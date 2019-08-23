@@ -1,2 +1,2 @@
-# blastos
+# BALLISTUS
 Client engine for BombSquad.
