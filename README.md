@@ -1,2 +1,2 @@
 # blastos
-Core engine components behind BombSquad.
+Client engine for BombSquad.
