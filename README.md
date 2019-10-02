@@ -1,2 +1,2 @@
 # Ballistica
-Client engine for BombSquad.
+The app framework powering BombSquad.
