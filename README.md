@@ -1,2 +1,2 @@
 # Ballistica
-The app framework powering BombSquad.
+The app framework powering BombSquad..
