@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="MypyConfigService">
+    <option name="executableName" value="dmypy start --timeout 3600 -- --config-file .mypy.ini --follow-imports=error; dmypy check `tools/snippets scriptfiles`" />
+    <option name="pathSuffix" value="/usr/local/bin" />
+  </component>
+</project>

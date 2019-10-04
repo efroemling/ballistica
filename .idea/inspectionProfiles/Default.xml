@@ -1,0 +1,104 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Default" />
+    <inspection_tool class="DuplicatedCode" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
+    <inspection_tool class="InconsistentLineSeparators" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="NonPython" level="WARNING" enabled="false" />
+    </inspection_tool>
+    <inspection_tool class="ProblematicWhitespace" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="NonPython" level="WARNING" enabled="false" />
+    </inspection_tool>
+    <inspection_tool class="PyBroadExceptionInspection" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
+    <inspection_tool class="PyMethodMayBeStaticInspection" enabled="true" level="INFORMATION" enabled_by_default="true" />
+    <inspection_tool class="PyPep8Inspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <scope name="UncheckedPython" level="WEAK WARNING" enabled="false">
+        <option name="ignoredErrors">
+          <list>
+            <option value="E129" />
+            <option value="E131" />
+            <option value="E124" />
+            <option value="E122" />
+            <option value="E125" />
+            <option value="E128" />
+          </list>
+        </option>
+      </scope>
+      <option name="ignoredErrors">
+        <list>
+          <option value="E129" />
+          <option value="E131" />
+          <option value="E124" />
+          <option value="E122" />
+          <option value="E125" />
+          <option value="E128" />
+        </list>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyProtectedMemberInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <scope name="UncheckedPython" level="WEAK WARNING" enabled="false" />
+    </inspection_tool>
+    <inspection_tool class="PyRedundantParenthesesInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <scope name="UncheckedPython" level="WEAK WARNING" enabled="false" />
+    </inspection_tool>
+    <inspection_tool class="PyShadowingBuiltinsInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <scope name="UncheckedPython" level="WEAK WARNING" enabled="false" />
+    </inspection_tool>
+    <inspection_tool class="PyShadowingNamesInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <scope name="UncheckedPython" level="WEAK WARNING" enabled="false" />
+    </inspection_tool>
+    <inspection_tool class="PyTypeCheckerInspection" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="PyUnresolvedReferencesInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="PyIgnoreUnresolved" level="WARNING" enabled="false">
+        <option name="ignoredIdentifiers">
+          <list>
+            <option value="astroid.node_classes.NodeNG.*" />
+            <option value="astroid.*" />
+            <option value="bastd.actor.spazbot.SpazBot.r_walk_speed" />
+            <option value="bastd.actor.spazbot.SpazBot.r_walk_row" />
+            <option value="_weakref.ReferenceType.__getitem__" />
+            <option value="devtool.*" />
+            <option value="AppKit" />
+            <option value="typing.Sequence.register" />
+          </list>
+        </option>
+      </scope>
+      <scope name="UncheckedPython" level="WARNING" enabled="false">
+        <option name="ignoredIdentifiers">
+          <list>
+            <option value="astroid.node_classes.NodeNG.*" />
+            <option value="astroid.*" />
+            <option value="bastd.actor.spazbot.SpazBot.r_walk_speed" />
+            <option value="bastd.actor.spazbot.SpazBot.r_walk_row" />
+            <option value="_weakref.ReferenceType.__getitem__" />
+            <option value="devtool.*" />
+            <option value="AppKit" />
+          </list>
+        </option>
+      </scope>
+      <option name="ignoredIdentifiers">
+        <list>
+          <option value="astroid.node_classes.NodeNG.*" />
+          <option value="astroid.*" />
+          <option value="bastd.actor.spazbot.SpazBot.r_walk_speed" />
+          <option value="bastd.actor.spazbot.SpazBot.r_walk_row" />
+          <option value="_weakref.ReferenceType.__getitem__" />
+          <option value="devtool.*" />
+          <option value="AppKit" />
+          <option value="typing.Sequence.register" />
+        </list>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyUnusedLocalInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <scope name="UncheckedPython" level="WEAK WARNING" enabled="false">
+        <option name="ignoreTupleUnpacking" value="true" />
+        <option name="ignoreLambdaParameters" value="true" />
+        <option name="ignoreLoopIterationVariables" value="true" />
+        <option name="ignoreVariablesStartingWithUnderscore" value="true" />
+      </scope>
+      <option name="ignoreTupleUnpacking" value="true" />
+      <option name="ignoreLambdaParameters" value="true" />
+      <option name="ignoreLoopIterationVariables" value="true" />
+      <option name="ignoreVariablesStartingWithUnderscore" value="true" />
+    </inspection_tool>
+  </profile>
+</component>

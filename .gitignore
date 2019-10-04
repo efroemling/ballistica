@@ -1,0 +1,133 @@
+# build/temp files
+Bin/
+build/
+build-server/
+autom4te.cache
+local.properties
+.DS_Store
+*.pyc
+*.orig
+*.swp
+*.swo
+*.vscode
+.sconsign.dblite
+.mayaSwatches
+.gdb_history
+.dmypy.json
+.cache
+.mypy_cache
+.mypy.ini
+.pycheckers
+.flycheck-dir-locals.el
+.pylintrc
+.clang-format
+.style.yapf
+.irony
+PUBSYNC_IN_PROGRESS
+_fulltest_buildfile_*
+ballistica_files/
+**/.#*
+
+# Project/tool files
+config/localconfig.json
+config/.*
+.dir-locals.el
+.spinoffdata
+flycheck_*
+
+# built application files
+*.apk
+*.ap_
+
+# files for the dex VM
+*.dex
+
+# Java class files
+*.class
+
+# generated files
+bin/
+gen/
+
+# ew - want to ignore libs built by NDK but not a few specific others..
+libs/
+!**/GameCircleSDK/libs
+!**/PlatformSDK/Android/libs
+
+# Visual Studio
+.vs
+*.vcxproj.user
+*.aps
+*.ncb
+*.opendb
+*.opensdf
+*.sdf
+*.ipch
+*.cachefile
+*.VC.db
+*.VC.VC.opendb
+*.exe
+!vc_redist.x86.exe
+!vc_redist.x64.exe
+!python.exe
+!pythonw.exe
+!**/OculusSDK/Tools/**/*.exe
+
+# Note: specifying exact Debug/Release dirs for now; we wind up ignoring
+# some files under LibOVR if we try to glob these together.
+ballisticacore-windows/Debug
+ballisticacore-windows/Release
+ballisticacore-windows/BallisticaCore/Debug
+ballisticacore-windows/BallisticaCore/Release
+ballisticacore-windows/BallisticaCoreHeadless/Debug
+ballisticacore-windows/BallisticaCoreHeadless/Release
+ballisticacore-windows-oculus/BallisticaCoreVR/Projects/Windows/VS2015/Debug
+ballisticacore-windows-oculus/BallisticaCoreVR/Projects/Windows/VS2015/Release
+
+# Android Studio
+# I'm keeping most IDEA related files out of git and only including gradle stuff;
+# It's nice to be able to cleanly re-import the project.
+# As time goes on, I'm making explicit exceptions for some key files (dictionaries, etc)
+# which are nice to keep around.
+ballisticacore-android/**/*.iml
+.gradle
+ballisticacore-android/.idea/*
+
+# Android Studio Stuff we *DO* want to keep
+!ballisticacore-android/.idea/dictionaries
+!ballisticacore-android/.idea/inspectionProfiles
+!ballisticacore-android/.idea/codeStyles
+
+
+# NDK
+.cxx
+
+# Windows thumbnail db
+Thumbs.db
+
+# Asset master source link
+assets/src_master
+
+# Asset build cache
+.assetcache
+
+# XCode
+xcuserdata/
+
+# Generated code output
+/src/generated/
+
+# Dynamically generated resource files
+/ballisticacore-android/BallisticaCore/src/cardboard/res/drawable-*/vr_icon.png
+/ballisticacore-android/BallisticaCore/src/cardboard/res/drawable-*/vr_icon_background.png
+/ballisticacore-android/BallisticaCore/src/cardboard/res/drawable-*/icon.png
+/ballisticacore-android/BallisticaCore/src/main/res/drawable-*/banner.png
+/ballisticacore-android/BallisticaCore/src/main/res/mipmap-*/ic_launcher*.png
+BallisticaCore.ico
+/ballisticacore-xcode/BallisticaCore Shared/Assets.xcassets/AppIcon iOS.appiconset/icon_*.png
+/ballisticacore-xcode/BallisticaCore Shared/Assets.xcassets/AppIcon macOS.appiconset/icon_*.png
+/ballisticacore-xcode/BallisticaCore Shared/Assets.xcassets/tvOS App Icon & Top Shelf Image.brandassets/App Icon - App Store.imagestack/Layer*.imagestacklayer/Content.imageset/*.png
+/ballisticacore-xcode/BallisticaCore Shared/Assets.xcassets/tvOS App Icon & Top Shelf Image.brandassets/App Icon.imagestack/Layer*.imagestacklayer/Content.imageset/*.png
+/ballisticacore-xcode/BallisticaCore Shared/Assets.xcassets/tvOS App Icon & Top Shelf Image.brandassets/Top Shelf Image Wide.imageset/*.png
+/ballisticacore-xcode/BallisticaCore Shared/Assets.xcassets/tvOS App Icon & Top Shelf Image.brandassets/Top Shelf Image.imageset/*.png
+
