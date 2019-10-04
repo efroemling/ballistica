@@ -349,6 +349,7 @@
       <w>dingsoundhigh</w>
       <w>dirname</w>
       <w>dirnames</w>
+      <w>dirpath</w>
       <w>dirtybit</w>
       <w>dirtyfiles</w>
       <w>disllowed</w>
@@ -1146,6 +1147,7 @@
       <w>profilename</w>
       <w>profilenames</w>
       <w>proj</w>
+      <w>projconfig</w>
       <w>projectpath</w>
       <w>projectroot</w>
       <w>projroot</w>
@@ -1175,6 +1177,7 @@
       <w>pushchangelog</w>
       <w>pushdocs</w>
       <w>pushish</w>
+      <w>pushlist</w>
       <w>pval</w>
       <w>pvars</w>
       <w>pvrtc</w>
@@ -1603,6 +1606,7 @@
       <w>unpremult</w>
       <w>unpremultiply</w>
       <w>unranked</w>
+      <w>unstaged</w>
       <w>unstripped</w>
       <w>unsubscriptable</w>
       <w>untracked</w>
