@@ -24,7 +24,6 @@
     "projectpath": "ballisticacore-ios.xcodeproj",
     "scheme": "BallisticaCore iOS Legacy"
   },
-  "pubsync_public_commit": "16d87a4a67ef69c6b2d08f2dea183a4a0f219ac6",
   "pylint_ignored_untracked_deps": [
     "bs_mapdefs_tip_top",
     "bs_mapdefs_lake_frigid",
@@ -57,16 +56,5 @@
     "assets/src/server",
     "src/generated_src",
     "tools"
-  ],
-  "sync_items": [
-    {
-      "src_path": ".editorconfig",
-      "src_project_id": "bamaster"
-    },
-    {
-      "dst_path": "assets/src/data/scripts/bafoundation",
-      "src_path": "src/bafoundation",
-      "src_project_id": "bamaster"
-    }
   ]
 }
