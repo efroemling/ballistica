@@ -21,9 +21,9 @@ import efrotools
 # Pull in some standard snippets we want to expose.
 # noinspection PyUnresolvedReferences
 from efrotools.snippets import (  # pylint: disable=unused-import
-    PROJROOT, snippets_main, formatcode, formatscripts, cpplintcode,
-    pylintscripts, mypyscripts, tool_config_install, sync, sync_all,
-    scriptfiles, pycharmscripts, clioncode, androidstudiocode,
+    PROJROOT, snippets_main, formatcode, formatscripts, formatmakefile,
+    cpplintcode, pylintscripts, mypyscripts, tool_config_install, sync,
+    sync_all, scriptfiles, pycharmscripts, clioncode, androidstudiocode,
     makefile_target_list, spelling)
 
 if TYPE_CHECKING:

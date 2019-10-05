@@ -155,6 +155,20 @@ def formatscripts() -> None:
     code.formatscripts(PROJROOT, full)
 
 
+def formatmakefile() -> None:
+    """Format the main makefile."""
+    from efrotools.makefile import Makefile
+    with open('Makefile') as infile:
+        original = infile.read()
+
+    formatted = Makefile(original).get_output()
+
+    # Only write if it changed.
+    if formatted != original:
+        with open('Makefile', 'w') as outfile:
+            outfile.write(formatted)
+
+
 def cpplintcode() -> None:
     """Run lint-checking on all code deemed lint-able."""
     from efrotools import code
