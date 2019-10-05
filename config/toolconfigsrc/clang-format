@@ -1,0 +1,9 @@
+BasedOnStyle: Google
+
+# ericf note: ensuring pointers/refs are consistent
+# (google style default is to derive from file and fall back to left)
+PointerAlignment: Left
+DerivePointerAlignment: false
+
+# want +, -, etc at beginning of split lines
+BreakBeforeBinaryOperators: NonAssignment

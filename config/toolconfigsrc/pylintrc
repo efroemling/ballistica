@@ -1,0 +1,98 @@
+[MASTER]
+jobs=1
+
+load-plugins=efrotools.pylintplugins
+
+persistent=no
+
+__EFRO_PYLINT_INIT__
+
+[REPORTS]
+
+# Don't want a score; aiming for perfection.
+score=no
+
+[VARIABLES]
+# By default pylint ignores unused imports in __init__.py, but
+# when flycheck checks it as flycheck___init__.py that doesn't apply.
+# Turning this off to keep things consistent.
+init-import=yes
+
+[FORMAT]
+# PEP-8 specifies 79 chars (that's right, not 80)
+max-line-length=79
+
+# We're using yapf to handle formatting and pylint doesn't always agree with it.
+disable=bad-continuation
+
+[MESSAGES CONTROL]
+# broad-except:
+#   I tend to catch Exception (*not* BaseException) as a broad safety net.
+#   This is not disallowed in PEP-8 and I feel its
+#   not a bad practice as long as they are not silently ignored.
+# too-few-public-methods:
+#   Yes I often use little classes just to carry around one or two named attrs
+#   or as simple messages to send to each other.
+#   Can look into Data Classes perhaps once 3.7 is well distributed,
+#   but for now I'm gonna say this is ok.
+# no-self-use
+#   I find a lot of things still make sense organizationally as methods
+#   even if they do not technically use self at the current time
+# too-many-instance-attributes
+#   Honestly just don't feel this is bad. If anything, the limit encourages
+#   me to stuff things in dicts or whatnot which loses the bit of
+#   type safety that pylint provides with attrs
+# too-many-arguments
+#   This one is more understandable, but I still don't see the problem
+#   with having a bunch of optional args in some cases.
+# similarities
+#   Not gonna touch this for now; maybe later. Bigger fish to fry.
+disable=broad-except,
+        too-few-public-methods,
+        no-self-use,
+        too-many-instance-attributes,
+        too-many-arguments,
+        similarities
+
+# We want to know whenever we can get rid of suppression statements.
+enable=useless-suppression
+
+[BASIC]
+# I use x, y, h, and v for graphical purposes often, where I feel like they are
+# meaningful, so adding them to the allowed list.
+# Also t, r, s for translate/rotate/scale
+# (i found myself just changing them to xval and yval which doesnt help)
+
+good-names=i,
+           j,
+           k,
+           x,
+           y,
+           h,
+           v,
+           s,
+           h2,
+           v2,
+           ex,
+           Run,
+           T,
+           S,
+           U,
+           _
+
+[MISCELLANEOUS]
+# We've got various TODO and FIXME notes in scripts, but don't want
+# lint to trigger over that fact.
+notes=
+
+[DESIGN]
+# We're going a bit over the recommended max of 7 ancestors when
+# in some bafoundation mixin classes; I don't feel like that's
+# unreasonable.
+max-parents=10
+
+[SIMILARITIES]
+
+[IMPORTS]
+# We do quite a bit of this. Perhaps can reconsider if its a good idea later.
+disable=import-outside-toplevel

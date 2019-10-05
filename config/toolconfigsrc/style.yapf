@@ -1,0 +1,8 @@
+[style]
+based_on_style = pep8
+allow_multiline_lambdas = true
+allow_multiline_dictionary_keys = true
+coalesce_brackets = true
+join_multiple_lines = false
+indent_dictionary_value = true
+blank_line_before_nested_class_or_def = true

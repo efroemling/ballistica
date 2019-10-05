@@ -1,0 +1,53 @@
+"""Exposed functionality not intended for full public use.
+
+Classes and functions contained here, while technically 'public', may change
+or disappear without warning, so should be avoided (or used sparingly and
+defensively) in mods.
+"""
+
+# pylint: disable=unused-import
+
+from ba._maps import (get_unowned_maps, get_map_class, register_map,
+                      preload_map_preview_media, get_map_display_string,
+                      get_filtered_map_name)
+from ba._appconfig import commit_app_config
+from ba._input import (get_device_value, get_input_map_hash,
+                       get_input_device_config)
+from ba._general import getclass, json_prep, get_type_name
+from ba._account import (on_account_state_changed,
+                         handle_account_gained_tickets, have_pro_options,
+                         have_pro, cache_tournament_info,
+                         ensure_have_account_player_profile,
+                         get_purchased_icons, get_cached_league_rank_data,
+                         get_league_rank_points, cache_league_rank_data)
+from ba._activitytypes import JoiningActivity, ScoreScreenActivity
+from ba._achievement import (get_achievement, set_completed_achievements,
+                             display_achievement_banner,
+                             get_achievements_for_coop_level)
+from ba._apputils import (is_browser_likely_available, get_remote_app_name,
+                          should_submit_debug_info, show_ad)
+from ba._benchmark import (run_gpu_benchmark, run_cpu_benchmark,
+                           run_media_reload_benchmark, run_stress_test)
+from ba._campaign import get_campaign
+from ba._messages import PlayerProfilesChangedMessage
+from ba._meta import get_game_types
+from ba._modutils import show_user_scripts
+from ba._teambasesession import DEFAULT_TEAM_COLORS, DEFAULT_TEAM_NAMES
+from ba._music import (have_music_player, music_volume_changed, do_play_music,
+                       get_soundtrack_entry_name, get_soundtrack_entry_type,
+                       get_music_player, set_music_play_mode,
+                       supports_soundtrack_entry_type,
+                       get_valid_music_file_extensions, MacITunesMusicPlayer)
+from ba._netutils import serverget, serverput, get_ip_address_type
+from ba._powerup import get_default_powerup_distribution
+from ba._profile import (get_player_profile_colors, get_player_profile_icon,
+                         get_player_colors)
+from ba._tips import get_next_tip
+from ba._playlist import (get_default_free_for_all_playlist,
+                          get_default_teams_playlist, filter_playlist)
+from ba._store import (get_available_sale_time, get_available_purchase_count,
+                       get_store_item_name_translated,
+                       get_store_item_display_size, get_store_layout,
+                       get_store_item, get_clean_price)
+from ba._tournament import get_tournament_prize_strings
+from ba._gameutils import get_trophy_string

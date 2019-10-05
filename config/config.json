@@ -1,0 +1,72 @@
+{
+  "code_source_dirs": [
+    "src/ballistica"
+  ],
+  "cpplint_blacklist": [
+    "src/ballistica/generic/json.cc",
+    "src/ballistica/generic/json.h",
+    "src/ballistica/generic/utf8.cc",
+    "src/ballistica/graphics/texture/dds.h",
+    "src/ballistica/graphics/texture/ktx.cc",
+    "src/ballistica/platform/android/android_gl3.h",
+    "src/ballistica/platform/apple/app_delegate.h",
+    "src/ballistica/platform/apple/scripting_bridge_itunes.h",
+    "src/ballistica/platform/android/utf8/checked.h",
+    "src/ballistica/platform/android/utf8/unchecked.h",
+    "src/ballistica/platform/android/utf8/core.h",
+    "src/ballistica/platform/apple/sdl_main_mac.h",
+    "src/ballistica/platform/oculus/main_rift.cc"
+  ],
+  "name": "BallisticaCore",
+  "push_ipa_config": {
+    "app_bundle_name": "BallisticaCore.app",
+    "archive_name": "bs",
+    "projectpath": "ballisticacore-ios.xcodeproj",
+    "scheme": "BallisticaCore iOS Legacy"
+  },
+  "pubsync_public_commit": "16d87a4a67ef69c6b2d08f2dea183a4a0f219ac6",
+  "pylint_ignored_untracked_deps": [
+    "bs_mapdefs_tip_top",
+    "bs_mapdefs_lake_frigid",
+    "bs_mapdefs_monkey_face",
+    "astroid.modutils",
+    "bs_mapdefs_doom_shroom",
+    "bs_mapdefs_rampage",
+    "bs_mapdefs_big_g",
+    "bs_mapdefs_courtyard",
+    "bs_mapdefs_crag_castle",
+    "bs_mapdefs_happy_thoughts",
+    "astroid",
+    "bs_mapdefs_bridgit",
+    "pylint.lint",
+    "bs_mapdefs_zig_zag",
+    "bs_mapdefs_the_pad",
+    "bs_mapdefs_step_right_up",
+    "pytz",
+    "bs_mapdefs_football_stadium",
+    "bs_mapdefs_tower_d",
+    "bs_mapdefs_hockey_stadium",
+    "bs_mapdefs_roundabout"
+  ],
+  "python_paths": [
+    "assets/src/data/scripts",
+    "tools"
+  ],
+  "python_source_dirs": [
+    "assets/src/data/scripts",
+    "assets/src/server",
+    "src/generated_src",
+    "tools"
+  ],
+  "sync_items": [
+    {
+      "src_path": ".editorconfig",
+      "src_project_id": "bamaster"
+    },
+    {
+      "dst_path": "assets/src/data/scripts/bafoundation",
+      "src_path": "src/bafoundation",
+      "src_project_id": "bamaster"
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+"""League related UI functionality."""

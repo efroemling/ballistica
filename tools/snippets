@@ -1,0 +1,580 @@
+#!/usr/bin/env python3
+"""Wee little snippets of functionality specific to this project.
+
+All top level functions here can be run by passing them as the first
+argument on the command line. (or pass no arguments to get a list of them).
+
+Functions can be placed here when they're not complex enough to warrant
+their own files. Often these functions act as user-facing entry points
+to functionality contained in efrotools or other standalone tool modules.
+"""
+
+from __future__ import annotations
+
+import os
+import subprocess
+import sys
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+import efrotools
+# Pull in some standard snippets we want to expose.
+# noinspection PyUnresolvedReferences
+from efrotools.snippets import (  # pylint: disable=unused-import
+    PROJROOT, snippets_main, formatcode, formatscripts, cpplintcode,
+    pylintscripts, mypyscripts, tool_config_install, sync, sync_all,
+    scriptfiles, pycharmscripts, clioncode, androidstudiocode,
+    makefile_target_list, spelling)
+
+if TYPE_CHECKING:
+    from typing import Optional, List
+
+# Parts of full-tests suite we only run on particular days.
+# (This runs in listed order so should be randomized by hand to avoid
+# clustering similar tests too much)
+SPARSE_TESTS: List[List[str]] = [
+    ['ios.pylibs.debug', 'android.pylibs.arm'],
+    ['linux.package.64', 'android.pylibs.arm64'],
+    ['windows.package', 'mac.pylibs'],
+    ['tvos.pylibs', 'android.pylibs.x86'],
+    ['linux.package.server.64', 'android.pylibs.arm.debug'],
+    ['windows.package.server'],
+    ['ios.pylibs', 'android.pylibs.arm64.debug'],
+    ['linux.package.server.32'],
+    ['android.pylibs.x86.debug', 'mac.package'],
+    ['mac.package.server', 'android.pylibs.x86_64'],
+    ['windows.package.oculus'],
+    ['linux.package.32', 'android.pylibs.x86_64.debug'],
+    ['mac.pylibs.debug', 'android.package'],
+]
+
+# Currently only doing sparse-tests in core; not spinoffs.
+# (whole word will get subbed out in spinoffs so this will be false)
+DO_SPARSE_TESTS = 'ballistica' + 'core' == 'ballisticacore'
+
+
+def archive_old_builds() -> None:
+    """Stuff our old public builds into the 'old' dir.
+
+    (called after we push newer ones)
+    """
+    if len(sys.argv) < 3:
+        raise Exception('invalid arguments')
+    ssh_server = sys.argv[2]
+    builds_dir = sys.argv[3]
+    ssh_args = sys.argv[4:]
+
+    def ssh_run(cmd: str) -> str:
+        val: str = subprocess.check_output(['ssh'] + ssh_args +
+                                           [ssh_server, cmd]).decode()
+        return val
+
+    files = ssh_run('ls -1t "' + builds_dir + '"').splitlines()
+
+    # For every file we find, gather all the ones with the same prefix;
+    # we'll want to archive all but the first one.
+    files_to_archive = set()
+    for fname in files:
+        if '_' not in fname:
+            continue
+        prefix = '_'.join(fname.split('_')[:-1])
+        for old_file in [f for f in files if f.startswith(prefix)][1:]:
+            files_to_archive.add(old_file)
+
+    # Would be faster to package this into a single command but
+    # this works.
+    for fname in sorted(files_to_archive):
+        print('Archiving ' + fname, file=sys.stderr)
+        ssh_run('mv "' + builds_dir + '/' + fname + '" "' + builds_dir +
+                '/old/"')
+
+
+def gen_fulltest_buildfile_android() -> None:
+    """Generate fulltest command list for jenkins.
+
+    (so we see nice pretty split-up build trees)
+    """
+    # pylint: disable=too-many-branches
+    import datetime
+
+    # Its a pretty big time-suck building all architectures for
+    # all of our subplatforms, so lets usually just build a single one.
+    # We'll rotate it though and occasionally do all 4 at once just to
+    # be safe.
+    dayoffset = datetime.datetime.now().timetuple().tm_yday
+
+    # Let's only do a full 'prod' once every two times through the loop.
+    # (it really should never catch anything that individual platforms don't)
+    modes = ['arm', 'arm64', 'x86', 'x86_64']
+    modes += modes
+    modes.append('prod')
+
+    lines = []
+    for i, flavor in enumerate(
+            sorted(os.listdir('ballisticacore-android/BallisticaCore/src'))):
+        if flavor == 'main' or flavor.startswith('.'):
+            continue
+        mode = modes[(dayoffset + i) % len(modes)]
+        lines.append('ANDROID_PLATFORM=' + flavor + ' ANDROID_MODE=' + mode +
+                     ' nice -n 15 make android-build')
+
+    # Now add sparse tests that land on today.
+    if DO_SPARSE_TESTS:
+        extras = SPARSE_TESTS[dayoffset % len(SPARSE_TESTS)]
+        extras = [e for e in extras if e.startswith('android.')]
+        for extra in extras:
+            if extra == 'android.pylibs.arm':
+                lines.append('tools/snippets python_build_android arm')
+            elif extra == 'android.pylibs.arm.debug':
+                lines.append('tools/snippets python_build_android_debug arm')
+            elif extra == 'android.pylibs.arm64':
+                lines.append('tools/snippets python_build_android arm64')
+            elif extra == 'android.pylibs.arm64.debug':
+                lines.append('tools/snippets python_build_android_debug arm64')
+            elif extra == 'android.pylibs.x86':
+                lines.append('tools/snippets python_build_android x86')
+            elif extra == 'android.pylibs.x86.debug':
+                lines.append('tools/snippets python_build_android_debug x86')
+            elif extra == 'android.pylibs.x86_64':
+                lines.append('tools/snippets python_build_android x86_64')
+            elif extra == 'android.pylibs.x86_64.debug':
+                lines.append(
+                    'tools/snippets python_build_android_debug x86_64')
+            elif extra == 'android.package':
+                lines.append('make android-package')
+            else:
+                raise RuntimeError(f'Unknown extra: {extra}')
+
+    with open('_fulltest_buildfile_android', 'w') as outfile:
+        outfile.write('\n'.join(lines))
+
+
+def gen_fulltest_buildfile_windows() -> None:
+    """Generate fulltest command list for jenkins.
+
+    (so we see nice pretty split-up build trees)
+    """
+    import datetime
+
+    dayoffset = datetime.datetime.now().timetuple().tm_yday
+
+    lines: List[str] = []
+
+    # We want to do one regular, one headless, and one oculus build,
+    # but let's switch up 32 or 64 bit based on the day.
+    # Also occasionally throw a release build in but stick to
+    # mostly debug builds to keep build times speedier.
+    pval1 = 'Win32' if dayoffset % 2 == 0 else 'x64'
+    pval2 = 'Win32' if (dayoffset + 1) % 2 == 0 else 'x64'
+    pval3 = 'Win32' if (dayoffset + 2) % 2 == 0 else 'x64'
+    cfg1 = 'Release' if dayoffset % 7 == 0 else 'Debug'
+    cfg2 = 'Release' if (dayoffset + 1) % 7 == 0 else 'Debug'
+    cfg3 = 'Release' if (dayoffset + 2) % 7 == 0 else 'Debug'
+
+    lines.append(f'WINDOWS_PROJECT= WINDOWS_PLATFORM={pval1} '
+                 f'WINDOWS_CONFIGURATION={cfg1} make windows-build')
+    lines.append(f'WINDOWS_PROJECT=Headless WINDOWS_PLATFORM={pval2} '
+                 f'WINDOWS_CONFIGURATION={cfg2} make windows-build')
+    lines.append(f'WINDOWS_PROJECT=Oculus WINDOWS_PLATFORM={pval3} '
+                 f'WINDOWS_CONFIGURATION={cfg3} make windows-build')
+
+    # Now add sparse tests that land on today.
+    if DO_SPARSE_TESTS:
+        extras = SPARSE_TESTS[dayoffset % len(SPARSE_TESTS)]
+        extras = [e for e in extras if e.startswith('windows.')]
+        for extra in extras:
+            if extra == 'windows.package':
+                lines.append('make windows-package')
+            elif extra == 'windows.package.server':
+                lines.append('make windows-server-package')
+            elif extra == 'windows.package.oculus':
+                lines.append('make windows-oculus-package')
+            else:
+                raise RuntimeError(f'Unknown extra: {extra}')
+
+    with open('_fulltest_buildfile_windows', 'w') as outfile:
+        outfile.write('\n'.join(lines))
+
+
+def gen_fulltest_buildfile_apple() -> None:
+    """Generate fulltest command list for jenkins.
+
+    (so we see nice pretty split-up build trees)
+    """
+    # pylint: disable=too-many-branches
+    import datetime
+
+    dayoffset = datetime.datetime.now().timetuple().tm_yday
+
+    # noinspection PyListCreation
+    lines = []
+
+    # iOS stuff
+    lines.append('nice -n 18 make ios-build')
+    lines.append('nice -n 18 make ios-new-build')
+    if DO_SPARSE_TESTS:
+        extras = SPARSE_TESTS[dayoffset % len(SPARSE_TESTS)]
+        extras = [e for e in extras if e.startswith('ios.')]
+        for extra in extras:
+            if extra == 'ios.pylibs':
+                lines.append('tools/snippets python_build_apple ios')
+            elif extra == 'ios.pylibs.debug':
+                lines.append('tools/snippets python_build_apple_debug ios')
+            else:
+                raise RuntimeError(f'Unknown extra: {extra}')
+
+    # tvOS stuff
+    lines.append('nice -n 18 make tvos-build')
+    if DO_SPARSE_TESTS:
+        extras = SPARSE_TESTS[dayoffset % len(SPARSE_TESTS)]
+        extras = [e for e in extras if e.startswith('tvos.')]
+        for extra in extras:
+            if extra == 'tvos.pylibs':
+                lines.append('tools/snippets python_build_apple tvos')
+            elif extra == 'tvos.pylibs.debug':
+                lines.append('tools/snippets python_build_apple_debug tvos')
+            else:
+                raise RuntimeError(f'Unknown extra: {extra}')
+
+    # macOS stuff
+    lines.append('nice -n 18 make mac-build')
+    # (throw release build in the mix to hopefully catch opt-mode-only errors).
+    lines.append('nice -n 18 make mac-appstore-release-build')
+    lines.append('nice -n 18 make mac-new-build')
+    lines.append('nice -n 18 make mac-server-build')
+    lines.append('nice -n 18 make cmake-build')
+    if DO_SPARSE_TESTS:
+        extras = SPARSE_TESTS[dayoffset % len(SPARSE_TESTS)]
+        extras = [e for e in extras if e.startswith('mac.')]
+        for extra in extras:
+            if extra == 'mac.package':
+                lines.append('make mac-package')
+            elif extra == 'mac.package.server':
+                lines.append('make mac-server-package')
+            elif extra == 'mac.pylibs':
+                lines.append('tools/snippets python_build_apple mac')
+            elif extra == 'mac.pylibs.debug':
+                lines.append('tools/snippets python_build_apple_debug mac')
+            else:
+                raise RuntimeError(f'Unknown extra: {extra}')
+
+    with open('_fulltest_buildfile_apple', 'w') as outfile:
+        outfile.write('\n'.join(lines))
+
+
+def gen_fulltest_buildfile_linux() -> None:
+    """Generate fulltest command list for jenkins.
+
+    (so we see nice pretty split-up build trees)
+    """
+    import datetime
+
+    # Its a bit of a waste of time doing both 32 and 64 bit builds
+    # for everything, so let's do one of each and alternate the architecture.
+    dayoffset = datetime.datetime.now().timetuple().tm_yday
+
+    targets = ['build', 'server-build']
+    lin32flav = 'LINUX32_FLAVOR=linux32-u16s'
+    lin64flav = 'LINUX64_FLAVOR=linux64-u18s'
+    lines = []
+    for i, target in enumerate(targets):
+        if (i + dayoffset) % 2 == 0:
+            lines.append(f'{lin32flav} make linux32-{target}')
+        else:
+            lines.append(f'{lin64flav} make linux64-{target}')
+
+    if DO_SPARSE_TESTS:
+        extras = SPARSE_TESTS[dayoffset % len(SPARSE_TESTS)]
+        extras = [e for e in extras if e.startswith('linux.')]
+        for extra in extras:
+            if extra == 'linux.package.32':
+                lines.append(f'{lin32flav} make linux32-package')
+            elif extra == 'linux.package.server.32':
+                lines.append(f'{lin32flav} make linux32-server-package')
+            elif extra == 'linux.package.64':
+                lines.append(f'{lin64flav} make linux64-package')
+            elif extra == 'linux.package.server.64':
+                lines.append(f'{lin64flav} make linux64-server-package')
+            else:
+                raise RuntimeError(f'Unknown extra: {extra}')
+
+    with open('_fulltest_buildfile_linux', 'w') as outfile:
+        outfile.write('\n'.join(lines))
+
+
+def resize_image() -> None:
+    """Resize an image and saves it to a new location.
+
+    args: xres, yres, src, dst
+    """
+    if len(sys.argv) != 6:
+        raise Exception("expected 5 args")
+    width = int(sys.argv[2])
+    height = int(sys.argv[3])
+    src = sys.argv[4]
+    dst = sys.argv[5]
+    if not dst.endswith('.png'):
+        raise Exception("dst must be a png")
+    if not src.endswith('.png'):
+        raise Exception("src must be a png")
+    print('Creating: ' + os.path.basename(dst), file=sys.stderr)
+
+    # Switching to imagemagick from sips - hopefully this goes well
+    # so we'll be nice and cross-platform...
+    efrotools.run('convert "' + src + '" -resize ' + str(width) + 'x' +
+                  str(height) + ' "' + dst + '"')
+
+
+def check_clean_safety() -> None:
+    """Ensure all files are are added to git or in gitignore.
+
+    Use to avoid losing work if we accidentally do a clean without
+    adding something.
+    """
+    from efrotools.snippets import check_clean_safety as std_snippet
+
+    # First do standard checks.
+    std_snippet()
+
+    # Then also make sure there are no untracked changes to core files
+    # (since we may be blowing core away here).
+    status = os.system(
+        os.path.join(str(PROJROOT), 'tools', 'spinoff') + ' cleancheck')
+    if status != 0:
+        sys.exit(255)
+
+
+def get_master_asset_src_dir() -> None:
+    """Print master-asset-source dir for this repo."""
+
+    # Ok, for now lets simply use our hard-coded master-src
+    # path if we're on master in and not otherwise.  Should
+    # probably make this configurable.
+    output = subprocess.check_output(
+        ['git', 'status', '--branch', '--porcelain']).decode()
+
+    # Also compare repo name to split version of itself to
+    # see if we're outside of core (filtering will cause mismatch if so).
+    if ('origin/master' in output.splitlines()[0]
+            and 'ballistica' + 'core' == 'ballisticacore'):
+
+        # We seem to be in master in core repo.. lets do it.
+        print('/Users/ericf/Dropbox/ballisticacore_master_assets')
+    else:
+        # Still need to supply dummy path for makefile if not..
+        print('/__DUMMY_MASTER_SRC_DISABLED_PATH__')
+
+
+def androidaddr() -> None:
+    """Return the source file location for an android program-counter.
+
+    command line args: archive_dir architecture addr
+    """
+    if len(sys.argv) != 5:
+        print('ERROR: expected 4 args; got ' + str(len(sys.argv) - 1) + '.\n' +
+              'Usage: "tools/snippets android_addr'
+              ' <ARCHIVE-PATH> <ARCH> <ADDR>"')
+        sys.exit(255)
+    archive_dir = sys.argv[2]
+    if not os.path.isdir(archive_dir):
+        print('ERROR: invalid archive dir: "' + archive_dir + '"')
+        sys.exit(255)
+    arch = sys.argv[3]
+    archs = {
+        'x86': {'prefix': 'x86-', 'libmain': 'libmain_x86.so'},
+        'arm': {'prefix': 'arm-', 'libmain': 'libmain_arm.so'},
+        'arm64': {'prefix': 'aarch64-', 'libmain': 'libmain_arm64.so'},
+        'x86-64': {'prefix': 'x86_64-', 'libmain': 'libmain_x86-64.so'}
+    }  # yapf: disable
+    if arch not in archs:
+        print('ERROR: invalid arch "' + arch + '"; (choices are ' +
+              ', '.join(archs.keys()) + ')')
+        sys.exit(255)
+    addr = sys.argv[4]
+    sdkutils = os.path.abspath(
+        os.path.join(os.path.dirname(sys.argv[0]), 'android_sdk_utils'))
+    rootdir = os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), '..'))
+    ndkpath = subprocess.check_output([sdkutils, 'get-ndk-path'
+                                       ]).decode('utf-8').strip()
+    if not os.path.isdir(ndkpath):
+        print("ERROR: ndk-path '" + ndkpath + '" does not exist')
+        sys.exit(255)
+    lines = subprocess.check_output(
+        ['find',
+         os.path.join(ndkpath, 'toolchains'), '-name',
+         '*addr2line']).decode('utf-8').strip().splitlines()
+    lines = [line for line in lines if archs[arch]['prefix'] in line]
+    if len(lines) != 1:
+        print("ERROR: couldn't find addr2line binary")
+        sys.exit(255)
+    addr2line = lines[0]
+    efrotools.run('mkdir -p "' + os.path.join(rootdir, 'android_addr_tmp') +
+                  '"')
+    try:
+        efrotools.run('cd "' + os.path.join(rootdir, 'android_addr_tmp') +
+                      '" && tar -xf "' +
+                      os.path.join(archive_dir, 'unstripped_libs',
+                                   archs[arch]['libmain'] + '.tgz') + '"')
+        efrotools.run(
+            addr2line + ' -e "' +
+            os.path.join(rootdir, 'android_addr_tmp', archs[arch]['libmain']) +
+            '" ' + addr)
+    finally:
+        os.system('rm -rf "' + os.path.join(rootdir, 'android_addr_tmp') + '"')
+
+
+def python_build_apple() -> None:
+    """Build an embeddable python for mac/ios/tvos."""
+    _python_build_apple(debug=False)
+
+
+def python_build_apple_debug() -> None:
+    """Build embeddable python for mac/ios/tvos (dbg ver)."""
+    _python_build_apple(debug=True)
+
+
+def _python_build_apple(debug: bool) -> None:
+    """Build an embeddable python for macOS/iOS/tvOS."""
+    from efrotools import pybuild
+    os.chdir(PROJROOT)
+    archs = ('mac', 'ios', 'tvos')
+    if len(sys.argv) != 3:
+        print("ERROR: expected one <ARCH> arg: " + ', '.join(archs))
+        sys.exit(255)
+    arch = sys.argv[2]
+    if arch not in archs:
+        print('ERROR: invalid arch. valid values are: ' + ', '.join(archs))
+        sys.exit(255)
+    pybuild.build_apple(arch, debug=debug)
+
+
+def python_build_android() -> None:
+    """Build an embeddable Python lib for Android."""
+    _python_build_android(debug=False)
+
+
+def python_build_android_debug() -> None:
+    """Build embeddable Android Python lib (debug ver)."""
+    _python_build_android(debug=True)
+
+
+def _python_build_android(debug: bool) -> None:
+    from efrotools import pybuild
+    os.chdir(PROJROOT)
+    archs = ('arm', 'arm64', 'x86', 'x86_64')
+    if len(sys.argv) != 3:
+        print("ERROR: expected one <ARCH> arg: " + ', '.join(archs))
+        sys.exit(255)
+    arch = sys.argv[2]
+    if arch not in archs:
+        print('ERROR: invalid arch. valid values are: ' + ', '.join(archs))
+        sys.exit(255)
+    pybuild.build_android(str(PROJROOT), arch, debug=debug)
+
+
+def python_android_patch() -> None:
+    """Patches Python to prep for building for Android."""
+    from efrotools import pybuild
+    os.chdir(sys.argv[2])
+    pybuild.android_patch()
+
+
+def python_gather() -> None:
+    """Gather build python components into the project.
+
+    This assumes all embeddable py builds have been run successfully.
+    """
+    from efrotools import pybuild
+    os.chdir(PROJROOT)
+    pybuild.gather()
+
+
+def clean_orphaned_assets() -> None:
+    """Remove assets that are no longer part of the build."""
+    import json
+
+    # Operate from dist root..
+    os.chdir(PROJROOT)
+    with open('assets/manifest.json') as infile:
+        manifest = set(json.loads(infile.read()))
+    for root, _dirs, fnames in os.walk('assets/build'):
+        for fname in fnames:
+            fpath = os.path.join(root, fname)
+            fpathrel = fpath[13:]  # paths are relative to assets/build
+            if fpathrel not in manifest:
+                print(f"Removing orphaned asset: {fpath}")
+                os.unlink(fpath)
+
+    # Lastly, clear empty dirs.
+    efrotools.run('find assets/build -depth -empty -type d -delete')
+
+
+def py_examine() -> None:
+    """Run a python examination at a given point in a given file."""
+    if len(sys.argv) != 7:
+        print('ERROR: expected 7 args')
+        sys.exit(255)
+    filename = Path(sys.argv[2])
+    line = int(sys.argv[3])
+    column = int(sys.argv[4])
+    selection: Optional[str] = (None if sys.argv[5] == '' else sys.argv[5])
+    operation = sys.argv[6]
+
+    # This stuff assumes it is being run from project root.
+    os.chdir(PROJROOT)
+
+    # Set up pypaths so our main distro stuff works.
+    scriptsdir = os.path.abspath(
+        os.path.join(os.path.dirname(sys.argv[0]),
+                     '../assets/src/data/scripts'))
+    toolsdir = os.path.abspath(
+        os.path.join(os.path.dirname(sys.argv[0]), '../tools'))
+    if scriptsdir not in sys.path:
+        sys.path.append(scriptsdir)
+    if toolsdir not in sys.path:
+        sys.path.append(toolsdir)
+    efrotools.py_examine(filename, line, column, selection, operation)
+
+
+def push_ipa() -> None:
+    """Construct and push ios IPA for testing."""
+    from efrotools import ios
+    root = Path(sys.argv[0], '../..').resolve()
+    if len(sys.argv) != 3:
+        raise Exception('expected 1 arg (debug or release)')
+    modename = sys.argv[2]
+    ios.push_ipa(root, modename)
+
+
+def check_mac_ssh() -> None:
+    """Make sure ssh password access is turned off.
+
+    (This totally doesn't belong here, but I use it it to remind myself to
+    fix mac ssh after system updates which blow away ssh customizations).
+    """
+    with open('/etc/ssh/sshd_config') as infile:
+        lines = infile.read().splitlines()
+    if ('UsePAM yes' in lines or '#PasswordAuthentication yes' in lines
+            or '#ChallengeResponseAuthentication yes' in lines):
+        print('ERROR: ssh config is allowing password access\n'
+              'To fix: sudo emacs -nw /etc/ssh/sshd_config\n'
+              '"#PasswordAuthentication yes" -> "PasswordAuthentication no"\n'
+              '"#ChallengeResponseAuthentication yes" -> '
+              '"ChallengeResponseAuthentication no"\n'
+              '"UsePam yes" -> "UsePam no"\n')
+        sys.exit(255)
+    print('password ssh auth seems disabled; hooray!')
+
+
+def megalint() -> None:
+    """Run really long jetbrains lints."""
+    print('would do megalint')
+
+
+def capitalize() -> None:
+    """Print args capitalized."""
+    print(' '.join(w.capitalize() for w in sys.argv[2:]))
+
+
+if __name__ == '__main__':
+    snippets_main(globals())
