@@ -51,7 +51,6 @@ class Makefile:
             plines.append(line)
         if plines:
             paragraphs.append(Paragraph(contents='\n'.join(plines)))
-            plines = []
 
         # Now break all paragraphs into sections.
         section = Section(name=None, paragraphs=[])
