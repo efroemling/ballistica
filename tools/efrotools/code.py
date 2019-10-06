@@ -497,7 +497,8 @@ def mypyscripts(projroot: Path, full: bool) -> None:
     """Run mypy on all of our scripts."""
     import time
     filenames = get_script_filenames(projroot)
-    print('Running Mypy ' + ('(full)' if full else '(incremental)') + '...')
+    print('Running Mypy ' + ('(full)' if full else '(incremental)') + '...',
+          flush=True)
     starttime = time.time()
     try:
         runmypy(filenames, full)
