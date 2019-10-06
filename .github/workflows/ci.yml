@@ -3,7 +3,7 @@ name: CI
 on: [push]
 
 jobs:
-  build:
+  check:
 
     runs-on: ubuntu-18.04
     
