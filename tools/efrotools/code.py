@@ -61,7 +61,7 @@ def formatcode(projroot: Path, full: bool) -> None:
         cache.update(filenames, confighash)
         cache.mark_clean(filenames)
         cache.write()
-    print(f'Formatting up to date for {len(filenames)} code files.',
+    print(f'Formatting is up to date for {len(filenames)} code files.',
           flush=True)
 
 
@@ -108,7 +108,7 @@ def cpplintcode(projroot: Path, full: bool) -> None:
     if dirtyfiles:
         cache.mark_clean(filenames)
         cache.write()
-    print(f'CppLint: {len(filenames)} files up to date.', flush=True)
+    print(f'CppLint: all {len(filenames)} files are passing.', flush=True)
 
 
 def get_code_filenames(projroot: Path) -> List[str]:
@@ -171,7 +171,7 @@ def formatscripts(projroot: Path, full: bool) -> None:
         cache.update(filenames, confighash)
         cache.mark_clean(filenames)
         cache.write()
-    print(f'Formatting up to date for {len(filenames)} script files.',
+    print(f'Formatting is up to date for {len(filenames)} script files.',
           flush=True)
 
 
@@ -256,7 +256,7 @@ def pylintscripts(projroot: Path, full: bool, fast: bool) -> None:
             traceback.print_exc()
             cache.write()
             sys.exit(255)
-    print(f'Pylint: {len(filenames)} files up to date.', flush=True)
+    print(f'Pylint: all {len(filenames)} files are passing.', flush=True)
 
     cache.write()
 
@@ -659,7 +659,8 @@ def _run_idea_inspections_cached(cachepath: Path,
                               inspectdir=inspectdir)
         with open(cachepath, 'w') as outfile:
             outfile.write(json.dumps({'hash': current_hash}))
-    print(f'{displayname}: {len(filenames)} files up to date.', flush=True)
+    print(f'{displayname}: all {len(filenames)} files are passing.',
+          flush=True)
 
 
 def pycharmscripts(projroot: Path, full: bool, verbose: bool) -> None:
