@@ -20,4 +20,5 @@ jobs:
         echo Add other actions to build,
         python3 --version
         which pylint || echo damn
+        ls /usr/local/bin
         echo test, and deploy your project.
