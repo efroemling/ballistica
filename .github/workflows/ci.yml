@@ -10,7 +10,9 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: Setup
-      run: pip3 install pylint
+      run: |
+        sudo apt-get install python3-setuptools
+        pip3 install pylint
     - name: Run a multi-line script
       run: |
         echo Add other actions to build,
