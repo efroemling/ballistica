@@ -486,7 +486,7 @@ def runmypy(filenames: List[str], full: bool = False,
         'python3.7', '-m', 'mypy', '--pretty', '--config-file', '.mypy.ini'
     ] + filenames
     if full:
-        args.insert(1, '--no-incremental')
+        args.insert(args.index('mypy') + 1, '--no-incremental')
     subprocess.run(args, check=check)
 
 
