@@ -13,7 +13,7 @@ jobs:
       run: |
         export DEBIAN_FRONTEND=noninteractive
         sudo apt-add-repository -y ppa:deadsnakes/ppa
-        sudo apt-get -y install python3.7 python3.7-dev python3-pip
+        sudo apt-get -y install python3.7 python3.7-dev python3-pip python3-setuptools
         pip3 install pylint
     - name: Run a multi-line script
       run: |
