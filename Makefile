@@ -4,8 +4,8 @@
 # The targets here do not expect -jX to be passed to them and generally
 # add that argument to subprocesses as needed.
 
-# Default is to build/run the mac version.
-all: cmake
+# Print help by default
+all: help
 
 # We often want one job per core, so try to determine our logical core count.
 ifeq ($(wildcard /proc),/proc)  # Linux

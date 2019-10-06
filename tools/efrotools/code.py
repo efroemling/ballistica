@@ -482,7 +482,9 @@ def _filter_module_name(mpath: str) -> str:
 def runmypy(filenames: List[str], full: bool = False,
             check: bool = True) -> None:
     """Run MyPy on provided filenames."""
-    args = ['mypy', '--pretty', '--config-file', '.mypy.ini'] + filenames
+    args = [
+        'python3.7', '-m', 'mypy', '--pretty', '--config-file', '.mypy.ini'
+    ] + filenames
     if full:
         args.insert(1, '--no-incremental')
     subprocess.run(args, check=check)

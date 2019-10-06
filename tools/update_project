@@ -224,7 +224,7 @@ def main() -> None:
 
     # Update our python enums module.
     # Should do this before updating asset deps since this is an asset.
-    if os.path.exists('tools/update_puthon_enums_module'):
+    if os.path.exists('tools/update_python_enums_module'):
         if os.system('tools/update_python_enums_module' + checkarg) != 0:
             print(CLRRED + 'Error checking/updating python enums module' +
                   CLREND)
