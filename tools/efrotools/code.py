@@ -488,7 +488,8 @@ def runmypy(filenames: List[str], full: bool = False,
             check: bool = True) -> None:
     """Run MyPy on provided filenames."""
     args = [
-        'python3.7', '-m', 'mypy', '--pretty', '--config-file', '.mypy.ini'
+        'python3.7', '-m', 'mypy', '--pretty', '--no-error-summary',
+        '--config-file', '.mypy.ini'
     ] + filenames
     if full:
         args.insert(args.index('mypy') + 1, '--no-incremental')
