@@ -37,6 +37,9 @@ def _find_files(scan_dir: str) -> Tuple[List[str], List[str]]:
     exts = ['.c', '.cc', '.cpp', '.cxx', '.m', '.mm']
     header_exts = ['.h']
 
+    foof: int = 'barf'
+    print(foof)
+
     # Gather all sources and headers.
     for root, _dirs, files in os.walk(scan_dir):
         for ftst in files:
