@@ -16,7 +16,5 @@ jobs:
         sudo apt-get -y install python3.7 python3.7-dev python3-pip python3-setuptools
         sudo python3.7 -m pip install pylint mypy typing-extensions
     - name: Run checks
-      run: |
-        python3.7 -m pylint --version
-        python3.7 -m mypy --version
+      run: make checkfull
         
