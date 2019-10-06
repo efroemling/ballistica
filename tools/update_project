@@ -345,7 +345,7 @@ def main() -> None:
                 outfile.write('\n'.join(lines) + '\n')
                 print(CLRBLU + 'Writing header: ' + filename + CLREND)
     else:
-        print(f'All {len(header_files)} headers up to date.')
+        print(f'No issues found in {len(header_files)} headers.')
 
     # Now write out any project files that have changed
     # (or error if we're in check mode).
