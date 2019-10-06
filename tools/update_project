@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.7
 """
 This script acts as a 'meta' Makefile for the project. It is in charge
 of generating Makefiles, IDE project files, procedurally generated source
