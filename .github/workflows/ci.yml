@@ -14,11 +14,11 @@ jobs:
         export DEBIAN_FRONTEND=noninteractive
         sudo apt-add-repository -y ppa:deadsnakes/ppa
         sudo apt-get -y install python3.7 python3.7-dev python3-pip python3-setuptools
-        sudo pip3 install pylint
+        sudo pip3 install pylint mypy typing-extensions
     - name: Run a multi-line script
       run: |
         echo Add other actions to build,
         python3 --version
-        which pylint || echo damn
-        ls /usr/local/bin
+        which pylint || echo damn1
+        which mypy || echo damn2
         echo test, and deploy your project.
