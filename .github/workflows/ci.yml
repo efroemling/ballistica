@@ -5,15 +5,16 @@ on: [push]
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     
     steps:
     - uses: actions/checkout@v1
     - name: Setup
       run: |
-        sudo apt install pylint3
+        export DEBIAN_FRONTEND=noninteractive
+        sudo apt-add-repository -y ppa:deadsnakes/ppa
+        sudo apt-get -y install python3.7 python3.7-dev python3-pip
     - name: Run a multi-line script
       run: |
         echo Add other actions to build,
-        python3 -m pylint --version
         echo test, and deploy your project.
