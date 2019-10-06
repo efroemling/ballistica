@@ -24,4 +24,5 @@ jobs:
         cat `which mypy`
         pylint --version
         mypy --version
+        tools/snippets || echo bad
         echo test, and deploy your project.
