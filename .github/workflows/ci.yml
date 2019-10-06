@@ -21,4 +21,6 @@ jobs:
         python3 --version
         which pylint || echo damn1
         which mypy || echo damn2
+        pylint --version
+        mypy --version
         echo test, and deploy your project.
