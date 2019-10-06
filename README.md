@@ -2,4 +2,4 @@
 
 The app framework powering BombSquad..
 
-https://github.com/<OWNER>/<REPOSITORY>/workflows/CI/badge.svg
+https://github.com/efroemling/ballistica/workflows/CI/badge.svg
