@@ -15,5 +15,5 @@ jobs:
     - name: Run a multi-line script
       run: |
         echo Add other actions to build,
-        pylint --version
+        python3 -m pylint --version
         echo test, and deploy your project.
