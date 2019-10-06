@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Optional, List
+    from typing import Optional, List, Tuple
 
 
 @dataclass
@@ -21,6 +21,13 @@ class Section:
 class Paragraph:
     """Represents a continuous set of non-blank lines in a Makefile."""
     contents: str
+
+    def get_logical_lines(self) -> List[str]:
+        """Return contents broken into logical lines.
+
+        Lines joined by continuation chars are considered a single line.
+        """
+        return self.contents.replace('\\\n', '').splitlines()
 
 
 class Makefile:
@@ -71,6 +78,33 @@ class Makefile:
                 self.sections.append(section)
             else:
                 section.paragraphs.append(paragraph)
+
+    def find_assigns(self, name: str) -> List[Tuple[Section, int]]:
+        """Return section/index pairs for paragraphs containing an assign.
+
+        Note that the paragraph may contain other statements as well.
+        """
+        found: List[Tuple[Section, int]] = []
+        for section in self.sections:
+            for i, paragraph in enumerate(section.paragraphs):
+                if any(
+                        line.split('=')[0].strip() == name
+                        for line in paragraph.get_logical_lines()):
+                    found.append((section, i))
+        return found
+
+    def find_targets(self, name: str) -> List[Tuple[Section, int]]:
+        """Return section/index pairs for paragraphs containing a target.
+
+        Note that the paragraph may contain other statements as well.
+        """
+        found: List[Tuple[Section, int]] = []
+        for section in self.sections:
+            for i, paragraph in enumerate(section.paragraphs):
+                if any(line.split()[0] == name + ':'
+                       for line in paragraph.get_logical_lines()):
+                    found.append((section, i))
+        return found
 
     def get_output(self) -> str:
         """Generate a Makefile from the current state."""
