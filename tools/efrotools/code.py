@@ -61,7 +61,8 @@ def formatcode(projroot: Path, full: bool) -> None:
         cache.update(filenames, confighash)
         cache.mark_clean(filenames)
         cache.write()
-    print(f'Formatting up to date for {len(filenames)} code files.')
+    print(f'Formatting up to date for {len(filenames)} code files.',
+          flush=True)
 
 
 def cpplintcode(projroot: Path, full: bool) -> None:
@@ -107,7 +108,7 @@ def cpplintcode(projroot: Path, full: bool) -> None:
     if dirtyfiles:
         cache.mark_clean(filenames)
         cache.write()
-    print(f'CppLint: {len(filenames)} files up to date.')
+    print(f'CppLint: {len(filenames)} files up to date.', flush=True)
 
 
 def get_code_filenames(projroot: Path) -> List[str]:
@@ -170,7 +171,8 @@ def formatscripts(projroot: Path, full: bool) -> None:
         cache.update(filenames, confighash)
         cache.mark_clean(filenames)
         cache.write()
-    print(f'Formatting up to date for {len(filenames)} script files.')
+    print(f'Formatting up to date for {len(filenames)} script files.',
+          flush=True)
 
 
 def _should_include_script(fnamefull: str) -> bool:
@@ -506,7 +508,7 @@ def mypyscripts(projroot: Path, full: bool) -> None:
         print('Mypy: fail.')
         sys.exit(255)
     duration = time.time() - starttime
-    print(f'Mypy passed in {duration:.1f} seconds.')
+    print(f'Mypy passed in {duration:.1f} seconds.', flush=True)
 
 
 def _parse_idea_results(path: Path) -> int:
@@ -657,7 +659,7 @@ def _run_idea_inspections_cached(cachepath: Path,
                               inspectdir=inspectdir)
         with open(cachepath, 'w') as outfile:
             outfile.write(json.dumps({'hash': current_hash}))
-    print(f'{displayname}: {len(filenames)} files up to date.')
+    print(f'{displayname}: {len(filenames)} files up to date.', flush=True)
 
 
 def pycharmscripts(projroot: Path, full: bool, verbose: bool) -> None:
