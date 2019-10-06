@@ -9,10 +9,10 @@ jobs:
     
     steps:
     - uses: actions/checkout@v1
-    - name: Run a one-line script
-      run: echo Hello, world!
+    - name: Setup
+      run: pip3 install pylint
     - name: Run a multi-line script
       run: |
         echo Add other actions to build,
-        which pip3
+        pylint --version
         echo test, and deploy your project.
