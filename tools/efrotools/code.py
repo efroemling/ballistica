@@ -18,7 +18,8 @@ def formatcode(projroot: Path, full: bool) -> None:
     """Run clang-format on all of our source code (multithreaded)."""
     import time
     import concurrent.futures
-    from efrotools import get_files_hash, get_proc_count
+    from efrotools import get_files_hash
+    from multiprocessing import cpu_count
     os.chdir(projroot)
     cachepath = Path(projroot, 'config/.cache-formatcode')
     if full and cachepath.exists():
@@ -50,7 +51,7 @@ def formatcode(projroot: Path, full: bool) -> None:
     # so it actually helps to lighten the load around them.
     # may want to revisit later when we have everything chopped up
     # better
-    with concurrent.futures.ThreadPoolExecutor(max_workers=get_proc_count() //
+    with concurrent.futures.ThreadPoolExecutor(max_workers=cpu_count() //
                                                2) as executor:
         # Converting this to a list will propagate any errors.
         list(executor.map(format_file, dirtyfiles))
@@ -66,7 +67,8 @@ def formatcode(projroot: Path, full: bool) -> None:
 def cpplintcode(projroot: Path, full: bool) -> None:
     """Run lint-checking on all code deemed lint-able."""
     from concurrent.futures import ThreadPoolExecutor
-    from efrotools import get_config, get_proc_count
+    from efrotools import get_config
+    from multiprocessing import cpu_count
     os.chdir(projroot)
     filenames = get_code_filenames(projroot)
     if any(' ' in name for name in filenames):
@@ -98,7 +100,7 @@ def cpplintcode(projroot: Path, full: bool) -> None:
         if result != 0:
             raise Exception(f'Linting failed for {filename}')
 
-    with ThreadPoolExecutor(max_workers=get_proc_count() // 2) as executor:
+    with ThreadPoolExecutor(max_workers=cpu_count() // 2) as executor:
         # Converting this to a list will propagate any errors.
         list(executor.map(lint_file, dirtyfiles))
 
@@ -129,7 +131,8 @@ def formatscripts(projroot: Path, full: bool) -> None:
     """Runs yapf on all our scripts (multithreaded)."""
     import time
     from concurrent.futures import ThreadPoolExecutor
-    from efrotools import get_proc_count, get_files_hash
+    from efrotools import get_files_hash
+    from multiprocessing import cpu_count
     os.chdir(projroot)
     cachepath = Path(projroot, 'config/.cache-formatscripts')
     if full and cachepath.exists():
@@ -158,7 +161,7 @@ def formatscripts(projroot: Path, full: bool) -> None:
     # so it actually helps to lighten the load around them.
     # may want to revisit later when we have everything chopped up
     # better
-    with ThreadPoolExecutor(max_workers=get_proc_count() // 2) as executor:
+    with ThreadPoolExecutor(max_workers=cpu_count() // 2) as executor:
         # Converting this to a list will propagate any errors
         list(executor.map(format_file, dirtyfiles))
 

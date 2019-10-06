@@ -14,7 +14,7 @@ jobs:
         export DEBIAN_FRONTEND=noninteractive
         sudo apt-add-repository -y ppa:deadsnakes/ppa
         sudo apt-get -y install python3.7 python3.7-dev python3-pip python3-setuptools
-        sudo python3.7 -m pip install pylint mypy typing-extensions
+        sudo python3.7 -m pip install pylint mypy typing-extensions pytz
     - name: Run checks
       run: make checkfull
         

@@ -12,14 +12,6 @@ if TYPE_CHECKING:
     from typing import Dict, Union, Sequence, Optional, Any
 
 
-def get_proc_count() -> int:
-    """Return the number of logical processors available."""
-
-    # Note: this is mac specific currently.
-    return int(
-        subprocess.check_output(['sysctl', '-n', 'hw.ncpu']).decode().strip())
-
-
 def explicit_bool(value: bool) -> bool:
     """Simply return input value; can avoid unreachable-code type warnings."""
     return value
