@@ -31,7 +31,7 @@ DOCPREFIX = "ballisticacore_"
 # things like tool config files, etc.
 PREREQS = .dir-locals.el .mypy.ini .pycheckers \
   .pylintrc .style.yapf .clang-format \
-  .projectile
+  .projectile .editorconfig
 
 # List the targets in this Makefile and basic descriptions for them.
 list:
@@ -308,6 +308,9 @@ TOOL_CFG_SRC = tools/efrotools/snippets.py config/config.json
 	${TOOL_CFG_INST} $< $@
 
 .projectile: config/toolconfigsrc/projectile ${TOOL_CFG_SRC}
+	${TOOL_CFG_INST} $< $@
+
+.editorconfig: config/toolconfigsrc/editorconfig ${TOOL_CFG_SRC}
 	${TOOL_CFG_INST} $< $@
 
 .dir-locals.el: config/toolconfigsrc/dir-locals.el ${TOOL_CFG_SRC}

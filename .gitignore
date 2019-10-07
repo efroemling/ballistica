@@ -21,6 +21,7 @@ local.properties
 .flycheck-dir-locals.el
 .pylintrc
 .projectile
+.editorconfig
 .clang-format
 .style.yapf
 .irony
