@@ -273,8 +273,9 @@ preflightfull2:
 #                                                                              #
 ################################################################################
 
-# This should give the cpu count on linux and mac; can expand this if need be.
-CPUS = $(shell getconf _NPROCESSORS_ONLN || echo 4)
+# This should give the cpu count on linux and mac; may need to expand this
+# if using this on other platforms.
+CPUS = $(shell getconf _NPROCESSORS_ONLN || echo 8)
 ROOT_DIR = ${abspath ${CURDIR}}
 VERSION = $(shell tools/version_utils version)
 BUILD_NUMBER = $(shell tools/version_utils build)
