@@ -1,13 +1,6 @@
 <component name="ProjectDictionaryState">
   <dictionary name="ericf">
     <words>
-      <w>spacelen</w>
-      <w>plines</w>
-      <w>formatmakefile</w>
-      <w>nosynctools</w>
-      <w>nosyncdir</w>
-      <w>nosyncdirs</w>
-      <w>pulllist</w>
       <w>aaaa</w>
       <w>aaab</w>
       <w>aaac</w>
@@ -536,6 +529,7 @@
       <w>formatcodefull</w>
       <w>formatdoc</w>
       <w>formatfull</w>
+      <w>formatmakefile</w>
       <w>formatscripts</w>
       <w>formatscriptsfull</w>
       <w>fout</w>
@@ -1005,6 +999,9 @@
       <w>norun</w>
       <w>nospeak</w>
       <w>nosub</w>
+      <w>nosyncdir</w>
+      <w>nosyncdirs</w>
+      <w>nosynctools</w>
       <w>notdir</w>
       <w>npos</w>
       <w>ntpath</w>
@@ -1096,6 +1093,7 @@
       <w>playsound</w>
       <w>playtype</w>
       <w>playtypes</w>
+      <w>plines</w>
       <w>plistlib</w>
       <w>plpt</w>
       <w>plst</w>
@@ -1173,6 +1171,7 @@
       <w>ptype</w>
       <w>pubsync</w>
       <w>pucknode</w>
+      <w>pulllist</w>
       <w>punchdir</w>
       <w>punchiness</w>
       <w>punchmats</w>
@@ -1360,6 +1359,7 @@
       <w>socketserver</w>
       <w>sourceimages</w>
       <w>sourcelines</w>
+      <w>spacelen</w>
       <w>spacingstr</w>
       <w>spammers</w>
       <w>spammy</w>

@@ -20,6 +20,7 @@ local.properties
 .pycheckers
 .flycheck-dir-locals.el
 .pylintrc
+.projectile
 .clang-format
 .style.yapf
 .irony

@@ -30,7 +30,8 @@ DOCPREFIX = "ballisticacore_"
 # Prerequisites that should be in place before running most any other build;
 # things like tool config files, etc.
 PREREQS = .dir-locals.el .mypy.ini .pycheckers \
-  .pylintrc .style.yapf .clang-format
+  .pylintrc .style.yapf .clang-format \
+  .projectile
 
 # List the targets in this Makefile and basic descriptions for them.
 list:
@@ -304,6 +305,9 @@ TOOL_CFG_SRC = tools/efrotools/snippets.py config/config.json
 	${TOOL_CFG_INST} $< $@
 
 .pylintrc: config/toolconfigsrc/pylintrc ${TOOL_CFG_SRC}
+	${TOOL_CFG_INST} $< $@
+
+.projectile: config/toolconfigsrc/projectile ${TOOL_CFG_SRC}
 	${TOOL_CFG_INST} $< $@
 
 .dir-locals.el: config/toolconfigsrc/dir-locals.el ${TOOL_CFG_SRC}
