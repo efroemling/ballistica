@@ -7,13 +7,6 @@
 # Print help by default
 all: help
 
-# We often want one job per core, so try to determine our logical core count.
-ifeq ($(wildcard /proc),/proc)  # Linux
-  JOBS = $(shell cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
-else  # Mac
-  JOBS = $(shell sysctl -n hw.ncpu)
-endif
-
 # Prefix used for output of docs/changelogs/etc targets for use in webpages.
 DOCPREFIX = "ballisticacore_"
 
@@ -47,19 +40,19 @@ prereqs-clean:
 
 # Build all assets for all platforms.
 assets:
-	@cd assets && make -j${JOBS}
+	@cd assets && make -j${CPUS}
 
 # Build only assets required for desktop builds (mac, pc, linux).
 assets-desktop:
-	@cd assets && make -j${JOBS} desktop
+	@cd assets && make -j${CPUS} desktop
 
 # Build only assets required for ios.
 assets-ios:
-	@cd assets && make -j${JOBS} ios
+	@cd assets && make -j${CPUS} ios
 
 # Build only assets required for android.
 assets-android:
-	@cd assets && make -j${JOBS} android
+	@cd assets && make -j${CPUS} android
 
 # Clean all assets.
 assets-clean:
@@ -67,7 +60,7 @@ assets-clean:
 
 # Build resources.
 resources: resources/Makefile
-	@cd resources && make -j${JOBS} resources
+	@cd resources && make -j${CPUS} resources
 
 # Clean resources.
 resources-clean:
@@ -75,7 +68,7 @@ resources-clean:
 
 # Build our generated code.
 code:
-	@cd src/generated_src && make -j${JOBS} generated_code
+	@cd src/generated_src && make -j${CPUS} generated_code
 
 # Clean generated code.
 code-clean:
@@ -280,6 +273,8 @@ preflightfull2:
 #                                                                              #
 ################################################################################
 
+# This should give the cpu count on linux and mac; can expand this if need be.
+CPUS = $(shell getconf _NPROCESSORS_ONLN || echo 4)
 ROOT_DIR = ${abspath ${CURDIR}}
 VERSION = $(shell tools/version_utils version)
 BUILD_NUMBER = $(shell tools/version_utils build)
