@@ -22,75 +22,13 @@ import sys
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Optional, Tuple, List, Sequence, Dict, Set
+    from typing import Optional, Tuple, List, Dict, Set
 
 CLRHDR = '\033[95m'  # Header.
 CLRGRN = '\033[92m'  # Green.
 CLRBLU = '\033[94m'  # Glue.
 CLRRED = '\033[91m'  # Red.
 CLREND = '\033[0m'  # End.
-
-
-def _check_files(src_files: Sequence[str]) -> None:
-
-    # A bit of sanity/lint-testing while we're here.
-    for fsrc in src_files:
-        if fsrc.endswith('.cpp') or fsrc.endswith('.cxx'):
-            raise Exception('please use .cc for c++ files; found ' + fsrc)
-
-        # Watch out for in-progress emacs edits.
-        # Could just ignore these but it probably means I intended
-        # to save something and forgot.
-        if '/.#' in fsrc:
-            print(f'{CLRRED}'
-                  f'ERROR: Found an unsaved emacs file: "{fsrc}"'
-                  f'{CLREND}')
-            sys.exit(255)
-
-
-def _check_headers(header_files: Sequence[str], fixable_header_errors: Dict,
-                   fix: bool) -> None:
-    for header_file_raw in header_files:
-        assert header_file_raw[0] == '/'
-        header_file = 'src/ballistica' + header_file_raw
-
-        # If its a header-file, lets make sure its define guard is correct.
-        if header_file.endswith('.h'):
-            guard = (
-                header_file[4:].upper().replace('/', '_').replace('.', '_') +
-                '_')
-            with open(header_file) as fhdr:
-                lines = fhdr.read().splitlines()
-            expected_lines = [(0, '// Copyright 2019 Eric Froemling'),
-                              (2, '#ifndef ' + guard), (3, '#define ' + guard),
-                              (-1, '#endif  // ' + guard)]
-            errors_found = False
-            can_fix = True
-            for line, expected in expected_lines:
-                if lines[line] != expected:
-                    errors_found = True
-                    print("Incorrect line " + str(line) + " in " +
-                          header_file + ":\n"
-                          "Expected: " + expected + "\n"
-                          "Found:    " + lines[line])
-
-                    # If the beginning of the line differs,
-                    # don't attempt auto-fix.
-                    if lines[line][:16] != expected[:16]:
-                        can_fix = False
-                if errors_found:
-                    if can_fix:
-                        fixable_header_errors.setdefault(header_file, [])\
-                                      .append((line, expected))
-                    else:
-                        print(CLRRED + "Error found in '" + header_file +
-                              "'. Not auto-fixable; please correct manually." +
-                              CLREND)
-                        sys.exit(255)
-    if fixable_header_errors and not fix:
-        print(CLRRED +
-              'Fixable header error(s) found; pass --fix to correct.' + CLREND)
-        sys.exit(255)
 
 
 class App:
@@ -109,9 +47,6 @@ class App:
     def run(self) -> None:
         """Do the thing."""
 
-        # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
-
         # Make sure we're operating from a project root.
         if not os.path.isdir('config') or not os.path.isdir('tools'):
             raise Exception('This must be run from a project root.')
@@ -125,36 +60,44 @@ class App:
         self._check_python_files()
         self._check_sync_states()
 
-        # Now go through and update our various build files
-        # (MSVC, CMake, Android NDK, etc) as well as sanity-testing/fixing
-        # various other files such as headers while we're at it.
-
-        # Grab sources/headers.
         self._find_sources_and_headers('src/ballistica')
-
-        # Run some checks on them.
-        _check_files(self._src_files)
-        _check_headers(self._header_files, self._fixable_header_errors,
-                       self._fix)
+        self._check_files()
+        self._check_headers()
 
         self._update_cmake_files()
         self._update_visual_studio_projects()
 
-        # If we're all good to here, do the actual writes.
+        # If we're all good to here, do actual writes of the
+        # _files_to_write entries filled out by the above stuff.
+        self._write_header_fixes()
+        self._write_changed_project_files()
+        self._update_compile_commands_file()
+        self._update_dummy_module()
 
-        # First, write any header fixes.
-        if self._fixable_header_errors:
-            for filename, fixes in self._fixable_header_errors.items():
-                with open(filename, 'r') as infile:
-                    lines = infile.read().splitlines()
-                for fix_line, fix_str in fixes:
-                    lines[fix_line] = fix_str
-                with open(filename, 'w') as outfile:
-                    outfile.write('\n'.join(lines) + '\n')
-                    print(CLRBLU + 'Writing header: ' + filename + CLREND)
+        if self._check:
+            print('Check-Builds: Everything up to date.')
         else:
-            print(f'No issues found in {len(self._header_files)} headers.')
+            print('Update-Builds: SUCCESS!')
 
+    def _update_dummy_module(self) -> None:
+        # Lastly update our dummy _ba module.
+        # We need to do this very last because it may run the cmake build
+        # so its success may depend on the cmake build files having already
+        # been updated.
+        if os.path.exists('tools/gendummymodule.py'):
+            if os.system('tools/gendummymodule.py' + self._checkarg) != 0:
+                print(CLRRED + 'Error checking/updating dummy module' + CLREND)
+                sys.exit(255)
+
+    def _update_compile_commands_file(self) -> None:
+        # Update our local compile-commands file based on any changes to
+        # our cmake stuff. Do this at end so cmake changes already happened.
+        if not self._check and os.path.exists('ballisticacore-cmake'):
+            if os.system('make .irony/compile_commands.json') != 0:
+                print(CLRRED + 'Error updating compile-commands.' + CLREND)
+                sys.exit(255)
+
+    def _write_changed_project_files(self) -> None:
         # Now write out any project files that have changed
         # (or error if we're in check mode).
         unchanged_project_count = 0
@@ -179,26 +122,83 @@ class App:
         if unchanged_project_count > 0:
             print(f'All {unchanged_project_count} project files up to date.')
 
-        # Update our local compile-commands file based on any changes to
-        # our cmake stuff. Do this at end so cmake changes already happened.
-        if not self._check and os.path.exists('ballisticacore-cmake'):
-            if os.system('make .irony/compile_commands.json') != 0:
-                print(CLRRED + 'Error updating compile-commands.' + CLREND)
-                sys.exit(255)
-
-        # Lastly update our dummy _ba module.
-        # We need to do this very last because it may run the cmake build
-        # so its success may depend on the cmake build files having already
-        # been updated.
-        if os.path.exists('tools/gendummymodule.py'):
-            if os.system('tools/gendummymodule.py' + self._checkarg) != 0:
-                print(CLRRED + 'Error checking/updating dummy module' + CLREND)
-                sys.exit(255)
-
-        if self._check:
-            print('Check-Builds: Everything up to date.')
+    def _write_header_fixes(self) -> None:
+        # First, write any header fixes.
+        if self._fixable_header_errors:
+            for filename, fixes in self._fixable_header_errors.items():
+                with open(filename, 'r') as infile:
+                    lines = infile.read().splitlines()
+                for fix_line, fix_str in fixes:
+                    lines[fix_line] = fix_str
+                with open(filename, 'w') as outfile:
+                    outfile.write('\n'.join(lines) + '\n')
+                    print(CLRBLU + 'Writing header: ' + filename + CLREND)
         else:
-            print('Update-Builds: SUCCESS!')
+            print(f'No issues found in {len(self._header_files)} headers.')
+
+    def _check_files(self) -> None:
+
+        # A bit of sanity/lint-testing while we're here.
+        for fsrc in self._src_files:
+            if fsrc.endswith('.cpp') or fsrc.endswith('.cxx'):
+                raise Exception('please use .cc for c++ files; found ' + fsrc)
+
+            # Watch out for in-progress emacs edits.
+            # Could just ignore these but it probably means I intended
+            # to save something and forgot.
+            if '/.#' in fsrc:
+                print(f'{CLRRED}'
+                      f'ERROR: Found an unsaved emacs file: "{fsrc}"'
+                      f'{CLREND}')
+                sys.exit(255)
+
+    def _check_headers(self) -> None:
+        for header_file_raw in self._header_files:
+            assert header_file_raw[0] == '/'
+            header_file = 'src/ballistica' + header_file_raw
+
+            if header_file.endswith('.h'):
+                self._check_header(header_file)
+
+        if self._fixable_header_errors and not self._fix:
+            print(CLRRED +
+                  'Fixable header error(s) found; pass --fix to correct.' +
+                  CLREND)
+            sys.exit(255)
+
+    def _check_header(self, header_file: str) -> None:
+        # Make sure its define guard is correct.
+        guard = (header_file[4:].upper().replace('/', '_').replace('.', '_') +
+                 '_')
+        with open(header_file) as fhdr:
+            lines = fhdr.read().splitlines()
+        expected_lines = [(0, '// Copyright 2019 Eric Froemling'),
+                          (2, '#ifndef ' + guard), (3, '#define ' + guard),
+                          (-1, '#endif  // ' + guard)]
+        errors_found = False
+        can_fix = True
+        for line, expected in expected_lines:
+            if lines[line] != expected:
+                errors_found = True
+                print("Incorrect line " + str(line) + " in " + header_file +
+                      ":\n"
+                      "Expected: " + expected + "\n"
+                      "Found:    " + lines[line])
+
+                # If the beginning of the line differs, don't attempt auto-fix.
+                if lines[line][:16] != expected[:16]:
+                    can_fix = False
+            if errors_found:
+                if can_fix:
+                    self._fixable_header_errors.setdefault(header_file,
+                                                           []).append(
+                                                               (line,
+                                                                expected))
+                else:
+                    print(CLRRED + "Error found in '" + header_file +
+                          "'. Not auto-fixable; please correct manually." +
+                          CLREND)
+                    sys.exit(255)
 
     def _update_visual_studio_project(self, fname: str, src_root: str) -> None:
         # pylint: disable=too-many-locals
@@ -334,6 +334,7 @@ class App:
         self._header_files = sorted(header_files)
 
     def _check_python_files(self) -> None:
+
         # Make sure all module dirs in python scripts contain an __init__.py
         scripts_dir = 'assets/src/data/scripts'
         for root, _dirs, files in os.walk(scripts_dir):
