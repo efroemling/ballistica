@@ -1,14 +1,14 @@
 # This Makefile encompasses most high level functionality you should need when
-# working with the game. These rules are also handy as reference or a starting
-# point if you need specific funtionality beyond what is here.
-# The targets here do not expect -jX to be passed to them and generally
-# add that argument to subprocesses as needed.
-
-# Print help by default
-all: help
+# working with Ballistica. These build rules are also handy as reference or a
+# starting point if you need specific funtionality beyond that exposed here.
+# Targets in this top level Makefile do not expect -jX to be passed to them
+# and generally handle spawning an appropriate number of child jobs themselves.
 
 # Prefix used for output of docs/changelogs/etc targets for use in webpages.
 DOCPREFIX = "ballisticacore_"
+
+# Print help by default
+all: help
 
 # Tell make which of these targets don't represent files.
 .PHONY: all
