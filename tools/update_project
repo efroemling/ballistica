@@ -192,7 +192,8 @@ class App:
                         lines = infile.read().splitlines()
                     line = lines[change[1].line_number]
                     print(f'{CLRRED}  Found "{line}"{CLREND}')
-                print(CLRRED + 'All errors are auto-fixable;'
+                print(CLRRED +
+                      f'All {len(auto_changes)} errors are auto-fixable;'
                       ' pass --fix to apply corrections.' + CLREND)
                 sys.exit(255)
             else:
@@ -353,7 +354,7 @@ class App:
         else:
             found_intact_private = True
 
-        if self._public and False:
+        if self._public:
             # Check for the full license.
             # If we can't find the full license but we found a private-license
             # line, offer to replace it with the full one.
