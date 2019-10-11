@@ -1,10 +1,6 @@
 <component name="ProjectDictionaryState">
   <dictionary name="ericf">
     <words>
-      <w>onln</w>
-      <w>nprocessors</w>
-      <w>getconf</w>
-      <w>cpus</w>
       <w>aaaa</w>
       <w>aaab</w>
       <w>aaac</w>
@@ -294,6 +290,7 @@
       <w>cpplintcode</w>
       <w>cpplintcodefull</w>
       <w>cpuinfo</w>
+      <w>cpus</w>
       <w>cpython</w>
       <w>crashlytics</w>
       <w>creditslist</w>
@@ -602,6 +599,7 @@
       <w>getclass</w>
       <w>getcollide</w>
       <w>getcollidemodel</w>
+      <w>getconf</w>
       <w>getconfig</w>
       <w>getcurrency</w>
       <w>getdata</w>
@@ -1008,6 +1006,7 @@
       <w>nosynctools</w>
       <w>notdir</w>
       <w>npos</w>
+      <w>nprocessors</w>
       <w>ntpath</w>
       <w>ntriple</w>
       <w>nturl</w>
@@ -1028,6 +1027,7 @@
       <w>oghashes</w>
       <w>ogval</w>
       <w>oldlady</w>
+      <w>onln</w>
       <w>onscreencountdown</w>
       <w>onscreenkeyboard</w>
       <w>onscreentimer</w>

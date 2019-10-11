@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import os
 import sys
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -31,6 +32,14 @@ CLRRED = '\033[91m'  # Red.
 CLREND = '\033[0m'  # End.
 
 
+@dataclass
+class LineChange:
+    """A change applying to a particular line in a file."""
+    line_number: int
+    expected: str
+    can_auto_update: bool
+
+
 class App:
     """Context for an app run."""
 
@@ -39,9 +48,13 @@ class App:
         self._fix = ('--fix' in sys.argv)
         self._checkarg = ' --check' if self._check else ''
 
-        self._files_to_write: Dict[str, str] = {}
         self._src_files: List[str] = []
         self._header_files: List[str] = []
+
+        self._line_changes: Dict[str, List[LineChange]] = {}
+        self._file_changes: Dict[str, str] = {}
+
+        # KILL ME
         self._fixable_header_errors: Dict[str, List[Tuple[int, str]]] = {}
 
     def run(self) -> None:
@@ -67,10 +80,10 @@ class App:
         self._update_cmake_files()
         self._update_visual_studio_projects()
 
-        # If we're all good to here, do actual writes of the
-        # _files_to_write entries filled out by the above stuff.
-        self._write_header_fixes()
-        self._write_changed_project_files()
+        # If we're all good to here, do actual writes set up
+        # by the above stuff.
+        self._apply_line_changes()
+        self._apply_file_changes()
         self._update_compile_commands_file()
         self._update_dummy_module()
 
@@ -97,11 +110,11 @@ class App:
                 print(CLRRED + 'Error updating compile-commands.' + CLREND)
                 sys.exit(255)
 
-    def _write_changed_project_files(self) -> None:
+    def _apply_file_changes(self) -> None:
         # Now write out any project files that have changed
         # (or error if we're in check mode).
         unchanged_project_count = 0
-        for fname, fcode in self._files_to_write.items():
+        for fname, fcode in self._file_changes.items():
             f_orig: Optional[str]
             if os.path.exists(fname):
                 with open(fname, 'r') as infile:
@@ -122,8 +135,26 @@ class App:
         if unchanged_project_count > 0:
             print(f'All {unchanged_project_count} project files up to date.')
 
-    def _write_header_fixes(self) -> None:
-        # First, write any header fixes.
+    def _apply_line_changes(self) -> None:
+
+        print("LOOKING AT", len(self._line_changes), 'CHANGES')
+
+        # Build a flat list of entries needing to be manually applied.
+        manual_changes: List[Tuple[str, LineChange]] = []
+        for fname, entries in self._line_changes.items():
+            for entry in entries:
+                if not entry.can_auto_update:
+                    manual_changes.append((fname, entry))
+
+        # If there are any said entries, list then and bail.
+        # (Don't wanna allow auto-apply unless it fixes everything)
+        if manual_changes:
+            print(f"{CLRRED}Found incorrect lines (cannot auto-update;"
+                  f" please correct manually):{CLREND}")
+            for change in manual_changes:
+                print(f'{CLRRED}{change}{CLREND}')
+            sys.exit(-1)
+
         if self._fixable_header_errors:
             for filename, fixes in self._fixable_header_errors.items():
                 with open(filename, 'r') as infile:
@@ -201,7 +232,6 @@ class App:
                     sys.exit(255)
 
     def _update_visual_studio_project(self, fname: str, src_root: str) -> None:
-        # pylint: disable=too-many-locals
         with open(fname) as infile:
             lines = infile.read().splitlines()
 
@@ -240,8 +270,13 @@ class App:
             for src in all_files
         ] + group_lines
         filtered = lines[:begin_index + 1] + group_lines + lines[end_index:]
-        self._files_to_write[fname] = '\r\n'.join(filtered) + '\r\n'
+        self._file_changes[fname] = '\r\n'.join(filtered) + '\r\n'
 
+        self._update_visual_studio_project_filters(filtered, fname, src_root)
+
+    def _update_visual_studio_project_filters(self, lines_in: List[str],
+                                              fname: str,
+                                              src_root: str) -> None:
         filterpaths: Set[str] = set()
         filterlines: List[str] = [
             '<?xml version="1.0" encoding="utf-8"?>',
@@ -249,7 +284,7 @@ class App:
             ' xmlns="http://schemas.microsoft.com/developer/msbuild/2003">',
             '  <ItemGroup>',
         ]
-        sourcelines = [l for l in filtered if 'Include="' + src_root in l]
+        sourcelines = [l for l in lines_in if 'Include="' + src_root in l]
         for line in sourcelines:
             entrytype = line.strip().split()[0][1:]
             path = line.split('"')[1]
@@ -276,9 +311,8 @@ class App:
             '  </ItemGroup>',
             '</Project>',
         ]
-
-        self._files_to_write[fname +
-                             '.filters'] = '\r\n'.join(filterlines) + '\r\n'
+        self._file_changes[fname +
+                           '.filters'] = '\r\n'.join(filterlines) + '\r\n'
 
     def _update_visual_studio_projects(self) -> None:
         fname = 'ballisticacore-windows/BallisticaCore/BallisticaCore.vcxproj'
@@ -306,7 +340,7 @@ class App:
             if not f.endswith('.mm') and not f.endswith('.m')
         ]
         filtered = lines[:auto_start + 1] + our_lines + lines[auto_end:]
-        self._files_to_write[fname] = '\n'.join(filtered) + '\n'
+        self._file_changes[fname] = '\n'.join(filtered) + '\n'
 
     def _update_cmake_files(self) -> None:
         fname = 'ballisticacore-cmake/CMakeLists.txt'
