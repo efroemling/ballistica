@@ -1,5 +1,24 @@
 #!/usr/bin/env python3.7
 # Copyright (c) 2011-2019 Eric Froemling
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# -----------------------------------------------------------------------------
 """
 This script acts as a 'meta' Makefile for the project. It is in charge
 of generating Makefiles, IDE project files, procedurally generated source
@@ -60,7 +79,7 @@ class App:
         self._source_files: List[str] = []
         self._header_files: List[str] = []
 
-        self._line_checks: Dict[str, List[LineChange]] = {}
+        self._line_corrections: Dict[str, List[LineChange]] = {}
         self._file_changes: Dict[str, str] = {}
 
     def run(self) -> None:
@@ -146,7 +165,7 @@ class App:
         # Build a flat list of entries that can and can-not be auto applied.
         manual_changes: List[Tuple[str, LineChange]] = []
         auto_changes: List[Tuple[str, LineChange]] = []
-        for fname, entries in self._line_checks.items():
+        for fname, entries in self._line_corrections.items():
             for entry in entries:
                 if entry.can_auto_update:
                     auto_changes.append((fname, entry))
@@ -220,10 +239,10 @@ class App:
             # (don't want to blow away an unrelated line)
             allow_auto = 'Copyright' in lines[
                 lnum] and 'Eric Froemling' in lines[lnum]
-            self._add_line_check(fname,
-                                 line_number=lnum,
-                                 expected=legal_notice,
-                                 can_auto_update=allow_auto)
+            self._add_line_correction(fname,
+                                      line_number=lnum,
+                                      expected=legal_notice,
+                                      can_auto_update=allow_auto)
 
     def _check_headers(self) -> None:
         for header_file_raw in self._header_files:
@@ -233,9 +252,9 @@ class App:
             if header_file.endswith('.h'):
                 self._check_header(header_file)
 
-    def _add_line_check(self, filename: str, line_number: int, expected: str,
-                        can_auto_update: bool) -> None:
-        self._line_checks.setdefault(filename, []).append(
+    def _add_line_correction(self, filename: str, line_number: int,
+                             expected: str, can_auto_update: bool) -> None:
+        self._line_corrections.setdefault(filename, []).append(
             LineChange(line_number=line_number,
                        expected=expected,
                        can_auto_update=can_auto_update))
@@ -258,10 +277,10 @@ class App:
             # (don't want to blow away an unrelated line)
             allow_auto = 'Copyright' in lines[
                 lnum] and 'Eric Froemling' in lines[lnum]
-            self._add_line_check(fname,
-                                 line_number=lnum,
-                                 expected=line,
-                                 can_auto_update=allow_auto)
+            self._add_line_correction(fname,
+                                      line_number=lnum,
+                                      expected=line,
+                                      can_auto_update=allow_auto)
 
         # Check for header guard at top
         line = '#ifndef ' + guard
@@ -270,10 +289,10 @@ class App:
             # Allow auto-correcting if it looks close already
             # (don't want to blow away an unrelated line)
             allow_auto = lines[lnum].startswith('#ifndef BALLISTICA_')
-            self._add_line_check(fname,
-                                 line_number=lnum,
-                                 expected=line,
-                                 can_auto_update=allow_auto)
+            self._add_line_correction(fname,
+                                      line_number=lnum,
+                                      expected=line,
+                                      can_auto_update=allow_auto)
 
         # Check for header guard at bottom
         line = '#endif  // ' + guard
@@ -282,12 +301,13 @@ class App:
             # Allow auto-correcting if it looks close already
             # (don't want to blow away an unrelated line)
             allow_auto = lines[lnum].startswith('#endif  // BALLISTICA_')
-            self._add_line_check(fname,
-                                 line_number=lnum,
-                                 expected=line,
-                                 can_auto_update=allow_auto)
+            self._add_line_correction(fname,
+                                      line_number=lnum,
+                                      expected=line,
+                                      can_auto_update=allow_auto)
 
     def _check_python_file(self, fname: str) -> None:
+        from efrotools import get_public_license
         with open(fname) as infile:
             contents = infile.read()
             lines = contents.splitlines()
@@ -307,8 +327,15 @@ class App:
         else:
             copyrightline = 0
 
-        # Look for copyright/legal-notice line(s)
+        # In all cases, look for our one-line legal notice.
+        # In the public case, look for the rest of our public license too.
+        public_license = get_public_license('python')
         line = '# ' + LEGAL_NOTICE_PRIVATE
+
+        # (Sanity check: public license's first line should be same as priv)
+        if line != public_license.splitlines()[0]:
+            raise RuntimeError('Public license first line should match priv.')
+
         lnum = copyrightline
         if len(lines) < lnum + 1:
             raise RuntimeError('Not enough lines in file:', fname)
@@ -318,10 +345,36 @@ class App:
             # (don't want to blow away an unrelated line)
             allow_auto = 'Copyright' in lines[
                 lnum] and 'Eric Froemling' in lines[lnum]
-            self._add_line_check(fname,
-                                 line_number=lnum,
-                                 expected=line,
-                                 can_auto_update=allow_auto)
+            self._add_line_correction(fname,
+                                      line_number=lnum,
+                                      expected=line,
+                                      can_auto_update=allow_auto)
+            found_intact_private = False
+        else:
+            found_intact_private = True
+
+        if self._public and False:
+            # Check for the full license.
+            # If we can't find the full license but we found a private-license
+            # line, offer to replace it with the full one.
+            # Otherwise just complain and die.
+
+            # Try to be reasonably certain it's not in here...
+            definitely_have_full = public_license in contents
+            might_have_full = ('Permission is hereby granted' in contents
+                               or 'THE SOFTWARE IS PROVIDED' in contents)
+
+            # Only muck with it if we're not sure we've got it.
+            if not definitely_have_full:
+                if found_intact_private and not might_have_full:
+                    self._add_line_correction(fname,
+                                              line_number=lnum,
+                                              expected=public_license,
+                                              can_auto_update=True)
+                else:
+                    raise RuntimeError(
+                        f'Found incorrect license text in {fname};'
+                        f' please correct.')
 
     def _check_python_files(self) -> None:
         from pathlib import Path
