@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Provides a popup for viewing tournament scores."""
 
 from __future__ import annotations

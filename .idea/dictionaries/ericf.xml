@@ -283,6 +283,7 @@
       <w>coopsession</w>
       <w>coords</w>
       <w>copyreg</w>
+      <w>copyrightline</w>
       <w>cornerpin</w>
       <w>coroutines</w>
       <w>countdownsounds</w>
@@ -480,6 +481,7 @@
       <w>fcntlmodule</w>
       <w>fcode</w>
       <w>fcontents</w>
+      <w>fcount</w>
       <w>fdata</w>
       <w>fdesc</w>
       <w>fecfc</w>
@@ -896,6 +898,7 @@
       <w>megalint</w>
       <w>memfunctions</w>
       <w>menubar</w>
+      <w>metaprogramming</w>
       <w>metascan</w>
       <w>meteorshower</w>
       <w>mhash</w>
@@ -996,6 +999,7 @@
       <w>nodepos</w>
       <w>nodpi</w>
       <w>noinspect</w>
+      <w>noninfringement</w>
       <w>nonmultipart</w>
       <w>noone</w>
       <w>norun</w>
@@ -1052,6 +1056,7 @@
       <w>outname</w>
       <w>outpath</w>
       <w>ouya</w>
+      <w>packagedirs</w>
       <w>painttxtattr</w>
       <w>palmos</w>
       <w>pandoc</w>

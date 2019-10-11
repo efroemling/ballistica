@@ -1,4 +1,5 @@
 #!/usr/bin/env python3.7
+# Copyright (c) 2011-2019 Eric Froemling
 """Functionality for running a BallisticaCore server."""
 from __future__ import annotations
 

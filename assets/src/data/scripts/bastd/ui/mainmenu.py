@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Implements the main menu window."""
 
 from __future__ import annotations

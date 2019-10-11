@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Provides a window for browsing and launching game playlists."""
 
 from __future__ import annotations

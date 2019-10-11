@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Provides the built-in on screen keyboard UI."""
 
 from __future__ import annotations

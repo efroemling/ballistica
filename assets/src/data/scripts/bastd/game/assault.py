@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Defines assault minigame."""
 
 # bs_meta require api 6

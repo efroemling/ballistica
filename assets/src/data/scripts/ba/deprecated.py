@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Deprecated functionality.
 
 Classes or functions can be relocated here when they are deprecated.

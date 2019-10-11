@@ -1,6 +1,4 @@
-# Synced from bamaster.
-# EFRO_SYNC_HASH=11716656185614230313846373816308841148
-#
+# Copyright (c) 2011-2019 Eric Froemling
 """Functionality for the actual Entity types."""
 
 from __future__ import annotations

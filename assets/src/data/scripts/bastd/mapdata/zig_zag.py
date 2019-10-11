@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 # This file was automatically generated from "zig_zag.ma"
 # pylint: disable=all
 points = {}

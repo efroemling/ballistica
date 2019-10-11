@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Provides a popup telling the user about the BSRemote app."""
 
 from __future__ import annotations

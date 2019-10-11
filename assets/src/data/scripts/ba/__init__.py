@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """The public face of Ballistica.
 
 This top level module is a collection of most commonly used functionality.

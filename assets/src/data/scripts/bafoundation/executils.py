@@ -1,6 +1,4 @@
-# Synced from bamaster.
-# EFRO_SYNC_HASH=43697789967751346220367938882574464737
-#
+# Copyright (c) 2011-2019 Eric Froemling
 """Exec related functionality shared between all ba components."""
 
 from __future__ import annotations

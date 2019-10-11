@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """UI for browsing available co-op levels/games/etc."""
 # FIXME: Break this up.
 # pylint: disable=too-many-lines

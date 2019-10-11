@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Functionality related to tournament play."""
 
 from __future__ import annotations

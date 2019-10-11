@@ -1,6 +1,4 @@
-# Synced from bsmaster.
-# EFRO_SYNC_HASH=303140082733449378022422119719823943963
-#
+# Copyright (c) 2011-2019 Eric Froemling
 """Custom json compressor/decompressor with support for more data times/etc."""
 
 from __future__ import annotations

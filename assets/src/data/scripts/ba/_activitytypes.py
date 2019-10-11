@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Some handy base class and special purpose Activity types."""
 from __future__ import annotations
 

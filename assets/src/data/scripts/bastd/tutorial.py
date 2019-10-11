@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Wrangles the game tutorial sequence."""
 
 # Not too concerned with keeping this old module pretty;

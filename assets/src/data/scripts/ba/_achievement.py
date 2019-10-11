@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Various functionality related to achievements."""
 from __future__ import annotations
 

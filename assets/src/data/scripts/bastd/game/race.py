@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Defines Race mini-game."""
 
 # bs_meta require api 6

@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """UI functionality for creating radio groups of buttons."""
 
 from __future__ import annotations

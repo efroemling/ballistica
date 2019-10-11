@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Provides a top level control settings window."""
 
 from __future__ import annotations

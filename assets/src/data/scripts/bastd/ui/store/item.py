@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """UI functionality related to UI items."""
 from __future__ import annotations
 

@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """UI functionality for unlinking accounts."""
 
 from __future__ import annotations

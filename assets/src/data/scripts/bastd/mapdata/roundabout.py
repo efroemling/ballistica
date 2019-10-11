@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 # This file was automatically generated from "roundabout.ma"
 # pylint: disable=all
 points = {}

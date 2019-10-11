@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Provides Ninja Fight mini-game."""
 
 # bs_meta require api 6

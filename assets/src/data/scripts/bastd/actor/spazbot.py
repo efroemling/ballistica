@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Bot versions of Spaz."""
 # pylint: disable=too-many-lines
 

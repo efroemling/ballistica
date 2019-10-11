@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """UI for browsing the store."""
 # pylint: disable=too-many-lines
 from __future__ import annotations

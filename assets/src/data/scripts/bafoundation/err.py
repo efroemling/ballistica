@@ -1,6 +1,4 @@
-# Synced from bamaster.
-# EFRO_SYNC_HASH=324606719817436157254454259763962378663
-#
+# Copyright (c) 2011-2019 Eric Froemling
 """Error related functionality shared between all ba components."""
 
 # Hmmmm - need to give this exception structure some thought...

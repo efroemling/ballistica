@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Functionality related to player profiles."""
 from __future__ import annotations
 

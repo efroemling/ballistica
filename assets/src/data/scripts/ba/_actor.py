@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Defines base Actor class."""
 
 from __future__ import annotations

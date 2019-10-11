@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Settings UI functionality related to wiimote support."""
 from __future__ import annotations
 

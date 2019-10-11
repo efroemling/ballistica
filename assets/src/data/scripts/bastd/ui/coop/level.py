@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Bits of utility functionality related to co-op levels."""
 
 from __future__ import annotations

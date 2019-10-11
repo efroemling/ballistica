@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Functionality related to the high level state of the app."""
 from __future__ import annotations
 

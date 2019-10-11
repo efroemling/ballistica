@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Defines a keep-away game type."""
 
 # bs_meta require api 6

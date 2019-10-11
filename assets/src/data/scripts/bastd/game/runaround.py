@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Defines the runaround co-op game."""
 
 # We wear the cone of shame.

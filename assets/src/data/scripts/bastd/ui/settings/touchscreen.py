@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """UI settings functionality related to touchscreens."""
 from __future__ import annotations
 

@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """UI functionality for creating tab style buttons."""
 
 from __future__ import annotations

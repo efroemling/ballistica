@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Provides a window to customize team names and colors."""
 
 from __future__ import annotations

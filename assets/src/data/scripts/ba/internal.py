@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Exposed functionality not intended for full public use.
 
 Classes and functions contained here, while technically 'public', may change

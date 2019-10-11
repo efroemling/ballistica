@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Provides the Conquest game."""
 
 # bs_meta require api 6

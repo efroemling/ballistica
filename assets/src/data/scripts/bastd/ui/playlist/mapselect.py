@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Provides UI for selecting maps in playlists."""
 
 from __future__ import annotations

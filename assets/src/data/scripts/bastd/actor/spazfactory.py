@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Provides a factory object from creating Spazzes."""
 
 from __future__ import annotations

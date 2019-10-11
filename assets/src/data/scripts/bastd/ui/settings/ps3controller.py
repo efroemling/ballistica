@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Settings UI related to PS3 controllers."""
 
 from __future__ import annotations

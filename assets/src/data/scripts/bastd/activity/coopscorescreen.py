@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Provides a score screen for coop games."""
 # pylint: disable=too-many-lines
 

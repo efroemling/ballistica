@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Utility functionality related to the overall operation of the app."""
 from __future__ import annotations
 

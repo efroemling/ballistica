@@ -1,6 +1,4 @@
-# Synced from bsmaster.
-# EFRO_SYNC_HASH=15008988795367952822112128932296326511
-#
+# Copyright (c) 2011-2019 Eric Froemling
 """Small handy bits of functionality."""
 
 from __future__ import annotations

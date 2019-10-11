@@ -1,6 +1,4 @@
-# Synced from bsmaster.
-# EFRO_SYNC_HASH=196941524992995247852512968857048418312
-#
+# Copyright (c) 2011-2019 Eric Froemling
 """Utilities for working with dataclasses."""
 
 from __future__ import annotations

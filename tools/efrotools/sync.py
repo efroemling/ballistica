@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Functionality for syncing specific directories between different projects.
 
 This can be preferable vs using shared git subrepos for certain use cases.

@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """UI for dealing with broken config files."""
 
 from __future__ import annotations

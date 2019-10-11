@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Provides Onslaught Co-op game."""
 
 # Yes this is a long one..

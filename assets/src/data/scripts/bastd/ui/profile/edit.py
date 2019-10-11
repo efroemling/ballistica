@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Provides UI to edit a player profile."""
 
 from __future__ import annotations

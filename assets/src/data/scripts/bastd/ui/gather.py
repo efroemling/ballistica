@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Provides UI for inviting/joining friends."""
 # pylint: disable=too-many-lines
 

@@ -1,6 +1,4 @@
-# Synced from bsmaster.
-# EFRO_SYNC_HASH=8117567323116015157093251373970987221
-#
+# Copyright (c) 2011-2019 Eric Froemling
 """Base classes for the entity system."""
 
 from __future__ import annotations

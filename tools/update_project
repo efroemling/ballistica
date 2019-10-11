@@ -1,4 +1,5 @@
 #!/usr/bin/env python3.7
+# Copyright (c) 2011-2019 Eric Froemling
 """
 This script acts as a 'meta' Makefile for the project. It is in charge
 of generating Makefiles, IDE project files, procedurally generated source
@@ -25,7 +26,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Optional, Tuple, List, Dict, Set
 
-LEGAL_NOTICE_PRIVATE = 'Copyright (c) 2019 Eric Froemling'
+LEGAL_NOTICE_PRIVATE = 'Copyright (c) 2011-2019 Eric Froemling'
 
 CLRHDR = '\033[95m'  # Header.
 CLRGRN = '\033[92m'  # Green.
@@ -56,14 +57,11 @@ class App:
         self._public = get_config(Path('.'))['public']
         assert isinstance(self._public, bool)
 
-        self._src_files: List[str] = []
+        self._source_files: List[str] = []
         self._header_files: List[str] = []
 
-        self._line_changes: Dict[str, List[LineChange]] = {}
+        self._line_checks: Dict[str, List[LineChange]] = {}
         self._file_changes: Dict[str, str] = {}
-
-        # KILL ME
-        self._fixable_header_errors: Dict[str, List[Tuple[int, str]]] = {}
 
     def run(self) -> None:
         """Do the thing."""
@@ -145,39 +143,56 @@ class App:
 
     def _apply_line_changes(self) -> None:
 
-        print("LOOKING AT", len(self._line_changes), 'CHANGES')
-
-        # Build a flat list of entries needing to be manually applied.
+        # Build a flat list of entries that can and can-not be auto applied.
         manual_changes: List[Tuple[str, LineChange]] = []
-        for fname, entries in self._line_changes.items():
+        auto_changes: List[Tuple[str, LineChange]] = []
+        for fname, entries in self._line_checks.items():
             for entry in entries:
-                if not entry.can_auto_update:
+                if entry.can_auto_update:
+                    auto_changes.append((fname, entry))
+                else:
                     manual_changes.append((fname, entry))
 
-        # If there are any said entries, list then and bail.
+        # If there are any manual-only entries, list then and bail.
         # (Don't wanna allow auto-apply unless it fixes everything)
         if manual_changes:
-            print(f"{CLRRED}Found incorrect lines (cannot auto-update;"
-                  f" please correct manually):{CLREND}")
+            print(f"{CLRRED}Found erroneous lines "
+                  f"requiring manual correction:{CLREND}")
             for change in manual_changes:
-                print(f'{CLRRED}{change}{CLREND}')
+                print(f'{CLRRED}{change[0]}:{change[1].line_number + 1}:'
+                      f' Expected line to be:\n  {change[1].expected}{CLREND}')
             sys.exit(-1)
 
-        if self._fixable_header_errors:
-            for filename, fixes in self._fixable_header_errors.items():
-                with open(filename, 'r') as infile:
-                    lines = infile.read().splitlines()
-                for fix_line, fix_str in fixes:
-                    lines[fix_line] = fix_str
-                with open(filename, 'w') as outfile:
-                    outfile.write('\n'.join(lines) + '\n')
-                    print(CLRBLU + 'Writing header: ' + filename + CLREND)
-        else:
-            print(f'No issues found in {len(self._header_files)} headers.')
+        # Now, if we've got auto entries, either list or auto-correct them.
+        if auto_changes:
+            if not self._fix:
+                for i, change in enumerate(auto_changes):
+                    print(f'{CLRRED}#{i}: {change[0]}:{CLREND}')
+                    print(f'{CLRRED}  Expected "{change[1].expected}"{CLREND}')
+                    with open(change[0]) as infile:
+                        lines = infile.read().splitlines()
+                    line = lines[change[1].line_number]
+                    print(f'{CLRRED}  Found "{line}"{CLREND}')
+                print(CLRRED + 'All errors are auto-fixable;'
+                      ' pass --fix to apply corrections.' + CLREND)
+                sys.exit(255)
+            else:
+                for i, change in enumerate(auto_changes):
+                    print(f'{CLRBLU}Correcting file: {change[0]}{CLREND}')
+                    with open(change[0]) as infile:
+                        lines = infile.read().splitlines()
+                    lines[change[1].line_number] = change[1].expected
+                    with open(change[0], 'w') as outfile:
+                        outfile.write('\n'.join(lines) + '\n')
+
+        # If there were no issues whatsoever, note that.
+        if not manual_changes and not auto_changes:
+            fcount = len(self._header_files) + len(self._source_files)
+            print(f'No issues found in {fcount} source files.')
 
     def _check_source_files(self) -> None:
 
-        for fsrc in self._src_files:
+        for fsrc in self._source_files:
             if fsrc.endswith('.cpp') or fsrc.endswith('.cxx'):
                 raise Exception('please use .cc for c++ files; found ' + fsrc)
 
@@ -197,13 +212,18 @@ class App:
         with open(fname) as infile:
             lines = infile.read().splitlines()
 
-        # Check for Copyright line/license.
-        expected_lines = [(0, '// ' + LEGAL_NOTICE_PRIVATE)]
-        for line_number, expected in expected_lines:
-            if lines[line_number] != expected:
-                print(CLRRED + "Invalid legal notice in '" + fname +
-                      "'; please correct." + CLREND)
-                sys.exit(255)
+        # Look for copyright/legal-notice line(s)
+        legal_notice = '// ' + LEGAL_NOTICE_PRIVATE
+        lnum = 0
+        if lines[lnum] != legal_notice:
+            # Allow auto-correcting if it looks close already
+            # (don't want to blow away an unrelated line)
+            allow_auto = 'Copyright' in lines[
+                lnum] and 'Eric Froemling' in lines[lnum]
+            self._add_line_check(fname,
+                                 line_number=lnum,
+                                 expected=legal_notice,
+                                 can_auto_update=allow_auto)
 
     def _check_headers(self) -> None:
         for header_file_raw in self._header_files:
@@ -213,49 +233,122 @@ class App:
             if header_file.endswith('.h'):
                 self._check_header(header_file)
 
-        if self._fixable_header_errors and not self._fix:
-            print(CLRRED +
-                  'Fixable header error(s) found; pass --fix to correct.' +
-                  CLREND)
-            sys.exit(255)
+    def _add_line_check(self, filename: str, line_number: int, expected: str,
+                        can_auto_update: bool) -> None:
+        self._line_checks.setdefault(filename, []).append(
+            LineChange(line_number=line_number,
+                       expected=expected,
+                       can_auto_update=can_auto_update))
 
-    def _check_header(self, header_file: str) -> None:
+    def _check_header(self, fname: str) -> None:
+
         # Make sure its define guard is correct.
-        guard = (header_file[4:].upper().replace('/', '_').replace('.', '_') +
-                 '_')
-        with open(header_file) as fhdr:
+        guard = (fname[4:].upper().replace('/', '_').replace('.', '_') + '_')
+        with open(fname) as fhdr:
             lines = fhdr.read().splitlines()
 
         if self._public:
             raise RuntimeError('FIXME: Check for full license.')
 
-        expected_lines = [(0, '// ' + LEGAL_NOTICE_PRIVATE),
-                          (2, '#ifndef ' + guard), (3, '#define ' + guard),
-                          (-1, '#endif  // ' + guard)]
-        errors_found = False
-        can_fix = True
-        for line, expected in expected_lines:
-            if lines[line] != expected:
-                errors_found = True
-                print("Incorrect line " + str(line) + " in " + header_file +
-                      ":\n"
-                      "Expected: " + expected + "\n"
-                      "Found:    " + lines[line])
+        # Look for copyright/legal-notice line(s)
+        line = '// ' + LEGAL_NOTICE_PRIVATE
+        lnum = 0
+        if lines[lnum] != line:
+            # Allow auto-correcting if it looks close already
+            # (don't want to blow away an unrelated line)
+            allow_auto = 'Copyright' in lines[
+                lnum] and 'Eric Froemling' in lines[lnum]
+            self._add_line_check(fname,
+                                 line_number=lnum,
+                                 expected=line,
+                                 can_auto_update=allow_auto)
 
-                # If the beginning of the line differs, don't attempt auto-fix.
-                if lines[line][:16] != expected[:16]:
-                    can_fix = False
-            if errors_found:
-                if can_fix:
-                    self._fixable_header_errors.setdefault(header_file,
-                                                           []).append(
-                                                               (line,
-                                                                expected))
-                else:
-                    print(CLRRED + "Error found in '" + header_file +
-                          "'. Not auto-fixable; please correct manually." +
-                          CLREND)
+        # Check for header guard at top
+        line = '#ifndef ' + guard
+        lnum = 2
+        if lines[lnum] != line:
+            # Allow auto-correcting if it looks close already
+            # (don't want to blow away an unrelated line)
+            allow_auto = lines[lnum].startswith('#ifndef BALLISTICA_')
+            self._add_line_check(fname,
+                                 line_number=lnum,
+                                 expected=line,
+                                 can_auto_update=allow_auto)
+
+        # Check for header guard at bottom
+        line = '#endif  // ' + guard
+        lnum = -1
+        if lines[lnum] != line:
+            # Allow auto-correcting if it looks close already
+            # (don't want to blow away an unrelated line)
+            allow_auto = lines[lnum].startswith('#endif  // BALLISTICA_')
+            self._add_line_check(fname,
+                                 line_number=lnum,
+                                 expected=line,
+                                 can_auto_update=allow_auto)
+
+    def _check_python_file(self, fname: str) -> None:
+        with open(fname) as infile:
+            contents = infile.read()
+            lines = contents.splitlines()
+
+        # Make sure all standalone scripts are pointing to the right
+        # version of python (with a few exceptions where it needs to
+        # differ)
+        if contents.startswith('#!/'):
+            copyrightline = 1
+            if fname not in [
+                    'tools/devtool', 'tools/version_utils', 'tools/vmshell'
+            ]:
+                if not contents.startswith('#!/usr/bin/env python3.7'):
+                    print(f"{CLRRED}Incorrect shebang (first line) for "
+                          f"{fname}.{CLREND}")
                     sys.exit(255)
+        else:
+            copyrightline = 0
+
+        # Look for copyright/legal-notice line(s)
+        line = '# ' + LEGAL_NOTICE_PRIVATE
+        lnum = copyrightline
+        if len(lines) < lnum + 1:
+            raise RuntimeError('Not enough lines in file:', fname)
+
+        if lines[lnum] != line:
+            # Allow auto-correcting if it looks close already
+            # (don't want to blow away an unrelated line)
+            allow_auto = 'Copyright' in lines[
+                lnum] and 'Eric Froemling' in lines[lnum]
+            self._add_line_check(fname,
+                                 line_number=lnum,
+                                 expected=line,
+                                 can_auto_update=allow_auto)
+
+    def _check_python_files(self) -> None:
+        from pathlib import Path
+        from efrotools.code import get_script_filenames
+
+        scriptfiles = get_script_filenames(Path('.'))
+        for fname in scriptfiles:
+            self._check_python_file(fname)
+
+        # Check our packages and make sure all subdirs contain and __init__.py
+        # (I tend to forget this sometimes)
+        packagedirs = ['tools/efrotools']
+        script_asset_dir = 'assets/src/data/scripts'
+        for name in os.listdir(script_asset_dir):
+            # (Assume all dirs under our script assets dir are packages)
+            if os.path.isdir(os.path.join(script_asset_dir)):
+                packagedirs.append(os.path.join(script_asset_dir, name))
+
+        for packagedir in packagedirs:
+            for root, _dirs, files in os.walk(packagedir):
+                if ('__pycache__' not in root
+                        and os.path.basename(root) != '.vscode'):
+                    if '__init__.py' not in files:
+                        print(CLRRED +
+                              'Error: no __init__.py in package dir: ' + root +
+                              CLREND)
+                        sys.exit(255)
 
     def _update_visual_studio_project(self, fname: str, src_root: str) -> None:
         with open(fname) as infile:
@@ -266,7 +359,7 @@ class App:
         # all_files = sorted(src_files + header_files)
         # del header_files  # Unused.
         all_files = sorted([
-            f for f in (self._src_files + self._header_files)
+            f for f in (self._source_files + self._header_files)
             if not f.endswith('.m') and not f.endswith('.mm')
             and not f.endswith('.c')
         ])
@@ -362,7 +455,7 @@ class App:
         auto_end = lines.index('        #AUTOGENERATED_END')
         our_lines = [
             '        ${BA_SRC_ROOT}/ballistica' + f
-            for f in sorted(self._src_files + self._header_files)
+            for f in sorted(self._source_files + self._header_files)
             if not f.endswith('.mm') and not f.endswith('.m')
         ]
         filtered = lines[:auto_start + 1] + our_lines + lines[auto_end:]
@@ -393,54 +486,8 @@ class App:
                     src_files.add(os.path.join(root, ftst)[len(scan_dir):])
                 if any(ftst.endswith(ext) for ext in header_exts):
                     header_files.add(os.path.join(root, ftst)[len(scan_dir):])
-        self._src_files = sorted(src_files)
+        self._source_files = sorted(src_files)
         self._header_files = sorted(header_files)
-
-    def _check_python_files(self) -> None:
-        from pathlib import Path
-        from efrotools.code import get_script_filenames
-
-        scriptfiles = get_script_filenames(Path('.'))
-        for fname in scriptfiles:
-            with open(fname) as infile:
-                contents = infile.read()
-
-            # Make sure all standalone scripts are pointing to the right
-            # version of python (with a few exceptions where it needs to
-            # differ)
-            if contents.startswith('#!/'):
-                # copyrightline = 1
-                if fname not in [
-                        'tools/devtool', 'tools/version_utils', 'tools/vmshell'
-                ]:
-                    if not contents.startswith('#!/usr/bin/env python3.7'):
-                        print(f"{CLRRED}Incorrect shebang (first line) for "
-                              f"{fname}.{CLREND}")
-                        sys.exit(255)
-            else:
-                pass
-                # copyrightline = 0
-
-            # Make sure the proper copyright notice is in place.
-
-        # Check our packages and make sure all subdirs contain and __init__.py
-        # (I tend to forget this sometimes)
-        packagedirs = ['tools/efrotools']
-        script_asset_dir = 'assets/src/data/scripts'
-        for name in os.listdir(script_asset_dir):
-            # (Assume all dirs under our script assets dir are packages)
-            if os.path.isdir(os.path.join(script_asset_dir)):
-                packagedirs.append(os.path.join(script_asset_dir, name))
-
-        for packagedir in packagedirs:
-            for root, _dirs, files in os.walk(packagedir):
-                if ('__pycache__' not in root
-                        and os.path.basename(root) != '.vscode'):
-                    if '__init__.py' not in files:
-                        print(CLRRED +
-                              'Error: no __init__.py in package dir: ' + root +
-                              CLREND)
-                        sys.exit(255)
 
     def _check_sync_states(self) -> None:
         # Make sure none of our sync targets have been mucked with since

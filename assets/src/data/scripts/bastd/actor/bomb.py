@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Various classes for bombs, mines, tnt, etc."""
 
 # FIXME

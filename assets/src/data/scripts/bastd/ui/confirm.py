@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Provides ConfirmWindow base class and commonly used derivatives."""
 
 from __future__ import annotations

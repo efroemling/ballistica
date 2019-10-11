@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Appearance functionality for spazzes."""
 from __future__ import annotations
 

@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Functionality related to game tips.
 
 These can be shown at opportune times such as between rounds."""

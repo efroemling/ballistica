@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Utility snippets applying to generic Python code."""
 from __future__ import annotations
 

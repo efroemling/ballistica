@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Functionality related to coop-mode sessions."""
 from __future__ import annotations
 

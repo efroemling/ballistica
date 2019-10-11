@@ -1,6 +1,4 @@
-# Synced from bamaster.
-# EFRO_SYNC_HASH=207162478257782519026483356805664558659
-#
+# Copyright (c) 2011-2019 Eric Froemling
 """Various support classes for accessing data and info on fields and values."""
 
 from __future__ import annotations

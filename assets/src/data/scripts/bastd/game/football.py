@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Implements football games (both co-op and teams varieties)."""
 
 # bs_meta require api 6

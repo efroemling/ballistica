@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Provides GameActivity class."""
 # pylint: disable=too-many-lines
 

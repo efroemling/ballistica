@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Snippets of code for use by the internal C++ layer.
 
 History: originally I would dynamically compile/eval bits of Python text

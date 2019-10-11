@@ -1,6 +1,4 @@
-# Synced from bamaster.
-# EFRO_SYNC_HASH=151238242547824871848833808259117588767
-#
+# Copyright (c) 2011-2019 Eric Froemling
 """Misc utility functionality related to the entity system."""
 
 from __future__ import annotations

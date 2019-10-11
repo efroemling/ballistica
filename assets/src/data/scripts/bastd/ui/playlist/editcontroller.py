@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Defines a controller for wrangling playlist edit UIs."""
 
 from __future__ import annotations

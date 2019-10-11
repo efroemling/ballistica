@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Provides a window for selecting a game type to add to a playlist."""
 
 from __future__ import annotations

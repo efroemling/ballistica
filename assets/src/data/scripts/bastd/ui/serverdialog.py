@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Dialog window controlled by the master server."""
 
 from __future__ import annotations

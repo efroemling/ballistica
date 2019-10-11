@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Functionality related to the final screen in free-for-all games."""
 
 from __future__ import annotations

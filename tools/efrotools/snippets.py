@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Standard snippets that can be pulled into project snippets scripts.
 
 A snippet is a mini-program that directly takes input from stdin and does

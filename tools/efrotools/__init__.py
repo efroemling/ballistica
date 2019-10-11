@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """EfroTools: Various build related functionality for use in my projects."""
 
 from __future__ import annotations
@@ -10,6 +11,27 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from typing import Dict, Union, Sequence, Optional, Any
+
+MIT_LICENSE = """Copyright (c) 2011-2019 Eric Froemling
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
 
 
 def explicit_bool(value: bool) -> bool:
@@ -44,6 +66,23 @@ def set_config(projroot: Path, config: Dict[str, Any]) -> None:
     os.makedirs(Path(projroot, 'config'), exist_ok=True)
     with Path(projroot, 'config/config.json').open('w') as outfile:
         outfile.write(json.dumps(config, indent=2))
+
+
+def get_public_license(style: str) -> str:
+    """Return the MIT license as used for our public facing stuff.
+
+    'style' arg can be 'python', 'c++', or 'raw'.
+    """
+    raw = MIT_LICENSE
+    if style == 'raw':
+        return raw
+    if style == 'python':
+        return ('\n'.join('#' + (' ' if l else '') + l
+                          for l in raw.splitlines()) + '\n' + '# ' + '-' * 77)
+    if style == 'c++':
+        return '\n'.join('//' + (' ' if l else '') + l
+                         for l in raw.splitlines())
+    raise RuntimeError(f'Invalid style: {style}')
 
 
 def readfile(path: Union[str, Path]) -> str:

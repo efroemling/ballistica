@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Functionality related to teams mode score screen."""
 
 from __future__ import annotations

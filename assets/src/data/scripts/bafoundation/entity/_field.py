@@ -1,6 +1,4 @@
-# Synced from bamaster.
-# EFRO_SYNC_HASH=1181984339043224435868827486253284940
-#
+# Copyright (c) 2011-2019 Eric Froemling
 """Field types for the entity system."""
 
 from __future__ import annotations

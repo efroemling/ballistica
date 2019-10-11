@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Store related functionality for classic mode."""
 
 from __future__ import annotations

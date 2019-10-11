@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 # This file was automatically generated from "happy_thoughts.ma"
 # pylint: disable=all
 points = {}

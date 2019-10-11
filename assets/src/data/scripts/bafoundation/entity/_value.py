@@ -1,6 +1,4 @@
-# Synced from bsmaster.
-# EFRO_SYNC_HASH=158385720566816709798128360485086830759
-#
+# Copyright (c) 2011-2019 Eric Froemling
 """Value types for the entity system."""
 
 from __future__ import annotations

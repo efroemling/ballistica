@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Provides a system for caching linting/formatting operations."""
 
 from __future__ import annotations

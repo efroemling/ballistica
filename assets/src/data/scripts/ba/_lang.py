@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Language related functionality."""
 from __future__ import annotations
 

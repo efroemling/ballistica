@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """UI functionality for running the game in kiosk mode."""
 
 from __future__ import annotations

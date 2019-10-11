@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Defines the King of the Hill game."""
 
 # bs_meta require api 6

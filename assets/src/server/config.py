@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 # place any of your own overrides here.
 # see ballisticacore_server for details on what you can override
 # examples (uncomment to use):

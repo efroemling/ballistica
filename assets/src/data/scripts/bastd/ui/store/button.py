@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """UI functionality for a button leading to the store."""
 from __future__ import annotations
 

@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Provides functionality for displaying QR codes."""
 from __future__ import annotations
 

@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """UI for top level settings categories."""
 
 from __future__ import annotations

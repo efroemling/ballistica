@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Provide our delegate for high level app functionality."""
 from __future__ import annotations
 

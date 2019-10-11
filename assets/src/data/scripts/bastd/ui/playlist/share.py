@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """UI functionality for importing shared playlists."""
 
 from __future__ import annotations

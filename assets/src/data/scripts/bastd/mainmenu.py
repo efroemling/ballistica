@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Session and Activity for displaying the main menu bg."""
 
 from __future__ import annotations

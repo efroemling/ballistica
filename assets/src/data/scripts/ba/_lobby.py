@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Implements lobby system for gathering before games, char select, etc."""
 
 from __future__ import annotations

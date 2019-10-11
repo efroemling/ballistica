@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Functionality related to the end screen in dual-team mode."""
 
 from __future__ import annotations

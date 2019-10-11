@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """UIs for debugging purposes."""
 
 from __future__ import annotations

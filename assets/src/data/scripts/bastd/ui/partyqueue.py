@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """UI related to waiting in line for a party."""
 
 from __future__ import annotations

@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Functionality for editing config values and applying them to the game."""
 
 from __future__ import annotations

@@ -1,4 +1,2 @@
-# Synced from bsmaster.
-# EFRO_SYNC_HASH=47258835994253322418493299167560392753
-#
+# Copyright (c) 2011-2019 Eric Froemling
 """Functionality shared between Ballistica client and server components."""

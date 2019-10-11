@@ -1,3 +1,4 @@
+# Copyright (c) 2011-2019 Eric Froemling
 """Provides a window which shows info about resource types."""
 
 from __future__ import annotations

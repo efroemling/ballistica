@@ -1,6 +1,4 @@
-# Synced from bamaster.
-# EFRO_SYNC_HASH=196413726588996288733581295344706442629
-#
+# Copyright (c) 2011-2019 Eric Froemling
 """Entity functionality.
 
 A system for defining complex data-containing types, supporting both static
