@@ -24,6 +24,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Optional, Tuple, List, Dict, Set
 
+LEGAL_NOTICE_PRIVATE = 'Copyright (c) 2019 Eric Froemling'
+
 CLRHDR = '\033[95m'  # Header.
 CLRGRN = '\033[92m'  # Green.
 CLRBLU = '\033[94m'  # Glue.
@@ -35,9 +37,15 @@ class App:
     """Context for an app run."""
 
     def __init__(self) -> None:
+        from efrotools import get_config
+        from pathlib import Path
         self._check = ('--check' in sys.argv)
         self._fix = ('--fix' in sys.argv)
         self._checkarg = ' --check' if self._check else ''
+
+        # We behave differently in the public repo
+        self._public = get_config(Path('.'))['public']
+        assert isinstance(self._public, bool)
 
         self._files_to_write: Dict[str, str] = {}
         self._src_files: List[str] = []
@@ -61,7 +69,7 @@ class App:
         self._check_sync_states()
 
         self._find_sources_and_headers('src/ballistica')
-        self._check_files()
+        self._check_source_files()
         self._check_headers()
 
         self._update_cmake_files()
@@ -136,9 +144,8 @@ class App:
         else:
             print(f'No issues found in {len(self._header_files)} headers.')
 
-    def _check_files(self) -> None:
+    def _check_source_files(self) -> None:
 
-        # A bit of sanity/lint-testing while we're here.
         for fsrc in self._src_files:
             if fsrc.endswith('.cpp') or fsrc.endswith('.cxx'):
                 raise Exception('please use .cc for c++ files; found ' + fsrc)
@@ -150,6 +157,21 @@ class App:
                 print(f'{CLRRED}'
                       f'ERROR: Found an unsaved emacs file: "{fsrc}"'
                       f'{CLREND}')
+                sys.exit(255)
+
+            fname = 'src/ballistica' + fsrc
+            self._check_source_file(fname)
+
+    def _check_source_file(self, fname: str) -> None:
+        with open(fname) as infile:
+            lines = infile.read().splitlines()
+
+        # Check for Copyright line/license.
+        expected_lines = [(0, '// ' + LEGAL_NOTICE_PRIVATE)]
+        for line_number, expected in expected_lines:
+            if lines[line_number] != expected:
+                print(CLRRED + "Invalid legal notice in '" + fname +
+                      "'; please correct." + CLREND)
                 sys.exit(255)
 
     def _check_headers(self) -> None:
@@ -172,7 +194,11 @@ class App:
                  '_')
         with open(header_file) as fhdr:
             lines = fhdr.read().splitlines()
-        expected_lines = [(0, '// Copyright 2019 Eric Froemling'),
+
+        if self._public:
+            raise RuntimeError('FIXME: Check for full license.')
+
+        expected_lines = [(0, '// ' + LEGAL_NOTICE_PRIVATE),
                           (2, '#ifndef ' + guard), (3, '#define ' + guard),
                           (-1, '#endif  // ' + guard)]
         errors_found = False
@@ -324,6 +350,9 @@ class App:
         header_exts = ['.h']
 
         # Gather all sources and headers.
+        # HMMM: Ideally we should use efrotools.code.get_code_filenames() here.
+        # (though we return things relative to the scan-dir which could
+        # throw things off)
         for root, _dirs, files in os.walk(scan_dir):
             for ftst in files:
                 if any(ftst.endswith(ext) for ext in exts):
@@ -334,16 +363,50 @@ class App:
         self._header_files = sorted(header_files)
 
     def _check_python_files(self) -> None:
+        from pathlib import Path
+        from efrotools.code import get_script_filenames
 
-        # Make sure all module dirs in python scripts contain an __init__.py
-        scripts_dir = 'assets/src/data/scripts'
-        for root, _dirs, files in os.walk(scripts_dir):
-            if (root != scripts_dir and '__pycache__' not in root
-                    and os.path.basename(root) != '.vscode'):
-                if '__init__.py' not in files:
-                    print(CLRRED + 'Error: no __init__.py in package dir: ' +
-                          root + CLREND)
-                    sys.exit(255)
+        scriptfiles = get_script_filenames(Path('.'))
+        for fname in scriptfiles:
+            with open(fname) as infile:
+                contents = infile.read()
+
+            # Make sure all standalone scripts are pointing to the right
+            # version of python (with a few exceptions where it needs to
+            # differ)
+            if contents.startswith('#!/'):
+                # copyrightline = 1
+                if fname not in [
+                        'tools/devtool', 'tools/version_utils', 'tools/vmshell'
+                ]:
+                    if not contents.startswith('#!/usr/bin/env python3.7'):
+                        print(f"{CLRRED}Incorrect shebang (first line) for "
+                              f"{fname}.{CLREND}")
+                        sys.exit(255)
+            else:
+                pass
+                # copyrightline = 0
+
+            # Make sure the proper copyright notice is in place.
+
+        # Check our packages and make sure all subdirs contain and __init__.py
+        # (I tend to forget this sometimes)
+        packagedirs = ['tools/efrotools']
+        script_asset_dir = 'assets/src/data/scripts'
+        for name in os.listdir(script_asset_dir):
+            # (Assume all dirs under our script assets dir are packages)
+            if os.path.isdir(os.path.join(script_asset_dir)):
+                packagedirs.append(os.path.join(script_asset_dir, name))
+
+        for packagedir in packagedirs:
+            for root, _dirs, files in os.walk(packagedir):
+                if ('__pycache__' not in root
+                        and os.path.basename(root) != '.vscode'):
+                    if '__init__.py' not in files:
+                        print(CLRRED +
+                              'Error: no __init__.py in package dir: ' + root +
+                              CLREND)
+                        sys.exit(255)
 
     def _check_sync_states(self) -> None:
         # Make sure none of our sync targets have been mucked with since

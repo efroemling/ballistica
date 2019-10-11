@@ -2,28 +2,8 @@
   "code_source_dirs": [
     "src/ballistica"
   ],
-  "cpplint_blacklist": [
-    "src/ballistica/generic/json.cc",
-    "src/ballistica/generic/json.h",
-    "src/ballistica/generic/utf8.cc",
-    "src/ballistica/graphics/texture/dds.h",
-    "src/ballistica/graphics/texture/ktx.cc",
-    "src/ballistica/platform/android/android_gl3.h",
-    "src/ballistica/platform/apple/app_delegate.h",
-    "src/ballistica/platform/apple/scripting_bridge_itunes.h",
-    "src/ballistica/platform/android/utf8/checked.h",
-    "src/ballistica/platform/android/utf8/unchecked.h",
-    "src/ballistica/platform/android/utf8/core.h",
-    "src/ballistica/platform/apple/sdl_main_mac.h",
-    "src/ballistica/platform/oculus/main_rift.cc"
-  ],
   "name": "BallisticaCore",
-  "push_ipa_config": {
-    "app_bundle_name": "BallisticaCore.app",
-    "archive_name": "bs",
-    "projectpath": "ballisticacore-ios.xcodeproj",
-    "scheme": "BallisticaCore iOS Legacy"
-  },
+  "public": true,
   "pylint_ignored_untracked_deps": [
     "bs_mapdefs_tip_top",
     "bs_mapdefs_lake_frigid",

@@ -114,7 +114,7 @@ def cpplintcode(projroot: Path, full: bool) -> None:
 def get_code_filenames(projroot: Path) -> List[str]:
     """Return the list of files to lint-check or auto-formatting."""
     from efrotools import get_config
-    exts = ('.h', '.cc', '.m', '.mm')
+    exts = ('.h', '.c', '.cc', '.cpp', '.cxx', '.m', '.mm')
     places = get_config(projroot).get('code_source_dirs', None)
     if places is None:
         raise RuntimeError('code_source_dirs not declared in config')
@@ -189,7 +189,7 @@ def _should_include_script(fnamefull: str) -> bool:
             if '/usr/bin/env python' in line or '/usr/bin/python' in line:
                 return True
         except UnicodeDecodeError:
-            # actual binary files will probably kick back this error..
+            # Actual binary files will probably kick back this error.
             pass
     return False
 
