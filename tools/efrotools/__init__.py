@@ -90,7 +90,7 @@ def set_config(projroot: Path, config: Dict[str, Any]) -> None:
 def get_public_license(style: str) -> str:
     """Return the MIT license as used for our public facing stuff.
 
-    'style' arg can be 'python', 'c++', or 'raw'.
+    'style' arg can be 'python', 'c++', or 'makefile, or 'raw'.
     """
     raw = MIT_LICENSE
     if style == 'raw':
@@ -98,6 +98,11 @@ def get_public_license(style: str) -> str:
     if style == 'python':
         return ('\n'.join('#' + (' ' if l else '') + l
                           for l in raw.splitlines()) + '\n' + '# ' + '-' * 77)
+    if style == 'makefile':
+        # Basically same as python except one char wider
+        # (Pep8 specifies 79 char lines vs more standard 80)
+        return ('\n'.join('#' + (' ' if l else '') + l
+                          for l in raw.splitlines()) + '\n' + '# ' + '-' * 78)
     if style == 'c++':
         return '\n'.join('//' + (' ' if l else '') + l
                          for l in raw.splitlines())

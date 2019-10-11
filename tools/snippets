@@ -511,7 +511,7 @@ def python_gather() -> None:
 
 
 def clean_orphaned_assets() -> None:
-    """Remove assets that are no longer part of the build."""
+    """Remove asset files that are no longer part of the build."""
     import json
 
     # Operate from dist root..
@@ -523,7 +523,7 @@ def clean_orphaned_assets() -> None:
             fpath = os.path.join(root, fname)
             fpathrel = fpath[13:]  # paths are relative to assets/build
             if fpathrel not in manifest:
-                print(f"Removing orphaned asset: {fpath}")
+                print(f"Removing orphaned asset file: {fpath}")
                 os.unlink(fpath)
 
     # Lastly, clear empty dirs.
@@ -595,6 +595,16 @@ def megalint() -> None:
 def capitalize() -> None:
     """Print args capitalized."""
     print(' '.join(w.capitalize() for w in sys.argv[2:]))
+
+
+def efrocache_update() -> None:
+    """Build & push files to efrocache for public access."""
+    print('WOULD UPDATE EFROCACHE')
+
+
+def efrocache_get() -> None:
+    """Get a file from efrocache."""
+    print('WOULD GET FROM EFROCACHE')
 
 
 if __name__ == '__main__':

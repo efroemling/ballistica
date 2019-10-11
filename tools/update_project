@@ -39,6 +39,7 @@ from __future__ import annotations
 
 import os
 import sys
+import subprocess
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -95,6 +96,7 @@ class App:
         self._update_generated_code_makefile()
         self._update_assets_makefile()
 
+        self._check_makefiles()
         self._check_python_files()
         self._check_sync_states()
 
@@ -306,6 +308,26 @@ class App:
                                       line_number=lnum,
                                       expected=line,
                                       can_auto_update=allow_auto)
+
+    def _check_makefiles(self) -> None:
+        from efrotools import get_public_license
+
+        # Run a few sanity checks on whatever makefiles we come across.
+        fnames = subprocess.run('find . -maxdepth 3 -name Makefile',
+                                shell=True,
+                                capture_output=True,
+                                check=True).stdout.decode().split()
+        fnames = [n for n in fnames if '/build/' not in n]
+
+        for fname in fnames:
+            with open(fname) as infile:
+                makefile = infile.read()
+            if LEGAL_NOTICE_PRIVATE not in makefile:
+                raise RuntimeError(f'Priv legal not found in {fname}')
+            if self._public:
+                public_license = get_public_license('makefile')
+                if public_license not in makefile:
+                    raise RuntimeError(f'Pub license not found in {fname}')
 
     def _check_python_file(self, fname: str) -> None:
         from efrotools import get_public_license
