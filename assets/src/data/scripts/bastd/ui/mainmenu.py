@@ -19,6 +19,7 @@
 # SOFTWARE.
 # -----------------------------------------------------------------------------
 """Implements the main menu window."""
+# pylint: disable=too-many-lines
 
 from __future__ import annotations
 
