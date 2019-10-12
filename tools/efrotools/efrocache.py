@@ -98,7 +98,15 @@ def get_target(path: str) -> None:
 
 def filter_makefile(makefile_dir: str, contents: str) -> str:
     """Filter makefile contents to use efrocache lookups."""
-    cachemap = '$(PROJ_DIR)/.efrocachemap'
+
+    if makefile_dir:
+        # Assuming just one level deep at the moment; can revisit later.
+        assert '/' not in makefile_dir
+        to_proj_root = '..'
+    else:
+        to_proj_root = ''
+
+    cachemap = os.path.join(to_proj_root, '.efrocachemap')
     lines = contents.splitlines()
     snippets = 'tools/snippets'
 
@@ -120,7 +128,7 @@ def filter_makefile(makefile_dir: str, contents: str) -> str:
         del lines[index:endindex]
         lines.insert(index, tname + ': ' + cachemap)
         target = (makefile_dir + '/' + '$@') if makefile_dir else '$@'
-        pre = 'cd $(PROJ_DIR) && ' if makefile_dir else ''
+        pre = 'cd {to_proj_root} && ' if makefile_dir else ''
         lines.insert(index + 1, f'\t{pre}{snippets} efrocache_get {target}')
     return '\n'.join(lines) + '\n'
 
