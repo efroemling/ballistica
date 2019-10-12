@@ -599,7 +599,9 @@ def capitalize() -> None:
 
 def efrocache_update() -> None:
     """Build & push files to efrocache for public access."""
-    print('WOULD UPDATE EFROCACHE')
+    from efrotools.efrocache import update_cache
+    makefile_dirs = ['', 'assets']
+    update_cache(makefile_dirs)
 
 
 def efrocache_get() -> None:

@@ -132,11 +132,18 @@ def spelling() -> None:
     if lines[2] != '    <words>':
         raise RuntimeError('Unexpected dictionary format.')
     words = sys.argv[2:]
+    added_count = 0
     for word in words:
-        lines.insert(3, f'      <w>{word.lower()}</w>')
+        line = f'      <w>{word.lower()}</w>'
+        if line not in lines:
+            lines.insert(3, line)
+            added_count += 1
+
     with open(fname, 'w') as outfile:
-        outfile.write('\n'.join(lines))
-    print('Added', len(words), 'words to the dictionary.')
+        # Sort lines in the words section.
+        assert all(l.startswith('      <w>') for l in lines[3:-3])
+        outfile.write('\n'.join(lines[:3] + sorted(lines[3:-3]) + lines[-3:]))
+    print('Added', added_count, 'words to the dictionary.')
 
 
 def check_clean_safety() -> None:

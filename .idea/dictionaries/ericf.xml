@@ -1,10 +1,6 @@
 <component name="ProjectDictionaryState">
   <dictionary name="ericf">
     <words>
-      <w>maxdepth</w>
-      <w>efrocache</w>
-      <w>packagedir</w>
-      <w>priv</w>
       <w>aaaa</w>
       <w>aaab</w>
       <w>aaac</w>
@@ -117,6 +113,7 @@
       <w>basemult</w>
       <w>basepos</w>
       <w>basespaz</w>
+      <w>baseurl</w>
       <w>basew</w>
       <w>bastd</w>
       <w>bbot</w>
@@ -422,6 +419,8 @@
       <w>editorconfig</w>
       <w>efile</w>
       <w>efro</w>
+      <w>efrocache</w>
+      <w>efrocachemap</w>
       <w>efroemling</w>
       <w>efrotool</w>
       <w>efrotools</w>
@@ -504,6 +503,7 @@
       <w>filterlines</w>
       <w>filterpath</w>
       <w>filterpaths</w>
+      <w>finalhash</w>
       <w>finalmaterials</w>
       <w>firebase</w>
       <w>firestore</w>
@@ -662,6 +662,7 @@
       <w>halign</w>
       <w>handlemessage</w>
       <w>hashopenssl</w>
+      <w>hashpath</w>
       <w>hashstr</w>
       <w>hashval</w>
       <w>hasstarted</w>
@@ -891,6 +892,7 @@
       <w>mathmodule</w>
       <w>mathnode</w>
       <w>mathutils</w>
+      <w>maxdepth</w>
       <w>maxlinks</w>
       <w>maxval</w>
       <w>maxw</w>
@@ -1060,6 +1062,7 @@
       <w>outname</w>
       <w>outpath</w>
       <w>ouya</w>
+      <w>packagedir</w>
       <w>packagedirs</w>
       <w>painttxtattr</w>
       <w>palmos</w>
@@ -1158,6 +1161,7 @@
       <w>priceraw</w>
       <w>printnodes</w>
       <w>printobjects</w>
+      <w>priv</w>
       <w>proactor</w>
       <w>proc</w>
       <w>procs</w>
