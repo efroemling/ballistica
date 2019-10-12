@@ -29,6 +29,101 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import List, Dict
 
+TARGET_TAG = '#__EFROCACHE_TARGET__'
+STRIP_BEGIN_TAG = '#__EFROCACHE_STRIP_BEGIN__'
+STRIP_END_TAG = '#__EFROCACHE_STRIP_END__'
+
+
+def get_file_hash(path: str) -> str:
+    """Return the hash used for caching.
+
+    This incorporates the file contents as well as its path.
+    """
+    import hashlib
+    md5 = hashlib.md5()
+    with open(path, 'rb') as infile:
+        md5.update(infile.read())
+    md5.update(path.encode())
+    return md5.hexdigest()
+
+
+def get_target(path: str) -> None:
+    """Fetch a target path from the cache, downloading if need be."""
+    import json
+    from efrotools import run
+    with open('.efrocachemap') as infile:
+        efrocachemap = json.loads(infile.read())
+    if path not in efrocachemap:
+        raise RuntimeError(f'Path not found in efrocache: {path}')
+    url = efrocachemap[path]
+    subpath = '/'.join(url.split('/')[-3:])
+    local_cache_path = os.path.join('.efrocache', subpath)
+    local_cache_path_dl = local_cache_path + '.download'
+    hashval = ''.join(subpath.split('/'))
+
+    # First off: if there's already a file in place, check its hash.
+    # If it matches the cache, we can just update its timestamp and
+    # call it a day.
+    if os.path.isfile(path):
+        existing_hash = get_file_hash(path)
+        if existing_hash == hashval:
+            print('FOUND VALID FILE; TOUCHING')
+            run(f'touch {path}')
+            return
+
+    # Ok there's not a valid file in place already.
+    # Clear out whatever is there to start with.
+    if os.path.exists(path):
+        os.unlink(path)
+
+    # Now if we don't have this entry in our local cache,
+    # download it.
+    if not os.path.exists(local_cache_path):
+        os.makedirs(os.path.dirname(local_cache_path), exist_ok=True)
+        print('Downloading:', path)
+        run(f'curl {url} > {local_cache_path_dl}')
+        run(f'mv {local_cache_path_dl} {local_cache_path}')
+
+    # Ok we should have a valid .tar.gz file in our cache dir at this point.
+    # Just expand it and it get placed wherever it belongs.
+    run(f'tar -zxf {local_cache_path}')
+
+    # The file will wind up with the timestamp it was compressed with,
+    # so let's update its timestamp or else it will still be considered
+    # dirty.
+    run(f'touch {path}')
+    if not os.path.exists(path):
+        raise RuntimeError(f'File {path} did not wind up as expected.')
+
+
+def filter_makefile(makefile_dir: str, contents: str) -> str:
+    """Filter makefile contents to use efrocache lookups."""
+    cachemap = '$(PROJ_DIR)/.efrocachemap'
+    lines = contents.splitlines()
+    snippets = 'tools/snippets'
+
+    # Strip out parts they don't want.
+    while STRIP_BEGIN_TAG in lines:
+        index = lines.index(TARGET_TAG)
+        endindex = index
+        while lines[endindex] != STRIP_END_TAG:
+            endindex += 1
+        del lines[index:endindex + 1]
+
+    # Replace cachable targets with cache lookups
+    while TARGET_TAG in lines:
+        index = lines.index(TARGET_TAG)
+        endindex = index
+        while lines[endindex].strip() != '':
+            endindex += 1
+        tname = lines[index + 1].split(':')[0]
+        del lines[index:endindex]
+        lines.insert(index, tname + ': ' + cachemap)
+        target = (makefile_dir + '/' + '$@') if makefile_dir else '$@'
+        pre = 'cd $(PROJ_DIR) && ' if makefile_dir else ''
+        lines.insert(index + 1, f'\t{pre}{snippets} efrocache_get {target}')
+    return '\n'.join(lines) + '\n'
+
 
 def update_cache(makefile_dirs: List[str]) -> None:
     """Given a list of directories containing makefiles, update caches."""

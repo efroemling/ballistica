@@ -34,10 +34,8 @@ all: help
 # Tell make which of these targets don't represent files.
 .PHONY: all
 
-# EFROCACHE_TARGET
-build/testfile:
-	mkdir -p $(dir $@)
-	echo foobar > $@
+build/testfile: $(PROJ_DIR)/.efrocachemap
+	tools/snippets efrocache_get $@
 
 
 ################################################################################
@@ -302,17 +300,17 @@ preflightfull2:
 # This should give the cpu count on linux and mac; may need to expand this
 # if using this on other platforms.
 CPUS = $(shell getconf _NPROCESSORS_ONLN || echo 8)
-ROOT_DIR = ${abspath ${CURDIR}}
+PROJ_DIR = ${abspath ${CURDIR}}
 VERSION = $(shell tools/version_utils version)
 BUILD_NUMBER = $(shell tools/version_utils build)
-DIST_DIR = ${ROOT_DIR}/build
+BUILD_DIR = ${PROJ_DIR}/build
 
 # Things to ignore when doing root level cleans.
 ROOT_CLEAN_IGNORES = --exclude=assets/src_master \
   --exclude=config/localconfig.json \
   --exclude=.spinoffdata
 
-CHECK_CLEAN_SAFETY = ${ROOT_DIR}/tools/snippets check_clean_safety
+CHECK_CLEAN_SAFETY = ${PROJ_DIR}/tools/snippets check_clean_safety
 
 # Some tool configs that need filtering (mainly injecting projroot path).
 TOOL_CFG_INST = tools/snippets tool_config_install

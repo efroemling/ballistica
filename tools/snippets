@@ -606,7 +606,10 @@ def efrocache_update() -> None:
 
 def efrocache_get() -> None:
     """Get a file from efrocache."""
-    print('WOULD GET FROM EFROCACHE')
+    from efrotools.efrocache import get_target
+    if len(sys.argv) != 3:
+        raise RuntimeError('Expected exactly 1 arg')
+    get_target(sys.argv[2])
 
 
 if __name__ == '__main__':
