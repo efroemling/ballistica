@@ -112,7 +112,7 @@ def filter_makefile(makefile_dir: str, contents: str) -> str:
 
     # Strip out parts they don't want.
     while STRIP_BEGIN_TAG in lines:
-        index = lines.index(TARGET_TAG)
+        index = lines.index(STRIP_BEGIN_TAG)
         endindex = index
         while lines[endindex] != STRIP_END_TAG:
             endindex += 1
@@ -128,7 +128,7 @@ def filter_makefile(makefile_dir: str, contents: str) -> str:
         del lines[index:endindex]
         lines.insert(index, tname + ': ' + cachemap)
         target = (makefile_dir + '/' + '$@') if makefile_dir else '$@'
-        pre = 'cd {to_proj_root} && ' if makefile_dir else ''
+        pre = f'cd {to_proj_root} && ' if makefile_dir else ''
         lines.insert(index + 1, f'\t{pre}{snippets} efrocache_get {target}')
     return '\n'.join(lines) + '\n'
 

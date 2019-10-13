@@ -63,6 +63,53 @@ all:
 
 # TEMP EFROCACHE TESTING------------------------------------------------
 
+build/testfile_a: ../.efrocachemap
+	cd .. && tools/snippets efrocache_get assets/$@
+
+EFROCACHE_FILES = build/testfile_a
+
+# Build everything we want available in efrocache
+efrocache_build: $(EFROCACHE_FILES)
+
+# Print everything in efrocache
+efrocache_list:
+	@echo $(EFROCACHE_FILES)
+# ---------------------------------------------------------------------
+
+
+
+# Build everything needed for desktop platforms (mac, windows, linux).
+desktop:
+	@test -d ${ASSET_SRC_MASTER_DIR} && make asset_sources || true
+	@${TOOLS_DIR}/convert_util --init-asset-cache
+	@make assets-desktop
+	@${TOOLS_DIR}/snippets clean_orphaned_assets
+
+# Build everything needed for ios.
+ios:
+	@test -d ${ASSET_SRC_MASTER_DIR} && make asset_sources || true
+	@${TOOLS_DIR}/convert_util --init-asset-cache
+	@make assets-ios
+	@${TOOLS_DIR}/snippets clean_orphaned_assets
+
+# Build everything needed for android.
+android:
+	@test -d ${ASSET_SRC_MASTER_DIR} && make asset_sources || true
+	@${TOOLS_DIR}/convert_util --init-asset-cache
+	@make assets-android
+	@${TOOLS_DIR}/snippets clean_orphaned_assets
+
+MAKE_AUDIO = 1
+MAKE_TEXTURES = 1
+MAKE_SCRIPTS = 1
+MAKE_FONTS = 1
+MAKE_DATA = 1
+
+ASSET_TARGETS_COMMON =
+ASSET_TARGETS_DESKTOP =
+ASSET_TARGETS_IOS =
+ASSET_TARGETS_ANDROID =
+
 
 # Audio.
 ifeq ($(MAKE_AUDIO),1)
