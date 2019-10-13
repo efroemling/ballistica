@@ -27,7 +27,13 @@ import subprocess
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import List, Dict
+    from typing import List, Dict, Tuple
+
+CLRHDR = '\033[95m'  # Header.
+CLRGRN = '\033[92m'  # Green.
+CLRBLU = '\033[94m'  # Glue.
+CLRRED = '\033[91m'  # Red.
+CLREND = '\033[0m'  # End.
 
 TARGET_TAG = '#__EFROCACHE_TARGET__'
 STRIP_BEGIN_TAG = '#__EFROCACHE_STRIP_BEGIN__'
@@ -49,6 +55,9 @@ def get_file_hash(path: str) -> str:
 
 def get_target(path: str) -> None:
     """Fetch a target path from the cache, downloading if need be."""
+    import time
+    starttime = time.time()
+
     import json
     from efrotools import run
     with open('.efrocachemap') as infile:
@@ -67,8 +76,8 @@ def get_target(path: str) -> None:
     if os.path.isfile(path):
         existing_hash = get_file_hash(path)
         if existing_hash == hashval:
-            print('FOUND VALID FILE; TOUCHING')
             run(f'touch {path}')
+            print(f'Unchanged in new cache: {path}')
             return
 
     # Ok there's not a valid file in place already.
@@ -80,8 +89,8 @@ def get_target(path: str) -> None:
     # download it.
     if not os.path.exists(local_cache_path):
         os.makedirs(os.path.dirname(local_cache_path), exist_ok=True)
-        print('Downloading:', path)
-        run(f'curl {url} > {local_cache_path_dl}')
+        print(f'Downloading: {CLRBLU}{path}{CLREND}')
+        run(f'curl --silent {url} > {local_cache_path_dl}')
         run(f'mv {local_cache_path_dl} {local_cache_path}')
 
     # Ok we should have a valid .tar.gz file in our cache dir at this point.
@@ -129,7 +138,7 @@ def filter_makefile(makefile_dir: str, contents: str) -> str:
         lines.insert(index, tname + ': ' + cachemap)
         target = (makefile_dir + '/' + '$@') if makefile_dir else '$@'
         pre = f'cd {to_proj_root} && ' if makefile_dir else ''
-        lines.insert(index + 1, f'\t{pre}{snippets} efrocache_get {target}')
+        lines.insert(index + 1, f'\t@{pre}{snippets} efrocache_get {target}')
     return '\n'.join(lines) + '\n'
 
 
@@ -141,19 +150,27 @@ def update_cache(makefile_dirs: List[str]) -> None:
     cpus = multiprocessing.cpu_count()
     fnames: List[str] = []
     for path in makefile_dirs:
-        # First, update things..
+        # First, make sure everything is built.
         cdp = f'cd {path} && ' if path else ''
         subprocess.run(f'{cdp}make -j{cpus} efrocache_build',
                        shell=True,
                        check=True)
-        # Now get the list of them.
-        fnames += [
-            os.path.join(path, s) for s in subprocess.run(
-                f'{cdp}make efrocache_list',
-                shell=True,
-                check=True,
-                capture_output=True).stdout.decode().split()
-        ]
+
+        raw_paths = subprocess.run(
+            f'{cdp}make efrocache_list',
+            shell=True,
+            check=True,
+            capture_output=True).stdout.decode().split()
+
+        # Make sure the paths they gave were relative.
+        for raw_path in raw_paths:
+            if raw_path.startswith('/'):
+                raise RuntimeError(f'Invalid path returned for caching '
+                                   f'(absolute paths not allowed): {raw_path}')
+
+        # Now get the list of it all.
+        fnames += [os.path.join(path, s) for s in raw_paths]
+
     staging_dir = 'build/efrocache'
     mapping_file = 'build/efrocachemap'
     run(f'rm -rf {staging_dir}')
@@ -169,32 +186,42 @@ def update_cache(makefile_dirs: List[str]) -> None:
     print(f'Cache update successful!')
 
 
+def _write_cache_file(staging_dir: str, fname: str) -> Tuple[str, str]:
+    import hashlib
+    from efrotools import run
+    print(f'Building efrocache for {fname}...')
+    if ' ' in fname:
+        raise RuntimeError('Spaces in paths not supported.')
+
+    # Just going with ol' md5 here; we're the only ones creating these so
+    # security isn't a concern.
+    md5 = hashlib.md5()
+    with open(fname, 'rb') as infile:
+        md5.update(infile.read())
+    md5.update(fname.encode())
+    finalhash = md5.hexdigest()
+    hashpath = os.path.join(finalhash[:2], finalhash[2:4], finalhash[4:])
+    path = os.path.join(staging_dir, hashpath)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+
+    # Fancy pipe stuff which will give us deterministic
+    # tar.gz files (no embedded timestamps)
+    run(f'tar cf - {fname} | gzip -n > {path}')
+    return fname, hashpath
+
+
 def _write_cache_files(fnames: List[str], staging_dir: str,
                        mapping_file: str) -> None:
-    from efrotools import run
-    import hashlib
+    from multiprocessing import cpu_count
+    from concurrent.futures import ThreadPoolExecutor
+    import functools
     import json
     mapping: Dict[str, str] = {}
     baseurl = 'https://files.ballistica.net/cache/ba1/'
-    for fname in fnames:
-
-        if ' ' in fname:
-            raise RuntimeError('Spaces in paths not supported.')
-
-        # Just going with ol' md5 here; we're the only ones creating these so
-        # security isn't a concern.
-        md5 = hashlib.md5()
-        with open(fname, 'rb') as infile:
-            md5.update(infile.read())
-        md5.update(fname.encode())
-        finalhash = md5.hexdigest()
-        hashpath = os.path.join(finalhash[:2], finalhash[2:4], finalhash[4:])
-        path = os.path.join(staging_dir, hashpath)
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-
-        # Fancy pipe stuff which will give us deterministic
-        # tar.gz files (no embedded timestamps)
-        run(f'tar cf - {fname} | gzip -n > {path}')
-        mapping[fname] = baseurl + hashpath
+    call = functools.partial(_write_cache_file, staging_dir)
+    with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
+        results = executor.map(call, fnames)
+    for result in results:
+        mapping[result[0]] = baseurl + result[1]
     with open(mapping_file, 'w') as outfile:
         outfile.write(json.dumps(mapping, indent=2, sort_keys=True))

@@ -35,7 +35,7 @@ all: help
 .PHONY: all
 
 build/testfile: .efrocachemap
-	tools/snippets efrocache_get $@
+	@tools/snippets efrocache_get $@
 
 
 ################################################################################
@@ -60,7 +60,7 @@ help: list
 prereqs: ${PREREQS}
 
 prereqs-clean:
-	rm -rf ${PREREQS} .irony
+	@rm -rf ${PREREQS} .irony
 
 # Build all assets for all platforms.
 assets:
