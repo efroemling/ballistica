@@ -86,6 +86,7 @@ def set_config(projroot: Path, config: Dict[str, Any]) -> None:
     with Path(projroot, 'config/config.json').open('w') as outfile:
         outfile.write(json.dumps(config, indent=2))
 
+
 def get_public_license(style: str) -> str:
     """Return the MIT license as used for our public facing stuff.
 

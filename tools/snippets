@@ -516,8 +516,12 @@ def clean_orphaned_assets() -> None:
 
     # Operate from dist root..
     os.chdir(PROJROOT)
-    with open('assets/manifest.json') as infile:
+
+    # Our manifest is split into 2 files (public and non-public)
+    with open('assets/.asset_manifest_1.json') as infile:
         manifest = set(json.loads(infile.read()))
+    with open('assets/.asset_manifest_2.json') as infile:
+        manifest.update(set(json.loads(infile.read())))
     for root, _dirs, fnames in os.walk('assets/build'):
         for fname in fnames:
             fpath = os.path.join(root, fname)
@@ -587,11 +591,6 @@ def check_mac_ssh() -> None:
     print('password ssh auth seems disabled; hooray!')
 
 
-def megalint() -> None:
-    """Run really long jetbrains lints."""
-    print('would do megalint')
-
-
 def capitalize() -> None:
     """Print args capitalized."""
     print(' '.join(w.capitalize() for w in sys.argv[2:]))
@@ -638,21 +637,16 @@ def warm_start_asset_build() -> None:
     public: bool = get_config(PROJROOT)['public']
 
     if public:
-        # In the public build, let's scan through all files managed by
-        # efrocache and update any with timestamps older than the latest
-        # cache-map that we already have the data for.
-        # Otherwise those files will update individually the next time
-        # they are 'built'. Even though that only takes a fraction of a
-        # second per file, it adds up when done for thousands of assets
-        # each time the cache map changes. It is much more efficient to do
-        # it in one go here.
-        print('WOULD DO EFROCACHE UPDATE PUSH')
+        from efrotools.efrocache import warm_start_cache
+        os.chdir(PROJROOT)
+        warm_start_cache()
     else:
         # For internal builds we don't use efrocache but we do use an
         # internal build cache. Download an initial cache/etc. if need be.
         subprocess.run(
             [str(Path(PROJROOT, 'tools/convert_util')), '--init-asset-cache'],
             check=True)
+
 
 if __name__ == '__main__':
     snippets_main(globals())

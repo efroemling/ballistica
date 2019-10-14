@@ -180,6 +180,7 @@
       <w>cachable</w>
       <w>cachebasename</w>
       <w>cacheentry</w>
+      <w>cachefile</w>
       <w>cachemap</w>
       <w>cachepath</w>
       <w>calced</w>
@@ -500,6 +501,7 @@
       <w>fieldattr</w>
       <w>fieldtypes</w>
       <w>filecmp</w>
+      <w>filehash</w>
       <w>fileinput</w>
       <w>filelist</w>
       <w>filenames</w>
@@ -544,6 +546,7 @@
       <w>formatmakefile</w>
       <w>formatscripts</w>
       <w>formatscriptsfull</w>
+      <w>formatters</w>
       <w>fout</w>
       <w>fpath</w>
       <w>fpathrel</w>
@@ -913,6 +916,7 @@
       <w>metaprogramming</w>
       <w>metascan</w>
       <w>meteorshower</w>
+      <w>mfpath</w>
       <w>mhash</w>
       <w>mhsh</w>
       <w>microprotocols</w>
@@ -1376,6 +1380,7 @@
       <w>smlh</w>
       <w>smtpd</w>
       <w>smtplib</w>
+      <w>smush</w>
       <w>snakeshadow</w>
       <w>sname</w>
       <w>snode</w>

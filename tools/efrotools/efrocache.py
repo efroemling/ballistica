@@ -39,6 +39,9 @@ TARGET_TAG = '#__EFROCACHE_TARGET__'
 STRIP_BEGIN_TAG = '#__EFROCACHE_STRIP_BEGIN__'
 STRIP_END_TAG = '#__EFROCACHE_STRIP_END__'
 
+CACHE_DIR_NAME = '.efrocache'
+CACHE_MAP_NAME = '.efrocachemap'
+
 
 def get_file_hash(path: str) -> str:
     """Return the hash used for caching.
@@ -58,13 +61,13 @@ def get_target(path: str) -> None:
 
     import json
     from efrotools import run
-    with open('.efrocachemap') as infile:
+    with open(CACHE_MAP_NAME) as infile:
         efrocachemap = json.loads(infile.read())
     if path not in efrocachemap:
         raise RuntimeError(f'Path not found in efrocache: {path}')
     url = efrocachemap[path]
     subpath = '/'.join(url.split('/')[-3:])
-    local_cache_path = os.path.join('.efrocache', subpath)
+    local_cache_path = os.path.join(CACHE_DIR_NAME, subpath)
     local_cache_path_dl = local_cache_path + '.download'
     hashval = ''.join(subpath.split('/'))
 
@@ -74,7 +77,7 @@ def get_target(path: str) -> None:
     if os.path.isfile(path):
         existing_hash = get_file_hash(path)
         if existing_hash == hashval:
-            os.utime(path)
+            os.utime(path, None)
             print(f'Refreshing from cache: {path}')
             return
 
@@ -113,7 +116,7 @@ def filter_makefile(makefile_dir: str, contents: str) -> str:
     else:
         to_proj_root = ''
 
-    cachemap = os.path.join(to_proj_root, '.efrocachemap')
+    cachemap = os.path.join(to_proj_root, CACHE_MAP_NAME)
     lines = contents.splitlines()
     snippets = 'tools/snippets'
 
@@ -230,3 +233,68 @@ def _write_cache_files(fnames: List[str], staging_dir: str,
         mapping[result[0]] = baseurl + result[1]
     with open(mapping_file, 'w') as outfile:
         outfile.write(json.dumps(mapping, indent=2, sort_keys=True))
+
+
+def _check_warm_start_entry(entry: Tuple[str, str]) -> None:
+    import hashlib
+    fname, filehash = entry
+    md5 = hashlib.md5()
+    with open(fname, 'rb') as infile:
+        md5.update(infile.read())
+    md5.update(fname.encode())
+    finalhash = md5.hexdigest()
+
+    # If the file still matches the hash value we have for it,
+    # go ahead and update its timestamp.
+    if finalhash == filehash:
+        os.utime(fname, None)
+
+
+def _check_warm_start_entries(entries: List[Tuple[str, str]]) -> None:
+    from multiprocessing import cpu_count
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
+        # Converting this to a list pulls results and propagates errors)
+        list(executor.map(_check_warm_start_entry, entries))
+
+
+def warm_start_cache() -> None:
+    """Efficiently update timestamps on unchanged cached files.
+
+    This can be run as a pre-pass before an asset build to quickly
+    update timestamps on all unchanged asset files. This can save
+    substantial time compared to letting every asset file update itself
+    individually during builds as would happen normally after the map is
+    modified.
+    """
+    import json
+
+    # In the public build, let's scan through all files managed by
+    # efrocache and update any with timestamps older than the latest
+    # cache-map that we already have the data for.
+    # Otherwise those files will update individually the next time
+    # they are 'built'. Even though that only takes a fraction of a
+    # second per file, it adds up when done for thousands of assets
+    # each time the cache map changes. It is much more efficient to do
+    # it in one go here.
+    cachemap: Dict[str, str]
+    with open(CACHE_MAP_NAME) as infile:
+        cachemap = json.loads(infile.read())
+    assert isinstance(cachemap, dict)
+    cachemap_mtime = os.path.getmtime(CACHE_MAP_NAME)
+    entries: List[Tuple[str, str]] = []
+    for fname, url in cachemap.items():
+        mtime = os.path.getmtime(fname)
+        if cachemap_mtime > mtime:
+            cachefile = CACHE_DIR_NAME + '/' + '/'.join(url.split('/')[-3:])
+            filehash = ''.join(url.split('/')[-3:])
+
+            # Only look at files that already exist and correspond to
+            # cache files that already exist.
+            # If this is the case we could probably just update the timestamp
+            # and call it a day, but let's be super safe by checking hashes
+            # on existing files to make sure they line up.
+            if os.path.isfile(fname) and os.path.isfile(cachefile):
+                entries.append((fname, filehash))
+    if entries:
+        _check_warm_start_entries(entries)
