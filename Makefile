@@ -34,9 +34,6 @@ all: help
 # Tell make which of these targets don't represent files.
 .PHONY: all
 
-build/testfile: .efrocachemap
-	@tools/snippets efrocache_get $@
-
 
 ################################################################################
 #                                                                              #

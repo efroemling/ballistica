@@ -368,6 +368,28 @@ def sync() -> None:
     run_standard_syncs(PROJROOT, mode, sync_items)
 
 
+def compile_python_files() -> None:
+    """Compile pyc files for packaging.
+
+    This creates hash-based PYC files in opt level 1 with hash checks
+    defaulting to off, so we don't have to worry about timestamps or
+    loading speed hits due to hash checks. (see PEP 552).
+    We just need to tell modders that they'll need to clear these
+    cache files out or turn on debugging mode if they want to tweak
+    the built-in scripts.
+    """
+    import py_compile
+    for arg in sys.argv[2:]:
+        # Hmm; seems mypy doesn't know about invalidation_mode yet.
+        mode = py_compile.PycInvalidationMode.UNCHECKED_HASH  # type: ignore
+        py_compile.compile(  # type: ignore
+            arg,
+            dfile=os.path.basename(arg),
+            doraise=True,
+            optimize=1,
+            invalidation_mode=mode)
+
+
 def makefile_target_list() -> None:
     """Prints targets in a makefile.
 

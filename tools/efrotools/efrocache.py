@@ -55,8 +55,6 @@ def get_file_hash(path: str) -> str:
 
 def get_target(path: str) -> None:
     """Fetch a target path from the cache, downloading if need be."""
-    import time
-    starttime = time.time()
 
     import json
     from efrotools import run
@@ -76,8 +74,8 @@ def get_target(path: str) -> None:
     if os.path.isfile(path):
         existing_hash = get_file_hash(path)
         if existing_hash == hashval:
-            run(f'touch {path}')
-            print(f'Unchanged in new cache: {path}')
+            os.utime(path)
+            print(f'Refreshing from cache: {path}')
             return
 
     # Ok there's not a valid file in place already.
@@ -125,6 +123,11 @@ def filter_makefile(makefile_dir: str, contents: str) -> str:
         endindex = index
         while lines[endindex] != STRIP_END_TAG:
             endindex += 1
+
+        # If the line after us is blank, include it too to keep spacing clean.
+        if not lines[endindex + 1].strip():
+            endindex += 1
+
         del lines[index:endindex + 1]
 
     # Replace cachable targets with cache lookups
@@ -150,8 +153,10 @@ def update_cache(makefile_dirs: List[str]) -> None:
     cpus = multiprocessing.cpu_count()
     fnames: List[str] = []
     for path in makefile_dirs:
-        # First, make sure everything is built.
+        # First, make sure all cache files are built.
         cdp = f'cd {path} && ' if path else ''
+        mfpath = os.path.join(path, 'Makefile')
+        print(f'Building cache targets for {mfpath}...')
         subprocess.run(f'{cdp}make -j{cpus} efrocache_build',
                        shell=True,
                        check=True)
@@ -189,7 +194,7 @@ def update_cache(makefile_dirs: List[str]) -> None:
 def _write_cache_file(staging_dir: str, fname: str) -> Tuple[str, str]:
     import hashlib
     from efrotools import run
-    print(f'Building efrocache for {fname}...')
+    print(f'Caching {fname}')
     if ' ' in fname:
         raise RuntimeError('Spaces in paths not supported.')
 

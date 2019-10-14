@@ -45,7 +45,7 @@ from efrotools.snippets import (  # pylint: disable=unused-import
     PROJROOT, snippets_main, formatcode, formatscripts, formatmakefile,
     cpplintcode, pylintscripts, mypyscripts, tool_config_install, sync,
     sync_all, scriptfiles, pycharmscripts, clioncode, androidstudiocode,
-    makefile_target_list, spelling)
+    makefile_target_list, spelling, compile_python_files)
 
 if TYPE_CHECKING:
     from typing import Optional, List
@@ -631,6 +631,28 @@ def get_modern_make() -> None:
     else:
         print('make')
 
+
+def warm_start_asset_build() -> None:
+    """Prep asset builds to run faster."""
+    from efrotools import get_config
+    public: bool = get_config(PROJROOT)['public']
+
+    if public:
+        # In the public build, let's scan through all files managed by
+        # efrocache and update any with timestamps older than the latest
+        # cache-map that we already have the data for.
+        # Otherwise those files will update individually the next time
+        # they are 'built'. Even though that only takes a fraction of a
+        # second per file, it adds up when done for thousands of assets
+        # each time the cache map changes. It is much more efficient to do
+        # it in one go here.
+        print('WOULD DO EFROCACHE UPDATE PUSH')
+    else:
+        # For internal builds we don't use efrocache but we do use an
+        # internal build cache. Download an initial cache/etc. if need be.
+        subprocess.run(
+            [str(Path(PROJROOT, 'tools/convert_util')), '--init-asset-cache'],
+            check=True)
 
 if __name__ == '__main__':
     snippets_main(globals())

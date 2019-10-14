@@ -86,7 +86,6 @@ def set_config(projroot: Path, config: Dict[str, Any]) -> None:
     with Path(projroot, 'config/config.json').open('w') as outfile:
         outfile.write(json.dumps(config, indent=2))
 
-
 def get_public_license(style: str) -> str:
     """Return the MIT license as used for our public facing stuff.
 
@@ -96,13 +95,15 @@ def get_public_license(style: str) -> str:
     if style == 'raw':
         return raw
     if style == 'python':
+        # Add a line at the bottom since our python-formatters tend to smush
+        # our code up against the license; this keeps things a bit more
+        # visually separated.
         return ('\n'.join('#' + (' ' if l else '') + l
                           for l in raw.splitlines()) + '\n' + '# ' + '-' * 77)
     if style == 'makefile':
-        # Basically same as python except one char wider
-        # (Pep8 specifies 79 char lines vs more standard 80)
+        # Basically same as python except without the last line.
         return ('\n'.join('#' + (' ' if l else '') + l
-                          for l in raw.splitlines()) + '\n' + '# ' + '-' * 78)
+                          for l in raw.splitlines()))
     if style == 'c++':
         return '\n'.join('//' + (' ' if l else '') + l
                          for l in raw.splitlines())

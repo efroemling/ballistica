@@ -92,6 +92,7 @@
       <w>audiobooks</w>
       <w>audioop</w>
       <w>autodesk</w>
+      <w>autogenerate</w>
       <w>autoremove</w>
       <w>autoretain</w>
       <w>autoselect</w>
@@ -176,8 +177,10 @@
       <w>buttondown</w>
       <w>buttonwidget</w>
       <w>byteswap</w>
+      <w>cachable</w>
       <w>cachebasename</w>
       <w>cacheentry</w>
+      <w>cachemap</w>
       <w>cachepath</w>
       <w>calced</w>
       <w>calcing</w>
@@ -422,6 +425,7 @@
       <w>efrocache</w>
       <w>efrocachemap</w>
       <w>efroemling</w>
+      <w>efrosync</w>
       <w>efrotool</w>
       <w>efrotools</w>
       <w>eftools</w>
@@ -434,6 +438,7 @@
       <w>ename</w>
       <w>encerr</w>
       <w>endcall</w>
+      <w>endindex</w>
       <w>endtime</w>
       <w>ensurepip</w>
       <w>entitylist</w>
@@ -637,6 +642,7 @@
       <w>gitlog</w>
       <w>gitlogcore</w>
       <w>globalsnode</w>
+      <w>gmake</w>
       <w>gname</w>
       <w>gnode</w>
       <w>goles</w>

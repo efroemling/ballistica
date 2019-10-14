@@ -17,69 +17,52 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-# ------------------------------------------------------------------------------
 
-############################ ASSET GENERATION TARGETS ##########################
+################################################################################
+#                                                                              #
+#                               Asset Generation                               #
+#                                                                              #
+################################################################################
 
-# For high level targets we run a build from master-src (if present) into src
-# followed by a build of src into build. Originally I tried to handle all
-# dependencies in one go, but I ran into weird corner cases where removing
-# some file in src would kick off a maya process to rebuild it which would also
-# as a side effect rebuild other files in src, but those other files' associated
-# build targets would not get updated until the next make invocation. Possibly
-# this was harmless but it felt janky; having a multi-tiered approach ensures
-# that maya or whatever else in master-src can muck with whatever it wants in
-# src and it will all get properly propagated to build in the next phase.
+# Generally this Makefile should not be modified by hand. To add or remove
+# assets, add or remove files under the assets/src directory and then run
+# "make update" from the project root. That will update this file as well as
+# other relevant files such as assets/manifest.json
 
-# If VERBOSE env var is 1, show command output.. (handy to diagnose failures).
-VERBOSE ?= 0
-ifeq (${VERBOSE},1)
-	VERBOSE_REDIRECT =
-else
-	VERBOSE_REDIRECT = >/dev/null 2>&1
-endif
+# Generally you shouldn't need to use this Makefile directly. Targets in the
+# root level Makefile should handle asset building for you. If you do use
+# this Makefile directly for whatever reason, remember to pass -jX on the
+# command line to speed up your builds. (with X being the number of procs
+# in your machine)
 
-
-
-# Note; make sure these are full paths; some code relies on that.
-TOOLS_DIR = ${abspath ${CURDIR}/../tools}
-PROJ_DIR = ${abspath ${CURDIR}/..}
-
-WIN_EXTRAS_DIR = ${abspath ${CURDIR}/../ballisticacore-windows/Extras}
-ASSET_SRC_DIR = ${CURDIR}/src
-ASSET_SRC_MASTER_DIR := $(shell $(TOOLS_DIR)/snippets get_master_asset_src_dir)
+TOOLS_DIR = ../tools
+PROJ_DIR = ..
+ASSET_SRC_DIR = src
 ASSET_BUILD_DIR = build
-CONVERT_UTIL = ${TOOLS_DIR}/convert_util
-MAKE_BOB = ${TOOLS_DIR}/make_bob/mac/make_bob
-MAYA_BIN = /Applications/Autodesk/maya2019/Maya.app/Contents/bin/maya
 
-# High level targets: generally these are what you should use here.
+# High level targets: generally these are what should be used here.
 
 # Build everything for all platforms.
 all:
-	@test -d ${ASSET_SRC_MASTER_DIR} && make asset_sources || true
-	@${TOOLS_DIR}/convert_util --init-asset-cache
+	@${TOOLS_DIR}/snippets warm_start_asset_build
 	@make assets
 	@${TOOLS_DIR}/snippets clean_orphaned_assets
 
 # Build everything needed for desktop platforms (mac, windows, linux).
 desktop:
-	@test -d ${ASSET_SRC_MASTER_DIR} && make asset_sources || true
-	@${TOOLS_DIR}/convert_util --init-asset-cache
+	@${TOOLS_DIR}/snippets warm_start_asset_build
 	@make assets-desktop
 	@${TOOLS_DIR}/snippets clean_orphaned_assets
 
 # Build everything needed for ios.
 ios:
-	@test -d ${ASSET_SRC_MASTER_DIR} && make asset_sources || true
-	@${TOOLS_DIR}/convert_util --init-asset-cache
+	@${TOOLS_DIR}/snippets warm_start_asset_build
 	@make assets-ios
 	@${TOOLS_DIR}/snippets clean_orphaned_assets
 
 # Build everything needed for android.
 android:
-	@test -d ${ASSET_SRC_MASTER_DIR} && make asset_sources || true
-	@${TOOLS_DIR}/convert_util --init-asset-cache
+	@${TOOLS_DIR}/snippets warm_start_asset_build
 	@make assets-android
 	@${TOOLS_DIR}/snippets clean_orphaned_assets
 
@@ -94,12 +77,10 @@ ASSET_TARGETS_DESKTOP =
 ASSET_TARGETS_IOS =
 ASSET_TARGETS_ANDROID =
 
-
 # Audio.
 ifeq ($(MAKE_AUDIO),1)
 ASSET_TARGETS_COMMON += $(AUDIO_TARGETS)
 endif
-
 
 # FontData.
 ifeq ($(MAKE_FONTS),1)
@@ -114,32 +95,12 @@ endif
 # Textures.
 ifeq ($(MAKE_TEXTURES),1)
 
-TEX2D_SRC_SOURCES = $(wildcard $(ASSET_SRC_MASTER_DIR)/textures/*.tex2d.psd)
-TEX2D_SRC_TARGETS = $(subst $(ASSET_SRC_MASTER_DIR),$(ASSET_SRC_DIR)/data,\
-      $(patsubst %.tex2d.psd,%.tex2d.png,$(TEX2D_SRC_SOURCES)))
-
 ASSET_TARGETS_DESKTOP += $(TEXTURE_TARGETS_DESKTOP)
 ASSET_TARGETS_IOS += $(TEXTURE_TARGETS_IOS)
 ASSET_TARGETS_ANDROID += $(TEXTURE_TARGETS_ANDROID)
 ASSET_TARGETS_COMMON += $(TEXTURE_TARGETS_PREVIEW)
 
-CUBE_SRC_SOURCES = $(wildcard $(ASSET_SRC_MASTER_DIR)/textures/*.texcube.psd)
-CUBE_SRC_TARGETS = $(subst $(ASSET_SRC_MASTER_DIR),$(ASSET_SRC_DIR)/data,\
-      $(patsubst %.texcube.psd,%_+x.tex2d.png,$(CUBE_SRC_SOURCES))) \
-      $(subst $(ASSET_SRC_MASTER_DIR),$(ASSET_SRC_DIR)/data,\
-      $(patsubst %.texcube.psd,%_-x.tex2d.png,$(CUBE_SRC_SOURCES))) \
-      $(subst $(ASSET_SRC_MASTER_DIR),$(ASSET_SRC_DIR)/data,\
-      $(patsubst %.texcube.psd,%_+y.tex2d.png,$(CUBE_SRC_SOURCES))) \
-      $(subst $(ASSET_SRC_MASTER_DIR),$(ASSET_SRC_DIR)/data,\
-      $(patsubst %.texcube.psd,%_-y.tex2d.png,$(CUBE_SRC_SOURCES))) \
-      $(subst $(ASSET_SRC_MASTER_DIR),$(ASSET_SRC_DIR)/data,\
-      $(patsubst %.texcube.psd,%_+z.tex2d.png,$(CUBE_SRC_SOURCES))) \
-      $(subst $(ASSET_SRC_MASTER_DIR),$(ASSET_SRC_DIR)/data,\
-      $(patsubst %.texcube.psd,%_-z.tex2d.png,$(CUBE_SRC_SOURCES)))
-
-
 endif # Textures
-
 
 # Scripts
 ifeq ($(MAKE_SCRIPTS),1)
@@ -2332,8 +2293,7 @@ SCRIPT_TARGETS_PYC_2 = \
   ${ASSET_BUILD_DIR}/pylib-apple/email/mime/__pycache__/base.cpython-37.opt-1.pyc \
   ${ASSET_BUILD_DIR}/pylib-site-packages/__pycache__/typing_extensions.cpython-37.opt-1.pyc
 
-
-# rule to copy src asset scripts to dst
+# Rule to copy src asset scripts to dst.
 # (and make non-writable so I'm less likely to accidentally edit them there)
 $(SCRIPT_TARGETS_PY_1) : ${ASSET_BUILD_DIR}/%.py : ${ASSET_SRC_DIR}/%.py
 	@echo Copying script: $(notdir $@)
@@ -2342,5454 +2302,5454 @@ $(SCRIPT_TARGETS_PY_1) : ${ASSET_BUILD_DIR}/%.py : ${ASSET_SRC_DIR}/%.py
 	@cp $^ $@
 	@chmod 444 $@
 
-# rule to copy src asset scripts to dst
+# Rule to copy src asset scripts to dst.
 # (and make non-writable so I'm less likely to accidentally edit them there)
 $(SCRIPT_TARGETS_PY_2) : ../.efrocachemap
 	@cd .. && tools/snippets efrocache_get assets/$@
 
-# looks like path mangling from py to pyc is too complex for pattern rules so
-# just generating explicit targets for each:
+# Looks like path mangling from py to pyc is too complex for pattern rules so
+# just generating explicit targets for each. Could perhaps look into using a
+# fancy for-loop instead.
 
 ${ASSET_BUILD_DIR}/server/__pycache__/server.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/server/server.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/server/__pycache__/config.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/server/config.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bafoundation/__pycache__/executils.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bafoundation/executils.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bafoundation/__pycache__/dataclassutils.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bafoundation/dataclassutils.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bafoundation/__pycache__/util.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bafoundation/util.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bafoundation/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bafoundation/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bafoundation/__pycache__/jsonutils.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bafoundation/jsonutils.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bafoundation/__pycache__/err.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bafoundation/err.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bafoundation/entity/__pycache__/_base.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bafoundation/entity/_base.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bafoundation/entity/__pycache__/_support.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bafoundation/entity/_support.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bafoundation/entity/__pycache__/util.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bafoundation/entity/util.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bafoundation/entity/__pycache__/_entity.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bafoundation/entity/_entity.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bafoundation/entity/__pycache__/_field.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bafoundation/entity/_field.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bafoundation/entity/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bafoundation/entity/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bafoundation/entity/__pycache__/_value.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bafoundation/entity/_value.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_gameactivity.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_gameactivity.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_apputils.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_apputils.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_coopsession.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_coopsession.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_appdelegate.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_appdelegate.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/internal.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/internal.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_coopgame.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_coopgame.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_meta.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_meta.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_math.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_math.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_appconfig.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_appconfig.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_gameresults.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_gameresults.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_profile.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_profile.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_error.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_error.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_achievement.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_achievement.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_teambasesession.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_teambasesession.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_gameutils.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_gameutils.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_activity.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_activity.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/deprecated.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/deprecated.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_modutils.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_modutils.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_tips.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_tips.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_store.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_store.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_activitytypes.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_activitytypes.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_session.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_session.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_hooks.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_hooks.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_enums.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_enums.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_netutils.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_netutils.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_app.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_app.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_benchmark.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_benchmark.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_tournament.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_tournament.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_messages.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_messages.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_teamssession.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_teamssession.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_freeforallsession.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_freeforallsession.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_playlist.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_playlist.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_team.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_team.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_actor.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_actor.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_powerup.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_powerup.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_campaign.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_campaign.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_lobby.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_lobby.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_stats.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_stats.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_input.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_input.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_dep.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_dep.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_level.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_level.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_general.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_general.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_server.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_server.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_account.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_account.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_music.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_music.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_lang.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_lang.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_maps.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_maps.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/__pycache__/_teamgame.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/_teamgame.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/ba/ui/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/ba/ui/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/__pycache__/mainmenu.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/mainmenu.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/__pycache__/maps.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/maps.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/__pycache__/appdelegate.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/appdelegate.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/__pycache__/tutorial.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/tutorial.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/__pycache__/stdmap.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/stdmap.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/playoptions.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/playoptions.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/mainmenu.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/mainmenu.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/getremote.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/getremote.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/tournamententry.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/tournamententry.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/telnet.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/telnet.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/appinvite.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/appinvite.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/gather.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/gather.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/config.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/config.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/colorpicker.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/colorpicker.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/tabs.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/tabs.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/promocode.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/promocode.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/fileselector.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/fileselector.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/feedback.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/feedback.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/teamnamescolors.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/teamnamescolors.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/configerror.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/configerror.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/serverdialog.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/serverdialog.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/getcurrency.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/getcurrency.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/specialoffer.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/specialoffer.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/helpui.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/helpui.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/purchase.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/purchase.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/continues.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/continues.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/play.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/play.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/popup.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/popup.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/onscreenkeyboard.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/onscreenkeyboard.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/kiosk.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/kiosk.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/qrcode.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/qrcode.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/trophies.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/trophies.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/partyqueue.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/partyqueue.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/url.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/url.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/debug.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/debug.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/iconpicker.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/iconpicker.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/watch.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/watch.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/achievements.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/achievements.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/radiogroup.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/radiogroup.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/creditslist.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/creditslist.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/tournamentscores.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/tournamentscores.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/characterpicker.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/characterpicker.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/report.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/report.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/resourcetypeinfo.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/resourcetypeinfo.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/confirm.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/confirm.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/__pycache__/party.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/party.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/__pycache__/graphics.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/graphics.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/__pycache__/advanced.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/advanced.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/__pycache__/controls.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/controls.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/__pycache__/gamepadadvanced.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/gamepadadvanced.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/__pycache__/gamepadselect.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/gamepadselect.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/__pycache__/touchscreen.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/touchscreen.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/__pycache__/xbox360controller.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/xbox360controller.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/__pycache__/audio.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/audio.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/__pycache__/gamepad.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/gamepad.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/__pycache__/nettesting.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/nettesting.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/__pycache__/remoteapp.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/remoteapp.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/__pycache__/testing.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/testing.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/__pycache__/wiimote.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/wiimote.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/__pycache__/vrtesting.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/vrtesting.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/__pycache__/allsettings.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/allsettings.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/__pycache__/ps3controller.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/ps3controller.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/__pycache__/keyboard.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/settings/keyboard.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/playlist/__pycache__/customizebrowser.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/playlist/customizebrowser.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/playlist/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/playlist/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/playlist/__pycache__/edit.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/playlist/edit.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/playlist/__pycache__/browser.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/playlist/browser.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/playlist/__pycache__/mapselect.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/playlist/mapselect.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/playlist/__pycache__/share.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/playlist/share.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/playlist/__pycache__/editgame.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/playlist/editgame.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/playlist/__pycache__/editcontroller.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/playlist/editcontroller.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/playlist/__pycache__/addgame.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/playlist/addgame.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/soundtrack/__pycache__/entrytypeselect.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/soundtrack/entrytypeselect.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/soundtrack/__pycache__/itunes.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/soundtrack/itunes.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/soundtrack/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/soundtrack/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/soundtrack/__pycache__/edit.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/soundtrack/edit.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/soundtrack/__pycache__/browser.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/soundtrack/browser.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/league/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/league/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/league/__pycache__/rankbutton.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/league/rankbutton.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/league/__pycache__/rankwindow.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/league/rankwindow.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/coop/__pycache__/gamebutton.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/coop/gamebutton.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/coop/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/coop/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/coop/__pycache__/browser.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/coop/browser.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/coop/__pycache__/level.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/coop/level.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/profile/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/profile/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/profile/__pycache__/edit.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/profile/edit.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/profile/__pycache__/upgrade.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/profile/upgrade.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/profile/__pycache__/browser.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/profile/browser.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/account/__pycache__/link.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/account/link.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/account/__pycache__/viewer.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/account/viewer.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/account/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/account/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/account/__pycache__/unlink.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/account/unlink.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/account/__pycache__/settings.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/account/settings.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/store/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/store/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/store/__pycache__/browser.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/store/browser.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/store/__pycache__/button.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/store/button.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/store/__pycache__/item.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/ui/store/item.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/activity/__pycache__/freeforallendscreen.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/activity/freeforallendscreen.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/activity/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/activity/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/activity/__pycache__/coopscorescreen.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/activity/coopscorescreen.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/activity/__pycache__/dualteamscorescreen.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/activity/dualteamscorescreen.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/activity/__pycache__/coopjoinscreen.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/activity/coopjoinscreen.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/activity/__pycache__/multiteamendscreen.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/activity/multiteamendscreen.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/activity/__pycache__/teamsscorescreen.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/activity/teamsscorescreen.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/activity/__pycache__/multiteamjoinscreen.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/activity/multiteamjoinscreen.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/activity/__pycache__/drawscreen.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/activity/drawscreen.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/game/__pycache__/capturetheflag.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/game/capturetheflag.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/game/__pycache__/targetpractice.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/game/targetpractice.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/game/__pycache__/ninjafight.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/game/ninjafight.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/game/__pycache__/easteregghunt.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/game/easteregghunt.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/game/__pycache__/race.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/game/race.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/game/__pycache__/meteorshower.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/game/meteorshower.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/game/__pycache__/thelaststand.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/game/thelaststand.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/game/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/game/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/game/__pycache__/football.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/game/football.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/game/__pycache__/kingofthehill.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/game/kingofthehill.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/game/__pycache__/assault.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/game/assault.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/game/__pycache__/keepaway.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/game/keepaway.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/game/__pycache__/elimination.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/game/elimination.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/game/__pycache__/deathmatch.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/game/deathmatch.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/game/__pycache__/onslaught.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/game/onslaught.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/game/__pycache__/hockey.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/game/hockey.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/game/__pycache__/chosenone.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/game/chosenone.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/game/__pycache__/conquest.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/game/conquest.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/game/__pycache__/runaround.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/game/runaround.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/__pycache__/bridgit.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/bridgit.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/__pycache__/big_g.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/big_g.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/__pycache__/hockey_stadium.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/hockey_stadium.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/__pycache__/courtyard.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/courtyard.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/__pycache__/tower_d.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/tower_d.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/__pycache__/roundabout.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/roundabout.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/__pycache__/rampage.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/rampage.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/__pycache__/crag_castle.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/crag_castle.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/__pycache__/step_right_up.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/step_right_up.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/__pycache__/football_stadium.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/football_stadium.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/__pycache__/the_pad.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/the_pad.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/__pycache__/happy_thoughts.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/happy_thoughts.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/__pycache__/monkey_face.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/monkey_face.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/__pycache__/doom_shroom.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/doom_shroom.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/__pycache__/zig_zag.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/zig_zag.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/__pycache__/lake_frigid.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/lake_frigid.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/__pycache__/tip_top.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/mapdata/tip_top.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/__pycache__/spazfactory.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/spazfactory.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/__pycache__/bomb.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/bomb.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/__pycache__/spazbot.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/spazbot.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/__pycache__/flag.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/flag.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/__pycache__/scoreboard.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/scoreboard.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/__pycache__/popuptext.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/popuptext.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/__pycache__/background.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/background.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/__pycache__/zoomtext.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/zoomtext.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/__pycache__/spaz.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/spaz.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/__pycache__/spazappearance.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/spazappearance.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/__pycache__/controlsguide.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/controlsguide.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/__pycache__/powerupbox.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/powerupbox.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/__pycache__/text.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/text.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/__pycache__/spawner.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/spawner.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/__pycache__/respawnicon.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/respawnicon.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/__pycache__/playerspaz.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/playerspaz.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/__pycache__/tipstext.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/tipstext.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/__pycache__/onscreencountdown.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/onscreencountdown.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/__pycache__/onscreentimer.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/onscreentimer.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/__pycache__/image.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/actor/image.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/data/scripts/bastd/session/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/data/scripts/bastd/session/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/zipfile.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/zipfile.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/shutil.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/shutil.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/tempfile.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/tempfile.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/queue.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/queue.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/macpath.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/macpath.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/_pyio.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/_pyio.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/crypt.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/crypt.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/pkgutil.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/pkgutil.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/_dummy_thread.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/_dummy_thread.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/lzma.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/lzma.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/asyncore.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/asyncore.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/__phello__.foo.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/__phello__.foo.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/_sitebuiltins.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/_sitebuiltins.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/copyreg.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/copyreg.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/sndhdr.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/sndhdr.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/rlcompleter.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/rlcompleter.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/gzip.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/gzip.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/ipaddress.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/ipaddress.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/trace.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/trace.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/webbrowser.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/webbrowser.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/nntplib.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/nntplib.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/_compat_pickle.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/_compat_pickle.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/_sysconfigdata_m_linux_.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/_sysconfigdata_m_linux_.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/dis.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/dis.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/formatter.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/formatter.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/bdb.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/bdb.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/zipapp.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/zipapp.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/cmd.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/cmd.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/tty.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/tty.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/tabnanny.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/tabnanny.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/_py_abc.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/_py_abc.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/cProfile.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/cProfile.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/token.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/token.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/textwrap.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/textwrap.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/base64.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/base64.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/_markupbase.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/_markupbase.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/bz2.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/bz2.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/signal.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/signal.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/sre_constants.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/sre_constants.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/cgitb.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/cgitb.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/_threading_local.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/_threading_local.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/pyclbr.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/pyclbr.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/gettext.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/gettext.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/wave.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/wave.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/weakref.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/weakref.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/bisect.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/bisect.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/opcode.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/opcode.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/netrc.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/netrc.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/heapq.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/heapq.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/functools.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/functools.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/modulefinder.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/modulefinder.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/_compression.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/_compression.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/tracemalloc.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/tracemalloc.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/hashlib.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/hashlib.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/cgi.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/cgi.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/codeop.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/codeop.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/fnmatch.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/fnmatch.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/traceback.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/traceback.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/nturl2path.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/nturl2path.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/warnings.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/warnings.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/subprocess.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/subprocess.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/profile.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/profile.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/imghdr.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/imghdr.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/this.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/this.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/filecmp.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/filecmp.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/codecs.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/codecs.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/uu.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/uu.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/_weakrefset.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/_weakrefset.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/io.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/io.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/code.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/code.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/operator.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/operator.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/fileinput.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/fileinput.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/os.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/os.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/difflib.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/difflib.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/pydoc.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/pydoc.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/symbol.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/symbol.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/selectors.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/selectors.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/decimal.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/decimal.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/socketserver.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/socketserver.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/copy.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/copy.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/genericpath.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/genericpath.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/linecache.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/linecache.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/types.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/types.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/mimetypes.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/mimetypes.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/xdrlib.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/xdrlib.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/colorsys.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/colorsys.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/numbers.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/numbers.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/_strptime.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/_strptime.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/dummy_threading.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/dummy_threading.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/contextvars.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/contextvars.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/random.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/random.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/ftplib.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/ftplib.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/chunk.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/chunk.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/optparse.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/optparse.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/pdb.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/pdb.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/threading.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/threading.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/platform.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/platform.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/pstats.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/pstats.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/glob.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/glob.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/quopri.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/quopri.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/symtable.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/symtable.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/pprint.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/pprint.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/calendar.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/calendar.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/inspect.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/inspect.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/poplib.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/poplib.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/binhex.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/binhex.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/plistlib.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/plistlib.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/pickletools.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/pickletools.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/pipes.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/pipes.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/site.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/site.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/telnetlib.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/telnetlib.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/keyword.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/keyword.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/configparser.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/configparser.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/reprlib.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/reprlib.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/secrets.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/secrets.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/shlex.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/shlex.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/posixpath.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/posixpath.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/py_compile.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/py_compile.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/_osx_support.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/_osx_support.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/stat.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/stat.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/compileall.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/compileall.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/csv.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/csv.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/fractions.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/fractions.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/sched.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/sched.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/mailbox.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/mailbox.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/sre_compile.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/sre_compile.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/locale.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/locale.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/ast.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/ast.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/doctest.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/doctest.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/argparse.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/argparse.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/getpass.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/getpass.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/pickle.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/pickle.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/pty.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/pty.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/contextlib.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/contextlib.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/statistics.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/statistics.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/_collections_abc.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/_collections_abc.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/sunau.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/sunau.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/__future__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/__future__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/dataclasses.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/dataclasses.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/shelve.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/shelve.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/string.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/string.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/smtplib.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/smtplib.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/getopt.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/getopt.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/antigravity.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/antigravity.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/enum.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/enum.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/timeit.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/timeit.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/hmac.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/hmac.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/tarfile.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/tarfile.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/stringprep.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/stringprep.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/typing.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/typing.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/ssl.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/ssl.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/socket.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/socket.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/datetime.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/datetime.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/sysconfig.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/sysconfig.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/pathlib.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/pathlib.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/_pydecimal.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/_pydecimal.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/ntpath.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/ntpath.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/tokenize.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/tokenize.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/uuid.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/uuid.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/imp.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/imp.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/smtpd.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/smtpd.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/re.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/re.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/mailcap.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/mailcap.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/aifc.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/aifc.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/struct.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/struct.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/asynchat.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/asynchat.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/sre_parse.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/sre_parse.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/abc.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/abc.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/runpy.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/runpy.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/__pycache__/_bootlocale.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/_bootlocale.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/mac_romanian.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/mac_romanian.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/mac_farsi.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/mac_farsi.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/idna.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/idna.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp273.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp273.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/punycode.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/punycode.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/raw_unicode_escape.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/raw_unicode_escape.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/utf_8.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/utf_8.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp1252.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp1252.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp869.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp869.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/iso8859_14.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/iso8859_14.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/iso8859_2.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/iso8859_2.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/mac_arabic.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/mac_arabic.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/mac_croatian.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/mac_croatian.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/big5hkscs.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/big5hkscs.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp1256.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp1256.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/iso8859_6.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/iso8859_6.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/iso8859_10.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/iso8859_10.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/iso2022_kr.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/iso2022_kr.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp1140.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp1140.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/unicode_internal.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/unicode_internal.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp1125.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp1125.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/iso2022_jp_1.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/iso2022_jp_1.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp1257.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp1257.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp949.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp949.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp858.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp858.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/iso8859_7.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/iso8859_7.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/iso8859_11.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/iso8859_11.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/hp_roman8.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/hp_roman8.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/koi8_r.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/koi8_r.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/zlib_codec.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/zlib_codec.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/gbk.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/gbk.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/johab.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/johab.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp1253.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp1253.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/iso8859_15.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/iso8859_15.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/iso2022_jp_2004.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/iso2022_jp_2004.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/mac_iceland.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/mac_iceland.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/iso8859_3.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/iso8859_3.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/mac_greek.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/mac_greek.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/rot_13.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/rot_13.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/utf_16_be.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/utf_16_be.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/euc_kr.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/euc_kr.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/mac_centeuro.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/mac_centeuro.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/euc_jisx0213.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/euc_jisx0213.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp863.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp863.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/ascii.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/ascii.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/iso8859_8.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/iso8859_8.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp857.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp857.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/utf_32_be.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/utf_32_be.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp1258.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp1258.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/oem.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/oem.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/mac_latin2.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/mac_latin2.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp775.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp775.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/mac_roman.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/mac_roman.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp852.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp852.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/shift_jisx0213.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/shift_jisx0213.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp866.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp866.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/utf_7.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/utf_7.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/base64_codec.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/base64_codec.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp932.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp932.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp720.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp720.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp862.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp862.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp437.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp437.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/palmos.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/palmos.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/iso8859_9.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/iso8859_9.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp856.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp856.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/aliases.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/aliases.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/latin_1.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/latin_1.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp875.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp875.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp950.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp950.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/unicode_escape.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/unicode_escape.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp737.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp737.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp865.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp865.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/ptcp154.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/ptcp154.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/big5.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/big5.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp424.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp424.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp861.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp861.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/euc_jp.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/euc_jp.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp855.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp855.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/shift_jis.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/shift_jis.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/utf_32_le.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/utf_32_le.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp500.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp500.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/undefined.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/undefined.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp860.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp860.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/uu_codec.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/uu_codec.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/utf_16_le.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/utf_16_le.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/gb18030.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/gb18030.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp65001.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp65001.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp874.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp874.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp850.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp850.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp864.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp864.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/utf_32.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/utf_32.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/koi8_u.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/koi8_u.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp1254.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp1254.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/iso2022_jp_2.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/iso2022_jp_2.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/utf_16.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/utf_16.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/iso8859_4.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/iso8859_4.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/euc_jis_2004.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/euc_jis_2004.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/mbcs.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/mbcs.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp1250.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp1250.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/gb2312.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/gb2312.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/iso8859_16.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/iso8859_16.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/mac_cyrillic.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/mac_cyrillic.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/hex_codec.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/hex_codec.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/tis_620.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/tis_620.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp037.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp037.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp1006.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp1006.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp1251.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp1251.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/mac_turkish.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/mac_turkish.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/iso2022_jp_ext.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/iso2022_jp_ext.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/iso8859_1.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/iso8859_1.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/hz.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/hz.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/bz2_codec.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/bz2_codec.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/quopri_codec.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/quopri_codec.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/kz1048.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/kz1048.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/utf_8_sig.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/utf_8_sig.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/koi8_t.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/koi8_t.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp1255.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp1255.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/iso2022_jp_3.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/iso2022_jp_3.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/shift_jis_2004.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/shift_jis_2004.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/cp1026.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/cp1026.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/charmap.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/charmap.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/iso8859_5.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/iso8859_5.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/iso8859_13.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/iso8859_13.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/encodings/__pycache__/iso2022_jp.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/encodings/iso2022_jp.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/ctypes/__pycache__/_aix.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/ctypes/_aix.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/ctypes/__pycache__/wintypes.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/ctypes/wintypes.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/ctypes/__pycache__/util.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/ctypes/util.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/ctypes/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/ctypes/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/ctypes/__pycache__/_endian.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/ctypes/_endian.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/ctypes/macholib/__pycache__/dyld.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/ctypes/macholib/dyld.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/ctypes/macholib/__pycache__/framework.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/ctypes/macholib/framework.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/ctypes/macholib/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/ctypes/macholib/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/ctypes/macholib/__pycache__/dylib.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/ctypes/macholib/dylib.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/curses/__pycache__/textpad.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/curses/textpad.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/curses/__pycache__/ascii.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/curses/ascii.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/curses/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/curses/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/curses/__pycache__/has_key.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/curses/has_key.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/curses/__pycache__/panel.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/curses/panel.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/urllib/__pycache__/error.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/urllib/error.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/urllib/__pycache__/request.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/urllib/request.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/urllib/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/urllib/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/urllib/__pycache__/response.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/urllib/response.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/urllib/__pycache__/robotparser.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/urllib/robotparser.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/urllib/__pycache__/parse.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/urllib/parse.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/html/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/html/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/html/__pycache__/parser.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/html/parser.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/html/__pycache__/entities.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/html/entities.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/xml/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/xml/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/xml/parsers/__pycache__/expat.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/xml/parsers/expat.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/xml/parsers/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/xml/parsers/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/xml/sax/__pycache__/handler.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/xml/sax/handler.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/xml/sax/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/xml/sax/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/xml/sax/__pycache__/saxutils.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/xml/sax/saxutils.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/xml/sax/__pycache__/xmlreader.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/xml/sax/xmlreader.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/xml/sax/__pycache__/expatreader.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/xml/sax/expatreader.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/xml/sax/__pycache__/_exceptions.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/xml/sax/_exceptions.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/xml/dom/__pycache__/pulldom.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/xml/dom/pulldom.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/xml/dom/__pycache__/expatbuilder.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/xml/dom/expatbuilder.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/xml/dom/__pycache__/domreg.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/xml/dom/domreg.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/xml/dom/__pycache__/minicompat.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/xml/dom/minicompat.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/xml/dom/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/xml/dom/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/xml/dom/__pycache__/NodeFilter.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/xml/dom/NodeFilter.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/xml/dom/__pycache__/xmlbuilder.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/xml/dom/xmlbuilder.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/xml/dom/__pycache__/minidom.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/xml/dom/minidom.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/xml/etree/__pycache__/ElementPath.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/xml/etree/ElementPath.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/xml/etree/__pycache__/cElementTree.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/xml/etree/cElementTree.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/xml/etree/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/xml/etree/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/xml/etree/__pycache__/ElementInclude.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/xml/etree/ElementInclude.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/xml/etree/__pycache__/ElementTree.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/xml/etree/ElementTree.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/json/__pycache__/decoder.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/json/decoder.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/json/__pycache__/scanner.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/json/scanner.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/json/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/json/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/json/__pycache__/encoder.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/json/encoder.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/json/__pycache__/tool.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/json/tool.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/http/__pycache__/cookies.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/http/cookies.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/http/__pycache__/server.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/http/server.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/http/__pycache__/client.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/http/client.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/http/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/http/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/http/__pycache__/cookiejar.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/http/cookiejar.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/sqlite3/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/sqlite3/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/sqlite3/__pycache__/dump.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/sqlite3/dump.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/sqlite3/__pycache__/dbapi2.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/sqlite3/dbapi2.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/concurrent/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/concurrent/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/concurrent/futures/__pycache__/_base.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/concurrent/futures/_base.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/concurrent/futures/__pycache__/thread.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/concurrent/futures/thread.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/concurrent/futures/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/concurrent/futures/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/concurrent/futures/__pycache__/process.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/concurrent/futures/process.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/importlib/__pycache__/util.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/importlib/util.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/importlib/__pycache__/_bootstrap.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/importlib/_bootstrap.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/importlib/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/importlib/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/importlib/__pycache__/_bootstrap_external.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/importlib/_bootstrap_external.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/importlib/__pycache__/resources.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/importlib/resources.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/importlib/__pycache__/machinery.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/importlib/machinery.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/importlib/__pycache__/abc.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/importlib/abc.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/xmlrpc/__pycache__/server.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/xmlrpc/server.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/xmlrpc/__pycache__/client.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/xmlrpc/client.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/xmlrpc/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/xmlrpc/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/collections/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/collections/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/collections/__pycache__/abc.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/collections/abc.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/asyncio/__pycache__/queues.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/asyncio/queues.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/asyncio/__pycache__/streams.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/asyncio/streams.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/asyncio/__pycache__/tasks.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/asyncio/tasks.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/asyncio/__pycache__/selector_events.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/asyncio/selector_events.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/asyncio/__pycache__/log.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/asyncio/log.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/asyncio/__pycache__/protocols.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/asyncio/protocols.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/asyncio/__pycache__/events.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/asyncio/events.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/asyncio/__pycache__/base_events.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/asyncio/base_events.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/asyncio/__pycache__/subprocess.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/asyncio/subprocess.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/asyncio/__pycache__/constants.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/asyncio/constants.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/asyncio/__pycache__/proactor_events.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/asyncio/proactor_events.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/asyncio/__pycache__/format_helpers.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/asyncio/format_helpers.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/asyncio/__pycache__/locks.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/asyncio/locks.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/asyncio/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/asyncio/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/asyncio/__pycache__/futures.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/asyncio/futures.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/asyncio/__pycache__/sslproto.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/asyncio/sslproto.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/asyncio/__pycache__/base_subprocess.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/asyncio/base_subprocess.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/asyncio/__pycache__/windows_utils.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/asyncio/windows_utils.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/asyncio/__pycache__/runners.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/asyncio/runners.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/asyncio/__pycache__/transports.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/asyncio/transports.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/asyncio/__pycache__/base_tasks.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/asyncio/base_tasks.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/asyncio/__pycache__/coroutines.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/asyncio/coroutines.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/asyncio/__pycache__/windows_events.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/asyncio/windows_events.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/asyncio/__pycache__/base_futures.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/asyncio/base_futures.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/asyncio/__pycache__/unix_events.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/asyncio/unix_events.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/logging/__pycache__/config.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/logging/config.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/logging/__pycache__/handlers.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/logging/handlers.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/logging/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/logging/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/email/__pycache__/contentmanager.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/email/contentmanager.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/email/__pycache__/_policybase.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/email/_policybase.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/email/__pycache__/header.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/email/header.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/email/__pycache__/_encoded_words.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/email/_encoded_words.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/email/__pycache__/_header_value_parser.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/email/_header_value_parser.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/email/__pycache__/policy.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/email/policy.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/email/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/email/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/email/__pycache__/message.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/email/message.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/email/__pycache__/encoders.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/email/encoders.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/email/__pycache__/parser.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/email/parser.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/email/__pycache__/generator.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/email/generator.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/email/__pycache__/utils.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/email/utils.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/email/__pycache__/charset.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/email/charset.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/email/__pycache__/iterators.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/email/iterators.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/email/__pycache__/quoprimime.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/email/quoprimime.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/email/__pycache__/errors.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/email/errors.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/email/__pycache__/feedparser.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/email/feedparser.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/email/__pycache__/_parseaddr.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/email/_parseaddr.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/email/__pycache__/base64mime.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/email/base64mime.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/email/__pycache__/headerregistry.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/email/headerregistry.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/email/mime/__pycache__/multipart.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/email/mime/multipart.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/email/mime/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/email/mime/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/email/mime/__pycache__/message.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/email/mime/message.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/email/mime/__pycache__/application.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/email/mime/application.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/email/mime/__pycache__/nonmultipart.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/email/mime/nonmultipart.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/email/mime/__pycache__/text.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/email/mime/text.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/email/mime/__pycache__/audio.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/email/mime/audio.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/email/mime/__pycache__/image.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/email/mime/image.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-android/email/mime/__pycache__/base.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-android/email/mime/base.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/zipfile.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/zipfile.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/shutil.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/shutil.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/tempfile.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/tempfile.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/queue.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/queue.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/macpath.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/macpath.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/_sysconfigdata_m_darwin_darwin.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/_sysconfigdata_m_darwin_darwin.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/_pyio.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/_pyio.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/crypt.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/crypt.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/pkgutil.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/pkgutil.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/_dummy_thread.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/_dummy_thread.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/lzma.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/lzma.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/asyncore.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/asyncore.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/__phello__.foo.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/__phello__.foo.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/_sitebuiltins.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/_sitebuiltins.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/copyreg.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/copyreg.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/sndhdr.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/sndhdr.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/rlcompleter.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/rlcompleter.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/gzip.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/gzip.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/ipaddress.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/ipaddress.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/trace.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/trace.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/webbrowser.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/webbrowser.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/nntplib.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/nntplib.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/_compat_pickle.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/_compat_pickle.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/dis.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/dis.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/formatter.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/formatter.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/bdb.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/bdb.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/zipapp.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/zipapp.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/cmd.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/cmd.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/tty.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/tty.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/tabnanny.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/tabnanny.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/_py_abc.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/_py_abc.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/cProfile.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/cProfile.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/token.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/token.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/textwrap.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/textwrap.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/base64.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/base64.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/_markupbase.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/_markupbase.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/bz2.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/bz2.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/signal.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/signal.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/sre_constants.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/sre_constants.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/cgitb.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/cgitb.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/_threading_local.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/_threading_local.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/pyclbr.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/pyclbr.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/gettext.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/gettext.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/wave.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/wave.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/weakref.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/weakref.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/bisect.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/bisect.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/opcode.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/opcode.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/netrc.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/netrc.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/heapq.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/heapq.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/functools.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/functools.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/modulefinder.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/modulefinder.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/_compression.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/_compression.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/tracemalloc.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/tracemalloc.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/hashlib.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/hashlib.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/cgi.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/cgi.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/codeop.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/codeop.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/fnmatch.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/fnmatch.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/traceback.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/traceback.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/nturl2path.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/nturl2path.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/warnings.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/warnings.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/subprocess.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/subprocess.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/profile.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/profile.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/imghdr.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/imghdr.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/this.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/this.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/filecmp.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/filecmp.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/codecs.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/codecs.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/uu.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/uu.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/_weakrefset.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/_weakrefset.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/io.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/io.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/code.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/code.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/operator.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/operator.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/fileinput.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/fileinput.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/os.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/os.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/difflib.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/difflib.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/pydoc.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/pydoc.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/symbol.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/symbol.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/selectors.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/selectors.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/decimal.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/decimal.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/socketserver.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/socketserver.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/copy.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/copy.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/genericpath.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/genericpath.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/linecache.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/linecache.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/types.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/types.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/mimetypes.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/mimetypes.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/xdrlib.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/xdrlib.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/colorsys.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/colorsys.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/numbers.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/numbers.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/_strptime.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/_strptime.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/dummy_threading.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/dummy_threading.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/contextvars.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/contextvars.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/random.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/random.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/ftplib.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/ftplib.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/chunk.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/chunk.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/optparse.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/optparse.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/pdb.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/pdb.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/threading.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/threading.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/platform.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/platform.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/pstats.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/pstats.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/glob.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/glob.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/quopri.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/quopri.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/symtable.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/symtable.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/pprint.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/pprint.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/calendar.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/calendar.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/inspect.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/inspect.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/poplib.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/poplib.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/binhex.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/binhex.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/plistlib.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/plistlib.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/pickletools.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/pickletools.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/pipes.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/pipes.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/site.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/site.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/telnetlib.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/telnetlib.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/keyword.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/keyword.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/configparser.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/configparser.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/reprlib.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/reprlib.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/secrets.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/secrets.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/shlex.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/shlex.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/posixpath.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/posixpath.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/py_compile.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/py_compile.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/_osx_support.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/_osx_support.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/stat.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/stat.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/compileall.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/compileall.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/csv.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/csv.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/fractions.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/fractions.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/sched.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/sched.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/mailbox.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/mailbox.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/sre_compile.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/sre_compile.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/locale.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/locale.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/ast.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/ast.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/doctest.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/doctest.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/argparse.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/argparse.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/getpass.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/getpass.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/pickle.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/pickle.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/pty.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/pty.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/contextlib.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/contextlib.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/statistics.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/statistics.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/_collections_abc.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/_collections_abc.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/sunau.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/sunau.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/__future__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/__future__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/dataclasses.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/dataclasses.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/shelve.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/shelve.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/string.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/string.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/smtplib.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/smtplib.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/getopt.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/getopt.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/antigravity.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/antigravity.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/enum.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/enum.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/timeit.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/timeit.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/hmac.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/hmac.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/tarfile.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/tarfile.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/stringprep.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/stringprep.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/typing.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/typing.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/ssl.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/ssl.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/socket.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/socket.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/datetime.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/datetime.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/sysconfig.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/sysconfig.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/pathlib.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/pathlib.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/_pydecimal.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/_pydecimal.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/ntpath.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/ntpath.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/tokenize.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/tokenize.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/uuid.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/uuid.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/imp.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/imp.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/smtpd.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/smtpd.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/re.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/re.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/mailcap.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/mailcap.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/aifc.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/aifc.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/struct.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/struct.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/asynchat.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/asynchat.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/sre_parse.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/sre_parse.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/abc.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/abc.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/runpy.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/runpy.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/__pycache__/_bootlocale.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/_bootlocale.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/mac_romanian.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/mac_romanian.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/mac_farsi.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/mac_farsi.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/idna.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/idna.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp273.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp273.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/punycode.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/punycode.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/raw_unicode_escape.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/raw_unicode_escape.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/utf_8.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/utf_8.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp1252.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp1252.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp869.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp869.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/iso8859_14.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/iso8859_14.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/iso8859_2.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/iso8859_2.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/mac_arabic.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/mac_arabic.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/mac_croatian.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/mac_croatian.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/big5hkscs.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/big5hkscs.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp1256.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp1256.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/iso8859_6.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/iso8859_6.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/iso8859_10.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/iso8859_10.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/iso2022_kr.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/iso2022_kr.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp1140.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp1140.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/unicode_internal.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/unicode_internal.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp1125.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp1125.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/iso2022_jp_1.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/iso2022_jp_1.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp1257.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp1257.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp949.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp949.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp858.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp858.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/iso8859_7.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/iso8859_7.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/iso8859_11.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/iso8859_11.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/hp_roman8.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/hp_roman8.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/koi8_r.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/koi8_r.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/zlib_codec.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/zlib_codec.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/gbk.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/gbk.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/johab.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/johab.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp1253.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp1253.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/iso8859_15.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/iso8859_15.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/iso2022_jp_2004.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/iso2022_jp_2004.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/mac_iceland.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/mac_iceland.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/iso8859_3.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/iso8859_3.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/mac_greek.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/mac_greek.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/rot_13.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/rot_13.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/utf_16_be.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/utf_16_be.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/euc_kr.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/euc_kr.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/mac_centeuro.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/mac_centeuro.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/euc_jisx0213.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/euc_jisx0213.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp863.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp863.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/ascii.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/ascii.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/iso8859_8.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/iso8859_8.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp857.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp857.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/utf_32_be.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/utf_32_be.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp1258.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp1258.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/oem.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/oem.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/mac_latin2.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/mac_latin2.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp775.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp775.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/mac_roman.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/mac_roman.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp852.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp852.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/shift_jisx0213.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/shift_jisx0213.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp866.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp866.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/utf_7.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/utf_7.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/base64_codec.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/base64_codec.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp932.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp932.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp720.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp720.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp862.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp862.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp437.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp437.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/palmos.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/palmos.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/iso8859_9.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/iso8859_9.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp856.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp856.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/aliases.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/aliases.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/latin_1.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/latin_1.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp875.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp875.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp950.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp950.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/unicode_escape.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/unicode_escape.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp737.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp737.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp865.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp865.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/ptcp154.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/ptcp154.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/big5.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/big5.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp424.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp424.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp861.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp861.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/euc_jp.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/euc_jp.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp855.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp855.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/shift_jis.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/shift_jis.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/utf_32_le.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/utf_32_le.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp500.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp500.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/undefined.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/undefined.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp860.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp860.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/uu_codec.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/uu_codec.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/utf_16_le.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/utf_16_le.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/gb18030.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/gb18030.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp65001.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp65001.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp874.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp874.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp850.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp850.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp864.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp864.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/utf_32.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/utf_32.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/koi8_u.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/koi8_u.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp1254.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp1254.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/iso2022_jp_2.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/iso2022_jp_2.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/utf_16.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/utf_16.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/iso8859_4.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/iso8859_4.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/euc_jis_2004.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/euc_jis_2004.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/mbcs.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/mbcs.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp1250.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp1250.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/gb2312.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/gb2312.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/iso8859_16.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/iso8859_16.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/mac_cyrillic.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/mac_cyrillic.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/hex_codec.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/hex_codec.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/tis_620.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/tis_620.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp037.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp037.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp1006.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp1006.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp1251.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp1251.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/mac_turkish.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/mac_turkish.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/iso2022_jp_ext.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/iso2022_jp_ext.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/iso8859_1.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/iso8859_1.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/hz.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/hz.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/bz2_codec.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/bz2_codec.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/quopri_codec.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/quopri_codec.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/kz1048.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/kz1048.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/utf_8_sig.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/utf_8_sig.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/koi8_t.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/koi8_t.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp1255.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp1255.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/iso2022_jp_3.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/iso2022_jp_3.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/shift_jis_2004.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/shift_jis_2004.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/cp1026.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/cp1026.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/charmap.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/charmap.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/iso8859_5.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/iso8859_5.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/iso8859_13.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/iso8859_13.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/encodings/__pycache__/iso2022_jp.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/encodings/iso2022_jp.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/ctypes/__pycache__/_aix.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/ctypes/_aix.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/ctypes/__pycache__/wintypes.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/ctypes/wintypes.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/ctypes/__pycache__/util.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/ctypes/util.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/ctypes/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/ctypes/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/ctypes/__pycache__/_endian.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/ctypes/_endian.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/ctypes/macholib/__pycache__/dyld.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/ctypes/macholib/dyld.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/ctypes/macholib/__pycache__/framework.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/ctypes/macholib/framework.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/ctypes/macholib/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/ctypes/macholib/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/ctypes/macholib/__pycache__/dylib.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/ctypes/macholib/dylib.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/curses/__pycache__/textpad.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/curses/textpad.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/curses/__pycache__/ascii.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/curses/ascii.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/curses/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/curses/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/curses/__pycache__/has_key.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/curses/has_key.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/curses/__pycache__/panel.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/curses/panel.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/urllib/__pycache__/error.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/urllib/error.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/urllib/__pycache__/request.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/urllib/request.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/urllib/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/urllib/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/urllib/__pycache__/response.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/urllib/response.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/urllib/__pycache__/robotparser.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/urllib/robotparser.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/urllib/__pycache__/parse.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/urllib/parse.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/html/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/html/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/html/__pycache__/parser.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/html/parser.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/html/__pycache__/entities.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/html/entities.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/xml/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/xml/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/xml/parsers/__pycache__/expat.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/xml/parsers/expat.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/xml/parsers/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/xml/parsers/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/xml/sax/__pycache__/handler.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/xml/sax/handler.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/xml/sax/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/xml/sax/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/xml/sax/__pycache__/saxutils.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/xml/sax/saxutils.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/xml/sax/__pycache__/xmlreader.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/xml/sax/xmlreader.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/xml/sax/__pycache__/expatreader.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/xml/sax/expatreader.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/xml/sax/__pycache__/_exceptions.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/xml/sax/_exceptions.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/xml/dom/__pycache__/pulldom.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/xml/dom/pulldom.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/xml/dom/__pycache__/expatbuilder.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/xml/dom/expatbuilder.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/xml/dom/__pycache__/domreg.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/xml/dom/domreg.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/xml/dom/__pycache__/minicompat.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/xml/dom/minicompat.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/xml/dom/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/xml/dom/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/xml/dom/__pycache__/NodeFilter.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/xml/dom/NodeFilter.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/xml/dom/__pycache__/xmlbuilder.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/xml/dom/xmlbuilder.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/xml/dom/__pycache__/minidom.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/xml/dom/minidom.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/xml/etree/__pycache__/ElementPath.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/xml/etree/ElementPath.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/xml/etree/__pycache__/cElementTree.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/xml/etree/cElementTree.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/xml/etree/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/xml/etree/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/xml/etree/__pycache__/ElementInclude.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/xml/etree/ElementInclude.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/xml/etree/__pycache__/ElementTree.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/xml/etree/ElementTree.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/json/__pycache__/decoder.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/json/decoder.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/json/__pycache__/scanner.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/json/scanner.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/json/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/json/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/json/__pycache__/encoder.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/json/encoder.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/json/__pycache__/tool.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/json/tool.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/http/__pycache__/cookies.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/http/cookies.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/http/__pycache__/server.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/http/server.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/http/__pycache__/client.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/http/client.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/http/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/http/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/http/__pycache__/cookiejar.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/http/cookiejar.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/sqlite3/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/sqlite3/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/sqlite3/__pycache__/dump.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/sqlite3/dump.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/sqlite3/__pycache__/dbapi2.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/sqlite3/dbapi2.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/concurrent/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/concurrent/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/concurrent/futures/__pycache__/_base.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/concurrent/futures/_base.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/concurrent/futures/__pycache__/thread.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/concurrent/futures/thread.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/concurrent/futures/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/concurrent/futures/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/concurrent/futures/__pycache__/process.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/concurrent/futures/process.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/importlib/__pycache__/util.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/importlib/util.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/importlib/__pycache__/_bootstrap.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/importlib/_bootstrap.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/importlib/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/importlib/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/importlib/__pycache__/_bootstrap_external.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/importlib/_bootstrap_external.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/importlib/__pycache__/resources.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/importlib/resources.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/importlib/__pycache__/machinery.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/importlib/machinery.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/importlib/__pycache__/abc.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/importlib/abc.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/xmlrpc/__pycache__/server.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/xmlrpc/server.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/xmlrpc/__pycache__/client.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/xmlrpc/client.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/xmlrpc/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/xmlrpc/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/collections/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/collections/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/collections/__pycache__/abc.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/collections/abc.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/asyncio/__pycache__/queues.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/asyncio/queues.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/asyncio/__pycache__/streams.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/asyncio/streams.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/asyncio/__pycache__/tasks.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/asyncio/tasks.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/asyncio/__pycache__/selector_events.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/asyncio/selector_events.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/asyncio/__pycache__/log.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/asyncio/log.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/asyncio/__pycache__/protocols.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/asyncio/protocols.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/asyncio/__pycache__/events.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/asyncio/events.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/asyncio/__pycache__/base_events.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/asyncio/base_events.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/asyncio/__pycache__/subprocess.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/asyncio/subprocess.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/asyncio/__pycache__/constants.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/asyncio/constants.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/asyncio/__pycache__/proactor_events.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/asyncio/proactor_events.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/asyncio/__pycache__/format_helpers.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/asyncio/format_helpers.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/asyncio/__pycache__/locks.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/asyncio/locks.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/asyncio/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/asyncio/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/asyncio/__pycache__/futures.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/asyncio/futures.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/asyncio/__pycache__/sslproto.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/asyncio/sslproto.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/asyncio/__pycache__/base_subprocess.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/asyncio/base_subprocess.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/asyncio/__pycache__/windows_utils.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/asyncio/windows_utils.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/asyncio/__pycache__/runners.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/asyncio/runners.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/asyncio/__pycache__/transports.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/asyncio/transports.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/asyncio/__pycache__/base_tasks.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/asyncio/base_tasks.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/asyncio/__pycache__/coroutines.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/asyncio/coroutines.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/asyncio/__pycache__/windows_events.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/asyncio/windows_events.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/asyncio/__pycache__/base_futures.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/asyncio/base_futures.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/asyncio/__pycache__/unix_events.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/asyncio/unix_events.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/logging/__pycache__/config.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/logging/config.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/logging/__pycache__/handlers.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/logging/handlers.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/logging/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/logging/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/email/__pycache__/contentmanager.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/email/contentmanager.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/email/__pycache__/_policybase.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/email/_policybase.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/email/__pycache__/header.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/email/header.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/email/__pycache__/_encoded_words.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/email/_encoded_words.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/email/__pycache__/_header_value_parser.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/email/_header_value_parser.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/email/__pycache__/policy.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/email/policy.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/email/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/email/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/email/__pycache__/message.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/email/message.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/email/__pycache__/encoders.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/email/encoders.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/email/__pycache__/parser.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/email/parser.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/email/__pycache__/generator.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/email/generator.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/email/__pycache__/utils.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/email/utils.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/email/__pycache__/charset.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/email/charset.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/email/__pycache__/iterators.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/email/iterators.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/email/__pycache__/quoprimime.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/email/quoprimime.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/email/__pycache__/errors.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/email/errors.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/email/__pycache__/feedparser.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/email/feedparser.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/email/__pycache__/_parseaddr.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/email/_parseaddr.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/email/__pycache__/base64mime.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/email/base64mime.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/email/__pycache__/headerregistry.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/email/headerregistry.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/email/mime/__pycache__/multipart.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/email/mime/multipart.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/email/mime/__pycache__/__init__.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/email/mime/__init__.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/email/mime/__pycache__/message.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/email/mime/message.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/email/mime/__pycache__/application.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/email/mime/application.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/email/mime/__pycache__/nonmultipart.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/email/mime/nonmultipart.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/email/mime/__pycache__/text.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/email/mime/text.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/email/mime/__pycache__/audio.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/email/mime/audio.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/email/mime/__pycache__/image.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/email/mime/image.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-apple/email/mime/__pycache__/base.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-apple/email/mime/base.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 ${ASSET_BUILD_DIR}/pylib-site-packages/__pycache__/typing_extensions.cpython-37.opt-1.pyc: \
       ${ASSET_BUILD_DIR}/pylib-site-packages/typing_extensions.py
-	@echo Compiling script: $(notdir $^)
-	@rm -rf $@ && ${TOOLS_DIR}/compile_python_files $^ && chmod 444 $@
-
+	@echo Compiling script: $^
+	@rm -rf $@ && ${TOOLS_DIR}/snippets compile_python_files $^ && chmod 444 $@
 
 COB_TARGETS = \
   ${ASSET_BUILD_DIR}/data/models/zigZagLevelBumper.cob \
@@ -7822,7 +7782,6 @@ COB_TARGETS = \
   ${ASSET_BUILD_DIR}/data/models/tipTopLevelBumper.cob \
   ${ASSET_BUILD_DIR}/data/models/thePadLevelCollide.cob \
   ${ASSET_BUILD_DIR}/data/models/bigGCollide.cob
-
 
 BOB_TARGETS = \
   ${ASSET_BUILD_DIR}/data/models/wrestlerToes.bob \
@@ -8258,7 +8217,6 @@ BOB_TARGETS = \
   ${ASSET_BUILD_DIR}/data/models/powerup.bob \
   ${ASSET_BUILD_DIR}/data/models/thePadVRFillTop.bob
 
-
 FONT_TARGETS = \
   ${ASSET_BUILD_DIR}/data/fonts/fontSmall1.fdata \
   ${ASSET_BUILD_DIR}/data/fonts/fontSmall3.fdata \
@@ -8268,7 +8226,6 @@ FONT_TARGETS = \
   ${ASSET_BUILD_DIR}/data/fonts/fontSmall0.fdata \
   ${ASSET_BUILD_DIR}/data/fonts/fontSmall4.fdata \
   ${ASSET_BUILD_DIR}/data/fonts/fontSmall6.fdata
-
 
 DATA_TARGETS = \
   ${ASSET_BUILD_DIR}/data/data/langdata.json \
@@ -8317,7 +8274,6 @@ DATA_TARGETS = \
   ${ASSET_BUILD_DIR}/data/data/languages/indonesian.json \
   ${ASSET_BUILD_DIR}/data/data/languages/italian.json \
   ${ASSET_BUILD_DIR}/data/data/languages/danish.json
-
 
 AUDIO_TARGETS = \
   ${ASSET_BUILD_DIR}/data/audio/penguinDeath.ogg \
@@ -8742,7 +8698,6 @@ AUDIO_TARGETS = \
   ${ASSET_BUILD_DIR}/data/audio/robot4.ogg \
   ${ASSET_BUILD_DIR}/data/audio/gravelSkid.ogg
 
-
 TEX2D_DDS_TARGETS = \
   ${ASSET_BUILD_DIR}/data/textures/cyborgIconColorMask.dds \
   ${ASSET_BUILD_DIR}/data/textures/chestOpenIcon.dds \
@@ -9144,7 +9099,6 @@ TEX2D_DDS_TARGETS = \
   ${ASSET_BUILD_DIR}/data/textures/robotColorMask.dds \
   ${ASSET_BUILD_DIR}/data/textures/impactBombColorLit.dds \
   ${ASSET_BUILD_DIR}/data/textures/achievementStayinAlive.dds
-
 
 TEX2D_PVR_TARGETS = \
   ${ASSET_BUILD_DIR}/data/textures/cyborgIconColorMask.pvr \
@@ -9548,7 +9502,6 @@ TEX2D_PVR_TARGETS = \
   ${ASSET_BUILD_DIR}/data/textures/impactBombColorLit.pvr \
   ${ASSET_BUILD_DIR}/data/textures/achievementStayinAlive.pvr
 
-
 TEX2D_KTX_TARGETS = \
   ${ASSET_BUILD_DIR}/data/textures/cyborgIconColorMask.ktx \
   ${ASSET_BUILD_DIR}/data/textures/chestOpenIcon.ktx \
@@ -9951,7 +9904,6 @@ TEX2D_KTX_TARGETS = \
   ${ASSET_BUILD_DIR}/data/textures/impactBombColorLit.ktx \
   ${ASSET_BUILD_DIR}/data/textures/achievementStayinAlive.ktx
 
-
 TEX2D_PREVIEW_PNG_TARGETS = \
   ${ASSET_BUILD_DIR}/data/textures/cyborgIconColorMask_preview.png \
   ${ASSET_BUILD_DIR}/data/textures/chestOpenIcon_preview.png \
@@ -10353,7 +10305,6 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   ${ASSET_BUILD_DIR}/data/textures/robotColorMask_preview.png \
   ${ASSET_BUILD_DIR}/data/textures/impactBombColorLit_preview.png \
   ${ASSET_BUILD_DIR}/data/textures/achievementStayinAlive_preview.png
-
 #AUTOGENERATED_END
 
 ASSET_TARGETS_COMMON += $(MODEL_TARGETS)
@@ -10400,12 +10351,6 @@ ${ASSET_BUILD_DIR}/%.pvr : ../.efrocachemap
 ${ASSET_BUILD_DIR}/%.ktx : ../.efrocachemap
 	@cd .. && tools/snippets efrocache_get assets/$@
 
-# Copies our previews into ${ASSET_SRC_MASTER_DIR} for use in maya.
-${ASSET_SRC_MASTER_DIR}/models/maya/sourceimages/ballistica_textures/%.png : \
-      ${ASSET_BUILD_DIR}/textures/%.png
-	@mkdir -p $(dir $@)
-	@cp $^ $@
-
 audio: $(AUDIO_TARGETS)
 clean-audio:
 	rm -rf $(ASSET_BUILD_DIR)/audio
@@ -10450,39 +10395,7 @@ assets-android: $(ASSET_TARGETS_ANDROID) $(ASSET_TARGETS_COMMON)
 asset_sources: $(MODEL_SRC_TARGETS) $(TEX2D_SRC_TARGETS) $(CUBE_SRC_TARGETS)
 
 clean:
-	rm -rf $(ASSET_BUILD_DIR)
-
-# TEMP EFROCACHE TESTING------------------------------------------------
-
-foof: $(TEXTURE_TARGETS_DESKTOP) $(TEXTURE_TARGETS_IOS) \
-  $(TEXTURE_TARGETS_ANDROID) $(TEXTURE_TARGETS_PREVIEW) $(MODEL_TARGETS)
-	echo SUCCESSSSSSS
-
-build/testfile_a: ../.efrocachemap
-	@cd .. && tools/snippets efrocache_get assets/$@
-
-EFROCACHE_FILES = build/testfile_a $(TEXTURE_TARGETS_DESKTOP) \
- $(TEXTURE_TARGETS_IOS) $(TEXTURE_TARGETS_ANDROID) $(TEXTURE_TARGETS_PREVIEW) \
- $(MODEL_TARGETS) $(AUDIO_TARGETS) $(DATA_TARGETS) $(SCRIPT_TARGETS_PY_2) \
- $(FONT_TARGETS)
-
-MODERN_MAKE = $(shell $(TOOLS_DIR)/snippets get_modern_make)
-
-# Build everything we want available in efrocache
-efrocache_build: $(EFROCACHE_FILES)
-
-# Print everything that'll go to efrocache.
-# We have to be a bit roundabout here since make can choke on this huge
-# arg list. So we use a file command workaround, but that requires us to
-# go through non-standard make on mac (standard make is old and lacks it)
-efrocache_list:
-	@$(MODERN_MAKE) --quiet _efrocache_list
-
-_efrocache_list:
-	$(file >_efrocache_tmp_list,$(EFROCACHE_FILES))
-	@cat _efrocache_tmp_list
-	@rm _efrocache_tmp_list
-# ---------------------------------------------------------------------
+	@rm -rf $(ASSET_BUILD_DIR)
 
 # None of these targets correspond to actual files; make sure make knows that.
 .PHONY: desktop ios android audio clean-audio fonts clean-fonts \
