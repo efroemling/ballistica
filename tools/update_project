@@ -196,7 +196,8 @@ class App:
                     print(f'{CLRRED}  Found "{line}"{CLREND}')
                 print(CLRRED +
                       f'All {len(auto_changes)} errors are auto-fixable;'
-                      ' pass --fix to apply corrections.' + CLREND)
+                      ' run tools/update_project --fix to apply corrections.' +
+                      CLREND)
                 sys.exit(255)
             else:
                 for i, change in enumerate(auto_changes):

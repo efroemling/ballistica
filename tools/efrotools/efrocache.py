@@ -164,11 +164,11 @@ def update_cache(makefile_dirs: List[str]) -> None:
         cdp = f'cd {path} && ' if path else ''
         mfpath = os.path.join(path, 'Makefile')
         print(f'Building cache targets for {mfpath}...')
-        subprocess.run(f'{cdp}make -j{cpus} efrocache_build',
+        subprocess.run(f'{cdp}make -j{cpus} efrocache-build',
                        shell=True,
                        check=True)
 
-        rawpaths = subprocess.run(f'{cdp}make efrocache_list',
+        rawpaths = subprocess.run(f'{cdp}make efrocache-list',
                                   shell=True,
                                   check=True,
                                   capture_output=True).stdout.decode().split()
