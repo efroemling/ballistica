@@ -421,7 +421,7 @@ def makefile_target_list() -> None:
 
     print('--------------------------\n'
           'Available Makefile Targets\n'
-          '--------------------------\n')
+          '--------------------------')
 
     entries: List[_Entry] = []
     for i, line in enumerate(lines):
@@ -438,8 +438,11 @@ def makefile_target_list() -> None:
             entries.append(
                 _Entry(kind='section', line=i, title=line[1:-2].strip()))
 
-    for entry in entries:
+    for i, entry in enumerate(entries):
         if entry.kind == 'section':
+            # Don't print headers for empty sections.
+            if i + 1 >= len(entries) or entries[i + 1].kind == 'section':
+                continue
             print('\n' + entry.title + '\n' + '-' * len(entry.title))
         elif entry.kind == 'target':
             print(CLRHDR + entry.title + CLRBLU + _docstr(lines, entry.line) +

@@ -28,42 +28,6 @@
 # Prefix used for output of docs/changelogs/etc targets for use in webpages.
 DOCPREFIX = "ballisticacore_"
 
-# Print help by default
-all: help
-
-# Tell make which of these targets don't represent files.
-.PHONY: all
-
-
-################################################################################
-#                                                                              #
-#                                    Prefab                                    #
-#                                                                              #
-################################################################################
-
-# Prebuilt binaries for various platforms.
-
-prefab-mac: prefab-mac-build
-	@cd build/prefab/mac/debug && ./ballisticacore
-
-prefab-mac-build: assets-cmake build/prefab/mac/debug/ballisticacore
-	@${STAGE_ASSETS} -cmake build/prefab/mac/debug
-
-build/prefab/mac/debug/ballisticacore: .efrocachemap
-	@tools/snippets efrocache_get $@
-
-prefab-mac-release: prefab-mac-release-build
-	@cd build/prefab-mac/release && ./ballisticacore
-
-prefab-mac-release-build: assets-cmake build/prefab/mac/release/ballisticacore
-	@${STAGE_ASSETS} -cmake build/prefab/mac/release
-
-build/prefab/mac/release/ballisticacore: .efrocachemap
-	@tools/snippets efrocache_get $@
-
-# Tell make which of these targets don't represent files.
-.PHONY: prefab-mac prefab-mac-build prefab-mac-release prefab-mac-release-build
-
 
 ################################################################################
 #                                                                              #
@@ -77,12 +41,9 @@ PREREQS = .dir-locals.el .mypy.ini .pycheckers \
   .pylintrc .style.yapf .clang-format \
   .projectile .editorconfig
 
-# List the targets in this Makefile and basic descriptions for them.
-list:
-	@tools/snippets makefile_target_list Makefile
-
-# Same as 'list'
+# List targets in this Makefile and basic descriptions for them.
 help: list
+	@tools/snippets makefile_target_list Makefile
 
 prereqs: ${PREREQS}
 
@@ -149,6 +110,54 @@ cleanlist:
   assets-mac assets-ios assets-android assets-clean \
   resources resources-clean code code-clean\
   clean cleanlist
+
+
+################################################################################
+#                                                                              #
+#                                    Prefab                                    #
+#                                                                              #
+################################################################################
+
+# Prebuilt binaries for various platforms.
+
+# Download/assemble/run a debug build for this platform.
+prefab:
+	@tools/snippets make_prefab debug
+
+# Download/assemble/run a release build for this platform.
+prefab-release:
+	@tools/snippets make_prefab release
+
+# Download/assemble a debug build for this platform.
+prefab-build:
+	@tools/snippets make_prefab debug-build
+
+# Download/assemble a release build for this platform.
+prefab-release-build:
+	@tools/snippets make_prefab release-build
+
+# Specific platform prefab targets:
+
+prefab-mac: prefab-mac-build
+	@cd build/prefab/mac/debug && ./ballisticacore
+
+prefab-mac-build: assets-cmake build/prefab/mac/debug/ballisticacore
+	@${STAGE_ASSETS} -cmake build/prefab/mac/debug
+
+build/prefab/mac/debug/ballisticacore: .efrocachemap
+	@tools/snippets efrocache_get $@
+
+prefab-mac-release: prefab-mac-release-build
+	@cd build/prefab/mac/release && ./ballisticacore
+
+prefab-mac-release-build: assets-cmake build/prefab/mac/release/ballisticacore
+	@${STAGE_ASSETS} -cmake build/prefab/mac/release
+
+build/prefab/mac/release/ballisticacore: .efrocachemap
+	@tools/snippets efrocache_get $@
+
+# Tell make which of these targets don't represent files.
+.PHONY: prefab-mac prefab-mac-build prefab-mac-release prefab-mac-release-build
 
 
 ################################################################################

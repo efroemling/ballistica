@@ -649,5 +649,34 @@ def warm_start_asset_build() -> None:
             check=True)
 
 
+def make_prefab() -> None:
+    """Run prefab builds for the current platform."""
+    from efrotools import run
+    import platform
+
+    if platform.system() == 'Darwin':
+        base = 'mac'
+    else:
+        raise RuntimeError('Prefab not supported on this platform.')
+
+    if len(sys.argv) != 3:
+        raise RuntimeError('Expected one argument')
+
+    arg = sys.argv[2]
+
+    if arg == 'debug':
+        target = f'prefab-{base}'
+    elif arg == 'debug-build':
+        target = f'prefab-{base}-build'
+    elif arg == 'release':
+        target = f'prefab-{base}-release'
+    elif arg == 'release-build':
+        target = f'prefab-{base}-release-build'
+    else:
+        raise RuntimeError(f'Invalid target: {arg}')
+
+    run(f'make {target}')
+
+
 if __name__ == '__main__':
     snippets_main(globals())
