@@ -3390,5 +3390,6 @@
   "assets/build/pylib-apple/xmlrpc/server.py": "https://files.ballistica.net/cache/ba1/87/7d/fbbba07f5acccda5a8b299d1f312",
   "assets/build/pylib-apple/zipapp.py": "https://files.ballistica.net/cache/ba1/bc/39/2d745b00133cddd197c3a4ee400e",
   "assets/build/pylib-apple/zipfile.py": "https://files.ballistica.net/cache/ba1/0d/65/193ca5b255078a203de5c18f306b",
-  "assets/build/pylib-site-packages/typing_extensions.py": "https://files.ballistica.net/cache/ba1/bb/a7/42ff13f96a1f1efb2cf1b79c4513"
+  "assets/build/pylib-site-packages/typing_extensions.py": "https://files.ballistica.net/cache/ba1/bb/a7/42ff13f96a1f1efb2cf1b79c4513",
+  "build/prefab-mac/debug/ballisticacore": "https://files.ballistica.net/cache/ba1/ed/b4/85c3542c79b5e7a11d2f17ad291a"
 }
