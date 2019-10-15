@@ -98,6 +98,7 @@ def get_target(path: str) -> None:
 
     # Ok we should have a valid .tar.gz file in our cache dir at this point.
     # Just expand it and it get placed wherever it belongs.
+    print(f'Extracting: {path}')
     run(f'tar -zxf {local_cache_path}')
 
     # The file will wind up with the timestamp it was compressed with,
@@ -307,10 +308,10 @@ def warm_start_cache() -> None:
         print('Downloading asset starter-cache...', flush=True)
         run(f'curl {BASE_URL}startercache.tar.xz > startercache.tar.xz')
         print('Decompressing starter-cache...', flush=True)
-        run('tar -xvf startercache.tar.xz')
+        run('tar -xf startercache.tar.xz')
         run(f'mv efrocache {CACHE_DIR_NAME}')
         run(f'rm startercache.tar.xz')
-        print('Starter-cache fetched successful!'
+        print('Starter-cache fetched successfully!'
               ' (should speed up asset builds)')
 
     # In the public build, let's scan through all files managed by
