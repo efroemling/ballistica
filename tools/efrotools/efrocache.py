@@ -35,6 +35,8 @@ CLRBLU = '\033[94m'  # Glue.
 CLRRED = '\033[91m'  # Red.
 CLREND = '\033[0m'  # End.
 
+BASE_URL = 'https://files.ballistica.net/cache/ba1/'
+
 TARGET_TAG = '#__EFROCACHE_TARGET__'
 STRIP_BEGIN_TAG = '#__EFROCACHE_STRIP_BEGIN__'
 STRIP_END_TAG = '#__EFROCACHE_STRIP_END__'
@@ -154,7 +156,8 @@ def update_cache(makefile_dirs: List[str]) -> None:
     import multiprocessing
     from efrotools import run
     cpus = multiprocessing.cpu_count()
-    fnames: List[str] = []
+    fnames1: List[str] = []
+    fnames2: List[str] = []
     for path in makefile_dirs:
         # First, make sure all cache files are built.
         cdp = f'cd {path} && ' if path else ''
@@ -164,28 +167,39 @@ def update_cache(makefile_dirs: List[str]) -> None:
                        shell=True,
                        check=True)
 
-        raw_paths = subprocess.run(
-            f'{cdp}make efrocache_list',
-            shell=True,
-            check=True,
-            capture_output=True).stdout.decode().split()
+        rawpaths = subprocess.run(f'{cdp}make efrocache_list',
+                                  shell=True,
+                                  check=True,
+                                  capture_output=True).stdout.decode().split()
 
         # Make sure the paths they gave were relative.
-        for raw_path in raw_paths:
-            if raw_path.startswith('/'):
+        for rawpath in rawpaths:
+            if rawpath.startswith('/'):
                 raise RuntimeError(f'Invalid path returned for caching '
-                                   f'(absolute paths not allowed): {raw_path}')
+                                   f'(absolute paths not allowed): {rawpath}')
 
-        # Now get the list of it all.
-        fnames += [os.path.join(path, s) for s in raw_paths]
+        # Break these into 2 lists, one of which will be included in the
+        # starter-cache.
+        for rawpath in rawpaths:
+            fullpath = os.path.join(path, rawpath)
+
+            # The main reason for this cache is to reduce round trips to
+            # the staging server for tiny files, so let's include small files
+            # only here. For larger stuff its ok to have a request per file.
+            if os.path.getsize(fullpath) < 100000:
+                fnames1.append(fullpath)
+            else:
+                fnames2.append(fullpath)
 
     staging_dir = 'build/efrocache'
     mapping_file = 'build/efrocachemap'
     run(f'rm -rf {staging_dir}')
     run(f'mkdir -p {staging_dir}')
 
-    _write_cache_files(fnames, staging_dir, mapping_file)
+    _write_cache_files(fnames1, fnames2, staging_dir, mapping_file)
 
+    print(f"Starter cache includes {len(fnames1)} items;"
+          f" excludes {len(fnames2)}")
     # Push what we just wrote to the staging server
     print('Pushing cache to staging...', flush=True)
     run('rsync --recursive build/efrocache/'
@@ -218,19 +232,38 @@ def _write_cache_file(staging_dir: str, fname: str) -> Tuple[str, str]:
     return fname, hashpath
 
 
-def _write_cache_files(fnames: List[str], staging_dir: str,
-                       mapping_file: str) -> None:
+def _write_cache_files(fnames1: List[str], fnames2: List[str],
+                       staging_dir: str, mapping_file: str) -> None:
     from multiprocessing import cpu_count
     from concurrent.futures import ThreadPoolExecutor
+    from efrotools import run
     import functools
     import json
     mapping: Dict[str, str] = {}
-    baseurl = 'https://files.ballistica.net/cache/ba1/'
     call = functools.partial(_write_cache_file, staging_dir)
+
+    # Do the first set.
     with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
-        results = executor.map(call, fnames)
+        results = executor.map(call, fnames1)
     for result in results:
-        mapping[result[0]] = baseurl + result[1]
+        mapping[result[0]] = BASE_URL + result[1]
+
+    # Once we've written our first set, create
+    # a starter-cache file from everything we wrote.
+    # This consists of some subset of the cache dir we just filled out.
+    # Clients initing their cache dirs can grab this as a starting point
+    # which should greatly reduce the individual file downloads they have
+    # to do (at least when first building).
+    print('Writing starter-cache...')
+    run('cd build && tar -Jcf startercache.tar.xz efrocache'
+        ' && mv startercache.tar.xz efrocache')
+
+    # Now finish up with the second set.
+    with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
+        results = executor.map(call, fnames2)
+        for result in results:
+            mapping[result[0]] = BASE_URL + result[1]
+
     with open(mapping_file, 'w') as outfile:
         outfile.write(json.dumps(mapping, indent=2, sort_keys=True))
 
@@ -259,15 +292,26 @@ def _check_warm_start_entries(entries: List[Tuple[str, str]]) -> None:
 
 
 def warm_start_cache() -> None:
-    """Efficiently update timestamps on unchanged cached files.
-
-    This can be run as a pre-pass before an asset build to quickly
-    update timestamps on all unchanged asset files. This can save
-    substantial time compared to letting every asset file update itself
-    individually during builds as would happen normally after the map is
-    modified.
-    """
+    """Run a pre-pass on the efrocache to improve efficiency."""
     import json
+    from efrotools import run
+
+    # We maintain a starter-cache on the staging server, which
+    # is simply the latest set of cache entries compressed into a single
+    # compressed archive. If we have no local cache yet we can download
+    # and expand this to give us a nice head start and greatly reduce
+    # the initial set of individual files we have to fetch.
+    # (downloading a single compressed archive is much more efficient than
+    # downloading thousands)
+    if not os.path.exists(CACHE_DIR_NAME):
+        print('Downloading asset starter-cache...', flush=True)
+        run(f'curl {BASE_URL}startercache.tar.xz > startercache.tar.xz')
+        print('Decompressing starter-cache...', flush=True)
+        run('tar -xvf startercache.tar.xz')
+        run(f'mv efrocache {CACHE_DIR_NAME}')
+        run(f'rm startercache.tar.xz')
+        print('Starter-cache fetched successful!'
+              ' (should speed up asset builds)')
 
     # In the public build, let's scan through all files managed by
     # efrocache and update any with timestamps older than the latest
@@ -284,17 +328,26 @@ def warm_start_cache() -> None:
     cachemap_mtime = os.path.getmtime(CACHE_MAP_NAME)
     entries: List[Tuple[str, str]] = []
     for fname, url in cachemap.items():
-        mtime = os.path.getmtime(fname)
-        if cachemap_mtime > mtime:
-            cachefile = CACHE_DIR_NAME + '/' + '/'.join(url.split('/')[-3:])
-            filehash = ''.join(url.split('/')[-3:])
 
-            # Only look at files that already exist and correspond to
-            # cache files that already exist.
-            # If this is the case we could probably just update the timestamp
-            # and call it a day, but let's be super safe by checking hashes
-            # on existing files to make sure they line up.
-            if os.path.isfile(fname) and os.path.isfile(cachefile):
-                entries.append((fname, filehash))
+        # File hasn't been pulled from cache yet = ignore.
+        if not os.path.exists(fname):
+            continue
+
+        # File is newer than the cache map = ignore.
+        if cachemap_mtime < os.path.getmtime(fname):
+            continue
+
+        # Don't have the cache source file for this guy = ignore.
+        cachefile = CACHE_DIR_NAME + '/' + '/'.join(url.split('/')[-3:])
+        if not os.path.exists(cachefile):
+            continue
+
+        # Ok, add it to the list of files we can potentially update timestamps
+        # on once we check its hash.
+        filehash = ''.join(url.split('/')[-3:])
+        entries.append((fname, filehash))
+
     if entries:
+        # Now fire off a multithreaded executor to check hashes and update
+        # timestamps.
         _check_warm_start_entries(entries)

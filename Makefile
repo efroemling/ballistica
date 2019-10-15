@@ -63,9 +63,17 @@ prereqs-clean:
 assets:
 	@cd assets && make -j${CPUS}
 
-# Build only assets required for desktop builds (mac, pc, linux).
-assets-desktop:
-	@cd assets && make -j${CPUS} desktop
+# Build only assets required for cmake builds (linux, mac)
+assets-cmake:
+	@cd assets && make -j${CPUS} cmake
+
+# Build only assets required for windows builds
+assets-win:
+	@cd assets && make -j${CPUS} win
+
+# Build only assets required for mac xcode builds
+assets-mac:
+	@cd assets && make -j${CPUS} mac
 
 # Build only assets required for ios.
 assets-ios:
@@ -107,8 +115,9 @@ cleanlist:
 	@git clean -dnx ${ROOT_CLEAN_IGNORES}
 
 # Tell make which of these targets don't represent files.
-.PHONY: list prereqs prereqs-clean assets assets-desktop assets-ios\
-  assets-android assets-clean resources resources-clean code code-clean\
+.PHONY: list prereqs prereqs-clean assets assets-cmake assests-win \
+  assets-mac assets-ios assets-android assets-clean \
+  resources resources-clean code code-clean\
   clean cleanlist
 
 

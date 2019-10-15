@@ -1260,6 +1260,8 @@
       <w>rankbutton</w>
       <w>rankwindow</w>
       <w>raspbian</w>
+      <w>rawpath</w>
+      <w>rawpaths</w>
       <w>rcfile</w>
       <w>rdict</w>
       <w>rdir</w>
@@ -1428,6 +1430,7 @@
       <w>stackstr</w>
       <w>standin</w>
       <w>starscale</w>
+      <w>startercache</w>
       <w>startscan</w>
       <w>starttime</w>
       <w>stayin</w>
