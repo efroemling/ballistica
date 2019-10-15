@@ -115,7 +115,7 @@ cleanlist:
 	@git clean -dnx ${ROOT_CLEAN_IGNORES}
 
 # Tell make which of these targets don't represent files.
-.PHONY: list prereqs prereqs-clean assets assets-cmake assests-win \
+.PHONY: list prereqs prereqs-clean assets assets-cmake assets-win \
   assets-mac assets-ios assets-android assets-clean \
   resources resources-clean code code-clean\
   clean cleanlist

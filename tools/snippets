@@ -359,10 +359,11 @@ def check_clean_safety() -> None:
 
     # Then also make sure there are no untracked changes to core files
     # (since we may be blowing core away here).
-    status = os.system(
-        os.path.join(str(PROJROOT), 'tools', 'spinoff') + ' cleancheck')
-    if status != 0:
-        sys.exit(255)
+    spinoff_bin = os.path.join(str(PROJROOT), 'tools', 'spinoff')
+    if os.path.exists(spinoff_bin):
+        status = os.system(spinoff_bin + ' cleancheck')
+        if status != 0:
+            sys.exit(255)
 
 
 def get_master_asset_src_dir() -> None:
