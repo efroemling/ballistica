@@ -332,6 +332,8 @@ VERSION = $(shell tools/version_utils version)
 BUILD_NUMBER = $(shell tools/version_utils build)
 BUILD_DIR = ${PROJ_DIR}/build
 
+STAGE_ASSETS = ${PROJ_DIR}/tools/stage_assets
+
 # Things to ignore when doing root level cleans.
 ROOT_CLEAN_IGNORES = --exclude=assets/src_master \
   --exclude=config/localconfig.json \
