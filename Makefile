@@ -44,16 +44,25 @@ all: help
 # Prebuilt binaries for various platforms.
 
 prefab-mac: prefab-mac-build
-	@cd build/prefab-mac/debug && ./ballisticacore
+	@cd build/prefab/mac/debug && ./ballisticacore
 
-prefab-mac-build: assets-cmake build/prefab-mac/debug/ballisticacore
-	@${STAGE_ASSETS} -cmake build/prefab-mac/debug
+prefab-mac-build: assets-cmake build/prefab/mac/debug/ballisticacore
+	@${STAGE_ASSETS} -cmake build/prefab/mac/debug
 
-build/prefab-mac/debug/ballisticacore: .efrocachemap
+build/prefab/mac/debug/ballisticacore: .efrocachemap
+	@tools/snippets efrocache_get $@
+
+prefab-mac-release: prefab-mac-release-build
+	@cd build/prefab-mac/release && ./ballisticacore
+
+prefab-mac-release-build: assets-cmake build/prefab/mac/release/ballisticacore
+	@${STAGE_ASSETS} -cmake build/prefab/mac/release
+
+build/prefab/mac/release/ballisticacore: .efrocachemap
 	@tools/snippets efrocache_get $@
 
 # Tell make which of these targets don't represent files.
-.PHONY: prefab-mac prefab-mac-build
+.PHONY: prefab-mac prefab-mac-build prefab-mac-release prefab-mac-release-build
 
 
 ################################################################################
