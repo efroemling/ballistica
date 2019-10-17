@@ -18,9 +18,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # -----------------------------------------------------------------------------
-"""A dummy stub module for the real _bs.
+"""A dummy stub module for the real _ba.
 
-The real _bs is a compiled extension module and only available
+The real _ba is a compiled extension module and only available
 in the live game. This dummy module allows Pylint/Mypy/etc. to
 function reasonably well outside of the game.
 

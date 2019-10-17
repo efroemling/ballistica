@@ -45,7 +45,7 @@ from efrotools.snippets import (  # pylint: disable=unused-import
     PROJROOT, snippets_main, formatcode, formatscripts, formatmakefile,
     cpplintcode, pylintscripts, mypyscripts, tool_config_install, sync,
     sync_all, scriptfiles, pycharmscripts, clioncode, androidstudiocode,
-    makefile_target_list, spelling, compile_python_files)
+    makefile_target_list, spelling, spelling_all, compile_python_files)
 
 if TYPE_CHECKING:
     from typing import Optional, List
@@ -55,17 +55,17 @@ if TYPE_CHECKING:
 # clustering similar tests too much)
 SPARSE_TESTS: List[List[str]] = [
     ['ios.pylibs.debug', 'android.pylibs.arm'],
-    ['linux.package.64', 'android.pylibs.arm64'],
+    ['linux.package', 'android.pylibs.arm64'],
     ['windows.package', 'mac.pylibs'],
     ['tvos.pylibs', 'android.pylibs.x86'],
-    ['linux.package.server.64', 'android.pylibs.arm.debug'],
+    ['android.pylibs.arm.debug'],
     ['windows.package.server'],
     ['ios.pylibs', 'android.pylibs.arm64.debug'],
-    ['linux.package.server.32'],
+    ['linux.package.server'],
     ['android.pylibs.x86.debug', 'mac.package'],
     ['mac.package.server', 'android.pylibs.x86_64'],
     ['windows.package.oculus'],
-    ['linux.package.32', 'android.pylibs.x86_64.debug'],
+    ['android.pylibs.x86_64.debug'],
     ['mac.pylibs.debug', 'android.package'],
 ]
 
@@ -290,32 +290,22 @@ def gen_fulltest_buildfile_linux() -> None:
     """
     import datetime
 
-    # Its a bit of a waste of time doing both 32 and 64 bit builds
-    # for everything, so let's do one of each and alternate the architecture.
     dayoffset = datetime.datetime.now().timetuple().tm_yday
 
     targets = ['build', 'server-build']
-    lin32flav = 'LINUX32_FLAVOR=linux32-u16s'
-    lin64flav = 'LINUX64_FLAVOR=linux64-u18s'
+    linflav = 'LINUX_FLAVOR=linux64-u19s'
     lines = []
-    for i, target in enumerate(targets):
-        if (i + dayoffset) % 2 == 0:
-            lines.append(f'{lin32flav} make linux32-{target}')
-        else:
-            lines.append(f'{lin64flav} make linux64-{target}')
+    for target in targets:
+        lines.append(f'{linflav} make linux-{target}')
 
     if DO_SPARSE_TESTS:
         extras = SPARSE_TESTS[dayoffset % len(SPARSE_TESTS)]
         extras = [e for e in extras if e.startswith('linux.')]
         for extra in extras:
-            if extra == 'linux.package.32':
-                lines.append(f'{lin32flav} make linux32-package')
-            elif extra == 'linux.package.server.32':
-                lines.append(f'{lin32flav} make linux32-server-package')
-            elif extra == 'linux.package.64':
-                lines.append(f'{lin64flav} make linux64-package')
-            elif extra == 'linux.package.server.64':
-                lines.append(f'{lin64flav} make linux64-server-package')
+            if extra == 'linux.package':
+                lines.append(f'{linflav} make linux-package')
+            elif extra == 'linux.package.server':
+                lines.append(f'{linflav} make linux-server-package')
             else:
                 raise RuntimeError(f'Unknown extra: {extra}')
 

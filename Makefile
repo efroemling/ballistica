@@ -121,7 +121,7 @@ cleanlist:
 # Prebuilt binaries for various platforms.
 
 # Download/assemble/run a debug build for this platform.
-prefab:
+prefab-debug:
 	@tools/snippets make_prefab debug
 
 # Download/assemble/run a release build for this platform.
@@ -129,7 +129,7 @@ prefab-release:
 	@tools/snippets make_prefab release
 
 # Download/assemble a debug build for this platform.
-prefab-build:
+prefab-debug-build:
 	@tools/snippets make_prefab debug-build
 
 # Download/assemble a release build for this platform.
@@ -138,10 +138,10 @@ prefab-release-build:
 
 # Specific platform prefab targets:
 
-prefab-mac: prefab-mac-build
+prefab-mac-debug: prefab-mac-build
 	@cd build/prefab/mac/debug && ./ballisticacore
 
-prefab-mac-build: assets-cmake build/prefab/mac/debug/ballisticacore
+prefab-mac-debug-build: assets-cmake build/prefab/mac/debug/ballisticacore
 	@${STAGE_ASSETS} -cmake build/prefab/mac/debug
 
 build/prefab/mac/debug/ballisticacore: .efrocachemap
@@ -156,8 +156,31 @@ prefab-mac-release-build: assets-cmake build/prefab/mac/release/ballisticacore
 build/prefab/mac/release/ballisticacore: .efrocachemap
 	@tools/snippets efrocache_get $@
 
+PREFAB_LINUX_FLAVOR ?= linux64-u19s
+
+prefab-linux-debug: prefab-linux-build
+	@cd build/prefab/linux/debug && ./ballisticacore
+
+prefab-linux-debug-build: assets-cmake build/prefab/linux/debug/ballisticacore
+	@${STAGE_ASSETS} -cmake build/prefab/linux/debug
+
+build/prefab/linux/debug/ballisticacore: .efrocachemap
+	@tools/snippets efrocache_get $@
+
+prefab-linux-release: prefab-linux-release-build
+	@cd build/prefab/linux/release && ./ballisticacore
+
+prefab-linux-release-build: assets-cmake \
+ build/prefab/linux/release/ballisticacore
+	@${STAGE_ASSETS} -cmake build/prefab/linux/release
+
+build/prefab/linux/release/ballisticacore: .efrocachemap
+	@tools/snippets efrocache_get $@
+
 # Tell make which of these targets don't represent files.
-.PHONY: prefab-mac prefab-mac-build prefab-mac-release prefab-mac-release-build
+.PHONY: prefab-mac prefab-mac-build prefab-mac-release \
+ prefab-mac-release-build prefab-linux prefab-linux-build prefab-linux-release \
+ prefab-linux-release-build\
 
 
 ################################################################################

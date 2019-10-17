@@ -212,7 +212,7 @@ class DirectoryScan:
 
     def _process_module_meta_tags(self, subpath: pathlib.Path,
                                   flines: List[str],
-                                  meta_lines: Dict[int, str]) -> None:
+                                  meta_lines: Dict[int, List[str]]) -> None:
         """Pull data from a module based on its bs_meta tags."""
         for lindex, mline in meta_lines.items():
             # meta_lines is just anything containing 'bs_meta'; make sure
@@ -278,7 +278,7 @@ class DirectoryScan:
         return classname
 
     def get_api_requirement(self, subpath: pathlib.Path,
-                            meta_lines: Dict[int, str],
+                            meta_lines: Dict[int, List[str]],
                             toplevel: bool) -> Optional[int]:
         """Return an API requirement integer or None if none present.
 

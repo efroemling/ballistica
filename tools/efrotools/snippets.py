@@ -124,14 +124,12 @@ def _trim_docstring(docstring: str) -> str:
     return '\n'.join(trimmed)
 
 
-def spelling() -> None:
-    """Add words to the PyCharm dictionary."""
+def _spelling(words: List[str]) -> None:
     fname = '.idea/dictionaries/ericf.xml'
     with open(fname) as infile:
         lines = infile.read().splitlines()
     if lines[2] != '    <words>':
         raise RuntimeError('Unexpected dictionary format.')
-    words = sys.argv[2:]
     added_count = 0
     for word in words:
         line = f'      <w>{word.lower()}</w>'
@@ -144,6 +142,28 @@ def spelling() -> None:
         assert all(l.startswith('      <w>') for l in lines[3:-3])
         outfile.write('\n'.join(lines[:3] + sorted(lines[3:-3]) + lines[-3:]))
     print('Added', added_count, 'words to the dictionary.')
+
+
+def spelling_all() -> None:
+    """Add all misspellings from a pycharscripts run."""
+
+    print('Running "make pycharmscriptsfull"...')
+    lines = [
+        line for line in subprocess.run(
+            ['make', 'pycharmscriptsfull'], check=False,
+            capture_output=True).stdout.decode().splitlines()
+        if 'Typo: In word' in line
+    ]
+    words = [
+        line.split('Typo: In word')[1].strip().replace("'", "")
+        for line in lines
+    ]
+    _spelling(words)
+
+
+def spelling() -> None:
+    """Add words to the PyCharm dictionary."""
+    _spelling(sys.argv[2:])
 
 
 def check_clean_safety() -> None:
@@ -380,14 +400,12 @@ def compile_python_files() -> None:
     """
     import py_compile
     for arg in sys.argv[2:]:
-        # Hmm; seems mypy doesn't know about invalidation_mode yet.
-        mode = py_compile.PycInvalidationMode.UNCHECKED_HASH  # type: ignore
-        py_compile.compile(  # type: ignore
-            arg,
-            dfile=os.path.basename(arg),
-            doraise=True,
-            optimize=1,
-            invalidation_mode=mode)
+        mode = py_compile.PycInvalidationMode.UNCHECKED_HASH
+        py_compile.compile(arg,
+                           dfile=os.path.basename(arg),
+                           doraise=True,
+                           optimize=1,
+                           invalidation_mode=mode)
 
 
 def makefile_target_list() -> None:
