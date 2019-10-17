@@ -35,15 +35,15 @@ DOCPREFIX = "ballisticacore_"
 #                                                                              #
 ################################################################################
 
+# List targets in this Makefile and basic descriptions for them.
+help: list
+	@tools/snippets makefile_target_list Makefile
+
 # Prerequisites that should be in place before running most any other build;
 # things like tool config files, etc.
 PREREQS = .dir-locals.el .mypy.ini .pycheckers \
   .pylintrc .style.yapf .clang-format \
   .projectile .editorconfig
-
-# List targets in this Makefile and basic descriptions for them.
-help: list
-	@tools/snippets makefile_target_list Makefile
 
 prereqs: ${PREREQS}
 
@@ -155,8 +155,6 @@ prefab-mac-release-build: assets-cmake build/prefab/mac/release/ballisticacore
 
 build/prefab/mac/release/ballisticacore: .efrocachemap
 	@tools/snippets efrocache_get $@
-
-PREFAB_LINUX_FLAVOR ?= linux64-u19s
 
 prefab-linux-debug: prefab-linux-build
 	@cd build/prefab/linux/debug && ./ballisticacore
