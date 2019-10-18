@@ -644,10 +644,22 @@ def make_prefab() -> None:
     from efrotools import run
     import platform
 
-    if platform.system() == 'Darwin':
+    system = platform.system()
+    machine = platform.machine()
+    if system == 'Darwin':
+        # Currently there's just x86_64 on mac; will need to revisit when arm
+        # cpus happen.
         base = 'mac'
+    elif system == 'Linux':
+        # We currently only support x86_64 linux.
+        if machine == 'x86_64':
+            base = 'linux'
+        else:
+            raise RuntimeError(f'make_prefab: unsupported linux machine type:'
+                               f' {machine}.')
     else:
-        raise RuntimeError('Prefab not supported on this platform.')
+        raise RuntimeError(f'make_prefab: unrecognized platform:'
+                           f' {platform.system()}.')
 
     if len(sys.argv) != 3:
         raise RuntimeError('Expected one argument')
