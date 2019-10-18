@@ -128,8 +128,8 @@ endif # Textures
 ifeq ($(MAKE_SCRIPTS),1)
 ASSET_TARGETS_CMAKE += $(SCRIPT_TARGETS_CMAKE)
 ASSET_TARGETS_MAC += $(SCRIPT_TARGETS_MAC)
-ASSET_TARGETS_WIN_WIN32 += $(SCRIPT_TARGETS_WIN)
-ASSET_TARGETS_WIN_X64 += $(SCRIPT_TARGETS_WIN)
+ASSET_TARGETS_WIN_WIN32 += $(SCRIPT_TARGETS_WIN_WIN32)
+ASSET_TARGETS_WIN_X64 += $(SCRIPT_TARGETS_WIN_X64)
 ASSET_TARGETS_IOS += $(SCRIPT_TARGETS_IOS)
 ASSET_TARGETS_ANDROID += $(SCRIPT_TARGETS_ANDROID)
 ASSET_TARGETS_COMMON += $(SCRIPT_TARGETS_COMMON)
@@ -7820,675 +7820,7 @@ build/pylib-site-packages/__pycache__/typing_extensions.cpython-37.opt-1.pyc: \
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
 
-SCRIPT_TARGETS_PY_2_WIN = \
-  build/windows/x64/Lib/zipfile.py \
-  build/windows/x64/Lib/shutil.py \
-  build/windows/x64/Lib/tempfile.py \
-  build/windows/x64/Lib/queue.py \
-  build/windows/x64/Lib/macpath.py \
-  build/windows/x64/Lib/_pyio.py \
-  build/windows/x64/Lib/crypt.py \
-  build/windows/x64/Lib/pkgutil.py \
-  build/windows/x64/Lib/_dummy_thread.py \
-  build/windows/x64/Lib/lzma.py \
-  build/windows/x64/Lib/asyncore.py \
-  build/windows/x64/Lib/__phello__.foo.py \
-  build/windows/x64/Lib/_sitebuiltins.py \
-  build/windows/x64/Lib/copyreg.py \
-  build/windows/x64/Lib/sndhdr.py \
-  build/windows/x64/Lib/rlcompleter.py \
-  build/windows/x64/Lib/gzip.py \
-  build/windows/x64/Lib/ipaddress.py \
-  build/windows/x64/Lib/trace.py \
-  build/windows/x64/Lib/webbrowser.py \
-  build/windows/x64/Lib/nntplib.py \
-  build/windows/x64/Lib/_compat_pickle.py \
-  build/windows/x64/Lib/dis.py \
-  build/windows/x64/Lib/formatter.py \
-  build/windows/x64/Lib/bdb.py \
-  build/windows/x64/Lib/zipapp.py \
-  build/windows/x64/Lib/cmd.py \
-  build/windows/x64/Lib/tty.py \
-  build/windows/x64/Lib/tabnanny.py \
-  build/windows/x64/Lib/_py_abc.py \
-  build/windows/x64/Lib/cProfile.py \
-  build/windows/x64/Lib/token.py \
-  build/windows/x64/Lib/textwrap.py \
-  build/windows/x64/Lib/base64.py \
-  build/windows/x64/Lib/_markupbase.py \
-  build/windows/x64/Lib/bz2.py \
-  build/windows/x64/Lib/signal.py \
-  build/windows/x64/Lib/sre_constants.py \
-  build/windows/x64/Lib/cgitb.py \
-  build/windows/x64/Lib/_threading_local.py \
-  build/windows/x64/Lib/pyclbr.py \
-  build/windows/x64/Lib/gettext.py \
-  build/windows/x64/Lib/wave.py \
-  build/windows/x64/Lib/weakref.py \
-  build/windows/x64/Lib/bisect.py \
-  build/windows/x64/Lib/opcode.py \
-  build/windows/x64/Lib/netrc.py \
-  build/windows/x64/Lib/heapq.py \
-  build/windows/x64/Lib/functools.py \
-  build/windows/x64/Lib/modulefinder.py \
-  build/windows/x64/Lib/_compression.py \
-  build/windows/x64/Lib/tracemalloc.py \
-  build/windows/x64/Lib/hashlib.py \
-  build/windows/x64/Lib/cgi.py \
-  build/windows/x64/Lib/codeop.py \
-  build/windows/x64/Lib/fnmatch.py \
-  build/windows/x64/Lib/traceback.py \
-  build/windows/x64/Lib/nturl2path.py \
-  build/windows/x64/Lib/warnings.py \
-  build/windows/x64/Lib/subprocess.py \
-  build/windows/x64/Lib/profile.py \
-  build/windows/x64/Lib/imghdr.py \
-  build/windows/x64/Lib/this.py \
-  build/windows/x64/Lib/filecmp.py \
-  build/windows/x64/Lib/codecs.py \
-  build/windows/x64/Lib/uu.py \
-  build/windows/x64/Lib/_weakrefset.py \
-  build/windows/x64/Lib/io.py \
-  build/windows/x64/Lib/code.py \
-  build/windows/x64/Lib/operator.py \
-  build/windows/x64/Lib/fileinput.py \
-  build/windows/x64/Lib/os.py \
-  build/windows/x64/Lib/difflib.py \
-  build/windows/x64/Lib/pydoc.py \
-  build/windows/x64/Lib/symbol.py \
-  build/windows/x64/Lib/selectors.py \
-  build/windows/x64/Lib/decimal.py \
-  build/windows/x64/Lib/socketserver.py \
-  build/windows/x64/Lib/copy.py \
-  build/windows/x64/Lib/genericpath.py \
-  build/windows/x64/Lib/linecache.py \
-  build/windows/x64/Lib/types.py \
-  build/windows/x64/Lib/mimetypes.py \
-  build/windows/x64/Lib/xdrlib.py \
-  build/windows/x64/Lib/colorsys.py \
-  build/windows/x64/Lib/numbers.py \
-  build/windows/x64/Lib/_strptime.py \
-  build/windows/x64/Lib/dummy_threading.py \
-  build/windows/x64/Lib/contextvars.py \
-  build/windows/x64/Lib/random.py \
-  build/windows/x64/Lib/ftplib.py \
-  build/windows/x64/Lib/chunk.py \
-  build/windows/x64/Lib/optparse.py \
-  build/windows/x64/Lib/pdb.py \
-  build/windows/x64/Lib/threading.py \
-  build/windows/x64/Lib/turtle.py \
-  build/windows/x64/Lib/platform.py \
-  build/windows/x64/Lib/pstats.py \
-  build/windows/x64/Lib/glob.py \
-  build/windows/x64/Lib/quopri.py \
-  build/windows/x64/Lib/symtable.py \
-  build/windows/x64/Lib/pprint.py \
-  build/windows/x64/Lib/calendar.py \
-  build/windows/x64/Lib/inspect.py \
-  build/windows/x64/Lib/poplib.py \
-  build/windows/x64/Lib/binhex.py \
-  build/windows/x64/Lib/plistlib.py \
-  build/windows/x64/Lib/pickletools.py \
-  build/windows/x64/Lib/pipes.py \
-  build/windows/x64/Lib/site.py \
-  build/windows/x64/Lib/telnetlib.py \
-  build/windows/x64/Lib/keyword.py \
-  build/windows/x64/Lib/configparser.py \
-  build/windows/x64/Lib/reprlib.py \
-  build/windows/x64/Lib/secrets.py \
-  build/windows/x64/Lib/shlex.py \
-  build/windows/x64/Lib/posixpath.py \
-  build/windows/x64/Lib/py_compile.py \
-  build/windows/x64/Lib/_osx_support.py \
-  build/windows/x64/Lib/stat.py \
-  build/windows/x64/Lib/compileall.py \
-  build/windows/x64/Lib/csv.py \
-  build/windows/x64/Lib/fractions.py \
-  build/windows/x64/Lib/sched.py \
-  build/windows/x64/Lib/imaplib.py \
-  build/windows/x64/Lib/mailbox.py \
-  build/windows/x64/Lib/sre_compile.py \
-  build/windows/x64/Lib/locale.py \
-  build/windows/x64/Lib/ast.py \
-  build/windows/x64/Lib/doctest.py \
-  build/windows/x64/Lib/argparse.py \
-  build/windows/x64/Lib/getpass.py \
-  build/windows/x64/Lib/pickle.py \
-  build/windows/x64/Lib/pty.py \
-  build/windows/x64/Lib/contextlib.py \
-  build/windows/x64/Lib/statistics.py \
-  build/windows/x64/Lib/_collections_abc.py \
-  build/windows/x64/Lib/sunau.py \
-  build/windows/x64/Lib/__future__.py \
-  build/windows/x64/Lib/dataclasses.py \
-  build/windows/x64/Lib/shelve.py \
-  build/windows/x64/Lib/string.py \
-  build/windows/x64/Lib/smtplib.py \
-  build/windows/x64/Lib/getopt.py \
-  build/windows/x64/Lib/antigravity.py \
-  build/windows/x64/Lib/enum.py \
-  build/windows/x64/Lib/timeit.py \
-  build/windows/x64/Lib/hmac.py \
-  build/windows/x64/Lib/tarfile.py \
-  build/windows/x64/Lib/stringprep.py \
-  build/windows/x64/Lib/typing.py \
-  build/windows/x64/Lib/ssl.py \
-  build/windows/x64/Lib/socket.py \
-  build/windows/x64/Lib/datetime.py \
-  build/windows/x64/Lib/sysconfig.py \
-  build/windows/x64/Lib/pathlib.py \
-  build/windows/x64/Lib/_pydecimal.py \
-  build/windows/x64/Lib/ntpath.py \
-  build/windows/x64/Lib/tokenize.py \
-  build/windows/x64/Lib/uuid.py \
-  build/windows/x64/Lib/imp.py \
-  build/windows/x64/Lib/smtpd.py \
-  build/windows/x64/Lib/re.py \
-  build/windows/x64/Lib/mailcap.py \
-  build/windows/x64/Lib/aifc.py \
-  build/windows/x64/Lib/struct.py \
-  build/windows/x64/Lib/asynchat.py \
-  build/windows/x64/Lib/sre_parse.py \
-  build/windows/x64/Lib/abc.py \
-  build/windows/x64/Lib/runpy.py \
-  build/windows/x64/Lib/_bootlocale.py \
-  build/windows/x64/Lib/encodings/mac_romanian.py \
-  build/windows/x64/Lib/encodings/mac_farsi.py \
-  build/windows/x64/Lib/encodings/idna.py \
-  build/windows/x64/Lib/encodings/cp273.py \
-  build/windows/x64/Lib/encodings/punycode.py \
-  build/windows/x64/Lib/encodings/raw_unicode_escape.py \
-  build/windows/x64/Lib/encodings/utf_8.py \
-  build/windows/x64/Lib/encodings/cp1252.py \
-  build/windows/x64/Lib/encodings/cp869.py \
-  build/windows/x64/Lib/encodings/iso8859_14.py \
-  build/windows/x64/Lib/encodings/iso8859_2.py \
-  build/windows/x64/Lib/encodings/mac_arabic.py \
-  build/windows/x64/Lib/encodings/mac_croatian.py \
-  build/windows/x64/Lib/encodings/big5hkscs.py \
-  build/windows/x64/Lib/encodings/cp1256.py \
-  build/windows/x64/Lib/encodings/iso8859_6.py \
-  build/windows/x64/Lib/encodings/iso8859_10.py \
-  build/windows/x64/Lib/encodings/iso2022_kr.py \
-  build/windows/x64/Lib/encodings/cp1140.py \
-  build/windows/x64/Lib/encodings/unicode_internal.py \
-  build/windows/x64/Lib/encodings/cp1125.py \
-  build/windows/x64/Lib/encodings/iso2022_jp_1.py \
-  build/windows/x64/Lib/encodings/cp1257.py \
-  build/windows/x64/Lib/encodings/cp949.py \
-  build/windows/x64/Lib/encodings/cp858.py \
-  build/windows/x64/Lib/encodings/iso8859_7.py \
-  build/windows/x64/Lib/encodings/iso8859_11.py \
-  build/windows/x64/Lib/encodings/hp_roman8.py \
-  build/windows/x64/Lib/encodings/koi8_r.py \
-  build/windows/x64/Lib/encodings/zlib_codec.py \
-  build/windows/x64/Lib/encodings/gbk.py \
-  build/windows/x64/Lib/encodings/johab.py \
-  build/windows/x64/Lib/encodings/cp1253.py \
-  build/windows/x64/Lib/encodings/iso8859_15.py \
-  build/windows/x64/Lib/encodings/iso2022_jp_2004.py \
-  build/windows/x64/Lib/encodings/mac_iceland.py \
-  build/windows/x64/Lib/encodings/iso8859_3.py \
-  build/windows/x64/Lib/encodings/mac_greek.py \
-  build/windows/x64/Lib/encodings/rot_13.py \
-  build/windows/x64/Lib/encodings/utf_16_be.py \
-  build/windows/x64/Lib/encodings/euc_kr.py \
-  build/windows/x64/Lib/encodings/mac_centeuro.py \
-  build/windows/x64/Lib/encodings/euc_jisx0213.py \
-  build/windows/x64/Lib/encodings/cp863.py \
-  build/windows/x64/Lib/encodings/ascii.py \
-  build/windows/x64/Lib/encodings/iso8859_8.py \
-  build/windows/x64/Lib/encodings/cp857.py \
-  build/windows/x64/Lib/encodings/utf_32_be.py \
-  build/windows/x64/Lib/encodings/cp1258.py \
-  build/windows/x64/Lib/encodings/oem.py \
-  build/windows/x64/Lib/encodings/mac_latin2.py \
-  build/windows/x64/Lib/encodings/cp775.py \
-  build/windows/x64/Lib/encodings/mac_roman.py \
-  build/windows/x64/Lib/encodings/__init__.py \
-  build/windows/x64/Lib/encodings/cp852.py \
-  build/windows/x64/Lib/encodings/shift_jisx0213.py \
-  build/windows/x64/Lib/encodings/cp866.py \
-  build/windows/x64/Lib/encodings/utf_7.py \
-  build/windows/x64/Lib/encodings/base64_codec.py \
-  build/windows/x64/Lib/encodings/cp932.py \
-  build/windows/x64/Lib/encodings/cp720.py \
-  build/windows/x64/Lib/encodings/cp862.py \
-  build/windows/x64/Lib/encodings/cp437.py \
-  build/windows/x64/Lib/encodings/palmos.py \
-  build/windows/x64/Lib/encodings/iso8859_9.py \
-  build/windows/x64/Lib/encodings/cp856.py \
-  build/windows/x64/Lib/encodings/aliases.py \
-  build/windows/x64/Lib/encodings/latin_1.py \
-  build/windows/x64/Lib/encodings/cp875.py \
-  build/windows/x64/Lib/encodings/cp950.py \
-  build/windows/x64/Lib/encodings/unicode_escape.py \
-  build/windows/x64/Lib/encodings/cp737.py \
-  build/windows/x64/Lib/encodings/cp865.py \
-  build/windows/x64/Lib/encodings/ptcp154.py \
-  build/windows/x64/Lib/encodings/big5.py \
-  build/windows/x64/Lib/encodings/cp424.py \
-  build/windows/x64/Lib/encodings/cp861.py \
-  build/windows/x64/Lib/encodings/euc_jp.py \
-  build/windows/x64/Lib/encodings/cp855.py \
-  build/windows/x64/Lib/encodings/shift_jis.py \
-  build/windows/x64/Lib/encodings/utf_32_le.py \
-  build/windows/x64/Lib/encodings/cp500.py \
-  build/windows/x64/Lib/encodings/undefined.py \
-  build/windows/x64/Lib/encodings/cp860.py \
-  build/windows/x64/Lib/encodings/uu_codec.py \
-  build/windows/x64/Lib/encodings/utf_16_le.py \
-  build/windows/x64/Lib/encodings/gb18030.py \
-  build/windows/x64/Lib/encodings/cp65001.py \
-  build/windows/x64/Lib/encodings/cp874.py \
-  build/windows/x64/Lib/encodings/cp850.py \
-  build/windows/x64/Lib/encodings/cp864.py \
-  build/windows/x64/Lib/encodings/utf_32.py \
-  build/windows/x64/Lib/encodings/koi8_u.py \
-  build/windows/x64/Lib/encodings/cp1254.py \
-  build/windows/x64/Lib/encodings/iso2022_jp_2.py \
-  build/windows/x64/Lib/encodings/utf_16.py \
-  build/windows/x64/Lib/encodings/iso8859_4.py \
-  build/windows/x64/Lib/encodings/euc_jis_2004.py \
-  build/windows/x64/Lib/encodings/mbcs.py \
-  build/windows/x64/Lib/encodings/cp1250.py \
-  build/windows/x64/Lib/encodings/gb2312.py \
-  build/windows/x64/Lib/encodings/iso8859_16.py \
-  build/windows/x64/Lib/encodings/mac_cyrillic.py \
-  build/windows/x64/Lib/encodings/hex_codec.py \
-  build/windows/x64/Lib/encodings/tis_620.py \
-  build/windows/x64/Lib/encodings/cp037.py \
-  build/windows/x64/Lib/encodings/cp1006.py \
-  build/windows/x64/Lib/encodings/cp1251.py \
-  build/windows/x64/Lib/encodings/mac_turkish.py \
-  build/windows/x64/Lib/encodings/iso2022_jp_ext.py \
-  build/windows/x64/Lib/encodings/iso8859_1.py \
-  build/windows/x64/Lib/encodings/hz.py \
-  build/windows/x64/Lib/encodings/bz2_codec.py \
-  build/windows/x64/Lib/encodings/quopri_codec.py \
-  build/windows/x64/Lib/encodings/kz1048.py \
-  build/windows/x64/Lib/encodings/utf_8_sig.py \
-  build/windows/x64/Lib/encodings/koi8_t.py \
-  build/windows/x64/Lib/encodings/cp1255.py \
-  build/windows/x64/Lib/encodings/iso2022_jp_3.py \
-  build/windows/x64/Lib/encodings/shift_jis_2004.py \
-  build/windows/x64/Lib/encodings/cp1026.py \
-  build/windows/x64/Lib/encodings/charmap.py \
-  build/windows/x64/Lib/encodings/iso8859_5.py \
-  build/windows/x64/Lib/encodings/iso8859_13.py \
-  build/windows/x64/Lib/encodings/iso2022_jp.py \
-  build/windows/x64/Lib/distutils/_msvccompiler.py \
-  build/windows/x64/Lib/distutils/unixccompiler.py \
-  build/windows/x64/Lib/distutils/filelist.py \
-  build/windows/x64/Lib/distutils/ccompiler.py \
-  build/windows/x64/Lib/distutils/msvc9compiler.py \
-  build/windows/x64/Lib/distutils/archive_util.py \
-  build/windows/x64/Lib/distutils/cmd.py \
-  build/windows/x64/Lib/distutils/config.py \
-  build/windows/x64/Lib/distutils/version.py \
-  build/windows/x64/Lib/distutils/log.py \
-  build/windows/x64/Lib/distutils/util.py \
-  build/windows/x64/Lib/distutils/fancy_getopt.py \
-  build/windows/x64/Lib/distutils/versionpredicate.py \
-  build/windows/x64/Lib/distutils/__init__.py \
-  build/windows/x64/Lib/distutils/file_util.py \
-  build/windows/x64/Lib/distutils/core.py \
-  build/windows/x64/Lib/distutils/cygwinccompiler.py \
-  build/windows/x64/Lib/distutils/extension.py \
-  build/windows/x64/Lib/distutils/debug.py \
-  build/windows/x64/Lib/distutils/spawn.py \
-  build/windows/x64/Lib/distutils/text_file.py \
-  build/windows/x64/Lib/distutils/msvccompiler.py \
-  build/windows/x64/Lib/distutils/errors.py \
-  build/windows/x64/Lib/distutils/dep_util.py \
-  build/windows/x64/Lib/distutils/dir_util.py \
-  build/windows/x64/Lib/distutils/sysconfig.py \
-  build/windows/x64/Lib/distutils/dist.py \
-  build/windows/x64/Lib/distutils/bcppcompiler.py \
-  build/windows/x64/Lib/distutils/tests/test_bdist.py \
-  build/windows/x64/Lib/distutils/tests/test_text_file.py \
-  build/windows/x64/Lib/distutils/tests/test_bdist_wininst.py \
-  build/windows/x64/Lib/distutils/tests/test_version.py \
-  build/windows/x64/Lib/distutils/tests/test_install_lib.py \
-  build/windows/x64/Lib/distutils/tests/test_build_py.py \
-  build/windows/x64/Lib/distutils/tests/test_extension.py \
-  build/windows/x64/Lib/distutils/tests/test_spawn.py \
-  build/windows/x64/Lib/distutils/tests/support.py \
-  build/windows/x64/Lib/distutils/tests/test_bdist_rpm.py \
-  build/windows/x64/Lib/distutils/tests/test_install_data.py \
-  build/windows/x64/Lib/distutils/tests/test_msvc9compiler.py \
-  build/windows/x64/Lib/distutils/tests/test_cygwinccompiler.py \
-  build/windows/x64/Lib/distutils/tests/test_unixccompiler.py \
-  build/windows/x64/Lib/distutils/tests/test_filelist.py \
-  build/windows/x64/Lib/distutils/tests/test_core.py \
-  build/windows/x64/Lib/distutils/tests/test_bdist_msi.py \
-  build/windows/x64/Lib/distutils/tests/test_cmd.py \
-  build/windows/x64/Lib/distutils/tests/__init__.py \
-  build/windows/x64/Lib/distutils/tests/test_msvccompiler.py \
-  build/windows/x64/Lib/distutils/tests/test_sysconfig.py \
-  build/windows/x64/Lib/distutils/tests/test_util.py \
-  build/windows/x64/Lib/distutils/tests/test_build_clib.py \
-  build/windows/x64/Lib/distutils/tests/test_register.py \
-  build/windows/x64/Lib/distutils/tests/test_log.py \
-  build/windows/x64/Lib/distutils/tests/test_dep_util.py \
-  build/windows/x64/Lib/distutils/tests/test_build.py \
-  build/windows/x64/Lib/distutils/tests/test_install_scripts.py \
-  build/windows/x64/Lib/distutils/tests/test_build_ext.py \
-  build/windows/x64/Lib/distutils/tests/test_dir_util.py \
-  build/windows/x64/Lib/distutils/tests/test_install_headers.py \
-  build/windows/x64/Lib/distutils/tests/test_clean.py \
-  build/windows/x64/Lib/distutils/tests/test_check.py \
-  build/windows/x64/Lib/distutils/tests/test_config.py \
-  build/windows/x64/Lib/distutils/tests/test_versionpredicate.py \
-  build/windows/x64/Lib/distutils/tests/test_upload.py \
-  build/windows/x64/Lib/distutils/tests/test_build_scripts.py \
-  build/windows/x64/Lib/distutils/tests/test_bdist_dumb.py \
-  build/windows/x64/Lib/distutils/tests/test_file_util.py \
-  build/windows/x64/Lib/distutils/tests/test_dist.py \
-  build/windows/x64/Lib/distutils/tests/test_install.py \
-  build/windows/x64/Lib/distutils/tests/test_config_cmd.py \
-  build/windows/x64/Lib/distutils/tests/test_sdist.py \
-  build/windows/x64/Lib/distutils/tests/test_archive_util.py \
-  build/windows/x64/Lib/distutils/command/build.py \
-  build/windows/x64/Lib/distutils/command/build_ext.py \
-  build/windows/x64/Lib/distutils/command/config.py \
-  build/windows/x64/Lib/distutils/command/clean.py \
-  build/windows/x64/Lib/distutils/command/check.py \
-  build/windows/x64/Lib/distutils/command/install_scripts.py \
-  build/windows/x64/Lib/distutils/command/upload.py \
-  build/windows/x64/Lib/distutils/command/register.py \
-  build/windows/x64/Lib/distutils/command/bdist_wininst.py \
-  build/windows/x64/Lib/distutils/command/install_headers.py \
-  build/windows/x64/Lib/distutils/command/install_lib.py \
-  build/windows/x64/Lib/distutils/command/build_py.py \
-  build/windows/x64/Lib/distutils/command/bdist_dumb.py \
-  build/windows/x64/Lib/distutils/command/__init__.py \
-  build/windows/x64/Lib/distutils/command/sdist.py \
-  build/windows/x64/Lib/distutils/command/bdist.py \
-  build/windows/x64/Lib/distutils/command/build_scripts.py \
-  build/windows/x64/Lib/distutils/command/bdist_rpm.py \
-  build/windows/x64/Lib/distutils/command/build_clib.py \
-  build/windows/x64/Lib/distutils/command/install.py \
-  build/windows/x64/Lib/distutils/command/bdist_msi.py \
-  build/windows/x64/Lib/distutils/command/install_egg_info.py \
-  build/windows/x64/Lib/distutils/command/install_data.py \
-  build/windows/x64/Lib/ctypes/_aix.py \
-  build/windows/x64/Lib/ctypes/wintypes.py \
-  build/windows/x64/Lib/ctypes/util.py \
-  build/windows/x64/Lib/ctypes/__init__.py \
-  build/windows/x64/Lib/ctypes/_endian.py \
-  build/windows/x64/Lib/ctypes/test/test_array_in_pointer.py \
-  build/windows/x64/Lib/ctypes/test/test_random_things.py \
-  build/windows/x64/Lib/ctypes/test/test_funcptr.py \
-  build/windows/x64/Lib/ctypes/test/test_callbacks.py \
-  build/windows/x64/Lib/ctypes/test/test_unicode.py \
-  build/windows/x64/Lib/ctypes/test/test_structures.py \
-  build/windows/x64/Lib/ctypes/test/test_cast.py \
-  build/windows/x64/Lib/ctypes/test/test_unaligned_structures.py \
-  build/windows/x64/Lib/ctypes/test/test_keeprefs.py \
-  build/windows/x64/Lib/ctypes/test/test_loading.py \
-  build/windows/x64/Lib/ctypes/test/test_memfunctions.py \
-  build/windows/x64/Lib/ctypes/test/test_slicing.py \
-  build/windows/x64/Lib/ctypes/test/test_numbers.py \
-  build/windows/x64/Lib/ctypes/test/test_libc.py \
-  build/windows/x64/Lib/ctypes/test/test_python_api.py \
-  build/windows/x64/Lib/ctypes/test/test_bytes.py \
-  build/windows/x64/Lib/ctypes/test/test_pep3118.py \
-  build/windows/x64/Lib/ctypes/test/__init__.py \
-  build/windows/x64/Lib/ctypes/test/test_frombuffer.py \
-  build/windows/x64/Lib/ctypes/test/test_parameters.py \
-  build/windows/x64/Lib/ctypes/test/test_wintypes.py \
-  build/windows/x64/Lib/ctypes/test/test_pointers.py \
-  build/windows/x64/Lib/ctypes/test/test_errno.py \
-  build/windows/x64/Lib/ctypes/test/test_arrays.py \
-  build/windows/x64/Lib/ctypes/test/test_cfuncs.py \
-  build/windows/x64/Lib/ctypes/test/test_find.py \
-  build/windows/x64/Lib/ctypes/test/test_refcounts.py \
-  build/windows/x64/Lib/ctypes/test/test_returnfuncptrs.py \
-  build/windows/x64/Lib/ctypes/test/test_internals.py \
-  build/windows/x64/Lib/ctypes/test/test_prototypes.py \
-  build/windows/x64/Lib/ctypes/test/test_values.py \
-  build/windows/x64/Lib/ctypes/test/test_varsize_struct.py \
-  build/windows/x64/Lib/ctypes/test/test_stringptr.py \
-  build/windows/x64/Lib/ctypes/test/test_as_parameter.py \
-  build/windows/x64/Lib/ctypes/test/test_pickling.py \
-  build/windows/x64/Lib/ctypes/test/test_bitfields.py \
-  build/windows/x64/Lib/ctypes/test/test_byteswap.py \
-  build/windows/x64/Lib/ctypes/test/test_functions.py \
-  build/windows/x64/Lib/ctypes/test/test_repr.py \
-  build/windows/x64/Lib/ctypes/test/test_macholib.py \
-  build/windows/x64/Lib/ctypes/test/test_incomplete.py \
-  build/windows/x64/Lib/ctypes/test/test_strings.py \
-  build/windows/x64/Lib/ctypes/test/test_struct_fields.py \
-  build/windows/x64/Lib/ctypes/test/test_buffers.py \
-  build/windows/x64/Lib/ctypes/test/test_simplesubclasses.py \
-  build/windows/x64/Lib/ctypes/test/test_anon.py \
-  build/windows/x64/Lib/ctypes/test/test_init.py \
-  build/windows/x64/Lib/ctypes/test/test_checkretval.py \
-  build/windows/x64/Lib/ctypes/test/test_delattr.py \
-  build/windows/x64/Lib/ctypes/test/__main__.py \
-  build/windows/x64/Lib/ctypes/test/test_objects.py \
-  build/windows/x64/Lib/ctypes/test/test_sizes.py \
-  build/windows/x64/Lib/ctypes/test/test_win32.py \
-  build/windows/x64/Lib/ctypes/macholib/dyld.py \
-  build/windows/x64/Lib/ctypes/macholib/framework.py \
-  build/windows/x64/Lib/ctypes/macholib/__init__.py \
-  build/windows/x64/Lib/ctypes/macholib/dylib.py \
-  build/windows/x64/Lib/unittest/signals.py \
-  build/windows/x64/Lib/unittest/runner.py \
-  build/windows/x64/Lib/unittest/suite.py \
-  build/windows/x64/Lib/unittest/util.py \
-  build/windows/x64/Lib/unittest/__init__.py \
-  build/windows/x64/Lib/unittest/result.py \
-  build/windows/x64/Lib/unittest/loader.py \
-  build/windows/x64/Lib/unittest/case.py \
-  build/windows/x64/Lib/unittest/main.py \
-  build/windows/x64/Lib/unittest/__main__.py \
-  build/windows/x64/Lib/unittest/mock.py \
-  build/windows/x64/Lib/unittest/test/test_result.py \
-  build/windows/x64/Lib/unittest/test/support.py \
-  build/windows/x64/Lib/unittest/test/test_loader.py \
-  build/windows/x64/Lib/unittest/test/test_skipping.py \
-  build/windows/x64/Lib/unittest/test/test_setups.py \
-  build/windows/x64/Lib/unittest/test/test_functiontestcase.py \
-  build/windows/x64/Lib/unittest/test/__init__.py \
-  build/windows/x64/Lib/unittest/test/test_break.py \
-  build/windows/x64/Lib/unittest/test/test_case.py \
-  build/windows/x64/Lib/unittest/test/test_discovery.py \
-  build/windows/x64/Lib/unittest/test/test_runner.py \
-  build/windows/x64/Lib/unittest/test/test_program.py \
-  build/windows/x64/Lib/unittest/test/test_suite.py \
-  build/windows/x64/Lib/unittest/test/test_assertions.py \
-  build/windows/x64/Lib/unittest/test/_test_warnings.py \
-  build/windows/x64/Lib/unittest/test/dummy.py \
-  build/windows/x64/Lib/unittest/test/__main__.py \
-  build/windows/x64/Lib/unittest/test/testmock/support.py \
-  build/windows/x64/Lib/unittest/test/testmock/testcallable.py \
-  build/windows/x64/Lib/unittest/test/testmock/__init__.py \
-  build/windows/x64/Lib/unittest/test/testmock/testmagicmethods.py \
-  build/windows/x64/Lib/unittest/test/testmock/testmock.py \
-  build/windows/x64/Lib/unittest/test/testmock/testwith.py \
-  build/windows/x64/Lib/unittest/test/testmock/testhelpers.py \
-  build/windows/x64/Lib/unittest/test/testmock/testpatch.py \
-  build/windows/x64/Lib/unittest/test/testmock/testsealable.py \
-  build/windows/x64/Lib/unittest/test/testmock/testsentinel.py \
-  build/windows/x64/Lib/unittest/test/testmock/__main__.py \
-  build/windows/x64/Lib/curses/textpad.py \
-  build/windows/x64/Lib/curses/ascii.py \
-  build/windows/x64/Lib/curses/__init__.py \
-  build/windows/x64/Lib/curses/has_key.py \
-  build/windows/x64/Lib/curses/panel.py \
-  build/windows/x64/Lib/multiprocessing/semaphore_tracker.py \
-  build/windows/x64/Lib/multiprocessing/queues.py \
-  build/windows/x64/Lib/multiprocessing/heap.py \
-  build/windows/x64/Lib/multiprocessing/reduction.py \
-  build/windows/x64/Lib/multiprocessing/util.py \
-  build/windows/x64/Lib/multiprocessing/popen_spawn_win32.py \
-  build/windows/x64/Lib/multiprocessing/__init__.py \
-  build/windows/x64/Lib/multiprocessing/forkserver.py \
-  build/windows/x64/Lib/multiprocessing/connection.py \
-  build/windows/x64/Lib/multiprocessing/context.py \
-  build/windows/x64/Lib/multiprocessing/spawn.py \
-  build/windows/x64/Lib/multiprocessing/synchronize.py \
-  build/windows/x64/Lib/multiprocessing/process.py \
-  build/windows/x64/Lib/multiprocessing/sharedctypes.py \
-  build/windows/x64/Lib/multiprocessing/popen_fork.py \
-  build/windows/x64/Lib/multiprocessing/pool.py \
-  build/windows/x64/Lib/multiprocessing/popen_forkserver.py \
-  build/windows/x64/Lib/multiprocessing/popen_spawn_posix.py \
-  build/windows/x64/Lib/multiprocessing/managers.py \
-  build/windows/x64/Lib/multiprocessing/resource_sharer.py \
-  build/windows/x64/Lib/multiprocessing/dummy/__init__.py \
-  build/windows/x64/Lib/multiprocessing/dummy/connection.py \
-  build/windows/x64/Lib/msilib/sequence.py \
-  build/windows/x64/Lib/msilib/__init__.py \
-  build/windows/x64/Lib/msilib/text.py \
-  build/windows/x64/Lib/msilib/schema.py \
-  build/windows/x64/Lib/urllib/error.py \
-  build/windows/x64/Lib/urllib/request.py \
-  build/windows/x64/Lib/urllib/__init__.py \
-  build/windows/x64/Lib/urllib/response.py \
-  build/windows/x64/Lib/urllib/robotparser.py \
-  build/windows/x64/Lib/urllib/parse.py \
-  build/windows/x64/Lib/html/__init__.py \
-  build/windows/x64/Lib/html/parser.py \
-  build/windows/x64/Lib/html/entities.py \
-  build/windows/x64/Lib/xml/__init__.py \
-  build/windows/x64/Lib/xml/parsers/expat.py \
-  build/windows/x64/Lib/xml/parsers/__init__.py \
-  build/windows/x64/Lib/xml/sax/handler.py \
-  build/windows/x64/Lib/xml/sax/__init__.py \
-  build/windows/x64/Lib/xml/sax/saxutils.py \
-  build/windows/x64/Lib/xml/sax/xmlreader.py \
-  build/windows/x64/Lib/xml/sax/expatreader.py \
-  build/windows/x64/Lib/xml/sax/_exceptions.py \
-  build/windows/x64/Lib/xml/dom/pulldom.py \
-  build/windows/x64/Lib/xml/dom/expatbuilder.py \
-  build/windows/x64/Lib/xml/dom/domreg.py \
-  build/windows/x64/Lib/xml/dom/minicompat.py \
-  build/windows/x64/Lib/xml/dom/__init__.py \
-  build/windows/x64/Lib/xml/dom/NodeFilter.py \
-  build/windows/x64/Lib/xml/dom/xmlbuilder.py \
-  build/windows/x64/Lib/xml/dom/minidom.py \
-  build/windows/x64/Lib/xml/etree/ElementPath.py \
-  build/windows/x64/Lib/xml/etree/cElementTree.py \
-  build/windows/x64/Lib/xml/etree/__init__.py \
-  build/windows/x64/Lib/xml/etree/ElementInclude.py \
-  build/windows/x64/Lib/xml/etree/ElementTree.py \
-  build/windows/x64/Lib/wsgiref/util.py \
-  build/windows/x64/Lib/wsgiref/handlers.py \
-  build/windows/x64/Lib/wsgiref/__init__.py \
-  build/windows/x64/Lib/wsgiref/validate.py \
-  build/windows/x64/Lib/wsgiref/simple_server.py \
-  build/windows/x64/Lib/wsgiref/headers.py \
-  build/windows/x64/Lib/json/decoder.py \
-  build/windows/x64/Lib/json/scanner.py \
-  build/windows/x64/Lib/json/__init__.py \
-  build/windows/x64/Lib/json/encoder.py \
-  build/windows/x64/Lib/json/tool.py \
-  build/windows/x64/Lib/http/cookies.py \
-  build/windows/x64/Lib/http/server.py \
-  build/windows/x64/Lib/http/client.py \
-  build/windows/x64/Lib/http/__init__.py \
-  build/windows/x64/Lib/http/cookiejar.py \
-  build/windows/x64/Lib/sqlite3/__init__.py \
-  build/windows/x64/Lib/sqlite3/dump.py \
-  build/windows/x64/Lib/sqlite3/dbapi2.py \
-  build/windows/x64/Lib/sqlite3/test/backup.py \
-  build/windows/x64/Lib/sqlite3/test/hooks.py \
-  build/windows/x64/Lib/sqlite3/test/regression.py \
-  build/windows/x64/Lib/sqlite3/test/dbapi.py \
-  build/windows/x64/Lib/sqlite3/test/transactions.py \
-  build/windows/x64/Lib/sqlite3/test/__init__.py \
-  build/windows/x64/Lib/sqlite3/test/types.py \
-  build/windows/x64/Lib/sqlite3/test/factory.py \
-  build/windows/x64/Lib/sqlite3/test/dump.py \
-  build/windows/x64/Lib/sqlite3/test/userfunctions.py \
-  build/windows/x64/Lib/ensurepip/__init__.py \
-  build/windows/x64/Lib/ensurepip/__main__.py \
-  build/windows/x64/Lib/ensurepip/_uninstall.py \
-  build/windows/x64/Lib/concurrent/__init__.py \
-  build/windows/x64/Lib/concurrent/futures/_base.py \
-  build/windows/x64/Lib/concurrent/futures/thread.py \
-  build/windows/x64/Lib/concurrent/futures/__init__.py \
-  build/windows/x64/Lib/concurrent/futures/process.py \
-  build/windows/x64/Lib/venv/__init__.py \
-  build/windows/x64/Lib/venv/__main__.py \
-  build/windows/x64/Lib/dbm/ndbm.py \
-  build/windows/x64/Lib/dbm/gnu.py \
-  build/windows/x64/Lib/dbm/__init__.py \
-  build/windows/x64/Lib/dbm/dumb.py \
-  build/windows/x64/Lib/importlib/util.py \
-  build/windows/x64/Lib/importlib/_bootstrap.py \
-  build/windows/x64/Lib/importlib/__init__.py \
-  build/windows/x64/Lib/importlib/_bootstrap_external.py \
-  build/windows/x64/Lib/importlib/resources.py \
-  build/windows/x64/Lib/importlib/machinery.py \
-  build/windows/x64/Lib/importlib/abc.py \
-  build/windows/x64/Lib/xmlrpc/server.py \
-  build/windows/x64/Lib/xmlrpc/client.py \
-  build/windows/x64/Lib/xmlrpc/__init__.py \
-  build/windows/x64/Lib/pydoc_data/__init__.py \
-  build/windows/x64/Lib/pydoc_data/topics.py \
-  build/windows/x64/Lib/collections/__init__.py \
-  build/windows/x64/Lib/collections/abc.py \
-  build/windows/x64/Lib/asyncio/queues.py \
-  build/windows/x64/Lib/asyncio/streams.py \
-  build/windows/x64/Lib/asyncio/tasks.py \
-  build/windows/x64/Lib/asyncio/selector_events.py \
-  build/windows/x64/Lib/asyncio/log.py \
-  build/windows/x64/Lib/asyncio/protocols.py \
-  build/windows/x64/Lib/asyncio/events.py \
-  build/windows/x64/Lib/asyncio/base_events.py \
-  build/windows/x64/Lib/asyncio/subprocess.py \
-  build/windows/x64/Lib/asyncio/constants.py \
-  build/windows/x64/Lib/asyncio/proactor_events.py \
-  build/windows/x64/Lib/asyncio/format_helpers.py \
-  build/windows/x64/Lib/asyncio/locks.py \
-  build/windows/x64/Lib/asyncio/__init__.py \
-  build/windows/x64/Lib/asyncio/futures.py \
-  build/windows/x64/Lib/asyncio/sslproto.py \
-  build/windows/x64/Lib/asyncio/base_subprocess.py \
-  build/windows/x64/Lib/asyncio/windows_utils.py \
-  build/windows/x64/Lib/asyncio/runners.py \
-  build/windows/x64/Lib/asyncio/transports.py \
-  build/windows/x64/Lib/asyncio/base_tasks.py \
-  build/windows/x64/Lib/asyncio/coroutines.py \
-  build/windows/x64/Lib/asyncio/windows_events.py \
-  build/windows/x64/Lib/asyncio/base_futures.py \
-  build/windows/x64/Lib/asyncio/unix_events.py \
-  build/windows/x64/Lib/logging/config.py \
-  build/windows/x64/Lib/logging/handlers.py \
-  build/windows/x64/Lib/logging/__init__.py \
-  build/windows/x64/Lib/email/contentmanager.py \
-  build/windows/x64/Lib/email/_policybase.py \
-  build/windows/x64/Lib/email/header.py \
-  build/windows/x64/Lib/email/_encoded_words.py \
-  build/windows/x64/Lib/email/_header_value_parser.py \
-  build/windows/x64/Lib/email/policy.py \
-  build/windows/x64/Lib/email/__init__.py \
-  build/windows/x64/Lib/email/message.py \
-  build/windows/x64/Lib/email/encoders.py \
-  build/windows/x64/Lib/email/parser.py \
-  build/windows/x64/Lib/email/generator.py \
-  build/windows/x64/Lib/email/utils.py \
-  build/windows/x64/Lib/email/charset.py \
-  build/windows/x64/Lib/email/iterators.py \
-  build/windows/x64/Lib/email/quoprimime.py \
-  build/windows/x64/Lib/email/errors.py \
-  build/windows/x64/Lib/email/feedparser.py \
-  build/windows/x64/Lib/email/_parseaddr.py \
-  build/windows/x64/Lib/email/base64mime.py \
-  build/windows/x64/Lib/email/headerregistry.py \
-  build/windows/x64/Lib/email/mime/multipart.py \
-  build/windows/x64/Lib/email/mime/__init__.py \
-  build/windows/x64/Lib/email/mime/message.py \
-  build/windows/x64/Lib/email/mime/application.py \
-  build/windows/x64/Lib/email/mime/nonmultipart.py \
-  build/windows/x64/Lib/email/mime/text.py \
-  build/windows/x64/Lib/email/mime/audio.py \
-  build/windows/x64/Lib/email/mime/image.py \
-  build/windows/x64/Lib/email/mime/base.py \
+SCRIPT_TARGETS_PY_2_WIN_WIN32 = \
   build/windows/Win32/Lib/zipfile.py \
   build/windows/Win32/Lib/shutil.py \
   build/windows/Win32/Lib/tempfile.py \
@@ -9158,675 +8490,7 @@ SCRIPT_TARGETS_PY_2_WIN = \
   build/windows/Win32/Lib/email/mime/image.py \
   build/windows/Win32/Lib/email/mime/base.py
 
-SCRIPT_TARGETS_PYC_2_WIN = \
-  build/windows/x64/Lib/__pycache__/zipfile.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/shutil.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/tempfile.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/queue.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/macpath.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/_pyio.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/crypt.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/pkgutil.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/_dummy_thread.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/lzma.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/asyncore.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/__phello__.foo.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/_sitebuiltins.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/copyreg.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/sndhdr.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/rlcompleter.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/gzip.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/ipaddress.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/trace.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/webbrowser.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/nntplib.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/_compat_pickle.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/dis.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/formatter.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/bdb.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/zipapp.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/cmd.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/tty.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/tabnanny.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/_py_abc.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/cProfile.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/token.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/textwrap.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/base64.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/_markupbase.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/bz2.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/signal.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/sre_constants.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/cgitb.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/_threading_local.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/pyclbr.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/gettext.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/wave.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/weakref.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/bisect.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/opcode.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/netrc.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/heapq.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/functools.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/modulefinder.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/_compression.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/tracemalloc.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/hashlib.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/cgi.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/codeop.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/fnmatch.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/traceback.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/nturl2path.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/warnings.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/subprocess.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/profile.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/imghdr.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/this.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/filecmp.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/codecs.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/uu.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/_weakrefset.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/io.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/code.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/operator.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/fileinput.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/os.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/difflib.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/pydoc.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/symbol.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/selectors.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/decimal.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/socketserver.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/copy.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/genericpath.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/linecache.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/types.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/mimetypes.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/xdrlib.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/colorsys.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/numbers.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/_strptime.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/dummy_threading.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/contextvars.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/random.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/ftplib.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/chunk.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/optparse.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/pdb.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/threading.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/turtle.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/platform.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/pstats.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/glob.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/quopri.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/symtable.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/pprint.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/calendar.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/inspect.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/poplib.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/binhex.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/plistlib.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/pickletools.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/pipes.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/site.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/telnetlib.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/keyword.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/configparser.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/reprlib.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/secrets.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/shlex.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/posixpath.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/py_compile.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/_osx_support.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/stat.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/compileall.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/csv.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/fractions.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/sched.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/imaplib.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/mailbox.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/sre_compile.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/locale.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/ast.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/doctest.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/argparse.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/getpass.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/pickle.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/pty.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/contextlib.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/statistics.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/_collections_abc.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/sunau.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/__future__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/dataclasses.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/shelve.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/string.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/smtplib.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/getopt.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/antigravity.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/enum.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/timeit.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/hmac.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/tarfile.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/stringprep.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/typing.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/ssl.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/socket.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/datetime.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/sysconfig.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/pathlib.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/_pydecimal.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/ntpath.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/tokenize.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/uuid.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/imp.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/smtpd.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/re.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/mailcap.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/aifc.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/struct.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/asynchat.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/sre_parse.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/abc.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/runpy.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/__pycache__/_bootlocale.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/mac_romanian.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/mac_farsi.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/idna.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp273.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/punycode.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/raw_unicode_escape.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/utf_8.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp1252.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp869.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/iso8859_14.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/iso8859_2.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/mac_arabic.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/mac_croatian.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/big5hkscs.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp1256.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/iso8859_6.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/iso8859_10.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/iso2022_kr.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp1140.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/unicode_internal.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp1125.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/iso2022_jp_1.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp1257.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp949.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp858.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/iso8859_7.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/iso8859_11.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/hp_roman8.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/koi8_r.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/zlib_codec.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/gbk.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/johab.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp1253.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/iso8859_15.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/iso2022_jp_2004.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/mac_iceland.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/iso8859_3.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/mac_greek.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/rot_13.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/utf_16_be.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/euc_kr.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/mac_centeuro.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/euc_jisx0213.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp863.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/ascii.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/iso8859_8.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp857.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/utf_32_be.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp1258.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/oem.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/mac_latin2.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp775.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/mac_roman.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp852.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/shift_jisx0213.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp866.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/utf_7.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/base64_codec.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp932.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp720.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp862.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp437.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/palmos.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/iso8859_9.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp856.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/aliases.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/latin_1.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp875.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp950.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/unicode_escape.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp737.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp865.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/ptcp154.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/big5.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp424.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp861.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/euc_jp.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp855.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/shift_jis.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/utf_32_le.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp500.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/undefined.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp860.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/uu_codec.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/utf_16_le.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/gb18030.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp65001.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp874.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp850.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp864.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/utf_32.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/koi8_u.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp1254.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/iso2022_jp_2.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/utf_16.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/iso8859_4.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/euc_jis_2004.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/mbcs.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp1250.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/gb2312.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/iso8859_16.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/mac_cyrillic.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/hex_codec.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/tis_620.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp037.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp1006.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp1251.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/mac_turkish.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/iso2022_jp_ext.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/iso8859_1.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/hz.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/bz2_codec.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/quopri_codec.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/kz1048.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/utf_8_sig.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/koi8_t.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp1255.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/iso2022_jp_3.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/shift_jis_2004.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/cp1026.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/charmap.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/iso8859_5.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/iso8859_13.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/encodings/__pycache__/iso2022_jp.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/__pycache__/_msvccompiler.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/__pycache__/unixccompiler.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/__pycache__/filelist.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/__pycache__/ccompiler.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/__pycache__/msvc9compiler.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/__pycache__/archive_util.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/__pycache__/cmd.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/__pycache__/config.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/__pycache__/version.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/__pycache__/log.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/__pycache__/util.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/__pycache__/fancy_getopt.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/__pycache__/versionpredicate.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/__pycache__/file_util.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/__pycache__/core.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/__pycache__/cygwinccompiler.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/__pycache__/extension.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/__pycache__/debug.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/__pycache__/spawn.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/__pycache__/text_file.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/__pycache__/msvccompiler.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/__pycache__/errors.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/__pycache__/dep_util.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/__pycache__/dir_util.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/__pycache__/sysconfig.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/__pycache__/dist.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/__pycache__/bcppcompiler.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_bdist.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_text_file.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_bdist_wininst.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_version.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_install_lib.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_build_py.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_extension.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_spawn.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/support.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_bdist_rpm.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_install_data.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_msvc9compiler.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_cygwinccompiler.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_unixccompiler.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_filelist.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_core.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_bdist_msi.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_cmd.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_msvccompiler.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_sysconfig.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_util.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_build_clib.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_register.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_log.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_dep_util.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_build.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_install_scripts.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_build_ext.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_dir_util.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_install_headers.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_clean.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_check.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_config.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_versionpredicate.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_upload.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_build_scripts.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_bdist_dumb.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_file_util.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_dist.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_install.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_config_cmd.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_sdist.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/tests/__pycache__/test_archive_util.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/command/__pycache__/build.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/command/__pycache__/build_ext.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/command/__pycache__/config.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/command/__pycache__/clean.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/command/__pycache__/check.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/command/__pycache__/install_scripts.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/command/__pycache__/upload.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/command/__pycache__/register.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/command/__pycache__/bdist_wininst.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/command/__pycache__/install_headers.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/command/__pycache__/install_lib.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/command/__pycache__/build_py.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/command/__pycache__/bdist_dumb.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/command/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/command/__pycache__/sdist.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/command/__pycache__/bdist.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/command/__pycache__/build_scripts.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/command/__pycache__/bdist_rpm.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/command/__pycache__/build_clib.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/command/__pycache__/install.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/command/__pycache__/bdist_msi.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/command/__pycache__/install_egg_info.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/distutils/command/__pycache__/install_data.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/__pycache__/_aix.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/__pycache__/wintypes.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/__pycache__/util.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/__pycache__/_endian.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_array_in_pointer.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_random_things.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_funcptr.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_callbacks.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_unicode.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_structures.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_cast.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_unaligned_structures.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_keeprefs.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_loading.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_memfunctions.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_slicing.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_numbers.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_libc.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_python_api.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_bytes.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_pep3118.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_frombuffer.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_parameters.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_wintypes.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_pointers.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_errno.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_arrays.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_cfuncs.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_find.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_refcounts.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_returnfuncptrs.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_internals.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_prototypes.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_values.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_varsize_struct.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_stringptr.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_as_parameter.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_pickling.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_bitfields.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_byteswap.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_functions.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_repr.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_macholib.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_incomplete.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_strings.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_struct_fields.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_buffers.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_simplesubclasses.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_anon.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_init.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_checkretval.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_delattr.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/__main__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_objects.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_sizes.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/test/__pycache__/test_win32.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/macholib/__pycache__/dyld.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/macholib/__pycache__/framework.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/macholib/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ctypes/macholib/__pycache__/dylib.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/__pycache__/signals.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/__pycache__/runner.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/__pycache__/suite.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/__pycache__/util.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/__pycache__/result.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/__pycache__/loader.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/__pycache__/case.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/__pycache__/main.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/__pycache__/__main__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/__pycache__/mock.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/test/__pycache__/test_result.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/test/__pycache__/support.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/test/__pycache__/test_loader.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/test/__pycache__/test_skipping.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/test/__pycache__/test_setups.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/test/__pycache__/test_functiontestcase.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/test/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/test/__pycache__/test_break.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/test/__pycache__/test_case.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/test/__pycache__/test_discovery.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/test/__pycache__/test_runner.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/test/__pycache__/test_program.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/test/__pycache__/test_suite.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/test/__pycache__/test_assertions.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/test/__pycache__/_test_warnings.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/test/__pycache__/dummy.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/test/__pycache__/__main__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/test/testmock/__pycache__/support.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/test/testmock/__pycache__/testcallable.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/test/testmock/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/test/testmock/__pycache__/testmagicmethods.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/test/testmock/__pycache__/testmock.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/test/testmock/__pycache__/testwith.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/test/testmock/__pycache__/testhelpers.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/test/testmock/__pycache__/testpatch.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/test/testmock/__pycache__/testsealable.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/test/testmock/__pycache__/testsentinel.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/unittest/test/testmock/__pycache__/__main__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/curses/__pycache__/textpad.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/curses/__pycache__/ascii.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/curses/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/curses/__pycache__/has_key.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/curses/__pycache__/panel.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/multiprocessing/__pycache__/semaphore_tracker.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/multiprocessing/__pycache__/queues.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/multiprocessing/__pycache__/heap.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/multiprocessing/__pycache__/reduction.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/multiprocessing/__pycache__/util.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/multiprocessing/__pycache__/popen_spawn_win32.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/multiprocessing/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/multiprocessing/__pycache__/forkserver.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/multiprocessing/__pycache__/connection.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/multiprocessing/__pycache__/context.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/multiprocessing/__pycache__/spawn.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/multiprocessing/__pycache__/synchronize.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/multiprocessing/__pycache__/process.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/multiprocessing/__pycache__/sharedctypes.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/multiprocessing/__pycache__/popen_fork.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/multiprocessing/__pycache__/pool.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/multiprocessing/__pycache__/popen_forkserver.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/multiprocessing/__pycache__/popen_spawn_posix.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/multiprocessing/__pycache__/managers.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/multiprocessing/__pycache__/resource_sharer.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/multiprocessing/dummy/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/multiprocessing/dummy/__pycache__/connection.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/msilib/__pycache__/sequence.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/msilib/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/msilib/__pycache__/text.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/msilib/__pycache__/schema.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/urllib/__pycache__/error.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/urllib/__pycache__/request.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/urllib/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/urllib/__pycache__/response.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/urllib/__pycache__/robotparser.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/urllib/__pycache__/parse.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/html/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/html/__pycache__/parser.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/html/__pycache__/entities.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/xml/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/xml/parsers/__pycache__/expat.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/xml/parsers/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/xml/sax/__pycache__/handler.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/xml/sax/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/xml/sax/__pycache__/saxutils.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/xml/sax/__pycache__/xmlreader.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/xml/sax/__pycache__/expatreader.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/xml/sax/__pycache__/_exceptions.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/xml/dom/__pycache__/pulldom.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/xml/dom/__pycache__/expatbuilder.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/xml/dom/__pycache__/domreg.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/xml/dom/__pycache__/minicompat.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/xml/dom/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/xml/dom/__pycache__/NodeFilter.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/xml/dom/__pycache__/xmlbuilder.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/xml/dom/__pycache__/minidom.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/xml/etree/__pycache__/ElementPath.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/xml/etree/__pycache__/cElementTree.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/xml/etree/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/xml/etree/__pycache__/ElementInclude.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/xml/etree/__pycache__/ElementTree.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/wsgiref/__pycache__/util.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/wsgiref/__pycache__/handlers.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/wsgiref/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/wsgiref/__pycache__/validate.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/wsgiref/__pycache__/simple_server.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/wsgiref/__pycache__/headers.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/json/__pycache__/decoder.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/json/__pycache__/scanner.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/json/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/json/__pycache__/encoder.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/json/__pycache__/tool.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/http/__pycache__/cookies.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/http/__pycache__/server.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/http/__pycache__/client.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/http/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/http/__pycache__/cookiejar.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/sqlite3/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/sqlite3/__pycache__/dump.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/sqlite3/__pycache__/dbapi2.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/sqlite3/test/__pycache__/backup.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/sqlite3/test/__pycache__/hooks.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/sqlite3/test/__pycache__/regression.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/sqlite3/test/__pycache__/dbapi.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/sqlite3/test/__pycache__/transactions.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/sqlite3/test/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/sqlite3/test/__pycache__/types.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/sqlite3/test/__pycache__/factory.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/sqlite3/test/__pycache__/dump.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/sqlite3/test/__pycache__/userfunctions.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ensurepip/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ensurepip/__pycache__/__main__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/ensurepip/__pycache__/_uninstall.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/concurrent/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/concurrent/futures/__pycache__/_base.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/concurrent/futures/__pycache__/thread.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/concurrent/futures/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/concurrent/futures/__pycache__/process.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/venv/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/venv/__pycache__/__main__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/dbm/__pycache__/ndbm.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/dbm/__pycache__/gnu.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/dbm/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/dbm/__pycache__/dumb.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/importlib/__pycache__/util.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/importlib/__pycache__/_bootstrap.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/importlib/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/importlib/__pycache__/_bootstrap_external.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/importlib/__pycache__/resources.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/importlib/__pycache__/machinery.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/importlib/__pycache__/abc.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/xmlrpc/__pycache__/server.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/xmlrpc/__pycache__/client.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/xmlrpc/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/pydoc_data/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/pydoc_data/__pycache__/topics.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/collections/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/collections/__pycache__/abc.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/asyncio/__pycache__/queues.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/asyncio/__pycache__/streams.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/asyncio/__pycache__/tasks.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/asyncio/__pycache__/selector_events.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/asyncio/__pycache__/log.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/asyncio/__pycache__/protocols.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/asyncio/__pycache__/events.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/asyncio/__pycache__/base_events.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/asyncio/__pycache__/subprocess.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/asyncio/__pycache__/constants.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/asyncio/__pycache__/proactor_events.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/asyncio/__pycache__/format_helpers.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/asyncio/__pycache__/locks.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/asyncio/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/asyncio/__pycache__/futures.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/asyncio/__pycache__/sslproto.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/asyncio/__pycache__/base_subprocess.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/asyncio/__pycache__/windows_utils.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/asyncio/__pycache__/runners.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/asyncio/__pycache__/transports.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/asyncio/__pycache__/base_tasks.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/asyncio/__pycache__/coroutines.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/asyncio/__pycache__/windows_events.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/asyncio/__pycache__/base_futures.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/asyncio/__pycache__/unix_events.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/logging/__pycache__/config.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/logging/__pycache__/handlers.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/logging/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/email/__pycache__/contentmanager.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/email/__pycache__/_policybase.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/email/__pycache__/header.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/email/__pycache__/_encoded_words.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/email/__pycache__/_header_value_parser.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/email/__pycache__/policy.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/email/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/email/__pycache__/message.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/email/__pycache__/encoders.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/email/__pycache__/parser.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/email/__pycache__/generator.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/email/__pycache__/utils.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/email/__pycache__/charset.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/email/__pycache__/iterators.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/email/__pycache__/quoprimime.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/email/__pycache__/errors.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/email/__pycache__/feedparser.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/email/__pycache__/_parseaddr.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/email/__pycache__/base64mime.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/email/__pycache__/headerregistry.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/email/mime/__pycache__/multipart.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/email/mime/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/email/mime/__pycache__/message.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/email/mime/__pycache__/application.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/email/mime/__pycache__/nonmultipart.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/email/mime/__pycache__/text.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/email/mime/__pycache__/audio.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/email/mime/__pycache__/image.cpython-37.opt-1.pyc \
-  build/windows/x64/Lib/email/mime/__pycache__/base.cpython-37.opt-1.pyc \
+SCRIPT_TARGETS_PYC_2_WIN_WIN32 = \
   build/windows/Win32/Lib/__pycache__/zipfile.cpython-37.opt-1.pyc \
   build/windows/Win32/Lib/__pycache__/shutil.cpython-37.opt-1.pyc \
   build/windows/Win32/Lib/__pycache__/tempfile.cpython-37.opt-1.pyc \
@@ -10498,7 +9162,4697 @@ SCRIPT_TARGETS_PYC_2_WIN = \
 
 # Rule to copy src asset scripts to dst.
 # (and make non-writable so I'm less likely to accidentally edit them there)
-$(SCRIPT_TARGETS_PY_2_WIN) : ../.efrocachemap
+$(SCRIPT_TARGETS_PY_2_WIN_WIN32) : ../.efrocachemap
+	@cd .. && tools/snippets efrocache_get assets/$@
+
+# Looks like path mangling from py to pyc is too complex for pattern rules so
+# just generating explicit targets for each. Could perhaps look into using a
+# fancy for-loop instead.
+
+build/windows/Win32/Lib/__pycache__/zipfile.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/zipfile.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/shutil.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/shutil.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/tempfile.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/tempfile.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/queue.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/queue.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/macpath.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/macpath.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/_pyio.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/_pyio.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/crypt.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/crypt.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/pkgutil.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/pkgutil.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/_dummy_thread.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/_dummy_thread.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/lzma.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/lzma.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/asyncore.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/asyncore.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/__phello__.foo.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/__phello__.foo.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/_sitebuiltins.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/_sitebuiltins.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/copyreg.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/copyreg.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/sndhdr.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/sndhdr.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/rlcompleter.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/rlcompleter.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/gzip.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/gzip.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/ipaddress.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ipaddress.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/trace.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/trace.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/webbrowser.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/webbrowser.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/nntplib.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/nntplib.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/_compat_pickle.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/_compat_pickle.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/dis.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/dis.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/formatter.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/formatter.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/bdb.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/bdb.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/zipapp.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/zipapp.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/cmd.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/cmd.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/tty.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/tty.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/tabnanny.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/tabnanny.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/_py_abc.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/_py_abc.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/cProfile.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/cProfile.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/token.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/token.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/textwrap.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/textwrap.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/base64.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/base64.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/_markupbase.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/_markupbase.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/bz2.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/bz2.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/signal.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/signal.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/sre_constants.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/sre_constants.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/cgitb.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/cgitb.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/_threading_local.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/_threading_local.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/pyclbr.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/pyclbr.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/gettext.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/gettext.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/wave.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/wave.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/weakref.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/weakref.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/bisect.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/bisect.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/opcode.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/opcode.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/netrc.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/netrc.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/heapq.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/heapq.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/functools.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/functools.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/modulefinder.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/modulefinder.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/_compression.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/_compression.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/tracemalloc.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/tracemalloc.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/hashlib.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/hashlib.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/cgi.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/cgi.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/codeop.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/codeop.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/fnmatch.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/fnmatch.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/traceback.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/traceback.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/nturl2path.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/nturl2path.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/warnings.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/warnings.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/subprocess.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/subprocess.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/profile.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/profile.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/imghdr.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/imghdr.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/this.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/this.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/filecmp.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/filecmp.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/codecs.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/codecs.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/uu.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/uu.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/_weakrefset.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/_weakrefset.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/io.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/io.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/code.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/code.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/operator.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/operator.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/fileinput.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/fileinput.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/os.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/os.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/difflib.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/difflib.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/pydoc.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/pydoc.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/symbol.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/symbol.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/selectors.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/selectors.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/decimal.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/decimal.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/socketserver.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/socketserver.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/copy.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/copy.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/genericpath.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/genericpath.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/linecache.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/linecache.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/types.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/types.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/mimetypes.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/mimetypes.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/xdrlib.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/xdrlib.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/colorsys.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/colorsys.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/numbers.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/numbers.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/_strptime.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/_strptime.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/dummy_threading.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/dummy_threading.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/contextvars.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/contextvars.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/random.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/random.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/ftplib.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ftplib.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/chunk.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/chunk.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/optparse.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/optparse.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/pdb.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/pdb.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/threading.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/threading.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/turtle.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/turtle.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/platform.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/platform.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/pstats.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/pstats.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/glob.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/glob.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/quopri.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/quopri.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/symtable.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/symtable.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/pprint.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/pprint.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/calendar.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/calendar.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/inspect.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/inspect.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/poplib.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/poplib.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/binhex.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/binhex.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/plistlib.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/plistlib.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/pickletools.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/pickletools.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/pipes.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/pipes.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/site.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/site.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/telnetlib.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/telnetlib.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/keyword.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/keyword.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/configparser.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/configparser.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/reprlib.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/reprlib.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/secrets.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/secrets.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/shlex.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/shlex.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/posixpath.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/posixpath.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/py_compile.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/py_compile.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/_osx_support.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/_osx_support.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/stat.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/stat.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/compileall.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/compileall.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/csv.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/csv.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/fractions.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/fractions.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/sched.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/sched.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/imaplib.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/imaplib.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/mailbox.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/mailbox.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/sre_compile.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/sre_compile.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/locale.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/locale.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/ast.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ast.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/doctest.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/doctest.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/argparse.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/argparse.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/getpass.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/getpass.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/pickle.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/pickle.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/pty.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/pty.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/contextlib.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/contextlib.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/statistics.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/statistics.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/_collections_abc.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/_collections_abc.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/sunau.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/sunau.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/__future__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/__future__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/dataclasses.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/dataclasses.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/shelve.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/shelve.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/string.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/string.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/smtplib.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/smtplib.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/getopt.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/getopt.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/antigravity.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/antigravity.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/enum.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/enum.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/timeit.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/timeit.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/hmac.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/hmac.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/tarfile.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/tarfile.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/stringprep.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/stringprep.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/typing.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/typing.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/ssl.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ssl.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/socket.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/socket.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/datetime.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/datetime.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/sysconfig.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/sysconfig.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/pathlib.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/pathlib.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/_pydecimal.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/_pydecimal.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/ntpath.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ntpath.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/tokenize.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/tokenize.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/uuid.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/uuid.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/imp.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/imp.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/smtpd.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/smtpd.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/re.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/re.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/mailcap.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/mailcap.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/aifc.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/aifc.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/struct.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/struct.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/asynchat.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/asynchat.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/sre_parse.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/sre_parse.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/abc.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/abc.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/runpy.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/runpy.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/__pycache__/_bootlocale.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/_bootlocale.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/mac_romanian.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/mac_romanian.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/mac_farsi.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/mac_farsi.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/idna.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/idna.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp273.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp273.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/punycode.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/punycode.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/raw_unicode_escape.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/raw_unicode_escape.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/utf_8.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/utf_8.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp1252.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp1252.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp869.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp869.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/iso8859_14.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/iso8859_14.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/iso8859_2.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/iso8859_2.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/mac_arabic.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/mac_arabic.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/mac_croatian.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/mac_croatian.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/big5hkscs.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/big5hkscs.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp1256.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp1256.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/iso8859_6.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/iso8859_6.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/iso8859_10.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/iso8859_10.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/iso2022_kr.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/iso2022_kr.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp1140.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp1140.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/unicode_internal.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/unicode_internal.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp1125.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp1125.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/iso2022_jp_1.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/iso2022_jp_1.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp1257.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp1257.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp949.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp949.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp858.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp858.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/iso8859_7.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/iso8859_7.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/iso8859_11.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/iso8859_11.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/hp_roman8.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/hp_roman8.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/koi8_r.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/koi8_r.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/zlib_codec.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/zlib_codec.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/gbk.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/gbk.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/johab.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/johab.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp1253.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp1253.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/iso8859_15.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/iso8859_15.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/iso2022_jp_2004.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/iso2022_jp_2004.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/mac_iceland.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/mac_iceland.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/iso8859_3.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/iso8859_3.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/mac_greek.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/mac_greek.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/rot_13.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/rot_13.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/utf_16_be.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/utf_16_be.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/euc_kr.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/euc_kr.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/mac_centeuro.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/mac_centeuro.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/euc_jisx0213.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/euc_jisx0213.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp863.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp863.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/ascii.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/ascii.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/iso8859_8.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/iso8859_8.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp857.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp857.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/utf_32_be.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/utf_32_be.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp1258.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp1258.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/oem.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/oem.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/mac_latin2.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/mac_latin2.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp775.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp775.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/mac_roman.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/mac_roman.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp852.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp852.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/shift_jisx0213.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/shift_jisx0213.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp866.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp866.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/utf_7.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/utf_7.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/base64_codec.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/base64_codec.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp932.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp932.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp720.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp720.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp862.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp862.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp437.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp437.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/palmos.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/palmos.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/iso8859_9.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/iso8859_9.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp856.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp856.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/aliases.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/aliases.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/latin_1.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/latin_1.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp875.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp875.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp950.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp950.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/unicode_escape.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/unicode_escape.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp737.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp737.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp865.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp865.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/ptcp154.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/ptcp154.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/big5.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/big5.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp424.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp424.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp861.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp861.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/euc_jp.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/euc_jp.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp855.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp855.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/shift_jis.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/shift_jis.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/utf_32_le.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/utf_32_le.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp500.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp500.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/undefined.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/undefined.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp860.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp860.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/uu_codec.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/uu_codec.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/utf_16_le.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/utf_16_le.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/gb18030.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/gb18030.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp65001.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp65001.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp874.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp874.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp850.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp850.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp864.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp864.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/utf_32.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/utf_32.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/koi8_u.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/koi8_u.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp1254.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp1254.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/iso2022_jp_2.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/iso2022_jp_2.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/utf_16.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/utf_16.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/iso8859_4.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/iso8859_4.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/euc_jis_2004.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/euc_jis_2004.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/mbcs.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/mbcs.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp1250.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp1250.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/gb2312.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/gb2312.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/iso8859_16.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/iso8859_16.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/mac_cyrillic.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/mac_cyrillic.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/hex_codec.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/hex_codec.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/tis_620.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/tis_620.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp037.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp037.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp1006.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp1006.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp1251.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp1251.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/mac_turkish.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/mac_turkish.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/iso2022_jp_ext.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/iso2022_jp_ext.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/iso8859_1.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/iso8859_1.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/hz.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/hz.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/bz2_codec.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/bz2_codec.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/quopri_codec.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/quopri_codec.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/kz1048.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/kz1048.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/utf_8_sig.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/utf_8_sig.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/koi8_t.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/koi8_t.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp1255.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp1255.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/iso2022_jp_3.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/iso2022_jp_3.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/shift_jis_2004.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/shift_jis_2004.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/cp1026.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/cp1026.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/charmap.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/charmap.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/iso8859_5.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/iso8859_5.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/iso8859_13.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/iso8859_13.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/encodings/__pycache__/iso2022_jp.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/encodings/iso2022_jp.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/__pycache__/_msvccompiler.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/_msvccompiler.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/__pycache__/unixccompiler.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/unixccompiler.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/__pycache__/filelist.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/filelist.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/__pycache__/ccompiler.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/ccompiler.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/__pycache__/msvc9compiler.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/msvc9compiler.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/__pycache__/archive_util.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/archive_util.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/__pycache__/cmd.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/cmd.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/__pycache__/config.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/config.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/__pycache__/version.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/version.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/__pycache__/log.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/log.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/__pycache__/util.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/util.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/__pycache__/fancy_getopt.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/fancy_getopt.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/__pycache__/versionpredicate.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/versionpredicate.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/__pycache__/file_util.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/file_util.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/__pycache__/core.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/core.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/__pycache__/cygwinccompiler.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/cygwinccompiler.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/__pycache__/extension.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/extension.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/__pycache__/debug.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/debug.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/__pycache__/spawn.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/spawn.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/__pycache__/text_file.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/text_file.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/__pycache__/msvccompiler.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/msvccompiler.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/__pycache__/errors.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/errors.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/__pycache__/dep_util.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/dep_util.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/__pycache__/dir_util.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/dir_util.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/__pycache__/sysconfig.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/sysconfig.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/__pycache__/dist.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/dist.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/__pycache__/bcppcompiler.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/bcppcompiler.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_bdist.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_bdist.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_text_file.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_text_file.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_bdist_wininst.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_bdist_wininst.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_version.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_version.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_install_lib.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_install_lib.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_build_py.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_build_py.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_extension.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_extension.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_spawn.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_spawn.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/support.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/support.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_bdist_rpm.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_bdist_rpm.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_install_data.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_install_data.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_msvc9compiler.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_msvc9compiler.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_cygwinccompiler.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_cygwinccompiler.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_unixccompiler.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_unixccompiler.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_filelist.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_filelist.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_core.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_core.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_bdist_msi.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_bdist_msi.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_cmd.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_cmd.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_msvccompiler.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_msvccompiler.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_sysconfig.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_sysconfig.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_util.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_util.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_build_clib.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_build_clib.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_register.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_register.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_log.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_log.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_dep_util.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_dep_util.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_build.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_build.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_install_scripts.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_install_scripts.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_build_ext.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_build_ext.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_dir_util.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_dir_util.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_install_headers.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_install_headers.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_clean.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_clean.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_check.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_check.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_config.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_config.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_versionpredicate.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_versionpredicate.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_upload.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_upload.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_build_scripts.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_build_scripts.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_bdist_dumb.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_bdist_dumb.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_file_util.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_file_util.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_dist.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_dist.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_install.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_install.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_config_cmd.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_config_cmd.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_sdist.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_sdist.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/tests/__pycache__/test_archive_util.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/tests/test_archive_util.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/command/__pycache__/build.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/command/build.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/command/__pycache__/build_ext.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/command/build_ext.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/command/__pycache__/config.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/command/config.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/command/__pycache__/clean.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/command/clean.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/command/__pycache__/check.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/command/check.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/command/__pycache__/install_scripts.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/command/install_scripts.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/command/__pycache__/upload.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/command/upload.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/command/__pycache__/register.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/command/register.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/command/__pycache__/bdist_wininst.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/command/bdist_wininst.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/command/__pycache__/install_headers.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/command/install_headers.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/command/__pycache__/install_lib.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/command/install_lib.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/command/__pycache__/build_py.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/command/build_py.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/command/__pycache__/bdist_dumb.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/command/bdist_dumb.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/command/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/command/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/command/__pycache__/sdist.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/command/sdist.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/command/__pycache__/bdist.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/command/bdist.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/command/__pycache__/build_scripts.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/command/build_scripts.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/command/__pycache__/bdist_rpm.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/command/bdist_rpm.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/command/__pycache__/build_clib.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/command/build_clib.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/command/__pycache__/install.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/command/install.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/command/__pycache__/bdist_msi.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/command/bdist_msi.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/command/__pycache__/install_egg_info.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/command/install_egg_info.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/distutils/command/__pycache__/install_data.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/distutils/command/install_data.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/__pycache__/_aix.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/_aix.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/__pycache__/wintypes.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/wintypes.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/__pycache__/util.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/util.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/__pycache__/_endian.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/_endian.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_array_in_pointer.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_array_in_pointer.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_random_things.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_random_things.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_funcptr.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_funcptr.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_callbacks.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_callbacks.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_unicode.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_unicode.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_structures.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_structures.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_cast.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_cast.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_unaligned_structures.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_unaligned_structures.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_keeprefs.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_keeprefs.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_loading.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_loading.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_memfunctions.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_memfunctions.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_slicing.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_slicing.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_numbers.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_numbers.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_libc.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_libc.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_python_api.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_python_api.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_bytes.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_bytes.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_pep3118.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_pep3118.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_frombuffer.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_frombuffer.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_parameters.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_parameters.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_wintypes.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_wintypes.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_pointers.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_pointers.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_errno.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_errno.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_arrays.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_arrays.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_cfuncs.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_cfuncs.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_find.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_find.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_refcounts.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_refcounts.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_returnfuncptrs.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_returnfuncptrs.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_internals.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_internals.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_prototypes.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_prototypes.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_values.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_values.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_varsize_struct.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_varsize_struct.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_stringptr.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_stringptr.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_as_parameter.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_as_parameter.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_pickling.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_pickling.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_bitfields.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_bitfields.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_byteswap.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_byteswap.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_functions.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_functions.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_repr.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_repr.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_macholib.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_macholib.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_incomplete.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_incomplete.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_strings.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_strings.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_struct_fields.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_struct_fields.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_buffers.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_buffers.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_simplesubclasses.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_simplesubclasses.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_anon.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_anon.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_init.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_init.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_checkretval.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_checkretval.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_delattr.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_delattr.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/__main__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/__main__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_objects.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_objects.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_sizes.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_sizes.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/test/__pycache__/test_win32.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/test/test_win32.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/macholib/__pycache__/dyld.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/macholib/dyld.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/macholib/__pycache__/framework.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/macholib/framework.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/macholib/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/macholib/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ctypes/macholib/__pycache__/dylib.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ctypes/macholib/dylib.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/__pycache__/signals.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/signals.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/__pycache__/runner.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/runner.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/__pycache__/suite.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/suite.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/__pycache__/util.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/util.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/__pycache__/result.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/result.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/__pycache__/loader.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/loader.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/__pycache__/case.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/case.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/__pycache__/main.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/main.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/__pycache__/__main__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/__main__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/__pycache__/mock.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/mock.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/test/__pycache__/test_result.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/test/test_result.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/test/__pycache__/support.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/test/support.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/test/__pycache__/test_loader.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/test/test_loader.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/test/__pycache__/test_skipping.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/test/test_skipping.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/test/__pycache__/test_setups.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/test/test_setups.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/test/__pycache__/test_functiontestcase.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/test/test_functiontestcase.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/test/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/test/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/test/__pycache__/test_break.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/test/test_break.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/test/__pycache__/test_case.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/test/test_case.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/test/__pycache__/test_discovery.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/test/test_discovery.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/test/__pycache__/test_runner.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/test/test_runner.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/test/__pycache__/test_program.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/test/test_program.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/test/__pycache__/test_suite.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/test/test_suite.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/test/__pycache__/test_assertions.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/test/test_assertions.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/test/__pycache__/_test_warnings.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/test/_test_warnings.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/test/__pycache__/dummy.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/test/dummy.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/test/__pycache__/__main__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/test/__main__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/test/testmock/__pycache__/support.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/test/testmock/support.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/test/testmock/__pycache__/testcallable.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/test/testmock/testcallable.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/test/testmock/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/test/testmock/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/test/testmock/__pycache__/testmagicmethods.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/test/testmock/testmagicmethods.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/test/testmock/__pycache__/testmock.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/test/testmock/testmock.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/test/testmock/__pycache__/testwith.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/test/testmock/testwith.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/test/testmock/__pycache__/testhelpers.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/test/testmock/testhelpers.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/test/testmock/__pycache__/testpatch.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/test/testmock/testpatch.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/test/testmock/__pycache__/testsealable.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/test/testmock/testsealable.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/test/testmock/__pycache__/testsentinel.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/test/testmock/testsentinel.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/unittest/test/testmock/__pycache__/__main__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/unittest/test/testmock/__main__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/curses/__pycache__/textpad.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/curses/textpad.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/curses/__pycache__/ascii.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/curses/ascii.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/curses/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/curses/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/curses/__pycache__/has_key.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/curses/has_key.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/curses/__pycache__/panel.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/curses/panel.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/multiprocessing/__pycache__/semaphore_tracker.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/multiprocessing/semaphore_tracker.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/multiprocessing/__pycache__/queues.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/multiprocessing/queues.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/multiprocessing/__pycache__/heap.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/multiprocessing/heap.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/multiprocessing/__pycache__/reduction.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/multiprocessing/reduction.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/multiprocessing/__pycache__/util.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/multiprocessing/util.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/multiprocessing/__pycache__/popen_spawn_win32.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/multiprocessing/popen_spawn_win32.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/multiprocessing/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/multiprocessing/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/multiprocessing/__pycache__/forkserver.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/multiprocessing/forkserver.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/multiprocessing/__pycache__/connection.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/multiprocessing/connection.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/multiprocessing/__pycache__/context.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/multiprocessing/context.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/multiprocessing/__pycache__/spawn.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/multiprocessing/spawn.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/multiprocessing/__pycache__/synchronize.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/multiprocessing/synchronize.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/multiprocessing/__pycache__/process.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/multiprocessing/process.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/multiprocessing/__pycache__/sharedctypes.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/multiprocessing/sharedctypes.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/multiprocessing/__pycache__/popen_fork.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/multiprocessing/popen_fork.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/multiprocessing/__pycache__/pool.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/multiprocessing/pool.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/multiprocessing/__pycache__/popen_forkserver.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/multiprocessing/popen_forkserver.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/multiprocessing/__pycache__/popen_spawn_posix.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/multiprocessing/popen_spawn_posix.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/multiprocessing/__pycache__/managers.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/multiprocessing/managers.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/multiprocessing/__pycache__/resource_sharer.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/multiprocessing/resource_sharer.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/multiprocessing/dummy/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/multiprocessing/dummy/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/multiprocessing/dummy/__pycache__/connection.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/multiprocessing/dummy/connection.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/msilib/__pycache__/sequence.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/msilib/sequence.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/msilib/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/msilib/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/msilib/__pycache__/text.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/msilib/text.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/msilib/__pycache__/schema.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/msilib/schema.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/urllib/__pycache__/error.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/urllib/error.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/urllib/__pycache__/request.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/urllib/request.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/urllib/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/urllib/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/urllib/__pycache__/response.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/urllib/response.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/urllib/__pycache__/robotparser.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/urllib/robotparser.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/urllib/__pycache__/parse.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/urllib/parse.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/html/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/html/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/html/__pycache__/parser.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/html/parser.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/html/__pycache__/entities.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/html/entities.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/xml/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/xml/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/xml/parsers/__pycache__/expat.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/xml/parsers/expat.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/xml/parsers/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/xml/parsers/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/xml/sax/__pycache__/handler.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/xml/sax/handler.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/xml/sax/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/xml/sax/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/xml/sax/__pycache__/saxutils.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/xml/sax/saxutils.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/xml/sax/__pycache__/xmlreader.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/xml/sax/xmlreader.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/xml/sax/__pycache__/expatreader.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/xml/sax/expatreader.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/xml/sax/__pycache__/_exceptions.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/xml/sax/_exceptions.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/xml/dom/__pycache__/pulldom.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/xml/dom/pulldom.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/xml/dom/__pycache__/expatbuilder.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/xml/dom/expatbuilder.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/xml/dom/__pycache__/domreg.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/xml/dom/domreg.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/xml/dom/__pycache__/minicompat.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/xml/dom/minicompat.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/xml/dom/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/xml/dom/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/xml/dom/__pycache__/NodeFilter.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/xml/dom/NodeFilter.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/xml/dom/__pycache__/xmlbuilder.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/xml/dom/xmlbuilder.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/xml/dom/__pycache__/minidom.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/xml/dom/minidom.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/xml/etree/__pycache__/ElementPath.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/xml/etree/ElementPath.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/xml/etree/__pycache__/cElementTree.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/xml/etree/cElementTree.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/xml/etree/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/xml/etree/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/xml/etree/__pycache__/ElementInclude.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/xml/etree/ElementInclude.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/xml/etree/__pycache__/ElementTree.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/xml/etree/ElementTree.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/wsgiref/__pycache__/util.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/wsgiref/util.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/wsgiref/__pycache__/handlers.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/wsgiref/handlers.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/wsgiref/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/wsgiref/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/wsgiref/__pycache__/validate.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/wsgiref/validate.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/wsgiref/__pycache__/simple_server.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/wsgiref/simple_server.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/wsgiref/__pycache__/headers.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/wsgiref/headers.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/json/__pycache__/decoder.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/json/decoder.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/json/__pycache__/scanner.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/json/scanner.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/json/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/json/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/json/__pycache__/encoder.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/json/encoder.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/json/__pycache__/tool.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/json/tool.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/http/__pycache__/cookies.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/http/cookies.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/http/__pycache__/server.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/http/server.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/http/__pycache__/client.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/http/client.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/http/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/http/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/http/__pycache__/cookiejar.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/http/cookiejar.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/sqlite3/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/sqlite3/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/sqlite3/__pycache__/dump.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/sqlite3/dump.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/sqlite3/__pycache__/dbapi2.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/sqlite3/dbapi2.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/sqlite3/test/__pycache__/backup.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/sqlite3/test/backup.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/sqlite3/test/__pycache__/hooks.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/sqlite3/test/hooks.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/sqlite3/test/__pycache__/regression.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/sqlite3/test/regression.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/sqlite3/test/__pycache__/dbapi.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/sqlite3/test/dbapi.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/sqlite3/test/__pycache__/transactions.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/sqlite3/test/transactions.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/sqlite3/test/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/sqlite3/test/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/sqlite3/test/__pycache__/types.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/sqlite3/test/types.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/sqlite3/test/__pycache__/factory.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/sqlite3/test/factory.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/sqlite3/test/__pycache__/dump.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/sqlite3/test/dump.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/sqlite3/test/__pycache__/userfunctions.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/sqlite3/test/userfunctions.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ensurepip/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ensurepip/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ensurepip/__pycache__/__main__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ensurepip/__main__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/ensurepip/__pycache__/_uninstall.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/ensurepip/_uninstall.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/concurrent/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/concurrent/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/concurrent/futures/__pycache__/_base.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/concurrent/futures/_base.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/concurrent/futures/__pycache__/thread.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/concurrent/futures/thread.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/concurrent/futures/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/concurrent/futures/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/concurrent/futures/__pycache__/process.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/concurrent/futures/process.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/venv/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/venv/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/venv/__pycache__/__main__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/venv/__main__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/dbm/__pycache__/ndbm.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/dbm/ndbm.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/dbm/__pycache__/gnu.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/dbm/gnu.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/dbm/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/dbm/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/dbm/__pycache__/dumb.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/dbm/dumb.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/importlib/__pycache__/util.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/importlib/util.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/importlib/__pycache__/_bootstrap.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/importlib/_bootstrap.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/importlib/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/importlib/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/importlib/__pycache__/_bootstrap_external.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/importlib/_bootstrap_external.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/importlib/__pycache__/resources.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/importlib/resources.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/importlib/__pycache__/machinery.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/importlib/machinery.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/importlib/__pycache__/abc.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/importlib/abc.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/xmlrpc/__pycache__/server.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/xmlrpc/server.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/xmlrpc/__pycache__/client.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/xmlrpc/client.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/xmlrpc/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/xmlrpc/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/pydoc_data/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/pydoc_data/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/pydoc_data/__pycache__/topics.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/pydoc_data/topics.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/collections/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/collections/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/collections/__pycache__/abc.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/collections/abc.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/asyncio/__pycache__/queues.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/asyncio/queues.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/asyncio/__pycache__/streams.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/asyncio/streams.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/asyncio/__pycache__/tasks.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/asyncio/tasks.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/asyncio/__pycache__/selector_events.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/asyncio/selector_events.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/asyncio/__pycache__/log.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/asyncio/log.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/asyncio/__pycache__/protocols.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/asyncio/protocols.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/asyncio/__pycache__/events.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/asyncio/events.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/asyncio/__pycache__/base_events.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/asyncio/base_events.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/asyncio/__pycache__/subprocess.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/asyncio/subprocess.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/asyncio/__pycache__/constants.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/asyncio/constants.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/asyncio/__pycache__/proactor_events.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/asyncio/proactor_events.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/asyncio/__pycache__/format_helpers.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/asyncio/format_helpers.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/asyncio/__pycache__/locks.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/asyncio/locks.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/asyncio/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/asyncio/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/asyncio/__pycache__/futures.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/asyncio/futures.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/asyncio/__pycache__/sslproto.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/asyncio/sslproto.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/asyncio/__pycache__/base_subprocess.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/asyncio/base_subprocess.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/asyncio/__pycache__/windows_utils.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/asyncio/windows_utils.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/asyncio/__pycache__/runners.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/asyncio/runners.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/asyncio/__pycache__/transports.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/asyncio/transports.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/asyncio/__pycache__/base_tasks.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/asyncio/base_tasks.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/asyncio/__pycache__/coroutines.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/asyncio/coroutines.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/asyncio/__pycache__/windows_events.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/asyncio/windows_events.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/asyncio/__pycache__/base_futures.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/asyncio/base_futures.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/asyncio/__pycache__/unix_events.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/asyncio/unix_events.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/logging/__pycache__/config.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/logging/config.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/logging/__pycache__/handlers.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/logging/handlers.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/logging/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/logging/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/email/__pycache__/contentmanager.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/email/contentmanager.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/email/__pycache__/_policybase.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/email/_policybase.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/email/__pycache__/header.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/email/header.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/email/__pycache__/_encoded_words.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/email/_encoded_words.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/email/__pycache__/_header_value_parser.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/email/_header_value_parser.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/email/__pycache__/policy.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/email/policy.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/email/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/email/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/email/__pycache__/message.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/email/message.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/email/__pycache__/encoders.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/email/encoders.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/email/__pycache__/parser.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/email/parser.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/email/__pycache__/generator.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/email/generator.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/email/__pycache__/utils.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/email/utils.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/email/__pycache__/charset.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/email/charset.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/email/__pycache__/iterators.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/email/iterators.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/email/__pycache__/quoprimime.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/email/quoprimime.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/email/__pycache__/errors.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/email/errors.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/email/__pycache__/feedparser.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/email/feedparser.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/email/__pycache__/_parseaddr.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/email/_parseaddr.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/email/__pycache__/base64mime.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/email/base64mime.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/email/__pycache__/headerregistry.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/email/headerregistry.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/email/mime/__pycache__/multipart.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/email/mime/multipart.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/email/mime/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/email/mime/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/email/mime/__pycache__/message.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/email/mime/message.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/email/mime/__pycache__/application.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/email/mime/application.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/email/mime/__pycache__/nonmultipart.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/email/mime/nonmultipart.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/email/mime/__pycache__/text.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/email/mime/text.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/email/mime/__pycache__/audio.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/email/mime/audio.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/email/mime/__pycache__/image.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/email/mime/image.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/windows/Win32/Lib/email/mime/__pycache__/base.cpython-37.opt-1.pyc: \
+      build/windows/Win32/Lib/email/mime/base.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+
+SCRIPT_TARGETS_PY_2_WIN_X64 = \
+  build/windows/x64/Lib/zipfile.py \
+  build/windows/x64/Lib/shutil.py \
+  build/windows/x64/Lib/tempfile.py \
+  build/windows/x64/Lib/queue.py \
+  build/windows/x64/Lib/macpath.py \
+  build/windows/x64/Lib/_pyio.py \
+  build/windows/x64/Lib/crypt.py \
+  build/windows/x64/Lib/pkgutil.py \
+  build/windows/x64/Lib/_dummy_thread.py \
+  build/windows/x64/Lib/lzma.py \
+  build/windows/x64/Lib/asyncore.py \
+  build/windows/x64/Lib/__phello__.foo.py \
+  build/windows/x64/Lib/_sitebuiltins.py \
+  build/windows/x64/Lib/copyreg.py \
+  build/windows/x64/Lib/sndhdr.py \
+  build/windows/x64/Lib/rlcompleter.py \
+  build/windows/x64/Lib/gzip.py \
+  build/windows/x64/Lib/ipaddress.py \
+  build/windows/x64/Lib/trace.py \
+  build/windows/x64/Lib/webbrowser.py \
+  build/windows/x64/Lib/nntplib.py \
+  build/windows/x64/Lib/_compat_pickle.py \
+  build/windows/x64/Lib/dis.py \
+  build/windows/x64/Lib/formatter.py \
+  build/windows/x64/Lib/bdb.py \
+  build/windows/x64/Lib/zipapp.py \
+  build/windows/x64/Lib/cmd.py \
+  build/windows/x64/Lib/tty.py \
+  build/windows/x64/Lib/tabnanny.py \
+  build/windows/x64/Lib/_py_abc.py \
+  build/windows/x64/Lib/cProfile.py \
+  build/windows/x64/Lib/token.py \
+  build/windows/x64/Lib/textwrap.py \
+  build/windows/x64/Lib/base64.py \
+  build/windows/x64/Lib/_markupbase.py \
+  build/windows/x64/Lib/bz2.py \
+  build/windows/x64/Lib/signal.py \
+  build/windows/x64/Lib/sre_constants.py \
+  build/windows/x64/Lib/cgitb.py \
+  build/windows/x64/Lib/_threading_local.py \
+  build/windows/x64/Lib/pyclbr.py \
+  build/windows/x64/Lib/gettext.py \
+  build/windows/x64/Lib/wave.py \
+  build/windows/x64/Lib/weakref.py \
+  build/windows/x64/Lib/bisect.py \
+  build/windows/x64/Lib/opcode.py \
+  build/windows/x64/Lib/netrc.py \
+  build/windows/x64/Lib/heapq.py \
+  build/windows/x64/Lib/functools.py \
+  build/windows/x64/Lib/modulefinder.py \
+  build/windows/x64/Lib/_compression.py \
+  build/windows/x64/Lib/tracemalloc.py \
+  build/windows/x64/Lib/hashlib.py \
+  build/windows/x64/Lib/cgi.py \
+  build/windows/x64/Lib/codeop.py \
+  build/windows/x64/Lib/fnmatch.py \
+  build/windows/x64/Lib/traceback.py \
+  build/windows/x64/Lib/nturl2path.py \
+  build/windows/x64/Lib/warnings.py \
+  build/windows/x64/Lib/subprocess.py \
+  build/windows/x64/Lib/profile.py \
+  build/windows/x64/Lib/imghdr.py \
+  build/windows/x64/Lib/this.py \
+  build/windows/x64/Lib/filecmp.py \
+  build/windows/x64/Lib/codecs.py \
+  build/windows/x64/Lib/uu.py \
+  build/windows/x64/Lib/_weakrefset.py \
+  build/windows/x64/Lib/io.py \
+  build/windows/x64/Lib/code.py \
+  build/windows/x64/Lib/operator.py \
+  build/windows/x64/Lib/fileinput.py \
+  build/windows/x64/Lib/os.py \
+  build/windows/x64/Lib/difflib.py \
+  build/windows/x64/Lib/pydoc.py \
+  build/windows/x64/Lib/symbol.py \
+  build/windows/x64/Lib/selectors.py \
+  build/windows/x64/Lib/decimal.py \
+  build/windows/x64/Lib/socketserver.py \
+  build/windows/x64/Lib/copy.py \
+  build/windows/x64/Lib/genericpath.py \
+  build/windows/x64/Lib/linecache.py \
+  build/windows/x64/Lib/types.py \
+  build/windows/x64/Lib/mimetypes.py \
+  build/windows/x64/Lib/xdrlib.py \
+  build/windows/x64/Lib/colorsys.py \
+  build/windows/x64/Lib/numbers.py \
+  build/windows/x64/Lib/_strptime.py \
+  build/windows/x64/Lib/dummy_threading.py \
+  build/windows/x64/Lib/contextvars.py \
+  build/windows/x64/Lib/random.py \
+  build/windows/x64/Lib/ftplib.py \
+  build/windows/x64/Lib/chunk.py \
+  build/windows/x64/Lib/optparse.py \
+  build/windows/x64/Lib/pdb.py \
+  build/windows/x64/Lib/threading.py \
+  build/windows/x64/Lib/turtle.py \
+  build/windows/x64/Lib/platform.py \
+  build/windows/x64/Lib/pstats.py \
+  build/windows/x64/Lib/glob.py \
+  build/windows/x64/Lib/quopri.py \
+  build/windows/x64/Lib/symtable.py \
+  build/windows/x64/Lib/pprint.py \
+  build/windows/x64/Lib/calendar.py \
+  build/windows/x64/Lib/inspect.py \
+  build/windows/x64/Lib/poplib.py \
+  build/windows/x64/Lib/binhex.py \
+  build/windows/x64/Lib/plistlib.py \
+  build/windows/x64/Lib/pickletools.py \
+  build/windows/x64/Lib/pipes.py \
+  build/windows/x64/Lib/site.py \
+  build/windows/x64/Lib/telnetlib.py \
+  build/windows/x64/Lib/keyword.py \
+  build/windows/x64/Lib/configparser.py \
+  build/windows/x64/Lib/reprlib.py \
+  build/windows/x64/Lib/secrets.py \
+  build/windows/x64/Lib/shlex.py \
+  build/windows/x64/Lib/posixpath.py \
+  build/windows/x64/Lib/py_compile.py \
+  build/windows/x64/Lib/_osx_support.py \
+  build/windows/x64/Lib/stat.py \
+  build/windows/x64/Lib/compileall.py \
+  build/windows/x64/Lib/csv.py \
+  build/windows/x64/Lib/fractions.py \
+  build/windows/x64/Lib/sched.py \
+  build/windows/x64/Lib/imaplib.py \
+  build/windows/x64/Lib/mailbox.py \
+  build/windows/x64/Lib/sre_compile.py \
+  build/windows/x64/Lib/locale.py \
+  build/windows/x64/Lib/ast.py \
+  build/windows/x64/Lib/doctest.py \
+  build/windows/x64/Lib/argparse.py \
+  build/windows/x64/Lib/getpass.py \
+  build/windows/x64/Lib/pickle.py \
+  build/windows/x64/Lib/pty.py \
+  build/windows/x64/Lib/contextlib.py \
+  build/windows/x64/Lib/statistics.py \
+  build/windows/x64/Lib/_collections_abc.py \
+  build/windows/x64/Lib/sunau.py \
+  build/windows/x64/Lib/__future__.py \
+  build/windows/x64/Lib/dataclasses.py \
+  build/windows/x64/Lib/shelve.py \
+  build/windows/x64/Lib/string.py \
+  build/windows/x64/Lib/smtplib.py \
+  build/windows/x64/Lib/getopt.py \
+  build/windows/x64/Lib/antigravity.py \
+  build/windows/x64/Lib/enum.py \
+  build/windows/x64/Lib/timeit.py \
+  build/windows/x64/Lib/hmac.py \
+  build/windows/x64/Lib/tarfile.py \
+  build/windows/x64/Lib/stringprep.py \
+  build/windows/x64/Lib/typing.py \
+  build/windows/x64/Lib/ssl.py \
+  build/windows/x64/Lib/socket.py \
+  build/windows/x64/Lib/datetime.py \
+  build/windows/x64/Lib/sysconfig.py \
+  build/windows/x64/Lib/pathlib.py \
+  build/windows/x64/Lib/_pydecimal.py \
+  build/windows/x64/Lib/ntpath.py \
+  build/windows/x64/Lib/tokenize.py \
+  build/windows/x64/Lib/uuid.py \
+  build/windows/x64/Lib/imp.py \
+  build/windows/x64/Lib/smtpd.py \
+  build/windows/x64/Lib/re.py \
+  build/windows/x64/Lib/mailcap.py \
+  build/windows/x64/Lib/aifc.py \
+  build/windows/x64/Lib/struct.py \
+  build/windows/x64/Lib/asynchat.py \
+  build/windows/x64/Lib/sre_parse.py \
+  build/windows/x64/Lib/abc.py \
+  build/windows/x64/Lib/runpy.py \
+  build/windows/x64/Lib/_bootlocale.py \
+  build/windows/x64/Lib/encodings/mac_romanian.py \
+  build/windows/x64/Lib/encodings/mac_farsi.py \
+  build/windows/x64/Lib/encodings/idna.py \
+  build/windows/x64/Lib/encodings/cp273.py \
+  build/windows/x64/Lib/encodings/punycode.py \
+  build/windows/x64/Lib/encodings/raw_unicode_escape.py \
+  build/windows/x64/Lib/encodings/utf_8.py \
+  build/windows/x64/Lib/encodings/cp1252.py \
+  build/windows/x64/Lib/encodings/cp869.py \
+  build/windows/x64/Lib/encodings/iso8859_14.py \
+  build/windows/x64/Lib/encodings/iso8859_2.py \
+  build/windows/x64/Lib/encodings/mac_arabic.py \
+  build/windows/x64/Lib/encodings/mac_croatian.py \
+  build/windows/x64/Lib/encodings/big5hkscs.py \
+  build/windows/x64/Lib/encodings/cp1256.py \
+  build/windows/x64/Lib/encodings/iso8859_6.py \
+  build/windows/x64/Lib/encodings/iso8859_10.py \
+  build/windows/x64/Lib/encodings/iso2022_kr.py \
+  build/windows/x64/Lib/encodings/cp1140.py \
+  build/windows/x64/Lib/encodings/unicode_internal.py \
+  build/windows/x64/Lib/encodings/cp1125.py \
+  build/windows/x64/Lib/encodings/iso2022_jp_1.py \
+  build/windows/x64/Lib/encodings/cp1257.py \
+  build/windows/x64/Lib/encodings/cp949.py \
+  build/windows/x64/Lib/encodings/cp858.py \
+  build/windows/x64/Lib/encodings/iso8859_7.py \
+  build/windows/x64/Lib/encodings/iso8859_11.py \
+  build/windows/x64/Lib/encodings/hp_roman8.py \
+  build/windows/x64/Lib/encodings/koi8_r.py \
+  build/windows/x64/Lib/encodings/zlib_codec.py \
+  build/windows/x64/Lib/encodings/gbk.py \
+  build/windows/x64/Lib/encodings/johab.py \
+  build/windows/x64/Lib/encodings/cp1253.py \
+  build/windows/x64/Lib/encodings/iso8859_15.py \
+  build/windows/x64/Lib/encodings/iso2022_jp_2004.py \
+  build/windows/x64/Lib/encodings/mac_iceland.py \
+  build/windows/x64/Lib/encodings/iso8859_3.py \
+  build/windows/x64/Lib/encodings/mac_greek.py \
+  build/windows/x64/Lib/encodings/rot_13.py \
+  build/windows/x64/Lib/encodings/utf_16_be.py \
+  build/windows/x64/Lib/encodings/euc_kr.py \
+  build/windows/x64/Lib/encodings/mac_centeuro.py \
+  build/windows/x64/Lib/encodings/euc_jisx0213.py \
+  build/windows/x64/Lib/encodings/cp863.py \
+  build/windows/x64/Lib/encodings/ascii.py \
+  build/windows/x64/Lib/encodings/iso8859_8.py \
+  build/windows/x64/Lib/encodings/cp857.py \
+  build/windows/x64/Lib/encodings/utf_32_be.py \
+  build/windows/x64/Lib/encodings/cp1258.py \
+  build/windows/x64/Lib/encodings/oem.py \
+  build/windows/x64/Lib/encodings/mac_latin2.py \
+  build/windows/x64/Lib/encodings/cp775.py \
+  build/windows/x64/Lib/encodings/mac_roman.py \
+  build/windows/x64/Lib/encodings/__init__.py \
+  build/windows/x64/Lib/encodings/cp852.py \
+  build/windows/x64/Lib/encodings/shift_jisx0213.py \
+  build/windows/x64/Lib/encodings/cp866.py \
+  build/windows/x64/Lib/encodings/utf_7.py \
+  build/windows/x64/Lib/encodings/base64_codec.py \
+  build/windows/x64/Lib/encodings/cp932.py \
+  build/windows/x64/Lib/encodings/cp720.py \
+  build/windows/x64/Lib/encodings/cp862.py \
+  build/windows/x64/Lib/encodings/cp437.py \
+  build/windows/x64/Lib/encodings/palmos.py \
+  build/windows/x64/Lib/encodings/iso8859_9.py \
+  build/windows/x64/Lib/encodings/cp856.py \
+  build/windows/x64/Lib/encodings/aliases.py \
+  build/windows/x64/Lib/encodings/latin_1.py \
+  build/windows/x64/Lib/encodings/cp875.py \
+  build/windows/x64/Lib/encodings/cp950.py \
+  build/windows/x64/Lib/encodings/unicode_escape.py \
+  build/windows/x64/Lib/encodings/cp737.py \
+  build/windows/x64/Lib/encodings/cp865.py \
+  build/windows/x64/Lib/encodings/ptcp154.py \
+  build/windows/x64/Lib/encodings/big5.py \
+  build/windows/x64/Lib/encodings/cp424.py \
+  build/windows/x64/Lib/encodings/cp861.py \
+  build/windows/x64/Lib/encodings/euc_jp.py \
+  build/windows/x64/Lib/encodings/cp855.py \
+  build/windows/x64/Lib/encodings/shift_jis.py \
+  build/windows/x64/Lib/encodings/utf_32_le.py \
+  build/windows/x64/Lib/encodings/cp500.py \
+  build/windows/x64/Lib/encodings/undefined.py \
+  build/windows/x64/Lib/encodings/cp860.py \
+  build/windows/x64/Lib/encodings/uu_codec.py \
+  build/windows/x64/Lib/encodings/utf_16_le.py \
+  build/windows/x64/Lib/encodings/gb18030.py \
+  build/windows/x64/Lib/encodings/cp65001.py \
+  build/windows/x64/Lib/encodings/cp874.py \
+  build/windows/x64/Lib/encodings/cp850.py \
+  build/windows/x64/Lib/encodings/cp864.py \
+  build/windows/x64/Lib/encodings/utf_32.py \
+  build/windows/x64/Lib/encodings/koi8_u.py \
+  build/windows/x64/Lib/encodings/cp1254.py \
+  build/windows/x64/Lib/encodings/iso2022_jp_2.py \
+  build/windows/x64/Lib/encodings/utf_16.py \
+  build/windows/x64/Lib/encodings/iso8859_4.py \
+  build/windows/x64/Lib/encodings/euc_jis_2004.py \
+  build/windows/x64/Lib/encodings/mbcs.py \
+  build/windows/x64/Lib/encodings/cp1250.py \
+  build/windows/x64/Lib/encodings/gb2312.py \
+  build/windows/x64/Lib/encodings/iso8859_16.py \
+  build/windows/x64/Lib/encodings/mac_cyrillic.py \
+  build/windows/x64/Lib/encodings/hex_codec.py \
+  build/windows/x64/Lib/encodings/tis_620.py \
+  build/windows/x64/Lib/encodings/cp037.py \
+  build/windows/x64/Lib/encodings/cp1006.py \
+  build/windows/x64/Lib/encodings/cp1251.py \
+  build/windows/x64/Lib/encodings/mac_turkish.py \
+  build/windows/x64/Lib/encodings/iso2022_jp_ext.py \
+  build/windows/x64/Lib/encodings/iso8859_1.py \
+  build/windows/x64/Lib/encodings/hz.py \
+  build/windows/x64/Lib/encodings/bz2_codec.py \
+  build/windows/x64/Lib/encodings/quopri_codec.py \
+  build/windows/x64/Lib/encodings/kz1048.py \
+  build/windows/x64/Lib/encodings/utf_8_sig.py \
+  build/windows/x64/Lib/encodings/koi8_t.py \
+  build/windows/x64/Lib/encodings/cp1255.py \
+  build/windows/x64/Lib/encodings/iso2022_jp_3.py \
+  build/windows/x64/Lib/encodings/shift_jis_2004.py \
+  build/windows/x64/Lib/encodings/cp1026.py \
+  build/windows/x64/Lib/encodings/charmap.py \
+  build/windows/x64/Lib/encodings/iso8859_5.py \
+  build/windows/x64/Lib/encodings/iso8859_13.py \
+  build/windows/x64/Lib/encodings/iso2022_jp.py \
+  build/windows/x64/Lib/distutils/_msvccompiler.py \
+  build/windows/x64/Lib/distutils/unixccompiler.py \
+  build/windows/x64/Lib/distutils/filelist.py \
+  build/windows/x64/Lib/distutils/ccompiler.py \
+  build/windows/x64/Lib/distutils/msvc9compiler.py \
+  build/windows/x64/Lib/distutils/archive_util.py \
+  build/windows/x64/Lib/distutils/cmd.py \
+  build/windows/x64/Lib/distutils/config.py \
+  build/windows/x64/Lib/distutils/version.py \
+  build/windows/x64/Lib/distutils/log.py \
+  build/windows/x64/Lib/distutils/util.py \
+  build/windows/x64/Lib/distutils/fancy_getopt.py \
+  build/windows/x64/Lib/distutils/versionpredicate.py \
+  build/windows/x64/Lib/distutils/__init__.py \
+  build/windows/x64/Lib/distutils/file_util.py \
+  build/windows/x64/Lib/distutils/core.py \
+  build/windows/x64/Lib/distutils/cygwinccompiler.py \
+  build/windows/x64/Lib/distutils/extension.py \
+  build/windows/x64/Lib/distutils/debug.py \
+  build/windows/x64/Lib/distutils/spawn.py \
+  build/windows/x64/Lib/distutils/text_file.py \
+  build/windows/x64/Lib/distutils/msvccompiler.py \
+  build/windows/x64/Lib/distutils/errors.py \
+  build/windows/x64/Lib/distutils/dep_util.py \
+  build/windows/x64/Lib/distutils/dir_util.py \
+  build/windows/x64/Lib/distutils/sysconfig.py \
+  build/windows/x64/Lib/distutils/dist.py \
+  build/windows/x64/Lib/distutils/bcppcompiler.py \
+  build/windows/x64/Lib/distutils/tests/test_bdist.py \
+  build/windows/x64/Lib/distutils/tests/test_text_file.py \
+  build/windows/x64/Lib/distutils/tests/test_bdist_wininst.py \
+  build/windows/x64/Lib/distutils/tests/test_version.py \
+  build/windows/x64/Lib/distutils/tests/test_install_lib.py \
+  build/windows/x64/Lib/distutils/tests/test_build_py.py \
+  build/windows/x64/Lib/distutils/tests/test_extension.py \
+  build/windows/x64/Lib/distutils/tests/test_spawn.py \
+  build/windows/x64/Lib/distutils/tests/support.py \
+  build/windows/x64/Lib/distutils/tests/test_bdist_rpm.py \
+  build/windows/x64/Lib/distutils/tests/test_install_data.py \
+  build/windows/x64/Lib/distutils/tests/test_msvc9compiler.py \
+  build/windows/x64/Lib/distutils/tests/test_cygwinccompiler.py \
+  build/windows/x64/Lib/distutils/tests/test_unixccompiler.py \
+  build/windows/x64/Lib/distutils/tests/test_filelist.py \
+  build/windows/x64/Lib/distutils/tests/test_core.py \
+  build/windows/x64/Lib/distutils/tests/test_bdist_msi.py \
+  build/windows/x64/Lib/distutils/tests/test_cmd.py \
+  build/windows/x64/Lib/distutils/tests/__init__.py \
+  build/windows/x64/Lib/distutils/tests/test_msvccompiler.py \
+  build/windows/x64/Lib/distutils/tests/test_sysconfig.py \
+  build/windows/x64/Lib/distutils/tests/test_util.py \
+  build/windows/x64/Lib/distutils/tests/test_build_clib.py \
+  build/windows/x64/Lib/distutils/tests/test_register.py \
+  build/windows/x64/Lib/distutils/tests/test_log.py \
+  build/windows/x64/Lib/distutils/tests/test_dep_util.py \
+  build/windows/x64/Lib/distutils/tests/test_build.py \
+  build/windows/x64/Lib/distutils/tests/test_install_scripts.py \
+  build/windows/x64/Lib/distutils/tests/test_build_ext.py \
+  build/windows/x64/Lib/distutils/tests/test_dir_util.py \
+  build/windows/x64/Lib/distutils/tests/test_install_headers.py \
+  build/windows/x64/Lib/distutils/tests/test_clean.py \
+  build/windows/x64/Lib/distutils/tests/test_check.py \
+  build/windows/x64/Lib/distutils/tests/test_config.py \
+  build/windows/x64/Lib/distutils/tests/test_versionpredicate.py \
+  build/windows/x64/Lib/distutils/tests/test_upload.py \
+  build/windows/x64/Lib/distutils/tests/test_build_scripts.py \
+  build/windows/x64/Lib/distutils/tests/test_bdist_dumb.py \
+  build/windows/x64/Lib/distutils/tests/test_file_util.py \
+  build/windows/x64/Lib/distutils/tests/test_dist.py \
+  build/windows/x64/Lib/distutils/tests/test_install.py \
+  build/windows/x64/Lib/distutils/tests/test_config_cmd.py \
+  build/windows/x64/Lib/distutils/tests/test_sdist.py \
+  build/windows/x64/Lib/distutils/tests/test_archive_util.py \
+  build/windows/x64/Lib/distutils/command/build.py \
+  build/windows/x64/Lib/distutils/command/build_ext.py \
+  build/windows/x64/Lib/distutils/command/config.py \
+  build/windows/x64/Lib/distutils/command/clean.py \
+  build/windows/x64/Lib/distutils/command/check.py \
+  build/windows/x64/Lib/distutils/command/install_scripts.py \
+  build/windows/x64/Lib/distutils/command/upload.py \
+  build/windows/x64/Lib/distutils/command/register.py \
+  build/windows/x64/Lib/distutils/command/bdist_wininst.py \
+  build/windows/x64/Lib/distutils/command/install_headers.py \
+  build/windows/x64/Lib/distutils/command/install_lib.py \
+  build/windows/x64/Lib/distutils/command/build_py.py \
+  build/windows/x64/Lib/distutils/command/bdist_dumb.py \
+  build/windows/x64/Lib/distutils/command/__init__.py \
+  build/windows/x64/Lib/distutils/command/sdist.py \
+  build/windows/x64/Lib/distutils/command/bdist.py \
+  build/windows/x64/Lib/distutils/command/build_scripts.py \
+  build/windows/x64/Lib/distutils/command/bdist_rpm.py \
+  build/windows/x64/Lib/distutils/command/build_clib.py \
+  build/windows/x64/Lib/distutils/command/install.py \
+  build/windows/x64/Lib/distutils/command/bdist_msi.py \
+  build/windows/x64/Lib/distutils/command/install_egg_info.py \
+  build/windows/x64/Lib/distutils/command/install_data.py \
+  build/windows/x64/Lib/ctypes/_aix.py \
+  build/windows/x64/Lib/ctypes/wintypes.py \
+  build/windows/x64/Lib/ctypes/util.py \
+  build/windows/x64/Lib/ctypes/__init__.py \
+  build/windows/x64/Lib/ctypes/_endian.py \
+  build/windows/x64/Lib/ctypes/test/test_array_in_pointer.py \
+  build/windows/x64/Lib/ctypes/test/test_random_things.py \
+  build/windows/x64/Lib/ctypes/test/test_funcptr.py \
+  build/windows/x64/Lib/ctypes/test/test_callbacks.py \
+  build/windows/x64/Lib/ctypes/test/test_unicode.py \
+  build/windows/x64/Lib/ctypes/test/test_structures.py \
+  build/windows/x64/Lib/ctypes/test/test_cast.py \
+  build/windows/x64/Lib/ctypes/test/test_unaligned_structures.py \
+  build/windows/x64/Lib/ctypes/test/test_keeprefs.py \
+  build/windows/x64/Lib/ctypes/test/test_loading.py \
+  build/windows/x64/Lib/ctypes/test/test_memfunctions.py \
+  build/windows/x64/Lib/ctypes/test/test_slicing.py \
+  build/windows/x64/Lib/ctypes/test/test_numbers.py \
+  build/windows/x64/Lib/ctypes/test/test_libc.py \
+  build/windows/x64/Lib/ctypes/test/test_python_api.py \
+  build/windows/x64/Lib/ctypes/test/test_bytes.py \
+  build/windows/x64/Lib/ctypes/test/test_pep3118.py \
+  build/windows/x64/Lib/ctypes/test/__init__.py \
+  build/windows/x64/Lib/ctypes/test/test_frombuffer.py \
+  build/windows/x64/Lib/ctypes/test/test_parameters.py \
+  build/windows/x64/Lib/ctypes/test/test_wintypes.py \
+  build/windows/x64/Lib/ctypes/test/test_pointers.py \
+  build/windows/x64/Lib/ctypes/test/test_errno.py \
+  build/windows/x64/Lib/ctypes/test/test_arrays.py \
+  build/windows/x64/Lib/ctypes/test/test_cfuncs.py \
+  build/windows/x64/Lib/ctypes/test/test_find.py \
+  build/windows/x64/Lib/ctypes/test/test_refcounts.py \
+  build/windows/x64/Lib/ctypes/test/test_returnfuncptrs.py \
+  build/windows/x64/Lib/ctypes/test/test_internals.py \
+  build/windows/x64/Lib/ctypes/test/test_prototypes.py \
+  build/windows/x64/Lib/ctypes/test/test_values.py \
+  build/windows/x64/Lib/ctypes/test/test_varsize_struct.py \
+  build/windows/x64/Lib/ctypes/test/test_stringptr.py \
+  build/windows/x64/Lib/ctypes/test/test_as_parameter.py \
+  build/windows/x64/Lib/ctypes/test/test_pickling.py \
+  build/windows/x64/Lib/ctypes/test/test_bitfields.py \
+  build/windows/x64/Lib/ctypes/test/test_byteswap.py \
+  build/windows/x64/Lib/ctypes/test/test_functions.py \
+  build/windows/x64/Lib/ctypes/test/test_repr.py \
+  build/windows/x64/Lib/ctypes/test/test_macholib.py \
+  build/windows/x64/Lib/ctypes/test/test_incomplete.py \
+  build/windows/x64/Lib/ctypes/test/test_strings.py \
+  build/windows/x64/Lib/ctypes/test/test_struct_fields.py \
+  build/windows/x64/Lib/ctypes/test/test_buffers.py \
+  build/windows/x64/Lib/ctypes/test/test_simplesubclasses.py \
+  build/windows/x64/Lib/ctypes/test/test_anon.py \
+  build/windows/x64/Lib/ctypes/test/test_init.py \
+  build/windows/x64/Lib/ctypes/test/test_checkretval.py \
+  build/windows/x64/Lib/ctypes/test/test_delattr.py \
+  build/windows/x64/Lib/ctypes/test/__main__.py \
+  build/windows/x64/Lib/ctypes/test/test_objects.py \
+  build/windows/x64/Lib/ctypes/test/test_sizes.py \
+  build/windows/x64/Lib/ctypes/test/test_win32.py \
+  build/windows/x64/Lib/ctypes/macholib/dyld.py \
+  build/windows/x64/Lib/ctypes/macholib/framework.py \
+  build/windows/x64/Lib/ctypes/macholib/__init__.py \
+  build/windows/x64/Lib/ctypes/macholib/dylib.py \
+  build/windows/x64/Lib/unittest/signals.py \
+  build/windows/x64/Lib/unittest/runner.py \
+  build/windows/x64/Lib/unittest/suite.py \
+  build/windows/x64/Lib/unittest/util.py \
+  build/windows/x64/Lib/unittest/__init__.py \
+  build/windows/x64/Lib/unittest/result.py \
+  build/windows/x64/Lib/unittest/loader.py \
+  build/windows/x64/Lib/unittest/case.py \
+  build/windows/x64/Lib/unittest/main.py \
+  build/windows/x64/Lib/unittest/__main__.py \
+  build/windows/x64/Lib/unittest/mock.py \
+  build/windows/x64/Lib/unittest/test/test_result.py \
+  build/windows/x64/Lib/unittest/test/support.py \
+  build/windows/x64/Lib/unittest/test/test_loader.py \
+  build/windows/x64/Lib/unittest/test/test_skipping.py \
+  build/windows/x64/Lib/unittest/test/test_setups.py \
+  build/windows/x64/Lib/unittest/test/test_functiontestcase.py \
+  build/windows/x64/Lib/unittest/test/__init__.py \
+  build/windows/x64/Lib/unittest/test/test_break.py \
+  build/windows/x64/Lib/unittest/test/test_case.py \
+  build/windows/x64/Lib/unittest/test/test_discovery.py \
+  build/windows/x64/Lib/unittest/test/test_runner.py \
+  build/windows/x64/Lib/unittest/test/test_program.py \
+  build/windows/x64/Lib/unittest/test/test_suite.py \
+  build/windows/x64/Lib/unittest/test/test_assertions.py \
+  build/windows/x64/Lib/unittest/test/_test_warnings.py \
+  build/windows/x64/Lib/unittest/test/dummy.py \
+  build/windows/x64/Lib/unittest/test/__main__.py \
+  build/windows/x64/Lib/unittest/test/testmock/support.py \
+  build/windows/x64/Lib/unittest/test/testmock/testcallable.py \
+  build/windows/x64/Lib/unittest/test/testmock/__init__.py \
+  build/windows/x64/Lib/unittest/test/testmock/testmagicmethods.py \
+  build/windows/x64/Lib/unittest/test/testmock/testmock.py \
+  build/windows/x64/Lib/unittest/test/testmock/testwith.py \
+  build/windows/x64/Lib/unittest/test/testmock/testhelpers.py \
+  build/windows/x64/Lib/unittest/test/testmock/testpatch.py \
+  build/windows/x64/Lib/unittest/test/testmock/testsealable.py \
+  build/windows/x64/Lib/unittest/test/testmock/testsentinel.py \
+  build/windows/x64/Lib/unittest/test/testmock/__main__.py \
+  build/windows/x64/Lib/curses/textpad.py \
+  build/windows/x64/Lib/curses/ascii.py \
+  build/windows/x64/Lib/curses/__init__.py \
+  build/windows/x64/Lib/curses/has_key.py \
+  build/windows/x64/Lib/curses/panel.py \
+  build/windows/x64/Lib/multiprocessing/semaphore_tracker.py \
+  build/windows/x64/Lib/multiprocessing/queues.py \
+  build/windows/x64/Lib/multiprocessing/heap.py \
+  build/windows/x64/Lib/multiprocessing/reduction.py \
+  build/windows/x64/Lib/multiprocessing/util.py \
+  build/windows/x64/Lib/multiprocessing/popen_spawn_win32.py \
+  build/windows/x64/Lib/multiprocessing/__init__.py \
+  build/windows/x64/Lib/multiprocessing/forkserver.py \
+  build/windows/x64/Lib/multiprocessing/connection.py \
+  build/windows/x64/Lib/multiprocessing/context.py \
+  build/windows/x64/Lib/multiprocessing/spawn.py \
+  build/windows/x64/Lib/multiprocessing/synchronize.py \
+  build/windows/x64/Lib/multiprocessing/process.py \
+  build/windows/x64/Lib/multiprocessing/sharedctypes.py \
+  build/windows/x64/Lib/multiprocessing/popen_fork.py \
+  build/windows/x64/Lib/multiprocessing/pool.py \
+  build/windows/x64/Lib/multiprocessing/popen_forkserver.py \
+  build/windows/x64/Lib/multiprocessing/popen_spawn_posix.py \
+  build/windows/x64/Lib/multiprocessing/managers.py \
+  build/windows/x64/Lib/multiprocessing/resource_sharer.py \
+  build/windows/x64/Lib/multiprocessing/dummy/__init__.py \
+  build/windows/x64/Lib/multiprocessing/dummy/connection.py \
+  build/windows/x64/Lib/msilib/sequence.py \
+  build/windows/x64/Lib/msilib/__init__.py \
+  build/windows/x64/Lib/msilib/text.py \
+  build/windows/x64/Lib/msilib/schema.py \
+  build/windows/x64/Lib/urllib/error.py \
+  build/windows/x64/Lib/urllib/request.py \
+  build/windows/x64/Lib/urllib/__init__.py \
+  build/windows/x64/Lib/urllib/response.py \
+  build/windows/x64/Lib/urllib/robotparser.py \
+  build/windows/x64/Lib/urllib/parse.py \
+  build/windows/x64/Lib/html/__init__.py \
+  build/windows/x64/Lib/html/parser.py \
+  build/windows/x64/Lib/html/entities.py \
+  build/windows/x64/Lib/xml/__init__.py \
+  build/windows/x64/Lib/xml/parsers/expat.py \
+  build/windows/x64/Lib/xml/parsers/__init__.py \
+  build/windows/x64/Lib/xml/sax/handler.py \
+  build/windows/x64/Lib/xml/sax/__init__.py \
+  build/windows/x64/Lib/xml/sax/saxutils.py \
+  build/windows/x64/Lib/xml/sax/xmlreader.py \
+  build/windows/x64/Lib/xml/sax/expatreader.py \
+  build/windows/x64/Lib/xml/sax/_exceptions.py \
+  build/windows/x64/Lib/xml/dom/pulldom.py \
+  build/windows/x64/Lib/xml/dom/expatbuilder.py \
+  build/windows/x64/Lib/xml/dom/domreg.py \
+  build/windows/x64/Lib/xml/dom/minicompat.py \
+  build/windows/x64/Lib/xml/dom/__init__.py \
+  build/windows/x64/Lib/xml/dom/NodeFilter.py \
+  build/windows/x64/Lib/xml/dom/xmlbuilder.py \
+  build/windows/x64/Lib/xml/dom/minidom.py \
+  build/windows/x64/Lib/xml/etree/ElementPath.py \
+  build/windows/x64/Lib/xml/etree/cElementTree.py \
+  build/windows/x64/Lib/xml/etree/__init__.py \
+  build/windows/x64/Lib/xml/etree/ElementInclude.py \
+  build/windows/x64/Lib/xml/etree/ElementTree.py \
+  build/windows/x64/Lib/wsgiref/util.py \
+  build/windows/x64/Lib/wsgiref/handlers.py \
+  build/windows/x64/Lib/wsgiref/__init__.py \
+  build/windows/x64/Lib/wsgiref/validate.py \
+  build/windows/x64/Lib/wsgiref/simple_server.py \
+  build/windows/x64/Lib/wsgiref/headers.py \
+  build/windows/x64/Lib/json/decoder.py \
+  build/windows/x64/Lib/json/scanner.py \
+  build/windows/x64/Lib/json/__init__.py \
+  build/windows/x64/Lib/json/encoder.py \
+  build/windows/x64/Lib/json/tool.py \
+  build/windows/x64/Lib/http/cookies.py \
+  build/windows/x64/Lib/http/server.py \
+  build/windows/x64/Lib/http/client.py \
+  build/windows/x64/Lib/http/__init__.py \
+  build/windows/x64/Lib/http/cookiejar.py \
+  build/windows/x64/Lib/sqlite3/__init__.py \
+  build/windows/x64/Lib/sqlite3/dump.py \
+  build/windows/x64/Lib/sqlite3/dbapi2.py \
+  build/windows/x64/Lib/sqlite3/test/backup.py \
+  build/windows/x64/Lib/sqlite3/test/hooks.py \
+  build/windows/x64/Lib/sqlite3/test/regression.py \
+  build/windows/x64/Lib/sqlite3/test/dbapi.py \
+  build/windows/x64/Lib/sqlite3/test/transactions.py \
+  build/windows/x64/Lib/sqlite3/test/__init__.py \
+  build/windows/x64/Lib/sqlite3/test/types.py \
+  build/windows/x64/Lib/sqlite3/test/factory.py \
+  build/windows/x64/Lib/sqlite3/test/dump.py \
+  build/windows/x64/Lib/sqlite3/test/userfunctions.py \
+  build/windows/x64/Lib/ensurepip/__init__.py \
+  build/windows/x64/Lib/ensurepip/__main__.py \
+  build/windows/x64/Lib/ensurepip/_uninstall.py \
+  build/windows/x64/Lib/concurrent/__init__.py \
+  build/windows/x64/Lib/concurrent/futures/_base.py \
+  build/windows/x64/Lib/concurrent/futures/thread.py \
+  build/windows/x64/Lib/concurrent/futures/__init__.py \
+  build/windows/x64/Lib/concurrent/futures/process.py \
+  build/windows/x64/Lib/venv/__init__.py \
+  build/windows/x64/Lib/venv/__main__.py \
+  build/windows/x64/Lib/dbm/ndbm.py \
+  build/windows/x64/Lib/dbm/gnu.py \
+  build/windows/x64/Lib/dbm/__init__.py \
+  build/windows/x64/Lib/dbm/dumb.py \
+  build/windows/x64/Lib/importlib/util.py \
+  build/windows/x64/Lib/importlib/_bootstrap.py \
+  build/windows/x64/Lib/importlib/__init__.py \
+  build/windows/x64/Lib/importlib/_bootstrap_external.py \
+  build/windows/x64/Lib/importlib/resources.py \
+  build/windows/x64/Lib/importlib/machinery.py \
+  build/windows/x64/Lib/importlib/abc.py \
+  build/windows/x64/Lib/xmlrpc/server.py \
+  build/windows/x64/Lib/xmlrpc/client.py \
+  build/windows/x64/Lib/xmlrpc/__init__.py \
+  build/windows/x64/Lib/pydoc_data/__init__.py \
+  build/windows/x64/Lib/pydoc_data/topics.py \
+  build/windows/x64/Lib/collections/__init__.py \
+  build/windows/x64/Lib/collections/abc.py \
+  build/windows/x64/Lib/asyncio/queues.py \
+  build/windows/x64/Lib/asyncio/streams.py \
+  build/windows/x64/Lib/asyncio/tasks.py \
+  build/windows/x64/Lib/asyncio/selector_events.py \
+  build/windows/x64/Lib/asyncio/log.py \
+  build/windows/x64/Lib/asyncio/protocols.py \
+  build/windows/x64/Lib/asyncio/events.py \
+  build/windows/x64/Lib/asyncio/base_events.py \
+  build/windows/x64/Lib/asyncio/subprocess.py \
+  build/windows/x64/Lib/asyncio/constants.py \
+  build/windows/x64/Lib/asyncio/proactor_events.py \
+  build/windows/x64/Lib/asyncio/format_helpers.py \
+  build/windows/x64/Lib/asyncio/locks.py \
+  build/windows/x64/Lib/asyncio/__init__.py \
+  build/windows/x64/Lib/asyncio/futures.py \
+  build/windows/x64/Lib/asyncio/sslproto.py \
+  build/windows/x64/Lib/asyncio/base_subprocess.py \
+  build/windows/x64/Lib/asyncio/windows_utils.py \
+  build/windows/x64/Lib/asyncio/runners.py \
+  build/windows/x64/Lib/asyncio/transports.py \
+  build/windows/x64/Lib/asyncio/base_tasks.py \
+  build/windows/x64/Lib/asyncio/coroutines.py \
+  build/windows/x64/Lib/asyncio/windows_events.py \
+  build/windows/x64/Lib/asyncio/base_futures.py \
+  build/windows/x64/Lib/asyncio/unix_events.py \
+  build/windows/x64/Lib/logging/config.py \
+  build/windows/x64/Lib/logging/handlers.py \
+  build/windows/x64/Lib/logging/__init__.py \
+  build/windows/x64/Lib/email/contentmanager.py \
+  build/windows/x64/Lib/email/_policybase.py \
+  build/windows/x64/Lib/email/header.py \
+  build/windows/x64/Lib/email/_encoded_words.py \
+  build/windows/x64/Lib/email/_header_value_parser.py \
+  build/windows/x64/Lib/email/policy.py \
+  build/windows/x64/Lib/email/__init__.py \
+  build/windows/x64/Lib/email/message.py \
+  build/windows/x64/Lib/email/encoders.py \
+  build/windows/x64/Lib/email/parser.py \
+  build/windows/x64/Lib/email/generator.py \
+  build/windows/x64/Lib/email/utils.py \
+  build/windows/x64/Lib/email/charset.py \
+  build/windows/x64/Lib/email/iterators.py \
+  build/windows/x64/Lib/email/quoprimime.py \
+  build/windows/x64/Lib/email/errors.py \
+  build/windows/x64/Lib/email/feedparser.py \
+  build/windows/x64/Lib/email/_parseaddr.py \
+  build/windows/x64/Lib/email/base64mime.py \
+  build/windows/x64/Lib/email/headerregistry.py \
+  build/windows/x64/Lib/email/mime/multipart.py \
+  build/windows/x64/Lib/email/mime/__init__.py \
+  build/windows/x64/Lib/email/mime/message.py \
+  build/windows/x64/Lib/email/mime/application.py \
+  build/windows/x64/Lib/email/mime/nonmultipart.py \
+  build/windows/x64/Lib/email/mime/text.py \
+  build/windows/x64/Lib/email/mime/audio.py \
+  build/windows/x64/Lib/email/mime/image.py \
+  build/windows/x64/Lib/email/mime/base.py
+
+SCRIPT_TARGETS_PYC_2_WIN_X64 = \
+  build/windows/x64/Lib/__pycache__/zipfile.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/shutil.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/tempfile.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/queue.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/macpath.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/_pyio.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/crypt.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/pkgutil.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/_dummy_thread.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/lzma.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/asyncore.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/__phello__.foo.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/_sitebuiltins.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/copyreg.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/sndhdr.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/rlcompleter.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/gzip.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/ipaddress.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/trace.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/webbrowser.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/nntplib.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/_compat_pickle.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/dis.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/formatter.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/bdb.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/zipapp.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/cmd.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/tty.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/tabnanny.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/_py_abc.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/cProfile.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/token.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/textwrap.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/base64.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/_markupbase.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/bz2.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/signal.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/sre_constants.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/cgitb.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/_threading_local.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/pyclbr.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/gettext.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/wave.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/weakref.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/bisect.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/opcode.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/netrc.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/heapq.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/functools.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/modulefinder.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/_compression.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/tracemalloc.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/hashlib.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/cgi.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/codeop.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/fnmatch.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/traceback.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/nturl2path.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/warnings.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/subprocess.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/profile.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/imghdr.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/this.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/filecmp.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/codecs.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/uu.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/_weakrefset.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/io.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/code.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/operator.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/fileinput.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/os.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/difflib.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/pydoc.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/symbol.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/selectors.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/decimal.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/socketserver.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/copy.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/genericpath.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/linecache.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/types.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/mimetypes.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/xdrlib.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/colorsys.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/numbers.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/_strptime.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/dummy_threading.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/contextvars.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/random.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/ftplib.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/chunk.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/optparse.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/pdb.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/threading.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/turtle.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/platform.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/pstats.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/glob.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/quopri.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/symtable.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/pprint.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/calendar.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/inspect.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/poplib.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/binhex.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/plistlib.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/pickletools.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/pipes.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/site.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/telnetlib.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/keyword.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/configparser.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/reprlib.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/secrets.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/shlex.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/posixpath.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/py_compile.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/_osx_support.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/stat.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/compileall.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/csv.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/fractions.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/sched.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/imaplib.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/mailbox.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/sre_compile.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/locale.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/ast.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/doctest.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/argparse.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/getpass.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/pickle.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/pty.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/contextlib.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/statistics.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/_collections_abc.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/sunau.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/__future__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/dataclasses.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/shelve.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/string.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/smtplib.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/getopt.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/antigravity.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/enum.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/timeit.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/hmac.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/tarfile.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/stringprep.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/typing.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/ssl.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/socket.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/datetime.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/sysconfig.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/pathlib.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/_pydecimal.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/ntpath.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/tokenize.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/uuid.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/imp.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/smtpd.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/re.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/mailcap.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/aifc.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/struct.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/asynchat.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/sre_parse.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/abc.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/runpy.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/__pycache__/_bootlocale.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/mac_romanian.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/mac_farsi.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/idna.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp273.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/punycode.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/raw_unicode_escape.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/utf_8.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp1252.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp869.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/iso8859_14.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/iso8859_2.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/mac_arabic.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/mac_croatian.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/big5hkscs.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp1256.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/iso8859_6.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/iso8859_10.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/iso2022_kr.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp1140.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/unicode_internal.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp1125.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/iso2022_jp_1.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp1257.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp949.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp858.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/iso8859_7.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/iso8859_11.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/hp_roman8.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/koi8_r.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/zlib_codec.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/gbk.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/johab.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp1253.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/iso8859_15.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/iso2022_jp_2004.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/mac_iceland.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/iso8859_3.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/mac_greek.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/rot_13.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/utf_16_be.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/euc_kr.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/mac_centeuro.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/euc_jisx0213.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp863.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/ascii.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/iso8859_8.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp857.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/utf_32_be.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp1258.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/oem.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/mac_latin2.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp775.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/mac_roman.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp852.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/shift_jisx0213.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp866.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/utf_7.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/base64_codec.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp932.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp720.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp862.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp437.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/palmos.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/iso8859_9.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp856.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/aliases.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/latin_1.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp875.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp950.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/unicode_escape.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp737.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp865.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/ptcp154.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/big5.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp424.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp861.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/euc_jp.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp855.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/shift_jis.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/utf_32_le.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp500.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/undefined.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp860.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/uu_codec.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/utf_16_le.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/gb18030.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp65001.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp874.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp850.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp864.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/utf_32.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/koi8_u.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp1254.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/iso2022_jp_2.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/utf_16.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/iso8859_4.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/euc_jis_2004.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/mbcs.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp1250.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/gb2312.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/iso8859_16.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/mac_cyrillic.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/hex_codec.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/tis_620.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp037.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp1006.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp1251.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/mac_turkish.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/iso2022_jp_ext.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/iso8859_1.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/hz.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/bz2_codec.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/quopri_codec.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/kz1048.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/utf_8_sig.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/koi8_t.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp1255.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/iso2022_jp_3.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/shift_jis_2004.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/cp1026.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/charmap.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/iso8859_5.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/iso8859_13.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/encodings/__pycache__/iso2022_jp.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/__pycache__/_msvccompiler.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/__pycache__/unixccompiler.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/__pycache__/filelist.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/__pycache__/ccompiler.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/__pycache__/msvc9compiler.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/__pycache__/archive_util.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/__pycache__/cmd.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/__pycache__/config.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/__pycache__/version.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/__pycache__/log.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/__pycache__/util.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/__pycache__/fancy_getopt.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/__pycache__/versionpredicate.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/__pycache__/file_util.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/__pycache__/core.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/__pycache__/cygwinccompiler.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/__pycache__/extension.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/__pycache__/debug.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/__pycache__/spawn.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/__pycache__/text_file.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/__pycache__/msvccompiler.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/__pycache__/errors.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/__pycache__/dep_util.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/__pycache__/dir_util.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/__pycache__/sysconfig.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/__pycache__/dist.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/__pycache__/bcppcompiler.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_bdist.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_text_file.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_bdist_wininst.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_version.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_install_lib.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_build_py.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_extension.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_spawn.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/support.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_bdist_rpm.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_install_data.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_msvc9compiler.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_cygwinccompiler.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_unixccompiler.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_filelist.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_core.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_bdist_msi.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_cmd.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_msvccompiler.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_sysconfig.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_util.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_build_clib.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_register.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_log.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_dep_util.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_build.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_install_scripts.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_build_ext.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_dir_util.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_install_headers.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_clean.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_check.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_config.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_versionpredicate.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_upload.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_build_scripts.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_bdist_dumb.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_file_util.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_dist.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_install.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_config_cmd.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_sdist.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/tests/__pycache__/test_archive_util.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/command/__pycache__/build.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/command/__pycache__/build_ext.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/command/__pycache__/config.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/command/__pycache__/clean.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/command/__pycache__/check.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/command/__pycache__/install_scripts.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/command/__pycache__/upload.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/command/__pycache__/register.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/command/__pycache__/bdist_wininst.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/command/__pycache__/install_headers.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/command/__pycache__/install_lib.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/command/__pycache__/build_py.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/command/__pycache__/bdist_dumb.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/command/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/command/__pycache__/sdist.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/command/__pycache__/bdist.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/command/__pycache__/build_scripts.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/command/__pycache__/bdist_rpm.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/command/__pycache__/build_clib.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/command/__pycache__/install.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/command/__pycache__/bdist_msi.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/command/__pycache__/install_egg_info.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/distutils/command/__pycache__/install_data.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/__pycache__/_aix.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/__pycache__/wintypes.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/__pycache__/util.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/__pycache__/_endian.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_array_in_pointer.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_random_things.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_funcptr.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_callbacks.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_unicode.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_structures.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_cast.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_unaligned_structures.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_keeprefs.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_loading.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_memfunctions.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_slicing.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_numbers.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_libc.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_python_api.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_bytes.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_pep3118.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_frombuffer.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_parameters.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_wintypes.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_pointers.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_errno.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_arrays.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_cfuncs.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_find.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_refcounts.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_returnfuncptrs.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_internals.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_prototypes.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_values.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_varsize_struct.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_stringptr.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_as_parameter.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_pickling.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_bitfields.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_byteswap.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_functions.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_repr.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_macholib.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_incomplete.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_strings.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_struct_fields.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_buffers.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_simplesubclasses.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_anon.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_init.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_checkretval.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_delattr.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/__main__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_objects.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_sizes.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/test/__pycache__/test_win32.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/macholib/__pycache__/dyld.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/macholib/__pycache__/framework.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/macholib/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ctypes/macholib/__pycache__/dylib.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/__pycache__/signals.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/__pycache__/runner.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/__pycache__/suite.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/__pycache__/util.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/__pycache__/result.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/__pycache__/loader.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/__pycache__/case.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/__pycache__/main.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/__pycache__/__main__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/__pycache__/mock.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/test/__pycache__/test_result.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/test/__pycache__/support.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/test/__pycache__/test_loader.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/test/__pycache__/test_skipping.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/test/__pycache__/test_setups.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/test/__pycache__/test_functiontestcase.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/test/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/test/__pycache__/test_break.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/test/__pycache__/test_case.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/test/__pycache__/test_discovery.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/test/__pycache__/test_runner.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/test/__pycache__/test_program.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/test/__pycache__/test_suite.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/test/__pycache__/test_assertions.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/test/__pycache__/_test_warnings.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/test/__pycache__/dummy.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/test/__pycache__/__main__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/test/testmock/__pycache__/support.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/test/testmock/__pycache__/testcallable.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/test/testmock/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/test/testmock/__pycache__/testmagicmethods.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/test/testmock/__pycache__/testmock.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/test/testmock/__pycache__/testwith.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/test/testmock/__pycache__/testhelpers.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/test/testmock/__pycache__/testpatch.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/test/testmock/__pycache__/testsealable.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/test/testmock/__pycache__/testsentinel.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/unittest/test/testmock/__pycache__/__main__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/curses/__pycache__/textpad.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/curses/__pycache__/ascii.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/curses/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/curses/__pycache__/has_key.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/curses/__pycache__/panel.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/multiprocessing/__pycache__/semaphore_tracker.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/multiprocessing/__pycache__/queues.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/multiprocessing/__pycache__/heap.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/multiprocessing/__pycache__/reduction.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/multiprocessing/__pycache__/util.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/multiprocessing/__pycache__/popen_spawn_win32.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/multiprocessing/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/multiprocessing/__pycache__/forkserver.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/multiprocessing/__pycache__/connection.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/multiprocessing/__pycache__/context.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/multiprocessing/__pycache__/spawn.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/multiprocessing/__pycache__/synchronize.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/multiprocessing/__pycache__/process.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/multiprocessing/__pycache__/sharedctypes.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/multiprocessing/__pycache__/popen_fork.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/multiprocessing/__pycache__/pool.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/multiprocessing/__pycache__/popen_forkserver.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/multiprocessing/__pycache__/popen_spawn_posix.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/multiprocessing/__pycache__/managers.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/multiprocessing/__pycache__/resource_sharer.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/multiprocessing/dummy/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/multiprocessing/dummy/__pycache__/connection.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/msilib/__pycache__/sequence.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/msilib/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/msilib/__pycache__/text.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/msilib/__pycache__/schema.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/urllib/__pycache__/error.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/urllib/__pycache__/request.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/urllib/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/urllib/__pycache__/response.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/urllib/__pycache__/robotparser.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/urllib/__pycache__/parse.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/html/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/html/__pycache__/parser.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/html/__pycache__/entities.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/xml/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/xml/parsers/__pycache__/expat.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/xml/parsers/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/xml/sax/__pycache__/handler.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/xml/sax/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/xml/sax/__pycache__/saxutils.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/xml/sax/__pycache__/xmlreader.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/xml/sax/__pycache__/expatreader.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/xml/sax/__pycache__/_exceptions.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/xml/dom/__pycache__/pulldom.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/xml/dom/__pycache__/expatbuilder.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/xml/dom/__pycache__/domreg.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/xml/dom/__pycache__/minicompat.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/xml/dom/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/xml/dom/__pycache__/NodeFilter.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/xml/dom/__pycache__/xmlbuilder.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/xml/dom/__pycache__/minidom.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/xml/etree/__pycache__/ElementPath.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/xml/etree/__pycache__/cElementTree.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/xml/etree/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/xml/etree/__pycache__/ElementInclude.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/xml/etree/__pycache__/ElementTree.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/wsgiref/__pycache__/util.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/wsgiref/__pycache__/handlers.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/wsgiref/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/wsgiref/__pycache__/validate.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/wsgiref/__pycache__/simple_server.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/wsgiref/__pycache__/headers.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/json/__pycache__/decoder.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/json/__pycache__/scanner.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/json/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/json/__pycache__/encoder.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/json/__pycache__/tool.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/http/__pycache__/cookies.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/http/__pycache__/server.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/http/__pycache__/client.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/http/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/http/__pycache__/cookiejar.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/sqlite3/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/sqlite3/__pycache__/dump.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/sqlite3/__pycache__/dbapi2.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/sqlite3/test/__pycache__/backup.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/sqlite3/test/__pycache__/hooks.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/sqlite3/test/__pycache__/regression.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/sqlite3/test/__pycache__/dbapi.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/sqlite3/test/__pycache__/transactions.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/sqlite3/test/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/sqlite3/test/__pycache__/types.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/sqlite3/test/__pycache__/factory.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/sqlite3/test/__pycache__/dump.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/sqlite3/test/__pycache__/userfunctions.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ensurepip/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ensurepip/__pycache__/__main__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/ensurepip/__pycache__/_uninstall.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/concurrent/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/concurrent/futures/__pycache__/_base.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/concurrent/futures/__pycache__/thread.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/concurrent/futures/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/concurrent/futures/__pycache__/process.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/venv/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/venv/__pycache__/__main__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/dbm/__pycache__/ndbm.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/dbm/__pycache__/gnu.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/dbm/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/dbm/__pycache__/dumb.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/importlib/__pycache__/util.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/importlib/__pycache__/_bootstrap.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/importlib/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/importlib/__pycache__/_bootstrap_external.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/importlib/__pycache__/resources.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/importlib/__pycache__/machinery.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/importlib/__pycache__/abc.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/xmlrpc/__pycache__/server.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/xmlrpc/__pycache__/client.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/xmlrpc/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/pydoc_data/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/pydoc_data/__pycache__/topics.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/collections/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/collections/__pycache__/abc.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/asyncio/__pycache__/queues.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/asyncio/__pycache__/streams.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/asyncio/__pycache__/tasks.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/asyncio/__pycache__/selector_events.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/asyncio/__pycache__/log.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/asyncio/__pycache__/protocols.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/asyncio/__pycache__/events.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/asyncio/__pycache__/base_events.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/asyncio/__pycache__/subprocess.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/asyncio/__pycache__/constants.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/asyncio/__pycache__/proactor_events.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/asyncio/__pycache__/format_helpers.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/asyncio/__pycache__/locks.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/asyncio/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/asyncio/__pycache__/futures.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/asyncio/__pycache__/sslproto.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/asyncio/__pycache__/base_subprocess.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/asyncio/__pycache__/windows_utils.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/asyncio/__pycache__/runners.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/asyncio/__pycache__/transports.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/asyncio/__pycache__/base_tasks.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/asyncio/__pycache__/coroutines.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/asyncio/__pycache__/windows_events.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/asyncio/__pycache__/base_futures.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/asyncio/__pycache__/unix_events.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/logging/__pycache__/config.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/logging/__pycache__/handlers.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/logging/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/email/__pycache__/contentmanager.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/email/__pycache__/_policybase.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/email/__pycache__/header.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/email/__pycache__/_encoded_words.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/email/__pycache__/_header_value_parser.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/email/__pycache__/policy.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/email/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/email/__pycache__/message.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/email/__pycache__/encoders.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/email/__pycache__/parser.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/email/__pycache__/generator.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/email/__pycache__/utils.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/email/__pycache__/charset.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/email/__pycache__/iterators.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/email/__pycache__/quoprimime.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/email/__pycache__/errors.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/email/__pycache__/feedparser.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/email/__pycache__/_parseaddr.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/email/__pycache__/base64mime.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/email/__pycache__/headerregistry.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/email/mime/__pycache__/multipart.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/email/mime/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/email/mime/__pycache__/message.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/email/mime/__pycache__/application.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/email/mime/__pycache__/nonmultipart.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/email/mime/__pycache__/text.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/email/mime/__pycache__/audio.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/email/mime/__pycache__/image.cpython-37.opt-1.pyc \
+  build/windows/x64/Lib/email/mime/__pycache__/base.cpython-37.opt-1.pyc
+
+# Rule to copy src asset scripts to dst.
+# (and make non-writable so I'm less likely to accidentally edit them there)
+$(SCRIPT_TARGETS_PY_2_WIN_X64) : ../.efrocachemap
 	@cd .. && tools/snippets efrocache_get assets/$@
 
 # Looks like path mangling from py to pyc is too complex for pattern rules so
@@ -13845,3346 +17199,6 @@ build/windows/x64/Lib/email/mime/__pycache__/base.cpython-37.opt-1.pyc: \
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/windows/Win32/Lib/__pycache__/zipfile.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/zipfile.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/shutil.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/shutil.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/tempfile.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/tempfile.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/queue.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/queue.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/macpath.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/macpath.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/_pyio.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/_pyio.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/crypt.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/crypt.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/pkgutil.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/pkgutil.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/_dummy_thread.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/_dummy_thread.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/lzma.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/lzma.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/asyncore.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/asyncore.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/__phello__.foo.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/__phello__.foo.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/_sitebuiltins.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/_sitebuiltins.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/copyreg.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/copyreg.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/sndhdr.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/sndhdr.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/rlcompleter.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/rlcompleter.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/gzip.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/gzip.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/ipaddress.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ipaddress.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/trace.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/trace.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/webbrowser.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/webbrowser.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/nntplib.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/nntplib.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/_compat_pickle.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/_compat_pickle.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/dis.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/dis.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/formatter.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/formatter.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/bdb.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/bdb.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/zipapp.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/zipapp.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/cmd.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/cmd.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/tty.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/tty.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/tabnanny.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/tabnanny.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/_py_abc.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/_py_abc.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/cProfile.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/cProfile.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/token.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/token.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/textwrap.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/textwrap.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/base64.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/base64.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/_markupbase.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/_markupbase.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/bz2.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/bz2.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/signal.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/signal.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/sre_constants.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/sre_constants.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/cgitb.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/cgitb.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/_threading_local.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/_threading_local.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/pyclbr.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/pyclbr.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/gettext.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/gettext.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/wave.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/wave.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/weakref.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/weakref.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/bisect.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/bisect.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/opcode.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/opcode.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/netrc.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/netrc.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/heapq.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/heapq.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/functools.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/functools.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/modulefinder.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/modulefinder.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/_compression.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/_compression.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/tracemalloc.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/tracemalloc.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/hashlib.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/hashlib.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/cgi.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/cgi.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/codeop.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/codeop.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/fnmatch.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/fnmatch.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/traceback.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/traceback.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/nturl2path.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/nturl2path.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/warnings.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/warnings.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/subprocess.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/subprocess.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/profile.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/profile.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/imghdr.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/imghdr.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/this.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/this.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/filecmp.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/filecmp.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/codecs.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/codecs.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/uu.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/uu.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/_weakrefset.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/_weakrefset.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/io.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/io.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/code.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/code.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/operator.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/operator.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/fileinput.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/fileinput.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/os.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/os.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/difflib.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/difflib.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/pydoc.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/pydoc.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/symbol.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/symbol.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/selectors.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/selectors.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/decimal.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/decimal.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/socketserver.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/socketserver.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/copy.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/copy.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/genericpath.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/genericpath.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/linecache.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/linecache.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/types.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/types.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/mimetypes.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/mimetypes.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/xdrlib.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/xdrlib.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/colorsys.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/colorsys.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/numbers.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/numbers.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/_strptime.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/_strptime.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/dummy_threading.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/dummy_threading.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/contextvars.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/contextvars.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/random.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/random.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/ftplib.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ftplib.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/chunk.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/chunk.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/optparse.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/optparse.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/pdb.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/pdb.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/threading.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/threading.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/turtle.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/turtle.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/platform.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/platform.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/pstats.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/pstats.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/glob.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/glob.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/quopri.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/quopri.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/symtable.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/symtable.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/pprint.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/pprint.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/calendar.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/calendar.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/inspect.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/inspect.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/poplib.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/poplib.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/binhex.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/binhex.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/plistlib.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/plistlib.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/pickletools.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/pickletools.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/pipes.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/pipes.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/site.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/site.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/telnetlib.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/telnetlib.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/keyword.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/keyword.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/configparser.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/configparser.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/reprlib.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/reprlib.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/secrets.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/secrets.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/shlex.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/shlex.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/posixpath.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/posixpath.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/py_compile.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/py_compile.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/_osx_support.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/_osx_support.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/stat.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/stat.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/compileall.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/compileall.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/csv.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/csv.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/fractions.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/fractions.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/sched.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/sched.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/imaplib.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/imaplib.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/mailbox.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/mailbox.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/sre_compile.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/sre_compile.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/locale.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/locale.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/ast.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ast.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/doctest.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/doctest.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/argparse.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/argparse.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/getpass.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/getpass.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/pickle.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/pickle.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/pty.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/pty.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/contextlib.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/contextlib.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/statistics.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/statistics.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/_collections_abc.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/_collections_abc.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/sunau.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/sunau.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/__future__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/__future__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/dataclasses.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/dataclasses.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/shelve.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/shelve.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/string.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/string.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/smtplib.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/smtplib.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/getopt.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/getopt.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/antigravity.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/antigravity.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/enum.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/enum.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/timeit.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/timeit.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/hmac.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/hmac.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/tarfile.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/tarfile.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/stringprep.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/stringprep.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/typing.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/typing.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/ssl.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ssl.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/socket.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/socket.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/datetime.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/datetime.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/sysconfig.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/sysconfig.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/pathlib.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/pathlib.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/_pydecimal.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/_pydecimal.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/ntpath.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ntpath.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/tokenize.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/tokenize.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/uuid.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/uuid.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/imp.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/imp.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/smtpd.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/smtpd.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/re.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/re.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/mailcap.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/mailcap.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/aifc.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/aifc.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/struct.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/struct.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/asynchat.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/asynchat.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/sre_parse.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/sre_parse.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/abc.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/abc.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/runpy.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/runpy.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/__pycache__/_bootlocale.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/_bootlocale.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/mac_romanian.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/mac_romanian.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/mac_farsi.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/mac_farsi.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/idna.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/idna.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp273.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp273.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/punycode.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/punycode.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/raw_unicode_escape.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/raw_unicode_escape.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/utf_8.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/utf_8.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp1252.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp1252.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp869.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp869.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/iso8859_14.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/iso8859_14.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/iso8859_2.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/iso8859_2.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/mac_arabic.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/mac_arabic.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/mac_croatian.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/mac_croatian.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/big5hkscs.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/big5hkscs.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp1256.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp1256.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/iso8859_6.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/iso8859_6.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/iso8859_10.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/iso8859_10.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/iso2022_kr.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/iso2022_kr.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp1140.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp1140.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/unicode_internal.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/unicode_internal.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp1125.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp1125.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/iso2022_jp_1.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/iso2022_jp_1.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp1257.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp1257.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp949.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp949.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp858.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp858.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/iso8859_7.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/iso8859_7.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/iso8859_11.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/iso8859_11.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/hp_roman8.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/hp_roman8.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/koi8_r.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/koi8_r.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/zlib_codec.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/zlib_codec.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/gbk.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/gbk.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/johab.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/johab.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp1253.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp1253.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/iso8859_15.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/iso8859_15.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/iso2022_jp_2004.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/iso2022_jp_2004.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/mac_iceland.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/mac_iceland.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/iso8859_3.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/iso8859_3.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/mac_greek.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/mac_greek.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/rot_13.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/rot_13.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/utf_16_be.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/utf_16_be.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/euc_kr.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/euc_kr.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/mac_centeuro.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/mac_centeuro.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/euc_jisx0213.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/euc_jisx0213.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp863.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp863.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/ascii.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/ascii.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/iso8859_8.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/iso8859_8.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp857.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp857.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/utf_32_be.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/utf_32_be.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp1258.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp1258.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/oem.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/oem.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/mac_latin2.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/mac_latin2.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp775.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp775.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/mac_roman.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/mac_roman.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp852.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp852.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/shift_jisx0213.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/shift_jisx0213.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp866.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp866.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/utf_7.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/utf_7.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/base64_codec.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/base64_codec.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp932.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp932.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp720.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp720.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp862.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp862.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp437.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp437.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/palmos.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/palmos.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/iso8859_9.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/iso8859_9.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp856.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp856.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/aliases.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/aliases.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/latin_1.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/latin_1.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp875.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp875.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp950.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp950.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/unicode_escape.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/unicode_escape.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp737.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp737.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp865.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp865.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/ptcp154.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/ptcp154.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/big5.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/big5.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp424.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp424.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp861.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp861.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/euc_jp.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/euc_jp.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp855.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp855.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/shift_jis.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/shift_jis.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/utf_32_le.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/utf_32_le.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp500.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp500.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/undefined.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/undefined.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp860.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp860.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/uu_codec.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/uu_codec.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/utf_16_le.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/utf_16_le.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/gb18030.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/gb18030.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp65001.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp65001.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp874.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp874.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp850.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp850.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp864.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp864.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/utf_32.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/utf_32.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/koi8_u.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/koi8_u.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp1254.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp1254.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/iso2022_jp_2.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/iso2022_jp_2.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/utf_16.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/utf_16.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/iso8859_4.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/iso8859_4.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/euc_jis_2004.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/euc_jis_2004.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/mbcs.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/mbcs.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp1250.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp1250.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/gb2312.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/gb2312.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/iso8859_16.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/iso8859_16.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/mac_cyrillic.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/mac_cyrillic.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/hex_codec.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/hex_codec.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/tis_620.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/tis_620.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp037.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp037.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp1006.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp1006.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp1251.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp1251.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/mac_turkish.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/mac_turkish.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/iso2022_jp_ext.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/iso2022_jp_ext.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/iso8859_1.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/iso8859_1.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/hz.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/hz.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/bz2_codec.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/bz2_codec.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/quopri_codec.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/quopri_codec.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/kz1048.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/kz1048.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/utf_8_sig.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/utf_8_sig.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/koi8_t.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/koi8_t.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp1255.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp1255.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/iso2022_jp_3.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/iso2022_jp_3.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/shift_jis_2004.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/shift_jis_2004.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/cp1026.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/cp1026.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/charmap.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/charmap.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/iso8859_5.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/iso8859_5.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/iso8859_13.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/iso8859_13.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/encodings/__pycache__/iso2022_jp.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/encodings/iso2022_jp.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/__pycache__/_msvccompiler.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/_msvccompiler.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/__pycache__/unixccompiler.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/unixccompiler.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/__pycache__/filelist.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/filelist.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/__pycache__/ccompiler.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/ccompiler.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/__pycache__/msvc9compiler.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/msvc9compiler.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/__pycache__/archive_util.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/archive_util.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/__pycache__/cmd.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/cmd.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/__pycache__/config.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/config.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/__pycache__/version.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/version.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/__pycache__/log.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/log.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/__pycache__/util.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/util.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/__pycache__/fancy_getopt.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/fancy_getopt.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/__pycache__/versionpredicate.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/versionpredicate.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/__pycache__/file_util.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/file_util.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/__pycache__/core.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/core.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/__pycache__/cygwinccompiler.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/cygwinccompiler.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/__pycache__/extension.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/extension.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/__pycache__/debug.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/debug.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/__pycache__/spawn.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/spawn.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/__pycache__/text_file.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/text_file.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/__pycache__/msvccompiler.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/msvccompiler.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/__pycache__/errors.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/errors.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/__pycache__/dep_util.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/dep_util.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/__pycache__/dir_util.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/dir_util.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/__pycache__/sysconfig.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/sysconfig.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/__pycache__/dist.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/dist.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/__pycache__/bcppcompiler.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/bcppcompiler.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_bdist.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_bdist.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_text_file.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_text_file.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_bdist_wininst.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_bdist_wininst.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_version.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_version.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_install_lib.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_install_lib.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_build_py.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_build_py.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_extension.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_extension.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_spawn.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_spawn.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/support.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/support.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_bdist_rpm.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_bdist_rpm.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_install_data.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_install_data.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_msvc9compiler.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_msvc9compiler.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_cygwinccompiler.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_cygwinccompiler.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_unixccompiler.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_unixccompiler.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_filelist.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_filelist.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_core.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_core.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_bdist_msi.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_bdist_msi.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_cmd.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_cmd.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_msvccompiler.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_msvccompiler.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_sysconfig.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_sysconfig.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_util.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_util.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_build_clib.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_build_clib.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_register.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_register.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_log.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_log.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_dep_util.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_dep_util.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_build.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_build.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_install_scripts.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_install_scripts.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_build_ext.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_build_ext.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_dir_util.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_dir_util.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_install_headers.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_install_headers.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_clean.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_clean.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_check.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_check.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_config.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_config.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_versionpredicate.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_versionpredicate.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_upload.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_upload.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_build_scripts.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_build_scripts.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_bdist_dumb.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_bdist_dumb.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_file_util.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_file_util.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_dist.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_dist.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_install.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_install.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_config_cmd.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_config_cmd.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_sdist.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_sdist.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/tests/__pycache__/test_archive_util.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/tests/test_archive_util.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/command/__pycache__/build.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/command/build.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/command/__pycache__/build_ext.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/command/build_ext.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/command/__pycache__/config.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/command/config.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/command/__pycache__/clean.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/command/clean.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/command/__pycache__/check.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/command/check.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/command/__pycache__/install_scripts.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/command/install_scripts.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/command/__pycache__/upload.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/command/upload.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/command/__pycache__/register.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/command/register.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/command/__pycache__/bdist_wininst.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/command/bdist_wininst.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/command/__pycache__/install_headers.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/command/install_headers.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/command/__pycache__/install_lib.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/command/install_lib.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/command/__pycache__/build_py.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/command/build_py.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/command/__pycache__/bdist_dumb.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/command/bdist_dumb.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/command/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/command/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/command/__pycache__/sdist.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/command/sdist.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/command/__pycache__/bdist.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/command/bdist.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/command/__pycache__/build_scripts.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/command/build_scripts.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/command/__pycache__/bdist_rpm.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/command/bdist_rpm.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/command/__pycache__/build_clib.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/command/build_clib.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/command/__pycache__/install.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/command/install.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/command/__pycache__/bdist_msi.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/command/bdist_msi.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/command/__pycache__/install_egg_info.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/command/install_egg_info.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/distutils/command/__pycache__/install_data.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/distutils/command/install_data.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/__pycache__/_aix.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/_aix.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/__pycache__/wintypes.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/wintypes.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/__pycache__/util.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/util.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/__pycache__/_endian.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/_endian.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_array_in_pointer.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_array_in_pointer.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_random_things.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_random_things.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_funcptr.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_funcptr.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_callbacks.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_callbacks.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_unicode.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_unicode.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_structures.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_structures.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_cast.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_cast.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_unaligned_structures.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_unaligned_structures.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_keeprefs.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_keeprefs.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_loading.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_loading.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_memfunctions.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_memfunctions.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_slicing.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_slicing.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_numbers.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_numbers.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_libc.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_libc.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_python_api.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_python_api.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_bytes.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_bytes.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_pep3118.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_pep3118.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_frombuffer.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_frombuffer.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_parameters.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_parameters.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_wintypes.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_wintypes.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_pointers.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_pointers.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_errno.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_errno.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_arrays.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_arrays.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_cfuncs.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_cfuncs.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_find.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_find.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_refcounts.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_refcounts.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_returnfuncptrs.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_returnfuncptrs.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_internals.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_internals.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_prototypes.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_prototypes.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_values.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_values.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_varsize_struct.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_varsize_struct.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_stringptr.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_stringptr.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_as_parameter.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_as_parameter.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_pickling.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_pickling.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_bitfields.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_bitfields.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_byteswap.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_byteswap.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_functions.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_functions.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_repr.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_repr.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_macholib.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_macholib.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_incomplete.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_incomplete.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_strings.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_strings.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_struct_fields.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_struct_fields.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_buffers.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_buffers.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_simplesubclasses.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_simplesubclasses.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_anon.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_anon.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_init.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_init.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_checkretval.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_checkretval.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_delattr.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_delattr.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/__main__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/__main__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_objects.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_objects.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_sizes.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_sizes.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/test/__pycache__/test_win32.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/test/test_win32.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/macholib/__pycache__/dyld.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/macholib/dyld.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/macholib/__pycache__/framework.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/macholib/framework.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/macholib/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/macholib/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ctypes/macholib/__pycache__/dylib.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ctypes/macholib/dylib.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/__pycache__/signals.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/signals.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/__pycache__/runner.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/runner.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/__pycache__/suite.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/suite.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/__pycache__/util.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/util.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/__pycache__/result.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/result.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/__pycache__/loader.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/loader.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/__pycache__/case.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/case.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/__pycache__/main.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/main.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/__pycache__/__main__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/__main__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/__pycache__/mock.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/mock.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/test/__pycache__/test_result.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/test/test_result.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/test/__pycache__/support.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/test/support.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/test/__pycache__/test_loader.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/test/test_loader.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/test/__pycache__/test_skipping.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/test/test_skipping.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/test/__pycache__/test_setups.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/test/test_setups.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/test/__pycache__/test_functiontestcase.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/test/test_functiontestcase.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/test/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/test/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/test/__pycache__/test_break.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/test/test_break.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/test/__pycache__/test_case.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/test/test_case.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/test/__pycache__/test_discovery.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/test/test_discovery.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/test/__pycache__/test_runner.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/test/test_runner.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/test/__pycache__/test_program.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/test/test_program.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/test/__pycache__/test_suite.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/test/test_suite.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/test/__pycache__/test_assertions.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/test/test_assertions.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/test/__pycache__/_test_warnings.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/test/_test_warnings.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/test/__pycache__/dummy.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/test/dummy.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/test/__pycache__/__main__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/test/__main__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/test/testmock/__pycache__/support.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/test/testmock/support.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/test/testmock/__pycache__/testcallable.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/test/testmock/testcallable.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/test/testmock/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/test/testmock/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/test/testmock/__pycache__/testmagicmethods.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/test/testmock/testmagicmethods.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/test/testmock/__pycache__/testmock.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/test/testmock/testmock.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/test/testmock/__pycache__/testwith.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/test/testmock/testwith.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/test/testmock/__pycache__/testhelpers.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/test/testmock/testhelpers.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/test/testmock/__pycache__/testpatch.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/test/testmock/testpatch.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/test/testmock/__pycache__/testsealable.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/test/testmock/testsealable.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/test/testmock/__pycache__/testsentinel.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/test/testmock/testsentinel.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/unittest/test/testmock/__pycache__/__main__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/unittest/test/testmock/__main__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/curses/__pycache__/textpad.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/curses/textpad.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/curses/__pycache__/ascii.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/curses/ascii.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/curses/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/curses/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/curses/__pycache__/has_key.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/curses/has_key.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/curses/__pycache__/panel.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/curses/panel.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/multiprocessing/__pycache__/semaphore_tracker.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/multiprocessing/semaphore_tracker.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/multiprocessing/__pycache__/queues.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/multiprocessing/queues.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/multiprocessing/__pycache__/heap.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/multiprocessing/heap.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/multiprocessing/__pycache__/reduction.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/multiprocessing/reduction.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/multiprocessing/__pycache__/util.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/multiprocessing/util.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/multiprocessing/__pycache__/popen_spawn_win32.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/multiprocessing/popen_spawn_win32.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/multiprocessing/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/multiprocessing/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/multiprocessing/__pycache__/forkserver.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/multiprocessing/forkserver.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/multiprocessing/__pycache__/connection.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/multiprocessing/connection.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/multiprocessing/__pycache__/context.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/multiprocessing/context.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/multiprocessing/__pycache__/spawn.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/multiprocessing/spawn.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/multiprocessing/__pycache__/synchronize.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/multiprocessing/synchronize.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/multiprocessing/__pycache__/process.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/multiprocessing/process.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/multiprocessing/__pycache__/sharedctypes.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/multiprocessing/sharedctypes.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/multiprocessing/__pycache__/popen_fork.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/multiprocessing/popen_fork.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/multiprocessing/__pycache__/pool.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/multiprocessing/pool.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/multiprocessing/__pycache__/popen_forkserver.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/multiprocessing/popen_forkserver.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/multiprocessing/__pycache__/popen_spawn_posix.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/multiprocessing/popen_spawn_posix.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/multiprocessing/__pycache__/managers.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/multiprocessing/managers.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/multiprocessing/__pycache__/resource_sharer.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/multiprocessing/resource_sharer.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/multiprocessing/dummy/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/multiprocessing/dummy/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/multiprocessing/dummy/__pycache__/connection.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/multiprocessing/dummy/connection.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/msilib/__pycache__/sequence.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/msilib/sequence.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/msilib/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/msilib/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/msilib/__pycache__/text.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/msilib/text.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/msilib/__pycache__/schema.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/msilib/schema.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/urllib/__pycache__/error.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/urllib/error.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/urllib/__pycache__/request.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/urllib/request.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/urllib/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/urllib/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/urllib/__pycache__/response.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/urllib/response.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/urllib/__pycache__/robotparser.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/urllib/robotparser.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/urllib/__pycache__/parse.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/urllib/parse.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/html/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/html/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/html/__pycache__/parser.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/html/parser.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/html/__pycache__/entities.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/html/entities.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/xml/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/xml/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/xml/parsers/__pycache__/expat.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/xml/parsers/expat.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/xml/parsers/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/xml/parsers/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/xml/sax/__pycache__/handler.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/xml/sax/handler.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/xml/sax/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/xml/sax/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/xml/sax/__pycache__/saxutils.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/xml/sax/saxutils.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/xml/sax/__pycache__/xmlreader.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/xml/sax/xmlreader.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/xml/sax/__pycache__/expatreader.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/xml/sax/expatreader.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/xml/sax/__pycache__/_exceptions.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/xml/sax/_exceptions.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/xml/dom/__pycache__/pulldom.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/xml/dom/pulldom.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/xml/dom/__pycache__/expatbuilder.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/xml/dom/expatbuilder.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/xml/dom/__pycache__/domreg.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/xml/dom/domreg.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/xml/dom/__pycache__/minicompat.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/xml/dom/minicompat.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/xml/dom/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/xml/dom/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/xml/dom/__pycache__/NodeFilter.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/xml/dom/NodeFilter.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/xml/dom/__pycache__/xmlbuilder.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/xml/dom/xmlbuilder.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/xml/dom/__pycache__/minidom.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/xml/dom/minidom.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/xml/etree/__pycache__/ElementPath.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/xml/etree/ElementPath.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/xml/etree/__pycache__/cElementTree.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/xml/etree/cElementTree.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/xml/etree/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/xml/etree/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/xml/etree/__pycache__/ElementInclude.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/xml/etree/ElementInclude.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/xml/etree/__pycache__/ElementTree.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/xml/etree/ElementTree.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/wsgiref/__pycache__/util.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/wsgiref/util.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/wsgiref/__pycache__/handlers.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/wsgiref/handlers.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/wsgiref/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/wsgiref/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/wsgiref/__pycache__/validate.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/wsgiref/validate.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/wsgiref/__pycache__/simple_server.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/wsgiref/simple_server.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/wsgiref/__pycache__/headers.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/wsgiref/headers.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/json/__pycache__/decoder.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/json/decoder.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/json/__pycache__/scanner.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/json/scanner.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/json/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/json/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/json/__pycache__/encoder.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/json/encoder.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/json/__pycache__/tool.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/json/tool.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/http/__pycache__/cookies.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/http/cookies.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/http/__pycache__/server.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/http/server.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/http/__pycache__/client.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/http/client.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/http/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/http/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/http/__pycache__/cookiejar.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/http/cookiejar.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/sqlite3/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/sqlite3/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/sqlite3/__pycache__/dump.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/sqlite3/dump.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/sqlite3/__pycache__/dbapi2.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/sqlite3/dbapi2.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/sqlite3/test/__pycache__/backup.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/sqlite3/test/backup.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/sqlite3/test/__pycache__/hooks.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/sqlite3/test/hooks.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/sqlite3/test/__pycache__/regression.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/sqlite3/test/regression.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/sqlite3/test/__pycache__/dbapi.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/sqlite3/test/dbapi.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/sqlite3/test/__pycache__/transactions.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/sqlite3/test/transactions.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/sqlite3/test/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/sqlite3/test/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/sqlite3/test/__pycache__/types.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/sqlite3/test/types.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/sqlite3/test/__pycache__/factory.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/sqlite3/test/factory.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/sqlite3/test/__pycache__/dump.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/sqlite3/test/dump.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/sqlite3/test/__pycache__/userfunctions.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/sqlite3/test/userfunctions.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ensurepip/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ensurepip/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ensurepip/__pycache__/__main__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ensurepip/__main__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/ensurepip/__pycache__/_uninstall.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/ensurepip/_uninstall.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/concurrent/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/concurrent/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/concurrent/futures/__pycache__/_base.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/concurrent/futures/_base.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/concurrent/futures/__pycache__/thread.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/concurrent/futures/thread.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/concurrent/futures/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/concurrent/futures/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/concurrent/futures/__pycache__/process.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/concurrent/futures/process.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/venv/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/venv/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/venv/__pycache__/__main__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/venv/__main__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/dbm/__pycache__/ndbm.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/dbm/ndbm.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/dbm/__pycache__/gnu.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/dbm/gnu.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/dbm/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/dbm/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/dbm/__pycache__/dumb.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/dbm/dumb.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/importlib/__pycache__/util.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/importlib/util.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/importlib/__pycache__/_bootstrap.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/importlib/_bootstrap.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/importlib/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/importlib/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/importlib/__pycache__/_bootstrap_external.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/importlib/_bootstrap_external.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/importlib/__pycache__/resources.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/importlib/resources.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/importlib/__pycache__/machinery.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/importlib/machinery.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/importlib/__pycache__/abc.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/importlib/abc.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/xmlrpc/__pycache__/server.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/xmlrpc/server.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/xmlrpc/__pycache__/client.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/xmlrpc/client.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/xmlrpc/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/xmlrpc/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/pydoc_data/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/pydoc_data/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/pydoc_data/__pycache__/topics.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/pydoc_data/topics.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/collections/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/collections/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/collections/__pycache__/abc.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/collections/abc.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/asyncio/__pycache__/queues.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/asyncio/queues.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/asyncio/__pycache__/streams.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/asyncio/streams.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/asyncio/__pycache__/tasks.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/asyncio/tasks.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/asyncio/__pycache__/selector_events.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/asyncio/selector_events.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/asyncio/__pycache__/log.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/asyncio/log.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/asyncio/__pycache__/protocols.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/asyncio/protocols.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/asyncio/__pycache__/events.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/asyncio/events.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/asyncio/__pycache__/base_events.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/asyncio/base_events.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/asyncio/__pycache__/subprocess.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/asyncio/subprocess.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/asyncio/__pycache__/constants.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/asyncio/constants.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/asyncio/__pycache__/proactor_events.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/asyncio/proactor_events.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/asyncio/__pycache__/format_helpers.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/asyncio/format_helpers.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/asyncio/__pycache__/locks.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/asyncio/locks.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/asyncio/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/asyncio/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/asyncio/__pycache__/futures.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/asyncio/futures.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/asyncio/__pycache__/sslproto.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/asyncio/sslproto.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/asyncio/__pycache__/base_subprocess.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/asyncio/base_subprocess.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/asyncio/__pycache__/windows_utils.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/asyncio/windows_utils.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/asyncio/__pycache__/runners.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/asyncio/runners.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/asyncio/__pycache__/transports.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/asyncio/transports.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/asyncio/__pycache__/base_tasks.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/asyncio/base_tasks.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/asyncio/__pycache__/coroutines.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/asyncio/coroutines.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/asyncio/__pycache__/windows_events.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/asyncio/windows_events.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/asyncio/__pycache__/base_futures.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/asyncio/base_futures.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/asyncio/__pycache__/unix_events.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/asyncio/unix_events.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/logging/__pycache__/config.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/logging/config.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/logging/__pycache__/handlers.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/logging/handlers.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/logging/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/logging/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/email/__pycache__/contentmanager.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/email/contentmanager.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/email/__pycache__/_policybase.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/email/_policybase.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/email/__pycache__/header.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/email/header.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/email/__pycache__/_encoded_words.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/email/_encoded_words.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/email/__pycache__/_header_value_parser.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/email/_header_value_parser.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/email/__pycache__/policy.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/email/policy.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/email/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/email/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/email/__pycache__/message.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/email/message.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/email/__pycache__/encoders.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/email/encoders.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/email/__pycache__/parser.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/email/parser.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/email/__pycache__/generator.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/email/generator.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/email/__pycache__/utils.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/email/utils.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/email/__pycache__/charset.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/email/charset.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/email/__pycache__/iterators.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/email/iterators.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/email/__pycache__/quoprimime.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/email/quoprimime.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/email/__pycache__/errors.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/email/errors.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/email/__pycache__/feedparser.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/email/feedparser.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/email/__pycache__/_parseaddr.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/email/_parseaddr.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/email/__pycache__/base64mime.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/email/base64mime.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/email/__pycache__/headerregistry.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/email/headerregistry.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/email/mime/__pycache__/multipart.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/email/mime/multipart.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/email/mime/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/email/mime/__init__.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/email/mime/__pycache__/message.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/email/mime/message.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/email/mime/__pycache__/application.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/email/mime/application.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/email/mime/__pycache__/nonmultipart.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/email/mime/nonmultipart.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/email/mime/__pycache__/text.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/email/mime/text.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/email/mime/__pycache__/audio.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/email/mime/audio.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/email/mime/__pycache__/image.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/email/mime/image.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/windows/Win32/Lib/email/mime/__pycache__/base.cpython-37.opt-1.pyc: \
-      build/windows/Win32/Lib/email/mime/base.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
 
 COB_TARGETS = \
   build/data/models/zigZagLevelBumper.cob \
@@ -19945,7 +19959,10 @@ clean-textures:
 
 # Script targets needed per-platform (may overlap)
 SCRIPT_TARGETS_CMAKE =
-SCRIPT_TARGETS_WIN = $(SCRIPT_TARGETS_PY_2_WIN) $(SCRIPT_TARGETS_PYC_2_WIN)
+SCRIPT_TARGETS_WIN_WIN32 = $(SCRIPT_TARGETS_PY_2_WIN_WIN32) \
+ $(SCRIPT_TARGETS_PYC_2_WIN_WIN32)
+SCRIPT_TARGETS_WIN_X64 = $(SCRIPT_TARGETS_PY_2_WIN_X64) \
+ $(SCRIPT_TARGETS_PYC_2_WIN_X64)
 SCRIPT_TARGETS_MAC = $(SCRIPT_TARGETS_PY_2_APPLE) $(SCRIPT_TARGETS_PYC_2_APPLE)
 SCRIPT_TARGETS_IOS = $(SCRIPT_TARGETS_PY_2_APPLE) $(SCRIPT_TARGETS_PYC_2_APPLE)
 SCRIPT_TARGETS_ANDROID = $(SCRIPT_TARGETS_PY_2_ANDROID) \
@@ -19957,8 +19974,8 @@ SCRIPT_TARGETS_COMMON = $(SCRIPT_TARGETS_PY_1) $(SCRIPT_TARGETS_PYC_1) \
 
 # Build scripts for a specific platform.
 scripts-cmake: $(SCRIPT_TARGETS_CMAKE) $(SCRIPT_TARGETS_COMMON)
-scripts-win: $(SCRIPT_TARGETS_WIN) $(SCRIPT_TARGETS_COMMON)
-	echo WTF $(SCRIPT_TARGETS_WIN)
+scripts-win-Win32: $(SCRIPT_TARGETS_WIN_WIN32) $(SCRIPT_TARGETS_COMMON)
+scripts-win-x64: $(SCRIPT_TARGETS_WIN_X64) $(SCRIPT_TARGETS_COMMON)
 scripts-mac: $(SCRIPT_TARGETS_MAC) $(SCRIPT_TARGETS_COMMON)
 scripts-ios: $(SCRIPT_TARGETS_IOS) $(SCRIPT_TARGETS_COMMON)
 scripts-android: $(SCRIPT_TARGETS_ANDROID) $(SCRIPT_TARGETS_COMMON)

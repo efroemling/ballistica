@@ -32,6 +32,7 @@
       <excludeFolder url="file://$MODULE_DIR$/src/generated" />
       <excludeFolder url="file://$MODULE_DIR$/src/tools" />
       <excludeFolder url="file://$MODULE_DIR$/submodules" />
+      <excludeFolder url="file://$MODULE_DIR$/.efrocache" />
       <excludePattern pattern=".assetcache" />
       <excludePattern pattern=".cache*" />
       <excludePattern pattern=".clang-format" />
@@ -57,6 +58,7 @@
       <excludePattern pattern="manifest.json" />
       <excludePattern pattern=".spinoffdata" />
       <excludePattern pattern=".asset_manifest_*.json" />
+      <excludePattern pattern=".efrocachemap" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.7" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
