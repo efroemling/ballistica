@@ -124,23 +124,25 @@ class Config:
             self.dst = sys.argv[2]
             self.tex_suffix = '.dds'
             self.win_extras_src = os.path.abspath(
-                os.path.dirname(sys.argv[0]) + '/../assets/src/windows/Win32')
+                os.path.dirname(sys.argv[0]) +
+                '/../assets/build/windows/Win32')
         elif '-win-x64' in sys.argv:
             self.dst = sys.argv[2]
             self.tex_suffix = '.dds'
             self.win_extras_src = os.path.abspath(
-                os.path.dirname(sys.argv[0]) + '/../assets/src/windows/x64')
+                os.path.dirname(sys.argv[0]) + '/../assets/build/windows/x64')
         elif '-win-server-Win32' in sys.argv:
             self.dst = sys.argv[2]
             self.win_extras_src = os.path.abspath(
-                os.path.dirname(sys.argv[0]) + '/../assets/src/windows/Win32')
+                os.path.dirname(sys.argv[0]) +
+                '/../assets/build/windows/Win32')
             self.include_textures = False
             self.include_audio = False
             self.include_models = False
         elif '-win-server-x64' in sys.argv:
             self.dst = sys.argv[2]
             self.win_extras_src = os.path.abspath(
-                os.path.dirname(sys.argv[0]) + '/../assets/src/windows/x64')
+                os.path.dirname(sys.argv[0]) + '/../assets/build/windows/x64')
             self.include_textures = False
             self.include_audio = False
             self.include_models = False
