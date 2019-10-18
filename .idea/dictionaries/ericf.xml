@@ -369,6 +369,7 @@
       <w>dlls</w>
       <w>dmodule</w>
       <w>dname</w>
+      <w>dnames</w>
       <w>dnode</w>
       <w>doclines</w>
       <w>docprefix</w>
@@ -394,6 +395,7 @@
       <w>drumroll</w>
       <w>dsqlite</w>
       <w>dstattr</w>
+      <w>dstbase</w>
       <w>dstdata</w>
       <w>dstfile</w>
       <w>dstfin</w>
@@ -835,6 +837,7 @@
       <w>lindexorig</w>
       <w>lineheight</w>
       <w>linenum</w>
+      <w>linflav</w>
       <w>linkto</w>
       <w>lintable</w>
       <w>lintcode</w>
@@ -1007,6 +1010,7 @@
       <w>newpath</w>
       <w>nextlevel</w>
       <w>nfoo</w>
+      <w>nilly</w>
       <w>ninjafight</w>
       <w>nitpicky</w>
       <w>nline</w>
@@ -1249,6 +1253,7 @@
       <w>pypaths</w>
       <w>pysources</w>
       <w>pythonpath</w>
+      <w>pythonw</w>
       <w>pytree</w>
       <w>pytz</w>
       <w>qrcode</w>
@@ -1499,6 +1504,7 @@
       <w>taobaomascot</w>
       <w>targ</w>
       <w>targetdir</w>
+      <w>targetpath</w>
       <w>targetpractice</w>
       <w>tbtcolor</w>
       <w>tbtn</w>

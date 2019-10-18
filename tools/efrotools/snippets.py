@@ -145,7 +145,7 @@ def _spelling(words: List[str]) -> None:
 
 
 def spelling_all() -> None:
-    """Add all misspellings from a pycharscripts run."""
+    """Add all misspellings from a pycharmscripts run."""
 
     print('Running "make pycharmscriptsfull"...')
     lines = [

@@ -58,9 +58,18 @@ assets:
 assets-cmake:
 	@cd assets && make -j${CPUS} cmake
 
-# Build only assets required for windows builds
+# Build only assets required for windows builds.
+# (honoring the WINDOWS_PLATFORM value)
 assets-windows:
-	@cd assets && make -j${CPUS} win
+	@cd assets && make -j${CPUS} win-${WINDOWS_PLATFORM}
+
+# Build only assets required for Win32 windows builds.
+assets-windows-Win32:
+	@cd assets && make -j${CPUS} win-Win32
+
+# Build only assets required for x64 windows builds.
+assets-windows-x64:
+	@cd assets && make -j${CPUS} win-x64
 
 # Build only assets required for mac xcode builds
 assets-mac:
@@ -107,6 +116,7 @@ cleanlist:
 
 # Tell make which of these targets don't represent files.
 .PHONY: list prereqs prereqs-clean assets assets-cmake assets-windows \
+  assets-windows-Win32 assets-windows-x64 \
   assets-mac assets-ios assets-android assets-clean \
   resources resources-clean code code-clean\
   clean cleanlist
@@ -181,7 +191,7 @@ prefab-windows-debug: prefab-windows-debug-build
 	@echo Build successful - now run:\
  build/prefab/windows/debug/BallisticaCore.exe
 
-prefab-windows-debug-build: assets-windows \
+prefab-windows-debug-build: assets-windows-${PREFAB_WINDOWS_PLATFORM} \
  build/prefab/windows/debug/BallisticaCore.exe
 	@${STAGE_ASSETS} -win-$(PREFAB_WINDOWS_PLATFORM) build/prefab/windows/debug
 
@@ -192,7 +202,7 @@ prefab-windows-release: prefab-windows-release-build
 	@echo Build successful - now run:\
  build/prefab/windows/release/BallisticaCore.exe
 
-prefab-windows-release-build: assets-windows \
+prefab-windows-release-build: assets-windows-${PREFAB_WINDOWS_PLATFORM} \
  build/prefab/windows/release/BallisticaCore.exe
 	@${STAGE_ASSETS} -win-$(PREFAB_WINDOWS_PLATFORM) build/prefab/windows/release
 
