@@ -138,7 +138,7 @@ prefab-release-build:
 
 # Specific platform prefab targets:
 
-prefab-mac-debug: prefab-mac-build
+prefab-mac-debug: prefab-mac-debug-build
 	@cd build/prefab/mac/debug && ./ballisticacore
 
 prefab-mac-debug-build: assets-cmake build/prefab/mac/debug/ballisticacore
@@ -178,7 +178,7 @@ build/prefab/linux/release/ballisticacore: .efrocachemap
 PREFAB_WINDOWS_PLATFORM = x64
 
 prefab-windows-debug: prefab-windows-debug-build
-	@echo Build succesful - now run:\
+	@echo Build successful - now run:\
  build/prefab/windows/debug/BallisticaCore.exe
 
 prefab-windows-debug-build: assets-windows \
@@ -189,7 +189,7 @@ build/prefab/windows/debug/BallisticaCore.exe: .efrocachemap
 	@tools/snippets efrocache_get $@
 
 prefab-windows-release: prefab-windows-release-build
-	@echo Build succesful - now run:\
+	@echo Build successful - now run:\
  build/prefab/windows/release/BallisticaCore.exe
 
 prefab-windows-release-build: assets-windows \
@@ -200,10 +200,11 @@ build/prefab/windows/release/BallisticaCore.exe: .efrocachemap
 	@tools/snippets efrocache_get $@
 
 # Tell make which of these targets don't represent files.
-.PHONY: prefab-mac prefab-mac-build prefab-mac-release \
- prefab-mac-release-build prefab-linux prefab-linux-build prefab-linux-release \
- prefab-linux-release-build prefab-windows-debug prefab-windows-debug-build \
- prefab-windows-release prefab-windows-release-build
+.PHONY: prefab-debug prefab-debug-build prefab-release prefab-release-build \
+ prefab-mac-debug prefab-mac-debug-build prefab-mac-release \
+ prefab-mac-release-build prefab-linux-debug prefab-linux-debug-build \
+ prefab-linux-release prefab-linux-release-build prefab-windows-debug \
+ prefab-windows-debug-build prefab-windows-release prefab-windows-release-build
 
 
 ################################################################################

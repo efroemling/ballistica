@@ -229,7 +229,9 @@ def _write_cache_file(staging_dir: str, fname: str) -> Tuple[str, str]:
 
     # Fancy pipe stuff which will give us deterministic
     # tar.gz files (no embedded timestamps)
-    run(f'tar cf - {fname} | gzip -n > {path}')
+    # Note: The 'COPYFILE_DISABLE' prevents mac tar from adding
+    # file attributes/resource-forks to the archive as as ._filename.
+    run(f'COPYFILE_DISABLE=1 tar cf - {fname} | gzip -n > {path}')
     return fname, hashpath
 
 
@@ -255,8 +257,10 @@ def _write_cache_files(fnames1: List[str], fnames2: List[str],
     # Clients initing their cache dirs can grab this as a starting point
     # which should greatly reduce the individual file downloads they have
     # to do (at least when first building).
+    # Note: The 'COPYFILE_DISABLE' prevents mac tar from adding
+    # file attributes/resource-forks to the archive as as ._filename.
     print('Writing starter-cache...')
-    run('cd build && tar -Jcf startercache.tar.xz efrocache'
+    run('cd build && COPYFILE_DISABLE=1 tar -Jcf startercache.tar.xz efrocache'
         ' && mv startercache.tar.xz efrocache')
 
     # Now finish up with the second set.
