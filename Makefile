@@ -59,7 +59,7 @@ assets-cmake:
 	@cd assets && make -j${CPUS} cmake
 
 # Build only assets required for windows builds
-assets-win:
+assets-windows:
 	@cd assets && make -j${CPUS} win
 
 # Build only assets required for mac xcode builds
@@ -106,7 +106,7 @@ cleanlist:
 	@git clean -dnx ${ROOT_CLEAN_IGNORES}
 
 # Tell make which of these targets don't represent files.
-.PHONY: list prereqs prereqs-clean assets assets-cmake assets-win \
+.PHONY: list prereqs prereqs-clean assets assets-cmake assets-windows \
   assets-mac assets-ios assets-android assets-clean \
   resources resources-clean code code-clean\
   clean cleanlist
@@ -175,10 +175,31 @@ prefab-linux-release-build: assets-cmake \
 build/prefab/linux/release/ballisticacore: .efrocachemap
 	@tools/snippets efrocache_get $@
 
+prefab-windows-debug: prefab-windows-debug-build
+	@echo Build succesful - now run build/prefab/windows/debug/BallisticaCore.exe
+
+prefab-windows-debug-build: assets-windows \
+ build/prefab/windows/debug/BallisticaCore.exe
+	@${STAGE_ASSETS} -win-$(PREFAB_WINDOWS_PLATFORM) build/prefab/windows/debug
+
+build/prefab/windows/debug/BallisticaCore.exe: .efrocachemap
+	@tools/snippets efrocache_get $@
+
+prefab-windows-release: prefab-windows-release-build
+	@echo Build succesful - now run build/prefab/windows/release/BallisticaCore.exe
+
+prefab-windows-release-build: assets-windows \
+ build/prefab/windows/release/BallisticaCore.exe
+	@${STAGE_ASSETS} -win-$(PREFAB_WINDOWS_PLATFORM) build/prefab/windows/release
+
+build/prefab/windows/release/BallisticaCore.exe: .efrocachemap
+	@tools/snippets efrocache_get $@
+
 # Tell make which of these targets don't represent files.
 .PHONY: prefab-mac prefab-mac-build prefab-mac-release \
  prefab-mac-release-build prefab-linux prefab-linux-build prefab-linux-release \
- prefab-linux-release-build\
+ prefab-linux-release-build prefab-windows-debug prefab-windows-debug-build \
+ prefab-windows-release prefab-windows-release-build
 
 
 ################################################################################

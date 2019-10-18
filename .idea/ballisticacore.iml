@@ -16,6 +16,7 @@
       <excludeFolder url="file://$MODULE_DIR$/assets/src/pylib-android" />
       <excludeFolder url="file://$MODULE_DIR$/assets/src/pylib-apple" />
       <excludeFolder url="file://$MODULE_DIR$/assets/src/pylib-site-packages" />
+      <excludeFolder url="file://$MODULE_DIR$/assets/src/windows" />
       <excludeFolder url="file://$MODULE_DIR$/ballisticacore-android" />
       <excludeFolder url="file://$MODULE_DIR$/ballisticacore-cmake" />
       <excludeFolder url="file://$MODULE_DIR$/ballisticacore-ios.xcodeproj" />
