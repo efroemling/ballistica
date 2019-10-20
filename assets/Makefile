@@ -614,7 +614,7 @@ SCRIPT_TARGETS_PYC_1 = \
 # Rule to copy src asset scripts to dst.
 # (and make non-writable so I'm less likely to accidentally edit them there)
 $(SCRIPT_TARGETS_PY_1) : build/%.py : src/%.py
-	@echo Copying script: $(notdir $@)
+	@echo Copying script: $@
 	@mkdir -p $(dir $@)
 	@rm -f $@
 	@cp $^ $@
