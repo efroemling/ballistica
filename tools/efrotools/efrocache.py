@@ -18,7 +18,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # -----------------------------------------------------------------------------
-"""A simple cloud caching system for making built binaries/assets available."""
+"""A simple cloud caching system for making built binaries/assets available.
+
+The basic idea here is the ballistica-internal project can flag file targets
+in its Makefiles as 'cached', and the public version of those Makefiles will
+be filtered to contain cache downloads in place of the original build commands.
+Cached files are gathered and uploaded as part of the pubsync process.
+"""
 
 from __future__ import annotations
 
@@ -201,6 +207,7 @@ def update_cache(makefile_dirs: List[str]) -> None:
 
     print(f"Starter cache includes {len(fnames1)} items;"
           f" excludes {len(fnames2)}")
+
     # Push what we just wrote to the staging server
     print('Pushing cache to staging...', flush=True)
     run('rsync --recursive build/efrocache/'

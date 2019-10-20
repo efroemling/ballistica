@@ -43,43 +43,43 @@ PROJ_DIR = ..
 # Build everything needed for all platforms.
 all:
 	@${TOOLS_DIR}/snippets warm_start_asset_build
-	@make assets
+	@$(MAKE) assets
 	@${TOOLS_DIR}/snippets clean_orphaned_assets
 
 # Build everything needed for our cmake builds (linux, mac).
 cmake:
 	@${TOOLS_DIR}/snippets warm_start_asset_build
-	@make assets-cmake
+	@$(MAKE) assets-cmake
 	@${TOOLS_DIR}/snippets clean_orphaned_assets
 
 # Build everything needed for x86 windows builds.
 win-Win32:
 	@${TOOLS_DIR}/snippets warm_start_asset_build
-	@make assets-win-Win32
+	@$(MAKE) assets-win-Win32
 	@${TOOLS_DIR}/snippets clean_orphaned_assets
 
 # Build everything needed for x86-64 windows builds.
 win-x64:
 	@${TOOLS_DIR}/snippets warm_start_asset_build
-	@make assets-win-x64
+	@$(MAKE) assets-win-x64
 	@${TOOLS_DIR}/snippets clean_orphaned_assets
 
 # Build everything needed for our mac xcode builds.
 mac:
 	@${TOOLS_DIR}/snippets warm_start_asset_build
-	@make assets-mac
+	@$(MAKE) assets-mac
 	@${TOOLS_DIR}/snippets clean_orphaned_assets
 
 # Build everything needed for our ios/tvos builds.
 ios:
 	@${TOOLS_DIR}/snippets warm_start_asset_build
-	@make assets-ios
+	@$(MAKE) assets-ios
 	@${TOOLS_DIR}/snippets clean_orphaned_assets
 
 # Build everything needed for android.
 android:
 	@${TOOLS_DIR}/snippets warm_start_asset_build
-	@make assets-android
+	@$(MAKE) assets-android
 	@${TOOLS_DIR}/snippets clean_orphaned_assets
 
 MAKE_AUDIO = 1

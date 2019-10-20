@@ -56,52 +56,52 @@ assets:
 
 # Build only assets required for cmake builds (linux, mac)
 assets-cmake:
-	@cd assets && make -j${CPUS} cmake
+	@cd assets && $(MAKE) -j${CPUS} cmake
 
 # Build only assets required for windows builds.
 # (honoring the WINDOWS_PLATFORM value)
 assets-windows:
-	@cd assets && make -j${CPUS} win-${WINDOWS_PLATFORM}
+	@cd assets && $(MAKE) -j${CPUS} win-${WINDOWS_PLATFORM}
 
 # Build only assets required for Win32 windows builds.
 assets-windows-Win32:
-	@cd assets && make -j${CPUS} win-Win32
+	@cd assets && $(MAKE) -j${CPUS} win-Win32
 
 # Build only assets required for x64 windows builds.
 assets-windows-x64:
-	@cd assets && make -j${CPUS} win-x64
+	@cd assets && $(MAKE) -j${CPUS} win-x64
 
 # Build only assets required for mac xcode builds
 assets-mac:
-	@cd assets && make -j${CPUS} mac
+	@cd assets && $(MAKE) -j${CPUS} mac
 
 # Build only assets required for ios.
 assets-ios:
-	@cd assets && make -j${CPUS} ios
+	@cd assets && $(MAKE) -j${CPUS} ios
 
 # Build only assets required for android.
 assets-android:
-	@cd assets && make -j${CPUS} android
+	@cd assets && $(MAKE) -j${CPUS} android
 
 # Clean all assets.
 assets-clean:
-	@cd assets && make clean
+	@cd assets && $(MAKE) clean
 
 # Build resources.
 resources: resources/Makefile
-	@cd resources && make -j${CPUS} resources
+	@cd resources && $(MAKE) -j${CPUS} resources
 
 # Clean resources.
 resources-clean:
-	@cd resources && make clean
+	@cd resources && $(MAKE) clean
 
 # Build our generated code.
 code:
-	@cd src/generated_src && make -j${CPUS} generated_code
+	@cd src/generated_src && $(MAKE) -j${CPUS} generated_code
 
 # Clean generated code.
 code-clean:
-	@cd src/generated_src && make clean
+	@cd src/generated_src && $(MAKE) clean
 
 # Remove *ALL* files and directories that aren't managed by git
 # (except for a few things such as localconfig.json).
@@ -231,12 +231,12 @@ build/prefab/windows/release/BallisticaCore.exe: .efrocachemap
 
 # Run formatting on all files in the project considered 'dirty'.
 format:
-	@make -j3 formatcode formatscripts formatmakefile
+	@$(MAKE) -j3 formatcode formatscripts formatmakefile
 	@echo Formatting complete!
 
 # Same but always formats; ignores dirty state.
 formatfull:
-	@make -j3 formatcodefull formatscriptsfull formatmakefile
+	@$(MAKE) -j3 formatcodefull formatscriptsfull formatmakefile
 	@echo Formatting complete!
 
 # Run formatting for compiled code sources (.cc, .h, etc.).
@@ -262,24 +262,24 @@ formatmakefile: prereqs
 # These are useful, but can take significantly longer and/or be a bit flaky.
 
 check: updatecheck
-	@make -j3 cpplintcode pylintscripts mypyscripts
+	@$(MAKE) -j3 cpplintcode pylintscripts mypyscripts
 	@echo ALL CHECKS PASSED!
 check2: updatecheck
-	@make -j4 cpplintcode pylintscripts mypyscripts pycharmscripts
+	@$(MAKE) -j4 cpplintcode pylintscripts mypyscripts pycharmscripts
 	@echo ALL CHECKS PASSED!
 
 checkfast: updatecheck
-	@make -j3 cpplintcode pylintscriptsfast mypyscripts
+	@$(MAKE) -j3 cpplintcode pylintscriptsfast mypyscripts
 	@echo ALL CHECKS PASSED!
 checkfast2: updatecheck
-	@make -j4 cpplintcode pylintscriptsfast mypyscripts pycharmscripts
+	@$(MAKE) -j4 cpplintcode pylintscriptsfast mypyscripts pycharmscripts
 	@echo ALL CHECKS PASSED!
 
 checkfull: updatecheck
-	@make -j3 cpplintcodefull pylintscriptsfull mypyscriptsfull
+	@$(MAKE) -j3 cpplintcodefull pylintscriptsfull mypyscriptsfull
 	@echo ALL CHECKS PASSED!
 checkfull2: updatecheck
-	@make -j4 cpplintcodefull pylintscriptsfull mypyscriptsfull pycharmscriptsfull
+	@$(MAKE) -j4 cpplintcodefull pylintscriptsfull mypyscriptsfull pycharmscriptsfull
 	@echo ALL CHECKS PASSED!
 
 cpplintcode: prereqs
@@ -336,54 +336,54 @@ updatecheck: prereqs
 # Run an update and check together; handy while iterating.
 # (slightly more efficient than running update/check separately).
 updatethencheck: update
-	@make -j3 cpplintcode pylintscripts mypyscripts
+	@$(MAKE) -j3 cpplintcode pylintscripts mypyscripts
 	@echo ALL CHECKS PASSED!
 updatethencheck2: update
-	@make -j4 cpplintcode pylintscripts mypyscripts pycharmscripts
+	@$(MAKE) -j4 cpplintcode pylintscripts mypyscripts pycharmscripts
 	@echo ALL CHECKS PASSED!
 
 updatethencheckfast: update
-	@make -j3 cpplintcode pylintscriptsfast mypyscripts
+	@$(MAKE) -j3 cpplintcode pylintscriptsfast mypyscripts
 	@echo ALL CHECKS PASSED!
 updatethencheckfast2: update
-	@make -j4 cpplintcode pylintscriptsfast mypyscripts pycharmscripts
+	@$(MAKE) -j4 cpplintcode pylintscriptsfast mypyscripts pycharmscripts
 	@echo ALL CHECKS PASSED!
 
 updatethencheckfull: update
-	@make -j3 cpplintcodefull pylintscriptsfull mypyscriptsfull
+	@$(MAKE) -j3 cpplintcodefull pylintscriptsfull mypyscriptsfull
 	@echo ALL CHECKS PASSED!
 updatethencheckfull2: update
-	@make -j4 cpplintcodefull pylintscriptsfull mypyscriptsfull pycharmscriptsfull
+	@$(MAKE) -j4 cpplintcodefull pylintscriptsfull mypyscriptsfull pycharmscriptsfull
 	@echo ALL CHECKS PASSED!
 
 # Run a format, an update, and then a check.
 # Handy before pushing commits.
 
 preflight:
-	@make format
-	@make updatethencheck
+	@$(MAKE) format
+	@$(MAKE) updatethencheck
 	@echo PREFLIGHT SUCCESSFUL!
 preflight2:
-	@make format
-	@make updatethencheck2
+	@$(MAKE) format
+	@$(MAKE) updatethencheck2
 	@echo PREFLIGHT SUCCESSFUL!
 
 preflightfast:
-	@make format
-	@make updatethencheckfast
+	@$(MAKE) format
+	@$(MAKE) updatethencheckfast
 	@echo PREFLIGHT SUCCESSFUL!
 preflightfast2:
-	@make format
-	@make updatethencheckfast2
+	@$(MAKE) format
+	@$(MAKE) updatethencheckfast2
 	@echo PREFLIGHT SUCCESSFUL!
 
 preflightfull:
-	@make formatfull
-	@make updatethencheckfull
+	@$(MAKE) formatfull
+	@$(MAKE) updatethencheckfull
 	@echo PREFLIGHT SUCCESSFUL!
 preflightfull2:
-	@make formatfull
-	@make updatethencheckfull2
+	@$(MAKE) formatfull
+	@$(MAKE) updatethencheckfull2
 	@echo PREFLIGHT SUCCESSFUL!
 
 # Tell make which of these targets don't represent files.
