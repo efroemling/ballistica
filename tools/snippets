@@ -661,8 +661,9 @@ def make_prefab() -> None:
             if machine == 'x86_64':
                 base = 'linux'
             else:
-                raise RuntimeError(f'make_prefab: unsupported linux machine type:'
-                                   f' {machine}.')
+                raise RuntimeError(
+                    f'make_prefab: unsupported linux machine type:'
+                    f' {machine}.')
     else:
         raise RuntimeError(f'make_prefab: unrecognized platform:'
                            f' {platform.system()}.')
