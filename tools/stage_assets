@@ -250,7 +250,8 @@ def _sync_windows_extras(cfg: Config) -> str:
         _run(cmd)
 
         # Now sync the top level individual files.
-        cmd = ("rsync --update " + cfg.win_extras_src + "/{*.dll,*.exe}"
+        cmd = ("rsync --update " + cfg.win_extras_src + "/*.dll " +
+               cfg.win_extras_src + "/*.exe"
                " \"" + cfg.dst + "/\"")
         _run(cmd)
 
