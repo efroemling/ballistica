@@ -188,8 +188,7 @@ build/prefab/linux/release/ballisticacore: .efrocachemap
 PREFAB_WINDOWS_PLATFORM = x64
 
 prefab-windows-debug: prefab-windows-debug-build
-	@echo Build successful - now run:\
- build/prefab/windows/debug/BallisticaCore.exe
+	build/prefab/windows/debug/BallisticaCore.exe
 
 prefab-windows-debug-build: assets-windows-${PREFAB_WINDOWS_PLATFORM} \
  build/prefab/windows/debug/BallisticaCore.exe
@@ -199,8 +198,7 @@ build/prefab/windows/debug/BallisticaCore.exe: .efrocachemap
 	@tools/snippets efrocache_get $@
 
 prefab-windows-release: prefab-windows-release-build
-	@echo Build successful - now run:\
- build/prefab/windows/release/BallisticaCore.exe
+	build/prefab/windows/release/BallisticaCore.exe
 
 prefab-windows-release-build: assets-windows-${PREFAB_WINDOWS_PLATFORM} \
  build/prefab/windows/release/BallisticaCore.exe
