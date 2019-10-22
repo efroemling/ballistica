@@ -8,7 +8,11 @@
 
 The Ballistica project is the foundation for the next generation of [BombSquad](http://bombsquadgame.com). It will be debuting with the upcoming 1.5 release of the game and lays the foundation for some of the big changes coming in 2.0.
 
+[Head to the project wiki to get started](https://github.com/efroemling/ballistica/wiki), or learn more about the project below.
+
 ### Project Goals
+* Cleanup
+  * BombSquad's codebase, and especially its scripting layer, have grown a lot over its lifetime, but not always in a 'designed' way. It was overdue for a major refactoring, which should keep it more maintainable for years to come. Examples of this include breaking up the giant 15 thousand line bsUI.py file into a much cleaner individual subpackages and updating all code from Python 2.7 to 3.7.
 * Provide modders and tinkerers with the best possible development environment
   * I've spent a lot of time incorporating auto-formatters, type-checkers, linters, and smart IDEs into my development workflow and have found them to be an enormous help. By sharing my setup here I hope to make them easily accessible to everyone.
 * Improve transparency
@@ -20,7 +24,7 @@ The Ballistica project is the foundation for the next generation of [BombSquad](
 
 ### Frequently Asked Questions
 * **Q: What's with the new name? Is BombSquad getting renamed?**
-* A: No, BombSquad is not getting renamed. 'Ballistica' is simply the name for the engine tech now. This way it can be used for other game/app projects without causing confusion. As a modder, the biggest change is that you will see a lot of 'ba' prefixes in the APIs as opposed to 'bs'.
+* A: No, BombSquad is still BombSquad. 'Ballistica' is simply the new name for the engine/app-framework. This way it can be used for other game/app projects without causing confusion. As a modder, the biggest change is that you will see a lot of 'ba' prefixes in the APIs as opposed to 'bs'. You may also see the word 'BallisticaCore' show up various places, which in actual releases will be replaced by 'BombSquad'.
 
 * **Q: Does this mean BombSquad is open source?**
 * A: Yes and no. All code contained in this repo is MIT licensed and free for use anywhere. This includes game scripts, pipeline tools, etc. In the future I hope to expand this to include at least some binary sources. Anything not included here, however, even if automatically downloaded by build scripts, is still copyrighted and cannot be redistributed without explicit consent. This includes assets and game binaries. So in general: create and share mods to your heart's content, but please don't distribute your own complete copy of the game.  Please email support@froemling.net if you have any questions.
