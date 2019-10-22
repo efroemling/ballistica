@@ -674,9 +674,9 @@ def make_prefab() -> None:
     arg = sys.argv[2]
 
     if arg == 'debug':
-        target = f'prefab-{base}'
+        target = f'prefab-{base}-debug'
     elif arg == 'debug-build':
-        target = f'prefab-{base}-build'
+        target = f'prefab-{base}-debug-build'
     elif arg == 'release':
         target = f'prefab-{base}-release'
     elif arg == 'release-build':
