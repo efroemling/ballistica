@@ -6,7 +6,7 @@
 
 ![](https://github.com/efroemling/ballistica/workflows/CI/badge.svg)
 
-The Ballistica project is the foundation for the next generation of [BombSquad](https://www.bombsquadgame.com). It will be debuting with the upcoming 1.5 release of the game and lays the foundation for some of the big changes coming in 2.0.
+The Ballistica project is the foundation for the next generation of [BombSquad](http://bombsquadgame.com). It will be debuting with the upcoming 1.5 release of the game and lays the foundation for some of the big changes coming in 2.0.
 
 ### Project Goals
 * Provide modders and tinkerers with the same tools and development environment that I am using
