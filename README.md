@@ -14,6 +14,7 @@ The Ballistica project is the foundation for the next generation of [BombSquad](
 * Improve transparency
   * I get a lot of "what's in the next update?" or "how is 2.0 coming?" questions. By working here in the open I hope to make many of these questions unnecessary.
 * Increase community involvement
+  * Provide a single place for tracking issues related to the engine/game
   * Allow people to submit their own bug fixes or improvements, making myself less of a bottleneck
   * Migrate modding documentation to this repo's wiki, allowing other modders to add their own bits of wisdom
 
@@ -23,3 +24,6 @@ The Ballistica project is the foundation for the next generation of [BombSquad](
 
 * **Q: Does this mean BombSquad is open source?**
 * A: Yes and no. All code contained in this repo is MIT licensed and free for use anywhere. This includes game scripts, pipeline tools, etc. In the future I hope to expand this to include at least some binary sources. Anything not included here, however, even if automatically downloaded by build scripts, is still copyrighted and cannot be redistributed without explicit consent. This includes assets and game binaries. So in general: create and share mods to your heart's content, but please don't distribute your own complete copy of the game.  Please email support@froemling.net if you have any questions.
+
+* **Q: Will my existing BombSquad 1.4.x mods still work?**
+* A: No. All mods will need to be explicitly updated to work with the new ballistica apis in 1.5+. This may or may not be a significant amount of work depending on the mod. I would highly suggest tinkering around with some of the new features in 1.5 such as type-safe Python and dynamic assets before attempting to port any old mods. You may also want to consider simply sticking with 1.4 versions for a while longer since they will still be fully supported, especially for server duties. The new 1.5 apis may still be in significant flux for at least a while until the dust settles.
