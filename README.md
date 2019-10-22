@@ -1,5 +1,7 @@
 # Ballistica
 
-The app framework powering BombSquad.
+*bal·lis·tic*: physics of an object in motion
+
+*-ica*: collection of things relating to a specific place person, theme, etc.
 
 ![](https://github.com/efroemling/ballistica/workflows/CI/badge.svg)
