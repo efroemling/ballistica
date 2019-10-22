@@ -9,9 +9,13 @@
 The Ballistica project is the foundation for the next generation of [BombSquad](http://bombsquadgame.com). It will be debuting with the upcoming 1.5 release of the game and lays the foundation for some of the big changes coming in 2.0.
 
 ### Project Goals
-* Provide modders and tinkerers with the same tools and development environment that I am using
-  * I've spent 
-* Improve transparency so people can more easily see what parts of the game I am working on at any given time
+* Provide modders and tinkerers with the best possible development environment
+  * I've spent a lot of time incorporating auto-formatters, type-checkers, linters, and smart IDEs into my development workflow and have found them to be an enormous help. By sharing my setup here I hope to make them easily accessible to everyone.
+* Improve transparency
+  * I get a lot of "what's in the next update?" or "how is 2.0 coming?" questions. By working here in the open I hope to make many of these questions unnecessary.
+* Increase community involvement
+  * Allow people to submit their own bug fixes or improvements, making myself less of a bottleneck
+  * Migrate modding documentation to this repo's wiki, allowing other modders to add their own bits of wisdom
 
 ### Frequently Asked Questions
 * **Q: What's with the new name? Is BombSquad getting renamed?**
