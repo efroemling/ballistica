@@ -223,6 +223,7 @@
       <w>charstr</w>
       <w>checkarg</w>
       <w>checkboxwidget</w>
+      <w>checkenv</w>
       <w>checkfast</w>
       <w>checkfull</w>
       <w>checkins</w>

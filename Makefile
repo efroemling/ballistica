@@ -43,7 +43,7 @@ help: list
 # things like tool config files, etc.
 PREREQS = .dir-locals.el .mypy.ini .pycheckers \
   .pylintrc .style.yapf .clang-format \
-  .projectile .editorconfig
+  .projectile .editorconfig .cache/checkenv
 
 prereqs: ${PREREQS}
 
@@ -51,36 +51,36 @@ prereqs-clean:
 	@rm -rf ${PREREQS} .irony
 
 # Build all assets for all platforms.
-assets:
+assets: prereqs
 	@cd assets && make -j${CPUS}
 
 # Build only assets required for cmake builds (linux, mac)
-assets-cmake:
+assets-cmake: prereqs
 	@cd assets && $(MAKE) -j${CPUS} cmake
 
 # Build only assets required for windows builds.
 # (honoring the WINDOWS_PLATFORM value)
-assets-windows:
+assets-windows: prereqs
 	@cd assets && $(MAKE) -j${CPUS} win-${WINDOWS_PLATFORM}
 
 # Build only assets required for Win32 windows builds.
-assets-windows-Win32:
+assets-windows-Win32: prereqs
 	@cd assets && $(MAKE) -j${CPUS} win-Win32
 
 # Build only assets required for x64 windows builds.
-assets-windows-x64:
+assets-windows-x64: prereqs
 	@cd assets && $(MAKE) -j${CPUS} win-x64
 
 # Build only assets required for mac xcode builds
-assets-mac:
+assets-mac: prereqs
 	@cd assets && $(MAKE) -j${CPUS} mac
 
 # Build only assets required for ios.
-assets-ios:
+assets-ios: prereqs
 	@cd assets && $(MAKE) -j${CPUS} ios
 
 # Build only assets required for android.
-assets-android:
+assets-android: prereqs
 	@cd assets && $(MAKE) -j${CPUS} android
 
 # Clean all assets.
@@ -88,7 +88,7 @@ assets-clean:
 	@cd assets && $(MAKE) clean
 
 # Build resources.
-resources: resources/Makefile
+resources: prereqs resources/Makefile
 	@cd resources && $(MAKE) -j${CPUS} resources
 
 # Clean resources.
@@ -96,7 +96,7 @@ resources-clean:
 	@cd resources && $(MAKE) clean
 
 # Build our generated code.
-code:
+code: prereqs
 	@cd src/generated_src && $(MAKE) -j${CPUS} generated_code
 
 # Clean generated code.
@@ -151,7 +151,8 @@ prefab-release-build:
 prefab-mac-debug: prefab-mac-debug-build
 	@cd build/prefab/mac/debug && ./ballisticacore
 
-prefab-mac-debug-build: assets-cmake build/prefab/mac/debug/ballisticacore
+prefab-mac-debug-build: prereqs assets-cmake \
+ build/prefab/mac/debug/ballisticacore
 	@${STAGE_ASSETS} -cmake build/prefab/mac/debug
 
 build/prefab/mac/debug/ballisticacore: .efrocachemap
@@ -160,16 +161,18 @@ build/prefab/mac/debug/ballisticacore: .efrocachemap
 prefab-mac-release: prefab-mac-release-build
 	@cd build/prefab/mac/release && ./ballisticacore
 
-prefab-mac-release-build: assets-cmake build/prefab/mac/release/ballisticacore
+prefab-mac-release-build: prereqs assets-cmake \
+ build/prefab/mac/release/ballisticacore
 	@${STAGE_ASSETS} -cmake build/prefab/mac/release
 
 build/prefab/mac/release/ballisticacore: .efrocachemap
 	@tools/snippets efrocache_get $@
 
-prefab-linux-debug: prefab-linux-build
+prefab-linux-debug: prefab-linux-debug-build
 	@cd build/prefab/linux/debug && ./ballisticacore
 
-prefab-linux-debug-build: assets-cmake build/prefab/linux/debug/ballisticacore
+prefab-linux-debug-build: prereqs assets-cmake \
+ build/prefab/linux/debug/ballisticacore
 	@${STAGE_ASSETS} -cmake build/prefab/linux/debug
 
 build/prefab/linux/debug/ballisticacore: .efrocachemap
@@ -178,7 +181,7 @@ build/prefab/linux/debug/ballisticacore: .efrocachemap
 prefab-linux-release: prefab-linux-release-build
 	@cd build/prefab/linux/release && ./ballisticacore
 
-prefab-linux-release-build: assets-cmake \
+prefab-linux-release-build: prereqs assets-cmake \
  build/prefab/linux/release/ballisticacore
 	@${STAGE_ASSETS} -cmake build/prefab/linux/release
 
@@ -190,7 +193,7 @@ PREFAB_WINDOWS_PLATFORM = x64
 prefab-windows-debug: prefab-windows-debug-build
 	build/prefab/windows/debug/BallisticaCore.exe
 
-prefab-windows-debug-build: assets-windows-${PREFAB_WINDOWS_PLATFORM} \
+prefab-windows-debug-build: prereqs assets-windows-${PREFAB_WINDOWS_PLATFORM} \
  build/prefab/windows/debug/BallisticaCore.exe
 	@${STAGE_ASSETS} -win-$(PREFAB_WINDOWS_PLATFORM) build/prefab/windows/debug
 
@@ -200,7 +203,8 @@ build/prefab/windows/debug/BallisticaCore.exe: .efrocachemap
 prefab-windows-release: prefab-windows-release-build
 	build/prefab/windows/release/BallisticaCore.exe
 
-prefab-windows-release-build: assets-windows-${PREFAB_WINDOWS_PLATFORM} \
+prefab-windows-release-build: prereqs \
+ assets-windows-${PREFAB_WINDOWS_PLATFORM} \
  build/prefab/windows/release/BallisticaCore.exe
 	@${STAGE_ASSETS} -win-$(PREFAB_WINDOWS_PLATFORM) build/prefab/windows/release
 
@@ -443,6 +447,11 @@ TOOL_CFG_SRC = tools/efrotools/snippets.py config/config.json
 
 .pycheckers: config/toolconfigsrc/pycheckers ${TOOL_CFG_SRC}
 	${TOOL_CFG_INST} $< $@
+
+.cache/checkenv:
+	@tools/snippets checkenv
+	@mkdir -p .cache
+	@touch .cache/checkenv
 
 # Tell make which of these targets don't represent files.
 .PHONY:

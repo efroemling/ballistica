@@ -36,10 +36,16 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Dict, Any, List
 
+
+class CleanError(Exception):
+    """Exception resulting in a clean error string print and exit."""
+
+
 # Absolute path of the project root.
 PROJROOT = Path(__file__).resolve().parents[2]
 
 CLRHDR = '\033[95m'
+CLRRED = '\033[91m'
 CLRBLU = '\033[94m'
 CLREND = '\033[0m'
 
@@ -72,7 +78,11 @@ def snippets_main(globs: Dict[str, Any]) -> None:
                     getattr(funcs[sys.argv[2]], '__doc__', '<no docs>'))
                 print('\nsnippets ' + sys.argv[2] + ':\n' + docs + '\n')
         elif sys.argv[1] in funcs:
-            funcs[sys.argv[1]]()
+            try:
+                funcs[sys.argv[1]]()
+            except CleanError as exc:
+                print(CLRRED + str(exc) + CLREND)
+                sys.exit(-1)
         else:
             print('Unknown snippets command: "' + sys.argv[1] + '"',
                   file=sys.stderr)
