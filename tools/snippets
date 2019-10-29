@@ -49,7 +49,7 @@ from efrotools.snippets import (  # pylint: disable=unused-import
     compile_python_files)
 
 if TYPE_CHECKING:
-    from typing import Optional, List
+    from typing import Optional, List, Sequence
 
 # Parts of full-tests suite we only run on particular days.
 # (This runs in listed order so should be randomized by hand to avoid
@@ -640,11 +640,63 @@ def warm_start_asset_build() -> None:
             check=True)
 
 
+def _vstr(nums: Sequence[int]) -> str:
+    return '.'.join(str(i) for i in nums)
+
+
 def checkenv() -> None:
     """Check for tools necessary to build and run the app."""
-    if subprocess.run(['which', 'python3.7'], check=False,
+    print('Checking environment...', flush=True)
+
+    python_bin = 'python3.7'
+    pylint_min_ver = [2, 4, 3]
+    mypy_min_ver = [0, 740]
+
+    # Make sure they've got our target python version.
+    if subprocess.run(['which', python_bin], check=False,
                       capture_output=True).returncode != 0:
-        raise CleanError('python3.7 is required for these builds.')
+        raise CleanError(f'{python_bin} is required.')
+
+    # Make sure they've got pip for that python version.
+    if subprocess.run(f"{python_bin} -m pip --version",
+                      shell=True,
+                      check=False,
+                      capture_output=True).returncode != 0:
+        raise CleanError('pip (for {python_bin}) is required.')
+
+    # Check for some required python modules.
+    for modname, minver in [
+        ('pylint', pylint_min_ver),
+        ('mypy', mypy_min_ver),
+        ('typing_extensions', None),
+        ('pytz', None),
+    ]:
+
+        if minver is not None:
+            results = subprocess.run(f'{python_bin} -m {modname} --version',
+                                     shell=True,
+                                     check=False,
+                                     capture_output=True)
+        else:
+            results = subprocess.run(f'{python_bin} -c "import {modname}"',
+                                     shell=True,
+                                     check=False,
+                                     capture_output=True)
+        if results.returncode != 0:
+            raise CleanError(
+                f'{modname} (for {python_bin}) is required.\n'
+                f'To install it, try: "{python_bin} -m pip install {modname}"')
+        if minver is not None:
+            ver_line = results.stdout.decode().splitlines()[0]
+            assert modname in ver_line
+            vnums = [int(x) for x in ver_line.split()[-1].split('.')]
+            assert len(vnums) == len(minver)
+            if vnums < minver:
+                raise CleanError(
+                    f'{modname} ver. {_vstr(minver)} or newer required;'
+                    f' found {_vstr(vnums)}')
+
+    print('Environment ok.', flush=True)
 
 
 def make_prefab() -> None:

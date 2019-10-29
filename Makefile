@@ -36,7 +36,7 @@ DOCPREFIX = "ballisticacore_"
 ################################################################################
 
 # List targets in this Makefile and basic descriptions for them.
-help: list
+help:
 	@tools/snippets makefile_target_list Makefile
 
 # Prerequisites that should be in place before running most any other build;
@@ -448,7 +448,7 @@ TOOL_CFG_SRC = tools/efrotools/snippets.py config/config.json
 .pycheckers: config/toolconfigsrc/pycheckers ${TOOL_CFG_SRC}
 	${TOOL_CFG_INST} $< $@
 
-.cache/checkenv:
+.cache/checkenv: tools/snippets
 	@tools/snippets checkenv
 	@mkdir -p .cache
 	@touch .cache/checkenv

@@ -210,7 +210,7 @@ def update_cache(makefile_dirs: List[str]) -> None:
 
     # Push what we just wrote to the staging server
     print('Pushing cache to staging...', flush=True)
-    run('rsync --recursive build/efrocache/'
+    run('rsync --progress --recursive build/efrocache/'
         ' ubuntu@ballistica.net:files.ballistica.net/cache/ba1/')
 
     print(f'Cache update successful!')

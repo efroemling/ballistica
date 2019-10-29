@@ -54,6 +54,7 @@
       <w>anroid</w>
       <w>antigravity</w>
       <w>apichanges</w>
+      <w>apis</w>
       <w>apks</w>
       <w>appcfg</w>
       <w>appconfig</w>
@@ -934,6 +935,7 @@
       <w>minigames</w>
       <w>minusbutton</w>
       <w>minval</w>
+      <w>minver</w>
       <w>mios</w>
       <w>mipmap</w>
       <w>mipmaps</w>
@@ -1689,6 +1691,7 @@
       <w>vmshell</w>
       <w>vmware</w>
       <w>vmwarevm</w>
+      <w>vnums</w>
       <w>vobj</w>
       <w>voffs</w>
       <w>vorbis</w>
@@ -1696,6 +1699,7 @@
       <w>vrmode</w>
       <w>vrtesting</w>
       <w>vscode</w>
+      <w>vstr</w>
       <w>vsync</w>
       <w>vsyncs</w>
       <w>vval</w>
