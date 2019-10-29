@@ -649,8 +649,6 @@ def checkenv() -> None:
     print('Checking environment...', flush=True)
 
     python_bin = 'python3.7'
-    pylint_min_ver = [2, 4, 3]
-    mypy_min_ver = [0, 740]
 
     # Make sure they've got our target python version.
     if subprocess.run(['which', python_bin], check=False,
@@ -666,8 +664,9 @@ def checkenv() -> None:
 
     # Check for some required python modules.
     for modname, minver in [
-        ('pylint', pylint_min_ver),
-        ('mypy', mypy_min_ver),
+        ('pylint', [2, 4, 3]),
+        ('mypy', [0, 740]),
+        ('yapf', [0, 28, 0]),
         ('typing_extensions', None),
         ('pytz', None),
     ]:
