@@ -23,7 +23,7 @@ The Ballistica project is the foundation for the next generation of [BombSquad](
   * Migrate modding documentation to this repo's wiki, allowing other modders to add their own bits of wisdom
 
 ### Frequently Asked Questions
-* **Q: What's with the new name? Is BombSquad getting renamed?**
+* **Q: What's with this new name? Is BombSquad getting renamed?**
 * A: No, BombSquad is still BombSquad. 'Ballistica' is simply the new name for the engine/app-framework. This way it can be used for other game/app projects without causing confusion (though that is mostly theoretical at this point). As a modder, the biggest change you will notice is a lot of 'ba' prefixes in the APIs as opposed to 'bs'. You may also see the word 'BallisticaCore' show up various places, which in actual releases gets replaced by 'BombSquad'.
 
 * **Q: Does this mean BombSquad is open source?**
