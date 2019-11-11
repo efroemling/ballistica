@@ -108,7 +108,7 @@ class FileSelectorWindow(ba.OldWindow):
         self._folder_color = (1.1, 0.8, 0.2)
         self._file_tex = ba.gettexture('file')
         self._file_color = (1, 1, 1)
-        self._use_folder_button = None
+        self._use_folder_button: Optional[ba.Widget] = None
         self._folder_center = self._width * 0.5 + 15
         self._folder_icon = ba.imagewidget(parent=self._root_widget,
                                            size=(40, 40),
@@ -189,7 +189,7 @@ class FileSelectorWindow(ba.OldWindow):
     class _RefreshThread(threading.Thread):
 
         def __init__(self, path: str,
-                     callback: Callable[[List[str], str], Any]):
+                     callback: Callable[[List[str], Optional[str]], Any]):
             super().__init__()
             self._callback = callback
             self._path = path
@@ -200,17 +200,19 @@ class FileSelectorWindow(ba.OldWindow):
                 files = os.listdir(self._path)
                 duration = time.time() - starttime
                 min_time = 0.1
-                # make sure this takes at least 1/10 second so the user
-                # has time to see the selection highlight
+
+                # Make sure this takes at least 1/10 second so the user
+                # has time to see the selection highlight.
                 if duration < min_time:
                     time.sleep(min_time - duration)
-                ba.pushcall(ba.Call(self._callback, file_names=files),
+                ba.pushcall(ba.Call(self._callback, files, None),
                             from_other_thread=True)
             except Exception as exc:
-                # ignore permission-denied
+                # Ignore permission-denied.
                 if 'Errno 13' not in str(exc):
                     ba.print_exception()
-                ba.pushcall(ba.Call(self._callback, error=str(exc)),
+                nofiles: List[str] = []
+                ba.pushcall(ba.Call(self._callback, nofiles, str(exc)),
                             from_other_thread=True)
 
     def _set_path(self, path: str, add_to_recent: bool = True) -> None:
@@ -219,7 +221,7 @@ class FileSelectorWindow(ba.OldWindow):
             self._recent_paths.append(path)
         self._RefreshThread(path, self._refresh).start()
 
-    def _refresh(self, file_names: List[str], error: str) -> None:
+    def _refresh(self, file_names: List[str], error: Optional[str]) -> None:
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
@@ -357,6 +359,7 @@ class FileSelectorWindow(ba.OldWindow):
                 if num == 0:
                     ba.widget(edit=cnt, up_widget=self._back_button)
                 is_valid_file_path = self._is_valid_file_path(entry)
+                assert self._path is not None
                 is_dir = os.path.isdir(self._path + '/' + entry)
                 if is_dir:
                     ba.imagewidget(parent=cnt,

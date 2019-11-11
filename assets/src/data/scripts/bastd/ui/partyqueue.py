@@ -123,7 +123,7 @@ class PartyQueueWindow(ba.OldWindow):
             # need to push a deferred call to kill these as necessary instead.
             # (should bulletproof internal widget code to give a clean error
             # in this case)
-            def kill_widgets(widgets: Sequence[ba.Widget]) -> None:
+            def kill_widgets(widgets: Sequence[Optional[ba.Widget]]) -> None:
                 for widget in widgets:
                     if widget:
                         widget.delete()

@@ -43,10 +43,9 @@ import efrotools
 # noinspection PyUnresolvedReferences
 from efrotools.snippets import (  # pylint: disable=unused-import
     PROJROOT, CleanError, snippets_main, formatcode, formatscripts,
-    formatmakefile, cpplintcode, pylintscripts, mypyscripts,
-    tool_config_install, sync, sync_all, scriptfiles, pycharmscripts,
-    clioncode, androidstudiocode, makefile_target_list, spelling, spelling_all,
-    compile_python_files)
+    formatmakefile, cpplint, pylint, mypy, tool_config_install, sync, sync_all,
+    scriptfiles, pycharmscripts, clioncode, androidstudiocode,
+    makefile_target_list, spelling, spelling_all, compile_python_files)
 
 if TYPE_CHECKING:
     from typing import Optional, List, Sequence

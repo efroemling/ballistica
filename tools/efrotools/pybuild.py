@@ -137,9 +137,9 @@ def build_apple(arch: str, debug: bool = False) -> None:
     txt = efrotools.replace_one(
         txt, '&& PATH=$(PROJECT_DIR)/$(PYTHON_DIR-macOS)/dist/bin:$(PATH) .',
         '&& PATH="$(PROJECT_DIR)/$(PYTHON_DIR-macOS)/dist/bin:$(PATH)" .')
-    txt = efrotools.replace_one(
-        txt, '&& PATH=$(PROJECT_DIR)/$(PYTHON_DIR-macOS)/dist/bin:$(PATH) m',
-        '&& PATH="$(PROJECT_DIR)/$(PYTHON_DIR-macOS)/dist/bin:$(PATH)" m')
+    # txt = efrotools.replace_one(
+    #     txt, '&& PATH=$(PROJECT_DIR)/$(PYTHON_DIR-macOS)/dist/bin:$(PATH) m',
+    #     '&& PATH="$(PROJECT_DIR)/$(PYTHON_DIR-macOS)/dist/bin:$(PATH)" m')
 
     # Remove makefile dependencies so we don't build the
     # libs we're not using.

@@ -40,9 +40,8 @@ def show_sign_in_prompt(account_type: str = None) -> None:
     else:
         confirm.ConfirmWindow(
             ba.Lstr(resource='notSignedInErrorText'),
-            ba.Call(settings.AccountSettingsWindow,
-                    modal=True,
-                    close_once_signed_in=True),
+            lambda: settings.AccountSettingsWindow(modal=True,
+                                                   close_once_signed_in=True),
             ok_text=ba.Lstr(resource='accountSettingsWindow.signInText'),
             width=460,
             height=130)

@@ -152,22 +152,26 @@ class PlaylistAddGameWindow(ba.OldWindow):
         gametypes.sort(key=lambda g: g.get_display_string().evaluate())
 
         for i, gametype in enumerate(gametypes):
-            txt = ba.textwidget(
-                parent=self._column,
-                position=(0, 0),
-                size=(self._width - 88, 24),
-                text=gametype.get_display_string(),
-                h_align="left",
-                v_align="center",
-                color=(0.8, 0.8, 0.8, 1.0),
-                maxwidth=self._scroll_width * 0.8,
-                on_select_call=ba.Call(self._set_selected_game_type, gametype),
-                always_highlight=True,
-                selectable=True,
-                on_activate_call=ba.Call(ba.timer,
-                                         0.1,
-                                         self._select_button.activate,
-                                         timetype='real'))
+
+            def _doit() -> None:
+                if self._select_button:
+                    ba.timer(0.1,
+                             self._select_button.activate,
+                             timetype=ba.TimeType.REAL)
+
+            txt = ba.textwidget(parent=self._column,
+                                position=(0, 0),
+                                size=(self._width - 88, 24),
+                                text=gametype.get_display_string(),
+                                h_align="left",
+                                v_align="center",
+                                color=(0.8, 0.8, 0.8, 1.0),
+                                maxwidth=self._scroll_width * 0.8,
+                                on_select_call=ba.Call(
+                                    self._set_selected_game_type, gametype),
+                                always_highlight=True,
+                                selectable=True,
+                                on_activate_call=_doit)
             if i == 0:
                 ba.widget(edit=txt, up_widget=self._back_button)
 

@@ -350,6 +350,7 @@ class PlaylistBrowserWindow(ba.OldWindow):
         for y in range(rows):
             for x in range(columns):
                 name = items[index][0]
+                assert name is not None
                 pos = (x * (button_width + 2 * button_buffer_h) +
                        button_buffer_h + 8 + h_offs, self._sub_height - 47 -
                        (y + 1) * (button_height + 2 * button_buffer_v))

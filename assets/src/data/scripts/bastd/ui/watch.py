@@ -333,15 +333,15 @@ class WatchWindow(ba.OldWindow):
             autoselect=True,
             maxwidth=c_width * 0.7,
             max_chars=200)
-        cbtn = ba.buttonwidget(parent=cnt,
-                               label=ba.Lstr(resource='cancelText'),
-                               on_activate_call=ba.Call(
-                                   ba.containerwidget,
-                                   edit=cnt,
-                                   transition='out_scale'),
-                               size=(180, 60),
-                               position=(30, 30),
-                               autoselect=True)
+        cbtn = ba.buttonwidget(
+            parent=cnt,
+            label=ba.Lstr(resource='cancelText'),
+            on_activate_call=ba.Call(
+                lambda c: ba.containerwidget(edit=c, transition='out_scale'),
+                cnt),
+            size=(180, 60),
+            position=(30, 30),
+            autoselect=True)
         okb = ba.buttonwidget(parent=cnt,
                               label=ba.Lstr(resource=self._r + '.renameText'),
                               size=(180, 60),

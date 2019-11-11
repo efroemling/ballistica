@@ -279,23 +279,29 @@ def print_corrupt_file_error() -> None:
     from ba._lang import get_resource
     from ba._general import Call
     from ba._enums import TimeType
-    _ba.timer(2.0,
-              Call(_ba.screenmessage,
-                   get_resource('internal.corruptFileText').replace(
-                       '${EMAIL}', 'support@froemling.net'),
-                   color=(1, 0, 0)),
-              timetype=TimeType.REAL)
+    _ba.timer(
+        2.0,
+        lambda: _ba.screenmessage(get_resource('internal.corruptFileText').
+                                  replace('${EMAIL}', 'support@froemling.net'),
+                                  color=(1, 0, 0)),
+        timetype=TimeType.REAL)
     _ba.timer(2.0,
               Call(_ba.playsound, _ba.getsound('error')),
               timetype=TimeType.REAL)
 
 
 def show_ad(purpose: str,
-            on_completion_call: Callable[[], Any] = None,
-            pass_actually_showed: bool = False) -> None:
+            on_completion_call: Callable[[], Any] = None) -> None:
     """(internal)"""
     _ba.app.last_ad_purpose = purpose
-    _ba.show_ad(purpose, on_completion_call, pass_actually_showed)
+    _ba.show_ad(purpose, on_completion_call)
+
+
+def show_ad_2(purpose: str,
+              on_completion_call: Callable[[bool], Any] = None) -> None:
+    """(internal)"""
+    _ba.app.last_ad_purpose = purpose
+    _ba.show_ad_2(purpose, on_completion_call)
 
 
 def call_after_ad(call: Callable[[], Any]) -> None:

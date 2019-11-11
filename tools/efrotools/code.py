@@ -85,7 +85,7 @@ def formatcode(projroot: Path, full: bool) -> None:
           flush=True)
 
 
-def cpplintcode(projroot: Path, full: bool) -> None:
+def cpplint(projroot: Path, full: bool) -> None:
     """Run lint-checking on all code deemed lint-able."""
     from concurrent.futures import ThreadPoolExecutor
     from efrotools import get_config
@@ -230,7 +230,7 @@ def get_script_filenames(projroot: Path) -> List[str]:
     return sorted(list(f for f in filenames if 'flycheck_' not in f))
 
 
-def pylintscripts(projroot: Path, full: bool, fast: bool) -> None:
+def pylint(projroot: Path, full: bool, fast: bool) -> None:
     """Run lint-checking on all scripts deemed lint-able."""
     from efrotools import get_files_hash
     pylintrc = Path(projroot, '.pylintrc')
@@ -516,7 +516,7 @@ def runmypy(filenames: List[str], full: bool = False,
     subprocess.run(args, check=check)
 
 
-def mypyscripts(projroot: Path, full: bool) -> None:
+def mypy(projroot: Path, full: bool) -> None:
     """Run mypy on all of our scripts."""
     import time
     filenames = get_script_filenames(projroot)

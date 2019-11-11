@@ -45,7 +45,7 @@ from ba._achievement import (get_achievement, set_completed_achievements,
                              display_achievement_banner,
                              get_achievements_for_coop_level)
 from ba._apputils import (is_browser_likely_available, get_remote_app_name,
-                          should_submit_debug_info, show_ad)
+                          should_submit_debug_info, show_ad, show_ad_2)
 from ba._benchmark import (run_gpu_benchmark, run_cpu_benchmark,
                            run_media_reload_benchmark, run_stress_test)
 from ba._campaign import get_campaign

@@ -39,12 +39,16 @@ class KioskWindow(ba.OldWindow):
         from bastd.ui import confirm
         self._width = 720.0
         self._height = 340.0
-        super().__init__(root_widget=ba.containerwidget(
-            size=(self._width, self._height),
-            transition=transition,
-            on_cancel_call=ba.Call(confirm.QuitWindow, swish=True, back=True),
-            background=False,
-            stack_offset=(0, -130)))
+
+        def _do_cancel() -> None:
+            confirm.QuitWindow(swish=True, back=True)
+
+        super().__init__(
+            root_widget=ba.containerwidget(size=(self._width, self._height),
+                                           transition=transition,
+                                           on_cancel_call=_do_cancel,
+                                           background=False,
+                                           stack_offset=(0, -130)))
 
         self._r = 'kioskWindow'
 

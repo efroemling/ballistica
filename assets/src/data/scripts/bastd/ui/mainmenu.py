@@ -320,10 +320,12 @@ class MainMenuWindow(ba.OldWindow):
             # we want back presses to quit our activity.
             if (not self._in_game and not self._have_quit_button
                     and ba.app.platform == 'android'):
+
+                def _do_quit() -> None:
+                    confirm.QuitWindow(swish=True, back=True)
+
                 ba.containerwidget(edit=self._root_widget,
-                                   on_cancel_call=ba.Call(confirm.QuitWindow,
-                                                          swish=True,
-                                                          back=True))
+                                   on_cancel_call=_do_quit)
 
         # Add speed-up/slow-down buttons for replays.
         # (ideally this should be part of a fading-out playback bar like most

@@ -41,9 +41,9 @@ help:
 
 # Prerequisites that should be in place before running most any other build;
 # things like tool config files, etc.
-PREREQS = .dir-locals.el .mypy.ini .pycheckers \
-  .pylintrc .style.yapf .clang-format \
-  .projectile .editorconfig .cache/checkenv
+PREREQS = .cache/checkenv .dir-locals.el \
+  .mypy.ini .pycheckers .pylintrc .style.yapf .clang-format \
+  .projectile .editorconfig
 
 prereqs: ${PREREQS}
 
@@ -264,43 +264,43 @@ formatmakefile: prereqs
 # These are useful, but can take significantly longer and/or be a bit flaky.
 
 check: updatecheck
-	@$(MAKE) -j3 cpplintcode pylintscripts mypyscripts
+	@$(MAKE) -j3 cpplint pylint mypy
 	@echo ALL CHECKS PASSED!
 check2: updatecheck
-	@$(MAKE) -j4 cpplintcode pylintscripts mypyscripts pycharmscripts
+	@$(MAKE) -j4 cpplint pylint mypy pycharmscripts
 	@echo ALL CHECKS PASSED!
 
 checkfast: updatecheck
-	@$(MAKE) -j3 cpplintcode pylintscriptsfast mypyscripts
+	@$(MAKE) -j3 cpplint pylintfast mypy
 	@echo ALL CHECKS PASSED!
 checkfast2: updatecheck
-	@$(MAKE) -j4 cpplintcode pylintscriptsfast mypyscripts pycharmscripts
+	@$(MAKE) -j4 cpplint pylintfast mypy pycharmscripts
 	@echo ALL CHECKS PASSED!
 
 checkfull: updatecheck
-	@$(MAKE) -j3 cpplintcodefull pylintscriptsfull mypyscriptsfull
+	@$(MAKE) -j3 cpplintfull pylintfull mypyfull
 	@echo ALL CHECKS PASSED!
 checkfull2: updatecheck
-	@$(MAKE) -j4 cpplintcodefull pylintscriptsfull mypyscriptsfull pycharmscriptsfull
+	@$(MAKE) -j4 cpplintfull pylintfull mypyfull pycharmscriptsfull
 	@echo ALL CHECKS PASSED!
 
-cpplintcode: prereqs
-	@tools/snippets cpplintcode
+cpplint: prereqs
+	@tools/snippets cpplint
 
-cpplintcodefull: prereqs
-	@tools/snippets cpplintcode -full
+cpplintfull: prereqs
+	@tools/snippets cpplint -full
 
-pylintscripts: prereqs
-	@tools/snippets pylintscripts
+pylint: prereqs
+	@tools/snippets pylint
 
-pylintscriptsfull: prereqs
-	@tools/snippets pylintscripts -full
+pylintfull: prereqs
+	@tools/snippets pylint -full
 
-mypyscripts: prereqs
-	@tools/snippets mypyscripts
+mypy: prereqs
+	@tools/snippets mypy
 
-mypyscriptsfull: prereqs
-	@tools/snippets mypyscripts -full
+mypyfull: prereqs
+	@tools/snippets mypy -full
 
 pycharmscripts: prereqs
 	@tools/snippets pycharmscripts
@@ -311,14 +311,14 @@ pycharmscriptsfull: prereqs
 # 'Fast' script checking using dependency recursion limits.
 # This can require much less re-checking but may miss problems in rare cases.
 # Its not a bad idea to run a non-fast check every so often or before pushing.
-pylintscriptsfast: prereqs
-	@tools/snippets pylintscripts -fast
+pylintfast: prereqs
+	@tools/snippets pylint -fast
 
 # Tell make which of these targets don't represent files.
 .PHONY: format formatfull formatcode formatcodefull formatscripts \
   formatscriptsfull check check2 checkfast checkfast2 checkfull checkfull2 \
-  cpplintcode cpplintcodefull pylintscripts pylintscriptsfull mypyscripts \
-  mypyscriptsfull pycharmscripts pycharmscriptsfull
+  cpplint cpplintfull pylint pylintfull mypy \
+  mypyfull pycharmscripts pycharmscriptsfull
 
 
 ################################################################################
@@ -338,24 +338,24 @@ updatecheck: prereqs
 # Run an update and check together; handy while iterating.
 # (slightly more efficient than running update/check separately).
 updatethencheck: update
-	@$(MAKE) -j3 cpplintcode pylintscripts mypyscripts
+	@$(MAKE) -j3 cpplint pylint mypy
 	@echo ALL CHECKS PASSED!
 updatethencheck2: update
-	@$(MAKE) -j4 cpplintcode pylintscripts mypyscripts pycharmscripts
+	@$(MAKE) -j4 cpplint pylint mypy pycharmscripts
 	@echo ALL CHECKS PASSED!
 
 updatethencheckfast: update
-	@$(MAKE) -j3 cpplintcode pylintscriptsfast mypyscripts
+	@$(MAKE) -j3 cpplint pylintfast mypy
 	@echo ALL CHECKS PASSED!
 updatethencheckfast2: update
-	@$(MAKE) -j4 cpplintcode pylintscriptsfast mypyscripts pycharmscripts
+	@$(MAKE) -j4 cpplint pylintfast mypy pycharmscripts
 	@echo ALL CHECKS PASSED!
 
 updatethencheckfull: update
-	@$(MAKE) -j3 cpplintcodefull pylintscriptsfull mypyscriptsfull
+	@$(MAKE) -j3 cpplintfull pylintfull mypyfull
 	@echo ALL CHECKS PASSED!
 updatethencheckfull2: update
-	@$(MAKE) -j4 cpplintcodefull pylintscriptsfull mypyscriptsfull pycharmscriptsfull
+	@$(MAKE) -j4 cpplintfull pylintfull mypyfull pycharmscriptsfull
 	@echo ALL CHECKS PASSED!
 
 # Run a format, an update, and then a check.

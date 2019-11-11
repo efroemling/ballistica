@@ -30,6 +30,7 @@ import _ba
 
 if TYPE_CHECKING:
     from typing import Any, Type
+    from bafoundation import executils
 
 T = TypeVar('T')
 
@@ -121,7 +122,7 @@ def get_type_name(cls: Type) -> str:
     return cls.__module__ + '.' + cls.__name__
 
 
-class WeakCall:
+class _WeakCall:
     """Wrap a callable and arguments into a single callable object.
 
     Category: General Utility Classes
@@ -159,11 +160,12 @@ class WeakCall:
         Instantiate a WeakCall; pass a callable as the first
         arg, followed by any number of arguments or keywords.
 
-        # example: wrap a method call with some positional and keyword args:
+        # example: wrap a method call with some positional and
+        # keyword args:
         myweakcall = ba.WeakCall(myobj.dostuff, argval1, namedarg=argval2)
 
         # Now we have a single callable to run that whole mess.
-        # This is the same as calling myobj.dostuff(argval1, namedarg=argval2)
+        # The same as calling myobj.dostuff(argval1, namedarg=argval2)
         # (provided my_obj still exists; this will do nothing otherwise)
         myweakcall()
         """
@@ -191,16 +193,18 @@ class WeakCall:
                 str(self._args) + ' _keywds=' + str(self._keywds) + '>')
 
 
-class Call:
+class _Call:
     """Wraps a callable and arguments into a single callable object.
 
     Category: General Utility Classes
 
-    The callable is strong-referenced so it won't die until this object does.
+    The callable is strong-referenced so it won't die until this
+    object does.
+
     Note that a bound method (ex: myobj.dosomething) contains a reference
-    to 'self' (myobj in that case), so you will be keeping that object alive
-    too. Use ba.WeakCall if you want to pass a method to callback without
-    keeping its object alive.
+    to 'self' (myobj in that case), so you will be keeping that object
+    alive too. Use ba.WeakCall if you want to pass a method to callback
+    without keeping its object alive.
     """
 
     def __init__(self, *args: Any, **keywds: Any):
@@ -208,11 +212,11 @@ class Call:
         Instantiate a Call; pass a callable as the first
         arg, followed by any number of arguments or keywords.
 
-        # example: wrap a method call with 1 positional and 1 keyword arg
+        # Example: wrap a method call with 1 positional and 1 keyword arg.
         mycall = ba.Call(myobj.dostuff, argval1, namedarg=argval2)
 
-        # now we have a single callable to run that whole mess
-        # this is the same as calling myobj.dostuff(argval1, namedarg=argval2)
+        # Now we have a single callable to run that whole mess.
+        # ..the same as calling myobj.dostuff(argval1, namedarg=argval2)
         mycall()
         """
         self._call = args[0]
@@ -225,6 +229,16 @@ class Call:
     def __str__(self) -> str:
         return ('<ba.Call object; _call=' + str(self._call) + ' _args=' +
                 str(self._args) + ' _keywds=' + str(self._keywds) + '>')
+
+
+if TYPE_CHECKING:
+    WeakCall = executils.Call
+    Call = executils.Call
+else:
+    WeakCall = _WeakCall
+    WeakCall.__name__ = 'WeakCall'
+    Call = _Call
+    Call.__name__ = 'Call'
 
 
 class WeakMethod:

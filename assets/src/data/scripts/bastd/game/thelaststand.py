@@ -152,7 +152,7 @@ class TheLastStandGame(ba.CoopGameActivity):
 
     def _drop_powerups(self,
                        standard_points: bool = False,
-                       force_first: bool = None) -> None:
+                       force_first: str = None) -> None:
         """Generic powerup drop."""
         from bastd.actor import powerupbox
         if standard_points:

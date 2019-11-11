@@ -118,9 +118,10 @@ class KingOfTheHillGame(ba.TeamGameActivity):
             actions=(("modify_part_collision", "collide",
                       True), ("modify_part_collision", "physical", False),
                      ("call", "at_connect",
-                      ba.Call(self._handle_player_flag_region_collide, 1)),
+                      ba.Call(self._handle_player_flag_region_collide, True)),
                      ("call", "at_disconnect",
-                      ba.Call(self._handle_player_flag_region_collide, 0))))
+                      ba.Call(self._handle_player_flag_region_collide,
+                              False))))
 
     def get_instance_description(self) -> Union[str, Sequence]:
         return ('Secure the flag for ${ARG1} seconds.',

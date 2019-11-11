@@ -797,15 +797,15 @@ class CoopBrowserWindow(ba.OldWindow):
         row_v_show_buffer = 100
         v -= 198
 
-        h_scroll = ba.hscrollwidget(parent=w_parent,
-                                    size=(self._scroll_width - 10, 205),
-                                    position=(-5, v),
-                                    simple_culling_h=70,
-                                    highlight=False,
-                                    border_opacity=0.0,
-                                    color=(0.45, 0.4, 0.5),
-                                    on_select_call=ba.Call(
-                                        self._on_row_selected, 'campaign'))
+        h_scroll = ba.hscrollwidget(
+            parent=w_parent,
+            size=(self._scroll_width - 10, 205),
+            position=(-5, v),
+            simple_culling_h=70,
+            highlight=False,
+            border_opacity=0.0,
+            color=(0.45, 0.4, 0.5),
+            on_select_call=lambda: self._on_row_selected('campaign'))
         self._campaign_h_scroll = h_scroll
         ba.widget(edit=h_scroll,
                   show_buffer_top=row_v_show_buffer,
@@ -1021,7 +1021,7 @@ class CoopBrowserWindow(ba.OldWindow):
         # event queue.. we need to push ours too so we're enabled *after* them.
         ba.pushcall(self._enable_selectable_callback)
 
-    def _on_row_selected(self, row: int) -> None:
+    def _on_row_selected(self, row: str) -> None:
         if self._do_selection_callbacks:
             if self._selected_row != row:
                 self._selected_row = row
@@ -1039,16 +1039,14 @@ class CoopBrowserWindow(ba.OldWindow):
             'has_time_remaining': False,
             'leader': None
         }
-        data['button'] = btn = ba.buttonwidget(parent=parent,
-                                               position=(x + 23, y + 4),
-                                               size=(sclx, scly),
-                                               label='',
-                                               button_type='square',
-                                               autoselect=True,
-                                               on_activate_call=ba.Call(
-                                                   self.run,
-                                                   None,
-                                                   tournament_button=data))
+        data['button'] = btn = ba.buttonwidget(
+            parent=parent,
+            position=(x + 23, y + 4),
+            size=(sclx, scly),
+            label='',
+            button_type='square',
+            autoselect=True,
+            on_activate_call=lambda: self.run(None, tournament_button=data))
         ba.widget(edit=btn,
                   show_buffer_bottom=50,
                   show_buffer_top=50,
@@ -1353,7 +1351,7 @@ class CoopBrowserWindow(ba.OldWindow):
             origin_widget=self._league_rank_button.get_button()).
                                    get_root_widget())
 
-    def _switch_to_score(self, show_tab: str = 'extras') -> None:
+    def _switch_to_score(self, show_tab: Optional[str] = 'extras') -> None:
         # pylint: disable=cyclic-import
         from bastd.ui import account
         from bastd.ui.store import browser
@@ -1403,7 +1401,9 @@ class CoopBrowserWindow(ba.OldWindow):
         """Return whether our tourney data is up to date."""
         return self._tourney_data_up_to_date
 
-    def run(self, game: str, tournament_button: Dict[str, Any] = None) -> None:
+    def run(self,
+            game: Optional[str],
+            tournament_button: Dict[str, Any] = None) -> None:
         """Run the provided game."""
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
@@ -1515,6 +1515,7 @@ class CoopBrowserWindow(ba.OldWindow):
                 position=tournament_button['button'].get_screen_space_center())
         else:
             # Otherwise just dive right in.
+            assert game is not None
             if ba.app.launch_coop_game(game, args=args):
                 ba.containerwidget(edit=self._root_widget,
                                    transition='out_left')

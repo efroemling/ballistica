@@ -27,7 +27,7 @@ from typing import TYPE_CHECKING
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Dict, Tuple, List, Sequence
+    from typing import Any, Callable, Dict, Tuple, List, Sequence, Optional
 
 
 def create_tab_buttons(parent_widget: ba.Widget,
@@ -50,9 +50,11 @@ def create_tab_buttons(parent_widget: ba.Widget,
     h = pos[0]
     for _i, tab in enumerate(tabs):
 
-        def _tick_and_call(call: Callable[[Any], Any], arg: Any) -> None:
+        def _tick_and_call(call: Optional[Callable[[Any], Any]],
+                           arg: Any) -> None:
             ba.playsound(ba.getsound('click01'))
-            call(arg)
+            if call is not None:
+                call(arg)
 
         pos = (h + tab_spacing * 0.5, tab_pos_v)
         size = (tab_button_width - tab_spacing, 50.0)

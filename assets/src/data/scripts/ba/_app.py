@@ -247,27 +247,9 @@ class App:
             import urllib.request
             try:
                 val = urllib.request.urlopen('https://example.com').read()
-                print("HTTPS SUCCESS", len(val))
+                print("HTTPS TEST SUCCESS", len(val))
             except Exception as exc:
-                print("GOT EXC", exc)
-
-        try:
-            import sqlite3
-            print("GOT SQLITE", sqlite3)
-        except Exception as exc:
-            print("EXC IMPORTING SQLITE", exc)
-
-        try:
-            import csv
-            print("GOT CSV", csv)
-        except Exception as exc:
-            print("EXC IMPORTING CSV", exc)
-
-        try:
-            import lzma
-            print("GOT LZMA", lzma)
-        except Exception as exc:
-            print("EXC IMPORTING LZMA", exc)
+                print("HTTPS TEST FAIL:", exc)
 
         # Config.
         self.config_file_healthy = False
@@ -436,7 +418,7 @@ class App:
         # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
         from ba import _apputils
-        from ba._general import Call
+        # from ba._general import Call
         from ba import _appconfig
         from ba import ui as bsui
         from ba import _achievement
@@ -493,31 +475,23 @@ class App:
             self.small_ui = True
             self.med_ui = False
             with _ba.Context('ui'):
-                _ba.pushcall(
-                    Call(_ba.screenmessage,
-                         'FORCING SMALL UI FOR TESTING',
-                         color=(1, 0, 1),
-                         log=True))
+                _ba.pushcall(lambda: _ba.screenmessage(
+                    'FORCING SMALL UI FOR TESTING', color=(1, 0, 1), log=True))
         # noinspection PyUnreachableCode
         if 0:  # force-test medium UI
             self.small_ui = False
             self.med_ui = True
             with _ba.Context('ui'):
-                _ba.pushcall(
-                    Call(_ba.screenmessage,
-                         'FORCING MEDIUM UI FOR TESTING',
-                         color=(1, 0, 1),
-                         log=True))
+                _ba.pushcall(lambda: _ba.screenmessage(
+                    'FORCING MEDIUM UI FOR TESTING', color=(1, 0, 1
+                                                            ), log=True))
         # noinspection PyUnreachableCode
         if 0:  # force-test large UI
             self.small_ui = False
             self.med_ui = False
             with _ba.Context('ui'):
-                _ba.pushcall(
-                    Call(_ba.screenmessage,
-                         'FORCING LARGE UI FOR TESTING',
-                         color=(1, 0, 1),
-                         log=True))
+                _ba.pushcall(lambda: _ba.screenmessage(
+                    'FORCING LARGE UI FOR TESTING', color=(1, 0, 1), log=True))
         # pylint: enable=using-constant-test
 
         # If there's a leftover log file, attempt to upload
@@ -572,16 +546,17 @@ class App:
         server_addr = _ba.get_master_server_address()
         if 'localhost' in server_addr:
             _ba.timer(2.0,
-                      Call(_ba.screenmessage,
-                           "Note: using local server", (1, 1, 0),
-                           log=True),
+                      lambda: _ba.screenmessage("Note: using local server",
+                                                (1, 1, 0),
+                                                log=True),
                       timetype=TimeType.REAL)
         elif 'test' in server_addr:
-            _ba.timer(2.0,
-                      Call(_ba.screenmessage,
-                           "Note: using test server-module", (1, 1, 0),
-                           log=True),
-                      timetype=TimeType.REAL)
+            _ba.timer(
+                2.0,
+                lambda: _ba.screenmessage("Note: using test server-module",
+                                          (1, 1, 0),
+                                          log=True),
+                timetype=TimeType.REAL)
 
         cfg['launchCount'] = launch_count
         cfg.commit()
@@ -786,7 +761,6 @@ class App:
     def do_remove_in_game_ads_message(self) -> None:
         """(internal)"""
         from ba._lang import Lstr
-        from ba._general import Call
         from ba._enums import TimeType
 
         # Print this message once every 10 minutes at most.
@@ -797,15 +771,12 @@ class App:
             with _ba.Context('ui'):
                 _ba.timer(
                     1.0,
-                    Call(_ba.screenmessage,
-                         Lstr(
-                             resource='removeInGameAdsText',
-                             subs=[
-                                 ('${PRO}',
-                                  Lstr(resource='store.bombSquadProNameText')),
-                                 ('${APP_NAME}', Lstr(resource='titleText'))
-                             ]),
-                         color=(1, 1, 0)),
+                    lambda: _ba.screenmessage(Lstr(
+                        resource='removeInGameAdsText',
+                        subs=[('${PRO}',
+                               Lstr(resource='store.bombSquadProNameText')),
+                              ('${APP_NAME}', Lstr(resource='titleText'))]),
+                                              color=(1, 1, 0)),
                     timetype=TimeType.REAL)
 
     def shutdown(self) -> None:

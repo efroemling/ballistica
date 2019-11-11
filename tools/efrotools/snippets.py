@@ -226,11 +226,11 @@ def formatmakefile() -> None:
             outfile.write(formatted)
 
 
-def cpplintcode() -> None:
+def cpplint() -> None:
     """Run lint-checking on all code deemed lint-able."""
     from efrotools import code
     full = '-full' in sys.argv
-    code.cpplintcode(PROJROOT, full)
+    code.cpplint(PROJROOT, full)
 
 
 def scriptfiles() -> None:
@@ -247,19 +247,19 @@ def scriptfiles() -> None:
         print(' '.join(paths))
 
 
-def pylintscripts() -> None:
+def pylint() -> None:
     """Run pylint checks on our scripts."""
     from efrotools import code
     full = ('-full' in sys.argv)
     fast = ('-fast' in sys.argv)
-    code.pylintscripts(PROJROOT, full, fast)
+    code.pylint(PROJROOT, full, fast)
 
 
-def mypyscripts() -> None:
+def mypy() -> None:
     """Run mypy checks on our scripts."""
     from efrotools import code
     full = ('-full' in sys.argv)
-    code.mypyscripts(PROJROOT, full)
+    code.mypy(PROJROOT, full)
 
 
 def pycharmscripts() -> None:

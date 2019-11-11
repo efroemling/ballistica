@@ -541,7 +541,7 @@ class TournamentEntryWindow(popup.PopupWindow):
         self._launch()
 
     def _on_pay_with_ad_press(self) -> None:
-        from ba.internal import show_ad
+        from ba.internal import show_ad_2
 
         # If we're already entering, ignore.
         if self._entering:
@@ -563,9 +563,8 @@ class TournamentEntryWindow(popup.PopupWindow):
         cur_time = ba.time(ba.TimeType.REAL)
         if cur_time - self._last_ad_press_time > 5.0:
             self._last_ad_press_time = cur_time
-            show_ad('tournament_entry',
-                    on_completion_call=ba.WeakCall(self._on_ad_complete),
-                    pass_actually_showed=True)
+            show_ad_2('tournament_entry',
+                      on_completion_call=ba.WeakCall(self._on_ad_complete))
 
     def _on_ad_complete(self, actually_showed: bool) -> None:
 

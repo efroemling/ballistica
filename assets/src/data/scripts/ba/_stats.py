@@ -32,7 +32,7 @@ import _ba
 if TYPE_CHECKING:
     import ba
     from weakref import ReferenceType
-    from typing import Any, Dict, Optional, Sequence, Union
+    from typing import Any, Dict, Optional, Sequence, Union, Tuple
 
 
 @dataclass
@@ -210,9 +210,9 @@ class PlayerRecord:
             delay = 1000
             sound = stats.orchestrahitsound4
 
-        def _apply(name2: str, score2: int, showpoints2: bool,
-                   color2: Sequence[float], scale2: float,
-                   sound2: ba.Sound) -> None:
+        def _apply(name2: Lstr, score2: int, showpoints2: bool,
+                   color2: Tuple[float, float, float, float], scale2: float,
+                   sound2: Optional[ba.Sound]) -> None:
             from bastd.actor.popuptext import PopupText
 
             # Only award this if they're still alive and we can get
@@ -238,7 +238,8 @@ class PlayerRecord:
                           color=color2,
                           scale=scale2,
                           position=our_pos).autoretain()
-            _ba.playsound(sound2)
+            if sound2:
+                _ba.playsound(sound2)
 
             self.score += score2
             self.accumscore += score2

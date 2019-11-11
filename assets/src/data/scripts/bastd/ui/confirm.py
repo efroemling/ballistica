@@ -147,7 +147,8 @@ class QuitWindow:
                  origin_widget: ba.Widget = None):
         app = ba.app
         self._back = back
-        # if there's already one of us up somewhere, kill it
+
+        # If there's already one of us up somewhere, kill it.
         if app.quit_window is not None:
             app.quit_window.delete()
             app.quit_window = None
@@ -164,9 +165,10 @@ class QuitWindow:
     def _fade_and_quit(self) -> None:
         _ba.fade_screen(False,
                         time=0.2,
-                        endcall=ba.Call(ba.quit, soft=True, back=self._back))
+                        endcall=lambda: ba.quit(soft=True, back=self._back))
         _ba.lock_all_input()
-        # unlock and fade back in shortly.. just in case something goes wrong
+
+        # Unlock and fade back in shortly.. just in case something goes wrong
         # (or on android where quit just backs out of our activity and
         # we may come back)
         ba.timer(0.3, _ba.unlock_all_input, timetype=ba.TimeType.REAL)

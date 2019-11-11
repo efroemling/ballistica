@@ -774,11 +774,11 @@ class AccountSettingsWindow(ba.OldWindow):
                 autoselect=True,
                 size=(button_width, 60),
                 label=ba.Lstr(resource=self._r + '.resetProgressText'),
-                on_activate_call=ba.Call(confirm.ConfirmWindow,
-                                         text=confirm_text,
-                                         width=500,
-                                         height=200,
-                                         action=self._reset_progress))
+                on_activate_call=lambda: confirm.ConfirmWindow(
+                    text=confirm_text,
+                    width=500,
+                    height=200,
+                    action=self._reset_progress))
             if first_selectable is None:
                 first_selectable = btn
             if ba.app.toolbars:

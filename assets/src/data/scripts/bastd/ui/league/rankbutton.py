@@ -207,7 +207,9 @@ class LeagueRankButton:
                     if widget:
                         widget.delete()
 
-                ba.timer(2.0, ba.Call(safe_delete, diff_text, timetype='real'))
+                ba.timer(2.0,
+                         ba.Call(safe_delete, diff_text),
+                         timetype=ba.TimeType.REAL)
             status_text: Union[str, ba.Lstr]
             if self._rank is not None:
                 assert self._smooth_rank is not None

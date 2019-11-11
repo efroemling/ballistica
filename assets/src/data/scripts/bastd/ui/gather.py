@@ -218,17 +218,15 @@ class GatherWindow(ba.OldWindow):
             # that they will get disconnected.. otherwise just go ahead..
             google_player_count = (_ba.get_google_play_party_client_count())
             if google_player_count > 0:
-                confirm.ConfirmWindow(ba.Lstr(
-                    resource=self._r + '.googlePlayReInviteText',
-                    subs=[('${COUNT}', str(google_player_count))]),
-                                      ba.Call(ba.timer,
-                                              0.2,
-                                              _ba.invite_players,
-                                              timetype='real'),
-                                      width=500,
-                                      height=150,
-                                      ok_text=ba.Lstr(resource=self._r +
-                                                      '.googlePlayInviteText'))
+                confirm.ConfirmWindow(
+                    ba.Lstr(resource=self._r + '.googlePlayReInviteText',
+                            subs=[('${COUNT}', str(google_player_count))]),
+                    lambda: ba.timer(
+                        0.2, _ba.invite_players, timetype=ba.TimeType.REAL),
+                    width=500,
+                    height=150,
+                    ok_text=ba.Lstr(resource=self._r +
+                                    '.googlePlayInviteText'))
             else:
                 ba.timer(0.1, _ba.invite_players, timetype=ba.TimeType.REAL)
 
@@ -411,19 +409,19 @@ class GatherWindow(ba.OldWindow):
                           h_align='center',
                           v_align='center')
             v -= 180
-            ba.buttonwidget(parent=cnt,
-                            label=ba.Lstr(resource=self._r +
-                                          '.googlePlaySeeInvitesText'),
-                            color=(0.5, 0.5, 0.6),
-                            textcolor=(0.75, 0.7, 0.8),
-                            autoselect=True,
-                            position=(c_width * 0.5 - b_width2 * 0.5, v),
-                            size=(b_width2, 60),
-                            on_activate_call=ba.Call(
-                                ba.timer,
-                                0.1,
-                                self._on_google_play_show_invites_press,
-                                timetype='real'))
+            ba.buttonwidget(
+                parent=cnt,
+                label=ba.Lstr(resource=self._r + '.googlePlaySeeInvitesText'),
+                color=(0.5, 0.5, 0.6),
+                textcolor=(0.75, 0.7, 0.8),
+                autoselect=True,
+                position=(c_width * 0.5 - b_width2 * 0.5, v),
+                size=(b_width2, 60),
+                on_activate_call=lambda: ba.timer(
+                    0.1,
+                    self._on_google_play_show_invites_press,
+                    timetype=ba.TimeType.REAL),
+            )
 
         elif tab == 'internet':
             c_width = self._scroll_width
@@ -448,9 +446,8 @@ class GatherWindow(ba.OldWindow):
                 click_activate=True,
                 selectable=True,
                 autoselect=True,
-                on_activate_call=ba.Call(self._set_internet_tab,
-                                         'join',
-                                         playsound=True),
+                on_activate_call=lambda: self._set_internet_tab(
+                    'join', playsound=True),
                 text=ba.Lstr(resource=self._r +
                              '.joinPublicPartyDescriptionText'))
             ba.widget(edit=txt, up_widget=self._tab_buttons[tab])
@@ -466,9 +463,8 @@ class GatherWindow(ba.OldWindow):
                 click_activate=True,
                 selectable=True,
                 autoselect=True,
-                on_activate_call=ba.Call(self._set_internet_tab,
-                                         'host',
-                                         playsound=True),
+                on_activate_call=lambda: self._set_internet_tab(
+                    'host', playsound=True),
                 text=ba.Lstr(resource=self._r +
                              '.hostPublicPartyDescriptionText'))
             ba.widget(edit=txt,
@@ -824,7 +820,8 @@ class GatherWindow(ba.OldWindow):
                 class HostAddrFetchThread(threading.Thread):
                     """Thread to fetch an addr."""
 
-                    def __init__(self, name: str, call: Callable[[str], Any]):
+                    def __init__(self, name: str,
+                                 call: Callable[[Optional[str]], Any]):
                         super().__init__()
                         self._name = name
                         self._call = call
@@ -839,7 +836,7 @@ class GatherWindow(ba.OldWindow):
                             ba.pushcall(ba.Call(self._call, None),
                                         from_other_thread=True)
 
-                def do_it_2(addr2: str) -> None:
+                def do_it_2(addr2: Optional[str]) -> None:
                     if addr2 is None:
                         ba.screenmessage(ba.Lstr(
                             resource='internal.unableToResolveHostText'),
@@ -1681,10 +1678,9 @@ class GatherWindow(ba.OldWindow):
                     class PingThread(threading.Thread):
                         """Thread for sending out pings."""
 
-                        def __init__(
-                                self, address: str, port: int,
-                                call: Callable[[str, int, Optional[int]], Any]
-                        ):
+                        def __init__(self, address: str, port: int,
+                                     call: Callable[[str, int, Optional[int]],
+                                                    Optional[int]]):
                             super().__init__()
                             # need utf8 here to avoid an error on our minimum
                             # bundled python
@@ -1743,7 +1739,8 @@ class GatherWindow(ba.OldWindow):
                     PingThread(party['address'], party['port'],
                                ba.WeakCall(self._ping_callback)).start()
 
-    def _ping_callback(self, address: str, port: int, result: int) -> None:
+    def _ping_callback(self, address: str, port: Optional[int],
+                       result: Optional[int]) -> None:
         # Look for a widget corresponding to this target; if we find one,
         # update our list.
         party = self._public_parties.get(address + '_' + str(port))

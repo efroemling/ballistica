@@ -920,7 +920,7 @@ class BotSet:
         self._spawning_count += 1
 
     def _spawn_bot(self, bot_type: Type[SpazBot], pos: Sequence[float],
-                   on_spawn_call: Callable[[SpazBot], Any]) -> None:
+                   on_spawn_call: Optional[Callable[[SpazBot], Any]]) -> None:
         spaz = bot_type()
         ba.playsound(self._spawn_sound, position=pos)
         assert spaz.node

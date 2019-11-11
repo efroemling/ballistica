@@ -667,7 +667,7 @@ class Achievement:
         from ba import _gameutils
         from bastd.actor.text import Text
         from bastd.actor.image import Image
-        from ba._general import Call, WeakCall
+        from ba._general import WeakCall
         from ba._lang import Lstr
         from ba._messages import DieMessage
         from ba._enums import TimeType, SpecialChar
@@ -692,7 +692,8 @@ class Achievement:
             _ba.playsound(_ba.getsound('achievement'), host_only=True)
         else:
             _ba.timer(
-                0.5, Call(_ba.playsound, _ba.getsound('ding'), host_only=True))
+                0.5,
+                lambda: _ba.playsound(_ba.getsound('ding'), host_only=True))
 
         in_time = 0.300
         out_time = 3.5

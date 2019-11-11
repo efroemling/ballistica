@@ -19,7 +19,6 @@
 # SOFTWARE.
 # -----------------------------------------------------------------------------
 """Functionality related to object/asset dependencies."""
-# pylint: disable=redefined-builtin
 
 from __future__ import annotations
 
@@ -74,8 +73,7 @@ class Dependency(Generic[T]):
     # return different things based on self's type and avoid the need for
     # the fake dep classes below.
     # See https://github.com/python/mypy/issues/5320
-    # noinspection PyShadowingBuiltins
-    def __get__(self, obj: Any, type: Any = None) -> Any:
+    def __get__(self, obj: Any, cls: Any = None) -> Any:
         if obj is None:
             raise TypeError("Dependency must be accessed through an instance.")
 
@@ -114,15 +112,13 @@ else:
     class _InstanceDep(Dependency[TI]):
         """Fake stub we use to tell the type system we provide a type."""
 
-        # noinspection PyShadowingBuiltins
-        def __get__(self, obj: Any, type: Any = None) -> Type[TI]:
+        def __get__(self, obj: Any, cls: Any = None) -> Type[TI]:
             return cast(Type[TI], None)
 
     class _StaticDep(Dependency[TS]):
         """Fake stub we use to tell the type system we provide an instance."""
 
-        # noinspection PyShadowingBuiltins
-        def __get__(self, obj: Any, type: Any = None) -> TS:
+        def __get__(self, obj: Any, cls: Any = None) -> TS:
             return cast(TS, None)
 
     # pylint: disable=invalid-name
@@ -169,7 +165,7 @@ class BoundDepComponent:
 
 
 class DepComponent:
-    """Base class for all classes that can act as dependencies.
+    """Base class for all classes that can act as or use dependencies.
 
     category: Dependency Classes
     """
@@ -373,7 +369,7 @@ class InstancedDepComponent(DepComponent):
 
 
 class StaticDepComponent(DepComponent):
-    """Base for DepComponents intended to be instanced once and shared."""
+    """Base for DepComponents intended to be instantiated once and shared."""
 
     @classmethod
     def dep_get_payload(cls, depdata: DepData) -> Any:

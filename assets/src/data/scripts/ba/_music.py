@@ -30,7 +30,7 @@ from typing import TYPE_CHECKING
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Callable, Any, List, Optional, Dict
+    from typing import Callable, Any, List, Optional, Dict, Union
 
 
 class MusicPlayer:
@@ -141,7 +141,9 @@ class InternalMusicPlayer(MusicPlayer):
 
     class _PickFolderSongThread(threading.Thread):
 
-        def __init__(self, path: str, callback: Callable):
+        def __init__(self, path: str,
+                     callback: Callable[[Union[str, List[str]], Optional[str]],
+                                        None]):
             super().__init__()
             self._callback = callback
             self._path = path
@@ -166,7 +168,7 @@ class InternalMusicPlayer(MusicPlayer):
                     raise Exception(
                         _lang.Lstr(resource='internal.noMusicFilesInFolderText'
                                    ).evaluate())
-                _ba.pushcall(Call(self._callback, result=all_files),
+                _ba.pushcall(Call(self._callback, all_files, None),
                              from_other_thread=True)
             except Exception as exc:
                 from ba import _error
@@ -175,9 +177,7 @@ class InternalMusicPlayer(MusicPlayer):
                     err_str = str(exc)
                 except Exception:
                     err_str = '<ENCERR4523>'
-                _ba.pushcall(Call(self._callback,
-                                  result=self._path,
-                                  error=err_str),
+                _ba.pushcall(Call(self._callback, self._path, err_str),
                              from_other_thread=True)
 
     def on_play(self, entry: Any) -> None:
@@ -195,14 +195,19 @@ class InternalMusicPlayer(MusicPlayer):
             self._actually_playing = False
             self._PickFolderSongThread(name, self._on_play_folder_cb).start()
 
-    def _on_play_folder_cb(self, result: str,
+    def _on_play_folder_cb(self,
+                           result: Union[str, List[str]],
                            error: Optional[str] = None) -> None:
         from ba import _lang
         if error is not None:
             rstr = (_lang.Lstr(
                 resource='internal.errorPlayingMusicText').evaluate())
-            err_str = (rstr.replace('${MUSIC}', os.path.basename(result)) +
-                       '; ' + str(error))
+            if isinstance(result, str):
+                err_str = (rstr.replace('${MUSIC}', os.path.basename(result)) +
+                           '; ' + str(error))
+            else:
+                err_str = (rstr.replace('${MUSIC}', '<multiple>') + '; ' +
+                           str(error))
             _ba.screenmessage(err_str, color=(1, 0, 0))
             return
 
@@ -332,7 +337,8 @@ class ITunesThread(threading.Thread):
         self._commands.append(['GET_PLAYLISTS', callback])
         self._commands_available.set()
 
-    def _handle_get_playlists_command(self, target: str) -> None:
+    def _handle_get_playlists_command(self, target: Callable[[List[str]], None]
+                                      ) -> None:
         from ba._general import Call
         try:
             playlists = _ba.itunes_get_playlists()

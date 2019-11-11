@@ -609,7 +609,7 @@ def show_get_tickets_prompt() -> None:
     confirm.ConfirmWindow(
         ba.Lstr(translate=('serverResponses',
                            'You don\'t have enough tickets for this!')),
-        ba.Call(GetCurrencyWindow, modal=True),
+        lambda: GetCurrencyWindow(modal=True),
         ok_text=ba.Lstr(resource='getTicketsWindow.titleText'),
         width=460,
         height=130)
