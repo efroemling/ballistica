@@ -87,22 +87,6 @@ assets-android: prereqs
 assets-clean:
 	@cd assets && $(MAKE) clean
 
-# Build resources.
-resources: prereqs resources/Makefile
-	@cd resources && $(MAKE) -j${CPUS} resources
-
-# Clean resources.
-resources-clean:
-	@cd resources && $(MAKE) clean
-
-# Build our generated code.
-code: prereqs
-	@cd src/generated_src && $(MAKE) -j${CPUS} generated_code
-
-# Clean generated code.
-code-clean:
-	@cd src/generated_src && $(MAKE) clean
-
 # Remove *ALL* files and directories that aren't managed by git
 # (except for a few things such as localconfig.json).
 clean:
@@ -118,7 +102,7 @@ cleanlist:
 .PHONY: list prereqs prereqs-clean assets assets-cmake assets-windows \
   assets-windows-Win32 assets-windows-x64 \
   assets-mac assets-ios assets-android assets-clean \
-  resources resources-clean code code-clean\
+ -clean-clean\
   clean cleanlist
 
 
