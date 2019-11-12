@@ -684,12 +684,12 @@ def _run_idea_inspections_cached(cachepath: Path,
           flush=True)
 
 
-def pycharmscripts(projroot: Path, full: bool, verbose: bool) -> None:
+def pycharm(projroot: Path, full: bool, verbose: bool) -> None:
     """Run pycharm inspections on all our scripts."""
 
     import time
 
-    cachepath = Path('config/.cache-pycharmscripts')
+    cachepath = Path('config/.cache-pycharm')
     filenames = get_script_filenames(projroot)
     pycharmroot = Path('/Applications/PyCharm CE.app')
     pycharmbin = Path(pycharmroot, 'Contents/MacOS/pycharm')

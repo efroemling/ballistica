@@ -112,7 +112,19 @@ class App:
         self._apply_line_changes()
         self._apply_file_changes()
         self._update_compile_commands_file()
-        self._update_dummy_module()
+
+        # We only check/update these in core; not spinoff projects.
+        # That is because they create hashes based on source files
+        # that get filtered for spinoff projects so always trip
+        # dirty-checks there. If we want to generate these uniquely per
+        # spinoff project we would need to start running updates
+        # independently for those projects as opposed to just using
+        # things as spinoff creates them.
+
+        # (this will get filtered and be unequal in spinoff projects)
+        if 'ballistica' + 'core' == 'ballisticacore':
+            self._update_dummy_module()
+            self._update_docs_md()
 
         if self._check:
             print('Check-Builds: Everything up to date.')
@@ -120,13 +132,26 @@ class App:
             print('Update-Builds: SUCCESS!')
 
     def _update_dummy_module(self) -> None:
-        # Lastly update our dummy _ba module.
-        # We need to do this very last because it may run the cmake build
+        # Update our dummy _ba module.
+        # We need to do this near the end because it may run the cmake build
         # so its success may depend on the cmake build files having already
         # been updated.
         if os.path.exists('tools/gendummymodule.py'):
             if os.system('tools/gendummymodule.py' + self._checkarg) != 0:
                 print(CLRRED + 'Error checking/updating dummy module' + CLREND)
+                sys.exit(255)
+
+    def _update_docs_md(self) -> None:
+        # Update our docs/*.md files.
+        # We need to do this near the end because it may run the cmake build
+        # so its success may depend on the cmake build files having already
+        # been updated.
+        # (only do this if gendocs is available)
+        if os.path.exists('tools/gendocs.py'):
+            if os.system('tools/snippets update_docs_md' +
+                         self._checkarg) != 0:
+                print(CLRRED + 'Error checking/updating docs markdown.' +
+                      CLREND)
                 sys.exit(255)
 
     def _update_compile_commands_file(self) -> None:
@@ -160,7 +185,8 @@ class App:
                 with open(fname, 'w') as outfile:
                     outfile.write(fcode)
         if unchanged_project_count > 0:
-            print(f'All {unchanged_project_count} project files up to date.')
+            print(
+                f'All {unchanged_project_count} project files are up to date.')
 
     def _apply_line_changes(self) -> None:
 

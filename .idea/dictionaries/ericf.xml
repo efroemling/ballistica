@@ -297,6 +297,7 @@
       <w>cpplint</w>
       <w>cpplintcode</w>
       <w>cpplintcodefull</w>
+      <w>cpplintfull</w>
       <w>cpuinfo</w>
       <w>cpus</w>
       <w>cpython</w>
@@ -375,6 +376,7 @@
       <w>dnode</w>
       <w>doclines</w>
       <w>docprefix</w>
+      <w>docshash</w>
       <w>docslines</w>
       <w>docstr</w>
       <w>doctype</w>
@@ -674,6 +676,7 @@
       <w>hacky</w>
       <w>halign</w>
       <w>handlemessage</w>
+      <w>hashlines</w>
       <w>hashopenssl</w>
       <w>hashpath</w>
       <w>hashstr</w>
@@ -990,8 +993,10 @@
       <w>myobj</w>
       <w>myprojname</w>
       <w>mypy</w>
+      <w>mypyfull</w>
       <w>mypyscripts</w>
       <w>mypyscriptsfull</w>
+      <w>mysound</w>
       <w>mytextnode</w>
       <w>myweakcall</w>
       <w>mywidget</w>
@@ -1230,6 +1235,7 @@
       <w>pybuild</w>
       <w>pycache</w>
       <w>pycharmbin</w>
+      <w>pycharmfull</w>
       <w>pycharmroot</w>
       <w>pycharmscripts</w>
       <w>pycharmscriptsfull</w>
@@ -1247,6 +1253,8 @@
       <w>pylib</w>
       <w>pylibs</w>
       <w>pylint</w>
+      <w>pylintfast</w>
+      <w>pylintfull</w>
       <w>pylintplugins</w>
       <w>pylintrc</w>
       <w>pylintscripts</w>
@@ -1457,6 +1465,7 @@
       <w>steelseries</w>
       <w>stickman</w>
       <w>storable</w>
+      <w>storedhash</w>
       <w>storeitemui</w>
       <w>stringprep</w>
       <w>stringptr</w>

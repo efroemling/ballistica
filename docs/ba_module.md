@@ -1,6 +1,8 @@
-<h4><em>last updated on 2019-11-11 for BallisticaCore version 1.5.0 build 20001</em></h4>
+<!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
+<!--DOCSHASH=2c7e7e6ababaa4f13a69ea88d880155c-->
+<h4><em>last updated on 2019-11-12 for Ballistica version 1.5.0 build 20001</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
- which are the ones most relevant to modding BallisticaCore. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
+ which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
 <h2>Table of Contents</h2>
 <h4><a class="offsanchor" name="class_category_Gameplay_Classes">Gameplay Classes</a></h4>

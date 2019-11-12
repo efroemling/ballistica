@@ -270,7 +270,7 @@ check: updatecheck
 	@echo ALL CHECKS PASSED!
 # Same as 'check' plus optional/slow extra checks.
 check2: updatecheck
-	@$(MAKE) -j4 cpplint pylint mypy pycharmscripts
+	@$(MAKE) -j4 cpplint pylint mypy pycharm
 	@echo ALL CHECKS PASSED!
 
 # Run faster checks which may occasionally miss things.
@@ -279,7 +279,7 @@ checkfast: updatecheck
 	@echo ALL CHECKS PASSED!
 # Same as 'checkfast' plus optional/slow extra checks.
 checkfast2: updatecheck
-	@$(MAKE) -j4 cpplint pylintfast mypy pycharmscripts
+	@$(MAKE) -j4 cpplint pylintfast mypy pycharm
 	@echo ALL CHECKS PASSED!
 
 # Run checks with no caching (all files are checked).
@@ -288,7 +288,7 @@ checkfull: updatecheck
 	@echo ALL CHECKS PASSED!
 # Same as 'checkfull' plus optional/slow extra checks.
 checkfull2: updatecheck
-	@$(MAKE) -j4 cpplintfull pylintfull mypyfull pycharmscriptsfull
+	@$(MAKE) -j4 cpplintfull pylintfull mypyfull pycharmfull
 	@echo ALL CHECKS PASSED!
 
 # Run Cpplint checks on all C/C++ code.
@@ -323,18 +323,18 @@ mypyfull: prereqs
 	@tools/snippets mypy -full
 
 # Run PyCharm checks on all Python code.
-pycharmscripts: prereqs
-	@tools/snippets pycharmscripts
+pycharm: prereqs
+	@tools/snippets pycharm
 
 # Run PyCharm checks without caching (all files are checked).
-pycharmscriptsfull: prereqs
-	@tools/snippets pycharmscripts -full
+pycharmfull: prereqs
+	@tools/snippets pycharm -full
 
 # Tell make which of these targets don't represent files.
 .PHONY: format formatfull formatcode formatcodefull formatscripts \
   formatscriptsfull check check2 checkfast checkfast2 checkfull checkfull2 \
   cpplint cpplintfull pylint pylintfull mypy \
-  mypyfull pycharmscripts pycharmscriptsfull
+  mypyfull pycharm pycharmfull
 
 
 ################################################################################
@@ -358,7 +358,7 @@ updatethencheck: update
 	@echo ALL CHECKS PASSED!
 # Same as 'updatethencheck' plus optional/slow extra checks.
 updatethencheck2: update
-	@$(MAKE) -j4 cpplint pylint mypy pycharmscripts
+	@$(MAKE) -j4 cpplint pylint mypy pycharm
 	@echo ALL CHECKS PASSED!
 
 # 'updatethencheck' without caching (checks all files).
@@ -367,7 +367,7 @@ updatethencheckfull: update
 	@echo ALL CHECKS PASSED!
 # 'updatethencheckfull' plus optional/slow extra checks.
 updatethencheckfull2: update
-	@$(MAKE) -j4 cpplintfull pylintfull mypyfull pycharmscriptsfull
+	@$(MAKE) -j4 cpplintfull pylintfull mypyfull pycharmfull
 	@echo ALL CHECKS PASSED!
 
 # Format, update, and check the project; do this before git commits.

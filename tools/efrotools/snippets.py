@@ -155,12 +155,12 @@ def _spelling(words: List[str]) -> None:
 
 
 def spelling_all() -> None:
-    """Add all misspellings from a pycharmscripts run."""
+    """Add all misspellings from a pycharm run."""
 
-    print('Running "make pycharmscriptsfull"...')
+    print('Running "make pycharmfull"...')
     lines = [
         line for line in subprocess.run(
-            ['make', 'pycharmscriptsfull'], check=False,
+            ['make', 'pycharmfull'], check=False,
             capture_output=True).stdout.decode().splitlines()
         if 'Typo: In word' in line
     ]
@@ -262,12 +262,12 @@ def mypy() -> None:
     code.mypy(PROJROOT, full)
 
 
-def pycharmscripts() -> None:
+def pycharm() -> None:
     """Run PyCharm checks on our scripts."""
     from efrotools import code
     full = '-full' in sys.argv
     verbose = '-v' in sys.argv
-    code.pycharmscripts(PROJROOT, full, verbose)
+    code.pycharm(PROJROOT, full, verbose)
 
 
 def clioncode() -> None:

@@ -44,8 +44,8 @@ import efrotools
 from efrotools.snippets import (  # pylint: disable=unused-import
     PROJROOT, CleanError, snippets_main, formatcode, formatscripts,
     formatmakefile, cpplint, pylint, mypy, tool_config_install, sync, sync_all,
-    scriptfiles, pycharmscripts, clioncode, androidstudiocode,
-    makefile_target_list, spelling, spelling_all, compile_python_files)
+    scriptfiles, pycharm, clioncode, androidstudiocode, makefile_target_list,
+    spelling, spelling_all, compile_python_files)
 
 if TYPE_CHECKING:
     from typing import Optional, List, Sequence
@@ -641,6 +641,53 @@ def warm_start_asset_build() -> None:
 
 def _vstr(nums: Sequence[int]) -> str:
     return '.'.join(str(i) for i in nums)
+
+
+def update_docs_md() -> None:
+    """Updates docs markdown files if necessary."""
+    # pylint: disable=too-many-locals
+    from efrotools import get_files_hash, run
+    from efrotools.code import get_script_filenames
+
+    check = ('--check' in sys.argv)
+
+    docs_path = 'docs/ba_module.md'
+
+    # Generate a hash from all c/c++ sources under the python subdir
+    # as well as all python scripts.
+    pysources = []
+    exts = ['.cc', '.c', '.h']
+    for root, _dirs, files in os.walk('src/ballistica/python'):
+        for fname in files:
+            if any(fname.endswith(ext) for ext in exts):
+                pysources.append(os.path.join(root, fname))
+    pysources += get_script_filenames(Path('.'))
+    curhash = get_files_hash(pysources)
+    print('final2', curhash)
+
+    # Extract the current embedded hash.
+    with open(docs_path) as infile:
+        lines = infile.readlines()
+    hashlines = [l for l in lines if '<!--DOCSHASH=' in l]
+    assert len(hashlines) == 1
+    storedhash = hashlines[0][13:-4]
+
+    if curhash != storedhash:
+        if check:
+            raise CleanError('Docs markdown is out of date.')
+
+        print(f'Updating {docs_path}...', flush=True)
+        run('make docs')
+
+        # Our docs markdown is just the docs html with a few added
+        # bits at the top.
+        with open('build/docs.html') as infile:
+            docs = infile.read()
+        docs = ('<!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->\n'
+                f'<!--DOCSHASH={curhash}-->\n') + docs
+        with open(docs_path, 'w') as outfile:
+            outfile.write(docs)
+    print(f'{docs_path} is up to date.')
 
 
 def checkenv() -> None:
