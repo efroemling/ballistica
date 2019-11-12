@@ -647,7 +647,6 @@ def update_docs_md() -> None:
     """Updates docs markdown files if necessary."""
     # pylint: disable=too-many-locals
     from efrotools import get_files_hash, run
-    from efrotools.code import get_script_filenames
 
     check = ('--check' in sys.argv)
 
@@ -656,14 +655,17 @@ def update_docs_md() -> None:
     # Generate a hash from all c/c++ sources under the python subdir
     # as well as all python scripts.
     pysources = []
-    exts = ['.cc', '.c', '.h']
-    for root, _dirs, files in os.walk('src/ballistica/python'):
-        for fname in files:
-            if any(fname.endswith(ext) for ext in exts):
-                pysources.append(os.path.join(root, fname))
-    pysources += get_script_filenames(Path('.'))
+    exts = ['.cc', '.c', '.h', '.py']
+    for basedir in [
+            'src/ballistica/python', 'assets/src/data/scripts/bafoundation',
+            'assets/src/data/scripts/ba'
+    ]:
+        assert os.path.isdir(basedir)
+        for root, _dirs, files in os.walk(basedir):
+            for fname in files:
+                if any(fname.endswith(ext) for ext in exts):
+                    pysources.append(os.path.join(root, fname))
     curhash = get_files_hash(pysources)
-    print('final2', curhash)
 
     # Extract the current embedded hash.
     with open(docs_path) as infile:
