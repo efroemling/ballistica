@@ -39,12 +39,12 @@ DOCPREFIX = "ballisticacore_"
 help:
 	@tools/snippets makefile_target_list Makefile
 
-# Prerequisites that should be in place before running most any other build;
-# things like tool config files, etc.
 PREREQS = .cache/checkenv .dir-locals.el \
   .mypy.ini .pycheckers .pylintrc .style.yapf .clang-format \
   .projectile .editorconfig
 
+# Target that should be built before running most any other build.
+# This installs tool config files, runs environment checks, etc.
 prereqs: ${PREREQS}
 
 prereqs-clean:
@@ -257,62 +257,78 @@ formatscripts: prereqs
 formatscriptsfull: prereqs
 	@tools/snippets formatscripts -full
 
+# Runs formatting on the project Makefile.
 formatmakefile: prereqs
 	@tools/snippets formatmakefile
 
 # Note: the '2' varieties include extra inspections such as PyCharm.
 # These are useful, but can take significantly longer and/or be a bit flaky.
 
+# Run all project checks.
 check: updatecheck
 	@$(MAKE) -j3 cpplint pylint mypy
 	@echo ALL CHECKS PASSED!
+# Same as 'check' plus optional/slow extra checks.
 check2: updatecheck
 	@$(MAKE) -j4 cpplint pylint mypy pycharmscripts
 	@echo ALL CHECKS PASSED!
 
+# Run faster checks which may occasionally miss things.
 checkfast: updatecheck
 	@$(MAKE) -j3 cpplint pylintfast mypy
 	@echo ALL CHECKS PASSED!
+# Same as 'checkfast' plus optional/slow extra checks.
 checkfast2: updatecheck
 	@$(MAKE) -j4 cpplint pylintfast mypy pycharmscripts
 	@echo ALL CHECKS PASSED!
 
+# Run checks with no caching (all files are checked).
 checkfull: updatecheck
 	@$(MAKE) -j3 cpplintfull pylintfull mypyfull
 	@echo ALL CHECKS PASSED!
+# Same as 'checkfull' plus optional/slow extra checks.
 checkfull2: updatecheck
 	@$(MAKE) -j4 cpplintfull pylintfull mypyfull pycharmscriptsfull
 	@echo ALL CHECKS PASSED!
 
+# Run Cpplint checks on all C/C++ code.
 cpplint: prereqs
 	@tools/snippets cpplint
 
+# Run Cpplint checks without caching (all files are checked).
 cpplintfull: prereqs
 	@tools/snippets cpplint -full
 
+# Run Pylint checks on all Python Code.
 pylint: prereqs
 	@tools/snippets pylint
 
+# Run Pylint checks without caching (all files are checked).
 pylintfull: prereqs
 	@tools/snippets pylint -full
 
+# Run 'Fast' pylint checks (may miss problems in some cases).
+# This uses dependency recursion limits and so can require much less
+# re-checking but may miss problems in some cases. Its not a bad idea to
+# run a non-fast check every so often or before pushing.
+pylintfast: prereqs
+	@tools/snippets pylint -fast
+
+# Run Mypy checks on all Python code.
 mypy: prereqs
 	@tools/snippets mypy
 
+# Run Mypy checks without caching (all files are checked).
 mypyfull: prereqs
 	@tools/snippets mypy -full
 
+# Run PyCharm checks on all Python code.
 pycharmscripts: prereqs
 	@tools/snippets pycharmscripts
 
+# Run PyCharm checks without caching (all files are checked).
 pycharmscriptsfull: prereqs
 	@tools/snippets pycharmscripts -full
-
-# 'Fast' script checking using dependency recursion limits.
-# This can require much less re-checking but may miss problems in rare cases.
-# Its not a bad idea to run a non-fast check every so often or before pushing.
-pylintfast: prereqs
-	@tools/snippets pylint -fast
 
 # Tell make which of these targets don't represent files.
 .PHONY: format formatfull formatcode formatcodefull formatscripts \
@@ -340,49 +356,37 @@ updatecheck: prereqs
 updatethencheck: update
 	@$(MAKE) -j3 cpplint pylint mypy
 	@echo ALL CHECKS PASSED!
+# Same as 'updatethencheck' plus optional/slow extra checks.
 updatethencheck2: update
 	@$(MAKE) -j4 cpplint pylint mypy pycharmscripts
 	@echo ALL CHECKS PASSED!
 
-updatethencheckfast: update
-	@$(MAKE) -j3 cpplint pylintfast mypy
-	@echo ALL CHECKS PASSED!
-updatethencheckfast2: update
-	@$(MAKE) -j4 cpplint pylintfast mypy pycharmscripts
-	@echo ALL CHECKS PASSED!
-
+# 'updatethencheck' without caching (checks all files).
 updatethencheckfull: update
 	@$(MAKE) -j3 cpplintfull pylintfull mypyfull
 	@echo ALL CHECKS PASSED!
+# 'updatethencheckfull' plus optional/slow extra checks.
 updatethencheckfull2: update
 	@$(MAKE) -j4 cpplintfull pylintfull mypyfull pycharmscriptsfull
 	@echo ALL CHECKS PASSED!
 
-# Run a format, an update, and then a check.
-# Handy before pushing commits.
-
+# Format, update, and check the project; do this before git commits.
 preflight:
 	@$(MAKE) format
 	@$(MAKE) updatethencheck
 	@echo PREFLIGHT SUCCESSFUL!
+# Same as 'preflight' plus optional/slow extra checks.
 preflight2:
 	@$(MAKE) format
 	@$(MAKE) updatethencheck2
 	@echo PREFLIGHT SUCCESSFUL!
 
-preflightfast:
-	@$(MAKE) format
-	@$(MAKE) updatethencheckfast
-	@echo PREFLIGHT SUCCESSFUL!
-preflightfast2:
-	@$(MAKE) format
-	@$(MAKE) updatethencheckfast2
-	@echo PREFLIGHT SUCCESSFUL!
-
+# Same as 'preflight' without caching (checks all files).
 preflightfull:
 	@$(MAKE) formatfull
 	@$(MAKE) updatethencheckfull
 	@echo PREFLIGHT SUCCESSFUL!
+# Same as 'preflightfull' plus optional/slow extra checks.
 preflightfull2:
 	@$(MAKE) formatfull
 	@$(MAKE) updatethencheckfull2
@@ -390,9 +394,8 @@ preflightfull2:
 
 # Tell make which of these targets don't represent files.
 .PHONY: update updatecheck updatethencheck updatethencheck2 \
-  updatethencheckfast updatethencheckfast2 updatethencheckfull \
-  updatethencheckfull2 preflight preflight2 preflightfast preflightfast2 \
-  preflightfull preflightfull2
+  updatethencheckfull updatethencheckfull2 preflight preflight2 \
+  preflightfast preflightfast2 preflightfull preflightfull2
 
 
 ################################################################################
