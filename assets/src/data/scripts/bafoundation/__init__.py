@@ -18,4 +18,4 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # -----------------------------------------------------------------------------
-"""Functionality shared between Ballistica client and server components."""
+"""Functionality shared between all Ballistica clients, servers, and tools."""

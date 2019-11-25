@@ -47,13 +47,13 @@ def filter_playlist(playlist: PlaylistType,
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-statements
     from ba import _meta
-    from ba import _maps
+    from ba import _map
     from ba import _general
     from ba import _gameactivity
     goodlist: List[Dict] = []
     unowned_maps: Sequence[str]
     if remove_unowned or mark_unowned:
-        unowned_maps = _maps.get_unowned_maps()
+        unowned_maps = _map.get_unowned_maps()
         unowned_game_types = _meta.get_unowned_game_types()
     else:
         unowned_maps = []
@@ -69,7 +69,7 @@ def filter_playlist(playlist: PlaylistType,
             entry['settings']['map'] = entry['map']
             del entry['map']
         # update old map names to new ones
-        entry['settings']['map'] = _maps.get_filtered_map_name(
+        entry['settings']['map'] = _map.get_filtered_map_name(
             entry['settings']['map'])
         if remove_unowned and entry['settings']['map'] in unowned_maps:
             continue

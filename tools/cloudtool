@@ -1,0 +1,199 @@
+#!/usr/bin/env python3.7
+# Copyright (c) 2011-2019 Eric Froemling
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# -----------------------------------------------------------------------------
+"""A tool for interacting with ballistica's cloud services.
+This facilitates workflows such as creating asset-bundles, etc.
+"""
+
+from __future__ import annotations
+
+import sys
+import os
+from typing import TYPE_CHECKING
+import urllib.request
+import urllib.parse
+import urllib.error
+from dataclasses import dataclass
+from pathlib import Path
+import json
+
+if TYPE_CHECKING:
+    from typing import Optional, Dict, Any
+
+# Version is sent to the master-server with all commands. Can be incremented
+# if we need to change behavior server-side to go along with client changes.
+VERSION = 1
+
+TOOL_NAME = 'cloudtool'
+
+# Set CLOUDTOOL_LOCAL env var to 1 to test with a locally-run master-server.
+MASTER_SERVER_ADDRESS = ('http://localhost:23524'
+                         if os.environ.get('CLOUDTOOL_LOCAL') == '1' else
+                         'https://bamaster.appspot.com')
+USER_AGENT_STRING = 'cloudtool'
+CACHE_DIR = Path('.cache/cloudtool')
+CACHE_DATA_PATH = Path(CACHE_DIR, 'state')
+
+CLRHDR = '\033[95m'  # Header.
+CLRGRN = '\033[92m'  # Green.
+CLRBLU = '\033[94m'  # Glue.
+CLRRED = '\033[91m'  # Red.
+CLREND = '\033[0m'  # End.
+
+CMD_LOGIN = 'login'
+CMD_LOGOUT = 'logout'
+CMD_HELP = 'help'
+
+
+@dataclass
+class StateData:
+    """Persistent state data stored to disk."""
+    login_token: Optional[str] = None
+
+
+@dataclass
+class Response:
+    """Response data from the master server for a command."""
+    message: Optional[str]
+    error: Optional[str]
+    data: Any
+
+
+class CleanError(Exception):
+    """Exception resulting in a clean error string print and exit."""
+
+
+class App:
+    """Context for a run of the tool."""
+
+    def __init__(self) -> None:
+        self._state = StateData()
+
+    def run(self) -> None:
+        """Run the tool."""
+
+        # Make reasonably sure we're being run from project root.
+        if not os.path.exists(f'tools/{TOOL_NAME}'):
+            raise CleanError(
+                'This tool must be run from ballistica project root.')
+
+        self._load_cache()
+
+        if len(sys.argv) < 2:
+            raise CleanError(
+                f'Invalid args. Run "cloudtool help" for usage info.')
+
+        cmd = sys.argv[1]
+        if cmd == CMD_LOGIN:
+            self.do_login()
+        elif cmd == CMD_LOGOUT:
+            self.do_logout()
+        else:
+            # For all other commands, simply pass them to the server verbatim.
+            self.do_misc_command()
+
+        self._save_cache()
+
+    def _load_cache(self) -> None:
+        if not os.path.exists(CACHE_DATA_PATH):
+            return
+        try:
+            with open(CACHE_DATA_PATH, 'r') as infile:
+                self._state = StateData(**json.loads(infile.read()))
+        except Exception:
+            print(CLRRED +
+                  f'Error loading {TOOL_NAME} data; resetting to defaults.' +
+                  CLREND)
+
+    def _save_cache(self) -> None:
+        if not CACHE_DIR.exists():
+            CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        with open(CACHE_DATA_PATH, 'w') as outfile:
+            outfile.write(json.dumps(self._state.__dict__))
+
+    def _servercmd(self, cmd: str, data: Dict) -> Response:
+        """Issue a command to the server and get a response."""
+
+        # We do all communication through POST requests to the server.
+        response_raw = urllib.request.urlopen(
+            urllib.request.Request(
+                (MASTER_SERVER_ADDRESS + '/cloudtoolcmd'),
+                urllib.parse.urlencode({
+                    'c': cmd,
+                    'v': VERSION,
+                    't': json.dumps(self._state.login_token),
+                    'd': json.dumps(data)
+                }).encode(), {'User-Agent': USER_AGENT_STRING}))
+        output = json.loads(response_raw.read().decode())
+        assert isinstance(output, dict)
+        response = Response(message=output['m'],
+                            data=output['d'],
+                            error=output['e'])
+
+        # Handle errors and messages which are common to all command types.
+        if response.error is not None:
+            raise CleanError(response.error)
+
+        if response.message is not None:
+            print(response.message)
+
+        return response
+
+    def do_login(self) -> None:
+        """Run the login command."""
+
+        if len(sys.argv) != 3:
+            raise CleanError('Expected a login code.')
+
+        login_code = sys.argv[2]
+        response = self._servercmd('login', {'c': login_code})
+
+        # If the command returned cleanly, we should have a token we can use
+        # to log in.
+        token = response.data['logintoken']
+        assert isinstance(token, str)
+
+        aname = response.data['accountname']
+        assert isinstance(aname, str)
+
+        print(f'{CLRGRN}Now logged in as {aname}.{CLREND}')
+        self._state.login_token = token
+
+    def do_logout(self) -> None:
+        """Run the logout command."""
+        self._state.login_token = None
+        print(f'{CLRGRN}Cloudtool is now logged out.{CLREND}')
+
+    def do_misc_command(self) -> None:
+        """Run a miscellaneous command."""
+
+        # We don't do anything special with the response here; the normal
+        # error-handling/message-printing is all that happens.
+        self._servercmd('misc', {'a': sys.argv[1:]})
+
+
+if __name__ == '__main__':
+    try:
+        App().run()
+    except CleanError as exc:
+        if str(exc):
+            print(f'{CLRRED}{exc}{CLREND}')
+        sys.exit(-1)

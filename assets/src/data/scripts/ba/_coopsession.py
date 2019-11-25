@@ -73,7 +73,7 @@ class CoopSession(Session):
                     max_players = 4
 
         print('FIXME: COOP SESSION WOULD CALC DEPS.')
-        depsets: Sequence[ba.DepSet] = []
+        depsets: Sequence[ba.DependencySet] = []
 
         super().__init__(depsets,
                          team_names=TEAM_NAMES,

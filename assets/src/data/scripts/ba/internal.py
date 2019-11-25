@@ -27,9 +27,9 @@ defensively) in mods.
 
 # pylint: disable=unused-import
 
-from ba._maps import (get_unowned_maps, get_map_class, register_map,
-                      preload_map_preview_media, get_map_display_string,
-                      get_filtered_map_name)
+from ba._map import (get_unowned_maps, get_map_class, register_map,
+                     preload_map_preview_media, get_map_display_string,
+                     get_filtered_map_name)
 from ba._appconfig import commit_app_config
 from ba._input import (get_device_value, get_input_map_hash,
                        get_input_device_config)

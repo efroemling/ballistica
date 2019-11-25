@@ -170,6 +170,7 @@ SCRIPT_TARGETS_PY_1 = \
   build/data/scripts/ba/_profile.py \
   build/data/scripts/ba/_error.py \
   build/data/scripts/ba/_achievement.py \
+  build/data/scripts/ba/_map.py \
   build/data/scripts/ba/_teambasesession.py \
   build/data/scripts/ba/_gameutils.py \
   build/data/scripts/ba/_activity.py \
@@ -197,14 +198,13 @@ SCRIPT_TARGETS_PY_1 = \
   build/data/scripts/ba/_lobby.py \
   build/data/scripts/ba/_stats.py \
   build/data/scripts/ba/_input.py \
-  build/data/scripts/ba/_dep.py \
   build/data/scripts/ba/_level.py \
+  build/data/scripts/ba/_dependency.py \
   build/data/scripts/ba/_general.py \
   build/data/scripts/ba/_server.py \
   build/data/scripts/ba/_account.py \
   build/data/scripts/ba/_music.py \
   build/data/scripts/ba/_lang.py \
-  build/data/scripts/ba/_maps.py \
   build/data/scripts/ba/_teamgame.py \
   build/data/scripts/ba/ui/__init__.py \
   build/data/scripts/bastd/mainmenu.py \
@@ -405,6 +405,7 @@ SCRIPT_TARGETS_PYC_1 = \
   build/data/scripts/ba/__pycache__/_profile.cpython-37.opt-1.pyc \
   build/data/scripts/ba/__pycache__/_error.cpython-37.opt-1.pyc \
   build/data/scripts/ba/__pycache__/_achievement.cpython-37.opt-1.pyc \
+  build/data/scripts/ba/__pycache__/_map.cpython-37.opt-1.pyc \
   build/data/scripts/ba/__pycache__/_teambasesession.cpython-37.opt-1.pyc \
   build/data/scripts/ba/__pycache__/_gameutils.cpython-37.opt-1.pyc \
   build/data/scripts/ba/__pycache__/_activity.cpython-37.opt-1.pyc \
@@ -432,14 +433,13 @@ SCRIPT_TARGETS_PYC_1 = \
   build/data/scripts/ba/__pycache__/_lobby.cpython-37.opt-1.pyc \
   build/data/scripts/ba/__pycache__/_stats.cpython-37.opt-1.pyc \
   build/data/scripts/ba/__pycache__/_input.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_dep.cpython-37.opt-1.pyc \
   build/data/scripts/ba/__pycache__/_level.cpython-37.opt-1.pyc \
+  build/data/scripts/ba/__pycache__/_dependency.cpython-37.opt-1.pyc \
   build/data/scripts/ba/__pycache__/_general.cpython-37.opt-1.pyc \
   build/data/scripts/ba/__pycache__/_server.cpython-37.opt-1.pyc \
   build/data/scripts/ba/__pycache__/_account.cpython-37.opt-1.pyc \
   build/data/scripts/ba/__pycache__/_music.cpython-37.opt-1.pyc \
   build/data/scripts/ba/__pycache__/_lang.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_maps.cpython-37.opt-1.pyc \
   build/data/scripts/ba/__pycache__/_teamgame.cpython-37.opt-1.pyc \
   build/data/scripts/ba/ui/__pycache__/__init__.cpython-37.opt-1.pyc \
   build/data/scripts/bastd/__pycache__/mainmenu.cpython-37.opt-1.pyc \
@@ -764,6 +764,11 @@ build/data/scripts/ba/__pycache__/_achievement.cpython-37.opt-1.pyc: \
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
+build/data/scripts/ba/__pycache__/_map.cpython-37.opt-1.pyc: \
+      build/data/scripts/ba/_map.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
 build/data/scripts/ba/__pycache__/_teambasesession.cpython-37.opt-1.pyc: \
       build/data/scripts/ba/_teambasesession.py
 	@echo Compiling script: $^
@@ -899,13 +904,13 @@ build/data/scripts/ba/__pycache__/_input.cpython-37.opt-1.pyc: \
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_dep.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_dep.py
+build/data/scripts/ba/__pycache__/_level.cpython-37.opt-1.pyc: \
+      build/data/scripts/ba/_level.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_level.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_level.py
+build/data/scripts/ba/__pycache__/_dependency.cpython-37.opt-1.pyc: \
+      build/data/scripts/ba/_dependency.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
@@ -931,11 +936,6 @@ build/data/scripts/ba/__pycache__/_music.cpython-37.opt-1.pyc: \
 
 build/data/scripts/ba/__pycache__/_lang.cpython-37.opt-1.pyc: \
       build/data/scripts/ba/_lang.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/data/scripts/ba/__pycache__/_maps.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_maps.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 

@@ -447,9 +447,9 @@ def makefile_target_list() -> None:
             return ' - ' + doc
         return doc
 
-    print('--------------------------\n'
-          'Available Makefile Targets\n'
-          '--------------------------')
+    print('----------------------\n'
+          'Available Make Targets\n'
+          '----------------------')
 
     entries: List[_Entry] = []
     for i, line in enumerate(lines):

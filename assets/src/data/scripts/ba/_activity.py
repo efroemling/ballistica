@@ -25,7 +25,7 @@ import weakref
 from typing import TYPE_CHECKING
 
 import _ba
-from ba._dep import InstancedDepComponent
+from ba._dependency import DependencyComponent
 
 if TYPE_CHECKING:
     from weakref import ReferenceType
@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     from bastd.actor.respawnicon import RespawnIcon
 
 
-class Activity(InstancedDepComponent):
+class Activity(DependencyComponent):
     """Units of execution wrangled by a ba.Session.
 
     Category: Gameplay Classes

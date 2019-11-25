@@ -54,32 +54,31 @@ prereqs-clean:
 assets: prereqs
 	@cd assets && make -j${CPUS}
 
-# Build only assets required for cmake builds (linux, mac)
+# Build assets required for cmake builds (linux, mac)
 assets-cmake: prereqs
 	@cd assets && $(MAKE) -j${CPUS} cmake
 
-# Build only assets required for windows builds.
-# (honoring the WINDOWS_PLATFORM value)
+# Build assets required for WINDOWS_PLATFORM windows builds.
 assets-windows: prereqs
 	@cd assets && $(MAKE) -j${CPUS} win-${WINDOWS_PLATFORM}
 
-# Build only assets required for Win32 windows builds.
+# Build assets required for Win32 windows builds.
 assets-windows-Win32: prereqs
 	@cd assets && $(MAKE) -j${CPUS} win-Win32
 
-# Build only assets required for x64 windows builds.
+# Build assets required for x64 windows builds.
 assets-windows-x64: prereqs
 	@cd assets && $(MAKE) -j${CPUS} win-x64
 
-# Build only assets required for mac xcode builds
+# Build assets required for mac xcode builds
 assets-mac: prereqs
 	@cd assets && $(MAKE) -j${CPUS} mac
 
-# Build only assets required for ios.
+# Build assets required for ios.
 assets-ios: prereqs
 	@cd assets && $(MAKE) -j${CPUS} ios
 
-# Build only assets required for android.
+# Build assets required for android.
 assets-android: prereqs
 	@cd assets && $(MAKE) -j${CPUS} android
 

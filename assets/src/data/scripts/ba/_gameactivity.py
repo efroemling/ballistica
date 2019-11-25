@@ -250,9 +250,9 @@ class GameActivity(Activity):
         implementation; should return a list of map names valid
         for this game-type for the given ba.Session type.
         """
-        from ba import _maps
+        from ba import _map
         del sessiontype  # unused arg
-        return _maps.getmaps("melee")
+        return _map.getmaps("melee")
 
     @classmethod
     def get_config_display_string(cls, config: Dict[str, Any]) -> ba.Lstr:
@@ -261,7 +261,7 @@ class GameActivity(Activity):
         This is used when viewing game-lists or showing what game
         is up next in a series.
         """
-        from ba import _maps
+        from ba import _map
         name = cls.get_display_string(config['settings'])
 
         # in newer configs, map is in settings; it used to be in the
@@ -270,15 +270,15 @@ class GameActivity(Activity):
             sval = Lstr(value="${NAME} @ ${MAP}",
                         subs=[('${NAME}', name),
                               ('${MAP}',
-                               _maps.get_map_display_string(
-                                   _maps.get_filtered_map_name(
+                               _map.get_map_display_string(
+                                   _map.get_filtered_map_name(
                                        config['settings']['map'])))])
         elif 'map' in config:
             sval = Lstr(value="${NAME} @ ${MAP}",
                         subs=[('${NAME}', name),
                               ('${MAP}',
-                               _maps.get_map_display_string(
-                                   _maps.get_filtered_map_name(config['map'])))
+                               _map.get_map_display_string(
+                                   _map.get_filtered_map_name(config['map'])))
                               ])
         else:
             print('invalid game config - expected map entry under settings')
@@ -295,7 +295,7 @@ class GameActivity(Activity):
 
     def __init__(self, settings: Dict[str, Any]):
         """Instantiate the Activity."""
-        from ba import _maps
+        from ba import _map
         super().__init__(settings)
 
         # Set some defaults.
@@ -313,7 +313,7 @@ class GameActivity(Activity):
         else:
             # If settings doesn't specify a map, pick a random one from the
             # list of supported ones.
-            unowned_maps = _maps.get_unowned_maps()
+            unowned_maps = _map.get_unowned_maps()
             valid_maps: List[str] = [
                 m for m in self.get_supported_maps(type(self.session))
                 if m not in unowned_maps
@@ -322,7 +322,7 @@ class GameActivity(Activity):
                 _ba.screenmessage(Lstr(resource='noValidMapsErrorText'))
                 raise Exception("No valid maps")
             map_name = valid_maps[random.randrange(len(valid_maps))]
-        self._map_type = _maps.get_map_class(map_name)
+        self._map_type = _map.get_map_class(map_name)
         self._map_type.preload()
         self._map: Optional[ba.Map] = None
         self._powerup_drop_timer: Optional[ba.Timer] = None

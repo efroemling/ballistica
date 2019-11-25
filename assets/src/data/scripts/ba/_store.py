@@ -40,7 +40,7 @@ def get_store_item_name_translated(item_name: str) -> ba.Lstr:
     """Return a ba.Lstr for a store item name."""
     # pylint: disable=cyclic-import
     from ba import _lang
-    from ba import _maps
+    from ba import _map
     item_info = get_store_item(item_name)
     if item_name.startswith('characters.'):
         return _lang.Lstr(translate=('characterNames', item_info['character']))
@@ -50,7 +50,7 @@ def get_store_item_name_translated(item_name: str) -> ba.Lstr:
                                  _lang.Lstr(resource='titleText'))])
     if item_name.startswith('maps.'):
         map_type: Type[ba.Map] = item_info['map_type']
-        return _maps.get_map_display_string(map_type.name)
+        return _map.get_map_display_string(map_type.name)
     if item_name.startswith('games.'):
         gametype: Type[ba.GameActivity] = item_info['gametype']
         return gametype.get_display_string()

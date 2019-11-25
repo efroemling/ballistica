@@ -422,7 +422,7 @@ class App:
         from ba import _appconfig
         from ba import ui as bsui
         from ba import _achievement
-        from ba import _maps
+        from ba import _map
         from ba import _meta
         from ba import _music
         from ba import _campaign
@@ -451,7 +451,7 @@ class App:
                 stdmaps.CragCastle, stdmaps.TowerD, stdmaps.HappyThoughts,
                 stdmaps.StepRightUp, stdmaps.Courtyard, stdmaps.Rampage
         ]:
-            _maps.register_map(maptype)
+            _map.register_map(maptype)
 
         if self.debug_build:
             _apputils.suppress_debug_reports()
@@ -590,7 +590,7 @@ class App:
 
         self.ran_on_launch = True
 
-        from ba._dep import test_depset
+        from ba._dependency import test_depset
         test_depset()
         # print('GAME TYPES ARE', meta.get_game_types())
         # _bs.quit()

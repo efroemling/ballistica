@@ -83,7 +83,7 @@ class Session:
     players: List[ba.Player]
 
     def __init__(self,
-                 depsets: Sequence[ba.DepSet],
+                 depsets: Sequence[ba.DependencySet],
                  team_names: Sequence[str] = None,
                  team_colors: Sequence[Sequence[float]] = None,
                  use_team_colors: bool = True,
@@ -94,7 +94,7 @@ class Session:
         # pylint: disable=too-many-branches
         """Instantiate a session.
 
-        depsets should be a sequence of successfully resolved ba.DepSet
+        depsets should be a sequence of successfully resolved ba.DependencySet
         instances; one for each ba.Activity the session may potentially run.
         """
         # pylint: disable=too-many-locals
@@ -105,7 +105,7 @@ class Session:
         from ba._gameactivity import GameActivity
         from ba._team import Team
         from ba._error import DependencyError
-        from ba._dep import Dep, AssetPackage
+        from ba._dependency import Dependency, AssetPackage
 
         print(' WOULD LOOK AT DEP SETS', depsets)
 
@@ -131,7 +131,8 @@ class Session:
         # throw a combined exception if we found anything missing
         if missing_asset_packages:
             raise DependencyError([
-                Dep(AssetPackage, set_id) for set_id in missing_asset_packages
+                Dependency(AssetPackage, set_id)
+                for set_id in missing_asset_packages
             ])
 
         # ok; looks like our dependencies check out.

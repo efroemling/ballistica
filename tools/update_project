@@ -19,8 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # -----------------------------------------------------------------------------
-"""
-This script acts as a 'meta' Makefile for the project. It is in charge
+"""This script acts as a 'meta' Makefile for the project. It is in charge
 of generating Makefiles, IDE project files, procedurally generated source
 files, etc. based on the current structure of the project.
 It can also perform sanity checks or cleanup tasks.

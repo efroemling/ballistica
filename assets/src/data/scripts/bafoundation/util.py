@@ -36,7 +36,13 @@ TRET = TypeVar('TRET')
 
 
 def utc_now() -> datetime.datetime:
-    """Get offset-aware current utc time."""
+    """Get offset-aware current utc time.
+
+    This should be used for all datetimes getting sent over the network,
+    used with the entity system, etc.
+    (datetime.utcnow() gives a utc time value, but it is not timezone-aware
+    which makes it less safe to use)
+    """
     return datetime.datetime.now(datetime.timezone.utc)
 
 

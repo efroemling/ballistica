@@ -43,7 +43,8 @@ from ba._actor import Actor
 from ba._app import App
 from ba._coopgame import CoopGameActivity
 from ba._coopsession import CoopSession
-from ba._dep import Dep, Dependency, DepComponent, DepSet, AssetPackage
+from ba._dependency import (Dependency, DependencyComponent, DependencySet,
+                            AssetPackage)
 from ba._enums import TimeType, Permission, TimeFormat, SpecialChar
 from ba._error import (UNHANDLED, print_exception, print_error, NotFoundError,
                        PlayerNotFoundError, NodeNotFoundError,
@@ -55,7 +56,7 @@ from ba._freeforallsession import FreeForAllSession
 from ba._gameactivity import GameActivity
 from ba._gameresults import TeamGameResults
 from ba._lang import Lstr, setlanguage, get_valid_languages
-from ba._maps import Map, getmaps
+from ba._map import Map, getmaps
 from ba._session import Session
 from ba._stats import PlayerScoredMessage, PlayerRecord, Stats
 from ba._team import Team

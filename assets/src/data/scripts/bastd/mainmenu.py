@@ -46,7 +46,7 @@ if TYPE_CHECKING:
 class MainMenuActivity(ba.Activity):
     """Activity showing the rotating main menu bg stuff."""
 
-    _stdassets = ba.Dep(ba.AssetPackage, 'stdassets@1')
+    _stdassets = ba.Dependency(ba.AssetPackage, 'stdassets@1')
 
     def on_transition_in(self) -> None:
         super().on_transition_in()
@@ -903,7 +903,7 @@ class MainMenuSession(ba.Session):
     def __init__(self) -> None:
 
         # Gather dependencies we'll need (just our activity).
-        self._activity_deps = ba.DepSet(ba.Dep(MainMenuActivity))
+        self._activity_deps = ba.DependencySet(ba.Dependency(MainMenuActivity))
 
         super().__init__([self._activity_deps])
         self._locked = False

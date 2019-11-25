@@ -1,6 +1,6 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<!--DOCSHASH=f593a39e3a39b53bf74c893acf8c746b-->
-<h4><em>last updated on 2019-11-12 for Ballistica version 1.5.0 build 20001</em></h4>
+<!--DOCSHASH=51c5d02115be6a67ed7833c3ec13432e-->
+<h4><em>last updated on 2019-11-21 for Ballistica version 1.5.0 build 20001</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -150,8 +150,8 @@
 </ul>
 <h4><a class="offsanchor" name="class_category_Dependency_Classes">Dependency Classes</a></h4>
 <ul>
-   <li><a href="#class_ba_DepComponent">ba.DepComponent</a></li>
    <li><a href="#class_ba_Dependency">ba.Dependency</a></li>
+   <li><a href="#class_ba_DependencyComponent">ba.DependencyComponent</a></li>
 </ul>
 <h4><a class="offsanchor" name="class_category_Enums">Enums</a></h4>
 <ul>
@@ -182,7 +182,7 @@
    <li><a href="#class_ba_AssetPackage">ba.AssetPackage</a></li>
    <li><a href="#class_ba_Campaign">ba.Campaign</a></li>
    <li><a href="#class_ba_Chooser">ba.Chooser</a></li>
-   <li><a href="#class_ba_DepSet">ba.DepSet</a></li>
+   <li><a href="#class_ba_DependencySet">ba.DependencySet</a></li>
    <li><a href="#class_ba_Lobby">ba.Lobby</a></li>
    <li><a href="#class_ba_MusicPlayer">ba.MusicPlayer</a></li>
    <li><a href="#class_ba_OldWindow">ba.OldWindow</a></li>
@@ -287,7 +287,7 @@ actually award achievements.</p>
 
 <hr>
 <h2><strong><a class="offsanchor" name="class_ba_Activity">ba.Activity</a></strong></h3>
-<p style="padding-left: 30px;">inherits from: <a href="#class_ba__dep_InstancedDepComponent">ba._dep.InstancedDepComponent</a>, <a href="#class_ba_DepComponent">ba.DepComponent</a></p>
+<p style="padding-left: 30px;">inherits from: <a href="#class_ba_DependencyComponent">ba.DependencyComponent</a></p>
 <p style="padding-left: 30px;">Units of execution wrangled by a <a href="#class_ba_Session">ba.Session</a>.</p>
 
 <p style="padding-left: 30px;">Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a></p>
@@ -329,7 +329,7 @@ player gets their own team; in teams mode there are always 2 teams
 regardless of the player count).</p>
 
 <h3 style="padding-left: 0px;">Methods Inherited:</h3>
-<h5 style="padding-left: 30px;"><a href="#method_ba__dep_InstancedDepComponent__dep_get_payload">dep_get_payload()</a>, <a href="#method_ba__dep_InstancedDepComponent__get_dynamic_deps">get_dynamic_deps()</a>, <a href="#method_ba__dep_InstancedDepComponent__is_present">is_present()</a></h5>
+<h5 style="padding-left: 30px;"><a href="#method_ba_DependencyComponent__dep_is_present">dep_is_present()</a>, <a href="#method_ba_DependencyComponent__get_dynamic_deps">get_dynamic_deps()</a></h5>
 <h3 style="padding-left: 0px;">Methods Defined or Overridden:</h3>
 <h5 style="padding-left: 30px;"><a href="#method_ba_Activity____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Activity__add_actor_weak_ref">add_actor_weak_ref()</a>, <a href="#method_ba_Activity__create_player_node">create_player_node()</a>, <a href="#method_ba_Activity__end">end()</a>, <a href="#method_ba_Activity__handlemessage">handlemessage()</a>, <a href="#method_ba_Activity__has_begun">has_begun()</a>, <a href="#method_ba_Activity__has_ended">has_ended()</a>, <a href="#method_ba_Activity__has_transitioned_in">has_transitioned_in()</a>, <a href="#method_ba_Activity__is_expired">is_expired()</a>, <a href="#method_ba_Activity__is_transitioning_out">is_transitioning_out()</a>, <a href="#method_ba_Activity__on_begin">on_begin()</a>, <a href="#method_ba_Activity__on_expire">on_expire()</a>, <a href="#method_ba_Activity__on_player_join">on_player_join()</a>, <a href="#method_ba_Activity__on_player_leave">on_player_leave()</a>, <a href="#method_ba_Activity__on_team_join">on_team_join()</a>, <a href="#method_ba_Activity__on_team_leave">on_team_leave()</a>, <a href="#method_ba_Activity__on_transition_in">on_transition_in()</a>, <a href="#method_ba_Activity__on_transition_out">on_transition_out()</a>, <a href="#method_ba_Activity__retain_actor">retain_actor()</a></h5>
 <h4 style="padding-left: 30px;"><a class="offsanchor" name="method_ba_Activity____init__"><strong>&lt;constructor&gt;</strong></a></h4>
@@ -903,17 +903,23 @@ when done.</p>
 
 <hr>
 <h2><strong><a class="offsanchor" name="class_ba_AssetPackage">ba.AssetPackage</a></strong></h3>
-<p style="padding-left: 30px;">inherits from: <a href="#class_ba__dep_StaticDepComponent">ba._dep.StaticDepComponent</a>, <a href="#class_ba_DepComponent">ba.DepComponent</a></p>
-<p style="padding-left: 30px;">DepComponent representing a bundled package of game assets.</p>
+<p style="padding-left: 30px;">inherits from: <a href="#class_ba_DependencyComponent">ba.DependencyComponent</a></p>
+<p style="padding-left: 30px;">DependencyComponent representing a bundled package of game assets.</p>
 
 <h3 style="padding-left: 0px;">Methods Inherited:</h3>
-<h5 style="padding-left: 30px;"><a href="#method_ba__dep_StaticDepComponent__dep_get_payload">dep_get_payload()</a>, <a href="#method_ba__dep_StaticDepComponent__get_dynamic_deps">get_dynamic_deps()</a></h5>
+<h5 style="padding-left: 30px;"><a href="#method_ba_DependencyComponent__get_dynamic_deps">get_dynamic_deps()</a></h5>
 <h3 style="padding-left: 0px;">Methods Defined or Overridden:</h3>
-<h5 style="padding-left: 30px;"><a href="#method_ba_AssetPackage____init__">&lt;constructor&gt;</a>, <a href="#method_ba_AssetPackage__getcollidemodel">getcollidemodel()</a>, <a href="#method_ba_AssetPackage__getdata">getdata()</a>, <a href="#method_ba_AssetPackage__getmodel">getmodel()</a>, <a href="#method_ba_AssetPackage__getsound">getsound()</a>, <a href="#method_ba_AssetPackage__gettexture">gettexture()</a>, <a href="#method_ba_AssetPackage__is_present">is_present()</a></h5>
+<h5 style="padding-left: 30px;"><a href="#method_ba_AssetPackage____init__">&lt;constructor&gt;</a>, <a href="#method_ba_AssetPackage__dep_is_present">dep_is_present()</a>, <a href="#method_ba_AssetPackage__getcollidemodel">getcollidemodel()</a>, <a href="#method_ba_AssetPackage__getdata">getdata()</a>, <a href="#method_ba_AssetPackage__getmodel">getmodel()</a>, <a href="#method_ba_AssetPackage__getsound">getsound()</a>, <a href="#method_ba_AssetPackage__gettexture">gettexture()</a></h5>
 <h4 style="padding-left: 30px;"><a class="offsanchor" name="method_ba_AssetPackage____init__"><strong>&lt;constructor&gt;</strong></a></h4>
 <p style="padding-left: 110px; text-indent: -50px;"><span style="color: #666677;">ba.AssetPackage()</span></p>
 
-<p style="padding-left: 60px;">Instantiate a DepComponent.</p>
+<p style="padding-left: 60px;">Instantiate a DependencyComponent.</p>
+
+<h4 style="padding-left: 30px;"><a class="offsanchor" name="method_ba_AssetPackage__dep_is_present"><strong>dep_is_present()</strong></a></h4>
+<h5 style="padding-left: 60px;"><span style="color: #CC6600;"><em>&lt;class method&gt;</span></em></h5>
+<p style="padding-left: 110px; text-indent: -50px;"><span style="color: #666677;">dep_is_present(config: Any = None) -&gt; bool </span></p>
+
+<p style="padding-left: 60px;">Return whether this component/config is present on this device.</p>
 
 <h4 style="padding-left: 30px;"><a class="offsanchor" name="method_ba_AssetPackage__getcollidemodel"><strong>getcollidemodel()</strong></a></h4>
 <p style="padding-left: 110px; text-indent: -50px;"><span style="color: #666677;">getcollidemodel(self, name: str) -&gt; <a href="#class_ba_CollideModel">ba.CollideModel</a></span></p>
@@ -949,12 +955,6 @@ when done.</p>
 <p style="padding-left: 60px;">Load a named <a href="#class_ba_Texture">ba.Texture</a> from the AssetPackage.</p>
 
 <p style="padding-left: 60px;">Behavior is similar to <a href="#function_ba_gettexture">ba.gettexture</a>()</p>
-
-<h4 style="padding-left: 30px;"><a class="offsanchor" name="method_ba_AssetPackage__is_present"><strong>is_present()</strong></a></h4>
-<h5 style="padding-left: 60px;"><span style="color: #CC6600;"><em>&lt;class method&gt;</span></em></h5>
-<p style="padding-left: 110px; text-indent: -50px;"><span style="color: #666677;">is_present(config: Any = None) -&gt; bool </span></p>
-
-<p style="padding-left: 60px;">Return whether this component/config is present on this device.</p>
 
 <hr>
 <h2><strong><a class="offsanchor" name="class_ba_Call">ba.Call</a></strong></h3>
@@ -1229,7 +1229,7 @@ start_long_action(callback_when_done=<a href="#class_ba_ContextCall">ba.ContextC
 
 <hr>
 <h2><strong><a class="offsanchor" name="class_ba_CoopGameActivity">ba.CoopGameActivity</a></strong></h3>
-<p style="padding-left: 30px;">inherits from: <a href="#class_ba_GameActivity">ba.GameActivity</a>, <a href="#class_ba_Activity">ba.Activity</a>, <a href="#class_ba__dep_InstancedDepComponent">ba._dep.InstancedDepComponent</a>, <a href="#class_ba_DepComponent">ba.DepComponent</a></p>
+<p style="padding-left: 30px;">inherits from: <a href="#class_ba_GameActivity">ba.GameActivity</a>, <a href="#class_ba_Activity">ba.Activity</a>, <a href="#class_ba_DependencyComponent">ba.DependencyComponent</a></p>
 <p style="padding-left: 30px;">Base class for cooperative-mode games.</p>
 
 <p style="padding-left: 30px;">Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a>
@@ -1258,7 +1258,7 @@ start_long_action(callback_when_done=<a href="#class_ba_ContextCall">ba.ContextC
 <p style="padding-left: 60px;">        If access is attempted before or after, raises a <a href="#class_ba_NotFoundError">ba.NotFoundError</a>.</p>
 
 <h3 style="padding-left: 0px;">Methods Inherited:</h3>
-<h5 style="padding-left: 30px;"><a href="#method_ba_GameActivity__add_actor_weak_ref">add_actor_weak_ref()</a>, <a href="#method_ba_GameActivity__begin">begin()</a>, <a href="#method_ba_GameActivity__continue_or_end_game">continue_or_end_game()</a>, <a href="#method_ba_GameActivity__create_config_ui">create_config_ui()</a>, <a href="#method_ba_GameActivity__create_player_node">create_player_node()</a>, <a href="#method_ba_GameActivity__dep_get_payload">dep_get_payload()</a>, <a href="#method_ba_GameActivity__end">end()</a>, <a href="#method_ba_GameActivity__end_game">end_game()</a>, <a href="#method_ba_GameActivity__get_config_display_string">get_config_display_string()</a>, <a href="#method_ba_GameActivity__get_description">get_description()</a>, <a href="#method_ba_GameActivity__get_description_display_string">get_description_display_string()</a>, <a href="#method_ba_GameActivity__get_display_string">get_display_string()</a>, <a href="#method_ba_GameActivity__get_dynamic_deps">get_dynamic_deps()</a>, <a href="#method_ba_GameActivity__get_instance_description">get_instance_description()</a>, <a href="#method_ba_GameActivity__get_instance_display_string">get_instance_display_string()</a>, <a href="#method_ba_GameActivity__get_instance_scoreboard_description">get_instance_scoreboard_description()</a>, <a href="#method_ba_GameActivity__get_instance_scoreboard_display_string">get_instance_scoreboard_display_string()</a>, <a href="#method_ba_GameActivity__get_name">get_name()</a>, <a href="#method_ba_GameActivity__get_resolved_score_info">get_resolved_score_info()</a>, <a href="#method_ba_GameActivity__get_score_info">get_score_info()</a>, <a href="#method_ba_GameActivity__get_settings">get_settings()</a>, <a href="#method_ba_GameActivity__get_supported_maps">get_supported_maps()</a>, <a href="#method_ba_GameActivity__get_team_display_string">get_team_display_string()</a>, <a href="#method_ba_GameActivity__handlemessage">handlemessage()</a>, <a href="#method_ba_GameActivity__has_begun">has_begun()</a>, <a href="#method_ba_GameActivity__has_ended">has_ended()</a>, <a href="#method_ba_GameActivity__has_transitioned_in">has_transitioned_in()</a>, <a href="#method_ba_GameActivity__is_expired">is_expired()</a>, <a href="#method_ba_GameActivity__is_present">is_present()</a>, <a href="#method_ba_GameActivity__is_transitioning_out">is_transitioning_out()</a>, <a href="#method_ba_GameActivity__is_waiting_for_continue">is_waiting_for_continue()</a>, <a href="#method_ba_GameActivity__on_continue">on_continue()</a>, <a href="#method_ba_GameActivity__on_expire">on_expire()</a>, <a href="#method_ba_GameActivity__on_player_join">on_player_join()</a>, <a href="#method_ba_GameActivity__on_player_leave">on_player_leave()</a>, <a href="#method_ba_GameActivity__on_team_join">on_team_join()</a>, <a href="#method_ba_GameActivity__on_team_leave">on_team_leave()</a>, <a href="#method_ba_GameActivity__on_transition_in">on_transition_in()</a>, <a href="#method_ba_GameActivity__on_transition_out">on_transition_out()</a>, <a href="#method_ba_GameActivity__project_flag_stand">project_flag_stand()</a>, <a href="#method_ba_GameActivity__respawn_player">respawn_player()</a>, <a href="#method_ba_GameActivity__retain_actor">retain_actor()</a>, <a href="#method_ba_GameActivity__set_has_ended">set_has_ended()</a>, <a href="#method_ba_GameActivity__set_immediate_end">set_immediate_end()</a>, <a href="#method_ba_GameActivity__setup_standard_powerup_drops">setup_standard_powerup_drops()</a>, <a href="#method_ba_GameActivity__setup_standard_time_limit">setup_standard_time_limit()</a>, <a href="#method_ba_GameActivity__show_info">show_info()</a>, <a href="#method_ba_GameActivity__show_scoreboard_info">show_scoreboard_info()</a>, <a href="#method_ba_GameActivity__show_zoom_message">show_zoom_message()</a>, <a href="#method_ba_GameActivity__spawn_player">spawn_player()</a>, <a href="#method_ba_GameActivity__spawn_player_if_exists">spawn_player_if_exists()</a>, <a href="#method_ba_GameActivity__start_transition_in">start_transition_in()</a></h5>
+<h5 style="padding-left: 30px;"><a href="#method_ba_GameActivity__add_actor_weak_ref">add_actor_weak_ref()</a>, <a href="#method_ba_GameActivity__begin">begin()</a>, <a href="#method_ba_GameActivity__continue_or_end_game">continue_or_end_game()</a>, <a href="#method_ba_GameActivity__create_config_ui">create_config_ui()</a>, <a href="#method_ba_GameActivity__create_player_node">create_player_node()</a>, <a href="#method_ba_GameActivity__dep_is_present">dep_is_present()</a>, <a href="#method_ba_GameActivity__end">end()</a>, <a href="#method_ba_GameActivity__end_game">end_game()</a>, <a href="#method_ba_GameActivity__get_config_display_string">get_config_display_string()</a>, <a href="#method_ba_GameActivity__get_description">get_description()</a>, <a href="#method_ba_GameActivity__get_description_display_string">get_description_display_string()</a>, <a href="#method_ba_GameActivity__get_display_string">get_display_string()</a>, <a href="#method_ba_GameActivity__get_dynamic_deps">get_dynamic_deps()</a>, <a href="#method_ba_GameActivity__get_instance_description">get_instance_description()</a>, <a href="#method_ba_GameActivity__get_instance_display_string">get_instance_display_string()</a>, <a href="#method_ba_GameActivity__get_instance_scoreboard_description">get_instance_scoreboard_description()</a>, <a href="#method_ba_GameActivity__get_instance_scoreboard_display_string">get_instance_scoreboard_display_string()</a>, <a href="#method_ba_GameActivity__get_name">get_name()</a>, <a href="#method_ba_GameActivity__get_resolved_score_info">get_resolved_score_info()</a>, <a href="#method_ba_GameActivity__get_score_info">get_score_info()</a>, <a href="#method_ba_GameActivity__get_settings">get_settings()</a>, <a href="#method_ba_GameActivity__get_supported_maps">get_supported_maps()</a>, <a href="#method_ba_GameActivity__get_team_display_string">get_team_display_string()</a>, <a href="#method_ba_GameActivity__handlemessage">handlemessage()</a>, <a href="#method_ba_GameActivity__has_begun">has_begun()</a>, <a href="#method_ba_GameActivity__has_ended">has_ended()</a>, <a href="#method_ba_GameActivity__has_transitioned_in">has_transitioned_in()</a>, <a href="#method_ba_GameActivity__is_expired">is_expired()</a>, <a href="#method_ba_GameActivity__is_transitioning_out">is_transitioning_out()</a>, <a href="#method_ba_GameActivity__is_waiting_for_continue">is_waiting_for_continue()</a>, <a href="#method_ba_GameActivity__on_continue">on_continue()</a>, <a href="#method_ba_GameActivity__on_expire">on_expire()</a>, <a href="#method_ba_GameActivity__on_player_join">on_player_join()</a>, <a href="#method_ba_GameActivity__on_player_leave">on_player_leave()</a>, <a href="#method_ba_GameActivity__on_team_join">on_team_join()</a>, <a href="#method_ba_GameActivity__on_team_leave">on_team_leave()</a>, <a href="#method_ba_GameActivity__on_transition_in">on_transition_in()</a>, <a href="#method_ba_GameActivity__on_transition_out">on_transition_out()</a>, <a href="#method_ba_GameActivity__project_flag_stand">project_flag_stand()</a>, <a href="#method_ba_GameActivity__respawn_player">respawn_player()</a>, <a href="#method_ba_GameActivity__retain_actor">retain_actor()</a>, <a href="#method_ba_GameActivity__set_has_ended">set_has_ended()</a>, <a href="#method_ba_GameActivity__set_immediate_end">set_immediate_end()</a>, <a href="#method_ba_GameActivity__setup_standard_powerup_drops">setup_standard_powerup_drops()</a>, <a href="#method_ba_GameActivity__setup_standard_time_limit">setup_standard_time_limit()</a>, <a href="#method_ba_GameActivity__show_info">show_info()</a>, <a href="#method_ba_GameActivity__show_scoreboard_info">show_scoreboard_info()</a>, <a href="#method_ba_GameActivity__show_zoom_message">show_zoom_message()</a>, <a href="#method_ba_GameActivity__spawn_player">spawn_player()</a>, <a href="#method_ba_GameActivity__spawn_player_if_exists">spawn_player_if_exists()</a>, <a href="#method_ba_GameActivity__start_transition_in">start_transition_in()</a></h5>
 <h3 style="padding-left: 0px;">Methods Defined or Overridden:</h3>
 <h5 style="padding-left: 30px;"><a href="#method_ba_CoopGameActivity____init__">&lt;constructor&gt;</a>, <a href="#method_ba_CoopGameActivity__celebrate">celebrate()</a>, <a href="#method_ba_CoopGameActivity__fade_to_red">fade_to_red()</a>, <a href="#method_ba_CoopGameActivity__get_score_type">get_score_type()</a>, <a href="#method_ba_CoopGameActivity__on_begin">on_begin()</a>, <a href="#method_ba_CoopGameActivity__setup_low_life_warning_sound">setup_low_life_warning_sound()</a>, <a href="#method_ba_CoopGameActivity__spawn_player_spaz">spawn_player_spaz()</a>, <a href="#method_ba_CoopGameActivity__supports_session_type">supports_session_type()</a></h5>
 <h4 style="padding-left: 30px;"><a class="offsanchor" name="method_ba_CoopGameActivity____init__"><strong>&lt;constructor&gt;</strong></a></h4>
@@ -1387,58 +1387,14 @@ so it can be beneficial to plan a short bit of time between when
 the data object is requested and when it's value is accessed.</p>
 
 <hr>
-<h2><strong><a class="offsanchor" name="class_ba_DepComponent">ba.DepComponent</a></strong></h3>
-<p style="padding-left: 30px;"><em>&lt;top level class&gt;</em>
-</p>
-<p style="padding-left: 30px;">Base class for all classes that can act as or use dependencies.</p>
-
-<p style="padding-left: 30px;">Category: <a href="#class_category_Dependency_Classes">Dependency Classes</a>
-</p>
-
-<h3 style="padding-left: 0px;">Methods:</h3>
-<h5 style="padding-left: 30px;"><a href="#method_ba_DepComponent____init__">&lt;constructor&gt;</a>, <a href="#method_ba_DepComponent__dep_get_payload">dep_get_payload()</a>, <a href="#method_ba_DepComponent__get_dynamic_deps">get_dynamic_deps()</a>, <a href="#method_ba_DepComponent__is_present">is_present()</a></h5>
-<h4 style="padding-left: 30px;"><a class="offsanchor" name="method_ba_DepComponent____init__"><strong>&lt;constructor&gt;</strong></a></h4>
-<p style="padding-left: 110px; text-indent: -50px;"><span style="color: #666677;">ba.DepComponent()</span></p>
-
-<p style="padding-left: 60px;">Instantiate a DepComponent.</p>
-
-<h4 style="padding-left: 30px;"><a class="offsanchor" name="method_ba_DepComponent__dep_get_payload"><strong>dep_get_payload()</strong></a></h4>
-<h5 style="padding-left: 60px;"><span style="color: #CC6600;"><em>&lt;class method&gt;</span></em></h5>
-<p style="padding-left: 110px; text-indent: -50px;"><span style="color: #666677;">dep_get_payload(depdata: DepData) -&gt; Any </span></p>
-
-<p style="padding-left: 60px;">Return user-facing data for a loaded dep.</p>
-
-<p style="padding-left: 60px;">If this dep does not yet have a 'payload' value, it should
-be generated and cached.  Otherwise the existing value
-should be returned.
-This is the value given for a DepComponent when accessed
-through a Dependency instance on a live object, etc.</p>
-
-<h4 style="padding-left: 30px;"><a class="offsanchor" name="method_ba_DepComponent__get_dynamic_deps"><strong>get_dynamic_deps()</strong></a></h4>
-<h5 style="padding-left: 60px;"><span style="color: #CC6600;"><em>&lt;class method&gt;</span></em></h5>
-<p style="padding-left: 110px; text-indent: -50px;"><span style="color: #666677;">get_dynamic_deps(config: Any = None) -&gt; List[Dependency] </span></p>
-
-<p style="padding-left: 60px;">Return any dynamically-calculated deps for this component/config.</p>
-
-<p style="padding-left: 60px;">Deps declared statically as part of the class do not need to be
-included here; this is only for additional deps that may vary based
-on the dep config value. (for instance a map required by a game type)</p>
-
-<h4 style="padding-left: 30px;"><a class="offsanchor" name="method_ba_DepComponent__is_present"><strong>is_present()</strong></a></h4>
-<h5 style="padding-left: 60px;"><span style="color: #CC6600;"><em>&lt;class method&gt;</span></em></h5>
-<p style="padding-left: 110px; text-indent: -50px;"><span style="color: #666677;">is_present(config: Any = None) -&gt; bool </span></p>
-
-<p style="padding-left: 60px;">Return whether this component/config is present on this device.</p>
-
-<hr>
 <h2><strong><a class="offsanchor" name="class_ba_Dependency">ba.Dependency</a></strong></h3>
 <p style="padding-left: 30px;">inherits from: <a href="#class_typing_Generic">typing.Generic</a></p>
-<p style="padding-left: 30px;">A dependency on a DepComponent (with an optional config).</p>
+<p style="padding-left: 30px;">A dependency on a DependencyComponent (with an optional config).</p>
 
 <p style="padding-left: 30px;">Category: <a href="#class_category_Dependency_Classes">Dependency Classes</a></p>
 
 <p style="padding-left: 30px;">    This class is used to request and access functionality provided
-    by other DepComponent classes from a DepComponent class.
+    by other DependencyComponent classes from a DependencyComponent class.
     The class functions as a descriptor, allowing dependencies to
     be added at a class level much the same as properties or methods
     and then used with class instances to access those dependencies.
@@ -1452,7 +1408,7 @@ on the dep config value. (for instance a map required by a game type)</p>
 <h4 style="padding-left: 30px;"><a class="offsanchor" name="method_ba_Dependency____init__"><strong>&lt;constructor&gt;</strong></a></h4>
 <p style="padding-left: 110px; text-indent: -50px;"><span style="color: #666677;">ba.Dependency(cls: Type[T], config: Any = None)</span></p>
 
-<p style="padding-left: 60px;">Instantiate a Dependency given a <a href="#class_ba_DepComponent">ba.DepComponent</a> subtype.</p>
+<p style="padding-left: 60px;">Instantiate a Dependency given a <a href="#class_ba_DependencyComponent">ba.DependencyComponent</a> type.</p>
 
 <p style="padding-left: 60px;">Optionally, an arbitrary object can be passed as 'config' to
 influence dependency calculation for the target class.</p>
@@ -1461,6 +1417,38 @@ influence dependency calculation for the target class.</p>
 <p style="padding-left: 110px; text-indent: -50px;"><span style="color: #666677;">get_hash(self) -&gt; int</span></p>
 
 <p style="padding-left: 60px;">Return the dependency's hash, calculating it if necessary.</p>
+
+<hr>
+<h2><strong><a class="offsanchor" name="class_ba_DependencyComponent">ba.DependencyComponent</a></strong></h3>
+<p style="padding-left: 30px;"><em>&lt;top level class&gt;</em>
+</p>
+<p style="padding-left: 30px;">Base class for all classes that can act as or use dependencies.</p>
+
+<p style="padding-left: 30px;">Category: <a href="#class_category_Dependency_Classes">Dependency Classes</a>
+</p>
+
+<h3 style="padding-left: 0px;">Methods:</h3>
+<h5 style="padding-left: 30px;"><a href="#method_ba_DependencyComponent____init__">&lt;constructor&gt;</a>, <a href="#method_ba_DependencyComponent__dep_is_present">dep_is_present()</a>, <a href="#method_ba_DependencyComponent__get_dynamic_deps">get_dynamic_deps()</a></h5>
+<h4 style="padding-left: 30px;"><a class="offsanchor" name="method_ba_DependencyComponent____init__"><strong>&lt;constructor&gt;</strong></a></h4>
+<p style="padding-left: 110px; text-indent: -50px;"><span style="color: #666677;">ba.DependencyComponent()</span></p>
+
+<p style="padding-left: 60px;">Instantiate a DependencyComponent.</p>
+
+<h4 style="padding-left: 30px;"><a class="offsanchor" name="method_ba_DependencyComponent__dep_is_present"><strong>dep_is_present()</strong></a></h4>
+<h5 style="padding-left: 60px;"><span style="color: #CC6600;"><em>&lt;class method&gt;</span></em></h5>
+<p style="padding-left: 110px; text-indent: -50px;"><span style="color: #666677;">dep_is_present(config: Any = None) -&gt; bool </span></p>
+
+<p style="padding-left: 60px;">Return whether this component/config is present on this device.</p>
+
+<h4 style="padding-left: 30px;"><a class="offsanchor" name="method_ba_DependencyComponent__get_dynamic_deps"><strong>get_dynamic_deps()</strong></a></h4>
+<h5 style="padding-left: 60px;"><span style="color: #CC6600;"><em>&lt;class method&gt;</span></em></h5>
+<p style="padding-left: 110px; text-indent: -50px;"><span style="color: #666677;">get_dynamic_deps(config: Any = None) -&gt; List[Dependency] </span></p>
+
+<p style="padding-left: 60px;">Return any dynamically-calculated deps for this component/config.</p>
+
+<p style="padding-left: 60px;">Deps declared statically as part of the class do not need to be
+included here; this is only for additional deps that may vary based
+on the dep config value. (for instance a map required by a game type)</p>
 
 <hr>
 <h2><strong><a class="offsanchor" name="class_ba_DependencyError">ba.DependencyError</a></strong></h3>
@@ -1484,33 +1472,48 @@ influence dependency calculation for the target class.</p>
 <p style="padding-left: 110px; text-indent: -50px;"><span style="color: #666677;">ba.DependencyError(deps: List[<a href="#class_ba_Dependency">ba.Dependency</a>])</span></p>
 
 <hr>
-<h2><strong><a class="offsanchor" name="class_ba_DepSet">ba.DepSet</a></strong></h3>
+<h2><strong><a class="offsanchor" name="class_ba_DependencySet">ba.DependencySet</a></strong></h3>
 <p style="padding-left: 30px;">inherits from: <a href="#class_typing_Generic">typing.Generic</a></p>
 <p style="padding-left: 30px;">Set of resolved dependencies and their associated data.</p>
 
-<h3 style="padding-left: 0px;">Methods:</h3>
-<h5 style="padding-left: 30px;"><a href="#method_ba_DepSet____init__">&lt;constructor&gt;</a>, <a href="#method_ba_DepSet__get_asset_package_ids">get_asset_package_ids()</a>, <a href="#method_ba_DepSet__load">load()</a>, <a href="#method_ba_DepSet__resolve">resolve()</a></h5>
-<h4 style="padding-left: 30px;"><a class="offsanchor" name="method_ba_DepSet____init__"><strong>&lt;constructor&gt;</strong></a></h4>
-<p style="padding-left: 110px; text-indent: -50px;"><span style="color: #666677;">ba.DepSet(root: Dependency[TI])</span></p>
+<p style="padding-left: 30px;">    To use DependencyComponents, a set must be created, resolved, and then
+    loaded. The DependencyComponents are only valid while the set remains
+    in existence.
+</p>
 
-<h4 style="padding-left: 30px;"><a class="offsanchor" name="method_ba_DepSet__get_asset_package_ids"><strong>get_asset_package_ids()</strong></a></h4>
+<h3 style="padding-left: 0px;">Attributes:</h3>
+<h5 style="padding-left: 30px;"><a href="#attr_ba_DependencySet__resolved">resolved</a>, <a href="#attr_ba_DependencySet__root">root</a></h5>
+<h4 style="padding-left: 30px;"><a class="offsanchor" name="attr_ba_DependencySet__resolved"><strong>resolved</strong></a></h4>
+<p style="padding-left: 60px;"><span style="color: #666677;">bool</span></p>
+<p style="padding-left: 60px;">Whether this set has been successfully resolved.</p>
+
+<h4 style="padding-left: 30px;"><a class="offsanchor" name="attr_ba_DependencySet__root"><strong>root</strong></a></h4>
+<p style="padding-left: 60px;"><span style="color: #666677;">T</span></p>
+<p style="padding-left: 60px;">The instantiated root DependencyComponent instance for the set.</p>
+
+<h3 style="padding-left: 0px;">Methods:</h3>
+<h5 style="padding-left: 30px;"><a href="#method_ba_DependencySet____init__">&lt;constructor&gt;</a>, <a href="#method_ba_DependencySet__get_asset_package_ids">get_asset_package_ids()</a>, <a href="#method_ba_DependencySet__load">load()</a>, <a href="#method_ba_DependencySet__resolve">resolve()</a></h5>
+<h4 style="padding-left: 30px;"><a class="offsanchor" name="method_ba_DependencySet____init__"><strong>&lt;constructor&gt;</strong></a></h4>
+<p style="padding-left: 110px; text-indent: -50px;"><span style="color: #666677;">ba.DependencySet(root_dependency: Dependency[T])</span></p>
+
+<h4 style="padding-left: 30px;"><a class="offsanchor" name="method_ba_DependencySet__get_asset_package_ids"><strong>get_asset_package_ids()</strong></a></h4>
 <p style="padding-left: 110px; text-indent: -50px;"><span style="color: #666677;">get_asset_package_ids(self) -&gt; Set[str]</span></p>
 
 <p style="padding-left: 60px;">Return the set of asset-package-ids required by this dep-set.</p>
 
 <p style="padding-left: 60px;">Must be called on a resolved dep-set.</p>
 
-<h4 style="padding-left: 30px;"><a class="offsanchor" name="method_ba_DepSet__load"><strong>load()</strong></a></h4>
-<p style="padding-left: 110px; text-indent: -50px;"><span style="color: #666677;">load(self) -&gt; Type[TI]</span></p>
+<h4 style="padding-left: 30px;"><a class="offsanchor" name="method_ba_DependencySet__load"><strong>load()</strong></a></h4>
+<p style="padding-left: 110px; text-indent: -50px;"><span style="color: #666677;">load(self) -&gt; None</span></p>
 
-<p style="padding-left: 60px;">Attach the resolved set to the current context.</p>
+<p style="padding-left: 60px;">Instantiate all DependencyComponents in the set.</p>
 
 <p style="padding-left: 60px;">Returns a wrapper which can be used to instantiate the root dep.</p>
 
-<h4 style="padding-left: 30px;"><a class="offsanchor" name="method_ba_DepSet__resolve"><strong>resolve()</strong></a></h4>
+<h4 style="padding-left: 30px;"><a class="offsanchor" name="method_ba_DependencySet__resolve"><strong>resolve()</strong></a></h4>
 <p style="padding-left: 110px; text-indent: -50px;"><span style="color: #666677;">resolve(self) -&gt; None</span></p>
 
-<p style="padding-left: 60px;">Resolve the total set of required dependencies for the set.</p>
+<p style="padding-left: 60px;">Resolve the complete set of required dependencies for this set.</p>
 
 <p style="padding-left: 60px;">Raises a <a href="#class_ba_DependencyError">ba.DependencyError</a> if dependencies are missing (or other
 Exception types on other errors).</p>
@@ -1616,7 +1619,7 @@ its time with lingering corpses, sound effects, etc.</p>
 
 <hr>
 <h2><strong><a class="offsanchor" name="class_ba_GameActivity">ba.GameActivity</a></strong></h3>
-<p style="padding-left: 30px;">inherits from: <a href="#class_ba_Activity">ba.Activity</a>, <a href="#class_ba__dep_InstancedDepComponent">ba._dep.InstancedDepComponent</a>, <a href="#class_ba_DepComponent">ba.DepComponent</a></p>
+<p style="padding-left: 30px;">inherits from: <a href="#class_ba_Activity">ba.Activity</a>, <a href="#class_ba_DependencyComponent">ba.DependencyComponent</a></p>
 <p style="padding-left: 30px;">Common base class for all game ba.Activities.</p>
 
 <p style="padding-left: 30px;">Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a>
@@ -1645,7 +1648,7 @@ its time with lingering corpses, sound effects, etc.</p>
 <p style="padding-left: 60px;">        If access is attempted before or after, raises a <a href="#class_ba_NotFoundError">ba.NotFoundError</a>.</p>
 
 <h3 style="padding-left: 0px;">Methods Inherited:</h3>
-<h5 style="padding-left: 30px;"><a href="#method_ba_Activity__add_actor_weak_ref">add_actor_weak_ref()</a>, <a href="#method_ba_Activity__begin">begin()</a>, <a href="#method_ba_Activity__create_player_node">create_player_node()</a>, <a href="#method_ba_Activity__dep_get_payload">dep_get_payload()</a>, <a href="#method_ba_Activity__get_dynamic_deps">get_dynamic_deps()</a>, <a href="#method_ba_Activity__has_begun">has_begun()</a>, <a href="#method_ba_Activity__has_ended">has_ended()</a>, <a href="#method_ba_Activity__has_transitioned_in">has_transitioned_in()</a>, <a href="#method_ba_Activity__is_expired">is_expired()</a>, <a href="#method_ba_Activity__is_present">is_present()</a>, <a href="#method_ba_Activity__is_transitioning_out">is_transitioning_out()</a>, <a href="#method_ba_Activity__on_expire">on_expire()</a>, <a href="#method_ba_Activity__on_team_join">on_team_join()</a>, <a href="#method_ba_Activity__on_team_leave">on_team_leave()</a>, <a href="#method_ba_Activity__on_transition_out">on_transition_out()</a>, <a href="#method_ba_Activity__retain_actor">retain_actor()</a>, <a href="#method_ba_Activity__set_has_ended">set_has_ended()</a>, <a href="#method_ba_Activity__set_immediate_end">set_immediate_end()</a>, <a href="#method_ba_Activity__start_transition_in">start_transition_in()</a></h5>
+<h5 style="padding-left: 30px;"><a href="#method_ba_Activity__add_actor_weak_ref">add_actor_weak_ref()</a>, <a href="#method_ba_Activity__begin">begin()</a>, <a href="#method_ba_Activity__create_player_node">create_player_node()</a>, <a href="#method_ba_Activity__dep_is_present">dep_is_present()</a>, <a href="#method_ba_Activity__get_dynamic_deps">get_dynamic_deps()</a>, <a href="#method_ba_Activity__has_begun">has_begun()</a>, <a href="#method_ba_Activity__has_ended">has_ended()</a>, <a href="#method_ba_Activity__has_transitioned_in">has_transitioned_in()</a>, <a href="#method_ba_Activity__is_expired">is_expired()</a>, <a href="#method_ba_Activity__is_transitioning_out">is_transitioning_out()</a>, <a href="#method_ba_Activity__on_expire">on_expire()</a>, <a href="#method_ba_Activity__on_team_join">on_team_join()</a>, <a href="#method_ba_Activity__on_team_leave">on_team_leave()</a>, <a href="#method_ba_Activity__on_transition_out">on_transition_out()</a>, <a href="#method_ba_Activity__retain_actor">retain_actor()</a>, <a href="#method_ba_Activity__set_has_ended">set_has_ended()</a>, <a href="#method_ba_Activity__set_immediate_end">set_immediate_end()</a>, <a href="#method_ba_Activity__start_transition_in">start_transition_in()</a></h5>
 <h3 style="padding-left: 0px;">Methods Defined or Overridden:</h3>
 <h5 style="padding-left: 30px;"><a href="#method_ba_GameActivity____init__">&lt;constructor&gt;</a>, <a href="#method_ba_GameActivity__continue_or_end_game">continue_or_end_game()</a>, <a href="#method_ba_GameActivity__create_config_ui">create_config_ui()</a>, <a href="#method_ba_GameActivity__end">end()</a>, <a href="#method_ba_GameActivity__end_game">end_game()</a>, <a href="#method_ba_GameActivity__get_config_display_string">get_config_display_string()</a>, <a href="#method_ba_GameActivity__get_description">get_description()</a>, <a href="#method_ba_GameActivity__get_description_display_string">get_description_display_string()</a>, <a href="#method_ba_GameActivity__get_display_string">get_display_string()</a>, <a href="#method_ba_GameActivity__get_instance_description">get_instance_description()</a>, <a href="#method_ba_GameActivity__get_instance_display_string">get_instance_display_string()</a>, <a href="#method_ba_GameActivity__get_instance_scoreboard_description">get_instance_scoreboard_description()</a>, <a href="#method_ba_GameActivity__get_instance_scoreboard_display_string">get_instance_scoreboard_display_string()</a>, <a href="#method_ba_GameActivity__get_name">get_name()</a>, <a href="#method_ba_GameActivity__get_resolved_score_info">get_resolved_score_info()</a>, <a href="#method_ba_GameActivity__get_score_info">get_score_info()</a>, <a href="#method_ba_GameActivity__get_settings">get_settings()</a>, <a href="#method_ba_GameActivity__get_supported_maps">get_supported_maps()</a>, <a href="#method_ba_GameActivity__get_team_display_string">get_team_display_string()</a>, <a href="#method_ba_GameActivity__handlemessage">handlemessage()</a>, <a href="#method_ba_GameActivity__is_waiting_for_continue">is_waiting_for_continue()</a>, <a href="#method_ba_GameActivity__on_begin">on_begin()</a>, <a href="#method_ba_GameActivity__on_continue">on_continue()</a>, <a href="#method_ba_GameActivity__on_player_join">on_player_join()</a>, <a href="#method_ba_GameActivity__on_player_leave">on_player_leave()</a>, <a href="#method_ba_GameActivity__on_transition_in">on_transition_in()</a>, <a href="#method_ba_GameActivity__project_flag_stand">project_flag_stand()</a>, <a href="#method_ba_GameActivity__respawn_player">respawn_player()</a>, <a href="#method_ba_GameActivity__setup_standard_powerup_drops">setup_standard_powerup_drops()</a>, <a href="#method_ba_GameActivity__setup_standard_time_limit">setup_standard_time_limit()</a>, <a href="#method_ba_GameActivity__show_info">show_info()</a>, <a href="#method_ba_GameActivity__show_scoreboard_info">show_scoreboard_info()</a>, <a href="#method_ba_GameActivity__show_zoom_message">show_zoom_message()</a>, <a href="#method_ba_GameActivity__spawn_player">spawn_player()</a>, <a href="#method_ba_GameActivity__spawn_player_if_exists">spawn_player_if_exists()</a>, <a href="#method_ba_GameActivity__spawn_player_spaz">spawn_player_spaz()</a>, <a href="#method_ba_GameActivity__supports_session_type">supports_session_type()</a></h5>
 <h4 style="padding-left: 30px;"><a class="offsanchor" name="method_ba_GameActivity____init__"><strong>&lt;constructor&gt;</strong></a></h4>
@@ -3303,11 +3306,11 @@ list in <a href="#class_ba_Activity">ba.Activity</a>; not this.</p>
 <h3 style="padding-left: 0px;">Methods:</h3>
 <h5 style="padding-left: 30px;"><a href="#method_ba_Session____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Session__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_Session__end">end()</a>, <a href="#method_ba_Session__end_activity">end_activity()</a>, <a href="#method_ba_Session__get_custom_menu_entries">get_custom_menu_entries()</a>, <a href="#method_ba_Session__getactivity">getactivity()</a>, <a href="#method_ba_Session__handlemessage">handlemessage()</a>, <a href="#method_ba_Session__on_activity_end">on_activity_end()</a>, <a href="#method_ba_Session__on_player_leave">on_player_leave()</a>, <a href="#method_ba_Session__on_player_request">on_player_request()</a>, <a href="#method_ba_Session__on_team_join">on_team_join()</a>, <a href="#method_ba_Session__on_team_leave">on_team_leave()</a>, <a href="#method_ba_Session__set_activity">set_activity()</a></h5>
 <h4 style="padding-left: 30px;"><a class="offsanchor" name="method_ba_Session____init__"><strong>&lt;constructor&gt;</strong></a></h4>
-<p style="padding-left: 110px; text-indent: -50px;"><span style="color: #666677;">ba.Session(depsets: Sequence[<a href="#class_ba_DepSet">ba.DepSet</a>], team_names: Sequence[str] = None, team_colors: Sequence[Sequence[float]] = None, use_team_colors: bool = True, min_players: int = 1, max_players: int = 8, allow_mid_activity_joins: bool = True)</span></p>
+<p style="padding-left: 110px; text-indent: -50px;"><span style="color: #666677;">ba.Session(depsets: Sequence[<a href="#class_ba_DependencySet">ba.DependencySet</a>], team_names: Sequence[str] = None, team_colors: Sequence[Sequence[float]] = None, use_team_colors: bool = True, min_players: int = 1, max_players: int = 8, allow_mid_activity_joins: bool = True)</span></p>
 
 <p style="padding-left: 60px;">Instantiate a session.</p>
 
-<p style="padding-left: 60px;">depsets should be a sequence of successfully resolved <a href="#class_ba_DepSet">ba.DepSet</a>
+<p style="padding-left: 60px;">depsets should be a sequence of successfully resolved <a href="#class_ba_DependencySet">ba.DependencySet</a>
 instances; one for each <a href="#class_ba_Activity">ba.Activity</a> the session may potentially run.</p>
 
 <h4 style="padding-left: 30px;"><a class="offsanchor" name="method_ba_Session__begin_next_activity"><strong>begin_next_activity()</strong></a></h4>
@@ -3754,7 +3757,7 @@ another <a href="#class_ba_Activity">ba.Activity</a>.</p>
 
 <hr>
 <h2><strong><a class="offsanchor" name="class_ba_TeamGameActivity">ba.TeamGameActivity</a></strong></h3>
-<p style="padding-left: 30px;">inherits from: <a href="#class_ba_GameActivity">ba.GameActivity</a>, <a href="#class_ba_Activity">ba.Activity</a>, <a href="#class_ba__dep_InstancedDepComponent">ba._dep.InstancedDepComponent</a>, <a href="#class_ba_DepComponent">ba.DepComponent</a></p>
+<p style="padding-left: 30px;">inherits from: <a href="#class_ba_GameActivity">ba.GameActivity</a>, <a href="#class_ba_Activity">ba.Activity</a>, <a href="#class_ba_DependencyComponent">ba.DependencyComponent</a></p>
 <p style="padding-left: 30px;">Base class for teams and free-for-all mode games.</p>
 
 <p style="padding-left: 30px;">Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a></p>
@@ -3786,7 +3789,7 @@ another <a href="#class_ba_Activity">ba.Activity</a>.</p>
 <p style="padding-left: 60px;">        If access is attempted before or after, raises a <a href="#class_ba_NotFoundError">ba.NotFoundError</a>.</p>
 
 <h3 style="padding-left: 0px;">Methods Inherited:</h3>
-<h5 style="padding-left: 30px;"><a href="#method_ba_GameActivity__add_actor_weak_ref">add_actor_weak_ref()</a>, <a href="#method_ba_GameActivity__begin">begin()</a>, <a href="#method_ba_GameActivity__continue_or_end_game">continue_or_end_game()</a>, <a href="#method_ba_GameActivity__create_config_ui">create_config_ui()</a>, <a href="#method_ba_GameActivity__create_player_node">create_player_node()</a>, <a href="#method_ba_GameActivity__dep_get_payload">dep_get_payload()</a>, <a href="#method_ba_GameActivity__end_game">end_game()</a>, <a href="#method_ba_GameActivity__get_config_display_string">get_config_display_string()</a>, <a href="#method_ba_GameActivity__get_description">get_description()</a>, <a href="#method_ba_GameActivity__get_description_display_string">get_description_display_string()</a>, <a href="#method_ba_GameActivity__get_display_string">get_display_string()</a>, <a href="#method_ba_GameActivity__get_dynamic_deps">get_dynamic_deps()</a>, <a href="#method_ba_GameActivity__get_instance_description">get_instance_description()</a>, <a href="#method_ba_GameActivity__get_instance_display_string">get_instance_display_string()</a>, <a href="#method_ba_GameActivity__get_instance_scoreboard_description">get_instance_scoreboard_description()</a>, <a href="#method_ba_GameActivity__get_instance_scoreboard_display_string">get_instance_scoreboard_display_string()</a>, <a href="#method_ba_GameActivity__get_name">get_name()</a>, <a href="#method_ba_GameActivity__get_resolved_score_info">get_resolved_score_info()</a>, <a href="#method_ba_GameActivity__get_score_info">get_score_info()</a>, <a href="#method_ba_GameActivity__get_settings">get_settings()</a>, <a href="#method_ba_GameActivity__get_supported_maps">get_supported_maps()</a>, <a href="#method_ba_GameActivity__get_team_display_string">get_team_display_string()</a>, <a href="#method_ba_GameActivity__handlemessage">handlemessage()</a>, <a href="#method_ba_GameActivity__has_begun">has_begun()</a>, <a href="#method_ba_GameActivity__has_ended">has_ended()</a>, <a href="#method_ba_GameActivity__has_transitioned_in">has_transitioned_in()</a>, <a href="#method_ba_GameActivity__is_expired">is_expired()</a>, <a href="#method_ba_GameActivity__is_present">is_present()</a>, <a href="#method_ba_GameActivity__is_transitioning_out">is_transitioning_out()</a>, <a href="#method_ba_GameActivity__is_waiting_for_continue">is_waiting_for_continue()</a>, <a href="#method_ba_GameActivity__on_continue">on_continue()</a>, <a href="#method_ba_GameActivity__on_expire">on_expire()</a>, <a href="#method_ba_GameActivity__on_player_join">on_player_join()</a>, <a href="#method_ba_GameActivity__on_player_leave">on_player_leave()</a>, <a href="#method_ba_GameActivity__on_team_join">on_team_join()</a>, <a href="#method_ba_GameActivity__on_team_leave">on_team_leave()</a>, <a href="#method_ba_GameActivity__on_transition_out">on_transition_out()</a>, <a href="#method_ba_GameActivity__project_flag_stand">project_flag_stand()</a>, <a href="#method_ba_GameActivity__respawn_player">respawn_player()</a>, <a href="#method_ba_GameActivity__retain_actor">retain_actor()</a>, <a href="#method_ba_GameActivity__set_has_ended">set_has_ended()</a>, <a href="#method_ba_GameActivity__set_immediate_end">set_immediate_end()</a>, <a href="#method_ba_GameActivity__setup_standard_powerup_drops">setup_standard_powerup_drops()</a>, <a href="#method_ba_GameActivity__setup_standard_time_limit">setup_standard_time_limit()</a>, <a href="#method_ba_GameActivity__show_info">show_info()</a>, <a href="#method_ba_GameActivity__show_scoreboard_info">show_scoreboard_info()</a>, <a href="#method_ba_GameActivity__show_zoom_message">show_zoom_message()</a>, <a href="#method_ba_GameActivity__spawn_player">spawn_player()</a>, <a href="#method_ba_GameActivity__spawn_player_if_exists">spawn_player_if_exists()</a>, <a href="#method_ba_GameActivity__start_transition_in">start_transition_in()</a></h5>
+<h5 style="padding-left: 30px;"><a href="#method_ba_GameActivity__add_actor_weak_ref">add_actor_weak_ref()</a>, <a href="#method_ba_GameActivity__begin">begin()</a>, <a href="#method_ba_GameActivity__continue_or_end_game">continue_or_end_game()</a>, <a href="#method_ba_GameActivity__create_config_ui">create_config_ui()</a>, <a href="#method_ba_GameActivity__create_player_node">create_player_node()</a>, <a href="#method_ba_GameActivity__dep_is_present">dep_is_present()</a>, <a href="#method_ba_GameActivity__end_game">end_game()</a>, <a href="#method_ba_GameActivity__get_config_display_string">get_config_display_string()</a>, <a href="#method_ba_GameActivity__get_description">get_description()</a>, <a href="#method_ba_GameActivity__get_description_display_string">get_description_display_string()</a>, <a href="#method_ba_GameActivity__get_display_string">get_display_string()</a>, <a href="#method_ba_GameActivity__get_dynamic_deps">get_dynamic_deps()</a>, <a href="#method_ba_GameActivity__get_instance_description">get_instance_description()</a>, <a href="#method_ba_GameActivity__get_instance_display_string">get_instance_display_string()</a>, <a href="#method_ba_GameActivity__get_instance_scoreboard_description">get_instance_scoreboard_description()</a>, <a href="#method_ba_GameActivity__get_instance_scoreboard_display_string">get_instance_scoreboard_display_string()</a>, <a href="#method_ba_GameActivity__get_name">get_name()</a>, <a href="#method_ba_GameActivity__get_resolved_score_info">get_resolved_score_info()</a>, <a href="#method_ba_GameActivity__get_score_info">get_score_info()</a>, <a href="#method_ba_GameActivity__get_settings">get_settings()</a>, <a href="#method_ba_GameActivity__get_supported_maps">get_supported_maps()</a>, <a href="#method_ba_GameActivity__get_team_display_string">get_team_display_string()</a>, <a href="#method_ba_GameActivity__handlemessage">handlemessage()</a>, <a href="#method_ba_GameActivity__has_begun">has_begun()</a>, <a href="#method_ba_GameActivity__has_ended">has_ended()</a>, <a href="#method_ba_GameActivity__has_transitioned_in">has_transitioned_in()</a>, <a href="#method_ba_GameActivity__is_expired">is_expired()</a>, <a href="#method_ba_GameActivity__is_transitioning_out">is_transitioning_out()</a>, <a href="#method_ba_GameActivity__is_waiting_for_continue">is_waiting_for_continue()</a>, <a href="#method_ba_GameActivity__on_continue">on_continue()</a>, <a href="#method_ba_GameActivity__on_expire">on_expire()</a>, <a href="#method_ba_GameActivity__on_player_join">on_player_join()</a>, <a href="#method_ba_GameActivity__on_player_leave">on_player_leave()</a>, <a href="#method_ba_GameActivity__on_team_join">on_team_join()</a>, <a href="#method_ba_GameActivity__on_team_leave">on_team_leave()</a>, <a href="#method_ba_GameActivity__on_transition_out">on_transition_out()</a>, <a href="#method_ba_GameActivity__project_flag_stand">project_flag_stand()</a>, <a href="#method_ba_GameActivity__respawn_player">respawn_player()</a>, <a href="#method_ba_GameActivity__retain_actor">retain_actor()</a>, <a href="#method_ba_GameActivity__set_has_ended">set_has_ended()</a>, <a href="#method_ba_GameActivity__set_immediate_end">set_immediate_end()</a>, <a href="#method_ba_GameActivity__setup_standard_powerup_drops">setup_standard_powerup_drops()</a>, <a href="#method_ba_GameActivity__setup_standard_time_limit">setup_standard_time_limit()</a>, <a href="#method_ba_GameActivity__show_info">show_info()</a>, <a href="#method_ba_GameActivity__show_scoreboard_info">show_scoreboard_info()</a>, <a href="#method_ba_GameActivity__show_zoom_message">show_zoom_message()</a>, <a href="#method_ba_GameActivity__spawn_player">spawn_player()</a>, <a href="#method_ba_GameActivity__spawn_player_if_exists">spawn_player_if_exists()</a>, <a href="#method_ba_GameActivity__start_transition_in">start_transition_in()</a></h5>
 <h3 style="padding-left: 0px;">Methods Defined or Overridden:</h3>
 <h5 style="padding-left: 30px;"><a href="#method_ba_TeamGameActivity____init__">&lt;constructor&gt;</a>, <a href="#method_ba_TeamGameActivity__end">end()</a>, <a href="#method_ba_TeamGameActivity__on_begin">on_begin()</a>, <a href="#method_ba_TeamGameActivity__on_transition_in">on_transition_in()</a>, <a href="#method_ba_TeamGameActivity__spawn_player_spaz">spawn_player_spaz()</a>, <a href="#method_ba_TeamGameActivity__supports_session_type">supports_session_type()</a></h5>
 <h4 style="padding-left: 30px;"><a class="offsanchor" name="method_ba_TeamGameActivity____init__"><strong>&lt;constructor&gt;</strong></a></h4>
