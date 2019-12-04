@@ -1351,8 +1351,8 @@ class GatherWindow(ba.OldWindow):
         ba.textwidget(edit=self._internet_host_max_party_size_value,
                       text=str(val))
 
-    def _on_public_party_query_result(self, result: Optional[Dict[str, Any]]
-                                      ) -> None:
+    def _on_public_party_query_result(
+            self, result: Optional[Dict[str, Any]]) -> None:
         with ba.Context('ui'):
             # any time we get any result at all, kill our loading status
             status_text = self._internet_join_status_text
@@ -1806,9 +1806,8 @@ class GatherWindow(ba.OldWindow):
                 fallback_resource='gatherWindow.stopAdvertisingText'),
             on_activate_call=self._on_stop_internet_advertising_press)
 
-    def _on_public_party_accessible_response(self,
-                                             data: Optional[Dict[str, Any]]
-                                             ) -> None:
+    def _on_public_party_accessible_response(
+            self, data: Optional[Dict[str, Any]]) -> None:
         # If we've got status text widgets, update them.
         text = self._internet_host_status_text
         if text:

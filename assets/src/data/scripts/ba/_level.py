@@ -171,11 +171,11 @@ class Level:
         if campaign is None:
             raise Exception("level is not in a campaign")
         campaign_config = campaign.get_config_dict()
-        val: Dict[str, Any] = campaign_config.setdefault(
-            self._name, {
-                'Rating': 0.0,
-                'Complete': False
-            })
+        val: Dict[str,
+                  Any] = campaign_config.setdefault(self._name, {
+                      'Rating': 0.0,
+                      'Complete': False
+                  })
         assert isinstance(val, dict)
         return val
 

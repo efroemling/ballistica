@@ -36,8 +36,8 @@ class ContinuesWindow(ba.OldWindow):
     """A window to continue a game."""
 
     def __init__(self, activity: ba.Activity, cost: int,
-                 continue_call: Callable[[], Any],
-                 cancel_call: Callable[[], Any]):
+                 continue_call: Callable[[], Any], cancel_call: Callable[[],
+                                                                         Any]):
         self._activity = weakref.ref(activity)
         self._cost = cost
         self._continue_call = continue_call

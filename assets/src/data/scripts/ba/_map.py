@@ -293,7 +293,8 @@ class Map(Actor):
         # FIXME: this should be part of game; not map.
         self._next_ffa_start_index = 0
 
-    def is_point_near_edge(self, point: ba.Vec3,
+    def is_point_near_edge(self,
+                           point: ba.Vec3,
                            running: bool = False) -> bool:
         """Return whether the provided point is near an edge of the map.
 
@@ -306,7 +307,7 @@ class Map(Actor):
         return False
 
     def get_def_bound_box(
-            self, name: str
+        self, name: str
     ) -> Optional[Tuple[float, float, float, float, float, float]]:
         """Return a 6 member bounds tuple or None if it is not defined."""
         try:
@@ -352,8 +353,8 @@ class Map(Actor):
                pnt[2] + random.uniform(*z_range))
         return pnt
 
-    def get_ffa_start_position(self, players: Sequence[ba.Player]
-                               ) -> Sequence[float]:
+    def get_ffa_start_position(
+            self, players: Sequence[ba.Player]) -> Sequence[float]:
         """Return a random starting position in one of the FFA spawn areas.
 
         If a list of ba.Players is provided; the returned points will be

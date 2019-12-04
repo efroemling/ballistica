@@ -202,7 +202,8 @@ class CoopGameActivity(GameActivity):
         spaz.play_big_death_sound = True
         return spaz
 
-    def _award_achievement(self, achievement_name: str,
+    def _award_achievement(self,
+                           achievement_name: str,
                            sound: bool = True) -> None:
         """Award an achievement.
 

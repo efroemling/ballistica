@@ -27,13 +27,15 @@ from __future__ import annotations
 
 import sys
 import os
+from enum import Enum
+from pathlib import Path
 from typing import TYPE_CHECKING
 import urllib.request
 import urllib.parse
 import urllib.error
 from dataclasses import dataclass
-from pathlib import Path
 import json
+import subprocess
 
 if TYPE_CHECKING:
     from typing import Optional, Dict, Any
@@ -60,7 +62,11 @@ CLREND = '\033[0m'  # End.
 
 CMD_LOGIN = 'login'
 CMD_LOGOUT = 'logout'
+CMD_PUTASSET = 'putasset'
 CMD_HELP = 'help'
+
+ASSET_PATH_VALID_CHARS = 'abcdefghijklmnopqrstuvwxyz0123456789_'
+ASSET_PATH_MAX_LENGTH = 128
 
 
 @dataclass
@@ -81,6 +87,74 @@ class CleanError(Exception):
     """Exception resulting in a clean error string print and exit."""
 
 
+class AssetType(Enum):
+    """Types for asset files."""
+    TEXTURE = 'texture'
+    SOUND = 'sound'
+
+
+class Asset:
+    """Data for a single asset."""
+
+    def __init__(self, assettype: AssetType) -> None:
+        self.assettype = assettype
+        print('INITING ASSET OF TYPE', assettype)
+
+
+def validate_asset_path(path: str) -> None:
+    """Throw an exception on an invalid asset path."""
+    names = path.split('/')
+    for name in names:
+        if not name:
+            raise CleanError(f'Found empty component in asset path "{path}".')
+        for char in name:
+            if char not in ASSET_PATH_VALID_CHARS:
+                raise CleanError(
+                    f'Found invalid char "{char}" in asset path "{path}".')
+
+
+class AssetBundle:
+    """Data for local or remote asset bundles."""
+
+    def __init__(self) -> None:
+        self.assets: Dict[str, Asset] = {}
+
+    @classmethod
+    def load_from_disk(cls, path: Path) -> AssetBundle:
+        """Load an asset bundle from an existing one on disk."""
+        import yaml
+        indexfilename = 'assetbundle.yaml'
+        bundle = AssetBundle()
+
+        if not path.is_dir():
+            raise CleanError(f'Directory not found: "{path}"')
+
+        with open(Path(path, indexfilename)) as infile:
+            index = yaml.safe_load(infile)
+        if not isinstance(index, dict):
+            raise CleanError(f'Root dict not found in {indexfilename}')
+        assets = index.get('assets')
+        if not isinstance(assets, dict):
+            raise CleanError(f'No "assets" dict found in {indexfilename}')
+        for assetpath, assetdata in assets.items():
+            validate_asset_path(assetpath)
+            if len(assetpath) > ASSET_PATH_MAX_LENGTH:
+                raise CleanError(f'Asset path is too long: "{assetpath}"')
+            if not isinstance(assetdata, dict):
+                raise CleanError(
+                    f'Invalid asset data for {assetpath} in {indexfilename}')
+            assettypestr = assetdata.get('type')
+            if not isinstance(assettypestr, str):
+                raise CleanError(
+                    f'Invalid asset type for {assetpath} in {indexfilename}')
+            assettype = AssetType(assettypestr)
+
+            print('looking at', assetpath, assetdata)
+            bundle.assets[assetpath] = Asset(assettype)
+
+        return bundle
+
+
 class App:
     """Context for a run of the tool."""
 
@@ -95,6 +169,14 @@ class App:
             raise CleanError(
                 'This tool must be run from ballistica project root.')
 
+        # Also run project prereqs checks so we can hopefully inform the user
+        # of missing python modules/etc. instead of just failing cryptically.
+        try:
+            subprocess.run(['make', '--quiet', 'prereqs'], check=True)
+        except subprocess.CalledProcessError:
+            raise CleanError('"make prereqs" check failed. '
+                             'Install missing requirements and try again.')
+
         self._load_cache()
 
         if len(sys.argv) < 2:
@@ -106,6 +188,8 @@ class App:
             self.do_login()
         elif cmd == CMD_LOGOUT:
             self.do_logout()
+        elif cmd == CMD_PUTASSET:
+            self.do_putasset()
         else:
             # For all other commands, simply pass them to the server verbatim.
             self.do_misc_command()
@@ -181,6 +265,15 @@ class App:
         """Run the logout command."""
         self._state.login_token = None
         print(f'{CLRGRN}Cloudtool is now logged out.{CLREND}')
+
+    def do_putasset(self) -> None:
+        """Run a putasset command."""
+
+        if len(sys.argv) != 3:
+            raise CleanError('Expected a path to an assetpackage directory.')
+
+        path = Path(sys.argv[2])
+        _bundle = AssetBundle.load_from_disk(path)
 
     def do_misc_command(self) -> None:
         """Run a miscellaneous command."""

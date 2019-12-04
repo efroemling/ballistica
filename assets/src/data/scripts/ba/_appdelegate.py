@@ -32,9 +32,9 @@ class AppDelegate:
     """Defines handlers for high level app functionality."""
 
     def create_default_game_config_ui(
-            self, gameclass: Type[ba.GameActivity],
-            sessionclass: Type[ba.Session], config: Optional[Dict[str, Any]],
-            completion_call: Callable[[Optional[Dict[str, Any]]], None]
+        self, gameclass: Type[ba.GameActivity], sessionclass: Type[ba.Session],
+        config: Optional[Dict[str, Any]],
+        completion_call: Callable[[Optional[Dict[str, Any]]], None]
     ) -> None:
         """Launch a UI to configure the given game config.
 

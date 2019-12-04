@@ -377,8 +377,8 @@ class App:
         self.main_menu_selection: Optional[str] = None  # FIXME: Kill this.
         self.have_party_queue_window = False
         self.quit_window: Any = None
-        self.dismiss_wii_remotes_window_call: (
-            Optional[Callable[[], Any]]) = None
+        self.dismiss_wii_remotes_window_call: (Optional[Callable[[],
+                                                                 Any]]) = None
         self.value_test_defaults: dict = {}
         self.main_menu_window_refresh_check_count = 0
         self.first_main_menu = True  # FIXME: Move to mainmenu class.

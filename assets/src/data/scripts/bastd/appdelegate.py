@@ -33,9 +33,9 @@ class AppDelegate(ba.AppDelegate):
     """Defines handlers for high level app functionality."""
 
     def create_default_game_config_ui(
-            self, gameclass: Type[ba.GameActivity],
-            sessionclass: Type[ba.Session], config: Optional[Dict[str, Any]],
-            completion_call: Callable[[Optional[Dict[str, Any]]], Any]
+        self, gameclass: Type[ba.GameActivity], sessionclass: Type[ba.Session],
+        config: Optional[Dict[str, Any]],
+        completion_call: Callable[[Optional[Dict[str, Any]]], Any]
     ) -> None:
         """(internal)"""
 

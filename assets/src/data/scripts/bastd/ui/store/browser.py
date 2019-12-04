@@ -445,7 +445,8 @@ class StoreBrowserWindow(ba.OldWindow):
                             resource='getTicketsWindow.unavailableText'),
                                          color=(1, 0, 0))
 
-    def _do_purchase_check(self, item: str,
+    def _do_purchase_check(self,
+                           item: str,
                            is_ticket_purchase: bool = False) -> None:
         from ba.internal import serverget
 

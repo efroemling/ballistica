@@ -210,8 +210,8 @@ class LeagueRankWindow(ba.OldWindow):
         else:
             ba.playsound(ba.getsound('error'))
 
-    def _on_power_ranking_query_response(self, data: Optional[Dict[str, Any]]
-                                         ) -> None:
+    def _on_power_ranking_query_response(
+            self, data: Optional[Dict[str, Any]]) -> None:
         from ba.internal import cache_league_rank_data
         self._doing_power_ranking_query = False
         # important: *only* cache this if we requested the current season..
@@ -607,8 +607,8 @@ class LeagueRankWindow(ba.OldWindow):
                     '/highscores?list=powerRankings&v=2' + league_str +
                     season_str + '&player=' + our_login_id)
 
-    def _update_for_league_rank_data(self,
-                                     data: Optional[Dict[str, Any]]) -> None:
+    def _update_for_league_rank_data(self, data: Optional[Dict[str,
+                                                               Any]]) -> None:
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals

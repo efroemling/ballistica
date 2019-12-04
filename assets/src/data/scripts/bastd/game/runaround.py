@@ -822,9 +822,9 @@ class RunaroundGame(ba.CoopGameActivity):
                 elif path == 6:
                     this_target_point_s *= 0.7
 
-                def _add_defender(
-                        defender_type: Tuple[Type[spazbot.SpazBot], float],
-                        pnt: str) -> Tuple[float, Dict[str, Any]]:
+                def _add_defender(defender_type: Tuple[Type[spazbot.SpazBot],
+                                                       float],
+                                  pnt: str) -> Tuple[float, Dict[str, Any]]:
                     # FIXME: should look into this warning
                     # pylint: disable=cell-var-from-loop
                     return this_target_point_s * defender_type[1], {

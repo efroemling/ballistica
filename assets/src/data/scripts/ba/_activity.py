@@ -516,7 +516,9 @@ class Activity(DependencyComponent):
     def handlemessage(self, msg: Any) -> Any:
         """General message handling; can be passed any message object."""
 
-    def end(self, results: Any = None, delay: float = 0.0,
+    def end(self,
+            results: Any = None,
+            delay: float = 0.0,
             force: bool = False) -> None:
         """Commences Activity shutdown and delivers results to the ba.Session.
 

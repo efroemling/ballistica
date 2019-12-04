@@ -171,7 +171,8 @@ class FootballStadium(ba.Map):
         gnode.vr_camera_offset = (0, -0.8, -1.1)
         gnode.vr_near_clip = 0.5
 
-    def is_point_near_edge(self, point: ba.Vec3,
+    def is_point_near_edge(self,
+                           point: ba.Vec3,
                            running: bool = False) -> bool:
         box_position = self.defs.boxes['edge_box'][0:3]
         box_scale = self.defs.boxes['edge_box'][6:9]
@@ -814,7 +815,8 @@ class DoomShroom(ba.Map):
         gnode.vignette_outer = (0.76, 0.76, 0.76)
         gnode.vignette_inner = (0.95, 0.95, 0.99)
 
-    def is_point_near_edge(self, point: ba.Vec3,
+    def is_point_near_edge(self,
+                           point: ba.Vec3,
                            running: bool = False) -> bool:
         xpos = point.x
         zpos = point.z
@@ -1162,7 +1164,8 @@ class TowerD(ba.Map):
         gnode.vignette_outer = (0.7, 0.73, 0.7)
         gnode.vignette_inner = (0.95, 0.95, 0.95)
 
-    def is_point_near_edge(self, point: ba.Vec3,
+    def is_point_near_edge(self,
+                           point: ba.Vec3,
                            running: bool = False) -> bool:
         # see if we're within edge_box
         boxes = self.defs.boxes
@@ -1453,7 +1456,8 @@ class Courtyard(ba.Map):
         gnode.vignette_outer = (0.6, 0.6, 0.64)
         gnode.vignette_inner = (0.95, 0.95, 0.93)
 
-    def is_point_near_edge(self, point: ba.Vec3,
+    def is_point_near_edge(self,
+                           point: ba.Vec3,
                            running: bool = False) -> bool:
         # count anything off our ground level as safe (for our platforms)
         # see if we're within edge_box
@@ -1549,7 +1553,8 @@ class Rampage(ba.Map):
         gnode.vignette_outer = (0.62, 0.64, 0.69)
         gnode.vignette_inner = (0.97, 0.95, 0.93)
 
-    def is_point_near_edge(self, point: ba.Vec3,
+    def is_point_near_edge(self,
+                           point: ba.Vec3,
                            running: bool = False) -> bool:
         box_position = self.defs.boxes['edge_box'][0:3]
         box_scale = self.defs.boxes['edge_box'][6:9]

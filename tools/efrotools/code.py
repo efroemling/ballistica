@@ -504,7 +504,8 @@ def _filter_module_name(mpath: str) -> str:
     return mpath[:-9] if mpath.endswith('.__init__') else mpath
 
 
-def runmypy(filenames: List[str], full: bool = False,
+def runmypy(filenames: List[str],
+            full: bool = False,
             check: bool = True) -> None:
     """Run MyPy on provided filenames."""
     args = [

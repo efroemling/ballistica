@@ -207,9 +207,8 @@ class CoopSession(Session):
         else:
             self.end()
 
-    def _on_tournament_restart_menu_press(self,
-                                          resume_callback: Callable[[], Any]
-                                          ) -> None:
+    def _on_tournament_restart_menu_press(
+            self, resume_callback: Callable[[], Any]) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.tournamententry import TournamentEntryWindow
         from ba._gameactivity import GameActivity

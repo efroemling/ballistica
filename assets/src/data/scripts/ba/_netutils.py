@@ -158,19 +158,19 @@ class ServerCallThread(threading.Thread):
                          from_other_thread=True)
 
 
-def serverget(request: str,
-              data: Dict[str, Any],
-              callback: Optional[ServerCallbackType] = None,
-              response_type: ServerResponseType = ServerResponseType.JSON
-              ) -> None:
+def serverget(
+        request: str,
+        data: Dict[str, Any],
+        callback: Optional[ServerCallbackType] = None,
+        response_type: ServerResponseType = ServerResponseType.JSON) -> None:
     """Make a call to the master server via a http GET."""
     ServerCallThread(request, 'get', data, callback, response_type).start()
 
 
-def serverput(request: str,
-              data: Dict[str, Any],
-              callback: Optional[ServerCallbackType] = None,
-              response_type: ServerResponseType = ServerResponseType.JSON
-              ) -> None:
+def serverput(
+        request: str,
+        data: Dict[str, Any],
+        callback: Optional[ServerCallbackType] = None,
+        response_type: ServerResponseType = ServerResponseType.JSON) -> None:
     """Make a call to the master server via a http POST."""
     ServerCallThread(request, 'post', data, callback, response_type).start()

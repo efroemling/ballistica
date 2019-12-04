@@ -45,8 +45,8 @@ class BoundCompoundValue:
     Allows access to its values through our own equivalent attributes.
     """
 
-    def __init__(self, value: CompoundValue,
-                 d_data: Union[List[Any], Dict[str, Any]]):
+    def __init__(self, value: CompoundValue, d_data: Union[List[Any],
+                                                           Dict[str, Any]]):
         self.d_value: CompoundValue
         self.d_data: Union[List[Any], Dict[str, Any]]
         # need to use base setters to avoid triggering our own overrides
@@ -374,8 +374,8 @@ class BoundCompoundListField(Generic[TC]):
 class BoundCompoundDictField(Generic[TK, TC]):
     """A CompoundDictField bound to its entity sub-data."""
 
-    def __init__(self, field: CompoundDictField[TK, TC],
-                 d_data: Dict[Any, Any]):
+    def __init__(self, field: CompoundDictField[TK, TC], d_data: Dict[Any,
+                                                                      Any]):
         self.d_field = field
         self.d_data = d_data
 

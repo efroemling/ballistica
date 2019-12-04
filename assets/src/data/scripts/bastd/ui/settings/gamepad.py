@@ -769,13 +769,13 @@ class AwaitGamepadInputWindow(ba.OldWindow):
     """Window for capturing a gamepad button press."""
 
     def __init__(
-            self,
-            gamepad: ba.InputDevice,
-            button: str,
-            callback: Callable[[str, Dict[str, Any], AwaitGamepadInputWindow],
-                               Any],
-            message: ba.Lstr = None,
-            message2: ba.Lstr = None):
+        self,
+        gamepad: ba.InputDevice,
+        button: str,
+        callback: Callable[[str, Dict[str, Any], AwaitGamepadInputWindow],
+                           Any],
+        message: ba.Lstr = None,
+        message2: ba.Lstr = None):
         if message is None:
             print('AwaitGamepadInputWindow message is None!')
             message = ba.Lstr(

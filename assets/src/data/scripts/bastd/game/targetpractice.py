@@ -60,8 +60,9 @@ class TargetPracticeGame(ba.TeamGameActivity):
                 or issubclass(sessiontype, ba.TeamBaseSession))
 
     @classmethod
-    def get_settings(cls, sessiontype: Type[ba.Session]
-                     ) -> List[Tuple[str, Dict[str, Any]]]:
+    def get_settings(
+            cls,
+            sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
         return [("Target Count", {
             'min_value': 1,
             'default': 3

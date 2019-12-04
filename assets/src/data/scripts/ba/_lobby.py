@@ -47,10 +47,10 @@ class JoinInfo:
         from ba._enums import SpecialChar
         can_switch_teams = (len(lobby.teams) > 1)
         self._state = 0
-        press_to_punch: Union[str, ba.Lstr] = _ba.charstr(
-            SpecialChar.LEFT_BUTTON)
-        press_to_bomb: Union[str, ba.Lstr] = _ba.charstr(
-            SpecialChar.RIGHT_BUTTON)
+        press_to_punch: Union[str,
+                              ba.Lstr] = _ba.charstr(SpecialChar.LEFT_BUTTON)
+        press_to_bomb: Union[str,
+                             ba.Lstr] = _ba.charstr(SpecialChar.RIGHT_BUTTON)
 
         # If we have a keyboard, grab keys for punch and pickup.
         # FIXME: This of course is only correct on the local device;

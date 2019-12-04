@@ -43,7 +43,8 @@ class EntityMixin:
     class are accessible on the new type.
     """
 
-    def __init__(self, d_data: Dict[str, Any] = None,
+    def __init__(self,
+                 d_data: Dict[str, Any] = None,
                  error: bool = False) -> None:
         super().__init__()
         if not isinstance(self, CompoundValue):
@@ -69,8 +70,8 @@ class EntityMixin:
         assert isinstance(self, CompoundValue)
         self.apply_fields_to_data(self.d_data, error=error)
 
-    def copy_data(self,
-                  target: Union[CompoundValue, BoundCompoundValue]) -> None:
+    def copy_data(self, target: Union[CompoundValue,
+                                      BoundCompoundValue]) -> None:
         """Copy data from a target Entity or compound-value.
 
         This first verifies that the target has a matching set of fields

@@ -243,8 +243,8 @@ class Spaz(ba.Actor):
         self._bomb_held = False
         if self.default_shields:
             self.equip_shields()
-        self._dropped_bomb_callbacks: List[
-            Callable[[Spaz, ba.Actor], Any]] = []
+        self._dropped_bomb_callbacks: List[Callable[[Spaz, ba.Actor],
+                                                    Any]] = []
 
         self._score_text: Optional[ba.Node] = None
         self._score_text_hide_timer: Optional[ba.Timer] = None
@@ -262,8 +262,8 @@ class Spaz(ba.Actor):
         self.punch_callback = None
         self.pick_up_powerup_callback = None
 
-    def add_dropped_bomb_callback(self, call: Callable[[Spaz, ba.Actor], Any]
-                                  ) -> None:
+    def add_dropped_bomb_callback(
+            self, call: Callable[[Spaz, ba.Actor], Any]) -> None:
         """
         Add a call to be run whenever this Spaz drops a bomb.
         The spaz and the newly-dropped bomb are passed as arguments.

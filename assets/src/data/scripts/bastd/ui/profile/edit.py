@@ -538,8 +538,8 @@ class EditProfileWindow(ba.OldWindow):
             tint_color=self._color,
             tint2_color=self._highlight)
 
-    def _make_picker(self, picker_type: str,
-                     origin: Tuple[float, float]) -> None:
+    def _make_picker(self, picker_type: str, origin: Tuple[float,
+                                                           float]) -> None:
         from bastd.ui import colorpicker
         if picker_type == 'color':
             initial_color = self._color

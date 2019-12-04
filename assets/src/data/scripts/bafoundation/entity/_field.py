@@ -83,7 +83,9 @@ class Field(BaseField, Generic[T]):
 class CompoundField(BaseField, Generic[TC]):
     """Field consisting of a single compound value."""
 
-    def __init__(self, d_key: str, value: TC,
+    def __init__(self,
+                 d_key: str,
+                 value: TC,
                  store_default: bool = False) -> None:
         super().__init__(d_key)
         if __debug__ is True:
@@ -283,7 +285,9 @@ class CompoundListField(BaseField, Generic[TC]):
     ie: mylist[10].fieldattr = 'foo'
     """
 
-    def __init__(self, d_key: str, valuetype: TC,
+    def __init__(self,
+                 d_key: str,
+                 valuetype: TC,
                  store_default: bool = False) -> None:
         super().__init__(d_key)
         self.d_value = valuetype
@@ -421,7 +425,8 @@ class CompoundDictField(BaseField, Generic[TK, TC]):
         ...
 
     @overload
-    def __get__(self, obj: Any,
+    def __get__(self,
+                obj: Any,
                 cls: Any = None) -> BoundCompoundDictField[TK, TC]:
         ...
 

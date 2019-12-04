@@ -1057,7 +1057,8 @@ class AccountSettingsWindow(ba.OldWindow):
         ba.buttonwidget(edit=self._sign_out_button,
                         label=ba.Lstr(resource=self._r + '.signingOutText'))
 
-    def _sign_in_press(self, account_type: str,
+    def _sign_in_press(self,
+                       account_type: str,
                        show_test_warning: bool = True) -> None:
         del show_test_warning  # unused
         _ba.sign_in(account_type)

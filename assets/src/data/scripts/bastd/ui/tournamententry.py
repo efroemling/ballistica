@@ -308,8 +308,8 @@ class TournamentEntryWindow(popup.PopupWindow):
         self._update()
         self._restore_state()
 
-    def _on_tournament_query_response(self,
-                                      data: Optional[Dict[str, Any]]) -> None:
+    def _on_tournament_query_response(self, data: Optional[Dict[str,
+                                                                Any]]) -> None:
         from ba.internal import cache_tournament_info
         self._running_query = False
         if data is not None:

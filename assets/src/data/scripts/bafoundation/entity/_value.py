@@ -146,7 +146,8 @@ class OptionalStringValue(SimpleValue[Optional[str]]):
 class BoolValue(SimpleValue[bool]):
     """Value consisting of a single bool."""
 
-    def __init__(self, default: bool = False,
+    def __init__(self,
+                 default: bool = False,
                  store_default: bool = False) -> None:
         super().__init__(default, store_default, bool, (int, float))
 
@@ -246,7 +247,8 @@ class IntValue(SimpleValue[int]):
 class OptionalIntValue(SimpleValue[Optional[int]]):
     """Value consisting of a single int or None"""
 
-    def __init__(self, default: int = None,
+    def __init__(self,
+                 default: int = None,
                  store_default: bool = False) -> None:
         super().__init__(default,
                          store_default,
@@ -257,7 +259,8 @@ class OptionalIntValue(SimpleValue[Optional[int]]):
 class FloatValue(SimpleValue[float]):
     """Value consisting of a single float."""
 
-    def __init__(self, default: float = 0.0,
+    def __init__(self,
+                 default: float = 0.0,
                  store_default: bool = False) -> None:
         super().__init__(default, store_default, float, (bool, int))
 
@@ -265,7 +268,8 @@ class FloatValue(SimpleValue[float]):
 class OptionalFloatValue(SimpleValue[Optional[float]]):
     """Value consisting of a single float or None."""
 
-    def __init__(self, default: float = None,
+    def __init__(self,
+                 default: float = None,
                  store_default: bool = False) -> None:
         super().__init__(default,
                          store_default,

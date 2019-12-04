@@ -337,8 +337,8 @@ class ITunesThread(threading.Thread):
         self._commands.append(['GET_PLAYLISTS', callback])
         self._commands_available.set()
 
-    def _handle_get_playlists_command(self, target: Callable[[List[str]], None]
-                                      ) -> None:
+    def _handle_get_playlists_command(
+            self, target: Callable[[List[str]], None]) -> None:
         from ba._general import Call
         try:
             playlists = _ba.itunes_get_playlists()

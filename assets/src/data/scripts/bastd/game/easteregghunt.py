@@ -67,8 +67,9 @@ class EasterEggHuntGame(ba.TeamGameActivity):
                 or issubclass(sessiontype, ba.FreeForAllSession))
 
     @classmethod
-    def get_settings(cls, sessiontype: Type[ba.Session]
-                     ) -> List[Tuple[str, Dict[str, Any]]]:
+    def get_settings(
+            cls,
+            sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
         return [("Pro Mode", {'default': False})]
 
     def __init__(self, settings: Dict[str, Any]):

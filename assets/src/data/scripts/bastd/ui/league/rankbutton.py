@@ -230,8 +230,8 @@ class LeagueRankButton:
             ba.print_exception('error doing smooth update')
             self._smooth_update_timer = None
 
-    def _update_for_league_rank_data(self,
-                                     data: Optional[Dict[str, Any]]) -> None:
+    def _update_for_league_rank_data(self, data: Optional[Dict[str,
+                                                               Any]]) -> None:
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
         from ba.internal import get_league_rank_points
@@ -340,8 +340,8 @@ class LeagueRankButton:
             ba.textwidget(edit=self._title_text, text=txt, color=t_color)
         ba.textwidget(edit=self._value_text, text=status_text)
 
-    def _on_power_ranking_query_response(self, data: Optional[Dict[str, Any]]
-                                         ) -> None:
+    def _on_power_ranking_query_response(
+            self, data: Optional[Dict[str, Any]]) -> None:
         from ba.internal import cache_league_rank_data
         self._doing_power_ranking_query = False
         cache_league_rank_data(data)

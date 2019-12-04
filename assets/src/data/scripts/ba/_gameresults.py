@@ -187,8 +187,8 @@ class TeamGameResults:
             team = score[0]()
             assert team is not None
             sval.append(team)
-        results: List[Tuple[Optional[int], List[ba.Team]]] = list(
-            winners.items())
+        results: List[Tuple[Optional[int],
+                            List[ba.Team]]] = list(winners.items())
         results.sort(reverse=not self._lower_is_better)
 
         # Also group the 'None' scores.
@@ -200,8 +200,8 @@ class TeamGameResults:
         # Add the Nones to the list (either as winners or losers
         # depending on the rules).
         if none_teams:
-            nones: List[Tuple[Optional[int], List[ba.Team]]] = [(None,
-                                                                 none_teams)]
+            nones: List[Tuple[Optional[int],
+                              List[ba.Team]]] = [(None, none_teams)]
             if self._none_is_winner:
                 results = nones + results
             else:

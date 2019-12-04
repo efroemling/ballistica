@@ -124,8 +124,8 @@ class TournamentScoresWindow(popup_ui.PopupWindow):
                              callback=ba.WeakCall(
                                  self._on_tournament_query_response))
 
-    def _on_tournament_query_response(self,
-                                      data: Optional[Dict[str, Any]]) -> None:
+    def _on_tournament_query_response(self, data: Optional[Dict[str,
+                                                                Any]]) -> None:
         if data is not None:
             # this used to be the whole payload
             data_t: List[Dict[str, Any]] = data['t']

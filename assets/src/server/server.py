@@ -123,8 +123,8 @@ def _get_default_config() -> Dict[str, Any]:
 
 def _run_process_until_exit(process: subprocess.Popen,
                             input_commands: Sequence[str],
-                            restart_minutes: int,
-                            config: Dict[str, Any]) -> None:
+                            restart_minutes: int, config: Dict[str,
+                                                               Any]) -> None:
     # So we pass our initial config.
     config_dirty = True
 

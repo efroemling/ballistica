@@ -77,8 +77,9 @@ class ConquestGame(ba.TeamGameActivity):
         return ba.getmaps("conquest")
 
     @classmethod
-    def get_settings(cls, sessiontype: Type[ba.Session]
-                     ) -> List[Tuple[str, Dict[str, Any]]]:
+    def get_settings(
+            cls,
+            sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
         return [
             ("Time Limit", {
                 'choices': [('None', 0), ('1 Minute', 60),

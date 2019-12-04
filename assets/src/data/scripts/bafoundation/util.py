@@ -60,8 +60,9 @@ class DispatchMethodWrapper(Generic[TARG, TRET]):
 
 
 # noinspection PyTypeHints, PyProtectedMember
-def dispatchmethod(func: Callable[[Any, TARG], TRET]
-                   ) -> DispatchMethodWrapper[TARG, TRET]:
+def dispatchmethod(
+    func: Callable[[Any, TARG], TRET]
+) -> DispatchMethodWrapper[TARG, TRET]:
     """A variation of functools.singledispatch for methods."""
     from functools import singledispatch, update_wrapper
     origwrapper: Any = singledispatch(func)
@@ -224,8 +225,9 @@ class ValueDispatcher(Generic[TVAL, TRET]):
         return partial(self._add_handler, value)
 
 
-def valuedispatch1arg(call: Callable[[TVAL, TARG], TRET]
-                      ) -> ValueDispatcher1Arg[TVAL, TARG, TRET]:
+def valuedispatch1arg(
+    call: Callable[[TVAL, TARG], TRET]
+) -> ValueDispatcher1Arg[TVAL, TARG, TRET]:
     """Like valuedispatch but for functions taking an extra argument."""
     return ValueDispatcher1Arg(call)
 

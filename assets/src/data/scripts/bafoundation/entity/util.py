@@ -30,9 +30,9 @@ if TYPE_CHECKING:
     from bafoundation.entity._support import BoundCompoundValue
 
 
-def diff_compound_values(obj1: Union[BoundCompoundValue, CompoundValue],
-                         obj2: Union[BoundCompoundValue, CompoundValue]
-                         ) -> str:
+def diff_compound_values(
+        obj1: Union[BoundCompoundValue, CompoundValue],
+        obj2: Union[BoundCompoundValue, CompoundValue]) -> str:
     """Generate a string showing differences between two compound values.
 
     Both must be associated with data and have the same set of fields.
@@ -108,8 +108,9 @@ def have_matching_fields(val1: CompoundValue, val2: CompoundValue) -> bool:
     return val1.get_fields() == val2.get_fields()
 
 
-def get_compound_value_and_data(obj: Union[BoundCompoundValue, CompoundValue]
-                                ) -> Tuple[CompoundValue, Any]:
+def get_compound_value_and_data(
+    obj: Union[BoundCompoundValue, CompoundValue]
+) -> Tuple[CompoundValue, Any]:
     """Return value and data for bound or unbound compound values."""
     # pylint: disable=cyclic-import
     from bafoundation.entity._support import BoundCompoundValue

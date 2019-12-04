@@ -179,8 +179,8 @@ class SpazBot(basespaz.Spaz):
         assert mval is not None
         return mval
 
-    def _get_target_player_pt(self
-                              ) -> Tuple[Optional[ba.Vec3], Optional[ba.Vec3]]:
+    def _get_target_player_pt(
+            self) -> Tuple[Optional[ba.Vec3], Optional[ba.Vec3]]:
         """Returns the position and velocity of our target.
 
         Both values will be None in the case of no target.

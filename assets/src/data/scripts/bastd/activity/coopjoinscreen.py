@@ -98,10 +98,12 @@ class CoopJoiningActivity(JoiningActivity):
             spacing = 25
             delay_inc = 0.1
 
-            def _add_t(text: Union[str, ba.Lstr],
-                       h_offs: float = 0.0,
-                       scale: float = 1.0,
-                       color: Sequence[float] = (1.0, 1.0, 1.0, 0.46)) -> None:
+            def _add_t(
+                text: Union[str, ba.Lstr],
+                h_offs: float = 0.0,
+                scale: float = 1.0,
+                color: Sequence[float] = (1.0, 1.0, 1.0, 0.46)
+            ) -> None:
                 Text(text,
                      scale=scale * 0.76,
                      h_align='left',

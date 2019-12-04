@@ -99,8 +99,10 @@ class OnScreenTimer(ba.Actor):
 
             self.inputnode.timemax = endtime_ms - self._starttime
 
-    def getstarttime(self, timeformat: ba.TimeFormat = ba.TimeFormat.SECONDS
-                     ) -> Union[int, float]:
+    def getstarttime(
+        self,
+        timeformat: ba.TimeFormat = ba.TimeFormat.SECONDS
+    ) -> Union[int, float]:
         """Return the sim-time when start() was called.
 
         Time will be returned in seconds if timeformat is SECONDS or

@@ -88,7 +88,7 @@
         </list>
       </option>
     </inspection_tool>
-    <inspection_tool class="PyUnusedLocalInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+    <inspection_tool class="PyUnusedLocalInspection" enabled="false" level="WEAK WARNING" enabled_by_default="false">
       <scope name="UncheckedPython" level="WEAK WARNING" enabled="false">
         <option name="ignoreTupleUnpacking" value="true" />
         <option name="ignoreLambdaParameters" value="true" />

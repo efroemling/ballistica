@@ -118,8 +118,8 @@ class TeamsScoreScreenActivity(ScoreScreenActivity):
             assert self.stats
             valid_players = list(self.stats.get_records().items())
 
-            def _get_player_score_set_entry(player: ba.Player
-                                            ) -> Optional[PlayerRecord]:
+            def _get_player_score_set_entry(
+                    player: ba.Player) -> Optional[PlayerRecord]:
                 for p_rec in valid_players:
                     # PyCharm incorrectly thinks valid_players is a List[str]
                     # noinspection PyUnresolvedReferences

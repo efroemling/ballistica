@@ -68,8 +68,9 @@ class KingOfTheHillGame(ba.TeamGameActivity):
         return ba.getmaps("king_of_the_hill")
 
     @classmethod
-    def get_settings(cls, sessiontype: Type[ba.Session]
-                     ) -> List[Tuple[str, Dict[str, Any]]]:
+    def get_settings(
+            cls,
+            sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
         return [("Hold Time", {
             'min_value': 10,
             'default': 30,

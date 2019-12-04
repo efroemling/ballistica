@@ -293,7 +293,7 @@ def gen_fulltest_buildfile_linux() -> None:
     dayoffset = datetime.datetime.now().timetuple().tm_yday
 
     targets = ['build', 'server-build']
-    linflav = 'LINUX_FLAVOR=linux64-u19s'
+    linflav = 'LINUX_FLAVOR=u18s'
     lines = []
     for target in targets:
         lines.append(f'{linflav} make linux-{target}')
@@ -714,7 +714,7 @@ def checkenv() -> None:
     for modname, minver, packagename in [
         ('pylint', [2, 4, 4], None),
         ('mypy', [0, 740], None),
-        ('yapf', [0, 28, 0], None),
+        ('yapf', [0, 29, 0], None),
         ('typing_extensions', None, None),
         ('pytz', None, None),
         ('yaml', None, 'PyYAML'),

@@ -348,12 +348,12 @@ class GamepadAdvancedSettingsWindow(ba.OldWindow):
         for child in self._subcontainer.get_children():
             ba.widget(edit=child, show_buffer_bottom=30, show_buffer_top=30)
 
-    def _capture_button(self,
-                        pos: Tuple[float, float],
-                        name: ba.Lstr,
-                        control: str,
-                        message: Optional[ba.Lstr] = None
-                        ) -> Tuple[ba.Widget, ba.Widget]:
+    def _capture_button(
+            self,
+            pos: Tuple[float, float],
+            name: ba.Lstr,
+            control: str,
+            message: Optional[ba.Lstr] = None) -> Tuple[ba.Widget, ba.Widget]:
         if message is None:
             message = ba.Lstr(resource=self._parent_window.get_r() +
                               '.pressAnyButtonText')
@@ -416,17 +416,17 @@ class GamepadAdvancedSettingsWindow(ba.OldWindow):
         ba.textwidget(edit=self._textwidgets[control],
                       text=self._parent_window.get_control_value_name(control))
 
-    def _config_value_editor(self,
-                             name: ba.Lstr,
-                             control: str,
-                             position: Tuple[float, float],
-                             min_val: float = 0.0,
-                             max_val: float = 100.0,
-                             increment: float = 1.0,
-                             change_sound: bool = True,
-                             x_offset: float = 0.0,
-                             displayname: ba.Lstr = None
-                             ) -> Tuple[ba.Widget, ba.Widget]:
+    def _config_value_editor(
+            self,
+            name: ba.Lstr,
+            control: str,
+            position: Tuple[float, float],
+            min_val: float = 0.0,
+            max_val: float = 100.0,
+            increment: float = 1.0,
+            change_sound: bool = True,
+            x_offset: float = 0.0,
+            displayname: ba.Lstr = None) -> Tuple[ba.Widget, ba.Widget]:
 
         if displayname is None:
             displayname = name

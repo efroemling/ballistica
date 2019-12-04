@@ -56,8 +56,9 @@ class DeathMatchGame(ba.TeamGameActivity):
         return ba.getmaps("melee")
 
     @classmethod
-    def get_settings(cls, sessiontype: Type[ba.Session]
-                     ) -> List[Tuple[str, Dict[str, Any]]]:
+    def get_settings(
+            cls,
+            sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
         settings: List[Tuple[str, Dict[str, Any]]] = [
             ("Kills to Win Per Player", {
                 'min_value': 1,

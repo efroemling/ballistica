@@ -48,9 +48,8 @@ class GameActivity(Activity):
 
     @classmethod
     def create_config_ui(
-            cls, sessionclass: Type[ba.Session],
-            config: Optional[Dict[str, Any]],
-            completion_call: Callable[[Optional[Dict[str, Any]]], None]
+        cls, sessionclass: Type[ba.Session], config: Optional[Dict[str, Any]],
+        completion_call: Callable[[Optional[Dict[str, Any]]], None]
     ) -> None:
         """Launch an in-game UI to configure settings for a game type.
 
@@ -171,8 +170,8 @@ class GameActivity(Activity):
         return ''
 
     @classmethod
-    def get_description_display_string(cls, sessiontype: Type[ba.Session]
-                                       ) -> ba.Lstr:
+    def get_description_display_string(
+            cls, sessiontype: Type[ba.Session]) -> ba.Lstr:
         """Return a translated version of get_description().
 
         Sub-classes should override get_description(); not this.
@@ -181,8 +180,9 @@ class GameActivity(Activity):
         return Lstr(translate=('gameDescriptions', description))
 
     @classmethod
-    def get_settings(cls, sessiontype: Type[ba.Session]
-                     ) -> List[Tuple[str, Dict[str, Any]]]:
+    def get_settings(
+            cls,
+            sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
         """
         Called by the default ba.GameActivity.create_config_ui()
         implementation; should return a dict of config options to be presented
@@ -643,8 +643,8 @@ class GameActivity(Activity):
                                  callback=WeakCall(
                                      self._on_tournament_query_response))
 
-    def _on_tournament_query_response(self,
-                                      data: Optional[Dict[str, Any]]) -> None:
+    def _on_tournament_query_response(self, data: Optional[Dict[str,
+                                                                Any]]) -> None:
         from ba._account import cache_tournament_info
         if data is not None:
             data_t = data['t']  # This used to be the whole payload.
@@ -935,7 +935,9 @@ class GameActivity(Activity):
             animate(combine, 'input3', {0: 0, 1.0: 1, 4.0: 1, 5.0: 0})
             _ba.timer(5.0, tnode.delete)
 
-    def end(self, results: Any = None, delay: float = 0.0,
+    def end(self,
+            results: Any = None,
+            delay: float = 0.0,
             force: bool = False) -> None:
         from ba._gameresults import TeamGameResults
 
