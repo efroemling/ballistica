@@ -30,6 +30,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from typing import Dict, Union, Sequence, Optional, Any
+    from typing_extensions import Literal
 
 MIT_LICENSE = """Copyright (c) 2011-2019 Eric Froemling
 
@@ -137,27 +138,33 @@ def run(cmd: str) -> None:
     subprocess.run(cmd, shell=True, check=True)
 
 
-def get_files_hash(filenames: Sequence[Union[str, Path]],
-                   extrahash: str = '',
-                   int_only: bool = False) -> str:
+def get_files_hash(
+        filenames: Sequence[Union[str, Path]],
+        extrahash: str = '',
+        int_only: bool = False,
+        hashtype: Union[Literal['md5'], Literal['sha256']] = 'md5') -> str:
     """Return a md5 hash for the given files."""
     import hashlib
     if not isinstance(filenames, list):
         raise Exception('expected a list')
-    md5 = hashlib.md5()
+    if TYPE_CHECKING:
+        # Help Mypy infer the right type for this.
+        hashobj = hashlib.md5()
+    else:
+        hashobj = getattr(hashlib, hashtype)()
     for fname in filenames:
         with open(fname, 'rb') as infile:
             while True:
                 data = infile.read(2**20)
                 if not data:
                     break
-                md5.update(data)
-    md5.update(extrahash.encode())
+                hashobj.update(data)
+    hashobj.update(extrahash.encode())
 
     if int_only:
-        return str(int.from_bytes(md5.digest(), byteorder='big'))
+        return str(int.from_bytes(hashobj.digest(), byteorder='big'))
 
-    return md5.hexdigest()
+    return hashobj.hexdigest()
 
 
 def _py_symbol_at_column(line: str, col: int) -> str:

@@ -521,9 +521,11 @@
       <w>fieldtypes</w>
       <w>filecmp</w>
       <w>filehash</w>
+      <w>fileinfo</w>
       <w>fileinput</w>
       <w>filelist</w>
       <w>filenames</w>
+      <w>filepath</w>
       <w>fileselector</w>
       <w>filestates</w>
       <w>filterlines</w>
@@ -690,9 +692,11 @@
       <w>halign</w>
       <w>handlemessage</w>
       <w>hashlines</w>
+      <w>hashobj</w>
       <w>hashopenssl</w>
       <w>hashpath</w>
       <w>hashstr</w>
+      <w>hashtype</w>
       <w>hashval</w>
       <w>hasstarted</w>
       <w>hatmotion</w>
@@ -1242,6 +1246,7 @@
       <w>pushish</w>
       <w>pushlist</w>
       <w>putasset</w>
+      <w>putassetmanifest</w>
       <w>pval</w>
       <w>pvars</w>
       <w>pvrtc</w>

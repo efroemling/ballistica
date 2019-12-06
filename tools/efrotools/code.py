@@ -90,6 +90,7 @@ def cpplint(projroot: Path, full: bool) -> None:
     from concurrent.futures import ThreadPoolExecutor
     from efrotools import get_config
     from multiprocessing import cpu_count
+
     os.chdir(projroot)
     filenames = get_code_filenames(projroot)
     if any(' ' in name for name in filenames):
@@ -183,7 +184,8 @@ def formatscripts(projroot: Path, full: bool) -> None:
     # may want to revisit later when we have everything chopped up
     # better
     with ThreadPoolExecutor(max_workers=cpu_count() // 2) as executor:
-        # Converting this to a list will propagate any errors
+        # Convert the futures to a list to propagate any errors even
+        # though there are no return values we use.
         list(executor.map(format_file, dirtyfiles))
 
     if dirtyfiles:

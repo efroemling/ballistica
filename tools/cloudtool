@@ -20,7 +20,7 @@
 # SOFTWARE.
 # -----------------------------------------------------------------------------
 """A tool for interacting with ballistica's cloud services.
-This facilitates workflows such as creating asset-bundles, etc.
+This facilitates workflows such as creating asset-packages, etc.
 """
 
 from __future__ import annotations
@@ -38,7 +38,7 @@ import json
 import subprocess
 
 if TYPE_CHECKING:
-    from typing import Optional, Dict, Any
+    from typing import Optional, Dict, Any, Tuple
 
 # Version is sent to the master-server with all commands. Can be incremented
 # if we need to change behavior server-side to go along with client changes.
@@ -96,9 +96,12 @@ class AssetType(Enum):
 class Asset:
     """Data for a single asset."""
 
-    def __init__(self, assettype: AssetType) -> None:
+    def __init__(self, package: AssetPackage, assettype: AssetType,
+                 path: str) -> None:
         self.assettype = assettype
-        print('INITING ASSET OF TYPE', assettype)
+        self.path = path
+        exts = {AssetType.TEXTURE: '.png', AssetType.SOUND: '.wav'}
+        self.filepath = os.path.join(package.path, path + exts[assettype])
 
 
 def validate_asset_path(path: str) -> None:
@@ -113,22 +116,23 @@ def validate_asset_path(path: str) -> None:
                     f'Found invalid char "{char}" in asset path "{path}".')
 
 
-class AssetBundle:
-    """Data for local or remote asset bundles."""
+class AssetPackage:
+    """Data for local or remote asset packages."""
 
     def __init__(self) -> None:
         self.assets: Dict[str, Asset] = {}
+        self.path = Path('')
 
     @classmethod
-    def load_from_disk(cls, path: Path) -> AssetBundle:
-        """Load an asset bundle from an existing one on disk."""
+    def load_from_disk(cls, path: Path) -> AssetPackage:
+        """Load an asset package from an existing one on disk."""
         import yaml
-        indexfilename = 'assetbundle.yaml'
-        bundle = AssetBundle()
-
+        indexfilename = 'assetpackage.yaml'
+        package = AssetPackage()
         if not path.is_dir():
             raise CleanError(f'Directory not found: "{path}"')
 
+        package.path = path
         with open(Path(path, indexfilename)) as infile:
             index = yaml.safe_load(infile)
         if not isinstance(index, dict):
@@ -150,9 +154,32 @@ class AssetBundle:
             assettype = AssetType(assettypestr)
 
             print('looking at', assetpath, assetdata)
-            bundle.assets[assetpath] = Asset(assettype)
+            package.assets[assetpath] = Asset(package, assettype, assetpath)
 
-        return bundle
+        return package
+
+    def get_manifest(self) -> Dict:
+        """Build a manifest of hashes and other info for files on disk."""
+        from efrotools import get_files_hash
+        from concurrent.futures import ThreadPoolExecutor
+        from multiprocessing import cpu_count
+
+        manifest: Dict = {'files': {}}
+
+        def _get_asset_info(iasset: Asset) -> Tuple[Asset, Dict]:
+            hval = get_files_hash([iasset.filepath], hashtype='sha256')
+            if not os.path.isfile(iasset.filepath):
+                raise Exception(f'Asset file not found: "{iasset.filepath}"')
+            info_out: Dict = {'hash': hval}
+            return iasset, info_out
+
+        # Use all procs to hash files for extra speedy goodness.
+        with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
+            for result in executor.map(_get_asset_info, self.assets.values()):
+                asset, info = result
+                manifest['files'][asset.path] = info
+
+        return manifest
 
 
 class App:
@@ -273,7 +300,17 @@ class App:
             raise CleanError('Expected a path to an assetpackage directory.')
 
         path = Path(sys.argv[2])
-        _bundle = AssetBundle.load_from_disk(path)
+        package = AssetPackage.load_from_disk(path)
+
+        # Now send the server a manifest of everything we've got in the local
+        # package.
+        manifest = package.get_manifest()
+        print('SENDING PACKAGE MANIFEST:', manifest)
+        response = self._servercmd('putassetmanifest', {'m': manifest})
+
+        # The server's response tells us what we need to upload to them.
+        # Do that.
+        print('WOULD UPLOAD NEEDED BITS')
 
     def do_misc_command(self) -> None:
         """Run a miscellaneous command."""
