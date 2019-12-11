@@ -554,6 +554,7 @@
       <w>fnames</w>
       <w>fnmatch</w>
       <w>fnode</w>
+      <w>fnum</w>
       <w>foof</w>
       <w>foos</w>
       <w>fopen</w>
@@ -687,6 +688,7 @@
       <w>grumbledorf</w>
       <w>guitarguy</w>
       <w>gval</w>
+      <w>gzpath</w>
       <w>hacktastic</w>
       <w>hacky</w>
       <w>halign</w>
@@ -728,6 +730,7 @@
       <w>hspacing</w>
       <w>hurtiness</w>
       <w>hval</w>
+      <w>iasset</w>
       <w>icls</w>
       <w>icns</w>
       <w>iconpicker</w>
@@ -1247,6 +1250,8 @@
       <w>pushlist</w>
       <w>putasset</w>
       <w>putassetmanifest</w>
+      <w>putassetupload</w>
+      <w>putfiles</w>
       <w>pval</w>
       <w>pvars</w>
       <w>pvrtc</w>

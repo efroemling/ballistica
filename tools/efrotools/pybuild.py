@@ -34,10 +34,10 @@ if TYPE_CHECKING:
 PYTHON_VERSION_MAJOR = "3.7"
 
 # Specific version we're using on apple builds.
-PYTHON_VERSION_APPLE = "3.7.0"
+# PYTHON_VERSION_APPLE = "3.7.0"
 
 # Specific version we're using on android builds.
-PYTHON_VERSION_ANDROID = "3.7.2"
+# PYTHON_VERSION_ANDROID = "3.7.2"
 
 ENABLE_OPENSSL = True
 
@@ -163,7 +163,7 @@ def build_apple(arch: str, debug: bool = False) -> None:
     txt = efrotools.replace_one(txt, 'MACOSX_DEPLOYMENT_TARGET=10.8',
                                 'MACOSX_DEPLOYMENT_TARGET=10.13')
     # And equivalent iOS (11+).
-    txt = efrotools.replace_one(txt, 'CFLAGS-iOS=-mios-version-min=7.0',
+    txt = efrotools.replace_one(txt, 'CFLAGS-iOS=-mios-version-min=8.0',
                                 'CFLAGS-iOS=-mios-version-min=11.0')
     # Ditto for tvOS.
     txt = efrotools.replace_one(txt, 'CFLAGS-tvOS=-mtvos-version-min=9.0',
@@ -283,7 +283,9 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     efrotools.writefile('pybuild/packages/python.py', ftxt)
 
     # Set this to a particular cpython commit to target exact releases from git
-    commit = 'e09359112e250268eca209355abeb17abf822486'  # 3.7.4 release
+    # commit = 'e09359112e250268eca209355abeb17abf822486'  # 3.7.4 release
+    commit = '5c02a39a0b31a330e06b4d6f44835afb205dc7cc'  # 3.7.5 release
+
     if commit is not None:
         ftxt = efrotools.readfile('pybuild/source.py')
 

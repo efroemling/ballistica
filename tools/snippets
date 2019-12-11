@@ -73,6 +73,18 @@ SPARSE_TESTS: List[List[str]] = [
 # (whole word will get subbed out in spinoffs so this will be false)
 DO_SPARSE_TESTS = 'ballistica' + 'core' == 'ballisticacore'
 
+# Python modules we require for this project.
+# (module name, required version, pip package (if it differs from module name))
+REQUIRED_PYTHON_MODULES = [
+    ('pylint', [2, 4, 4], None),
+    ('mypy', [0, 740], None),
+    ('yapf', [0, 29, 0], None),
+    ('typing_extensions', None, None),
+    ('pytz', None, None),
+    ('yaml', None, 'PyYAML'),
+    ('requests', None, None),
+]
+
 
 def archive_old_builds() -> None:
     """Stuff our old public builds into the 'old' dir.
@@ -692,6 +704,16 @@ def update_docs_md() -> None:
     print(f'{docs_path} is up to date.')
 
 
+def pip_req_list() -> None:
+    """List Python Pip packages needed for this project."""
+    out: List[str] = []
+    for module in REQUIRED_PYTHON_MODULES:
+        name = module[0] if module[2] is None else module[2]
+        assert isinstance(name, str)
+        out.append(name)
+    print(' '.join(out))
+
+
 def checkenv() -> None:
     """Check for tools necessary to build and run the app."""
     print('Checking environment...', flush=True)
@@ -711,14 +733,7 @@ def checkenv() -> None:
         raise CleanError('pip (for {python_bin}) is required.')
 
     # Check for some required python modules.
-    for modname, minver, packagename in [
-        ('pylint', [2, 4, 4], None),
-        ('mypy', [0, 740], None),
-        ('yapf', [0, 29, 0], None),
-        ('typing_extensions', None, None),
-        ('pytz', None, None),
-        ('yaml', None, 'PyYAML'),
-    ]:
+    for modname, minver, packagename in REQUIRED_PYTHON_MODULES:
         if packagename is None:
             packagename = modname
         if minver is not None:

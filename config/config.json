@@ -26,7 +26,8 @@
     "bs_mapdefs_tower_d",
     "bs_mapdefs_hockey_stadium",
     "bs_mapdefs_roundabout",
-    "yaml"
+    "yaml",
+    "requests"
   ],
   "python_paths": [
     "assets/src/data/scripts",

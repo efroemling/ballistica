@@ -30,15 +30,15 @@ import os
 from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING
-import urllib.request
-import urllib.parse
-import urllib.error
 from dataclasses import dataclass
 import json
 import subprocess
+import tempfile
+
+import requests
 
 if TYPE_CHECKING:
-    from typing import Optional, Dict, Any, Tuple
+    from typing import Optional, Dict, Any, Tuple, List, BinaryIO
 
 # Version is sent to the master-server with all commands. Can be incremented
 # if we need to change behavior server-side to go along with client changes.
@@ -125,7 +125,7 @@ class AssetPackage:
 
     @classmethod
     def load_from_disk(cls, path: Path) -> AssetPackage:
-        """Load an asset package from an existing one on disk."""
+        """Load an asset package from files on disk."""
         import yaml
         indexfilename = 'assetpackage.yaml'
         package = AssetPackage()
@@ -153,24 +153,26 @@ class AssetPackage:
                     f'Invalid asset type for {assetpath} in {indexfilename}')
             assettype = AssetType(assettypestr)
 
-            print('looking at', assetpath, assetdata)
+            print('Looking at asset:', assetpath, assetdata)
             package.assets[assetpath] = Asset(package, assettype, assetpath)
 
         return package
 
     def get_manifest(self) -> Dict:
         """Build a manifest of hashes and other info for files on disk."""
-        from efrotools import get_files_hash
+        import hashlib
         from concurrent.futures import ThreadPoolExecutor
         from multiprocessing import cpu_count
 
         manifest: Dict = {'files': {}}
 
         def _get_asset_info(iasset: Asset) -> Tuple[Asset, Dict]:
-            hval = get_files_hash([iasset.filepath], hashtype='sha256')
+            sha = hashlib.sha256()
+            with open(iasset.filepath, 'rb') as infile:
+                sha.update(infile.read())
             if not os.path.isfile(iasset.filepath):
                 raise Exception(f'Asset file not found: "{iasset.filepath}"')
-            info_out: Dict = {'hash': hval}
+            info_out: Dict = {'hash': sha.hexdigest()}
             return iasset, info_out
 
         # Use all procs to hash files for extra speedy goodness.
@@ -240,26 +242,34 @@ class App:
         with open(CACHE_DATA_PATH, 'w') as outfile:
             outfile.write(json.dumps(self._state.__dict__))
 
-    def _servercmd(self, cmd: str, data: Dict) -> Response:
+    def _servercmd(self,
+                   cmd: str,
+                   data: Dict,
+                   files: Dict[str, BinaryIO] = None) -> Response:
         """Issue a command to the server and get a response."""
 
-        # We do all communication through POST requests to the server.
-        response_raw = urllib.request.urlopen(
-            urllib.request.Request(
-                (MASTER_SERVER_ADDRESS + '/cloudtoolcmd'),
-                urllib.parse.urlencode({
-                    'c': cmd,
-                    'v': VERSION,
-                    't': json.dumps(self._state.login_token),
-                    'd': json.dumps(data)
-                }).encode(), {'User-Agent': USER_AGENT_STRING}))
-        output = json.loads(response_raw.read().decode())
+        response_raw_2 = requests.post(
+            (MASTER_SERVER_ADDRESS + '/cloudtoolcmd'),
+            data={
+                'c': cmd,
+                'v': VERSION,
+                't': json.dumps(self._state.login_token),
+                'd': json.dumps(data)
+            },
+            files=files)
+        response_raw_2.raise_for_status()  # Except if anything went wrong.
+        assert isinstance(response_raw_2.content, bytes)
+        output = json.loads(response_raw_2.content.decode())
         assert isinstance(output, dict)
+        assert isinstance(output['m'], (str, type(None)))
+        assert isinstance(output['e'], (str, type(None)))
+        assert 'd' in output
         response = Response(message=output['m'],
                             data=output['d'],
                             error=output['e'])
 
-        # Handle errors and messages which are common to all command types.
+        # Handle errors and print messages;
+        # (functionality common to all command types).
         if response.error is not None:
             raise CleanError(response.error)
 
@@ -302,15 +312,42 @@ class App:
         path = Path(sys.argv[2])
         package = AssetPackage.load_from_disk(path)
 
-        # Now send the server a manifest of everything we've got in the local
-        # package.
+        # Send the server a manifest of everything we've got locally.
         manifest = package.get_manifest()
         print('SENDING PACKAGE MANIFEST:', manifest)
         response = self._servercmd('putassetmanifest', {'m': manifest})
 
-        # The server's response tells us what we need to upload to them.
-        # Do that.
-        print('WOULD UPLOAD NEEDED BITS')
+        # The server should give us an upload id and a set of files it wants.
+        # Upload each of those.
+        upload_files: List[str] = response.data['upload_files']
+        assert isinstance(upload_files, list)
+        assert all(isinstance(f, str) for f in upload_files)
+        self._putasset_upload(package, upload_files)
+
+        print('Asset upload successful!')
+
+    def _putasset_upload(self, package: AssetPackage,
+                         files: List[str]) -> None:
+
+        # Upload the files one at a time.
+        # (we can potentially do this in parallel in the future).
+        for fnum, fname in enumerate(files):
+            print(
+                f'{CLRBLU}Uploading file {fnum+1} of {len(files)}: '
+                f'"{fname}"...{CLREND}',
+                flush=True)
+            with tempfile.TemporaryDirectory() as tempdir:
+                asset = package.assets[fname]
+                srcpath = Path(asset.filepath)
+                gzpath = Path(tempdir, 'file.gz')
+                subprocess.run(f'gzip --stdout "{srcpath}" > "{gzpath}"',
+                               shell=True,
+                               check=True)
+                with open(gzpath, 'rb') as infile:
+                    putfiles: Dict = {'file': infile}
+                    _response = self._servercmd('putassetupload',
+                                                {'path': asset.path},
+                                                files=putfiles)
 
     def do_misc_command(self) -> None:
         """Run a miscellaneous command."""
