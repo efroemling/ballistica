@@ -434,7 +434,10 @@ def pytest() -> None:
     os.environ['PYTHONDONTWRITEBYTECODE'] = '1'
 
     # Do the thing.
-    subprocess.run([PYTHON_BIN, '-m', 'pytest'] + sys.argv[2:], check=True)
+    results = subprocess.run([PYTHON_BIN, '-m', 'pytest'] + sys.argv[2:],
+                             check=False)
+    if results.returncode != 0:
+        sys.exit(results.returncode)
 
 
 def makefile_target_list() -> None:

@@ -20,6 +20,15 @@
 # -----------------------------------------------------------------------------
 """Testing tests."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, List, Sequence
+
+from efrotools.statictest import static_type_equals
+
+if TYPE_CHECKING:
+    pass
+
 
 def inc(x: int) -> int:
     """Testing inc."""
@@ -28,8 +37,12 @@ def inc(x: int) -> int:
 
 def test_answer() -> None:
     """Testing answer."""
-    import bafoundation
-    print('testfooooo', dir(bafoundation))
+    fooval: List[int] = [3, 4]
+    assert static_type_equals(fooval[0], int)
+    assert static_type_equals(fooval, List[int])
+    somevar: Sequence[int] = []
+    assert static_type_equals(somevar, Sequence[int])
+    assert isinstance(fooval, list)
     assert inc(3) == 4
 
 

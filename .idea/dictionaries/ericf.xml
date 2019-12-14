@@ -79,6 +79,7 @@
       <w>argval</w>
       <w>armeabi</w>
       <w>arraymodule</w>
+      <w>assertnode</w>
       <w>assetbundle</w>
       <w>assetcache</w>
       <w>assetdata</w>
@@ -196,6 +197,7 @@
       <w>calced</w>
       <w>calcing</w>
       <w>calcs</w>
+      <w>callnode</w>
       <w>cameraflash</w>
       <w>camerashake</w>
       <w>campaignname</w>
@@ -460,6 +462,7 @@
       <w>encerr</w>
       <w>endcall</w>
       <w>endindex</w>
+      <w>endparen</w>
       <w>endtime</w>
       <w>ensurepip</w>
       <w>entitylist</w>
@@ -534,6 +537,7 @@
       <w>filterpaths</w>
       <w>finalhash</w>
       <w>finalmaterials</w>
+      <w>finfo</w>
       <w>firebase</w>
       <w>firestore</w>
       <w>firetv</w>
@@ -558,6 +562,7 @@
       <w>fnum</w>
       <w>foof</w>
       <w>foos</w>
+      <w>fooval</w>
       <w>fopen</w>
       <w>forcetype</w>
       <w>forcevalue</w>
@@ -571,6 +576,7 @@
       <w>formatscriptsfull</w>
       <w>formatters</w>
       <w>fout</w>
+      <w>fparts</w>
       <w>fpath</w>
       <w>fpathrel</w>
       <w>fpathshort</w>
@@ -863,7 +869,11 @@
       <w>lindex</w>
       <w>lindexorig</w>
       <w>lineheight</w>
+      <w>lineno</w>
       <w>linenum</w>
+      <w>linenumber</w>
+      <w>linetype</w>
+      <w>linetypes</w>
       <w>linflav</w>
       <w>linkto</w>
       <w>lintable</w>
@@ -1019,6 +1029,7 @@
       <w>mypyfull</w>
       <w>mypyscripts</w>
       <w>mypyscriptsfull</w>
+      <w>mypytype</w>
       <w>mysound</w>
       <w>mytextnode</w>
       <w>myweakcall</w>
@@ -1039,6 +1050,7 @@
       <w>newdbpath</w>
       <w>newnode</w>
       <w>newpath</w>
+      <w>nextfilenum</w>
       <w>nextlevel</w>
       <w>nfoo</w>
       <w>nilly</w>
@@ -1296,6 +1308,7 @@
       <w>pypaths</w>
       <w>pysources</w>
       <w>pytest</w>
+      <w>pythondontwritebytecode</w>
       <w>pythonpath</w>
       <w>pythonw</w>
       <w>pytree</w>
@@ -1438,6 +1451,7 @@
       <w>snode</w>
       <w>socketmodule</w>
       <w>socketserver</w>
+      <w>somevar</w>
       <w>sourceimages</w>
       <w>sourcelines</w>
       <w>spacelen</w>
@@ -1483,6 +1497,8 @@
       <w>startercache</w>
       <w>startscan</w>
       <w>starttime</w>
+      <w>statictestfiles</w>
+      <w>statictype</w>
       <w>stayin</w>
       <w>stdafx</w>
       <w>stdassets</w>
@@ -1571,6 +1587,7 @@
       <w>teleporting</w>
       <w>telnetlib</w>
       <w>tempfile</w>
+      <w>tempfilepath</w>
       <w>templatecb</w>
       <w>termios</w>
       <w>testbuffer</w>
@@ -1682,6 +1699,7 @@
       <w>uname</w>
       <w>unbounds</w>
       <w>uncollectible</w>
+      <w>unforunate</w>
       <w>unimported</w>
       <w>uninferrable</w>
       <w>uninited</w>
@@ -1749,6 +1767,7 @@
       <w>vsync</w>
       <w>vsyncs</w>
       <w>vval</w>
+      <w>wanttype</w>
       <w>wasdead</w>
       <w>weakref</w>
       <w>weakrefs</w>
