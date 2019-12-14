@@ -59,10 +59,10 @@ class BoundCompoundValue:
         return compound_eq(self, other)
 
     def __getattr__(self, name: str, default: Any = None) -> Any:
-        # if this attribute corresponds to a field on our compound value's
+        # If this attribute corresponds to a field on our compound value's
         # unbound type, ask it to give us a value using our data
-        field = getattr(type(object.__getattribute__(self, 'd_value')), name,
-                        None)
+        d_value = type(object.__getattribute__(self, 'd_value'))
+        field = getattr(d_value, name, None)
         if isinstance(field, BaseField):
             return field.get_with_data(self.d_data)
         raise AttributeError

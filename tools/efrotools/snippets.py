@@ -418,6 +418,25 @@ def compile_python_files() -> None:
                            invalidation_mode=mode)
 
 
+def pytest() -> None:
+    """Run pytest with project environment set up properly."""
+    from efrotools import get_config, PYTHON_BIN
+
+    # Grab our python paths for the project and stuff them in PYTHONPATH.
+    pypaths = get_config(PROJROOT).get('python_paths')
+    if pypaths is None:
+        raise CleanError('python_paths not found in project config.')
+
+    os.environ['PYTHONPATH'] = ':'.join(pypaths)
+
+    # Also tell Python interpreters not to write __pycache__ dirs everywhere
+    # which can screw up our builds.
+    os.environ['PYTHONDONTWRITEBYTECODE'] = '1'
+
+    # Do the thing.
+    subprocess.run([PYTHON_BIN, '-m', 'pytest'] + sys.argv[2:], check=True)
+
+
 def makefile_target_list() -> None:
     """Prints targets in a makefile.
 

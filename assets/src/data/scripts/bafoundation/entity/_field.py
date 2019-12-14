@@ -71,7 +71,7 @@ class Field(BaseField, Generic[T]):
         # Use default runtime get/set but let type-checker know our types.
         # Note: we actually return a bound-field when accessed on
         # a type instead of an instance, but we don't reflect that here yet
-        # (need to write a mypy plugin so sub-field access works first)
+        # (would need to write a mypy plugin so sub-field access works first)
 
         def __get__(self, obj: Any, cls: Any = None) -> T:
             ...
@@ -125,46 +125,38 @@ class CompoundField(BaseField, Generic[TC]):
         def __set__(self: CompoundField[TC], obj: Any, value: TC) -> None:
             ...
 
-    else:
+    def get_with_data(self, data: Any) -> Any:
+        assert self.d_key in data
+        return BoundCompoundValue(self.d_value, data[self.d_key])
 
-        def __get__(self, obj, cls=None):
-            if obj is None:
-                # when called on the type, we return the field
-                return self
-            # (this is only ever called on entity root fields
-            # so no need to worry about custom d_key case)
-            assert self.d_key in obj.d_data
-            return BoundCompoundValue(self.d_value, obj.d_data[self.d_key])
+    def set_with_data(self, data: Any, value: Any, error: bool) -> Any:
+        from bafoundation.entity._value import CompoundValue
 
-        def __set__(self, obj, value):
-            from bafoundation.entity._value import CompoundValue
+        # Ok here's the deal: our type checking above allows any subtype
+        # of our CompoundValue in here, but we want to be more picky than
+        # that. Let's check fields for equality. This way we'll allow
+        # assigning something like a Carentity to a Car field
+        # (where the data is the same), but won't allow assigning a Car
+        # to a Vehicle field (as Car probably adds more fields).
+        value1: CompoundValue
+        if isinstance(value, BoundCompoundValue):
+            value1 = value.d_value
+        elif isinstance(value, CompoundValue):
+            value1 = value
+        else:
+            raise ValueError(f"Can't assign from object type {type(value)}")
+        dataval = getattr(value, 'd_data', None)
+        if dataval is None:
+            raise ValueError(f"Can't assign from unbound object {value}")
+        if self.d_value.get_fields() != value1.get_fields():
+            raise ValueError(f"Can't assign to {self.d_value} from"
+                             f" incompatible type {value.d_value}; "
+                             f"sub-fields do not match.")
 
-            # Ok here's the deal: our type checking above allows any subtype
-            # of our CompoundValue in here, but we want to be more picky than
-            # that. Let's check fields for equality. This way we'll allow
-            # assigning something like a Carentity to a Car field
-            # (where the data is the same), but won't allow assigning a Car
-            # to a Vehicle field (as Car probably adds more fields).
-            value1: CompoundValue
-            if isinstance(value, BoundCompoundValue):
-                value1 = value.d_value
-            elif isinstance(value, CompoundValue):
-                value1 = value
-            else:
-                raise ValueError(
-                    f"Can't assign from object type {type(value)}")
-            data = getattr(value, 'd_data', None)
-            if data is None:
-                raise ValueError(f"Can't assign from unbound object {value}")
-            if self.d_value.get_fields() != value1.get_fields():
-                raise ValueError(f"Can't assign to {self.d_value} from"
-                                 f" incompatible type {value.d_value}; "
-                                 f"sub-fields do not match.")
-
-            # If we're allowing this to go through, we can simply copy the
-            # data from the passed in value. The fields match so it should
-            # be in a valid state already.
-            obj.d_data[self.d_key] = copy.deepcopy(data)
+        # If we're allowing this to go through, we can simply copy the
+        # data from the passed in value. The fields match so it should
+        # be in a valid state already.
+        data[self.d_key] = copy.deepcopy(dataval)
 
 
 class ListField(BaseField, Generic[T]):
@@ -199,24 +191,24 @@ class ListField(BaseField, Generic[T]):
     # When accessed on a FieldInspector we return a sub-field FieldInspector.
     # When accessed on an instance we return a BoundListField.
 
-    @overload
-    def __get__(self, obj: None, cls: Any = None) -> FieldInspector:
-        ...
-
-    @overload
-    def __get__(self, obj: Any, cls: Any = None) -> BoundListField[T]:
-        ...
-
-    def __get__(self, obj: Any, cls: Any = None) -> Any:
-        if obj is None:
-            # When called on the type, we return the field.
-            return self
-        return BoundListField(self, obj.d_data[self.d_key])
-
     if TYPE_CHECKING:
+
+        @overload
+        def __get__(self, obj: None, cls: Any = None) -> FieldInspector:
+            ...
+
+        @overload
+        def __get__(self, obj: Any, cls: Any = None) -> BoundListField[T]:
+            ...
+
+        def __get__(self, obj: Any, cls: Any = None) -> Any:
+            ...
 
         def __set__(self, obj: Any, value: List[T]) -> None:
             ...
+
+    def get_with_data(self, data: Any) -> Any:
+        return BoundListField(self, data[self.d_key])
 
 
 class DictField(BaseField, Generic[TK, T]):
@@ -258,24 +250,24 @@ class DictField(BaseField, Generic[TK, T]):
         # change the dict, but we can prune completely if empty (and allowed)
         return not data and not self._store_default
 
-    @overload
-    def __get__(self, obj: None, cls: Any = None) -> DictField[TK, T]:
-        ...
-
-    @overload
-    def __get__(self, obj: Any, cls: Any = None) -> BoundDictField[TK, T]:
-        ...
-
-    def __get__(self, obj: Any, cls: Any = None) -> Any:
-        if obj is None:
-            # When called on the type, we return the field.
-            return self
-        return BoundDictField(self._keytype, self, obj.d_data[self.d_key])
-
     if TYPE_CHECKING:
+
+        @overload
+        def __get__(self, obj: None, cls: Any = None) -> DictField[TK, T]:
+            ...
+
+        @overload
+        def __get__(self, obj: Any, cls: Any = None) -> BoundDictField[TK, T]:
+            ...
+
+        def __get__(self, obj: Any, cls: Any = None) -> Any:
+            ...
 
         def __set__(self, obj: Any, value: Dict[TK, T]) -> None:
             ...
+
+    def get_with_data(self, data: Any) -> Any:
+        return BoundDictField(self._keytype, self, data[self.d_key])
 
 
 class CompoundListField(BaseField, Generic[TC]):
@@ -323,49 +315,47 @@ class CompoundListField(BaseField, Generic[TC]):
         # We can also optionally prune the whole list if empty and allowed.
         return not data and not self._store_default
 
-    @overload
-    def __get__(self, obj: None, cls: Any = None) -> CompoundListField[TC]:
-        ...
-
-    @overload
-    def __get__(self, obj: Any, cls: Any = None) -> BoundCompoundListField[TC]:
-        ...
-
-    def __get__(self, obj: Any, cls: Any = None) -> Any:
-        # On access we simply provide a version of ourself
-        # bound to our corresponding sub-data.
-        if obj is None:
-            # when called on the type, we return the field
-            return self
-        assert self.d_key in obj.d_data
-        return BoundCompoundListField(self, obj.d_data[self.d_key])
-
-    # Note:
-    # When setting the list, we tell the type-checker that we accept
-    # a raw list of CompoundValue objects, but at runtime we actually
-    # deal with BoundCompoundValue objects (see note in BoundCompoundListField)
     if TYPE_CHECKING:
 
+        @overload
+        def __get__(self, obj: None, cls: Any = None) -> CompoundListField[TC]:
+            ...
+
+        @overload
+        def __get__(self,
+                    obj: Any,
+                    cls: Any = None) -> BoundCompoundListField[TC]:
+            ...
+
+        def __get__(self, obj: Any, cls: Any = None) -> Any:
+            ...
+
+        # Note:
+        # When setting the list, we tell the type-checker that we accept
+        # a raw list of CompoundValue objects, but at runtime we actually
+        # deal with BoundCompoundValue objects (see note in
+        # BoundCompoundListField)
         def __set__(self, obj: Any, value: List[TC]) -> None:
             ...
 
-    else:
+    def get_with_data(self, data: Any) -> Any:
+        assert self.d_key in data
+        return BoundCompoundListField(self, data[self.d_key])
 
-        def __set__(self, obj, value):
-            if not isinstance(value, list):
-                raise TypeError(
-                    'CompoundListField expected list value on set.')
+    def set_with_data(self, data: Any, value: Any, error: bool) -> Any:
+        if not isinstance(value, list):
+            raise TypeError('CompoundListField expected list value on set.')
 
-            # Allow assigning only from a sequence of our existing children.
-            # (could look into expanding this to other children if we can
-            # be sure the underlying data will line up; for example two
-            # CompoundListFields with different child_field values should not
-            # be inter-assignable.
-            if (not all(isinstance(i, BoundCompoundValue) for i in value)
-                    or not all(i.d_value is self.d_value for i in value)):
-                raise ValueError('CompoundListField assignment must be a '
-                                 'list containing only its existing children.')
-            obj.d_data[self.d_key] = [i.d_data for i in value]
+        # Allow assigning only from a sequence of our existing children.
+        # (could look into expanding this to other children if we can
+        # be sure the underlying data will line up; for example two
+        # CompoundListFields with different child_field values should not
+        # be inter-assignable.
+        if (not all(isinstance(i, BoundCompoundValue) for i in value)
+                or not all(i.d_value is self.d_value for i in value)):
+            raise ValueError('CompoundListField assignment must be a '
+                             'list containing only its existing children.')
+        data[self.d_key] = [i.d_data for i in value]
 
 
 class CompoundDictField(BaseField, Generic[TK, TC]):
@@ -420,54 +410,45 @@ class CompoundDictField(BaseField, Generic[TK, TC]):
         # We can also optionally prune the whole list if empty and allowed.
         return not data and not self._store_default
 
-    @overload
-    def __get__(self, obj: None, cls: Any = None) -> CompoundDictField[TK, TC]:
-        ...
-
-    @overload
-    def __get__(self,
-                obj: Any,
-                cls: Any = None) -> BoundCompoundDictField[TK, TC]:
-        ...
-
-    def __get__(self, obj: Any, cls: Any = None) -> Any:
-        # On access we simply provide a version of ourself
-        # bound to our corresponding sub-data.
-        if obj is None:
-            # when called on the type, we return the field
-            return self
-        assert self.d_key in obj.d_data
-        return BoundCompoundDictField(self, obj.d_data[self.d_key])
-
-    # In the type-checker's eyes we take CompoundValues but at runtime
-    # we actually take BoundCompoundValues (see note in BoundCompoundDictField)
+    # ONLY overriding these in type-checker land to clarify types.
+    # (see note in BaseField)
     if TYPE_CHECKING:
+
+        @overload
+        def __get__(self,
+                    obj: None,
+                    cls: Any = None) -> CompoundDictField[TK, TC]:
+            ...
+
+        @overload
+        def __get__(self,
+                    obj: Any,
+                    cls: Any = None) -> BoundCompoundDictField[TK, TC]:
+            ...
+
+        def __get__(self, obj: Any, cls: Any = None) -> Any:
+            ...
 
         def __set__(self, obj: Any, value: Dict[TK, TC]) -> None:
             ...
 
-    else:
+    def get_with_data(self, data: Any) -> Any:
+        assert self.d_key in data
+        return BoundCompoundDictField(self, data[self.d_key])
 
-        def __set__(self, obj, value):
-            if not isinstance(value, dict):
-                raise TypeError(
-                    'CompoundDictField expected dict value on set.')
+    def set_with_data(self, data: Any, value: Any, error: bool) -> Any:
+        if not isinstance(value, dict):
+            raise TypeError('CompoundDictField expected dict value on set.')
 
-            # Allow assigning only from a sequence of our existing children.
-            # (could look into expanding this to other children if we can
-            # be sure the underlying data will line up; for example two
-            # CompoundListFields with different child_field values should not
-            # be inter-assignable.
-            print('val', value)
-            if (not all(isinstance(i, self.d_keytype) for i in value.keys())
-                    or not all(
-                        isinstance(i, BoundCompoundValue)
-                        for i in value.values())
-                    or not all(i.d_value is self.d_value
-                               for i in value.values())):
-                raise ValueError('CompoundDictField assignment must be a '
-                                 'dict containing only its existing children.')
-            obj.d_data[self.d_key] = {
-                key: val.d_data
-                for key, val in value.items()
-            }
+        # Allow assigning only from a sequence of our existing children.
+        # (could look into expanding this to other children if we can
+        # be sure the underlying data will line up; for example two
+        # CompoundListFields with different child_field values should not
+        # be inter-assignable.
+        if (not all(isinstance(i, self.d_keytype) for i in value.keys())
+                or not all(
+                    isinstance(i, BoundCompoundValue) for i in value.values())
+                or not all(i.d_value is self.d_value for i in value.values())):
+            raise ValueError('CompoundDictField assignment must be a '
+                             'dict containing only its existing children.')
+        data[self.d_key] = {key: val.d_data for key, val in value.items()}

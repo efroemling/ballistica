@@ -32,6 +32,9 @@ if TYPE_CHECKING:
     from typing import Dict, Union, Sequence, Optional, Any
     from typing_extensions import Literal
 
+# Python binary assumed by these tools.
+PYTHON_BIN = 'python3.7'
+
 MIT_LICENSE = """Copyright (c) 2011-2019 Eric Froemling
 
 Permission is hereby granted, free of charge, to any person obtaining a copy

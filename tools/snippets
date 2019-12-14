@@ -45,7 +45,7 @@ from efrotools.snippets import (  # pylint: disable=unused-import
     PROJROOT, CleanError, snippets_main, formatcode, formatscripts,
     formatmakefile, cpplint, pylint, mypy, tool_config_install, sync, sync_all,
     scriptfiles, pycharm, clioncode, androidstudiocode, makefile_target_list,
-    spelling, spelling_all, compile_python_files)
+    spelling, spelling_all, compile_python_files, pytest)
 
 if TYPE_CHECKING:
     from typing import Optional, List, Sequence
@@ -53,7 +53,7 @@ if TYPE_CHECKING:
 # Parts of full-tests suite we only run on particular days.
 # (This runs in listed order so should be randomized by hand to avoid
 # clustering similar tests too much)
-SPARSE_TESTS: List[List[str]] = [
+SPARSE_TEST_BUILDS: List[List[str]] = [
     ['ios.pylibs.debug', 'android.pylibs.arm'],
     ['linux.package', 'android.pylibs.arm64'],
     ['windows.package', 'mac.pylibs'],
@@ -71,7 +71,7 @@ SPARSE_TESTS: List[List[str]] = [
 
 # Currently only doing sparse-tests in core; not spinoffs.
 # (whole word will get subbed out in spinoffs so this will be false)
-DO_SPARSE_TESTS = 'ballistica' + 'core' == 'ballisticacore'
+DO_SPARSE_TEST_BUILDS = 'ballistica' + 'core' == 'ballisticacore'
 
 # Python modules we require for this project.
 # (module name, required version, pip package (if it differs from module name))
@@ -83,6 +83,7 @@ REQUIRED_PYTHON_MODULES = [
     ('pytz', None, None),
     ('yaml', None, 'PyYAML'),
     ('requests', None, None),
+    ('pytest', None, None),
 ]
 
 
@@ -152,8 +153,8 @@ def gen_fulltest_buildfile_android() -> None:
                      ' nice -n 15 make android-build')
 
     # Now add sparse tests that land on today.
-    if DO_SPARSE_TESTS:
-        extras = SPARSE_TESTS[dayoffset % len(SPARSE_TESTS)]
+    if DO_SPARSE_TEST_BUILDS:
+        extras = SPARSE_TEST_BUILDS[dayoffset % len(SPARSE_TEST_BUILDS)]
         extras = [e for e in extras if e.startswith('android.')]
         for extra in extras:
             if extra == 'android.pylibs.arm':
@@ -212,8 +213,8 @@ def gen_fulltest_buildfile_windows() -> None:
                  f'WINDOWS_CONFIGURATION={cfg3} make windows-build')
 
     # Now add sparse tests that land on today.
-    if DO_SPARSE_TESTS:
-        extras = SPARSE_TESTS[dayoffset % len(SPARSE_TESTS)]
+    if DO_SPARSE_TEST_BUILDS:
+        extras = SPARSE_TEST_BUILDS[dayoffset % len(SPARSE_TEST_BUILDS)]
         extras = [e for e in extras if e.startswith('windows.')]
         for extra in extras:
             if extra == 'windows.package':
@@ -245,8 +246,8 @@ def gen_fulltest_buildfile_apple() -> None:
     # iOS stuff
     lines.append('nice -n 18 make ios-build')
     lines.append('nice -n 18 make ios-new-build')
-    if DO_SPARSE_TESTS:
-        extras = SPARSE_TESTS[dayoffset % len(SPARSE_TESTS)]
+    if DO_SPARSE_TEST_BUILDS:
+        extras = SPARSE_TEST_BUILDS[dayoffset % len(SPARSE_TEST_BUILDS)]
         extras = [e for e in extras if e.startswith('ios.')]
         for extra in extras:
             if extra == 'ios.pylibs':
@@ -258,8 +259,8 @@ def gen_fulltest_buildfile_apple() -> None:
 
     # tvOS stuff
     lines.append('nice -n 18 make tvos-build')
-    if DO_SPARSE_TESTS:
-        extras = SPARSE_TESTS[dayoffset % len(SPARSE_TESTS)]
+    if DO_SPARSE_TEST_BUILDS:
+        extras = SPARSE_TEST_BUILDS[dayoffset % len(SPARSE_TEST_BUILDS)]
         extras = [e for e in extras if e.startswith('tvos.')]
         for extra in extras:
             if extra == 'tvos.pylibs':
@@ -276,8 +277,8 @@ def gen_fulltest_buildfile_apple() -> None:
     lines.append('nice -n 18 make mac-new-build')
     lines.append('nice -n 18 make mac-server-build')
     lines.append('nice -n 18 make cmake-build')
-    if DO_SPARSE_TESTS:
-        extras = SPARSE_TESTS[dayoffset % len(SPARSE_TESTS)]
+    if DO_SPARSE_TEST_BUILDS:
+        extras = SPARSE_TEST_BUILDS[dayoffset % len(SPARSE_TEST_BUILDS)]
         extras = [e for e in extras if e.startswith('mac.')]
         for extra in extras:
             if extra == 'mac.package':
@@ -310,8 +311,8 @@ def gen_fulltest_buildfile_linux() -> None:
     for target in targets:
         lines.append(f'{linflav} make linux-{target}')
 
-    if DO_SPARSE_TESTS:
-        extras = SPARSE_TESTS[dayoffset % len(SPARSE_TESTS)]
+    if DO_SPARSE_TEST_BUILDS:
+        extras = SPARSE_TEST_BUILDS[dayoffset % len(SPARSE_TEST_BUILDS)]
         extras = [e for e in extras if e.startswith('linux.')]
         for extra in extras:
             if extra == 'linux.package':
@@ -716,39 +717,38 @@ def pip_req_list() -> None:
 
 def checkenv() -> None:
     """Check for tools necessary to build and run the app."""
+    from efrotools import PYTHON_BIN
     print('Checking environment...', flush=True)
 
-    python_bin = 'python3.7'
-
     # Make sure they've got our target python version.
-    if subprocess.run(['which', python_bin], check=False,
+    if subprocess.run(['which', PYTHON_BIN], check=False,
                       capture_output=True).returncode != 0:
-        raise CleanError(f'{python_bin} is required.')
+        raise CleanError(f'{PYTHON_BIN} is required.')
 
     # Make sure they've got pip for that python version.
-    if subprocess.run(f"{python_bin} -m pip --version",
+    if subprocess.run(f"{PYTHON_BIN} -m pip --version",
                       shell=True,
                       check=False,
                       capture_output=True).returncode != 0:
-        raise CleanError('pip (for {python_bin}) is required.')
+        raise CleanError('pip (for {PYTHON_BIN}) is required.')
 
     # Check for some required python modules.
     for modname, minver, packagename in REQUIRED_PYTHON_MODULES:
         if packagename is None:
             packagename = modname
         if minver is not None:
-            results = subprocess.run(f'{python_bin} -m {modname} --version',
+            results = subprocess.run(f'{PYTHON_BIN} -m {modname} --version',
                                      shell=True,
                                      check=False,
                                      capture_output=True)
         else:
-            results = subprocess.run(f'{python_bin} -c "import {modname}"',
+            results = subprocess.run(f'{PYTHON_BIN} -c "import {modname}"',
                                      shell=True,
                                      check=False,
                                      capture_output=True)
         if results.returncode != 0:
-            raise CleanError(f'{packagename} (for {python_bin}) is required.\n'
-                             f'To install it, try: "{python_bin}'
+            raise CleanError(f'{packagename} (for {PYTHON_BIN}) is required.\n'
+                             f'To install it, try: "{PYTHON_BIN}'
                              f' -m pip install {packagename}"')
         if minver is not None:
             ver_line = results.stdout.decode().splitlines()[0]

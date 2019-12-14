@@ -37,6 +37,7 @@
     "assets/src/data/scripts",
     "assets/src/server",
     "src/generated_src",
-    "tools"
+    "tools",
+    "tests"
   ]
 }

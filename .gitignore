@@ -17,6 +17,7 @@ local.properties
 .dmypy.json
 .cache
 .mypy_cache
+.pytest_cache
 .mypy.ini
 .pycheckers
 .flycheck-dir-locals.el

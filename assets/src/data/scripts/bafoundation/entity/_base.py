@@ -91,12 +91,17 @@ class BaseField(DataHandler):
         # more than a single field entry so this is unused)
         self.d_key = d_key
 
+    # IMPORTANT: this method should only be overridden in the eyes of the
+    # type-checker (to specify exact return types). Subclasses should instead
+    # override get_with_data() for doing the actual work, since that method
+    # may sometimes be called explicitly instead of through __get__
     def __get__(self, obj: Any, type_in: Any = None) -> Any:
         if obj is None:
             # when called on the type, we return the field
             return self
         return self.get_with_data(obj.d_data)
 
+    # IMPORTANT: same deal as __get__() (see note above)
     def __set__(self, obj: Any, value: Any) -> None:
         assert obj is not None
         self.set_with_data(obj.d_data, value, error=True)

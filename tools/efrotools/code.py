@@ -510,8 +510,9 @@ def runmypy(filenames: List[str],
             full: bool = False,
             check: bool = True) -> None:
     """Run MyPy on provided filenames."""
+    from efrotools import PYTHON_BIN
     args = [
-        'python3.7', '-m', 'mypy', '--pretty', '--no-error-summary',
+        PYTHON_BIN, '-m', 'mypy', '--pretty', '--no-error-summary',
         '--config-file', '.mypy.ini'
     ] + filenames
     if full:

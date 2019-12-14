@@ -60,11 +60,9 @@
       <excludePattern pattern=".spinoffdata" />
       <excludePattern pattern=".asset_manifest_*.json" />
       <excludePattern pattern=".efrocachemap" />
+      <excludePattern pattern=".pytest_cache" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.7" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-  </component>
-  <component name="TestRunnerService">
-    <option name="PROJECT_TEST_RUNNER" value="Unittests" />
   </component>
 </module>

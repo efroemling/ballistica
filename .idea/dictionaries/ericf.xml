@@ -336,6 +336,7 @@
       <w>dataclassutils</w>
       <w>datamodule</w>
       <w>dataname</w>
+      <w>dataval</w>
       <w>datetimemodule</w>
       <w>datetimes</w>
       <w>daynum</w>
@@ -1250,6 +1251,9 @@
       <w>pushlist</w>
       <w>putasset</w>
       <w>putassetmanifest</w>
+      <w>putassetpack</w>
+      <w>putassetpackmanifest</w>
+      <w>putassetpackupload</w>
       <w>putassetupload</w>
       <w>putfiles</w>
       <w>pval</w>
@@ -1291,6 +1295,7 @@
       <w>pyoffs</w>
       <w>pypaths</w>
       <w>pysources</w>
+      <w>pytest</w>
       <w>pythonpath</w>
       <w>pythonw</w>
       <w>pytree</w>
@@ -1575,6 +1580,7 @@
       <w>testcapimodule</w>
       <w>testclass</w>
       <w>testfoo</w>
+      <w>testfooooo</w>
       <w>testhelpers</w>
       <w>testimportmultiple</w>
       <w>testm</w>

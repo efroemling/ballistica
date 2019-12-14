@@ -322,6 +322,19 @@ pycharmfull: prereqs
 
 ################################################################################
 #                                                                              #
+#                                   Testing                                    #
+#                                                                              #
+################################################################################
+
+# Run all tests.
+# Note: need to disable bytecode writing so we don't cause errors due to
+# unexpected __pycache__ dirs popping up.
+test: prereqs
+	@tools/snippets pytest tests
+
+
+################################################################################
+#                                                                              #
 #                           Updating / Preflighting                            #
 #                                                                              #
 ################################################################################
