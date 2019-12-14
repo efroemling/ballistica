@@ -187,6 +187,7 @@
       <w>bumpmap</w>
       <w>buttondown</w>
       <w>buttonwidget</w>
+      <w>bval</w>
       <w>byteswap</w>
       <w>cachable</w>
       <w>cachebasename</w>
@@ -281,6 +282,7 @@
       <w>compat</w>
       <w>compileall</w>
       <w>compilelocations</w>
+      <w>compoundlist</w>
       <w>configerror</w>
       <w>confighash</w>
       <w>configkey</w>
@@ -470,6 +472,7 @@
       <w>entrytype</w>
       <w>entrytypeselect</w>
       <w>enumtype</w>
+      <w>enumval</w>
       <w>envhash</w>
       <w>epath</w>
       <w>epicfail</w>
@@ -613,6 +616,7 @@
       <w>functxt</w>
       <w>funtionality</w>
       <w>futimens</w>
+      <w>fval</w>
       <w>gameactivity</w>
       <w>gamebutton</w>
       <w>gameclass</w>
@@ -794,10 +798,12 @@
       <w>iserverget</w>
       <w>iserverput</w>
       <w>ispunch</w>
+      <w>isubval</w>
       <w>isysroot</w>
       <w>itms</w>
       <w>itmsp</w>
       <w>itunes</w>
+      <w>ival</w>
       <w>jackmorgan</w>
       <w>janktastic</w>
       <w>janky</w>
@@ -1442,6 +1448,7 @@
       <w>sitebuiltins</w>
       <w>skey</w>
       <w>sline</w>
+      <w>slval</w>
       <w>smlh</w>
       <w>smtpd</w>
       <w>smtplib</w>
@@ -1546,6 +1553,7 @@
       <w>svalin</w>
       <w>sver</w>
       <w>svne</w>
+      <w>svvv</w>
       <w>swip</w>
       <w>swipsound</w>
       <w>symlinked</w>
@@ -1576,6 +1584,7 @@
       <w>tchar</w>
       <w>tcombine</w>
       <w>tdelay</w>
+      <w>tdval</w>
       <w>teambasesession</w>
       <w>teamgame</w>
       <w>teamnamescolors</w>

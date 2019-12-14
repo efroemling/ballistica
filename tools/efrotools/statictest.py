@@ -52,6 +52,8 @@ class StaticTestFile:
         from efrotools import PYTHON_BIN
 
         self._filename = filename
+        self.modulename = f'temp{_nextfilenum}'
+        _nextfilenum += 1
 
         # Types we *want* for lines
         self.linetypes_wanted: Dict[int, str] = {}
@@ -71,26 +73,32 @@ class StaticTestFile:
         # (so that we can recycle our mypy cache).
         if _tempdir is None:
             _tempdir = tempfile.TemporaryDirectory()
+            # print(f"Created temp dir at {_tempdir.name}")
 
         # Copy our file into the temp dir with a unique name, find all
         # instances of static_type_equals(), and run mypy type checks
         # in those places to get static types.
-        tempfilepath = os.path.join(_tempdir.name, f'temp{_nextfilenum}.py')
-        _nextfilenum += 1
+        tempfilepath = os.path.join(_tempdir.name, self.modulename + '.py')
         with open(tempfilepath, 'w') as outfile:
             outfile.write(self.filter_file_contents(fdata))
-        results = subprocess.run([
-            PYTHON_BIN, '-m', 'mypy', '--no-error-summary', '--config-file',
-            '.mypy.ini', '--cache-dir', _tempdir.name, tempfilepath
-        ],
-                                 capture_output=True,
-                                 check=False)
-        # HMM; it seems we get an errored return code due to reveal_type()s.
-        # So I guess we just have to ignore other errors, which is unforunate.
-        # (though if the run fails, we'll probably error when attempting to
-        # look up a revealed type that we don't have anyway)
+        results = subprocess.run(
+            [
+                PYTHON_BIN, '-m', 'mypy', '--no-error-summary',
+                '--config-file', '.mypy.ini', '--cache-dir',
+                os.path.join(_tempdir.name, '.mypy_cache'), tempfilepath
+            ],
+            capture_output=True,
+            check=False,
+        )
+
+        # HMM; it seems we always get an errored return code due to
+        # our use of reveal_type() so we can't look at that.
+        # However we can look for error notices in the output and fail there.
         lines = results.stdout.decode().splitlines()
         for line in lines:
+            if ': error: ' in line:
+                print("Full mypy output:\n", results.stdout.decode())
+                raise RuntimeError('Errors detected in mypy output.')
             if 'Revealed type is ' in line:
                 finfo = line.split(' ')[0]
                 fparts = finfo.split(':')
@@ -172,16 +180,21 @@ def static_type_equals(value: Any, statictype: Type) -> bool:
 
     if filename not in _statictestfiles:
         _statictestfiles[filename] = StaticTestFile(filename)
+    testfile = _statictestfiles[filename]
 
-    wanttype = _statictestfiles[filename].linetypes_wanted[linenumber]
-    mypytype = _statictestfiles[filename].linetypes_mypy[linenumber]
+    wanttype = testfile.linetypes_wanted[linenumber]
+    mypytype = testfile.linetypes_mypy[linenumber]
 
     # Do some filtering of Mypy types to simple python ones.
     # (ie: 'builtins.list[builtins.int*]' -> int)
-    mypytype = mypytype.replace('builtins.int*', 'int')
+    mypytype = mypytype.replace('*', '')
+    mypytype = mypytype.replace('?', '')
     mypytype = mypytype.replace('builtins.int', 'int')
     mypytype = mypytype.replace('builtins.list', 'List')
     mypytype = mypytype.replace('typing.Sequence', 'Sequence')
+
+    # temp3.FooClass -> FooClass
+    mypytype = mypytype.replace(testfile.modulename + '.', '')
 
     if wanttype != mypytype:
         print(f'Mypy type "{mypytype}" does not match '

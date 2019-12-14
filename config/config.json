@@ -18,6 +18,7 @@
     "astroid",
     "bs_mapdefs_bridgit",
     "pylint.lint",
+    "pytest",
     "bs_mapdefs_zig_zag",
     "bs_mapdefs_the_pad",
     "bs_mapdefs_step_right_up",
