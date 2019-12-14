@@ -2,10 +2,10 @@ name: CI
 
 on:
   # Run on pushes and also once per day (in case deps change under us)
-  - push
-  - schedule:
+  push:
+  schedule:
       # Note: * is a special character in YAML so we have to quote the str.
-      - cron: '0 4 * * *'
+      cron: '0 4 * * *'
         
 jobs:
   check:
