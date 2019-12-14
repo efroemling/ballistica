@@ -1,18 +1,21 @@
 name: CI
 
-on: [push]
-
+on:
+  # Run on pushes and also once per day (in case deps change under us)
+  push:
+  schedule:
+      # Note: '*' is a special character in YAML so we have to quote the str.
+      - cron: '0 4 * * *'
+        
 jobs:
   check:
-
     runs-on: ubuntu-18.04
-    
     steps:
     - uses: actions/checkout@v1
-    - name: Set up tools
+    - name: Install dependencies
       run: |
         sudo apt-get -y install python3.7 python3.7-dev python3-pip python3-setuptools
-        python3.7 -m pip install pylint mypy typing-extensions pytz yapf
-    - name: Run checks
-      run: make checkfull
+        python3.7 -m pip install `tools/snippets pip_req_list`
+    - name: Run checks and tests
+      run: make -j2 checkfull test
         
