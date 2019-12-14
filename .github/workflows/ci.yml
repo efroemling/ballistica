@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v1
-    - name: Set up tools
+    - name: Install dependencies
       run: |
         sudo apt-get -y install python3.7 python3.7-dev python3-pip python3-setuptools
         python3.7 -m pip install `tools/snippets pip_req_list`
