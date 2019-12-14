@@ -62,7 +62,7 @@ def formatcode(projroot: Path, full: bool) -> None:
         if result != 0:
             raise Exception(f'Formatting failed for {filename}')
         duration = time.time() - start_time
-        print(f'Formatted {filename} in {duration:.2f} seconds')
+        print(f'Formatted {filename} in {duration:.2f} seconds.')
         sys.stdout.flush()
         return {'f': filename, 't': duration}
 
@@ -175,7 +175,7 @@ def formatscripts(projroot: Path, full: bool) -> None:
         if result != 0:
             raise Exception(f'Formatting failed for {filename}')
         duration = time.time() - start_time
-        print(f'Formatted {filename} in {duration:.2f} seconds')
+        print(f'Formatted {filename} in {duration:.2f} seconds.')
         sys.stdout.flush()
 
     # NOTE: using fewer workers than we have logical procs for now;

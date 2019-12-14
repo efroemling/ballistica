@@ -258,6 +258,10 @@ def _write_cache_files(fnames1: List[str], fnames2: List[str],
     for result in results:
         mapping[result[0]] = BASE_URL + result[1]
 
+    # FIXME - we could save significant bandwidth by assembling the
+    # starter cache on the server instead of locally and then uploading it.
+    # (we have to sync all its comprising files to the server anyway)
+
     # Once we've written our first set, create
     # a starter-cache file from everything we wrote.
     # This consists of some subset of the cache dir we just filled out.
