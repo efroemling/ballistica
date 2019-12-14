@@ -5,7 +5,7 @@ on:
   push:
   schedule:
       # Note: '*' is a special character in YAML so we have to quote the str.
-      - cron: '0 4 * * *'
+      - cron: '0 12 * * *'
         
 jobs:
   check:
