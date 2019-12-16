@@ -130,7 +130,7 @@ class SimpleValue(TypedValue[T]):
 class StringValue(SimpleValue[str]):
     """Value consisting of a single string."""
 
-    def __init__(self, default: str = "", store_default: bool = False) -> None:
+    def __init__(self, default: str = "", store_default: bool = True) -> None:
         super().__init__(default, store_default, str)
 
 
@@ -139,7 +139,7 @@ class OptionalStringValue(SimpleValue[Optional[str]]):
 
     def __init__(self,
                  default: Optional[str] = None,
-                 store_default: bool = False) -> None:
+                 store_default: bool = True) -> None:
         super().__init__(default, store_default, str, allow_none=True)
 
 
@@ -148,7 +148,7 @@ class BoolValue(SimpleValue[bool]):
 
     def __init__(self,
                  default: bool = False,
-                 store_default: bool = False) -> None:
+                 store_default: bool = True) -> None:
         super().__init__(default, store_default, bool, (int, float))
 
 
@@ -157,7 +157,7 @@ class OptionalBoolValue(SimpleValue[Optional[bool]]):
 
     def __init__(self,
                  default: Optional[bool] = None,
-                 store_default: bool = False) -> None:
+                 store_default: bool = True) -> None:
         super().__init__(default,
                          store_default,
                          bool, (int, float),
@@ -207,7 +207,7 @@ class DateTimeValue(SimpleValue[datetime.datetime]):
     The default value for this is always the current time in UTC.
     """
 
-    def __init__(self, store_default: bool = False) -> None:
+    def __init__(self, store_default: bool = True) -> None:
         # Pass dummy datetime value as default just to satisfy constructor;
         # we override get_default_data though so this doesn't get used.
         dummy_default = datetime.datetime.now(datetime.timezone.utc)
@@ -226,7 +226,7 @@ class DateTimeValue(SimpleValue[datetime.datetime]):
 class OptionalDateTimeValue(SimpleValue[Optional[datetime.datetime]]):
     """Value consisting of a datetime.datetime object or None."""
 
-    def __init__(self, store_default: bool = False) -> None:
+    def __init__(self, store_default: bool = True) -> None:
         super().__init__(None,
                          store_default,
                          datetime.datetime,
@@ -240,7 +240,7 @@ class OptionalDateTimeValue(SimpleValue[Optional[datetime.datetime]]):
 class IntValue(SimpleValue[int]):
     """Value consisting of a single int."""
 
-    def __init__(self, default: int = 0, store_default: bool = False) -> None:
+    def __init__(self, default: int = 0, store_default: bool = True) -> None:
         super().__init__(default, store_default, int, (bool, float))
 
 
@@ -249,7 +249,7 @@ class OptionalIntValue(SimpleValue[Optional[int]]):
 
     def __init__(self,
                  default: int = None,
-                 store_default: bool = False) -> None:
+                 store_default: bool = True) -> None:
         super().__init__(default,
                          store_default,
                          int, (bool, float),
@@ -261,7 +261,7 @@ class FloatValue(SimpleValue[float]):
 
     def __init__(self,
                  default: float = 0.0,
-                 store_default: bool = False) -> None:
+                 store_default: bool = True) -> None:
         super().__init__(default, store_default, float, (bool, int))
 
 
@@ -270,7 +270,7 @@ class OptionalFloatValue(SimpleValue[Optional[float]]):
 
     def __init__(self,
                  default: float = None,
-                 store_default: bool = False) -> None:
+                 store_default: bool = True) -> None:
         super().__init__(default,
                          store_default,
                          float, (bool, int),
@@ -282,7 +282,7 @@ class Float3Value(SimpleValue[Tuple[float, float, float]]):
 
     def __init__(self,
                  default: Tuple[float, float, float] = (0.0, 0.0, 0.0),
-                 store_default: bool = False) -> None:
+                 store_default: bool = True) -> None:
         super().__init__(default, store_default)
 
     def __repr__(self) -> str:
@@ -315,7 +315,7 @@ class BaseEnumValue(TypedValue[T]):
     def __init__(self,
                  enumtype: Type[T],
                  default: Optional[T] = None,
-                 store_default: bool = False,
+                 store_default: bool = True,
                  allow_none: bool = False) -> None:
         super().__init__()
         assert issubclass(enumtype, Enum)
@@ -388,7 +388,7 @@ class EnumValue(BaseEnumValue[TE]):
     def __init__(self,
                  enumtype: Type[TE],
                  default: TE = None,
-                 store_default: bool = False) -> None:
+                 store_default: bool = True) -> None:
         super().__init__(enumtype, default, store_default, allow_none=False)
 
 
@@ -401,7 +401,7 @@ class OptionalEnumValue(BaseEnumValue[Optional[TE]]):
     def __init__(self,
                  enumtype: Type[TE],
                  default: TE = None,
-                 store_default: bool = False) -> None:
+                 store_default: bool = True) -> None:
         super().__init__(enumtype, default, store_default, allow_none=True)
 
 
@@ -412,7 +412,7 @@ class CompoundValue(DataHandler):
     any number of Field instances within themself.
     """
 
-    def __init__(self, store_default: bool = False) -> None:
+    def __init__(self, store_default: bool = True) -> None:
         super().__init__()
         self._store_default = store_default
 

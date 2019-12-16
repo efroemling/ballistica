@@ -121,11 +121,11 @@ class EntityMixin:
         self.d_data = target.d_data
         target.d_data = None
 
-    def get_pruned_data(self) -> Dict[str, Any]:
+    def pruned_data(self) -> Dict[str, Any]:
         """Return a pruned version of this instance's data.
 
         This varies from d_data in that values may be stripped out if
-        they are equal to defaults (if the field allows such).
+        they are equal to defaults (for fields with that option enabled).
         """
         import copy
         data = copy.deepcopy(self.d_data)
@@ -133,24 +133,26 @@ class EntityMixin:
         self.prune_fields_data(data)
         return data
 
-    def to_json_str(self, pretty: bool = False) -> str:
+    def to_json_str(self, prune: bool = True, pretty: bool = False) -> str:
         """Convert the entity to a json string.
 
         This uses bafoundation.jsontools.ExtendedJSONEncoder/Decoder
         to support data types not natively storable in json.
         """
+        if prune:
+            data = self.pruned_data()
+        else:
+            data = self.d_data
         if pretty:
-            return json.dumps(self.d_data,
+            return json.dumps(data,
                               indent=2,
                               sort_keys=True,
                               cls=ExtendedJSONEncoder)
-        return json.dumps(self.d_data,
-                          separators=(',', ':'),
-                          cls=ExtendedJSONEncoder)
+        return json.dumps(data, separators=(',', ':'), cls=ExtendedJSONEncoder)
 
     @staticmethod
     def json_loads(s: str) -> Any:
-        """Load a json string with our special extended decoder.
+        """Load a json string using our special extended decoder.
 
         Note that this simply returns loaded json data; no
         Entities are involved.

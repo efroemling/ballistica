@@ -443,11 +443,14 @@ class App:
         # Check our packages and make sure all subdirs contain and __init__.py
         # (I tend to forget this sometimes)
         packagedirs = ['tools/efrotools']
-        script_asset_dir = 'assets/src/data/scripts'
-        for name in os.listdir(script_asset_dir):
-            # (Assume all dirs under our script assets dir are packages)
-            if os.path.isdir(os.path.join(script_asset_dir)):
-                packagedirs.append(os.path.join(script_asset_dir, name))
+
+        # (Assume all dirs under these dirs are packages)
+        dirs_of_packages = ['assets/src/data/scripts', 'tests']
+        for dir_of_packages in dirs_of_packages:
+            for name in os.listdir(dir_of_packages):
+                if (not name.startswith('.') and os.path.isdir(
+                        os.path.join(dir_of_packages, name))):
+                    packagedirs.append(os.path.join(dir_of_packages, name))
 
         for packagedir in packagedirs:
             for root, _dirs, files in os.walk(packagedir):

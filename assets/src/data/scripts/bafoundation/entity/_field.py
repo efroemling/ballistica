@@ -47,7 +47,7 @@ class Field(BaseField, Generic[T]):
     def __init__(self,
                  d_key: str,
                  value: 'TypedValue[T]',
-                 store_default: bool = False) -> None:
+                 store_default: bool = True) -> None:
         super().__init__(d_key)
         self.d_value = value
         self._store_default = store_default
@@ -86,7 +86,7 @@ class CompoundField(BaseField, Generic[TC]):
     def __init__(self,
                  d_key: str,
                  value: TC,
-                 store_default: bool = False) -> None:
+                 store_default: bool = True) -> None:
         super().__init__(d_key)
         if __debug__ is True:
             from bafoundation.entity._value import CompoundValue
@@ -165,7 +165,7 @@ class ListField(BaseField, Generic[T]):
     def __init__(self,
                  d_key: str,
                  value: 'TypedValue[T]',
-                 store_default: bool = False) -> None:
+                 store_default: bool = True) -> None:
         super().__init__(d_key)
         self.d_value = value
         self._store_default = store_default
@@ -218,7 +218,7 @@ class DictField(BaseField, Generic[TK, T]):
                  d_key: str,
                  keytype: Type[TK],
                  field: 'TypedValue[T]',
-                 store_default: bool = False) -> None:
+                 store_default: bool = True) -> None:
         super().__init__(d_key)
         self.d_value = field
         self._store_default = store_default
@@ -280,7 +280,7 @@ class CompoundListField(BaseField, Generic[TC]):
     def __init__(self,
                  d_key: str,
                  valuetype: TC,
-                 store_default: bool = False) -> None:
+                 store_default: bool = True) -> None:
         super().__init__(d_key)
         self.d_value = valuetype
 
@@ -369,7 +369,7 @@ class CompoundDictField(BaseField, Generic[TK, TC]):
                  d_key: str,
                  keytype: Type[TK],
                  valuetype: TC,
-                 store_default: bool = False) -> None:
+                 store_default: bool = True) -> None:
         super().__init__(d_key)
         self.d_value = valuetype
 

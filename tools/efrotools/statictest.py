@@ -185,12 +185,16 @@ def static_type_equals(value: Any, statictype: Type) -> bool:
     wanttype = testfile.linetypes_wanted[linenumber]
     mypytype = testfile.linetypes_mypy[linenumber]
 
-    # Do some filtering of Mypy types to simple python ones.
+    # Do some filtering of Mypy types so we can compare to simple python ones.
     # (ie: 'builtins.list[builtins.int*]' -> int)
+    # Note to self: perhaps we'd want a fallback form where we can pass a
+    # type as a string if we want to match the exact mypy value?...
     mypytype = mypytype.replace('*', '')
     mypytype = mypytype.replace('?', '')
     mypytype = mypytype.replace('builtins.int', 'int')
+    mypytype = mypytype.replace('builtins.float', 'float')
     mypytype = mypytype.replace('builtins.list', 'List')
+    mypytype = mypytype.replace('builtins.bool', 'bool')
     mypytype = mypytype.replace('typing.Sequence', 'Sequence')
 
     # temp3.FooClass -> FooClass

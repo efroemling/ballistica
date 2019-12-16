@@ -65,9 +65,9 @@ CMD_LOGOUT = 'logout'
 CMD_PUTASSETPACK = 'putassetpack'
 CMD_HELP = 'help'
 
+# Note to self: keep this synced with server-side logic.
 ASSET_PACKAGE_NAME_VALID_CHARS = 'abcdefghijklmnopqrstuvwxyz0123456789_'
 ASSET_PACKAGE_NAME_MAX_LENGTH = 32
-
 ASSET_PATH_VALID_CHARS = 'abcdefghijklmnopqrstuvwxyz0123456789_'
 ASSET_PATH_MAX_LENGTH = 128
 
