@@ -357,10 +357,20 @@ def sync_all() -> None:
     This assumes that there is a 'syncfull' and 'synclist' Makefile target
     under each project.
     """
+    print(f'{CLRBLU}Updating formatting for all projects...{CLREND}')
     projects_str = os.environ.get('EFROTOOLS_SYNC_PROJECTS')
     if projects_str is None:
-        print('EFROTOOL_SYNC_PROJECTS is not defined.')
-        sys.exit(255)
+        raise CleanError('EFROTOOL_SYNC_PROJECTS is not defined.')
+
+    # No matter what we're doing (even if just listing), run formatting
+    # in all projects before beginning. Otherwise if we do a sync and then
+    # a preflight we'll often wind up getting out-of-sync errors due to
+    # formatting changing after the sync.
+    for project in projects_str.split(':'):
+        cmd = f'cd "{project}" && make format'
+        print(cmd)
+        subprocess.run(cmd, shell=True, check=True)
+
     if len(sys.argv) > 2 and sys.argv[2] == 'list':
         # List mode
         for project in projects_str.split(':'):

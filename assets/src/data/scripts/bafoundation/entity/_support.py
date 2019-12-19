@@ -34,9 +34,9 @@ if TYPE_CHECKING:
                                             CompoundDictField)
 
 T = TypeVar('T')
-TK = TypeVar('TK')
-TC = TypeVar('TC', bound='CompoundValue')
-TBL = TypeVar('TBL', bound='BoundCompoundListField')
+TKey = TypeVar('TKey')
+TCompound = TypeVar('TCompound', bound='CompoundValue')
+TBoundList = TypeVar('TBoundList', bound='BoundCompoundListField')
 
 
 class BoundCompoundValue:
@@ -49,12 +49,13 @@ class BoundCompoundValue:
                                                            Dict[str, Any]]):
         self.d_value: CompoundValue
         self.d_data: Union[List[Any], Dict[str, Any]]
-        # need to use base setters to avoid triggering our own overrides
+
+        # Need to use base setters to avoid triggering our own overrides.
         object.__setattr__(self, 'd_value', value)
         object.__setattr__(self, 'd_data', d_data)
 
     def __eq__(self, other: Any) -> Any:
-        # allow comparing to compound and bound-compound objects
+        # Allow comparing to compound and bound-compound objects.
         from bafoundation.entity.util import compound_eq
         return compound_eq(self, other)
 
@@ -68,7 +69,7 @@ class BoundCompoundValue:
         raise AttributeError
 
     def __setattr__(self, name: str, value: Any) -> None:
-        # same deal as __getattr__ basically
+        # Same deal as __getattr__ basically.
         field = getattr(type(object.__getattribute__(self, 'd_value')), name,
                         None)
         if isinstance(field, BaseField):
@@ -81,10 +82,12 @@ class BoundCompoundValue:
         value = object.__getattribute__(self, 'd_value')
         data = object.__getattribute__(self, 'd_data')
         assert isinstance(data, dict)
+
         # Need to clear our dict in-place since we have no
         # access to our parent which we'd need to assign an empty one.
         data.clear()
-        # now fill in default data
+
+        # Now fill in default data.
         value.apply_fields_to_data(data, error=True)
 
     def __repr__(self) -> str:
@@ -157,7 +160,7 @@ class BoundListField(Generic[T]):
         self._i = 0
 
     def __eq__(self, other: Any) -> Any:
-        # just convert us into a regular list and run a compare with that
+        # Just convert us into a regular list and run a compare with that.
         flattened = [
             self.d_field.d_value.filter_output(value) for value in self.d_data
         ]
@@ -211,18 +214,18 @@ class BoundListField(Generic[T]):
         self.d_data[key] = self.d_field.d_value.filter_input(value, error=True)
 
 
-class BoundDictField(Generic[TK, T]):
+class BoundDictField(Generic[TKey, T]):
     """DictField bound to its data; used for accessing its values."""
 
-    def __init__(self, keytype: Type[TK], field: DictField[TK, T],
-                 d_data: Dict[TK, T]):
+    def __init__(self, keytype: Type[TKey], field: DictField[TKey, T],
+                 d_data: Dict[TKey, T]):
         self._keytype = keytype
         self.d_field = field
         assert isinstance(d_data, dict)
         self.d_data = d_data
 
     def __eq__(self, other: Any) -> Any:
-        # just convert us into a regular dict and run a compare with that
+        # Just convert us into a regular dict and run a compare with that.
         flattened = {
             key: self.d_field.d_value.filter_output(value)
             for key, value in self.d_data.items()
@@ -237,7 +240,7 @@ class BoundDictField(Generic[TK, T]):
     def __len__(self) -> int:
         return len(self.d_data)
 
-    def __getitem__(self, key: TK) -> T:
+    def __getitem__(self, key: TKey) -> T:
         if not isinstance(key, self._keytype):
             raise TypeError(
                 f'Invalid key type {type(key)}; expected {self._keytype}')
@@ -245,7 +248,7 @@ class BoundDictField(Generic[TK, T]):
         typedval: T = self.d_field.d_value.filter_output(self.d_data[key])
         return typedval
 
-    def get(self, key: TK, default: Optional[T] = None) -> Optional[T]:
+    def get(self, key: TKey, default: Optional[T] = None) -> Optional[T]:
         """Get a value if present, or a default otherwise."""
         if not isinstance(key, self._keytype):
             raise TypeError(
@@ -256,18 +259,18 @@ class BoundDictField(Generic[TK, T]):
         typedval: T = self.d_field.d_value.filter_output(self.d_data[key])
         return typedval
 
-    def __setitem__(self, key: TK, value: T) -> None:
+    def __setitem__(self, key: TKey, value: T) -> None:
         if not isinstance(key, self._keytype):
             raise TypeError("Expected str index.")
         self.d_data[key] = self.d_field.d_value.filter_input(value, error=True)
 
-    def __contains__(self, key: TK) -> bool:
+    def __contains__(self, key: TKey) -> bool:
         return key in self.d_data
 
-    def __delitem__(self, key: TK) -> None:
+    def __delitem__(self, key: TKey) -> None:
         del self.d_data[key]
 
-    def keys(self) -> List[TK]:
+    def keys(self) -> List[TKey]:
         """Return a list of our keys."""
         return list(self.d_data.keys())
 
@@ -278,16 +281,16 @@ class BoundDictField(Generic[TK, T]):
             for value in self.d_data.values()
         ]
 
-    def items(self) -> List[Tuple[TK, T]]:
+    def items(self) -> List[Tuple[TKey, T]]:
         """Return a list of item/value pairs."""
         return [(key, self.d_field.d_value.filter_output(value))
                 for key, value in self.d_data.items()]
 
 
-class BoundCompoundListField(Generic[TC]):
+class BoundCompoundListField(Generic[TCompound]):
     """A CompoundListField bound to its entity sub-data."""
 
-    def __init__(self, field: CompoundListField[TC], d_data: List[Any]):
+    def __init__(self, field: CompoundListField[TCompound], d_data: List[Any]):
         self.d_field = field
         self.d_data = d_data
         self._i = 0
@@ -323,20 +326,20 @@ class BoundCompoundListField(Generic[TC]):
     if TYPE_CHECKING:
 
         @overload
-        def __getitem__(self, key: int) -> TC:
+        def __getitem__(self, key: int) -> TCompound:
             ...
 
         @overload
-        def __getitem__(self, key: slice) -> List[TC]:
+        def __getitem__(self, key: slice) -> List[TCompound]:
             ...
 
         def __getitem__(self, key: Any) -> Any:
             ...
 
-        def __next__(self) -> TC:
+        def __next__(self) -> TCompound:
             ...
 
-        def append(self) -> TC:
+        def append(self) -> TCompound:
             """Append and return a new field entry to the array."""
             ...
     else:
@@ -366,16 +369,16 @@ class BoundCompoundListField(Generic[TC]):
                     self.d_field.d_value.get_default_data(), error=True))
             return BoundCompoundValue(self.d_field.d_value, self.d_data[-1])
 
-    def __iter__(self: TBL) -> TBL:
+    def __iter__(self: TBoundList) -> TBoundList:
         self._i = 0
         return self
 
 
-class BoundCompoundDictField(Generic[TK, TC]):
+class BoundCompoundDictField(Generic[TKey, TCompound]):
     """A CompoundDictField bound to its entity sub-data."""
 
-    def __init__(self, field: CompoundDictField[TK, TC], d_data: Dict[Any,
-                                                                      Any]):
+    def __init__(self, field: CompoundDictField[TKey, TCompound],
+                 d_data: Dict[Any, Any]):
         self.d_field = field
         self.d_data = d_data
 
@@ -408,16 +411,16 @@ class BoundCompoundDictField(Generic[TK, TC]):
     # would not be able to make sense of)
     if TYPE_CHECKING:
 
-        def __getitem__(self, key: TK) -> TC:
+        def __getitem__(self, key: TKey) -> TCompound:
             pass
 
-        def values(self) -> List[TC]:
+        def values(self) -> List[TCompound]:
             """Return a list of our values."""
 
-        def items(self) -> List[Tuple[TK, TC]]:
+        def items(self) -> List[Tuple[TKey, TCompound]]:
             """Return key/value pairs for all dict entries."""
 
-        def add(self, key: TK) -> TC:
+        def add(self, key: TKey) -> TCompound:
             """Add an entry into the dict, returning it.
 
             Any existing value is replaced."""
@@ -438,14 +441,14 @@ class BoundCompoundDictField(Generic[TK, TC]):
             return [(key, BoundCompoundValue(self.d_field.d_value, value))
                     for key, value in self.d_data.items()]
 
-        def add(self, key: TK) -> TC:
+        def add(self, key: TKey) -> TCompound:
             """Add an entry into the dict, returning it.
 
             Any existing value is replaced."""
             if not isinstance(key, self.d_field.d_keytype):
                 raise TypeError(f'expected key type {self.d_field.d_keytype};'
                                 f' got {type(key)}')
-            # push the entity default into data and then let it fill in
+            # Push the entity default into data and then let it fill in
             # any children/etc.
             self.d_data[key] = (self.d_field.d_value.filter_input(
                 self.d_field.d_value.get_default_data(), error=True))
@@ -454,12 +457,12 @@ class BoundCompoundDictField(Generic[TK, TC]):
     def __len__(self) -> int:
         return len(self.d_data)
 
-    def __contains__(self, key: TK) -> bool:
+    def __contains__(self, key: TKey) -> bool:
         return key in self.d_data
 
-    def __delitem__(self, key: TK) -> None:
+    def __delitem__(self, key: TKey) -> None:
         del self.d_data[key]
 
-    def keys(self) -> List[TK]:
+    def keys(self) -> List[TKey]:
         """Return a list of our keys."""
         return list(self.d_data.keys())

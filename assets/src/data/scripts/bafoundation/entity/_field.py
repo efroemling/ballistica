@@ -34,7 +34,6 @@ from bafoundation.entity._support import (BaseField, BoundCompoundValue,
 if TYPE_CHECKING:
     from typing import Dict, Type, List, Any
     from bafoundation.entity._value import TypedValue, CompoundValue
-    from bafoundation.entity._support import FieldInspector
 
 T = TypeVar('T')
 TK = TypeVar('TK')
@@ -46,7 +45,7 @@ class Field(BaseField, Generic[T]):
 
     def __init__(self,
                  d_key: str,
-                 value: 'TypedValue[T]',
+                 value: TypedValue[T],
                  store_default: bool = True) -> None:
         super().__init__(d_key)
         self.d_value = value
@@ -73,7 +72,15 @@ class Field(BaseField, Generic[T]):
         # a type instead of an instance, but we don't reflect that here yet
         # (would need to write a mypy plugin so sub-field access works first)
 
+        @overload
+        def __get__(self, obj: None, cls: Any = None) -> Field[T]:
+            ...
+
+        @overload
         def __get__(self, obj: Any, cls: Any = None) -> T:
+            ...
+
+        def __get__(self, obj: Any, cls: Any = None) -> Any:
             ...
 
         def __set__(self, obj: Any, value: T) -> None:
@@ -164,7 +171,7 @@ class ListField(BaseField, Generic[T]):
 
     def __init__(self,
                  d_key: str,
-                 value: 'TypedValue[T]',
+                 value: TypedValue[T],
                  store_default: bool = True) -> None:
         super().__init__(d_key)
         self.d_value = value
@@ -174,9 +181,14 @@ class ListField(BaseField, Generic[T]):
         return []
 
     def filter_input(self, data: Any, error: bool) -> Any:
+
+        # If we were passed a BoundListField, operate on its raw values
+        if isinstance(data, BoundListField):
+            data = data.d_data
+
         if not isinstance(data, list):
             if error:
-                raise TypeError('list value expected')
+                raise TypeError(f'list value expected; got {type(data)}')
             logging.error('Ignoring non-list data for %s: %s', self, data)
             data = []
         for i, entry in enumerate(data):
@@ -193,8 +205,9 @@ class ListField(BaseField, Generic[T]):
 
     if TYPE_CHECKING:
 
+        # Access via type gives our field; via an instance gives a bound field.
         @overload
-        def __get__(self, obj: None, cls: Any = None) -> FieldInspector:
+        def __get__(self, obj: None, cls: Any = None) -> ListField[T]:
             ...
 
         @overload
@@ -204,7 +217,16 @@ class ListField(BaseField, Generic[T]):
         def __get__(self, obj: Any, cls: Any = None) -> Any:
             ...
 
+        # Allow setting via a raw value list or a bound list field
+        @overload
         def __set__(self, obj: Any, value: List[T]) -> None:
+            ...
+
+        @overload
+        def __set__(self, obj: Any, value: BoundListField[T]) -> None:
+            ...
+
+        def __set__(self, obj: Any, value: Any) -> None:
             ...
 
     def get_with_data(self, data: Any) -> Any:
@@ -217,7 +239,7 @@ class DictField(BaseField, Generic[TK, T]):
     def __init__(self,
                  d_key: str,
                  keytype: Type[TK],
-                 field: 'TypedValue[T]',
+                 field: TypedValue[T],
                  store_default: bool = True) -> None:
         super().__init__(d_key)
         self.d_value = field
@@ -229,6 +251,11 @@ class DictField(BaseField, Generic[TK, T]):
 
     # noinspection DuplicatedCode
     def filter_input(self, data: Any, error: bool) -> Any:
+
+        # If we were passed a BoundDictField, operate on its raw values
+        if isinstance(data, BoundDictField):
+            data = data.d_data
+
         if not isinstance(data, dict):
             if error:
                 raise TypeError('dict value expected')
@@ -252,6 +279,8 @@ class DictField(BaseField, Generic[TK, T]):
 
     if TYPE_CHECKING:
 
+        # Return our field if accessed via type and bound-dict-field
+        # if via instance.
         @overload
         def __get__(self, obj: None, cls: Any = None) -> DictField[TK, T]:
             ...
@@ -263,7 +292,16 @@ class DictField(BaseField, Generic[TK, T]):
         def __get__(self, obj: Any, cls: Any = None) -> Any:
             ...
 
+        # Allow setting via matching dict values or BoundDictFields
+        @overload
         def __set__(self, obj: Any, value: Dict[TK, T]) -> None:
+            ...
+
+        @overload
+        def __set__(self, obj: Any, value: BoundDictField[TK, T]) -> None:
+            ...
+
+        def __set__(self, obj: Any, value: Any) -> None:
             ...
 
     def get_with_data(self, data: Any) -> Any:
@@ -290,6 +328,7 @@ class CompoundListField(BaseField, Generic[TC]):
         self._store_default = store_default
 
     def filter_input(self, data: Any, error: bool) -> list:
+
         if not isinstance(data, list):
             if error:
                 raise TypeError('list value expected')
@@ -333,9 +372,17 @@ class CompoundListField(BaseField, Generic[TC]):
         # Note:
         # When setting the list, we tell the type-checker that we accept
         # a raw list of CompoundValue objects, but at runtime we actually
-        # deal with BoundCompoundValue objects (see note in
+        # always deal with BoundCompoundValue objects (see note in
         # BoundCompoundListField)
+        @overload
         def __set__(self, obj: Any, value: List[TC]) -> None:
+            ...
+
+        @overload
+        def __set__(self, obj: Any, value: BoundCompoundListField[TC]) -> None:
+            ...
+
+        def __set__(self, obj: Any, value: Any) -> None:
             ...
 
     def get_with_data(self, data: Any) -> Any:
@@ -343,8 +390,16 @@ class CompoundListField(BaseField, Generic[TC]):
         return BoundCompoundListField(self, data[self.d_key])
 
     def set_with_data(self, data: Any, value: Any, error: bool) -> Any:
+
+        # If we were passed a BoundCompoundListField,
+        # simply convert it to a list of BoundCompoundValue objects which
+        # is what we work with natively here.
+        if isinstance(value, BoundCompoundListField):
+            value = list(value)
+
         if not isinstance(value, list):
-            raise TypeError('CompoundListField expected list value on set.')
+            raise TypeError(f'CompoundListField expected list value on set;'
+                            f' got {type(value)}.')
 
         # Allow assigning only from a sequence of our existing children.
         # (could look into expanding this to other children if we can
@@ -355,7 +410,8 @@ class CompoundListField(BaseField, Generic[TC]):
                 or not all(i.d_value is self.d_value for i in value)):
             raise ValueError('CompoundListField assignment must be a '
                              'list containing only its existing children.')
-        data[self.d_key] = [i.d_data for i in value]
+        data[self.d_key] = self.filter_input([i.d_data for i in value],
+                                             error=error)
 
 
 class CompoundDictField(BaseField, Generic[TK, TC]):

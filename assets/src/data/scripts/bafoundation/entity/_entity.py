@@ -45,7 +45,7 @@ class EntityMixin:
 
     def __init__(self,
                  d_data: Dict[str, Any] = None,
-                 error: bool = False) -> None:
+                 error: bool = True) -> None:
         super().__init__()
         if not isinstance(self, CompoundValue):
             raise RuntimeError('EntityMixin class must be combined'
@@ -60,7 +60,7 @@ class EntityMixin:
         """Resets data to default."""
         self.set_data({}, error=True)
 
-    def set_data(self, data: Dict, error: bool = False) -> None:
+    def set_data(self, data: Dict, error: bool = True) -> None:
         """Set the data for this entity and apply all value filters to it.
 
         Note that it is more efficient to pass data to an Entity's constructor
@@ -159,7 +159,7 @@ class EntityMixin:
         """
         return json.loads(s, cls=ExtendedJSONDecoder)
 
-    def load_from_json_str(self, s: str, error: bool = False) -> None:
+    def load_from_json_str(self, s: str, error: bool = True) -> None:
         """Set the entity's data in-place from a json string.
 
         The 'error' argument determines whether Exceptions will be raised
@@ -171,7 +171,7 @@ class EntityMixin:
         self.set_data(data, error=error)
 
     @classmethod
-    def from_json_str(cls: Type[T], s: str, error: bool = False) -> T:
+    def from_json_str(cls: Type[T], s: str, error: bool = True) -> T:
         """Instantiate a new instance with provided json string.
 
         The 'error' argument determines whether exceptions will be raised

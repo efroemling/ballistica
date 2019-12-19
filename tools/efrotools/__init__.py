@@ -141,11 +141,11 @@ def run(cmd: str) -> None:
     subprocess.run(cmd, shell=True, check=True)
 
 
-def get_files_hash(
-        filenames: Sequence[Union[str, Path]],
-        extrahash: str = '',
-        int_only: bool = False,
-        hashtype: Union[Literal['md5'], Literal['sha256']] = 'md5') -> str:
+# 1
+def get_files_hash(filenames: Sequence[Union[str, Path]],
+                   extrahash: str = '',
+                   int_only: bool = False,
+                   hashtype: Literal['md5', 'sha256'] = 'md5') -> str:
     """Return a md5 hash for the given files."""
     import hashlib
     if not isinstance(filenames, list):

@@ -68,10 +68,10 @@ class EntityTest(entity.Entity):
     enumval = entity.Field('e', entity.EnumValue(EnumTest, default=None))
     enumval2 = entity.Field(
         'e2', entity.OptionalEnumValue(EnumTest, default=EnumTest.SECOND))
-    compoundlist = entity.CompoundListField('l', CompoundTest())
     slval = entity.ListField('sl', entity.StringValue())
     tval2 = entity.Field('t2', entity.DateTimeValue())
     str_int_dict = entity.DictField('sd', str, entity.IntValue())
+    compoundlist = entity.CompoundListField('l', CompoundTest())
     tdval = entity.CompoundDictField('td', str, CompoundTest())
     fval2 = entity.Field('f2', entity.Float3Value())
 
@@ -98,7 +98,18 @@ def test_entity_values() -> None:
     ent.fval = True
     ent.fval = 1.0
 
-    # Simple str/int dict field.
+    # Simple value list field.
+    assert not ent.slval
+    assert len(ent.slval) == 0
+    with pytest.raises(TypeError):
+        ent.slval.append(1)  # type: ignore
+    ent.slval.append('blah')
+    assert len(ent.slval) == 1
+    assert list(ent.slval) == ['blah']
+    with pytest.raises(TypeError):
+        ent.slval = ['foo', 'bar', 1]  # type: ignore
+
+    # Simple value dict field.
     assert 'foo' not in ent.str_int_dict
     with pytest.raises(TypeError):
         ent.str_int_dict[0] = 123  # type: ignore
@@ -107,6 +118,25 @@ def test_entity_values() -> None:
     ent.str_int_dict['foo'] = 123
     assert static_type_equals(ent.str_int_dict['foo'], int)
     assert ent.str_int_dict['foo'] == 123
+
+    # Waaah; this works at runtime, but it seems that we'd need
+    # to have BoundDictField inherit from Mapping for mypy to accept this.
+    # (which seems to get a bit ugly, but may be worth revisiting)
+    # assert dict(ent.str_int_dict) == {'foo': 123}
+
+
+# noinspection PyTypeHints
+def test_entity_values_2() -> None:
+    """Test various entity assigns for value and type correctness."""
+
+    ent = EntityTest()
+
+    # Compound value
+    assert static_type_equals(ent.grp, CompoundTest)
+    assert static_type_equals(ent.grp.isubval, int)
+    assert isinstance(ent.grp.isubval, int)
+    with pytest.raises(TypeError):
+        ent.grp.isubval = 'blah'  # type: ignore
 
     # Compound value inheritance.
     assert ent.grp2.isubval2 == 3453
@@ -139,6 +169,67 @@ def test_entity_values() -> None:
     assert static_type_equals(val, SubCompoundTest)
     assert static_type_equals(ent.grp.compoundlist[0], SubCompoundTest)
     assert static_type_equals(ent.grp.compoundlist[0].subval, bool)
+
+
+def test_field_copies() -> None:
+    """Test copying various values between fields."""
+    ent1 = EntityTest()
+    ent2 = EntityTest()
+
+    # Copying a simple value.
+    ent1.ival = 334
+    ent2.ival = ent1.ival
+    assert ent2.ival == 334
+
+    # Copying a nested compound.
+    ent1.grp.isubval = 543
+    ent2.grp = ent1.grp
+    assert ent2.grp.isubval == 543
+
+    # Type-checker currently allows this because both are Compounds
+    # but should fail at runtime since their subfield arrangement differs.
+    # reveal_type(ent1.grp.blah)
+    with pytest.raises(ValueError):
+        ent2.grp = ent1.grp2
+
+    # Copying a value list.
+    ent1.slval = ['foo', 'bar']
+    assert ent1.slval == ['foo', 'bar']
+    ent2.slval = ent1.slval
+    assert ent2.slval == ['foo', 'bar']
+
+    # Copying a value dict.
+    ent1.str_int_dict['tval'] = 987
+    ent2.str_int_dict = ent1.str_int_dict
+    assert ent2.str_int_dict['tval'] == 987
+
+    # Copying a CompoundList
+    val = ent1.compoundlist.append()
+    val.isubval = 356
+    assert ent1.compoundlist[0].isubval == 356
+    assert len(ent1.compoundlist) == 1
+    assert len(ent2.compoundlist) == 0
+    ent2.compoundlist = ent1.compoundlist
+    assert ent2.compoundlist[0].isubval == 356
+    assert len(ent2.compoundlist) == 1
+
+
+def test_field_access_from_type() -> None:
+    """Accessing fields through type objects should return the Field objs."""
+
+    ent = EntityTest()
+
+    # Accessing fields through the type should return field objects
+    # instead of values.
+    assert static_type_equals(ent.ival, int)
+    assert isinstance(ent.ival, int)
+    mypytype = 'bafoundation.entity._field.Field[builtins.int*]'
+    assert static_type_equals(type(ent).ival, mypytype)
+    assert isinstance(type(ent).ival, entity.Field)
+
+    # Accessing subtype on a nested compound field..
+    assert static_type_equals(type(ent).compoundlist.d_value, CompoundTest)
+    assert isinstance(type(ent).compoundlist.d_value, CompoundTest)
 
 
 class EntityTestMixin(entity.EntityMixin, CompoundTest2):

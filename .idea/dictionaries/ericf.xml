@@ -83,7 +83,12 @@
       <w>assetbundle</w>
       <w>assetcache</w>
       <w>assetdata</w>
+      <w>assetpack</w>
       <w>assetpackage</w>
+      <w>assetpackput</w>
+      <w>assetpackputfinish</w>
+      <w>assetpackputmanifest</w>
+      <w>assetpackputupload</w>
       <w>assetpath</w>
       <w>assettype</w>
       <w>assettypestr</w>
@@ -526,6 +531,7 @@
       <w>fhdr</w>
       <w>fieldattr</w>
       <w>fieldtypes</w>
+      <w>filebytes</w>
       <w>filecmp</w>
       <w>filehash</w>
       <w>fileinfo</w>
@@ -534,6 +540,7 @@
       <w>filenames</w>
       <w>filepath</w>
       <w>fileselector</w>
+      <w>filesize</w>
       <w>filestates</w>
       <w>filterlines</w>
       <w>filterpath</w>
@@ -1129,6 +1136,7 @@
       <w>packagedir</w>
       <w>packagedirs</w>
       <w>packagename</w>
+      <w>packageversion</w>
       <w>painttxtattr</w>
       <w>palmos</w>
       <w>pandoc</w>
@@ -1777,6 +1785,7 @@
       <w>vsync</w>
       <w>vsyncs</w>
       <w>vval</w>
+      <w>waaah</w>
       <w>wanttype</w>
       <w>wasdead</w>
       <w>weakref</w>

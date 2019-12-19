@@ -28,7 +28,7 @@ import os
 import subprocess
 
 if TYPE_CHECKING:
-    from typing import Any, Type, Dict, Optional, List
+    from typing import Any, Type, Dict, Optional, List, Union
 
 # Global state:
 # We maintain a single temp dir where our mypy cache and our temp
@@ -131,7 +131,13 @@ class StaticTestFile:
                 # Parse this line as AST - we should find an assert
                 # statement containing a static_type_equals() call
                 # with 2 args.
-                tree = ast.parse(line[offset:])
+                try:
+                    tree = ast.parse(line[offset:])
+                except Exception:
+                    raise RuntimeError(
+                        f"{self._filename} line {lineno+1}: unable to "
+                        f"parse line (static_type_equals() call cannot"
+                        f" be split across lines).") from None
                 assert isinstance(tree, ast.Module)
                 if (len(tree.body) != 1
                         or not isinstance(tree.body[0], ast.Assert)):
@@ -165,13 +171,19 @@ class StaticTestFile:
         return '\n'.join(lines_out) + '\n'
 
 
-def static_type_equals(value: Any, statictype: Type) -> bool:
-    """Check a type statically using mypy."""
+def static_type_equals(value: Any, statictype: Union[Type, str]) -> bool:
+    """Check a type statically using mypy.
+
+    If a string is passed as statictype, it is checked against the mypy
+    output for an exact match.
+    If a type is passed, various filtering may apply when searching for
+    a match (for instance, if mypy outputs 'builtins.int*' it will match
+    the 'int' type passed in as statictype).
+    """
     from inspect import getframeinfo, stack
 
     # We don't actually use there here; we pull them as strings from the src.
     del value
-    del statictype
 
     # Get the filename and line number of the calling function.
     caller = getframeinfo(stack()[1][0])
@@ -182,23 +194,36 @@ def static_type_equals(value: Any, statictype: Type) -> bool:
         _statictestfiles[filename] = StaticTestFile(filename)
     testfile = _statictestfiles[filename]
 
-    wanttype = testfile.linetypes_wanted[linenumber]
     mypytype = testfile.linetypes_mypy[linenumber]
 
-    # Do some filtering of Mypy types so we can compare to simple python ones.
-    # (ie: 'builtins.list[builtins.int*]' -> int)
-    # Note to self: perhaps we'd want a fallback form where we can pass a
-    # type as a string if we want to match the exact mypy value?...
-    mypytype = mypytype.replace('*', '')
-    mypytype = mypytype.replace('?', '')
-    mypytype = mypytype.replace('builtins.int', 'int')
-    mypytype = mypytype.replace('builtins.float', 'float')
-    mypytype = mypytype.replace('builtins.list', 'List')
-    mypytype = mypytype.replace('builtins.bool', 'bool')
-    mypytype = mypytype.replace('typing.Sequence', 'Sequence')
+    if isinstance(statictype, str):
+        # If they passed a string value as the statictype,
+        # do a comparison with the exact mypy value.
+        wanttype = statictype
+    else:
+        # If they passed a type object, things are a bit trickier because
+        # mypy's name for the type might not match the name we pass it in with.
+        # Try to do some filtering to minimize these differences...
+        wanttype = testfile.linetypes_wanted[linenumber]
+        del statictype
 
-    # temp3.FooClass -> FooClass
-    mypytype = mypytype.replace(testfile.modulename + '.', '')
+        # Do some filtering of Mypy types so we can compare
+        # to simple python ones.
+
+        # (ie: 'builtins.list[builtins.int*]' -> int)
+        # Note to self: perhaps we'd want a fallback form where we can pass a
+        # type as a string if we want to match the exact mypy value?...
+        mypytype = mypytype.replace('*', '')
+        mypytype = mypytype.replace('?', '')
+        mypytype = mypytype.replace('builtins.int', 'int')
+        mypytype = mypytype.replace('builtins.float', 'float')
+        mypytype = mypytype.replace('builtins.list', 'List')
+        mypytype = mypytype.replace('builtins.bool', 'bool')
+        mypytype = mypytype.replace('typing.Sequence', 'Sequence')
+
+        # So classes declared in the test file can be passed using base names.
+        # ie: temp3.FooClass -> FooClass
+        mypytype = mypytype.replace(testfile.modulename + '.', '')
 
     if wanttype != mypytype:
         print(f'Mypy type "{mypytype}" does not match '

@@ -62,7 +62,7 @@ CLREND = '\033[0m'  # End.
 
 CMD_LOGIN = 'login'
 CMD_LOGOUT = 'logout'
-CMD_PUTASSETPACK = 'putassetpack'
+CMD_ASSETPACK = 'assetpack'
 CMD_HELP = 'help'
 
 # Note to self: keep this synced with server-side logic.
@@ -182,7 +182,7 @@ class AssetPackage:
                     f'Invalid asset type for {assetpath} in {indexfilename}')
             assettype = AssetType(assettypestr)
 
-            print('Looking at asset:', assetpath, assetdata)
+            # print('Looking at asset:', assetpath, assetdata)
             package.assets[assetpath] = Asset(package, assettype, assetpath)
 
         return package
@@ -198,10 +198,12 @@ class AssetPackage:
         def _get_asset_info(iasset: Asset) -> Tuple[Asset, Dict]:
             sha = hashlib.sha256()
             with open(iasset.filepath, 'rb') as infile:
-                sha.update(infile.read())
+                filebytes = infile.read()
+                filesize = len(filebytes)
+                sha.update(filebytes)
             if not os.path.isfile(iasset.filepath):
                 raise Exception(f'Asset file not found: "{iasset.filepath}"')
-            info_out: Dict = {'hash': sha.hexdigest()}
+            info_out: Dict = {'hash': sha.hexdigest(), 'size': filesize}
             return iasset, info_out
 
         # Use all procs to hash files for extra speedy goodness.
@@ -246,8 +248,9 @@ class App:
             self.do_login()
         elif cmd == CMD_LOGOUT:
             self.do_logout()
-        elif cmd == CMD_PUTASSETPACK:
-            self.do_putassetpack()
+        elif (cmd == CMD_ASSETPACK and len(sys.argv) > 2
+              and sys.argv[2] == 'put'):
+            self.do_assetpack_put()
         else:
             # For all other commands, simply pass them to the server verbatim.
             self.do_misc_command()
@@ -332,31 +335,37 @@ class App:
         self._state.login_token = None
         print(f'{CLRGRN}Cloudtool is now logged out.{CLREND}')
 
-    def do_putassetpack(self) -> None:
-        """Run a putassetpack command."""
+    def do_assetpack_put(self) -> None:
+        """Run an assetpackput command."""
 
-        if len(sys.argv) != 3:
+        if len(sys.argv) != 4:
             raise CleanError('Expected a path to an assetpackage directory.')
 
-        path = Path(sys.argv[2])
+        path = Path(sys.argv[3])
         package = AssetPackage.load_from_disk(path)
 
         # Send the server a manifest of everything we've got locally.
         manifest = package.get_manifest()
-        print('SENDING PACKAGE MANIFEST:', manifest)
-        response = self._servercmd('putassetpackmanifest', {'m': manifest})
+        response = self._servercmd('assetpackputmanifest', {'m': manifest})
 
-        # The server should give us an upload id and a set of files it wants.
+        # The server should give us a version and a set of files it wants.
         # Upload each of those.
         upload_files: List[str] = response.data['upload_files']
         assert isinstance(upload_files, list)
         assert all(isinstance(f, str) for f in upload_files)
-        self._putassetpack_upload(package, upload_files)
+        version = response.data['package_version']
+        assert isinstance(version, str)
+        self._assetpack_put_upload(package, version, upload_files)
 
-        print('Asset upload successful!')
+        # Lastly, send a 'finish' command - this will prompt a response
+        # with info about the completed package.
+        _response = self._servercmd('assetpackputfinish', {
+            'packageversion': version,
+        })
+        # print(f'{CLRGRN}Created asset package: {version}{CLREND}')
 
-    def _putassetpack_upload(self, package: AssetPackage,
-                             files: List[str]) -> None:
+    def _assetpack_put_upload(self, package: AssetPackage, version: str,
+                              files: List[str]) -> None:
 
         # Upload the files one at a time.
         # (we can potentially do this in parallel in the future).
@@ -374,9 +383,14 @@ class App:
                                check=True)
                 with open(gzpath, 'rb') as infile:
                     putfiles: Dict = {'file': infile}
-                    _response = self._servercmd('putassetpackupload',
-                                                {'path': asset.path},
-                                                files=putfiles)
+                    _response = self._servercmd(
+                        'assetpackputupload',
+                        {
+                            'packageversion': version,
+                            'path': asset.path
+                        },
+                        files=putfiles,
+                    )
 
     def do_misc_command(self) -> None:
         """Run a miscellaneous command."""
