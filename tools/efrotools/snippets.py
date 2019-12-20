@@ -157,10 +157,10 @@ def _spelling(words: List[str]) -> None:
 def spelling_all() -> None:
     """Add all misspellings from a pycharm run."""
 
-    print('Running "make pycharmfull"...')
+    print('Running "make pycharm-full"...')
     lines = [
         line for line in subprocess.run(
-            ['make', 'pycharmfull'], check=False,
+            ['make', 'pycharm-full'], check=False,
             capture_output=True).stdout.decode().splitlines()
         if 'Typo: In word' in line
     ]
@@ -354,7 +354,7 @@ def sync_all() -> None:
     """Runs full syncs between all efrotools projects.
 
     This list is defined in the EFROTOOLS_SYNC_PROJECTS env var.
-    This assumes that there is a 'syncfull' and 'synclist' Makefile target
+    This assumes that there is a 'sync-full' and 'sync-list' Makefile target
     under each project.
     """
     print(f'{CLRBLU}Updating formatting for all projects...{CLREND}')
@@ -374,7 +374,7 @@ def sync_all() -> None:
     if len(sys.argv) > 2 and sys.argv[2] == 'list':
         # List mode
         for project in projects_str.split(':'):
-            cmd = f'cd "{project}" && make synclist'
+            cmd = f'cd "{project}" && make sync-list'
             print(cmd)
             subprocess.run(cmd, shell=True, check=True)
 
@@ -389,7 +389,7 @@ def sync_all() -> None:
                 print(CLRBLU + "Running sync pass 2:"
                       " (ensures latest src is pulled to all dsts)" + CLREND)
             for project in projects_str.split(':'):
-                cmd = f'cd "{project}" && make syncfull'
+                cmd = f'cd "{project}" && make sync-full'
                 print(cmd)
                 subprocess.run(cmd, shell=True, check=True)
         print(CLRBLU + 'Sync-all successful!' + CLREND)

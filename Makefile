@@ -93,7 +93,7 @@ clean:
 	@git clean -dfx ${ROOT_CLEAN_IGNORES}
 
 # Show what clean would delete without actually deleting it.
-cleanlist:
+clean-list:
 	@${CHECK_CLEAN_SAFETY}
 	@git clean -dnx ${ROOT_CLEAN_IGNORES}
 
@@ -102,7 +102,7 @@ cleanlist:
   assets-windows-Win32 assets-windows-x64 \
   assets-mac assets-ios assets-android assets-clean \
  -clean-clean\
-  clean cleanlist
+  clean clean-list
 
 
 ################################################################################
@@ -213,11 +213,11 @@ update: prereqs
 	@tools/update_project
 
 # Don't update but fail if anything needs it.
-updatecheck: prereqs
+update-check: prereqs
 	@tools/update_project --check
 
 # Tell make which of these targets don't represent files.
-.PHONY: update updatecheck
+.PHONY: update update-check
 
 
 ################################################################################
@@ -228,36 +228,36 @@ updatecheck: prereqs
 
 # Run formatting on all files in the project considered 'dirty'.
 format:
-	@$(MAKE) -j3 formatcode formatscripts formatmakefile
+	@$(MAKE) -j3 format-code format-scripts format-makefile
 	@echo Formatting complete!
 
 # Same but always formats; ignores dirty state.
-formatfull:
-	@$(MAKE) -j3 formatcodefull formatscriptsfull formatmakefile
+format-full:
+	@$(MAKE) -j3 format-code-full format-scripts-full format-makefile
 	@echo Formatting complete!
 
 # Run formatting for compiled code sources (.cc, .h, etc.).
-formatcode: prereqs
+format-code: prereqs
 	@tools/snippets formatcode
 
 # Same but always formats; ignores dirty state.
-formatcodefull: prereqs
+format-code-full: prereqs
 	@tools/snippets formatcode -full
 
 # Runs formatting for scripts (.py, etc).
-formatscripts: prereqs
+format-scripts: prereqs
 	@tools/snippets formatscripts
 
 # Same but always formats; ignores dirty state.
-formatscriptsfull: prereqs
+format-scripts-full: prereqs
 	@tools/snippets formatscripts -full
 
 # Runs formatting on the project Makefile.
-formatmakefile: prereqs
+format-makefile: prereqs
 	@tools/snippets formatmakefile
 
-.PHONY: format formatfull formatcode formatcodefull formatscripts \
- formatscriptsfull
+.PHONY: format format-full format-code format-code-full format-scripts \
+ format-scripts-full
 
 
 ################################################################################
@@ -267,21 +267,23 @@ formatmakefile: prereqs
 ################################################################################
 
 # Run all project checks. (static analysis)
-check: updatecheck
+check: update-check
 	@$(MAKE) -j3 cpplint pylint mypy
 	@echo ALL CHECKS PASSED!
+
+# Same as check but no caching (all files are checked).
+check-full: update-check
+	@$(MAKE) -j3 cpplint-full pylint-full mypy-full
+	@echo ALL CHECKS PASSED!
+
 # Same as 'check' plus optional/slow extra checks.
-check2: updatecheck
+check2: update-check
 	@$(MAKE) -j4 cpplint pylint mypy pycharm
 	@echo ALL CHECKS PASSED!
 
-# Run checks with no caching (all files are checked).
-checkfull: updatecheck
-	@$(MAKE) -j3 cpplintfull pylintfull mypyfull
-	@echo ALL CHECKS PASSED!
-# Same as 'checkfull' plus optional/slow extra checks.
-check2full: updatecheck
-	@$(MAKE) -j4 cpplintfull pylintfull mypyfull pycharmfull
+# Same as check2 but no caching (all files are checked).
+check2-full: update-check
+	@$(MAKE) -j4 cpplint-full pylint-full mypy-full pycharm-full
 	@echo ALL CHECKS PASSED!
 
 # Run Cpplint checks on all C/C++ code.
@@ -289,7 +291,7 @@ cpplint: prereqs
 	@tools/snippets cpplint
 
 # Run Cpplint checks without caching (all files are checked).
-cpplintfull: prereqs
+cpplint-full: prereqs
 	@tools/snippets cpplint -full
 
 # Run Pylint checks on all Python Code.
@@ -297,7 +299,7 @@ pylint: prereqs
 	@tools/snippets pylint
 
 # Run Pylint checks without caching (all files are checked).
-pylintfull: prereqs
+pylint-full: prereqs
 	@tools/snippets pylint -full
 
 # Run Mypy checks on all Python code.
@@ -305,7 +307,7 @@ mypy: prereqs
 	@tools/snippets mypy
 
 # Run Mypy checks without caching (all files are checked).
-mypyfull: prereqs
+mypy-full: prereqs
 	@tools/snippets mypy -full
 
 # Run PyCharm checks on all Python code.
@@ -313,13 +315,13 @@ pycharm: prereqs
 	@tools/snippets pycharm
 
 # Run PyCharm checks without caching (all files are checked).
-pycharmfull: prereqs
+pycharm-full: prereqs
 	@tools/snippets pycharm -full
 
 # Tell make which of these targets don't represent files.
-.PHONY: check check2 checkfull check2full \
-  cpplint cpplintfull pylint pylintfull mypy \
-  mypyfull pycharm pycharmfull
+.PHONY: check check-full check2 check2-full \
+  cpplint cpplint-full pylint pylint-full mypy \
+  mypy-full pycharm pycharm-full
 
 
 ################################################################################
@@ -335,10 +337,10 @@ test: prereqs
 	@tools/snippets pytest -v tests
 
 # Run tests with any caching disabled.
-testfull: test
+test-full: test
 
 # Tell make which of these targets don't represent files.
-.PHONY: test testfull
+.PHONY: test test-full
 
 
 ################################################################################
@@ -353,6 +355,14 @@ preflight:
 	@$(MAKE) update
 	@$(MAKE) -j4 cpplint pylint mypy test
 	@echo PREFLIGHT SUCCESSFUL!
+
+# Same as 'preflight' without caching (all files are visited).
+preflight-full:
+	@$(MAKE) format-full
+	@$(MAKE) update
+	@$(MAKE) -j4 cpplint-full pylint-full mypy-full test-full
+	@echo PREFLIGHT SUCCESSFUL!
+
 # Same as 'preflight' plus optional/slow extra checks.
 preflight2:
 	@$(MAKE) format
@@ -360,21 +370,15 @@ preflight2:
 	@$(MAKE) -j5 cpplint pylint mypy pycharm test
 	@echo PREFLIGHT SUCCESSFUL!
 
-# Same as 'preflight' without caching (checks all files).
-preflightfull:
-	@$(MAKE) formatfull
+# Same as 'preflight2' but without caching (all files are visited).
+preflight2-full:
+	@$(MAKE) format-full
 	@$(MAKE) update
-	@$(MAKE) -j4 cpplintfull pylintfull mypyfull testfull
-	@echo PREFLIGHT SUCCESSFUL!
-# Same as 'preflightfull' plus optional/slow extra checks.
-preflight2full:
-	@$(MAKE) formatfull
-	@$(MAKE) update
-	@$(MAKE) -j5 cpplintfull pylintfull mypyfull pycharmfull testfull
+	@$(MAKE) -j5 cpplint-full pylint-full mypy-full pycharm-full test-full
 	@echo PREFLIGHT SUCCESSFUL!
 
 # Tell make which of these targets don't represent files.
-.PHONY: preflight preflight2 preflightfull preflight2full
+.PHONY: preflight preflight-full preflight2 preflight2-full
 
 
 ################################################################################
