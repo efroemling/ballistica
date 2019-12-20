@@ -204,15 +204,27 @@ build/prefab/windows/release/BallisticaCore.exe: .efrocachemap
 
 ################################################################################
 #                                                                              #
-#                            Formatting / Checking                             #
+#                                   Updating                                   #
 #                                                                              #
 ################################################################################
 
-# Note: Some of these targets have alternative flavors:
-# 'full' - clears caches/etc so all files are reprocessed even if not dirty.
-# 'fast' - takes some shortcuts for faster iteration, but may miss things
+# Update any project files that need it (does NOT build projects).
+update: prereqs
+	@tools/update_project
 
-# Format code/scripts.
+# Don't update but fail if anything needs it.
+updatecheck: prereqs
+	@tools/update_project --check
+
+# Tell make which of these targets don't represent files.
+.PHONY: update updatecheck
+
+
+################################################################################
+#                                                                              #
+#                                  Formatting                                  #
+#                                                                              #
+################################################################################
 
 # Run formatting on all files in the project considered 'dirty'.
 format:
@@ -244,10 +256,17 @@ formatscriptsfull: prereqs
 formatmakefile: prereqs
 	@tools/snippets formatmakefile
 
-# Note: the '2' varieties include extra inspections such as PyCharm.
-# These are useful, but can take significantly longer and/or be a bit flaky.
+.PHONY: format formatfull formatcode formatcodefull formatscripts \
+ formatscriptsfull
 
-# Run all project checks.
+
+################################################################################
+#                                                                              #
+#                                   Checking                                   #
+#                                                                              #
+################################################################################
+
+# Run all project checks. (static analysis)
 check: updatecheck
 	@$(MAKE) -j3 cpplint pylint mypy
 	@echo ALL CHECKS PASSED!
@@ -256,21 +275,12 @@ check2: updatecheck
 	@$(MAKE) -j4 cpplint pylint mypy pycharm
 	@echo ALL CHECKS PASSED!
 
-# Run faster checks which may occasionally miss things.
-checkfast: updatecheck
-	@$(MAKE) -j3 cpplint pylintfast mypy
-	@echo ALL CHECKS PASSED!
-# Same as 'checkfast' plus optional/slow extra checks.
-checkfast2: updatecheck
-	@$(MAKE) -j4 cpplint pylintfast mypy pycharm
-	@echo ALL CHECKS PASSED!
-
 # Run checks with no caching (all files are checked).
 checkfull: updatecheck
 	@$(MAKE) -j3 cpplintfull pylintfull mypyfull
 	@echo ALL CHECKS PASSED!
 # Same as 'checkfull' plus optional/slow extra checks.
-checkfull2: updatecheck
+check2full: updatecheck
 	@$(MAKE) -j4 cpplintfull pylintfull mypyfull pycharmfull
 	@echo ALL CHECKS PASSED!
 
@@ -290,13 +300,6 @@ pylint: prereqs
 pylintfull: prereqs
 	@tools/snippets pylint -full
 
-# Run 'Fast' pylint checks (may miss problems in some cases).
-# This uses dependency recursion limits and so can require much less
-# re-checking but may miss problems in some cases. Its not a bad idea to
-# run a non-fast check every so often or before pushing.
-pylintfast: prereqs
-	@tools/snippets pylint -fast
-
 # Run Mypy checks on all Python code.
 mypy: prereqs
 	@tools/snippets mypy
@@ -314,8 +317,7 @@ pycharmfull: prereqs
 	@tools/snippets pycharm -full
 
 # Tell make which of these targets don't represent files.
-.PHONY: format formatfull formatcode formatcodefull formatscripts \
-  formatscriptsfull check check2 checkfast checkfast2 checkfull checkfull2 \
+.PHONY: check check2 checkfull check2full \
   cpplint cpplintfull pylint pylintfull mypy \
   mypyfull pycharm pycharmfull
 
@@ -326,72 +328,53 @@ pycharmfull: prereqs
 #                                                                              #
 ################################################################################
 
-# Run all tests.
+# Run all tests. (live execution verification)
 # Note: need to disable bytecode writing so we don't cause errors due to
 # unexpected __pycache__ dirs popping up.
 test: prereqs
 	@tools/snippets pytest -v tests
 
+# Run tests with any caching disabled.
+testfull: test
+
+# Tell make which of these targets don't represent files.
+.PHONY: test testfull
+
 
 ################################################################################
 #                                                                              #
-#                           Updating / Preflighting                            #
+#                                 Preflighting                                 #
 #                                                                              #
 ################################################################################
 
-# Update any project files that need it (does NOT build projects).
-update: prereqs
-	@tools/update_project
-
-# Don't update but fail if anything needs it.
-updatecheck: prereqs
-	@tools/update_project --check
-
-# Run an update and check together; handy while iterating.
-# (slightly more efficient than running update/check separately).
-updatethencheck: update
-	@$(MAKE) -j3 cpplint pylint mypy
-	@echo ALL CHECKS PASSED!
-# Same as 'updatethencheck' plus optional/slow extra checks.
-updatethencheck2: update
-	@$(MAKE) -j4 cpplint pylint mypy pycharm
-	@echo ALL CHECKS PASSED!
-
-# 'updatethencheck' without caching (checks all files).
-updatethencheckfull: update
-	@$(MAKE) -j3 cpplintfull pylintfull mypyfull
-	@echo ALL CHECKS PASSED!
-# 'updatethencheckfull' plus optional/slow extra checks.
-updatethencheckfull2: update
-	@$(MAKE) -j4 cpplintfull pylintfull mypyfull pycharmfull
-	@echo ALL CHECKS PASSED!
-
-# Format, update, and check the project; do this before git commits.
+# Format, update, check, & test the project. Do this before commits.
 preflight:
 	@$(MAKE) format
-	@$(MAKE) updatethencheck
+	@$(MAKE) update
+	@$(MAKE) -j4 cpplint pylint mypy test
 	@echo PREFLIGHT SUCCESSFUL!
 # Same as 'preflight' plus optional/slow extra checks.
 preflight2:
 	@$(MAKE) format
-	@$(MAKE) updatethencheck2
+	@$(MAKE) update
+	@$(MAKE) -j5 cpplint pylint mypy pycharm test
 	@echo PREFLIGHT SUCCESSFUL!
 
 # Same as 'preflight' without caching (checks all files).
 preflightfull:
 	@$(MAKE) formatfull
-	@$(MAKE) updatethencheckfull
+	@$(MAKE) update
+	@$(MAKE) -j4 cpplintfull pylintfull mypyfull testfull
 	@echo PREFLIGHT SUCCESSFUL!
 # Same as 'preflightfull' plus optional/slow extra checks.
-preflightfull2:
+preflight2full:
 	@$(MAKE) formatfull
-	@$(MAKE) updatethencheckfull2
+	@$(MAKE) update
+	@$(MAKE) -j5 cpplintfull pylintfull mypyfull pycharmfull testfull
 	@echo PREFLIGHT SUCCESSFUL!
 
 # Tell make which of these targets don't represent files.
-.PHONY: update updatecheck updatethencheck updatethencheck2 \
-  updatethencheckfull updatethencheckfull2 preflight preflight2 \
-  preflightfast preflightfast2 preflightfull preflightfull2
+.PHONY: preflight preflight2 preflightfull preflight2full
 
 
 ################################################################################
