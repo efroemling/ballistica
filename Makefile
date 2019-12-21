@@ -370,7 +370,7 @@ preflight2:
 	@$(MAKE) -j5 cpplint pylint mypy pycharm test
 	@echo PREFLIGHT SUCCESSFUL!
 
-# Same as 'preflight2' but without caching (all files are visited).
+# Same as 'preflight2' but without caching (all files visited).
 preflight2-full:
 	@$(MAKE) format-full
 	@$(MAKE) update
