@@ -72,7 +72,11 @@ class EntityTest(entity.Entity):
     tval2 = entity.Field('t2', entity.DateTimeValue())
     str_int_dict = entity.DictField('sd', str, entity.IntValue())
     compoundlist = entity.CompoundListField('l', CompoundTest())
-    tdval = entity.CompoundDictField('td', str, CompoundTest())
+    compoundlist2 = entity.CompoundListField('l2', CompoundTest())
+    compoundlist3 = entity.CompoundListField('l3', CompoundTest2())
+    compounddict = entity.CompoundDictField('td', str, CompoundTest())
+    compounddict2 = entity.CompoundDictField('td2', str, CompoundTest())
+    compounddict3 = entity.CompoundDictField('td3', str, CompoundTest2())
     fval2 = entity.Field('f2', entity.Float3Value())
 
 
@@ -111,8 +115,10 @@ def test_entity_values() -> None:
 
     # Simple value dict field.
     assert 'foo' not in ent.str_int_dict
+    # Set with incorrect key type should give TypeError.
     with pytest.raises(TypeError):
         ent.str_int_dict[0] = 123  # type: ignore
+    # And set with incorrect value type should do same.
     with pytest.raises(TypeError):
         ent.str_int_dict['foo'] = 'bar'  # type: ignore
     ent.str_int_dict['foo'] = 123
@@ -123,6 +129,9 @@ def test_entity_values() -> None:
     # to have BoundDictField inherit from Mapping for mypy to accept this.
     # (which seems to get a bit ugly, but may be worth revisiting)
     # assert dict(ent.str_int_dict) == {'foo': 123}
+
+    # Passing key/value pairs as a list works though..
+    assert dict(ent.str_int_dict.items()) == {'foo': 123}
 
 
 # noinspection PyTypeHints
@@ -154,6 +163,17 @@ def test_entity_values_2() -> None:
     assert len(ent.compoundlist) == 1
     assert static_type_equals(ent.compoundlist[0], CompoundTest)
 
+    # Compound dict field.
+    cdval = ent.compounddict.add('foo')
+    assert static_type_equals(cdval, CompoundTest)
+    # Set with incorrect key type should give TypeError.
+    with pytest.raises(TypeError):
+        _cdval2 = ent.compounddict.add(1)  # type: ignore
+    # Hmm; should this throw a TypeError and not a KeyError?..
+    with pytest.raises(KeyError):
+        _cdval3 = ent.compounddict[1]  # type: ignore
+    assert static_type_equals(ent.compounddict['foo'], CompoundTest)
+
     # Enum value
     with pytest.raises(ValueError):
         ent.enumval = None  # type: ignore
@@ -171,6 +191,7 @@ def test_entity_values_2() -> None:
     assert static_type_equals(ent.grp.compoundlist[0].subval, bool)
 
 
+# noinspection PyTypeHints
 def test_field_copies() -> None:
     """Test copying various values between fields."""
     ent1 = EntityTest()
@@ -208,10 +229,43 @@ def test_field_copies() -> None:
     val.isubval = 356
     assert ent1.compoundlist[0].isubval == 356
     assert len(ent1.compoundlist) == 1
+    ent1.compoundlist.append()
+    assert len(ent1.compoundlist) == 2
     assert len(ent2.compoundlist) == 0
+    # Copying to the same field on different obj should work.
     ent2.compoundlist = ent1.compoundlist
     assert ent2.compoundlist[0].isubval == 356
-    assert len(ent2.compoundlist) == 1
+    assert len(ent2.compoundlist) == 2
+    # Cross-field assigns should work too if the field layouts match..
+    ent1.compoundlist2 = ent1.compoundlist
+    # And not if they don't...
+    # (in this case mypy errors too but that may not always be the case)
+    with pytest.raises(ValueError):
+        ent1.compoundlist3 = ent1.compoundlist  # type: ignore
+
+    # Copying a CompoundDict
+    ent1.compounddict.add('foo')
+    ent1.compounddict.add('bar')
+    assert static_type_equals(ent1.compounddict['foo'].isubval, int)
+    ent1.compounddict['foo'].isubval = 23
+    # Copying to the same field on different obj should work.
+    ent2.compounddict = ent1.compounddict
+    assert ent2.compounddict.keys() == ['foo', 'bar']
+    assert ent2.compounddict['foo'].isubval == 23
+    # Cross field assigns should work too if the field layouts match..
+    ent1.compounddict2 = ent1.compounddict
+    # ..And should fail otherwise.
+    # (mypy catches this too, but that may not always be the case if
+    # two CompoundValues have the same type but different layouts based
+    # on their __init__ args or whatnot)
+    with pytest.raises(ValueError):
+        ent1.compounddict3 = ent1.compounddict  # type: ignore
+    # Make sure invalid key types get caught when setting a full dict:
+    with pytest.raises(TypeError):
+        ent1.compounddict2 = {
+            'foo': ent1.compounddict['foo'],
+            2: ent1.compounddict['bar'],  # type: ignore
+        }
 
 
 def test_field_access_from_type() -> None:

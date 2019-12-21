@@ -30,6 +30,7 @@ from bafoundation.entity._support import (BaseField, BoundCompoundValue,
                                           BoundListField, BoundDictField,
                                           BoundCompoundListField,
                                           BoundCompoundDictField)
+from bafoundation.entity.util import have_matching_fields
 
 if TYPE_CHECKING:
     from typing import Dict, Type, List, Any
@@ -203,6 +204,7 @@ class ListField(BaseField, Generic[T]):
     # When accessed on a FieldInspector we return a sub-field FieldInspector.
     # When accessed on an instance we return a BoundListField.
 
+    # noinspection DuplicatedCode
     if TYPE_CHECKING:
 
         # Access via type gives our field; via an instance gives a bound field.
@@ -277,6 +279,7 @@ class DictField(BaseField, Generic[TK, T]):
         # change the dict, but we can prune completely if empty (and allowed)
         return not data and not self._store_default
 
+    # noinspection DuplicatedCode
     if TYPE_CHECKING:
 
         # Return our field if accessed via type and bound-dict-field
@@ -354,6 +357,7 @@ class CompoundListField(BaseField, Generic[TC]):
         # We can also optionally prune the whole list if empty and allowed.
         return not data and not self._store_default
 
+    # noinspection DuplicatedCode
     if TYPE_CHECKING:
 
         @overload
@@ -370,10 +374,10 @@ class CompoundListField(BaseField, Generic[TC]):
             ...
 
         # Note:
-        # When setting the list, we tell the type-checker that we accept
+        # When setting the list, we tell the type-checker that we also accept
         # a raw list of CompoundValue objects, but at runtime we actually
         # always deal with BoundCompoundValue objects (see note in
-        # BoundCompoundListField)
+        # BoundCompoundListField for why we accept CompoundValue objs)
         @overload
         def __set__(self, obj: Any, value: List[TC]) -> None:
             ...
@@ -392,7 +396,7 @@ class CompoundListField(BaseField, Generic[TC]):
     def set_with_data(self, data: Any, value: Any, error: bool) -> Any:
 
         # If we were passed a BoundCompoundListField,
-        # simply convert it to a list of BoundCompoundValue objects which
+        # simply convert it to a flat list of BoundCompoundValue objects which
         # is what we work with natively here.
         if isinstance(value, BoundCompoundListField):
             value = list(value)
@@ -406,10 +410,28 @@ class CompoundListField(BaseField, Generic[TC]):
         # be sure the underlying data will line up; for example two
         # CompoundListFields with different child_field values should not
         # be inter-assignable.
-        if (not all(isinstance(i, BoundCompoundValue) for i in value)
-                or not all(i.d_value is self.d_value for i in value)):
+        if not all(isinstance(i, BoundCompoundValue) for i in value):
             raise ValueError('CompoundListField assignment must be a '
-                             'list containing only its existing children.')
+                             'list containing only BoundCompoundValue objs.')
+
+        # Make sure the data all has the same CompoundValue type and
+        # compare that type against ours once to make sure its fields match.
+        # (this will not allow passing CompoundValues from multiple sources
+        # but I don't know if that would ever come up..)
+        for i, val in enumerate(value):
+            if i == 0:
+                # Do the full field comparison on the first value only..
+                if not have_matching_fields(val.d_value, self.d_value):
+                    raise ValueError(
+                        'CompoundListField assignment must be a '
+                        'list containing matching CompoundValues.')
+            else:
+                # For all remaining values, just ensure they match the first.
+                if val.d_value is not value[0].d_value:
+                    raise ValueError(
+                        'CompoundListField assignment cannot contain '
+                        'multiple CompoundValue types as sources.')
+
         data[self.d_key] = self.filter_input([i.d_data for i in value],
                                              error=error)
 
@@ -468,6 +490,7 @@ class CompoundDictField(BaseField, Generic[TK, TC]):
 
     # ONLY overriding these in type-checker land to clarify types.
     # (see note in BaseField)
+    # noinspection DuplicatedCode
     if TYPE_CHECKING:
 
         @overload
@@ -485,7 +508,21 @@ class CompoundDictField(BaseField, Generic[TK, TC]):
         def __get__(self, obj: Any, cls: Any = None) -> Any:
             ...
 
+        # Note:
+        # When setting the dict, we tell the type-checker that we also accept
+        # a raw dict of CompoundValue objects, but at runtime we actually
+        # always deal with BoundCompoundValue objects (see note in
+        # BoundCompoundDictField for why we accept CompoundValue objs)
+        @overload
         def __set__(self, obj: Any, value: Dict[TK, TC]) -> None:
+            ...
+
+        @overload
+        def __set__(self, obj: Any, value: BoundCompoundDictField[TK,
+                                                                  TC]) -> None:
+            ...
+
+        def __set__(self, obj: Any, value: Any) -> None:
             ...
 
     def get_with_data(self, data: Any) -> Any:
@@ -493,6 +530,13 @@ class CompoundDictField(BaseField, Generic[TK, TC]):
         return BoundCompoundDictField(self, data[self.d_key])
 
     def set_with_data(self, data: Any, value: Any, error: bool) -> Any:
+
+        # If we were passed a BoundCompoundDictField,
+        # simply convert it to a flat dict of BoundCompoundValue objects which
+        # is what we work with natively here.
+        if isinstance(value, BoundCompoundDictField):
+            value = dict(value.items())
+
         if not isinstance(value, dict):
             raise TypeError('CompoundDictField expected dict value on set.')
 
@@ -501,10 +545,31 @@ class CompoundDictField(BaseField, Generic[TK, TC]):
         # be sure the underlying data will line up; for example two
         # CompoundListFields with different child_field values should not
         # be inter-assignable.
-        if (not all(isinstance(i, self.d_keytype) for i in value.keys())
-                or not all(
-                    isinstance(i, BoundCompoundValue) for i in value.values())
-                or not all(i.d_value is self.d_value for i in value.values())):
+        if (not all(isinstance(i, BoundCompoundValue)
+                    for i in value.values())):
             raise ValueError('CompoundDictField assignment must be a '
-                             'dict containing only its existing children.')
-        data[self.d_key] = {key: val.d_data for key, val in value.items()}
+                             'dict containing only BoundCompoundValues.')
+
+        # Make sure the data all has the same CompoundValue type and
+        # compare that type against ours once to make sure its fields match.
+        # (this will not allow passing CompoundValues from multiple sources
+        # but I don't know if that would ever come up..)
+        first_value: Any = None
+        for i, val in enumerate(value.values()):
+            if i == 0:
+                first_value = val.d_value
+                # Do the full field comparison on the first value only..
+                if not have_matching_fields(val.d_value, self.d_value):
+                    raise ValueError(
+                        'CompoundListField assignment must be a '
+                        'list containing matching CompoundValues.')
+            else:
+                # For all remaining values, just ensure they match the first.
+                if val.d_value is not first_value:
+                    raise ValueError(
+                        'CompoundListField assignment cannot contain '
+                        'multiple CompoundValue types as sources.')
+
+        data[self.d_key] = self.filter_input(
+            {key: val.d_data
+             for key, val in value.items()}, error=error)

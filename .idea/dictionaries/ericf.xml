@@ -219,6 +219,7 @@
       <w>ccompiler</w>
       <w>cdrk</w>
       <w>cdull</w>
+      <w>cdval</w>
       <w>centeuro</w>
       <w>centiseconds</w>
       <w>cfconfig</w>
@@ -287,6 +288,7 @@
       <w>compat</w>
       <w>compileall</w>
       <w>compilelocations</w>
+      <w>compounddict</w>
       <w>compoundlist</w>
       <w>configerror</w>
       <w>confighash</w>
@@ -518,6 +520,7 @@
       <w>farthestpt</w>
       <w>fbase</w>
       <w>fclose</w>
+      <w>fcmd</w>
       <w>fcntlmodule</w>
       <w>fcode</w>
       <w>fcontents</w>
@@ -591,6 +594,7 @@
       <w>fpathrel</w>
       <w>fpathshort</w>
       <w>fprint</w>
+      <w>fproject</w>
       <w>fpsc</w>
       <w>framerate</w>
       <w>freefly</w>
