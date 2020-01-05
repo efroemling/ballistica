@@ -46,6 +46,30 @@ def utc_now() -> datetime.datetime:
     return datetime.datetime.now(datetime.timezone.utc)
 
 
+def data_size_str(bytecount: int) -> str:
+    """Given a size in bytes, returns a short human readable string.
+
+    This should be 6 or fewer chars for most all sane file sizes.
+    """
+    # pylint: disable=too-many-return-statements
+    if bytecount <= 999:
+        return f'{bytecount} B'
+    kbytecount = bytecount / 1024
+    if round(kbytecount, 1) < 10.0:
+        return f'{kbytecount:.1f} KB'
+    if round(kbytecount, 0) < 999:
+        return f'{kbytecount:.0f} KB'
+    mbytecount = bytecount / (1024 * 1024)
+    if round(mbytecount, 1) < 10.0:
+        return f'{mbytecount:.1f} MB'
+    if round(mbytecount, 0) < 999:
+        return f'{mbytecount:.0f} MB'
+    gbytecount = bytecount / (1024 * 1024 * 1024)
+    if round(gbytecount, 1) < 10.0:
+        return f'{mbytecount:.1f} GB'
+    return f'{gbytecount:.0f} GB'
+
+
 class DispatchMethodWrapper(Generic[TARG, TRET]):
     """Type-aware standin for the dispatch func returned by dispatchmethod."""
 
