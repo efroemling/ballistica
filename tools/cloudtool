@@ -107,6 +107,16 @@ class Asset:
         self.filepath = os.path.join(package.path, path + exts[assettype])
 
 
+def get_tz_offset_seconds() -> float:
+    """Return the offset between utc and local time in seconds."""
+    import time
+    import datetime
+    tval = time.time()
+    utc_offset = (datetime.datetime.fromtimestamp(tval) -
+                  datetime.datetime.utcfromtimestamp(tval)).total_seconds()
+    return utc_offset
+
+
 # Note to self: keep this synced with server-side validation func...
 def validate_asset_package_name(name: str) -> None:
     """Throw an exception on an invalid asset-package name."""
@@ -286,7 +296,8 @@ class App:
                 'c': cmd,
                 'v': VERSION,
                 't': json.dumps(self._state.login_token),
-                'd': json.dumps(data)
+                'd': json.dumps(data),
+                'z': get_tz_offset_seconds(),
             },
             files=files)
         response_raw_2.raise_for_status()  # Except if anything went wrong.
