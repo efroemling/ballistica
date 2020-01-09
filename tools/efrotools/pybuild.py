@@ -215,6 +215,20 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
                   '"')
     os.chdir(builddir)
 
+    # It seems we now need 'autopoint' as part of this build, but on mac it
+    # is not available on the normal path, but only as part of the keg-only
+    # gettext homebrew formula.
+    if (subprocess.run('which autopoint', shell=True, check=False).returncode
+            != 0):
+        print("Updating path for mac autopoint...")
+        appath = subprocess.run('brew ls gettext | grep bin/autopoint',
+                                shell=True,
+                                check=True,
+                                capture_output=True)
+        appathout = os.path.dirname(appath.stdout.decode().strip())
+        os.environ['PATH'] += (':' + appathout)
+        print(f'ADDED "{appathout}" TO SYS PATH...')
+
     # Commit from Dec 6th, 2018.  Looks like right after this one the repo
     # switched to ndk r19 beta 2 and now seems to require r19, so we can
     # try switching back to master one r19 comes down the pipe.
@@ -265,8 +279,8 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
                                      "'./configure', '--with-pydebug',")
 
     # We don't use this stuff so lets strip it out to simplify.
-    ftxt = efrotools.replace_one(ftxt, "'--with-system-ffi',", "")
-    ftxt = efrotools.replace_one(ftxt, "'--with-system-expat',", "")
+    # ftxt = efrotools.replace_one(ftxt, "'--with-system-ffi',", "")
+    # ftxt = efrotools.replace_one(ftxt, "'--with-system-expat',", "")
     ftxt = efrotools.replace_one(ftxt, "'--without-ensurepip',", "")
 
     # This builds all modules as dynamic libs, but we want to be consistent
@@ -274,11 +288,17 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     # need... so to change that we'll need to add a hook for ourself after
     # python is downloaded but before it is built so we can muck with it.
     ftxt = efrotools.replace_one(
-        ftxt, '    def prepare(self):',
-        '    def prepare(self):\n        import os\n'
+        ftxt, '    def build(self):',
+        '    def build(self):\n        import os\n'
         '        if os.system(\'"' + rootdir +
         '/tools/snippets" python_android_patch "' + os.getcwd() +
         '"\') != 0: raise Exception("patch apply failed")')
+    # ftxt = efrotools.replace_one(
+    #     ftxt, '    def prepare(self):',
+    #     '    def prepare(self):\n        import os\n'
+    #     '        if os.system(\'"' + rootdir +
+    #     '/tools/snippets" python_android_patch "' + os.getcwd() +
+    #     '"\') != 0: raise Exception("patch apply failed")')
 
     efrotools.writefile('pybuild/packages/python.py', ftxt)
 
@@ -291,10 +311,15 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
 
         # Check out a particular commit right after the clone.
         ftxt = efrotools.replace_one(
-            ftxt,
-            "'git', 'clone', '-b', self.branch, self.source_url, self.dest])",
-            "'git', 'clone', '-b', self.branch, self.source_url, self.dest])\n"
-            "        run_in_dir(['git', 'checkout', '" + commit +
+            ftxt, "'git', 'clone', '--single-branch', '-b',"
+            " self.branch, self.source_url, self.dest])",
+            "'git', 'clone', '-b',"
+            " self.branch, self.source_url, self.dest])\n"
+            "        # efro: hack to get the python we want.\n"
+            "        print('DOING URL', self.source_url)\n"
+            "        if self.source_url == "
+            "'https://github.com/python/cpython/':\n"
+            "            run_in_dir(['git', 'checkout', '" + commit +
             "'], self.source_dir)")
         efrotools.writefile('pybuild/source.py', ftxt)
     ftxt = efrotools.readfile('pybuild/util.py')

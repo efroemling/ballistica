@@ -94,6 +94,14 @@ class AssetType(Enum):
     """Types for asset files."""
     TEXTURE = 'texture'
     SOUND = 'sound'
+    DATA = 'data'
+
+
+ASSET_SOURCE_FILE_EXTS = {
+    AssetType.TEXTURE: 'png',
+    AssetType.SOUND: 'wav',
+    AssetType.DATA: 'yaml',
+}
 
 
 class Asset:
@@ -103,8 +111,8 @@ class Asset:
                  path: str) -> None:
         self.assettype = assettype
         self.path = path
-        exts = {AssetType.TEXTURE: '.png', AssetType.SOUND: '.wav'}
-        self.filepath = os.path.join(package.path, path + exts[assettype])
+        self.filepath = os.path.join(
+            package.path, path + '.' + ASSET_SOURCE_FILE_EXTS[assettype])
 
 
 def get_tz_offset_seconds() -> float:
@@ -158,6 +166,7 @@ class AssetPackage:
         self.assets: Dict[str, Asset] = {}
         self.path = Path('')
         self.name = 'untitled'
+        self.index = ''
 
     @classmethod
     def load_from_disk(cls, path: Path) -> AssetPackage:
@@ -170,14 +179,20 @@ class AssetPackage:
 
         package.path = path
         with open(Path(path, indexfilename)) as infile:
-            index = yaml.safe_load(infile)
+            package.index = infile.read()
+            index = yaml.safe_load(package.index)
         if not isinstance(index, dict):
             raise CleanError(f'Root dict not found in {indexfilename}')
+
+        # Pull our name from the index file.
+        # (NOTE: can probably just let the server do this)
         name = index.get('name')
         if not isinstance(name, str):
             raise CleanError(f'No "name" str found in {indexfilename}')
         validate_asset_package_name(name)
         package.name = name
+
+        # Build our list of Asset objs from the index.
         assets = index.get('assets')
         if not isinstance(assets, dict):
             raise CleanError(f'No "assets" dict found in {indexfilename}')
@@ -191,8 +206,6 @@ class AssetPackage:
                 raise CleanError(
                     f'Invalid asset type for {assetpath} in {indexfilename}')
             assettype = AssetType(assettypestr)
-
-            # print('Looking at asset:', assetpath, assetdata)
             package.assets[assetpath] = Asset(package, assettype, assetpath)
 
         return package
@@ -203,7 +216,7 @@ class AssetPackage:
         from concurrent.futures import ThreadPoolExecutor
         from multiprocessing import cpu_count
 
-        manifest: Dict = {'name': self.name, 'files': {}}
+        manifest: Dict = {'name': self.name, 'files': {}, 'index': self.index}
 
         def _get_asset_info(iasset: Asset) -> Tuple[Asset, Dict]:
             sha = hashlib.sha256()
@@ -213,7 +226,11 @@ class AssetPackage:
                 sha.update(filebytes)
             if not os.path.isfile(iasset.filepath):
                 raise Exception(f'Asset file not found: "{iasset.filepath}"')
-            info_out: Dict = {'hash': sha.hexdigest(), 'size': filesize}
+            info_out: Dict = {
+                'hash': sha.hexdigest(),
+                'size': filesize,
+                'ext': ASSET_SOURCE_FILE_EXTS[iasset.assettype]
+            }
             return iasset, info_out
 
         # Use all procs to hash files for extra speedy goodness.
@@ -250,8 +267,9 @@ class App:
         self._load_cache()
 
         if len(sys.argv) < 2:
-            raise CleanError(
-                f'Invalid args. Run "cloudtool help" for usage info.')
+            print(f'{CLRRED}You must provide one or more arguments.{CLREND}')
+            self.do_misc_command(['help'])
+            raise CleanError()
 
         cmd = sys.argv[1]
         if cmd == CMD_LOGIN:
@@ -263,7 +281,7 @@ class App:
             self.do_assetpack_put()
         else:
             # For all other commands, simply pass them to the server verbatim.
-            self.do_misc_command()
+            self.do_misc_command(sys.argv[1:])
 
         self._save_cache()
 
@@ -373,7 +391,6 @@ class App:
         _response = self._servercmd('assetpackputfinish', {
             'packageversion': version,
         })
-        # print(f'{CLRGRN}Created asset package: {version}{CLREND}')
 
     def _assetpack_put_upload(self, package: AssetPackage, version: str,
                               files: List[str]) -> None:
@@ -383,7 +400,7 @@ class App:
         for fnum, fname in enumerate(files):
             print(
                 f'{CLRBLU}Uploading file {fnum+1} of {len(files)}: '
-                f'"{fname}"...{CLREND}',
+                f'{fname}{CLREND}',
                 flush=True)
             with tempfile.TemporaryDirectory() as tempdir:
                 asset = package.assets[fname]
@@ -403,12 +420,12 @@ class App:
                         files=putfiles,
                     )
 
-    def do_misc_command(self) -> None:
+    def do_misc_command(self, args: List[str]) -> None:
         """Run a miscellaneous command."""
 
         # We don't do anything special with the response here; the normal
         # error-handling/message-printing is all that happens.
-        self._servercmd('misc', {'a': sys.argv[1:]})
+        self._servercmd('misc', {'a': args})
 
 
 if __name__ == '__main__':

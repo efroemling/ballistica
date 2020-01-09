@@ -58,6 +58,8 @@
       <w>apichanges</w>
       <w>apis</w>
       <w>apks</w>
+      <w>appath</w>
+      <w>appathout</w>
       <w>appcfg</w>
       <w>appconfig</w>
       <w>appdelegate</w>
@@ -109,6 +111,7 @@
       <w>autodesk</w>
       <w>autogenerate</w>
       <w>autonoassets</w>
+      <w>autopoint</w>
       <w>autoremove</w>
       <w>autoretain</w>
       <w>autoselect</w>
@@ -193,6 +196,7 @@
       <w>buttondown</w>
       <w>buttonwidget</w>
       <w>bval</w>
+      <w>bytecount</w>
       <w>byteswap</w>
       <w>cachable</w>
       <w>cachebasename</w>
@@ -647,6 +651,7 @@
       <w>gametype</w>
       <w>gametypes</w>
       <w>gameutils</w>
+      <w>gbytecount</w>
       <w>gearvr</w>
       <w>gendocs</w>
       <w>gendummymodule</w>
@@ -660,6 +665,7 @@
       <w>getconf</w>
       <w>getconfig</w>
       <w>getcurrency</w>
+      <w>getcwd</w>
       <w>getdata</w>
       <w>getlevelname</w>
       <w>getmaps</w>
@@ -832,6 +838,7 @@
       <w>jsonstrbase</w>
       <w>jsontools</w>
       <w>jsonutils</w>
+      <w>kbytecount</w>
       <w>keepaway</w>
       <w>keeprefs</w>
       <w>keylayout</w>
@@ -964,6 +971,7 @@
       <w>maxval</w>
       <w>maxw</w>
       <w>maxwidth</w>
+      <w>mbytecount</w>
       <w>mdiv</w>
       <w>mdocs</w>
       <w>mdocslines</w>
