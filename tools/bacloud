@@ -43,13 +43,13 @@ if TYPE_CHECKING:
 # if we need to change behavior server-side to go along with client changes.
 VERSION = 1
 
-TOOL_NAME = 'cloudtool'
+TOOL_NAME = 'bacloud'
 
-# Set CLOUDTOOL_LOCAL env var to 1 to test with a locally-run master-server.
+# Set BACLOUD_LOCAL env var to 1 to test with a locally-run master-server.
 MASTER_SERVER_ADDRESS = ('http://localhost:23524'
-                         if os.environ.get('CLOUDTOOL_LOCAL') == '1' else
+                         if os.environ.get('BACLOUD_LOCAL') == '1' else
                          'https://bamaster.appspot.com')
-STATE_DIR = Path('.cache/cloudtool')
+STATE_DIR = Path('.cache/bacloud')
 STATE_DATA_PATH = Path(STATE_DIR, 'state')
 
 CLRHDR = '\033[95m'  # Header.
@@ -68,7 +68,7 @@ class StateData:
 # noinspection PyUnresolvedReferences
 @dataclass
 class Response:
-    """Response sent from the cloudtool server to the client.
+    """Response sent from the bacloud server to the client.
 
     Attributes:
       message: If present, client should print this message.
@@ -220,7 +220,7 @@ class App:
         """Issue a command to the server and get a response."""
 
         response_raw_2 = requests.post(
-            (MASTER_SERVER_ADDRESS + '/cloudtoolcmd'),
+            (MASTER_SERVER_ADDRESS + '/bacloudcmd'),
             data={
                 'c': cmd,
                 'v': VERSION,
