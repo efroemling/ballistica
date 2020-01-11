@@ -49,8 +49,8 @@ TOOL_NAME = 'cloudtool'
 MASTER_SERVER_ADDRESS = ('http://localhost:23524'
                          if os.environ.get('CLOUDTOOL_LOCAL') == '1' else
                          'https://bamaster.appspot.com')
-CACHE_DIR = Path('.cache/cloudtool')
-CACHE_DATA_PATH = Path(CACHE_DIR, 'state')
+STATE_DIR = Path('.cache/cloudtool')
+STATE_DATA_PATH = Path(STATE_DIR, 'state')
 
 CLRHDR = '\033[95m'  # Header.
 CLRGRN = '\033[92m'  # Green.
@@ -129,9 +129,7 @@ class Package:
         if not path.is_dir():
             raise CleanError(f'Directory not found: "{path}"')
         package.path = path
-
         packagepathstr = str(path)
-
         paths: List[str] = []
 
         # Build the full list of package-relative paths.
@@ -200,19 +198,19 @@ class App:
         self._save_state()
 
     def _load_state(self) -> None:
-        if not os.path.exists(CACHE_DATA_PATH):
+        if not os.path.exists(STATE_DATA_PATH):
             return
         try:
-            with open(CACHE_DATA_PATH, 'r') as infile:
+            with open(STATE_DATA_PATH, 'r') as infile:
                 self._state = StateData(**json.loads(infile.read()))
         except Exception:
             print(f'{CLRRED}Error loading {TOOL_NAME} data;'
                   f' resetting to defaults.{CLREND}')
 
     def _save_state(self) -> None:
-        if not CACHE_DIR.exists():
-            CACHE_DIR.mkdir(parents=True, exist_ok=True)
-        with open(CACHE_DATA_PATH, 'w') as outfile:
+        if not STATE_DIR.exists():
+            STATE_DIR.mkdir(parents=True, exist_ok=True)
+        with open(STATE_DATA_PATH, 'w') as outfile:
             outfile.write(json.dumps(self._state.__dict__))
 
     def _servercmd(self,
