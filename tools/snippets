@@ -327,7 +327,7 @@ def gen_fulltest_buildfile_linux() -> None:
 
 
 def resize_image() -> None:
-    """Resize an image and saves it to a new location.
+    """Resize an image and save it to a new location.
 
     args: xres, yres, src, dst
     """

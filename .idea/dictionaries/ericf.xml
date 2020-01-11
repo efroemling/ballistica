@@ -207,6 +207,8 @@
       <w>calced</w>
       <w>calcing</w>
       <w>calcs</w>
+      <w>callargs</w>
+      <w>callname</w>
       <w>callnode</w>
       <w>cameraflash</w>
       <w>camerashake</w>
@@ -292,6 +294,8 @@
       <w>compat</w>
       <w>compileall</w>
       <w>compilelocations</w>
+      <w>completeargs</w>
+      <w>completecmd</w>
       <w>compounddict</w>
       <w>compoundlist</w>
       <w>configerror</w>
@@ -619,6 +623,7 @@
       <w>ftxt</w>
       <w>fullclean</w>
       <w>fullcleanlist</w>
+      <w>fullfilepath</w>
       <w>fullpath</w>
       <w>fullprice</w>
       <w>fullscreen</w>
@@ -783,6 +788,7 @@
       <w>incrementbuild</w>
       <w>indentfilter</w>
       <w>indentstr</w>
+      <w>indexfile</w>
       <w>indexfilename</w>
       <w>indicies</w>
       <w>indstr</w>
@@ -919,6 +925,7 @@
       <w>lnumend</w>
       <w>lnumorig</w>
       <w>lnums</w>
+      <w>loadpackage</w>
       <w>localconfig</w>
       <w>locationgroup</w>
       <w>locationgroups</w>
@@ -1075,6 +1082,7 @@
       <w>newdbpath</w>
       <w>newnode</w>
       <w>newpath</w>
+      <w>nextcall</w>
       <w>nextfilenum</w>
       <w>nextlevel</w>
       <w>nfoo</w>
@@ -1148,6 +1156,8 @@
       <w>packagedir</w>
       <w>packagedirs</w>
       <w>packagename</w>
+      <w>packagepath</w>
+      <w>packagepathstr</w>
       <w>packageversion</w>
       <w>painttxtattr</w>
       <w>palmos</w>
@@ -1757,6 +1767,8 @@
       <w>updatethencheck</w>
       <w>updatethencheckfast</w>
       <w>updatethencheckfull</w>
+      <w>uploadargs</w>
+      <w>uploadcmd</w>
       <w>uptime</w>
       <w>useragent</w>
       <w>useragentstring</w>
