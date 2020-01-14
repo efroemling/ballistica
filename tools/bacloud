@@ -49,8 +49,6 @@ TOOL_NAME = 'bacloud'
 MASTER_SERVER_ADDRESS = ('http://localhost:23524'
                          if os.environ.get('BACLOUD_LOCAL') == '1' else
                          'https://bamaster.appspot.com')
-STATE_DIR = Path('.cache/bacloud')
-STATE_DATA_PATH = Path(STATE_DIR, 'state')
 
 CLRHDR = '\033[95m'  # Header.
 CLRGRN = '\033[92m'  # Green.
@@ -109,7 +107,7 @@ def get_tz_offset_seconds() -> float:
 
 
 @dataclass
-class File:
+class PackageFile:
     """Represents a single file within a Package."""
     filehash: str
     filesize: int
@@ -120,7 +118,7 @@ class Package:
 
     def __init__(self) -> None:
         self.path = Path('')
-        self.files: Dict[str, File] = {}
+        self.files: Dict[str, PackageFile] = {}
 
     @classmethod
     def load_from_disk(cls, path: Path) -> Package:
@@ -143,7 +141,7 @@ class Package:
         from concurrent.futures import ThreadPoolExecutor
         from multiprocessing import cpu_count
 
-        def _get_file_info(filepath: str) -> Tuple[str, File]:
+        def _get_file_info(filepath: str) -> Tuple[str, PackageFile]:
             sha = hashlib.sha256()
             fullfilepath = os.path.join(packagepathstr, filepath)
             if not os.path.isfile(fullfilepath):
@@ -152,8 +150,8 @@ class Package:
                 filebytes = infile.read()
                 filesize = len(filebytes)
                 sha.update(filebytes)
-            return (filepath, File(filehash=sha.hexdigest(),
-                                   filesize=filesize))
+            return (filepath,
+                    PackageFile(filehash=sha.hexdigest(), filesize=filesize))
 
         # Now use all procs to hash the files efficiently.
         with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
@@ -168,49 +166,60 @@ class App:
     def __init__(self) -> None:
         self._state = StateData()
         self._package: Optional[Package] = None
+        self._project_root: Optional[Path] = None
 
     def run(self) -> None:
         """Run the tool."""
 
-        # Make reasonably sure we're being run from project root.
-        if not os.path.exists(f'tools/{TOOL_NAME}'):
-            raise CleanError(
-                'This tool must be run from ballistica project root.')
+        # Make sure we can locate the project bacloud is being run from.
+        self._project_root = Path(sys.argv[0]).parents[1]
+        if not all(
+                Path(self._project_root, name).is_dir()
+                for name in ('tools', 'config', 'tests')):
+            raise CleanError('Unable to locate project directory.')
 
         # Also run project prereqs checks so we can hopefully inform the user
         # of missing python modules/etc. instead of just failing cryptically.
         try:
-            subprocess.run(['make', '--quiet', 'prereqs'], check=True)
+            subprocess.run(['make', '--quiet', 'prereqs'],
+                           check=True,
+                           cwd=self._project_root)
         except subprocess.CalledProcessError:
             raise CleanError('"make prereqs" check failed. '
                              'Install missing requirements and try again.')
 
         self._load_state()
 
-        if len(sys.argv) < 2:
-            print(f'{CLRRED}You must provide one or more arguments.{CLREND}')
-            self.run_command(['help'])
-            raise CleanError()
-
         # Simply pass all args to the server and let it do the thing.
-        self.run_command(sys.argv[1:])
+        self.run_user_command(sys.argv[1:])
 
         self._save_state()
 
+    @property
+    def _state_dir(self) -> Path:
+        """The full path to the state dir."""
+        assert self._project_root is not None
+        return Path(self._project_root, '.cache/bacloud')
+
+    @property
+    def _state_data_path(self) -> Path:
+        """The full path to the state data file."""
+        return Path(self._state_dir, 'state')
+
     def _load_state(self) -> None:
-        if not os.path.exists(STATE_DATA_PATH):
+        if not os.path.exists(self._state_data_path):
             return
         try:
-            with open(STATE_DATA_PATH, 'r') as infile:
+            with open(self._state_data_path, 'r') as infile:
                 self._state = StateData(**json.loads(infile.read()))
         except Exception:
             print(f'{CLRRED}Error loading {TOOL_NAME} data;'
                   f' resetting to defaults.{CLREND}')
 
     def _save_state(self) -> None:
-        if not STATE_DIR.exists():
-            STATE_DIR.mkdir(parents=True, exist_ok=True)
-        with open(STATE_DATA_PATH, 'w') as outfile:
+        if not self._state_dir.exists():
+            self._state_dir.mkdir(parents=True, exist_ok=True)
+        with open(self._state_data_path, 'w') as outfile:
             outfile.write(json.dumps(self._state.__dict__))
 
     def _servercmd(self,
@@ -242,11 +251,11 @@ class App:
 
         # Handle common responses (can move these out of here at some point)
 
-        if response.error is not None:
-            raise CleanError(response.error)
-
         if response.message is not None:
             print(response.message)
+
+        if response.error is not None:
+            raise CleanError(response.error)
 
         return response
 
@@ -319,16 +328,15 @@ class App:
         # Lastly, run the 'upload complete' command we were passed.
         return completecmd, completeargs
 
-    def run_command(self, args: List[str]) -> None:
-        """Run a command to completion."""
+    def run_user_command(self, args: List[str]) -> None:
+        """Run a single user command to completion."""
 
-        nextcall: Optional[Tuple[str, Dict]] = ('toplevel', {'a': args})
+        nextcall: Optional[Tuple[str, Dict]] = ('user', {'a': args})
 
-        # Now talk to the server in a loop until they are done with us.
+        # Now talk to the server in a loop until there's nothing left to do.
         while nextcall is not None:
             response = self._servercmd(*nextcall)
             nextcall = None
-
             if response.loadpackage is not None:
                 nextcall = self._handle_loadpackage_response(response)
             if response.upload is not None:

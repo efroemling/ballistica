@@ -33,12 +33,6 @@ if TYPE_CHECKING:
 # Overall version we're using for the game currently.
 PYTHON_VERSION_MAJOR = "3.7"
 
-# Specific version we're using on apple builds.
-# PYTHON_VERSION_APPLE = "3.7.0"
-
-# Specific version we're using on android builds.
-# PYTHON_VERSION_ANDROID = "3.7.2"
-
 ENABLE_OPENSSL = True
 
 
@@ -51,7 +45,10 @@ def build_apple(arch: str, debug: bool = False) -> None:
                   'git@github.com:pybee/Python-Apple-support.git "' +
                   builddir + '"')
     os.chdir(builddir)
-    efrotools.run('git checkout 3.7')
+
+    # TEMP: Check out a particular commit while the branch head is broken.
+    # efrotools.run('git checkout 1a9c71dca298c03517e8236b81cf1d9c8c521cbf')
+    efrotools.run(f'git checkout {PYTHON_VERSION_MAJOR}')
 
     # On mac we currently have to add the _scproxy module or urllib will
     # fail.
@@ -137,9 +134,6 @@ def build_apple(arch: str, debug: bool = False) -> None:
     txt = efrotools.replace_one(
         txt, '&& PATH=$(PROJECT_DIR)/$(PYTHON_DIR-macOS)/dist/bin:$(PATH) .',
         '&& PATH="$(PROJECT_DIR)/$(PYTHON_DIR-macOS)/dist/bin:$(PATH)" .')
-    # txt = efrotools.replace_one(
-    #     txt, '&& PATH=$(PROJECT_DIR)/$(PYTHON_DIR-macOS)/dist/bin:$(PATH) m',
-    #     '&& PATH="$(PROJECT_DIR)/$(PYTHON_DIR-macOS)/dist/bin:$(PATH)" m')
 
     # Remove makefile dependencies so we don't build the
     # libs we're not using.
@@ -304,7 +298,8 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
 
     # Set this to a particular cpython commit to target exact releases from git
     # commit = 'e09359112e250268eca209355abeb17abf822486'  # 3.7.4 release
-    commit = '5c02a39a0b31a330e06b4d6f44835afb205dc7cc'  # 3.7.5 release
+    # commit = '5c02a39a0b31a330e06b4d6f44835afb205dc7cc'  # 3.7.5 release
+    commit = '43364a7ae01fbe4288ef42622259a0038ce1edcc'  # 3.7.6 release
 
     if commit is not None:
         ftxt = efrotools.readfile('pybuild/source.py')
