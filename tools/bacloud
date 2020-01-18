@@ -69,27 +69,37 @@ class Response:
     """Response sent from the bacloud server to the client.
 
     Attributes:
-      message: If present, client should print this message.
+      message: If present, client should print this message before any other
+        response processing (including error handling) occurs.
       error: If present, client should abort with this error message.
       loadpackage: If present, client should load this package from a
         location on disk (arg1) and push its manifest to a server command
         (arg2) with provided args (arg3). The manifest should be added to
-        the args as 'manifest'. arg4 is the index file name whose
+        the args as 'manifest'. arg4, if present, is the index file name whose
         contents should be included with the manifest.
-      upload: If present, client should upload the requested files (arg1)
+      uploads: If present, client should upload the requested files (arg1)
         from the loaded package to a server command (arg2) with provided
         args (arg3). Arg4 and arg5 are a server call and args which should
         be called once all file uploads finish.
       login: If present, a token that should be stored client-side and passed
         with subsequent commands.
       logout: If True, any existing client-side token should be discarded.
+      inline_downloads: If present, pathnames mapped to base64 gzipped data to
+        be written to the client. This should only be used for relatively
+        small files as they are all included inline as part of the response.
+      deletes: If present, file paths that should be deleted on the client.
+      endmessage: If present, a message that should be printed after all other
+        response processing is done.
     """
     message: Optional[str] = None
     error: Optional[str] = None
-    loadpackage: Optional[Tuple[str, str, Dict, str]] = None
-    upload: Optional[Tuple[List[str], str, Dict, str, Dict]] = None
+    loadpackage: Optional[Tuple[str, str, Dict, Optional[str]]] = None
+    uploads: Optional[Tuple[List[str], str, Dict, str, Dict]] = None
     login: Optional[str] = None
     logout: bool = False
+    inline_downloads: Optional[Dict[str, str]] = None
+    deletes: Optional[List[str]] = None
+    endmessage: Optional[str] = None
 
 
 class CleanError(Exception):
@@ -165,7 +175,7 @@ class App:
 
     def __init__(self) -> None:
         self._state = StateData()
-        self._package: Optional[Package] = None
+        # self._package: Optional[Package] = None
         self._project_root: Optional[Path] = None
 
     def run(self) -> None:
@@ -243,16 +253,16 @@ class App:
         output = json.loads(response_raw_2.content.decode())
 
         # Create a default Response and fill in only attrs we're aware of.
-        # (server may send attrs unknown to older clients)
+        # (newer server may send us attrs we're unaware of)
         response = Response()
         for key, val in output.items():
             if hasattr(response, key):
                 setattr(response, key, val)
 
-        # Handle common responses (can move these out of here at some point)
-
+        # Handle a few things inline.
+        # (so this functionality is available even to recursive commands, etc.)
         if response.message is not None:
-            print(response.message)
+            print(response.message, flush=True)
 
         if response.error is not None:
             raise CleanError(response.error)
@@ -261,9 +271,10 @@ class App:
 
     def _upload_file(self, filename: str, call: str, args: Dict) -> None:
         print(f'{CLRBLU}Uploading {filename}{CLREND}', flush=True)
-        assert self._package is not None
+        # assert self._package is not None
         with tempfile.TemporaryDirectory() as tempdir:
-            srcpath = Path(self._package.path, filename)
+            # srcpath = Path(self._package.path, filename)
+            srcpath = Path(filename)
             gzpath = Path(tempdir, 'file.gz')
             subprocess.run(f'gzip --stdout "{srcpath}" > "{gzpath}"',
                            shell=True,
@@ -284,30 +295,31 @@ class App:
         assert isinstance(packagepath, str)
         assert isinstance(callname, str)
         assert isinstance(callargs, dict)
-        assert isinstance(indexfile, str)
-        self._package = Package.load_from_disk(Path(packagepath))
+        assert indexfile is None or isinstance(indexfile, str)
+        package = Package.load_from_disk(Path(packagepath))
 
         # Make the remote call they gave us with the package
         # manifest added in.
-        with Path(self._package.path, indexfile).open() as infile:
-            index = infile.read()
+        if indexfile is not None:
+            with Path(package.path, indexfile).open() as infile:
+                index = infile.read()
+        else:
+            index = ''
         callargs['manifest'] = {
             'index': index,
-            'files': {
-                key: asdict(val)
-                for key, val in self._package.files.items()
-            }
+            'files': {key: asdict(val)
+                      for key, val in package.files.items()}
         }
         return callname, callargs
 
-    def _handle_upload_response(
-            self, response: Response) -> Optional[Tuple[str, Dict]]:
+    def _handle_uploads(self,
+                        response: Response) -> Optional[Tuple[str, Dict]]:
         from concurrent.futures import ThreadPoolExecutor
-        assert response.upload is not None
-        assert self._package is not None
-        assert len(response.upload) == 5
+        assert response.uploads is not None
+        # assert self._package is not None
+        assert len(response.uploads) == 5
         (filenames, uploadcmd, uploadargs, completecmd,
-         completeargs) = response.upload
+         completeargs) = response.uploads
         assert isinstance(filenames, list)
         assert isinstance(uploadcmd, str)
         assert isinstance(uploadargs, dict)
@@ -328,6 +340,23 @@ class App:
         # Lastly, run the 'upload complete' command we were passed.
         return completecmd, completeargs
 
+    def _handle_inline_downloads(self, response: Response) -> None:
+        """Handle inline file data to be saved to the client."""
+        import base64
+        import zlib
+        assert response.inline_downloads is not None
+        for fname, fdata in response.inline_downloads.items():
+            data_zipped = base64.b64decode(fdata)
+            data = zlib.decompress(data_zipped)
+            with open(fname, 'wb') as outfile:
+                outfile.write(data)
+
+    def _handle_deletes(self, response: Response) -> None:
+        """Handle file deletes."""
+        assert response.deletes is not None
+        for fname in response.deletes:
+            os.unlink(fname)
+
     def run_user_command(self, args: List[str]) -> None:
         """Run a single user command to completion."""
 
@@ -339,12 +368,20 @@ class App:
             nextcall = None
             if response.loadpackage is not None:
                 nextcall = self._handle_loadpackage_response(response)
-            if response.upload is not None:
-                nextcall = self._handle_upload_response(response)
+            if response.uploads is not None:
+                nextcall = self._handle_uploads(response)
             if response.login is not None:
                 self._state.login_token = response.login
             if response.logout:
                 self._state.login_token = None
+            if response.inline_downloads:
+                self._handle_inline_downloads(response)
+            if response.deletes:
+                self._handle_deletes(response)
+
+            # This should always be printed last.
+            if response.endmessage is not None:
+                print(response.endmessage, flush=True)
 
 
 if __name__ == '__main__':

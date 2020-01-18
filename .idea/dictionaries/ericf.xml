@@ -459,6 +459,7 @@
       <w>dynload</w>
       <w>eachother</w>
       <w>easteregghunt</w>
+      <w>edcc</w>
       <w>editcontroller</w>
       <w>editgame</w>
       <w>editorconfig</w>
@@ -481,6 +482,7 @@
       <w>encerr</w>
       <w>endcall</w>
       <w>endindex</w>
+      <w>endmessage</w>
       <w>endparen</w>
       <w>endtime</w>
       <w>ensurepip</w>
@@ -1171,6 +1173,7 @@
       <w>passwd</w>
       <w>patcomp</w>
       <w>pathlib</w>
+      <w>pathnames</w>
       <w>pathstonames</w>
       <w>patsubst</w>
       <w>pausable</w>
