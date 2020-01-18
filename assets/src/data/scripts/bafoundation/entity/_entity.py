@@ -138,6 +138,8 @@ class EntityMixin:
 
         This uses bafoundation.jsontools.ExtendedJSONEncoder/Decoder
         to support data types not natively storable in json.
+        Be sure to use the corresponding loading functions here for
+        this same reason.
         """
         if prune:
             data = self.pruned_data()

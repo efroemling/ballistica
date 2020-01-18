@@ -47,8 +47,8 @@ def build_apple(arch: str, debug: bool = False) -> None:
     os.chdir(builddir)
 
     # TEMP: Check out a particular commit while the branch head is broken.
-    # efrotools.run('git checkout 1a9c71dca298c03517e8236b81cf1d9c8c521cbf')
-    efrotools.run(f'git checkout {PYTHON_VERSION_MAJOR}')
+    efrotools.run('git checkout 1a9c71dca298c03517e8236b81cf1d9c8c521cbf')
+    # efrotools.run(f'git checkout {PYTHON_VERSION_MAJOR}')
 
     # On mac we currently have to add the _scproxy module or urllib will
     # fail.
@@ -267,14 +267,13 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
         "super().__init__('https://github.com/python/cpython/', branch='3.7')")
 
     # Turn ipv6 on (curious why its turned off here?...)
+    # Also, turn on low level debugging features for our debug builds.
     ftxt = efrotools.replace_one(ftxt, "'--disable-ipv6',", "'--enable-ipv6',")
     if debug:
         ftxt = efrotools.replace_one(ftxt, "'./configure',",
                                      "'./configure', '--with-pydebug',")
 
     # We don't use this stuff so lets strip it out to simplify.
-    # ftxt = efrotools.replace_one(ftxt, "'--with-system-ffi',", "")
-    # ftxt = efrotools.replace_one(ftxt, "'--with-system-expat',", "")
     ftxt = efrotools.replace_one(ftxt, "'--without-ensurepip',", "")
 
     # This builds all modules as dynamic libs, but we want to be consistent
@@ -287,18 +286,10 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
         '        if os.system(\'"' + rootdir +
         '/tools/snippets" python_android_patch "' + os.getcwd() +
         '"\') != 0: raise Exception("patch apply failed")')
-    # ftxt = efrotools.replace_one(
-    #     ftxt, '    def prepare(self):',
-    #     '    def prepare(self):\n        import os\n'
-    #     '        if os.system(\'"' + rootdir +
-    #     '/tools/snippets" python_android_patch "' + os.getcwd() +
-    #     '"\') != 0: raise Exception("patch apply failed")')
 
     efrotools.writefile('pybuild/packages/python.py', ftxt)
 
     # Set this to a particular cpython commit to target exact releases from git
-    # commit = 'e09359112e250268eca209355abeb17abf822486'  # 3.7.4 release
-    # commit = '5c02a39a0b31a330e06b4d6f44835afb205dc7cc'  # 3.7.5 release
     commit = '43364a7ae01fbe4288ef42622259a0038ce1edcc'  # 3.7.6 release
 
     if commit is not None:

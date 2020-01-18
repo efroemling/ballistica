@@ -80,6 +80,22 @@ def ignore_type_check_filter(node: nc.NodeNG) -> nc.NodeNG:
     return node
 
 
+def ignore_reveal_type_call(node: nc.NodeNG) -> nc.NodeNG:
+    """Make 'reveal_type()' not trigger an error.
+
+    The 'reveal_type()' fake call is used for type debugging types with
+    mypy and it is annoying having pylint errors pop up alongside the mypy
+    info.
+    """
+
+    # Let's just replace any reveal_type(x) call with print(x)..
+    if (isinstance(node.func, astroid.Name)
+            and node.func.name == 'reveal_type'):
+        node.func.name = 'print'
+        return node
+    return node
+
+
 def _strip_import(cnode: nc.NodeNG, mnode: nc.NodeNG) -> None:
     if isinstance(cnode, (astroid.Import, astroid.ImportFrom)):
         for name, val in list(mnode.locals.items()):
@@ -193,6 +209,8 @@ def register_plugins(manager: astroid.Manager) -> None:
     # That stuff only gets run for mypy, and in general we want to
     # check code as if it doesn't exist at all.
     manager.register_transform(astroid.If, ignore_type_check_filter)
+
+    manager.register_transform(astroid.Call, ignore_reveal_type_call)
 
     # Annotations on variables within a function are defer-eval'ed
     # in some cases, so lets replace them with simple strings in those
