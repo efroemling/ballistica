@@ -81,6 +81,7 @@
       <w>argval</w>
       <w>armeabi</w>
       <w>arraymodule</w>
+      <w>asdict</w>
       <w>assertnode</w>
       <w>assetbundle</w>
       <w>assetcache</w>
@@ -392,6 +393,7 @@
       <w>dilateerode</w>
       <w>dingsound</w>
       <w>dingsoundhigh</w>
+      <w>dirmanifest</w>
       <w>dirname</w>
       <w>dirnames</w>
       <w>dirpath</w>
@@ -481,6 +483,7 @@
       <w>ename</w>
       <w>encerr</w>
       <w>endcall</w>
+      <w>endcommand</w>
       <w>endindex</w>
       <w>endmessage</w>
       <w>endparen</w>
@@ -543,6 +546,7 @@
       <w>feedparser</w>
       <w>ffap</w>
       <w>fhash</w>
+      <w>fhashes</w>
       <w>fhdr</w>
       <w>fieldattr</w>
       <w>fieldtypes</w>
@@ -666,6 +670,7 @@
       <w>gendummymodule</w>
       <w>genericpath</w>
       <w>genmapjson</w>
+      <w>genstartercache</w>
       <w>genutils</w>
       <w>getactivity</w>
       <w>getclass</w>
@@ -962,6 +967,7 @@
       <w>mailcap</w>
       <w>mainmenu</w>
       <w>makedeps</w>
+      <w>makedirs</w>
       <w>makesetup</w>
       <w>malformatted</w>
       <w>mallimportedby</w>

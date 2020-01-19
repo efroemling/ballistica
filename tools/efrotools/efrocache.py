@@ -33,7 +33,7 @@ import subprocess
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import List, Dict, Tuple
+    from typing import List, Dict, Tuple, Set
 
 CLRHDR = '\033[95m'  # Header.
 CLRGRN = '\033[92m'  # Green.
@@ -165,9 +165,11 @@ def update_cache(makefile_dirs: List[str]) -> None:
     cpus = multiprocessing.cpu_count()
     fnames1: List[str] = []
     fnames2: List[str] = []
+    fhashes1: Set[str] = set()
     for path in makefile_dirs:
-        # First, make sure all cache files are built.
         cdp = f'cd {path} && ' if path else ''
+
+        # First, make sure all cache files are built.
         mfpath = os.path.join(path, 'Makefile')
         print(f'Building cache targets for {mfpath}...')
         subprocess.run(f'{cdp}make -j{cpus} efrocache-build',
@@ -208,10 +210,14 @@ def update_cache(makefile_dirs: List[str]) -> None:
     print(f"Starter cache includes {len(fnames1)} items;"
           f" excludes {len(fnames2)}")
 
-    # Push what we just wrote to the staging server
+    # Sync all individual cache files to the staging server.
     print('Pushing cache to staging...', flush=True)
     run('rsync --progress --recursive build/efrocache/'
         ' ubuntu@ballistica.net:files.ballistica.net/cache/ba1/')
+
+    # Now generate the starter cache on the server..
+    run('ssh -oBatchMode=yes -oStrictHostKeyChecking=yes ubuntu@ballistica.net'
+        ' "cd files.ballistica.net/cache/ba1 && python3 genstartercache.py"')
 
     print(f'Cache update successful!')
 
@@ -244,9 +250,10 @@ def _write_cache_file(staging_dir: str, fname: str) -> Tuple[str, str]:
 
 def _write_cache_files(fnames1: List[str], fnames2: List[str],
                        staging_dir: str, mapping_file: str) -> None:
+    # pylint: disable=too-many-locals
+    fhashes1: Set[str] = set()
     from multiprocessing import cpu_count
     from concurrent.futures import ThreadPoolExecutor
-    from efrotools import run
     import functools
     import json
     mapping: Dict[str, str] = {}
@@ -257,22 +264,35 @@ def _write_cache_files(fnames1: List[str], fnames2: List[str],
         results = executor.map(call, fnames1)
     for result in results:
         mapping[result[0]] = BASE_URL + result[1]
+        fhashes1.add(result[1])
 
-    # FIXME - we could save significant bandwidth by assembling the
-    # starter cache on the server instead of locally and then uploading it.
-    # (we have to sync all its comprising files to the server anyway)
+    # We want the server to have a startercache.tar.xz file which contains
+    # this entire first set. It is much more efficient to build that file
+    # on the server than it is to build it here and upload the whole thing.
+    # ...so let's simply write a script to generate it and upload that.
 
-    # Once we've written our first set, create
-    # a starter-cache file from everything we wrote.
-    # This consists of some subset of the cache dir we just filled out.
-    # Clients initing their cache dirs can grab this as a starting point
-    # which should greatly reduce the individual file downloads they have
-    # to do (at least when first building).
-    # Note: The 'COPYFILE_DISABLE' prevents mac tar from adding
-    # file attributes/resource-forks to the archive as as ._filename.
-    print('Writing starter-cache...')
-    run('cd build && COPYFILE_DISABLE=1 tar -Jcf startercache.tar.xz efrocache'
-        ' && mv startercache.tar.xz efrocache')
+    # yapf: disable
+    script = (
+        'import os\n'
+        'import subprocess\n'
+        'fnames = ' + repr(fhashes1) + '\n'
+        'subprocess.run(["rm", "-rf", "efrocache"], check=True)\n'
+        'print("Copying starter cache files...", flush=True)\n'
+        'for fname in fnames:\n'
+        '    dst = os.path.join("efrocache", fname)\n'
+        '    os.makedirs(os.path.dirname(dst), exist_ok=True)\n'
+        '    subprocess.run(["cp", fname, dst], check=True)\n'
+        'print("Compressing starter cache archive...", flush=True)\n'
+        'subprocess.run(["tar", "-Jcf", "tmp.tar.xz", "efrocache"],'
+        ' check=True)\n'
+        'subprocess.run(["mv", "tmp.tar.xz", "startercache.tar.xz"],'
+        ' check=True)\n'
+        'subprocess.run(["rm", "-rf", "efrocache", "genstartercache.py"])\n'
+        'print("Starter cache generation complete!", flush=True)\n')
+    # yapf: enable
+
+    with open('build/efrocache/genstartercache.py', 'w') as outfile:
+        outfile.write(script)
 
     # Now finish up with the second set.
     with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
