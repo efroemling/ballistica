@@ -397,6 +397,7 @@
       <w>dirname</w>
       <w>dirnames</w>
       <w>dirpath</w>
+      <w>dirpruneempty</w>
       <w>dirtybit</w>
       <w>dirtyfiles</w>
       <w>disllowed</w>
@@ -1282,6 +1283,7 @@
       <w>projroot</w>
       <w>projs</w>
       <w>promocode</w>
+      <w>prunedir</w>
       <w>prval</w>
       <w>pstats</w>
       <w>pstr</w>

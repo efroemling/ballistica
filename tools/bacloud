@@ -329,7 +329,9 @@ class App:
         import base64
         import zlib
         for fname, fdata in downloads_inline.items():
-            os.makedirs(os.path.dirname(fname), exist_ok=True)
+            dirname = os.path.dirname(fname)
+            if dirname:
+                os.makedirs(dirname, exist_ok=True)
             data_zipped = base64.b64decode(fdata)
             data = zlib.decompress(data_zipped)
             with open(fname, 'wb') as outfile:
