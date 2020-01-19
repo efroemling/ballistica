@@ -86,6 +86,8 @@ class Response:
         be written to the client. This should only be used for relatively
         small files as they are all included inline as part of the response.
       deletes: If present, file paths that should be deleted on the client.
+      dirpruneempty: If present, all empty dirs under this one should be
+        removed.
       endmessage: If present, a message that should be printed after all other
         response processing is done.
       endcommand: If present, this command is run with these args at the end
@@ -100,6 +102,7 @@ class Response:
     uploads_inline: Optional[List[str]] = None
     downloads_inline: Optional[Dict[str, str]] = None
     deletes: Optional[List[str]] = None
+    dirpruneempty: Optional[str] = None
     endmessage: Optional[str] = None
     endcommand: Optional[Tuple[str, Dict]] = None
 
@@ -119,41 +122,44 @@ def get_tz_offset_seconds() -> float:
 
 
 @dataclass
-class PackageFile:
-    """Represents a single file within a Package."""
+class DirManifestFile:
+    """Represents a single file within a DirManifest."""
     filehash: str
     filesize: int
 
 
-class Package:
+class DirManifest:
     """Represents a directory of files with some common purpose."""
 
     def __init__(self) -> None:
         self.path = Path('')
-        self.files: Dict[str, PackageFile] = {}
+        self.files: Dict[str, DirManifestFile] = {}
 
     @classmethod
-    def load_from_disk(cls, path: Path) -> Package:
+    def load_from_disk(cls, path: Path) -> DirManifest:
         """Create a package populated from a directory on disk."""
-        package = Package()
-        if not path.is_dir():
-            raise CleanError(f'Directory not found: "{path}"')
+        package = DirManifest()
+
         package.path = path
         packagepathstr = str(path)
         paths: List[str] = []
 
-        # Build the full list of package-relative paths.
-        for basename, _dirnames, filenames in os.walk(path):
-            for filename in filenames:
-                fullname = os.path.join(basename, filename)
-                assert fullname.startswith(packagepathstr)
-                paths.append(fullname[len(packagepathstr) + 1:])
+        # Simply return empty manifests if the given path isn't a dir.
+        # (the server may intend to create it and is just asking what's
+        # there already)
+        if path.is_dir():
+            # Build the full list of package-relative paths.
+            for basename, _dirnames, filenames in os.walk(path):
+                for filename in filenames:
+                    fullname = os.path.join(basename, filename)
+                    assert fullname.startswith(packagepathstr)
+                    paths.append(fullname[len(packagepathstr) + 1:])
 
         import hashlib
         from concurrent.futures import ThreadPoolExecutor
         from multiprocessing import cpu_count
 
-        def _get_file_info(filepath: str) -> Tuple[str, PackageFile]:
+        def _get_file_info(filepath: str) -> Tuple[str, DirManifestFile]:
             sha = hashlib.sha256()
             fullfilepath = os.path.join(packagepathstr, filepath)
             if not os.path.isfile(fullfilepath):
@@ -163,7 +169,8 @@ class Package:
                 filesize = len(filebytes)
                 sha.update(filebytes)
             return (filepath,
-                    PackageFile(filehash=sha.hexdigest(), filesize=filesize))
+                    DirManifestFile(filehash=sha.hexdigest(),
+                                    filesize=filesize))
 
         # Now use all procs to hash the files efficiently.
         with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
@@ -287,48 +294,23 @@ class App:
                     files=putfiles,
                 )
 
-    def _handle_dirmanifest_response(self, response: Response) -> None:
+    def _handle_dirmanifest_response(self, dirmanifest: str) -> None:
         from dataclasses import asdict
-        assert response.dirmanifest is not None
-        # assert len(response.dirmanifest) == 2
-        # (packagepath, indexfile) = response.dirmanifest
-        assert isinstance(response.dirmanifest, str)
-        # assert isinstance(callname, str)
-        # assert isinstance(callargs, dict)
-        # assert indexfile is None or isinstance(indexfile, str)
-        package = Package.load_from_disk(Path(response.dirmanifest))
-
-        # Make the remote call they gave us with the package
-        # manifest added in.
-        # if indexfile is not None:
-        #     with Path(package.path, indexfile).open() as infile:
-        #         index = infile.read()
-        # else:
-        #     index = ''
-        # callargs['manifest'] = {
-        #     'index': index,
-        #     'files': {key: asdict(val)
-        #               for key, val in package.files.items()}
-        # }
+        manifest = DirManifest.load_from_disk(Path(dirmanifest))
 
         # Store the manifest to be included with our next called command.
         self._end_command_args['manifest'] = {
             'files': {key: asdict(val)
-                      for key, val in package.files.items()}
+                      for key, val in manifest.files.items()}
         }
-        # return callname, callargs
 
-    def _handle_uploads(self, response: Response) -> None:
+    def _handle_uploads(self, uploads: Tuple[List[str], str, Dict]) -> None:
         from concurrent.futures import ThreadPoolExecutor
-        assert response.uploads is not None
-        assert len(response.uploads) == 3
-        filenames, uploadcmd, uploadargs = response.uploads
+        assert len(uploads) == 3
+        filenames, uploadcmd, uploadargs = uploads
         assert isinstance(filenames, list)
         assert isinstance(uploadcmd, str)
         assert isinstance(uploadargs, dict)
-
-        # assert isinstance(completecmd, str)
-        # assert isinstance(completeargs, dict)
 
         def _do_filename(filename: str) -> None:
             self._upload_file(filename, uploadcmd, uploadargs)
@@ -341,33 +323,29 @@ class App:
             # exceptions that occurred.
             list(executor.map(_do_filename, filenames))
 
-        # Lastly, run the 'upload complete' command we were passed.
-        # return completecmd, completeargs
-
-    def _handle_downloads_inline(self, response: Response) -> None:
+    def _handle_downloads_inline(self, downloads_inline: Dict[str,
+                                                              str]) -> None:
         """Handle inline file data to be saved to the client."""
         import base64
         import zlib
-        assert response.downloads_inline is not None
-        for fname, fdata in response.downloads_inline.items():
+        for fname, fdata in downloads_inline.items():
+            os.makedirs(os.path.dirname(fname), exist_ok=True)
             data_zipped = base64.b64decode(fdata)
             data = zlib.decompress(data_zipped)
             with open(fname, 'wb') as outfile:
                 outfile.write(data)
 
-    def _handle_deletes(self, response: Response) -> None:
+    def _handle_deletes(self, deletes: List[str]) -> None:
         """Handle file deletes."""
-        assert response.deletes is not None
-        for fname in response.deletes:
+        for fname in deletes:
             os.unlink(fname)
 
-    def _handle_uploads_inline(self, response: Response) -> None:
+    def _handle_uploads_inline(self, uploads_inline: List[str]) -> None:
         """Handle uploading files inline."""
         import base64
         import zlib
-        assert response.uploads_inline is not None
         files: Dict[str, str] = {}
-        for filepath in response.uploads_inline:
+        for filepath in uploads_inline:
             if not os.path.exists(filepath):
                 raise CleanError(f'File not found: {filepath}')
             with open(filepath, 'rb') as infile:
@@ -376,6 +354,20 @@ class App:
             data_base64 = base64.b64encode(data_zipped).decode()
             files[filepath] = data_base64
         self._end_command_args['uploads_inline'] = files
+
+    def _handle_dirpruneempty(self, prunedir: str) -> None:
+        """Handle pruning empty directories."""
+        # Walk the tree bottom-up so we can properly kill recursive empty dirs.
+        for basename, dirnames, filenames in os.walk(prunedir, topdown=False):
+            # It seems that child dirs we kill during the walk are still
+            # listed when the parent dir is visited, so lets make sure
+            # to only acknowledge still-existing ones.
+            dirnames = [
+                d for d in dirnames
+                if os.path.exists(os.path.join(basename, d))
+            ]
+            if not dirnames and not filenames and basename != prunedir:
+                os.rmdir(basename)
 
     def run_user_command(self, args: List[str]) -> None:
         """Run a single user command to completion."""
@@ -392,15 +384,17 @@ class App:
             if response.logout:
                 self._state.login_token = None
             if response.dirmanifest is not None:
-                self._handle_dirmanifest_response(response)
+                self._handle_dirmanifest_response(response.dirmanifest)
             if response.uploads_inline is not None:
-                self._handle_uploads_inline(response)
+                self._handle_uploads_inline(response.uploads_inline)
             if response.uploads is not None:
-                self._handle_uploads(response)
+                self._handle_uploads(response.uploads)
             if response.downloads_inline:
-                self._handle_downloads_inline(response)
+                self._handle_downloads_inline(response.downloads_inline)
             if response.deletes:
-                self._handle_deletes(response)
+                self._handle_deletes(response.deletes)
+            if response.dirpruneempty:
+                self._handle_dirpruneempty(response.dirpruneempty)
             if response.endmessage is not None:
                 print(response.endmessage, flush=True)
             if response.endcommand is not None:

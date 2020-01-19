@@ -47,8 +47,8 @@ def build_apple(arch: str, debug: bool = False) -> None:
     os.chdir(builddir)
 
     # TEMP: Check out a particular commit while the branch head is broken.
-    efrotools.run('git checkout 1a9c71dca298c03517e8236b81cf1d9c8c521cbf')
-    # efrotools.run(f'git checkout {PYTHON_VERSION_MAJOR}')
+    # efrotools.run('git checkout 1a9c71dca298c03517e8236b81cf1d9c8c521cbf')
+    efrotools.run(f'git checkout {PYTHON_VERSION_MAJOR}')
 
     # On mac we currently have to add the _scproxy module or urllib will
     # fail.
