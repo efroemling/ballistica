@@ -21,7 +21,6 @@
 """Utility snippets applying to generic Python code."""
 from __future__ import annotations
 
-import copy
 import types
 import weakref
 from typing import TYPE_CHECKING, TypeVar
@@ -261,21 +260,3 @@ class WeakMethod:
 
     def __str__(self) -> str:
         return '<ba.WeakMethod object; call=' + str(self._func) + '>'
-
-
-def make_hash(obj: Any) -> int:
-    """Makes a hash from a dictionary, list, tuple or set to any level,
-    that contains only other hashable types (including any lists, tuples,
-    sets, and dictionaries).
-    """
-
-    if isinstance(obj, (set, tuple, list)):
-        return hash(tuple([make_hash(e) for e in obj]))
-    if not isinstance(obj, dict):
-        return hash(obj)
-
-    new_obj = copy.deepcopy(obj)
-    for k, v in new_obj.items():
-        new_obj[k] = make_hash(v)
-
-    return hash(tuple(frozenset(sorted(new_obj.items()))))

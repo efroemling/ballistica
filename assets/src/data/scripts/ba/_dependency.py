@@ -26,7 +26,6 @@ import weakref
 from typing import (Generic, TypeVar, TYPE_CHECKING)
 
 import _ba
-from ba import _general
 
 if TYPE_CHECKING:
     from typing import Optional, Any, Dict, List, Set, Type
@@ -63,8 +62,9 @@ class Dependency(Generic[T]):
 
     def get_hash(self) -> int:
         """Return the dependency's hash, calculating it if necessary."""
+        from bafoundation.util import make_hash
         if self._hash is None:
-            self._hash = _general.make_hash((self.cls, self.config))
+            self._hash = make_hash((self.cls, self.config))
         return self._hash
 
     def __get__(self, obj: Any, cls: Any = None) -> T:

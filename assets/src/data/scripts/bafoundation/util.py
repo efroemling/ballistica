@@ -279,3 +279,25 @@ class ValueDispatcher1Arg(Generic[TVAL, TARG, TRET]):
         """Add a handler to the dispatcher."""
         from functools import partial
         return partial(self._add_handler, value)
+
+
+def make_hash(obj: Any) -> int:
+    """Makes a hash from a dictionary, list, tuple or set to any level,
+    that contains only other hashable types (including any lists, tuples,
+    sets, and dictionaries).
+
+    Note that this uses Python's hash() function internally so collisions/etc.
+    may be more common than with fancy cryptographic hashes.
+    """
+    import copy
+
+    if isinstance(obj, (set, tuple, list)):
+        return hash(tuple([make_hash(e) for e in obj]))
+    if not isinstance(obj, dict):
+        return hash(obj)
+
+    new_obj = copy.deepcopy(obj)
+    for k, v in new_obj.items():
+        new_obj[k] = make_hash(v)
+
+    return hash(tuple(frozenset(sorted(new_obj.items()))))

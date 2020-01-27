@@ -95,6 +95,7 @@
       <w>assetpath</w>
       <w>assettype</w>
       <w>assettypestr</w>
+      <w>astc</w>
       <w>astcenc</w>
       <w>astroid</w>
       <w>asus</w>
@@ -553,6 +554,7 @@
       <w>fieldtypes</w>
       <w>filebytes</w>
       <w>filecmp</w>
+      <w>fileext</w>
       <w>filehash</w>
       <w>fileinfo</w>
       <w>fileinput</w>

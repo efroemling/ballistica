@@ -148,6 +148,7 @@ SCRIPT_TARGETS_PY_1 = \
   build/data/scripts/bafoundation/dataclassutils.py \
   build/data/scripts/bafoundation/util.py \
   build/data/scripts/bafoundation/__init__.py \
+  build/data/scripts/bafoundation/assets.py \
   build/data/scripts/bafoundation/jsonutils.py \
   build/data/scripts/bafoundation/err.py \
   build/data/scripts/bafoundation/entity/_base.py \
@@ -383,6 +384,7 @@ SCRIPT_TARGETS_PYC_1 = \
   build/data/scripts/bafoundation/__pycache__/dataclassutils.cpython-37.opt-1.pyc \
   build/data/scripts/bafoundation/__pycache__/util.cpython-37.opt-1.pyc \
   build/data/scripts/bafoundation/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/data/scripts/bafoundation/__pycache__/assets.cpython-37.opt-1.pyc \
   build/data/scripts/bafoundation/__pycache__/jsonutils.cpython-37.opt-1.pyc \
   build/data/scripts/bafoundation/__pycache__/err.cpython-37.opt-1.pyc \
   build/data/scripts/bafoundation/entity/__pycache__/_base.cpython-37.opt-1.pyc \
@@ -651,6 +653,11 @@ build/data/scripts/bafoundation/__pycache__/util.cpython-37.opt-1.pyc: \
 
 build/data/scripts/bafoundation/__pycache__/__init__.cpython-37.opt-1.pyc: \
       build/data/scripts/bafoundation/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/data/scripts/bafoundation/__pycache__/assets.cpython-37.opt-1.pyc: \
+      build/data/scripts/bafoundation/assets.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 

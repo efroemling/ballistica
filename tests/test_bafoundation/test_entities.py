@@ -297,6 +297,37 @@ def test_entity_mixin() -> None:
     assert ent.isubval2 == 3453
 
 
+def test_entity_embedding() -> None:
+    """Making sure compound entities work as expected."""
+
+    class EmbCompoundValTest(entity.CompoundValue):
+        """Testing..."""
+        isubval = entity.Field('i', entity.IntValue(default=12345))
+
+    class EmbCompoundTest(entity.Entity):
+        """Testing..."""
+        isubval = entity.Field('i', entity.IntValue(default=12345))
+        sub = entity.CompoundField('sub', EmbCompoundValTest())
+
+    # This should be ok...
+    _ent = EmbCompoundTest()
+
+    class EmbCompoundValTest2(entity.Entity):
+        """Testing..."""
+        isubval = entity.Field('i', entity.IntValue(default=12345))
+
+    with pytest.raises(AssertionError):
+
+        # This should not be ok
+        # (can only embed CompoundValues, not complete Entities)
+        class EmbCompoundTest2(entity.Entity):
+            """Testing..."""
+            isubval = entity.Field('i', entity.IntValue(default=12345))
+            sub = entity.CompoundField('sub', EmbCompoundValTest2())
+
+        _ent2 = EmbCompoundTest2()
+
+
 def test_key_uniqueness() -> None:
     """Make sure entities reject multiple fields with the same key."""
 
