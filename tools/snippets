@@ -671,7 +671,8 @@ def update_docs_md() -> None:
     exts = ['.cc', '.c', '.h', '.py']
     for basedir in [
             'src/ballistica/python',
-            'assets/src/data/scripts/bafoundation',
+            'assets/src/data/scripts/efro',
+            'assets/src/data/scripts/bacommon',
             'assets/src/data/scripts/ba',
     ]:
         assert os.path.isdir(basedir)

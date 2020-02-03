@@ -29,8 +29,8 @@ from collections import abc
 from enum import Enum
 from typing import TYPE_CHECKING, TypeVar, Tuple, Optional, Generic
 
-from bafoundation.entity._base import DataHandler, BaseField
-from bafoundation.entity.util import compound_eq
+from efro.entity._base import DataHandler, BaseField
+from efro.entity.util import compound_eq
 
 if TYPE_CHECKING:
     from typing import Optional, Set, List, Dict, Any, Type

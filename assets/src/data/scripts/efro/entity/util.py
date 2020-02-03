@@ -26,8 +26,8 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from typing import Any, Union, Tuple, List
-    from bafoundation.entity._value import CompoundValue
-    from bafoundation.entity._support import BoundCompoundValue
+    from efro.entity._value import CompoundValue
+    from efro.entity._support import BoundCompoundValue
 
 
 def diff_compound_values(
@@ -73,7 +73,7 @@ class CompoundValueDiff:
 
 def _diff(obj1: Union[BoundCompoundValue, CompoundValue],
           obj2: Union[BoundCompoundValue, CompoundValue], indent: int) -> str:
-    from bafoundation.entity._support import BoundCompoundValue
+    from efro.entity._support import BoundCompoundValue
     bits: List[str] = []
     indentstr = ' ' * indent
     vobj1, _data1 = get_compound_value_and_data(obj1)
@@ -113,8 +113,8 @@ def get_compound_value_and_data(
 ) -> Tuple[CompoundValue, Any]:
     """Return value and data for bound or unbound compound values."""
     # pylint: disable=cyclic-import
-    from bafoundation.entity._support import BoundCompoundValue
-    from bafoundation.entity._value import CompoundValue
+    from efro.entity._support import BoundCompoundValue
+    from efro.entity._value import CompoundValue
     if isinstance(obj, BoundCompoundValue):
         value = obj.d_value
         data = obj.d_data

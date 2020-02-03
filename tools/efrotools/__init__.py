@@ -18,7 +18,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # -----------------------------------------------------------------------------
-"""EfroTools: Various build related functionality for use in my projects."""
+"""Build/tool functionality shared between all efro projects.
+
+This stuff can be a bit more sloppy/loosey-goosey since it is not used in
+live client or server code.
+"""
 
 from __future__ import annotations
 

@@ -45,6 +45,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Optional, Tuple, List, Dict, Set
 
+# Minimal legal notice line required in our private files.
+# (Though public ones also start with this line too)
 LEGAL_NOTICE_PRIVATE = 'Copyright (c) 2011-2019 Eric Froemling'
 
 CLRHDR = '\033[95m'  # Header.
@@ -442,7 +444,7 @@ class App:
 
         # Check our packages and make sure all subdirs contain and __init__.py
         # (I tend to forget this sometimes)
-        packagedirs = ['tools/efrotools']
+        packagedirs = ['tools/efrotools', 'tools/efro']
 
         # (Assume all dirs under these dirs are packages)
         dirs_of_packages = ['assets/src/data/scripts', 'tests']

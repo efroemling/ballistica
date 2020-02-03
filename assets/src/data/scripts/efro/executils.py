@@ -69,9 +69,10 @@ class CallbackSet(Generic[CT]):
 # similarly to functools.partial (in that they take a callable and some
 # positional arguments to be passed to it)
 
-# We define several different _CallXArg classes corresponding to different
-# argument counts and define Call() as an overloaded function which returns
-# one of them based on how many args are passed.
+# In type-checking land, We define several different _CallXArg classes
+# corresponding to different argument counts and define Call() as an
+# overloaded function which returns one of them based on how many args are
+# passed.
 
 # To use this, simply assign your call type to this Call for type checking:
 # example:

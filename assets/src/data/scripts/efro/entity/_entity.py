@@ -25,9 +25,9 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING, TypeVar
 
-from bafoundation.entity._support import FieldInspector, BoundCompoundValue
-from bafoundation.entity._value import CompoundValue
-from bafoundation.jsonutils import ExtendedJSONEncoder, ExtendedJSONDecoder
+from efro.entity._support import FieldInspector, BoundCompoundValue
+from efro.entity._value import CompoundValue
+from efro.jsonutils import ExtendedJSONEncoder, ExtendedJSONDecoder
 
 if TYPE_CHECKING:
     from typing import Dict, Any, Type, Union
@@ -79,7 +79,7 @@ class EntityMixin:
         compound field, the assignment operator can be used.
         """
         import copy
-        from bafoundation.entity.util import have_matching_fields
+        from efro.entity.util import have_matching_fields
         tvalue: CompoundValue
         if isinstance(target, CompoundValue):
             tvalue = target
@@ -108,7 +108,7 @@ class EntityMixin:
         with the result of a database transaction (which generally return
         fresh entities).
         """
-        from bafoundation.entity.util import have_matching_fields
+        from efro.entity.util import have_matching_fields
         if not isinstance(target, EntityMixin):
             raise TypeError('EntityMixin is required.')
         assert isinstance(target, CompoundValue)
@@ -136,7 +136,7 @@ class EntityMixin:
     def to_json_str(self, prune: bool = True, pretty: bool = False) -> str:
         """Convert the entity to a json string.
 
-        This uses bafoundation.jsontools.ExtendedJSONEncoder/Decoder
+        This uses efro.jsontools.ExtendedJSONEncoder/Decoder
         to support data types not natively storable in json.
         Be sure to use the corresponding loading functions here for
         this same reason.

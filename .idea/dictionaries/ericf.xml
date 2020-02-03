@@ -125,6 +125,7 @@
       <w>backgrounding</w>
       <w>bacloud</w>
       <w>bacloudcmd</w>
+      <w>bacommon</w>
       <w>badguy</w>
       <w>bafoundation</w>
       <w>ballistica</w>
@@ -325,6 +326,7 @@
       <w>coords</w>
       <w>copyreg</w>
       <w>copyrightline</w>
+      <w>copyrule</w>
       <w>cornerpin</w>
       <w>coroutines</w>
       <w>countdownsounds</w>
@@ -342,6 +344,7 @@
       <w>csum</w>
       <w>ctest</w>
       <w>ctex</w>
+      <w>ctuple</w>
       <w>ctype</w>
       <w>curdir</w>
       <w>curhash</w>
@@ -718,6 +721,7 @@
       <w>goles</w>
       <w>goodlist</w>
       <w>googlevr</w>
+      <w>goosey</w>
       <w>gotresponse</w>
       <w>gpio</w>
       <w>gprev</w>
@@ -950,6 +954,7 @@
       <w>logitech</w>
       <w>logput</w>
       <w>loofa</w>
+      <w>loosey</w>
       <w>losecount</w>
       <w>lpos</w>
       <w>lprop</w>

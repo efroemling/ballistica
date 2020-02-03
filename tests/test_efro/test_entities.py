@@ -27,7 +27,7 @@ from enum import Enum, unique
 
 import pytest
 
-from bafoundation import entity
+from efro import entity
 from efrotools.statictest import static_type_equals
 
 if TYPE_CHECKING:
@@ -277,7 +277,7 @@ def test_field_access_from_type() -> None:
     # instead of values.
     assert static_type_equals(ent.ival, int)
     assert isinstance(ent.ival, int)
-    mypytype = 'bafoundation.entity._field.Field[builtins.int*]'
+    mypytype = 'efro.entity._field.Field[builtins.int*]'
     assert static_type_equals(type(ent).ival, mypytype)
     assert isinstance(type(ent).ival, entity.Field)
 

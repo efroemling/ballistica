@@ -26,15 +26,15 @@ import copy
 import logging
 from typing import TYPE_CHECKING, Generic, TypeVar, overload
 
-from bafoundation.entity._support import (BaseField, BoundCompoundValue,
-                                          BoundListField, BoundDictField,
-                                          BoundCompoundListField,
-                                          BoundCompoundDictField)
-from bafoundation.entity.util import have_matching_fields
+from efro.entity._support import (BaseField, BoundCompoundValue,
+                                  BoundListField, BoundDictField,
+                                  BoundCompoundListField,
+                                  BoundCompoundDictField)
+from efro.entity.util import have_matching_fields
 
 if TYPE_CHECKING:
     from typing import Dict, Type, List, Any
-    from bafoundation.entity._value import TypedValue, CompoundValue
+    from efro.entity._value import TypedValue, CompoundValue
 
 T = TypeVar('T')
 TK = TypeVar('TK')
@@ -97,7 +97,7 @@ class CompoundField(BaseField, Generic[TC]):
                  store_default: bool = True) -> None:
         super().__init__(d_key)
         if __debug__ is True:
-            from bafoundation.entity._value import CompoundValue
+            from efro.entity._value import CompoundValue
             assert isinstance(value, CompoundValue)
             assert not hasattr(value, 'd_data')
         self.d_value = value
@@ -138,7 +138,7 @@ class CompoundField(BaseField, Generic[TC]):
         return BoundCompoundValue(self.d_value, data[self.d_key])
 
     def set_with_data(self, data: Any, value: Any, error: bool) -> Any:
-        from bafoundation.entity._value import CompoundValue
+        from efro.entity._value import CompoundValue
 
         # Ok here's the deal: our type checking above allows any subtype
         # of our CompoundValue in here, but we want to be more picky than

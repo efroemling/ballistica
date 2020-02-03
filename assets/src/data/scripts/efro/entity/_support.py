@@ -24,14 +24,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeVar, Generic, overload
 
-from bafoundation.entity._base import BaseField
+from efro.entity._base import BaseField
 
 if TYPE_CHECKING:
     from typing import (Optional, Tuple, Type, Any, Dict, List, Union)
-    from bafoundation.entity._value import CompoundValue
-    from bafoundation.entity._field import (ListField, DictField,
-                                            CompoundListField,
-                                            CompoundDictField)
+    from efro.entity._value import CompoundValue
+    from efro.entity._field import (ListField, DictField, CompoundListField,
+                                    CompoundDictField)
 
 T = TypeVar('T')
 TKey = TypeVar('TKey')
@@ -56,7 +55,7 @@ class BoundCompoundValue:
 
     def __eq__(self, other: Any) -> Any:
         # Allow comparing to compound and bound-compound objects.
-        from bafoundation.entity.util import compound_eq
+        from efro.entity.util import compound_eq
         return compound_eq(self, other)
 
     def __getattr__(self, name: str, default: Any = None) -> Any:
@@ -119,7 +118,7 @@ class FieldInspector:
 
     def __getattr__(self, name: str, default: Any = None) -> Any:
         # pylint: disable=cyclic-import
-        from bafoundation.entity._field import CompoundField
+        from efro.entity._field import CompoundField
 
         # If this attribute corresponds to a field on our obj's
         # unbound type, return a new inspector for it.
@@ -296,7 +295,7 @@ class BoundCompoundListField(Generic[TCompound]):
         self._i = 0
 
     def __eq__(self, other: Any) -> Any:
-        from bafoundation.entity.util import have_matching_fields
+        from efro.entity.util import have_matching_fields
 
         # We can only be compared to other bound-compound-fields
         if not isinstance(other, BoundCompoundListField):
@@ -383,7 +382,7 @@ class BoundCompoundDictField(Generic[TKey, TCompound]):
         self.d_data = d_data
 
     def __eq__(self, other: Any) -> Any:
-        from bafoundation.entity.util import have_matching_fields
+        from efro.entity.util import have_matching_fields
 
         # We can only be compared to other bound-compound-fields
         if not isinstance(other, BoundCompoundDictField):

@@ -62,7 +62,7 @@ class Dependency(Generic[T]):
 
     def get_hash(self) -> int:
         """Return the dependency's hash, calculating it if necessary."""
-        from bafoundation.util import make_hash
+        from efro.util import make_hash
         if self._hash is None:
             self._hash = make_hash((self.cls, self.config))
         return self._hash

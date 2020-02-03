@@ -29,7 +29,7 @@ import _ba
 
 if TYPE_CHECKING:
     from typing import Any, Type
-    from bafoundation import executils
+    from efro import executils
 
 T = TypeVar('T')
 

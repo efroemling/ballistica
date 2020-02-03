@@ -144,20 +144,20 @@ ASSET_TARGETS_WIN_X64 += $(EXTRAS_TARGETS_WIN_X64)
 SCRIPT_TARGETS_PY_1 = \
   build/server/server.py \
   build/server/config.py \
-  build/data/scripts/bafoundation/executils.py \
-  build/data/scripts/bafoundation/dataclassutils.py \
-  build/data/scripts/bafoundation/util.py \
-  build/data/scripts/bafoundation/__init__.py \
-  build/data/scripts/bafoundation/assets.py \
-  build/data/scripts/bafoundation/jsonutils.py \
-  build/data/scripts/bafoundation/err.py \
-  build/data/scripts/bafoundation/entity/_base.py \
-  build/data/scripts/bafoundation/entity/_support.py \
-  build/data/scripts/bafoundation/entity/util.py \
-  build/data/scripts/bafoundation/entity/_entity.py \
-  build/data/scripts/bafoundation/entity/_field.py \
-  build/data/scripts/bafoundation/entity/__init__.py \
-  build/data/scripts/bafoundation/entity/_value.py \
+  build/data/scripts/efro/executils.py \
+  build/data/scripts/efro/util.py \
+  build/data/scripts/efro/__init__.py \
+  build/data/scripts/efro/jsonutils.py \
+  build/data/scripts/efro/entity/_base.py \
+  build/data/scripts/efro/entity/_support.py \
+  build/data/scripts/efro/entity/util.py \
+  build/data/scripts/efro/entity/_entity.py \
+  build/data/scripts/efro/entity/_field.py \
+  build/data/scripts/efro/entity/__init__.py \
+  build/data/scripts/efro/entity/_value.py \
+  build/data/scripts/bacommon/__init__.py \
+  build/data/scripts/bacommon/assets.py \
+  build/data/scripts/bacommon/err.py \
   build/data/scripts/ba/_gameactivity.py \
   build/data/scripts/ba/_apputils.py \
   build/data/scripts/ba/_coopsession.py \
@@ -380,20 +380,20 @@ SCRIPT_TARGETS_PY_1 = \
 SCRIPT_TARGETS_PYC_1 = \
   build/server/__pycache__/server.cpython-37.opt-1.pyc \
   build/server/__pycache__/config.cpython-37.opt-1.pyc \
-  build/data/scripts/bafoundation/__pycache__/executils.cpython-37.opt-1.pyc \
-  build/data/scripts/bafoundation/__pycache__/dataclassutils.cpython-37.opt-1.pyc \
-  build/data/scripts/bafoundation/__pycache__/util.cpython-37.opt-1.pyc \
-  build/data/scripts/bafoundation/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/scripts/bafoundation/__pycache__/assets.cpython-37.opt-1.pyc \
-  build/data/scripts/bafoundation/__pycache__/jsonutils.cpython-37.opt-1.pyc \
-  build/data/scripts/bafoundation/__pycache__/err.cpython-37.opt-1.pyc \
-  build/data/scripts/bafoundation/entity/__pycache__/_base.cpython-37.opt-1.pyc \
-  build/data/scripts/bafoundation/entity/__pycache__/_support.cpython-37.opt-1.pyc \
-  build/data/scripts/bafoundation/entity/__pycache__/util.cpython-37.opt-1.pyc \
-  build/data/scripts/bafoundation/entity/__pycache__/_entity.cpython-37.opt-1.pyc \
-  build/data/scripts/bafoundation/entity/__pycache__/_field.cpython-37.opt-1.pyc \
-  build/data/scripts/bafoundation/entity/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/scripts/bafoundation/entity/__pycache__/_value.cpython-37.opt-1.pyc \
+  build/data/scripts/efro/__pycache__/executils.cpython-37.opt-1.pyc \
+  build/data/scripts/efro/__pycache__/util.cpython-37.opt-1.pyc \
+  build/data/scripts/efro/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/data/scripts/efro/__pycache__/jsonutils.cpython-37.opt-1.pyc \
+  build/data/scripts/efro/entity/__pycache__/_base.cpython-37.opt-1.pyc \
+  build/data/scripts/efro/entity/__pycache__/_support.cpython-37.opt-1.pyc \
+  build/data/scripts/efro/entity/__pycache__/util.cpython-37.opt-1.pyc \
+  build/data/scripts/efro/entity/__pycache__/_entity.cpython-37.opt-1.pyc \
+  build/data/scripts/efro/entity/__pycache__/_field.cpython-37.opt-1.pyc \
+  build/data/scripts/efro/entity/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/data/scripts/efro/entity/__pycache__/_value.cpython-37.opt-1.pyc \
+  build/data/scripts/bacommon/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/data/scripts/bacommon/__pycache__/assets.cpython-37.opt-1.pyc \
+  build/data/scripts/bacommon/__pycache__/err.cpython-37.opt-1.pyc \
   build/data/scripts/ba/__pycache__/_gameactivity.cpython-37.opt-1.pyc \
   build/data/scripts/ba/__pycache__/_apputils.cpython-37.opt-1.pyc \
   build/data/scripts/ba/__pycache__/_coopsession.cpython-37.opt-1.pyc \
@@ -624,7 +624,7 @@ $(SCRIPT_TARGETS_PY_1) : build/%.py : src/%.py
 
 # Looks like path mangling from py to pyc is too complex for pattern rules so
 # just generating explicit targets for each. Could perhaps look into using a
-# fancy for-loop instead.
+# fancy for-loop instead, but perhaps listing these explicitly isn't so bad.
 
 build/server/__pycache__/server.cpython-37.opt-1.pyc: \
       build/server/server.py
@@ -636,73 +636,73 @@ build/server/__pycache__/config.cpython-37.opt-1.pyc: \
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bafoundation/__pycache__/executils.cpython-37.opt-1.pyc: \
-      build/data/scripts/bafoundation/executils.py
+build/data/scripts/efro/__pycache__/executils.cpython-37.opt-1.pyc: \
+      build/data/scripts/efro/executils.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bafoundation/__pycache__/dataclassutils.cpython-37.opt-1.pyc: \
-      build/data/scripts/bafoundation/dataclassutils.py
+build/data/scripts/efro/__pycache__/util.cpython-37.opt-1.pyc: \
+      build/data/scripts/efro/util.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bafoundation/__pycache__/util.cpython-37.opt-1.pyc: \
-      build/data/scripts/bafoundation/util.py
+build/data/scripts/efro/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/data/scripts/efro/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bafoundation/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/scripts/bafoundation/__init__.py
+build/data/scripts/efro/__pycache__/jsonutils.cpython-37.opt-1.pyc: \
+      build/data/scripts/efro/jsonutils.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bafoundation/__pycache__/assets.cpython-37.opt-1.pyc: \
-      build/data/scripts/bafoundation/assets.py
+build/data/scripts/efro/entity/__pycache__/_base.cpython-37.opt-1.pyc: \
+      build/data/scripts/efro/entity/_base.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bafoundation/__pycache__/jsonutils.cpython-37.opt-1.pyc: \
-      build/data/scripts/bafoundation/jsonutils.py
+build/data/scripts/efro/entity/__pycache__/_support.cpython-37.opt-1.pyc: \
+      build/data/scripts/efro/entity/_support.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bafoundation/__pycache__/err.cpython-37.opt-1.pyc: \
-      build/data/scripts/bafoundation/err.py
+build/data/scripts/efro/entity/__pycache__/util.cpython-37.opt-1.pyc: \
+      build/data/scripts/efro/entity/util.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bafoundation/entity/__pycache__/_base.cpython-37.opt-1.pyc: \
-      build/data/scripts/bafoundation/entity/_base.py
+build/data/scripts/efro/entity/__pycache__/_entity.cpython-37.opt-1.pyc: \
+      build/data/scripts/efro/entity/_entity.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bafoundation/entity/__pycache__/_support.cpython-37.opt-1.pyc: \
-      build/data/scripts/bafoundation/entity/_support.py
+build/data/scripts/efro/entity/__pycache__/_field.cpython-37.opt-1.pyc: \
+      build/data/scripts/efro/entity/_field.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bafoundation/entity/__pycache__/util.cpython-37.opt-1.pyc: \
-      build/data/scripts/bafoundation/entity/util.py
+build/data/scripts/efro/entity/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/data/scripts/efro/entity/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bafoundation/entity/__pycache__/_entity.cpython-37.opt-1.pyc: \
-      build/data/scripts/bafoundation/entity/_entity.py
+build/data/scripts/efro/entity/__pycache__/_value.cpython-37.opt-1.pyc: \
+      build/data/scripts/efro/entity/_value.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bafoundation/entity/__pycache__/_field.cpython-37.opt-1.pyc: \
-      build/data/scripts/bafoundation/entity/_field.py
+build/data/scripts/bacommon/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/data/scripts/bacommon/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bafoundation/entity/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/scripts/bafoundation/entity/__init__.py
+build/data/scripts/bacommon/__pycache__/assets.cpython-37.opt-1.pyc: \
+      build/data/scripts/bacommon/assets.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bafoundation/entity/__pycache__/_value.cpython-37.opt-1.pyc: \
-      build/data/scripts/bafoundation/entity/_value.py
+build/data/scripts/bacommon/__pycache__/err.cpython-37.opt-1.pyc: \
+      build/data/scripts/bacommon/err.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
@@ -2665,7 +2665,7 @@ $(SCRIPT_TARGETS_PY_2_APPLE) : ../.efrocachemap
 
 # Looks like path mangling from py to pyc is too complex for pattern rules so
 # just generating explicit targets for each. Could perhaps look into using a
-# fancy for-loop instead.
+# fancy for-loop instead, but perhaps listing these explicitly isn't so bad.
 
 build/pylib-apple/__pycache__/zipfile.cpython-37.opt-1.pyc: \
       build/pylib-apple/zipfile.py
@@ -5668,7 +5668,7 @@ $(SCRIPT_TARGETS_PY_2_ANDROID) : ../.efrocachemap
 
 # Looks like path mangling from py to pyc is too complex for pattern rules so
 # just generating explicit targets for each. Could perhaps look into using a
-# fancy for-loop instead.
+# fancy for-loop instead, but perhaps listing these explicitly isn't so bad.
 
 build/pylib-android/__pycache__/zipfile.cpython-37.opt-1.pyc: \
       build/pylib-android/zipfile.py
@@ -7819,7 +7819,7 @@ $(SCRIPT_TARGETS_PY_2_COMMON) : ../.efrocachemap
 
 # Looks like path mangling from py to pyc is too complex for pattern rules so
 # just generating explicit targets for each. Could perhaps look into using a
-# fancy for-loop instead.
+# fancy for-loop instead, but perhaps listing these explicitly isn't so bad.
 
 build/pylib-site-packages/__pycache__/typing_extensions.cpython-37.opt-1.pyc: \
       build/pylib-site-packages/typing_extensions.py
@@ -9174,7 +9174,7 @@ $(SCRIPT_TARGETS_PY_2_WIN_WIN32) : ../.efrocachemap
 
 # Looks like path mangling from py to pyc is too complex for pattern rules so
 # just generating explicit targets for each. Could perhaps look into using a
-# fancy for-loop instead.
+# fancy for-loop instead, but perhaps listing these explicitly isn't so bad.
 
 build/windows/Win32/Lib/__pycache__/zipfile.cpython-37.opt-1.pyc: \
       build/windows/Win32/Lib/zipfile.py
@@ -13864,7 +13864,7 @@ $(SCRIPT_TARGETS_PY_2_WIN_X64) : ../.efrocachemap
 
 # Looks like path mangling from py to pyc is too complex for pattern rules so
 # just generating explicit targets for each. Could perhaps look into using a
-# fancy for-loop instead.
+# fancy for-loop instead, but perhaps listing these explicitly isn't so bad.
 
 build/windows/x64/Lib/__pycache__/zipfile.cpython-37.opt-1.pyc: \
       build/windows/x64/Lib/zipfile.py

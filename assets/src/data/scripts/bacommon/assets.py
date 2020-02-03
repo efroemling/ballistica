@@ -25,7 +25,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from enum import Enum
 
-from bafoundation import entity
+from efro import entity
 
 if TYPE_CHECKING:
     pass
