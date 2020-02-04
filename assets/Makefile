@@ -144,474 +144,474 @@ ASSET_TARGETS_WIN_X64 += $(EXTRAS_TARGETS_WIN_X64)
 SCRIPT_TARGETS_PY_1 = \
   build/server/server.py \
   build/server/config.py \
-  build/data/scripts/efro/executils.py \
-  build/data/scripts/efro/util.py \
-  build/data/scripts/efro/__init__.py \
-  build/data/scripts/efro/jsonutils.py \
-  build/data/scripts/efro/entity/_base.py \
-  build/data/scripts/efro/entity/_support.py \
-  build/data/scripts/efro/entity/util.py \
-  build/data/scripts/efro/entity/_entity.py \
-  build/data/scripts/efro/entity/_field.py \
-  build/data/scripts/efro/entity/__init__.py \
-  build/data/scripts/efro/entity/_value.py \
-  build/data/scripts/bacommon/__init__.py \
-  build/data/scripts/bacommon/assets.py \
-  build/data/scripts/bacommon/err.py \
-  build/data/scripts/ba/_gameactivity.py \
-  build/data/scripts/ba/_apputils.py \
-  build/data/scripts/ba/_coopsession.py \
-  build/data/scripts/ba/_appdelegate.py \
-  build/data/scripts/ba/internal.py \
-  build/data/scripts/ba/_coopgame.py \
-  build/data/scripts/ba/_meta.py \
-  build/data/scripts/ba/_math.py \
-  build/data/scripts/ba/_appconfig.py \
-  build/data/scripts/ba/_gameresults.py \
-  build/data/scripts/ba/_profile.py \
-  build/data/scripts/ba/_error.py \
-  build/data/scripts/ba/_achievement.py \
-  build/data/scripts/ba/_map.py \
-  build/data/scripts/ba/_teambasesession.py \
-  build/data/scripts/ba/_gameutils.py \
-  build/data/scripts/ba/_activity.py \
-  build/data/scripts/ba/deprecated.py \
-  build/data/scripts/ba/_modutils.py \
-  build/data/scripts/ba/_tips.py \
-  build/data/scripts/ba/_store.py \
-  build/data/scripts/ba/_activitytypes.py \
-  build/data/scripts/ba/__init__.py \
-  build/data/scripts/ba/_session.py \
-  build/data/scripts/ba/_hooks.py \
-  build/data/scripts/ba/_enums.py \
-  build/data/scripts/ba/_netutils.py \
-  build/data/scripts/ba/_app.py \
-  build/data/scripts/ba/_benchmark.py \
-  build/data/scripts/ba/_tournament.py \
-  build/data/scripts/ba/_messages.py \
-  build/data/scripts/ba/_teamssession.py \
-  build/data/scripts/ba/_freeforallsession.py \
-  build/data/scripts/ba/_playlist.py \
-  build/data/scripts/ba/_team.py \
-  build/data/scripts/ba/_actor.py \
-  build/data/scripts/ba/_powerup.py \
-  build/data/scripts/ba/_campaign.py \
-  build/data/scripts/ba/_lobby.py \
-  build/data/scripts/ba/_stats.py \
-  build/data/scripts/ba/_input.py \
-  build/data/scripts/ba/_level.py \
-  build/data/scripts/ba/_dependency.py \
-  build/data/scripts/ba/_general.py \
-  build/data/scripts/ba/_server.py \
-  build/data/scripts/ba/_account.py \
-  build/data/scripts/ba/_music.py \
-  build/data/scripts/ba/_lang.py \
-  build/data/scripts/ba/_teamgame.py \
-  build/data/scripts/ba/ui/__init__.py \
-  build/data/scripts/bastd/mainmenu.py \
-  build/data/scripts/bastd/maps.py \
-  build/data/scripts/bastd/appdelegate.py \
-  build/data/scripts/bastd/tutorial.py \
-  build/data/scripts/bastd/__init__.py \
-  build/data/scripts/bastd/stdmap.py \
-  build/data/scripts/bastd/ui/playoptions.py \
-  build/data/scripts/bastd/ui/mainmenu.py \
-  build/data/scripts/bastd/ui/getremote.py \
-  build/data/scripts/bastd/ui/tournamententry.py \
-  build/data/scripts/bastd/ui/telnet.py \
-  build/data/scripts/bastd/ui/appinvite.py \
-  build/data/scripts/bastd/ui/gather.py \
-  build/data/scripts/bastd/ui/config.py \
-  build/data/scripts/bastd/ui/colorpicker.py \
-  build/data/scripts/bastd/ui/tabs.py \
-  build/data/scripts/bastd/ui/promocode.py \
-  build/data/scripts/bastd/ui/fileselector.py \
-  build/data/scripts/bastd/ui/feedback.py \
-  build/data/scripts/bastd/ui/teamnamescolors.py \
-  build/data/scripts/bastd/ui/configerror.py \
-  build/data/scripts/bastd/ui/serverdialog.py \
-  build/data/scripts/bastd/ui/getcurrency.py \
-  build/data/scripts/bastd/ui/__init__.py \
-  build/data/scripts/bastd/ui/specialoffer.py \
-  build/data/scripts/bastd/ui/helpui.py \
-  build/data/scripts/bastd/ui/purchase.py \
-  build/data/scripts/bastd/ui/continues.py \
-  build/data/scripts/bastd/ui/play.py \
-  build/data/scripts/bastd/ui/popup.py \
-  build/data/scripts/bastd/ui/onscreenkeyboard.py \
-  build/data/scripts/bastd/ui/kiosk.py \
-  build/data/scripts/bastd/ui/qrcode.py \
-  build/data/scripts/bastd/ui/trophies.py \
-  build/data/scripts/bastd/ui/partyqueue.py \
-  build/data/scripts/bastd/ui/url.py \
-  build/data/scripts/bastd/ui/debug.py \
-  build/data/scripts/bastd/ui/iconpicker.py \
-  build/data/scripts/bastd/ui/watch.py \
-  build/data/scripts/bastd/ui/achievements.py \
-  build/data/scripts/bastd/ui/radiogroup.py \
-  build/data/scripts/bastd/ui/creditslist.py \
-  build/data/scripts/bastd/ui/tournamentscores.py \
-  build/data/scripts/bastd/ui/characterpicker.py \
-  build/data/scripts/bastd/ui/report.py \
-  build/data/scripts/bastd/ui/resourcetypeinfo.py \
-  build/data/scripts/bastd/ui/confirm.py \
-  build/data/scripts/bastd/ui/party.py \
-  build/data/scripts/bastd/ui/settings/graphics.py \
-  build/data/scripts/bastd/ui/settings/advanced.py \
-  build/data/scripts/bastd/ui/settings/controls.py \
-  build/data/scripts/bastd/ui/settings/gamepadadvanced.py \
-  build/data/scripts/bastd/ui/settings/gamepadselect.py \
-  build/data/scripts/bastd/ui/settings/touchscreen.py \
-  build/data/scripts/bastd/ui/settings/__init__.py \
-  build/data/scripts/bastd/ui/settings/xbox360controller.py \
-  build/data/scripts/bastd/ui/settings/audio.py \
-  build/data/scripts/bastd/ui/settings/gamepad.py \
-  build/data/scripts/bastd/ui/settings/nettesting.py \
-  build/data/scripts/bastd/ui/settings/remoteapp.py \
-  build/data/scripts/bastd/ui/settings/testing.py \
-  build/data/scripts/bastd/ui/settings/wiimote.py \
-  build/data/scripts/bastd/ui/settings/vrtesting.py \
-  build/data/scripts/bastd/ui/settings/allsettings.py \
-  build/data/scripts/bastd/ui/settings/ps3controller.py \
-  build/data/scripts/bastd/ui/settings/keyboard.py \
-  build/data/scripts/bastd/ui/playlist/customizebrowser.py \
-  build/data/scripts/bastd/ui/playlist/__init__.py \
-  build/data/scripts/bastd/ui/playlist/edit.py \
-  build/data/scripts/bastd/ui/playlist/browser.py \
-  build/data/scripts/bastd/ui/playlist/mapselect.py \
-  build/data/scripts/bastd/ui/playlist/share.py \
-  build/data/scripts/bastd/ui/playlist/editgame.py \
-  build/data/scripts/bastd/ui/playlist/editcontroller.py \
-  build/data/scripts/bastd/ui/playlist/addgame.py \
-  build/data/scripts/bastd/ui/soundtrack/entrytypeselect.py \
-  build/data/scripts/bastd/ui/soundtrack/itunes.py \
-  build/data/scripts/bastd/ui/soundtrack/__init__.py \
-  build/data/scripts/bastd/ui/soundtrack/edit.py \
-  build/data/scripts/bastd/ui/soundtrack/browser.py \
-  build/data/scripts/bastd/ui/league/__init__.py \
-  build/data/scripts/bastd/ui/league/rankbutton.py \
-  build/data/scripts/bastd/ui/league/rankwindow.py \
-  build/data/scripts/bastd/ui/coop/gamebutton.py \
-  build/data/scripts/bastd/ui/coop/__init__.py \
-  build/data/scripts/bastd/ui/coop/browser.py \
-  build/data/scripts/bastd/ui/coop/level.py \
-  build/data/scripts/bastd/ui/profile/__init__.py \
-  build/data/scripts/bastd/ui/profile/edit.py \
-  build/data/scripts/bastd/ui/profile/upgrade.py \
-  build/data/scripts/bastd/ui/profile/browser.py \
-  build/data/scripts/bastd/ui/account/link.py \
-  build/data/scripts/bastd/ui/account/viewer.py \
-  build/data/scripts/bastd/ui/account/__init__.py \
-  build/data/scripts/bastd/ui/account/unlink.py \
-  build/data/scripts/bastd/ui/account/settings.py \
-  build/data/scripts/bastd/ui/store/__init__.py \
-  build/data/scripts/bastd/ui/store/browser.py \
-  build/data/scripts/bastd/ui/store/button.py \
-  build/data/scripts/bastd/ui/store/item.py \
-  build/data/scripts/bastd/activity/freeforallendscreen.py \
-  build/data/scripts/bastd/activity/__init__.py \
-  build/data/scripts/bastd/activity/coopscorescreen.py \
-  build/data/scripts/bastd/activity/dualteamscorescreen.py \
-  build/data/scripts/bastd/activity/coopjoinscreen.py \
-  build/data/scripts/bastd/activity/multiteamendscreen.py \
-  build/data/scripts/bastd/activity/teamsscorescreen.py \
-  build/data/scripts/bastd/activity/multiteamjoinscreen.py \
-  build/data/scripts/bastd/activity/drawscreen.py \
-  build/data/scripts/bastd/game/capturetheflag.py \
-  build/data/scripts/bastd/game/targetpractice.py \
-  build/data/scripts/bastd/game/ninjafight.py \
-  build/data/scripts/bastd/game/easteregghunt.py \
-  build/data/scripts/bastd/game/race.py \
-  build/data/scripts/bastd/game/meteorshower.py \
-  build/data/scripts/bastd/game/thelaststand.py \
-  build/data/scripts/bastd/game/__init__.py \
-  build/data/scripts/bastd/game/football.py \
-  build/data/scripts/bastd/game/kingofthehill.py \
-  build/data/scripts/bastd/game/assault.py \
-  build/data/scripts/bastd/game/keepaway.py \
-  build/data/scripts/bastd/game/elimination.py \
-  build/data/scripts/bastd/game/deathmatch.py \
-  build/data/scripts/bastd/game/onslaught.py \
-  build/data/scripts/bastd/game/hockey.py \
-  build/data/scripts/bastd/game/chosenone.py \
-  build/data/scripts/bastd/game/conquest.py \
-  build/data/scripts/bastd/game/runaround.py \
-  build/data/scripts/bastd/mapdata/bridgit.py \
-  build/data/scripts/bastd/mapdata/big_g.py \
-  build/data/scripts/bastd/mapdata/hockey_stadium.py \
-  build/data/scripts/bastd/mapdata/courtyard.py \
-  build/data/scripts/bastd/mapdata/tower_d.py \
-  build/data/scripts/bastd/mapdata/__init__.py \
-  build/data/scripts/bastd/mapdata/roundabout.py \
-  build/data/scripts/bastd/mapdata/rampage.py \
-  build/data/scripts/bastd/mapdata/crag_castle.py \
-  build/data/scripts/bastd/mapdata/step_right_up.py \
-  build/data/scripts/bastd/mapdata/football_stadium.py \
-  build/data/scripts/bastd/mapdata/the_pad.py \
-  build/data/scripts/bastd/mapdata/happy_thoughts.py \
-  build/data/scripts/bastd/mapdata/monkey_face.py \
-  build/data/scripts/bastd/mapdata/doom_shroom.py \
-  build/data/scripts/bastd/mapdata/zig_zag.py \
-  build/data/scripts/bastd/mapdata/lake_frigid.py \
-  build/data/scripts/bastd/mapdata/tip_top.py \
-  build/data/scripts/bastd/actor/spazfactory.py \
-  build/data/scripts/bastd/actor/bomb.py \
-  build/data/scripts/bastd/actor/spazbot.py \
-  build/data/scripts/bastd/actor/flag.py \
-  build/data/scripts/bastd/actor/scoreboard.py \
-  build/data/scripts/bastd/actor/popuptext.py \
-  build/data/scripts/bastd/actor/background.py \
-  build/data/scripts/bastd/actor/__init__.py \
-  build/data/scripts/bastd/actor/zoomtext.py \
-  build/data/scripts/bastd/actor/spaz.py \
-  build/data/scripts/bastd/actor/spazappearance.py \
-  build/data/scripts/bastd/actor/controlsguide.py \
-  build/data/scripts/bastd/actor/powerupbox.py \
-  build/data/scripts/bastd/actor/text.py \
-  build/data/scripts/bastd/actor/spawner.py \
-  build/data/scripts/bastd/actor/respawnicon.py \
-  build/data/scripts/bastd/actor/playerspaz.py \
-  build/data/scripts/bastd/actor/tipstext.py \
-  build/data/scripts/bastd/actor/onscreencountdown.py \
-  build/data/scripts/bastd/actor/onscreentimer.py \
-  build/data/scripts/bastd/actor/image.py \
-  build/data/scripts/bastd/session/__init__.py
+  build/data/python/efro/executils.py \
+  build/data/python/efro/util.py \
+  build/data/python/efro/__init__.py \
+  build/data/python/efro/jsonutils.py \
+  build/data/python/efro/entity/_base.py \
+  build/data/python/efro/entity/_support.py \
+  build/data/python/efro/entity/util.py \
+  build/data/python/efro/entity/_entity.py \
+  build/data/python/efro/entity/_field.py \
+  build/data/python/efro/entity/__init__.py \
+  build/data/python/efro/entity/_value.py \
+  build/data/python/bacommon/__init__.py \
+  build/data/python/bacommon/assets.py \
+  build/data/python/bacommon/err.py \
+  build/data/python/ba/_gameactivity.py \
+  build/data/python/ba/_apputils.py \
+  build/data/python/ba/_coopsession.py \
+  build/data/python/ba/_appdelegate.py \
+  build/data/python/ba/internal.py \
+  build/data/python/ba/_coopgame.py \
+  build/data/python/ba/_meta.py \
+  build/data/python/ba/_math.py \
+  build/data/python/ba/_appconfig.py \
+  build/data/python/ba/_gameresults.py \
+  build/data/python/ba/_profile.py \
+  build/data/python/ba/_error.py \
+  build/data/python/ba/_achievement.py \
+  build/data/python/ba/_map.py \
+  build/data/python/ba/_teambasesession.py \
+  build/data/python/ba/_gameutils.py \
+  build/data/python/ba/_activity.py \
+  build/data/python/ba/deprecated.py \
+  build/data/python/ba/_modutils.py \
+  build/data/python/ba/_tips.py \
+  build/data/python/ba/_store.py \
+  build/data/python/ba/_activitytypes.py \
+  build/data/python/ba/__init__.py \
+  build/data/python/ba/_session.py \
+  build/data/python/ba/_hooks.py \
+  build/data/python/ba/_enums.py \
+  build/data/python/ba/_netutils.py \
+  build/data/python/ba/_app.py \
+  build/data/python/ba/_benchmark.py \
+  build/data/python/ba/_tournament.py \
+  build/data/python/ba/_messages.py \
+  build/data/python/ba/_teamssession.py \
+  build/data/python/ba/_freeforallsession.py \
+  build/data/python/ba/_playlist.py \
+  build/data/python/ba/_team.py \
+  build/data/python/ba/_actor.py \
+  build/data/python/ba/_powerup.py \
+  build/data/python/ba/_campaign.py \
+  build/data/python/ba/_lobby.py \
+  build/data/python/ba/_stats.py \
+  build/data/python/ba/_input.py \
+  build/data/python/ba/_level.py \
+  build/data/python/ba/_dependency.py \
+  build/data/python/ba/_general.py \
+  build/data/python/ba/_server.py \
+  build/data/python/ba/_account.py \
+  build/data/python/ba/_music.py \
+  build/data/python/ba/_lang.py \
+  build/data/python/ba/_teamgame.py \
+  build/data/python/ba/ui/__init__.py \
+  build/data/python/bastd/mainmenu.py \
+  build/data/python/bastd/maps.py \
+  build/data/python/bastd/appdelegate.py \
+  build/data/python/bastd/tutorial.py \
+  build/data/python/bastd/__init__.py \
+  build/data/python/bastd/stdmap.py \
+  build/data/python/bastd/ui/playoptions.py \
+  build/data/python/bastd/ui/mainmenu.py \
+  build/data/python/bastd/ui/getremote.py \
+  build/data/python/bastd/ui/tournamententry.py \
+  build/data/python/bastd/ui/telnet.py \
+  build/data/python/bastd/ui/appinvite.py \
+  build/data/python/bastd/ui/gather.py \
+  build/data/python/bastd/ui/config.py \
+  build/data/python/bastd/ui/colorpicker.py \
+  build/data/python/bastd/ui/tabs.py \
+  build/data/python/bastd/ui/promocode.py \
+  build/data/python/bastd/ui/fileselector.py \
+  build/data/python/bastd/ui/feedback.py \
+  build/data/python/bastd/ui/teamnamescolors.py \
+  build/data/python/bastd/ui/configerror.py \
+  build/data/python/bastd/ui/serverdialog.py \
+  build/data/python/bastd/ui/getcurrency.py \
+  build/data/python/bastd/ui/__init__.py \
+  build/data/python/bastd/ui/specialoffer.py \
+  build/data/python/bastd/ui/helpui.py \
+  build/data/python/bastd/ui/purchase.py \
+  build/data/python/bastd/ui/continues.py \
+  build/data/python/bastd/ui/play.py \
+  build/data/python/bastd/ui/popup.py \
+  build/data/python/bastd/ui/onscreenkeyboard.py \
+  build/data/python/bastd/ui/kiosk.py \
+  build/data/python/bastd/ui/qrcode.py \
+  build/data/python/bastd/ui/trophies.py \
+  build/data/python/bastd/ui/partyqueue.py \
+  build/data/python/bastd/ui/url.py \
+  build/data/python/bastd/ui/debug.py \
+  build/data/python/bastd/ui/iconpicker.py \
+  build/data/python/bastd/ui/watch.py \
+  build/data/python/bastd/ui/achievements.py \
+  build/data/python/bastd/ui/radiogroup.py \
+  build/data/python/bastd/ui/creditslist.py \
+  build/data/python/bastd/ui/tournamentscores.py \
+  build/data/python/bastd/ui/characterpicker.py \
+  build/data/python/bastd/ui/report.py \
+  build/data/python/bastd/ui/resourcetypeinfo.py \
+  build/data/python/bastd/ui/confirm.py \
+  build/data/python/bastd/ui/party.py \
+  build/data/python/bastd/ui/settings/graphics.py \
+  build/data/python/bastd/ui/settings/advanced.py \
+  build/data/python/bastd/ui/settings/controls.py \
+  build/data/python/bastd/ui/settings/gamepadadvanced.py \
+  build/data/python/bastd/ui/settings/gamepadselect.py \
+  build/data/python/bastd/ui/settings/touchscreen.py \
+  build/data/python/bastd/ui/settings/__init__.py \
+  build/data/python/bastd/ui/settings/xbox360controller.py \
+  build/data/python/bastd/ui/settings/audio.py \
+  build/data/python/bastd/ui/settings/gamepad.py \
+  build/data/python/bastd/ui/settings/nettesting.py \
+  build/data/python/bastd/ui/settings/remoteapp.py \
+  build/data/python/bastd/ui/settings/testing.py \
+  build/data/python/bastd/ui/settings/wiimote.py \
+  build/data/python/bastd/ui/settings/vrtesting.py \
+  build/data/python/bastd/ui/settings/allsettings.py \
+  build/data/python/bastd/ui/settings/ps3controller.py \
+  build/data/python/bastd/ui/settings/keyboard.py \
+  build/data/python/bastd/ui/playlist/customizebrowser.py \
+  build/data/python/bastd/ui/playlist/__init__.py \
+  build/data/python/bastd/ui/playlist/edit.py \
+  build/data/python/bastd/ui/playlist/browser.py \
+  build/data/python/bastd/ui/playlist/mapselect.py \
+  build/data/python/bastd/ui/playlist/share.py \
+  build/data/python/bastd/ui/playlist/editgame.py \
+  build/data/python/bastd/ui/playlist/editcontroller.py \
+  build/data/python/bastd/ui/playlist/addgame.py \
+  build/data/python/bastd/ui/soundtrack/entrytypeselect.py \
+  build/data/python/bastd/ui/soundtrack/itunes.py \
+  build/data/python/bastd/ui/soundtrack/__init__.py \
+  build/data/python/bastd/ui/soundtrack/edit.py \
+  build/data/python/bastd/ui/soundtrack/browser.py \
+  build/data/python/bastd/ui/league/__init__.py \
+  build/data/python/bastd/ui/league/rankbutton.py \
+  build/data/python/bastd/ui/league/rankwindow.py \
+  build/data/python/bastd/ui/coop/gamebutton.py \
+  build/data/python/bastd/ui/coop/__init__.py \
+  build/data/python/bastd/ui/coop/browser.py \
+  build/data/python/bastd/ui/coop/level.py \
+  build/data/python/bastd/ui/profile/__init__.py \
+  build/data/python/bastd/ui/profile/edit.py \
+  build/data/python/bastd/ui/profile/upgrade.py \
+  build/data/python/bastd/ui/profile/browser.py \
+  build/data/python/bastd/ui/account/link.py \
+  build/data/python/bastd/ui/account/viewer.py \
+  build/data/python/bastd/ui/account/__init__.py \
+  build/data/python/bastd/ui/account/unlink.py \
+  build/data/python/bastd/ui/account/settings.py \
+  build/data/python/bastd/ui/store/__init__.py \
+  build/data/python/bastd/ui/store/browser.py \
+  build/data/python/bastd/ui/store/button.py \
+  build/data/python/bastd/ui/store/item.py \
+  build/data/python/bastd/activity/freeforallendscreen.py \
+  build/data/python/bastd/activity/__init__.py \
+  build/data/python/bastd/activity/coopscorescreen.py \
+  build/data/python/bastd/activity/dualteamscorescreen.py \
+  build/data/python/bastd/activity/coopjoinscreen.py \
+  build/data/python/bastd/activity/multiteamendscreen.py \
+  build/data/python/bastd/activity/teamsscorescreen.py \
+  build/data/python/bastd/activity/multiteamjoinscreen.py \
+  build/data/python/bastd/activity/drawscreen.py \
+  build/data/python/bastd/game/capturetheflag.py \
+  build/data/python/bastd/game/targetpractice.py \
+  build/data/python/bastd/game/ninjafight.py \
+  build/data/python/bastd/game/easteregghunt.py \
+  build/data/python/bastd/game/race.py \
+  build/data/python/bastd/game/meteorshower.py \
+  build/data/python/bastd/game/thelaststand.py \
+  build/data/python/bastd/game/__init__.py \
+  build/data/python/bastd/game/football.py \
+  build/data/python/bastd/game/kingofthehill.py \
+  build/data/python/bastd/game/assault.py \
+  build/data/python/bastd/game/keepaway.py \
+  build/data/python/bastd/game/elimination.py \
+  build/data/python/bastd/game/deathmatch.py \
+  build/data/python/bastd/game/onslaught.py \
+  build/data/python/bastd/game/hockey.py \
+  build/data/python/bastd/game/chosenone.py \
+  build/data/python/bastd/game/conquest.py \
+  build/data/python/bastd/game/runaround.py \
+  build/data/python/bastd/mapdata/bridgit.py \
+  build/data/python/bastd/mapdata/big_g.py \
+  build/data/python/bastd/mapdata/hockey_stadium.py \
+  build/data/python/bastd/mapdata/courtyard.py \
+  build/data/python/bastd/mapdata/tower_d.py \
+  build/data/python/bastd/mapdata/__init__.py \
+  build/data/python/bastd/mapdata/roundabout.py \
+  build/data/python/bastd/mapdata/rampage.py \
+  build/data/python/bastd/mapdata/crag_castle.py \
+  build/data/python/bastd/mapdata/step_right_up.py \
+  build/data/python/bastd/mapdata/football_stadium.py \
+  build/data/python/bastd/mapdata/the_pad.py \
+  build/data/python/bastd/mapdata/happy_thoughts.py \
+  build/data/python/bastd/mapdata/monkey_face.py \
+  build/data/python/bastd/mapdata/doom_shroom.py \
+  build/data/python/bastd/mapdata/zig_zag.py \
+  build/data/python/bastd/mapdata/lake_frigid.py \
+  build/data/python/bastd/mapdata/tip_top.py \
+  build/data/python/bastd/actor/spazfactory.py \
+  build/data/python/bastd/actor/bomb.py \
+  build/data/python/bastd/actor/spazbot.py \
+  build/data/python/bastd/actor/flag.py \
+  build/data/python/bastd/actor/scoreboard.py \
+  build/data/python/bastd/actor/popuptext.py \
+  build/data/python/bastd/actor/background.py \
+  build/data/python/bastd/actor/__init__.py \
+  build/data/python/bastd/actor/zoomtext.py \
+  build/data/python/bastd/actor/spaz.py \
+  build/data/python/bastd/actor/spazappearance.py \
+  build/data/python/bastd/actor/controlsguide.py \
+  build/data/python/bastd/actor/powerupbox.py \
+  build/data/python/bastd/actor/text.py \
+  build/data/python/bastd/actor/spawner.py \
+  build/data/python/bastd/actor/respawnicon.py \
+  build/data/python/bastd/actor/playerspaz.py \
+  build/data/python/bastd/actor/tipstext.py \
+  build/data/python/bastd/actor/onscreencountdown.py \
+  build/data/python/bastd/actor/onscreentimer.py \
+  build/data/python/bastd/actor/image.py \
+  build/data/python/bastd/session/__init__.py
 
 SCRIPT_TARGETS_PYC_1 = \
   build/server/__pycache__/server.cpython-37.opt-1.pyc \
   build/server/__pycache__/config.cpython-37.opt-1.pyc \
-  build/data/scripts/efro/__pycache__/executils.cpython-37.opt-1.pyc \
-  build/data/scripts/efro/__pycache__/util.cpython-37.opt-1.pyc \
-  build/data/scripts/efro/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/scripts/efro/__pycache__/jsonutils.cpython-37.opt-1.pyc \
-  build/data/scripts/efro/entity/__pycache__/_base.cpython-37.opt-1.pyc \
-  build/data/scripts/efro/entity/__pycache__/_support.cpython-37.opt-1.pyc \
-  build/data/scripts/efro/entity/__pycache__/util.cpython-37.opt-1.pyc \
-  build/data/scripts/efro/entity/__pycache__/_entity.cpython-37.opt-1.pyc \
-  build/data/scripts/efro/entity/__pycache__/_field.cpython-37.opt-1.pyc \
-  build/data/scripts/efro/entity/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/scripts/efro/entity/__pycache__/_value.cpython-37.opt-1.pyc \
-  build/data/scripts/bacommon/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/scripts/bacommon/__pycache__/assets.cpython-37.opt-1.pyc \
-  build/data/scripts/bacommon/__pycache__/err.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_gameactivity.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_apputils.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_coopsession.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_appdelegate.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/internal.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_coopgame.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_meta.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_math.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_appconfig.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_gameresults.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_profile.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_error.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_achievement.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_map.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_teambasesession.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_gameutils.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_activity.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/deprecated.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_modutils.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_tips.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_store.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_activitytypes.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_session.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_hooks.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_enums.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_netutils.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_app.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_benchmark.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_tournament.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_messages.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_teamssession.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_freeforallsession.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_playlist.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_team.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_actor.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_powerup.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_campaign.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_lobby.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_stats.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_input.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_level.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_dependency.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_general.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_server.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_account.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_music.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_lang.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/__pycache__/_teamgame.cpython-37.opt-1.pyc \
-  build/data/scripts/ba/ui/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/__pycache__/mainmenu.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/__pycache__/maps.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/__pycache__/appdelegate.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/__pycache__/tutorial.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/__pycache__/stdmap.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/playoptions.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/mainmenu.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/getremote.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/tournamententry.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/telnet.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/appinvite.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/gather.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/config.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/colorpicker.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/tabs.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/promocode.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/fileselector.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/feedback.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/teamnamescolors.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/configerror.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/serverdialog.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/getcurrency.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/specialoffer.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/helpui.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/purchase.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/continues.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/play.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/popup.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/onscreenkeyboard.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/kiosk.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/qrcode.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/trophies.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/partyqueue.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/url.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/debug.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/iconpicker.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/watch.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/achievements.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/radiogroup.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/creditslist.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/tournamentscores.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/characterpicker.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/report.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/resourcetypeinfo.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/confirm.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/__pycache__/party.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/settings/__pycache__/graphics.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/settings/__pycache__/advanced.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/settings/__pycache__/controls.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/settings/__pycache__/gamepadadvanced.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/settings/__pycache__/gamepadselect.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/settings/__pycache__/touchscreen.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/settings/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/settings/__pycache__/xbox360controller.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/settings/__pycache__/audio.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/settings/__pycache__/gamepad.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/settings/__pycache__/nettesting.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/settings/__pycache__/remoteapp.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/settings/__pycache__/testing.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/settings/__pycache__/wiimote.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/settings/__pycache__/vrtesting.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/settings/__pycache__/allsettings.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/settings/__pycache__/ps3controller.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/settings/__pycache__/keyboard.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/playlist/__pycache__/customizebrowser.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/playlist/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/playlist/__pycache__/edit.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/playlist/__pycache__/browser.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/playlist/__pycache__/mapselect.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/playlist/__pycache__/share.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/playlist/__pycache__/editgame.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/playlist/__pycache__/editcontroller.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/playlist/__pycache__/addgame.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/soundtrack/__pycache__/entrytypeselect.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/soundtrack/__pycache__/itunes.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/soundtrack/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/soundtrack/__pycache__/edit.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/soundtrack/__pycache__/browser.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/league/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/league/__pycache__/rankbutton.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/league/__pycache__/rankwindow.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/coop/__pycache__/gamebutton.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/coop/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/coop/__pycache__/browser.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/coop/__pycache__/level.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/profile/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/profile/__pycache__/edit.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/profile/__pycache__/upgrade.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/profile/__pycache__/browser.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/account/__pycache__/link.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/account/__pycache__/viewer.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/account/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/account/__pycache__/unlink.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/account/__pycache__/settings.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/store/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/store/__pycache__/browser.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/store/__pycache__/button.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/ui/store/__pycache__/item.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/activity/__pycache__/freeforallendscreen.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/activity/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/activity/__pycache__/coopscorescreen.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/activity/__pycache__/dualteamscorescreen.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/activity/__pycache__/coopjoinscreen.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/activity/__pycache__/multiteamendscreen.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/activity/__pycache__/teamsscorescreen.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/activity/__pycache__/multiteamjoinscreen.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/activity/__pycache__/drawscreen.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/game/__pycache__/capturetheflag.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/game/__pycache__/targetpractice.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/game/__pycache__/ninjafight.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/game/__pycache__/easteregghunt.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/game/__pycache__/race.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/game/__pycache__/meteorshower.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/game/__pycache__/thelaststand.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/game/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/game/__pycache__/football.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/game/__pycache__/kingofthehill.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/game/__pycache__/assault.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/game/__pycache__/keepaway.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/game/__pycache__/elimination.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/game/__pycache__/deathmatch.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/game/__pycache__/onslaught.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/game/__pycache__/hockey.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/game/__pycache__/chosenone.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/game/__pycache__/conquest.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/game/__pycache__/runaround.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/mapdata/__pycache__/bridgit.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/mapdata/__pycache__/big_g.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/mapdata/__pycache__/hockey_stadium.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/mapdata/__pycache__/courtyard.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/mapdata/__pycache__/tower_d.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/mapdata/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/mapdata/__pycache__/roundabout.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/mapdata/__pycache__/rampage.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/mapdata/__pycache__/crag_castle.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/mapdata/__pycache__/step_right_up.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/mapdata/__pycache__/football_stadium.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/mapdata/__pycache__/the_pad.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/mapdata/__pycache__/happy_thoughts.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/mapdata/__pycache__/monkey_face.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/mapdata/__pycache__/doom_shroom.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/mapdata/__pycache__/zig_zag.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/mapdata/__pycache__/lake_frigid.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/mapdata/__pycache__/tip_top.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/actor/__pycache__/spazfactory.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/actor/__pycache__/bomb.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/actor/__pycache__/spazbot.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/actor/__pycache__/flag.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/actor/__pycache__/scoreboard.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/actor/__pycache__/popuptext.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/actor/__pycache__/background.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/actor/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/actor/__pycache__/zoomtext.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/actor/__pycache__/spaz.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/actor/__pycache__/spazappearance.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/actor/__pycache__/controlsguide.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/actor/__pycache__/powerupbox.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/actor/__pycache__/text.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/actor/__pycache__/spawner.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/actor/__pycache__/respawnicon.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/actor/__pycache__/playerspaz.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/actor/__pycache__/tipstext.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/actor/__pycache__/onscreencountdown.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/actor/__pycache__/onscreentimer.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/actor/__pycache__/image.cpython-37.opt-1.pyc \
-  build/data/scripts/bastd/session/__pycache__/__init__.cpython-37.opt-1.pyc
+  build/data/python/efro/__pycache__/executils.cpython-37.opt-1.pyc \
+  build/data/python/efro/__pycache__/util.cpython-37.opt-1.pyc \
+  build/data/python/efro/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/data/python/efro/__pycache__/jsonutils.cpython-37.opt-1.pyc \
+  build/data/python/efro/entity/__pycache__/_base.cpython-37.opt-1.pyc \
+  build/data/python/efro/entity/__pycache__/_support.cpython-37.opt-1.pyc \
+  build/data/python/efro/entity/__pycache__/util.cpython-37.opt-1.pyc \
+  build/data/python/efro/entity/__pycache__/_entity.cpython-37.opt-1.pyc \
+  build/data/python/efro/entity/__pycache__/_field.cpython-37.opt-1.pyc \
+  build/data/python/efro/entity/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/data/python/efro/entity/__pycache__/_value.cpython-37.opt-1.pyc \
+  build/data/python/bacommon/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/data/python/bacommon/__pycache__/assets.cpython-37.opt-1.pyc \
+  build/data/python/bacommon/__pycache__/err.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_gameactivity.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_apputils.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_coopsession.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_appdelegate.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/internal.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_coopgame.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_meta.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_math.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_appconfig.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_gameresults.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_profile.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_error.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_achievement.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_map.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_teambasesession.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_gameutils.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_activity.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/deprecated.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_modutils.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_tips.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_store.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_activitytypes.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_session.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_hooks.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_enums.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_netutils.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_app.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_benchmark.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_tournament.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_messages.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_teamssession.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_freeforallsession.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_playlist.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_team.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_actor.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_powerup.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_campaign.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_lobby.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_stats.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_input.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_level.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_dependency.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_general.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_server.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_account.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_music.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_lang.cpython-37.opt-1.pyc \
+  build/data/python/ba/__pycache__/_teamgame.cpython-37.opt-1.pyc \
+  build/data/python/ba/ui/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/data/python/bastd/__pycache__/mainmenu.cpython-37.opt-1.pyc \
+  build/data/python/bastd/__pycache__/maps.cpython-37.opt-1.pyc \
+  build/data/python/bastd/__pycache__/appdelegate.cpython-37.opt-1.pyc \
+  build/data/python/bastd/__pycache__/tutorial.cpython-37.opt-1.pyc \
+  build/data/python/bastd/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/data/python/bastd/__pycache__/stdmap.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/playoptions.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/mainmenu.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/getremote.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/tournamententry.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/telnet.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/appinvite.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/gather.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/config.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/colorpicker.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/tabs.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/promocode.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/fileselector.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/feedback.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/teamnamescolors.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/configerror.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/serverdialog.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/getcurrency.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/specialoffer.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/helpui.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/purchase.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/continues.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/play.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/popup.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/onscreenkeyboard.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/kiosk.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/qrcode.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/trophies.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/partyqueue.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/url.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/debug.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/iconpicker.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/watch.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/achievements.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/radiogroup.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/creditslist.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/tournamentscores.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/characterpicker.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/report.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/resourcetypeinfo.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/confirm.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/__pycache__/party.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/settings/__pycache__/graphics.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/settings/__pycache__/advanced.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/settings/__pycache__/controls.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/settings/__pycache__/gamepadadvanced.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/settings/__pycache__/gamepadselect.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/settings/__pycache__/touchscreen.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/settings/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/settings/__pycache__/xbox360controller.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/settings/__pycache__/audio.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/settings/__pycache__/gamepad.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/settings/__pycache__/nettesting.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/settings/__pycache__/remoteapp.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/settings/__pycache__/testing.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/settings/__pycache__/wiimote.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/settings/__pycache__/vrtesting.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/settings/__pycache__/allsettings.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/settings/__pycache__/ps3controller.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/settings/__pycache__/keyboard.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/playlist/__pycache__/customizebrowser.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/playlist/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/playlist/__pycache__/edit.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/playlist/__pycache__/browser.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/playlist/__pycache__/mapselect.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/playlist/__pycache__/share.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/playlist/__pycache__/editgame.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/playlist/__pycache__/editcontroller.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/playlist/__pycache__/addgame.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/soundtrack/__pycache__/entrytypeselect.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/soundtrack/__pycache__/itunes.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/soundtrack/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/soundtrack/__pycache__/edit.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/soundtrack/__pycache__/browser.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/league/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/league/__pycache__/rankbutton.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/league/__pycache__/rankwindow.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/coop/__pycache__/gamebutton.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/coop/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/coop/__pycache__/browser.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/coop/__pycache__/level.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/profile/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/profile/__pycache__/edit.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/profile/__pycache__/upgrade.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/profile/__pycache__/browser.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/account/__pycache__/link.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/account/__pycache__/viewer.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/account/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/account/__pycache__/unlink.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/account/__pycache__/settings.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/store/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/store/__pycache__/browser.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/store/__pycache__/button.cpython-37.opt-1.pyc \
+  build/data/python/bastd/ui/store/__pycache__/item.cpython-37.opt-1.pyc \
+  build/data/python/bastd/activity/__pycache__/freeforallendscreen.cpython-37.opt-1.pyc \
+  build/data/python/bastd/activity/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/data/python/bastd/activity/__pycache__/coopscorescreen.cpython-37.opt-1.pyc \
+  build/data/python/bastd/activity/__pycache__/dualteamscorescreen.cpython-37.opt-1.pyc \
+  build/data/python/bastd/activity/__pycache__/coopjoinscreen.cpython-37.opt-1.pyc \
+  build/data/python/bastd/activity/__pycache__/multiteamendscreen.cpython-37.opt-1.pyc \
+  build/data/python/bastd/activity/__pycache__/teamsscorescreen.cpython-37.opt-1.pyc \
+  build/data/python/bastd/activity/__pycache__/multiteamjoinscreen.cpython-37.opt-1.pyc \
+  build/data/python/bastd/activity/__pycache__/drawscreen.cpython-37.opt-1.pyc \
+  build/data/python/bastd/game/__pycache__/capturetheflag.cpython-37.opt-1.pyc \
+  build/data/python/bastd/game/__pycache__/targetpractice.cpython-37.opt-1.pyc \
+  build/data/python/bastd/game/__pycache__/ninjafight.cpython-37.opt-1.pyc \
+  build/data/python/bastd/game/__pycache__/easteregghunt.cpython-37.opt-1.pyc \
+  build/data/python/bastd/game/__pycache__/race.cpython-37.opt-1.pyc \
+  build/data/python/bastd/game/__pycache__/meteorshower.cpython-37.opt-1.pyc \
+  build/data/python/bastd/game/__pycache__/thelaststand.cpython-37.opt-1.pyc \
+  build/data/python/bastd/game/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/data/python/bastd/game/__pycache__/football.cpython-37.opt-1.pyc \
+  build/data/python/bastd/game/__pycache__/kingofthehill.cpython-37.opt-1.pyc \
+  build/data/python/bastd/game/__pycache__/assault.cpython-37.opt-1.pyc \
+  build/data/python/bastd/game/__pycache__/keepaway.cpython-37.opt-1.pyc \
+  build/data/python/bastd/game/__pycache__/elimination.cpython-37.opt-1.pyc \
+  build/data/python/bastd/game/__pycache__/deathmatch.cpython-37.opt-1.pyc \
+  build/data/python/bastd/game/__pycache__/onslaught.cpython-37.opt-1.pyc \
+  build/data/python/bastd/game/__pycache__/hockey.cpython-37.opt-1.pyc \
+  build/data/python/bastd/game/__pycache__/chosenone.cpython-37.opt-1.pyc \
+  build/data/python/bastd/game/__pycache__/conquest.cpython-37.opt-1.pyc \
+  build/data/python/bastd/game/__pycache__/runaround.cpython-37.opt-1.pyc \
+  build/data/python/bastd/mapdata/__pycache__/bridgit.cpython-37.opt-1.pyc \
+  build/data/python/bastd/mapdata/__pycache__/big_g.cpython-37.opt-1.pyc \
+  build/data/python/bastd/mapdata/__pycache__/hockey_stadium.cpython-37.opt-1.pyc \
+  build/data/python/bastd/mapdata/__pycache__/courtyard.cpython-37.opt-1.pyc \
+  build/data/python/bastd/mapdata/__pycache__/tower_d.cpython-37.opt-1.pyc \
+  build/data/python/bastd/mapdata/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/data/python/bastd/mapdata/__pycache__/roundabout.cpython-37.opt-1.pyc \
+  build/data/python/bastd/mapdata/__pycache__/rampage.cpython-37.opt-1.pyc \
+  build/data/python/bastd/mapdata/__pycache__/crag_castle.cpython-37.opt-1.pyc \
+  build/data/python/bastd/mapdata/__pycache__/step_right_up.cpython-37.opt-1.pyc \
+  build/data/python/bastd/mapdata/__pycache__/football_stadium.cpython-37.opt-1.pyc \
+  build/data/python/bastd/mapdata/__pycache__/the_pad.cpython-37.opt-1.pyc \
+  build/data/python/bastd/mapdata/__pycache__/happy_thoughts.cpython-37.opt-1.pyc \
+  build/data/python/bastd/mapdata/__pycache__/monkey_face.cpython-37.opt-1.pyc \
+  build/data/python/bastd/mapdata/__pycache__/doom_shroom.cpython-37.opt-1.pyc \
+  build/data/python/bastd/mapdata/__pycache__/zig_zag.cpython-37.opt-1.pyc \
+  build/data/python/bastd/mapdata/__pycache__/lake_frigid.cpython-37.opt-1.pyc \
+  build/data/python/bastd/mapdata/__pycache__/tip_top.cpython-37.opt-1.pyc \
+  build/data/python/bastd/actor/__pycache__/spazfactory.cpython-37.opt-1.pyc \
+  build/data/python/bastd/actor/__pycache__/bomb.cpython-37.opt-1.pyc \
+  build/data/python/bastd/actor/__pycache__/spazbot.cpython-37.opt-1.pyc \
+  build/data/python/bastd/actor/__pycache__/flag.cpython-37.opt-1.pyc \
+  build/data/python/bastd/actor/__pycache__/scoreboard.cpython-37.opt-1.pyc \
+  build/data/python/bastd/actor/__pycache__/popuptext.cpython-37.opt-1.pyc \
+  build/data/python/bastd/actor/__pycache__/background.cpython-37.opt-1.pyc \
+  build/data/python/bastd/actor/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/data/python/bastd/actor/__pycache__/zoomtext.cpython-37.opt-1.pyc \
+  build/data/python/bastd/actor/__pycache__/spaz.cpython-37.opt-1.pyc \
+  build/data/python/bastd/actor/__pycache__/spazappearance.cpython-37.opt-1.pyc \
+  build/data/python/bastd/actor/__pycache__/controlsguide.cpython-37.opt-1.pyc \
+  build/data/python/bastd/actor/__pycache__/powerupbox.cpython-37.opt-1.pyc \
+  build/data/python/bastd/actor/__pycache__/text.cpython-37.opt-1.pyc \
+  build/data/python/bastd/actor/__pycache__/spawner.cpython-37.opt-1.pyc \
+  build/data/python/bastd/actor/__pycache__/respawnicon.cpython-37.opt-1.pyc \
+  build/data/python/bastd/actor/__pycache__/playerspaz.cpython-37.opt-1.pyc \
+  build/data/python/bastd/actor/__pycache__/tipstext.cpython-37.opt-1.pyc \
+  build/data/python/bastd/actor/__pycache__/onscreencountdown.cpython-37.opt-1.pyc \
+  build/data/python/bastd/actor/__pycache__/onscreentimer.cpython-37.opt-1.pyc \
+  build/data/python/bastd/actor/__pycache__/image.cpython-37.opt-1.pyc \
+  build/data/python/bastd/session/__pycache__/__init__.cpython-37.opt-1.pyc
 
 # Rule to copy src asset scripts to dst.
 # (and make non-writable so I'm less likely to accidentally edit them there)
@@ -636,1163 +636,1163 @@ build/server/__pycache__/config.cpython-37.opt-1.pyc: \
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/efro/__pycache__/executils.cpython-37.opt-1.pyc: \
-      build/data/scripts/efro/executils.py
+build/data/python/efro/__pycache__/executils.cpython-37.opt-1.pyc: \
+      build/data/python/efro/executils.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/efro/__pycache__/util.cpython-37.opt-1.pyc: \
-      build/data/scripts/efro/util.py
+build/data/python/efro/__pycache__/util.cpython-37.opt-1.pyc: \
+      build/data/python/efro/util.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/efro/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/scripts/efro/__init__.py
+build/data/python/efro/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/data/python/efro/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/efro/__pycache__/jsonutils.cpython-37.opt-1.pyc: \
-      build/data/scripts/efro/jsonutils.py
+build/data/python/efro/__pycache__/jsonutils.cpython-37.opt-1.pyc: \
+      build/data/python/efro/jsonutils.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/efro/entity/__pycache__/_base.cpython-37.opt-1.pyc: \
-      build/data/scripts/efro/entity/_base.py
+build/data/python/efro/entity/__pycache__/_base.cpython-37.opt-1.pyc: \
+      build/data/python/efro/entity/_base.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/efro/entity/__pycache__/_support.cpython-37.opt-1.pyc: \
-      build/data/scripts/efro/entity/_support.py
+build/data/python/efro/entity/__pycache__/_support.cpython-37.opt-1.pyc: \
+      build/data/python/efro/entity/_support.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/efro/entity/__pycache__/util.cpython-37.opt-1.pyc: \
-      build/data/scripts/efro/entity/util.py
+build/data/python/efro/entity/__pycache__/util.cpython-37.opt-1.pyc: \
+      build/data/python/efro/entity/util.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/efro/entity/__pycache__/_entity.cpython-37.opt-1.pyc: \
-      build/data/scripts/efro/entity/_entity.py
+build/data/python/efro/entity/__pycache__/_entity.cpython-37.opt-1.pyc: \
+      build/data/python/efro/entity/_entity.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/efro/entity/__pycache__/_field.cpython-37.opt-1.pyc: \
-      build/data/scripts/efro/entity/_field.py
+build/data/python/efro/entity/__pycache__/_field.cpython-37.opt-1.pyc: \
+      build/data/python/efro/entity/_field.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/efro/entity/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/scripts/efro/entity/__init__.py
+build/data/python/efro/entity/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/data/python/efro/entity/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/efro/entity/__pycache__/_value.cpython-37.opt-1.pyc: \
-      build/data/scripts/efro/entity/_value.py
+build/data/python/efro/entity/__pycache__/_value.cpython-37.opt-1.pyc: \
+      build/data/python/efro/entity/_value.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bacommon/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/scripts/bacommon/__init__.py
+build/data/python/bacommon/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/data/python/bacommon/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bacommon/__pycache__/assets.cpython-37.opt-1.pyc: \
-      build/data/scripts/bacommon/assets.py
+build/data/python/bacommon/__pycache__/assets.cpython-37.opt-1.pyc: \
+      build/data/python/bacommon/assets.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bacommon/__pycache__/err.cpython-37.opt-1.pyc: \
-      build/data/scripts/bacommon/err.py
+build/data/python/bacommon/__pycache__/err.cpython-37.opt-1.pyc: \
+      build/data/python/bacommon/err.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_gameactivity.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_gameactivity.py
+build/data/python/ba/__pycache__/_gameactivity.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_gameactivity.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_apputils.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_apputils.py
+build/data/python/ba/__pycache__/_apputils.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_apputils.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_coopsession.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_coopsession.py
+build/data/python/ba/__pycache__/_coopsession.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_coopsession.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_appdelegate.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_appdelegate.py
+build/data/python/ba/__pycache__/_appdelegate.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_appdelegate.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/internal.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/internal.py
+build/data/python/ba/__pycache__/internal.cpython-37.opt-1.pyc: \
+      build/data/python/ba/internal.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_coopgame.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_coopgame.py
+build/data/python/ba/__pycache__/_coopgame.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_coopgame.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_meta.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_meta.py
+build/data/python/ba/__pycache__/_meta.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_meta.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_math.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_math.py
+build/data/python/ba/__pycache__/_math.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_math.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_appconfig.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_appconfig.py
+build/data/python/ba/__pycache__/_appconfig.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_appconfig.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_gameresults.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_gameresults.py
+build/data/python/ba/__pycache__/_gameresults.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_gameresults.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_profile.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_profile.py
+build/data/python/ba/__pycache__/_profile.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_profile.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_error.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_error.py
+build/data/python/ba/__pycache__/_error.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_error.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_achievement.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_achievement.py
+build/data/python/ba/__pycache__/_achievement.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_achievement.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_map.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_map.py
+build/data/python/ba/__pycache__/_map.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_map.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_teambasesession.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_teambasesession.py
+build/data/python/ba/__pycache__/_teambasesession.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_teambasesession.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_gameutils.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_gameutils.py
+build/data/python/ba/__pycache__/_gameutils.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_gameutils.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_activity.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_activity.py
+build/data/python/ba/__pycache__/_activity.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_activity.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/deprecated.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/deprecated.py
+build/data/python/ba/__pycache__/deprecated.cpython-37.opt-1.pyc: \
+      build/data/python/ba/deprecated.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_modutils.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_modutils.py
+build/data/python/ba/__pycache__/_modutils.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_modutils.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_tips.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_tips.py
+build/data/python/ba/__pycache__/_tips.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_tips.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_store.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_store.py
+build/data/python/ba/__pycache__/_store.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_store.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_activitytypes.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_activitytypes.py
+build/data/python/ba/__pycache__/_activitytypes.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_activitytypes.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/__init__.py
+build/data/python/ba/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/data/python/ba/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_session.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_session.py
+build/data/python/ba/__pycache__/_session.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_session.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_hooks.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_hooks.py
+build/data/python/ba/__pycache__/_hooks.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_hooks.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_enums.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_enums.py
+build/data/python/ba/__pycache__/_enums.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_enums.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_netutils.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_netutils.py
+build/data/python/ba/__pycache__/_netutils.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_netutils.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_app.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_app.py
+build/data/python/ba/__pycache__/_app.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_app.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_benchmark.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_benchmark.py
+build/data/python/ba/__pycache__/_benchmark.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_benchmark.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_tournament.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_tournament.py
+build/data/python/ba/__pycache__/_tournament.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_tournament.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_messages.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_messages.py
+build/data/python/ba/__pycache__/_messages.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_messages.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_teamssession.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_teamssession.py
+build/data/python/ba/__pycache__/_teamssession.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_teamssession.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_freeforallsession.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_freeforallsession.py
+build/data/python/ba/__pycache__/_freeforallsession.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_freeforallsession.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_playlist.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_playlist.py
+build/data/python/ba/__pycache__/_playlist.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_playlist.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_team.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_team.py
+build/data/python/ba/__pycache__/_team.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_team.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_actor.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_actor.py
+build/data/python/ba/__pycache__/_actor.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_actor.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_powerup.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_powerup.py
+build/data/python/ba/__pycache__/_powerup.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_powerup.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_campaign.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_campaign.py
+build/data/python/ba/__pycache__/_campaign.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_campaign.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_lobby.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_lobby.py
+build/data/python/ba/__pycache__/_lobby.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_lobby.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_stats.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_stats.py
+build/data/python/ba/__pycache__/_stats.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_stats.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_input.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_input.py
+build/data/python/ba/__pycache__/_input.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_input.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_level.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_level.py
+build/data/python/ba/__pycache__/_level.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_level.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_dependency.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_dependency.py
+build/data/python/ba/__pycache__/_dependency.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_dependency.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_general.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_general.py
+build/data/python/ba/__pycache__/_general.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_general.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_server.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_server.py
+build/data/python/ba/__pycache__/_server.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_server.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_account.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_account.py
+build/data/python/ba/__pycache__/_account.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_account.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_music.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_music.py
+build/data/python/ba/__pycache__/_music.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_music.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_lang.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_lang.py
+build/data/python/ba/__pycache__/_lang.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_lang.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/__pycache__/_teamgame.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/_teamgame.py
+build/data/python/ba/__pycache__/_teamgame.cpython-37.opt-1.pyc: \
+      build/data/python/ba/_teamgame.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/ba/ui/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/scripts/ba/ui/__init__.py
+build/data/python/ba/ui/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/data/python/ba/ui/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/__pycache__/mainmenu.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/mainmenu.py
+build/data/python/bastd/__pycache__/mainmenu.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/mainmenu.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/__pycache__/maps.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/maps.py
+build/data/python/bastd/__pycache__/maps.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/maps.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/__pycache__/appdelegate.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/appdelegate.py
+build/data/python/bastd/__pycache__/appdelegate.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/appdelegate.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/__pycache__/tutorial.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/tutorial.py
+build/data/python/bastd/__pycache__/tutorial.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/tutorial.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/__init__.py
+build/data/python/bastd/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/__pycache__/stdmap.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/stdmap.py
+build/data/python/bastd/__pycache__/stdmap.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/stdmap.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/playoptions.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/playoptions.py
+build/data/python/bastd/ui/__pycache__/playoptions.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/playoptions.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/mainmenu.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/mainmenu.py
+build/data/python/bastd/ui/__pycache__/mainmenu.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/mainmenu.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/getremote.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/getremote.py
+build/data/python/bastd/ui/__pycache__/getremote.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/getremote.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/tournamententry.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/tournamententry.py
+build/data/python/bastd/ui/__pycache__/tournamententry.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/tournamententry.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/telnet.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/telnet.py
+build/data/python/bastd/ui/__pycache__/telnet.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/telnet.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/appinvite.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/appinvite.py
+build/data/python/bastd/ui/__pycache__/appinvite.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/appinvite.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/gather.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/gather.py
+build/data/python/bastd/ui/__pycache__/gather.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/gather.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/config.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/config.py
+build/data/python/bastd/ui/__pycache__/config.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/config.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/colorpicker.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/colorpicker.py
+build/data/python/bastd/ui/__pycache__/colorpicker.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/colorpicker.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/tabs.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/tabs.py
+build/data/python/bastd/ui/__pycache__/tabs.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/tabs.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/promocode.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/promocode.py
+build/data/python/bastd/ui/__pycache__/promocode.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/promocode.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/fileselector.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/fileselector.py
+build/data/python/bastd/ui/__pycache__/fileselector.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/fileselector.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/feedback.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/feedback.py
+build/data/python/bastd/ui/__pycache__/feedback.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/feedback.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/teamnamescolors.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/teamnamescolors.py
+build/data/python/bastd/ui/__pycache__/teamnamescolors.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/teamnamescolors.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/configerror.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/configerror.py
+build/data/python/bastd/ui/__pycache__/configerror.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/configerror.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/serverdialog.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/serverdialog.py
+build/data/python/bastd/ui/__pycache__/serverdialog.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/serverdialog.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/getcurrency.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/getcurrency.py
+build/data/python/bastd/ui/__pycache__/getcurrency.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/getcurrency.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/__init__.py
+build/data/python/bastd/ui/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/specialoffer.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/specialoffer.py
+build/data/python/bastd/ui/__pycache__/specialoffer.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/specialoffer.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/helpui.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/helpui.py
+build/data/python/bastd/ui/__pycache__/helpui.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/helpui.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/purchase.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/purchase.py
+build/data/python/bastd/ui/__pycache__/purchase.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/purchase.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/continues.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/continues.py
+build/data/python/bastd/ui/__pycache__/continues.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/continues.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/play.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/play.py
+build/data/python/bastd/ui/__pycache__/play.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/play.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/popup.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/popup.py
+build/data/python/bastd/ui/__pycache__/popup.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/popup.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/onscreenkeyboard.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/onscreenkeyboard.py
+build/data/python/bastd/ui/__pycache__/onscreenkeyboard.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/onscreenkeyboard.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/kiosk.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/kiosk.py
+build/data/python/bastd/ui/__pycache__/kiosk.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/kiosk.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/qrcode.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/qrcode.py
+build/data/python/bastd/ui/__pycache__/qrcode.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/qrcode.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/trophies.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/trophies.py
+build/data/python/bastd/ui/__pycache__/trophies.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/trophies.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/partyqueue.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/partyqueue.py
+build/data/python/bastd/ui/__pycache__/partyqueue.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/partyqueue.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/url.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/url.py
+build/data/python/bastd/ui/__pycache__/url.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/url.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/debug.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/debug.py
+build/data/python/bastd/ui/__pycache__/debug.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/debug.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/iconpicker.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/iconpicker.py
+build/data/python/bastd/ui/__pycache__/iconpicker.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/iconpicker.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/watch.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/watch.py
+build/data/python/bastd/ui/__pycache__/watch.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/watch.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/achievements.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/achievements.py
+build/data/python/bastd/ui/__pycache__/achievements.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/achievements.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/radiogroup.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/radiogroup.py
+build/data/python/bastd/ui/__pycache__/radiogroup.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/radiogroup.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/creditslist.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/creditslist.py
+build/data/python/bastd/ui/__pycache__/creditslist.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/creditslist.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/tournamentscores.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/tournamentscores.py
+build/data/python/bastd/ui/__pycache__/tournamentscores.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/tournamentscores.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/characterpicker.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/characterpicker.py
+build/data/python/bastd/ui/__pycache__/characterpicker.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/characterpicker.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/report.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/report.py
+build/data/python/bastd/ui/__pycache__/report.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/report.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/resourcetypeinfo.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/resourcetypeinfo.py
+build/data/python/bastd/ui/__pycache__/resourcetypeinfo.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/resourcetypeinfo.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/confirm.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/confirm.py
+build/data/python/bastd/ui/__pycache__/confirm.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/confirm.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/__pycache__/party.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/party.py
+build/data/python/bastd/ui/__pycache__/party.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/party.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/settings/__pycache__/graphics.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/settings/graphics.py
+build/data/python/bastd/ui/settings/__pycache__/graphics.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/settings/graphics.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/settings/__pycache__/advanced.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/settings/advanced.py
+build/data/python/bastd/ui/settings/__pycache__/advanced.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/settings/advanced.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/settings/__pycache__/controls.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/settings/controls.py
+build/data/python/bastd/ui/settings/__pycache__/controls.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/settings/controls.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/settings/__pycache__/gamepadadvanced.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/settings/gamepadadvanced.py
+build/data/python/bastd/ui/settings/__pycache__/gamepadadvanced.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/settings/gamepadadvanced.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/settings/__pycache__/gamepadselect.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/settings/gamepadselect.py
+build/data/python/bastd/ui/settings/__pycache__/gamepadselect.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/settings/gamepadselect.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/settings/__pycache__/touchscreen.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/settings/touchscreen.py
+build/data/python/bastd/ui/settings/__pycache__/touchscreen.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/settings/touchscreen.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/settings/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/settings/__init__.py
+build/data/python/bastd/ui/settings/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/settings/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/settings/__pycache__/xbox360controller.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/settings/xbox360controller.py
+build/data/python/bastd/ui/settings/__pycache__/xbox360controller.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/settings/xbox360controller.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/settings/__pycache__/audio.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/settings/audio.py
+build/data/python/bastd/ui/settings/__pycache__/audio.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/settings/audio.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/settings/__pycache__/gamepad.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/settings/gamepad.py
+build/data/python/bastd/ui/settings/__pycache__/gamepad.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/settings/gamepad.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/settings/__pycache__/nettesting.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/settings/nettesting.py
+build/data/python/bastd/ui/settings/__pycache__/nettesting.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/settings/nettesting.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/settings/__pycache__/remoteapp.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/settings/remoteapp.py
+build/data/python/bastd/ui/settings/__pycache__/remoteapp.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/settings/remoteapp.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/settings/__pycache__/testing.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/settings/testing.py
+build/data/python/bastd/ui/settings/__pycache__/testing.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/settings/testing.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/settings/__pycache__/wiimote.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/settings/wiimote.py
+build/data/python/bastd/ui/settings/__pycache__/wiimote.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/settings/wiimote.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/settings/__pycache__/vrtesting.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/settings/vrtesting.py
+build/data/python/bastd/ui/settings/__pycache__/vrtesting.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/settings/vrtesting.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/settings/__pycache__/allsettings.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/settings/allsettings.py
+build/data/python/bastd/ui/settings/__pycache__/allsettings.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/settings/allsettings.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/settings/__pycache__/ps3controller.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/settings/ps3controller.py
+build/data/python/bastd/ui/settings/__pycache__/ps3controller.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/settings/ps3controller.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/settings/__pycache__/keyboard.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/settings/keyboard.py
+build/data/python/bastd/ui/settings/__pycache__/keyboard.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/settings/keyboard.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/playlist/__pycache__/customizebrowser.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/playlist/customizebrowser.py
+build/data/python/bastd/ui/playlist/__pycache__/customizebrowser.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/playlist/customizebrowser.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/playlist/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/playlist/__init__.py
+build/data/python/bastd/ui/playlist/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/playlist/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/playlist/__pycache__/edit.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/playlist/edit.py
+build/data/python/bastd/ui/playlist/__pycache__/edit.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/playlist/edit.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/playlist/__pycache__/browser.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/playlist/browser.py
+build/data/python/bastd/ui/playlist/__pycache__/browser.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/playlist/browser.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/playlist/__pycache__/mapselect.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/playlist/mapselect.py
+build/data/python/bastd/ui/playlist/__pycache__/mapselect.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/playlist/mapselect.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/playlist/__pycache__/share.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/playlist/share.py
+build/data/python/bastd/ui/playlist/__pycache__/share.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/playlist/share.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/playlist/__pycache__/editgame.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/playlist/editgame.py
+build/data/python/bastd/ui/playlist/__pycache__/editgame.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/playlist/editgame.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/playlist/__pycache__/editcontroller.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/playlist/editcontroller.py
+build/data/python/bastd/ui/playlist/__pycache__/editcontroller.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/playlist/editcontroller.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/playlist/__pycache__/addgame.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/playlist/addgame.py
+build/data/python/bastd/ui/playlist/__pycache__/addgame.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/playlist/addgame.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/soundtrack/__pycache__/entrytypeselect.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/soundtrack/entrytypeselect.py
+build/data/python/bastd/ui/soundtrack/__pycache__/entrytypeselect.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/soundtrack/entrytypeselect.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/soundtrack/__pycache__/itunes.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/soundtrack/itunes.py
+build/data/python/bastd/ui/soundtrack/__pycache__/itunes.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/soundtrack/itunes.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/soundtrack/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/soundtrack/__init__.py
+build/data/python/bastd/ui/soundtrack/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/soundtrack/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/soundtrack/__pycache__/edit.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/soundtrack/edit.py
+build/data/python/bastd/ui/soundtrack/__pycache__/edit.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/soundtrack/edit.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/soundtrack/__pycache__/browser.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/soundtrack/browser.py
+build/data/python/bastd/ui/soundtrack/__pycache__/browser.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/soundtrack/browser.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/league/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/league/__init__.py
+build/data/python/bastd/ui/league/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/league/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/league/__pycache__/rankbutton.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/league/rankbutton.py
+build/data/python/bastd/ui/league/__pycache__/rankbutton.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/league/rankbutton.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/league/__pycache__/rankwindow.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/league/rankwindow.py
+build/data/python/bastd/ui/league/__pycache__/rankwindow.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/league/rankwindow.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/coop/__pycache__/gamebutton.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/coop/gamebutton.py
+build/data/python/bastd/ui/coop/__pycache__/gamebutton.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/coop/gamebutton.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/coop/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/coop/__init__.py
+build/data/python/bastd/ui/coop/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/coop/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/coop/__pycache__/browser.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/coop/browser.py
+build/data/python/bastd/ui/coop/__pycache__/browser.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/coop/browser.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/coop/__pycache__/level.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/coop/level.py
+build/data/python/bastd/ui/coop/__pycache__/level.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/coop/level.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/profile/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/profile/__init__.py
+build/data/python/bastd/ui/profile/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/profile/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/profile/__pycache__/edit.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/profile/edit.py
+build/data/python/bastd/ui/profile/__pycache__/edit.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/profile/edit.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/profile/__pycache__/upgrade.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/profile/upgrade.py
+build/data/python/bastd/ui/profile/__pycache__/upgrade.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/profile/upgrade.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/profile/__pycache__/browser.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/profile/browser.py
+build/data/python/bastd/ui/profile/__pycache__/browser.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/profile/browser.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/account/__pycache__/link.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/account/link.py
+build/data/python/bastd/ui/account/__pycache__/link.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/account/link.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/account/__pycache__/viewer.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/account/viewer.py
+build/data/python/bastd/ui/account/__pycache__/viewer.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/account/viewer.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/account/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/account/__init__.py
+build/data/python/bastd/ui/account/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/account/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/account/__pycache__/unlink.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/account/unlink.py
+build/data/python/bastd/ui/account/__pycache__/unlink.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/account/unlink.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/account/__pycache__/settings.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/account/settings.py
+build/data/python/bastd/ui/account/__pycache__/settings.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/account/settings.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/store/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/store/__init__.py
+build/data/python/bastd/ui/store/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/store/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/store/__pycache__/browser.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/store/browser.py
+build/data/python/bastd/ui/store/__pycache__/browser.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/store/browser.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/store/__pycache__/button.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/store/button.py
+build/data/python/bastd/ui/store/__pycache__/button.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/store/button.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/ui/store/__pycache__/item.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/ui/store/item.py
+build/data/python/bastd/ui/store/__pycache__/item.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/ui/store/item.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/activity/__pycache__/freeforallendscreen.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/activity/freeforallendscreen.py
+build/data/python/bastd/activity/__pycache__/freeforallendscreen.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/activity/freeforallendscreen.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/activity/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/activity/__init__.py
+build/data/python/bastd/activity/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/activity/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/activity/__pycache__/coopscorescreen.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/activity/coopscorescreen.py
+build/data/python/bastd/activity/__pycache__/coopscorescreen.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/activity/coopscorescreen.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/activity/__pycache__/dualteamscorescreen.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/activity/dualteamscorescreen.py
+build/data/python/bastd/activity/__pycache__/dualteamscorescreen.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/activity/dualteamscorescreen.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/activity/__pycache__/coopjoinscreen.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/activity/coopjoinscreen.py
+build/data/python/bastd/activity/__pycache__/coopjoinscreen.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/activity/coopjoinscreen.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/activity/__pycache__/multiteamendscreen.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/activity/multiteamendscreen.py
+build/data/python/bastd/activity/__pycache__/multiteamendscreen.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/activity/multiteamendscreen.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/activity/__pycache__/teamsscorescreen.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/activity/teamsscorescreen.py
+build/data/python/bastd/activity/__pycache__/teamsscorescreen.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/activity/teamsscorescreen.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/activity/__pycache__/multiteamjoinscreen.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/activity/multiteamjoinscreen.py
+build/data/python/bastd/activity/__pycache__/multiteamjoinscreen.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/activity/multiteamjoinscreen.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/activity/__pycache__/drawscreen.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/activity/drawscreen.py
+build/data/python/bastd/activity/__pycache__/drawscreen.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/activity/drawscreen.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/game/__pycache__/capturetheflag.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/game/capturetheflag.py
+build/data/python/bastd/game/__pycache__/capturetheflag.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/game/capturetheflag.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/game/__pycache__/targetpractice.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/game/targetpractice.py
+build/data/python/bastd/game/__pycache__/targetpractice.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/game/targetpractice.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/game/__pycache__/ninjafight.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/game/ninjafight.py
+build/data/python/bastd/game/__pycache__/ninjafight.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/game/ninjafight.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/game/__pycache__/easteregghunt.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/game/easteregghunt.py
+build/data/python/bastd/game/__pycache__/easteregghunt.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/game/easteregghunt.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/game/__pycache__/race.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/game/race.py
+build/data/python/bastd/game/__pycache__/race.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/game/race.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/game/__pycache__/meteorshower.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/game/meteorshower.py
+build/data/python/bastd/game/__pycache__/meteorshower.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/game/meteorshower.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/game/__pycache__/thelaststand.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/game/thelaststand.py
+build/data/python/bastd/game/__pycache__/thelaststand.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/game/thelaststand.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/game/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/game/__init__.py
+build/data/python/bastd/game/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/game/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/game/__pycache__/football.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/game/football.py
+build/data/python/bastd/game/__pycache__/football.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/game/football.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/game/__pycache__/kingofthehill.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/game/kingofthehill.py
+build/data/python/bastd/game/__pycache__/kingofthehill.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/game/kingofthehill.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/game/__pycache__/assault.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/game/assault.py
+build/data/python/bastd/game/__pycache__/assault.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/game/assault.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/game/__pycache__/keepaway.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/game/keepaway.py
+build/data/python/bastd/game/__pycache__/keepaway.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/game/keepaway.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/game/__pycache__/elimination.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/game/elimination.py
+build/data/python/bastd/game/__pycache__/elimination.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/game/elimination.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/game/__pycache__/deathmatch.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/game/deathmatch.py
+build/data/python/bastd/game/__pycache__/deathmatch.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/game/deathmatch.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/game/__pycache__/onslaught.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/game/onslaught.py
+build/data/python/bastd/game/__pycache__/onslaught.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/game/onslaught.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/game/__pycache__/hockey.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/game/hockey.py
+build/data/python/bastd/game/__pycache__/hockey.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/game/hockey.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/game/__pycache__/chosenone.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/game/chosenone.py
+build/data/python/bastd/game/__pycache__/chosenone.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/game/chosenone.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/game/__pycache__/conquest.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/game/conquest.py
+build/data/python/bastd/game/__pycache__/conquest.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/game/conquest.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/game/__pycache__/runaround.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/game/runaround.py
+build/data/python/bastd/game/__pycache__/runaround.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/game/runaround.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/mapdata/__pycache__/bridgit.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/mapdata/bridgit.py
+build/data/python/bastd/mapdata/__pycache__/bridgit.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/mapdata/bridgit.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/mapdata/__pycache__/big_g.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/mapdata/big_g.py
+build/data/python/bastd/mapdata/__pycache__/big_g.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/mapdata/big_g.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/mapdata/__pycache__/hockey_stadium.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/mapdata/hockey_stadium.py
+build/data/python/bastd/mapdata/__pycache__/hockey_stadium.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/mapdata/hockey_stadium.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/mapdata/__pycache__/courtyard.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/mapdata/courtyard.py
+build/data/python/bastd/mapdata/__pycache__/courtyard.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/mapdata/courtyard.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/mapdata/__pycache__/tower_d.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/mapdata/tower_d.py
+build/data/python/bastd/mapdata/__pycache__/tower_d.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/mapdata/tower_d.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/mapdata/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/mapdata/__init__.py
+build/data/python/bastd/mapdata/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/mapdata/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/mapdata/__pycache__/roundabout.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/mapdata/roundabout.py
+build/data/python/bastd/mapdata/__pycache__/roundabout.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/mapdata/roundabout.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/mapdata/__pycache__/rampage.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/mapdata/rampage.py
+build/data/python/bastd/mapdata/__pycache__/rampage.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/mapdata/rampage.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/mapdata/__pycache__/crag_castle.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/mapdata/crag_castle.py
+build/data/python/bastd/mapdata/__pycache__/crag_castle.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/mapdata/crag_castle.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/mapdata/__pycache__/step_right_up.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/mapdata/step_right_up.py
+build/data/python/bastd/mapdata/__pycache__/step_right_up.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/mapdata/step_right_up.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/mapdata/__pycache__/football_stadium.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/mapdata/football_stadium.py
+build/data/python/bastd/mapdata/__pycache__/football_stadium.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/mapdata/football_stadium.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/mapdata/__pycache__/the_pad.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/mapdata/the_pad.py
+build/data/python/bastd/mapdata/__pycache__/the_pad.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/mapdata/the_pad.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/mapdata/__pycache__/happy_thoughts.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/mapdata/happy_thoughts.py
+build/data/python/bastd/mapdata/__pycache__/happy_thoughts.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/mapdata/happy_thoughts.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/mapdata/__pycache__/monkey_face.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/mapdata/monkey_face.py
+build/data/python/bastd/mapdata/__pycache__/monkey_face.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/mapdata/monkey_face.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/mapdata/__pycache__/doom_shroom.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/mapdata/doom_shroom.py
+build/data/python/bastd/mapdata/__pycache__/doom_shroom.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/mapdata/doom_shroom.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/mapdata/__pycache__/zig_zag.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/mapdata/zig_zag.py
+build/data/python/bastd/mapdata/__pycache__/zig_zag.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/mapdata/zig_zag.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/mapdata/__pycache__/lake_frigid.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/mapdata/lake_frigid.py
+build/data/python/bastd/mapdata/__pycache__/lake_frigid.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/mapdata/lake_frigid.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/mapdata/__pycache__/tip_top.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/mapdata/tip_top.py
+build/data/python/bastd/mapdata/__pycache__/tip_top.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/mapdata/tip_top.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/actor/__pycache__/spazfactory.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/actor/spazfactory.py
+build/data/python/bastd/actor/__pycache__/spazfactory.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/actor/spazfactory.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/actor/__pycache__/bomb.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/actor/bomb.py
+build/data/python/bastd/actor/__pycache__/bomb.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/actor/bomb.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/actor/__pycache__/spazbot.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/actor/spazbot.py
+build/data/python/bastd/actor/__pycache__/spazbot.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/actor/spazbot.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/actor/__pycache__/flag.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/actor/flag.py
+build/data/python/bastd/actor/__pycache__/flag.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/actor/flag.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/actor/__pycache__/scoreboard.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/actor/scoreboard.py
+build/data/python/bastd/actor/__pycache__/scoreboard.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/actor/scoreboard.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/actor/__pycache__/popuptext.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/actor/popuptext.py
+build/data/python/bastd/actor/__pycache__/popuptext.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/actor/popuptext.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/actor/__pycache__/background.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/actor/background.py
+build/data/python/bastd/actor/__pycache__/background.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/actor/background.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/actor/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/actor/__init__.py
+build/data/python/bastd/actor/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/actor/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/actor/__pycache__/zoomtext.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/actor/zoomtext.py
+build/data/python/bastd/actor/__pycache__/zoomtext.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/actor/zoomtext.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/actor/__pycache__/spaz.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/actor/spaz.py
+build/data/python/bastd/actor/__pycache__/spaz.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/actor/spaz.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/actor/__pycache__/spazappearance.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/actor/spazappearance.py
+build/data/python/bastd/actor/__pycache__/spazappearance.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/actor/spazappearance.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/actor/__pycache__/controlsguide.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/actor/controlsguide.py
+build/data/python/bastd/actor/__pycache__/controlsguide.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/actor/controlsguide.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/actor/__pycache__/powerupbox.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/actor/powerupbox.py
+build/data/python/bastd/actor/__pycache__/powerupbox.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/actor/powerupbox.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/actor/__pycache__/text.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/actor/text.py
+build/data/python/bastd/actor/__pycache__/text.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/actor/text.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/actor/__pycache__/spawner.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/actor/spawner.py
+build/data/python/bastd/actor/__pycache__/spawner.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/actor/spawner.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/actor/__pycache__/respawnicon.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/actor/respawnicon.py
+build/data/python/bastd/actor/__pycache__/respawnicon.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/actor/respawnicon.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/actor/__pycache__/playerspaz.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/actor/playerspaz.py
+build/data/python/bastd/actor/__pycache__/playerspaz.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/actor/playerspaz.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/actor/__pycache__/tipstext.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/actor/tipstext.py
+build/data/python/bastd/actor/__pycache__/tipstext.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/actor/tipstext.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/actor/__pycache__/onscreencountdown.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/actor/onscreencountdown.py
+build/data/python/bastd/actor/__pycache__/onscreencountdown.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/actor/onscreencountdown.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/actor/__pycache__/onscreentimer.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/actor/onscreentimer.py
+build/data/python/bastd/actor/__pycache__/onscreentimer.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/actor/onscreentimer.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/actor/__pycache__/image.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/actor/image.py
+build/data/python/bastd/actor/__pycache__/image.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/actor/image.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/scripts/bastd/session/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/scripts/bastd/session/__init__.py
+build/data/python/bastd/session/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/data/python/bastd/session/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 

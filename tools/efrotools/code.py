@@ -227,6 +227,9 @@ def get_script_filenames(projroot: Path) -> List[str]:
         for root, _dirs, files in os.walk(place):
             for fname in files:
                 fnamefull = os.path.join(root, fname)
+                # Skip symlinks (we conceivably operate on the original too)
+                if os.path.islink(fnamefull):
+                    continue
                 if _should_include_script(fnamefull):
                     filenames.add(fnamefull)
     return sorted(list(f for f in filenames if 'flycheck_' not in f))

@@ -555,7 +555,7 @@ def py_examine() -> None:
     # Set up pypaths so our main distro stuff works.
     scriptsdir = os.path.abspath(
         os.path.join(os.path.dirname(sys.argv[0]),
-                     '../assets/src/data/scripts'))
+                     '../assets/src/data/python'))
     toolsdir = os.path.abspath(
         os.path.join(os.path.dirname(sys.argv[0]), '../tools'))
     if scriptsdir not in sys.path:
@@ -671,9 +671,9 @@ def update_docs_md() -> None:
     exts = ['.cc', '.c', '.h', '.py']
     for basedir in [
             'src/ballistica/python',
-            'assets/src/data/scripts/efro',
-            'assets/src/data/scripts/bacommon',
-            'assets/src/data/scripts/ba',
+            'assets/src/data/python/efro',
+            'assets/src/data/python/bacommon',
+            'assets/src/data/python/ba',
     ]:
         assert os.path.isdir(basedir)
         for root, _dirs, files in os.walk(basedir):

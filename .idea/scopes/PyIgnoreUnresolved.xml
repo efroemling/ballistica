@@ -1,3 +1,3 @@
 <component name="DependencyValidationManager">
-  <scope name="PyIgnoreUnresolved" pattern="file:assets/src/data/scripts/ba/internal.py||file:assets/src/data/scripts/ba/deprecated.py||file:assets/src/data/scripts/ba/__init__.py||file:assets/src/data/scripts/ba/_messages.py" />
+  <scope name="PyIgnoreUnresolved" pattern="file:assets/src/data/python/ba/internal.py||file:assets/src/data/python/ba/deprecated.py||file:assets/src/data/python/ba/__init__.py||file:assets/src/data/python/ba/_messages.py" />
 </component>
