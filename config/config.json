@@ -31,11 +31,11 @@
     "requests"
   ],
   "python_paths": [
-    "assets/src/data/python",
+    "assets/src/ba_data/python",
     "tools"
   ],
   "python_source_dirs": [
-    "assets/src/data/python",
+    "assets/src/ba_data/python",
     "assets/src/server",
     "src/generated_src",
     "tools",

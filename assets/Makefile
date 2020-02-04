@@ -144,474 +144,474 @@ ASSET_TARGETS_WIN_X64 += $(EXTRAS_TARGETS_WIN_X64)
 SCRIPT_TARGETS_PY_1 = \
   build/server/server.py \
   build/server/config.py \
-  build/data/python/efro/executils.py \
-  build/data/python/efro/util.py \
-  build/data/python/efro/__init__.py \
-  build/data/python/efro/jsonutils.py \
-  build/data/python/efro/entity/_base.py \
-  build/data/python/efro/entity/_support.py \
-  build/data/python/efro/entity/util.py \
-  build/data/python/efro/entity/_entity.py \
-  build/data/python/efro/entity/_field.py \
-  build/data/python/efro/entity/__init__.py \
-  build/data/python/efro/entity/_value.py \
-  build/data/python/bacommon/__init__.py \
-  build/data/python/bacommon/assets.py \
-  build/data/python/bacommon/err.py \
-  build/data/python/ba/_gameactivity.py \
-  build/data/python/ba/_apputils.py \
-  build/data/python/ba/_coopsession.py \
-  build/data/python/ba/_appdelegate.py \
-  build/data/python/ba/internal.py \
-  build/data/python/ba/_coopgame.py \
-  build/data/python/ba/_meta.py \
-  build/data/python/ba/_math.py \
-  build/data/python/ba/_appconfig.py \
-  build/data/python/ba/_gameresults.py \
-  build/data/python/ba/_profile.py \
-  build/data/python/ba/_error.py \
-  build/data/python/ba/_achievement.py \
-  build/data/python/ba/_map.py \
-  build/data/python/ba/_teambasesession.py \
-  build/data/python/ba/_gameutils.py \
-  build/data/python/ba/_activity.py \
-  build/data/python/ba/deprecated.py \
-  build/data/python/ba/_modutils.py \
-  build/data/python/ba/_tips.py \
-  build/data/python/ba/_store.py \
-  build/data/python/ba/_activitytypes.py \
-  build/data/python/ba/__init__.py \
-  build/data/python/ba/_session.py \
-  build/data/python/ba/_hooks.py \
-  build/data/python/ba/_enums.py \
-  build/data/python/ba/_netutils.py \
-  build/data/python/ba/_app.py \
-  build/data/python/ba/_benchmark.py \
-  build/data/python/ba/_tournament.py \
-  build/data/python/ba/_messages.py \
-  build/data/python/ba/_teamssession.py \
-  build/data/python/ba/_freeforallsession.py \
-  build/data/python/ba/_playlist.py \
-  build/data/python/ba/_team.py \
-  build/data/python/ba/_actor.py \
-  build/data/python/ba/_powerup.py \
-  build/data/python/ba/_campaign.py \
-  build/data/python/ba/_lobby.py \
-  build/data/python/ba/_stats.py \
-  build/data/python/ba/_input.py \
-  build/data/python/ba/_level.py \
-  build/data/python/ba/_dependency.py \
-  build/data/python/ba/_general.py \
-  build/data/python/ba/_server.py \
-  build/data/python/ba/_account.py \
-  build/data/python/ba/_music.py \
-  build/data/python/ba/_lang.py \
-  build/data/python/ba/_teamgame.py \
-  build/data/python/ba/ui/__init__.py \
-  build/data/python/bastd/mainmenu.py \
-  build/data/python/bastd/maps.py \
-  build/data/python/bastd/appdelegate.py \
-  build/data/python/bastd/tutorial.py \
-  build/data/python/bastd/__init__.py \
-  build/data/python/bastd/stdmap.py \
-  build/data/python/bastd/ui/playoptions.py \
-  build/data/python/bastd/ui/mainmenu.py \
-  build/data/python/bastd/ui/getremote.py \
-  build/data/python/bastd/ui/tournamententry.py \
-  build/data/python/bastd/ui/telnet.py \
-  build/data/python/bastd/ui/appinvite.py \
-  build/data/python/bastd/ui/gather.py \
-  build/data/python/bastd/ui/config.py \
-  build/data/python/bastd/ui/colorpicker.py \
-  build/data/python/bastd/ui/tabs.py \
-  build/data/python/bastd/ui/promocode.py \
-  build/data/python/bastd/ui/fileselector.py \
-  build/data/python/bastd/ui/feedback.py \
-  build/data/python/bastd/ui/teamnamescolors.py \
-  build/data/python/bastd/ui/configerror.py \
-  build/data/python/bastd/ui/serverdialog.py \
-  build/data/python/bastd/ui/getcurrency.py \
-  build/data/python/bastd/ui/__init__.py \
-  build/data/python/bastd/ui/specialoffer.py \
-  build/data/python/bastd/ui/helpui.py \
-  build/data/python/bastd/ui/purchase.py \
-  build/data/python/bastd/ui/continues.py \
-  build/data/python/bastd/ui/play.py \
-  build/data/python/bastd/ui/popup.py \
-  build/data/python/bastd/ui/onscreenkeyboard.py \
-  build/data/python/bastd/ui/kiosk.py \
-  build/data/python/bastd/ui/qrcode.py \
-  build/data/python/bastd/ui/trophies.py \
-  build/data/python/bastd/ui/partyqueue.py \
-  build/data/python/bastd/ui/url.py \
-  build/data/python/bastd/ui/debug.py \
-  build/data/python/bastd/ui/iconpicker.py \
-  build/data/python/bastd/ui/watch.py \
-  build/data/python/bastd/ui/achievements.py \
-  build/data/python/bastd/ui/radiogroup.py \
-  build/data/python/bastd/ui/creditslist.py \
-  build/data/python/bastd/ui/tournamentscores.py \
-  build/data/python/bastd/ui/characterpicker.py \
-  build/data/python/bastd/ui/report.py \
-  build/data/python/bastd/ui/resourcetypeinfo.py \
-  build/data/python/bastd/ui/confirm.py \
-  build/data/python/bastd/ui/party.py \
-  build/data/python/bastd/ui/settings/graphics.py \
-  build/data/python/bastd/ui/settings/advanced.py \
-  build/data/python/bastd/ui/settings/controls.py \
-  build/data/python/bastd/ui/settings/gamepadadvanced.py \
-  build/data/python/bastd/ui/settings/gamepadselect.py \
-  build/data/python/bastd/ui/settings/touchscreen.py \
-  build/data/python/bastd/ui/settings/__init__.py \
-  build/data/python/bastd/ui/settings/xbox360controller.py \
-  build/data/python/bastd/ui/settings/audio.py \
-  build/data/python/bastd/ui/settings/gamepad.py \
-  build/data/python/bastd/ui/settings/nettesting.py \
-  build/data/python/bastd/ui/settings/remoteapp.py \
-  build/data/python/bastd/ui/settings/testing.py \
-  build/data/python/bastd/ui/settings/wiimote.py \
-  build/data/python/bastd/ui/settings/vrtesting.py \
-  build/data/python/bastd/ui/settings/allsettings.py \
-  build/data/python/bastd/ui/settings/ps3controller.py \
-  build/data/python/bastd/ui/settings/keyboard.py \
-  build/data/python/bastd/ui/playlist/customizebrowser.py \
-  build/data/python/bastd/ui/playlist/__init__.py \
-  build/data/python/bastd/ui/playlist/edit.py \
-  build/data/python/bastd/ui/playlist/browser.py \
-  build/data/python/bastd/ui/playlist/mapselect.py \
-  build/data/python/bastd/ui/playlist/share.py \
-  build/data/python/bastd/ui/playlist/editgame.py \
-  build/data/python/bastd/ui/playlist/editcontroller.py \
-  build/data/python/bastd/ui/playlist/addgame.py \
-  build/data/python/bastd/ui/soundtrack/entrytypeselect.py \
-  build/data/python/bastd/ui/soundtrack/itunes.py \
-  build/data/python/bastd/ui/soundtrack/__init__.py \
-  build/data/python/bastd/ui/soundtrack/edit.py \
-  build/data/python/bastd/ui/soundtrack/browser.py \
-  build/data/python/bastd/ui/league/__init__.py \
-  build/data/python/bastd/ui/league/rankbutton.py \
-  build/data/python/bastd/ui/league/rankwindow.py \
-  build/data/python/bastd/ui/coop/gamebutton.py \
-  build/data/python/bastd/ui/coop/__init__.py \
-  build/data/python/bastd/ui/coop/browser.py \
-  build/data/python/bastd/ui/coop/level.py \
-  build/data/python/bastd/ui/profile/__init__.py \
-  build/data/python/bastd/ui/profile/edit.py \
-  build/data/python/bastd/ui/profile/upgrade.py \
-  build/data/python/bastd/ui/profile/browser.py \
-  build/data/python/bastd/ui/account/link.py \
-  build/data/python/bastd/ui/account/viewer.py \
-  build/data/python/bastd/ui/account/__init__.py \
-  build/data/python/bastd/ui/account/unlink.py \
-  build/data/python/bastd/ui/account/settings.py \
-  build/data/python/bastd/ui/store/__init__.py \
-  build/data/python/bastd/ui/store/browser.py \
-  build/data/python/bastd/ui/store/button.py \
-  build/data/python/bastd/ui/store/item.py \
-  build/data/python/bastd/activity/freeforallendscreen.py \
-  build/data/python/bastd/activity/__init__.py \
-  build/data/python/bastd/activity/coopscorescreen.py \
-  build/data/python/bastd/activity/dualteamscorescreen.py \
-  build/data/python/bastd/activity/coopjoinscreen.py \
-  build/data/python/bastd/activity/multiteamendscreen.py \
-  build/data/python/bastd/activity/teamsscorescreen.py \
-  build/data/python/bastd/activity/multiteamjoinscreen.py \
-  build/data/python/bastd/activity/drawscreen.py \
-  build/data/python/bastd/game/capturetheflag.py \
-  build/data/python/bastd/game/targetpractice.py \
-  build/data/python/bastd/game/ninjafight.py \
-  build/data/python/bastd/game/easteregghunt.py \
-  build/data/python/bastd/game/race.py \
-  build/data/python/bastd/game/meteorshower.py \
-  build/data/python/bastd/game/thelaststand.py \
-  build/data/python/bastd/game/__init__.py \
-  build/data/python/bastd/game/football.py \
-  build/data/python/bastd/game/kingofthehill.py \
-  build/data/python/bastd/game/assault.py \
-  build/data/python/bastd/game/keepaway.py \
-  build/data/python/bastd/game/elimination.py \
-  build/data/python/bastd/game/deathmatch.py \
-  build/data/python/bastd/game/onslaught.py \
-  build/data/python/bastd/game/hockey.py \
-  build/data/python/bastd/game/chosenone.py \
-  build/data/python/bastd/game/conquest.py \
-  build/data/python/bastd/game/runaround.py \
-  build/data/python/bastd/mapdata/bridgit.py \
-  build/data/python/bastd/mapdata/big_g.py \
-  build/data/python/bastd/mapdata/hockey_stadium.py \
-  build/data/python/bastd/mapdata/courtyard.py \
-  build/data/python/bastd/mapdata/tower_d.py \
-  build/data/python/bastd/mapdata/__init__.py \
-  build/data/python/bastd/mapdata/roundabout.py \
-  build/data/python/bastd/mapdata/rampage.py \
-  build/data/python/bastd/mapdata/crag_castle.py \
-  build/data/python/bastd/mapdata/step_right_up.py \
-  build/data/python/bastd/mapdata/football_stadium.py \
-  build/data/python/bastd/mapdata/the_pad.py \
-  build/data/python/bastd/mapdata/happy_thoughts.py \
-  build/data/python/bastd/mapdata/monkey_face.py \
-  build/data/python/bastd/mapdata/doom_shroom.py \
-  build/data/python/bastd/mapdata/zig_zag.py \
-  build/data/python/bastd/mapdata/lake_frigid.py \
-  build/data/python/bastd/mapdata/tip_top.py \
-  build/data/python/bastd/actor/spazfactory.py \
-  build/data/python/bastd/actor/bomb.py \
-  build/data/python/bastd/actor/spazbot.py \
-  build/data/python/bastd/actor/flag.py \
-  build/data/python/bastd/actor/scoreboard.py \
-  build/data/python/bastd/actor/popuptext.py \
-  build/data/python/bastd/actor/background.py \
-  build/data/python/bastd/actor/__init__.py \
-  build/data/python/bastd/actor/zoomtext.py \
-  build/data/python/bastd/actor/spaz.py \
-  build/data/python/bastd/actor/spazappearance.py \
-  build/data/python/bastd/actor/controlsguide.py \
-  build/data/python/bastd/actor/powerupbox.py \
-  build/data/python/bastd/actor/text.py \
-  build/data/python/bastd/actor/spawner.py \
-  build/data/python/bastd/actor/respawnicon.py \
-  build/data/python/bastd/actor/playerspaz.py \
-  build/data/python/bastd/actor/tipstext.py \
-  build/data/python/bastd/actor/onscreencountdown.py \
-  build/data/python/bastd/actor/onscreentimer.py \
-  build/data/python/bastd/actor/image.py \
-  build/data/python/bastd/session/__init__.py
+  build/ba_data/python/efro/executils.py \
+  build/ba_data/python/efro/util.py \
+  build/ba_data/python/efro/__init__.py \
+  build/ba_data/python/efro/jsonutils.py \
+  build/ba_data/python/efro/entity/_base.py \
+  build/ba_data/python/efro/entity/_support.py \
+  build/ba_data/python/efro/entity/util.py \
+  build/ba_data/python/efro/entity/_entity.py \
+  build/ba_data/python/efro/entity/_field.py \
+  build/ba_data/python/efro/entity/__init__.py \
+  build/ba_data/python/efro/entity/_value.py \
+  build/ba_data/python/bacommon/__init__.py \
+  build/ba_data/python/bacommon/assets.py \
+  build/ba_data/python/bacommon/err.py \
+  build/ba_data/python/ba/_gameactivity.py \
+  build/ba_data/python/ba/_apputils.py \
+  build/ba_data/python/ba/_coopsession.py \
+  build/ba_data/python/ba/_appdelegate.py \
+  build/ba_data/python/ba/internal.py \
+  build/ba_data/python/ba/_coopgame.py \
+  build/ba_data/python/ba/_meta.py \
+  build/ba_data/python/ba/_math.py \
+  build/ba_data/python/ba/_appconfig.py \
+  build/ba_data/python/ba/_gameresults.py \
+  build/ba_data/python/ba/_profile.py \
+  build/ba_data/python/ba/_error.py \
+  build/ba_data/python/ba/_achievement.py \
+  build/ba_data/python/ba/_map.py \
+  build/ba_data/python/ba/_teambasesession.py \
+  build/ba_data/python/ba/_gameutils.py \
+  build/ba_data/python/ba/_activity.py \
+  build/ba_data/python/ba/deprecated.py \
+  build/ba_data/python/ba/_modutils.py \
+  build/ba_data/python/ba/_tips.py \
+  build/ba_data/python/ba/_store.py \
+  build/ba_data/python/ba/_activitytypes.py \
+  build/ba_data/python/ba/__init__.py \
+  build/ba_data/python/ba/_session.py \
+  build/ba_data/python/ba/_hooks.py \
+  build/ba_data/python/ba/_enums.py \
+  build/ba_data/python/ba/_netutils.py \
+  build/ba_data/python/ba/_app.py \
+  build/ba_data/python/ba/_benchmark.py \
+  build/ba_data/python/ba/_tournament.py \
+  build/ba_data/python/ba/_messages.py \
+  build/ba_data/python/ba/_teamssession.py \
+  build/ba_data/python/ba/_freeforallsession.py \
+  build/ba_data/python/ba/_playlist.py \
+  build/ba_data/python/ba/_team.py \
+  build/ba_data/python/ba/_actor.py \
+  build/ba_data/python/ba/_powerup.py \
+  build/ba_data/python/ba/_campaign.py \
+  build/ba_data/python/ba/_lobby.py \
+  build/ba_data/python/ba/_stats.py \
+  build/ba_data/python/ba/_input.py \
+  build/ba_data/python/ba/_level.py \
+  build/ba_data/python/ba/_dependency.py \
+  build/ba_data/python/ba/_general.py \
+  build/ba_data/python/ba/_server.py \
+  build/ba_data/python/ba/_account.py \
+  build/ba_data/python/ba/_music.py \
+  build/ba_data/python/ba/_lang.py \
+  build/ba_data/python/ba/_teamgame.py \
+  build/ba_data/python/ba/ui/__init__.py \
+  build/ba_data/python/bastd/mainmenu.py \
+  build/ba_data/python/bastd/maps.py \
+  build/ba_data/python/bastd/appdelegate.py \
+  build/ba_data/python/bastd/tutorial.py \
+  build/ba_data/python/bastd/__init__.py \
+  build/ba_data/python/bastd/stdmap.py \
+  build/ba_data/python/bastd/ui/playoptions.py \
+  build/ba_data/python/bastd/ui/mainmenu.py \
+  build/ba_data/python/bastd/ui/getremote.py \
+  build/ba_data/python/bastd/ui/tournamententry.py \
+  build/ba_data/python/bastd/ui/telnet.py \
+  build/ba_data/python/bastd/ui/appinvite.py \
+  build/ba_data/python/bastd/ui/gather.py \
+  build/ba_data/python/bastd/ui/config.py \
+  build/ba_data/python/bastd/ui/colorpicker.py \
+  build/ba_data/python/bastd/ui/tabs.py \
+  build/ba_data/python/bastd/ui/promocode.py \
+  build/ba_data/python/bastd/ui/fileselector.py \
+  build/ba_data/python/bastd/ui/feedback.py \
+  build/ba_data/python/bastd/ui/teamnamescolors.py \
+  build/ba_data/python/bastd/ui/configerror.py \
+  build/ba_data/python/bastd/ui/serverdialog.py \
+  build/ba_data/python/bastd/ui/getcurrency.py \
+  build/ba_data/python/bastd/ui/__init__.py \
+  build/ba_data/python/bastd/ui/specialoffer.py \
+  build/ba_data/python/bastd/ui/helpui.py \
+  build/ba_data/python/bastd/ui/purchase.py \
+  build/ba_data/python/bastd/ui/continues.py \
+  build/ba_data/python/bastd/ui/play.py \
+  build/ba_data/python/bastd/ui/popup.py \
+  build/ba_data/python/bastd/ui/onscreenkeyboard.py \
+  build/ba_data/python/bastd/ui/kiosk.py \
+  build/ba_data/python/bastd/ui/qrcode.py \
+  build/ba_data/python/bastd/ui/trophies.py \
+  build/ba_data/python/bastd/ui/partyqueue.py \
+  build/ba_data/python/bastd/ui/url.py \
+  build/ba_data/python/bastd/ui/debug.py \
+  build/ba_data/python/bastd/ui/iconpicker.py \
+  build/ba_data/python/bastd/ui/watch.py \
+  build/ba_data/python/bastd/ui/achievements.py \
+  build/ba_data/python/bastd/ui/radiogroup.py \
+  build/ba_data/python/bastd/ui/creditslist.py \
+  build/ba_data/python/bastd/ui/tournamentscores.py \
+  build/ba_data/python/bastd/ui/characterpicker.py \
+  build/ba_data/python/bastd/ui/report.py \
+  build/ba_data/python/bastd/ui/resourcetypeinfo.py \
+  build/ba_data/python/bastd/ui/confirm.py \
+  build/ba_data/python/bastd/ui/party.py \
+  build/ba_data/python/bastd/ui/settings/graphics.py \
+  build/ba_data/python/bastd/ui/settings/advanced.py \
+  build/ba_data/python/bastd/ui/settings/controls.py \
+  build/ba_data/python/bastd/ui/settings/gamepadadvanced.py \
+  build/ba_data/python/bastd/ui/settings/gamepadselect.py \
+  build/ba_data/python/bastd/ui/settings/touchscreen.py \
+  build/ba_data/python/bastd/ui/settings/__init__.py \
+  build/ba_data/python/bastd/ui/settings/xbox360controller.py \
+  build/ba_data/python/bastd/ui/settings/audio.py \
+  build/ba_data/python/bastd/ui/settings/gamepad.py \
+  build/ba_data/python/bastd/ui/settings/nettesting.py \
+  build/ba_data/python/bastd/ui/settings/remoteapp.py \
+  build/ba_data/python/bastd/ui/settings/testing.py \
+  build/ba_data/python/bastd/ui/settings/wiimote.py \
+  build/ba_data/python/bastd/ui/settings/vrtesting.py \
+  build/ba_data/python/bastd/ui/settings/allsettings.py \
+  build/ba_data/python/bastd/ui/settings/ps3controller.py \
+  build/ba_data/python/bastd/ui/settings/keyboard.py \
+  build/ba_data/python/bastd/ui/playlist/customizebrowser.py \
+  build/ba_data/python/bastd/ui/playlist/__init__.py \
+  build/ba_data/python/bastd/ui/playlist/edit.py \
+  build/ba_data/python/bastd/ui/playlist/browser.py \
+  build/ba_data/python/bastd/ui/playlist/mapselect.py \
+  build/ba_data/python/bastd/ui/playlist/share.py \
+  build/ba_data/python/bastd/ui/playlist/editgame.py \
+  build/ba_data/python/bastd/ui/playlist/editcontroller.py \
+  build/ba_data/python/bastd/ui/playlist/addgame.py \
+  build/ba_data/python/bastd/ui/soundtrack/entrytypeselect.py \
+  build/ba_data/python/bastd/ui/soundtrack/itunes.py \
+  build/ba_data/python/bastd/ui/soundtrack/__init__.py \
+  build/ba_data/python/bastd/ui/soundtrack/edit.py \
+  build/ba_data/python/bastd/ui/soundtrack/browser.py \
+  build/ba_data/python/bastd/ui/league/__init__.py \
+  build/ba_data/python/bastd/ui/league/rankbutton.py \
+  build/ba_data/python/bastd/ui/league/rankwindow.py \
+  build/ba_data/python/bastd/ui/coop/gamebutton.py \
+  build/ba_data/python/bastd/ui/coop/__init__.py \
+  build/ba_data/python/bastd/ui/coop/browser.py \
+  build/ba_data/python/bastd/ui/coop/level.py \
+  build/ba_data/python/bastd/ui/profile/__init__.py \
+  build/ba_data/python/bastd/ui/profile/edit.py \
+  build/ba_data/python/bastd/ui/profile/upgrade.py \
+  build/ba_data/python/bastd/ui/profile/browser.py \
+  build/ba_data/python/bastd/ui/account/link.py \
+  build/ba_data/python/bastd/ui/account/viewer.py \
+  build/ba_data/python/bastd/ui/account/__init__.py \
+  build/ba_data/python/bastd/ui/account/unlink.py \
+  build/ba_data/python/bastd/ui/account/settings.py \
+  build/ba_data/python/bastd/ui/store/__init__.py \
+  build/ba_data/python/bastd/ui/store/browser.py \
+  build/ba_data/python/bastd/ui/store/button.py \
+  build/ba_data/python/bastd/ui/store/item.py \
+  build/ba_data/python/bastd/activity/freeforallendscreen.py \
+  build/ba_data/python/bastd/activity/__init__.py \
+  build/ba_data/python/bastd/activity/coopscorescreen.py \
+  build/ba_data/python/bastd/activity/dualteamscorescreen.py \
+  build/ba_data/python/bastd/activity/coopjoinscreen.py \
+  build/ba_data/python/bastd/activity/multiteamendscreen.py \
+  build/ba_data/python/bastd/activity/teamsscorescreen.py \
+  build/ba_data/python/bastd/activity/multiteamjoinscreen.py \
+  build/ba_data/python/bastd/activity/drawscreen.py \
+  build/ba_data/python/bastd/game/capturetheflag.py \
+  build/ba_data/python/bastd/game/targetpractice.py \
+  build/ba_data/python/bastd/game/ninjafight.py \
+  build/ba_data/python/bastd/game/easteregghunt.py \
+  build/ba_data/python/bastd/game/race.py \
+  build/ba_data/python/bastd/game/meteorshower.py \
+  build/ba_data/python/bastd/game/thelaststand.py \
+  build/ba_data/python/bastd/game/__init__.py \
+  build/ba_data/python/bastd/game/football.py \
+  build/ba_data/python/bastd/game/kingofthehill.py \
+  build/ba_data/python/bastd/game/assault.py \
+  build/ba_data/python/bastd/game/keepaway.py \
+  build/ba_data/python/bastd/game/elimination.py \
+  build/ba_data/python/bastd/game/deathmatch.py \
+  build/ba_data/python/bastd/game/onslaught.py \
+  build/ba_data/python/bastd/game/hockey.py \
+  build/ba_data/python/bastd/game/chosenone.py \
+  build/ba_data/python/bastd/game/conquest.py \
+  build/ba_data/python/bastd/game/runaround.py \
+  build/ba_data/python/bastd/mapdata/bridgit.py \
+  build/ba_data/python/bastd/mapdata/big_g.py \
+  build/ba_data/python/bastd/mapdata/hockey_stadium.py \
+  build/ba_data/python/bastd/mapdata/courtyard.py \
+  build/ba_data/python/bastd/mapdata/tower_d.py \
+  build/ba_data/python/bastd/mapdata/__init__.py \
+  build/ba_data/python/bastd/mapdata/roundabout.py \
+  build/ba_data/python/bastd/mapdata/rampage.py \
+  build/ba_data/python/bastd/mapdata/crag_castle.py \
+  build/ba_data/python/bastd/mapdata/step_right_up.py \
+  build/ba_data/python/bastd/mapdata/football_stadium.py \
+  build/ba_data/python/bastd/mapdata/the_pad.py \
+  build/ba_data/python/bastd/mapdata/happy_thoughts.py \
+  build/ba_data/python/bastd/mapdata/monkey_face.py \
+  build/ba_data/python/bastd/mapdata/doom_shroom.py \
+  build/ba_data/python/bastd/mapdata/zig_zag.py \
+  build/ba_data/python/bastd/mapdata/lake_frigid.py \
+  build/ba_data/python/bastd/mapdata/tip_top.py \
+  build/ba_data/python/bastd/actor/spazfactory.py \
+  build/ba_data/python/bastd/actor/bomb.py \
+  build/ba_data/python/bastd/actor/spazbot.py \
+  build/ba_data/python/bastd/actor/flag.py \
+  build/ba_data/python/bastd/actor/scoreboard.py \
+  build/ba_data/python/bastd/actor/popuptext.py \
+  build/ba_data/python/bastd/actor/background.py \
+  build/ba_data/python/bastd/actor/__init__.py \
+  build/ba_data/python/bastd/actor/zoomtext.py \
+  build/ba_data/python/bastd/actor/spaz.py \
+  build/ba_data/python/bastd/actor/spazappearance.py \
+  build/ba_data/python/bastd/actor/controlsguide.py \
+  build/ba_data/python/bastd/actor/powerupbox.py \
+  build/ba_data/python/bastd/actor/text.py \
+  build/ba_data/python/bastd/actor/spawner.py \
+  build/ba_data/python/bastd/actor/respawnicon.py \
+  build/ba_data/python/bastd/actor/playerspaz.py \
+  build/ba_data/python/bastd/actor/tipstext.py \
+  build/ba_data/python/bastd/actor/onscreencountdown.py \
+  build/ba_data/python/bastd/actor/onscreentimer.py \
+  build/ba_data/python/bastd/actor/image.py \
+  build/ba_data/python/bastd/session/__init__.py
 
 SCRIPT_TARGETS_PYC_1 = \
   build/server/__pycache__/server.cpython-37.opt-1.pyc \
   build/server/__pycache__/config.cpython-37.opt-1.pyc \
-  build/data/python/efro/__pycache__/executils.cpython-37.opt-1.pyc \
-  build/data/python/efro/__pycache__/util.cpython-37.opt-1.pyc \
-  build/data/python/efro/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/python/efro/__pycache__/jsonutils.cpython-37.opt-1.pyc \
-  build/data/python/efro/entity/__pycache__/_base.cpython-37.opt-1.pyc \
-  build/data/python/efro/entity/__pycache__/_support.cpython-37.opt-1.pyc \
-  build/data/python/efro/entity/__pycache__/util.cpython-37.opt-1.pyc \
-  build/data/python/efro/entity/__pycache__/_entity.cpython-37.opt-1.pyc \
-  build/data/python/efro/entity/__pycache__/_field.cpython-37.opt-1.pyc \
-  build/data/python/efro/entity/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/python/efro/entity/__pycache__/_value.cpython-37.opt-1.pyc \
-  build/data/python/bacommon/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/python/bacommon/__pycache__/assets.cpython-37.opt-1.pyc \
-  build/data/python/bacommon/__pycache__/err.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_gameactivity.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_apputils.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_coopsession.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_appdelegate.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/internal.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_coopgame.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_meta.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_math.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_appconfig.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_gameresults.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_profile.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_error.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_achievement.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_map.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_teambasesession.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_gameutils.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_activity.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/deprecated.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_modutils.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_tips.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_store.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_activitytypes.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_session.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_hooks.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_enums.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_netutils.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_app.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_benchmark.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_tournament.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_messages.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_teamssession.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_freeforallsession.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_playlist.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_team.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_actor.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_powerup.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_campaign.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_lobby.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_stats.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_input.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_level.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_dependency.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_general.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_server.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_account.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_music.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_lang.cpython-37.opt-1.pyc \
-  build/data/python/ba/__pycache__/_teamgame.cpython-37.opt-1.pyc \
-  build/data/python/ba/ui/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/python/bastd/__pycache__/mainmenu.cpython-37.opt-1.pyc \
-  build/data/python/bastd/__pycache__/maps.cpython-37.opt-1.pyc \
-  build/data/python/bastd/__pycache__/appdelegate.cpython-37.opt-1.pyc \
-  build/data/python/bastd/__pycache__/tutorial.cpython-37.opt-1.pyc \
-  build/data/python/bastd/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/python/bastd/__pycache__/stdmap.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/playoptions.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/mainmenu.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/getremote.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/tournamententry.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/telnet.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/appinvite.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/gather.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/config.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/colorpicker.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/tabs.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/promocode.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/fileselector.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/feedback.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/teamnamescolors.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/configerror.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/serverdialog.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/getcurrency.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/specialoffer.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/helpui.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/purchase.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/continues.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/play.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/popup.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/onscreenkeyboard.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/kiosk.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/qrcode.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/trophies.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/partyqueue.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/url.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/debug.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/iconpicker.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/watch.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/achievements.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/radiogroup.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/creditslist.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/tournamentscores.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/characterpicker.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/report.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/resourcetypeinfo.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/confirm.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/__pycache__/party.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/settings/__pycache__/graphics.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/settings/__pycache__/advanced.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/settings/__pycache__/controls.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/settings/__pycache__/gamepadadvanced.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/settings/__pycache__/gamepadselect.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/settings/__pycache__/touchscreen.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/settings/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/settings/__pycache__/xbox360controller.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/settings/__pycache__/audio.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/settings/__pycache__/gamepad.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/settings/__pycache__/nettesting.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/settings/__pycache__/remoteapp.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/settings/__pycache__/testing.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/settings/__pycache__/wiimote.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/settings/__pycache__/vrtesting.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/settings/__pycache__/allsettings.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/settings/__pycache__/ps3controller.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/settings/__pycache__/keyboard.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/playlist/__pycache__/customizebrowser.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/playlist/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/playlist/__pycache__/edit.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/playlist/__pycache__/browser.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/playlist/__pycache__/mapselect.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/playlist/__pycache__/share.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/playlist/__pycache__/editgame.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/playlist/__pycache__/editcontroller.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/playlist/__pycache__/addgame.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/soundtrack/__pycache__/entrytypeselect.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/soundtrack/__pycache__/itunes.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/soundtrack/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/soundtrack/__pycache__/edit.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/soundtrack/__pycache__/browser.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/league/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/league/__pycache__/rankbutton.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/league/__pycache__/rankwindow.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/coop/__pycache__/gamebutton.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/coop/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/coop/__pycache__/browser.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/coop/__pycache__/level.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/profile/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/profile/__pycache__/edit.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/profile/__pycache__/upgrade.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/profile/__pycache__/browser.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/account/__pycache__/link.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/account/__pycache__/viewer.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/account/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/account/__pycache__/unlink.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/account/__pycache__/settings.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/store/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/store/__pycache__/browser.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/store/__pycache__/button.cpython-37.opt-1.pyc \
-  build/data/python/bastd/ui/store/__pycache__/item.cpython-37.opt-1.pyc \
-  build/data/python/bastd/activity/__pycache__/freeforallendscreen.cpython-37.opt-1.pyc \
-  build/data/python/bastd/activity/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/python/bastd/activity/__pycache__/coopscorescreen.cpython-37.opt-1.pyc \
-  build/data/python/bastd/activity/__pycache__/dualteamscorescreen.cpython-37.opt-1.pyc \
-  build/data/python/bastd/activity/__pycache__/coopjoinscreen.cpython-37.opt-1.pyc \
-  build/data/python/bastd/activity/__pycache__/multiteamendscreen.cpython-37.opt-1.pyc \
-  build/data/python/bastd/activity/__pycache__/teamsscorescreen.cpython-37.opt-1.pyc \
-  build/data/python/bastd/activity/__pycache__/multiteamjoinscreen.cpython-37.opt-1.pyc \
-  build/data/python/bastd/activity/__pycache__/drawscreen.cpython-37.opt-1.pyc \
-  build/data/python/bastd/game/__pycache__/capturetheflag.cpython-37.opt-1.pyc \
-  build/data/python/bastd/game/__pycache__/targetpractice.cpython-37.opt-1.pyc \
-  build/data/python/bastd/game/__pycache__/ninjafight.cpython-37.opt-1.pyc \
-  build/data/python/bastd/game/__pycache__/easteregghunt.cpython-37.opt-1.pyc \
-  build/data/python/bastd/game/__pycache__/race.cpython-37.opt-1.pyc \
-  build/data/python/bastd/game/__pycache__/meteorshower.cpython-37.opt-1.pyc \
-  build/data/python/bastd/game/__pycache__/thelaststand.cpython-37.opt-1.pyc \
-  build/data/python/bastd/game/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/python/bastd/game/__pycache__/football.cpython-37.opt-1.pyc \
-  build/data/python/bastd/game/__pycache__/kingofthehill.cpython-37.opt-1.pyc \
-  build/data/python/bastd/game/__pycache__/assault.cpython-37.opt-1.pyc \
-  build/data/python/bastd/game/__pycache__/keepaway.cpython-37.opt-1.pyc \
-  build/data/python/bastd/game/__pycache__/elimination.cpython-37.opt-1.pyc \
-  build/data/python/bastd/game/__pycache__/deathmatch.cpython-37.opt-1.pyc \
-  build/data/python/bastd/game/__pycache__/onslaught.cpython-37.opt-1.pyc \
-  build/data/python/bastd/game/__pycache__/hockey.cpython-37.opt-1.pyc \
-  build/data/python/bastd/game/__pycache__/chosenone.cpython-37.opt-1.pyc \
-  build/data/python/bastd/game/__pycache__/conquest.cpython-37.opt-1.pyc \
-  build/data/python/bastd/game/__pycache__/runaround.cpython-37.opt-1.pyc \
-  build/data/python/bastd/mapdata/__pycache__/bridgit.cpython-37.opt-1.pyc \
-  build/data/python/bastd/mapdata/__pycache__/big_g.cpython-37.opt-1.pyc \
-  build/data/python/bastd/mapdata/__pycache__/hockey_stadium.cpython-37.opt-1.pyc \
-  build/data/python/bastd/mapdata/__pycache__/courtyard.cpython-37.opt-1.pyc \
-  build/data/python/bastd/mapdata/__pycache__/tower_d.cpython-37.opt-1.pyc \
-  build/data/python/bastd/mapdata/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/python/bastd/mapdata/__pycache__/roundabout.cpython-37.opt-1.pyc \
-  build/data/python/bastd/mapdata/__pycache__/rampage.cpython-37.opt-1.pyc \
-  build/data/python/bastd/mapdata/__pycache__/crag_castle.cpython-37.opt-1.pyc \
-  build/data/python/bastd/mapdata/__pycache__/step_right_up.cpython-37.opt-1.pyc \
-  build/data/python/bastd/mapdata/__pycache__/football_stadium.cpython-37.opt-1.pyc \
-  build/data/python/bastd/mapdata/__pycache__/the_pad.cpython-37.opt-1.pyc \
-  build/data/python/bastd/mapdata/__pycache__/happy_thoughts.cpython-37.opt-1.pyc \
-  build/data/python/bastd/mapdata/__pycache__/monkey_face.cpython-37.opt-1.pyc \
-  build/data/python/bastd/mapdata/__pycache__/doom_shroom.cpython-37.opt-1.pyc \
-  build/data/python/bastd/mapdata/__pycache__/zig_zag.cpython-37.opt-1.pyc \
-  build/data/python/bastd/mapdata/__pycache__/lake_frigid.cpython-37.opt-1.pyc \
-  build/data/python/bastd/mapdata/__pycache__/tip_top.cpython-37.opt-1.pyc \
-  build/data/python/bastd/actor/__pycache__/spazfactory.cpython-37.opt-1.pyc \
-  build/data/python/bastd/actor/__pycache__/bomb.cpython-37.opt-1.pyc \
-  build/data/python/bastd/actor/__pycache__/spazbot.cpython-37.opt-1.pyc \
-  build/data/python/bastd/actor/__pycache__/flag.cpython-37.opt-1.pyc \
-  build/data/python/bastd/actor/__pycache__/scoreboard.cpython-37.opt-1.pyc \
-  build/data/python/bastd/actor/__pycache__/popuptext.cpython-37.opt-1.pyc \
-  build/data/python/bastd/actor/__pycache__/background.cpython-37.opt-1.pyc \
-  build/data/python/bastd/actor/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/data/python/bastd/actor/__pycache__/zoomtext.cpython-37.opt-1.pyc \
-  build/data/python/bastd/actor/__pycache__/spaz.cpython-37.opt-1.pyc \
-  build/data/python/bastd/actor/__pycache__/spazappearance.cpython-37.opt-1.pyc \
-  build/data/python/bastd/actor/__pycache__/controlsguide.cpython-37.opt-1.pyc \
-  build/data/python/bastd/actor/__pycache__/powerupbox.cpython-37.opt-1.pyc \
-  build/data/python/bastd/actor/__pycache__/text.cpython-37.opt-1.pyc \
-  build/data/python/bastd/actor/__pycache__/spawner.cpython-37.opt-1.pyc \
-  build/data/python/bastd/actor/__pycache__/respawnicon.cpython-37.opt-1.pyc \
-  build/data/python/bastd/actor/__pycache__/playerspaz.cpython-37.opt-1.pyc \
-  build/data/python/bastd/actor/__pycache__/tipstext.cpython-37.opt-1.pyc \
-  build/data/python/bastd/actor/__pycache__/onscreencountdown.cpython-37.opt-1.pyc \
-  build/data/python/bastd/actor/__pycache__/onscreentimer.cpython-37.opt-1.pyc \
-  build/data/python/bastd/actor/__pycache__/image.cpython-37.opt-1.pyc \
-  build/data/python/bastd/session/__pycache__/__init__.cpython-37.opt-1.pyc
+  build/ba_data/python/efro/__pycache__/executils.cpython-37.opt-1.pyc \
+  build/ba_data/python/efro/__pycache__/util.cpython-37.opt-1.pyc \
+  build/ba_data/python/efro/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/ba_data/python/efro/__pycache__/jsonutils.cpython-37.opt-1.pyc \
+  build/ba_data/python/efro/entity/__pycache__/_base.cpython-37.opt-1.pyc \
+  build/ba_data/python/efro/entity/__pycache__/_support.cpython-37.opt-1.pyc \
+  build/ba_data/python/efro/entity/__pycache__/util.cpython-37.opt-1.pyc \
+  build/ba_data/python/efro/entity/__pycache__/_entity.cpython-37.opt-1.pyc \
+  build/ba_data/python/efro/entity/__pycache__/_field.cpython-37.opt-1.pyc \
+  build/ba_data/python/efro/entity/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/ba_data/python/efro/entity/__pycache__/_value.cpython-37.opt-1.pyc \
+  build/ba_data/python/bacommon/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/ba_data/python/bacommon/__pycache__/assets.cpython-37.opt-1.pyc \
+  build/ba_data/python/bacommon/__pycache__/err.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_gameactivity.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_apputils.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_coopsession.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_appdelegate.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/internal.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_coopgame.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_meta.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_math.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_appconfig.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_gameresults.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_profile.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_error.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_achievement.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_map.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_teambasesession.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_gameutils.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_activity.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/deprecated.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_modutils.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_tips.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_store.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_activitytypes.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_session.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_hooks.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_enums.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_netutils.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_app.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_benchmark.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_tournament.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_messages.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_teamssession.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_freeforallsession.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_playlist.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_team.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_actor.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_powerup.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_campaign.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_lobby.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_stats.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_input.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_level.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_dependency.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_general.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_server.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_account.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_music.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_lang.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_teamgame.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/ui/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/__pycache__/mainmenu.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/__pycache__/maps.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/__pycache__/appdelegate.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/__pycache__/tutorial.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/__pycache__/stdmap.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/playoptions.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/mainmenu.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/getremote.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/tournamententry.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/telnet.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/appinvite.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/gather.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/config.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/colorpicker.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/tabs.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/promocode.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/fileselector.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/feedback.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/teamnamescolors.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/configerror.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/serverdialog.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/getcurrency.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/specialoffer.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/helpui.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/purchase.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/continues.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/play.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/popup.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/onscreenkeyboard.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/kiosk.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/qrcode.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/trophies.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/partyqueue.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/url.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/debug.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/iconpicker.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/watch.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/achievements.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/radiogroup.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/creditslist.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/tournamentscores.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/characterpicker.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/report.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/resourcetypeinfo.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/confirm.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/__pycache__/party.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/settings/__pycache__/graphics.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/settings/__pycache__/advanced.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/settings/__pycache__/controls.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/settings/__pycache__/gamepadadvanced.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/settings/__pycache__/gamepadselect.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/settings/__pycache__/touchscreen.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/settings/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/settings/__pycache__/xbox360controller.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/settings/__pycache__/audio.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/settings/__pycache__/gamepad.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/settings/__pycache__/nettesting.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/settings/__pycache__/remoteapp.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/settings/__pycache__/testing.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/settings/__pycache__/wiimote.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/settings/__pycache__/vrtesting.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/settings/__pycache__/allsettings.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/settings/__pycache__/ps3controller.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/settings/__pycache__/keyboard.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/playlist/__pycache__/customizebrowser.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/playlist/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/playlist/__pycache__/edit.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/playlist/__pycache__/browser.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/playlist/__pycache__/mapselect.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/playlist/__pycache__/share.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/playlist/__pycache__/editgame.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/playlist/__pycache__/editcontroller.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/playlist/__pycache__/addgame.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/soundtrack/__pycache__/entrytypeselect.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/soundtrack/__pycache__/itunes.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/soundtrack/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/soundtrack/__pycache__/edit.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/soundtrack/__pycache__/browser.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/league/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/league/__pycache__/rankbutton.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/league/__pycache__/rankwindow.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/coop/__pycache__/gamebutton.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/coop/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/coop/__pycache__/browser.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/coop/__pycache__/level.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/profile/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/profile/__pycache__/edit.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/profile/__pycache__/upgrade.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/profile/__pycache__/browser.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/account/__pycache__/link.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/account/__pycache__/viewer.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/account/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/account/__pycache__/unlink.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/account/__pycache__/settings.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/store/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/store/__pycache__/browser.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/store/__pycache__/button.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/store/__pycache__/item.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/activity/__pycache__/freeforallendscreen.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/activity/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/activity/__pycache__/coopscorescreen.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/activity/__pycache__/dualteamscorescreen.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/activity/__pycache__/coopjoinscreen.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/activity/__pycache__/multiteamendscreen.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/activity/__pycache__/teamsscorescreen.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/activity/__pycache__/multiteamjoinscreen.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/activity/__pycache__/drawscreen.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/game/__pycache__/capturetheflag.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/game/__pycache__/targetpractice.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/game/__pycache__/ninjafight.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/game/__pycache__/easteregghunt.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/game/__pycache__/race.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/game/__pycache__/meteorshower.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/game/__pycache__/thelaststand.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/game/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/game/__pycache__/football.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/game/__pycache__/kingofthehill.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/game/__pycache__/assault.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/game/__pycache__/keepaway.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/game/__pycache__/elimination.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/game/__pycache__/deathmatch.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/game/__pycache__/onslaught.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/game/__pycache__/hockey.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/game/__pycache__/chosenone.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/game/__pycache__/conquest.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/game/__pycache__/runaround.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/mapdata/__pycache__/bridgit.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/mapdata/__pycache__/big_g.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/mapdata/__pycache__/hockey_stadium.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/mapdata/__pycache__/courtyard.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/mapdata/__pycache__/tower_d.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/mapdata/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/mapdata/__pycache__/roundabout.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/mapdata/__pycache__/rampage.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/mapdata/__pycache__/crag_castle.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/mapdata/__pycache__/step_right_up.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/mapdata/__pycache__/football_stadium.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/mapdata/__pycache__/the_pad.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/mapdata/__pycache__/happy_thoughts.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/mapdata/__pycache__/monkey_face.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/mapdata/__pycache__/doom_shroom.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/mapdata/__pycache__/zig_zag.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/mapdata/__pycache__/lake_frigid.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/mapdata/__pycache__/tip_top.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/actor/__pycache__/spazfactory.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/actor/__pycache__/bomb.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/actor/__pycache__/spazbot.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/actor/__pycache__/flag.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/actor/__pycache__/scoreboard.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/actor/__pycache__/popuptext.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/actor/__pycache__/background.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/actor/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/actor/__pycache__/zoomtext.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/actor/__pycache__/spaz.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/actor/__pycache__/spazappearance.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/actor/__pycache__/controlsguide.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/actor/__pycache__/powerupbox.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/actor/__pycache__/text.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/actor/__pycache__/spawner.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/actor/__pycache__/respawnicon.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/actor/__pycache__/playerspaz.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/actor/__pycache__/tipstext.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/actor/__pycache__/onscreencountdown.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/actor/__pycache__/onscreentimer.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/actor/__pycache__/image.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/session/__pycache__/__init__.cpython-37.opt-1.pyc
 
 # Rule to copy src asset scripts to dst.
 # (and make non-writable so I'm less likely to accidentally edit them there)
@@ -636,1163 +636,1163 @@ build/server/__pycache__/config.cpython-37.opt-1.pyc: \
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/efro/__pycache__/executils.cpython-37.opt-1.pyc: \
-      build/data/python/efro/executils.py
+build/ba_data/python/efro/__pycache__/executils.cpython-37.opt-1.pyc: \
+      build/ba_data/python/efro/executils.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/efro/__pycache__/util.cpython-37.opt-1.pyc: \
-      build/data/python/efro/util.py
+build/ba_data/python/efro/__pycache__/util.cpython-37.opt-1.pyc: \
+      build/ba_data/python/efro/util.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/efro/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/python/efro/__init__.py
+build/ba_data/python/efro/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/ba_data/python/efro/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/efro/__pycache__/jsonutils.cpython-37.opt-1.pyc: \
-      build/data/python/efro/jsonutils.py
+build/ba_data/python/efro/__pycache__/jsonutils.cpython-37.opt-1.pyc: \
+      build/ba_data/python/efro/jsonutils.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/efro/entity/__pycache__/_base.cpython-37.opt-1.pyc: \
-      build/data/python/efro/entity/_base.py
+build/ba_data/python/efro/entity/__pycache__/_base.cpython-37.opt-1.pyc: \
+      build/ba_data/python/efro/entity/_base.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/efro/entity/__pycache__/_support.cpython-37.opt-1.pyc: \
-      build/data/python/efro/entity/_support.py
+build/ba_data/python/efro/entity/__pycache__/_support.cpython-37.opt-1.pyc: \
+      build/ba_data/python/efro/entity/_support.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/efro/entity/__pycache__/util.cpython-37.opt-1.pyc: \
-      build/data/python/efro/entity/util.py
+build/ba_data/python/efro/entity/__pycache__/util.cpython-37.opt-1.pyc: \
+      build/ba_data/python/efro/entity/util.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/efro/entity/__pycache__/_entity.cpython-37.opt-1.pyc: \
-      build/data/python/efro/entity/_entity.py
+build/ba_data/python/efro/entity/__pycache__/_entity.cpython-37.opt-1.pyc: \
+      build/ba_data/python/efro/entity/_entity.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/efro/entity/__pycache__/_field.cpython-37.opt-1.pyc: \
-      build/data/python/efro/entity/_field.py
+build/ba_data/python/efro/entity/__pycache__/_field.cpython-37.opt-1.pyc: \
+      build/ba_data/python/efro/entity/_field.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/efro/entity/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/python/efro/entity/__init__.py
+build/ba_data/python/efro/entity/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/ba_data/python/efro/entity/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/efro/entity/__pycache__/_value.cpython-37.opt-1.pyc: \
-      build/data/python/efro/entity/_value.py
+build/ba_data/python/efro/entity/__pycache__/_value.cpython-37.opt-1.pyc: \
+      build/ba_data/python/efro/entity/_value.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bacommon/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/python/bacommon/__init__.py
+build/ba_data/python/bacommon/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bacommon/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bacommon/__pycache__/assets.cpython-37.opt-1.pyc: \
-      build/data/python/bacommon/assets.py
+build/ba_data/python/bacommon/__pycache__/assets.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bacommon/assets.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bacommon/__pycache__/err.cpython-37.opt-1.pyc: \
-      build/data/python/bacommon/err.py
+build/ba_data/python/bacommon/__pycache__/err.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bacommon/err.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_gameactivity.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_gameactivity.py
+build/ba_data/python/ba/__pycache__/_gameactivity.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_gameactivity.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_apputils.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_apputils.py
+build/ba_data/python/ba/__pycache__/_apputils.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_apputils.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_coopsession.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_coopsession.py
+build/ba_data/python/ba/__pycache__/_coopsession.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_coopsession.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_appdelegate.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_appdelegate.py
+build/ba_data/python/ba/__pycache__/_appdelegate.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_appdelegate.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/internal.cpython-37.opt-1.pyc: \
-      build/data/python/ba/internal.py
+build/ba_data/python/ba/__pycache__/internal.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/internal.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_coopgame.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_coopgame.py
+build/ba_data/python/ba/__pycache__/_coopgame.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_coopgame.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_meta.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_meta.py
+build/ba_data/python/ba/__pycache__/_meta.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_meta.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_math.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_math.py
+build/ba_data/python/ba/__pycache__/_math.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_math.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_appconfig.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_appconfig.py
+build/ba_data/python/ba/__pycache__/_appconfig.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_appconfig.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_gameresults.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_gameresults.py
+build/ba_data/python/ba/__pycache__/_gameresults.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_gameresults.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_profile.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_profile.py
+build/ba_data/python/ba/__pycache__/_profile.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_profile.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_error.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_error.py
+build/ba_data/python/ba/__pycache__/_error.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_error.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_achievement.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_achievement.py
+build/ba_data/python/ba/__pycache__/_achievement.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_achievement.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_map.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_map.py
+build/ba_data/python/ba/__pycache__/_map.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_map.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_teambasesession.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_teambasesession.py
+build/ba_data/python/ba/__pycache__/_teambasesession.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_teambasesession.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_gameutils.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_gameutils.py
+build/ba_data/python/ba/__pycache__/_gameutils.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_gameutils.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_activity.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_activity.py
+build/ba_data/python/ba/__pycache__/_activity.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_activity.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/deprecated.cpython-37.opt-1.pyc: \
-      build/data/python/ba/deprecated.py
+build/ba_data/python/ba/__pycache__/deprecated.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/deprecated.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_modutils.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_modutils.py
+build/ba_data/python/ba/__pycache__/_modutils.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_modutils.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_tips.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_tips.py
+build/ba_data/python/ba/__pycache__/_tips.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_tips.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_store.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_store.py
+build/ba_data/python/ba/__pycache__/_store.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_store.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_activitytypes.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_activitytypes.py
+build/ba_data/python/ba/__pycache__/_activitytypes.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_activitytypes.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/python/ba/__init__.py
+build/ba_data/python/ba/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_session.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_session.py
+build/ba_data/python/ba/__pycache__/_session.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_session.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_hooks.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_hooks.py
+build/ba_data/python/ba/__pycache__/_hooks.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_hooks.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_enums.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_enums.py
+build/ba_data/python/ba/__pycache__/_enums.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_enums.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_netutils.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_netutils.py
+build/ba_data/python/ba/__pycache__/_netutils.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_netutils.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_app.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_app.py
+build/ba_data/python/ba/__pycache__/_app.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_app.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_benchmark.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_benchmark.py
+build/ba_data/python/ba/__pycache__/_benchmark.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_benchmark.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_tournament.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_tournament.py
+build/ba_data/python/ba/__pycache__/_tournament.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_tournament.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_messages.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_messages.py
+build/ba_data/python/ba/__pycache__/_messages.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_messages.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_teamssession.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_teamssession.py
+build/ba_data/python/ba/__pycache__/_teamssession.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_teamssession.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_freeforallsession.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_freeforallsession.py
+build/ba_data/python/ba/__pycache__/_freeforallsession.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_freeforallsession.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_playlist.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_playlist.py
+build/ba_data/python/ba/__pycache__/_playlist.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_playlist.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_team.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_team.py
+build/ba_data/python/ba/__pycache__/_team.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_team.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_actor.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_actor.py
+build/ba_data/python/ba/__pycache__/_actor.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_actor.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_powerup.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_powerup.py
+build/ba_data/python/ba/__pycache__/_powerup.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_powerup.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_campaign.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_campaign.py
+build/ba_data/python/ba/__pycache__/_campaign.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_campaign.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_lobby.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_lobby.py
+build/ba_data/python/ba/__pycache__/_lobby.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_lobby.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_stats.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_stats.py
+build/ba_data/python/ba/__pycache__/_stats.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_stats.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_input.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_input.py
+build/ba_data/python/ba/__pycache__/_input.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_input.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_level.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_level.py
+build/ba_data/python/ba/__pycache__/_level.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_level.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_dependency.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_dependency.py
+build/ba_data/python/ba/__pycache__/_dependency.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_dependency.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_general.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_general.py
+build/ba_data/python/ba/__pycache__/_general.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_general.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_server.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_server.py
+build/ba_data/python/ba/__pycache__/_server.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_server.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_account.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_account.py
+build/ba_data/python/ba/__pycache__/_account.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_account.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_music.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_music.py
+build/ba_data/python/ba/__pycache__/_music.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_music.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_lang.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_lang.py
+build/ba_data/python/ba/__pycache__/_lang.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_lang.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/__pycache__/_teamgame.cpython-37.opt-1.pyc: \
-      build/data/python/ba/_teamgame.py
+build/ba_data/python/ba/__pycache__/_teamgame.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_teamgame.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/ba/ui/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/python/ba/ui/__init__.py
+build/ba_data/python/ba/ui/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/ui/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/__pycache__/mainmenu.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/mainmenu.py
+build/ba_data/python/bastd/__pycache__/mainmenu.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/mainmenu.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/__pycache__/maps.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/maps.py
+build/ba_data/python/bastd/__pycache__/maps.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/maps.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/__pycache__/appdelegate.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/appdelegate.py
+build/ba_data/python/bastd/__pycache__/appdelegate.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/appdelegate.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/__pycache__/tutorial.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/tutorial.py
+build/ba_data/python/bastd/__pycache__/tutorial.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/tutorial.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/__init__.py
+build/ba_data/python/bastd/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/__pycache__/stdmap.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/stdmap.py
+build/ba_data/python/bastd/__pycache__/stdmap.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/stdmap.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/playoptions.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/playoptions.py
+build/ba_data/python/bastd/ui/__pycache__/playoptions.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/playoptions.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/mainmenu.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/mainmenu.py
+build/ba_data/python/bastd/ui/__pycache__/mainmenu.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/mainmenu.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/getremote.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/getremote.py
+build/ba_data/python/bastd/ui/__pycache__/getremote.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/getremote.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/tournamententry.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/tournamententry.py
+build/ba_data/python/bastd/ui/__pycache__/tournamententry.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/tournamententry.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/telnet.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/telnet.py
+build/ba_data/python/bastd/ui/__pycache__/telnet.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/telnet.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/appinvite.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/appinvite.py
+build/ba_data/python/bastd/ui/__pycache__/appinvite.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/appinvite.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/gather.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/gather.py
+build/ba_data/python/bastd/ui/__pycache__/gather.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/gather.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/config.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/config.py
+build/ba_data/python/bastd/ui/__pycache__/config.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/config.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/colorpicker.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/colorpicker.py
+build/ba_data/python/bastd/ui/__pycache__/colorpicker.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/colorpicker.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/tabs.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/tabs.py
+build/ba_data/python/bastd/ui/__pycache__/tabs.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/tabs.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/promocode.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/promocode.py
+build/ba_data/python/bastd/ui/__pycache__/promocode.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/promocode.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/fileselector.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/fileselector.py
+build/ba_data/python/bastd/ui/__pycache__/fileselector.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/fileselector.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/feedback.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/feedback.py
+build/ba_data/python/bastd/ui/__pycache__/feedback.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/feedback.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/teamnamescolors.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/teamnamescolors.py
+build/ba_data/python/bastd/ui/__pycache__/teamnamescolors.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/teamnamescolors.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/configerror.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/configerror.py
+build/ba_data/python/bastd/ui/__pycache__/configerror.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/configerror.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/serverdialog.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/serverdialog.py
+build/ba_data/python/bastd/ui/__pycache__/serverdialog.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/serverdialog.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/getcurrency.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/getcurrency.py
+build/ba_data/python/bastd/ui/__pycache__/getcurrency.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/getcurrency.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/__init__.py
+build/ba_data/python/bastd/ui/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/specialoffer.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/specialoffer.py
+build/ba_data/python/bastd/ui/__pycache__/specialoffer.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/specialoffer.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/helpui.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/helpui.py
+build/ba_data/python/bastd/ui/__pycache__/helpui.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/helpui.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/purchase.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/purchase.py
+build/ba_data/python/bastd/ui/__pycache__/purchase.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/purchase.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/continues.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/continues.py
+build/ba_data/python/bastd/ui/__pycache__/continues.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/continues.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/play.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/play.py
+build/ba_data/python/bastd/ui/__pycache__/play.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/play.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/popup.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/popup.py
+build/ba_data/python/bastd/ui/__pycache__/popup.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/popup.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/onscreenkeyboard.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/onscreenkeyboard.py
+build/ba_data/python/bastd/ui/__pycache__/onscreenkeyboard.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/onscreenkeyboard.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/kiosk.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/kiosk.py
+build/ba_data/python/bastd/ui/__pycache__/kiosk.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/kiosk.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/qrcode.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/qrcode.py
+build/ba_data/python/bastd/ui/__pycache__/qrcode.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/qrcode.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/trophies.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/trophies.py
+build/ba_data/python/bastd/ui/__pycache__/trophies.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/trophies.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/partyqueue.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/partyqueue.py
+build/ba_data/python/bastd/ui/__pycache__/partyqueue.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/partyqueue.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/url.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/url.py
+build/ba_data/python/bastd/ui/__pycache__/url.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/url.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/debug.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/debug.py
+build/ba_data/python/bastd/ui/__pycache__/debug.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/debug.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/iconpicker.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/iconpicker.py
+build/ba_data/python/bastd/ui/__pycache__/iconpicker.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/iconpicker.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/watch.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/watch.py
+build/ba_data/python/bastd/ui/__pycache__/watch.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/watch.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/achievements.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/achievements.py
+build/ba_data/python/bastd/ui/__pycache__/achievements.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/achievements.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/radiogroup.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/radiogroup.py
+build/ba_data/python/bastd/ui/__pycache__/radiogroup.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/radiogroup.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/creditslist.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/creditslist.py
+build/ba_data/python/bastd/ui/__pycache__/creditslist.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/creditslist.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/tournamentscores.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/tournamentscores.py
+build/ba_data/python/bastd/ui/__pycache__/tournamentscores.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/tournamentscores.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/characterpicker.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/characterpicker.py
+build/ba_data/python/bastd/ui/__pycache__/characterpicker.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/characterpicker.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/report.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/report.py
+build/ba_data/python/bastd/ui/__pycache__/report.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/report.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/resourcetypeinfo.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/resourcetypeinfo.py
+build/ba_data/python/bastd/ui/__pycache__/resourcetypeinfo.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/resourcetypeinfo.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/confirm.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/confirm.py
+build/ba_data/python/bastd/ui/__pycache__/confirm.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/confirm.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/__pycache__/party.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/party.py
+build/ba_data/python/bastd/ui/__pycache__/party.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/party.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/settings/__pycache__/graphics.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/settings/graphics.py
+build/ba_data/python/bastd/ui/settings/__pycache__/graphics.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/settings/graphics.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/settings/__pycache__/advanced.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/settings/advanced.py
+build/ba_data/python/bastd/ui/settings/__pycache__/advanced.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/settings/advanced.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/settings/__pycache__/controls.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/settings/controls.py
+build/ba_data/python/bastd/ui/settings/__pycache__/controls.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/settings/controls.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/settings/__pycache__/gamepadadvanced.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/settings/gamepadadvanced.py
+build/ba_data/python/bastd/ui/settings/__pycache__/gamepadadvanced.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/settings/gamepadadvanced.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/settings/__pycache__/gamepadselect.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/settings/gamepadselect.py
+build/ba_data/python/bastd/ui/settings/__pycache__/gamepadselect.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/settings/gamepadselect.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/settings/__pycache__/touchscreen.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/settings/touchscreen.py
+build/ba_data/python/bastd/ui/settings/__pycache__/touchscreen.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/settings/touchscreen.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/settings/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/settings/__init__.py
+build/ba_data/python/bastd/ui/settings/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/settings/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/settings/__pycache__/xbox360controller.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/settings/xbox360controller.py
+build/ba_data/python/bastd/ui/settings/__pycache__/xbox360controller.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/settings/xbox360controller.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/settings/__pycache__/audio.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/settings/audio.py
+build/ba_data/python/bastd/ui/settings/__pycache__/audio.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/settings/audio.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/settings/__pycache__/gamepad.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/settings/gamepad.py
+build/ba_data/python/bastd/ui/settings/__pycache__/gamepad.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/settings/gamepad.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/settings/__pycache__/nettesting.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/settings/nettesting.py
+build/ba_data/python/bastd/ui/settings/__pycache__/nettesting.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/settings/nettesting.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/settings/__pycache__/remoteapp.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/settings/remoteapp.py
+build/ba_data/python/bastd/ui/settings/__pycache__/remoteapp.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/settings/remoteapp.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/settings/__pycache__/testing.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/settings/testing.py
+build/ba_data/python/bastd/ui/settings/__pycache__/testing.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/settings/testing.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/settings/__pycache__/wiimote.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/settings/wiimote.py
+build/ba_data/python/bastd/ui/settings/__pycache__/wiimote.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/settings/wiimote.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/settings/__pycache__/vrtesting.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/settings/vrtesting.py
+build/ba_data/python/bastd/ui/settings/__pycache__/vrtesting.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/settings/vrtesting.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/settings/__pycache__/allsettings.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/settings/allsettings.py
+build/ba_data/python/bastd/ui/settings/__pycache__/allsettings.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/settings/allsettings.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/settings/__pycache__/ps3controller.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/settings/ps3controller.py
+build/ba_data/python/bastd/ui/settings/__pycache__/ps3controller.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/settings/ps3controller.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/settings/__pycache__/keyboard.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/settings/keyboard.py
+build/ba_data/python/bastd/ui/settings/__pycache__/keyboard.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/settings/keyboard.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/playlist/__pycache__/customizebrowser.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/playlist/customizebrowser.py
+build/ba_data/python/bastd/ui/playlist/__pycache__/customizebrowser.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/playlist/customizebrowser.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/playlist/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/playlist/__init__.py
+build/ba_data/python/bastd/ui/playlist/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/playlist/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/playlist/__pycache__/edit.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/playlist/edit.py
+build/ba_data/python/bastd/ui/playlist/__pycache__/edit.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/playlist/edit.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/playlist/__pycache__/browser.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/playlist/browser.py
+build/ba_data/python/bastd/ui/playlist/__pycache__/browser.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/playlist/browser.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/playlist/__pycache__/mapselect.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/playlist/mapselect.py
+build/ba_data/python/bastd/ui/playlist/__pycache__/mapselect.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/playlist/mapselect.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/playlist/__pycache__/share.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/playlist/share.py
+build/ba_data/python/bastd/ui/playlist/__pycache__/share.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/playlist/share.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/playlist/__pycache__/editgame.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/playlist/editgame.py
+build/ba_data/python/bastd/ui/playlist/__pycache__/editgame.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/playlist/editgame.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/playlist/__pycache__/editcontroller.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/playlist/editcontroller.py
+build/ba_data/python/bastd/ui/playlist/__pycache__/editcontroller.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/playlist/editcontroller.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/playlist/__pycache__/addgame.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/playlist/addgame.py
+build/ba_data/python/bastd/ui/playlist/__pycache__/addgame.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/playlist/addgame.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/soundtrack/__pycache__/entrytypeselect.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/soundtrack/entrytypeselect.py
+build/ba_data/python/bastd/ui/soundtrack/__pycache__/entrytypeselect.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/soundtrack/entrytypeselect.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/soundtrack/__pycache__/itunes.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/soundtrack/itunes.py
+build/ba_data/python/bastd/ui/soundtrack/__pycache__/itunes.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/soundtrack/itunes.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/soundtrack/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/soundtrack/__init__.py
+build/ba_data/python/bastd/ui/soundtrack/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/soundtrack/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/soundtrack/__pycache__/edit.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/soundtrack/edit.py
+build/ba_data/python/bastd/ui/soundtrack/__pycache__/edit.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/soundtrack/edit.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/soundtrack/__pycache__/browser.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/soundtrack/browser.py
+build/ba_data/python/bastd/ui/soundtrack/__pycache__/browser.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/soundtrack/browser.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/league/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/league/__init__.py
+build/ba_data/python/bastd/ui/league/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/league/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/league/__pycache__/rankbutton.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/league/rankbutton.py
+build/ba_data/python/bastd/ui/league/__pycache__/rankbutton.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/league/rankbutton.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/league/__pycache__/rankwindow.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/league/rankwindow.py
+build/ba_data/python/bastd/ui/league/__pycache__/rankwindow.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/league/rankwindow.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/coop/__pycache__/gamebutton.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/coop/gamebutton.py
+build/ba_data/python/bastd/ui/coop/__pycache__/gamebutton.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/coop/gamebutton.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/coop/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/coop/__init__.py
+build/ba_data/python/bastd/ui/coop/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/coop/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/coop/__pycache__/browser.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/coop/browser.py
+build/ba_data/python/bastd/ui/coop/__pycache__/browser.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/coop/browser.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/coop/__pycache__/level.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/coop/level.py
+build/ba_data/python/bastd/ui/coop/__pycache__/level.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/coop/level.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/profile/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/profile/__init__.py
+build/ba_data/python/bastd/ui/profile/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/profile/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/profile/__pycache__/edit.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/profile/edit.py
+build/ba_data/python/bastd/ui/profile/__pycache__/edit.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/profile/edit.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/profile/__pycache__/upgrade.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/profile/upgrade.py
+build/ba_data/python/bastd/ui/profile/__pycache__/upgrade.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/profile/upgrade.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/profile/__pycache__/browser.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/profile/browser.py
+build/ba_data/python/bastd/ui/profile/__pycache__/browser.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/profile/browser.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/account/__pycache__/link.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/account/link.py
+build/ba_data/python/bastd/ui/account/__pycache__/link.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/account/link.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/account/__pycache__/viewer.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/account/viewer.py
+build/ba_data/python/bastd/ui/account/__pycache__/viewer.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/account/viewer.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/account/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/account/__init__.py
+build/ba_data/python/bastd/ui/account/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/account/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/account/__pycache__/unlink.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/account/unlink.py
+build/ba_data/python/bastd/ui/account/__pycache__/unlink.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/account/unlink.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/account/__pycache__/settings.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/account/settings.py
+build/ba_data/python/bastd/ui/account/__pycache__/settings.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/account/settings.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/store/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/store/__init__.py
+build/ba_data/python/bastd/ui/store/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/store/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/store/__pycache__/browser.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/store/browser.py
+build/ba_data/python/bastd/ui/store/__pycache__/browser.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/store/browser.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/store/__pycache__/button.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/store/button.py
+build/ba_data/python/bastd/ui/store/__pycache__/button.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/store/button.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/ui/store/__pycache__/item.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/ui/store/item.py
+build/ba_data/python/bastd/ui/store/__pycache__/item.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/store/item.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/activity/__pycache__/freeforallendscreen.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/activity/freeforallendscreen.py
+build/ba_data/python/bastd/activity/__pycache__/freeforallendscreen.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/activity/freeforallendscreen.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/activity/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/activity/__init__.py
+build/ba_data/python/bastd/activity/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/activity/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/activity/__pycache__/coopscorescreen.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/activity/coopscorescreen.py
+build/ba_data/python/bastd/activity/__pycache__/coopscorescreen.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/activity/coopscorescreen.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/activity/__pycache__/dualteamscorescreen.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/activity/dualteamscorescreen.py
+build/ba_data/python/bastd/activity/__pycache__/dualteamscorescreen.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/activity/dualteamscorescreen.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/activity/__pycache__/coopjoinscreen.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/activity/coopjoinscreen.py
+build/ba_data/python/bastd/activity/__pycache__/coopjoinscreen.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/activity/coopjoinscreen.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/activity/__pycache__/multiteamendscreen.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/activity/multiteamendscreen.py
+build/ba_data/python/bastd/activity/__pycache__/multiteamendscreen.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/activity/multiteamendscreen.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/activity/__pycache__/teamsscorescreen.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/activity/teamsscorescreen.py
+build/ba_data/python/bastd/activity/__pycache__/teamsscorescreen.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/activity/teamsscorescreen.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/activity/__pycache__/multiteamjoinscreen.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/activity/multiteamjoinscreen.py
+build/ba_data/python/bastd/activity/__pycache__/multiteamjoinscreen.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/activity/multiteamjoinscreen.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/activity/__pycache__/drawscreen.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/activity/drawscreen.py
+build/ba_data/python/bastd/activity/__pycache__/drawscreen.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/activity/drawscreen.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/game/__pycache__/capturetheflag.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/game/capturetheflag.py
+build/ba_data/python/bastd/game/__pycache__/capturetheflag.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/game/capturetheflag.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/game/__pycache__/targetpractice.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/game/targetpractice.py
+build/ba_data/python/bastd/game/__pycache__/targetpractice.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/game/targetpractice.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/game/__pycache__/ninjafight.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/game/ninjafight.py
+build/ba_data/python/bastd/game/__pycache__/ninjafight.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/game/ninjafight.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/game/__pycache__/easteregghunt.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/game/easteregghunt.py
+build/ba_data/python/bastd/game/__pycache__/easteregghunt.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/game/easteregghunt.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/game/__pycache__/race.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/game/race.py
+build/ba_data/python/bastd/game/__pycache__/race.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/game/race.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/game/__pycache__/meteorshower.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/game/meteorshower.py
+build/ba_data/python/bastd/game/__pycache__/meteorshower.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/game/meteorshower.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/game/__pycache__/thelaststand.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/game/thelaststand.py
+build/ba_data/python/bastd/game/__pycache__/thelaststand.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/game/thelaststand.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/game/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/game/__init__.py
+build/ba_data/python/bastd/game/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/game/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/game/__pycache__/football.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/game/football.py
+build/ba_data/python/bastd/game/__pycache__/football.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/game/football.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/game/__pycache__/kingofthehill.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/game/kingofthehill.py
+build/ba_data/python/bastd/game/__pycache__/kingofthehill.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/game/kingofthehill.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/game/__pycache__/assault.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/game/assault.py
+build/ba_data/python/bastd/game/__pycache__/assault.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/game/assault.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/game/__pycache__/keepaway.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/game/keepaway.py
+build/ba_data/python/bastd/game/__pycache__/keepaway.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/game/keepaway.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/game/__pycache__/elimination.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/game/elimination.py
+build/ba_data/python/bastd/game/__pycache__/elimination.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/game/elimination.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/game/__pycache__/deathmatch.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/game/deathmatch.py
+build/ba_data/python/bastd/game/__pycache__/deathmatch.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/game/deathmatch.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/game/__pycache__/onslaught.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/game/onslaught.py
+build/ba_data/python/bastd/game/__pycache__/onslaught.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/game/onslaught.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/game/__pycache__/hockey.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/game/hockey.py
+build/ba_data/python/bastd/game/__pycache__/hockey.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/game/hockey.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/game/__pycache__/chosenone.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/game/chosenone.py
+build/ba_data/python/bastd/game/__pycache__/chosenone.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/game/chosenone.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/game/__pycache__/conquest.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/game/conquest.py
+build/ba_data/python/bastd/game/__pycache__/conquest.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/game/conquest.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/game/__pycache__/runaround.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/game/runaround.py
+build/ba_data/python/bastd/game/__pycache__/runaround.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/game/runaround.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/mapdata/__pycache__/bridgit.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/mapdata/bridgit.py
+build/ba_data/python/bastd/mapdata/__pycache__/bridgit.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/mapdata/bridgit.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/mapdata/__pycache__/big_g.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/mapdata/big_g.py
+build/ba_data/python/bastd/mapdata/__pycache__/big_g.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/mapdata/big_g.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/mapdata/__pycache__/hockey_stadium.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/mapdata/hockey_stadium.py
+build/ba_data/python/bastd/mapdata/__pycache__/hockey_stadium.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/mapdata/hockey_stadium.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/mapdata/__pycache__/courtyard.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/mapdata/courtyard.py
+build/ba_data/python/bastd/mapdata/__pycache__/courtyard.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/mapdata/courtyard.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/mapdata/__pycache__/tower_d.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/mapdata/tower_d.py
+build/ba_data/python/bastd/mapdata/__pycache__/tower_d.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/mapdata/tower_d.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/mapdata/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/mapdata/__init__.py
+build/ba_data/python/bastd/mapdata/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/mapdata/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/mapdata/__pycache__/roundabout.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/mapdata/roundabout.py
+build/ba_data/python/bastd/mapdata/__pycache__/roundabout.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/mapdata/roundabout.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/mapdata/__pycache__/rampage.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/mapdata/rampage.py
+build/ba_data/python/bastd/mapdata/__pycache__/rampage.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/mapdata/rampage.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/mapdata/__pycache__/crag_castle.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/mapdata/crag_castle.py
+build/ba_data/python/bastd/mapdata/__pycache__/crag_castle.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/mapdata/crag_castle.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/mapdata/__pycache__/step_right_up.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/mapdata/step_right_up.py
+build/ba_data/python/bastd/mapdata/__pycache__/step_right_up.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/mapdata/step_right_up.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/mapdata/__pycache__/football_stadium.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/mapdata/football_stadium.py
+build/ba_data/python/bastd/mapdata/__pycache__/football_stadium.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/mapdata/football_stadium.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/mapdata/__pycache__/the_pad.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/mapdata/the_pad.py
+build/ba_data/python/bastd/mapdata/__pycache__/the_pad.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/mapdata/the_pad.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/mapdata/__pycache__/happy_thoughts.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/mapdata/happy_thoughts.py
+build/ba_data/python/bastd/mapdata/__pycache__/happy_thoughts.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/mapdata/happy_thoughts.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/mapdata/__pycache__/monkey_face.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/mapdata/monkey_face.py
+build/ba_data/python/bastd/mapdata/__pycache__/monkey_face.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/mapdata/monkey_face.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/mapdata/__pycache__/doom_shroom.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/mapdata/doom_shroom.py
+build/ba_data/python/bastd/mapdata/__pycache__/doom_shroom.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/mapdata/doom_shroom.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/mapdata/__pycache__/zig_zag.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/mapdata/zig_zag.py
+build/ba_data/python/bastd/mapdata/__pycache__/zig_zag.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/mapdata/zig_zag.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/mapdata/__pycache__/lake_frigid.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/mapdata/lake_frigid.py
+build/ba_data/python/bastd/mapdata/__pycache__/lake_frigid.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/mapdata/lake_frigid.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/mapdata/__pycache__/tip_top.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/mapdata/tip_top.py
+build/ba_data/python/bastd/mapdata/__pycache__/tip_top.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/mapdata/tip_top.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/actor/__pycache__/spazfactory.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/actor/spazfactory.py
+build/ba_data/python/bastd/actor/__pycache__/spazfactory.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/actor/spazfactory.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/actor/__pycache__/bomb.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/actor/bomb.py
+build/ba_data/python/bastd/actor/__pycache__/bomb.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/actor/bomb.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/actor/__pycache__/spazbot.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/actor/spazbot.py
+build/ba_data/python/bastd/actor/__pycache__/spazbot.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/actor/spazbot.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/actor/__pycache__/flag.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/actor/flag.py
+build/ba_data/python/bastd/actor/__pycache__/flag.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/actor/flag.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/actor/__pycache__/scoreboard.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/actor/scoreboard.py
+build/ba_data/python/bastd/actor/__pycache__/scoreboard.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/actor/scoreboard.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/actor/__pycache__/popuptext.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/actor/popuptext.py
+build/ba_data/python/bastd/actor/__pycache__/popuptext.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/actor/popuptext.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/actor/__pycache__/background.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/actor/background.py
+build/ba_data/python/bastd/actor/__pycache__/background.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/actor/background.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/actor/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/actor/__init__.py
+build/ba_data/python/bastd/actor/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/actor/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/actor/__pycache__/zoomtext.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/actor/zoomtext.py
+build/ba_data/python/bastd/actor/__pycache__/zoomtext.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/actor/zoomtext.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/actor/__pycache__/spaz.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/actor/spaz.py
+build/ba_data/python/bastd/actor/__pycache__/spaz.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/actor/spaz.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/actor/__pycache__/spazappearance.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/actor/spazappearance.py
+build/ba_data/python/bastd/actor/__pycache__/spazappearance.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/actor/spazappearance.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/actor/__pycache__/controlsguide.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/actor/controlsguide.py
+build/ba_data/python/bastd/actor/__pycache__/controlsguide.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/actor/controlsguide.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/actor/__pycache__/powerupbox.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/actor/powerupbox.py
+build/ba_data/python/bastd/actor/__pycache__/powerupbox.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/actor/powerupbox.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/actor/__pycache__/text.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/actor/text.py
+build/ba_data/python/bastd/actor/__pycache__/text.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/actor/text.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/actor/__pycache__/spawner.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/actor/spawner.py
+build/ba_data/python/bastd/actor/__pycache__/spawner.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/actor/spawner.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/actor/__pycache__/respawnicon.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/actor/respawnicon.py
+build/ba_data/python/bastd/actor/__pycache__/respawnicon.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/actor/respawnicon.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/actor/__pycache__/playerspaz.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/actor/playerspaz.py
+build/ba_data/python/bastd/actor/__pycache__/playerspaz.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/actor/playerspaz.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/actor/__pycache__/tipstext.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/actor/tipstext.py
+build/ba_data/python/bastd/actor/__pycache__/tipstext.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/actor/tipstext.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/actor/__pycache__/onscreencountdown.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/actor/onscreencountdown.py
+build/ba_data/python/bastd/actor/__pycache__/onscreencountdown.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/actor/onscreencountdown.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/actor/__pycache__/onscreentimer.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/actor/onscreentimer.py
+build/ba_data/python/bastd/actor/__pycache__/onscreentimer.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/actor/onscreentimer.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/actor/__pycache__/image.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/actor/image.py
+build/ba_data/python/bastd/actor/__pycache__/image.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/actor/image.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/data/python/bastd/session/__pycache__/__init__.cpython-37.opt-1.pyc: \
-      build/data/python/bastd/session/__init__.py
+build/ba_data/python/bastd/session/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/session/__init__.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
@@ -17208,2559 +17208,2559 @@ build/windows/x64/Lib/email/mime/__pycache__/base.cpython-37.opt-1.pyc: \
 
 
 COB_TARGETS = \
-  build/data/models/zigZagLevelBumper.cob \
-  build/data/models/rampageBumper.cob \
-  build/data/models/bigGBumper.cob \
-  build/data/models/roundaboutLevelCollide.cob \
-  build/data/models/cragCastleLevelBumper.cob \
-  build/data/models/lakeFrigidCollide.cob \
-  build/data/models/stepRightUpLevelCollide.cob \
-  build/data/models/courtyardPlayerWall.cob \
-  build/data/models/rampageLevelCollide.cob \
-  build/data/models/monkeyFaceLevelCollide.cob \
-  build/data/models/courtyardLevelCollide.cob \
-  build/data/models/hockeyStadiumCollide.cob \
-  build/data/models/towerDLevelCollide.cob \
-  build/data/models/tipTopLevelCollide.cob \
-  build/data/models/monkeyFaceLevelBumper.cob \
-  build/data/models/zigZagLevelCollide.cob \
-  build/data/models/bridgitLevelRailingCollide.cob \
-  build/data/models/thePadLevelBumper.cob \
-  build/data/models/natureBackgroundCollide.cob \
-  build/data/models/doomShroomLevelCollide.cob \
-  build/data/models/footballStadiumCollide.cob \
-  build/data/models/doomShroomStemCollide.cob \
-  build/data/models/bridgitLevelCollide.cob \
-  build/data/models/alwaysLandLevelCollide.cob \
-  build/data/models/cragCastleLevelCollide.cob \
-  build/data/models/roundaboutLevelBumper.cob \
-  build/data/models/towerDPlayerWall.cob \
-  build/data/models/tipTopLevelBumper.cob \
-  build/data/models/thePadLevelCollide.cob \
-  build/data/models/bigGCollide.cob
+  build/ba_data/models/zigZagLevelBumper.cob \
+  build/ba_data/models/rampageBumper.cob \
+  build/ba_data/models/bigGBumper.cob \
+  build/ba_data/models/roundaboutLevelCollide.cob \
+  build/ba_data/models/cragCastleLevelBumper.cob \
+  build/ba_data/models/lakeFrigidCollide.cob \
+  build/ba_data/models/stepRightUpLevelCollide.cob \
+  build/ba_data/models/courtyardPlayerWall.cob \
+  build/ba_data/models/rampageLevelCollide.cob \
+  build/ba_data/models/monkeyFaceLevelCollide.cob \
+  build/ba_data/models/courtyardLevelCollide.cob \
+  build/ba_data/models/hockeyStadiumCollide.cob \
+  build/ba_data/models/towerDLevelCollide.cob \
+  build/ba_data/models/tipTopLevelCollide.cob \
+  build/ba_data/models/monkeyFaceLevelBumper.cob \
+  build/ba_data/models/zigZagLevelCollide.cob \
+  build/ba_data/models/bridgitLevelRailingCollide.cob \
+  build/ba_data/models/thePadLevelBumper.cob \
+  build/ba_data/models/natureBackgroundCollide.cob \
+  build/ba_data/models/doomShroomLevelCollide.cob \
+  build/ba_data/models/footballStadiumCollide.cob \
+  build/ba_data/models/doomShroomStemCollide.cob \
+  build/ba_data/models/bridgitLevelCollide.cob \
+  build/ba_data/models/alwaysLandLevelCollide.cob \
+  build/ba_data/models/cragCastleLevelCollide.cob \
+  build/ba_data/models/roundaboutLevelBumper.cob \
+  build/ba_data/models/towerDPlayerWall.cob \
+  build/ba_data/models/tipTopLevelBumper.cob \
+  build/ba_data/models/thePadLevelCollide.cob \
+  build/ba_data/models/bigGCollide.cob
 
 BOB_TARGETS = \
-  build/data/models/wrestlerToes.bob \
-  build/data/models/melTorso.bob \
-  build/data/models/gladiatorHead.bob \
-  build/data/models/image16x1.bob \
-  build/data/models/actionButtonBottom.bob \
-  build/data/models/santaUpperLeg.bob \
-  build/data/models/thePadBGSmall.bob \
-  build/data/models/cowboyForeArm.bob \
-  build/data/models/image1x1.bob \
-  build/data/models/trees.bob \
-  build/data/models/plasticEyesTransparent.bob \
-  build/data/models/currencyPlusButton.bob \
-  build/data/models/scrollBarThumbOpaque.bob \
-  build/data/models/cyborgUpperArm.bob \
-  build/data/models/jumpsuitTorso.bob \
-  build/data/models/jumpsuitToes.bob \
-  build/data/models/natureBackground.bob \
-  build/data/models/operaSingerPelvis.bob \
-  build/data/models/oldLadyUpperArm.bob \
-  build/data/models/hairTuft1.bob \
-  build/data/models/neoSpazUpperLeg.bob \
-  build/data/models/overlayGuide.bob \
-  build/data/models/gladiatorUpperLeg.bob \
-  build/data/models/alienTorso.bob \
-  build/data/models/zoeTorso.bob \
-  build/data/models/operaSingerForeArm.bob \
-  build/data/models/buttonTabOpaque.bob \
-  build/data/models/wizardToes.bob \
-  build/data/models/witchTorso.bob \
-  build/data/models/shrapnelBoard.bob \
-  build/data/models/puck.bob \
-  build/data/models/jumpsuitLowerLeg.bob \
-  build/data/models/zoeHand.bob \
-  build/data/models/witchLowerLeg.bob \
-  build/data/models/achievementOutline.bob \
-  build/data/models/bonesToes.bob \
-  build/data/models/bearToes.bob \
-  build/data/models/buttonBackOpaque.bob \
-  build/data/models/vrOverlay.bob \
-  build/data/models/playerLineup2Transparent.bob \
-  build/data/models/kronkToes.bob \
-  build/data/models/alwaysLandLevel.bob \
-  build/data/models/oldLadyToes.bob \
-  build/data/models/superheroHand.bob \
-  build/data/models/toolbarBacking.bob \
-  build/data/models/bomb.bob \
-  build/data/models/currencyMeter.bob \
-  build/data/models/cowboyUpperLeg.bob \
-  build/data/models/ninjaLowerLeg.bob \
-  build/data/models/kronkForeArm.bob \
-  build/data/models/ninjaHand.bob \
-  build/data/models/windowBGBlotch.bob \
-  build/data/models/kronkPelvis.bob \
-  build/data/models/agentTorso.bob \
-  build/data/models/penguinLowerLeg.bob \
-  build/data/models/scrollBarThumbShortOpaque.bob \
-  build/data/models/bunnyLowerLeg.bob \
-  build/data/models/neoSpazPelvis.bob \
-  build/data/models/scrollWidgetShort.bob \
-  build/data/models/operaSingerHand.bob \
-  build/data/models/image1x1FullScreen.bob \
-  build/data/models/ninjaTorso.bob \
-  build/data/models/assassinHead.bob \
-  build/data/models/jackHead.bob \
-  build/data/models/level_select_button_transparent.bob \
-  build/data/models/rampageLevelBottom.bob \
-  build/data/models/pixieHead.bob \
-  build/data/models/toolbarBackingTransparent.bob \
-  build/data/models/aliUpperLeg.bob \
-  build/data/models/alienToes.bob \
-  build/data/models/cyborgLowerLeg.bob \
-  build/data/models/runningShoes.bob \
-  build/data/models/oldLadyLowerLeg.bob \
-  build/data/models/scorch.bob \
-  build/data/models/cowboyToes.bob \
-  build/data/models/ninjaPelvis.bob \
-  build/data/models/wrestlerForeArm.bob \
-  build/data/models/heartOpaque.bob \
-  build/data/models/level_select_button_opaque.bob \
-  build/data/models/frostyUpperLeg.bob \
-  build/data/models/bonesForeArm.bob \
-  build/data/models/frostyHead.bob \
-  build/data/models/witchHand.bob \
-  build/data/models/cyborgToes.bob \
-  build/data/models/wizardTorso.bob \
-  build/data/models/shield.bob \
-  build/data/models/image4x1.bob \
-  build/data/models/frostyForeArm.bob \
-  build/data/models/bunnyUpperArm.bob \
-  build/data/models/bridgitLevelTop.bob \
-  build/data/models/agentHand.bob \
-  build/data/models/flagStand.bob \
-  build/data/models/cragCastleLevelBottom.bob \
-  build/data/models/doomShroomBG.bob \
-  build/data/models/melHead.bob \
-  build/data/models/assassinTorso.bob \
-  build/data/models/image1x1VRFullScreen.bob \
-  build/data/models/witchForeArm.bob \
-  build/data/models/penguinUpperArm.bob \
-  build/data/models/aliForeArm.bob \
-  build/data/models/robotHand.bob \
-  build/data/models/lakeFrigidVRFill.bob \
-  build/data/models/oldLadyPelvis.bob \
-  build/data/models/bunnyHand.bob \
-  build/data/models/wing.bob \
-  build/data/models/ninjaUpperArm.bob \
-  build/data/models/bonesPelvis.bob \
-  build/data/models/santaHand.bob \
-  build/data/models/neoSpazTorso.bob \
-  build/data/models/witchUpperArm.bob \
-  build/data/models/superheroForeArm.bob \
-  build/data/models/jumpsuitUpperArm.bob \
-  build/data/models/hairTuft1b.bob \
-  build/data/models/superheroUpperLeg.bob \
-  build/data/models/bearPelvis.bob \
-  build/data/models/natureBackgroundVRFill.bob \
-  build/data/models/penguinHead.bob \
-  build/data/models/warriorToes.bob \
-  build/data/models/arrowBack.bob \
-  build/data/models/zigZagLevel.bob \
-  build/data/models/frostyUpperArm.bob \
-  build/data/models/tipTopLevelBottom.bob \
-  build/data/models/santaLowerLeg.bob \
-  build/data/models/playerLineup3Transparent.bob \
-  build/data/models/santaForeArm.bob \
-  build/data/models/agentToes.bob \
-  build/data/models/doomShroomLevel.bob \
-  build/data/models/bombSticky.bob \
-  build/data/models/zoeForeArm.bob \
-  build/data/models/doomShroomVRFill.bob \
-  build/data/models/alwaysLandLevelBottom.bob \
-  build/data/models/aliUpperArm.bob \
-  build/data/models/towerDLevelBottom.bob \
-  build/data/models/actionHeroPelvis.bob \
-  build/data/models/warriorHand.bob \
-  build/data/models/operaSingerTorso.bob \
-  build/data/models/frostyTorso.bob \
-  build/data/models/toolbarBackingBottom.bob \
-  build/data/models/gladiatorLowerLeg.bob \
-  build/data/models/neoSpazLowerLeg.bob \
-  build/data/models/robotToes.bob \
-  build/data/models/bunnyToes.bob \
-  build/data/models/santaToes.bob \
-  build/data/models/cowboyLowerLeg.bob \
-  build/data/models/ninjaUpperLeg.bob \
-  build/data/models/windowHSmallVMedOpaque.bob \
-  build/data/models/aliHead.bob \
-  build/data/models/cowboyHand.bob \
-  build/data/models/thePadBG.bob \
-  build/data/models/thePadVRFillBottom.bob \
-  build/data/models/bearTorso.bob \
-  build/data/models/superheroUpperArm.bob \
-  build/data/models/buttonLargerOpaque.bob \
-  build/data/models/witchUpperLeg.bob \
-  build/data/models/eyeBallIris.bob \
-  build/data/models/alienHand.bob \
-  build/data/models/jumpsuitUpperLeg.bob \
-  build/data/models/stepRightUpLevelBottom.bob \
-  build/data/models/cyborgHand.bob \
-  build/data/models/bunnyUpperLeg.bob \
-  build/data/models/witchToes.bob \
-  build/data/models/cowboyPelvis.bob \
-  build/data/models/penguinUpperLeg.bob \
-  build/data/models/melForeArm.bob \
-  build/data/models/buttonBackTransparent.bob \
-  build/data/models/monkeyFaceLevelBottom.bob \
-  build/data/models/frostyPelvis.bob \
-  build/data/models/pixieForeArm.bob \
-  build/data/models/neoSpazUpperArm.bob \
-  build/data/models/gladiatorUpperArm.bob \
-  build/data/models/superheroToes.bob \
-  build/data/models/oldLadyHand.bob \
-  build/data/models/kronkHand.bob \
-  build/data/models/oldLadyUpperLeg.bob \
-  build/data/models/windowHSmallVSmallTransparent.bob \
-  build/data/models/buttonSmallTransparent.bob \
-  build/data/models/cyborgUpperLeg.bob \
-  build/data/models/box.bob \
-  build/data/models/buttonSmallOpaque.bob \
-  build/data/models/aliLowerLeg.bob \
-  build/data/models/zoeToes.bob \
-  build/data/models/bearHand.bob \
-  build/data/models/bonesHand.bob \
-  build/data/models/alienPelvis.bob \
-  build/data/models/lakeFrigid.bob \
-  build/data/models/hockeyStadiumStands.bob \
-  build/data/models/penguinPelvis.bob \
-  build/data/models/superheroTorso.bob \
-  build/data/models/footballStadium.bob \
-  build/data/models/wrestlerPelvis.bob \
-  build/data/models/operaSingerToes.bob \
-  build/data/models/actionHeroHead.bob \
-  build/data/models/ninjaToes.bob \
-  build/data/models/flash.bob \
-  build/data/models/santaUpperArm.bob \
-  build/data/models/frostyLowerLeg.bob \
-  build/data/models/gladiatorTorso.bob \
-  build/data/models/superheroPelvis.bob \
-  build/data/models/cylinder.bob \
-  build/data/models/windowHSmallVSmallOpaque.bob \
-  build/data/models/thePadLevelBottom.bob \
-  build/data/models/neoSpazHead.bob \
-  build/data/models/toolbarBackingOpaque.bob \
-  build/data/models/shrapnel1.bob \
-  build/data/models/assassinForeArm.bob \
-  build/data/models/arrowFront.bob \
-  build/data/models/wrestlerHand.bob \
-  build/data/models/angryComputerTransparent.bob \
-  build/data/models/buttonLargeTransparent.bob \
-  build/data/models/wizardHand.bob \
-  build/data/models/boxingGlove.bob \
-  build/data/models/tipTopLevel.bob \
-  build/data/models/bonesTorso.bob \
-  build/data/models/lakeFrigidReflections.bob \
-  build/data/models/image2x1.bob \
-  build/data/models/superheroLowerLeg.bob \
-  build/data/models/buttonNull.bob \
-  build/data/models/cowboyUpperArm.bob \
-  build/data/models/buttonLargeOpaque.bob \
-  build/data/models/jumpsuitHand.bob \
-  build/data/models/locatorBox.bob \
-  build/data/models/cyborgPelvis.bob \
-  build/data/models/aliHand.bob \
-  build/data/models/cowboyHead.bob \
-  build/data/models/wrestlerLowerLeg.bob \
-  build/data/models/jackLowerLeg.bob \
-  build/data/models/alienLowerLeg.bob \
-  build/data/models/hairTuft3.bob \
-  build/data/models/pixieToes.bob \
-  build/data/models/rampageBG.bob \
-  build/data/models/impactBomb.bob \
-  build/data/models/alienHead.bob \
-  build/data/models/scrollBarThumbShortTransparent.bob \
-  build/data/models/assassinToes.bob \
-  build/data/models/jackToes.bob \
-  build/data/models/actionButtonTop.bob \
-  build/data/models/witchPelvis.bob \
-  build/data/models/cyborgHead.bob \
-  build/data/models/melUpperArm.bob \
-  build/data/models/tnt.bob \
-  build/data/models/wizardPelvis.bob \
-  build/data/models/rampageBG2.bob \
-  build/data/models/wizardUpperLeg.bob \
-  build/data/models/cowboyTorso.bob \
-  build/data/models/locatorCircle.bob \
-  build/data/models/frostyToes.bob \
-  build/data/models/bunnyForeArm.bob \
-  build/data/models/warriorLowerLeg.bob \
-  build/data/models/penguinForeArm.bob \
-  build/data/models/actionHeroUpperArm.bob \
-  build/data/models/actionButtonLeft.bob \
-  build/data/models/actionHeroForeArm.bob \
-  build/data/models/powerupSimple.bob \
-  build/data/models/robotUpperArm.bob \
-  build/data/models/bearForeArm.bob \
-  build/data/models/melToes.bob \
-  build/data/models/shrapnelSlime.bob \
-  build/data/models/lakeFrigidTop.bob \
-  build/data/models/pixieUpperLeg.bob \
-  build/data/models/operaSingerUpperArm.bob \
-  build/data/models/cyborgForeArm.bob \
-  build/data/models/shockWave.bob \
-  build/data/models/warriorHead.bob \
-  build/data/models/assassinPelvis.bob \
-  build/data/models/bearLowerLeg.bob \
-  build/data/models/penguinToes.bob \
-  build/data/models/jackForeArm.bob \
-  build/data/models/buttonSquareTransparent.bob \
-  build/data/models/aliPelvis.bob \
-  build/data/models/bonesLowerLeg.bob \
-  build/data/models/toolbarBackingTop.bob \
-  build/data/models/thePadLevel.bob \
-  build/data/models/kronkUpperLeg.bob \
-  build/data/models/tipTopBG.bob \
-  build/data/models/wizardForeArm.bob \
-  build/data/models/neoSpazHand.bob \
-  build/data/models/agentForeArm.bob \
-  build/data/models/actionHeroTorso.bob \
-  build/data/models/warriorUpperArm.bob \
-  build/data/models/logoTransparent.bob \
-  build/data/models/wrestlerHead.bob \
-  build/data/models/toolbarBackingBottom2.bob \
-  build/data/models/melLowerLeg.bob \
-  build/data/models/assassinUpperLeg.bob \
-  build/data/models/gladiatorToes.bob \
-  build/data/models/vrFade.bob \
-  build/data/models/rampageVRFill.bob \
-  build/data/models/cragCastleVRFillMound.bob \
-  build/data/models/courtyardLevel.bob \
-  build/data/models/landMine.bob \
-  build/data/models/wizardHead.bob \
-  build/data/models/oldLadyTorso.bob \
-  build/data/models/jackUpperArm.bob \
-  build/data/models/wrestlerUpperArm.bob \
-  build/data/models/alienUpperArm.bob \
-  build/data/models/jumpsuitHead.bob \
-  build/data/models/eyeBall.bob \
-  build/data/models/textBoxTransparent.bob \
-  build/data/models/bridgitLevelBottom.bob \
-  build/data/models/oldLadyHead.bob \
-  build/data/models/kronkHead.bob \
-  build/data/models/bearUpperArm.bob \
-  build/data/models/bunnyTorso.bob \
-  build/data/models/bonesUpperArm.bob \
-  build/data/models/bearHead.bob \
-  build/data/models/bonesHead.bob \
-  build/data/models/oldLadyForeArm.bob \
-  build/data/models/windowHSmallVMedTransparent.bob \
-  build/data/models/buttonMediumOpaque.bob \
-  build/data/models/roundaboutLevelBottom.bob \
-  build/data/models/buttonTabTransparent.bob \
-  build/data/models/warriorForeArm.bob \
-  build/data/models/operaSingerLowerLeg.bob \
-  build/data/models/agentUpperLeg.bob \
-  build/data/models/actionHeroLowerLeg.bob \
-  build/data/models/robotLowerLeg.bob \
-  build/data/models/buttonLargerTransparent.bob \
-  build/data/models/robotPelvis.bob \
-  build/data/models/actionButtonRight.bob \
-  build/data/models/zoeUpperLeg.bob \
-  build/data/models/actionHeroHand.bob \
-  build/data/models/buttonSquareOpaque.bob \
-  build/data/models/zoeHead.bob \
-  build/data/models/egg.bob \
-  build/data/models/hockeyStadiumInner.bob \
-  build/data/models/alienUpperLeg.bob \
-  build/data/models/jackUpperLeg.bob \
-  build/data/models/wrestlerUpperLeg.bob \
-  build/data/models/buttonBackSmallTransparent.bob \
-  build/data/models/monkeyFaceLevel.bob \
-  build/data/models/hairTuft2.bob \
-  build/data/models/bunnyPelvis.bob \
-  build/data/models/superheroHead.bob \
-  build/data/models/meterTransparent.bob \
-  build/data/models/warriorUpperLeg.bob \
-  build/data/models/gladiatorPelvis.bob \
-  build/data/models/actionHeroToes.bob \
-  build/data/models/jumpsuitPelvis.bob \
-  build/data/models/ninjaHead.bob \
-  build/data/models/footballStadiumVRFill.bob \
-  build/data/models/crossOut.bob \
-  build/data/models/checkTransparent.bob \
-  build/data/models/operaSingerHead.bob \
-  build/data/models/wizardLowerLeg.bob \
-  build/data/models/cyborgTorso.bob \
-  build/data/models/stepRightUpVRFillMound.bob \
-  build/data/models/robotForeArm.bob \
-  build/data/models/assassinUpperArm.bob \
-  build/data/models/scrollBarThumbShortSimple.bob \
-  build/data/models/bigG.bob \
-  build/data/models/agentUpperArm.bob \
-  build/data/models/courtyardLevelBottom.bob \
-  build/data/models/eyeLid.bob \
-  build/data/models/pixieLowerLeg.bob \
-  build/data/models/gladiatorHand.bob \
-  build/data/models/ninjaForeArm.bob \
-  build/data/models/penguinTorso.bob \
-  build/data/models/toolbarBackingTop2.bob \
-  build/data/models/stepRightUpLevel.bob \
-  build/data/models/neoSpazToes.bob \
-  build/data/models/zoeUpperArm.bob \
-  build/data/models/kronkTorso.bob \
-  build/data/models/warriorPelvis.bob \
-  build/data/models/gladiatorForeArm.bob \
-  build/data/models/locator.bob \
-  build/data/models/neoSpazForeArm.bob \
-  build/data/models/buttonMediumTransparent.bob \
-  build/data/models/pixiePelvis.bob \
-  build/data/models/logo.bob \
-  build/data/models/scrollBarThumbSimple.bob \
-  build/data/models/kronkLowerLeg.bob \
-  build/data/models/aliTorso.bob \
-  build/data/models/scrollBarThumbTransparent.bob \
-  build/data/models/locatorCircleOutline.bob \
-  build/data/models/alwaysLandVRFillMound.bob \
-  build/data/models/alienForeArm.bob \
-  build/data/models/bonesUpperLeg.bob \
-  build/data/models/softEdgeOutside.bob \
-  build/data/models/bearUpperLeg.bob \
-  build/data/models/roundaboutLevel.bob \
-  build/data/models/wizardUpperArm.bob \
-  build/data/models/playerLineup4Transparent.bob \
-  build/data/models/zigZagLevelBottom.bob \
-  build/data/models/assassinLowerLeg.bob \
-  build/data/models/melUpperLeg.bob \
-  build/data/models/robotTorso.bob \
-  build/data/models/cragCastleLevel.bob \
-  build/data/models/zoePelvis.bob \
-  build/data/models/agentHead.bob \
-  build/data/models/rampageLevel.bob \
-  build/data/models/thePadVRFillMound.bob \
-  build/data/models/melHand.bob \
-  build/data/models/jackTorso.bob \
-  build/data/models/pixieTorso.bob \
-  build/data/models/santaHead.bob \
-  build/data/models/playerLineup1Transparent.bob \
-  build/data/models/bigGBottom.bob \
-  build/data/models/robotHead.bob \
-  build/data/models/frameInset.bob \
-  build/data/models/bunnyHead.bob \
-  build/data/models/santaTorso.bob \
-  build/data/models/penguinHand.bob \
-  build/data/models/heartTransparent.bob \
-  build/data/models/hairTuft4.bob \
-  build/data/models/doomShroomStem.bob \
-  build/data/models/buttonBackSmallOpaque.bob \
-  build/data/models/pixieHand.bob \
-  build/data/models/scrollBarTroughTransparent.bob \
-  build/data/models/assassinHand.bob \
-  build/data/models/jackHand.bob \
-  build/data/models/agentPelvis.bob \
-  build/data/models/towerDLevel.bob \
-  build/data/models/softEdgeInside.bob \
-  build/data/models/aliToes.bob \
-  build/data/models/hockeyStadiumOuter.bob \
-  build/data/models/warriorTorso.bob \
-  build/data/models/image2x1Vertical.bob \
-  build/data/models/kronkUpperArm.bob \
-  build/data/models/zoeLowerLeg.bob \
-  build/data/models/wrestlerTorso.bob \
-  build/data/models/frostyHand.bob \
-  build/data/models/robotUpperLeg.bob \
-  build/data/models/alwaysLandBG.bob \
-  build/data/models/jumpsuitForeArm.bob \
-  build/data/models/actionHeroUpperLeg.bob \
-  build/data/models/agentLowerLeg.bob \
-  build/data/models/witchHead.bob \
-  build/data/models/operaSingerUpperLeg.bob \
-  build/data/models/pixieUpperArm.bob \
-  build/data/models/flagPole.bob \
-  build/data/models/powerup.bob \
-  build/data/models/thePadVRFillTop.bob
+  build/ba_data/models/wrestlerToes.bob \
+  build/ba_data/models/melTorso.bob \
+  build/ba_data/models/gladiatorHead.bob \
+  build/ba_data/models/image16x1.bob \
+  build/ba_data/models/actionButtonBottom.bob \
+  build/ba_data/models/santaUpperLeg.bob \
+  build/ba_data/models/thePadBGSmall.bob \
+  build/ba_data/models/cowboyForeArm.bob \
+  build/ba_data/models/image1x1.bob \
+  build/ba_data/models/trees.bob \
+  build/ba_data/models/plasticEyesTransparent.bob \
+  build/ba_data/models/currencyPlusButton.bob \
+  build/ba_data/models/scrollBarThumbOpaque.bob \
+  build/ba_data/models/cyborgUpperArm.bob \
+  build/ba_data/models/jumpsuitTorso.bob \
+  build/ba_data/models/jumpsuitToes.bob \
+  build/ba_data/models/natureBackground.bob \
+  build/ba_data/models/operaSingerPelvis.bob \
+  build/ba_data/models/oldLadyUpperArm.bob \
+  build/ba_data/models/hairTuft1.bob \
+  build/ba_data/models/neoSpazUpperLeg.bob \
+  build/ba_data/models/overlayGuide.bob \
+  build/ba_data/models/gladiatorUpperLeg.bob \
+  build/ba_data/models/alienTorso.bob \
+  build/ba_data/models/zoeTorso.bob \
+  build/ba_data/models/operaSingerForeArm.bob \
+  build/ba_data/models/buttonTabOpaque.bob \
+  build/ba_data/models/wizardToes.bob \
+  build/ba_data/models/witchTorso.bob \
+  build/ba_data/models/shrapnelBoard.bob \
+  build/ba_data/models/puck.bob \
+  build/ba_data/models/jumpsuitLowerLeg.bob \
+  build/ba_data/models/zoeHand.bob \
+  build/ba_data/models/witchLowerLeg.bob \
+  build/ba_data/models/achievementOutline.bob \
+  build/ba_data/models/bonesToes.bob \
+  build/ba_data/models/bearToes.bob \
+  build/ba_data/models/buttonBackOpaque.bob \
+  build/ba_data/models/vrOverlay.bob \
+  build/ba_data/models/playerLineup2Transparent.bob \
+  build/ba_data/models/kronkToes.bob \
+  build/ba_data/models/alwaysLandLevel.bob \
+  build/ba_data/models/oldLadyToes.bob \
+  build/ba_data/models/superheroHand.bob \
+  build/ba_data/models/toolbarBacking.bob \
+  build/ba_data/models/bomb.bob \
+  build/ba_data/models/currencyMeter.bob \
+  build/ba_data/models/cowboyUpperLeg.bob \
+  build/ba_data/models/ninjaLowerLeg.bob \
+  build/ba_data/models/kronkForeArm.bob \
+  build/ba_data/models/ninjaHand.bob \
+  build/ba_data/models/windowBGBlotch.bob \
+  build/ba_data/models/kronkPelvis.bob \
+  build/ba_data/models/agentTorso.bob \
+  build/ba_data/models/penguinLowerLeg.bob \
+  build/ba_data/models/scrollBarThumbShortOpaque.bob \
+  build/ba_data/models/bunnyLowerLeg.bob \
+  build/ba_data/models/neoSpazPelvis.bob \
+  build/ba_data/models/scrollWidgetShort.bob \
+  build/ba_data/models/operaSingerHand.bob \
+  build/ba_data/models/image1x1FullScreen.bob \
+  build/ba_data/models/ninjaTorso.bob \
+  build/ba_data/models/assassinHead.bob \
+  build/ba_data/models/jackHead.bob \
+  build/ba_data/models/level_select_button_transparent.bob \
+  build/ba_data/models/rampageLevelBottom.bob \
+  build/ba_data/models/pixieHead.bob \
+  build/ba_data/models/toolbarBackingTransparent.bob \
+  build/ba_data/models/aliUpperLeg.bob \
+  build/ba_data/models/alienToes.bob \
+  build/ba_data/models/cyborgLowerLeg.bob \
+  build/ba_data/models/runningShoes.bob \
+  build/ba_data/models/oldLadyLowerLeg.bob \
+  build/ba_data/models/scorch.bob \
+  build/ba_data/models/cowboyToes.bob \
+  build/ba_data/models/ninjaPelvis.bob \
+  build/ba_data/models/wrestlerForeArm.bob \
+  build/ba_data/models/heartOpaque.bob \
+  build/ba_data/models/level_select_button_opaque.bob \
+  build/ba_data/models/frostyUpperLeg.bob \
+  build/ba_data/models/bonesForeArm.bob \
+  build/ba_data/models/frostyHead.bob \
+  build/ba_data/models/witchHand.bob \
+  build/ba_data/models/cyborgToes.bob \
+  build/ba_data/models/wizardTorso.bob \
+  build/ba_data/models/shield.bob \
+  build/ba_data/models/image4x1.bob \
+  build/ba_data/models/frostyForeArm.bob \
+  build/ba_data/models/bunnyUpperArm.bob \
+  build/ba_data/models/bridgitLevelTop.bob \
+  build/ba_data/models/agentHand.bob \
+  build/ba_data/models/flagStand.bob \
+  build/ba_data/models/cragCastleLevelBottom.bob \
+  build/ba_data/models/doomShroomBG.bob \
+  build/ba_data/models/melHead.bob \
+  build/ba_data/models/assassinTorso.bob \
+  build/ba_data/models/image1x1VRFullScreen.bob \
+  build/ba_data/models/witchForeArm.bob \
+  build/ba_data/models/penguinUpperArm.bob \
+  build/ba_data/models/aliForeArm.bob \
+  build/ba_data/models/robotHand.bob \
+  build/ba_data/models/lakeFrigidVRFill.bob \
+  build/ba_data/models/oldLadyPelvis.bob \
+  build/ba_data/models/bunnyHand.bob \
+  build/ba_data/models/wing.bob \
+  build/ba_data/models/ninjaUpperArm.bob \
+  build/ba_data/models/bonesPelvis.bob \
+  build/ba_data/models/santaHand.bob \
+  build/ba_data/models/neoSpazTorso.bob \
+  build/ba_data/models/witchUpperArm.bob \
+  build/ba_data/models/superheroForeArm.bob \
+  build/ba_data/models/jumpsuitUpperArm.bob \
+  build/ba_data/models/hairTuft1b.bob \
+  build/ba_data/models/superheroUpperLeg.bob \
+  build/ba_data/models/bearPelvis.bob \
+  build/ba_data/models/natureBackgroundVRFill.bob \
+  build/ba_data/models/penguinHead.bob \
+  build/ba_data/models/warriorToes.bob \
+  build/ba_data/models/arrowBack.bob \
+  build/ba_data/models/zigZagLevel.bob \
+  build/ba_data/models/frostyUpperArm.bob \
+  build/ba_data/models/tipTopLevelBottom.bob \
+  build/ba_data/models/santaLowerLeg.bob \
+  build/ba_data/models/playerLineup3Transparent.bob \
+  build/ba_data/models/santaForeArm.bob \
+  build/ba_data/models/agentToes.bob \
+  build/ba_data/models/doomShroomLevel.bob \
+  build/ba_data/models/bombSticky.bob \
+  build/ba_data/models/zoeForeArm.bob \
+  build/ba_data/models/doomShroomVRFill.bob \
+  build/ba_data/models/alwaysLandLevelBottom.bob \
+  build/ba_data/models/aliUpperArm.bob \
+  build/ba_data/models/towerDLevelBottom.bob \
+  build/ba_data/models/actionHeroPelvis.bob \
+  build/ba_data/models/warriorHand.bob \
+  build/ba_data/models/operaSingerTorso.bob \
+  build/ba_data/models/frostyTorso.bob \
+  build/ba_data/models/toolbarBackingBottom.bob \
+  build/ba_data/models/gladiatorLowerLeg.bob \
+  build/ba_data/models/neoSpazLowerLeg.bob \
+  build/ba_data/models/robotToes.bob \
+  build/ba_data/models/bunnyToes.bob \
+  build/ba_data/models/santaToes.bob \
+  build/ba_data/models/cowboyLowerLeg.bob \
+  build/ba_data/models/ninjaUpperLeg.bob \
+  build/ba_data/models/windowHSmallVMedOpaque.bob \
+  build/ba_data/models/aliHead.bob \
+  build/ba_data/models/cowboyHand.bob \
+  build/ba_data/models/thePadBG.bob \
+  build/ba_data/models/thePadVRFillBottom.bob \
+  build/ba_data/models/bearTorso.bob \
+  build/ba_data/models/superheroUpperArm.bob \
+  build/ba_data/models/buttonLargerOpaque.bob \
+  build/ba_data/models/witchUpperLeg.bob \
+  build/ba_data/models/eyeBallIris.bob \
+  build/ba_data/models/alienHand.bob \
+  build/ba_data/models/jumpsuitUpperLeg.bob \
+  build/ba_data/models/stepRightUpLevelBottom.bob \
+  build/ba_data/models/cyborgHand.bob \
+  build/ba_data/models/bunnyUpperLeg.bob \
+  build/ba_data/models/witchToes.bob \
+  build/ba_data/models/cowboyPelvis.bob \
+  build/ba_data/models/penguinUpperLeg.bob \
+  build/ba_data/models/melForeArm.bob \
+  build/ba_data/models/buttonBackTransparent.bob \
+  build/ba_data/models/monkeyFaceLevelBottom.bob \
+  build/ba_data/models/frostyPelvis.bob \
+  build/ba_data/models/pixieForeArm.bob \
+  build/ba_data/models/neoSpazUpperArm.bob \
+  build/ba_data/models/gladiatorUpperArm.bob \
+  build/ba_data/models/superheroToes.bob \
+  build/ba_data/models/oldLadyHand.bob \
+  build/ba_data/models/kronkHand.bob \
+  build/ba_data/models/oldLadyUpperLeg.bob \
+  build/ba_data/models/windowHSmallVSmallTransparent.bob \
+  build/ba_data/models/buttonSmallTransparent.bob \
+  build/ba_data/models/cyborgUpperLeg.bob \
+  build/ba_data/models/box.bob \
+  build/ba_data/models/buttonSmallOpaque.bob \
+  build/ba_data/models/aliLowerLeg.bob \
+  build/ba_data/models/zoeToes.bob \
+  build/ba_data/models/bearHand.bob \
+  build/ba_data/models/bonesHand.bob \
+  build/ba_data/models/alienPelvis.bob \
+  build/ba_data/models/lakeFrigid.bob \
+  build/ba_data/models/hockeyStadiumStands.bob \
+  build/ba_data/models/penguinPelvis.bob \
+  build/ba_data/models/superheroTorso.bob \
+  build/ba_data/models/footballStadium.bob \
+  build/ba_data/models/wrestlerPelvis.bob \
+  build/ba_data/models/operaSingerToes.bob \
+  build/ba_data/models/actionHeroHead.bob \
+  build/ba_data/models/ninjaToes.bob \
+  build/ba_data/models/flash.bob \
+  build/ba_data/models/santaUpperArm.bob \
+  build/ba_data/models/frostyLowerLeg.bob \
+  build/ba_data/models/gladiatorTorso.bob \
+  build/ba_data/models/superheroPelvis.bob \
+  build/ba_data/models/cylinder.bob \
+  build/ba_data/models/windowHSmallVSmallOpaque.bob \
+  build/ba_data/models/thePadLevelBottom.bob \
+  build/ba_data/models/neoSpazHead.bob \
+  build/ba_data/models/toolbarBackingOpaque.bob \
+  build/ba_data/models/shrapnel1.bob \
+  build/ba_data/models/assassinForeArm.bob \
+  build/ba_data/models/arrowFront.bob \
+  build/ba_data/models/wrestlerHand.bob \
+  build/ba_data/models/angryComputerTransparent.bob \
+  build/ba_data/models/buttonLargeTransparent.bob \
+  build/ba_data/models/wizardHand.bob \
+  build/ba_data/models/boxingGlove.bob \
+  build/ba_data/models/tipTopLevel.bob \
+  build/ba_data/models/bonesTorso.bob \
+  build/ba_data/models/lakeFrigidReflections.bob \
+  build/ba_data/models/image2x1.bob \
+  build/ba_data/models/superheroLowerLeg.bob \
+  build/ba_data/models/buttonNull.bob \
+  build/ba_data/models/cowboyUpperArm.bob \
+  build/ba_data/models/buttonLargeOpaque.bob \
+  build/ba_data/models/jumpsuitHand.bob \
+  build/ba_data/models/locatorBox.bob \
+  build/ba_data/models/cyborgPelvis.bob \
+  build/ba_data/models/aliHand.bob \
+  build/ba_data/models/cowboyHead.bob \
+  build/ba_data/models/wrestlerLowerLeg.bob \
+  build/ba_data/models/jackLowerLeg.bob \
+  build/ba_data/models/alienLowerLeg.bob \
+  build/ba_data/models/hairTuft3.bob \
+  build/ba_data/models/pixieToes.bob \
+  build/ba_data/models/rampageBG.bob \
+  build/ba_data/models/impactBomb.bob \
+  build/ba_data/models/alienHead.bob \
+  build/ba_data/models/scrollBarThumbShortTransparent.bob \
+  build/ba_data/models/assassinToes.bob \
+  build/ba_data/models/jackToes.bob \
+  build/ba_data/models/actionButtonTop.bob \
+  build/ba_data/models/witchPelvis.bob \
+  build/ba_data/models/cyborgHead.bob \
+  build/ba_data/models/melUpperArm.bob \
+  build/ba_data/models/tnt.bob \
+  build/ba_data/models/wizardPelvis.bob \
+  build/ba_data/models/rampageBG2.bob \
+  build/ba_data/models/wizardUpperLeg.bob \
+  build/ba_data/models/cowboyTorso.bob \
+  build/ba_data/models/locatorCircle.bob \
+  build/ba_data/models/frostyToes.bob \
+  build/ba_data/models/bunnyForeArm.bob \
+  build/ba_data/models/warriorLowerLeg.bob \
+  build/ba_data/models/penguinForeArm.bob \
+  build/ba_data/models/actionHeroUpperArm.bob \
+  build/ba_data/models/actionButtonLeft.bob \
+  build/ba_data/models/actionHeroForeArm.bob \
+  build/ba_data/models/powerupSimple.bob \
+  build/ba_data/models/robotUpperArm.bob \
+  build/ba_data/models/bearForeArm.bob \
+  build/ba_data/models/melToes.bob \
+  build/ba_data/models/shrapnelSlime.bob \
+  build/ba_data/models/lakeFrigidTop.bob \
+  build/ba_data/models/pixieUpperLeg.bob \
+  build/ba_data/models/operaSingerUpperArm.bob \
+  build/ba_data/models/cyborgForeArm.bob \
+  build/ba_data/models/shockWave.bob \
+  build/ba_data/models/warriorHead.bob \
+  build/ba_data/models/assassinPelvis.bob \
+  build/ba_data/models/bearLowerLeg.bob \
+  build/ba_data/models/penguinToes.bob \
+  build/ba_data/models/jackForeArm.bob \
+  build/ba_data/models/buttonSquareTransparent.bob \
+  build/ba_data/models/aliPelvis.bob \
+  build/ba_data/models/bonesLowerLeg.bob \
+  build/ba_data/models/toolbarBackingTop.bob \
+  build/ba_data/models/thePadLevel.bob \
+  build/ba_data/models/kronkUpperLeg.bob \
+  build/ba_data/models/tipTopBG.bob \
+  build/ba_data/models/wizardForeArm.bob \
+  build/ba_data/models/neoSpazHand.bob \
+  build/ba_data/models/agentForeArm.bob \
+  build/ba_data/models/actionHeroTorso.bob \
+  build/ba_data/models/warriorUpperArm.bob \
+  build/ba_data/models/logoTransparent.bob \
+  build/ba_data/models/wrestlerHead.bob \
+  build/ba_data/models/toolbarBackingBottom2.bob \
+  build/ba_data/models/melLowerLeg.bob \
+  build/ba_data/models/assassinUpperLeg.bob \
+  build/ba_data/models/gladiatorToes.bob \
+  build/ba_data/models/vrFade.bob \
+  build/ba_data/models/rampageVRFill.bob \
+  build/ba_data/models/cragCastleVRFillMound.bob \
+  build/ba_data/models/courtyardLevel.bob \
+  build/ba_data/models/landMine.bob \
+  build/ba_data/models/wizardHead.bob \
+  build/ba_data/models/oldLadyTorso.bob \
+  build/ba_data/models/jackUpperArm.bob \
+  build/ba_data/models/wrestlerUpperArm.bob \
+  build/ba_data/models/alienUpperArm.bob \
+  build/ba_data/models/jumpsuitHead.bob \
+  build/ba_data/models/eyeBall.bob \
+  build/ba_data/models/textBoxTransparent.bob \
+  build/ba_data/models/bridgitLevelBottom.bob \
+  build/ba_data/models/oldLadyHead.bob \
+  build/ba_data/models/kronkHead.bob \
+  build/ba_data/models/bearUpperArm.bob \
+  build/ba_data/models/bunnyTorso.bob \
+  build/ba_data/models/bonesUpperArm.bob \
+  build/ba_data/models/bearHead.bob \
+  build/ba_data/models/bonesHead.bob \
+  build/ba_data/models/oldLadyForeArm.bob \
+  build/ba_data/models/windowHSmallVMedTransparent.bob \
+  build/ba_data/models/buttonMediumOpaque.bob \
+  build/ba_data/models/roundaboutLevelBottom.bob \
+  build/ba_data/models/buttonTabTransparent.bob \
+  build/ba_data/models/warriorForeArm.bob \
+  build/ba_data/models/operaSingerLowerLeg.bob \
+  build/ba_data/models/agentUpperLeg.bob \
+  build/ba_data/models/actionHeroLowerLeg.bob \
+  build/ba_data/models/robotLowerLeg.bob \
+  build/ba_data/models/buttonLargerTransparent.bob \
+  build/ba_data/models/robotPelvis.bob \
+  build/ba_data/models/actionButtonRight.bob \
+  build/ba_data/models/zoeUpperLeg.bob \
+  build/ba_data/models/actionHeroHand.bob \
+  build/ba_data/models/buttonSquareOpaque.bob \
+  build/ba_data/models/zoeHead.bob \
+  build/ba_data/models/egg.bob \
+  build/ba_data/models/hockeyStadiumInner.bob \
+  build/ba_data/models/alienUpperLeg.bob \
+  build/ba_data/models/jackUpperLeg.bob \
+  build/ba_data/models/wrestlerUpperLeg.bob \
+  build/ba_data/models/buttonBackSmallTransparent.bob \
+  build/ba_data/models/monkeyFaceLevel.bob \
+  build/ba_data/models/hairTuft2.bob \
+  build/ba_data/models/bunnyPelvis.bob \
+  build/ba_data/models/superheroHead.bob \
+  build/ba_data/models/meterTransparent.bob \
+  build/ba_data/models/warriorUpperLeg.bob \
+  build/ba_data/models/gladiatorPelvis.bob \
+  build/ba_data/models/actionHeroToes.bob \
+  build/ba_data/models/jumpsuitPelvis.bob \
+  build/ba_data/models/ninjaHead.bob \
+  build/ba_data/models/footballStadiumVRFill.bob \
+  build/ba_data/models/crossOut.bob \
+  build/ba_data/models/checkTransparent.bob \
+  build/ba_data/models/operaSingerHead.bob \
+  build/ba_data/models/wizardLowerLeg.bob \
+  build/ba_data/models/cyborgTorso.bob \
+  build/ba_data/models/stepRightUpVRFillMound.bob \
+  build/ba_data/models/robotForeArm.bob \
+  build/ba_data/models/assassinUpperArm.bob \
+  build/ba_data/models/scrollBarThumbShortSimple.bob \
+  build/ba_data/models/bigG.bob \
+  build/ba_data/models/agentUpperArm.bob \
+  build/ba_data/models/courtyardLevelBottom.bob \
+  build/ba_data/models/eyeLid.bob \
+  build/ba_data/models/pixieLowerLeg.bob \
+  build/ba_data/models/gladiatorHand.bob \
+  build/ba_data/models/ninjaForeArm.bob \
+  build/ba_data/models/penguinTorso.bob \
+  build/ba_data/models/toolbarBackingTop2.bob \
+  build/ba_data/models/stepRightUpLevel.bob \
+  build/ba_data/models/neoSpazToes.bob \
+  build/ba_data/models/zoeUpperArm.bob \
+  build/ba_data/models/kronkTorso.bob \
+  build/ba_data/models/warriorPelvis.bob \
+  build/ba_data/models/gladiatorForeArm.bob \
+  build/ba_data/models/locator.bob \
+  build/ba_data/models/neoSpazForeArm.bob \
+  build/ba_data/models/buttonMediumTransparent.bob \
+  build/ba_data/models/pixiePelvis.bob \
+  build/ba_data/models/logo.bob \
+  build/ba_data/models/scrollBarThumbSimple.bob \
+  build/ba_data/models/kronkLowerLeg.bob \
+  build/ba_data/models/aliTorso.bob \
+  build/ba_data/models/scrollBarThumbTransparent.bob \
+  build/ba_data/models/locatorCircleOutline.bob \
+  build/ba_data/models/alwaysLandVRFillMound.bob \
+  build/ba_data/models/alienForeArm.bob \
+  build/ba_data/models/bonesUpperLeg.bob \
+  build/ba_data/models/softEdgeOutside.bob \
+  build/ba_data/models/bearUpperLeg.bob \
+  build/ba_data/models/roundaboutLevel.bob \
+  build/ba_data/models/wizardUpperArm.bob \
+  build/ba_data/models/playerLineup4Transparent.bob \
+  build/ba_data/models/zigZagLevelBottom.bob \
+  build/ba_data/models/assassinLowerLeg.bob \
+  build/ba_data/models/melUpperLeg.bob \
+  build/ba_data/models/robotTorso.bob \
+  build/ba_data/models/cragCastleLevel.bob \
+  build/ba_data/models/zoePelvis.bob \
+  build/ba_data/models/agentHead.bob \
+  build/ba_data/models/rampageLevel.bob \
+  build/ba_data/models/thePadVRFillMound.bob \
+  build/ba_data/models/melHand.bob \
+  build/ba_data/models/jackTorso.bob \
+  build/ba_data/models/pixieTorso.bob \
+  build/ba_data/models/santaHead.bob \
+  build/ba_data/models/playerLineup1Transparent.bob \
+  build/ba_data/models/bigGBottom.bob \
+  build/ba_data/models/robotHead.bob \
+  build/ba_data/models/frameInset.bob \
+  build/ba_data/models/bunnyHead.bob \
+  build/ba_data/models/santaTorso.bob \
+  build/ba_data/models/penguinHand.bob \
+  build/ba_data/models/heartTransparent.bob \
+  build/ba_data/models/hairTuft4.bob \
+  build/ba_data/models/doomShroomStem.bob \
+  build/ba_data/models/buttonBackSmallOpaque.bob \
+  build/ba_data/models/pixieHand.bob \
+  build/ba_data/models/scrollBarTroughTransparent.bob \
+  build/ba_data/models/assassinHand.bob \
+  build/ba_data/models/jackHand.bob \
+  build/ba_data/models/agentPelvis.bob \
+  build/ba_data/models/towerDLevel.bob \
+  build/ba_data/models/softEdgeInside.bob \
+  build/ba_data/models/aliToes.bob \
+  build/ba_data/models/hockeyStadiumOuter.bob \
+  build/ba_data/models/warriorTorso.bob \
+  build/ba_data/models/image2x1Vertical.bob \
+  build/ba_data/models/kronkUpperArm.bob \
+  build/ba_data/models/zoeLowerLeg.bob \
+  build/ba_data/models/wrestlerTorso.bob \
+  build/ba_data/models/frostyHand.bob \
+  build/ba_data/models/robotUpperLeg.bob \
+  build/ba_data/models/alwaysLandBG.bob \
+  build/ba_data/models/jumpsuitForeArm.bob \
+  build/ba_data/models/actionHeroUpperLeg.bob \
+  build/ba_data/models/agentLowerLeg.bob \
+  build/ba_data/models/witchHead.bob \
+  build/ba_data/models/operaSingerUpperLeg.bob \
+  build/ba_data/models/pixieUpperArm.bob \
+  build/ba_data/models/flagPole.bob \
+  build/ba_data/models/powerup.bob \
+  build/ba_data/models/thePadVRFillTop.bob
 
 FONT_TARGETS = \
-  build/data/fonts/fontSmall1.fdata \
-  build/data/fonts/fontSmall3.fdata \
-  build/data/fonts/fontSmall7.fdata \
-  build/data/fonts/fontSmall5.fdata \
-  build/data/fonts/fontSmall2.fdata \
-  build/data/fonts/fontSmall0.fdata \
-  build/data/fonts/fontSmall4.fdata \
-  build/data/fonts/fontSmall6.fdata
+  build/ba_data/fonts/fontSmall1.fdata \
+  build/ba_data/fonts/fontSmall3.fdata \
+  build/ba_data/fonts/fontSmall7.fdata \
+  build/ba_data/fonts/fontSmall5.fdata \
+  build/ba_data/fonts/fontSmall2.fdata \
+  build/ba_data/fonts/fontSmall0.fdata \
+  build/ba_data/fonts/fontSmall4.fdata \
+  build/ba_data/fonts/fontSmall6.fdata
 
 DATA_TARGETS = \
-  build/data/data/langdata.json \
-  build/data/data/maps/monkey_face.json \
-  build/data/data/maps/football_stadium.json \
-  build/data/data/maps/tip_top.json \
-  build/data/data/maps/crag_castle.json \
-  build/data/data/maps/doom_shroom.json \
-  build/data/data/maps/zig_zag.json \
-  build/data/data/maps/step_right_up.json \
-  build/data/data/maps/bridgit.json \
-  build/data/data/maps/happy_thoughts.json \
-  build/data/data/maps/roundabout.json \
-  build/data/data/maps/rampage.json \
-  build/data/data/maps/lake_frigid.json \
-  build/data/data/maps/tower_d.json \
-  build/data/data/maps/hockey_stadium.json \
-  build/data/data/maps/courtyard.json \
-  build/data/data/maps/the_pad.json \
-  build/data/data/maps/big_g.json \
-  build/data/data/languages/arabic.json \
-  build/data/data/languages/chinese.json \
-  build/data/data/languages/hungarian.json \
-  build/data/data/languages/french.json \
-  build/data/data/languages/serbian.json \
-  build/data/data/languages/belarussian.json \
-  build/data/data/languages/polish.json \
-  build/data/data/languages/persian.json \
-  build/data/data/languages/esperanto.json \
-  build/data/data/languages/croatian.json \
-  build/data/data/languages/turkish.json \
-  build/data/data/languages/german.json \
-  build/data/data/languages/spanish.json \
-  build/data/data/languages/portuguese.json \
-  build/data/data/languages/korean.json \
-  build/data/data/languages/romanian.json \
-  build/data/data/languages/english.json \
-  build/data/data/languages/russian.json \
-  build/data/data/languages/ukrainian.json \
-  build/data/data/languages/swedish.json \
-  build/data/data/languages/gibberish.json \
-  build/data/data/languages/dutch.json \
-  build/data/data/languages/greek.json \
-  build/data/data/languages/hindi.json \
-  build/data/data/languages/czech.json \
-  build/data/data/languages/indonesian.json \
-  build/data/data/languages/italian.json \
-  build/data/data/languages/danish.json
+  build/ba_data/data/langdata.json \
+  build/ba_data/data/maps/monkey_face.json \
+  build/ba_data/data/maps/football_stadium.json \
+  build/ba_data/data/maps/tip_top.json \
+  build/ba_data/data/maps/crag_castle.json \
+  build/ba_data/data/maps/doom_shroom.json \
+  build/ba_data/data/maps/zig_zag.json \
+  build/ba_data/data/maps/step_right_up.json \
+  build/ba_data/data/maps/bridgit.json \
+  build/ba_data/data/maps/happy_thoughts.json \
+  build/ba_data/data/maps/roundabout.json \
+  build/ba_data/data/maps/rampage.json \
+  build/ba_data/data/maps/lake_frigid.json \
+  build/ba_data/data/maps/tower_d.json \
+  build/ba_data/data/maps/hockey_stadium.json \
+  build/ba_data/data/maps/courtyard.json \
+  build/ba_data/data/maps/the_pad.json \
+  build/ba_data/data/maps/big_g.json \
+  build/ba_data/data/languages/arabic.json \
+  build/ba_data/data/languages/chinese.json \
+  build/ba_data/data/languages/hungarian.json \
+  build/ba_data/data/languages/french.json \
+  build/ba_data/data/languages/serbian.json \
+  build/ba_data/data/languages/belarussian.json \
+  build/ba_data/data/languages/polish.json \
+  build/ba_data/data/languages/persian.json \
+  build/ba_data/data/languages/esperanto.json \
+  build/ba_data/data/languages/croatian.json \
+  build/ba_data/data/languages/turkish.json \
+  build/ba_data/data/languages/german.json \
+  build/ba_data/data/languages/spanish.json \
+  build/ba_data/data/languages/portuguese.json \
+  build/ba_data/data/languages/korean.json \
+  build/ba_data/data/languages/romanian.json \
+  build/ba_data/data/languages/english.json \
+  build/ba_data/data/languages/russian.json \
+  build/ba_data/data/languages/ukrainian.json \
+  build/ba_data/data/languages/swedish.json \
+  build/ba_data/data/languages/gibberish.json \
+  build/ba_data/data/languages/dutch.json \
+  build/ba_data/data/languages/greek.json \
+  build/ba_data/data/languages/hindi.json \
+  build/ba_data/data/languages/czech.json \
+  build/ba_data/data/languages/indonesian.json \
+  build/ba_data/data/languages/italian.json \
+  build/ba_data/data/languages/danish.json
 
 AUDIO_TARGETS = \
-  build/data/audio/penguinDeath.ogg \
-  build/data/audio/ali1.ogg \
-  build/data/audio/whenJohnnyComesMarchingHomeMusic.ogg \
-  build/data/audio/kronk4.ogg \
-  build/data/audio/bearHit1.ogg \
-  build/data/audio/jumpsuitHit1.ogg \
-  build/data/audio/skid01.ogg \
-  build/data/audio/swish3.ogg \
-  build/data/audio/ticking.ogg \
-  build/data/audio/agent4.ogg \
-  build/data/audio/announceTen.ogg \
-  build/data/audio/spazImpact04.ogg \
-  build/data/audio/bearFall.ogg \
-  build/data/audio/jumpsuitFall.ogg \
-  build/data/audio/tap.ogg \
-  build/data/audio/wizard4.ogg \
-  build/data/audio/jackHit01.ogg \
-  build/data/audio/kronk10.ogg \
-  build/data/audio/agentHit2.ogg \
-  build/data/audio/swish2.ogg \
-  build/data/audio/corkPop.ogg \
-  build/data/audio/laser.ogg \
-  build/data/audio/announceFour.ogg \
-  build/data/audio/frostyDeath.ogg \
-  build/data/audio/superhero1.ogg \
-  build/data/audio/scoreHit02.ogg \
-  build/data/audio/warnBeep.ogg \
-  build/data/audio/kronk5.ogg \
-  build/data/audio/oldLadyHit2.ogg \
-  build/data/audio/crowdChant.ogg \
-  build/data/audio/scamper01.ogg \
-  build/data/audio/ali2.ogg \
-  build/data/audio/kronk7.ogg \
-  build/data/audio/refWhistle.ogg \
-  build/data/audio/bearHit2.ogg \
-  build/data/audio/jumpsuitHit2.ogg \
-  build/data/audio/superhero3.ogg \
-  build/data/audio/jackFall01.ogg \
-  build/data/audio/aliDeath.ogg \
-  build/data/audio/technoHit01.ogg \
-  build/data/audio/frostyFall.ogg \
-  build/data/audio/oldLadyFall.ogg \
-  build/data/audio/jackHit03.ogg \
-  build/data/audio/alien4.ogg \
-  build/data/audio/agentFall.ogg \
-  build/data/audio/activateBeep.ogg \
-  build/data/audio/freeze.ogg \
-  build/data/audio/jackHit02.ogg \
-  build/data/audio/blank.ogg \
-  build/data/audio/dingSmall.ogg \
-  build/data/audio/agentHit1.ogg \
-  build/data/audio/superhero2.ogg \
-  build/data/audio/scoreHit01.ogg \
-  build/data/audio/kronk6.ogg \
-  build/data/audio/oldLadyHit1.ogg \
-  build/data/audio/ali3.ogg \
-  build/data/audio/zoeEff.ogg \
-  build/data/audio/swip2.ogg \
-  build/data/audio/swish.ogg \
-  build/data/audio/kronk2.ogg \
-  build/data/audio/witchHit2.ogg \
-  build/data/audio/penguinHit2.ogg \
-  build/data/audio/agent2.ogg \
-  build/data/audio/dingSmallHigh.ogg \
-  build/data/audio/santaDeath.ogg \
-  build/data/audio/alienFall.ogg \
-  build/data/audio/jackHit06.ogg \
-  build/data/audio/alien1.ogg \
-  build/data/audio/spazScream01.ogg \
-  build/data/audio/spazImpact02.ogg \
-  build/data/audio/wizard3.ogg \
-  build/data/audio/spazFall01.ogg \
-  build/data/audio/wizard2.ogg \
-  build/data/audio/spazImpact03.ogg \
-  build/data/audio/scoreIncrease.ogg \
-  build/data/audio/jackHit07.ogg \
-  build/data/audio/bunnyHit2.ogg \
-  build/data/audio/ninjaFall1.ogg \
-  build/data/audio/orchestraHit.ogg \
-  build/data/audio/agent3.ogg \
-  build/data/audio/melFall01.ogg \
-  build/data/audio/playerDeath.ogg \
-  build/data/audio/alienHit1.ogg \
-  build/data/audio/kronk3.ogg \
-  build/data/audio/operaSingerDeath.ogg \
-  build/data/audio/witchHit1.ogg \
-  build/data/audio/kronk1.ogg \
-  build/data/audio/bunnyFall.ogg \
-  build/data/audio/ali4.ogg \
-  build/data/audio/penguinHit1.ogg \
-  build/data/audio/superPunch.ogg \
-  build/data/audio/agent1.ogg \
-  build/data/audio/ooh.ogg \
-  build/data/audio/alien2.ogg \
-  build/data/audio/jackHit05.ogg \
-  build/data/audio/fuse01.ogg \
-  build/data/audio/spazImpact01.ogg \
-  build/data/audio/flagCatcherMusic.ogg \
-  build/data/audio/foghorn.ogg \
-  build/data/audio/wizard1.ogg \
-  build/data/audio/announceThree.ogg \
-  build/data/audio/jackHit04.ogg \
-  build/data/audio/alien3.ogg \
-  build/data/audio/shieldDown.ogg \
-  build/data/audio/penguinFall.ogg \
-  build/data/audio/kronkDeath.ogg \
-  build/data/audio/witchFall.ogg \
-  build/data/audio/spazOw.ogg \
-  build/data/audio/bunnyHit1.ogg \
-  build/data/audio/superhero4.ogg \
-  build/data/audio/punchWeak01.ogg \
-  build/data/audio/alienHit2.ogg \
-  build/data/audio/deek2.ogg \
-  build/data/audio/actionHeroHit2.ogg \
-  build/data/audio/pixie3.ogg \
-  build/data/audio/ninjaHit2.ogg \
-  build/data/audio/warriorDeath.ogg \
-  build/data/audio/jumpsuitDeath.ogg \
-  build/data/audio/bearDeath.ogg \
-  build/data/audio/actionHeroDeath.ogg \
-  build/data/audio/oldLady4.ogg \
-  build/data/audio/frosty01.ogg \
-  build/data/audio/gladiatorHit1.ogg \
-  build/data/audio/pixieDeath.ogg \
-  build/data/audio/healthPowerup.ogg \
-  build/data/audio/impactMedium.ogg \
-  build/data/audio/jackDeath01.ogg \
-  build/data/audio/zoeImpact01.ogg \
-  build/data/audio/forwardMarchMusic.ogg \
-  build/data/audio/woodDebrisFall.ogg \
-  build/data/audio/ninjaHit3.ogg \
-  build/data/audio/pixieHit2.ogg \
-  build/data/audio/splatter.ogg \
-  build/data/audio/gladiatorFall.ogg \
-  build/data/audio/tick.ogg \
-  build/data/audio/pixie2.ogg \
-  build/data/audio/actionHeroHit1.ogg \
-  build/data/audio/swip.ogg \
-  build/data/audio/ninjaHit1.ogg \
-  build/data/audio/zoeImpact03.ogg \
-  build/data/audio/zoeFall01.ogg \
-  build/data/audio/frosty02.ogg \
-  build/data/audio/gladiatorHit2.ogg \
-  build/data/audio/pixieFall.ogg \
-  build/data/audio/zoeScream01.ogg \
-  build/data/audio/frosty03.ogg \
-  build/data/audio/actionHeroFall.ogg \
-  build/data/audio/menuMusic.ogg \
-  build/data/audio/zoeImpact02.ogg \
-  build/data/audio/penguin4.ogg \
-  build/data/audio/runAwayMusic.ogg \
-  build/data/audio/pixieHit1.ogg \
-  build/data/audio/pixie1.ogg \
-  build/data/audio/metalHit.ogg \
-  build/data/audio/hiss.ogg \
-  build/data/audio/ninjaHit4.ogg \
-  build/data/audio/bunnyJump.ogg \
-  build/data/audio/cowboyDeath.ogg \
-  build/data/audio/oldLady2.ogg \
-  build/data/audio/mel09.ogg \
-  build/data/audio/announceSix.ogg \
-  build/data/audio/raceBeep2.ogg \
-  build/data/audio/announceTwo.ogg \
-  build/data/audio/mel08.ogg \
-  build/data/audio/oldLady3.ogg \
-  build/data/audio/punch01.ogg \
-  build/data/audio/penguin1.ogg \
-  build/data/audio/orchestraHitBig2.ogg \
-  build/data/audio/robotHit2.ogg \
-  build/data/audio/ninjaHit5.ogg \
-  build/data/audio/pixie4.ogg \
-  build/data/audio/operaSingerHit2.ogg \
-  build/data/audio/cyborgDeath.ogg \
-  build/data/audio/ninjaHit7.ogg \
-  build/data/audio/survivalMusic.ogg \
-  build/data/audio/penguin3.ogg \
-  build/data/audio/oldLady1.ogg \
-  build/data/audio/agentDeath.ogg \
-  build/data/audio/cashRegister2.ogg \
-  build/data/audio/frosty04.ogg \
-  build/data/audio/operaSingerFall.ogg \
-  build/data/audio/robotFall.ogg \
-  build/data/audio/scaryMusic.ogg \
-  build/data/audio/raceBeep1.ogg \
-  build/data/audio/frosty05.ogg \
-  build/data/audio/penguin2.ogg \
-  build/data/audio/zoeImpact04.ogg \
-  build/data/audio/orchestraHitBig1.ogg \
-  build/data/audio/robotHit1.ogg \
-  build/data/audio/ninjaHit6.ogg \
-  build/data/audio/gong.ogg \
-  build/data/audio/operaSingerHit1.ogg \
-  build/data/audio/shieldUp.ogg \
-  build/data/audio/charSelectMusic.ogg \
-  build/data/audio/cyborg2.ogg \
-  build/data/audio/santa05.ogg \
-  build/data/audio/bones1.ogg \
-  build/data/audio/shatter.ogg \
-  build/data/audio/kronkFall.ogg \
-  build/data/audio/impactHard.ogg \
-  build/data/audio/bombRoll01.ogg \
-  build/data/audio/explosion05.ogg \
-  build/data/audio/announceEight.ogg \
-  build/data/audio/superheroFall.ogg \
-  build/data/audio/mel06.ogg \
-  build/data/audio/santaHit01.ogg \
-  build/data/audio/cyborgHit2.ogg \
-  build/data/audio/bonesDeath.ogg \
-  build/data/audio/deek.ogg \
-  build/data/audio/mel07.ogg \
-  build/data/audio/gladiator4.ogg \
-  build/data/audio/explosion04.ogg \
-  build/data/audio/wrestler1.ogg \
-  build/data/audio/spazJump01.ogg \
-  build/data/audio/santaFall.ogg \
-  build/data/audio/superheroHit1.ogg \
-  build/data/audio/punchSwish.ogg \
-  build/data/audio/santa04.ogg \
-  build/data/audio/cyborg3.ogg \
-  build/data/audio/zoePickup01.ogg \
-  build/data/audio/cyborg1.ogg \
-  build/data/audio/spazAttack04.ogg \
-  build/data/audio/bigImpact2.ogg \
-  build/data/audio/bones2.ogg \
-  build/data/audio/ninjaHit8.ogg \
-  build/data/audio/announceNine.ogg \
-  build/data/audio/spazJump03.ogg \
-  build/data/audio/wrestler3.ogg \
-  build/data/audio/bunnyDeath.ogg \
-  build/data/audio/mel05.ogg \
-  build/data/audio/santaHit02.ogg \
-  build/data/audio/cyborgHit1.ogg \
-  build/data/audio/bear4.ogg \
-  build/data/audio/gunCocking.ogg \
-  build/data/audio/spawn.ogg \
-  build/data/audio/powerdown01.ogg \
-  build/data/audio/santaHit03.ogg \
-  build/data/audio/assassin4.ogg \
-  build/data/audio/mel04.ogg \
-  build/data/audio/mel10.ogg \
-  build/data/audio/cyborgFall.ogg \
-  build/data/audio/wrestler2.ogg \
-  build/data/audio/spazJump02.ogg \
-  build/data/audio/bones3.ogg \
-  build/data/audio/superheroHit2.ogg \
-  build/data/audio/bellMed.ogg \
-  build/data/audio/santa03.ogg \
-  build/data/audio/cyborg4.ogg \
-  build/data/audio/powerup01.ogg \
-  build/data/audio/robotDeath.ogg \
-  build/data/audio/flyingMusic.ogg \
-  build/data/audio/shieldHit.ogg \
-  build/data/audio/spazAttack01.ogg \
-  build/data/audio/sparkle02.ogg \
-  build/data/audio/cowboyHit1.ogg \
-  build/data/audio/cashRegister.ogg \
-  build/data/audio/explosion03.ogg \
-  build/data/audio/announceOne.ogg \
-  build/data/audio/gladiator3.ogg \
-  build/data/audio/impactMedium2.ogg \
-  build/data/audio/bear1.ogg \
-  build/data/audio/wrestlerDeath.ogg \
-  build/data/audio/pop01.ogg \
-  build/data/audio/frostyHit01.ogg \
-  build/data/audio/cowboyFall.ogg \
-  build/data/audio/assassin1.ogg \
-  build/data/audio/gladiator2.ogg \
-  build/data/audio/mel01.ogg \
-  build/data/audio/warriorHit2.ogg \
-  build/data/audio/explosion02.ogg \
-  build/data/audio/blip.ogg \
-  build/data/audio/sparkle03.ogg \
-  build/data/audio/bigImpact.ogg \
-  build/data/audio/santa02.ogg \
-  build/data/audio/boo.ogg \
-  build/data/audio/sparkle01.ogg \
-  build/data/audio/spazAttack02.ogg \
-  build/data/audio/warriorFall.ogg \
-  build/data/audio/cymbal.ogg \
-  build/data/audio/cowboyHit2.ogg \
-  build/data/audio/slowEpicMusic.ogg \
-  build/data/audio/laserReverse.ogg \
-  build/data/audio/mel03.ogg \
-  build/data/audio/bellLow.ogg \
-  build/data/audio/bear2.ogg \
-  build/data/audio/santaHit04.ogg \
-  build/data/audio/assassin3.ogg \
-  build/data/audio/zoeOw.ogg \
-  build/data/audio/frostyHit03.ogg \
-  build/data/audio/frostyHit02.ogg \
-  build/data/audio/victoryMusic.ogg \
-  build/data/audio/assassin2.ogg \
-  build/data/audio/bear3.ogg \
-  build/data/audio/gladiator1.ogg \
-  build/data/audio/mel02.ogg \
-  build/data/audio/warriorHit1.ogg \
-  build/data/audio/explosion01.ogg \
-  build/data/audio/boxDrop.ogg \
-  build/data/audio/wrestler4.ogg \
-  build/data/audio/wizardDeath.ogg \
-  build/data/audio/spazJump04.ogg \
-  build/data/audio/oldLadyDeath.ogg \
-  build/data/audio/zoeDeath01.ogg \
-  build/data/audio/spazAttack03.ogg \
-  build/data/audio/bellHigh.ogg \
-  build/data/audio/santa01.ogg \
-  build/data/audio/cowboy1.ogg \
-  build/data/audio/jack04.ogg \
-  build/data/audio/toTheDeathMusic.ogg \
-  build/data/audio/jumpsuit3.ogg \
-  build/data/audio/ninjaAttack7.ogg \
-  build/data/audio/actionHero3.ogg \
-  build/data/audio/warrior1.ogg \
-  build/data/audio/alienDeath.ogg \
-  build/data/audio/zoeAttack03.ogg \
-  build/data/audio/orchestraHit3.ogg \
-  build/data/audio/bunny4.ogg \
-  build/data/audio/boxingBell.ogg \
-  build/data/audio/assassinHit2.ogg \
-  build/data/audio/operaSinger4.ogg \
-  build/data/audio/error.ogg \
-  build/data/audio/click01.ogg \
-  build/data/audio/achievement.ogg \
-  build/data/audio/playerLeft.ogg \
-  build/data/audio/aliHit2.ogg \
-  build/data/audio/footImpact01.ogg \
-  build/data/audio/spazDeath01.ogg \
-  build/data/audio/dripity.ogg \
-  build/data/audio/stickyImpact.ogg \
-  build/data/audio/debrisFall.ogg \
-  build/data/audio/orchestraHit2.ogg \
-  build/data/audio/zoeAttack02.ogg \
-  build/data/audio/actionHero2.ogg \
-  build/data/audio/score.ogg \
-  build/data/audio/ninjaAttack6.ogg \
-  build/data/audio/witch1.ogg \
-  build/data/audio/punchStrong02.ogg \
-  build/data/audio/wizardHit2.ogg \
-  build/data/audio/robot1.ogg \
-  build/data/audio/jumpsuit2.ogg \
-  build/data/audio/jack05.ogg \
-  build/data/audio/superheroDeath.ogg \
-  build/data/audio/cowboy2.ogg \
-  build/data/audio/drumRoll.ogg \
-  build/data/audio/robot3.ogg \
-  build/data/audio/ninjaAttack4.ogg \
-  build/data/audio/alarm.ogg \
-  build/data/audio/witch3.ogg \
-  build/data/audio/warrior2.ogg \
-  build/data/audio/impactHard3.ogg \
-  build/data/audio/aliFall.ogg \
-  build/data/audio/spazEff.ogg \
-  build/data/audio/wizardFall.ogg \
-  build/data/audio/block.ogg \
-  build/data/audio/assassinHit1.ogg \
-  build/data/audio/footImpact03.ogg \
-  build/data/audio/trashRummage.ogg \
-  build/data/audio/footImpact02.ogg \
-  build/data/audio/aliHit1.ogg \
-  build/data/audio/ninjaDeath1.ogg \
-  build/data/audio/announceFive.ogg \
-  build/data/audio/zoeAttack01.ogg \
-  build/data/audio/actionHero1.ogg \
-  build/data/audio/impactHard2.ogg \
-  build/data/audio/warrior3.ogg \
-  build/data/audio/melDeath01.ogg \
-  build/data/audio/witch2.ogg \
-  build/data/audio/assassinFall.ogg \
-  build/data/audio/punchStrong01.ogg \
-  build/data/audio/ninjaAttack5.ogg \
-  build/data/audio/wizardHit1.ogg \
-  build/data/audio/robot2.ogg \
-  build/data/audio/announceSeven.ogg \
-  build/data/audio/jack06.ogg \
-  build/data/audio/cowboy3.ogg \
-  build/data/audio/jumpsuit1.ogg \
-  build/data/audio/bombDrop01.ogg \
-  build/data/audio/zoeJump03.ogg \
-  build/data/audio/warnBeeps.ogg \
-  build/data/audio/jack02.ogg \
-  build/data/audio/ninjaAttack1.ogg \
-  build/data/audio/bunny2.ogg \
-  build/data/audio/gladiatorDeath.ogg \
-  build/data/audio/operaSinger2.ogg \
-  build/data/audio/fanfare.ogg \
-  build/data/audio/wrestlerHit1.ogg \
-  build/data/audio/tickingCrazy.ogg \
-  build/data/audio/metalSkid.ogg \
-  build/data/audio/operaSinger3.ogg \
-  build/data/audio/actionHero4.ogg \
-  build/data/audio/zoeAttack04.ogg \
-  build/data/audio/orchestraHit4.ogg \
-  build/data/audio/bunny3.ogg \
-  build/data/audio/spazPickup01.ogg \
-  build/data/audio/wrestlerFall.ogg \
-  build/data/audio/cheer.ogg \
-  build/data/audio/zoeJump02.ogg \
-  build/data/audio/jack03.ogg \
-  build/data/audio/jumpsuit4.ogg \
-  build/data/audio/bombDrop02.ogg \
-  build/data/audio/cowboy4.ogg \
-  build/data/audio/jack01.ogg \
-  build/data/audio/grandRompMusic.ogg \
-  build/data/audio/ninjaAttack2.ogg \
-  build/data/audio/kronk8.ogg \
-  build/data/audio/bunny1.ogg \
-  build/data/audio/warrior4.ogg \
-  build/data/audio/ding.ogg \
-  build/data/audio/operaSinger1.ogg \
-  build/data/audio/wrestlerHit2.ogg \
-  build/data/audio/bonesFall.ogg \
-  build/data/audio/scoresEpicMusic.ogg \
-  build/data/audio/sportsMusic.ogg \
-  build/data/audio/witchDeath.ogg \
-  build/data/audio/kronk9.ogg \
-  build/data/audio/ninjaAttack3.ogg \
-  build/data/audio/assassinDeath.ogg \
-  build/data/audio/witch4.ogg \
-  build/data/audio/zoeJump01.ogg \
-  build/data/audio/robot4.ogg \
-  build/data/audio/gravelSkid.ogg
+  build/ba_data/audio/penguinDeath.ogg \
+  build/ba_data/audio/ali1.ogg \
+  build/ba_data/audio/whenJohnnyComesMarchingHomeMusic.ogg \
+  build/ba_data/audio/kronk4.ogg \
+  build/ba_data/audio/bearHit1.ogg \
+  build/ba_data/audio/jumpsuitHit1.ogg \
+  build/ba_data/audio/skid01.ogg \
+  build/ba_data/audio/swish3.ogg \
+  build/ba_data/audio/ticking.ogg \
+  build/ba_data/audio/agent4.ogg \
+  build/ba_data/audio/announceTen.ogg \
+  build/ba_data/audio/spazImpact04.ogg \
+  build/ba_data/audio/bearFall.ogg \
+  build/ba_data/audio/jumpsuitFall.ogg \
+  build/ba_data/audio/tap.ogg \
+  build/ba_data/audio/wizard4.ogg \
+  build/ba_data/audio/jackHit01.ogg \
+  build/ba_data/audio/kronk10.ogg \
+  build/ba_data/audio/agentHit2.ogg \
+  build/ba_data/audio/swish2.ogg \
+  build/ba_data/audio/corkPop.ogg \
+  build/ba_data/audio/laser.ogg \
+  build/ba_data/audio/announceFour.ogg \
+  build/ba_data/audio/frostyDeath.ogg \
+  build/ba_data/audio/superhero1.ogg \
+  build/ba_data/audio/scoreHit02.ogg \
+  build/ba_data/audio/warnBeep.ogg \
+  build/ba_data/audio/kronk5.ogg \
+  build/ba_data/audio/oldLadyHit2.ogg \
+  build/ba_data/audio/crowdChant.ogg \
+  build/ba_data/audio/scamper01.ogg \
+  build/ba_data/audio/ali2.ogg \
+  build/ba_data/audio/kronk7.ogg \
+  build/ba_data/audio/refWhistle.ogg \
+  build/ba_data/audio/bearHit2.ogg \
+  build/ba_data/audio/jumpsuitHit2.ogg \
+  build/ba_data/audio/superhero3.ogg \
+  build/ba_data/audio/jackFall01.ogg \
+  build/ba_data/audio/aliDeath.ogg \
+  build/ba_data/audio/technoHit01.ogg \
+  build/ba_data/audio/frostyFall.ogg \
+  build/ba_data/audio/oldLadyFall.ogg \
+  build/ba_data/audio/jackHit03.ogg \
+  build/ba_data/audio/alien4.ogg \
+  build/ba_data/audio/agentFall.ogg \
+  build/ba_data/audio/activateBeep.ogg \
+  build/ba_data/audio/freeze.ogg \
+  build/ba_data/audio/jackHit02.ogg \
+  build/ba_data/audio/blank.ogg \
+  build/ba_data/audio/dingSmall.ogg \
+  build/ba_data/audio/agentHit1.ogg \
+  build/ba_data/audio/superhero2.ogg \
+  build/ba_data/audio/scoreHit01.ogg \
+  build/ba_data/audio/kronk6.ogg \
+  build/ba_data/audio/oldLadyHit1.ogg \
+  build/ba_data/audio/ali3.ogg \
+  build/ba_data/audio/zoeEff.ogg \
+  build/ba_data/audio/swip2.ogg \
+  build/ba_data/audio/swish.ogg \
+  build/ba_data/audio/kronk2.ogg \
+  build/ba_data/audio/witchHit2.ogg \
+  build/ba_data/audio/penguinHit2.ogg \
+  build/ba_data/audio/agent2.ogg \
+  build/ba_data/audio/dingSmallHigh.ogg \
+  build/ba_data/audio/santaDeath.ogg \
+  build/ba_data/audio/alienFall.ogg \
+  build/ba_data/audio/jackHit06.ogg \
+  build/ba_data/audio/alien1.ogg \
+  build/ba_data/audio/spazScream01.ogg \
+  build/ba_data/audio/spazImpact02.ogg \
+  build/ba_data/audio/wizard3.ogg \
+  build/ba_data/audio/spazFall01.ogg \
+  build/ba_data/audio/wizard2.ogg \
+  build/ba_data/audio/spazImpact03.ogg \
+  build/ba_data/audio/scoreIncrease.ogg \
+  build/ba_data/audio/jackHit07.ogg \
+  build/ba_data/audio/bunnyHit2.ogg \
+  build/ba_data/audio/ninjaFall1.ogg \
+  build/ba_data/audio/orchestraHit.ogg \
+  build/ba_data/audio/agent3.ogg \
+  build/ba_data/audio/melFall01.ogg \
+  build/ba_data/audio/playerDeath.ogg \
+  build/ba_data/audio/alienHit1.ogg \
+  build/ba_data/audio/kronk3.ogg \
+  build/ba_data/audio/operaSingerDeath.ogg \
+  build/ba_data/audio/witchHit1.ogg \
+  build/ba_data/audio/kronk1.ogg \
+  build/ba_data/audio/bunnyFall.ogg \
+  build/ba_data/audio/ali4.ogg \
+  build/ba_data/audio/penguinHit1.ogg \
+  build/ba_data/audio/superPunch.ogg \
+  build/ba_data/audio/agent1.ogg \
+  build/ba_data/audio/ooh.ogg \
+  build/ba_data/audio/alien2.ogg \
+  build/ba_data/audio/jackHit05.ogg \
+  build/ba_data/audio/fuse01.ogg \
+  build/ba_data/audio/spazImpact01.ogg \
+  build/ba_data/audio/flagCatcherMusic.ogg \
+  build/ba_data/audio/foghorn.ogg \
+  build/ba_data/audio/wizard1.ogg \
+  build/ba_data/audio/announceThree.ogg \
+  build/ba_data/audio/jackHit04.ogg \
+  build/ba_data/audio/alien3.ogg \
+  build/ba_data/audio/shieldDown.ogg \
+  build/ba_data/audio/penguinFall.ogg \
+  build/ba_data/audio/kronkDeath.ogg \
+  build/ba_data/audio/witchFall.ogg \
+  build/ba_data/audio/spazOw.ogg \
+  build/ba_data/audio/bunnyHit1.ogg \
+  build/ba_data/audio/superhero4.ogg \
+  build/ba_data/audio/punchWeak01.ogg \
+  build/ba_data/audio/alienHit2.ogg \
+  build/ba_data/audio/deek2.ogg \
+  build/ba_data/audio/actionHeroHit2.ogg \
+  build/ba_data/audio/pixie3.ogg \
+  build/ba_data/audio/ninjaHit2.ogg \
+  build/ba_data/audio/warriorDeath.ogg \
+  build/ba_data/audio/jumpsuitDeath.ogg \
+  build/ba_data/audio/bearDeath.ogg \
+  build/ba_data/audio/actionHeroDeath.ogg \
+  build/ba_data/audio/oldLady4.ogg \
+  build/ba_data/audio/frosty01.ogg \
+  build/ba_data/audio/gladiatorHit1.ogg \
+  build/ba_data/audio/pixieDeath.ogg \
+  build/ba_data/audio/healthPowerup.ogg \
+  build/ba_data/audio/impactMedium.ogg \
+  build/ba_data/audio/jackDeath01.ogg \
+  build/ba_data/audio/zoeImpact01.ogg \
+  build/ba_data/audio/forwardMarchMusic.ogg \
+  build/ba_data/audio/woodDebrisFall.ogg \
+  build/ba_data/audio/ninjaHit3.ogg \
+  build/ba_data/audio/pixieHit2.ogg \
+  build/ba_data/audio/splatter.ogg \
+  build/ba_data/audio/gladiatorFall.ogg \
+  build/ba_data/audio/tick.ogg \
+  build/ba_data/audio/pixie2.ogg \
+  build/ba_data/audio/actionHeroHit1.ogg \
+  build/ba_data/audio/swip.ogg \
+  build/ba_data/audio/ninjaHit1.ogg \
+  build/ba_data/audio/zoeImpact03.ogg \
+  build/ba_data/audio/zoeFall01.ogg \
+  build/ba_data/audio/frosty02.ogg \
+  build/ba_data/audio/gladiatorHit2.ogg \
+  build/ba_data/audio/pixieFall.ogg \
+  build/ba_data/audio/zoeScream01.ogg \
+  build/ba_data/audio/frosty03.ogg \
+  build/ba_data/audio/actionHeroFall.ogg \
+  build/ba_data/audio/menuMusic.ogg \
+  build/ba_data/audio/zoeImpact02.ogg \
+  build/ba_data/audio/penguin4.ogg \
+  build/ba_data/audio/runAwayMusic.ogg \
+  build/ba_data/audio/pixieHit1.ogg \
+  build/ba_data/audio/pixie1.ogg \
+  build/ba_data/audio/metalHit.ogg \
+  build/ba_data/audio/hiss.ogg \
+  build/ba_data/audio/ninjaHit4.ogg \
+  build/ba_data/audio/bunnyJump.ogg \
+  build/ba_data/audio/cowboyDeath.ogg \
+  build/ba_data/audio/oldLady2.ogg \
+  build/ba_data/audio/mel09.ogg \
+  build/ba_data/audio/announceSix.ogg \
+  build/ba_data/audio/raceBeep2.ogg \
+  build/ba_data/audio/announceTwo.ogg \
+  build/ba_data/audio/mel08.ogg \
+  build/ba_data/audio/oldLady3.ogg \
+  build/ba_data/audio/punch01.ogg \
+  build/ba_data/audio/penguin1.ogg \
+  build/ba_data/audio/orchestraHitBig2.ogg \
+  build/ba_data/audio/robotHit2.ogg \
+  build/ba_data/audio/ninjaHit5.ogg \
+  build/ba_data/audio/pixie4.ogg \
+  build/ba_data/audio/operaSingerHit2.ogg \
+  build/ba_data/audio/cyborgDeath.ogg \
+  build/ba_data/audio/ninjaHit7.ogg \
+  build/ba_data/audio/survivalMusic.ogg \
+  build/ba_data/audio/penguin3.ogg \
+  build/ba_data/audio/oldLady1.ogg \
+  build/ba_data/audio/agentDeath.ogg \
+  build/ba_data/audio/cashRegister2.ogg \
+  build/ba_data/audio/frosty04.ogg \
+  build/ba_data/audio/operaSingerFall.ogg \
+  build/ba_data/audio/robotFall.ogg \
+  build/ba_data/audio/scaryMusic.ogg \
+  build/ba_data/audio/raceBeep1.ogg \
+  build/ba_data/audio/frosty05.ogg \
+  build/ba_data/audio/penguin2.ogg \
+  build/ba_data/audio/zoeImpact04.ogg \
+  build/ba_data/audio/orchestraHitBig1.ogg \
+  build/ba_data/audio/robotHit1.ogg \
+  build/ba_data/audio/ninjaHit6.ogg \
+  build/ba_data/audio/gong.ogg \
+  build/ba_data/audio/operaSingerHit1.ogg \
+  build/ba_data/audio/shieldUp.ogg \
+  build/ba_data/audio/charSelectMusic.ogg \
+  build/ba_data/audio/cyborg2.ogg \
+  build/ba_data/audio/santa05.ogg \
+  build/ba_data/audio/bones1.ogg \
+  build/ba_data/audio/shatter.ogg \
+  build/ba_data/audio/kronkFall.ogg \
+  build/ba_data/audio/impactHard.ogg \
+  build/ba_data/audio/bombRoll01.ogg \
+  build/ba_data/audio/explosion05.ogg \
+  build/ba_data/audio/announceEight.ogg \
+  build/ba_data/audio/superheroFall.ogg \
+  build/ba_data/audio/mel06.ogg \
+  build/ba_data/audio/santaHit01.ogg \
+  build/ba_data/audio/cyborgHit2.ogg \
+  build/ba_data/audio/bonesDeath.ogg \
+  build/ba_data/audio/deek.ogg \
+  build/ba_data/audio/mel07.ogg \
+  build/ba_data/audio/gladiator4.ogg \
+  build/ba_data/audio/explosion04.ogg \
+  build/ba_data/audio/wrestler1.ogg \
+  build/ba_data/audio/spazJump01.ogg \
+  build/ba_data/audio/santaFall.ogg \
+  build/ba_data/audio/superheroHit1.ogg \
+  build/ba_data/audio/punchSwish.ogg \
+  build/ba_data/audio/santa04.ogg \
+  build/ba_data/audio/cyborg3.ogg \
+  build/ba_data/audio/zoePickup01.ogg \
+  build/ba_data/audio/cyborg1.ogg \
+  build/ba_data/audio/spazAttack04.ogg \
+  build/ba_data/audio/bigImpact2.ogg \
+  build/ba_data/audio/bones2.ogg \
+  build/ba_data/audio/ninjaHit8.ogg \
+  build/ba_data/audio/announceNine.ogg \
+  build/ba_data/audio/spazJump03.ogg \
+  build/ba_data/audio/wrestler3.ogg \
+  build/ba_data/audio/bunnyDeath.ogg \
+  build/ba_data/audio/mel05.ogg \
+  build/ba_data/audio/santaHit02.ogg \
+  build/ba_data/audio/cyborgHit1.ogg \
+  build/ba_data/audio/bear4.ogg \
+  build/ba_data/audio/gunCocking.ogg \
+  build/ba_data/audio/spawn.ogg \
+  build/ba_data/audio/powerdown01.ogg \
+  build/ba_data/audio/santaHit03.ogg \
+  build/ba_data/audio/assassin4.ogg \
+  build/ba_data/audio/mel04.ogg \
+  build/ba_data/audio/mel10.ogg \
+  build/ba_data/audio/cyborgFall.ogg \
+  build/ba_data/audio/wrestler2.ogg \
+  build/ba_data/audio/spazJump02.ogg \
+  build/ba_data/audio/bones3.ogg \
+  build/ba_data/audio/superheroHit2.ogg \
+  build/ba_data/audio/bellMed.ogg \
+  build/ba_data/audio/santa03.ogg \
+  build/ba_data/audio/cyborg4.ogg \
+  build/ba_data/audio/powerup01.ogg \
+  build/ba_data/audio/robotDeath.ogg \
+  build/ba_data/audio/flyingMusic.ogg \
+  build/ba_data/audio/shieldHit.ogg \
+  build/ba_data/audio/spazAttack01.ogg \
+  build/ba_data/audio/sparkle02.ogg \
+  build/ba_data/audio/cowboyHit1.ogg \
+  build/ba_data/audio/cashRegister.ogg \
+  build/ba_data/audio/explosion03.ogg \
+  build/ba_data/audio/announceOne.ogg \
+  build/ba_data/audio/gladiator3.ogg \
+  build/ba_data/audio/impactMedium2.ogg \
+  build/ba_data/audio/bear1.ogg \
+  build/ba_data/audio/wrestlerDeath.ogg \
+  build/ba_data/audio/pop01.ogg \
+  build/ba_data/audio/frostyHit01.ogg \
+  build/ba_data/audio/cowboyFall.ogg \
+  build/ba_data/audio/assassin1.ogg \
+  build/ba_data/audio/gladiator2.ogg \
+  build/ba_data/audio/mel01.ogg \
+  build/ba_data/audio/warriorHit2.ogg \
+  build/ba_data/audio/explosion02.ogg \
+  build/ba_data/audio/blip.ogg \
+  build/ba_data/audio/sparkle03.ogg \
+  build/ba_data/audio/bigImpact.ogg \
+  build/ba_data/audio/santa02.ogg \
+  build/ba_data/audio/boo.ogg \
+  build/ba_data/audio/sparkle01.ogg \
+  build/ba_data/audio/spazAttack02.ogg \
+  build/ba_data/audio/warriorFall.ogg \
+  build/ba_data/audio/cymbal.ogg \
+  build/ba_data/audio/cowboyHit2.ogg \
+  build/ba_data/audio/slowEpicMusic.ogg \
+  build/ba_data/audio/laserReverse.ogg \
+  build/ba_data/audio/mel03.ogg \
+  build/ba_data/audio/bellLow.ogg \
+  build/ba_data/audio/bear2.ogg \
+  build/ba_data/audio/santaHit04.ogg \
+  build/ba_data/audio/assassin3.ogg \
+  build/ba_data/audio/zoeOw.ogg \
+  build/ba_data/audio/frostyHit03.ogg \
+  build/ba_data/audio/frostyHit02.ogg \
+  build/ba_data/audio/victoryMusic.ogg \
+  build/ba_data/audio/assassin2.ogg \
+  build/ba_data/audio/bear3.ogg \
+  build/ba_data/audio/gladiator1.ogg \
+  build/ba_data/audio/mel02.ogg \
+  build/ba_data/audio/warriorHit1.ogg \
+  build/ba_data/audio/explosion01.ogg \
+  build/ba_data/audio/boxDrop.ogg \
+  build/ba_data/audio/wrestler4.ogg \
+  build/ba_data/audio/wizardDeath.ogg \
+  build/ba_data/audio/spazJump04.ogg \
+  build/ba_data/audio/oldLadyDeath.ogg \
+  build/ba_data/audio/zoeDeath01.ogg \
+  build/ba_data/audio/spazAttack03.ogg \
+  build/ba_data/audio/bellHigh.ogg \
+  build/ba_data/audio/santa01.ogg \
+  build/ba_data/audio/cowboy1.ogg \
+  build/ba_data/audio/jack04.ogg \
+  build/ba_data/audio/toTheDeathMusic.ogg \
+  build/ba_data/audio/jumpsuit3.ogg \
+  build/ba_data/audio/ninjaAttack7.ogg \
+  build/ba_data/audio/actionHero3.ogg \
+  build/ba_data/audio/warrior1.ogg \
+  build/ba_data/audio/alienDeath.ogg \
+  build/ba_data/audio/zoeAttack03.ogg \
+  build/ba_data/audio/orchestraHit3.ogg \
+  build/ba_data/audio/bunny4.ogg \
+  build/ba_data/audio/boxingBell.ogg \
+  build/ba_data/audio/assassinHit2.ogg \
+  build/ba_data/audio/operaSinger4.ogg \
+  build/ba_data/audio/error.ogg \
+  build/ba_data/audio/click01.ogg \
+  build/ba_data/audio/achievement.ogg \
+  build/ba_data/audio/playerLeft.ogg \
+  build/ba_data/audio/aliHit2.ogg \
+  build/ba_data/audio/footImpact01.ogg \
+  build/ba_data/audio/spazDeath01.ogg \
+  build/ba_data/audio/dripity.ogg \
+  build/ba_data/audio/stickyImpact.ogg \
+  build/ba_data/audio/debrisFall.ogg \
+  build/ba_data/audio/orchestraHit2.ogg \
+  build/ba_data/audio/zoeAttack02.ogg \
+  build/ba_data/audio/actionHero2.ogg \
+  build/ba_data/audio/score.ogg \
+  build/ba_data/audio/ninjaAttack6.ogg \
+  build/ba_data/audio/witch1.ogg \
+  build/ba_data/audio/punchStrong02.ogg \
+  build/ba_data/audio/wizardHit2.ogg \
+  build/ba_data/audio/robot1.ogg \
+  build/ba_data/audio/jumpsuit2.ogg \
+  build/ba_data/audio/jack05.ogg \
+  build/ba_data/audio/superheroDeath.ogg \
+  build/ba_data/audio/cowboy2.ogg \
+  build/ba_data/audio/drumRoll.ogg \
+  build/ba_data/audio/robot3.ogg \
+  build/ba_data/audio/ninjaAttack4.ogg \
+  build/ba_data/audio/alarm.ogg \
+  build/ba_data/audio/witch3.ogg \
+  build/ba_data/audio/warrior2.ogg \
+  build/ba_data/audio/impactHard3.ogg \
+  build/ba_data/audio/aliFall.ogg \
+  build/ba_data/audio/spazEff.ogg \
+  build/ba_data/audio/wizardFall.ogg \
+  build/ba_data/audio/block.ogg \
+  build/ba_data/audio/assassinHit1.ogg \
+  build/ba_data/audio/footImpact03.ogg \
+  build/ba_data/audio/trashRummage.ogg \
+  build/ba_data/audio/footImpact02.ogg \
+  build/ba_data/audio/aliHit1.ogg \
+  build/ba_data/audio/ninjaDeath1.ogg \
+  build/ba_data/audio/announceFive.ogg \
+  build/ba_data/audio/zoeAttack01.ogg \
+  build/ba_data/audio/actionHero1.ogg \
+  build/ba_data/audio/impactHard2.ogg \
+  build/ba_data/audio/warrior3.ogg \
+  build/ba_data/audio/melDeath01.ogg \
+  build/ba_data/audio/witch2.ogg \
+  build/ba_data/audio/assassinFall.ogg \
+  build/ba_data/audio/punchStrong01.ogg \
+  build/ba_data/audio/ninjaAttack5.ogg \
+  build/ba_data/audio/wizardHit1.ogg \
+  build/ba_data/audio/robot2.ogg \
+  build/ba_data/audio/announceSeven.ogg \
+  build/ba_data/audio/jack06.ogg \
+  build/ba_data/audio/cowboy3.ogg \
+  build/ba_data/audio/jumpsuit1.ogg \
+  build/ba_data/audio/bombDrop01.ogg \
+  build/ba_data/audio/zoeJump03.ogg \
+  build/ba_data/audio/warnBeeps.ogg \
+  build/ba_data/audio/jack02.ogg \
+  build/ba_data/audio/ninjaAttack1.ogg \
+  build/ba_data/audio/bunny2.ogg \
+  build/ba_data/audio/gladiatorDeath.ogg \
+  build/ba_data/audio/operaSinger2.ogg \
+  build/ba_data/audio/fanfare.ogg \
+  build/ba_data/audio/wrestlerHit1.ogg \
+  build/ba_data/audio/tickingCrazy.ogg \
+  build/ba_data/audio/metalSkid.ogg \
+  build/ba_data/audio/operaSinger3.ogg \
+  build/ba_data/audio/actionHero4.ogg \
+  build/ba_data/audio/zoeAttack04.ogg \
+  build/ba_data/audio/orchestraHit4.ogg \
+  build/ba_data/audio/bunny3.ogg \
+  build/ba_data/audio/spazPickup01.ogg \
+  build/ba_data/audio/wrestlerFall.ogg \
+  build/ba_data/audio/cheer.ogg \
+  build/ba_data/audio/zoeJump02.ogg \
+  build/ba_data/audio/jack03.ogg \
+  build/ba_data/audio/jumpsuit4.ogg \
+  build/ba_data/audio/bombDrop02.ogg \
+  build/ba_data/audio/cowboy4.ogg \
+  build/ba_data/audio/jack01.ogg \
+  build/ba_data/audio/grandRompMusic.ogg \
+  build/ba_data/audio/ninjaAttack2.ogg \
+  build/ba_data/audio/kronk8.ogg \
+  build/ba_data/audio/bunny1.ogg \
+  build/ba_data/audio/warrior4.ogg \
+  build/ba_data/audio/ding.ogg \
+  build/ba_data/audio/operaSinger1.ogg \
+  build/ba_data/audio/wrestlerHit2.ogg \
+  build/ba_data/audio/bonesFall.ogg \
+  build/ba_data/audio/scoresEpicMusic.ogg \
+  build/ba_data/audio/sportsMusic.ogg \
+  build/ba_data/audio/witchDeath.ogg \
+  build/ba_data/audio/kronk9.ogg \
+  build/ba_data/audio/ninjaAttack3.ogg \
+  build/ba_data/audio/assassinDeath.ogg \
+  build/ba_data/audio/witch4.ogg \
+  build/ba_data/audio/zoeJump01.ogg \
+  build/ba_data/audio/robot4.ogg \
+  build/ba_data/audio/gravelSkid.ogg
 
 TEX2D_DDS_TARGETS = \
-  build/data/textures/cyborgIconColorMask.dds \
-  build/data/textures/chestOpenIcon.dds \
-  build/data/textures/analogStick.dds \
-  build/data/textures/circleOutline.dds \
-  build/data/textures/white.dds \
-  build/data/textures/medalBronze.dds \
-  build/data/textures/slash.dds \
-  build/data/textures/arrow.dds \
-  build/data/textures/ouyaIcon.dds \
-  build/data/textures/eyeColor.dds \
-  build/data/textures/achievementMedalLarge.dds \
-  build/data/textures/cowboyIconColorMask.dds \
-  build/data/textures/wings.dds \
-  build/data/textures/roundaboutPreview.dds \
-  build/data/textures/warriorIcon.dds \
-  build/data/textures/windowHSmallVMed.dds \
-  build/data/textures/ninjaIconColorMask.dds \
-  build/data/textures/reflectionSharpest_+z.dds \
-  build/data/textures/stepRightUpLevelColor.dds \
-  build/data/textures/fontSmall5.dds \
-  build/data/textures/bombButton.dds \
-  build/data/textures/aliIconColorMask.dds \
-  build/data/textures/chTitleChar2.dds \
-  build/data/textures/achievementOnslaught.dds \
-  build/data/textures/smoke.dds \
-  build/data/textures/lakeFrigidReflections.dds \
-  build/data/textures/bunnyColor.dds \
-  build/data/textures/leftButton.dds \
-  build/data/textures/hockeyStadium.dds \
-  build/data/textures/cowboyIcon.dds \
-  build/data/textures/lakeFrigid.dds \
-  build/data/textures/startButton.dds \
-  build/data/textures/footballStadium.dds \
-  build/data/textures/crossOutMask.dds \
-  build/data/textures/bonesIconColorMask.dds \
-  build/data/textures/operaSingerIconColorMask.dds \
-  build/data/textures/lakeFrigidPreview.dds \
-  build/data/textures/alienIcon.dds \
-  build/data/textures/oldLadyColor.dds \
-  build/data/textures/ouyaAButton.dds \
-  build/data/textures/eggTex3.dds \
-  build/data/textures/cyborgIcon.dds \
-  build/data/textures/actionHeroColor.dds \
-  build/data/textures/achievementTeamPlayer.dds \
-  build/data/textures/reflectionSoft_+x.dds \
-  build/data/textures/fontExtras3.dds \
-  build/data/textures/buttonBomb.dds \
-  build/data/textures/star.dds \
-  build/data/textures/reflectionSharpest_-y.dds \
-  build/data/textures/achievementSharingIsCaring.dds \
-  build/data/textures/fontSmall3.dds \
-  build/data/textures/powerupSpeed.dds \
-  build/data/textures/vrFillMound.dds \
-  build/data/textures/agentIconColorMask.dds \
-  build/data/textures/kronkIcon.dds \
-  build/data/textures/oldLadyIcon.dds \
-  build/data/textures/chTitleChar4.dds \
-  build/data/textures/nextLevelIcon.dds \
-  build/data/textures/gameCircleIcon.dds \
-  build/data/textures/bonesIcon.dds \
-  build/data/textures/bearIcon.dds \
-  build/data/textures/towerDPreview.dds \
-  build/data/textures/achievementTNT.dds \
-  build/data/textures/medalGold.dds \
-  build/data/textures/circleZigZag.dds \
-  build/data/textures/bunnyColorMask.dds \
-  build/data/textures/black.dds \
-  build/data/textures/menuIcon.dds \
-  build/data/textures/file.dds \
-  build/data/textures/logIcon.dds \
-  build/data/textures/controllerIcon.dds \
-  build/data/textures/reflectionSharper_-y.dds \
-  build/data/textures/operaSingerColorMask.dds \
-  build/data/textures/achievementFootballShutout.dds \
-  build/data/textures/reflectionPowerup_-x.dds \
-  build/data/textures/achievementsIcon.dds \
-  build/data/textures/cowboyColor.dds \
-  build/data/textures/wrestlerIconColorMask.dds \
-  build/data/textures/googlePlayAchievementsIcon.dds \
-  build/data/textures/alienIconColorMask.dds \
-  build/data/textures/ticketRollBig.dds \
-  build/data/textures/wrestlerIcon.dds \
-  build/data/textures/egg1.dds \
-  build/data/textures/gameCenterIcon.dds \
-  build/data/textures/landMineLit.dds \
-  build/data/textures/achievementWall.dds \
-  build/data/textures/achievementMedalMedium.dds \
-  build/data/textures/reflectionChar_-x.dds \
-  build/data/textures/softRectVertical.dds \
-  build/data/textures/reflectionSharper_+z.dds \
-  build/data/textures/wizardIcon.dds \
-  build/data/textures/mapPreviewMask.dds \
-  build/data/textures/nub.dds \
-  build/data/textures/empty.dds \
-  build/data/textures/frostyIconColorMask.dds \
-  build/data/textures/reflectionSharp_-x.dds \
-  build/data/textures/bombColorIce.dds \
-  build/data/textures/jumpsuitIcon.dds \
-  build/data/textures/footballStadiumPreview.dds \
-  build/data/textures/pixieIconColorMask.dds \
-  build/data/textures/achievementEmpty.dds \
-  build/data/textures/wrestlerColor.dds \
-  build/data/textures/shield.dds \
-  build/data/textures/iconOnslaught.dds \
-  build/data/textures/replayIcon.dds \
-  build/data/textures/powerupHealth.dds \
-  build/data/textures/bg.dds \
-  build/data/textures/chTitleChar3.dds \
-  build/data/textures/textClearButton.dds \
-  build/data/textures/reflectionSoft_-z.dds \
-  build/data/textures/fontSmall4.dds \
-  build/data/textures/warriorColor.dds \
-  build/data/textures/light.dds \
-  build/data/textures/santaColor.dds \
-  build/data/textures/jackColor.dds \
-  build/data/textures/aliSplash.dds \
-  build/data/textures/scorch.dds \
-  build/data/textures/zoeIcon.dds \
-  build/data/textures/bonesColorMask.dds \
-  build/data/textures/pixieColor.dds \
-  build/data/textures/actionHeroIconColorMask.dds \
-  build/data/textures/treesColor.dds \
-  build/data/textures/neoSpazColorMask.dds \
-  build/data/textures/superheroIcon.dds \
-  build/data/textures/achievementOffYouGo.dds \
-  build/data/textures/tipTopBGColor.dds \
-  build/data/textures/robotColor.dds \
-  build/data/textures/reflectionSharpest_-x.dds \
-  build/data/textures/menuButton.dds \
-  build/data/textures/powerupStickyBombs.dds \
-  build/data/textures/ninjaIcon.dds \
-  build/data/textures/witchColorMask.dds \
-  build/data/textures/cowboyColorMask.dds \
-  build/data/textures/operaSingerIcon.dds \
-  build/data/textures/achievementBoxer.dds \
-  build/data/textures/eggTex2.dds \
-  build/data/textures/rampageBGColor.dds \
-  build/data/textures/fontExtras2.dds \
-  build/data/textures/rampageLevelColor.dds \
-  build/data/textures/reflectionSoft_+y.dds \
-  build/data/textures/ticketRolls.dds \
-  build/data/textures/natureBackgroundColor.dds \
-  build/data/textures/santaIconColorMask.dds \
-  build/data/textures/reflectionPowerup_+z.dds \
-  build/data/textures/characterIconMask.dds \
-  build/data/textures/aliColor.dds \
-  build/data/textures/ninjaColorMask.dds \
-  build/data/textures/buttonPickUp.dds \
-  build/data/textures/chTitleChar5.dds \
-  build/data/textures/bigGPreview.dds \
-  build/data/textures/hockeyStadiumPreview.dds \
-  build/data/textures/achievementMedalSmall.dds \
-  build/data/textures/fontSmall2.dds \
-  build/data/textures/achievementOutline.dds \
-  build/data/textures/levelIcon.dds \
-  build/data/textures/googlePlayGamesIcon.dds \
-  build/data/textures/gladiatorColorMask.dds \
-  build/data/textures/boxingGlovesColor.dds \
-  build/data/textures/ouyaOButton.dds \
-  build/data/textures/leaderboardsIcon.dds \
-  build/data/textures/puckColor.dds \
-  build/data/textures/reflectionChar_+z.dds \
-  build/data/textures/penguinColor.dds \
-  build/data/textures/reflectionSharper_-x.dds \
-  build/data/textures/googlePlayLeaderboardsIcon.dds \
-  build/data/textures/scrollWidget.dds \
-  build/data/textures/courtyardPreview.dds \
-  build/data/textures/aliColorMask.dds \
-  build/data/textures/penguinColorMask.dds \
-  build/data/textures/witchIcon.dds \
-  build/data/textures/reflectionSharp_+z.dds \
-  build/data/textures/graphicsIcon.dds \
-  build/data/textures/agentIcon.dds \
-  build/data/textures/fontExtras4.dds \
-  build/data/textures/reflectionPowerup_-y.dds \
-  build/data/textures/storeIcon.dds \
-  build/data/textures/doomShroomPreview.dds \
-  build/data/textures/null.dds \
-  build/data/textures/backIcon.dds \
-  build/data/textures/cyborgColor.dds \
-  build/data/textures/monkeyFaceLevelColor.dds \
-  build/data/textures/santaIcon.dds \
-  build/data/textures/alwaysLandBGColor.dds \
-  build/data/textures/roundaboutLevelColor.dds \
-  build/data/textures/robotIcon.dds \
-  build/data/textures/reflectionSharp_-y.dds \
-  build/data/textures/bunnyIcon.dds \
-  build/data/textures/circleShadow.dds \
-  build/data/textures/flagPoleColor.dds \
-  build/data/textures/ouyaUButton.dds \
-  build/data/textures/reflectionChar_-y.dds \
-  build/data/textures/achievementInControl.dds \
-  build/data/textures/wizardColorMask.dds \
-  build/data/textures/reflectionSharpest_+x.dds \
-  build/data/textures/neoSpazColor.dds \
-  build/data/textures/zigZagLevelColor.dds \
-  build/data/textures/thePadPreview.dds \
-  build/data/textures/superheroIconColorMask.dds \
-  build/data/textures/fontSmall7.dds \
-  build/data/textures/ticketRoll.dds \
-  build/data/textures/reflectionSoft_-y.dds \
-  build/data/textures/playerLineup.dds \
-  build/data/textures/storeCharacterEaster.dds \
-  build/data/textures/coin.dds \
-  build/data/textures/circleOutlineNoAlpha.dds \
-  build/data/textures/scorchBig.dds \
-  build/data/textures/logoEaster.dds \
-  build/data/textures/warriorColorMask.dds \
-  build/data/textures/assassinColor.dds \
-  build/data/textures/bombStickyColor.dds \
-  build/data/textures/eggTex1.dds \
-  build/data/textures/gladiatorIconColorMask.dds \
-  build/data/textures/melColorMask.dds \
-  build/data/textures/thePadLevelColor.dds \
-  build/data/textures/wizardIconColorMask.dds \
-  build/data/textures/bar.dds \
-  build/data/textures/zoeIconColorMask.dds \
-  build/data/textures/windowHSmallVSmall.dds \
-  build/data/textures/circleNoAlpha.dds \
-  build/data/textures/gladiatorIcon.dds \
-  build/data/textures/reflectionSoft_+z.dds \
-  build/data/textures/achievementRunaround.dds \
-  build/data/textures/wizardColor.dds \
-  build/data/textures/touchArrowsActions.dds \
-  build/data/textures/advancedIcon.dds \
-  build/data/textures/softRect2.dds \
-  build/data/textures/achievementMine.dds \
-  build/data/textures/rightButton.dds \
-  build/data/textures/touchArrows.dds \
-  build/data/textures/cyborgColorMask.dds \
-  build/data/textures/jumpsuitIconColorMask.dds \
-  build/data/textures/bridgitPreview.dds \
-  build/data/textures/ninjaColor.dds \
-  build/data/textures/santaColorMask.dds \
-  build/data/textures/storeCharacter.dds \
-  build/data/textures/flagColor.dds \
-  build/data/textures/cragCastlePreview.dds \
-  build/data/textures/frameInset.dds \
-  build/data/textures/lock.dds \
-  build/data/textures/agentColor.dds \
-  build/data/textures/achievementGotTheMoves.dds \
-  build/data/textures/buttonPunch.dds \
-  build/data/textures/settingsIcon.dds \
-  build/data/textures/rgbStripes.dds \
-  build/data/textures/reflectionSharp_+y.dds \
-  build/data/textures/powerupImpactBombs.dds \
-  build/data/textures/bigG.dds \
-  build/data/textures/melIconColorMask.dds \
-  build/data/textures/reflectionChar_+y.dds \
-  build/data/textures/multiplayerExamples.dds \
-  build/data/textures/actionButtons.dds \
-  build/data/textures/melIcon.dds \
-  build/data/textures/oldLadyIconColorMask.dds \
-  build/data/textures/robotIconColorMask.dds \
-  build/data/textures/monkeyFacePreview.dds \
-  build/data/textures/achievementDualWielding.dds \
-  build/data/textures/folder.dds \
-  build/data/textures/frostyColorMask.dds \
-  build/data/textures/kronkIconColorMask.dds \
-  build/data/textures/fontBig.dds \
-  build/data/textures/fontSmall1.dds \
-  build/data/textures/shadowSoft.dds \
-  build/data/textures/powerupLandMines.dds \
-  build/data/textures/stepRightUpPreview.dds \
-  build/data/textures/bearIconColorMask.dds \
-  build/data/textures/kronk.dds \
-  build/data/textures/downButton.dds \
-  build/data/textures/bombColor.dds \
-  build/data/textures/logo.dds \
-  build/data/textures/reflectionPowerup_+y.dds \
-  build/data/textures/zoeColorMask.dds \
-  build/data/textures/jumpsuitColorMask.dds \
-  build/data/textures/penguinIcon.dds \
-  build/data/textures/powerupPunch.dds \
-  build/data/textures/shadow.dds \
-  build/data/textures/reflectionChar_-z.dds \
-  build/data/textures/assassinIcon.dds \
-  build/data/textures/impactBombColor.dds \
-  build/data/textures/storeCharacterXmas.dds \
-  build/data/textures/jackIcon.dds \
-  build/data/textures/pixieIcon.dds \
-  build/data/textures/jumpsuitColor.dds \
-  build/data/textures/reflectionSharper_+x.dds \
-  build/data/textures/jackColorMask.dds \
-  build/data/textures/shrapnel1Color.dds \
-  build/data/textures/witchColor.dds \
-  build/data/textures/achievementFreeLoader.dds \
-  build/data/textures/zoeColor.dds \
-  build/data/textures/alienColor.dds \
-  build/data/textures/inventoryIcon.dds \
-  build/data/textures/reflectionSharp_-z.dds \
-  build/data/textures/glow.dds \
-  build/data/textures/usersButton.dds \
-  build/data/textures/reflectionPowerup_-z.dds \
-  build/data/textures/melColor.dds \
-  build/data/textures/aliControllerQR.dds \
-  build/data/textures/frostyIcon.dds \
-  build/data/textures/achievementFootballVictory.dds \
-  build/data/textures/tickets.dds \
-  build/data/textures/cursor.dds \
-  build/data/textures/egg3.dds \
-  build/data/textures/crossOut.dds \
-  build/data/textures/bonesColor.dds \
-  build/data/textures/achievementCrossHair.dds \
-  build/data/textures/actionHeroColorMask.dds \
-  build/data/textures/chTitleChar1.dds \
-  build/data/textures/heart.dds \
-  build/data/textures/fontExtras.dds \
-  build/data/textures/penguinIconColorMask.dds \
-  build/data/textures/eyeColorTintMask.dds \
-  build/data/textures/aliIcon.dds \
-  build/data/textures/chestIconMulti.dds \
-  build/data/textures/reflectionSoft_-x.dds \
-  build/data/textures/uiAtlas.dds \
-  build/data/textures/reflectionSharpest_+y.dds \
-  build/data/textures/cragCastleLevelColor.dds \
-  build/data/textures/assassinColorMask.dds \
-  build/data/textures/bridgitLevelColor.dds \
-  build/data/textures/fontSmall6.dds \
-  build/data/textures/towerDLevelColor.dds \
-  build/data/textures/ouyaYButton.dds \
-  build/data/textures/lightSharp.dds \
-  build/data/textures/buttonSquare.dds \
-  build/data/textures/softRect.dds \
-  build/data/textures/powerupIceBombs.dds \
-  build/data/textures/jackIconColorMask.dds \
-  build/data/textures/audioIcon.dds \
-  build/data/textures/tv.dds \
-  build/data/textures/reflectionSharpest_-z.dds \
-  build/data/textures/warriorIconColorMask.dds \
-  build/data/textures/googlePlusSignInButton.dds \
-  build/data/textures/circle.dds \
-  build/data/textures/neoSpazIconColorMask.dds \
-  build/data/textures/medalComplete.dds \
-  build/data/textures/alwaysLandLevelColor.dds \
-  build/data/textures/alwaysLandPreview.dds \
-  build/data/textures/egg4.dds \
-  build/data/textures/wrestlerColorMask.dds \
-  build/data/textures/superheroColorMask.dds \
-  build/data/textures/gladiatorColor.dds \
-  build/data/textures/aliBSRemoteIOSQR.dds \
-  build/data/textures/bearColorMask.dds \
-  build/data/textures/doomShroomLevelColor.dds \
-  build/data/textures/powerupBomb.dds \
-  build/data/textures/chestIcon.dds \
-  build/data/textures/upButton.dds \
-  build/data/textures/iconRunaround.dds \
-  build/data/textures/doomShroomBGColor.dds \
-  build/data/textures/superheroColor.dds \
-  build/data/textures/landMine.dds \
-  build/data/textures/buttonJump.dds \
-  build/data/textures/sparks.dds \
-  build/data/textures/explosion.dds \
-  build/data/textures/tipTopLevelColor.dds \
-  build/data/textures/bunnyIconColorMask.dds \
-  build/data/textures/reflectionChar_+x.dds \
-  build/data/textures/ticketsMore.dds \
-  build/data/textures/pixieColorMask.dds \
-  build/data/textures/medalSilver.dds \
-  build/data/textures/neoSpazIcon.dds \
-  build/data/textures/meter.dds \
-  build/data/textures/scrollWidgetGlow.dds \
-  build/data/textures/achievementFlawlessVictory.dds \
-  build/data/textures/zigzagPreview.dds \
-  build/data/textures/reflectionSharper_-z.dds \
-  build/data/textures/alienColorMask.dds \
-  build/data/textures/powerupShield.dds \
-  build/data/textures/reflectionSharp_+x.dds \
-  build/data/textures/chestIconEmpty.dds \
-  build/data/textures/agentColorMask.dds \
-  build/data/textures/reflectionPowerup_+x.dds \
-  build/data/textures/witchIconColorMask.dds \
-  build/data/textures/kronkColorMask.dds \
-  build/data/textures/menuBG.dds \
-  build/data/textures/fontSmall0.dds \
-  build/data/textures/assassinIconColorMask.dds \
-  build/data/textures/bearColor.dds \
-  build/data/textures/operaSingerColor.dds \
-  build/data/textures/rampageBGColor2.dds \
-  build/data/textures/fuse.dds \
-  build/data/textures/frostyColor.dds \
-  build/data/textures/achievementSuperPunch.dds \
-  build/data/textures/tipTopPreview.dds \
-  build/data/textures/googlePlusIcon.dds \
-  build/data/textures/powerupCurse.dds \
-  build/data/textures/trophy.dds \
-  build/data/textures/courtyardLevelColor.dds \
-  build/data/textures/oldLadyColorMask.dds \
-  build/data/textures/rampagePreview.dds \
-  build/data/textures/cuteSpaz.dds \
-  build/data/textures/lightSoft.dds \
-  build/data/textures/reflectionSharper_+y.dds \
-  build/data/textures/uiAtlas2.dds \
-  build/data/textures/egg2.dds \
-  build/data/textures/shadowSharp.dds \
-  build/data/textures/tnt.dds \
-  build/data/textures/actionHeroIcon.dds \
-  build/data/textures/robotColorMask.dds \
-  build/data/textures/impactBombColorLit.dds \
-  build/data/textures/achievementStayinAlive.dds
+  build/ba_data/textures/cyborgIconColorMask.dds \
+  build/ba_data/textures/chestOpenIcon.dds \
+  build/ba_data/textures/analogStick.dds \
+  build/ba_data/textures/circleOutline.dds \
+  build/ba_data/textures/white.dds \
+  build/ba_data/textures/medalBronze.dds \
+  build/ba_data/textures/slash.dds \
+  build/ba_data/textures/arrow.dds \
+  build/ba_data/textures/ouyaIcon.dds \
+  build/ba_data/textures/eyeColor.dds \
+  build/ba_data/textures/achievementMedalLarge.dds \
+  build/ba_data/textures/cowboyIconColorMask.dds \
+  build/ba_data/textures/wings.dds \
+  build/ba_data/textures/roundaboutPreview.dds \
+  build/ba_data/textures/warriorIcon.dds \
+  build/ba_data/textures/windowHSmallVMed.dds \
+  build/ba_data/textures/ninjaIconColorMask.dds \
+  build/ba_data/textures/reflectionSharpest_+z.dds \
+  build/ba_data/textures/stepRightUpLevelColor.dds \
+  build/ba_data/textures/fontSmall5.dds \
+  build/ba_data/textures/bombButton.dds \
+  build/ba_data/textures/aliIconColorMask.dds \
+  build/ba_data/textures/chTitleChar2.dds \
+  build/ba_data/textures/achievementOnslaught.dds \
+  build/ba_data/textures/smoke.dds \
+  build/ba_data/textures/lakeFrigidReflections.dds \
+  build/ba_data/textures/bunnyColor.dds \
+  build/ba_data/textures/leftButton.dds \
+  build/ba_data/textures/hockeyStadium.dds \
+  build/ba_data/textures/cowboyIcon.dds \
+  build/ba_data/textures/lakeFrigid.dds \
+  build/ba_data/textures/startButton.dds \
+  build/ba_data/textures/footballStadium.dds \
+  build/ba_data/textures/crossOutMask.dds \
+  build/ba_data/textures/bonesIconColorMask.dds \
+  build/ba_data/textures/operaSingerIconColorMask.dds \
+  build/ba_data/textures/lakeFrigidPreview.dds \
+  build/ba_data/textures/alienIcon.dds \
+  build/ba_data/textures/oldLadyColor.dds \
+  build/ba_data/textures/ouyaAButton.dds \
+  build/ba_data/textures/eggTex3.dds \
+  build/ba_data/textures/cyborgIcon.dds \
+  build/ba_data/textures/actionHeroColor.dds \
+  build/ba_data/textures/achievementTeamPlayer.dds \
+  build/ba_data/textures/reflectionSoft_+x.dds \
+  build/ba_data/textures/fontExtras3.dds \
+  build/ba_data/textures/buttonBomb.dds \
+  build/ba_data/textures/star.dds \
+  build/ba_data/textures/reflectionSharpest_-y.dds \
+  build/ba_data/textures/achievementSharingIsCaring.dds \
+  build/ba_data/textures/fontSmall3.dds \
+  build/ba_data/textures/powerupSpeed.dds \
+  build/ba_data/textures/vrFillMound.dds \
+  build/ba_data/textures/agentIconColorMask.dds \
+  build/ba_data/textures/kronkIcon.dds \
+  build/ba_data/textures/oldLadyIcon.dds \
+  build/ba_data/textures/chTitleChar4.dds \
+  build/ba_data/textures/nextLevelIcon.dds \
+  build/ba_data/textures/gameCircleIcon.dds \
+  build/ba_data/textures/bonesIcon.dds \
+  build/ba_data/textures/bearIcon.dds \
+  build/ba_data/textures/towerDPreview.dds \
+  build/ba_data/textures/achievementTNT.dds \
+  build/ba_data/textures/medalGold.dds \
+  build/ba_data/textures/circleZigZag.dds \
+  build/ba_data/textures/bunnyColorMask.dds \
+  build/ba_data/textures/black.dds \
+  build/ba_data/textures/menuIcon.dds \
+  build/ba_data/textures/file.dds \
+  build/ba_data/textures/logIcon.dds \
+  build/ba_data/textures/controllerIcon.dds \
+  build/ba_data/textures/reflectionSharper_-y.dds \
+  build/ba_data/textures/operaSingerColorMask.dds \
+  build/ba_data/textures/achievementFootballShutout.dds \
+  build/ba_data/textures/reflectionPowerup_-x.dds \
+  build/ba_data/textures/achievementsIcon.dds \
+  build/ba_data/textures/cowboyColor.dds \
+  build/ba_data/textures/wrestlerIconColorMask.dds \
+  build/ba_data/textures/googlePlayAchievementsIcon.dds \
+  build/ba_data/textures/alienIconColorMask.dds \
+  build/ba_data/textures/ticketRollBig.dds \
+  build/ba_data/textures/wrestlerIcon.dds \
+  build/ba_data/textures/egg1.dds \
+  build/ba_data/textures/gameCenterIcon.dds \
+  build/ba_data/textures/landMineLit.dds \
+  build/ba_data/textures/achievementWall.dds \
+  build/ba_data/textures/achievementMedalMedium.dds \
+  build/ba_data/textures/reflectionChar_-x.dds \
+  build/ba_data/textures/softRectVertical.dds \
+  build/ba_data/textures/reflectionSharper_+z.dds \
+  build/ba_data/textures/wizardIcon.dds \
+  build/ba_data/textures/mapPreviewMask.dds \
+  build/ba_data/textures/nub.dds \
+  build/ba_data/textures/empty.dds \
+  build/ba_data/textures/frostyIconColorMask.dds \
+  build/ba_data/textures/reflectionSharp_-x.dds \
+  build/ba_data/textures/bombColorIce.dds \
+  build/ba_data/textures/jumpsuitIcon.dds \
+  build/ba_data/textures/footballStadiumPreview.dds \
+  build/ba_data/textures/pixieIconColorMask.dds \
+  build/ba_data/textures/achievementEmpty.dds \
+  build/ba_data/textures/wrestlerColor.dds \
+  build/ba_data/textures/shield.dds \
+  build/ba_data/textures/iconOnslaught.dds \
+  build/ba_data/textures/replayIcon.dds \
+  build/ba_data/textures/powerupHealth.dds \
+  build/ba_data/textures/bg.dds \
+  build/ba_data/textures/chTitleChar3.dds \
+  build/ba_data/textures/textClearButton.dds \
+  build/ba_data/textures/reflectionSoft_-z.dds \
+  build/ba_data/textures/fontSmall4.dds \
+  build/ba_data/textures/warriorColor.dds \
+  build/ba_data/textures/light.dds \
+  build/ba_data/textures/santaColor.dds \
+  build/ba_data/textures/jackColor.dds \
+  build/ba_data/textures/aliSplash.dds \
+  build/ba_data/textures/scorch.dds \
+  build/ba_data/textures/zoeIcon.dds \
+  build/ba_data/textures/bonesColorMask.dds \
+  build/ba_data/textures/pixieColor.dds \
+  build/ba_data/textures/actionHeroIconColorMask.dds \
+  build/ba_data/textures/treesColor.dds \
+  build/ba_data/textures/neoSpazColorMask.dds \
+  build/ba_data/textures/superheroIcon.dds \
+  build/ba_data/textures/achievementOffYouGo.dds \
+  build/ba_data/textures/tipTopBGColor.dds \
+  build/ba_data/textures/robotColor.dds \
+  build/ba_data/textures/reflectionSharpest_-x.dds \
+  build/ba_data/textures/menuButton.dds \
+  build/ba_data/textures/powerupStickyBombs.dds \
+  build/ba_data/textures/ninjaIcon.dds \
+  build/ba_data/textures/witchColorMask.dds \
+  build/ba_data/textures/cowboyColorMask.dds \
+  build/ba_data/textures/operaSingerIcon.dds \
+  build/ba_data/textures/achievementBoxer.dds \
+  build/ba_data/textures/eggTex2.dds \
+  build/ba_data/textures/rampageBGColor.dds \
+  build/ba_data/textures/fontExtras2.dds \
+  build/ba_data/textures/rampageLevelColor.dds \
+  build/ba_data/textures/reflectionSoft_+y.dds \
+  build/ba_data/textures/ticketRolls.dds \
+  build/ba_data/textures/natureBackgroundColor.dds \
+  build/ba_data/textures/santaIconColorMask.dds \
+  build/ba_data/textures/reflectionPowerup_+z.dds \
+  build/ba_data/textures/characterIconMask.dds \
+  build/ba_data/textures/aliColor.dds \
+  build/ba_data/textures/ninjaColorMask.dds \
+  build/ba_data/textures/buttonPickUp.dds \
+  build/ba_data/textures/chTitleChar5.dds \
+  build/ba_data/textures/bigGPreview.dds \
+  build/ba_data/textures/hockeyStadiumPreview.dds \
+  build/ba_data/textures/achievementMedalSmall.dds \
+  build/ba_data/textures/fontSmall2.dds \
+  build/ba_data/textures/achievementOutline.dds \
+  build/ba_data/textures/levelIcon.dds \
+  build/ba_data/textures/googlePlayGamesIcon.dds \
+  build/ba_data/textures/gladiatorColorMask.dds \
+  build/ba_data/textures/boxingGlovesColor.dds \
+  build/ba_data/textures/ouyaOButton.dds \
+  build/ba_data/textures/leaderboardsIcon.dds \
+  build/ba_data/textures/puckColor.dds \
+  build/ba_data/textures/reflectionChar_+z.dds \
+  build/ba_data/textures/penguinColor.dds \
+  build/ba_data/textures/reflectionSharper_-x.dds \
+  build/ba_data/textures/googlePlayLeaderboardsIcon.dds \
+  build/ba_data/textures/scrollWidget.dds \
+  build/ba_data/textures/courtyardPreview.dds \
+  build/ba_data/textures/aliColorMask.dds \
+  build/ba_data/textures/penguinColorMask.dds \
+  build/ba_data/textures/witchIcon.dds \
+  build/ba_data/textures/reflectionSharp_+z.dds \
+  build/ba_data/textures/graphicsIcon.dds \
+  build/ba_data/textures/agentIcon.dds \
+  build/ba_data/textures/fontExtras4.dds \
+  build/ba_data/textures/reflectionPowerup_-y.dds \
+  build/ba_data/textures/storeIcon.dds \
+  build/ba_data/textures/doomShroomPreview.dds \
+  build/ba_data/textures/null.dds \
+  build/ba_data/textures/backIcon.dds \
+  build/ba_data/textures/cyborgColor.dds \
+  build/ba_data/textures/monkeyFaceLevelColor.dds \
+  build/ba_data/textures/santaIcon.dds \
+  build/ba_data/textures/alwaysLandBGColor.dds \
+  build/ba_data/textures/roundaboutLevelColor.dds \
+  build/ba_data/textures/robotIcon.dds \
+  build/ba_data/textures/reflectionSharp_-y.dds \
+  build/ba_data/textures/bunnyIcon.dds \
+  build/ba_data/textures/circleShadow.dds \
+  build/ba_data/textures/flagPoleColor.dds \
+  build/ba_data/textures/ouyaUButton.dds \
+  build/ba_data/textures/reflectionChar_-y.dds \
+  build/ba_data/textures/achievementInControl.dds \
+  build/ba_data/textures/wizardColorMask.dds \
+  build/ba_data/textures/reflectionSharpest_+x.dds \
+  build/ba_data/textures/neoSpazColor.dds \
+  build/ba_data/textures/zigZagLevelColor.dds \
+  build/ba_data/textures/thePadPreview.dds \
+  build/ba_data/textures/superheroIconColorMask.dds \
+  build/ba_data/textures/fontSmall7.dds \
+  build/ba_data/textures/ticketRoll.dds \
+  build/ba_data/textures/reflectionSoft_-y.dds \
+  build/ba_data/textures/playerLineup.dds \
+  build/ba_data/textures/storeCharacterEaster.dds \
+  build/ba_data/textures/coin.dds \
+  build/ba_data/textures/circleOutlineNoAlpha.dds \
+  build/ba_data/textures/scorchBig.dds \
+  build/ba_data/textures/logoEaster.dds \
+  build/ba_data/textures/warriorColorMask.dds \
+  build/ba_data/textures/assassinColor.dds \
+  build/ba_data/textures/bombStickyColor.dds \
+  build/ba_data/textures/eggTex1.dds \
+  build/ba_data/textures/gladiatorIconColorMask.dds \
+  build/ba_data/textures/melColorMask.dds \
+  build/ba_data/textures/thePadLevelColor.dds \
+  build/ba_data/textures/wizardIconColorMask.dds \
+  build/ba_data/textures/bar.dds \
+  build/ba_data/textures/zoeIconColorMask.dds \
+  build/ba_data/textures/windowHSmallVSmall.dds \
+  build/ba_data/textures/circleNoAlpha.dds \
+  build/ba_data/textures/gladiatorIcon.dds \
+  build/ba_data/textures/reflectionSoft_+z.dds \
+  build/ba_data/textures/achievementRunaround.dds \
+  build/ba_data/textures/wizardColor.dds \
+  build/ba_data/textures/touchArrowsActions.dds \
+  build/ba_data/textures/advancedIcon.dds \
+  build/ba_data/textures/softRect2.dds \
+  build/ba_data/textures/achievementMine.dds \
+  build/ba_data/textures/rightButton.dds \
+  build/ba_data/textures/touchArrows.dds \
+  build/ba_data/textures/cyborgColorMask.dds \
+  build/ba_data/textures/jumpsuitIconColorMask.dds \
+  build/ba_data/textures/bridgitPreview.dds \
+  build/ba_data/textures/ninjaColor.dds \
+  build/ba_data/textures/santaColorMask.dds \
+  build/ba_data/textures/storeCharacter.dds \
+  build/ba_data/textures/flagColor.dds \
+  build/ba_data/textures/cragCastlePreview.dds \
+  build/ba_data/textures/frameInset.dds \
+  build/ba_data/textures/lock.dds \
+  build/ba_data/textures/agentColor.dds \
+  build/ba_data/textures/achievementGotTheMoves.dds \
+  build/ba_data/textures/buttonPunch.dds \
+  build/ba_data/textures/settingsIcon.dds \
+  build/ba_data/textures/rgbStripes.dds \
+  build/ba_data/textures/reflectionSharp_+y.dds \
+  build/ba_data/textures/powerupImpactBombs.dds \
+  build/ba_data/textures/bigG.dds \
+  build/ba_data/textures/melIconColorMask.dds \
+  build/ba_data/textures/reflectionChar_+y.dds \
+  build/ba_data/textures/multiplayerExamples.dds \
+  build/ba_data/textures/actionButtons.dds \
+  build/ba_data/textures/melIcon.dds \
+  build/ba_data/textures/oldLadyIconColorMask.dds \
+  build/ba_data/textures/robotIconColorMask.dds \
+  build/ba_data/textures/monkeyFacePreview.dds \
+  build/ba_data/textures/achievementDualWielding.dds \
+  build/ba_data/textures/folder.dds \
+  build/ba_data/textures/frostyColorMask.dds \
+  build/ba_data/textures/kronkIconColorMask.dds \
+  build/ba_data/textures/fontBig.dds \
+  build/ba_data/textures/fontSmall1.dds \
+  build/ba_data/textures/shadowSoft.dds \
+  build/ba_data/textures/powerupLandMines.dds \
+  build/ba_data/textures/stepRightUpPreview.dds \
+  build/ba_data/textures/bearIconColorMask.dds \
+  build/ba_data/textures/kronk.dds \
+  build/ba_data/textures/downButton.dds \
+  build/ba_data/textures/bombColor.dds \
+  build/ba_data/textures/logo.dds \
+  build/ba_data/textures/reflectionPowerup_+y.dds \
+  build/ba_data/textures/zoeColorMask.dds \
+  build/ba_data/textures/jumpsuitColorMask.dds \
+  build/ba_data/textures/penguinIcon.dds \
+  build/ba_data/textures/powerupPunch.dds \
+  build/ba_data/textures/shadow.dds \
+  build/ba_data/textures/reflectionChar_-z.dds \
+  build/ba_data/textures/assassinIcon.dds \
+  build/ba_data/textures/impactBombColor.dds \
+  build/ba_data/textures/storeCharacterXmas.dds \
+  build/ba_data/textures/jackIcon.dds \
+  build/ba_data/textures/pixieIcon.dds \
+  build/ba_data/textures/jumpsuitColor.dds \
+  build/ba_data/textures/reflectionSharper_+x.dds \
+  build/ba_data/textures/jackColorMask.dds \
+  build/ba_data/textures/shrapnel1Color.dds \
+  build/ba_data/textures/witchColor.dds \
+  build/ba_data/textures/achievementFreeLoader.dds \
+  build/ba_data/textures/zoeColor.dds \
+  build/ba_data/textures/alienColor.dds \
+  build/ba_data/textures/inventoryIcon.dds \
+  build/ba_data/textures/reflectionSharp_-z.dds \
+  build/ba_data/textures/glow.dds \
+  build/ba_data/textures/usersButton.dds \
+  build/ba_data/textures/reflectionPowerup_-z.dds \
+  build/ba_data/textures/melColor.dds \
+  build/ba_data/textures/aliControllerQR.dds \
+  build/ba_data/textures/frostyIcon.dds \
+  build/ba_data/textures/achievementFootballVictory.dds \
+  build/ba_data/textures/tickets.dds \
+  build/ba_data/textures/cursor.dds \
+  build/ba_data/textures/egg3.dds \
+  build/ba_data/textures/crossOut.dds \
+  build/ba_data/textures/bonesColor.dds \
+  build/ba_data/textures/achievementCrossHair.dds \
+  build/ba_data/textures/actionHeroColorMask.dds \
+  build/ba_data/textures/chTitleChar1.dds \
+  build/ba_data/textures/heart.dds \
+  build/ba_data/textures/fontExtras.dds \
+  build/ba_data/textures/penguinIconColorMask.dds \
+  build/ba_data/textures/eyeColorTintMask.dds \
+  build/ba_data/textures/aliIcon.dds \
+  build/ba_data/textures/chestIconMulti.dds \
+  build/ba_data/textures/reflectionSoft_-x.dds \
+  build/ba_data/textures/uiAtlas.dds \
+  build/ba_data/textures/reflectionSharpest_+y.dds \
+  build/ba_data/textures/cragCastleLevelColor.dds \
+  build/ba_data/textures/assassinColorMask.dds \
+  build/ba_data/textures/bridgitLevelColor.dds \
+  build/ba_data/textures/fontSmall6.dds \
+  build/ba_data/textures/towerDLevelColor.dds \
+  build/ba_data/textures/ouyaYButton.dds \
+  build/ba_data/textures/lightSharp.dds \
+  build/ba_data/textures/buttonSquare.dds \
+  build/ba_data/textures/softRect.dds \
+  build/ba_data/textures/powerupIceBombs.dds \
+  build/ba_data/textures/jackIconColorMask.dds \
+  build/ba_data/textures/audioIcon.dds \
+  build/ba_data/textures/tv.dds \
+  build/ba_data/textures/reflectionSharpest_-z.dds \
+  build/ba_data/textures/warriorIconColorMask.dds \
+  build/ba_data/textures/googlePlusSignInButton.dds \
+  build/ba_data/textures/circle.dds \
+  build/ba_data/textures/neoSpazIconColorMask.dds \
+  build/ba_data/textures/medalComplete.dds \
+  build/ba_data/textures/alwaysLandLevelColor.dds \
+  build/ba_data/textures/alwaysLandPreview.dds \
+  build/ba_data/textures/egg4.dds \
+  build/ba_data/textures/wrestlerColorMask.dds \
+  build/ba_data/textures/superheroColorMask.dds \
+  build/ba_data/textures/gladiatorColor.dds \
+  build/ba_data/textures/aliBSRemoteIOSQR.dds \
+  build/ba_data/textures/bearColorMask.dds \
+  build/ba_data/textures/doomShroomLevelColor.dds \
+  build/ba_data/textures/powerupBomb.dds \
+  build/ba_data/textures/chestIcon.dds \
+  build/ba_data/textures/upButton.dds \
+  build/ba_data/textures/iconRunaround.dds \
+  build/ba_data/textures/doomShroomBGColor.dds \
+  build/ba_data/textures/superheroColor.dds \
+  build/ba_data/textures/landMine.dds \
+  build/ba_data/textures/buttonJump.dds \
+  build/ba_data/textures/sparks.dds \
+  build/ba_data/textures/explosion.dds \
+  build/ba_data/textures/tipTopLevelColor.dds \
+  build/ba_data/textures/bunnyIconColorMask.dds \
+  build/ba_data/textures/reflectionChar_+x.dds \
+  build/ba_data/textures/ticketsMore.dds \
+  build/ba_data/textures/pixieColorMask.dds \
+  build/ba_data/textures/medalSilver.dds \
+  build/ba_data/textures/neoSpazIcon.dds \
+  build/ba_data/textures/meter.dds \
+  build/ba_data/textures/scrollWidgetGlow.dds \
+  build/ba_data/textures/achievementFlawlessVictory.dds \
+  build/ba_data/textures/zigzagPreview.dds \
+  build/ba_data/textures/reflectionSharper_-z.dds \
+  build/ba_data/textures/alienColorMask.dds \
+  build/ba_data/textures/powerupShield.dds \
+  build/ba_data/textures/reflectionSharp_+x.dds \
+  build/ba_data/textures/chestIconEmpty.dds \
+  build/ba_data/textures/agentColorMask.dds \
+  build/ba_data/textures/reflectionPowerup_+x.dds \
+  build/ba_data/textures/witchIconColorMask.dds \
+  build/ba_data/textures/kronkColorMask.dds \
+  build/ba_data/textures/menuBG.dds \
+  build/ba_data/textures/fontSmall0.dds \
+  build/ba_data/textures/assassinIconColorMask.dds \
+  build/ba_data/textures/bearColor.dds \
+  build/ba_data/textures/operaSingerColor.dds \
+  build/ba_data/textures/rampageBGColor2.dds \
+  build/ba_data/textures/fuse.dds \
+  build/ba_data/textures/frostyColor.dds \
+  build/ba_data/textures/achievementSuperPunch.dds \
+  build/ba_data/textures/tipTopPreview.dds \
+  build/ba_data/textures/googlePlusIcon.dds \
+  build/ba_data/textures/powerupCurse.dds \
+  build/ba_data/textures/trophy.dds \
+  build/ba_data/textures/courtyardLevelColor.dds \
+  build/ba_data/textures/oldLadyColorMask.dds \
+  build/ba_data/textures/rampagePreview.dds \
+  build/ba_data/textures/cuteSpaz.dds \
+  build/ba_data/textures/lightSoft.dds \
+  build/ba_data/textures/reflectionSharper_+y.dds \
+  build/ba_data/textures/uiAtlas2.dds \
+  build/ba_data/textures/egg2.dds \
+  build/ba_data/textures/shadowSharp.dds \
+  build/ba_data/textures/tnt.dds \
+  build/ba_data/textures/actionHeroIcon.dds \
+  build/ba_data/textures/robotColorMask.dds \
+  build/ba_data/textures/impactBombColorLit.dds \
+  build/ba_data/textures/achievementStayinAlive.dds
 
 TEX2D_PVR_TARGETS = \
-  build/data/textures/cyborgIconColorMask.pvr \
-  build/data/textures/chestOpenIcon.pvr \
-  build/data/textures/analogStick.pvr \
-  build/data/textures/circleOutline.pvr \
-  build/data/textures/white.pvr \
-  build/data/textures/medalBronze.pvr \
-  build/data/textures/slash.pvr \
-  build/data/textures/arrow.pvr \
-  build/data/textures/ouyaIcon.pvr \
-  build/data/textures/eyeColor.pvr \
-  build/data/textures/achievementMedalLarge.pvr \
-  build/data/textures/cowboyIconColorMask.pvr \
-  build/data/textures/wings.pvr \
-  build/data/textures/roundaboutPreview.pvr \
-  build/data/textures/warriorIcon.pvr \
-  build/data/textures/windowHSmallVMed.pvr \
-  build/data/textures/ninjaIconColorMask.pvr \
-  build/data/textures/reflectionSharpest_+z.pvr \
-  build/data/textures/stepRightUpLevelColor.pvr \
-  build/data/textures/fontSmall5.pvr \
-  build/data/textures/bombButton.pvr \
-  build/data/textures/aliIconColorMask.pvr \
-  build/data/textures/chTitleChar2.pvr \
-  build/data/textures/achievementOnslaught.pvr \
-  build/data/textures/smoke.pvr \
-  build/data/textures/lakeFrigidReflections.pvr \
-  build/data/textures/bunnyColor.pvr \
-  build/data/textures/leftButton.pvr \
-  build/data/textures/hockeyStadium.pvr \
-  build/data/textures/cowboyIcon.pvr \
-  build/data/textures/lakeFrigid.pvr \
-  build/data/textures/startButton.pvr \
-  build/data/textures/footballStadium.pvr \
-  build/data/textures/crossOutMask.pvr \
-  build/data/textures/bonesIconColorMask.pvr \
-  build/data/textures/operaSingerIconColorMask.pvr \
-  build/data/textures/lakeFrigidPreview.pvr \
-  build/data/textures/alienIcon.pvr \
-  build/data/textures/oldLadyColor.pvr \
-  build/data/textures/ouyaAButton.pvr \
-  build/data/textures/eggTex3.pvr \
-  build/data/textures/cyborgIcon.pvr \
-  build/data/textures/actionHeroColor.pvr \
-  build/data/textures/achievementTeamPlayer.pvr \
-  build/data/textures/reflectionSoft_+x.pvr \
-  build/data/textures/fontExtras3.pvr \
-  build/data/textures/buttonBomb.pvr \
-  build/data/textures/star.pvr \
-  build/data/textures/reflectionSharpest_-y.pvr \
-  build/data/textures/achievementSharingIsCaring.pvr \
-  build/data/textures/fontSmall3.pvr \
-  build/data/textures/powerupSpeed.pvr \
-  build/data/textures/vrFillMound.pvr \
-  build/data/textures/agentIconColorMask.pvr \
-  build/data/textures/kronkIcon.pvr \
-  build/data/textures/oldLadyIcon.pvr \
-  build/data/textures/chTitleChar4.pvr \
-  build/data/textures/nextLevelIcon.pvr \
-  build/data/textures/gameCircleIcon.pvr \
-  build/data/textures/bonesIcon.pvr \
-  build/data/textures/bearIcon.pvr \
-  build/data/textures/towerDPreview.pvr \
-  build/data/textures/achievementTNT.pvr \
-  build/data/textures/medalGold.pvr \
-  build/data/textures/circleZigZag.pvr \
-  build/data/textures/bunnyColorMask.pvr \
-  build/data/textures/black.pvr \
-  build/data/textures/menuIcon.pvr \
-  build/data/textures/file.pvr \
-  build/data/textures/logIcon.pvr \
-  build/data/textures/controllerIcon.pvr \
-  build/data/textures/reflectionSharper_-y.pvr \
-  build/data/textures/operaSingerColorMask.pvr \
-  build/data/textures/achievementFootballShutout.pvr \
-  build/data/textures/reflectionPowerup_-x.pvr \
-  build/data/textures/achievementsIcon.pvr \
-  build/data/textures/cowboyColor.pvr \
-  build/data/textures/wrestlerIconColorMask.pvr \
-  build/data/textures/googlePlayAchievementsIcon.pvr \
-  build/data/textures/alienIconColorMask.pvr \
-  build/data/textures/ticketRollBig.pvr \
-  build/data/textures/wrestlerIcon.pvr \
-  build/data/textures/egg1.pvr \
-  build/data/textures/gameCenterIcon.pvr \
-  build/data/textures/landMineLit.pvr \
-  build/data/textures/achievementWall.pvr \
-  build/data/textures/achievementMedalMedium.pvr \
-  build/data/textures/reflectionChar_-x.pvr \
-  build/data/textures/softRectVertical.pvr \
-  build/data/textures/reflectionSharper_+z.pvr \
-  build/data/textures/wizardIcon.pvr \
-  build/data/textures/mapPreviewMask.pvr \
-  build/data/textures/nub.pvr \
-  build/data/textures/empty.pvr \
-  build/data/textures/frostyIconColorMask.pvr \
-  build/data/textures/reflectionSharp_-x.pvr \
-  build/data/textures/bombColorIce.pvr \
-  build/data/textures/jumpsuitIcon.pvr \
-  build/data/textures/footballStadiumPreview.pvr \
-  build/data/textures/pixieIconColorMask.pvr \
-  build/data/textures/achievementEmpty.pvr \
-  build/data/textures/wrestlerColor.pvr \
-  build/data/textures/shield.pvr \
-  build/data/textures/iconOnslaught.pvr \
-  build/data/textures/replayIcon.pvr \
-  build/data/textures/powerupHealth.pvr \
-  build/data/textures/bg.pvr \
-  build/data/textures/chTitleChar3.pvr \
-  build/data/textures/textClearButton.pvr \
-  build/data/textures/reflectionSoft_-z.pvr \
-  build/data/textures/fontSmall4.pvr \
-  build/data/textures/warriorColor.pvr \
-  build/data/textures/light.pvr \
-  build/data/textures/santaColor.pvr \
-  build/data/textures/jackColor.pvr \
-  build/data/textures/aliSplash.pvr \
-  build/data/textures/scorch.pvr \
-  build/data/textures/zoeIcon.pvr \
-  build/data/textures/bonesColorMask.pvr \
-  build/data/textures/pixieColor.pvr \
-  build/data/textures/actionHeroIconColorMask.pvr \
-  build/data/textures/treesColor.pvr \
-  build/data/textures/neoSpazColorMask.pvr \
-  build/data/textures/superheroIcon.pvr \
-  build/data/textures/achievementOffYouGo.pvr \
-  build/data/textures/tipTopBGColor.pvr \
-  build/data/textures/robotColor.pvr \
-  build/data/textures/reflectionSharpest_-x.pvr \
-  build/data/textures/menuButton.pvr \
-  build/data/textures/powerupStickyBombs.pvr \
-  build/data/textures/ninjaIcon.pvr \
-  build/data/textures/witchColorMask.pvr \
-  build/data/textures/cowboyColorMask.pvr \
-  build/data/textures/operaSingerIcon.pvr \
-  build/data/textures/achievementBoxer.pvr \
-  build/data/textures/eggTex2.pvr \
-  build/data/textures/rampageBGColor.pvr \
-  build/data/textures/fontExtras2.pvr \
-  build/data/textures/rampageLevelColor.pvr \
-  build/data/textures/reflectionSoft_+y.pvr \
-  build/data/textures/ticketRolls.pvr \
-  build/data/textures/natureBackgroundColor.pvr \
-  build/data/textures/santaIconColorMask.pvr \
-  build/data/textures/reflectionPowerup_+z.pvr \
-  build/data/textures/characterIconMask.pvr \
-  build/data/textures/aliColor.pvr \
-  build/data/textures/ninjaColorMask.pvr \
-  build/data/textures/buttonPickUp.pvr \
-  build/data/textures/chTitleChar5.pvr \
-  build/data/textures/bigGPreview.pvr \
-  build/data/textures/hockeyStadiumPreview.pvr \
-  build/data/textures/achievementMedalSmall.pvr \
-  build/data/textures/fontSmall2.pvr \
-  build/data/textures/achievementOutline.pvr \
-  build/data/textures/levelIcon.pvr \
-  build/data/textures/googlePlayGamesIcon.pvr \
-  build/data/textures/gladiatorColorMask.pvr \
-  build/data/textures/boxingGlovesColor.pvr \
-  build/data/textures/ouyaOButton.pvr \
-  build/data/textures/leaderboardsIcon.pvr \
-  build/data/textures/puckColor.pvr \
-  build/data/textures/reflectionChar_+z.pvr \
-  build/data/textures/penguinColor.pvr \
-  build/data/textures/reflectionSharper_-x.pvr \
-  build/data/textures/googlePlayLeaderboardsIcon.pvr \
-  build/data/textures/scrollWidget.pvr \
-  build/data/textures/courtyardPreview.pvr \
-  build/data/textures/aliColorMask.pvr \
-  build/data/textures/penguinColorMask.pvr \
-  build/data/textures/witchIcon.pvr \
-  build/data/textures/reflectionSharp_+z.pvr \
-  build/data/textures/graphicsIcon.pvr \
-  build/data/textures/agentIcon.pvr \
-  build/data/textures/fontExtras4.pvr \
-  build/data/textures/reflectionPowerup_-y.pvr \
-  build/data/textures/storeIcon.pvr \
-  build/data/textures/doomShroomPreview.pvr \
-  build/data/textures/null.pvr \
-  build/data/textures/backIcon.pvr \
-  build/data/textures/cyborgColor.pvr \
-  build/data/textures/monkeyFaceLevelColor.pvr \
-  build/data/textures/santaIcon.pvr \
-  build/data/textures/alwaysLandBGColor.pvr \
-  build/data/textures/roundaboutLevelColor.pvr \
-  build/data/textures/robotIcon.pvr \
-  build/data/textures/reflectionSharp_-y.pvr \
-  build/data/textures/bunnyIcon.pvr \
-  build/data/textures/circleShadow.pvr \
-  build/data/textures/flagPoleColor.pvr \
-  build/data/textures/ouyaUButton.pvr \
-  build/data/textures/reflectionChar_-y.pvr \
-  build/data/textures/achievementInControl.pvr \
-  build/data/textures/wizardColorMask.pvr \
-  build/data/textures/reflectionSharpest_+x.pvr \
-  build/data/textures/neoSpazColor.pvr \
-  build/data/textures/zigZagLevelColor.pvr \
-  build/data/textures/thePadPreview.pvr \
-  build/data/textures/superheroIconColorMask.pvr \
-  build/data/textures/fontSmall7.pvr \
-  build/data/textures/ticketRoll.pvr \
-  build/data/textures/reflectionSoft_-y.pvr \
-  build/data/textures/playerLineup.pvr \
-  build/data/textures/storeCharacterEaster.pvr \
-  build/data/textures/coin.pvr \
-  build/data/textures/circleOutlineNoAlpha.pvr \
-  build/data/textures/scorchBig.pvr \
-  build/data/textures/logoEaster.pvr \
-  build/data/textures/warriorColorMask.pvr \
-  build/data/textures/assassinColor.pvr \
-  build/data/textures/bombStickyColor.pvr \
-  build/data/textures/eggTex1.pvr \
-  build/data/textures/gladiatorIconColorMask.pvr \
-  build/data/textures/melColorMask.pvr \
-  build/data/textures/thePadLevelColor.pvr \
-  build/data/textures/wizardIconColorMask.pvr \
-  build/data/textures/bar.pvr \
-  build/data/textures/zoeIconColorMask.pvr \
-  build/data/textures/windowHSmallVSmall.pvr \
-  build/data/textures/circleNoAlpha.pvr \
-  build/data/textures/gladiatorIcon.pvr \
-  build/data/textures/reflectionSoft_+z.pvr \
-  build/data/textures/achievementRunaround.pvr \
-  build/data/textures/wizardColor.pvr \
-  build/data/textures/touchArrowsActions.pvr \
-  build/data/textures/advancedIcon.pvr \
-  build/data/textures/softRect2.pvr \
-  build/data/textures/achievementMine.pvr \
-  build/data/textures/rightButton.pvr \
-  build/data/textures/touchArrows.pvr \
-  build/data/textures/cyborgColorMask.pvr \
-  build/data/textures/jumpsuitIconColorMask.pvr \
-  build/data/textures/bridgitPreview.pvr \
-  build/data/textures/ninjaColor.pvr \
-  build/data/textures/santaColorMask.pvr \
-  build/data/textures/storeCharacter.pvr \
-  build/data/textures/flagColor.pvr \
-  build/data/textures/cragCastlePreview.pvr \
-  build/data/textures/frameInset.pvr \
-  build/data/textures/lock.pvr \
-  build/data/textures/agentColor.pvr \
-  build/data/textures/achievementGotTheMoves.pvr \
-  build/data/textures/buttonPunch.pvr \
-  build/data/textures/settingsIcon.pvr \
-  build/data/textures/rgbStripes.pvr \
-  build/data/textures/reflectionSharp_+y.pvr \
-  build/data/textures/powerupImpactBombs.pvr \
-  build/data/textures/bigG.pvr \
-  build/data/textures/melIconColorMask.pvr \
-  build/data/textures/reflectionChar_+y.pvr \
-  build/data/textures/multiplayerExamples.pvr \
-  build/data/textures/actionButtons.pvr \
-  build/data/textures/melIcon.pvr \
-  build/data/textures/oldLadyIconColorMask.pvr \
-  build/data/textures/robotIconColorMask.pvr \
-  build/data/textures/monkeyFacePreview.pvr \
-  build/data/textures/achievementDualWielding.pvr \
-  build/data/textures/folder.pvr \
-  build/data/textures/frostyColorMask.pvr \
-  build/data/textures/kronkIconColorMask.pvr \
-  build/data/textures/fontBig.pvr \
-  build/data/textures/fontSmall1.pvr \
-  build/data/textures/shadowSoft.pvr \
-  build/data/textures/powerupLandMines.pvr \
-  build/data/textures/stepRightUpPreview.pvr \
-  build/data/textures/bearIconColorMask.pvr \
-  build/data/textures/kronk.pvr \
-  build/data/textures/downButton.pvr \
-  build/data/textures/bombColor.pvr \
-  build/data/textures/logo.pvr \
-  build/data/textures/reflectionPowerup_+y.pvr \
-  build/data/textures/zoeColorMask.pvr \
-  build/data/textures/jumpsuitColorMask.pvr \
-  build/data/textures/penguinIcon.pvr \
-  build/data/textures/powerupPunch.pvr \
-  build/data/textures/shadow.pvr \
-  build/data/textures/reflectionChar_-z.pvr \
-  build/data/textures/assassinIcon.pvr \
-  build/data/textures/impactBombColor.pvr \
-  build/data/textures/storeCharacterXmas.pvr \
-  build/data/textures/jackIcon.pvr \
-  build/data/textures/pixieIcon.pvr \
-  build/data/textures/jumpsuitColor.pvr \
-  build/data/textures/reflectionSharper_+x.pvr \
-  build/data/textures/jackColorMask.pvr \
-  build/data/textures/shrapnel1Color.pvr \
-  build/data/textures/witchColor.pvr \
-  build/data/textures/achievementFreeLoader.pvr \
-  build/data/textures/zoeColor.pvr \
-  build/data/textures/alienColor.pvr \
-  build/data/textures/inventoryIcon.pvr \
-  build/data/textures/reflectionSharp_-z.pvr \
-  build/data/textures/glow.pvr \
-  build/data/textures/usersButton.pvr \
-  build/data/textures/reflectionPowerup_-z.pvr \
-  build/data/textures/melColor.pvr \
-  build/data/textures/aliControllerQR.pvr \
-  build/data/textures/frostyIcon.pvr \
-  build/data/textures/achievementFootballVictory.pvr \
-  build/data/textures/tickets.pvr \
-  build/data/textures/cursor.pvr \
-  build/data/textures/egg3.pvr \
-  build/data/textures/crossOut.pvr \
-  build/data/textures/bonesColor.pvr \
-  build/data/textures/achievementCrossHair.pvr \
-  build/data/textures/actionHeroColorMask.pvr \
-  build/data/textures/chTitleChar1.pvr \
-  build/data/textures/heart.pvr \
-  build/data/textures/fontExtras.pvr \
-  build/data/textures/penguinIconColorMask.pvr \
-  build/data/textures/eyeColorTintMask.pvr \
-  build/data/textures/aliIcon.pvr \
-  build/data/textures/chestIconMulti.pvr \
-  build/data/textures/reflectionSoft_-x.pvr \
-  build/data/textures/uiAtlas.pvr \
-  build/data/textures/reflectionSharpest_+y.pvr \
-  build/data/textures/cragCastleLevelColor.pvr \
-  build/data/textures/assassinColorMask.pvr \
-  build/data/textures/bridgitLevelColor.pvr \
-  build/data/textures/fontSmall6.pvr \
-  build/data/textures/towerDLevelColor.pvr \
-  build/data/textures/ouyaYButton.pvr \
-  build/data/textures/lightSharp.pvr \
-  build/data/textures/buttonSquare.pvr \
-  build/data/textures/softRect.pvr \
-  build/data/textures/powerupIceBombs.pvr \
-  build/data/textures/jackIconColorMask.pvr \
-  build/data/textures/audioIcon.pvr \
-  build/data/textures/tv.pvr \
-  build/data/textures/reflectionSharpest_-z.pvr \
-  build/data/textures/warriorIconColorMask.pvr \
-  build/data/textures/googlePlusSignInButton.pvr \
-  build/data/textures/circle.pvr \
-  build/data/textures/neoSpazIconColorMask.pvr \
-  build/data/textures/medalComplete.pvr \
-  build/data/textures/alwaysLandLevelColor.pvr \
-  build/data/textures/alwaysLandPreview.pvr \
-  build/data/textures/egg4.pvr \
-  build/data/textures/wrestlerColorMask.pvr \
-  build/data/textures/superheroColorMask.pvr \
-  build/data/textures/gladiatorColor.pvr \
-  build/data/textures/aliBSRemoteIOSQR.pvr \
-  build/data/textures/bearColorMask.pvr \
-  build/data/textures/doomShroomLevelColor.pvr \
-  build/data/textures/powerupBomb.pvr \
-  build/data/textures/chestIcon.pvr \
-  build/data/textures/upButton.pvr \
-  build/data/textures/iconRunaround.pvr \
-  build/data/textures/doomShroomBGColor.pvr \
-  build/data/textures/superheroColor.pvr \
-  build/data/textures/landMine.pvr \
-  build/data/textures/buttonJump.pvr \
-  build/data/textures/sparks.pvr \
-  build/data/textures/explosion.pvr \
-  build/data/textures/tipTopLevelColor.pvr \
-  build/data/textures/bunnyIconColorMask.pvr \
-  build/data/textures/reflectionChar_+x.pvr \
-  build/data/textures/ticketsMore.pvr \
-  build/data/textures/pixieColorMask.pvr \
-  build/data/textures/medalSilver.pvr \
-  build/data/textures/neoSpazIcon.pvr \
-  build/data/textures/meter.pvr \
-  build/data/textures/scrollWidgetGlow.pvr \
-  build/data/textures/achievementFlawlessVictory.pvr \
-  build/data/textures/zigzagPreview.pvr \
-  build/data/textures/reflectionSharper_-z.pvr \
-  build/data/textures/alienColorMask.pvr \
-  build/data/textures/powerupShield.pvr \
-  build/data/textures/reflectionSharp_+x.pvr \
-  build/data/textures/chestIconEmpty.pvr \
-  build/data/textures/agentColorMask.pvr \
-  build/data/textures/reflectionPowerup_+x.pvr \
-  build/data/textures/witchIconColorMask.pvr \
-  build/data/textures/kronkColorMask.pvr \
-  build/data/textures/menuBG.pvr \
-  build/data/textures/fontSmall0.pvr \
-  build/data/textures/assassinIconColorMask.pvr \
-  build/data/textures/bearColor.pvr \
-  build/data/textures/operaSingerColor.pvr \
-  build/data/textures/rampageBGColor2.pvr \
-  build/data/textures/fuse.pvr \
-  build/data/textures/frostyColor.pvr \
-  build/data/textures/achievementSuperPunch.pvr \
-  build/data/textures/tipTopPreview.pvr \
-  build/data/textures/googlePlusIcon.pvr \
-  build/data/textures/powerupCurse.pvr \
-  build/data/textures/trophy.pvr \
-  build/data/textures/courtyardLevelColor.pvr \
-  build/data/textures/oldLadyColorMask.pvr \
-  build/data/textures/rampagePreview.pvr \
-  build/data/textures/cuteSpaz.pvr \
-  build/data/textures/lightSoft.pvr \
-  build/data/textures/reflectionSharper_+y.pvr \
-  build/data/textures/uiAtlas2.pvr \
-  build/data/textures/egg2.pvr \
-  build/data/textures/shadowSharp.pvr \
-  build/data/textures/tnt.pvr \
-  build/data/textures/actionHeroIcon.pvr \
-  build/data/textures/robotColorMask.pvr \
-  build/data/textures/impactBombColorLit.pvr \
-  build/data/textures/achievementStayinAlive.pvr
+  build/ba_data/textures/cyborgIconColorMask.pvr \
+  build/ba_data/textures/chestOpenIcon.pvr \
+  build/ba_data/textures/analogStick.pvr \
+  build/ba_data/textures/circleOutline.pvr \
+  build/ba_data/textures/white.pvr \
+  build/ba_data/textures/medalBronze.pvr \
+  build/ba_data/textures/slash.pvr \
+  build/ba_data/textures/arrow.pvr \
+  build/ba_data/textures/ouyaIcon.pvr \
+  build/ba_data/textures/eyeColor.pvr \
+  build/ba_data/textures/achievementMedalLarge.pvr \
+  build/ba_data/textures/cowboyIconColorMask.pvr \
+  build/ba_data/textures/wings.pvr \
+  build/ba_data/textures/roundaboutPreview.pvr \
+  build/ba_data/textures/warriorIcon.pvr \
+  build/ba_data/textures/windowHSmallVMed.pvr \
+  build/ba_data/textures/ninjaIconColorMask.pvr \
+  build/ba_data/textures/reflectionSharpest_+z.pvr \
+  build/ba_data/textures/stepRightUpLevelColor.pvr \
+  build/ba_data/textures/fontSmall5.pvr \
+  build/ba_data/textures/bombButton.pvr \
+  build/ba_data/textures/aliIconColorMask.pvr \
+  build/ba_data/textures/chTitleChar2.pvr \
+  build/ba_data/textures/achievementOnslaught.pvr \
+  build/ba_data/textures/smoke.pvr \
+  build/ba_data/textures/lakeFrigidReflections.pvr \
+  build/ba_data/textures/bunnyColor.pvr \
+  build/ba_data/textures/leftButton.pvr \
+  build/ba_data/textures/hockeyStadium.pvr \
+  build/ba_data/textures/cowboyIcon.pvr \
+  build/ba_data/textures/lakeFrigid.pvr \
+  build/ba_data/textures/startButton.pvr \
+  build/ba_data/textures/footballStadium.pvr \
+  build/ba_data/textures/crossOutMask.pvr \
+  build/ba_data/textures/bonesIconColorMask.pvr \
+  build/ba_data/textures/operaSingerIconColorMask.pvr \
+  build/ba_data/textures/lakeFrigidPreview.pvr \
+  build/ba_data/textures/alienIcon.pvr \
+  build/ba_data/textures/oldLadyColor.pvr \
+  build/ba_data/textures/ouyaAButton.pvr \
+  build/ba_data/textures/eggTex3.pvr \
+  build/ba_data/textures/cyborgIcon.pvr \
+  build/ba_data/textures/actionHeroColor.pvr \
+  build/ba_data/textures/achievementTeamPlayer.pvr \
+  build/ba_data/textures/reflectionSoft_+x.pvr \
+  build/ba_data/textures/fontExtras3.pvr \
+  build/ba_data/textures/buttonBomb.pvr \
+  build/ba_data/textures/star.pvr \
+  build/ba_data/textures/reflectionSharpest_-y.pvr \
+  build/ba_data/textures/achievementSharingIsCaring.pvr \
+  build/ba_data/textures/fontSmall3.pvr \
+  build/ba_data/textures/powerupSpeed.pvr \
+  build/ba_data/textures/vrFillMound.pvr \
+  build/ba_data/textures/agentIconColorMask.pvr \
+  build/ba_data/textures/kronkIcon.pvr \
+  build/ba_data/textures/oldLadyIcon.pvr \
+  build/ba_data/textures/chTitleChar4.pvr \
+  build/ba_data/textures/nextLevelIcon.pvr \
+  build/ba_data/textures/gameCircleIcon.pvr \
+  build/ba_data/textures/bonesIcon.pvr \
+  build/ba_data/textures/bearIcon.pvr \
+  build/ba_data/textures/towerDPreview.pvr \
+  build/ba_data/textures/achievementTNT.pvr \
+  build/ba_data/textures/medalGold.pvr \
+  build/ba_data/textures/circleZigZag.pvr \
+  build/ba_data/textures/bunnyColorMask.pvr \
+  build/ba_data/textures/black.pvr \
+  build/ba_data/textures/menuIcon.pvr \
+  build/ba_data/textures/file.pvr \
+  build/ba_data/textures/logIcon.pvr \
+  build/ba_data/textures/controllerIcon.pvr \
+  build/ba_data/textures/reflectionSharper_-y.pvr \
+  build/ba_data/textures/operaSingerColorMask.pvr \
+  build/ba_data/textures/achievementFootballShutout.pvr \
+  build/ba_data/textures/reflectionPowerup_-x.pvr \
+  build/ba_data/textures/achievementsIcon.pvr \
+  build/ba_data/textures/cowboyColor.pvr \
+  build/ba_data/textures/wrestlerIconColorMask.pvr \
+  build/ba_data/textures/googlePlayAchievementsIcon.pvr \
+  build/ba_data/textures/alienIconColorMask.pvr \
+  build/ba_data/textures/ticketRollBig.pvr \
+  build/ba_data/textures/wrestlerIcon.pvr \
+  build/ba_data/textures/egg1.pvr \
+  build/ba_data/textures/gameCenterIcon.pvr \
+  build/ba_data/textures/landMineLit.pvr \
+  build/ba_data/textures/achievementWall.pvr \
+  build/ba_data/textures/achievementMedalMedium.pvr \
+  build/ba_data/textures/reflectionChar_-x.pvr \
+  build/ba_data/textures/softRectVertical.pvr \
+  build/ba_data/textures/reflectionSharper_+z.pvr \
+  build/ba_data/textures/wizardIcon.pvr \
+  build/ba_data/textures/mapPreviewMask.pvr \
+  build/ba_data/textures/nub.pvr \
+  build/ba_data/textures/empty.pvr \
+  build/ba_data/textures/frostyIconColorMask.pvr \
+  build/ba_data/textures/reflectionSharp_-x.pvr \
+  build/ba_data/textures/bombColorIce.pvr \
+  build/ba_data/textures/jumpsuitIcon.pvr \
+  build/ba_data/textures/footballStadiumPreview.pvr \
+  build/ba_data/textures/pixieIconColorMask.pvr \
+  build/ba_data/textures/achievementEmpty.pvr \
+  build/ba_data/textures/wrestlerColor.pvr \
+  build/ba_data/textures/shield.pvr \
+  build/ba_data/textures/iconOnslaught.pvr \
+  build/ba_data/textures/replayIcon.pvr \
+  build/ba_data/textures/powerupHealth.pvr \
+  build/ba_data/textures/bg.pvr \
+  build/ba_data/textures/chTitleChar3.pvr \
+  build/ba_data/textures/textClearButton.pvr \
+  build/ba_data/textures/reflectionSoft_-z.pvr \
+  build/ba_data/textures/fontSmall4.pvr \
+  build/ba_data/textures/warriorColor.pvr \
+  build/ba_data/textures/light.pvr \
+  build/ba_data/textures/santaColor.pvr \
+  build/ba_data/textures/jackColor.pvr \
+  build/ba_data/textures/aliSplash.pvr \
+  build/ba_data/textures/scorch.pvr \
+  build/ba_data/textures/zoeIcon.pvr \
+  build/ba_data/textures/bonesColorMask.pvr \
+  build/ba_data/textures/pixieColor.pvr \
+  build/ba_data/textures/actionHeroIconColorMask.pvr \
+  build/ba_data/textures/treesColor.pvr \
+  build/ba_data/textures/neoSpazColorMask.pvr \
+  build/ba_data/textures/superheroIcon.pvr \
+  build/ba_data/textures/achievementOffYouGo.pvr \
+  build/ba_data/textures/tipTopBGColor.pvr \
+  build/ba_data/textures/robotColor.pvr \
+  build/ba_data/textures/reflectionSharpest_-x.pvr \
+  build/ba_data/textures/menuButton.pvr \
+  build/ba_data/textures/powerupStickyBombs.pvr \
+  build/ba_data/textures/ninjaIcon.pvr \
+  build/ba_data/textures/witchColorMask.pvr \
+  build/ba_data/textures/cowboyColorMask.pvr \
+  build/ba_data/textures/operaSingerIcon.pvr \
+  build/ba_data/textures/achievementBoxer.pvr \
+  build/ba_data/textures/eggTex2.pvr \
+  build/ba_data/textures/rampageBGColor.pvr \
+  build/ba_data/textures/fontExtras2.pvr \
+  build/ba_data/textures/rampageLevelColor.pvr \
+  build/ba_data/textures/reflectionSoft_+y.pvr \
+  build/ba_data/textures/ticketRolls.pvr \
+  build/ba_data/textures/natureBackgroundColor.pvr \
+  build/ba_data/textures/santaIconColorMask.pvr \
+  build/ba_data/textures/reflectionPowerup_+z.pvr \
+  build/ba_data/textures/characterIconMask.pvr \
+  build/ba_data/textures/aliColor.pvr \
+  build/ba_data/textures/ninjaColorMask.pvr \
+  build/ba_data/textures/buttonPickUp.pvr \
+  build/ba_data/textures/chTitleChar5.pvr \
+  build/ba_data/textures/bigGPreview.pvr \
+  build/ba_data/textures/hockeyStadiumPreview.pvr \
+  build/ba_data/textures/achievementMedalSmall.pvr \
+  build/ba_data/textures/fontSmall2.pvr \
+  build/ba_data/textures/achievementOutline.pvr \
+  build/ba_data/textures/levelIcon.pvr \
+  build/ba_data/textures/googlePlayGamesIcon.pvr \
+  build/ba_data/textures/gladiatorColorMask.pvr \
+  build/ba_data/textures/boxingGlovesColor.pvr \
+  build/ba_data/textures/ouyaOButton.pvr \
+  build/ba_data/textures/leaderboardsIcon.pvr \
+  build/ba_data/textures/puckColor.pvr \
+  build/ba_data/textures/reflectionChar_+z.pvr \
+  build/ba_data/textures/penguinColor.pvr \
+  build/ba_data/textures/reflectionSharper_-x.pvr \
+  build/ba_data/textures/googlePlayLeaderboardsIcon.pvr \
+  build/ba_data/textures/scrollWidget.pvr \
+  build/ba_data/textures/courtyardPreview.pvr \
+  build/ba_data/textures/aliColorMask.pvr \
+  build/ba_data/textures/penguinColorMask.pvr \
+  build/ba_data/textures/witchIcon.pvr \
+  build/ba_data/textures/reflectionSharp_+z.pvr \
+  build/ba_data/textures/graphicsIcon.pvr \
+  build/ba_data/textures/agentIcon.pvr \
+  build/ba_data/textures/fontExtras4.pvr \
+  build/ba_data/textures/reflectionPowerup_-y.pvr \
+  build/ba_data/textures/storeIcon.pvr \
+  build/ba_data/textures/doomShroomPreview.pvr \
+  build/ba_data/textures/null.pvr \
+  build/ba_data/textures/backIcon.pvr \
+  build/ba_data/textures/cyborgColor.pvr \
+  build/ba_data/textures/monkeyFaceLevelColor.pvr \
+  build/ba_data/textures/santaIcon.pvr \
+  build/ba_data/textures/alwaysLandBGColor.pvr \
+  build/ba_data/textures/roundaboutLevelColor.pvr \
+  build/ba_data/textures/robotIcon.pvr \
+  build/ba_data/textures/reflectionSharp_-y.pvr \
+  build/ba_data/textures/bunnyIcon.pvr \
+  build/ba_data/textures/circleShadow.pvr \
+  build/ba_data/textures/flagPoleColor.pvr \
+  build/ba_data/textures/ouyaUButton.pvr \
+  build/ba_data/textures/reflectionChar_-y.pvr \
+  build/ba_data/textures/achievementInControl.pvr \
+  build/ba_data/textures/wizardColorMask.pvr \
+  build/ba_data/textures/reflectionSharpest_+x.pvr \
+  build/ba_data/textures/neoSpazColor.pvr \
+  build/ba_data/textures/zigZagLevelColor.pvr \
+  build/ba_data/textures/thePadPreview.pvr \
+  build/ba_data/textures/superheroIconColorMask.pvr \
+  build/ba_data/textures/fontSmall7.pvr \
+  build/ba_data/textures/ticketRoll.pvr \
+  build/ba_data/textures/reflectionSoft_-y.pvr \
+  build/ba_data/textures/playerLineup.pvr \
+  build/ba_data/textures/storeCharacterEaster.pvr \
+  build/ba_data/textures/coin.pvr \
+  build/ba_data/textures/circleOutlineNoAlpha.pvr \
+  build/ba_data/textures/scorchBig.pvr \
+  build/ba_data/textures/logoEaster.pvr \
+  build/ba_data/textures/warriorColorMask.pvr \
+  build/ba_data/textures/assassinColor.pvr \
+  build/ba_data/textures/bombStickyColor.pvr \
+  build/ba_data/textures/eggTex1.pvr \
+  build/ba_data/textures/gladiatorIconColorMask.pvr \
+  build/ba_data/textures/melColorMask.pvr \
+  build/ba_data/textures/thePadLevelColor.pvr \
+  build/ba_data/textures/wizardIconColorMask.pvr \
+  build/ba_data/textures/bar.pvr \
+  build/ba_data/textures/zoeIconColorMask.pvr \
+  build/ba_data/textures/windowHSmallVSmall.pvr \
+  build/ba_data/textures/circleNoAlpha.pvr \
+  build/ba_data/textures/gladiatorIcon.pvr \
+  build/ba_data/textures/reflectionSoft_+z.pvr \
+  build/ba_data/textures/achievementRunaround.pvr \
+  build/ba_data/textures/wizardColor.pvr \
+  build/ba_data/textures/touchArrowsActions.pvr \
+  build/ba_data/textures/advancedIcon.pvr \
+  build/ba_data/textures/softRect2.pvr \
+  build/ba_data/textures/achievementMine.pvr \
+  build/ba_data/textures/rightButton.pvr \
+  build/ba_data/textures/touchArrows.pvr \
+  build/ba_data/textures/cyborgColorMask.pvr \
+  build/ba_data/textures/jumpsuitIconColorMask.pvr \
+  build/ba_data/textures/bridgitPreview.pvr \
+  build/ba_data/textures/ninjaColor.pvr \
+  build/ba_data/textures/santaColorMask.pvr \
+  build/ba_data/textures/storeCharacter.pvr \
+  build/ba_data/textures/flagColor.pvr \
+  build/ba_data/textures/cragCastlePreview.pvr \
+  build/ba_data/textures/frameInset.pvr \
+  build/ba_data/textures/lock.pvr \
+  build/ba_data/textures/agentColor.pvr \
+  build/ba_data/textures/achievementGotTheMoves.pvr \
+  build/ba_data/textures/buttonPunch.pvr \
+  build/ba_data/textures/settingsIcon.pvr \
+  build/ba_data/textures/rgbStripes.pvr \
+  build/ba_data/textures/reflectionSharp_+y.pvr \
+  build/ba_data/textures/powerupImpactBombs.pvr \
+  build/ba_data/textures/bigG.pvr \
+  build/ba_data/textures/melIconColorMask.pvr \
+  build/ba_data/textures/reflectionChar_+y.pvr \
+  build/ba_data/textures/multiplayerExamples.pvr \
+  build/ba_data/textures/actionButtons.pvr \
+  build/ba_data/textures/melIcon.pvr \
+  build/ba_data/textures/oldLadyIconColorMask.pvr \
+  build/ba_data/textures/robotIconColorMask.pvr \
+  build/ba_data/textures/monkeyFacePreview.pvr \
+  build/ba_data/textures/achievementDualWielding.pvr \
+  build/ba_data/textures/folder.pvr \
+  build/ba_data/textures/frostyColorMask.pvr \
+  build/ba_data/textures/kronkIconColorMask.pvr \
+  build/ba_data/textures/fontBig.pvr \
+  build/ba_data/textures/fontSmall1.pvr \
+  build/ba_data/textures/shadowSoft.pvr \
+  build/ba_data/textures/powerupLandMines.pvr \
+  build/ba_data/textures/stepRightUpPreview.pvr \
+  build/ba_data/textures/bearIconColorMask.pvr \
+  build/ba_data/textures/kronk.pvr \
+  build/ba_data/textures/downButton.pvr \
+  build/ba_data/textures/bombColor.pvr \
+  build/ba_data/textures/logo.pvr \
+  build/ba_data/textures/reflectionPowerup_+y.pvr \
+  build/ba_data/textures/zoeColorMask.pvr \
+  build/ba_data/textures/jumpsuitColorMask.pvr \
+  build/ba_data/textures/penguinIcon.pvr \
+  build/ba_data/textures/powerupPunch.pvr \
+  build/ba_data/textures/shadow.pvr \
+  build/ba_data/textures/reflectionChar_-z.pvr \
+  build/ba_data/textures/assassinIcon.pvr \
+  build/ba_data/textures/impactBombColor.pvr \
+  build/ba_data/textures/storeCharacterXmas.pvr \
+  build/ba_data/textures/jackIcon.pvr \
+  build/ba_data/textures/pixieIcon.pvr \
+  build/ba_data/textures/jumpsuitColor.pvr \
+  build/ba_data/textures/reflectionSharper_+x.pvr \
+  build/ba_data/textures/jackColorMask.pvr \
+  build/ba_data/textures/shrapnel1Color.pvr \
+  build/ba_data/textures/witchColor.pvr \
+  build/ba_data/textures/achievementFreeLoader.pvr \
+  build/ba_data/textures/zoeColor.pvr \
+  build/ba_data/textures/alienColor.pvr \
+  build/ba_data/textures/inventoryIcon.pvr \
+  build/ba_data/textures/reflectionSharp_-z.pvr \
+  build/ba_data/textures/glow.pvr \
+  build/ba_data/textures/usersButton.pvr \
+  build/ba_data/textures/reflectionPowerup_-z.pvr \
+  build/ba_data/textures/melColor.pvr \
+  build/ba_data/textures/aliControllerQR.pvr \
+  build/ba_data/textures/frostyIcon.pvr \
+  build/ba_data/textures/achievementFootballVictory.pvr \
+  build/ba_data/textures/tickets.pvr \
+  build/ba_data/textures/cursor.pvr \
+  build/ba_data/textures/egg3.pvr \
+  build/ba_data/textures/crossOut.pvr \
+  build/ba_data/textures/bonesColor.pvr \
+  build/ba_data/textures/achievementCrossHair.pvr \
+  build/ba_data/textures/actionHeroColorMask.pvr \
+  build/ba_data/textures/chTitleChar1.pvr \
+  build/ba_data/textures/heart.pvr \
+  build/ba_data/textures/fontExtras.pvr \
+  build/ba_data/textures/penguinIconColorMask.pvr \
+  build/ba_data/textures/eyeColorTintMask.pvr \
+  build/ba_data/textures/aliIcon.pvr \
+  build/ba_data/textures/chestIconMulti.pvr \
+  build/ba_data/textures/reflectionSoft_-x.pvr \
+  build/ba_data/textures/uiAtlas.pvr \
+  build/ba_data/textures/reflectionSharpest_+y.pvr \
+  build/ba_data/textures/cragCastleLevelColor.pvr \
+  build/ba_data/textures/assassinColorMask.pvr \
+  build/ba_data/textures/bridgitLevelColor.pvr \
+  build/ba_data/textures/fontSmall6.pvr \
+  build/ba_data/textures/towerDLevelColor.pvr \
+  build/ba_data/textures/ouyaYButton.pvr \
+  build/ba_data/textures/lightSharp.pvr \
+  build/ba_data/textures/buttonSquare.pvr \
+  build/ba_data/textures/softRect.pvr \
+  build/ba_data/textures/powerupIceBombs.pvr \
+  build/ba_data/textures/jackIconColorMask.pvr \
+  build/ba_data/textures/audioIcon.pvr \
+  build/ba_data/textures/tv.pvr \
+  build/ba_data/textures/reflectionSharpest_-z.pvr \
+  build/ba_data/textures/warriorIconColorMask.pvr \
+  build/ba_data/textures/googlePlusSignInButton.pvr \
+  build/ba_data/textures/circle.pvr \
+  build/ba_data/textures/neoSpazIconColorMask.pvr \
+  build/ba_data/textures/medalComplete.pvr \
+  build/ba_data/textures/alwaysLandLevelColor.pvr \
+  build/ba_data/textures/alwaysLandPreview.pvr \
+  build/ba_data/textures/egg4.pvr \
+  build/ba_data/textures/wrestlerColorMask.pvr \
+  build/ba_data/textures/superheroColorMask.pvr \
+  build/ba_data/textures/gladiatorColor.pvr \
+  build/ba_data/textures/aliBSRemoteIOSQR.pvr \
+  build/ba_data/textures/bearColorMask.pvr \
+  build/ba_data/textures/doomShroomLevelColor.pvr \
+  build/ba_data/textures/powerupBomb.pvr \
+  build/ba_data/textures/chestIcon.pvr \
+  build/ba_data/textures/upButton.pvr \
+  build/ba_data/textures/iconRunaround.pvr \
+  build/ba_data/textures/doomShroomBGColor.pvr \
+  build/ba_data/textures/superheroColor.pvr \
+  build/ba_data/textures/landMine.pvr \
+  build/ba_data/textures/buttonJump.pvr \
+  build/ba_data/textures/sparks.pvr \
+  build/ba_data/textures/explosion.pvr \
+  build/ba_data/textures/tipTopLevelColor.pvr \
+  build/ba_data/textures/bunnyIconColorMask.pvr \
+  build/ba_data/textures/reflectionChar_+x.pvr \
+  build/ba_data/textures/ticketsMore.pvr \
+  build/ba_data/textures/pixieColorMask.pvr \
+  build/ba_data/textures/medalSilver.pvr \
+  build/ba_data/textures/neoSpazIcon.pvr \
+  build/ba_data/textures/meter.pvr \
+  build/ba_data/textures/scrollWidgetGlow.pvr \
+  build/ba_data/textures/achievementFlawlessVictory.pvr \
+  build/ba_data/textures/zigzagPreview.pvr \
+  build/ba_data/textures/reflectionSharper_-z.pvr \
+  build/ba_data/textures/alienColorMask.pvr \
+  build/ba_data/textures/powerupShield.pvr \
+  build/ba_data/textures/reflectionSharp_+x.pvr \
+  build/ba_data/textures/chestIconEmpty.pvr \
+  build/ba_data/textures/agentColorMask.pvr \
+  build/ba_data/textures/reflectionPowerup_+x.pvr \
+  build/ba_data/textures/witchIconColorMask.pvr \
+  build/ba_data/textures/kronkColorMask.pvr \
+  build/ba_data/textures/menuBG.pvr \
+  build/ba_data/textures/fontSmall0.pvr \
+  build/ba_data/textures/assassinIconColorMask.pvr \
+  build/ba_data/textures/bearColor.pvr \
+  build/ba_data/textures/operaSingerColor.pvr \
+  build/ba_data/textures/rampageBGColor2.pvr \
+  build/ba_data/textures/fuse.pvr \
+  build/ba_data/textures/frostyColor.pvr \
+  build/ba_data/textures/achievementSuperPunch.pvr \
+  build/ba_data/textures/tipTopPreview.pvr \
+  build/ba_data/textures/googlePlusIcon.pvr \
+  build/ba_data/textures/powerupCurse.pvr \
+  build/ba_data/textures/trophy.pvr \
+  build/ba_data/textures/courtyardLevelColor.pvr \
+  build/ba_data/textures/oldLadyColorMask.pvr \
+  build/ba_data/textures/rampagePreview.pvr \
+  build/ba_data/textures/cuteSpaz.pvr \
+  build/ba_data/textures/lightSoft.pvr \
+  build/ba_data/textures/reflectionSharper_+y.pvr \
+  build/ba_data/textures/uiAtlas2.pvr \
+  build/ba_data/textures/egg2.pvr \
+  build/ba_data/textures/shadowSharp.pvr \
+  build/ba_data/textures/tnt.pvr \
+  build/ba_data/textures/actionHeroIcon.pvr \
+  build/ba_data/textures/robotColorMask.pvr \
+  build/ba_data/textures/impactBombColorLit.pvr \
+  build/ba_data/textures/achievementStayinAlive.pvr
 
 TEX2D_KTX_TARGETS = \
-  build/data/textures/cyborgIconColorMask.ktx \
-  build/data/textures/chestOpenIcon.ktx \
-  build/data/textures/analogStick.ktx \
-  build/data/textures/circleOutline.ktx \
-  build/data/textures/white.ktx \
-  build/data/textures/medalBronze.ktx \
-  build/data/textures/slash.ktx \
-  build/data/textures/arrow.ktx \
-  build/data/textures/ouyaIcon.ktx \
-  build/data/textures/eyeColor.ktx \
-  build/data/textures/achievementMedalLarge.ktx \
-  build/data/textures/cowboyIconColorMask.ktx \
-  build/data/textures/wings.ktx \
-  build/data/textures/roundaboutPreview.ktx \
-  build/data/textures/warriorIcon.ktx \
-  build/data/textures/windowHSmallVMed.ktx \
-  build/data/textures/ninjaIconColorMask.ktx \
-  build/data/textures/reflectionSharpest_+z.ktx \
-  build/data/textures/stepRightUpLevelColor.ktx \
-  build/data/textures/fontSmall5.ktx \
-  build/data/textures/bombButton.ktx \
-  build/data/textures/aliIconColorMask.ktx \
-  build/data/textures/chTitleChar2.ktx \
-  build/data/textures/achievementOnslaught.ktx \
-  build/data/textures/smoke.ktx \
-  build/data/textures/lakeFrigidReflections.ktx \
-  build/data/textures/bunnyColor.ktx \
-  build/data/textures/leftButton.ktx \
-  build/data/textures/hockeyStadium.ktx \
-  build/data/textures/cowboyIcon.ktx \
-  build/data/textures/lakeFrigid.ktx \
-  build/data/textures/startButton.ktx \
-  build/data/textures/footballStadium.ktx \
-  build/data/textures/crossOutMask.ktx \
-  build/data/textures/bonesIconColorMask.ktx \
-  build/data/textures/operaSingerIconColorMask.ktx \
-  build/data/textures/lakeFrigidPreview.ktx \
-  build/data/textures/alienIcon.ktx \
-  build/data/textures/oldLadyColor.ktx \
-  build/data/textures/ouyaAButton.ktx \
-  build/data/textures/eggTex3.ktx \
-  build/data/textures/cyborgIcon.ktx \
-  build/data/textures/actionHeroColor.ktx \
-  build/data/textures/achievementTeamPlayer.ktx \
-  build/data/textures/reflectionSoft_+x.ktx \
-  build/data/textures/fontExtras3.ktx \
-  build/data/textures/buttonBomb.ktx \
-  build/data/textures/star.ktx \
-  build/data/textures/reflectionSharpest_-y.ktx \
-  build/data/textures/achievementSharingIsCaring.ktx \
-  build/data/textures/fontSmall3.ktx \
-  build/data/textures/powerupSpeed.ktx \
-  build/data/textures/vrFillMound.ktx \
-  build/data/textures/agentIconColorMask.ktx \
-  build/data/textures/kronkIcon.ktx \
-  build/data/textures/oldLadyIcon.ktx \
-  build/data/textures/chTitleChar4.ktx \
-  build/data/textures/nextLevelIcon.ktx \
-  build/data/textures/gameCircleIcon.ktx \
-  build/data/textures/bonesIcon.ktx \
-  build/data/textures/bearIcon.ktx \
-  build/data/textures/towerDPreview.ktx \
-  build/data/textures/achievementTNT.ktx \
-  build/data/textures/medalGold.ktx \
-  build/data/textures/circleZigZag.ktx \
-  build/data/textures/bunnyColorMask.ktx \
-  build/data/textures/black.ktx \
-  build/data/textures/menuIcon.ktx \
-  build/data/textures/file.ktx \
-  build/data/textures/logIcon.ktx \
-  build/data/textures/controllerIcon.ktx \
-  build/data/textures/reflectionSharper_-y.ktx \
-  build/data/textures/operaSingerColorMask.ktx \
-  build/data/textures/achievementFootballShutout.ktx \
-  build/data/textures/reflectionPowerup_-x.ktx \
-  build/data/textures/achievementsIcon.ktx \
-  build/data/textures/cowboyColor.ktx \
-  build/data/textures/wrestlerIconColorMask.ktx \
-  build/data/textures/googlePlayAchievementsIcon.ktx \
-  build/data/textures/alienIconColorMask.ktx \
-  build/data/textures/ticketRollBig.ktx \
-  build/data/textures/wrestlerIcon.ktx \
-  build/data/textures/egg1.ktx \
-  build/data/textures/gameCenterIcon.ktx \
-  build/data/textures/landMineLit.ktx \
-  build/data/textures/achievementWall.ktx \
-  build/data/textures/achievementMedalMedium.ktx \
-  build/data/textures/reflectionChar_-x.ktx \
-  build/data/textures/softRectVertical.ktx \
-  build/data/textures/reflectionSharper_+z.ktx \
-  build/data/textures/wizardIcon.ktx \
-  build/data/textures/mapPreviewMask.ktx \
-  build/data/textures/nub.ktx \
-  build/data/textures/empty.ktx \
-  build/data/textures/frostyIconColorMask.ktx \
-  build/data/textures/reflectionSharp_-x.ktx \
-  build/data/textures/bombColorIce.ktx \
-  build/data/textures/jumpsuitIcon.ktx \
-  build/data/textures/footballStadiumPreview.ktx \
-  build/data/textures/pixieIconColorMask.ktx \
-  build/data/textures/achievementEmpty.ktx \
-  build/data/textures/wrestlerColor.ktx \
-  build/data/textures/shield.ktx \
-  build/data/textures/iconOnslaught.ktx \
-  build/data/textures/replayIcon.ktx \
-  build/data/textures/powerupHealth.ktx \
-  build/data/textures/bg.ktx \
-  build/data/textures/chTitleChar3.ktx \
-  build/data/textures/textClearButton.ktx \
-  build/data/textures/reflectionSoft_-z.ktx \
-  build/data/textures/fontSmall4.ktx \
-  build/data/textures/warriorColor.ktx \
-  build/data/textures/light.ktx \
-  build/data/textures/santaColor.ktx \
-  build/data/textures/jackColor.ktx \
-  build/data/textures/aliSplash.ktx \
-  build/data/textures/scorch.ktx \
-  build/data/textures/zoeIcon.ktx \
-  build/data/textures/bonesColorMask.ktx \
-  build/data/textures/pixieColor.ktx \
-  build/data/textures/actionHeroIconColorMask.ktx \
-  build/data/textures/treesColor.ktx \
-  build/data/textures/neoSpazColorMask.ktx \
-  build/data/textures/superheroIcon.ktx \
-  build/data/textures/achievementOffYouGo.ktx \
-  build/data/textures/tipTopBGColor.ktx \
-  build/data/textures/robotColor.ktx \
-  build/data/textures/reflectionSharpest_-x.ktx \
-  build/data/textures/menuButton.ktx \
-  build/data/textures/powerupStickyBombs.ktx \
-  build/data/textures/ninjaIcon.ktx \
-  build/data/textures/witchColorMask.ktx \
-  build/data/textures/cowboyColorMask.ktx \
-  build/data/textures/operaSingerIcon.ktx \
-  build/data/textures/achievementBoxer.ktx \
-  build/data/textures/eggTex2.ktx \
-  build/data/textures/rampageBGColor.ktx \
-  build/data/textures/fontExtras2.ktx \
-  build/data/textures/rampageLevelColor.ktx \
-  build/data/textures/reflectionSoft_+y.ktx \
-  build/data/textures/ticketRolls.ktx \
-  build/data/textures/natureBackgroundColor.ktx \
-  build/data/textures/santaIconColorMask.ktx \
-  build/data/textures/reflectionPowerup_+z.ktx \
-  build/data/textures/characterIconMask.ktx \
-  build/data/textures/aliColor.ktx \
-  build/data/textures/ninjaColorMask.ktx \
-  build/data/textures/buttonPickUp.ktx \
-  build/data/textures/chTitleChar5.ktx \
-  build/data/textures/bigGPreview.ktx \
-  build/data/textures/hockeyStadiumPreview.ktx \
-  build/data/textures/achievementMedalSmall.ktx \
-  build/data/textures/fontSmall2.ktx \
-  build/data/textures/achievementOutline.ktx \
-  build/data/textures/levelIcon.ktx \
-  build/data/textures/googlePlayGamesIcon.ktx \
-  build/data/textures/gladiatorColorMask.ktx \
-  build/data/textures/boxingGlovesColor.ktx \
-  build/data/textures/ouyaOButton.ktx \
-  build/data/textures/leaderboardsIcon.ktx \
-  build/data/textures/puckColor.ktx \
-  build/data/textures/reflectionChar_+z.ktx \
-  build/data/textures/penguinColor.ktx \
-  build/data/textures/reflectionSharper_-x.ktx \
-  build/data/textures/googlePlayLeaderboardsIcon.ktx \
-  build/data/textures/scrollWidget.ktx \
-  build/data/textures/courtyardPreview.ktx \
-  build/data/textures/aliColorMask.ktx \
-  build/data/textures/penguinColorMask.ktx \
-  build/data/textures/witchIcon.ktx \
-  build/data/textures/reflectionSharp_+z.ktx \
-  build/data/textures/graphicsIcon.ktx \
-  build/data/textures/agentIcon.ktx \
-  build/data/textures/fontExtras4.ktx \
-  build/data/textures/reflectionPowerup_-y.ktx \
-  build/data/textures/storeIcon.ktx \
-  build/data/textures/doomShroomPreview.ktx \
-  build/data/textures/null.ktx \
-  build/data/textures/backIcon.ktx \
-  build/data/textures/cyborgColor.ktx \
-  build/data/textures/monkeyFaceLevelColor.ktx \
-  build/data/textures/santaIcon.ktx \
-  build/data/textures/alwaysLandBGColor.ktx \
-  build/data/textures/roundaboutLevelColor.ktx \
-  build/data/textures/robotIcon.ktx \
-  build/data/textures/reflectionSharp_-y.ktx \
-  build/data/textures/bunnyIcon.ktx \
-  build/data/textures/circleShadow.ktx \
-  build/data/textures/flagPoleColor.ktx \
-  build/data/textures/ouyaUButton.ktx \
-  build/data/textures/reflectionChar_-y.ktx \
-  build/data/textures/achievementInControl.ktx \
-  build/data/textures/wizardColorMask.ktx \
-  build/data/textures/reflectionSharpest_+x.ktx \
-  build/data/textures/neoSpazColor.ktx \
-  build/data/textures/zigZagLevelColor.ktx \
-  build/data/textures/thePadPreview.ktx \
-  build/data/textures/superheroIconColorMask.ktx \
-  build/data/textures/fontSmall7.ktx \
-  build/data/textures/ticketRoll.ktx \
-  build/data/textures/reflectionSoft_-y.ktx \
-  build/data/textures/playerLineup.ktx \
-  build/data/textures/storeCharacterEaster.ktx \
-  build/data/textures/coin.ktx \
-  build/data/textures/circleOutlineNoAlpha.ktx \
-  build/data/textures/scorchBig.ktx \
-  build/data/textures/logoEaster.ktx \
-  build/data/textures/warriorColorMask.ktx \
-  build/data/textures/assassinColor.ktx \
-  build/data/textures/bombStickyColor.ktx \
-  build/data/textures/eggTex1.ktx \
-  build/data/textures/gladiatorIconColorMask.ktx \
-  build/data/textures/melColorMask.ktx \
-  build/data/textures/thePadLevelColor.ktx \
-  build/data/textures/wizardIconColorMask.ktx \
-  build/data/textures/bar.ktx \
-  build/data/textures/zoeIconColorMask.ktx \
-  build/data/textures/windowHSmallVSmall.ktx \
-  build/data/textures/circleNoAlpha.ktx \
-  build/data/textures/gladiatorIcon.ktx \
-  build/data/textures/reflectionSoft_+z.ktx \
-  build/data/textures/achievementRunaround.ktx \
-  build/data/textures/wizardColor.ktx \
-  build/data/textures/touchArrowsActions.ktx \
-  build/data/textures/advancedIcon.ktx \
-  build/data/textures/softRect2.ktx \
-  build/data/textures/achievementMine.ktx \
-  build/data/textures/rightButton.ktx \
-  build/data/textures/touchArrows.ktx \
-  build/data/textures/cyborgColorMask.ktx \
-  build/data/textures/jumpsuitIconColorMask.ktx \
-  build/data/textures/bridgitPreview.ktx \
-  build/data/textures/ninjaColor.ktx \
-  build/data/textures/santaColorMask.ktx \
-  build/data/textures/storeCharacter.ktx \
-  build/data/textures/flagColor.ktx \
-  build/data/textures/cragCastlePreview.ktx \
-  build/data/textures/frameInset.ktx \
-  build/data/textures/lock.ktx \
-  build/data/textures/agentColor.ktx \
-  build/data/textures/achievementGotTheMoves.ktx \
-  build/data/textures/buttonPunch.ktx \
-  build/data/textures/settingsIcon.ktx \
-  build/data/textures/rgbStripes.ktx \
-  build/data/textures/reflectionSharp_+y.ktx \
-  build/data/textures/powerupImpactBombs.ktx \
-  build/data/textures/bigG.ktx \
-  build/data/textures/melIconColorMask.ktx \
-  build/data/textures/reflectionChar_+y.ktx \
-  build/data/textures/multiplayerExamples.ktx \
-  build/data/textures/actionButtons.ktx \
-  build/data/textures/melIcon.ktx \
-  build/data/textures/oldLadyIconColorMask.ktx \
-  build/data/textures/robotIconColorMask.ktx \
-  build/data/textures/monkeyFacePreview.ktx \
-  build/data/textures/achievementDualWielding.ktx \
-  build/data/textures/folder.ktx \
-  build/data/textures/frostyColorMask.ktx \
-  build/data/textures/kronkIconColorMask.ktx \
-  build/data/textures/fontBig.ktx \
-  build/data/textures/fontSmall1.ktx \
-  build/data/textures/shadowSoft.ktx \
-  build/data/textures/powerupLandMines.ktx \
-  build/data/textures/stepRightUpPreview.ktx \
-  build/data/textures/bearIconColorMask.ktx \
-  build/data/textures/kronk.ktx \
-  build/data/textures/downButton.ktx \
-  build/data/textures/bombColor.ktx \
-  build/data/textures/logo.ktx \
-  build/data/textures/reflectionPowerup_+y.ktx \
-  build/data/textures/zoeColorMask.ktx \
-  build/data/textures/jumpsuitColorMask.ktx \
-  build/data/textures/penguinIcon.ktx \
-  build/data/textures/powerupPunch.ktx \
-  build/data/textures/shadow.ktx \
-  build/data/textures/reflectionChar_-z.ktx \
-  build/data/textures/assassinIcon.ktx \
-  build/data/textures/impactBombColor.ktx \
-  build/data/textures/storeCharacterXmas.ktx \
-  build/data/textures/jackIcon.ktx \
-  build/data/textures/pixieIcon.ktx \
-  build/data/textures/jumpsuitColor.ktx \
-  build/data/textures/reflectionSharper_+x.ktx \
-  build/data/textures/jackColorMask.ktx \
-  build/data/textures/shrapnel1Color.ktx \
-  build/data/textures/witchColor.ktx \
-  build/data/textures/achievementFreeLoader.ktx \
-  build/data/textures/zoeColor.ktx \
-  build/data/textures/alienColor.ktx \
-  build/data/textures/inventoryIcon.ktx \
-  build/data/textures/reflectionSharp_-z.ktx \
-  build/data/textures/glow.ktx \
-  build/data/textures/usersButton.ktx \
-  build/data/textures/reflectionPowerup_-z.ktx \
-  build/data/textures/melColor.ktx \
-  build/data/textures/aliControllerQR.ktx \
-  build/data/textures/frostyIcon.ktx \
-  build/data/textures/achievementFootballVictory.ktx \
-  build/data/textures/tickets.ktx \
-  build/data/textures/cursor.ktx \
-  build/data/textures/egg3.ktx \
-  build/data/textures/crossOut.ktx \
-  build/data/textures/bonesColor.ktx \
-  build/data/textures/achievementCrossHair.ktx \
-  build/data/textures/actionHeroColorMask.ktx \
-  build/data/textures/chTitleChar1.ktx \
-  build/data/textures/heart.ktx \
-  build/data/textures/fontExtras.ktx \
-  build/data/textures/penguinIconColorMask.ktx \
-  build/data/textures/eyeColorTintMask.ktx \
-  build/data/textures/aliIcon.ktx \
-  build/data/textures/chestIconMulti.ktx \
-  build/data/textures/reflectionSoft_-x.ktx \
-  build/data/textures/uiAtlas.ktx \
-  build/data/textures/reflectionSharpest_+y.ktx \
-  build/data/textures/cragCastleLevelColor.ktx \
-  build/data/textures/assassinColorMask.ktx \
-  build/data/textures/bridgitLevelColor.ktx \
-  build/data/textures/fontSmall6.ktx \
-  build/data/textures/towerDLevelColor.ktx \
-  build/data/textures/ouyaYButton.ktx \
-  build/data/textures/lightSharp.ktx \
-  build/data/textures/buttonSquare.ktx \
-  build/data/textures/softRect.ktx \
-  build/data/textures/powerupIceBombs.ktx \
-  build/data/textures/jackIconColorMask.ktx \
-  build/data/textures/audioIcon.ktx \
-  build/data/textures/tv.ktx \
-  build/data/textures/reflectionSharpest_-z.ktx \
-  build/data/textures/warriorIconColorMask.ktx \
-  build/data/textures/googlePlusSignInButton.ktx \
-  build/data/textures/circle.ktx \
-  build/data/textures/neoSpazIconColorMask.ktx \
-  build/data/textures/medalComplete.ktx \
-  build/data/textures/alwaysLandLevelColor.ktx \
-  build/data/textures/alwaysLandPreview.ktx \
-  build/data/textures/egg4.ktx \
-  build/data/textures/wrestlerColorMask.ktx \
-  build/data/textures/superheroColorMask.ktx \
-  build/data/textures/gladiatorColor.ktx \
-  build/data/textures/aliBSRemoteIOSQR.ktx \
-  build/data/textures/bearColorMask.ktx \
-  build/data/textures/doomShroomLevelColor.ktx \
-  build/data/textures/powerupBomb.ktx \
-  build/data/textures/chestIcon.ktx \
-  build/data/textures/upButton.ktx \
-  build/data/textures/iconRunaround.ktx \
-  build/data/textures/doomShroomBGColor.ktx \
-  build/data/textures/superheroColor.ktx \
-  build/data/textures/landMine.ktx \
-  build/data/textures/buttonJump.ktx \
-  build/data/textures/sparks.ktx \
-  build/data/textures/explosion.ktx \
-  build/data/textures/tipTopLevelColor.ktx \
-  build/data/textures/bunnyIconColorMask.ktx \
-  build/data/textures/reflectionChar_+x.ktx \
-  build/data/textures/ticketsMore.ktx \
-  build/data/textures/pixieColorMask.ktx \
-  build/data/textures/medalSilver.ktx \
-  build/data/textures/neoSpazIcon.ktx \
-  build/data/textures/meter.ktx \
-  build/data/textures/scrollWidgetGlow.ktx \
-  build/data/textures/achievementFlawlessVictory.ktx \
-  build/data/textures/zigzagPreview.ktx \
-  build/data/textures/reflectionSharper_-z.ktx \
-  build/data/textures/alienColorMask.ktx \
-  build/data/textures/powerupShield.ktx \
-  build/data/textures/reflectionSharp_+x.ktx \
-  build/data/textures/chestIconEmpty.ktx \
-  build/data/textures/agentColorMask.ktx \
-  build/data/textures/reflectionPowerup_+x.ktx \
-  build/data/textures/witchIconColorMask.ktx \
-  build/data/textures/kronkColorMask.ktx \
-  build/data/textures/menuBG.ktx \
-  build/data/textures/fontSmall0.ktx \
-  build/data/textures/assassinIconColorMask.ktx \
-  build/data/textures/bearColor.ktx \
-  build/data/textures/operaSingerColor.ktx \
-  build/data/textures/rampageBGColor2.ktx \
-  build/data/textures/fuse.ktx \
-  build/data/textures/frostyColor.ktx \
-  build/data/textures/achievementSuperPunch.ktx \
-  build/data/textures/tipTopPreview.ktx \
-  build/data/textures/googlePlusIcon.ktx \
-  build/data/textures/powerupCurse.ktx \
-  build/data/textures/trophy.ktx \
-  build/data/textures/courtyardLevelColor.ktx \
-  build/data/textures/oldLadyColorMask.ktx \
-  build/data/textures/rampagePreview.ktx \
-  build/data/textures/cuteSpaz.ktx \
-  build/data/textures/lightSoft.ktx \
-  build/data/textures/reflectionSharper_+y.ktx \
-  build/data/textures/uiAtlas2.ktx \
-  build/data/textures/egg2.ktx \
-  build/data/textures/shadowSharp.ktx \
-  build/data/textures/tnt.ktx \
-  build/data/textures/actionHeroIcon.ktx \
-  build/data/textures/robotColorMask.ktx \
-  build/data/textures/impactBombColorLit.ktx \
-  build/data/textures/achievementStayinAlive.ktx
+  build/ba_data/textures/cyborgIconColorMask.ktx \
+  build/ba_data/textures/chestOpenIcon.ktx \
+  build/ba_data/textures/analogStick.ktx \
+  build/ba_data/textures/circleOutline.ktx \
+  build/ba_data/textures/white.ktx \
+  build/ba_data/textures/medalBronze.ktx \
+  build/ba_data/textures/slash.ktx \
+  build/ba_data/textures/arrow.ktx \
+  build/ba_data/textures/ouyaIcon.ktx \
+  build/ba_data/textures/eyeColor.ktx \
+  build/ba_data/textures/achievementMedalLarge.ktx \
+  build/ba_data/textures/cowboyIconColorMask.ktx \
+  build/ba_data/textures/wings.ktx \
+  build/ba_data/textures/roundaboutPreview.ktx \
+  build/ba_data/textures/warriorIcon.ktx \
+  build/ba_data/textures/windowHSmallVMed.ktx \
+  build/ba_data/textures/ninjaIconColorMask.ktx \
+  build/ba_data/textures/reflectionSharpest_+z.ktx \
+  build/ba_data/textures/stepRightUpLevelColor.ktx \
+  build/ba_data/textures/fontSmall5.ktx \
+  build/ba_data/textures/bombButton.ktx \
+  build/ba_data/textures/aliIconColorMask.ktx \
+  build/ba_data/textures/chTitleChar2.ktx \
+  build/ba_data/textures/achievementOnslaught.ktx \
+  build/ba_data/textures/smoke.ktx \
+  build/ba_data/textures/lakeFrigidReflections.ktx \
+  build/ba_data/textures/bunnyColor.ktx \
+  build/ba_data/textures/leftButton.ktx \
+  build/ba_data/textures/hockeyStadium.ktx \
+  build/ba_data/textures/cowboyIcon.ktx \
+  build/ba_data/textures/lakeFrigid.ktx \
+  build/ba_data/textures/startButton.ktx \
+  build/ba_data/textures/footballStadium.ktx \
+  build/ba_data/textures/crossOutMask.ktx \
+  build/ba_data/textures/bonesIconColorMask.ktx \
+  build/ba_data/textures/operaSingerIconColorMask.ktx \
+  build/ba_data/textures/lakeFrigidPreview.ktx \
+  build/ba_data/textures/alienIcon.ktx \
+  build/ba_data/textures/oldLadyColor.ktx \
+  build/ba_data/textures/ouyaAButton.ktx \
+  build/ba_data/textures/eggTex3.ktx \
+  build/ba_data/textures/cyborgIcon.ktx \
+  build/ba_data/textures/actionHeroColor.ktx \
+  build/ba_data/textures/achievementTeamPlayer.ktx \
+  build/ba_data/textures/reflectionSoft_+x.ktx \
+  build/ba_data/textures/fontExtras3.ktx \
+  build/ba_data/textures/buttonBomb.ktx \
+  build/ba_data/textures/star.ktx \
+  build/ba_data/textures/reflectionSharpest_-y.ktx \
+  build/ba_data/textures/achievementSharingIsCaring.ktx \
+  build/ba_data/textures/fontSmall3.ktx \
+  build/ba_data/textures/powerupSpeed.ktx \
+  build/ba_data/textures/vrFillMound.ktx \
+  build/ba_data/textures/agentIconColorMask.ktx \
+  build/ba_data/textures/kronkIcon.ktx \
+  build/ba_data/textures/oldLadyIcon.ktx \
+  build/ba_data/textures/chTitleChar4.ktx \
+  build/ba_data/textures/nextLevelIcon.ktx \
+  build/ba_data/textures/gameCircleIcon.ktx \
+  build/ba_data/textures/bonesIcon.ktx \
+  build/ba_data/textures/bearIcon.ktx \
+  build/ba_data/textures/towerDPreview.ktx \
+  build/ba_data/textures/achievementTNT.ktx \
+  build/ba_data/textures/medalGold.ktx \
+  build/ba_data/textures/circleZigZag.ktx \
+  build/ba_data/textures/bunnyColorMask.ktx \
+  build/ba_data/textures/black.ktx \
+  build/ba_data/textures/menuIcon.ktx \
+  build/ba_data/textures/file.ktx \
+  build/ba_data/textures/logIcon.ktx \
+  build/ba_data/textures/controllerIcon.ktx \
+  build/ba_data/textures/reflectionSharper_-y.ktx \
+  build/ba_data/textures/operaSingerColorMask.ktx \
+  build/ba_data/textures/achievementFootballShutout.ktx \
+  build/ba_data/textures/reflectionPowerup_-x.ktx \
+  build/ba_data/textures/achievementsIcon.ktx \
+  build/ba_data/textures/cowboyColor.ktx \
+  build/ba_data/textures/wrestlerIconColorMask.ktx \
+  build/ba_data/textures/googlePlayAchievementsIcon.ktx \
+  build/ba_data/textures/alienIconColorMask.ktx \
+  build/ba_data/textures/ticketRollBig.ktx \
+  build/ba_data/textures/wrestlerIcon.ktx \
+  build/ba_data/textures/egg1.ktx \
+  build/ba_data/textures/gameCenterIcon.ktx \
+  build/ba_data/textures/landMineLit.ktx \
+  build/ba_data/textures/achievementWall.ktx \
+  build/ba_data/textures/achievementMedalMedium.ktx \
+  build/ba_data/textures/reflectionChar_-x.ktx \
+  build/ba_data/textures/softRectVertical.ktx \
+  build/ba_data/textures/reflectionSharper_+z.ktx \
+  build/ba_data/textures/wizardIcon.ktx \
+  build/ba_data/textures/mapPreviewMask.ktx \
+  build/ba_data/textures/nub.ktx \
+  build/ba_data/textures/empty.ktx \
+  build/ba_data/textures/frostyIconColorMask.ktx \
+  build/ba_data/textures/reflectionSharp_-x.ktx \
+  build/ba_data/textures/bombColorIce.ktx \
+  build/ba_data/textures/jumpsuitIcon.ktx \
+  build/ba_data/textures/footballStadiumPreview.ktx \
+  build/ba_data/textures/pixieIconColorMask.ktx \
+  build/ba_data/textures/achievementEmpty.ktx \
+  build/ba_data/textures/wrestlerColor.ktx \
+  build/ba_data/textures/shield.ktx \
+  build/ba_data/textures/iconOnslaught.ktx \
+  build/ba_data/textures/replayIcon.ktx \
+  build/ba_data/textures/powerupHealth.ktx \
+  build/ba_data/textures/bg.ktx \
+  build/ba_data/textures/chTitleChar3.ktx \
+  build/ba_data/textures/textClearButton.ktx \
+  build/ba_data/textures/reflectionSoft_-z.ktx \
+  build/ba_data/textures/fontSmall4.ktx \
+  build/ba_data/textures/warriorColor.ktx \
+  build/ba_data/textures/light.ktx \
+  build/ba_data/textures/santaColor.ktx \
+  build/ba_data/textures/jackColor.ktx \
+  build/ba_data/textures/aliSplash.ktx \
+  build/ba_data/textures/scorch.ktx \
+  build/ba_data/textures/zoeIcon.ktx \
+  build/ba_data/textures/bonesColorMask.ktx \
+  build/ba_data/textures/pixieColor.ktx \
+  build/ba_data/textures/actionHeroIconColorMask.ktx \
+  build/ba_data/textures/treesColor.ktx \
+  build/ba_data/textures/neoSpazColorMask.ktx \
+  build/ba_data/textures/superheroIcon.ktx \
+  build/ba_data/textures/achievementOffYouGo.ktx \
+  build/ba_data/textures/tipTopBGColor.ktx \
+  build/ba_data/textures/robotColor.ktx \
+  build/ba_data/textures/reflectionSharpest_-x.ktx \
+  build/ba_data/textures/menuButton.ktx \
+  build/ba_data/textures/powerupStickyBombs.ktx \
+  build/ba_data/textures/ninjaIcon.ktx \
+  build/ba_data/textures/witchColorMask.ktx \
+  build/ba_data/textures/cowboyColorMask.ktx \
+  build/ba_data/textures/operaSingerIcon.ktx \
+  build/ba_data/textures/achievementBoxer.ktx \
+  build/ba_data/textures/eggTex2.ktx \
+  build/ba_data/textures/rampageBGColor.ktx \
+  build/ba_data/textures/fontExtras2.ktx \
+  build/ba_data/textures/rampageLevelColor.ktx \
+  build/ba_data/textures/reflectionSoft_+y.ktx \
+  build/ba_data/textures/ticketRolls.ktx \
+  build/ba_data/textures/natureBackgroundColor.ktx \
+  build/ba_data/textures/santaIconColorMask.ktx \
+  build/ba_data/textures/reflectionPowerup_+z.ktx \
+  build/ba_data/textures/characterIconMask.ktx \
+  build/ba_data/textures/aliColor.ktx \
+  build/ba_data/textures/ninjaColorMask.ktx \
+  build/ba_data/textures/buttonPickUp.ktx \
+  build/ba_data/textures/chTitleChar5.ktx \
+  build/ba_data/textures/bigGPreview.ktx \
+  build/ba_data/textures/hockeyStadiumPreview.ktx \
+  build/ba_data/textures/achievementMedalSmall.ktx \
+  build/ba_data/textures/fontSmall2.ktx \
+  build/ba_data/textures/achievementOutline.ktx \
+  build/ba_data/textures/levelIcon.ktx \
+  build/ba_data/textures/googlePlayGamesIcon.ktx \
+  build/ba_data/textures/gladiatorColorMask.ktx \
+  build/ba_data/textures/boxingGlovesColor.ktx \
+  build/ba_data/textures/ouyaOButton.ktx \
+  build/ba_data/textures/leaderboardsIcon.ktx \
+  build/ba_data/textures/puckColor.ktx \
+  build/ba_data/textures/reflectionChar_+z.ktx \
+  build/ba_data/textures/penguinColor.ktx \
+  build/ba_data/textures/reflectionSharper_-x.ktx \
+  build/ba_data/textures/googlePlayLeaderboardsIcon.ktx \
+  build/ba_data/textures/scrollWidget.ktx \
+  build/ba_data/textures/courtyardPreview.ktx \
+  build/ba_data/textures/aliColorMask.ktx \
+  build/ba_data/textures/penguinColorMask.ktx \
+  build/ba_data/textures/witchIcon.ktx \
+  build/ba_data/textures/reflectionSharp_+z.ktx \
+  build/ba_data/textures/graphicsIcon.ktx \
+  build/ba_data/textures/agentIcon.ktx \
+  build/ba_data/textures/fontExtras4.ktx \
+  build/ba_data/textures/reflectionPowerup_-y.ktx \
+  build/ba_data/textures/storeIcon.ktx \
+  build/ba_data/textures/doomShroomPreview.ktx \
+  build/ba_data/textures/null.ktx \
+  build/ba_data/textures/backIcon.ktx \
+  build/ba_data/textures/cyborgColor.ktx \
+  build/ba_data/textures/monkeyFaceLevelColor.ktx \
+  build/ba_data/textures/santaIcon.ktx \
+  build/ba_data/textures/alwaysLandBGColor.ktx \
+  build/ba_data/textures/roundaboutLevelColor.ktx \
+  build/ba_data/textures/robotIcon.ktx \
+  build/ba_data/textures/reflectionSharp_-y.ktx \
+  build/ba_data/textures/bunnyIcon.ktx \
+  build/ba_data/textures/circleShadow.ktx \
+  build/ba_data/textures/flagPoleColor.ktx \
+  build/ba_data/textures/ouyaUButton.ktx \
+  build/ba_data/textures/reflectionChar_-y.ktx \
+  build/ba_data/textures/achievementInControl.ktx \
+  build/ba_data/textures/wizardColorMask.ktx \
+  build/ba_data/textures/reflectionSharpest_+x.ktx \
+  build/ba_data/textures/neoSpazColor.ktx \
+  build/ba_data/textures/zigZagLevelColor.ktx \
+  build/ba_data/textures/thePadPreview.ktx \
+  build/ba_data/textures/superheroIconColorMask.ktx \
+  build/ba_data/textures/fontSmall7.ktx \
+  build/ba_data/textures/ticketRoll.ktx \
+  build/ba_data/textures/reflectionSoft_-y.ktx \
+  build/ba_data/textures/playerLineup.ktx \
+  build/ba_data/textures/storeCharacterEaster.ktx \
+  build/ba_data/textures/coin.ktx \
+  build/ba_data/textures/circleOutlineNoAlpha.ktx \
+  build/ba_data/textures/scorchBig.ktx \
+  build/ba_data/textures/logoEaster.ktx \
+  build/ba_data/textures/warriorColorMask.ktx \
+  build/ba_data/textures/assassinColor.ktx \
+  build/ba_data/textures/bombStickyColor.ktx \
+  build/ba_data/textures/eggTex1.ktx \
+  build/ba_data/textures/gladiatorIconColorMask.ktx \
+  build/ba_data/textures/melColorMask.ktx \
+  build/ba_data/textures/thePadLevelColor.ktx \
+  build/ba_data/textures/wizardIconColorMask.ktx \
+  build/ba_data/textures/bar.ktx \
+  build/ba_data/textures/zoeIconColorMask.ktx \
+  build/ba_data/textures/windowHSmallVSmall.ktx \
+  build/ba_data/textures/circleNoAlpha.ktx \
+  build/ba_data/textures/gladiatorIcon.ktx \
+  build/ba_data/textures/reflectionSoft_+z.ktx \
+  build/ba_data/textures/achievementRunaround.ktx \
+  build/ba_data/textures/wizardColor.ktx \
+  build/ba_data/textures/touchArrowsActions.ktx \
+  build/ba_data/textures/advancedIcon.ktx \
+  build/ba_data/textures/softRect2.ktx \
+  build/ba_data/textures/achievementMine.ktx \
+  build/ba_data/textures/rightButton.ktx \
+  build/ba_data/textures/touchArrows.ktx \
+  build/ba_data/textures/cyborgColorMask.ktx \
+  build/ba_data/textures/jumpsuitIconColorMask.ktx \
+  build/ba_data/textures/bridgitPreview.ktx \
+  build/ba_data/textures/ninjaColor.ktx \
+  build/ba_data/textures/santaColorMask.ktx \
+  build/ba_data/textures/storeCharacter.ktx \
+  build/ba_data/textures/flagColor.ktx \
+  build/ba_data/textures/cragCastlePreview.ktx \
+  build/ba_data/textures/frameInset.ktx \
+  build/ba_data/textures/lock.ktx \
+  build/ba_data/textures/agentColor.ktx \
+  build/ba_data/textures/achievementGotTheMoves.ktx \
+  build/ba_data/textures/buttonPunch.ktx \
+  build/ba_data/textures/settingsIcon.ktx \
+  build/ba_data/textures/rgbStripes.ktx \
+  build/ba_data/textures/reflectionSharp_+y.ktx \
+  build/ba_data/textures/powerupImpactBombs.ktx \
+  build/ba_data/textures/bigG.ktx \
+  build/ba_data/textures/melIconColorMask.ktx \
+  build/ba_data/textures/reflectionChar_+y.ktx \
+  build/ba_data/textures/multiplayerExamples.ktx \
+  build/ba_data/textures/actionButtons.ktx \
+  build/ba_data/textures/melIcon.ktx \
+  build/ba_data/textures/oldLadyIconColorMask.ktx \
+  build/ba_data/textures/robotIconColorMask.ktx \
+  build/ba_data/textures/monkeyFacePreview.ktx \
+  build/ba_data/textures/achievementDualWielding.ktx \
+  build/ba_data/textures/folder.ktx \
+  build/ba_data/textures/frostyColorMask.ktx \
+  build/ba_data/textures/kronkIconColorMask.ktx \
+  build/ba_data/textures/fontBig.ktx \
+  build/ba_data/textures/fontSmall1.ktx \
+  build/ba_data/textures/shadowSoft.ktx \
+  build/ba_data/textures/powerupLandMines.ktx \
+  build/ba_data/textures/stepRightUpPreview.ktx \
+  build/ba_data/textures/bearIconColorMask.ktx \
+  build/ba_data/textures/kronk.ktx \
+  build/ba_data/textures/downButton.ktx \
+  build/ba_data/textures/bombColor.ktx \
+  build/ba_data/textures/logo.ktx \
+  build/ba_data/textures/reflectionPowerup_+y.ktx \
+  build/ba_data/textures/zoeColorMask.ktx \
+  build/ba_data/textures/jumpsuitColorMask.ktx \
+  build/ba_data/textures/penguinIcon.ktx \
+  build/ba_data/textures/powerupPunch.ktx \
+  build/ba_data/textures/shadow.ktx \
+  build/ba_data/textures/reflectionChar_-z.ktx \
+  build/ba_data/textures/assassinIcon.ktx \
+  build/ba_data/textures/impactBombColor.ktx \
+  build/ba_data/textures/storeCharacterXmas.ktx \
+  build/ba_data/textures/jackIcon.ktx \
+  build/ba_data/textures/pixieIcon.ktx \
+  build/ba_data/textures/jumpsuitColor.ktx \
+  build/ba_data/textures/reflectionSharper_+x.ktx \
+  build/ba_data/textures/jackColorMask.ktx \
+  build/ba_data/textures/shrapnel1Color.ktx \
+  build/ba_data/textures/witchColor.ktx \
+  build/ba_data/textures/achievementFreeLoader.ktx \
+  build/ba_data/textures/zoeColor.ktx \
+  build/ba_data/textures/alienColor.ktx \
+  build/ba_data/textures/inventoryIcon.ktx \
+  build/ba_data/textures/reflectionSharp_-z.ktx \
+  build/ba_data/textures/glow.ktx \
+  build/ba_data/textures/usersButton.ktx \
+  build/ba_data/textures/reflectionPowerup_-z.ktx \
+  build/ba_data/textures/melColor.ktx \
+  build/ba_data/textures/aliControllerQR.ktx \
+  build/ba_data/textures/frostyIcon.ktx \
+  build/ba_data/textures/achievementFootballVictory.ktx \
+  build/ba_data/textures/tickets.ktx \
+  build/ba_data/textures/cursor.ktx \
+  build/ba_data/textures/egg3.ktx \
+  build/ba_data/textures/crossOut.ktx \
+  build/ba_data/textures/bonesColor.ktx \
+  build/ba_data/textures/achievementCrossHair.ktx \
+  build/ba_data/textures/actionHeroColorMask.ktx \
+  build/ba_data/textures/chTitleChar1.ktx \
+  build/ba_data/textures/heart.ktx \
+  build/ba_data/textures/fontExtras.ktx \
+  build/ba_data/textures/penguinIconColorMask.ktx \
+  build/ba_data/textures/eyeColorTintMask.ktx \
+  build/ba_data/textures/aliIcon.ktx \
+  build/ba_data/textures/chestIconMulti.ktx \
+  build/ba_data/textures/reflectionSoft_-x.ktx \
+  build/ba_data/textures/uiAtlas.ktx \
+  build/ba_data/textures/reflectionSharpest_+y.ktx \
+  build/ba_data/textures/cragCastleLevelColor.ktx \
+  build/ba_data/textures/assassinColorMask.ktx \
+  build/ba_data/textures/bridgitLevelColor.ktx \
+  build/ba_data/textures/fontSmall6.ktx \
+  build/ba_data/textures/towerDLevelColor.ktx \
+  build/ba_data/textures/ouyaYButton.ktx \
+  build/ba_data/textures/lightSharp.ktx \
+  build/ba_data/textures/buttonSquare.ktx \
+  build/ba_data/textures/softRect.ktx \
+  build/ba_data/textures/powerupIceBombs.ktx \
+  build/ba_data/textures/jackIconColorMask.ktx \
+  build/ba_data/textures/audioIcon.ktx \
+  build/ba_data/textures/tv.ktx \
+  build/ba_data/textures/reflectionSharpest_-z.ktx \
+  build/ba_data/textures/warriorIconColorMask.ktx \
+  build/ba_data/textures/googlePlusSignInButton.ktx \
+  build/ba_data/textures/circle.ktx \
+  build/ba_data/textures/neoSpazIconColorMask.ktx \
+  build/ba_data/textures/medalComplete.ktx \
+  build/ba_data/textures/alwaysLandLevelColor.ktx \
+  build/ba_data/textures/alwaysLandPreview.ktx \
+  build/ba_data/textures/egg4.ktx \
+  build/ba_data/textures/wrestlerColorMask.ktx \
+  build/ba_data/textures/superheroColorMask.ktx \
+  build/ba_data/textures/gladiatorColor.ktx \
+  build/ba_data/textures/aliBSRemoteIOSQR.ktx \
+  build/ba_data/textures/bearColorMask.ktx \
+  build/ba_data/textures/doomShroomLevelColor.ktx \
+  build/ba_data/textures/powerupBomb.ktx \
+  build/ba_data/textures/chestIcon.ktx \
+  build/ba_data/textures/upButton.ktx \
+  build/ba_data/textures/iconRunaround.ktx \
+  build/ba_data/textures/doomShroomBGColor.ktx \
+  build/ba_data/textures/superheroColor.ktx \
+  build/ba_data/textures/landMine.ktx \
+  build/ba_data/textures/buttonJump.ktx \
+  build/ba_data/textures/sparks.ktx \
+  build/ba_data/textures/explosion.ktx \
+  build/ba_data/textures/tipTopLevelColor.ktx \
+  build/ba_data/textures/bunnyIconColorMask.ktx \
+  build/ba_data/textures/reflectionChar_+x.ktx \
+  build/ba_data/textures/ticketsMore.ktx \
+  build/ba_data/textures/pixieColorMask.ktx \
+  build/ba_data/textures/medalSilver.ktx \
+  build/ba_data/textures/neoSpazIcon.ktx \
+  build/ba_data/textures/meter.ktx \
+  build/ba_data/textures/scrollWidgetGlow.ktx \
+  build/ba_data/textures/achievementFlawlessVictory.ktx \
+  build/ba_data/textures/zigzagPreview.ktx \
+  build/ba_data/textures/reflectionSharper_-z.ktx \
+  build/ba_data/textures/alienColorMask.ktx \
+  build/ba_data/textures/powerupShield.ktx \
+  build/ba_data/textures/reflectionSharp_+x.ktx \
+  build/ba_data/textures/chestIconEmpty.ktx \
+  build/ba_data/textures/agentColorMask.ktx \
+  build/ba_data/textures/reflectionPowerup_+x.ktx \
+  build/ba_data/textures/witchIconColorMask.ktx \
+  build/ba_data/textures/kronkColorMask.ktx \
+  build/ba_data/textures/menuBG.ktx \
+  build/ba_data/textures/fontSmall0.ktx \
+  build/ba_data/textures/assassinIconColorMask.ktx \
+  build/ba_data/textures/bearColor.ktx \
+  build/ba_data/textures/operaSingerColor.ktx \
+  build/ba_data/textures/rampageBGColor2.ktx \
+  build/ba_data/textures/fuse.ktx \
+  build/ba_data/textures/frostyColor.ktx \
+  build/ba_data/textures/achievementSuperPunch.ktx \
+  build/ba_data/textures/tipTopPreview.ktx \
+  build/ba_data/textures/googlePlusIcon.ktx \
+  build/ba_data/textures/powerupCurse.ktx \
+  build/ba_data/textures/trophy.ktx \
+  build/ba_data/textures/courtyardLevelColor.ktx \
+  build/ba_data/textures/oldLadyColorMask.ktx \
+  build/ba_data/textures/rampagePreview.ktx \
+  build/ba_data/textures/cuteSpaz.ktx \
+  build/ba_data/textures/lightSoft.ktx \
+  build/ba_data/textures/reflectionSharper_+y.ktx \
+  build/ba_data/textures/uiAtlas2.ktx \
+  build/ba_data/textures/egg2.ktx \
+  build/ba_data/textures/shadowSharp.ktx \
+  build/ba_data/textures/tnt.ktx \
+  build/ba_data/textures/actionHeroIcon.ktx \
+  build/ba_data/textures/robotColorMask.ktx \
+  build/ba_data/textures/impactBombColorLit.ktx \
+  build/ba_data/textures/achievementStayinAlive.ktx
 
 TEX2D_PREVIEW_PNG_TARGETS = \
-  build/data/textures/cyborgIconColorMask_preview.png \
-  build/data/textures/chestOpenIcon_preview.png \
-  build/data/textures/analogStick_preview.png \
-  build/data/textures/circleOutline_preview.png \
-  build/data/textures/white_preview.png \
-  build/data/textures/medalBronze_preview.png \
-  build/data/textures/slash_preview.png \
-  build/data/textures/arrow_preview.png \
-  build/data/textures/ouyaIcon_preview.png \
-  build/data/textures/eyeColor_preview.png \
-  build/data/textures/achievementMedalLarge_preview.png \
-  build/data/textures/cowboyIconColorMask_preview.png \
-  build/data/textures/wings_preview.png \
-  build/data/textures/roundaboutPreview_preview.png \
-  build/data/textures/warriorIcon_preview.png \
-  build/data/textures/windowHSmallVMed_preview.png \
-  build/data/textures/ninjaIconColorMask_preview.png \
-  build/data/textures/reflectionSharpest_+z_preview.png \
-  build/data/textures/stepRightUpLevelColor_preview.png \
-  build/data/textures/fontSmall5_preview.png \
-  build/data/textures/bombButton_preview.png \
-  build/data/textures/aliIconColorMask_preview.png \
-  build/data/textures/chTitleChar2_preview.png \
-  build/data/textures/achievementOnslaught_preview.png \
-  build/data/textures/smoke_preview.png \
-  build/data/textures/lakeFrigidReflections_preview.png \
-  build/data/textures/bunnyColor_preview.png \
-  build/data/textures/leftButton_preview.png \
-  build/data/textures/hockeyStadium_preview.png \
-  build/data/textures/cowboyIcon_preview.png \
-  build/data/textures/lakeFrigid_preview.png \
-  build/data/textures/startButton_preview.png \
-  build/data/textures/footballStadium_preview.png \
-  build/data/textures/crossOutMask_preview.png \
-  build/data/textures/bonesIconColorMask_preview.png \
-  build/data/textures/operaSingerIconColorMask_preview.png \
-  build/data/textures/lakeFrigidPreview_preview.png \
-  build/data/textures/alienIcon_preview.png \
-  build/data/textures/oldLadyColor_preview.png \
-  build/data/textures/ouyaAButton_preview.png \
-  build/data/textures/eggTex3_preview.png \
-  build/data/textures/cyborgIcon_preview.png \
-  build/data/textures/actionHeroColor_preview.png \
-  build/data/textures/achievementTeamPlayer_preview.png \
-  build/data/textures/reflectionSoft_+x_preview.png \
-  build/data/textures/fontExtras3_preview.png \
-  build/data/textures/buttonBomb_preview.png \
-  build/data/textures/star_preview.png \
-  build/data/textures/reflectionSharpest_-y_preview.png \
-  build/data/textures/achievementSharingIsCaring_preview.png \
-  build/data/textures/fontSmall3_preview.png \
-  build/data/textures/powerupSpeed_preview.png \
-  build/data/textures/vrFillMound_preview.png \
-  build/data/textures/agentIconColorMask_preview.png \
-  build/data/textures/kronkIcon_preview.png \
-  build/data/textures/oldLadyIcon_preview.png \
-  build/data/textures/chTitleChar4_preview.png \
-  build/data/textures/nextLevelIcon_preview.png \
-  build/data/textures/gameCircleIcon_preview.png \
-  build/data/textures/bonesIcon_preview.png \
-  build/data/textures/bearIcon_preview.png \
-  build/data/textures/towerDPreview_preview.png \
-  build/data/textures/achievementTNT_preview.png \
-  build/data/textures/medalGold_preview.png \
-  build/data/textures/circleZigZag_preview.png \
-  build/data/textures/bunnyColorMask_preview.png \
-  build/data/textures/black_preview.png \
-  build/data/textures/menuIcon_preview.png \
-  build/data/textures/file_preview.png \
-  build/data/textures/logIcon_preview.png \
-  build/data/textures/controllerIcon_preview.png \
-  build/data/textures/reflectionSharper_-y_preview.png \
-  build/data/textures/operaSingerColorMask_preview.png \
-  build/data/textures/achievementFootballShutout_preview.png \
-  build/data/textures/reflectionPowerup_-x_preview.png \
-  build/data/textures/achievementsIcon_preview.png \
-  build/data/textures/cowboyColor_preview.png \
-  build/data/textures/wrestlerIconColorMask_preview.png \
-  build/data/textures/googlePlayAchievementsIcon_preview.png \
-  build/data/textures/alienIconColorMask_preview.png \
-  build/data/textures/ticketRollBig_preview.png \
-  build/data/textures/wrestlerIcon_preview.png \
-  build/data/textures/egg1_preview.png \
-  build/data/textures/gameCenterIcon_preview.png \
-  build/data/textures/landMineLit_preview.png \
-  build/data/textures/achievementWall_preview.png \
-  build/data/textures/achievementMedalMedium_preview.png \
-  build/data/textures/reflectionChar_-x_preview.png \
-  build/data/textures/softRectVertical_preview.png \
-  build/data/textures/reflectionSharper_+z_preview.png \
-  build/data/textures/wizardIcon_preview.png \
-  build/data/textures/mapPreviewMask_preview.png \
-  build/data/textures/nub_preview.png \
-  build/data/textures/empty_preview.png \
-  build/data/textures/frostyIconColorMask_preview.png \
-  build/data/textures/reflectionSharp_-x_preview.png \
-  build/data/textures/bombColorIce_preview.png \
-  build/data/textures/jumpsuitIcon_preview.png \
-  build/data/textures/footballStadiumPreview_preview.png \
-  build/data/textures/pixieIconColorMask_preview.png \
-  build/data/textures/achievementEmpty_preview.png \
-  build/data/textures/wrestlerColor_preview.png \
-  build/data/textures/shield_preview.png \
-  build/data/textures/iconOnslaught_preview.png \
-  build/data/textures/replayIcon_preview.png \
-  build/data/textures/powerupHealth_preview.png \
-  build/data/textures/bg_preview.png \
-  build/data/textures/chTitleChar3_preview.png \
-  build/data/textures/textClearButton_preview.png \
-  build/data/textures/reflectionSoft_-z_preview.png \
-  build/data/textures/fontSmall4_preview.png \
-  build/data/textures/warriorColor_preview.png \
-  build/data/textures/light_preview.png \
-  build/data/textures/santaColor_preview.png \
-  build/data/textures/jackColor_preview.png \
-  build/data/textures/aliSplash_preview.png \
-  build/data/textures/scorch_preview.png \
-  build/data/textures/zoeIcon_preview.png \
-  build/data/textures/bonesColorMask_preview.png \
-  build/data/textures/pixieColor_preview.png \
-  build/data/textures/actionHeroIconColorMask_preview.png \
-  build/data/textures/treesColor_preview.png \
-  build/data/textures/neoSpazColorMask_preview.png \
-  build/data/textures/superheroIcon_preview.png \
-  build/data/textures/achievementOffYouGo_preview.png \
-  build/data/textures/tipTopBGColor_preview.png \
-  build/data/textures/robotColor_preview.png \
-  build/data/textures/reflectionSharpest_-x_preview.png \
-  build/data/textures/menuButton_preview.png \
-  build/data/textures/powerupStickyBombs_preview.png \
-  build/data/textures/ninjaIcon_preview.png \
-  build/data/textures/witchColorMask_preview.png \
-  build/data/textures/cowboyColorMask_preview.png \
-  build/data/textures/operaSingerIcon_preview.png \
-  build/data/textures/achievementBoxer_preview.png \
-  build/data/textures/eggTex2_preview.png \
-  build/data/textures/rampageBGColor_preview.png \
-  build/data/textures/fontExtras2_preview.png \
-  build/data/textures/rampageLevelColor_preview.png \
-  build/data/textures/reflectionSoft_+y_preview.png \
-  build/data/textures/ticketRolls_preview.png \
-  build/data/textures/natureBackgroundColor_preview.png \
-  build/data/textures/santaIconColorMask_preview.png \
-  build/data/textures/reflectionPowerup_+z_preview.png \
-  build/data/textures/characterIconMask_preview.png \
-  build/data/textures/aliColor_preview.png \
-  build/data/textures/ninjaColorMask_preview.png \
-  build/data/textures/buttonPickUp_preview.png \
-  build/data/textures/chTitleChar5_preview.png \
-  build/data/textures/bigGPreview_preview.png \
-  build/data/textures/hockeyStadiumPreview_preview.png \
-  build/data/textures/achievementMedalSmall_preview.png \
-  build/data/textures/fontSmall2_preview.png \
-  build/data/textures/achievementOutline_preview.png \
-  build/data/textures/levelIcon_preview.png \
-  build/data/textures/googlePlayGamesIcon_preview.png \
-  build/data/textures/gladiatorColorMask_preview.png \
-  build/data/textures/boxingGlovesColor_preview.png \
-  build/data/textures/ouyaOButton_preview.png \
-  build/data/textures/leaderboardsIcon_preview.png \
-  build/data/textures/puckColor_preview.png \
-  build/data/textures/reflectionChar_+z_preview.png \
-  build/data/textures/penguinColor_preview.png \
-  build/data/textures/reflectionSharper_-x_preview.png \
-  build/data/textures/googlePlayLeaderboardsIcon_preview.png \
-  build/data/textures/scrollWidget_preview.png \
-  build/data/textures/courtyardPreview_preview.png \
-  build/data/textures/aliColorMask_preview.png \
-  build/data/textures/penguinColorMask_preview.png \
-  build/data/textures/witchIcon_preview.png \
-  build/data/textures/reflectionSharp_+z_preview.png \
-  build/data/textures/graphicsIcon_preview.png \
-  build/data/textures/agentIcon_preview.png \
-  build/data/textures/fontExtras4_preview.png \
-  build/data/textures/reflectionPowerup_-y_preview.png \
-  build/data/textures/storeIcon_preview.png \
-  build/data/textures/doomShroomPreview_preview.png \
-  build/data/textures/null_preview.png \
-  build/data/textures/backIcon_preview.png \
-  build/data/textures/cyborgColor_preview.png \
-  build/data/textures/monkeyFaceLevelColor_preview.png \
-  build/data/textures/santaIcon_preview.png \
-  build/data/textures/alwaysLandBGColor_preview.png \
-  build/data/textures/roundaboutLevelColor_preview.png \
-  build/data/textures/robotIcon_preview.png \
-  build/data/textures/reflectionSharp_-y_preview.png \
-  build/data/textures/bunnyIcon_preview.png \
-  build/data/textures/circleShadow_preview.png \
-  build/data/textures/flagPoleColor_preview.png \
-  build/data/textures/ouyaUButton_preview.png \
-  build/data/textures/reflectionChar_-y_preview.png \
-  build/data/textures/achievementInControl_preview.png \
-  build/data/textures/wizardColorMask_preview.png \
-  build/data/textures/reflectionSharpest_+x_preview.png \
-  build/data/textures/neoSpazColor_preview.png \
-  build/data/textures/zigZagLevelColor_preview.png \
-  build/data/textures/thePadPreview_preview.png \
-  build/data/textures/superheroIconColorMask_preview.png \
-  build/data/textures/fontSmall7_preview.png \
-  build/data/textures/ticketRoll_preview.png \
-  build/data/textures/reflectionSoft_-y_preview.png \
-  build/data/textures/playerLineup_preview.png \
-  build/data/textures/storeCharacterEaster_preview.png \
-  build/data/textures/coin_preview.png \
-  build/data/textures/circleOutlineNoAlpha_preview.png \
-  build/data/textures/scorchBig_preview.png \
-  build/data/textures/logoEaster_preview.png \
-  build/data/textures/warriorColorMask_preview.png \
-  build/data/textures/assassinColor_preview.png \
-  build/data/textures/bombStickyColor_preview.png \
-  build/data/textures/eggTex1_preview.png \
-  build/data/textures/gladiatorIconColorMask_preview.png \
-  build/data/textures/melColorMask_preview.png \
-  build/data/textures/thePadLevelColor_preview.png \
-  build/data/textures/wizardIconColorMask_preview.png \
-  build/data/textures/bar_preview.png \
-  build/data/textures/zoeIconColorMask_preview.png \
-  build/data/textures/windowHSmallVSmall_preview.png \
-  build/data/textures/circleNoAlpha_preview.png \
-  build/data/textures/gladiatorIcon_preview.png \
-  build/data/textures/reflectionSoft_+z_preview.png \
-  build/data/textures/achievementRunaround_preview.png \
-  build/data/textures/wizardColor_preview.png \
-  build/data/textures/touchArrowsActions_preview.png \
-  build/data/textures/advancedIcon_preview.png \
-  build/data/textures/softRect2_preview.png \
-  build/data/textures/achievementMine_preview.png \
-  build/data/textures/rightButton_preview.png \
-  build/data/textures/touchArrows_preview.png \
-  build/data/textures/cyborgColorMask_preview.png \
-  build/data/textures/jumpsuitIconColorMask_preview.png \
-  build/data/textures/bridgitPreview_preview.png \
-  build/data/textures/ninjaColor_preview.png \
-  build/data/textures/santaColorMask_preview.png \
-  build/data/textures/storeCharacter_preview.png \
-  build/data/textures/flagColor_preview.png \
-  build/data/textures/cragCastlePreview_preview.png \
-  build/data/textures/frameInset_preview.png \
-  build/data/textures/lock_preview.png \
-  build/data/textures/agentColor_preview.png \
-  build/data/textures/achievementGotTheMoves_preview.png \
-  build/data/textures/buttonPunch_preview.png \
-  build/data/textures/settingsIcon_preview.png \
-  build/data/textures/rgbStripes_preview.png \
-  build/data/textures/reflectionSharp_+y_preview.png \
-  build/data/textures/powerupImpactBombs_preview.png \
-  build/data/textures/bigG_preview.png \
-  build/data/textures/melIconColorMask_preview.png \
-  build/data/textures/reflectionChar_+y_preview.png \
-  build/data/textures/multiplayerExamples_preview.png \
-  build/data/textures/actionButtons_preview.png \
-  build/data/textures/melIcon_preview.png \
-  build/data/textures/oldLadyIconColorMask_preview.png \
-  build/data/textures/robotIconColorMask_preview.png \
-  build/data/textures/monkeyFacePreview_preview.png \
-  build/data/textures/achievementDualWielding_preview.png \
-  build/data/textures/folder_preview.png \
-  build/data/textures/frostyColorMask_preview.png \
-  build/data/textures/kronkIconColorMask_preview.png \
-  build/data/textures/fontBig_preview.png \
-  build/data/textures/fontSmall1_preview.png \
-  build/data/textures/shadowSoft_preview.png \
-  build/data/textures/powerupLandMines_preview.png \
-  build/data/textures/stepRightUpPreview_preview.png \
-  build/data/textures/bearIconColorMask_preview.png \
-  build/data/textures/kronk_preview.png \
-  build/data/textures/downButton_preview.png \
-  build/data/textures/bombColor_preview.png \
-  build/data/textures/logo_preview.png \
-  build/data/textures/reflectionPowerup_+y_preview.png \
-  build/data/textures/zoeColorMask_preview.png \
-  build/data/textures/jumpsuitColorMask_preview.png \
-  build/data/textures/penguinIcon_preview.png \
-  build/data/textures/powerupPunch_preview.png \
-  build/data/textures/shadow_preview.png \
-  build/data/textures/reflectionChar_-z_preview.png \
-  build/data/textures/assassinIcon_preview.png \
-  build/data/textures/impactBombColor_preview.png \
-  build/data/textures/storeCharacterXmas_preview.png \
-  build/data/textures/jackIcon_preview.png \
-  build/data/textures/pixieIcon_preview.png \
-  build/data/textures/jumpsuitColor_preview.png \
-  build/data/textures/reflectionSharper_+x_preview.png \
-  build/data/textures/jackColorMask_preview.png \
-  build/data/textures/shrapnel1Color_preview.png \
-  build/data/textures/witchColor_preview.png \
-  build/data/textures/achievementFreeLoader_preview.png \
-  build/data/textures/zoeColor_preview.png \
-  build/data/textures/alienColor_preview.png \
-  build/data/textures/inventoryIcon_preview.png \
-  build/data/textures/reflectionSharp_-z_preview.png \
-  build/data/textures/glow_preview.png \
-  build/data/textures/usersButton_preview.png \
-  build/data/textures/reflectionPowerup_-z_preview.png \
-  build/data/textures/melColor_preview.png \
-  build/data/textures/aliControllerQR_preview.png \
-  build/data/textures/frostyIcon_preview.png \
-  build/data/textures/achievementFootballVictory_preview.png \
-  build/data/textures/tickets_preview.png \
-  build/data/textures/cursor_preview.png \
-  build/data/textures/egg3_preview.png \
-  build/data/textures/crossOut_preview.png \
-  build/data/textures/bonesColor_preview.png \
-  build/data/textures/achievementCrossHair_preview.png \
-  build/data/textures/actionHeroColorMask_preview.png \
-  build/data/textures/chTitleChar1_preview.png \
-  build/data/textures/heart_preview.png \
-  build/data/textures/fontExtras_preview.png \
-  build/data/textures/penguinIconColorMask_preview.png \
-  build/data/textures/eyeColorTintMask_preview.png \
-  build/data/textures/aliIcon_preview.png \
-  build/data/textures/chestIconMulti_preview.png \
-  build/data/textures/reflectionSoft_-x_preview.png \
-  build/data/textures/uiAtlas_preview.png \
-  build/data/textures/reflectionSharpest_+y_preview.png \
-  build/data/textures/cragCastleLevelColor_preview.png \
-  build/data/textures/assassinColorMask_preview.png \
-  build/data/textures/bridgitLevelColor_preview.png \
-  build/data/textures/fontSmall6_preview.png \
-  build/data/textures/towerDLevelColor_preview.png \
-  build/data/textures/ouyaYButton_preview.png \
-  build/data/textures/lightSharp_preview.png \
-  build/data/textures/buttonSquare_preview.png \
-  build/data/textures/softRect_preview.png \
-  build/data/textures/powerupIceBombs_preview.png \
-  build/data/textures/jackIconColorMask_preview.png \
-  build/data/textures/audioIcon_preview.png \
-  build/data/textures/tv_preview.png \
-  build/data/textures/reflectionSharpest_-z_preview.png \
-  build/data/textures/warriorIconColorMask_preview.png \
-  build/data/textures/googlePlusSignInButton_preview.png \
-  build/data/textures/circle_preview.png \
-  build/data/textures/neoSpazIconColorMask_preview.png \
-  build/data/textures/medalComplete_preview.png \
-  build/data/textures/alwaysLandLevelColor_preview.png \
-  build/data/textures/alwaysLandPreview_preview.png \
-  build/data/textures/egg4_preview.png \
-  build/data/textures/wrestlerColorMask_preview.png \
-  build/data/textures/superheroColorMask_preview.png \
-  build/data/textures/gladiatorColor_preview.png \
-  build/data/textures/aliBSRemoteIOSQR_preview.png \
-  build/data/textures/bearColorMask_preview.png \
-  build/data/textures/doomShroomLevelColor_preview.png \
-  build/data/textures/powerupBomb_preview.png \
-  build/data/textures/chestIcon_preview.png \
-  build/data/textures/upButton_preview.png \
-  build/data/textures/iconRunaround_preview.png \
-  build/data/textures/doomShroomBGColor_preview.png \
-  build/data/textures/superheroColor_preview.png \
-  build/data/textures/landMine_preview.png \
-  build/data/textures/buttonJump_preview.png \
-  build/data/textures/sparks_preview.png \
-  build/data/textures/explosion_preview.png \
-  build/data/textures/tipTopLevelColor_preview.png \
-  build/data/textures/bunnyIconColorMask_preview.png \
-  build/data/textures/reflectionChar_+x_preview.png \
-  build/data/textures/ticketsMore_preview.png \
-  build/data/textures/pixieColorMask_preview.png \
-  build/data/textures/medalSilver_preview.png \
-  build/data/textures/neoSpazIcon_preview.png \
-  build/data/textures/meter_preview.png \
-  build/data/textures/scrollWidgetGlow_preview.png \
-  build/data/textures/achievementFlawlessVictory_preview.png \
-  build/data/textures/zigzagPreview_preview.png \
-  build/data/textures/reflectionSharper_-z_preview.png \
-  build/data/textures/alienColorMask_preview.png \
-  build/data/textures/powerupShield_preview.png \
-  build/data/textures/reflectionSharp_+x_preview.png \
-  build/data/textures/chestIconEmpty_preview.png \
-  build/data/textures/agentColorMask_preview.png \
-  build/data/textures/reflectionPowerup_+x_preview.png \
-  build/data/textures/witchIconColorMask_preview.png \
-  build/data/textures/kronkColorMask_preview.png \
-  build/data/textures/menuBG_preview.png \
-  build/data/textures/fontSmall0_preview.png \
-  build/data/textures/assassinIconColorMask_preview.png \
-  build/data/textures/bearColor_preview.png \
-  build/data/textures/operaSingerColor_preview.png \
-  build/data/textures/rampageBGColor2_preview.png \
-  build/data/textures/fuse_preview.png \
-  build/data/textures/frostyColor_preview.png \
-  build/data/textures/achievementSuperPunch_preview.png \
-  build/data/textures/tipTopPreview_preview.png \
-  build/data/textures/googlePlusIcon_preview.png \
-  build/data/textures/powerupCurse_preview.png \
-  build/data/textures/trophy_preview.png \
-  build/data/textures/courtyardLevelColor_preview.png \
-  build/data/textures/oldLadyColorMask_preview.png \
-  build/data/textures/rampagePreview_preview.png \
-  build/data/textures/cuteSpaz_preview.png \
-  build/data/textures/lightSoft_preview.png \
-  build/data/textures/reflectionSharper_+y_preview.png \
-  build/data/textures/uiAtlas2_preview.png \
-  build/data/textures/egg2_preview.png \
-  build/data/textures/shadowSharp_preview.png \
-  build/data/textures/tnt_preview.png \
-  build/data/textures/actionHeroIcon_preview.png \
-  build/data/textures/robotColorMask_preview.png \
-  build/data/textures/impactBombColorLit_preview.png \
-  build/data/textures/achievementStayinAlive_preview.png
+  build/ba_data/textures/cyborgIconColorMask_preview.png \
+  build/ba_data/textures/chestOpenIcon_preview.png \
+  build/ba_data/textures/analogStick_preview.png \
+  build/ba_data/textures/circleOutline_preview.png \
+  build/ba_data/textures/white_preview.png \
+  build/ba_data/textures/medalBronze_preview.png \
+  build/ba_data/textures/slash_preview.png \
+  build/ba_data/textures/arrow_preview.png \
+  build/ba_data/textures/ouyaIcon_preview.png \
+  build/ba_data/textures/eyeColor_preview.png \
+  build/ba_data/textures/achievementMedalLarge_preview.png \
+  build/ba_data/textures/cowboyIconColorMask_preview.png \
+  build/ba_data/textures/wings_preview.png \
+  build/ba_data/textures/roundaboutPreview_preview.png \
+  build/ba_data/textures/warriorIcon_preview.png \
+  build/ba_data/textures/windowHSmallVMed_preview.png \
+  build/ba_data/textures/ninjaIconColorMask_preview.png \
+  build/ba_data/textures/reflectionSharpest_+z_preview.png \
+  build/ba_data/textures/stepRightUpLevelColor_preview.png \
+  build/ba_data/textures/fontSmall5_preview.png \
+  build/ba_data/textures/bombButton_preview.png \
+  build/ba_data/textures/aliIconColorMask_preview.png \
+  build/ba_data/textures/chTitleChar2_preview.png \
+  build/ba_data/textures/achievementOnslaught_preview.png \
+  build/ba_data/textures/smoke_preview.png \
+  build/ba_data/textures/lakeFrigidReflections_preview.png \
+  build/ba_data/textures/bunnyColor_preview.png \
+  build/ba_data/textures/leftButton_preview.png \
+  build/ba_data/textures/hockeyStadium_preview.png \
+  build/ba_data/textures/cowboyIcon_preview.png \
+  build/ba_data/textures/lakeFrigid_preview.png \
+  build/ba_data/textures/startButton_preview.png \
+  build/ba_data/textures/footballStadium_preview.png \
+  build/ba_data/textures/crossOutMask_preview.png \
+  build/ba_data/textures/bonesIconColorMask_preview.png \
+  build/ba_data/textures/operaSingerIconColorMask_preview.png \
+  build/ba_data/textures/lakeFrigidPreview_preview.png \
+  build/ba_data/textures/alienIcon_preview.png \
+  build/ba_data/textures/oldLadyColor_preview.png \
+  build/ba_data/textures/ouyaAButton_preview.png \
+  build/ba_data/textures/eggTex3_preview.png \
+  build/ba_data/textures/cyborgIcon_preview.png \
+  build/ba_data/textures/actionHeroColor_preview.png \
+  build/ba_data/textures/achievementTeamPlayer_preview.png \
+  build/ba_data/textures/reflectionSoft_+x_preview.png \
+  build/ba_data/textures/fontExtras3_preview.png \
+  build/ba_data/textures/buttonBomb_preview.png \
+  build/ba_data/textures/star_preview.png \
+  build/ba_data/textures/reflectionSharpest_-y_preview.png \
+  build/ba_data/textures/achievementSharingIsCaring_preview.png \
+  build/ba_data/textures/fontSmall3_preview.png \
+  build/ba_data/textures/powerupSpeed_preview.png \
+  build/ba_data/textures/vrFillMound_preview.png \
+  build/ba_data/textures/agentIconColorMask_preview.png \
+  build/ba_data/textures/kronkIcon_preview.png \
+  build/ba_data/textures/oldLadyIcon_preview.png \
+  build/ba_data/textures/chTitleChar4_preview.png \
+  build/ba_data/textures/nextLevelIcon_preview.png \
+  build/ba_data/textures/gameCircleIcon_preview.png \
+  build/ba_data/textures/bonesIcon_preview.png \
+  build/ba_data/textures/bearIcon_preview.png \
+  build/ba_data/textures/towerDPreview_preview.png \
+  build/ba_data/textures/achievementTNT_preview.png \
+  build/ba_data/textures/medalGold_preview.png \
+  build/ba_data/textures/circleZigZag_preview.png \
+  build/ba_data/textures/bunnyColorMask_preview.png \
+  build/ba_data/textures/black_preview.png \
+  build/ba_data/textures/menuIcon_preview.png \
+  build/ba_data/textures/file_preview.png \
+  build/ba_data/textures/logIcon_preview.png \
+  build/ba_data/textures/controllerIcon_preview.png \
+  build/ba_data/textures/reflectionSharper_-y_preview.png \
+  build/ba_data/textures/operaSingerColorMask_preview.png \
+  build/ba_data/textures/achievementFootballShutout_preview.png \
+  build/ba_data/textures/reflectionPowerup_-x_preview.png \
+  build/ba_data/textures/achievementsIcon_preview.png \
+  build/ba_data/textures/cowboyColor_preview.png \
+  build/ba_data/textures/wrestlerIconColorMask_preview.png \
+  build/ba_data/textures/googlePlayAchievementsIcon_preview.png \
+  build/ba_data/textures/alienIconColorMask_preview.png \
+  build/ba_data/textures/ticketRollBig_preview.png \
+  build/ba_data/textures/wrestlerIcon_preview.png \
+  build/ba_data/textures/egg1_preview.png \
+  build/ba_data/textures/gameCenterIcon_preview.png \
+  build/ba_data/textures/landMineLit_preview.png \
+  build/ba_data/textures/achievementWall_preview.png \
+  build/ba_data/textures/achievementMedalMedium_preview.png \
+  build/ba_data/textures/reflectionChar_-x_preview.png \
+  build/ba_data/textures/softRectVertical_preview.png \
+  build/ba_data/textures/reflectionSharper_+z_preview.png \
+  build/ba_data/textures/wizardIcon_preview.png \
+  build/ba_data/textures/mapPreviewMask_preview.png \
+  build/ba_data/textures/nub_preview.png \
+  build/ba_data/textures/empty_preview.png \
+  build/ba_data/textures/frostyIconColorMask_preview.png \
+  build/ba_data/textures/reflectionSharp_-x_preview.png \
+  build/ba_data/textures/bombColorIce_preview.png \
+  build/ba_data/textures/jumpsuitIcon_preview.png \
+  build/ba_data/textures/footballStadiumPreview_preview.png \
+  build/ba_data/textures/pixieIconColorMask_preview.png \
+  build/ba_data/textures/achievementEmpty_preview.png \
+  build/ba_data/textures/wrestlerColor_preview.png \
+  build/ba_data/textures/shield_preview.png \
+  build/ba_data/textures/iconOnslaught_preview.png \
+  build/ba_data/textures/replayIcon_preview.png \
+  build/ba_data/textures/powerupHealth_preview.png \
+  build/ba_data/textures/bg_preview.png \
+  build/ba_data/textures/chTitleChar3_preview.png \
+  build/ba_data/textures/textClearButton_preview.png \
+  build/ba_data/textures/reflectionSoft_-z_preview.png \
+  build/ba_data/textures/fontSmall4_preview.png \
+  build/ba_data/textures/warriorColor_preview.png \
+  build/ba_data/textures/light_preview.png \
+  build/ba_data/textures/santaColor_preview.png \
+  build/ba_data/textures/jackColor_preview.png \
+  build/ba_data/textures/aliSplash_preview.png \
+  build/ba_data/textures/scorch_preview.png \
+  build/ba_data/textures/zoeIcon_preview.png \
+  build/ba_data/textures/bonesColorMask_preview.png \
+  build/ba_data/textures/pixieColor_preview.png \
+  build/ba_data/textures/actionHeroIconColorMask_preview.png \
+  build/ba_data/textures/treesColor_preview.png \
+  build/ba_data/textures/neoSpazColorMask_preview.png \
+  build/ba_data/textures/superheroIcon_preview.png \
+  build/ba_data/textures/achievementOffYouGo_preview.png \
+  build/ba_data/textures/tipTopBGColor_preview.png \
+  build/ba_data/textures/robotColor_preview.png \
+  build/ba_data/textures/reflectionSharpest_-x_preview.png \
+  build/ba_data/textures/menuButton_preview.png \
+  build/ba_data/textures/powerupStickyBombs_preview.png \
+  build/ba_data/textures/ninjaIcon_preview.png \
+  build/ba_data/textures/witchColorMask_preview.png \
+  build/ba_data/textures/cowboyColorMask_preview.png \
+  build/ba_data/textures/operaSingerIcon_preview.png \
+  build/ba_data/textures/achievementBoxer_preview.png \
+  build/ba_data/textures/eggTex2_preview.png \
+  build/ba_data/textures/rampageBGColor_preview.png \
+  build/ba_data/textures/fontExtras2_preview.png \
+  build/ba_data/textures/rampageLevelColor_preview.png \
+  build/ba_data/textures/reflectionSoft_+y_preview.png \
+  build/ba_data/textures/ticketRolls_preview.png \
+  build/ba_data/textures/natureBackgroundColor_preview.png \
+  build/ba_data/textures/santaIconColorMask_preview.png \
+  build/ba_data/textures/reflectionPowerup_+z_preview.png \
+  build/ba_data/textures/characterIconMask_preview.png \
+  build/ba_data/textures/aliColor_preview.png \
+  build/ba_data/textures/ninjaColorMask_preview.png \
+  build/ba_data/textures/buttonPickUp_preview.png \
+  build/ba_data/textures/chTitleChar5_preview.png \
+  build/ba_data/textures/bigGPreview_preview.png \
+  build/ba_data/textures/hockeyStadiumPreview_preview.png \
+  build/ba_data/textures/achievementMedalSmall_preview.png \
+  build/ba_data/textures/fontSmall2_preview.png \
+  build/ba_data/textures/achievementOutline_preview.png \
+  build/ba_data/textures/levelIcon_preview.png \
+  build/ba_data/textures/googlePlayGamesIcon_preview.png \
+  build/ba_data/textures/gladiatorColorMask_preview.png \
+  build/ba_data/textures/boxingGlovesColor_preview.png \
+  build/ba_data/textures/ouyaOButton_preview.png \
+  build/ba_data/textures/leaderboardsIcon_preview.png \
+  build/ba_data/textures/puckColor_preview.png \
+  build/ba_data/textures/reflectionChar_+z_preview.png \
+  build/ba_data/textures/penguinColor_preview.png \
+  build/ba_data/textures/reflectionSharper_-x_preview.png \
+  build/ba_data/textures/googlePlayLeaderboardsIcon_preview.png \
+  build/ba_data/textures/scrollWidget_preview.png \
+  build/ba_data/textures/courtyardPreview_preview.png \
+  build/ba_data/textures/aliColorMask_preview.png \
+  build/ba_data/textures/penguinColorMask_preview.png \
+  build/ba_data/textures/witchIcon_preview.png \
+  build/ba_data/textures/reflectionSharp_+z_preview.png \
+  build/ba_data/textures/graphicsIcon_preview.png \
+  build/ba_data/textures/agentIcon_preview.png \
+  build/ba_data/textures/fontExtras4_preview.png \
+  build/ba_data/textures/reflectionPowerup_-y_preview.png \
+  build/ba_data/textures/storeIcon_preview.png \
+  build/ba_data/textures/doomShroomPreview_preview.png \
+  build/ba_data/textures/null_preview.png \
+  build/ba_data/textures/backIcon_preview.png \
+  build/ba_data/textures/cyborgColor_preview.png \
+  build/ba_data/textures/monkeyFaceLevelColor_preview.png \
+  build/ba_data/textures/santaIcon_preview.png \
+  build/ba_data/textures/alwaysLandBGColor_preview.png \
+  build/ba_data/textures/roundaboutLevelColor_preview.png \
+  build/ba_data/textures/robotIcon_preview.png \
+  build/ba_data/textures/reflectionSharp_-y_preview.png \
+  build/ba_data/textures/bunnyIcon_preview.png \
+  build/ba_data/textures/circleShadow_preview.png \
+  build/ba_data/textures/flagPoleColor_preview.png \
+  build/ba_data/textures/ouyaUButton_preview.png \
+  build/ba_data/textures/reflectionChar_-y_preview.png \
+  build/ba_data/textures/achievementInControl_preview.png \
+  build/ba_data/textures/wizardColorMask_preview.png \
+  build/ba_data/textures/reflectionSharpest_+x_preview.png \
+  build/ba_data/textures/neoSpazColor_preview.png \
+  build/ba_data/textures/zigZagLevelColor_preview.png \
+  build/ba_data/textures/thePadPreview_preview.png \
+  build/ba_data/textures/superheroIconColorMask_preview.png \
+  build/ba_data/textures/fontSmall7_preview.png \
+  build/ba_data/textures/ticketRoll_preview.png \
+  build/ba_data/textures/reflectionSoft_-y_preview.png \
+  build/ba_data/textures/playerLineup_preview.png \
+  build/ba_data/textures/storeCharacterEaster_preview.png \
+  build/ba_data/textures/coin_preview.png \
+  build/ba_data/textures/circleOutlineNoAlpha_preview.png \
+  build/ba_data/textures/scorchBig_preview.png \
+  build/ba_data/textures/logoEaster_preview.png \
+  build/ba_data/textures/warriorColorMask_preview.png \
+  build/ba_data/textures/assassinColor_preview.png \
+  build/ba_data/textures/bombStickyColor_preview.png \
+  build/ba_data/textures/eggTex1_preview.png \
+  build/ba_data/textures/gladiatorIconColorMask_preview.png \
+  build/ba_data/textures/melColorMask_preview.png \
+  build/ba_data/textures/thePadLevelColor_preview.png \
+  build/ba_data/textures/wizardIconColorMask_preview.png \
+  build/ba_data/textures/bar_preview.png \
+  build/ba_data/textures/zoeIconColorMask_preview.png \
+  build/ba_data/textures/windowHSmallVSmall_preview.png \
+  build/ba_data/textures/circleNoAlpha_preview.png \
+  build/ba_data/textures/gladiatorIcon_preview.png \
+  build/ba_data/textures/reflectionSoft_+z_preview.png \
+  build/ba_data/textures/achievementRunaround_preview.png \
+  build/ba_data/textures/wizardColor_preview.png \
+  build/ba_data/textures/touchArrowsActions_preview.png \
+  build/ba_data/textures/advancedIcon_preview.png \
+  build/ba_data/textures/softRect2_preview.png \
+  build/ba_data/textures/achievementMine_preview.png \
+  build/ba_data/textures/rightButton_preview.png \
+  build/ba_data/textures/touchArrows_preview.png \
+  build/ba_data/textures/cyborgColorMask_preview.png \
+  build/ba_data/textures/jumpsuitIconColorMask_preview.png \
+  build/ba_data/textures/bridgitPreview_preview.png \
+  build/ba_data/textures/ninjaColor_preview.png \
+  build/ba_data/textures/santaColorMask_preview.png \
+  build/ba_data/textures/storeCharacter_preview.png \
+  build/ba_data/textures/flagColor_preview.png \
+  build/ba_data/textures/cragCastlePreview_preview.png \
+  build/ba_data/textures/frameInset_preview.png \
+  build/ba_data/textures/lock_preview.png \
+  build/ba_data/textures/agentColor_preview.png \
+  build/ba_data/textures/achievementGotTheMoves_preview.png \
+  build/ba_data/textures/buttonPunch_preview.png \
+  build/ba_data/textures/settingsIcon_preview.png \
+  build/ba_data/textures/rgbStripes_preview.png \
+  build/ba_data/textures/reflectionSharp_+y_preview.png \
+  build/ba_data/textures/powerupImpactBombs_preview.png \
+  build/ba_data/textures/bigG_preview.png \
+  build/ba_data/textures/melIconColorMask_preview.png \
+  build/ba_data/textures/reflectionChar_+y_preview.png \
+  build/ba_data/textures/multiplayerExamples_preview.png \
+  build/ba_data/textures/actionButtons_preview.png \
+  build/ba_data/textures/melIcon_preview.png \
+  build/ba_data/textures/oldLadyIconColorMask_preview.png \
+  build/ba_data/textures/robotIconColorMask_preview.png \
+  build/ba_data/textures/monkeyFacePreview_preview.png \
+  build/ba_data/textures/achievementDualWielding_preview.png \
+  build/ba_data/textures/folder_preview.png \
+  build/ba_data/textures/frostyColorMask_preview.png \
+  build/ba_data/textures/kronkIconColorMask_preview.png \
+  build/ba_data/textures/fontBig_preview.png \
+  build/ba_data/textures/fontSmall1_preview.png \
+  build/ba_data/textures/shadowSoft_preview.png \
+  build/ba_data/textures/powerupLandMines_preview.png \
+  build/ba_data/textures/stepRightUpPreview_preview.png \
+  build/ba_data/textures/bearIconColorMask_preview.png \
+  build/ba_data/textures/kronk_preview.png \
+  build/ba_data/textures/downButton_preview.png \
+  build/ba_data/textures/bombColor_preview.png \
+  build/ba_data/textures/logo_preview.png \
+  build/ba_data/textures/reflectionPowerup_+y_preview.png \
+  build/ba_data/textures/zoeColorMask_preview.png \
+  build/ba_data/textures/jumpsuitColorMask_preview.png \
+  build/ba_data/textures/penguinIcon_preview.png \
+  build/ba_data/textures/powerupPunch_preview.png \
+  build/ba_data/textures/shadow_preview.png \
+  build/ba_data/textures/reflectionChar_-z_preview.png \
+  build/ba_data/textures/assassinIcon_preview.png \
+  build/ba_data/textures/impactBombColor_preview.png \
+  build/ba_data/textures/storeCharacterXmas_preview.png \
+  build/ba_data/textures/jackIcon_preview.png \
+  build/ba_data/textures/pixieIcon_preview.png \
+  build/ba_data/textures/jumpsuitColor_preview.png \
+  build/ba_data/textures/reflectionSharper_+x_preview.png \
+  build/ba_data/textures/jackColorMask_preview.png \
+  build/ba_data/textures/shrapnel1Color_preview.png \
+  build/ba_data/textures/witchColor_preview.png \
+  build/ba_data/textures/achievementFreeLoader_preview.png \
+  build/ba_data/textures/zoeColor_preview.png \
+  build/ba_data/textures/alienColor_preview.png \
+  build/ba_data/textures/inventoryIcon_preview.png \
+  build/ba_data/textures/reflectionSharp_-z_preview.png \
+  build/ba_data/textures/glow_preview.png \
+  build/ba_data/textures/usersButton_preview.png \
+  build/ba_data/textures/reflectionPowerup_-z_preview.png \
+  build/ba_data/textures/melColor_preview.png \
+  build/ba_data/textures/aliControllerQR_preview.png \
+  build/ba_data/textures/frostyIcon_preview.png \
+  build/ba_data/textures/achievementFootballVictory_preview.png \
+  build/ba_data/textures/tickets_preview.png \
+  build/ba_data/textures/cursor_preview.png \
+  build/ba_data/textures/egg3_preview.png \
+  build/ba_data/textures/crossOut_preview.png \
+  build/ba_data/textures/bonesColor_preview.png \
+  build/ba_data/textures/achievementCrossHair_preview.png \
+  build/ba_data/textures/actionHeroColorMask_preview.png \
+  build/ba_data/textures/chTitleChar1_preview.png \
+  build/ba_data/textures/heart_preview.png \
+  build/ba_data/textures/fontExtras_preview.png \
+  build/ba_data/textures/penguinIconColorMask_preview.png \
+  build/ba_data/textures/eyeColorTintMask_preview.png \
+  build/ba_data/textures/aliIcon_preview.png \
+  build/ba_data/textures/chestIconMulti_preview.png \
+  build/ba_data/textures/reflectionSoft_-x_preview.png \
+  build/ba_data/textures/uiAtlas_preview.png \
+  build/ba_data/textures/reflectionSharpest_+y_preview.png \
+  build/ba_data/textures/cragCastleLevelColor_preview.png \
+  build/ba_data/textures/assassinColorMask_preview.png \
+  build/ba_data/textures/bridgitLevelColor_preview.png \
+  build/ba_data/textures/fontSmall6_preview.png \
+  build/ba_data/textures/towerDLevelColor_preview.png \
+  build/ba_data/textures/ouyaYButton_preview.png \
+  build/ba_data/textures/lightSharp_preview.png \
+  build/ba_data/textures/buttonSquare_preview.png \
+  build/ba_data/textures/softRect_preview.png \
+  build/ba_data/textures/powerupIceBombs_preview.png \
+  build/ba_data/textures/jackIconColorMask_preview.png \
+  build/ba_data/textures/audioIcon_preview.png \
+  build/ba_data/textures/tv_preview.png \
+  build/ba_data/textures/reflectionSharpest_-z_preview.png \
+  build/ba_data/textures/warriorIconColorMask_preview.png \
+  build/ba_data/textures/googlePlusSignInButton_preview.png \
+  build/ba_data/textures/circle_preview.png \
+  build/ba_data/textures/neoSpazIconColorMask_preview.png \
+  build/ba_data/textures/medalComplete_preview.png \
+  build/ba_data/textures/alwaysLandLevelColor_preview.png \
+  build/ba_data/textures/alwaysLandPreview_preview.png \
+  build/ba_data/textures/egg4_preview.png \
+  build/ba_data/textures/wrestlerColorMask_preview.png \
+  build/ba_data/textures/superheroColorMask_preview.png \
+  build/ba_data/textures/gladiatorColor_preview.png \
+  build/ba_data/textures/aliBSRemoteIOSQR_preview.png \
+  build/ba_data/textures/bearColorMask_preview.png \
+  build/ba_data/textures/doomShroomLevelColor_preview.png \
+  build/ba_data/textures/powerupBomb_preview.png \
+  build/ba_data/textures/chestIcon_preview.png \
+  build/ba_data/textures/upButton_preview.png \
+  build/ba_data/textures/iconRunaround_preview.png \
+  build/ba_data/textures/doomShroomBGColor_preview.png \
+  build/ba_data/textures/superheroColor_preview.png \
+  build/ba_data/textures/landMine_preview.png \
+  build/ba_data/textures/buttonJump_preview.png \
+  build/ba_data/textures/sparks_preview.png \
+  build/ba_data/textures/explosion_preview.png \
+  build/ba_data/textures/tipTopLevelColor_preview.png \
+  build/ba_data/textures/bunnyIconColorMask_preview.png \
+  build/ba_data/textures/reflectionChar_+x_preview.png \
+  build/ba_data/textures/ticketsMore_preview.png \
+  build/ba_data/textures/pixieColorMask_preview.png \
+  build/ba_data/textures/medalSilver_preview.png \
+  build/ba_data/textures/neoSpazIcon_preview.png \
+  build/ba_data/textures/meter_preview.png \
+  build/ba_data/textures/scrollWidgetGlow_preview.png \
+  build/ba_data/textures/achievementFlawlessVictory_preview.png \
+  build/ba_data/textures/zigzagPreview_preview.png \
+  build/ba_data/textures/reflectionSharper_-z_preview.png \
+  build/ba_data/textures/alienColorMask_preview.png \
+  build/ba_data/textures/powerupShield_preview.png \
+  build/ba_data/textures/reflectionSharp_+x_preview.png \
+  build/ba_data/textures/chestIconEmpty_preview.png \
+  build/ba_data/textures/agentColorMask_preview.png \
+  build/ba_data/textures/reflectionPowerup_+x_preview.png \
+  build/ba_data/textures/witchIconColorMask_preview.png \
+  build/ba_data/textures/kronkColorMask_preview.png \
+  build/ba_data/textures/menuBG_preview.png \
+  build/ba_data/textures/fontSmall0_preview.png \
+  build/ba_data/textures/assassinIconColorMask_preview.png \
+  build/ba_data/textures/bearColor_preview.png \
+  build/ba_data/textures/operaSingerColor_preview.png \
+  build/ba_data/textures/rampageBGColor2_preview.png \
+  build/ba_data/textures/fuse_preview.png \
+  build/ba_data/textures/frostyColor_preview.png \
+  build/ba_data/textures/achievementSuperPunch_preview.png \
+  build/ba_data/textures/tipTopPreview_preview.png \
+  build/ba_data/textures/googlePlusIcon_preview.png \
+  build/ba_data/textures/powerupCurse_preview.png \
+  build/ba_data/textures/trophy_preview.png \
+  build/ba_data/textures/courtyardLevelColor_preview.png \
+  build/ba_data/textures/oldLadyColorMask_preview.png \
+  build/ba_data/textures/rampagePreview_preview.png \
+  build/ba_data/textures/cuteSpaz_preview.png \
+  build/ba_data/textures/lightSoft_preview.png \
+  build/ba_data/textures/reflectionSharper_+y_preview.png \
+  build/ba_data/textures/uiAtlas2_preview.png \
+  build/ba_data/textures/egg2_preview.png \
+  build/ba_data/textures/shadowSharp_preview.png \
+  build/ba_data/textures/tnt_preview.png \
+  build/ba_data/textures/actionHeroIcon_preview.png \
+  build/ba_data/textures/robotColorMask_preview.png \
+  build/ba_data/textures/impactBombColorLit_preview.png \
+  build/ba_data/textures/achievementStayinAlive_preview.png
 
 EXTRAS_TARGETS_WIN_WIN32 = \
   build/windows/Win32/VC_redist.x86.exe \
@@ -19902,15 +19902,15 @@ build/%.fdata : ../.efrocachemap
 	@cd .. && tools/snippets efrocache_get assets/$@
 
 # Langdata one-off json file.
-build/data/data/langdata.json : ../.efrocachemap
+build/ba_data/data/langdata.json : ../.efrocachemap
 	@cd .. && tools/snippets efrocache_get assets/$@
 
 # Languages json files.
-build/data/data/languages/%.json : ../.efrocachemap
+build/ba_data/data/languages/%.json : ../.efrocachemap
 	@cd .. && tools/snippets efrocache_get assets/$@
 
 # Map json files.
-build/data/data/maps/%.json : ../.efrocachemap
+build/ba_data/data/maps/%.json : ../.efrocachemap
 	@cd .. && tools/snippets efrocache_get assets/$@
 
 src/%.tex2d.png : ../.efrocachemap
@@ -19933,22 +19933,22 @@ build/%.ktx : ../.efrocachemap
 
 audio: $(AUDIO_TARGETS)
 clean-audio:
-	rm -rf build/audio
+	rm -rf build/ba_data/audio
 
 data: $(DATA_TARGETS)
 clean-data:
-	rm -rf build/data
+	rm -rf build/ba_data/data
 
 fonts: $(FONT_TARGETS)
 clean-fonts:
-	rm -rf build/fonts
+	rm -rf build/ba_data/fonts
 
 # Model targets needed for all platforms.
 MODEL_TARGETS = ${BOB_TARGETS} ${COB_TARGETS}
 
 models: $(MODEL_TARGETS)
 clean-models:
-	rm -rf build/models
+	rm -rf build/ba_data/models
 
 # Texture targets needed per-platform (may overlap)
 TEXTURE_TARGETS_CMAKE = $(TEX2D_DDS_TARGETS)
@@ -19962,7 +19962,7 @@ TEXTURE_TARGETS_COMMON = $(TEX2D_PREVIEW_PNG_TARGETS) \
  $(TEX2D_PREVIEW_PNG_TARGETS_2)
 
 clean-textures:
-	rm -rf build/textures
+	rm -rf build/ba_data/textures
 
 # Script targets needed per-platform (may overlap)
 SCRIPT_TARGETS_CMAKE =
@@ -19990,7 +19990,7 @@ scripts-android: $(SCRIPT_TARGETS_ANDROID) $(SCRIPT_TARGETS_COMMON)
 # Build scripts for all platforms
 scripts: scripts-cmake scripts-win scripts-mac scripts-ios scripts-android
 clean-scripts:
-	rm -rf build/scripts
+	rm -rf build/ba_data/scripts
 
 # Build all required assets for a specific platform.
 assets-cmake: $(ASSET_TARGETS_CMAKE) $(ASSET_TARGETS_COMMON)

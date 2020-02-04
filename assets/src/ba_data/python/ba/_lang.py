@@ -187,7 +187,7 @@ def setlanguage(language: Optional[str],
     else:
         switched = False
 
-    with open('data/data/languages/english.json') as infile:
+    with open('ba_data/data/languages/english.json') as infile:
         lenglishvalues = json.loads(infile.read())
 
     # None implies default.
@@ -197,7 +197,7 @@ def setlanguage(language: Optional[str],
         if language == 'English':
             lmodvalues = None
         else:
-            lmodfile = 'data/data/languages/' + language.lower() + '.json'
+            lmodfile = 'ba_data/data/languages/' + language.lower() + '.json'
             with open(lmodfile) as infile:
                 lmodvalues = json.loads(infile.read())
     except Exception:
@@ -412,7 +412,7 @@ def get_valid_languages() -> List[str]:
     langs = set()
     app = _ba.app
     try:
-        names = os.listdir('data/data/languages')
+        names = os.listdir('ba_data/data/languages')
         names = [n.replace('.json', '').capitalize() for n in names]
     except Exception:
         from ba import _error

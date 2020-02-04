@@ -447,7 +447,7 @@ class App:
         packagedirs = ['tools/efrotools', 'tools/efro']
 
         # (Assume all dirs under these dirs are packages)
-        dirs_of_packages = ['assets/src/data/python', 'tests']
+        dirs_of_packages = ['assets/src/ba_data/python', 'tests']
         for dir_of_packages in dirs_of_packages:
             for name in os.listdir(dir_of_packages):
                 if (not name.startswith('.') and os.path.isdir(

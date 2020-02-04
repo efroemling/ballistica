@@ -338,8 +338,8 @@ def main() -> None:
     if cfg.include_collide_models:
         cmd += " --include '*.cob'"
 
-    cmd += (" --include='*/' --exclude='*' \"" + cfg.src + "/data/\" \"" +
-            cfg.dst + "/data/\"")
+    cmd += (" --include='*/' --exclude='*' \"" + cfg.src + "/ba_data/\" \"" +
+            cfg.dst + "/ba_data/\"")
     _run(cmd)
 
     # On Android we need to build a payload file so it knows
