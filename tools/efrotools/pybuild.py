@@ -578,10 +578,10 @@ def gather() -> None:
                 efrotools.run('mkdir -p "' + builddir + '"')
                 efrotools.run('mkdir -p "' + lib_dst + '"')
 
-                # Only pull modules into game assets on release pass
+                # Only pull modules into game assets on release pass.
                 if not debug:
                     # Copy system modules into the src assets
-                    # dir for this group
+                    # dir for this group.
                     efrotools.run('mkdir -p "' + assets_src_dst + '"')
                     efrotools.run(
                         'rsync --recursive --include "*.py"'
@@ -595,10 +595,25 @@ def gather() -> None:
                         'multiprocessing', 'pydoc_data', 'site-packages',
                         'ensurepip', 'tkinter', 'wsgiref', 'distutils',
                         'turtle.py', 'turtledemo', 'test', 'sqlite3/test',
-                        'unittest', 'dbm', 'venv', 'ctypes/test', 'imaplib.py'
+                        'unittest', 'dbm', 'venv', 'ctypes/test', 'imaplib.py',
+                        '_sysconfigdata_*'
                     ]
                     efrotools.run('cd "' + assets_src_dst + '" && rm -rf ' +
                                   ' '.join(prune))
+
+                    # Some minor filtering to system scripts:
+                    # on iOS/tvOS, addusersitepackages() leads to a crash
+                    # due to _sysconfigdata_dm_ios_darwin module not existing,
+                    # so let's skip that.
+                    fname = f'{assets_src_dst}/site.py'
+                    txt = efrotools.readfile(fname)
+                    txt = efrotools.replace_one(
+                        txt,
+                        '    known_paths = addusersitepackages(known_paths)',
+                        '    # efro tweak: this craps out on ios/tvos.\n'
+                        '    # (and we don\'t use it anyway)\n'
+                        '    # known_paths = addusersitepackages(known_paths)')
+                    efrotools.writefile(fname, txt)
 
                 # Copy in a base set of headers (everything in a group should
                 # be using the same headers)

@@ -312,7 +312,7 @@ def main() -> None:
 
     # Now standard common game data.
     assert cfg.dst is not None
-    _run('mkdir -p "' + cfg.dst + '/data"')
+    _run('mkdir -p "' + cfg.dst + '/ba_data"')
     cmd = ("rsync --recursive --update --delete --delete-excluded"
            " --prune-empty-dirs")
 

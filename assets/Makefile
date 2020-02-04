@@ -1806,7 +1806,6 @@ SCRIPT_TARGETS_PY_2_APPLE = \
   build/pylib-apple/tempfile.py \
   build/pylib-apple/queue.py \
   build/pylib-apple/macpath.py \
-  build/pylib-apple/_sysconfigdata_m_darwin_darwin.py \
   build/pylib-apple/_pyio.py \
   build/pylib-apple/crypt.py \
   build/pylib-apple/pkgutil.py \
@@ -2235,7 +2234,6 @@ SCRIPT_TARGETS_PYC_2_APPLE = \
   build/pylib-apple/__pycache__/tempfile.cpython-37.opt-1.pyc \
   build/pylib-apple/__pycache__/queue.cpython-37.opt-1.pyc \
   build/pylib-apple/__pycache__/macpath.cpython-37.opt-1.pyc \
-  build/pylib-apple/__pycache__/_sysconfigdata_m_darwin_darwin.cpython-37.opt-1.pyc \
   build/pylib-apple/__pycache__/_pyio.cpython-37.opt-1.pyc \
   build/pylib-apple/__pycache__/crypt.cpython-37.opt-1.pyc \
   build/pylib-apple/__pycache__/pkgutil.cpython-37.opt-1.pyc \
@@ -2689,11 +2687,6 @@ build/pylib-apple/__pycache__/queue.cpython-37.opt-1.pyc: \
 
 build/pylib-apple/__pycache__/macpath.cpython-37.opt-1.pyc: \
       build/pylib-apple/macpath.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/pylib-apple/__pycache__/_sysconfigdata_m_darwin_darwin.cpython-37.opt-1.pyc: \
-      build/pylib-apple/_sysconfigdata_m_darwin_darwin.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
@@ -4826,7 +4819,6 @@ SCRIPT_TARGETS_PY_2_ANDROID = \
   build/pylib-android/webbrowser.py \
   build/pylib-android/nntplib.py \
   build/pylib-android/_compat_pickle.py \
-  build/pylib-android/_sysconfigdata_m_linux_.py \
   build/pylib-android/dis.py \
   build/pylib-android/formatter.py \
   build/pylib-android/bdb.py \
@@ -5255,7 +5247,6 @@ SCRIPT_TARGETS_PYC_2_ANDROID = \
   build/pylib-android/__pycache__/webbrowser.cpython-37.opt-1.pyc \
   build/pylib-android/__pycache__/nntplib.cpython-37.opt-1.pyc \
   build/pylib-android/__pycache__/_compat_pickle.cpython-37.opt-1.pyc \
-  build/pylib-android/__pycache__/_sysconfigdata_m_linux_.cpython-37.opt-1.pyc \
   build/pylib-android/__pycache__/dis.cpython-37.opt-1.pyc \
   build/pylib-android/__pycache__/formatter.cpython-37.opt-1.pyc \
   build/pylib-android/__pycache__/bdb.cpython-37.opt-1.pyc \
@@ -5777,11 +5768,6 @@ build/pylib-android/__pycache__/nntplib.cpython-37.opt-1.pyc: \
 
 build/pylib-android/__pycache__/_compat_pickle.cpython-37.opt-1.pyc: \
       build/pylib-android/_compat_pickle.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/pylib-android/__pycache__/_sysconfigdata_m_linux_.cpython-37.opt-1.pyc: \
-      build/pylib-android/_sysconfigdata_m_linux_.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
