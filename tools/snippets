@@ -707,14 +707,27 @@ def update_docs_md() -> None:
     print(f'{docs_path} is up to date.')
 
 
-def pip_req_list() -> None:
-    """List Python Pip packages needed for this project."""
+def _get_pip_reqs() -> List[str]:
     out: List[str] = []
     for module in REQUIRED_PYTHON_MODULES:
         name = module[0] if module[2] is None else module[2]
         assert isinstance(name, str)
         out.append(name)
-    print(' '.join(out))
+    return out
+
+
+def list_pip_reqs() -> None:
+    """List Python Pip packages needed for this project."""
+    print(' '.join(_get_pip_reqs()))
+
+
+def install_pip_reqs() -> None:
+    """Install Python Pip packages needed for this project."""
+    from efrotools import PYTHON_BIN
+    subprocess.run([PYTHON_BIN, '-m', 'pip', 'install', '--upgrade'] +
+                   _get_pip_reqs(),
+                   check=True)
+    print(f'All pip requirements installed!')
 
 
 def checkenv() -> None:
