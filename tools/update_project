@@ -1,5 +1,5 @@
 #!/usr/bin/env python3.7
-# Copyright (c) 2011-2019 Eric Froemling
+# Copyright (c) 2011-2020 Eric Froemling
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -45,15 +45,18 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Optional, Tuple, List, Dict, Set
 
-# Minimal legal notice line required in our private files.
-# (Though public ones also start with this line too)
-LEGAL_NOTICE_PRIVATE = 'Copyright (c) 2011-2019 Eric Froemling'
-
 CLRHDR = '\033[95m'  # Header.
 CLRGRN = '\033[92m'  # Green.
 CLRBLU = '\033[94m'  # Glue.
 CLRRED = '\033[91m'  # Red.
 CLREND = '\033[0m'  # End.
+
+
+def get_legal_notice_private() -> str:
+    """Return the one line legal notice we expect private files to have."""
+    # We just use the first line of the mit license (just the copyright)
+    from efrotools import MIT_LICENSE
+    return MIT_LICENSE.splitlines()[0]
 
 
 @dataclass
@@ -263,7 +266,7 @@ class App:
             lines = infile.read().splitlines()
 
         # Look for copyright/legal-notice line(s)
-        legal_notice = '// ' + LEGAL_NOTICE_PRIVATE
+        legal_notice = '// ' + get_legal_notice_private()
         lnum = 0
         if lines[lnum] != legal_notice:
             # Allow auto-correcting if it looks close already
@@ -301,7 +304,7 @@ class App:
             raise RuntimeError('FIXME: Check for full license.')
 
         # Look for copyright/legal-notice line(s)
-        line = '// ' + LEGAL_NOTICE_PRIVATE
+        line = '// ' + get_legal_notice_private()
         lnum = 0
         if lines[lnum] != line:
             # Allow auto-correcting if it looks close already
@@ -350,7 +353,7 @@ class App:
         for fname in fnames:
             with open(fname) as infile:
                 makefile = infile.read()
-            if LEGAL_NOTICE_PRIVATE not in makefile:
+            if get_legal_notice_private() not in makefile:
                 raise RuntimeError(f'Priv legal not found in {fname}')
             if self._public:
                 public_license = get_public_license('makefile')
@@ -388,7 +391,7 @@ class App:
         # In all cases, look for our one-line legal notice.
         # In the public case, look for the rest of our public license too.
         public_license = get_public_license('python')
-        line = '# ' + LEGAL_NOTICE_PRIVATE
+        line = '# ' + get_legal_notice_private()
 
         # (Sanity check: public license's first line should be same as priv)
         if line != public_license.splitlines()[0]:

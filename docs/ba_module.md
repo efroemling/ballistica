@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<!--DOCSHASH=b0afcd2985f1e0bb65bafcc5708a89e9-->
+<!--DOCSHASH=c16f4e560c92e537cd19a323b815765c-->
 <h4><em>last updated on 2020-02-04 for Ballistica version 1.5.0 build 20001</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
