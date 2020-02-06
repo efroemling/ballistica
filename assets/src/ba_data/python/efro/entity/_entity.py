@@ -30,7 +30,7 @@ from efro.entity._value import CompoundValue
 from efro.jsonutils import ExtendedJSONEncoder, ExtendedJSONDecoder
 
 if TYPE_CHECKING:
-    from typing import Dict, Any, Type, Union
+    from typing import Dict, Any, Type, Union, Optional
 
 T = TypeVar('T', bound='EntityMixin')
 
@@ -133,24 +133,38 @@ class EntityMixin:
         self.prune_fields_data(data)
         return data
 
-    def to_json_str(self, prune: bool = True, pretty: bool = False) -> str:
+    def to_json_str(self,
+                    prune: bool = True,
+                    pretty: bool = False,
+                    sort_keys_override: Optional[bool] = None) -> str:
         """Convert the entity to a json string.
 
         This uses efro.jsontools.ExtendedJSONEncoder/Decoder
         to support data types not natively storable in json.
         Be sure to use the corresponding loading functions here for
         this same reason.
+        By default, keys are sorted when pretty-printing and not otherwise,
+        but this can be overridden by passing a bool as sort_keys_override.
         """
         if prune:
             data = self.pruned_data()
         else:
             data = self.d_data
         if pretty:
-            return json.dumps(data,
-                              indent=2,
-                              sort_keys=True,
-                              cls=ExtendedJSONEncoder)
-        return json.dumps(data, separators=(',', ':'), cls=ExtendedJSONEncoder)
+            return json.dumps(
+                data,
+                indent=2,
+                sort_keys=(sort_keys_override
+                           if sort_keys_override is not None else True),
+                cls=ExtendedJSONEncoder)
+
+        # When not doing pretty, go for quick and compact.
+        return json.dumps(
+            data,
+            separators=(',', ':'),
+            sort_keys=(sort_keys_override
+                       if sort_keys_override is not None else False),
+            cls=ExtendedJSONEncoder)
 
     @staticmethod
     def json_loads(s: str) -> Any:

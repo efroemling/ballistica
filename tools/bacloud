@@ -71,11 +71,12 @@ class Response:
     Attributes:
       message: If present, client should print this message before any other
         response processing (including error handling) occurs.
+      message_end: end arg for message print() call.
       error: If present, client should abort with this error message.
       login: If present, a token that should be stored client-side and passed
         with subsequent commands.
       logout: If True, any existing client-side token should be discarded.
-      dirmanifest: If present, client should generate a manifest of this dir.
+      dir_manifest: If present, client should generate a manifest of this dir.
         It should be added to endcommand args as 'manifest'.
       uploads: If present, client should upload the requested files (arg1)
         individually to a server command (arg2) with provided args (arg3).
@@ -86,25 +87,28 @@ class Response:
         be written to the client. This should only be used for relatively
         small files as they are all included inline as part of the response.
       deletes: If present, file paths that should be deleted on the client.
-      dirpruneempty: If present, all empty dirs under this one should be
+      dir_prune_empty: If present, all empty dirs under this one should be
         removed.
-      endmessage: If present, a message that should be printed after all other
+      end_message: If present, a message that should be printed after all other
         response processing is done.
-      endcommand: If present, this command is run with these args at the end
+      end_message_end: end arg for end_message print() call.
+      end_command: If present, this command is run with these args at the end
         of response processing.
     """
     message: Optional[str] = None
+    message_end: str = '\n'
     error: Optional[str] = None
     login: Optional[str] = None
     logout: bool = False
-    dirmanifest: Optional[str] = None
+    dir_manifest: Optional[str] = None
     uploads: Optional[Tuple[List[str], str, Dict]] = None
     uploads_inline: Optional[List[str]] = None
     downloads_inline: Optional[Dict[str, str]] = None
     deletes: Optional[List[str]] = None
-    dirpruneempty: Optional[str] = None
-    endmessage: Optional[str] = None
-    endcommand: Optional[Tuple[str, Dict]] = None
+    dir_prune_empty: Optional[str] = None
+    end_message: Optional[str] = None
+    end_message_end: str = '\n'
+    end_command: Optional[Tuple[str, Dict]] = None
 
 
 class CleanError(Exception):
@@ -271,7 +275,7 @@ class App:
         # Handle a few things inline.
         # (so this functionality is available even to recursive commands, etc.)
         if response.message is not None:
-            print(response.message, flush=True)
+            print(response.message, end=response.message_end, flush=True)
 
         if response.error is not None:
             raise CleanError(response.error)
@@ -294,7 +298,7 @@ class App:
                     files=putfiles,
                 )
 
-    def _handle_dirmanifest_response(self, dirmanifest: str) -> None:
+    def _handle_dir_manifest_response(self, dirmanifest: str) -> None:
         from dataclasses import asdict
         manifest = DirManifest.load_from_disk(Path(dirmanifest))
 
@@ -357,7 +361,7 @@ class App:
             files[filepath] = data_base64
         self._end_command_args['uploads_inline'] = files
 
-    def _handle_dirpruneempty(self, prunedir: str) -> None:
+    def _handle_dir_prune_empty(self, prunedir: str) -> None:
         """Handle pruning empty directories."""
         # Walk the tree bottom-up so we can properly kill recursive empty dirs.
         for basename, dirnames, filenames in os.walk(prunedir, topdown=False):
@@ -385,8 +389,8 @@ class App:
                 self._state.login_token = response.login
             if response.logout:
                 self._state.login_token = None
-            if response.dirmanifest is not None:
-                self._handle_dirmanifest_response(response.dirmanifest)
+            if response.dir_manifest is not None:
+                self._handle_dir_manifest_response(response.dir_manifest)
             if response.uploads_inline is not None:
                 self._handle_uploads_inline(response.uploads_inline)
             if response.uploads is not None:
@@ -395,12 +399,14 @@ class App:
                 self._handle_downloads_inline(response.downloads_inline)
             if response.deletes:
                 self._handle_deletes(response.deletes)
-            if response.dirpruneempty:
-                self._handle_dirpruneempty(response.dirpruneempty)
-            if response.endmessage is not None:
-                print(response.endmessage, flush=True)
-            if response.endcommand is not None:
-                nextcall = response.endcommand
+            if response.dir_prune_empty:
+                self._handle_dir_prune_empty(response.dir_prune_empty)
+            if response.end_message is not None:
+                print(response.end_message,
+                      end=response.end_message_end,
+                      flush=True)
+            if response.end_command is not None:
+                nextcall = response.end_command
                 for key, val in self._end_command_args.items():
                     nextcall[1][key] = val
 
