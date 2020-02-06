@@ -45,10 +45,12 @@ VERSION = 1
 
 TOOL_NAME = 'bacloud'
 
-# Set BACLOUD_LOCAL env var to 1 to test with a locally-run master-server.
-MASTER_SERVER_ADDRESS = ('http://localhost:23524'
-                         if os.environ.get('BACLOUD_LOCAL') == '1' else
-                         'https://bamaster.appspot.com')
+# Set BACLOUD_SERVER env var to LOCAL to talk to a locally-run master-server.
+# Set it to TEST to talk to the 'test' app-engine service.
+MASTER_SERVER_ADDRESS = (
+    'http://localhost:23524' if os.environ.get('BACLOUD_SERVER') == 'LOCAL'
+    else 'https://1-dot-test-dot-bamaster.appspot.com' if os.environ.get(
+        'BACLOUD_SERVER') == 'TEST' else 'https://bamaster.appspot.com')
 
 CLRHDR = '\033[95m'  # Header.
 CLRGRN = '\033[92m'  # Green.
