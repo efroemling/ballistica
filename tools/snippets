@@ -826,5 +826,30 @@ def make_prefab() -> None:
     run(f'make {target}')
 
 
+def update_makebob() -> None:
+    """Build fresh make_bob binaries for all relevant platforms."""
+    print('Building mac_x86_64...', flush=True)
+    env = dict(os.environ)
+    env['CMAKE_BUILD_TYPE'] = 'Release'
+    subprocess.run(['make', 'cmake-build'], check=True, env=env)
+    subprocess.run(
+        [
+            'cp', '-v', 'ballisticacore-cmake/build/release/make_bob',
+            'tools/make_bob/mac_x86_64/'
+        ],
+        check=True,
+    )
+    print('Building linux_x86_64...', flush=True)
+    subprocess.run(['make', 'linux-build'], check=True, env=env)
+    subprocess.run(
+        [
+            'cp', '-v', 'build/linux-release/make_bob',
+            'tools/make_bob/linux_x86_64/'
+        ],
+        check=True,
+    )
+    print('All builds complete!', flush=True)
+
+
 if __name__ == '__main__':
     snippets_main(globals())
