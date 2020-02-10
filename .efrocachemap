@@ -878,7 +878,7 @@
   "assets/build/ba_data/models/towerDLevelBottom.bob": "https://files.ballistica.net/cache/ba1/80/cc/0c938ec519ba9c3bc9aeb51c11c6",
   "assets/build/ba_data/models/towerDLevelCollide.cob": "https://files.ballistica.net/cache/ba1/66/83/af98677836422135d93a378867a4",
   "assets/build/ba_data/models/towerDPlayerWall.cob": "https://files.ballistica.net/cache/ba1/5a/0a/cf6a24d5003e5b0a4fb4f1103695",
-  "assets/build/ba_data/models/trees.bob": "https://files.ballistica.net/cache/ba1/79/9f/4b2cf5aade98b0cc05d5e3f277e5",
+  "assets/build/ba_data/models/trees.bob": "https://files.ballistica.net/cache/ba1/72/2e/709d5217f70a8e9f871f9cb36765",
   "assets/build/ba_data/models/vrFade.bob": "https://files.ballistica.net/cache/ba1/3a/39/0b46b332f9099b5c0087f4fff67f",
   "assets/build/ba_data/models/vrOverlay.bob": "https://files.ballistica.net/cache/ba1/c1/07/c75f8388c32635734f2c43af2885",
   "assets/build/ba_data/models/warriorForeArm.bob": "https://files.ballistica.net/cache/ba1/c5/11/a2a7105d75fbb3da89739d0c398c",
@@ -4116,6 +4116,6 @@
   "build/prefab/linux/release/ballisticacore": "https://files.ballistica.net/cache/ba1/72/9b/58303368be4482e72e8a24b3502b",
   "build/prefab/mac/debug/ballisticacore": "https://files.ballistica.net/cache/ba1/45/0a/2bee5cb0ff703d0c7cb02c01dffa",
   "build/prefab/mac/release/ballisticacore": "https://files.ballistica.net/cache/ba1/80/26/ecd223d7b86da5a6e93267299085",
-  "build/prefab/windows/debug/BallisticaCore.exe": "https://files.ballistica.net/cache/ba1/ad/e4/3fedd1d0f50a7087be8d135e1750",
+  "build/prefab/windows/debug/BallisticaCore.exe": "https://files.ballistica.net/cache/ba1/d6/df/c19832bf171d7675c1cddd9eeadd",
   "build/prefab/windows/release/BallisticaCore.exe": "https://files.ballistica.net/cache/ba1/68/e3/31fd0626dbb3db5b48bd57916d12"
 }
