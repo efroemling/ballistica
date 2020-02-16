@@ -48,15 +48,9 @@ class AssetType(Enum):
     DATA = 'data'
 
 
-class AssetInfo(entity.CompoundValue):
-    """Info for a specific asset file in a package."""
-    filehash = entity.Field('h', entity.StringValue())
-    fileext = entity.Field('e', entity.StringValue())
-
-
 class AssetPackageFlavorManifestValue(entity.CompoundValue):
     """A manifest of asset info for a specific flavor of an asset package."""
-    assets = entity.CompoundDictField('a', str, AssetInfo())
+    assetfiles = entity.DictField('assetfiles', str, entity.StringValue())
 
 
 class AssetPackageFlavorManifest(entity.EntityMixin,
@@ -66,4 +60,14 @@ class AssetPackageFlavorManifest(entity.EntityMixin,
 
 class AssetPackageBuildState(entity.Entity):
     """Contains info about an in-progress asset cloud build."""
+
+    # Asset names still being built.
     in_progress_builds = entity.ListField('b', entity.StringValue())
+
+    # The initial number of assets needing to be built.
+    initial_build_count = entity.Field('c', entity.IntValue())
+
+    # Build error string. If this is present, it should be presented
+    # to the user and they should required to explicitly restart the build
+    # in some way if desired.
+    error = entity.Field('e', entity.OptionalStringValue())

@@ -416,6 +416,10 @@ class App:
 if __name__ == '__main__':
     try:
         App().run()
+    except KeyboardInterrupt:
+        # Let's do a clean fail on keyboard interrupt.
+        # Can make this optional if a backtrace is ever useful..
+        sys.exit(-1)
     except CleanError as exc:
         if str(exc):
             print(f'{CLRRED}{exc}{CLREND}')
