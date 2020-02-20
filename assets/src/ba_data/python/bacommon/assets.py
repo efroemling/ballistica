@@ -46,6 +46,7 @@ class AssetType(Enum):
     TEXTURE = 'texture'
     SOUND = 'sound'
     DATA = 'data'
+    MESH = 'mesh'
 
 
 class AssetPackageFlavorManifestValue(entity.CompoundValue):

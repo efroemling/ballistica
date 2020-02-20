@@ -652,6 +652,7 @@
       <w>funtionality</w>
       <w>futimens</w>
       <w>fval</w>
+      <w>fverts</w>
       <w>gameactivity</w>
       <w>gamebutton</w>
       <w>gameclass</w>
@@ -819,6 +820,7 @@
       <w>initing</w>
       <w>inits</w>
       <w>inmobi</w>
+      <w>inpath</w>
       <w>inputdevice</w>
       <w>inputfiles</w>
       <w>inputhash</w>
@@ -1675,6 +1677,7 @@
       <w>testthread</w>
       <w>testval</w>
       <w>testwith</w>
+      <w>texcoords</w>
       <w>texcube</w>
       <w>textactor</w>
       <w>textcolor</w>
