@@ -91,6 +91,7 @@ class Response:
       deletes: If present, file paths that should be deleted on the client.
       dir_prune_empty: If present, all empty dirs under this one should be
         removed.
+      open_url: If present, url to display to the user.
       end_message: If present, a message that should be printed after all other
         response processing is done.
       end_message_end: end arg for end_message print() call.
@@ -108,6 +109,7 @@ class Response:
     downloads_inline: Optional[Dict[str, str]] = None
     deletes: Optional[List[str]] = None
     dir_prune_empty: Optional[str] = None
+    open_url: Optional[str] = None
     end_message: Optional[str] = None
     end_message_end: str = '\n'
     end_command: Optional[Tuple[str, Dict]] = None
@@ -377,8 +379,13 @@ class App:
             if not dirnames and not filenames and basename != prunedir:
                 os.rmdir(basename)
 
+    def _handle_open_url(self, url: str) -> None:
+        import webbrowser
+        webbrowser.open(url)
+
     def run_user_command(self, args: List[str]) -> None:
         """Run a single user command to completion."""
+        # pylint: disable=too-many-branches
 
         nextcall: Optional[Tuple[str, Dict]] = ('user', {'a': args})
 
@@ -403,6 +410,8 @@ class App:
                 self._handle_deletes(response.deletes)
             if response.dir_prune_empty:
                 self._handle_dir_prune_empty(response.dir_prune_empty)
+            if response.open_url is not None:
+                self._handle_open_url(response.open_url)
             if response.end_message is not None:
                 print(response.end_message,
                       end=response.end_message_end,

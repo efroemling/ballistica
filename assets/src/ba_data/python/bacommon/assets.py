@@ -44,9 +44,11 @@ class AssetPackageFlavor(Enum):
 class AssetType(Enum):
     """Types for individual assets within a package."""
     TEXTURE = 'texture'
+    CUBE_TEXTURE = 'cube_texture'
     SOUND = 'sound'
     DATA = 'data'
     MESH = 'mesh'
+    COLLISION_MESH = 'collision_mesh'
 
 
 class AssetPackageFlavorManifestValue(entity.CompoundValue):
