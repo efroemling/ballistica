@@ -181,6 +181,7 @@ SCRIPT_TARGETS_PY_1 = \
   build/ba_data/python/ba/_store.py \
   build/ba_data/python/ba/_activitytypes.py \
   build/ba_data/python/ba/__init__.py \
+  build/ba_data/python/ba/_assetmanager.py \
   build/ba_data/python/ba/_session.py \
   build/ba_data/python/ba/_hooks.py \
   build/ba_data/python/ba/_enums.py \
@@ -417,6 +418,7 @@ SCRIPT_TARGETS_PYC_1 = \
   build/ba_data/python/ba/__pycache__/_store.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_activitytypes.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_assetmanager.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_session.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_hooks.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_enums.cpython-37.opt-1.pyc \
@@ -818,6 +820,11 @@ build/ba_data/python/ba/__pycache__/_activitytypes.cpython-37.opt-1.pyc: \
 
 build/ba_data/python/ba/__pycache__/__init__.cpython-37.opt-1.pyc: \
       build/ba_data/python/ba/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python/ba/__pycache__/_assetmanager.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_assetmanager.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 

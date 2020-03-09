@@ -310,6 +310,14 @@ mypy: prereqs
 mypy-full: prereqs
 	@tools/snippets mypy -full
 
+# Run Mypy checks on all Python code using daemon mode.
+dmypy: prereqs
+	@tools/snippets dmypy
+
+# Stop the mypy daemon
+dmypy-stop: prereqs
+	@tools/snippets dmypy -stop
+
 # Run PyCharm checks on all Python code.
 pycharm: prereqs
 	@tools/snippets pycharm
@@ -338,6 +346,11 @@ test: prereqs
 
 # Run tests with any caching disabled.
 test-full: test
+
+# Some individual tests for iterating.
+test-assetmanager:
+	@tools/snippets pytest \
+ -s -v tests/test_ba/test_assetmanager.py::test_assetmanager
 
 # Tell make which of these targets don't represent files.
 .PHONY: test test-full

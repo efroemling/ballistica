@@ -524,7 +524,7 @@ def runmypy(filenames: List[str],
 
 
 def mypy(projroot: Path, full: bool) -> None:
-    """Run mypy on all of our scripts."""
+    """Type check all of our scripts using mypy."""
     import time
     filenames = get_script_filenames(projroot)
     print('Running Mypy ' + ('(full)' if full else '(incremental)') + '...',
@@ -537,6 +537,31 @@ def mypy(projroot: Path, full: bool) -> None:
         sys.exit(255)
     duration = time.time() - starttime
     print(f'Mypy passed in {duration:.1f} seconds.', flush=True)
+
+
+def dmypy(projroot: Path) -> None:
+    """Type check all of our scripts using mypy in daemon mode."""
+    import time
+    filenames = get_script_filenames(projroot)
+
+    # Special case; explicitly kill the daemon.
+    if '-stop' in sys.argv:
+        subprocess.run(['dmypy', 'stop'], check=False)
+        return
+
+    print('Running Mypy (daemon)...', flush=True)
+    starttime = time.time()
+    try:
+        args = [
+            'dmypy', 'run', '--timeout', '3600', '--', '--config-file',
+            '.mypy.ini', '--follow-imports=error', '--pretty'
+        ] + filenames
+        subprocess.run(args, check=True)
+    except Exception:
+        print('Mypy: fail.')
+        sys.exit(255)
+    duration = time.time() - starttime
+    print(f'Mypy daemon passed in {duration:.1f} seconds.', flush=True)
 
 
 def _parse_idea_results(path: Path) -> int:

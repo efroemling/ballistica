@@ -262,6 +262,12 @@ def mypy() -> None:
     code.mypy(PROJROOT, full)
 
 
+def dmypy() -> None:
+    """Run mypy checks on our scripts using the mypy daemon."""
+    from efrotools import code
+    code.dmypy(PROJROOT)
+
+
 def pycharm() -> None:
     """Run PyCharm checks on our scripts."""
     from efrotools import code

@@ -288,6 +288,9 @@ def make_hash(obj: Any) -> int:
 
     Note that this uses Python's hash() function internally so collisions/etc.
     may be more common than with fancy cryptographic hashes.
+
+    Also be aware that Python's hash() output varies across processes, so
+    this should only be used for values that will remain in a single process.
     """
     import copy
 

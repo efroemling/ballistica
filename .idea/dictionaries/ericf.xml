@@ -87,6 +87,7 @@
       <w>assetcache</w>
       <w>assetdata</w>
       <w>assetfiles</w>
+      <w>assetmanager</w>
       <w>assetpack</w>
       <w>assetpackage</w>
       <w>assetpackput</w>
@@ -414,6 +415,7 @@
       <w>dline</w>
       <w>dlls</w>
       <w>dmodule</w>
+      <w>dmypy</w>
       <w>dname</w>
       <w>dnames</w>
       <w>dnode</w>
@@ -1863,6 +1865,7 @@
       <w>workdir</w>
       <w>workflows</w>
       <w>wpath</w>
+      <w>wref</w>
       <w>writeclasses</w>
       <w>writefuncs</w>
       <w>wtcolor</w>
