@@ -119,7 +119,10 @@ class EntityMixin:
                 f" ({type(self)}); can't steal data.")
         assert target.d_data is not None
         self.d_data = target.d_data
-        target.d_data = None
+
+        # Make sure target blows up if someone tries to use it.
+        # noinspection PyTypeHints
+        target.d_data = None  # type: ignore
 
     def pruned_data(self) -> Dict[str, Any]:
         """Return a pruned version of this instance's data.

@@ -71,11 +71,10 @@ class ExtendedJSONDecoder(json.JSONDecoder):
     """Custom json decoder supporting extended types."""
 
     def __init__(self, *args: Any, **kwargs: Any):
-        json.JSONDecoder.__init__(  # type: ignore
-            self,
-            object_hook=self.object_hook,
-            *args,
-            **kwargs)
+        json.JSONDecoder.__init__(self,
+                                  object_hook=self.object_hook,
+                                  *args,
+                                  **kwargs)
 
     def object_hook(self, obj: Any) -> Any:  # pylint: disable=E0202
         """Custom hook."""

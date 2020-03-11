@@ -45,6 +45,7 @@
       <w>allpaths</w>
       <w>allsettings</w>
       <w>allteams</w>
+      <w>aman</w>
       <w>aname</w>
       <w>anamorphosis</w>
       <w>andr</w>
@@ -105,6 +106,7 @@
       <w>asyncio</w>
       <w>asynciomodule</w>
       <w>asyncore</w>
+      <w>atexit</w>
       <w>attrdict</w>
       <w>attrdocs</w>
       <w>attrinfo</w>
@@ -463,6 +465,7 @@
       <w>duckdns</w>
       <w>dummymodule</w>
       <w>dummyname</w>
+      <w>dummytoken</w>
       <w>dummyval</w>
       <w>dups</w>
       <w>dxml</w>
@@ -1662,6 +1665,7 @@
       <w>testcapimodule</w>
       <w>testclass</w>
       <w>testd</w>
+      <w>testdl</w>
       <w>testfoo</w>
       <w>testfooooo</w>
       <w>testfull</w>
@@ -1797,6 +1801,7 @@
       <w>uploadargs</w>
       <w>uploadcmd</w>
       <w>uptime</w>
+      <w>ureq</w>
       <w>useragent</w>
       <w>useragentstring</w>
       <w>userbase</w>

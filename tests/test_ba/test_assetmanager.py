@@ -24,8 +24,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 import weakref
+import tempfile
+from pathlib import Path
 # noinspection PyProtectedMember
 from ba._assetmanager import AssetManager
+
+from bacommon.assets import AssetPackageFlavor
 
 # import pytest
 
@@ -36,9 +40,17 @@ if TYPE_CHECKING:
 def test_assetmanager() -> None:
     """Testing."""
 
-    manager = AssetManager()
-    wref = weakref.ref(manager)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        man = AssetManager(rootdir=Path(tmpdir))
+        wref = weakref.ref(man)
 
-    # Make sure it's not keeping itself alive.
-    del manager
-    assert wref() is None
+        gather = man.launch_gather(packages=['a@2'],
+                                   flavor=AssetPackageFlavor.DESKTOP,
+                                   account_token='dummytoken')
+        wref2 = weakref.ref(gather)
+
+        # Make sure nothing is keeping itself alive
+        del man
+        del gather
+        assert wref() is None
+        assert wref2() is None

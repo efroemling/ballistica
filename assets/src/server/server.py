@@ -169,6 +169,7 @@ def _run_process_until_exit(process: subprocess.Popen,
             ftmp.close()
 
             # Note to self: Is there a type-safe way we could do this?
+            assert process.stdin is not None
             process.stdin.write(('from ba import _server; '
                                  '_server.config_server(config_file=' +
                                  repr(fname) + ')\n').encode('utf-8'))
