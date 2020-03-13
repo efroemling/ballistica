@@ -41,6 +41,7 @@ def test_assetmanager() -> None:
     """Testing."""
 
     with tempfile.TemporaryDirectory() as tmpdir:
+
         manager = AssetManager(rootdir=Path(tmpdir))
         wref = weakref.ref(manager)
         manager.start()
@@ -52,7 +53,7 @@ def test_assetmanager() -> None:
 
         manager.stop()
 
-        # Make sure nothing is keeping itself alive
+        # Make sure nothing is keeping itself alive.
         del manager
         del gather
         assert wref() is None

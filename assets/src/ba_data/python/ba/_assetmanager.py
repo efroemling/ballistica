@@ -162,9 +162,13 @@ class AssetGather:
 
 
 def fetch_url(url: str, filename: Path, asset_gather: AssetGather) -> None:
-    """Fetch a given url to a given filename."""
+    """Fetch a given url to a given filename for a given AssetGather.
+
+    """
+    # pylint: disable=too-many-locals
 
     import socket
+    import threading
 
     # We don't want to keep the provided AssetGather alive, but we want
     # to abort if it dies.
@@ -173,31 +177,41 @@ def fetch_url(url: str, filename: Path, asset_gather: AssetGather) -> None:
 
     # Pass a very short timeout to urllib so we have opportunities
     # to cancel even with network blockage.
-    ureq = urllib.request.urlopen(url, None, 1)
-    file_size = int(ureq.headers["Content-Length"])
-    print(f"\nDownloading: {filename} Bytes: {file_size:,}")
+    req = urllib.request.urlopen(url, timeout=1)
+    file_size = int(req.headers['Content-Length'])
+    print(f'\nDownloading: {filename} Bytes: {file_size:,}')
+
+    def doit() -> None:
+        time.sleep(1)
+        print('dir', type(req.fp), dir(req.fp))
+        print('WOULD DO IT', flush=True)
+        # req.close()
+        req.fp.close()
+
+    threading.Thread(target=doit).run()
 
     with open(filename, 'wb') as outfile:
         file_size_dl = 0
 
-        # I'm guessing we want this decently big so we're running fewer cycles
-        # of this loop during downloads and keeping our load lower. Our timeout
-        # should ensure a minimum rate for the loop and this will affect
-        # the maximum. Perhaps we should aim for a few cycles per second on
-        # an average connection?..
-        block_sz = 1024 * 1024
+        block_sz = 1024 * 1024 * 1000
         time_outs = 0
         while True:
             try:
-                data = ureq.read(block_sz)
+                data = req.read(block_sz)
+            except ValueError:
+                import traceback
+                traceback.print_exc()
+                print('VALUEERROR', flush=True)
+                break
             except socket.timeout:
+                print('TIMEOUT', flush=True)
                 # File has not had activity in max seconds.
                 if time_outs > 3:
-                    print("\n\n\nsorry -- try back later")
+                    print('\n\n\nsorry -- try back later')
                     os.unlink(filename)
                     raise
-                print("\nHmmm... little issue... "
-                      "I'll wait a couple of seconds")
+                print('\nHmmm... little issue... '
+                      'I\'ll wait a couple of seconds')
                 time.sleep(3)
                 time_outs += 1
                 continue
