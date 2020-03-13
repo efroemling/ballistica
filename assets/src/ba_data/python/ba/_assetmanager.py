@@ -30,7 +30,6 @@ import weakref
 import time
 import os
 import sys
-# import atexit
 
 from efro import entity
 
@@ -58,22 +57,16 @@ class AssetManager:
         print('AssetManager()')
         assert isinstance(rootdir, Path)
         self._rootdir = rootdir
-        self._shutting_down = False
+        self._started = False
         if not self._rootdir.is_dir():
             raise RuntimeError(f'Provided rootdir does not exist: "{rootdir}"')
 
         self.load_state()
 
-        # atexit.register(self._at_exit)
-
     def __del__(self) -> None:
-        self._shutting_down = True
-        self.update()
         print('~AssetManager()')
-
-    # @staticmethod
-    # def _at_exit() -> None:
-    #     print('HELLO FROM SHUTDOWN')
+        if self._started:
+            logging.warning('AssetManager dying in a started state.')
 
     def launch_gather(
             self,
@@ -89,9 +82,24 @@ class AssetManager:
     def update(self) -> None:
         """Can be called periodically to perform upkeep."""
 
-        # Currently we always write state when shutting down.
-        if self._shutting_down:
-            self.save_state()
+    def start(self) -> None:
+        """Tell the manager to start working.
+
+        This will initiate network activity and other processing.
+        """
+        if self._started:
+            logging.warning('AssetManager.start() called on running manager.')
+        self._started = True
+
+    def stop(self) -> None:
+        """Tell the manager to stop working.
+
+        All network activity should be ceased before this function returns.
+        """
+        if not self._started:
+            logging.warning('AssetManager.stop() called on stopped manager.')
+        self._started = False
+        self.save_state()
 
     @property
     def rootdir(self) -> Path:
@@ -118,6 +126,7 @@ class AssetManager:
 
     def save_state(self) -> None:
         """Save state to disk (if possible)."""
+
         print('AMAN SAVING STATE')
         try:
             with open(self.state_path, 'w') as outfile:
@@ -133,7 +142,9 @@ class AssetGather:
         self._manager = weakref.ref(manager)
         self._valid = True
         print('AssetGather()')
-        fetch_url("http://www.python.org/ftp/python/2.7.3/Python-2.7.3.tgz",
+        # url = 'https://files.ballistica.net/bombsquad/promo/BSGamePlay.mov'
+        url = 'http://www.python.org/ftp/python/2.7.3/Python-2.7.3.tgz'
+        fetch_url(url,
                   filename=Path(manager.rootdir, 'testdl'),
                   asset_gather=self)
         print('fetch success')
@@ -151,9 +162,7 @@ class AssetGather:
 
 
 def fetch_url(url: str, filename: Path, asset_gather: AssetGather) -> None:
-    """Fetch a given url to a given filename for a given AssetGather.
-
-    This """
+    """Fetch a given url to a given filename."""
 
     import socket
 
@@ -176,13 +185,12 @@ def fetch_url(url: str, filename: Path, asset_gather: AssetGather) -> None:
         # should ensure a minimum rate for the loop and this will affect
         # the maximum. Perhaps we should aim for a few cycles per second on
         # an average connection?..
-        block_sz = 1024 * 100 * 2
+        block_sz = 1024 * 1024
         time_outs = 0
         while True:
             try:
                 data = ureq.read(block_sz)
             except socket.timeout:
-
                 # File has not had activity in max seconds.
                 if time_outs > 3:
                     print("\n\n\nsorry -- try back later")

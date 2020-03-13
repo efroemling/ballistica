@@ -41,16 +41,19 @@ def test_assetmanager() -> None:
     """Testing."""
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        man = AssetManager(rootdir=Path(tmpdir))
-        wref = weakref.ref(man)
+        manager = AssetManager(rootdir=Path(tmpdir))
+        wref = weakref.ref(manager)
+        manager.start()
 
-        gather = man.launch_gather(packages=['a@2'],
-                                   flavor=AssetPackageFlavor.DESKTOP,
-                                   account_token='dummytoken')
+        gather = manager.launch_gather(packages=['a@2'],
+                                       flavor=AssetPackageFlavor.DESKTOP,
+                                       account_token='dummytoken')
         wref2 = weakref.ref(gather)
 
+        manager.stop()
+
         # Make sure nothing is keeping itself alive
-        del man
+        del manager
         del gather
         assert wref() is None
         assert wref2() is None

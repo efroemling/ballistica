@@ -347,10 +347,10 @@ test: prereqs
 # Run tests with any caching disabled.
 test-full: test
 
-# Some individual tests for iterating.
+# Iterating on individual tests with extra debug output enabled.
 test-assetmanager:
-	@tools/snippets pytest \
- -s -v tests/test_ba/test_assetmanager.py::test_assetmanager
+	@tools/snippets pytest -o log_cli=true -o log_cli_level=debug -s -v \
+      tests/test_ba/test_assetmanager.py::test_assetmanager
 
 # Tell make which of these targets don't represent files.
 .PHONY: test test-full
