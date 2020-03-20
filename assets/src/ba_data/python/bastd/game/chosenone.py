@@ -21,7 +21,7 @@
 """Provides the chosen-one mini-game."""
 
 # ba_meta require api 6
-# (see bombsquadgame.com/apichanges)
+# (see https://github.com/efroemling/ballistica/wiki/Using-ba_meta-Tags)
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
