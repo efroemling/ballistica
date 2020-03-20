@@ -20,7 +20,7 @@
 # -----------------------------------------------------------------------------
 """Elimination mini-game."""
 
-# bs_meta require api 6
+# ba_meta require api 6
 # (see bombsquadgame.com/apichanges)
 
 from __future__ import annotations
@@ -163,7 +163,7 @@ class Icon(ba.Actor):
                 ba.timer(0.6, self.update_for_lives)
 
 
-# bs_meta export game
+# ba_meta export game
 class EliminationGame(ba.TeamGameActivity):
     """Game type where last player(s) left alive win."""
 

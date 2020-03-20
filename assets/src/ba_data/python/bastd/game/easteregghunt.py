@@ -20,7 +20,7 @@
 # -----------------------------------------------------------------------------
 """Provides an easter egg hunt game."""
 
-# bs_meta require api 6
+# ba_meta require api 6
 # (see bombsquadgame.com/apichanges)
 
 from __future__ import annotations
@@ -38,7 +38,7 @@ if TYPE_CHECKING:
     from typing import Any, Type, Dict, List, Tuple, Optional
 
 
-# bs_meta export game
+# ba_meta export game
 class EasterEggHuntGame(ba.TeamGameActivity):
     """A game where score is based on collecting eggs"""
 

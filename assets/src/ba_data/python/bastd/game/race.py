@@ -20,7 +20,7 @@
 # -----------------------------------------------------------------------------
 """Defines Race mini-game."""
 
-# bs_meta require api 6
+# ba_meta require api 6
 # (see bombsquadgame.com/apichanges)
 
 from __future__ import annotations
@@ -58,7 +58,7 @@ class RaceRegion(ba.Actor):
             })
 
 
-# bs_meta export game
+# ba_meta export game
 class RaceGame(ba.TeamGameActivity):
     """Game of racing around a track."""
 

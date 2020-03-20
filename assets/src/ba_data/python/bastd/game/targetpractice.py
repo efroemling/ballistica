@@ -20,7 +20,7 @@
 # -----------------------------------------------------------------------------
 """Implements Target Practice game."""
 
-# bs_meta require api 6
+# ba_meta require api 6
 # (see bombsquadgame.com/apichanges)
 
 from __future__ import annotations
@@ -37,7 +37,7 @@ if TYPE_CHECKING:
     from bastd.actor.bomb import Bomb, Blast
 
 
-# bs_meta export game
+# ba_meta export game
 class TargetPracticeGame(ba.TeamGameActivity):
     """Game where players try to hit targets with bombs."""
 

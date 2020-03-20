@@ -175,7 +175,7 @@ class DirectoryScan:
             flines = infile.readlines()
         meta_lines = {
             lnum: l[1:].split()
-            for lnum, l in enumerate(flines) if 'bs_meta' in l
+            for lnum, l in enumerate(flines) if 'ba_meta' in l
         }
         toplevel = len(subpath.parts) <= 1
         required_api = self.get_api_requirement(subpath, meta_lines, toplevel)
@@ -213,25 +213,25 @@ class DirectoryScan:
     def _process_module_meta_tags(self, subpath: pathlib.Path,
                                   flines: List[str],
                                   meta_lines: Dict[int, List[str]]) -> None:
-        """Pull data from a module based on its bs_meta tags."""
+        """Pull data from a module based on its ba_meta tags."""
         for lindex, mline in meta_lines.items():
-            # meta_lines is just anything containing 'bs_meta'; make sure
-            # the bs_meta is in the right place.
-            if mline[0] != 'bs_meta':
+            # meta_lines is just anything containing 'ba_meta'; make sure
+            # the ba_meta is in the right place.
+            if mline[0] != 'ba_meta':
                 self.results['warnings'] += (
                     'Warning: ' + str(subpath) +
-                    ': malformed bs_meta statement on line ' +
+                    ': malformed ba_meta statement on line ' +
                     str(lindex + 1) + '.\n')
             elif (len(mline) == 4 and mline[1] == 'require'
                   and mline[2] == 'api'):
                 # Ignore 'require api X' lines in this pass.
                 pass
             elif len(mline) != 3 or mline[1] != 'export':
-                # Currently we only support 'bs_meta export FOO';
+                # Currently we only support 'ba_meta export FOO';
                 # complain for anything else we see.
                 self.results['warnings'] += (
                     'Warning: ' + str(subpath) +
-                    ': unrecognized bs_meta statement on line ' +
+                    ': unrecognized ba_meta statement on line ' +
                     str(lindex + 1) + '.\n')
             else:
                 # Looks like we've got a valid export line!
@@ -273,7 +273,7 @@ class DirectoryScan:
         if classname is None:
             self.results['warnings'] += (
                 'Warning: ' + str(subpath) + ': class definition not found'
-                ' below "bs_meta export" statement on line ' +
+                ' below "ba_meta export" statement on line ' +
                 str(lindexorig + 1) + '.\n')
         return classname
 
@@ -285,7 +285,7 @@ class DirectoryScan:
         Malformed api requirement strings will be logged as warnings.
         """
         lines = [
-            l for l in meta_lines.values() if len(l) == 4 and l[0] == 'bs_meta'
+            l for l in meta_lines.values() if len(l) == 4 and l[0] == 'ba_meta'
             and l[1] == 'require' and l[2] == 'api' and l[3].isdigit()
         ]
 
@@ -297,14 +297,14 @@ class DirectoryScan:
         if len(lines) > 1:
             self.results['warnings'] += (
                 'Warning: ' + str(subpath) +
-                ': multiple "# bs_meta api require <NUM>" lines found;'
+                ': multiple "# ba_meta api require <NUM>" lines found;'
                 ' ignoring module.\n')
         elif not lines and toplevel and meta_lines:
             # If we're a top-level module containing meta lines but
             # no valid api require, complain.
             self.results['warnings'] += (
                 'Warning: ' + str(subpath) +
-                ': no valid "# bs_meta api require <NUM>" line found;'
+                ': no valid "# ba_meta api require <NUM>" line found;'
                 ' ignoring module.\n')
         return None
 

@@ -20,7 +20,7 @@
 # -----------------------------------------------------------------------------
 """Implements football games (both co-op and teams varieties)."""
 
-# bs_meta require api 6
+# ba_meta require api 6
 # (see bombsquadgame.com/apichanges)
 
 from __future__ import annotations
@@ -65,7 +65,7 @@ class FootballFlag(stdflag.Flag):
         self.node.connectattr('position', self.light, 'position')
 
 
-# bs_meta export game
+# ba_meta export game
 class FootballTeamGame(ba.TeamGameActivity):
     """Football game for teams mode."""
 

@@ -20,7 +20,7 @@
 # -----------------------------------------------------------------------------
 """Defines a keep-away game type."""
 
-# bs_meta require api 6
+# ba_meta require api 6
 # (see bombsquadgame.com/apichanges)
 
 from __future__ import annotations
@@ -36,7 +36,7 @@ if TYPE_CHECKING:
                         Union)
 
 
-# bs_meta export game
+# ba_meta export game
 class KeepAwayGame(ba.TeamGameActivity):
     """Game where you try to keep the flag away from your enemies."""
 

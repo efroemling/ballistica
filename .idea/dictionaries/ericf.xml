@@ -34,6 +34,7 @@
       <w>activitytypes</w>
       <w>activityutils</w>
       <w>actorclass</w>
+      <w>adbcfaca</w>
       <w>adbpath</w>
       <w>addgame</w>
       <w>addr</w>
@@ -791,6 +792,7 @@
       <w>icns</w>
       <w>iconpicker</w>
       <w>iconscale</w>
+      <w>ident</w>
       <w>idevices</w>
       <w>ifeq</w>
       <w>ifneq</w>

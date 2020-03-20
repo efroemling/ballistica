@@ -20,7 +20,7 @@
 # -----------------------------------------------------------------------------
 """Provides the Conquest game."""
 
-# bs_meta require api 6
+# ba_meta require api 6
 # (see bombsquadgame.com/apichanges)
 
 from __future__ import annotations
@@ -56,7 +56,7 @@ class ConquestFlag(Flag):
         return self._team
 
 
-# bs_meta export game
+# ba_meta export game
 class ConquestGame(ba.TeamGameActivity):
     """A game where teams try to claim all flags on the map."""
 

@@ -20,7 +20,7 @@
 # -----------------------------------------------------------------------------
 """Provides Ninja Fight mini-game."""
 
-# bs_meta require api 6
+# ba_meta require api 6
 # (see bombsquadgame.com/apichanges)
 
 from __future__ import annotations
@@ -37,7 +37,7 @@ if TYPE_CHECKING:
     from typing import Any, Type, Dict, List, Optional
 
 
-# bs_meta export game
+# ba_meta export game
 class NinjaFightGame(ba.TeamGameActivity):
     """
     A co-op game where you try to defeat a group

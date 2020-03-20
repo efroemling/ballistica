@@ -20,7 +20,7 @@
 # -----------------------------------------------------------------------------
 """Hockey game and support classes."""
 
-# bs_meta require api 6
+# ba_meta require api 6
 # (see bombsquadgame.com/apichanges)
 
 from __future__ import annotations
@@ -105,7 +105,7 @@ class Puck(ba.Actor):
             super().handlemessage(msg)
 
 
-# bs_meta export game
+# ba_meta export game
 class HockeyGame(ba.TeamGameActivity):
     """Ice hockey game."""
 

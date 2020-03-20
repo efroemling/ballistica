@@ -223,19 +223,11 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
         os.environ['PATH'] += (':' + appathout)
         print(f'ADDED "{appathout}" TO SYS PATH...')
 
-    # Commit from Dec 6th, 2018.  Looks like right after this one the repo
-    # switched to ndk r19 beta 2 and now seems to require r19, so we can
-    # try switching back to master one r19 comes down the pipe.
-    # noinspection PyUnreachableCode
-    if False:  # pylint: disable=using-constant-test
-        efrotools.run('git checkout eb587c52db349fecfc4666c6bf7e077352513035')
-
-    # Commit from ~March 14 2019.  Looks like right after this the project
-    # switched to compiling python as a shared library which would be a pretty
-    # big change.
-    # noinspection PyUnreachableCode
-    if False:  # pylint: disable=using-constant-test
-        efrotools.run('git checkout b3024bf350fd5134542ee974a9a28921a687a8a0')
+    # Commit from Jan 8, 2020. Right after this, the build system was switched
+    # a a completely new minimal one which will take some work to update here.
+    # Punting on that for now...
+    if True:  # pylint: disable=using-constant-test
+        efrotools.run('git checkout 9adbcfaca37f40b7a86381f83f0f6af4187233ae')
     ftxt = efrotools.readfile('pybuild/env.py')
 
     # Set the packages we build.

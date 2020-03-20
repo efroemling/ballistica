@@ -20,7 +20,7 @@
 # -----------------------------------------------------------------------------
 """Defines assault minigame."""
 
-# bs_meta require api 6
+# ba_meta require api 6
 # (see bombsquadgame.com/apichanges)
 
 from __future__ import annotations
@@ -35,7 +35,7 @@ if TYPE_CHECKING:
     from typing import Any, Type, List, Dict, Tuple, Sequence, Union
 
 
-# bs_meta export game
+# ba_meta export game
 class AssaultGame(ba.TeamGameActivity):
     """Game where you score by touching the other team's flag."""
 

@@ -20,7 +20,7 @@
 # -----------------------------------------------------------------------------
 """Provides the chosen-one mini-game."""
 
-# bs_meta require api 6
+# ba_meta require api 6
 # (see bombsquadgame.com/apichanges)
 from __future__ import annotations
 
@@ -36,7 +36,7 @@ if TYPE_CHECKING:
                         Union)
 
 
-# bs_meta export game
+# ba_meta export game
 class ChosenOneGame(ba.TeamGameActivity):
     """
     Game involving trying to remain the one 'chosen one'

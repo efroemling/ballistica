@@ -20,7 +20,7 @@
 # -----------------------------------------------------------------------------
 """Defines the King of the Hill game."""
 
-# bs_meta require api 6
+# ba_meta require api 6
 # (see bombsquadgame.com/apichanges)
 
 from __future__ import annotations
@@ -38,7 +38,7 @@ if TYPE_CHECKING:
                         Union)
 
 
-# bs_meta export game
+# ba_meta export game
 class KingOfTheHillGame(ba.TeamGameActivity):
     """Game where a team wins by holding a 'hill' for a set amount of time."""
 

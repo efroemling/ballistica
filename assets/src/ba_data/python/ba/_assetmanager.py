@@ -24,6 +24,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from pathlib import Path
+import threading
 import urllib.request
 import logging
 import weakref
@@ -56,6 +57,7 @@ class AssetManager:
     def __init__(self, rootdir: Path) -> None:
         print('AssetManager()')
         assert isinstance(rootdir, Path)
+        self.thread_ident = threading.get_ident()
         self._rootdir = rootdir
         self._started = False
         if not self._rootdir.is_dir():
@@ -139,6 +141,7 @@ class AssetGather:
     """Wrangles a gather of assets."""
 
     def __init__(self, manager: AssetManager) -> None:
+        assert threading.get_ident() == manager.thread_ident
         self._manager = weakref.ref(manager)
         self._valid = True
         print('AssetGather()')
@@ -168,7 +171,6 @@ def fetch_url(url: str, filename: Path, asset_gather: AssetGather) -> None:
     # pylint: disable=too-many-locals
 
     import socket
-    import threading
 
     # We don't want to keep the provided AssetGather alive, but we want
     # to abort if it dies.
@@ -186,7 +188,7 @@ def fetch_url(url: str, filename: Path, asset_gather: AssetGather) -> None:
         print('dir', type(req.fp), dir(req.fp))
         print('WOULD DO IT', flush=True)
         # req.close()
-        req.fp.close()
+        # req.fp.close()
 
     threading.Thread(target=doit).run()
 
@@ -228,3 +230,4 @@ def fetch_url(url: str, filename: Path, asset_gather: AssetGather) -> None:
             status = f'{file_size_dl:20,} Bytes [{percent:.2%}] received'
             sys.stdout.write('\r' + status)
             sys.stdout.flush()
+    print('done with', req.fp)

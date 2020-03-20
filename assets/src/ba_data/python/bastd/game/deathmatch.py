@@ -20,7 +20,7 @@
 # -----------------------------------------------------------------------------
 """DeathMatch game and support classes."""
 
-# bs_meta require api 6
+# ba_meta require api 6
 # (see bombsquadgame.com/apichanges)
 from __future__ import annotations
 
@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     from typing import Any, Type, List, Dict, Tuple, Union, Sequence
 
 
-# bs_meta export game
+# ba_meta export game
 class DeathMatchGame(ba.TeamGameActivity):
     """A game type based on acquiring kills."""
 
