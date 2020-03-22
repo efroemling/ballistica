@@ -175,7 +175,7 @@ class DirectoryScan:
             flines = infile.readlines()
         meta_lines = {
             lnum: l[1:].split()
-            for lnum, l in enumerate(flines) if 'ba_meta' in l
+            for lnum, l in enumerate(flines) if '# ba_meta ' in l
         }
         toplevel = len(subpath.parts) <= 1
         required_api = self.get_api_requirement(subpath, meta_lines, toplevel)
@@ -218,6 +218,7 @@ class DirectoryScan:
             # meta_lines is just anything containing 'ba_meta'; make sure
             # the ba_meta is in the right place.
             if mline[0] != 'ba_meta':
+                print(f'GOT "{mline[0]}"')
                 self.results['warnings'] += (
                     'Warning: ' + str(subpath) +
                     ': malformed ba_meta statement on line ' +
@@ -309,13 +310,14 @@ class DirectoryScan:
         return None
 
 
-def getscanresults() -> Dict[str, Any]:
+def get_scan_results() -> Dict[str, Any]:
     """Return meta scan results; blocking if the scan is not yet complete."""
     import time
     app = _ba.app
     if app.metascan is None:
-        print('WARNING: ba.meta.getscanresults() called before scan completed.'
-              ' This can cause hitches.')
+        print(
+            'WARNING: ba.meta.get_scan_results() called before scan completed.'
+            ' This can cause hitches.')
 
         # Now wait a bit for the scan to complete.
         # Eventually error though if it doesn't.
@@ -324,6 +326,7 @@ def getscanresults() -> Dict[str, Any]:
             time.sleep(0.05)
             if time.time() - starttime > 10.0:
                 raise Exception('timeout waiting for meta scan to complete.')
+    print('RETURNING SCAN RESULTS')
     return app.metascan
 
 
@@ -331,7 +334,7 @@ def get_game_types() -> List[Type[ba.GameActivity]]:
     """Return available game types."""
     from ba import _general
     from ba import _gameactivity
-    gameclassnames = getscanresults().get('games', [])
+    gameclassnames = get_scan_results().get('games', [])
     gameclasses = []
     for gameclassname in gameclassnames:
         try:
