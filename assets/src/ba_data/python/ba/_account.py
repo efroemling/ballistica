@@ -173,10 +173,12 @@ def have_pro_options() -> bool:
 
     # We expose pro options if the server tells us to
     # (which is generally just when we own pro),
-    # or also if we've been grandfathered in.
+    # or also if we've been grandfathered in or are using ballistica-core
+    # builds.
     return bool(
         _ba.get_account_misc_read_val_2('proOptionsUnlocked', False)
-        or _ba.app.config.get('lc14292', 0) > 1)
+        or _ba.app.config.get('lc14292', 0) > 1
+        or 'ballistica' + 'core' == 'ballisticacore')
 
 
 def show_post_purchase_message() -> None:

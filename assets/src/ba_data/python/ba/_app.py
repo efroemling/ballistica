@@ -28,7 +28,7 @@ import _ba
 
 if TYPE_CHECKING:
     import ba
-    from ba import _lang as bs_lang
+    from ba import _lang, _meta
     from bastd.actor import spazappearance
     from typing import (Optional, Dict, Tuple, Set, Any, List, Type, Tuple,
                         Callable)
@@ -240,16 +240,7 @@ class App:
         """
         # pylint: disable=too-many-statements
 
-        test_https = False
-        if test_https:
-            # Testing https support (would be nice to get this working on
-            # our custom python builds; need to wrangle certificates somehow).
-            import urllib.request
-            try:
-                val = urllib.request.urlopen('https://example.com').read()
-                print("HTTPS TEST SUCCESS", len(val))
-            except Exception as exc:
-                print("HTTPS TEST FAIL:", exc)
+        # _test_https()
 
         # Config.
         self.config_file_healthy = False
@@ -274,7 +265,7 @@ class App:
         self._platform: str = env['platform']
         self._subplatform: str = env['subplatform']
         self._interface_type: str = env['interface_type']
-        self._on_tv: bool = env['on_tv']  #
+        self._on_tv: bool = env['on_tv']
         self._vr_mode: bool = env['vr_mode']
         self.protocol_version: int = env['protocol_version']
         self.toolbar_test: bool = env['toolbar_test']
@@ -282,7 +273,7 @@ class App:
 
         # Misc.
         self.default_language = self._get_default_language()
-        self.metascan: Optional[Dict[str, Any]] = None
+        self.metascan: Optional[_meta.ScanResults] = None
         self.tips: List[str] = []
         self.stress_test_reset_timer: Optional[ba.Timer] = None
         self.suppress_debug_reports = False
@@ -337,8 +328,8 @@ class App:
         }
 
         # Language.
-        self.language_target: Optional[bs_lang.AttrDict] = None
-        self.language_merged: Optional[bs_lang.AttrDict] = None
+        self.language_target: Optional[_lang.AttrDict] = None
+        self.language_merged: Optional[_lang.AttrDict] = None
 
         # Achievements.
         self.achievements: List[ba.Achievement] = []
@@ -418,7 +409,6 @@ class App:
         # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
         from ba import _apputils
-        # from ba._general import Call
         from ba import _appconfig
         from ba import ui as bsui
         from ba import _achievement
@@ -443,6 +433,8 @@ class App:
             self.music_player_type = _music.InternalMusicPlayer
         elif _ba.env()['platform'] == 'mac' and hasattr(_ba, 'itunes_init'):
             self.music_player_type = _music.MacITunesMusicPlayer
+
+        # FIXME: This should not be hard-coded.
         for maptype in [
                 stdmaps.HockeyStadium, stdmaps.FootballStadium,
                 stdmaps.Bridgit, stdmaps.BigG, stdmaps.Roundabout,
@@ -543,6 +535,7 @@ class App:
 
         # Debugging - make note if we're using the local test server so we
         # don't accidentally leave it on in a release.
+        # FIXME - move this to native layer.
         server_addr = _ba.get_master_server_address()
         if 'localhost' in server_addr:
             _ba.timer(2.0,
@@ -574,10 +567,8 @@ class App:
         if self.subplatform != 'headless':
             _ba.timer(3.0, check_special_offer, timetype=TimeType.REAL)
 
-        _meta.startscan()
-
-        # Start scanning for stuff available in our scripts.
-        # meta.get_game_types()
+        # Start scanning for things exposed via ba_meta.
+        _meta.start_scan()
 
         # Auto-sign-in to a local account in a moment if we're set to.
         def do_auto_sign_in() -> None:
@@ -592,8 +583,6 @@ class App:
 
         from ba._dependency import test_depset
         test_depset()
-        # print('GAME TYPES ARE', meta.get_game_types())
-        # _bs.quit()
 
     def read_config(self) -> None:
         """(internal)"""
@@ -610,21 +599,21 @@ class App:
         activity = _ba.get_foreground_host_activity()
         if (activity is not None and activity.allow_pausing
                 and not _ba.have_connected_clients()):
+            from ba import _gameutils, _actor, _lang
             # FIXME: Shouldn't be touching scene stuff here;
             #  should just pass the request on to the host-session.
-            import ba
-            with ba.Context(activity):
-                globs = ba.sharedobj('globals')
+            with _ba.Context(activity):
+                globs = _gameutils.sharedobj('globals')
                 if not globs.paused:
-                    ba.playsound(ba.getsound('refWhistle'))
+                    _ba.playsound(_ba.getsound('refWhistle'))
                     globs.paused = True
 
                 # FIXME: This should not be an attr on Actor.
-                activity.paused_text = ba.Actor(
-                    ba.newnode(
+                activity.paused_text = _actor.Actor(
+                    _ba.newnode(
                         'text',
                         attrs={
-                            'text': ba.Lstr(resource='pausedByHostText'),
+                            'text': _lang.Lstr(resource='pausedByHostText'),
                             'client_only': True,
                             'flatness': 1.0,
                             'h_align': 'center'
@@ -821,3 +810,16 @@ class App:
         else:
             _ba.screenmessage(Lstr(resource='errorText'), color=(1, 0, 0))
             _ba.playsound(_ba.getsound('error'))
+
+    def _test_https(self) -> None:
+        """Testing https support.
+
+        (would be nice to get this working on our custom python builds; need
+        to wrangle certificates somehow).
+        """
+        import urllib.request
+        try:
+            val = urllib.request.urlopen('https://example.com').read()
+            print("HTTPS TEST SUCCESS", len(val))
+        except Exception as exc:
+            print("HTTPS TEST FAIL:", exc)

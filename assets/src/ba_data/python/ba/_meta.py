@@ -26,11 +26,12 @@ import os
 import pathlib
 import threading
 from typing import TYPE_CHECKING
+from dataclasses import dataclass, field
 
 import _ba
 
 if TYPE_CHECKING:
-    from typing import (Any, Dict, List, Tuple, Union, Optional, Type, Set)
+    from typing import Dict, List, Tuple, Union, Optional, Type, Set
     import ba
 
 # The API version of this build of the game.
@@ -40,7 +41,7 @@ if TYPE_CHECKING:
 CURRENT_API_VERSION = 6
 
 
-def startscan() -> None:
+def start_scan() -> None:
     """Begin scanning script directories for scripts containing metadata.
 
     Should be called only once at launch."""
@@ -52,23 +53,31 @@ def startscan() -> None:
     thread.start()
 
 
-def handle_scan_results(results: Dict[str, Any]) -> None:
+@dataclass
+class ScanResults:
+    """Final results from a metadata scan."""
+    games: List[str] = field(default_factory=list)
+    errors: str = ''
+    warnings: str = ''
+
+
+def handle_scan_results(results: ScanResults) -> None:
     """Called in the game thread with results of a completed scan."""
     from ba import _lang
 
     # Warnings generally only get printed locally for users' benefit
     # (things like out-of-date scripts being ignored, etc.)
     # Errors are more serious and will get included in the regular log
-    warnings = results.get('warnings', '')
-    errors = results.get('errors', '')
-    if warnings != '' or errors != '':
+    # warnings = results.get('warnings', '')
+    # errors = results.get('errors', '')
+    if results.warnings != '' or results.errors != '':
         _ba.screenmessage(_lang.Lstr(resource='scanScriptsErrorText'),
                           color=(1, 0, 0))
         _ba.playsound(_ba.getsound('error'))
-        if warnings != '':
-            _ba.log(warnings, to_server=False)
-        if errors != '':
-            _ba.log(errors)
+        if results.warnings != '':
+            _ba.log(results.warnings, to_server=False)
+        if results.errors != '':
+            _ba.log(results.errors)
 
 
 class ScanThread(threading.Thread):
@@ -85,7 +94,8 @@ class ScanThread(threading.Thread):
             scan.scan()
             results = scan.results
         except Exception as exc:
-            results = {'errors': 'Scan exception: ' + str(exc)}
+            # results = {'errors': 'Scan exception: ' + str(exc)}
+            results = ScanResults(errors=f'Scan exception: {exc}')
 
         # Push a call to the game thread to print warnings/errors
         # or otherwise deal with scan results.
@@ -116,11 +126,7 @@ class DirectoryScan:
         'errors': errors encountered during scan; should be fully logged
         """
         self.paths = [pathlib.Path(p) for p in paths]
-        self.results: Dict[str, Any] = {
-            'errors': '',
-            'warnings': '',
-            'games': []
-        }
+        self.results = ScanResults()
 
     def _get_path_module_entries(
             self, path: pathlib.Path, subpath: Union[str, pathlib.Path],
@@ -137,7 +143,7 @@ class DirectoryScan:
             entries = []
         except Exception as exc:
             # Unexpected; report this.
-            self.results['errors'] += str(exc) + '\n'
+            self.results.errors += f'{exc}\n'
             entries = []
 
         # Now identify python packages/modules out of what we found.
@@ -158,9 +164,8 @@ class DirectoryScan:
                 self.scan_module(moduledir, subpath)
             except Exception:
                 from ba import _error
-                self.results['warnings'] += ("Error scanning '" +
-                                             str(subpath) + "': " +
-                                             _error.exc_str() + '\n')
+                self.results.warnings += ("Error scanning '" + str(subpath) +
+                                          "': " + _error.exc_str() + '\n')
 
     def scan_module(self, moduledir: pathlib.Path,
                     subpath: pathlib.Path) -> None:
@@ -187,11 +192,11 @@ class DirectoryScan:
         # If we find a module requiring a different api version, warn
         # and ignore.
         if required_api is not None and required_api != CURRENT_API_VERSION:
-            self.results['warnings'] += ('Warning: ' + str(subpath) +
-                                         ' requires api ' + str(required_api) +
-                                         ' but we are running ' +
-                                         str(CURRENT_API_VERSION) +
-                                         '; ignoring module.\n')
+            self.results.warnings += ('Warning: ' + str(subpath) +
+                                      ' requires api ' + str(required_api) +
+                                      ' but we are running ' +
+                                      str(CURRENT_API_VERSION) +
+                                      '; ignoring module.\n')
             return
 
         # Ok; can proceed with a full scan of this module.
@@ -206,9 +211,8 @@ class DirectoryScan:
                     self.scan_module(submodule[0], submodule[1])
             except Exception:
                 from ba import _error
-                self.results['warnings'] += ("Error scanning '" +
-                                             str(subpath) + "': " +
-                                             _error.exc_str() + '\n')
+                self.results.warnings += ("Error scanning '" + str(subpath) +
+                                          "': " + _error.exc_str() + '\n')
 
     def _process_module_meta_tags(self, subpath: pathlib.Path,
                                   flines: List[str],
@@ -219,7 +223,7 @@ class DirectoryScan:
             # the ba_meta is in the right place.
             if mline[0] != 'ba_meta':
                 print(f'GOT "{mline[0]}"')
-                self.results['warnings'] += (
+                self.results.warnings += (
                     'Warning: ' + str(subpath) +
                     ': malformed ba_meta statement on line ' +
                     str(lindex + 1) + '.\n')
@@ -230,7 +234,7 @@ class DirectoryScan:
             elif len(mline) != 3 or mline[1] != 'export':
                 # Currently we only support 'ba_meta export FOO';
                 # complain for anything else we see.
-                self.results['warnings'] += (
+                self.results.warnings += (
                     'Warning: ' + str(subpath) +
                     ': unrecognized ba_meta statement on line ' +
                     str(lindex + 1) + '.\n')
@@ -245,9 +249,9 @@ class DirectoryScan:
                 if export_class_name is not None:
                     classname = modulename + '.' + export_class_name
                     if exporttype == 'game':
-                        self.results['games'].append(classname)
+                        self.results.games.append(classname)
                     else:
-                        self.results['warnings'] += (
+                        self.results.warnings += (
                             'Warning: ' + str(subpath) +
                             ': unrecognized export type "' + exporttype +
                             '" on line ' + str(lindex + 1) + '.\n')
@@ -272,7 +276,7 @@ class DirectoryScan:
                     classname = cbits[0]
                     break  # success!
         if classname is None:
-            self.results['warnings'] += (
+            self.results.warnings += (
                 'Warning: ' + str(subpath) + ': class definition not found'
                 ' below "ba_meta export" statement on line ' +
                 str(lindexorig + 1) + '.\n')
@@ -296,21 +300,21 @@ class DirectoryScan:
 
         # Ok; not successful. lets issue warnings for a few error cases.
         if len(lines) > 1:
-            self.results['warnings'] += (
+            self.results.warnings += (
                 'Warning: ' + str(subpath) +
                 ': multiple "# ba_meta api require <NUM>" lines found;'
                 ' ignoring module.\n')
         elif not lines and toplevel and meta_lines:
             # If we're a top-level module containing meta lines but
             # no valid api require, complain.
-            self.results['warnings'] += (
+            self.results.warnings += (
                 'Warning: ' + str(subpath) +
                 ': no valid "# ba_meta api require <NUM>" line found;'
                 ' ignoring module.\n')
         return None
 
 
-def get_scan_results() -> Dict[str, Any]:
+def get_scan_results() -> ScanResults:
     """Return meta scan results; blocking if the scan is not yet complete."""
     import time
     app = _ba.app
@@ -326,7 +330,6 @@ def get_scan_results() -> Dict[str, Any]:
             time.sleep(0.05)
             if time.time() - starttime > 10.0:
                 raise Exception('timeout waiting for meta scan to complete.')
-    print('RETURNING SCAN RESULTS')
     return app.metascan
 
 
@@ -334,7 +337,7 @@ def get_game_types() -> List[Type[ba.GameActivity]]:
     """Return available game types."""
     from ba import _general
     from ba import _gameactivity
-    gameclassnames = get_scan_results().get('games', [])
+    gameclassnames = get_scan_results().games
     gameclasses = []
     for gameclassname in gameclassnames:
         try:
