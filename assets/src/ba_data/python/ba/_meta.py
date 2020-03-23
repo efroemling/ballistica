@@ -34,10 +34,10 @@ if TYPE_CHECKING:
     from typing import Dict, List, Tuple, Union, Optional, Type, Set
     import ba
 
-# The API version of this build of the game.
+# The meta api version of this build of the game.
 # Only packages and modules requiring this exact api version
 # will be considered when scanning directories.
-# See bombsquadgame.com/apichanges for differences between api versions.
+# See https://github.com/efroemling/ballistica/wiki/Using-ba_meta-Tags
 CURRENT_API_VERSION = 6
 
 
