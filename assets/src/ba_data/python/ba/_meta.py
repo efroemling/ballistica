@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 # The meta api version of this build of the game.
 # Only packages and modules requiring this exact api version
 # will be considered when scanning directories.
-# See https://github.com/efroemling/ballistica/wiki/Using-ba_meta-Tags
+# See: https://github.com/efroemling/ballistica/wiki/Using-ba_meta-Tags
 CURRENT_API_VERSION = 6
 
 
