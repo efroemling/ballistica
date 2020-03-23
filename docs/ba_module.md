@@ -653,7 +653,17 @@ likely result in errors.</p>
 </p>
 
 <h3 style="padding-left: 0px;">Attributes:</h3>
-<h5 style="padding-left: 30px;"><a href="#attr_ba_App__build_number">build_number</a>, <a href="#attr_ba_App__config">config</a>, <a href="#attr_ba_App__config_file_path">config_file_path</a>, <a href="#attr_ba_App__debug_build">debug_build</a>, <a href="#attr_ba_App__interface_type">interface_type</a>, <a href="#attr_ba_App__language">language</a>, <a href="#attr_ba_App__locale">locale</a>, <a href="#attr_ba_App__on_tv">on_tv</a>, <a href="#attr_ba_App__platform">platform</a>, <a href="#attr_ba_App__subplatform">subplatform</a>, <a href="#attr_ba_App__system_scripts_directory">system_scripts_directory</a>, <a href="#attr_ba_App__test_build">test_build</a>, <a href="#attr_ba_App__ui_bounds">ui_bounds</a>, <a href="#attr_ba_App__user_agent_string">user_agent_string</a>, <a href="#attr_ba_App__user_scripts_directory">user_scripts_directory</a>, <a href="#attr_ba_App__version">version</a>, <a href="#attr_ba_App__vr_mode">vr_mode</a></h5>
+<h5 style="padding-left: 30px;"><a href="#attr_ba_App__api_version">api_version</a>, <a href="#attr_ba_App__build_number">build_number</a>, <a href="#attr_ba_App__config">config</a>, <a href="#attr_ba_App__config_file_path">config_file_path</a>, <a href="#attr_ba_App__debug_build">debug_build</a>, <a href="#attr_ba_App__interface_type">interface_type</a>, <a href="#attr_ba_App__language">language</a>, <a href="#attr_ba_App__locale">locale</a>, <a href="#attr_ba_App__on_tv">on_tv</a>, <a href="#attr_ba_App__platform">platform</a>, <a href="#attr_ba_App__subplatform">subplatform</a>, <a href="#attr_ba_App__system_scripts_directory">system_scripts_directory</a>, <a href="#attr_ba_App__test_build">test_build</a>, <a href="#attr_ba_App__ui_bounds">ui_bounds</a>, <a href="#attr_ba_App__user_agent_string">user_agent_string</a>, <a href="#attr_ba_App__user_scripts_directory">user_scripts_directory</a>, <a href="#attr_ba_App__version">version</a>, <a href="#attr_ba_App__vr_mode">vr_mode</a></h5>
+<h4 style="padding-left: 30px;"><a class="offsanchor" name="attr_ba_App__api_version"><strong>api_version</strong></a></h4>
+<p style="padding-left: 60px;"><span style="color: #666677;">int</span></p>
+<p style="padding-left: 60px;">The game's api version.</p>
+
+<p style="padding-left: 60px;">        Only python modules and packages associated with the current api
+        version will be detected by the game (see the ba_meta tag). This
+        value will change whenever backward-incompatible changes are
+        introduced to game apis; when that happens, scripts should be updated
+        accordingly and set to target the new api.</p>
+
 <h4 style="padding-left: 30px;"><a class="offsanchor" name="attr_ba_App__build_number"><strong>build_number</strong></a></h4>
 <p style="padding-left: 60px;"><span style="color: #666677;">int</span></p>
 <p style="padding-left: 60px;">Integer build number.</p>
