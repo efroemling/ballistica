@@ -21,7 +21,7 @@
 """Provides an easter egg hunt game."""
 
 # ba_meta require api 6
-# (see https://github.com/efroemling/ballistica/wiki/Using-ba_meta-Tags)
+# (see https://github.com/efroemling/ballistica/wiki/Meta-Tags)
 
 from __future__ import annotations
 
@@ -40,7 +40,7 @@ if TYPE_CHECKING:
 
 # ba_meta export game
 class EasterEggHuntGame(ba.TeamGameActivity):
-    """A game where score is based on collecting eggs"""
+    """A game where score is based on collecting eggs."""
 
     @classmethod
     def get_name(cls) -> str:
@@ -237,7 +237,6 @@ class EasterEggHuntGame(ba.TeamGameActivity):
                                   pos[1] + random.uniform(-spread, spread),
                                   pos[2] + random.uniform(-spread, spread))))
         else:
-
             # Default handler.
             super().handlemessage(msg)
 

@@ -202,6 +202,19 @@ class App:
         return self._subplatform
 
     @property
+    def api_version(self) -> int:
+        """The game's api version.
+
+        Only python modules and packages associated with the current api
+        version will be detected by the game (see the ba_meta tag). This
+        value will change whenever backward-incompatible changes are
+        introduced to game apis; when that happens, scripts should be updated
+        accordingly and set to target the new api.
+        """
+        from ba._meta import CURRENT_API_VERSION
+        return CURRENT_API_VERSION
+
+    @property
     def interface_type(self) -> str:
         """Interface mode the game is in; can be 'large', 'medium', or 'small'.
 

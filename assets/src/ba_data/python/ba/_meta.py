@@ -37,8 +37,16 @@ if TYPE_CHECKING:
 # The meta api version of this build of the game.
 # Only packages and modules requiring this exact api version
 # will be considered when scanning directories.
-# See: https://github.com/efroemling/ballistica/wiki/Using-ba_meta-Tags
+# See: https://github.com/efroemling/ballistica/wiki/Meta-Tags
 CURRENT_API_VERSION = 6
+
+
+@dataclass
+class ScanResults:
+    """Final results from a metadata scan."""
+    games: List[str] = field(default_factory=list)
+    errors: str = ''
+    warnings: str = ''
 
 
 def start_scan() -> None:
@@ -51,14 +59,6 @@ def start_scan() -> None:
     scriptdirs = [app.system_scripts_directory, app.user_scripts_directory]
     thread = ScanThread(scriptdirs)
     thread.start()
-
-
-@dataclass
-class ScanResults:
-    """Final results from a metadata scan."""
-    games: List[str] = field(default_factory=list)
-    errors: str = ''
-    warnings: str = ''
 
 
 def handle_scan_results(results: ScanResults) -> None:
@@ -94,7 +94,6 @@ class ScanThread(threading.Thread):
             scan.scan()
             results = scan.results
         except Exception as exc:
-            # results = {'errors': 'Scan exception: ' + str(exc)}
             results = ScanResults(errors=f'Scan exception: {exc}')
 
         # Push a call to the game thread to print warnings/errors
@@ -192,11 +191,9 @@ class DirectoryScan:
         # If we find a module requiring a different api version, warn
         # and ignore.
         if required_api is not None and required_api != CURRENT_API_VERSION:
-            self.results.warnings += ('Warning: ' + str(subpath) +
-                                      ' requires api ' + str(required_api) +
-                                      ' but we are running ' +
-                                      str(CURRENT_API_VERSION) +
-                                      '; ignoring module.\n')
+            self.results.warnings += (
+                f'Warning: {subpath} requires api {required_api} but'
+                f' we are running {CURRENT_API_VERSION}; ignoring module.\n')
             return
 
         # Ok; can proceed with a full scan of this module.
@@ -211,18 +208,17 @@ class DirectoryScan:
                     self.scan_module(submodule[0], submodule[1])
             except Exception:
                 from ba import _error
-                self.results.warnings += ("Error scanning '" + str(subpath) +
-                                          "': " + _error.exc_str() + '\n')
+                self.results.warnings += (
+                    f"Error scanning '{subpath}': {_error.exc_str()}\n")
 
     def _process_module_meta_tags(self, subpath: pathlib.Path,
                                   flines: List[str],
                                   meta_lines: Dict[int, List[str]]) -> None:
         """Pull data from a module based on its ba_meta tags."""
         for lindex, mline in meta_lines.items():
-            # meta_lines is just anything containing 'ba_meta'; make sure
+            # meta_lines is just anything containing '# ba_meta '; make sure
             # the ba_meta is in the right place.
             if mline[0] != 'ba_meta':
-                print(f'GOT "{mline[0]}"')
                 self.results.warnings += (
                     'Warning: ' + str(subpath) +
                     ': malformed ba_meta statement on line ' +
