@@ -312,6 +312,7 @@
       <w>confighash</w>
       <w>configkey</w>
       <w>configparser</w>
+      <w>configpath</w>
       <w>connectattr</w>
       <w>containerwidget</w>
       <w>contentmanager</w>

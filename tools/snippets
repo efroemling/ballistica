@@ -575,6 +575,25 @@ def push_ipa() -> None:
     ios.push_ipa(root, modename)
 
 
+def fix_mac_ssh() -> None:
+    """Turn off mac ssh password access.
+
+    (This totally doesn't belong in this project btw..)
+    """
+    configpath = '/etc/ssh/sshd_config'
+    with open(configpath) as infile:
+        lines = infile.readlines()
+    index = lines.index('#PasswordAuthentication yes\n')
+    lines[index] = 'PasswordAuthentication no\n'
+    index = lines.index('#ChallengeResponseAuthentication yes\n')
+    lines[index] = 'ChallengeResponseAuthentication no\n'
+    index = lines.index('UsePAM yes\n')
+    lines[index] = 'UsePAM no\n'
+    with open(configpath, 'w') as outfile:
+        outfile.write(''.join(lines))
+    print('SSH config updated successfully!')
+
+
 def check_mac_ssh() -> None:
     """Make sure ssh password access is turned off.
 
@@ -585,12 +604,8 @@ def check_mac_ssh() -> None:
         lines = infile.read().splitlines()
     if ('UsePAM yes' in lines or '#PasswordAuthentication yes' in lines
             or '#ChallengeResponseAuthentication yes' in lines):
-        print('ERROR: ssh config is allowing password access\n'
-              'To fix: sudo emacs -nw /etc/ssh/sshd_config\n'
-              '"#PasswordAuthentication yes" -> "PasswordAuthentication no"\n'
-              '"#ChallengeResponseAuthentication yes" -> '
-              '"ChallengeResponseAuthentication no"\n'
-              '"UsePam yes" -> "UsePam no"\n')
+        print('ERROR: ssh config is allowing password access.\n'
+              'To fix: sudo tools/snippets fix_mac_ssh')
         sys.exit(255)
     print('password ssh auth seems disabled; hooray!')
 
