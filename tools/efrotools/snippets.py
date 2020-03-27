@@ -443,6 +443,7 @@ def compile_python_files() -> None:
 
 def pytest() -> None:
     """Run pytest with project environment set up properly."""
+    import platform
     from efrotools import get_config, PYTHON_BIN
 
     # Grab our python paths for the project and stuff them in PYTHONPATH.
@@ -450,7 +451,8 @@ def pytest() -> None:
     if pypaths is None:
         raise CleanError('python_paths not found in project config.')
 
-    os.environ['PYTHONPATH'] = ':'.join(pypaths)
+    separator = ';' if platform.system() == 'Windows' else ':'
+    os.environ['PYTHONPATH'] = separator.join(pypaths)
 
     # Also tell Python interpreters not to write __pycache__ dirs everywhere
     # which can screw up our builds.
