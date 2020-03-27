@@ -8,7 +8,9 @@ on:
       - cron: '0 12 * * *'
         
 jobs:
-  
+
+  # We run most of our testing on linux but it should apply to mac too;
+  # we can always add an explicit mac job if it seems worthwhile.
   ci_unix:
     runs-on: ubuntu-18.04
     steps:
@@ -21,7 +23,10 @@ jobs:
       run: tools/snippets install_pip_reqs
     - name: Run checks and tests
       run: make -j2 check test
-      
+
+  # Most of our toolset doesn't work on raw windows (outside of WSL).
+  # However, it's nice to at least run unit tests there since some behavior
+  # (filesystem, etc) can vary significantly.
   ci_windows:
     runs-on: windows-latest
     steps:
