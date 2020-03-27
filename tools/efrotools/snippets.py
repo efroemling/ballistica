@@ -451,19 +451,8 @@ def pytest() -> None:
     if pypaths is None:
         raise CleanError('python_paths not found in project config.')
 
-    if platform.system() == 'Windows':
-        sep = ';'
-        # pypaths = [
-        #     os.path.join(os.getcwd(), s.replace('/', '\\')) for s in pypaths
-        # ]
-    else:
-        sep = ':'
-
-    os.environ['PYTHONPATH'] = sep.join(pypaths)
-    subprocess.run([PYTHON_BIN, '-c', 'import sys; print("FOOO", sys.path)'],
-                   check=True)
-
-    print('SET VAL TO', ':'.join(pypaths), flush=True)
+    separator = ';' if platform.system() == 'Windows' else ':'
+    os.environ['PYTHONPATH'] = separator.join(pypaths)
 
     # Also tell Python interpreters not to write __pycache__ dirs everywhere
     # which can screw up our builds.
