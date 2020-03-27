@@ -115,7 +115,7 @@ class AssetManager:
 
     def load_state(self) -> None:
         """Loads state from disk. Resets to default state if unable to."""
-        print('AMAN LOADING STATE')
+        print('ASSET-MANAGER LOADING STATE')
         try:
             state_path = self.state_path
             if state_path.exists():
@@ -129,7 +129,7 @@ class AssetManager:
     def save_state(self) -> None:
         """Save state to disk (if possible)."""
 
-        print('AMAN SAVING STATE')
+        print('ASSET-MANAGER SAVING STATE')
         try:
             with open(self.state_path, 'w') as outfile:
                 outfile.write(self._state.to_json_str())
@@ -138,27 +138,35 @@ class AssetManager:
 
 
 class AssetGather:
-    """Wrangles a gather of assets."""
+    """Wrangles a gathering of assets."""
 
     def __init__(self, manager: AssetManager) -> None:
         assert threading.get_ident() == manager.thread_ident
         self._manager = weakref.ref(manager)
-        self._valid = True
+        # self._valid = True
         print('AssetGather()')
         # url = 'https://files.ballistica.net/bombsquad/promo/BSGamePlay.mov'
-        url = 'http://www.python.org/ftp/python/2.7.3/Python-2.7.3.tgz'
-        fetch_url(url,
-                  filename=Path(manager.rootdir, 'testdl'),
-                  asset_gather=self)
-        print('fetch success')
+        # url = 'http://www.python.org/ftp/python/2.7.3/Python-2.7.3.tgz'
+        # fetch_url(url,
+        #           filename=Path(manager.rootdir, 'testdl'),
+        #           asset_gather=self)
+        # print('fetch success')
+        thread = threading.Thread(target=self._run)
+        thread.run()
 
-    @property
-    def valid(self) -> bool:
-        """Whether this gather is still valid.
+    def _run(self) -> None:
+        """Run the gather in a background thread."""
+        print('hello from gather bg')
 
-        A gather becomes in valid if its originating AssetManager dies.
-        """
-        return True
+        # First, do some sort of.
+
+    # @property
+    # def valid(self) -> bool:
+    #     """Whether this gather is still valid.
+
+    #     A gather becomes in valid if its originating AssetManager dies.
+    #     """
+    #     return True
 
     def __del__(self) -> None:
         print('~AssetGather()')

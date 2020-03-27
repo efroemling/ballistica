@@ -45,7 +45,6 @@ def test_assetmanager() -> None:
         manager = AssetManager(rootdir=Path(tmpdir))
         wref = weakref.ref(manager)
         manager.start()
-
         gather = manager.launch_gather(packages=['a@2'],
                                        flavor=AssetPackageFlavor.DESKTOP,
                                        account_token='dummytoken')
