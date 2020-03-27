@@ -451,6 +451,7 @@ def pytest() -> None:
         raise CleanError('python_paths not found in project config.')
 
     os.environ['PYTHONPATH'] = ':'.join(pypaths)
+    print('SET VAL TO', ':'.join(pypaths), flush=True)
 
     # Also tell Python interpreters not to write __pycache__ dirs everywhere
     # which can screw up our builds.
