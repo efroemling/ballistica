@@ -39,10 +39,6 @@ if TYPE_CHECKING:
 
 def test_assetmanager() -> None:
     """Testing."""
-    import sys
-    import os
-    print('PATH IS', sys.path)
-    print('CWD IS', os.getcwd())
 
     with tempfile.TemporaryDirectory() as tmpdir:
 
