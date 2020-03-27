@@ -449,9 +449,6 @@ def pytest() -> None:
     print('PATH IS', sys.path)
     print('CWD IS', os.getcwd())
 
-    subprocess.run([PYTHON_BIN, '-c', 'import sys; print("FOOO", sys.path)'],
-                   check=True)
-
     # Grab our python paths for the project and stuff them in PYTHONPATH.
     pypaths = get_config(PROJROOT).get('python_paths')
     if pypaths is None:
@@ -463,6 +460,9 @@ def pytest() -> None:
         ]
 
     os.environ['PYTHONPATH'] = ':'.join(pypaths)
+    subprocess.run([PYTHON_BIN, '-c', 'import sys; print("FOOO", sys.path)'],
+                   check=True)
+
     print('SET VAL TO', ':'.join(pypaths), flush=True)
 
     # Also tell Python interpreters not to write __pycache__ dirs everywhere
