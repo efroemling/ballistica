@@ -18,6 +18,19 @@ jobs:
         tools/snippets install_pip_reqs
     - name: Run checks and tests
       run: echo make -j2 check test
+  ci_unix2:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.7
+    - name: Install dependencies
+      run: |
+        tools/snippets install_pip_reqs
+    - name: Run checks and tests
+      run: echo make -j2 check test
   ci_windows:
     runs-on: windows-latest
     steps:
