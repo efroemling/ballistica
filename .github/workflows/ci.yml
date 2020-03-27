@@ -27,5 +27,5 @@ jobs:
       with:
         python-version: 3.7
     - name: Display Python version
-      run: python tools/snippets
+      run: python tools/snippets install_pip_reqs
         
