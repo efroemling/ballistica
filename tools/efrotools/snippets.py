@@ -446,9 +446,6 @@ def pytest() -> None:
     import platform
     from efrotools import get_config, PYTHON_BIN
 
-    print('PATH IS', sys.path)
-    print('CWD IS', os.getcwd())
-
     # Grab our python paths for the project and stuff them in PYTHONPATH.
     pypaths = get_config(PROJROOT).get('python_paths')
     if pypaths is None:
@@ -456,9 +453,9 @@ def pytest() -> None:
 
     if platform.system() == 'Windows':
         sep = ';'
-        pypaths = [
-            os.path.join(os.getcwd(), s.replace('/', '\\')) for s in pypaths
-        ]
+        # pypaths = [
+        #     os.path.join(os.getcwd(), s.replace('/', '\\')) for s in pypaths
+        # ]
     else:
         sep = ':'
 
