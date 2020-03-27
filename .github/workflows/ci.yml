@@ -8,7 +8,7 @@ on:
       - cron: '0 12 * * *'
         
 jobs:
-  CI Linux:
+  ci_unix:
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v1
@@ -18,7 +18,7 @@ jobs:
         tools/snippets install_pip_reqs
     - name: Run checks and tests
       run: make -j2 check test
-  CI Windows:
+  ci_windows:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v1
