@@ -8,7 +8,7 @@ on:
       - cron: '0 12 * * *'
         
 jobs:
-  checklinux:
+  CI Linux:
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v1
@@ -18,12 +18,12 @@ jobs:
         tools/snippets install_pip_reqs
     - name: Run checks and tests
       run: make -j2 check test
-  checkwin:
+  CI Windows:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v1
     - name: Set up Python
-      uses: actions/setup-python@1
+      uses: actions/setup-python@v1
       with:
         python-version: 3.7
     - name: Display Python version
