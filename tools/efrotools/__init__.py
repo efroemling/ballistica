@@ -29,6 +29,7 @@ from __future__ import annotations
 import os
 import json
 import subprocess
+import platform
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -37,7 +38,7 @@ if TYPE_CHECKING:
     from typing_extensions import Literal
 
 # Python binary assumed by these tools.
-PYTHON_BIN = 'python3.7'
+PYTHON_BIN = 'python3.7' if platform.system() != 'Windows' else 'python'
 
 MIT_LICENSE = """Copyright (c) 2011-2020 Eric Froemling
 
