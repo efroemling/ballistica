@@ -39,13 +39,16 @@ if TYPE_CHECKING:
 
 def test_assetmanager() -> None:
     """Testing."""
+    import sys
+    import os
+    print('PATH IS', sys.path)
+    print('CWD IS', os.getcwd())
 
     with tempfile.TemporaryDirectory() as tmpdir:
 
         manager = AssetManager(rootdir=Path(tmpdir))
         wref = weakref.ref(manager)
         manager.start()
-
         gather = manager.launch_gather(packages=['a@2'],
                                        flavor=AssetPackageFlavor.DESKTOP,
                                        account_token='dummytoken')
