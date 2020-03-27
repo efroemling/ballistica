@@ -27,10 +27,9 @@ jobs:
       with:
         python-version: 3.7
     - name: Install dependencies
-      run: |
-        tools/snippets install_pip_reqs
+      run: tools/snippets install_pip_reqs
     - name: Run checks and tests
-      run: echo make -j2 check test
+      run: make -j2 check test
   ci_windows:
     runs-on: windows-latest
     steps:
@@ -40,5 +39,5 @@ jobs:
       with:
         python-version: 3.7
     - name: Display Python version
-      run: python tools/snippets install_pip_reqs
+      run: python tools/snippets list_pip_reqs
         
