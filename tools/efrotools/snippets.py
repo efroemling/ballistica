@@ -455,7 +455,9 @@ def pytest() -> None:
         raise CleanError('python_paths not found in project config.')
 
     if platform.system() == 'Windows':
-        pypaths = [s.replace('/', '\\') for s in pypaths]
+        pypaths = [
+            os.path.join(os.getcwd(), s.replace('/', '\\')) for s in pypaths
+        ]
 
     os.environ['PYTHONPATH'] = ':'.join(pypaths)
     print('SET VAL TO', ':'.join(pypaths), flush=True)
