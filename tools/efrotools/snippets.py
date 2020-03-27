@@ -455,11 +455,14 @@ def pytest() -> None:
         raise CleanError('python_paths not found in project config.')
 
     if platform.system() == 'Windows':
+        sep = ';'
         pypaths = [
             os.path.join(os.getcwd(), s.replace('/', '\\')) for s in pypaths
         ]
+    else:
+        sep = ':'
 
-    os.environ['PYTHONPATH'] = ':'.join(pypaths)
+    os.environ['PYTHONPATH'] = sep.join(pypaths)
     subprocess.run([PYTHON_BIN, '-c', 'import sys; print("FOOO", sys.path)'],
                    check=True)
 
