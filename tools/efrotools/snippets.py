@@ -443,12 +443,16 @@ def compile_python_files() -> None:
 
 def pytest() -> None:
     """Run pytest with project environment set up properly."""
+    import platform
     from efrotools import get_config, PYTHON_BIN
 
     # Grab our python paths for the project and stuff them in PYTHONPATH.
     pypaths = get_config(PROJROOT).get('python_paths')
     if pypaths is None:
         raise CleanError('python_paths not found in project config.')
+
+    if platform.system() == 'Windows':
+        pypaths = [s.replace('/', '\\') for s in pypaths]
 
     os.environ['PYTHONPATH'] = ':'.join(pypaths)
     print('SET VAL TO', ':'.join(pypaths), flush=True)
