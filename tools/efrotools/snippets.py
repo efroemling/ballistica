@@ -429,7 +429,8 @@ def compile_python_files() -> None:
     loading speed hits due to hash checks. (see PEP 552).
     We just need to tell modders that they'll need to clear these
     cache files out or turn on debugging mode if they want to tweak
-    the built-in scripts.
+    the built-in scripts directly (or go through the asset build system which
+    properly recreates the .pyc files).
     """
     import py_compile
     for arg in sys.argv[2:]:
