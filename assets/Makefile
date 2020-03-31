@@ -17719,6 +17719,7 @@ DATA_TARGETS = \
   build/ba_data/data/languages/dutch.json \
   build/ba_data/data/languages/greek.json \
   build/ba_data/data/languages/hindi.json \
+  build/ba_data/data/languages/chinesetraditional.json \
   build/ba_data/data/languages/czech.json \
   build/ba_data/data/languages/indonesian.json \
   build/ba_data/data/languages/italian.json \

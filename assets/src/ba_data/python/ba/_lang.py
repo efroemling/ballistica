@@ -414,6 +414,12 @@ def get_valid_languages() -> List[str]:
     try:
         names = os.listdir('ba_data/data/languages')
         names = [n.replace('.json', '').capitalize() for n in names]
+
+        # FIXME: our simple capitalization fails on multi-word names;
+        # should handle this in a better way...
+        for i, name in enumerate(names):
+            if name == 'Chinesetraditional':
+                names[i] = 'ChineseTraditional'
     except Exception:
         from ba import _error
         _error.print_exception()

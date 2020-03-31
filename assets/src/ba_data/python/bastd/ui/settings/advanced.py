@@ -249,7 +249,7 @@ class AdvancedSettingsWindow(ba.OldWindow):
         # so we don't have to go digging through each full language.
         try:
             import json
-            with open('data/data/langdata.json') as infile:
+            with open('ba_data/data/langdata.json') as infile:
                 lang_names_translated = (json.loads(
                     infile.read())['lang_names_translated'])
         except Exception:

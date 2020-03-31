@@ -85,7 +85,8 @@ class App:
         """
 
         # We don't yet support full unicode display on windows or linux :-(.
-        if (language in ('Chinese', 'Persian', 'Korean', 'Arabic', 'Hindi')
+        if (language in ('Chinese', 'ChineseTraditional', 'Persian', 'Korean',
+                         'Arabic', 'Hindi')
                 and self.platform in ('windows', 'linux')):
             return False
         return True
@@ -119,7 +120,13 @@ class App:
             'uk': 'Ukrainian',
             'hi': 'Hindi'
         }
-        language = languages.get(self.locale[:2], 'English')
+
+        # Special case Chinese: specific variations map to traditional.
+        # (otherwise will map to 'Chinese' which is simplified)
+        if self.locale in ('zh_HANT', 'zh_TW'):
+            language = 'ChineseTraditional'
+        else:
+            language = languages.get(self.locale[:2], 'English')
         if not self.can_display_language(language):
             language = 'English'
         return language

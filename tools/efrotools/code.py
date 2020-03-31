@@ -721,6 +721,7 @@ def pycharm(projroot: Path, full: bool, verbose: bool) -> None:
 
     import time
 
+    # FIXME: Generalize this to work with at least linux, possibly windows.
     cachepath = Path('config/.cache-pycharm')
     filenames = get_script_filenames(projroot)
     pycharmroot = Path('/Applications/PyCharm CE.app')

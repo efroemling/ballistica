@@ -66,7 +66,7 @@ class Activity(DependencyComponent):
     # Annotating attr types at the class level lets us introspect them.
     settings: Dict[str, Any]
     teams: List[ba.Team]
-    players: List[_ba.Player]
+    players: List[ba.Player]
 
     def __init__(self, settings: Dict[str, Any]):
         """Creates an activity in the current ba.Session.

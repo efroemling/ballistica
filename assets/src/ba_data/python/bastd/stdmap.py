@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 def _get_map_data(name: str) -> Dict[str, Any]:
     import json
     print('Would get map data', name)
-    with open('data/data/maps/' + name + '.json') as infile:
+    with open('ba_data/data/maps/' + name + '.json') as infile:
         mapdata = json.loads(infile.read())
     assert isinstance(mapdata, dict)
     return mapdata

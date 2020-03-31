@@ -265,6 +265,7 @@
       <w>checkroundover</w>
       <w>checksums</w>
       <w>childnode</w>
+      <w>chinesetraditional</w>
       <w>chipfork</w>
       <w>chosenone</w>
       <w>chromebooks</w>
@@ -347,6 +348,7 @@
       <w>crashlytics</w>
       <w>creditslist</w>
       <w>cryptmodule</w>
+      <w>cssclass</w>
       <w>cstr</w>
       <w>csum</w>
       <w>ctest</w>
@@ -752,6 +754,7 @@
       <w>hacky</w>
       <w>halign</w>
       <w>handlemessage</w>
+      <w>hant</w>
       <w>hashlines</w>
       <w>hashobj</w>
       <w>hashopenssl</w>

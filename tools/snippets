@@ -703,15 +703,10 @@ def update_docs_md() -> None:
     curhash = get_files_hash(pysources)
 
     # Extract the current embedded hash.
-    # with open(docs_path) as infile:
-    #     lines = infile.readlines()
-    # hashlines = [l for l in lines if '<!--DOCSHASH=' in l]
-    # assert len(hashlines) == 1
-    # storedhash = hashlines[0][13:-4]
     with open(docs_hash_path) as infile:
         storedhash = infile.read()
 
-    if curhash != storedhash:
+    if curhash != storedhash or not os.path.exists(docs_path):
         if check:
             raise CleanError('Docs markdown is out of date.')
 
@@ -722,10 +717,8 @@ def update_docs_md() -> None:
         # bits at the top.
         with open('build/docs.html') as infile:
             docs = infile.read()
-        docs = (
-            '<!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->\n'
-            # f'<!--DOCSHASH={curhash}-->\n'
-        ) + docs
+        docs = ('<!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->\n'
+                ) + docs
         with open(docs_path, 'w') as outfile:
             outfile.write(docs)
         with open(docs_hash_path, 'w') as outfile:
