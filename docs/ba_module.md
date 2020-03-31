@@ -547,13 +547,13 @@ is a convenient way to access this same functionality.</p>
     (killing off or transitioning out their nodes) when the last Python
     reference to them disappears, so you can use logic such as:</p>
 
-<pre><span><em>    # create a flag Actor in our game activity</em></span>
+<pre><span><em><small>    # create a flag Actor in our game activity</small></em></span>
     self.flag = ba.Flag(position=(0, 10, 0))</pre>
 
-<pre><span><em>    # later, destroy the flag..</em></span>
-<span><em>    # (provided nothing else is holding a reference to it)</em></span>
-<span><em>    # we could also just assign a new flag to this value.</em></span>
-<span><em>    # either way, the old flag disappears.</em></span>
+<pre><span><em><small>    # later, destroy the flag..</small></em></span>
+<span><em><small>    # (provided nothing else is holding a reference to it)</small></em></span>
+<span><em><small>    # we could also just assign a new flag to this value.</small></em></span>
+<span><em><small>    # either way, the old flag disappears.</small></em></span>
     self.flag = None</pre>
 
 <p>    This is in contrast to the behavior of the more low level <a href="#class_ba_Node">ba.Nodes</a>,
@@ -570,11 +570,11 @@ is a convenient way to access this same functionality.</p>
     class providing a handlemessage() method.  The most universally handled
     message type for actors is the <a href="#class_ba_DieMessage">ba.DieMessage</a>.</p>
 
-<pre><span><em>    # another way to kill the flag from the example above:</em></span>
-<span><em>    # we can safely call this on any type with a 'handlemessage' method</em></span>
-<span><em>    # (though its not guaranteed to always have a meaningful effect)</em></span>
-<span><em>    # in this case the Actor instance will still be around, but its exists()</em></span>
-<span><em>    # and is_alive() methods will both return False</em></span>
+<pre><span><em><small>    # another way to kill the flag from the example above:</small></em></span>
+<span><em><small>    # we can safely call this on any type with a 'handlemessage' method</small></em></span>
+<span><em><small>    # (though its not guaranteed to always have a meaningful effect)</small></em></span>
+<span><em><small>    # in this case the Actor instance will still be around, but its exists()</small></em></span>
+<span><em><small>    # and is_alive() methods will both return False</small></em></span>
     self.flag.handlemessage(<a href="#class_ba_DieMessage">ba.DieMessage</a>())
 </pre>
 
@@ -1102,11 +1102,11 @@ when done.</p>
 <p>Instantiate a Call; pass a callable as the first
 arg, followed by any number of arguments or keywords.</p>
 
-<pre><span><em># Example: wrap a method call with 1 positional and 1 keyword arg.</em></span>
+<pre><span><em><small># Example: wrap a method call with 1 positional and 1 keyword arg.</small></em></span>
 mycall = ba.Call(myobj.dostuff, argval1, namedarg=argval2)</pre>
 
-<pre><span><em># Now we have a single callable to run that whole mess.</em></span>
-<span><em># ..the same as calling myobj.dostuff(argval1, namedarg=argval2)</em></span>
+<pre><span><em><small># Now we have a single callable to run that whole mess.</small></em></span>
+<span><em><small># ..the same as calling myobj.dostuff(argval1, namedarg=argval2)</small></em></span>
 mycall()</pre>
 
 </dd>
@@ -1335,8 +1335,8 @@ Usage:</strong></p>
 sets the context as current on entry and resets it to the previous
 value on exit.</p>
 
-<pre><span><em># example: load a few textures into the UI context</em></span>
-<span><em># (for use in widgets, etc)</em></span>
+<pre><span><em><small># example: load a few textures into the UI context</small></em></span>
+<span><em><small># (for use in widgets, etc)</small></em></span>
 with <a href="#class_ba_Context">ba.Context</a>('ui'):
    tex1 = <a href="#function_ba_gettexture">ba.gettexture</a>('foo_tex_1')
    tex2 = <a href="#function_ba_gettexture">ba.gettexture</a>('foo_tex_2')</pre>
@@ -1371,16 +1371,16 @@ ContextCall has the added bonus that it will not run during context
 shutdown, whereas <a href="#class_ba_WeakCall">ba.WeakCall</a> simply looks at whether the target
 object still exists.</p>
 
-<pre><span><em># example A: code like this can inadvertently prevent our activity</em></span>
-<span><em># (self) from ending until the operation completes, since the bound</em></span>
-<span><em># method we're passing (self.dosomething) contains a strong-reference</em></span>
-<span><em># to self).</em></span>
+<pre><span><em><small># example A: code like this can inadvertently prevent our activity</small></em></span>
+<span><em><small># (self) from ending until the operation completes, since the bound</small></em></span>
+<span><em><small># method we're passing (self.dosomething) contains a strong-reference</small></em></span>
+<span><em><small># to self).</small></em></span>
 start_some_long_action(callback_when_done=self.dosomething)</pre>
 
-<pre><span><em># example B: in this case our activity (self) can still die</em></span>
-<span><em># properly; the callback will clear itself when the activity starts</em></span>
-<span><em># shutting down, becoming a harmless no-op and releasing the reference</em></span>
-<span><em># to our activity.</em></span>
+<pre><span><em><small># example B: in this case our activity (self) can still die</small></em></span>
+<span><em><small># properly; the callback will clear itself when the activity starts</small></em></span>
+<span><em><small># shutting down, becoming a harmless no-op and releasing the reference</small></em></span>
+<span><em><small># to our activity.</small></em></span>
 start_long_action(callback_when_done=<a href="#class_ba_ContextCall">ba.ContextCall</a>(self.mycallback))</pre>
 
 <hr>
@@ -1995,10 +1995,10 @@ ideally just one or two. To include arbitrary values in the
 description, you can return a sequence of values in the following
 form instead of just a string:</p>
 
-<pre><span><em># this will give us something like 'Score 3 goals.' in English</em></span>
-<span><em># and can properly translate to 'Anota 3 goles.' in Spanish.</em></span>
-<span><em># If we just returned the string 'Score 3 Goals' here, there would</em></span>
-<span><em># have to be a translation entry for each specific number. ew.</em></span>
+<pre><span><em><small># this will give us something like 'Score 3 goals.' in English</small></em></span>
+<span><em><small># and can properly translate to 'Anota 3 goles.' in Spanish.</small></em></span>
+<span><em><small># If we just returned the string 'Score 3 Goals' here, there would</small></em></span>
+<span><em><small># have to be a translation entry for each specific number. ew.</small></em></span>
 return ['Score ${ARG1} goals.', self.settings['Score to Win']]</pre>
 
 <p>This way the first string can be consistently translated, with any arg
@@ -2028,10 +2028,10 @@ ideally just one or two. To include arbitrary values in the
 description, you can return a sequence of values in the following form
 instead of just a string:</p>
 
-<pre><span><em># this will give us something like 'score 3 goals' in English</em></span>
-<span><em># and can properly translate to 'anota 3 goles' in Spanish.</em></span>
-<span><em># If we just returned the string 'score 3 goals' here, there would</em></span>
-<span><em># have to be a translation entry for each specific number. ew.</em></span>
+<pre><span><em><small># this will give us something like 'score 3 goals' in English</small></em></span>
+<span><em><small># and can properly translate to 'anota 3 goles' in Spanish.</small></em></span>
+<span><em><small># If we just returned the string 'score 3 goals' here, there would</small></em></span>
+<span><em><small># have to be a translation entry for each specific number. ew.</small></em></span>
 return ['score ${ARG1} goals', self.settings['Score to Win']]</pre>
 
 <p>This way the first string can be consistently translated, with any arg
@@ -2112,7 +2112,7 @@ of a name and a dict of options.</p>
 
 <p>'increment': Value increment for int/float settings.</p>
 
-<pre><span><em># example get_settings() implementation for a capture-the-flag game:</em></span>
+<pre><span><em><small># example get_settings() implementation for a capture-the-flag game:</small></em></span>
 @classmethod
 def get_settings(cls,sessiontype):
     return [("Score to Win", {
@@ -2672,22 +2672,22 @@ needs a chooser.</p>
 <p>    To see available resource keys, look at any of the bs_language_*.py files
     in the game or the translations pages at bombsquadgame.com/translate.</p>
 
-<pre><span><em>    # EXAMPLE 1: specify a string from a resource path</em></span>
+<pre><span><em><small>    # EXAMPLE 1: specify a string from a resource path</small></em></span>
     mynode.text = <a href="#class_ba_Lstr">ba.Lstr</a>(resource='audioSettingsWindow.titleText')</pre>
 
-<pre><span><em>    # EXAMPLE 2: specify a translated string via a category and english value;</em></span>
-<span><em>    # if a translated value is available, it will be used; otherwise the</em></span>
-<span><em>    # english value will be. To see available translation categories, look</em></span>
-<span><em>    # under the 'translations' resource section.</em></span>
+<pre><span><em><small>    # EXAMPLE 2: specify a translated string via a category and english value;</small></em></span>
+<span><em><small>    # if a translated value is available, it will be used; otherwise the</small></em></span>
+<span><em><small>    # english value will be. To see available translation categories, look</small></em></span>
+<span><em><small>    # under the 'translations' resource section.</small></em></span>
     mynode.text = <a href="#class_ba_Lstr">ba.Lstr</a>(translate=('gameDescriptions', 'Defeat all enemies'))</pre>
 
-<pre><span><em>    # EXAMPLE 3: specify a raw value and some substitutions.  Substitutions can</em></span>
-<span><em>    # be used with resource and translate modes as well.</em></span>
+<pre><span><em><small>    # EXAMPLE 3: specify a raw value and some substitutions.  Substitutions can</small></em></span>
+<span><em><small>    # be used with resource and translate modes as well.</small></em></span>
     mynode.text = <a href="#class_ba_Lstr">ba.Lstr</a>(value='${A} / ${B}',
                           subs=[('${A}', str(score)), ('${B}', str(total))])</pre>
 
-<pre><span><em>    # EXAMPLE 4: Lstrs can be nested.  This example would display the resource</em></span>
-<span><em>    # at res_a but replace ${NAME} with the value of the resource at res_b</em></span>
+<pre><span><em><small>    # EXAMPLE 4: Lstrs can be nested.  This example would display the resource</small></em></span>
+<span><em><small>    # at res_a but replace ${NAME} with the value of the resource at res_b</small></em></span>
     mytextnode.text = <a href="#class_ba_Lstr">ba.Lstr</a>(resource='res_a',
                               subs=[('${NAME}', <a href="#class_ba_Lstr">ba.Lstr</a>(resource='res_b'))])
 </pre>
@@ -3028,23 +3028,23 @@ can be specified by providing a tuple of tuples.</p>
   collision when parts are 'rolling' against each other. Provide a
   <a href="#class_ba_Sound">ba.Sound</a>, a target-impulse, and a volume.</p>
 
-<pre><span><em># example 1: create a material that lets us ignore</em></span>
-<span><em># collisions against any nodes we touch in the first</em></span>
-<span><em># 100 ms of our existence; handy for preventing us from</em></span>
-<span><em># exploding outward if we spawn on top of another object:</em></span>
+<pre><span><em><small># example 1: create a material that lets us ignore</small></em></span>
+<span><em><small># collisions against any nodes we touch in the first</small></em></span>
+<span><em><small># 100 ms of our existence; handy for preventing us from</small></em></span>
+<span><em><small># exploding outward if we spawn on top of another object:</small></em></span>
 m = <a href="#class_ba_Material">ba.Material</a>()
 m.add_actions(conditions=(('we_are_younger_than', 100),
                          'or',('they_are_younger_than', 100)),
              actions=('modify_node_collision', 'collide', False))</pre>
 
-<pre><span><em># example 2: send a DieMessage to anything we touch, but cause</em></span>
-<span><em># no physical response.  This should cause any <a href="#class_ba_Actor">ba.Actor</a> to drop dead:</em></span>
+<pre><span><em><small># example 2: send a DieMessage to anything we touch, but cause</small></em></span>
+<span><em><small># no physical response.  This should cause any <a href="#class_ba_Actor">ba.Actor</a> to drop dead:</small></em></span>
 m = <a href="#class_ba_Material">ba.Material</a>()
 m.add_actions(actions=(('modify_part_collision', 'physical', False),
                       ('message', 'their_node', 'at_connect',
                        <a href="#class_ba_DieMessage">ba.DieMessage</a>())))</pre>
 
-<pre><span><em># example 3: play some sounds when we're contacting the ground:</em></span>
+<pre><span><em><small># example 3: play some sounds when we're contacting the ground:</small></em></span>
 m = <a href="#class_ba_Material">ba.Material</a>()
 m.add_actions(conditions=('they_have_material',
                           <a href="#function_ba_sharedobj">ba.sharedobj</a>('footing_material')),
@@ -3187,7 +3187,7 @@ the two nodes exist.  The connection can be severed by setting the
 target attribute to any value or connecting another node attribute
 to it.</p>
 
-<pre><span><em># example: create a locator and attach a light to it</em></span>
+<pre><span><em><small># example: create a locator and attach a light to it</small></em></span>
 light = <a href="#function_ba_newnode">ba.newnode</a>('light')
 loc = <a href="#function_ba_newnode">ba.newnode</a>('locator', attrs={'position': (0,10,0)})
 loc.connectattr('position', light, 'position')</pre>
@@ -4609,15 +4609,15 @@ Real time timers are currently only available in the UI context.</p>
 <p>the 'timeformat' arg defaults to SECONDS but can also be MILLISECONDS
 if you want to pass time as milliseconds.</p>
 
-<pre><span><em># example: use a Timer object to print repeatedly for a few seconds:</em></span>
+<pre><span><em><small># example: use a Timer object to print repeatedly for a few seconds:</small></em></span>
 def say_it():
     <a href="#function_ba_screenmessage">ba.screenmessage</a>('BADGER!')
 def stop_saying_it():
     self.t = None
     <a href="#function_ba_screenmessage">ba.screenmessage</a>('MUSHROOM MUSHROOM!')
-<span><em># create our timer; it will run as long as we hold self.t</em></span>
+<span><em><small># create our timer; it will run as long as we hold self.t</small></em></span>
 self.t = <a href="#class_ba_Timer">ba.Timer</a>(0.3, say_it, repeat=True)
-<span><em># now fire off a one-shot timer to kill it</em></span>
+<span><em><small># now fire off a one-shot timer to kill it</small></em></span>
 <a href="#function_ba_timer">ba.timer</a>(3.89, stop_saying_it)</pre>
 
 <hr>
@@ -4802,17 +4802,17 @@ self.t = <a href="#class_ba_Timer">ba.Timer</a>(0.3, say_it, repeat=True)
 <p>    Think of this as a handy way to tell an object to do something
     at some point in the future if it happens to still exist.</p>
 
-<pre><span><em>    # EXAMPLE A: this code will create a FooClass instance and call its</em></span>
-<span><em>    # bar() method 5 seconds later; it will be kept alive even though</em></span>
-<span><em>    # we overwrite its variable with None because the bound method</em></span>
-<span><em>    # we pass as a timer callback (foo.bar) strong-references it</em></span>
+<pre><span><em><small>    # EXAMPLE A: this code will create a FooClass instance and call its</small></em></span>
+<span><em><small>    # bar() method 5 seconds later; it will be kept alive even though</small></em></span>
+<span><em><small>    # we overwrite its variable with None because the bound method</small></em></span>
+<span><em><small>    # we pass as a timer callback (foo.bar) strong-references it</small></em></span>
     foo = FooClass()
     <a href="#function_ba_timer">ba.timer</a>(5.0, foo.bar)
     foo = None</pre>
 
-<pre><span><em>    # EXAMPLE B: this code will *not* keep our object alive; it will die</em></span>
-<span><em>    # when we overwrite it with None and the timer will be a no-op when it</em></span>
-<span><em>    # fires</em></span>
+<pre><span><em><small>    # EXAMPLE B: this code will *not* keep our object alive; it will die</small></em></span>
+<span><em><small>    # when we overwrite it with None and the timer will be a no-op when it</small></em></span>
+<span><em><small>    # fires</small></em></span>
     foo = FooClass()
     <a href="#function_ba_timer">ba.timer</a>(5.0, <a href="#class_ba_WeakCall">ba.WeakCall</a>(foo.bar))
     foo = None</pre>
@@ -4830,13 +4830,13 @@ self.t = <a href="#class_ba_Timer">ba.Timer</a>(0.3, say_it, repeat=True)
 <p>Instantiate a WeakCall; pass a callable as the first
 arg, followed by any number of arguments or keywords.</p>
 
-<pre><span><em># example: wrap a method call with some positional and</em></span>
-<span><em># keyword args:</em></span>
+<pre><span><em><small># example: wrap a method call with some positional and</small></em></span>
+<span><em><small># keyword args:</small></em></span>
 myweakcall = ba.WeakCall(myobj.dostuff, argval1, namedarg=argval2)</pre>
 
-<pre><span><em># Now we have a single callable to run that whole mess.</em></span>
-<span><em># The same as calling myobj.dostuff(argval1, namedarg=argval2)</em></span>
-<span><em># (provided my_obj still exists; this will do nothing otherwise)</em></span>
+<pre><span><em><small># Now we have a single callable to run that whole mess.</small></em></span>
+<span><em><small># The same as calling myobj.dostuff(argval1, namedarg=argval2)</small></em></span>
+<span><em><small># (provided my_obj still exists; this will do nothing otherwise)</small></em></span>
 myweakcall()</pre>
 
 </dd>
@@ -5819,7 +5819,7 @@ Real time timers are currently only available in the UI context.</p>
 
 <p>the 'timeformat' arg defaults to seconds but can also be milliseconds.</p>
 
-<pre><span><em># timer example: print some stuff through time:</em></span>
+<pre><span><em><small># timer example: print some stuff through time:</small></em></span>
 <a href="#function_ba_screenmessage">ba.screenmessage</a>('hello from now!')
 <a href="#function_ba_timer">ba.timer</a>(1.0, <a href="#class_ba_Call">ba.Call</a>(<a href="#function_ba_screenmessage">ba.screenmessage</a>, 'hello from the future!'))
 <a href="#function_ba_timer">ba.timer</a>(2.0, <a href="#class_ba_Call">ba.Call</a>(<a href="#function_ba_screenmessage">ba.screenmessage</a>, 'hello from the future 2!'))</pre>
