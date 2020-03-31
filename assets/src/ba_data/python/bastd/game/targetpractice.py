@@ -80,11 +80,9 @@ class TargetPracticeGame(ba.TeamGameActivity):
         self._update_timer: Optional[ba.Timer] = None
         self._countdown: Optional[OnScreenCountdown] = None
 
-    # noinspection PyMethodOverriding
-    def on_transition_in(self) -> None:  # type: ignore
-        # FIXME: Unify these args.
-        # pylint: disable=arguments-differ
-        ba.TeamGameActivity.on_transition_in(self, music='ForwardMarch')
+    def on_transition_in(self) -> None:
+        self._default_music = 'ForwardMarch'
+        super().on_transition_in()
 
     def on_team_join(self, team: ba.Team) -> None:
         team.gamedata['score'] = 0

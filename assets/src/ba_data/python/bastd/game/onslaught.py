@@ -123,12 +123,9 @@ class OnslaughtGame(ba.CoopGameActivity):
         self._land_mine_kills = 0
         self._tnt_kills = 0
 
-    # noinspection PyMethodOverriding
-    def on_transition_in(self) -> None:  # type: ignore
-        # FIXME: Unify these args.
-        # pylint: disable=arguments-differ
+    def on_transition_in(self) -> None:
         from bastd.actor.scoreboard import Scoreboard
-        ba.CoopGameActivity.on_transition_in(self)
+        super().on_transition_in()
 
         # Show special landmine tip on rookie preset.
         if self._preset in ['rookie', 'rookie_easy']:

@@ -83,11 +83,9 @@ class NinjaFightGame(ba.TeamGameActivity):
 
     # Called when our game is transitioning in but not ready to begin;
     # we can go ahead and start creating stuff, playing music, etc.
-    # noinspection PyMethodOverriding
-    def on_transition_in(self) -> None:  # type: ignore
-        # FIXME: Unify args.
-        # pylint: disable=arguments-differ
-        ba.TeamGameActivity.on_transition_in(self, music='ToTheDeath')
+    def on_transition_in(self) -> None:
+        self._default_music = 'ToTheDeath'
+        super().on_transition_in()
 
     # Called when our game actually begins.
     def on_begin(self) -> None:

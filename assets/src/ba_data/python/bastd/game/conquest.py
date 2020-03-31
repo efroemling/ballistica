@@ -122,12 +122,10 @@ class ConquestGame(ba.TeamGameActivity):
     def get_instance_scoreboard_description(self) -> Union[str, Sequence]:
         return 'secure all ${ARG1} flags', len(self.map.flag_points)
 
-    # noinspection PyMethodOverriding
-    def on_transition_in(self) -> None:  # type: ignore
-        # FIXME unify these args
-        # pylint: disable=arguments-differ
-        ba.TeamGameActivity.on_transition_in(
-            self, music='Epic' if self.settings['Epic Mode'] else 'GrandRomp')
+    def on_transition_in(self) -> None:
+        self._default_music = ('Epic'
+                               if self.settings['Epic Mode'] else 'GrandRomp')
+        super().on_transition_in()
 
     def on_team_join(self, team: ba.Team) -> None:
         if self.has_begun():

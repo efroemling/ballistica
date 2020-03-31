@@ -64,11 +64,11 @@ class TeamGameActivity(GameActivity):
         if isinstance(_ba.getsession(), FreeForAllSession):
             self._show_kill_points = False
 
-    def on_transition_in(self, music: str = None) -> None:
+    def on_transition_in(self) -> None:
         # pylint: disable=cyclic-import
         from ba._coopsession import CoopSession
         from bastd.actor.controlsguide import ControlsGuide
-        super().on_transition_in(music)
+        super().on_transition_in()
 
         # On the first game, show the controls UI momentarily.
         # (unless we're being run in co-op mode, in which case we leave

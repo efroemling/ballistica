@@ -151,6 +151,8 @@ class ScoreScreenActivity(_activity.Activity):
         self._tips_text: Optional[ba.Actor] = None
         self._kicked_off_server_shutdown = False
         self._kicked_off_server_restart = False
+        self._default_music: Optional[str] = 'Scores'
+        self._default_show_tips = True
 
     def on_player_join(self, player: ba.Player) -> None:
         from ba import _general
@@ -163,22 +165,17 @@ class ScoreScreenActivity(_activity.Activity):
         _ba.timer(time_till_assign, _general.WeakCall(self._safe_assign,
                                                       player))
 
-    def on_transition_in(self,
-                         music: Optional[str] = 'Scores',
-                         show_tips: bool = True) -> None:
-        # FIXME: Unify args.
-        # pylint: disable=arguments-differ
-        # pylint: disable=cyclic-import
-        from bastd.actor import tipstext
-        from bastd.actor import background
-        from ba import _music as bs_music
+    def on_transition_in(self) -> None:
+        from bastd.actor.tipstext import TipsText
+        from bastd.actor.background import Background
+        from ba import _music
         super().on_transition_in()
-        self._background = background.Background(fade_time=0.5,
-                                                 start_faded=False,
-                                                 show_logo=True)
-        if show_tips:
-            self._tips_text = tipstext.TipsText()
-        bs_music.setmusic(music)
+        self._background = Background(fade_time=0.5,
+                                      start_faded=False,
+                                      show_logo=True)
+        if self._default_show_tips:
+            self._tips_text = TipsText()
+        _music.setmusic(self._default_music)
 
     def on_begin(self, custom_continue_message: ba.Lstr = None) -> None:
         # FIXME: Unify args.

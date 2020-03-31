@@ -206,11 +206,9 @@ class HockeyGame(ba.TeamGameActivity):
             return 'score a goal'
         return 'score ${ARG1} goals', self.settings['Score to Win']
 
-    # noinspection PyMethodOverriding
-    def on_transition_in(self) -> None:  # type: ignore
-        # FIXME: Unify args.
-        # pylint: disable=arguments-differ
-        ba.TeamGameActivity.on_transition_in(self, music='Hockey')
+    def on_transition_in(self) -> None:
+        self._default_music = 'Hockey'
+        super().on_transition_in()
 
     def on_begin(self) -> None:
         ba.TeamGameActivity.on_begin(self)

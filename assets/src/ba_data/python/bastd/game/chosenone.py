@@ -117,12 +117,10 @@ class ChosenOneGame(ba.TeamGameActivity):
     def get_instance_description(self) -> Union[str, Sequence]:
         return 'There can be only one.'
 
-    # noinspection PyMethodOverriding
-    def on_transition_in(self) -> None:  # type: ignore
-        # FIXME: unify these args.
-        # pylint: disable=arguments-differ
-        ba.TeamGameActivity.on_transition_in(
-            self, music='Epic' if self.settings['Epic Mode'] else 'Chosen One')
+    def on_transition_in(self) -> None:
+        self._default_music = ('Epic'
+                               if self.settings['Epic Mode'] else 'Chosen One')
+        super().on_transition_in()
 
     def on_team_join(self, team: ba.Team) -> None:
         team.gamedata['time_remaining'] = self.settings["Chosen One Time"]

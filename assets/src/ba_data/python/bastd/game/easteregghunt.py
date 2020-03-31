@@ -96,11 +96,9 @@ class EasterEggHuntGame(ba.TeamGameActivity):
     # Called when our game is transitioning in but not ready to start.
     # ..we can go ahead and set our music and whatnot.
 
-    # noinspection PyMethodOverriding
-    def on_transition_in(self) -> None:  # type: ignore
-        # FIXME: Unify these arguments.
-        # pylint: disable=arguments-differ
-        ba.TeamGameActivity.on_transition_in(self, music='ForwardMarch')
+    def on_transition_in(self) -> None:
+        self._default_music = 'ForwardMarch'
+        super().on_transition_in()
 
     def on_team_join(self, team: ba.Team) -> None:
         team.gamedata['score'] = 0

@@ -123,11 +123,9 @@ class KeepAwayGame(ba.TeamGameActivity):
         return ('carry the flag for ${ARG1} seconds',
                 self.settings['Hold Time'])
 
-    # noinspection PyMethodOverriding
-    def on_transition_in(self) -> None:  # type: ignore
-        # FIXME: Unify these args.
-        # pylint: disable=arguments-differ
-        ba.TeamGameActivity.on_transition_in(self, music='Keep Away')
+    def on_transition_in(self) -> None:
+        self._default_music = 'Keep Away'
+        super().on_transition_in()
 
     def on_team_join(self, team: ba.Team) -> None:
         team.gamedata['time_remaining'] = self.settings["Hold Time"]

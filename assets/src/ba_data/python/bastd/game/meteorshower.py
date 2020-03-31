@@ -90,12 +90,10 @@ class MeteorShowerGame(ba.TeamGameActivity):
 
     # Called when our game is transitioning in but not ready to start;
     # ..we can go ahead and set our music and whatnot.
-    # noinspection PyMethodOverriding
-    def on_transition_in(self) -> None:  # type: ignore
-        # FIXME unify these
-        # pylint: disable=arguments-differ
-        ba.TeamGameActivity.on_transition_in(
-            self, music='Epic' if self.settings['Epic Mode'] else 'Survival')
+    def on_transition_in(self) -> None:
+        self._default_music = ('Epic'
+                               if self.settings['Epic Mode'] else 'Survival')
+        super().on_transition_in()
 
     # Called when our game actually starts.
     def on_begin(self) -> None:

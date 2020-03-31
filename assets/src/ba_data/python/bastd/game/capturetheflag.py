@@ -134,13 +134,10 @@ class CaptureTheFlagGame(ba.TeamGameActivity):
             return 'return 1 flag'
         return 'return ${ARG1} flags', self.settings['Score to Win']
 
-    # noinspection PyMethodOverriding
-    def on_transition_in(self) -> None:  # type: ignore
-        # FIXME unify these args
-        # pylint: disable=arguments-differ
-        ba.TeamGameActivity.on_transition_in(
-            self,
-            music='Epic' if self.settings['Epic Mode'] else 'FlagCatcher')
+    def on_transition_in(self) -> None:
+        self._default_music = ('Epic' if self.settings['Epic Mode'] else
+                               'FlagCatcher')
+        super().on_transition_in()
 
     def on_team_join(self, team: ba.Team) -> None:
         team.gamedata['score'] = 0

@@ -67,7 +67,7 @@ class OnScreenTimer(ba.Actor):
         self.inputnode.time1 = self._starttime
         ba.sharedobj('globals').connectattr('time', self.inputnode, 'time2')
 
-    def hasstarted(self) -> bool:
+    def has_started(self) -> bool:
         """Return whether this timer has started yet."""
         return self._starttime is not None
 

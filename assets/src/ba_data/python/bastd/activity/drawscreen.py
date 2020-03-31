@@ -37,11 +37,9 @@ class DrawScoreScreenActivity(TeamsScoreScreenActivity):
     def __init__(self, settings: Dict[str, Any]):
         super().__init__(settings=settings)
 
-    # noinspection PyMethodOverriding
-    def on_transition_in(self) -> None:  # type: ignore
-        # FIXME FIXME: unify args
-        # pylint: disable=arguments-differ
-        super().on_transition_in(music=None)
+    def on_transition_in(self) -> None:
+        self._default_music = None  # Awkward silence...
+        super().on_transition_in()
 
     # noinspection PyMethodOverriding
     def on_begin(self) -> None:  # type: ignore

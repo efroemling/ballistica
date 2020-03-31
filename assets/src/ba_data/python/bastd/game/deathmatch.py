@@ -114,12 +114,10 @@ class DeathMatchGame(ba.TeamGameActivity):
     def get_instance_scoreboard_description(self) -> Union[str, Sequence]:
         return 'kill ${ARG1} enemies', self._score_to_win
 
-    # noinspection PyMethodOverriding
-    def on_transition_in(self) -> None:  # type: ignore
-        # FIXME need to unify these function signatures
-        # pylint: disable=arguments-differ
-        ba.TeamGameActivity.on_transition_in(
-            self, music='Epic' if self.settings['Epic Mode'] else 'ToTheDeath')
+    def on_transition_in(self) -> None:
+        self._default_music = ('Epic'
+                               if self.settings['Epic Mode'] else 'ToTheDeath')
+        super().on_transition_in()
 
     def on_team_join(self, team: ba.Team) -> None:
         team.gamedata['score'] = 0

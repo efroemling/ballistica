@@ -96,12 +96,10 @@ class TheLastStandGame(ba.CoopGameActivity):
             spazbot.ExplodeyBot:            [0.05, 0.02, 0.002]
         }  # yapf: disable
 
-    # noinspection PyMethodOverriding
-    def on_transition_in(self) -> None:  # type: ignore
-        # FIXME: Unify args for this call.
-        # pylint: disable=arguments-differ
+    def on_transition_in(self) -> None:
         from bastd.actor.scoreboard import Scoreboard
-        ba.CoopGameActivity.on_transition_in(self, music='Epic')
+        self._default_music = 'Epic'
+        super().on_transition_in()
         ba.timer(1.3, ba.Call(ba.playsound, self._new_wave_sound))
         self._scoreboard = Scoreboard(label=ba.Lstr(resource='scoreText'),
                                       score_split=0.5)

@@ -145,11 +145,9 @@ class FootballTeamGame(ba.TeamGameActivity):
             return 'score ${ARG1} touchdowns', touchdowns
         return 'score a touchdown'
 
-    # noinspection PyMethodOverriding
-    def on_transition_in(self) -> None:  # type: ignore
-        # FIXME: Unify these args.
-        # pylint: disable=arguments-differ
-        ba.TeamGameActivity.on_transition_in(self, music='Football')
+    def on_transition_in(self) -> None:
+        self._default_music = 'Football'
+        super().on_transition_in()
 
     def on_begin(self) -> None:
         ba.TeamGameActivity.on_begin(self)
@@ -398,11 +396,9 @@ class FootballCoopGame(ba.CoopGameActivity):
         self._flag_respawn_light: Optional[ba.Actor] = None
         self._flag: Optional[FootballFlag] = None
 
-    # noinspection PyMethodOverriding
-    def on_transition_in(self) -> None:  # type: ignore
-        # FIXME: Unify these args.
-        # pylint: disable=arguments-differ
-        ba.CoopGameActivity.on_transition_in(self, music='Football')
+    def on_transition_in(self) -> None:
+        self._default_music = 'Football'
+        super().on_transition_in()
         self._scoreboard = Scoreboard()
         self._flag_spawn_pos = self.map.get_flag_position(None)
         self._spawn_flag()

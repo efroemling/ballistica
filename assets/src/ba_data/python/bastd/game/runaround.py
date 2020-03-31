@@ -129,11 +129,9 @@ class RunaroundGame(ba.CoopGameActivity):
         self._flawless_bonus: Optional[int] = None
         self._wave_update_timer: Optional[ba.Timer] = None
 
-    # noinspection PyMethodOverriding
-    def on_transition_in(self) -> None:  # type: ignore
-        # FIXME: Unify args here.
-        # pylint: disable=arguments-differ
-        ba.CoopGameActivity.on_transition_in(self, music='Marching')
+    def on_transition_in(self) -> None:
+        self._default_music = 'Marching'
+        super().on_transition_in()
         self._scoreboard = Scoreboard(label=ba.Lstr(resource='scoreText'),
                                       score_split=0.5)
         self._score_region = ba.Actor(

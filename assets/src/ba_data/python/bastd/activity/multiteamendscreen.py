@@ -42,11 +42,11 @@ class TeamSeriesVictoryScoreScreenActivity(TeamsScoreScreenActivity):
         self._tips_text = None
 
     # noinspection PyMethodOverriding
-    def on_transition_in(self) -> None:  # type: ignore
-        # FIXME: Unify args.
-        # pylint: disable=arguments-differ
-        # we don't yet want music and stuff..
-        super().on_transition_in(music=None, show_tips=False)
+    def on_transition_in(self) -> None:
+        # We don't yet want music and whatnot...
+        self._default_music = None
+        self._default_show_tips = False
+        super().on_transition_in()
 
     # noinspection PyMethodOverriding
     def on_begin(self) -> None:  # type: ignore

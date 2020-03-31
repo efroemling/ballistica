@@ -243,12 +243,10 @@ class EliminationGame(ba.TeamGameActivity):
         return 'last team standing wins' if isinstance(
             self.session, ba.TeamsSession) else 'last one standing wins'
 
-    # noinspection PyMethodOverriding
-    def on_transition_in(self) -> None:  # type: ignore
-        # FIXME: need to give on_transition_in() consistent args everywhere.
-        # pylint: disable=arguments-differ
-        ba.TeamGameActivity.on_transition_in(
-            self, music='Epic' if self.settings['Epic Mode'] else 'Survival')
+    def on_transition_in(self) -> None:
+        self._default_music = ('Epic'
+                               if self.settings['Epic Mode'] else 'Survival')
+        super().on_transition_in()
         self._start_time = ba.time()
 
     def on_team_join(self, team: ba.Team) -> None:

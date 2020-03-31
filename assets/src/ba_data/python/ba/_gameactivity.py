@@ -240,7 +240,7 @@ class GameActivity(Activity):
                         'default': False
                     })]
         """
-        del sessiontype  # unused arg
+        del sessiontype  # Unused arg.
         return []
 
     @classmethod
@@ -264,8 +264,8 @@ class GameActivity(Activity):
         from ba import _map
         name = cls.get_display_string(config['settings'])
 
-        # in newer configs, map is in settings; it used to be in the
-        # config root
+        # In newer configs, map is in settings; it used to be in the
+        # config root.
         if 'map' in config['settings']:
             sval = Lstr(value="${NAME} @ ${MAP}",
                         subs=[('${NAME}', name),
@@ -305,6 +305,10 @@ class GameActivity(Activity):
 
         # Whether to show points for kills.
         self._show_kill_points = True
+
+        # Music that should play in on_transition_in()
+        # (unless overridden by the map).
+        self._default_music: Optional[str] = None
 
         # Go ahead and get our map loading.
         map_name: str
@@ -438,22 +442,14 @@ class GameActivity(Activity):
         """
         return ''
 
-    def on_transition_in(self, music: str = None) -> None:
-        """
-        Method override; optionally can
-        be passed a 'music' string which is the suggested type of
-        music to play during the game.
-        Note that in some cases music may be overridden by
-        the map or other factors, which is why you should pass
-        it in here instead of simply playing it yourself.
-        """
-        # FIXME: Unify args.
-        # pylint: disable=arguments-differ
+    def on_transition_in(self) -> None:
 
         super().on_transition_in()
 
-        # make our map
+        # Make our map.
         self._map = self._map_type()
+
+        music = self._default_music
 
         # give our map a chance to override the music
         # (for happy-thoughts and other such themed maps)
@@ -462,8 +458,8 @@ class GameActivity(Activity):
             music = override_music
 
         if music is not None:
-            from ba import _music as bsmusic
-            bsmusic.setmusic(music)
+            from ba import _music
+            _music.setmusic(music)
 
     def on_continue(self) -> None:
         """

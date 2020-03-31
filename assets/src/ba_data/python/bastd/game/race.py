@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import random
 from typing import TYPE_CHECKING
+from dataclasses import dataclass
 
 import ba
 from bastd.actor.bomb import Bomb
@@ -36,6 +37,13 @@ if TYPE_CHECKING:
     from typing import (Any, Type, Tuple, List, Sequence, Optional, Dict,
                         Union)
     from bastd.actor.onscreentimer import OnScreenTimer
+
+
+@dataclass
+class RaceMine:
+    """Holds info about a mine on the track."""
+    point: Sequence[float]
+    mine: Optional[Bomb]
 
 
 class RaceRegion(ba.Actor):
@@ -48,7 +56,7 @@ class RaceRegion(ba.Actor):
         self.pos = pt
         self.index = index
         self.node = ba.newnode(
-            "region",
+            'region',
             delegate=self,
             attrs={
                 'position': pt[:3],
@@ -84,41 +92,41 @@ class RaceGame(ba.TeamGameActivity):
 
     @classmethod
     def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
-        return ba.getmaps("race")
+        return ba.getmaps('race')
 
     @classmethod
     def get_settings(
             cls,
             sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
         settings: List[Tuple[str, Dict[str, Any]]] = [
-            ("Laps", {
+            ('Laps', {
                 'min_value': 1,
-                "default": 3,
-                "increment": 1
+                'default': 3,
+                'increment': 1
             }),
-            ("Time Limit", {
+            ('Time Limit', {
                 'choices': [('None', 0), ('1 Minute', 60),
                             ('2 Minutes', 120), ('5 Minutes', 300),
                             ('10 Minutes', 600), ('20 Minutes', 1200)],
                 'default': 0
             }),
-            ("Mine Spawning", {
+            ('Mine Spawning', {
                 'choices': [('No Mines', 0), ('8 Seconds', 8000),
                             ('4 Seconds', 4000), ('2 Seconds', 2000)],
                 'default': 4000
             }),
-            ("Bomb Spawning", {
+            ('Bomb Spawning', {
                 'choices': [('None', 0), ('8 Seconds', 8000),
                             ('4 Seconds', 4000), ('2 Seconds', 2000),
                             ('1 Second', 1000)],
             'default': 2000
             }),
-            ("Epic Mode", {
+            ('Epic Mode', {
                 'default': False
             })]  # yapf: disable
 
         if issubclass(sessiontype, ba.TeamsSession):
-            settings.append(("Entire Team Must Finish", {'default': False}))
+            settings.append(('Entire Team Must Finish', {'default': False}))
         return settings
 
     def __init__(self, settings: Dict[str, Any]):
@@ -128,8 +136,8 @@ class RaceGame(ba.TeamGameActivity):
         self._scoreboard = Scoreboard()
         if self.settings['Epic Mode']:
             self.slow_motion = True
-        self._score_sound = ba.getsound("score")
-        self._swipsound = ba.getsound("swip")
+        self._score_sound = ba.getsound('score')
+        self._swipsound = ba.getsound('swip')
         self._last_team_time: Optional[float] = None
         self._front_race_region = None
         self._nub_tex = ba.gettexture('nub')
@@ -140,7 +148,7 @@ class RaceGame(ba.TeamGameActivity):
         self._team_finish_pts: Optional[int] = None
         self._time_text: Optional[ba.Actor] = None
         self._timer: Optional[OnScreenTimer] = None
-        self._race_mines: Optional[List[Dict[str, Any]]] = None
+        self._race_mines: Optional[List[RaceMine]] = None
         self._race_mine_timer: Optional[ba.Timer] = None
         self._scoreboard_timer: Optional[ba.Timer] = None
         self._player_order_update_timer: Optional[ba.Timer] = None
@@ -163,20 +171,18 @@ class RaceGame(ba.TeamGameActivity):
             return 'run ${ARG1} laps', self.settings['Laps']
         return 'run 1 lap'
 
-    # noinspection PyMethodOverriding
-    def on_transition_in(self) -> None:  # type: ignore
-        # FIXME: unify these args
-        # pylint: disable=arguments-differ
-        ba.TeamGameActivity.on_transition_in(
-            self, music='Epic Race' if self.settings['Epic Mode'] else 'Race')
+    def on_transition_in(self) -> None:
+        self._default_music = ('Epic Race'
+                               if self.settings['Epic Mode'] else 'Race')
+        super().on_transition_in()
 
         pts = self.map.get_def_points('race_point')
         mat = self.race_region_material = ba.Material()
-        mat.add_actions(conditions=("they_have_material",
+        mat.add_actions(conditions=('they_have_material',
                                     ba.sharedobj('player_material')),
-                        actions=(("modify_part_collision", "collide", True),
-                                 ("modify_part_collision", "physical",
-                                  False), ("call", "at_connect",
+                        actions=(('modify_part_collision', 'collide', True),
+                                 ('modify_part_collision', 'physical',
+                                  False), ('call', 'at_connect',
                                            self._handle_race_point_collide)))
         for rpt in pts:
             self._regions.append(RaceRegion(rpt, len(self._regions)))
@@ -358,7 +364,7 @@ class RaceGame(ba.TeamGameActivity):
             player.team.gamedata['finished'] = True
             player.team.gamedata['time'] = None
             player.team.gamedata['lap'] = 0
-            ba.playsound(ba.getsound("boo"))
+            ba.playsound(ba.getsound('boo'))
             for otherplayer in player.team.players:
                 otherplayer.gamedata['lap'] = 0
                 otherplayer.gamedata['finished'] = True
@@ -415,10 +421,10 @@ class RaceGame(ba.TeamGameActivity):
         self._timer = OnScreenTimer()
 
         if self.settings['Mine Spawning'] != 0:
-            self._race_mines = [{
-                'point': p,
-                'mine': None
-            } for p in self.map.get_def_points('race_mine')]
+            self._race_mines = [
+                RaceMine(point=p, mine=None)
+                for p in self.map.get_def_points('race_mine')
+            ]
             if self._race_mines:
                 self._race_mine_timer = ba.Timer(
                     0.001 * self.settings['Mine Spawning'],
@@ -572,21 +578,20 @@ class RaceGame(ba.TeamGameActivity):
     def _make_mine(self, i: int) -> None:
         assert self._race_mines is not None
         rmine = self._race_mines[i]
-        rmine['mine'] = Bomb(position=rmine['point'][:3],
-                             bomb_type='land_mine')
-        rmine['mine'].arm()
+        rmine.mine = Bomb(position=rmine.point[:3], bomb_type='land_mine')
+        rmine.mine.arm()
 
     def _flash_mine(self, i: int) -> None:
         assert self._race_mines is not None
         rmine = self._race_mines[i]
-        light = ba.newnode("light",
+        light = ba.newnode('light',
                            attrs={
-                               'position': rmine['point'][:3],
+                               'position': rmine.point[:3],
                                'color': (1, 0.2, 0.2),
                                'radius': 0.1,
                                'height_attenuated': False
                            })
-        ba.animate(light, "intensity", {0.0: 0, 0.1: 1.0, 0.2: 0}, loop=True)
+        ba.animate(light, 'intensity', {0.0: 0, 0.1: 1.0, 0.2: 0}, loop=True)
         ba.timer(1.0, light.delete)
 
     def _update_race_mine(self) -> None:
@@ -596,10 +601,10 @@ class RaceGame(ba.TeamGameActivity):
         for _i in range(3):
             m_index = random.randrange(len(self._race_mines))
             rmine = self._race_mines[m_index]
-            if not rmine['mine']:
+            if not rmine.mine:
                 break
         assert rmine is not None
-        if not rmine['mine']:
+        if not rmine.mine:
             self._flash_mine(m_index)
             ba.timer(0.95, ba.Call(self._make_mine, m_index))
 
@@ -690,7 +695,7 @@ class RaceGame(ba.TeamGameActivity):
         # finish time if we have one. (so users don't get upset if their
         # final time differs from what they see onscreen by a tiny bit)
         assert self._timer is not None
-        if self._timer.hasstarted():
+        if self._timer.has_started():
             self._timer.stop(
                 endtime=None if self._last_team_time is None else (
                     self._timer.getstarttime() + self._last_team_time))

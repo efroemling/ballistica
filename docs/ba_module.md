@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-03-30 for Ballistica version 1.5.0 build 20001</em></h4>
+<h4><em>last updated on 2020-03-31 for Ballistica version 1.5.0 build 20001</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -2210,14 +2210,14 @@ whatever is relevant to keep the game going.</p>
 
 </dd>
 <dt><h4><a name="method_ba_GameActivity__on_transition_in">on_transition_in()</a></dt></h4><dd>
-<p><span>on_transition_in(self, music: str = None) -&gt; None</span></p>
+<p><span>on_transition_in(self) -&gt; None</span></p>
 
-<p>Method override; optionally can
-be passed a 'music' string which is the suggested type of
-music to play during the game.
-Note that in some cases music may be overridden by
-the map or other factors, which is why you should pass
-it in here instead of simply playing it yourself.</p>
+<p>Called when the Activity is first becoming visible.</p>
+
+<p>Upon this call, the Activity should fade in backgrounds,
+start playing music, etc. It does not yet have access to <a href="#class_ba_Player">ba.Players</a>
+or <a href="#class_ba_Team">ba.Teams</a>, however. They remain owned by the previous Activity
+up until <a href="#method_ba_Activity__on_begin">ba.Activity.on_begin</a>() is called.</p>
 
 </dd>
 <dt><h4><a name="method_ba_GameActivity__project_flag_stand">project_flag_stand()</a></dt></h4><dd>
@@ -4356,14 +4356,14 @@ and it should begin its actual game logic.</p>
 
 </dd>
 <dt><h4><a name="method_ba_TeamGameActivity__on_transition_in">on_transition_in()</a></dt></h4><dd>
-<p><span>on_transition_in(self, music: str = None) -&gt; None</span></p>
+<p><span>on_transition_in(self) -&gt; None</span></p>
 
-<p>Method override; optionally can
-be passed a 'music' string which is the suggested type of
-music to play during the game.
-Note that in some cases music may be overridden by
-the map or other factors, which is why you should pass
-it in here instead of simply playing it yourself.</p>
+<p>Called when the Activity is first becoming visible.</p>
+
+<p>Upon this call, the Activity should fade in backgrounds,
+start playing music, etc. It does not yet have access to <a href="#class_ba_Player">ba.Players</a>
+or <a href="#class_ba_Team">ba.Teams</a>, however. They remain owned by the previous Activity
+up until <a href="#method_ba_Activity__on_begin">ba.Activity.on_begin</a>() is called.</p>
 
 </dd>
 <dt><h4><a name="method_ba_TeamGameActivity__spawn_player_spaz">spawn_player_spaz()</a></dt></h4><dd>
