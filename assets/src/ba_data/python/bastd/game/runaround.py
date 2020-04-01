@@ -130,7 +130,7 @@ class RunaroundGame(ba.CoopGameActivity):
         self._wave_update_timer: Optional[ba.Timer] = None
 
     def on_transition_in(self) -> None:
-        self._default_music = 'Marching'
+        self._default_music = ba.MusicType.MARCHING
         super().on_transition_in()
         self._scoreboard = Scoreboard(label=ba.Lstr(resource='scoreText'),
                                       score_split=0.5)
@@ -630,7 +630,7 @@ class RunaroundGame(ba.CoopGameActivity):
                 base_delay += 0.85
                 ba.playsound(self._winsound)
                 ba.cameraflash()
-                ba.setmusic('Victory')
+                ba.setmusic(ba.MusicType.VICTORY)
                 self._game_over = True
                 ba.timer(base_delay, ba.Call(self.do_end, 'victory'))
                 return

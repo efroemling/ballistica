@@ -98,7 +98,7 @@ class TheLastStandGame(ba.CoopGameActivity):
 
     def on_transition_in(self) -> None:
         from bastd.actor.scoreboard import Scoreboard
-        self._default_music = 'Epic'
+        self._default_music = ba.MusicType.EPIC
         super().on_transition_in()
         ba.timer(1.3, ba.Call(ba.playsound, self._new_wave_sound))
         self._scoreboard = Scoreboard(label=ba.Lstr(resource='scoreText'),

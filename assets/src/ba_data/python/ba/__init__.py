@@ -78,7 +78,7 @@ from ba._messages import (OutOfBoundsMessage, DieMessage, StandMessage,
                           DroppedMessage, ShouldShatterMessage,
                           ImpactDamageMessage, FreezeMessage, ThawMessage,
                           HitMessage)
-from ba._music import setmusic, MusicPlayer
+from ba._music import setmusic, MusicPlayer, MusicType, MusicPlayMode
 from ba._powerup import PowerupMessage, PowerupAcceptMessage
 from ba._teambasesession import TeamBaseSession
 from ba.ui import (OldWindow, UILocation, UILocationWindow, UIController,

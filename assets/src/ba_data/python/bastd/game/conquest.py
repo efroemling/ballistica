@@ -123,8 +123,8 @@ class ConquestGame(ba.TeamGameActivity):
         return 'secure all ${ARG1} flags', len(self.map.flag_points)
 
     def on_transition_in(self) -> None:
-        self._default_music = ('Epic'
-                               if self.settings['Epic Mode'] else 'GrandRomp')
+        self._default_music = (ba.MusicType.EPIC if self.settings['Epic Mode']
+                               else ba.MusicType.GRAND_ROMP)
         super().on_transition_in()
 
     def on_team_join(self, team: ba.Team) -> None:

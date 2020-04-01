@@ -436,6 +436,7 @@
       <w>domreg</w>
       <w>domsg</w>
       <w>dont</w>
+      <w>doplay</w>
       <w>doraise</w>
       <w>dosend</w>
       <w>dosomething</w>
@@ -1066,6 +1067,7 @@
       <w>mtime</w>
       <w>mtrans</w>
       <w>mtvos</w>
+      <w>mtype</w>
       <w>mult</w>
       <w>multibytecodec</w>
       <w>multikillcount</w>
@@ -1074,6 +1076,8 @@
       <w>multiteamendscreen</w>
       <w>multiteamjoinscreen</w>
       <w>multithreaded</w>
+      <w>musicinfo</w>
+      <w>musicinfos</w>
       <w>musicplayer</w>
       <w>musictype</w>
       <w>musopen</w>
@@ -1526,6 +1530,7 @@
       <w>socketmodule</w>
       <w>socketserver</w>
       <w>somevar</w>
+      <w>soundtrackname</w>
       <w>sourceimages</w>
       <w>sourcelines</w>
       <w>spacelen</w>

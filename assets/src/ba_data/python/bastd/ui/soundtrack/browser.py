@@ -188,7 +188,7 @@ class SoundtrackBrowserWindow(ba.OldWindow):
             ba.widget(edit=btn,
                       left_widget=_ba.get_special_widget('back_button'))
 
-        # keep our lock images up to date/etc.
+        # Keep our lock images up to date/etc.
         self._update_timer = ba.Timer(1.0,
                                       ba.WeakCall(self._update),
                                       timetype=ba.TimeType.REAL,
@@ -282,10 +282,10 @@ class SoundtrackBrowserWindow(ba.OldWindow):
         else:
             sdtk = cfg['Soundtracks'][self._selected_soundtrack]
 
-        # find a valid dup name that doesn't exist
+        # Find a valid dup name that doesn't exist.
         test_index = 1
         copy_text = ba.Lstr(resource='copyOfText').evaluate()
-        # get just 'Copy' or whatnot
+        # Get just 'Copy' or whatnot.
         copy_word = copy_text.replace('${NAME}', '').strip()
         base_name = self._get_soundtrack_display_name(
             self._selected_soundtrack).evaluate()
@@ -294,7 +294,7 @@ class SoundtrackBrowserWindow(ba.OldWindow):
             assert isinstance(base_name, bytes)
             base_name = base_name.decode('utf-8')
 
-        # if it looks like a copy, strip digits and spaces off the end
+        # If it looks like a copy, strip digits and spaces off the end.
         if copy_word in base_name:
             while base_name[-1].isdigit() or base_name[-1] == ' ':
                 base_name = base_name[:-1]
@@ -320,14 +320,14 @@ class SoundtrackBrowserWindow(ba.OldWindow):
         cfg = ba.app.config
         current_soundtrack = cfg.setdefault('Soundtrack', '__default__')
 
-        # if it varies from current, commit and play
+        # If it varies from current, commit and play.
         if current_soundtrack != name and self._allow_changing_soundtracks:
             ba.playsound(ba.getsound('gunCocking'))
             cfg['Soundtrack'] = self._selected_soundtrack
             cfg.commit()
-            # just play whats already playing.. this'll grab it from the
-            # new soundtrack
-            do_play_music(ba.app.music_types['regular'])
+            # Just play whats already playing.. this'll grab it from the
+            # new soundtrack.
+            do_play_music(ba.app.music_types[ba.MusicPlayMode.REGULAR])
 
     def _back(self) -> None:
         # pylint: disable=cyclic-import

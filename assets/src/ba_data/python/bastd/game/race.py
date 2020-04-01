@@ -172,8 +172,9 @@ class RaceGame(ba.TeamGameActivity):
         return 'run 1 lap'
 
     def on_transition_in(self) -> None:
-        self._default_music = ('Epic Race'
-                               if self.settings['Epic Mode'] else 'Race')
+        self._default_music = (ba.MusicType.EPIC_RACE
+                               if self.settings['Epic Mode'] else
+                               ba.MusicType.RACE)
         super().on_transition_in()
 
         pts = self.map.get_def_points('race_point')

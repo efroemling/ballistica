@@ -26,11 +26,44 @@ import os
 import random
 import threading
 from typing import TYPE_CHECKING
+from enum import Enum
 
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Callable, Any, List, Optional, Dict, Union
+    from typing import Callable, Any, List, Optional, Dict, Union, Tuple
+
+
+class MusicType(Enum):
+    """Types of music available to play in-game."""
+    MENU = 'Menu'
+    VICTORY = 'Victory'
+    CHAR_SELECT = 'CharSelect'
+    RUN_AWAY = 'RunAway'
+    ONSLAUGHT = 'Onslaught'
+    KEEP_AWAY = 'Keep Away'
+    RACE = 'Race'
+    EPIC_RACE = 'Epic Race'
+    SCORES = 'Scores'
+    GRAND_ROMP = 'GrandRomp'
+    TO_THE_DEATH = 'ToTheDeath'
+    CHOSEN_ONE = 'Chosen One'
+    FORWARD_MARCH = 'ForwardMarch'
+    FLAG_CATCHER = 'FlagCatcher'
+    SURVIVAL = 'Survival'
+    EPIC = 'Epic'
+    SPORTS = 'Sports'
+    HOCKEY = 'Hockey'
+    FOOTBALL = 'Football'
+    FLYING = 'Flying'
+    SCARY = 'Scary'
+    MARCHING = 'Marching'
+
+
+class MusicPlayMode(Enum):
+    """Influences behavior when playing music."""
+    REGULAR = 'regular'
+    TEST = 'test'
 
 
 class MusicPlayer:
@@ -229,12 +262,13 @@ class InternalMusicPlayer(MusicPlayer):
 
 
 # For internal music player.
+# FIXME: this only applies to Android currently.
 def get_valid_music_file_extensions() -> List[str]:
     """Return file extensions for types playable on this device."""
     return ['mp3', 'ogg', 'm4a', 'wav', 'flac', 'mid']
 
 
-class ITunesThread(threading.Thread):
+class MacMusicAppThread(threading.Thread):
     """Thread which wrangles iTunes/Music.app playback"""
 
     def __init__(self) -> None:
@@ -246,16 +280,16 @@ class ITunesThread(threading.Thread):
         self._orig_volume: Optional[int] = None
 
     def run(self) -> None:
-        """Run the iTunes/Music.app thread."""
+        """Run the Music.app thread."""
         from ba._general import Call
         from ba._lang import Lstr
         from ba._enums import TimeType
-        _ba.set_thread_name("BA_ITunesThread")
-        _ba.itunes_init()
+        _ba.set_thread_name("BA_MacMusicAppThread")
+        _ba.mac_music_app_init()
 
-        # It looks like launching iTunes here on 10.7/10.8 knocks us
-        # out of fullscreen; ick. That might be a bug, but for now we
-        # can work around it by reactivating ourself after.
+        # Let's mention to the user we're launching Music.app in case
+        # it causes any funny business (this used to background the app
+        # sometimes, though I think that is fixed now)
         def do_print() -> None:
             _ba.timer(1.0,
                       Call(_ba.screenmessage, Lstr(resource='usingItunesText'),
@@ -265,12 +299,8 @@ class ITunesThread(threading.Thread):
         _ba.pushcall(do_print, from_other_thread=True)
 
         # Here we grab this to force the actual launch.
-        # Currently (on 10.8 at least) this is causing a switch
-        # away from our fullscreen window. to work around this we
-        # explicitly focus our main window to bring ourself back.
-        _ba.itunes_get_volume()
-        _ba.pushcall(_ba.focus_window, from_other_thread=True)
-        _ba.itunes_get_library_source()
+        _ba.mac_music_app_get_volume()
+        _ba.mac_music_app_get_library_source()
         done = False
         while not done:
             self._commands_available.wait()
@@ -307,8 +337,8 @@ class ITunesThread(threading.Thread):
         if old_volume > 0.0 and volume == 0.0:
             try:
                 assert self._orig_volume is not None
-                _ba.itunes_stop()
-                _ba.itunes_set_volume(self._orig_volume)
+                _ba.mac_music_app_stop()
+                _ba.mac_music_app_set_volume(self._orig_volume)
             except Exception as exc:
                 print('Error stopping iTunes music:', exc)
         elif self._volume > 0:
@@ -316,8 +346,8 @@ class ITunesThread(threading.Thread):
             # If volume was zero, store pre-playing volume and start
             # playing.
             if old_volume == 0.0:
-                self._orig_volume = _ba.itunes_get_volume()
-            self._update_itunes_volume()
+                self._orig_volume = _ba.mac_music_app_get_volume()
+            self._update_mac_music_app_volume()
             if old_volume == 0.0:
                 self._play_current_playlist()
 
@@ -341,7 +371,7 @@ class ITunesThread(threading.Thread):
             self, target: Callable[[List[str]], None]) -> None:
         from ba._general import Call
         try:
-            playlists = _ba.itunes_get_playlists()
+            playlists = _ba.mac_music_app_get_playlists()
             playlists = [
                 p for p in playlists if p not in [
                     'Music', 'Movies', 'TV Shows', 'Podcasts', 'iTunes\xa0U',
@@ -360,8 +390,8 @@ class ITunesThread(threading.Thread):
             if self._current_playlist is not None and self._volume > 0:
                 try:
                     assert self._orig_volume is not None
-                    _ba.itunes_stop()
-                    _ba.itunes_set_volume(self._orig_volume)
+                    _ba.mac_music_app_stop()
+                    _ba.mac_music_app_set_volume(self._orig_volume)
                 except Exception as exc:
                     print('Error stopping iTunes music:', exc)
             self._current_playlist = None
@@ -371,16 +401,16 @@ class ITunesThread(threading.Thread):
             if self._current_playlist is not None and self._volume > 0:
                 try:
                     assert self._orig_volume is not None
-                    _ba.itunes_stop()
-                    _ba.itunes_set_volume(self._orig_volume)
+                    _ba.mac_music_app_stop()
+                    _ba.mac_music_app_set_volume(self._orig_volume)
                 except Exception as exc:
                     print('Error stopping iTunes music:', exc)
 
             # Set our playlist and play it if our volume is up.
             self._current_playlist = target
             if self._volume > 0:
-                self._orig_volume = (_ba.itunes_get_volume())
-                self._update_itunes_volume()
+                self._orig_volume = (_ba.mac_music_app_get_volume())
+                self._update_mac_music_app_volume()
                 self._play_current_playlist()
 
     def _handle_die_command(self) -> None:
@@ -390,8 +420,8 @@ class ITunesThread(threading.Thread):
         if self._current_playlist is not None and self._volume > 0:
             try:
                 assert self._orig_volume is not None
-                _ba.itunes_stop()
-                _ba.itunes_set_volume(self._orig_volume)
+                _ba.mac_music_app_stop()
+                _ba.mac_music_app_set_volume(self._orig_volume)
             except Exception as exc:
                 print('Error stopping iTunes music:', exc)
 
@@ -400,7 +430,7 @@ class ITunesThread(threading.Thread):
             from ba import _lang
             from ba._general import Call
             assert self._current_playlist is not None
-            if _ba.itunes_play_playlist(self._current_playlist):
+            if _ba.mac_music_app_play_playlist(self._current_playlist):
                 pass
             else:
                 _ba.pushcall(Call(
@@ -413,8 +443,9 @@ class ITunesThread(threading.Thread):
             _error.print_exception(
                 f"error playing playlist {self._current_playlist}")
 
-    def _update_itunes_volume(self) -> None:
-        _ba.itunes_set_volume(max(0, min(100, int(100.0 * self._volume))))
+    def _update_mac_music_app_volume(self) -> None:
+        _ba.mac_music_app_set_volume(
+            max(0, min(100, int(100.0 * self._volume))))
 
 
 class MacITunesMusicPlayer(MusicPlayer):
@@ -425,7 +456,7 @@ class MacITunesMusicPlayer(MusicPlayer):
 
     def __init__(self) -> None:
         super().__init__()
-        self._thread = ITunesThread()
+        self._thread = MacMusicAppThread()
         self._thread.start()
 
     def on_select_entry(self, callback: Callable[[Any], None],
@@ -479,7 +510,8 @@ def music_volume_changed(val: float) -> None:
         app.music_player.set_volume(val)
 
 
-def set_music_play_mode(mode: str, force_restart: bool = False) -> None:
+def set_music_play_mode(mode: MusicPlayMode,
+                        force_restart: bool = False) -> None:
     """Sets music play mode; used for soundtrack testing/etc."""
     app = _ba.app
     old_mode = app.music_mode
@@ -490,8 +522,9 @@ def set_music_play_mode(mode: str, force_restart: bool = False) -> None:
         # actually play anything until its requested.
         # If we're switching *out* of test mode though
         # we want to go back to whatever the normal song was.
-        if mode == 'regular':
-            do_play_music(app.music_types['regular'])
+        if mode is MusicPlayMode.REGULAR:
+            mtype = app.music_types[MusicPlayMode.REGULAR]
+            do_play_music(None if mtype is None else mtype.value)
 
 
 def supports_soundtrack_entry_type(entry_type: str) -> bool:
@@ -556,16 +589,10 @@ def get_soundtrack_entry_name(entry: Any) -> str:
         return 'default'
 
 
-def setmusic(musictype: Optional[str], continuous: bool = False) -> None:
+def setmusic(musictype: Optional[MusicType], continuous: bool = False) -> None:
     """Set or stop the current music based on a string musictype.
 
     category: Gameplay Functions
-
-    Current valid values for 'musictype': 'Menu', 'Victory', 'CharSelect',
-    'RunAway', 'Onslaught', 'Keep Away', 'Race', 'Epic Race', 'Scores',
-    'GrandRomp', 'ToTheDeath', 'Chosen One', 'ForwardMarch', 'FlagCatcher',
-    'Survival', 'Epic', 'Sports', 'Hockey', 'Football', 'Flying', 'Scary',
-    'Marching'.
 
     This function will handle loading and playing sound media as necessary,
     and also supports custom user soundtracks on specific platforms so the
@@ -585,7 +612,7 @@ def setmusic(musictype: Optional[str], continuous: bool = False) -> None:
     # not an actual sound node create.
     gnode = _gameutils.sharedobj('globals')
     gnode.music_continuous = continuous
-    gnode.music = '' if musictype is None else musictype
+    gnode.music = '' if musictype is None else musictype.value
     gnode.music_count += 1
 
 
@@ -595,27 +622,33 @@ def handle_app_resume() -> None:
         do_play_music(None)
 
 
-def do_play_music(musictype: Optional[str],
+def do_play_music(musictype: Union[MusicType, str, None],
                   continuous: bool = False,
-                  mode: str = 'regular',
-                  testsoundtrack: Dict = None) -> None:
+                  mode: MusicPlayMode = MusicPlayMode.REGULAR,
+                  testsoundtrack: Dict[str, Any] = None) -> None:
     """Plays the requested music type/mode.
 
     For most cases setmusic() is the proper call to use, which itself calls
     this. Certain cases, however, such as soundtrack testing, may require
     calling this directly.
     """
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-statements
+
+    # We can be passed a MusicType or the string value of one.
+    if musictype is not None:
+        try:
+            musictype = MusicType(musictype)
+        except ValueError:
+            print(f"Invalid music type: '{musictype}'")
+            musictype = None
+
     app = _ba.app
     with _ba.Context('ui'):
 
         # If they don't want to restart music and we're already
         # playing what's requested, we're done.
-        if continuous and app.music_types[mode] == musictype:
+        if continuous and app.music_types[mode] is musictype:
             return
         app.music_types[mode] = musictype
-        cfg = app.config
 
         # If the OS tells us there's currently music playing,
         # all our operations default to playing nothing.
@@ -632,127 +665,104 @@ def do_play_music(musictype: Optional[str],
         # entry for this music-type, and if we have one, have the music-player
         # play it.  If not, we'll play game music ourself.
         if musictype is not None and app.music_player_type is not None:
-            try:
-                soundtrack: Dict
-                if testsoundtrack is not None:
-                    soundtrack = testsoundtrack
-                else:
-                    soundtrack = cfg['Soundtracks'][cfg['Soundtrack']]
-                entry = soundtrack[musictype]
-            except Exception:
-                entry = None
+            if testsoundtrack is not None:
+                soundtrack = testsoundtrack
+            else:
+                soundtrack = _get_user_soundtrack()
+            entry = soundtrack.get(musictype.value)
         else:
             entry = None
 
         # Go through music-player.
         if entry is not None:
-
-            # Stop any existing internal music.
-            if app.music is not None:
-                app.music.delete()
-                app.music = None
-
-            # Play music-player music.
-            get_music_player().play(entry)
+            _play_music_player_music(entry)
 
         # Handle via internal music.
         else:
-            if musictype is not None:
-                loop = True
-                if musictype == 'Menu':
-                    filename = 'menuMusic'
-                    volume = 5.0
-                elif musictype == 'Victory':
-                    filename = 'victoryMusic'
-                    volume = 6.0
-                    loop = False
-                elif musictype == 'CharSelect':
-                    filename = 'charSelectMusic'
-                    volume = 2.0
-                elif musictype == 'RunAway':
-                    filename = 'runAwayMusic'
-                    volume = 6.0
-                elif musictype == 'Onslaught':
-                    filename = 'runAwayMusic'
-                    volume = 6.0
-                elif musictype == 'Keep Away':
-                    filename = 'runAwayMusic'
-                    volume = 6.0
-                elif musictype == 'Race':
-                    filename = 'runAwayMusic'
-                    volume = 6.0
-                elif musictype == 'Epic Race':
-                    filename = 'slowEpicMusic'
-                    volume = 6.0
-                elif musictype == 'Scores':
-                    filename = 'scoresEpicMusic'
-                    volume = 3.0
-                    loop = False
-                elif musictype == 'GrandRomp':
-                    filename = 'grandRompMusic'
-                    volume = 6.0
-                elif musictype == 'ToTheDeath':
-                    filename = 'toTheDeathMusic'
-                    volume = 6.0
-                elif musictype == 'Chosen One':
-                    filename = 'survivalMusic'
-                    volume = 4.0
-                elif musictype == 'ForwardMarch':
-                    filename = 'forwardMarchMusic'
-                    volume = 4.0
-                elif musictype == 'FlagCatcher':
-                    filename = 'flagCatcherMusic'
-                    volume = 6.0
-                elif musictype == 'Survival':
-                    filename = 'survivalMusic'
-                    volume = 4.0
-                elif musictype == 'Epic':
-                    filename = 'slowEpicMusic'
-                    volume = 6.0
-                elif musictype == 'Sports':
-                    filename = 'sportsMusic'
-                    volume = 4.0
-                elif musictype == 'Hockey':
-                    filename = 'sportsMusic'
-                    volume = 4.0
-                elif musictype == 'Football':
-                    filename = 'sportsMusic'
-                    volume = 4.0
-                elif musictype == 'Flying':
-                    filename = 'flyingMusic'
-                    volume = 4.0
-                elif musictype == 'Scary':
-                    filename = 'scaryMusic'
-                    volume = 4.0
-                elif musictype == 'Marching':
-                    filename = 'whenJohnnyComesMarchingHomeMusic'
-                    volume = 4.0
-                else:
-                    print("Unknown music: '" + musictype + "'")
-                    filename = 'flagCatcherMusic'
-                    volume = 6.0
+            _play_internal_music(musictype)
 
-            # Stop any existing music-player playback.
-            if app.music_player is not None:
-                app.music_player.stop()
 
-            # Stop any existing internal music.
-            if app.music:
-                app.music.delete()
-                app.music = None
+def _get_user_soundtrack() -> Dict[str, Any]:
+    """Return current user soundtrack or empty dict otherwise."""
+    cfg = _ba.app.config
+    soundtrack: Dict[str, Any] = {}
+    soundtrackname = cfg.get('Soundtrack')
+    if soundtrackname is not None:
+        try:
+            soundtrack = cfg['Soundtracks'][soundtrackname]
+        except Exception as exc:
+            print(f"Error looking up user soundtrack: {exc}")
+            soundtrack = {}
+    return soundtrack
 
-            # Start up new internal music.
-            if musictype is not None:
 
-                # FIXME: Currently this won't start playing if we're paused
-                #  since attr values don't get updated until
-                #  node updates happen.  :-(
-                #  Update: hmm I don't think that's true anymore. Should check.
-                app.music = _ba.newnode(type='sound',
-                                        attrs={
-                                            'sound': _ba.getsound(filename),
-                                            'positional': False,
-                                            'music': True,
-                                            'volume': volume,
-                                            'loop': loop
-                                        })
+def _play_music_player_music(entry: Any) -> None:
+    app = _ba.app
+
+    # Stop any existing internal music.
+    if app.music is not None:
+        app.music.delete()
+        app.music = None
+
+    # Do the thing.
+    get_music_player().play(entry)
+
+
+def _play_internal_music(musictype: Optional[MusicType]) -> None:
+    app = _ba.app
+
+    # Stop any existing music-player playback.
+    if app.music_player is not None:
+        app.music_player.stop()
+
+    # Stop any existing internal music.
+    if app.music:
+        app.music.delete()
+        app.music = None
+
+    # Start up new internal music.
+    if musictype is not None:
+
+        # Filenames/volume/loop for our built-in music.
+        musicinfos: Dict[MusicType, Tuple[str, float, bool]] = {
+            MusicType.MENU: ('menuMusic', 5.0, True),
+            MusicType.VICTORY: ('victoryMusic', 6.0, False),
+            MusicType.CHAR_SELECT: ('charSelectMusic', 2.0, True),
+            MusicType.RUN_AWAY: ('runAwayMusic', 6.0, True),
+            MusicType.ONSLAUGHT: ('runAwayMusic', 6.0, True),
+            MusicType.KEEP_AWAY: ('runAwayMusic', 6.0, True),
+            MusicType.RACE: ('runAwayMusic', 6.0, True),
+            MusicType.EPIC_RACE: ('slowEpicMusic', 6.0, True),
+            MusicType.SCORES: ('scoresEpicMusic', 3.0, False),
+            MusicType.GRAND_ROMP: ('grandRompMusic', 6.0, True),
+            MusicType.TO_THE_DEATH: ('toTheDeathMusic', 6.0, True),
+            MusicType.CHOSEN_ONE: ('survivalMusic', 4.0, True),
+            MusicType.FORWARD_MARCH: ('forwardMarchMusic', 4.0, True),
+            MusicType.FLAG_CATCHER: ('flagCatcherMusic', 6.0, True),
+            MusicType.SURVIVAL: ('survivalMusic', 4.0, True),
+            MusicType.EPIC: ('slowEpicMusic', 6.0, True),
+            MusicType.SPORTS: ('sportsMusic', 4.0, True),
+            MusicType.HOCKEY: ('sportsMusic', 4.0, True),
+            MusicType.FOOTBALL: ('sportsMusic', 4.0, True),
+            MusicType.FLYING: ('flyingMusic', 4.0, True),
+            MusicType.SCARY: ('scaryMusic', 4.0, True),
+            MusicType.MARCHING:
+                ('whenJohnnyComesMarchingHomeMusic', 4.0, True),
+        }
+        musicinfo = musicinfos.get(musictype)
+        if musicinfo is None:
+            print(f"Unknown music: '{musictype}'")
+            filename = 'flagCatcherMusic'
+            volume = 6.0
+            loop = True
+        else:
+            filename, volume, loop = musicinfo
+
+        app.music = _ba.newnode(type='sound',
+                                attrs={
+                                    'sound': _ba.getsound(filename),
+                                    'positional': False,
+                                    'music': True,
+                                    'volume': volume,
+                                    'loop': loop
+                                })

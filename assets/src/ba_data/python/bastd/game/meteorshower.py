@@ -91,8 +91,8 @@ class MeteorShowerGame(ba.TeamGameActivity):
     # Called when our game is transitioning in but not ready to start;
     # ..we can go ahead and set our music and whatnot.
     def on_transition_in(self) -> None:
-        self._default_music = ('Epic'
-                               if self.settings['Epic Mode'] else 'Survival')
+        self._default_music = (ba.MusicType.EPIC if self.settings['Epic Mode']
+                               else ba.MusicType.SURVIVAL)
         super().on_transition_in()
 
     # Called when our game actually starts.

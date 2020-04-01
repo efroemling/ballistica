@@ -115,8 +115,8 @@ class DeathMatchGame(ba.TeamGameActivity):
         return 'kill ${ARG1} enemies', self._score_to_win
 
     def on_transition_in(self) -> None:
-        self._default_music = ('Epic'
-                               if self.settings['Epic Mode'] else 'ToTheDeath')
+        self._default_music = (ba.MusicType.EPIC if self.settings['Epic Mode']
+                               else ba.MusicType.TO_THE_DEATH)
         super().on_transition_in()
 
     def on_team_join(self, team: ba.Team) -> None:

@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-03-31 for Ballistica version 1.5.0 build 20001</em></h4>
+<h4><em>last updated on 2020-04-01 for Ballistica version 1.5.0 build 20001</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -174,7 +174,7 @@
       <li><a href="#class_ba_WidgetNotFoundError">ba.WidgetNotFoundError</a></li>
    </ul>
 </ul>
-<h4><a name="class_category_Misc">Misc</a></h4>
+<h4><a name="class_category_Misc_Classes">Misc Classes</a></h4>
 <ul>
    <li><a href="#class_ba_Achievement">ba.Achievement</a></li>
    <li><a href="#class_ba_AppDelegate">ba.AppDelegate</a></li>
@@ -184,10 +184,12 @@
    <li><a href="#class_ba_DependencySet">ba.DependencySet</a></li>
    <li><a href="#class_ba_Lobby">ba.Lobby</a></li>
    <li><a href="#class_ba_MusicPlayer">ba.MusicPlayer</a></li>
+   <li><a href="#class_ba_MusicPlayMode">ba.MusicPlayMode</a></li>
+   <li><a href="#class_ba_MusicType">ba.MusicType</a></li>
    <li><a href="#class_ba_OldWindow">ba.OldWindow</a></li>
    <li><a href="#class_ba_UIController">ba.UIController</a></li>
 </ul>
-<h4><a name="function_category_Misc">Misc</a></h4>
+<h4><a name="function_category_Misc_Functions">Misc Functions</a></h4>
 <ul>
    <li><a href="#function_ba_show_damage_count">ba.show_damage_count()</a></li>
 </ul>
@@ -2806,7 +2808,7 @@ as far from these players as possible.</p>
 </dd>
 <dt><h4><a name="method_ba_Map__get_music_type">get_music_type()</a></dt></h4><dd>
 <h5><span><em>&lt;class method&gt;</span></em></h5>
-<p><span>get_music_type() -&gt; Optional[str] </span></p>
+<p><span>get_music_type() -&gt; Optional[<a href="#class_ba_MusicType">ba.MusicType</a>] </span></p>
 
 <p>Return a music-type string that should be played on this map.</p>
 
@@ -3145,6 +3147,46 @@ signify that the default soundtrack should be used..</p>
 
 </dd>
 </dl>
+<hr>
+<h2><strong><a name="class_ba_MusicPlayMode">ba.MusicPlayMode</a></strong></h3>
+<p>inherits from: enum.Enum</p>
+<p>Influences behavior when playing music.</p>
+
+<h3>Values:</h3>
+<ul>
+<li>REGULAR</li>
+<li>TEST</li>
+</ul>
+<hr>
+<h2><strong><a name="class_ba_MusicType">ba.MusicType</a></strong></h3>
+<p>inherits from: enum.Enum</p>
+<p>Types of music available to play in-game.</p>
+
+<h3>Values:</h3>
+<ul>
+<li>MENU</li>
+<li>VICTORY</li>
+<li>CHAR_SELECT</li>
+<li>RUN_AWAY</li>
+<li>ONSLAUGHT</li>
+<li>KEEP_AWAY</li>
+<li>RACE</li>
+<li>EPIC_RACE</li>
+<li>SCORES</li>
+<li>GRAND_ROMP</li>
+<li>TO_THE_DEATH</li>
+<li>CHOSEN_ONE</li>
+<li>FORWARD_MARCH</li>
+<li>FLAG_CATCHER</li>
+<li>SURVIVAL</li>
+<li>EPIC</li>
+<li>SPORTS</li>
+<li>HOCKEY</li>
+<li>FOOTBALL</li>
+<li>FLYING</li>
+<li>SCARY</li>
+<li>MARCHING</li>
+</ul>
 <hr>
 <h2><strong><a name="class_ba_Node">ba.Node</a></strong></h3>
 <p><em>&lt;top level class&gt;</em>
@@ -5627,17 +5669,11 @@ are applied to the Widget.</p>
 
 <hr>
 <h2><strong><a name="function_ba_setmusic">ba.setmusic()</a></strong></h3>
-<p><span>setmusic(musictype: Optional[str], continuous: bool = False) -&gt; None</span></p>
+<p><span>setmusic(musictype: Optional[MusicType], continuous: bool = False) -&gt; None</span></p>
 
 <p>Set or stop the current music based on a string musictype.</p>
 
 <p>Category: <a href="#function_category_Gameplay_Functions">Gameplay Functions</a></p>
-
-<p>Current valid values for 'musictype': 'Menu', 'Victory', 'CharSelect',
-'RunAway', 'Onslaught', 'Keep Away', 'Race', 'Epic Race', 'Scores',
-'GrandRomp', 'ToTheDeath', 'Chosen One', 'ForwardMarch', 'FlagCatcher',
-'Survival', 'Epic', 'Sports', 'Hockey', 'Football', 'Flying', 'Scary',
-'Marching'.</p>
 
 <p>This function will handle loading and playing sound media as necessary,
 and also supports custom user soundtracks on specific platforms so the

@@ -259,6 +259,7 @@ class App:
         the single shared instance.
         """
         # pylint: disable=too-many-statements
+        from ba._music import MusicPlayMode
 
         # _test_https()
 
@@ -270,26 +271,44 @@ class App:
         # refreshed/etc.
         self.fg_state = 0
 
-        # Environment stuff (pulling these out as attrs so we can type-check
-        # them).
+        # Environment stuff.
+        # (pulling these into attrs so we can type-check them)
+
         env = _ba.env()
         self._build_number: int = env['build_number']
+        assert isinstance(self._build_number, int)
         self._config_file_path: str = env['config_file_path']
+        assert isinstance(self._config_file_path, str)
         self._locale: str = env['locale']
+        assert isinstance(self._locale, str)
         self._user_agent_string: str = env['user_agent_string']
+        assert isinstance(self._user_agent_string, str)
         self._version: str = env['version']
+        assert isinstance(self._version, str)
         self._debug_build: bool = env['debug_build']
+        assert isinstance(self._debug_build, bool)
         self._test_build: bool = env['test_build']
+        assert isinstance(self._test_build, bool)
         self._user_scripts_directory: str = env['user_scripts_directory']
+        assert isinstance(self._user_scripts_directory, str)
         self._system_scripts_directory: str = env['system_scripts_directory']
+        assert isinstance(self._system_scripts_directory, str)
         self._platform: str = env['platform']
+        assert isinstance(self._platform, str)
         self._subplatform: str = env['subplatform']
+        assert isinstance(self._subplatform, str)
         self._interface_type: str = env['interface_type']
+        assert isinstance(self._interface_type, str)
         self._on_tv: bool = env['on_tv']
+        assert isinstance(self._on_tv, bool)
         self._vr_mode: bool = env['vr_mode']
+        assert isinstance(self._vr_mode, bool)
         self.protocol_version: int = env['protocol_version']
+        assert isinstance(self.protocol_version, int)
         self.toolbar_test: bool = env['toolbar_test']
+        assert isinstance(self.toolbar_test, bool)
         self.kiosk_mode: bool = env['kiosk_mode']
+        assert isinstance(self.kiosk_mode, bool)
 
         # Misc.
         self.default_language = self._get_default_language()
@@ -339,12 +358,12 @@ class App:
 
         # Music.
         self.music: Optional[ba.Node] = None
-        self.music_mode: str = 'regular'
+        self.music_mode: ba.MusicPlayMode = MusicPlayMode.REGULAR
         self.music_player: Optional[ba.MusicPlayer] = None
         self.music_player_type: Optional[Type[ba.MusicPlayer]] = None
-        self.music_types: Dict[str, Optional[str]] = {
-            'regular': None,
-            'test': None
+        self.music_types: Dict[ba.MusicPlayMode, Optional[ba.MusicType]] = {
+            MusicPlayMode.REGULAR: None,
+            MusicPlayMode.TEST: None
         }
 
         # Language.
@@ -443,15 +462,16 @@ class App:
 
         cfg = self.config
 
-        # Set up our app delegate.
         self.delegate = appdelegate.AppDelegate()
+
         self.uicontroller = bsui.UIController()
         _achievement.init_achievements()
         spazappearance.register_appearances()
         _campaign.init_campaigns()
         if _ba.env()['platform'] == 'android':
             self.music_player_type = _music.InternalMusicPlayer
-        elif _ba.env()['platform'] == 'mac' and hasattr(_ba, 'itunes_init'):
+        elif _ba.env()['platform'] == 'mac' and hasattr(
+                _ba, 'mac_music_app_init'):
             self.music_player_type = _music.MacITunesMusicPlayer
 
         # FIXME: This should not be hard-coded.
@@ -550,6 +570,8 @@ class App:
         launch_count = cfg.get('launchCount', 0)
         launch_count += 1
 
+        # So we know how many times we've run the game at various
+        # version milestones.
         for key in ('lc14173', 'lc14292'):
             cfg.setdefault(key, launch_count)
 
@@ -615,7 +637,6 @@ class App:
         If there's a foreground host-activity that says it's pausable, tell it
         to pause ..we now no longer pause if there are connected clients.
         """
-        # pylint: disable=cyclic-import
         activity = _ba.get_foreground_host_activity()
         if (activity is not None and activity.allow_pausing
                 and not _ba.have_connected_clients()):

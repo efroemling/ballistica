@@ -146,7 +146,7 @@ class FootballTeamGame(ba.TeamGameActivity):
         return 'score a touchdown'
 
     def on_transition_in(self) -> None:
-        self._default_music = 'Football'
+        self._default_music = ba.MusicType.FOOTBALL
         super().on_transition_in()
 
     def on_begin(self) -> None:
@@ -397,7 +397,7 @@ class FootballCoopGame(ba.CoopGameActivity):
         self._flag: Optional[FootballFlag] = None
 
     def on_transition_in(self) -> None:
-        self._default_music = 'Football'
+        self._default_music = ba.MusicType.FOOTBALL
         super().on_transition_in()
         self._scoreboard = Scoreboard()
         self._flag_spawn_pos = self.map.get_flag_position(None)
@@ -748,7 +748,7 @@ class FootballCoopGame(ba.CoopGameActivity):
                     if team is self._bot_team:
                         self.continue_or_end_game()
                     else:
-                        ba.setmusic('Victory')
+                        ba.setmusic(ba.MusicType.VICTORY)
 
                         # Completion achievements.
                         assert self._bot_team is not None

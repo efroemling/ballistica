@@ -822,7 +822,7 @@ class MainMenuActivity(ba.Activity):
         with ba.Context(self):
             _preload1()
 
-        ba.timer(0.5, lambda: ba.setmusic('Menu'))
+        ba.timer(0.5, lambda: ba.setmusic(ba.MusicType.MENU))
 
 
 def _preload1() -> None:

@@ -234,7 +234,7 @@ class TutorialActivity(ba.Activity):
 
     def on_transition_in(self) -> None:
         super().on_transition_in()
-        ba.setmusic('CharSelect', continuous=True)
+        ba.setmusic(ba.MusicType.CHAR_SELECT, continuous=True)
         self._map = self._map_type()
 
     def on_begin(self) -> None:

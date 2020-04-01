@@ -51,11 +51,12 @@ class SoundtrackEntryTypeSelectWindow(ba.OldWindow):
         spacing = 80
 
         do_default = True
-        do_itunes_playlist = supports_soundtrack_entry_type('iTunesPlaylist')
+        do_mac_music_app_playlist = supports_soundtrack_entry_type(
+            'iTunesPlaylist')
         do_music_file = supports_soundtrack_entry_type('musicFile')
         do_music_folder = supports_soundtrack_entry_type('musicFolder')
 
-        if do_itunes_playlist:
+        if do_mac_music_app_playlist:
             self._height += spacing
         if do_music_file:
             self._height += spacing
@@ -108,13 +109,13 @@ class SoundtrackEntryTypeSelectWindow(ba.OldWindow):
                 ba.containerwidget(edit=self._root_widget, selected_child=btn)
             v -= spacing
 
-        if do_itunes_playlist:
+        if do_mac_music_app_playlist:
             btn = ba.buttonwidget(
                 parent=self._root_widget,
                 size=(self._width - 100, 60),
                 position=(50, v),
                 label=ba.Lstr(resource=self._r + '.useITunesPlaylistText'),
-                on_activate_call=self._on_itunes_playlist_press,
+                on_activate_call=self._on_mac_music_app_playlist_press,
                 icon=None)
             if current_entry_type == 'iTunesPlaylist':
                 ba.containerwidget(edit=self._root_widget, selected_child=btn)
@@ -145,7 +146,7 @@ class SoundtrackEntryTypeSelectWindow(ba.OldWindow):
                 ba.containerwidget(edit=self._root_widget, selected_child=btn)
             v -= spacing
 
-    def _on_itunes_playlist_press(self) -> None:
+    def _on_mac_music_app_playlist_press(self) -> None:
         from ba.internal import (get_soundtrack_entry_type,
                                  get_soundtrack_entry_name)
         from bastd.ui.soundtrack import itunes

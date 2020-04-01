@@ -25,7 +25,8 @@ import time
 from typing import TYPE_CHECKING
 
 import _ba
-from ba import _activity
+from ba._activity import Activity
+from ba._music import setmusic, MusicType
 
 if TYPE_CHECKING:
     from typing import Any, Dict, Optional
@@ -33,7 +34,7 @@ if TYPE_CHECKING:
     from ba._lobby import JoinInfo
 
 
-class EndSessionActivity(_activity.Activity):
+class EndSessionActivity(Activity):
     """Special ba.Activity to fade out and end the current ba.Session."""
 
     def __init__(self, settings: Dict[str, Any]):
@@ -61,7 +62,7 @@ class EndSessionActivity(_activity.Activity):
         call_after_ad(Call(_ba.new_host_session, MainMenuSession))
 
 
-class JoiningActivity(_activity.Activity):
+class JoiningActivity(Activity):
     """Standard activity for waiting for players to join.
 
     It shows tips and other info and waits for all players to check ready.
@@ -88,18 +89,17 @@ class JoiningActivity(_activity.Activity):
         # pylint: disable=cyclic-import
         from bastd.actor.tipstext import TipsText
         from bastd.actor.background import Background
-        from ba import _music
         super().on_transition_in()
         self._background = Background(fade_time=0.5,
                                       start_faded=True,
                                       show_logo=True)
         self._tips_text = TipsText()
-        _music.setmusic('CharSelect')
+        setmusic(MusicType.CHAR_SELECT)
         self._join_info = self.session.lobby.create_join_info()
         _ba.set_analytics_screen('Joining Screen')
 
 
-class TransitionActivity(_activity.Activity):
+class TransitionActivity(Activity):
     """A simple overlay fade out/in.
 
     Useful as a bare minimum transition between two level based activities.
@@ -132,7 +132,7 @@ class TransitionActivity(_activity.Activity):
         _ba.timer(0.1, self.end)
 
 
-class ScoreScreenActivity(_activity.Activity):
+class ScoreScreenActivity(Activity):
     """A standard score screen that fades in and shows stuff for a while.
 
     After a specified delay, player input is assigned to end the activity.
@@ -151,7 +151,7 @@ class ScoreScreenActivity(_activity.Activity):
         self._tips_text: Optional[ba.Actor] = None
         self._kicked_off_server_shutdown = False
         self._kicked_off_server_restart = False
-        self._default_music: Optional[str] = 'Scores'
+        self._default_music: Optional[MusicType] = MusicType.SCORES
         self._default_show_tips = True
 
     def on_player_join(self, player: ba.Player) -> None:
@@ -168,14 +168,13 @@ class ScoreScreenActivity(_activity.Activity):
     def on_transition_in(self) -> None:
         from bastd.actor.tipstext import TipsText
         from bastd.actor.background import Background
-        from ba import _music
         super().on_transition_in()
         self._background = Background(fade_time=0.5,
                                       start_faded=False,
                                       show_logo=True)
         if self._default_show_tips:
             self._tips_text = TipsText()
-        _music.setmusic(self._default_music)
+        setmusic(self._default_music)
 
     def on_begin(self, custom_continue_message: ba.Lstr = None) -> None:
         # FIXME: Unify args.

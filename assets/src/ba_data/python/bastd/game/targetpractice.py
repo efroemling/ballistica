@@ -81,7 +81,7 @@ class TargetPracticeGame(ba.TeamGameActivity):
         self._countdown: Optional[OnScreenCountdown] = None
 
     def on_transition_in(self) -> None:
-        self._default_music = 'ForwardMarch'
+        self._default_music = ba.MusicType.FORWARD_MARCH
         super().on_transition_in()
 
     def on_team_join(self, team: ba.Team) -> None:

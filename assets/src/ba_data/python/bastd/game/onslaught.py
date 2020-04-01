@@ -180,7 +180,7 @@ class OnslaughtGame(ba.CoopGameActivity):
                            'color': (0.3, 0.8, 0.3, 1.0),
                            'text': ''
                        }))
-        ba.setmusic('Onslaught')
+        ba.setmusic(ba.MusicType.ONSLAUGHT)
 
         self._scoreboard = Scoreboard(label=ba.Lstr(resource='scoreText'),
                                       score_split=0.5)
@@ -769,7 +769,7 @@ class OnslaughtGame(ba.CoopGameActivity):
                 base_delay += 0.85
                 ba.playsound(self._winsound)
                 ba.cameraflash()
-                ba.setmusic('Victory')
+                ba.setmusic(ba.MusicType.VICTORY)
                 self._game_over = True
 
                 # Can't just pass delay to do_end because our extra bonuses

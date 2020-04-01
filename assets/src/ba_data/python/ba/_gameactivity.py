@@ -308,7 +308,7 @@ class GameActivity(Activity):
 
         # Music that should play in on_transition_in()
         # (unless overridden by the map).
-        self._default_music: Optional[str] = None
+        self._default_music: Optional[ba.MusicType] = None
 
         # Go ahead and get our map loading.
         map_name: str

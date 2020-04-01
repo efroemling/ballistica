@@ -280,7 +280,7 @@ class SoundtrackEditWindow(ba.OldWindow):
                 size=(50, 32),
                 label=ba.Lstr(resource=self._r + '.testText'),
                 text_scale=0.6,
-                on_activate_call=ba.Call(self._test, song_type),
+                on_activate_call=ba.Call(self._test, ba.MusicType(song_type)),
                 up_widget=prev_test_button
                 if prev_test_button is not None else self._text_field)
             if prev_test_button is not None:
@@ -330,7 +330,7 @@ class SoundtrackEditWindow(ba.OldWindow):
             ba.Call(self._restore_editor, state, song_type), entry,
             selection_target_name).get_root_widget())
 
-    def _test(self, song_type: str) -> None:
+    def _test(self, song_type: ba.MusicType) -> None:
         from ba.internal import set_music_play_mode, do_play_music
 
         # Warn if volume is zero.
@@ -339,8 +339,10 @@ class SoundtrackEditWindow(ba.OldWindow):
             ba.screenmessage(ba.Lstr(resource=self._r +
                                      '.musicVolumeZeroWarning'),
                              color=(1, 0.5, 0))
-        set_music_play_mode('test')
-        do_play_music(song_type, mode='test', testsoundtrack=self._soundtrack)
+        set_music_play_mode(ba.MusicPlayMode.TEST)
+        do_play_music(song_type,
+                      mode=ba.MusicPlayMode.TEST,
+                      testsoundtrack=self._soundtrack)
 
     def _get_entry_button_display_name(self,
                                        entry: Any) -> Union[str, ba.Lstr]:
@@ -369,7 +371,7 @@ class SoundtrackEditWindow(ba.OldWindow):
         from ba.internal import set_music_play_mode
         from bastd.ui.soundtrack import browser as stb
         # Resets music back to normal.
-        set_music_play_mode('regular')
+        set_music_play_mode(ba.MusicPlayMode.REGULAR)
         ba.containerwidget(edit=self._root_widget, transition='out_right')
         ba.app.main_menu_window = (stb.SoundtrackBrowserWindow(
             transition='in_left').get_root_widget())
@@ -411,7 +413,7 @@ class SoundtrackEditWindow(ba.OldWindow):
         ba.containerwidget(edit=self._root_widget, transition='out_right')
 
         # Resets music back to normal.
-        set_music_play_mode('regular', force_restart=True)
+        set_music_play_mode(ba.MusicPlayMode.REGULAR, force_restart=True)
 
         ba.app.main_menu_window = (stb.SoundtrackBrowserWindow(
             transition='in_left').get_root_widget())

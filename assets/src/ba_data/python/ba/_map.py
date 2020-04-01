@@ -196,7 +196,7 @@ class Map(Actor):
         return cls.name
 
     @classmethod
-    def get_music_type(cls) -> Optional[str]:
+    def get_music_type(cls) -> Optional[ba.MusicType]:
         """Return a music-type string that should be played on this map.
 
         If None is returned, default music will be used.

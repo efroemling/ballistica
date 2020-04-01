@@ -105,6 +105,9 @@ class App:
         self._check_sync_states()
 
         self._find_sources_and_headers('src/ballistica')
+
+        # FIXME: It might make more sense to have some of these checks
+        # run via 'make check' rather than here through 'make update'.
         self._check_source_files()
         self._check_headers()
 

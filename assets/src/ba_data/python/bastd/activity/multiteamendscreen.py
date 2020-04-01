@@ -340,7 +340,7 @@ class TeamSeriesVictoryScoreScreenActivity(TeamsScoreScreenActivity):
 
         # Make sure we don't stomp on the next activity's music choice.
         if not self.is_transitioning_out():
-            ba.setmusic('Victory')
+            ba.setmusic(ba.MusicType.VICTORY)
 
     def _show_winner(self, team: ba.Team) -> None:
         from bastd.actor.image import Image

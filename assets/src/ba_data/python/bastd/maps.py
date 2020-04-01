@@ -1216,8 +1216,8 @@ class HappyThoughts(ba.Map):
         return data
 
     @classmethod
-    def get_music_type(cls) -> str:
-        return 'Flying'
+    def get_music_type(cls) -> ba.MusicType:
+        return ba.MusicType.FLYING
 
     def __init__(self) -> None:
         super().__init__(vr_overlay_offset=(0, -3.7, 2.5))

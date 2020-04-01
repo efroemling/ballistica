@@ -118,8 +118,8 @@ class ChosenOneGame(ba.TeamGameActivity):
         return 'There can be only one.'
 
     def on_transition_in(self) -> None:
-        self._default_music = ('Epic'
-                               if self.settings['Epic Mode'] else 'Chosen One')
+        self._default_music = (ba.MusicType.EPIC if self.settings['Epic Mode']
+                               else ba.MusicType.CHOSEN_ONE)
         super().on_transition_in()
 
     def on_team_join(self, team: ba.Team) -> None:

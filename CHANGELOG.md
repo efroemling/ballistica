@@ -50,6 +50,9 @@
 - The bs.Vector class is no more; in its place is a shiny new ba.Vec3 which is implemented internally in C++ so its nice and speedy.  Will probably update certain things like vector node attrs to support this class in the future since it makes vector math nice and convenient.
 - Ok you get the point..
 
+### 1.4.151 (14371)
+- Added Chinese-Traditional language and improved translations for others.
+
 ### 1.4.150 (14369)
 - Telnet port can now be specified in the config
 - Telnet socket no longer opens on headless build when telnet access is off (reduces DoS attack potential)
