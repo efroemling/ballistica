@@ -277,8 +277,12 @@ def pylint(projroot: Path, full: bool, fast: bool) -> None:
             # Note: even if we fail here, we still want to
             # update our disk cache (since some lints may have passed).
             print('Pylint failed.', flush=True)
-            import traceback
-            traceback.print_exc()
+
+            # Hmm; this can be handy sometimes; perhaps should add an env
+            # var to control it?
+            if bool(False):
+                import traceback
+                traceback.print_exc()
             cache.write()
             sys.exit(255)
     print(f'Pylint: all {len(filenames)} files are passing.', flush=True)
