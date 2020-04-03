@@ -146,11 +146,11 @@ class FootballTeamGame(ba.TeamGameActivity):
         return 'score a touchdown'
 
     def on_transition_in(self) -> None:
-        self._default_music = ba.MusicType.FOOTBALL
+        self.default_music = ba.MusicType.FOOTBALL
         super().on_transition_in()
 
     def on_begin(self) -> None:
-        ba.TeamGameActivity.on_begin(self)
+        super().on_begin()
         self.setup_standard_time_limit(self.settings['Time Limit'])
         self.setup_standard_powerup_drops()
         self._flag_spawn_pos = (self.map.get_flag_position(None))
@@ -397,7 +397,7 @@ class FootballCoopGame(ba.CoopGameActivity):
         self._flag: Optional[FootballFlag] = None
 
     def on_transition_in(self) -> None:
-        self._default_music = ba.MusicType.FOOTBALL
+        self.default_music = ba.MusicType.FOOTBALL
         super().on_transition_in()
         self._scoreboard = Scoreboard()
         self._flag_spawn_pos = self.map.get_flag_position(None)
@@ -429,7 +429,7 @@ class FootballCoopGame(ba.CoopGameActivity):
         # FIXME: Split this up a bit.
         # pylint: disable=too-many-statements
         from bastd.actor import controlsguide
-        ba.CoopGameActivity.on_begin(self)
+        super().on_begin()
 
         # Show controls help in kiosk mode.
         if ba.app.kiosk_mode:

@@ -244,8 +244,8 @@ class EliminationGame(ba.TeamGameActivity):
             self.session, ba.TeamsSession) else 'last one standing wins'
 
     def on_transition_in(self) -> None:
-        self._default_music = (ba.MusicType.EPIC if self.settings['Epic Mode']
-                               else ba.MusicType.SURVIVAL)
+        self.default_music = (ba.MusicType.EPIC if self.settings['Epic Mode']
+                              else ba.MusicType.SURVIVAL)
         super().on_transition_in()
         self._start_time = ba.time()
 
@@ -445,7 +445,7 @@ class EliminationGame(ba.TeamGameActivity):
         ba.timer(0, self._update_icons)
 
     def on_begin(self) -> None:
-        ba.TeamGameActivity.on_begin(self)
+        super().on_begin()
         self.setup_standard_time_limit(self.settings['Time Limit'])
         self.setup_standard_powerup_drops()
         if self._solo_mode:

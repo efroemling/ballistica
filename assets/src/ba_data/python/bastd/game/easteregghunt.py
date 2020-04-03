@@ -97,7 +97,7 @@ class EasterEggHuntGame(ba.TeamGameActivity):
     # ..we can go ahead and set our music and whatnot.
 
     def on_transition_in(self) -> None:
-        self._default_music = ba.MusicType.FORWARD_MARCH
+        self.default_music = ba.MusicType.FORWARD_MARCH
         super().on_transition_in()
 
     def on_team_join(self, team: ba.Team) -> None:
@@ -114,7 +114,7 @@ class EasterEggHuntGame(ba.TeamGameActivity):
         gamemap = self.map
         assert isinstance(gamemap, TowerD)
         gamemap.player_wall.delete()
-        ba.TeamGameActivity.on_begin(self)
+        super().on_begin()
         self._update_scoreboard()
         self._update_timer = ba.Timer(0.25, self._update, repeat=True)
         self._countdown = OnScreenCountdown(60, endcall=self.end_game)

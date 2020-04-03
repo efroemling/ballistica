@@ -124,7 +124,7 @@ class KeepAwayGame(ba.TeamGameActivity):
                 self.settings['Hold Time'])
 
     def on_transition_in(self) -> None:
-        self._default_music = ba.MusicType.KEEP_AWAY
+        self.default_music = ba.MusicType.KEEP_AWAY
         super().on_transition_in()
 
     def on_team_join(self, team: ba.Team) -> None:
@@ -132,7 +132,7 @@ class KeepAwayGame(ba.TeamGameActivity):
         self._update_scoreboard()
 
     def on_begin(self) -> None:
-        ba.TeamGameActivity.on_begin(self)
+        super().on_begin()
         self.setup_standard_time_limit(self.settings['Time Limit'])
         self.setup_standard_powerup_drops()
         self._flag_spawn_pos = self.map.get_flag_position(None)

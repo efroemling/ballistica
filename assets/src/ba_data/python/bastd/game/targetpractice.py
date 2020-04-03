@@ -81,7 +81,7 @@ class TargetPracticeGame(ba.TeamGameActivity):
         self._countdown: Optional[OnScreenCountdown] = None
 
     def on_transition_in(self) -> None:
-        self._default_music = ba.MusicType.FORWARD_MARCH
+        self.default_music = ba.MusicType.FORWARD_MARCH
         super().on_transition_in()
 
     def on_team_join(self, team: ba.Team) -> None:
@@ -91,7 +91,7 @@ class TargetPracticeGame(ba.TeamGameActivity):
 
     def on_begin(self) -> None:
         from bastd.actor.onscreencountdown import OnScreenCountdown
-        ba.TeamGameActivity.on_begin(self)
+        super().on_begin()
         self.update_scoreboard()
 
         # Number of targets is based on player count.

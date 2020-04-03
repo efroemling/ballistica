@@ -98,14 +98,14 @@ class TheLastStandGame(ba.CoopGameActivity):
 
     def on_transition_in(self) -> None:
         from bastd.actor.scoreboard import Scoreboard
-        self._default_music = ba.MusicType.EPIC
+        self.default_music = ba.MusicType.EPIC
         super().on_transition_in()
         ba.timer(1.3, ba.Call(ba.playsound, self._new_wave_sound))
         self._scoreboard = Scoreboard(label=ba.Lstr(resource='scoreText'),
                                       score_split=0.5)
 
     def on_begin(self) -> None:
-        ba.CoopGameActivity.on_begin(self)
+        super().on_begin()
 
         # Spit out a few powerups and start dropping more shortly.
         self._drop_powerups(standard_points=True)

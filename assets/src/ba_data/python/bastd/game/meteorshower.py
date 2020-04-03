@@ -91,15 +91,15 @@ class MeteorShowerGame(ba.TeamGameActivity):
     # Called when our game is transitioning in but not ready to start;
     # ..we can go ahead and set our music and whatnot.
     def on_transition_in(self) -> None:
-        self._default_music = (ba.MusicType.EPIC if self.settings['Epic Mode']
-                               else ba.MusicType.SURVIVAL)
+        self.default_music = (ba.MusicType.EPIC if self.settings['Epic Mode']
+                              else ba.MusicType.SURVIVAL)
         super().on_transition_in()
 
     # Called when our game actually starts.
     def on_begin(self) -> None:
         from bastd.actor.onscreentimer import OnScreenTimer
 
-        ba.TeamGameActivity.on_begin(self)
+        super().on_begin()
 
         # Drop a wave every few seconds.. and every so often drop the time
         # between waves ..lets have things increase faster if we have fewer

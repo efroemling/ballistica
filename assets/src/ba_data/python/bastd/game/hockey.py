@@ -207,11 +207,11 @@ class HockeyGame(ba.TeamGameActivity):
         return 'score ${ARG1} goals', self.settings['Score to Win']
 
     def on_transition_in(self) -> None:
-        self._default_music = ba.MusicType.HOCKEY
+        self.default_music = ba.MusicType.HOCKEY
         super().on_transition_in()
 
     def on_begin(self) -> None:
-        ba.TeamGameActivity.on_begin(self)
+        super().on_begin()
 
         self.setup_standard_time_limit(self.settings['Time Limit'])
         self.setup_standard_powerup_drops()

@@ -141,18 +141,19 @@ class ScoreScreenActivity(Activity):
     def __init__(self, settings: Dict[str, Any]):
         super().__init__(settings)
         self.transition_time = 0.5
-        self._birth_time = _ba.time()
-        self._min_view_time = 5.0
         self.inherits_tint = True
         self.inherits_camera_vr_offset = True
         self.use_fixed_vr_overlay = True
+        self.default_music: Optional[MusicType] = MusicType.SCORES
+        self._birth_time = _ba.time()
+        self._min_view_time = 5.0
         self._allow_server_restart = False
         self._background: Optional[ba.Actor] = None
         self._tips_text: Optional[ba.Actor] = None
         self._kicked_off_server_shutdown = False
         self._kicked_off_server_restart = False
-        self._default_music: Optional[MusicType] = MusicType.SCORES
         self._default_show_tips = True
+        self._custom_continue_message: Optional[ba.Lstr] = None
 
     def on_player_join(self, player: ba.Player) -> None:
         from ba import _general
@@ -174,11 +175,9 @@ class ScoreScreenActivity(Activity):
                                       show_logo=True)
         if self._default_show_tips:
             self._tips_text = TipsText()
-        setmusic(self._default_music)
+        setmusic(self.default_music)
 
-    def on_begin(self, custom_continue_message: ba.Lstr = None) -> None:
-        # FIXME: Unify args.
-        # pylint: disable=arguments-differ
+    def on_begin(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.actor import text
         from ba import _lang
@@ -194,7 +193,8 @@ class ScoreScreenActivity(Activity):
         else:
             sval = _lang.Lstr(resource='pressAnyButtonText')
 
-        text.Text(custom_continue_message if custom_continue_message else sval,
+        text.Text(self._custom_continue_message
+                  if self._custom_continue_message is not None else sval,
                   v_attach='bottom',
                   h_align='center',
                   flash=True,

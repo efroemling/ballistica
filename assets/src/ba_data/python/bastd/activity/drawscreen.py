@@ -38,13 +38,10 @@ class DrawScoreScreenActivity(TeamsScoreScreenActivity):
         super().__init__(settings=settings)
 
     def on_transition_in(self) -> None:
-        self._default_music = None  # Awkward silence...
+        self.default_music = None  # Awkward silence...
         super().on_transition_in()
 
-    # noinspection PyMethodOverriding
-    def on_begin(self) -> None:  # type: ignore
-        # FIXME FIXME: unify args
-        # pylint: disable=arguments-differ
+    def on_begin(self) -> None:
         from bastd.actor.zoomtext import ZoomText
         ba.set_analytics_screen('Draw Score Screen')
         super().on_begin()

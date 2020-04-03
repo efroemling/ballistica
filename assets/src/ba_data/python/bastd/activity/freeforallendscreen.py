@@ -40,12 +40,9 @@ class FreeForAllVictoryScoreScreenActivity(TeamsScoreScreenActivity):
         self.transition_time = 0.5
         self._cymbal_sound = ba.getsound('cymbal')
 
-    # noinspection PyMethodOverriding
-    def on_begin(self) -> None:  # type: ignore
-        # FIXME FIXME unify args
-        # pylint: disable=arguments-differ
-        # pylint: disable=too-many-statements
+    def on_begin(self) -> None:
         # pylint: disable=too-many-locals
+        # pylint: disable=too-many-statements
         from bastd.actor.text import Text
         from bastd.actor import image
         ba.set_analytics_screen('FreeForAll Score Screen')

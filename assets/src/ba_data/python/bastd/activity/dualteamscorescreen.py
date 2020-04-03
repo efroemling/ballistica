@@ -38,10 +38,7 @@ class TeamVictoryScoreScreenActivity(TeamsScoreScreenActivity):
     def __init__(self, settings: Dict[str, Any]):
         super().__init__(settings=settings)
 
-    # noinspection PyMethodOverriding
-    def on_begin(self) -> None:  # type: ignore
-        # FIXME: Unify args.
-        # pylint: disable=arguments-differ
+    def on_begin(self) -> None:
         from ba.deprecated import get_resource
         ba.set_analytics_screen('Teams Score Screen')
         super().on_begin()

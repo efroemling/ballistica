@@ -306,9 +306,9 @@ class GameActivity(Activity):
         # Whether to show points for kills.
         self._show_kill_points = True
 
-        # Music that should play in on_transition_in()
+        # If not None, the music type that should play in on_transition_in()
         # (unless overridden by the map).
-        self._default_music: Optional[ba.MusicType] = None
+        self.default_music: Optional[ba.MusicType] = None
 
         # Go ahead and get our map loading.
         map_name: str
@@ -449,7 +449,7 @@ class GameActivity(Activity):
         # Make our map.
         self._map = self._map_type()
 
-        music = self._default_music
+        music = self.default_music
 
         # give our map a chance to override the music
         # (for happy-thoughts and other such themed maps)

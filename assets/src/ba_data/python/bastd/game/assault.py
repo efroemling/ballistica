@@ -94,8 +94,8 @@ class AssaultGame(ba.TeamGameActivity):
         return 'touch ${ARG1} flags', self.settings['Score to Win']
 
     def on_transition_in(self) -> None:
-        self._default_music = (ba.MusicType.EPIC if self.settings['Epic Mode']
-                               else ba.MusicType.FORWARD_MARCH)
+        self.default_music = (ba.MusicType.EPIC if self.settings['Epic Mode']
+                              else ba.MusicType.FORWARD_MARCH)
         super().on_transition_in()
 
     def on_team_join(self, team: ba.Team) -> None:
@@ -104,7 +104,7 @@ class AssaultGame(ba.TeamGameActivity):
 
     def on_begin(self) -> None:
         from bastd.actor.flag import Flag
-        ba.TeamGameActivity.on_begin(self)
+        super().on_begin()
         self.setup_standard_time_limit(self.settings['Time Limit'])
         self.setup_standard_powerup_drops()
         for team in self.teams:

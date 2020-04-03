@@ -73,7 +73,7 @@ def suppress_debug_reports() -> None:
     This should be called in devel/debug situations to avoid spamming
     the master server with spurious logs.
     """
-    _ba.screenmessage("Suppressing debug reports.", color=(1, 0, 0))
+    # _ba.screenmessage("Suppressing debug reports.", color=(1, 0, 0))
     _ba.app.suppress_debug_reports = True
 
 

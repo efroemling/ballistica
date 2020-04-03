@@ -41,17 +41,13 @@ class TeamSeriesVictoryScoreScreenActivity(TeamsScoreScreenActivity):
         self._allow_server_restart = True
         self._tips_text = None
 
-    # noinspection PyMethodOverriding
     def on_transition_in(self) -> None:
         # We don't yet want music and whatnot...
-        self._default_music = None
+        self.default_music = None
         self._default_show_tips = False
         super().on_transition_in()
 
-    # noinspection PyMethodOverriding
-    def on_begin(self) -> None:  # type: ignore
-        # FIXME FIXME: args differ
-        # pylint: disable=arguments-differ
+    def on_begin(self) -> None:
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
@@ -64,7 +60,9 @@ class TeamSeriesVictoryScoreScreenActivity(TeamsScoreScreenActivity):
             sval = ba.Lstr(resource='pressAnyKeyButtonPlayAgainText')
         else:
             sval = ba.Lstr(resource='pressAnyButtonPlayAgainText')
-        super().on_begin(show_up_next=False, custom_continue_message=sval)
+        self._show_up_next = False
+        self._custom_continue_message = sval
+        super().on_begin()
         winning_team = self.settings['winner']
 
         # Pause a moment before playing victory music.

@@ -130,7 +130,7 @@ class RunaroundGame(ba.CoopGameActivity):
         self._wave_update_timer: Optional[ba.Timer] = None
 
     def on_transition_in(self) -> None:
-        self._default_music = ba.MusicType.MARCHING
+        self.default_music = ba.MusicType.MARCHING
         super().on_transition_in()
         self._scoreboard = Scoreboard(label=ba.Lstr(resource='scoreText'),
                                       score_split=0.5)
@@ -145,7 +145,7 @@ class RunaroundGame(ba.CoopGameActivity):
                 }))
 
     def on_begin(self) -> None:
-        ba.CoopGameActivity.on_begin(self)
+        super().on_begin()
         player_count = len(self.players)
         hard = self._preset not in ['pro_easy', 'uber_easy']
 

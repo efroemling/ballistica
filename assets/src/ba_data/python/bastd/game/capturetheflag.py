@@ -52,7 +52,7 @@ class CTFFlag(stdflag.Flag):
                                       'h_align': 'center'
                                   })
         self.reset_return_times()
-        self.last_player_to_hold = None
+        self.last_player_to_hold: Optional[ba.Player] = None
         self.time_out_respawn_time: Optional[int] = None
         self.touch_return_time: Optional[float] = None
 
@@ -135,8 +135,8 @@ class CaptureTheFlagGame(ba.TeamGameActivity):
         return 'return ${ARG1} flags', self.settings['Score to Win']
 
     def on_transition_in(self) -> None:
-        self._default_music = (ba.MusicType.EPIC if self.settings['Epic Mode']
-                               else ba.MusicType.FLAG_CATCHER)
+        self.default_music = (ba.MusicType.EPIC if self.settings['Epic Mode']
+                              else ba.MusicType.FLAG_CATCHER)
         super().on_transition_in()
 
     def on_team_join(self, team: ba.Team) -> None:
@@ -208,7 +208,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity):
         self._update_scoreboard()
 
     def on_begin(self) -> None:
-        ba.TeamGameActivity.on_begin(self)
+        super().on_begin()
         self.setup_standard_time_limit(self.settings['Time Limit'])
         self.setup_standard_powerup_drops()
         ba.timer(1.0, call=self._tick, repeat=True)
@@ -222,6 +222,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity):
 
     def _handle_flag_entered_base(self, team: ba.Team) -> None:
         flag = ba.get_collision_info("opposing_node").getdelegate()
+        assert isinstance(flag, CTFFlag)
 
         if flag.get_team() is team:
             team.gamedata['home_flag_at_base'] = True
@@ -234,7 +235,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity):
             if team.gamedata['home_flag_at_base']:
                 # Award points to whoever was carrying the enemy flag.
                 player = flag.last_player_to_hold
-                if player and player.get_team() is team:
+                if player and player.team is team:
                     assert self.stats
                     self.stats.player_scored(player, 50, big_message=True)
 

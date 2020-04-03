@@ -172,9 +172,9 @@ class RaceGame(ba.TeamGameActivity):
         return 'run 1 lap'
 
     def on_transition_in(self) -> None:
-        self._default_music = (ba.MusicType.EPIC_RACE
-                               if self.settings['Epic Mode'] else
-                               ba.MusicType.RACE)
+        self.default_music = (ba.MusicType.EPIC_RACE
+                              if self.settings['Epic Mode'] else
+                              ba.MusicType.RACE)
         super().on_transition_in()
 
         pts = self.map.get_def_points('race_point')
@@ -400,7 +400,7 @@ class RaceGame(ba.TeamGameActivity):
 
     def on_begin(self) -> None:
         from bastd.actor.onscreentimer import OnScreenTimer
-        ba.TeamGameActivity.on_begin(self)
+        super().on_begin()
         self.setup_standard_time_limit(self.settings['Time Limit'])
         self.setup_standard_powerup_drops()
         self._team_finish_pts = 100

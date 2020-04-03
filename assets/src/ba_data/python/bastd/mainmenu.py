@@ -242,6 +242,7 @@ class MainMenuActivity(ba.Activity):
                            'background': True,
                            'color_texture': bgtex
                        }))
+
         self._ts = 0.86
 
         self._language: Optional[str] = None

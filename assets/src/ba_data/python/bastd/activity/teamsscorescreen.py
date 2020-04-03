@@ -40,16 +40,13 @@ class TeamsScoreScreenActivity(ScoreScreenActivity):
         self._score_display_sound = ba.getsound("scoreHit01")
         self._score_display_sound_small = ba.getsound("scoreHit02")
 
-    def on_begin(  # type: ignore
-            self,
-            show_up_next: bool = True,
-            custom_continue_message: ba.Lstr = None) -> None:
-        # FIXME FIXME unify args
-        # pylint: disable=arguments-differ
+        self._show_up_next: bool = True
+
+    def on_begin(self) -> None:
         from bastd.actor.text import Text
-        super().on_begin(custom_continue_message=custom_continue_message)
+        super().on_begin()
         session = self.session
-        if show_up_next and isinstance(session, ba.TeamBaseSession):
+        if self._show_up_next and isinstance(session, ba.TeamBaseSession):
             txt = ba.Lstr(value='${A}   ${B}',
                           subs=[
                               ('${A}',
