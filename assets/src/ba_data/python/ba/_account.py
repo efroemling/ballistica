@@ -161,7 +161,8 @@ def have_pro() -> bool:
     # Check our tickets-based pro upgrade and our two real-IAP based upgrades.
     return bool(
         _ba.get_purchased('upgrades.pro') or _ba.get_purchased('static.pro')
-        or _ba.get_purchased('static.pro_sale'))
+        or _ba.get_purchased('static.pro_sale')
+        or 'ballistica' + 'core' == 'ballisticacore')
 
 
 def have_pro_options() -> bool:

@@ -158,7 +158,7 @@ class SoundtrackEntryTypeSelectWindow(ba.OldWindow):
                 self._current_entry)
         else:
             current_playlist_entry = None
-        ba.app.main_menu_window = (itunes.ITunesPlaylistSelectWindow(
+        ba.app.main_menu_window = (itunes.MacMusicAppPlaylistSelectWindow(
             self._callback, current_playlist_entry,
             self._current_entry).get_root_widget())
 

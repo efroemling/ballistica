@@ -71,7 +71,7 @@ class App:
     """Context for an app run."""
 
     def __init__(self) -> None:
-        from efrotools import get_config
+        from efrotools import get_config, get_localconfig
         from pathlib import Path
         self._check = ('--check' in sys.argv)
         self._fix = ('--fix' in sys.argv)
@@ -86,6 +86,9 @@ class App:
 
         self._line_corrections: Dict[str, List[LineChange]] = {}
         self._file_changes: Dict[str, str] = {}
+
+        self._copyright_checks = bool(
+            get_localconfig(Path('.')).get('copyright_checks', True))
 
     def run(self) -> None:
         """Do the thing."""
@@ -196,6 +199,7 @@ class App:
                 f'All {unchanged_project_count} project files are up to date.')
 
     def _apply_line_changes(self) -> None:
+        # pylint: disable=too-many-branches
 
         # Build a flat list of entries that can and can-not be auto applied.
         manual_changes: List[Tuple[str, LineChange]] = []
@@ -215,6 +219,15 @@ class App:
             for change in manual_changes:
                 print(f'{CLRRED}{change[0]}:{change[1].line_number + 1}:'
                       f' Expected line to be:\n  {change[1].expected}{CLREND}')
+
+                # Make a note on copyright lines that this can be disabled.
+                if 'Copyright' in change[1].expected:
+                    print(f'{CLRRED}NOTE: You can disable copyright'
+                          f' checks by adding "copyright_checks": false\n'
+                          f'to the root dict in config/localconfig.json.\n'
+                          f'see https://github.com/efroemling/ballistica/wiki'
+                          f'/Knowledge-Nuggets#'
+                          f'hello-world-creating-a-new-game-type{CLREND}')
             sys.exit(-1)
 
         # Now, if we've got auto entries, either list or auto-correct them.
@@ -269,17 +282,18 @@ class App:
             lines = infile.read().splitlines()
 
         # Look for copyright/legal-notice line(s)
-        legal_notice = '// ' + get_legal_notice_private()
-        lnum = 0
-        if lines[lnum] != legal_notice:
-            # Allow auto-correcting if it looks close already
-            # (don't want to blow away an unrelated line)
-            allow_auto = 'Copyright' in lines[
-                lnum] and 'Eric Froemling' in lines[lnum]
-            self._add_line_correction(fname,
-                                      line_number=lnum,
-                                      expected=legal_notice,
-                                      can_auto_update=allow_auto)
+        if self._copyright_checks:
+            legal_notice = '// ' + get_legal_notice_private()
+            lnum = 0
+            if lines[lnum] != legal_notice:
+                # Allow auto-correcting if it looks close already
+                # (don't want to blow away an unrelated line)
+                allow_auto = 'Copyright' in lines[
+                    lnum] and 'Eric Froemling' in lines[lnum]
+                self._add_line_correction(fname,
+                                          line_number=lnum,
+                                          expected=legal_notice,
+                                          can_auto_update=allow_auto)
 
     def _check_headers(self) -> None:
         for header_file_raw in self._header_files:
@@ -393,52 +407,55 @@ class App:
 
         # In all cases, look for our one-line legal notice.
         # In the public case, look for the rest of our public license too.
-        public_license = get_public_license('python')
-        line = '# ' + get_legal_notice_private()
+        if self._copyright_checks:
+            public_license = get_public_license('python')
+            line = '# ' + get_legal_notice_private()
 
-        # (Sanity check: public license's first line should be same as priv)
-        if line != public_license.splitlines()[0]:
-            raise RuntimeError('Public license first line should match priv.')
+            # (Sanity check: public license's first line should be
+            # same as priv)
+            if line != public_license.splitlines()[0]:
+                raise RuntimeError(
+                    'Public license first line should match priv.')
 
-        lnum = copyrightline
-        if len(lines) < lnum + 1:
-            raise RuntimeError('Not enough lines in file:', fname)
+            lnum = copyrightline
+            if len(lines) < lnum + 1:
+                raise RuntimeError('Not enough lines in file:', fname)
 
-        if lines[lnum] != line:
-            # Allow auto-correcting if it looks close already
-            # (don't want to blow away an unrelated line)
-            allow_auto = 'Copyright' in lines[
-                lnum] and 'Eric Froemling' in lines[lnum]
-            self._add_line_correction(fname,
-                                      line_number=lnum,
-                                      expected=line,
-                                      can_auto_update=allow_auto)
-            found_intact_private = False
-        else:
-            found_intact_private = True
+            if lines[lnum] != line:
+                # Allow auto-correcting if it looks close already
+                # (don't want to blow away an unrelated line)
+                allow_auto = 'Copyright' in lines[
+                    lnum] and 'Eric Froemling' in lines[lnum]
+                self._add_line_correction(fname,
+                                          line_number=lnum,
+                                          expected=line,
+                                          can_auto_update=allow_auto)
+                found_intact_private = False
+            else:
+                found_intact_private = True
 
-        if self._public:
-            # Check for the full license.
-            # If we can't find the full license but we found a private-license
-            # line, offer to replace it with the full one.
-            # Otherwise just complain and die.
+            if self._public:
+                # Check for the full license.
+                # If we can't find the full license but we found
+                # a private-license line, offer to replace it with the
+                # full one. Otherwise just complain and die.
 
-            # Try to be reasonably certain it's not in here...
-            definitely_have_full = public_license in contents
-            might_have_full = ('Permission is hereby granted' in contents
-                               or 'THE SOFTWARE IS PROVIDED' in contents)
+                # Try to be reasonably certain it's not in here...
+                definitely_have_full = public_license in contents
+                might_have_full = ('Permission is hereby granted' in contents
+                                   or 'THE SOFTWARE IS PROVIDED' in contents)
 
-            # Only muck with it if we're not sure we've got it.
-            if not definitely_have_full:
-                if found_intact_private and not might_have_full:
-                    self._add_line_correction(fname,
-                                              line_number=lnum,
-                                              expected=public_license,
-                                              can_auto_update=True)
-                else:
-                    raise RuntimeError(
-                        f'Found incorrect license text in {fname};'
-                        f' please correct.')
+                # Only muck with it if we're not sure we've got it.
+                if not definitely_have_full:
+                    if found_intact_private and not might_have_full:
+                        self._add_line_correction(fname,
+                                                  line_number=lnum,
+                                                  expected=public_license,
+                                                  can_auto_update=True)
+                    else:
+                        raise RuntimeError(
+                            f'Found incorrect license text in {fname};'
+                            f' please correct.')
 
     def _check_python_files(self) -> None:
         from pathlib import Path

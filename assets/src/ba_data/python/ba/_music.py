@@ -448,7 +448,7 @@ class MacMusicAppThread(threading.Thread):
             max(0, min(100, int(100.0 * self._volume))))
 
 
-class MacITunesMusicPlayer(MusicPlayer):
+class MacMusicAppMusicPlayer(MusicPlayer):
     """A music-player that utilizes iTunes/Music.app for playback.
 
     Allows selecting playlists as entries.
@@ -478,7 +478,7 @@ class MacITunesMusicPlayer(MusicPlayer):
         if entry_type == 'iTunesPlaylist':
             self._thread.play_playlist(get_soundtrack_entry_name(entry))
         else:
-            print('MacITunesMusicPlayer passed unrecognized entry type:',
+            print('MacMusicAppMusicPlayer passed unrecognized entry type:',
                   entry_type)
 
     def on_stop(self) -> None:
@@ -687,9 +687,9 @@ def _get_user_soundtrack() -> Dict[str, Any]:
     cfg = _ba.app.config
     soundtrack: Dict[str, Any] = {}
     soundtrackname = cfg.get('Soundtrack')
-    if soundtrackname is not None:
+    if soundtrackname is not None and soundtrackname != '__default__':
         try:
-            soundtrack = cfg['Soundtracks'][soundtrackname]
+            soundtrack = cfg.get('Soundtracks', {})[soundtrackname]
         except Exception as exc:
             print(f"Error looking up user soundtrack: {exc}")
             soundtrack = {}

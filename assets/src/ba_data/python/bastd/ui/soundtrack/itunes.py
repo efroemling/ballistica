@@ -31,12 +31,12 @@ if TYPE_CHECKING:
     from typing import Any, List, Optional, Callable
 
 
-class ITunesPlaylistSelectWindow(ba.OldWindow):
+class MacMusicAppPlaylistSelectWindow(ba.OldWindow):
     """Window for selecting an iTunes playlist."""
 
     def __init__(self, callback: Callable[[Any], Any],
                  existing_playlist: Optional[str], existing_entry: Any):
-        from ba.internal import get_music_player, MacITunesMusicPlayer
+        from ba.internal import get_music_player, MacMusicAppMusicPlayer
         self._r = 'editSoundtrackWindow'
         self._callback = callback
         self._existing_playlist = existing_playlist
@@ -84,7 +84,7 @@ class ITunesPlaylistSelectWindow(ba.OldWindow):
                       color=(0.6, 0.9, 0.6, 1.0),
                       scale=0.8)
         musicplayer = get_music_player()
-        assert isinstance(musicplayer, MacITunesMusicPlayer)
+        assert isinstance(musicplayer, MacMusicAppMusicPlayer)
         musicplayer.get_playlists(self._playlists_cb)
         ba.containerwidget(edit=self._root_widget,
                            selected_child=self._scrollwidget)

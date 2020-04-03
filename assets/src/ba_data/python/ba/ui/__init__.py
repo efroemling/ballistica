@@ -172,7 +172,7 @@ def uicleanupcheck(obj: Any, widget: ba.Widget) -> None:
 
     def foobar() -> None:
         """Just testing."""
-        print('FOO HERE (UICLEANUPCHECK)')
+        print('uicleanupcheck widget dying...')
 
     widget.add_delete_callback(foobar)
     _ba.app.uicleanupchecks.append({

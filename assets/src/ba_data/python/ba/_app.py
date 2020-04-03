@@ -472,7 +472,7 @@ class App:
             self.music_player_type = _music.InternalMusicPlayer
         elif _ba.env()['platform'] == 'mac' and hasattr(
                 _ba, 'mac_music_app_init'):
-            self.music_player_type = _music.MacITunesMusicPlayer
+            self.music_player_type = _music.MacMusicAppMusicPlayer
 
         # FIXME: This should not be hard-coded.
         for maptype in [
@@ -623,8 +623,8 @@ class App:
 
         self.ran_on_launch = True
 
-        from ba._dependency import test_depset
-        test_depset()
+        # from ba._dependency import test_depset
+        # test_depset()
 
     def read_config(self) -> None:
         """(internal)"""
