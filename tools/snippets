@@ -759,6 +759,11 @@ def checkenv() -> None:
                       capture_output=True).returncode != 0:
         raise CleanError(f'curl is required; please install it.')
 
+    # Make sure they've got our target python version.
+    if subprocess.run(['which', PYTHON_BIN], check=False,
+                      capture_output=True).returncode != 0:
+        raise CleanError(f'{PYTHON_BIN} is required; please install it.')
+
     # Make sure they've got pip for that python version.
     if subprocess.run(f"{PYTHON_BIN} -m pip --version",
                       shell=True,
