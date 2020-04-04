@@ -755,8 +755,6 @@ def checkenv() -> None:
     print('Checking environment...', flush=True)
 
     # Make sure they've got curl.
-
-    # Make sure they've got our target python version.
     if subprocess.run(['which', 'curl'], check=False,
                       capture_output=True).returncode != 0:
         raise CleanError(f'curl is required; please install it.')
