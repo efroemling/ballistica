@@ -503,8 +503,8 @@ class PlaylistBrowserWindow(ba.OldWindow):
                                         position=(h + scl * 75, v + scl * 10),
                                         texture=ba.gettexture('lock'),
                                         draw_controller=btn)
-                        assert v is not None
-                        v -= scl * 130.0
+                        if v is not None:
+                            v -= scl * 130.0
 
                 except Exception:
                     ba.print_exception("error listing playlist maps")

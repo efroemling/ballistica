@@ -154,6 +154,8 @@ def filter_playlist(playlist: PlaylistType,
                         and 'default' in setting):
                     entry['settings'][setting_name] = setting['default']
             goodlist.append(entry)
+        except ImportError as exc:
+            print(f'Import failed while scanning playlist: {exc}')
         except Exception:
             from ba import _error
             _error.print_exception()

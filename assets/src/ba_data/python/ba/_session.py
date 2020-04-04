@@ -107,7 +107,7 @@ class Session:
         from ba._error import DependencyError
         from ba._dependency import Dependency, AssetPackage
 
-        print(' WOULD LOOK AT DEP SETS', depsets)
+        # print(' WOULD LOOK AT DEP SETS', depsets)
 
         # first off, resolve all dep-sets we were passed.
         # if things are missing, we'll try to gather them into
@@ -140,7 +140,8 @@ class Session:
         required_asset_packages: Set[str] = set()
         for depset in depsets:
             required_asset_packages.update(depset.get_asset_package_ids())
-        print('Would set host-session asset-reqs to:', required_asset_packages)
+        # print('Would set host-session asset-reqs to:',
+        # required_asset_packages)
 
         if team_names is None:
             team_names = ['Good Guys']

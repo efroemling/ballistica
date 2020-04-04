@@ -117,9 +117,9 @@ class DependencyComponent:
         # For now lets issue a warning if these are instantiated without
         # a dep-entry; we'll make this an error once we're no longer
         # seeing warnings.
-        entry = getattr(self, '_dep_entry', None)
-        if entry is None:
-            print(f'FIXME: INSTANTIATING DEP CLASS {type(self)} DIRECTLY.')
+        # entry = getattr(self, '_dep_entry', None)
+        # if entry is None:
+        #     print(f'FIXME: INSTANTIATING DEP CLASS {type(self)} DIRECTLY.')
 
     @classmethod
     def dep_is_present(cls, config: Any = None) -> bool:
@@ -142,11 +142,11 @@ class DependencyComponent:
 class DependencyEntry:
     """Data associated with a dependency/config pair in a ba.DependencySet."""
 
-    def __del__(self) -> None:
-        print('~DepEntry()', self.cls)
+    # def __del__(self) -> None:
+    #     print('~DepEntry()', self.cls)
 
     def __init__(self, depset: DependencySet, dep: Dependency[T]):
-        print("DepEntry()", dep.cls)
+        # print("DepEntry()", dep.cls)
         self.cls = dep.cls
         self.config = dep.config
 
@@ -190,7 +190,7 @@ class DependencySet(Generic[T]):
     """
 
     def __init__(self, root_dependency: Dependency[T]):
-        print('DepSet()')
+        # print('DepSet()')
         self._root_dependency = root_dependency
         self._resolved = False
         self._loaded = False
@@ -198,8 +198,8 @@ class DependencySet(Generic[T]):
         # Dependency data indexed by hash.
         self.entries: Dict[int, DependencyEntry] = {}
 
-    def __del__(self) -> None:
-        print("~DepSet()")
+    # def __del__(self) -> None:
+    #     print("~DepSet()")
 
     def resolve(self) -> None:
         """Resolve the complete set of required dependencies for this set.
@@ -211,7 +211,7 @@ class DependencySet(Generic[T]):
         if self._resolved:
             raise Exception("DependencySet has already been resolved.")
 
-        print('RESOLVING DEP SET')
+        # print('RESOLVING DEP SET')
 
         # First, recursively expand out all dependencies.
         self._resolve(self._root_dependency, 0)
@@ -229,7 +229,7 @@ class DependencySet(Generic[T]):
             raise DependencyError(missing)
 
         self._resolved = True
-        print('RESOLVE SUCCESS!')
+        # print('RESOLVE SUCCESS!')
 
     @property
     def resolved(self) -> bool:
