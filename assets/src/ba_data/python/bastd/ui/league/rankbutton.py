@@ -112,7 +112,7 @@ class LeagueRankButton:
 
         self._smooth_update_timer: Optional[ba.Timer] = None
 
-        # take note of our account state; we'll refresh later if this changes
+        # Take note of our account state; we'll refresh later if this changes.
         self._account_state_num = _ba.get_account_state_num()
         self._last_power_ranking_query_time: Optional[float] = None
         self._doing_power_ranking_query = False
@@ -124,7 +124,7 @@ class LeagueRankButton:
                                       repeat=True)
         self._update()
 
-        # if we've got cached power-ranking data already, apply it..
+        # If we've got cached power-ranking data already, apply it.
         data = get_cached_league_rank_data()
         if data is not None:
             self._update_for_league_rank_data(data)
@@ -309,8 +309,7 @@ class LeagueRankButton:
                      timetype=ba.TimeType.REAL,
                      timeformat=ba.TimeFormat.MILLISECONDS)
 
-        assert self._smooth_percent is not None
-        if (self._percent is not None
+        if (self._percent is not None and self._smooth_percent is not None
                 and int(self._smooth_percent) != self._percent):
             self._improvement_text = str(
                 (int(self._percent) - int(self._smooth_percent)))
@@ -354,7 +353,8 @@ class LeagueRankButton:
         account_state_num = _ba.get_account_state_num()
         if account_state_num != self._account_state_num:
             self._account_state_num = account_state_num
-            # and power ranking too...
+
+            # And power ranking too...
             if not self._doing_power_ranking_query:
                 self._last_power_ranking_query_time = None
 

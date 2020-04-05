@@ -451,7 +451,7 @@ class App:
         # pylint: disable=cyclic-import
         from ba import _apputils
         from ba import _appconfig
-        from ba import ui as bsui
+        from ba.ui import UIController, ui_upkeep
         from ba import _achievement
         from ba import _map
         from ba import _meta
@@ -466,7 +466,7 @@ class App:
 
         self.delegate = appdelegate.AppDelegate()
 
-        self.uicontroller = bsui.UIController()
+        self.uicontroller = UIController()
         _achievement.init_achievements()
         spazappearance.register_appearances()
         _campaign.init_campaigns()
@@ -499,34 +499,30 @@ class App:
         # Kick off our periodic UI upkeep.
         # FIXME: Can probably kill this if we do immediate UI death checks.
         self.uiupkeeptimer = _ba.Timer(2.6543,
-                                       bsui.upkeep,
+                                       ui_upkeep,
                                        timetype=TimeType.REAL,
                                        repeat=True)
 
-        # pylint: disable=using-constant-test
-        # noinspection PyUnreachableCode
-        if 0:  # force-test small UI
+        if bool(False):  # force-test small UI
             self.small_ui = True
             self.med_ui = False
             with _ba.Context('ui'):
                 _ba.pushcall(lambda: _ba.screenmessage(
                     'FORCING SMALL UI FOR TESTING', color=(1, 0, 1), log=True))
-        # noinspection PyUnreachableCode
-        if 0:  # force-test medium UI
+
+        if bool(False):  # force-test medium UI
             self.small_ui = False
             self.med_ui = True
             with _ba.Context('ui'):
                 _ba.pushcall(lambda: _ba.screenmessage(
                     'FORCING MEDIUM UI FOR TESTING', color=(1, 0, 1
                                                             ), log=True))
-        # noinspection PyUnreachableCode
-        if 0:  # force-test large UI
+        if bool(False):  # force-test large UI
             self.small_ui = False
             self.med_ui = False
             with _ba.Context('ui'):
                 _ba.pushcall(lambda: _ba.screenmessage(
                     'FORCING LARGE UI FOR TESTING', color=(1, 0, 1), log=True))
-        # pylint: enable=using-constant-test
 
         # If there's a leftover log file, attempt to upload
         # it to the server and/or get rid of it.
@@ -669,6 +665,7 @@ class App:
         to resume.
         """
         from ba import _gameutils
+
         # FIXME: Shouldn't be touching scene stuff here;
         #  should just pass the request on to the host-session.
         activity = _ba.get_foreground_host_activity()

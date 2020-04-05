@@ -36,7 +36,7 @@ class WatchWindow(ba.Window):
     """Window for watching replays."""
 
     def __init__(self,
-                 transition: str = 'in_right',
+                 transition: Optional[str] = 'in_right',
                  origin_widget: ba.Widget = None):
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements

@@ -403,44 +403,56 @@ class MainMenuActivity(ba.Activity):
         # Bring up the last place we were, or start at the main menu otherwise.
         with ba.Context('ui'):
             from bastd.ui import specialoffer
-            if True:  # pylint: disable=using-constant-test
+            if bool(False):
                 uicontroller = ba.app.uicontroller
                 assert uicontroller is not None
                 uicontroller.show_main_menu()
             else:
+                main_window = ba.app.main_window
 
-                # main_window = ba.app.main_window
-
-                # # when coming back from a kiosk-mode game, jump to
-                # # the kiosk start screen..
-                # if ba.app.kiosk_mode:
-                #     ba.app.main_menu_window = (
-                #         bs_ui.KioskWindow().get_root_widget())
-                # # ..or in normal cases go back to the main menu
-                # else:
-                #     if main_window == 'Gather':
-                #         ba.app.main_menu_window = (bs_ui.GatherWindow(
-                #             transition=None).get_root_widget())
-                #     elif main_window == 'Watch':
-                #         ba.app.main_menu_window = (bs_ui.WatchWindow(
-                #             transition=None).get_root_widget())
-                #     elif main_window == 'Team Game Select':
-                #         ba.app.main_menu_window =
-                # (bs_ui.PlaylistBrowserWindow(
-                #             sessiontype=ba.TeamsSession,
-                #             transition=None).get_root_widget())
-                #     elif main_window == 'Free-for-All Game Select':
-                #         ba.app.main_menu_window =
-                # (bs_ui.PlaylistBrowserWindow(
-                #             sessiontype=ba.FreeForAllSession,
-                #             transition=None).get_root_widget())
-                #     elif main_window == 'Coop Select':
-                #         ba.app.main_menu_window = (bs_ui.CoopWindow(
-                #             transition=None).get_root_widget())
-                #     else:
-                #         ba.app.main_menu_window = (
-                # bs_ui.MainMenuWindow(
-                #             transition=None).get_root_widget())
+                # When coming back from a kiosk-mode game, jump to
+                # the kiosk start screen.
+                if ba.app.kiosk_mode:
+                    # pylint: disable=cyclic-import
+                    from bastd.ui.kiosk import KioskWindow
+                    ba.app.main_menu_window = KioskWindow().get_root_widget()
+                # ..or in normal cases go back to the main menu
+                else:
+                    main_window = ba.app.main_window
+                    if main_window == 'Gather':
+                        # pylint: disable=cyclic-import
+                        from bastd.ui.gather import GatherWindow
+                        ba.app.main_menu_window = (GatherWindow(
+                            transition=None).get_root_widget())
+                    elif main_window == 'Watch':
+                        # pylint: disable=cyclic-import
+                        from bastd.ui.watch import WatchWindow
+                        ba.app.main_menu_window = WatchWindow(
+                            transition=None).get_root_widget()
+                    elif main_window == 'Team Game Select':
+                        # pylint: disable=cyclic-import
+                        from bastd.ui.playlist.browser import (
+                            PlaylistBrowserWindow)
+                        ba.app.main_menu_window = PlaylistBrowserWindow(
+                            sessiontype=ba.TeamsSession,
+                            transition=None).get_root_widget()
+                    elif main_window == 'Free-for-All Game Select':
+                        # pylint: disable=cyclic-import
+                        from bastd.ui.playlist.browser import (
+                            PlaylistBrowserWindow)
+                        ba.app.main_menu_window = PlaylistBrowserWindow(
+                            sessiontype=ba.FreeForAllSession,
+                            transition=None).get_root_widget()
+                    elif main_window == 'Coop Select':
+                        # pylint: disable=cyclic-import
+                        from bastd.ui.coop.browser import CoopBrowserWindow
+                        ba.app.main_menu_window = CoopBrowserWindow(
+                            transition=None).get_root_widget()
+                    else:
+                        # pylint: disable=cyclic-import
+                        from bastd.ui.mainmenu import MainMenuWindow
+                        ba.app.main_menu_window = MainMenuWindow(
+                            transition=None).get_root_widget()
 
                 # attempt to show any pending offers immediately.
                 # If that doesn't work, try again in a few seconds
@@ -449,14 +461,14 @@ class MainMenuActivity(ba.Activity):
                 # until the next opportunity.
                 if not specialoffer.show_offer():
 
-                    def try_again():
+                    def try_again() -> None:
                         if not specialoffer.show_offer():
-                            # try one last time..
+                            # Try one last time..
                             ba.timer(2.0,
                                      specialoffer.show_offer,
-                                     timetype='real')
+                                     timetype=ba.TimeType.REAL)
 
-                    ba.timer(2.0, try_again, timetype='real')
+                    ba.timer(2.0, try_again, timetype=ba.TimeType.REAL)
         ba.app.main_menu_did_initial_transition = True
 
     def _update(self) -> None:

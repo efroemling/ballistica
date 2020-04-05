@@ -49,7 +49,7 @@ class CoopBrowserWindow(ba.Window):
                  self._height - 85 - (4 if ba.app.small_ui else 0)))
 
     def __init__(self,
-                 transition: str = 'in_right',
+                 transition: Optional[str] = 'in_right',
                  origin_widget: ba.Widget = None):
         # pylint: disable=cyclic-import
         # pylint: disable=too-many-statements

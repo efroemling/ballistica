@@ -26,7 +26,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import ba
-from bastd import stdmap
+# from bastd import stdmap
 
 if TYPE_CHECKING:
     from typing import Any, List, Dict
@@ -181,7 +181,7 @@ class FootballStadium(ba.Map):
         return xpos < -0.5 or xpos > 0.5 or zpos < -0.5 or zpos > 0.5
 
 
-class Bridgit(stdmap.StdMap):
+class Bridgit(ba.Map):
     """Map with a narrow bridge in the middle."""
     # noinspection PyUnresolvedReferences
     from bastd.mapdata import bridgit as defs
@@ -192,7 +192,7 @@ class Bridgit(stdmap.StdMap):
     @classmethod
     def get_play_types(cls) -> List[str]:
         """Return valid play types for this map."""
-        print('getting playtypes', cls._getdata()['play_types'])
+        # print('getting playtypes', cls._getdata()['play_types'])
         return ['melee', 'team_flag', 'keep_away']
 
     @classmethod

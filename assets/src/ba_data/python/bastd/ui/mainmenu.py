@@ -25,17 +25,18 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
+import _ba
 
 if TYPE_CHECKING:
     from typing import Any, Callable, List, Dict, Tuple, Optional, Union
 
 
 class MainMenuWindow(ba.Window):
-    """The main menu window, both in-game and in the main menu."""
+    """The main menu window, both in-game and in the main menu session."""
 
-    def __init__(self, transition: str = 'in_right'):
+    def __init__(self, transition: Optional[str] = 'in_right'):
+        # pylint: disable=cyclic-import
         from bastd import mainmenu
         self._in_game = not isinstance(_ba.get_foreground_host_session(),
                                        mainmenu.MainMenuSession)
@@ -614,6 +615,7 @@ class MainMenuWindow(ba.Window):
             self._tdelay += self._t_delay_inc
         else:
             self._gc_button = None
+
         # How-to-play button.
         h, v, scale = positions[self._p_index]
         self._p_index += 1
@@ -627,6 +629,7 @@ class MainMenuWindow(ba.Window):
             transition_delay=self._tdelay,
             on_activate_call=self._howtoplay)
         self._how_to_play_button = btn
+
         # Scattered eggs on easter.
         if _ba.get_account_misc_read_val('easter',
                                          False) and not self._in_game:

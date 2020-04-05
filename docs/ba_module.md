@@ -139,10 +139,6 @@
 <h4><a name="class_category_User_Interface_Classes">User Interface Classes</a></h4>
 <ul>
    <li><a href="#class_ba_UIController">ba.UIController</a></li>
-   <li><a href="#class_ba_UILocation">ba.UILocation</a></li>
-   <ul>
-      <li><a href="#class_ba_UILocationWindow">ba.UILocationWindow</a></li>
-   </ul>
    <li><a href="#class_ba_Widget">ba.Widget</a></li>
    <li><a href="#class_ba_Window">ba.Window</a></li>
 </ul>
@@ -4713,65 +4709,6 @@ self.t = <a href="#class_ba_Timer">ba.Timer</a>(0.3, say_it, repeat=True)
 <p><span>show_main_menu(self, in_game: bool = True) -&gt; None</span></p>
 
 <p>Show the main menu, clearing other UIs from location stacks.</p>
-
-</dd>
-</dl>
-<hr>
-<h2><strong><a name="class_ba_UILocation">ba.UILocation</a></strong></h3>
-<p><em>&lt;top level class&gt;</em>
-</p>
-<p>Defines a specific 'place' in the UI the user can navigate to.</p>
-
-<p>Category: <a href="#class_category_User_Interface_Classes">User Interface Classes</a>
-</p>
-
-<h3>Methods:</h3>
-<h5><a href="#method_ba_UILocation____init__">&lt;constructor&gt;</a>, <a href="#method_ba_UILocation__push_location">push_location()</a>, <a href="#method_ba_UILocation__restore_state">restore_state()</a>, <a href="#method_ba_UILocation__save_state">save_state()</a></h5>
-<dl>
-<dt><h4><a name="method_ba_UILocation____init__">&lt;constructor&gt;</a></dt></h4><dd>
-<p><span>ba.UILocation()</span></p>
-
-</dd>
-<dt><h4><a name="method_ba_UILocation__push_location">push_location()</a></dt></h4><dd>
-<p><span>push_location(self, location: str) -&gt; None</span></p>
-
-<p>Push a new location to the stack and transition to it.</p>
-
-</dd>
-<dt><h4><a name="method_ba_UILocation__restore_state">restore_state()</a></dt></h4><dd>
-<p><span>restore_state(self) -&gt; None</span></p>
-
-<p>Restore this instance's state from a dict.</p>
-
-</dd>
-<dt><h4><a name="method_ba_UILocation__save_state">save_state()</a></dt></h4><dd>
-<p><span>save_state(self) -&gt; None</span></p>
-
-<p>Serialize this instance's state to a dict.</p>
-
-</dd>
-</dl>
-<hr>
-<h2><strong><a name="class_ba_UILocationWindow">ba.UILocationWindow</a></strong></h3>
-<p>inherits from: <a href="#class_ba_UILocation">ba.UILocation</a></p>
-<p>A UILocation consisting of a single root window widget.</p>
-
-<p>Category: <a href="#class_category_User_Interface_Classes">User Interface Classes</a>
-</p>
-
-<h3>Methods Inherited:</h3>
-<h5><a href="#method_ba_UILocation__push_location">push_location()</a>, <a href="#method_ba_UILocation__restore_state">restore_state()</a>, <a href="#method_ba_UILocation__save_state">save_state()</a></h5>
-<h3>Methods Defined or Overridden:</h3>
-<h5><a href="#method_ba_UILocationWindow____init__">&lt;constructor&gt;</a>, <a href="#method_ba_UILocationWindow__get_root_widget">get_root_widget()</a></h5>
-<dl>
-<dt><h4><a name="method_ba_UILocationWindow____init__">&lt;constructor&gt;</a></dt></h4><dd>
-<p><span>ba.UILocationWindow()</span></p>
-
-</dd>
-<dt><h4><a name="method_ba_UILocationWindow__get_root_widget">get_root_widget()</a></dt></h4><dd>
-<p><span>get_root_widget(self) -&gt; <a href="#class_ba_Widget">ba.Widget</a></span></p>
-
-<p>Return the root widget for this window.</p>
 
 </dd>
 </dl>

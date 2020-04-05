@@ -41,7 +41,7 @@ class GatherWindow(ba.Window):
         _ba.set_party_icon_always_visible(False)
 
     def __init__(self,
-                 transition: str = 'in_right',
+                 transition: Optional[str] = 'in_right',
                  origin_widget: ba.Widget = None):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals

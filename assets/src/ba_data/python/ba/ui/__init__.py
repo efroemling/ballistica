@@ -206,7 +206,7 @@ def uicleanupcheck(obj: Any, widget: ba.Widget) -> None:
                        widget_death_time=None))
 
 
-def upkeep() -> None:
+def ui_upkeep() -> None:
     """Run UI cleanup checks, etc. should be called periodically."""
     app = _ba.app
     remainingchecks = []
