@@ -311,7 +311,10 @@ def animate_array(node: ba.Node,
 
 def show_damage_count(damage: str, position: Sequence[float],
                       direction: Sequence[float]) -> None:
-    """Pop up a damage count at a position in space."""
+    """Pop up a damage count at a position in space.
+
+    Category: Gameplay Functions
+    """
     lifespan = 1.0
     app = _ba.app
 

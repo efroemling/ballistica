@@ -29,7 +29,10 @@ if TYPE_CHECKING:
 
 
 class AppDelegate:
-    """Defines handlers for high level app functionality."""
+    """Defines handlers for high level app functionality.
+
+    Category: App Classes
+    """
 
     def create_default_game_config_ui(
         self, gameclass: Type[ba.GameActivity], sessionclass: Type[ba.Session],

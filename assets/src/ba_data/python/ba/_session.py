@@ -29,6 +29,7 @@ import _ba
 if TYPE_CHECKING:
     from weakref import ReferenceType
     from typing import Sequence, List, Dict, Any, Optional, Set
+
     import ba
 
 
@@ -90,13 +91,13 @@ class Session:
                  min_players: int = 1,
                  max_players: int = 8,
                  allow_mid_activity_joins: bool = True):
-        # pylint: disable=too-many-statements
-        # pylint: disable=too-many-branches
         """Instantiate a session.
 
         depsets should be a sequence of successfully resolved ba.DependencySet
         instances; one for each ba.Activity the session may potentially run.
         """
+        # pylint: disable=too-many-statements
+        # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
         from ba._lobby import Lobby
@@ -128,18 +129,20 @@ class Session:
                     missing_info = [(d.cls, d.config) for d in exc.deps]
                     raise Exception(
                         f'Missing non-asset dependencies: {missing_info}')
-        # throw a combined exception if we found anything missing
+
+        # Throw a combined exception if we found anything missing.
         if missing_asset_packages:
             raise DependencyError([
                 Dependency(AssetPackage, set_id)
                 for set_id in missing_asset_packages
             ])
 
-        # ok; looks like our dependencies check out.
-        # now give the engine a list of asset-set-ids to pass along to clients
+        # Ok; looks like our dependencies check out.
+        # Now give the engine a list of asset-set-ids to pass along to clients.
         required_asset_packages: Set[str] = set()
         for depset in depsets:
             required_asset_packages.update(depset.get_asset_package_ids())
+
         # print('Would set host-session asset-reqs to:',
         # required_asset_packages)
 
@@ -213,8 +216,8 @@ class Session:
         self.lobby = Lobby()
         self.stats = Stats()
 
-        # instantiates our session globals node.. (so it can apply
-        # default settings)
+        # Instantiate our session globals node
+        # (so it can apply default settings).
         sharedobj('globals')
 
     @property
@@ -233,13 +236,14 @@ class Session:
         This should return True or False to accept/reject.
         """
         from ba._lang import Lstr
-        # limit player counts *unless* we're in a stress test
+
+        # Limit player counts *unless* we're in a stress test.
         if _ba.app.stress_test_reset_timer is None:
 
             if len(self.players) >= self.max_players:
 
-                # print a rejection message *only* to the client trying to join
-                # (prevents spamming everyone else in the game)
+                # Print a rejection message *only* to the client trying to join
+                # (prevents spamming everyone else in the game).
                 _ba.playsound(_ba.getsound('error'))
                 _ba.screenmessage(
                     Lstr(resource='playerLimitReachedText',
@@ -261,14 +265,14 @@ class Session:
         from ba._lang import Lstr
         from ba import _error
 
-        # remove them from the game rosters
+        # Remove them from the game rosters.
         if player in self.players:
 
             _ba.playsound(_ba.getsound('playerLeft'))
 
             team: Optional[ba.Team]
 
-            # the player will have no team if they are still in the lobby
+            # The player will have no team if they are still in the lobby.
             try:
                 team = player.team
             except _error.TeamNotFoundError:
@@ -298,7 +302,7 @@ class Session:
             # team lists every activity)
             if team is not None and player in team.players:
 
-                # testing.. can remove this eventually
+                # Testing.. can remove this eventually.
                 if isinstance(self, FreeForAllSession):
                     if len(team.players) != 1:
                         _error.print_error("expected 1 player in FFA team")
@@ -408,7 +412,7 @@ class Session:
         with _ba.Context(self):
             curtime = _ba.time(TimeType.REAL)
             if self._ending:
-                # ignore repeats unless its been a while..
+                # Ignore repeats unless its been a while.
                 assert self.launch_end_session_activity_time is not None
                 since_last = (curtime - self.launch_end_session_activity_time)
                 if since_last < 30.0:
@@ -419,7 +423,7 @@ class Session:
             self.launch_end_session_activity_time = curtime
             self.set_activity(_ba.new_activity(EndSessionActivity))
             self.wants_to_end = False
-            self._ending = True  # prevents further activity-mucking
+            self._ending = True  # Prevent further activity-mucking.
 
     def on_team_join(self, team: ba.Team) -> None:
         """Called when a new ba.Team joins the session."""
@@ -429,7 +433,7 @@ class Session:
 
     def _complete_end_activity(self, activity: ba.Activity,
                                results: Any) -> None:
-        # run the subclass callback in the session context
+        # Run the subclass callback in the session context.
         try:
             with _ba.Context(self):
                 self.on_activity_end(activity, results)
@@ -501,7 +505,7 @@ class Session:
         from ba._gameutils import sharedobj
         from ba._enums import TimeType
 
-        # sanity test - make sure this doesn't get called recursively
+        # Sanity test: make sure this doesn't get called recursively.
         if self._in_set_activity:
             raise Exception(
                 "Session.set_activity() cannot be called recursively.")
@@ -509,7 +513,7 @@ class Session:
         if activity.session is not _ba.getsession():
             raise Exception("provided activity's session is not current")
 
-        # quietly ignore this if the whole session is going down
+        # Quietly ignore this if the whole session is going down.
         if self._ending:
             return
 
@@ -543,7 +547,7 @@ class Session:
             else:
                 glb.slow_motion = activity.slow_motion
             if activity.inherits_music and gprev is not None:
-                glb.music_continuous = True  # prevents restarting same music
+                glb.music_continuous = True  # Prevent restarting same music.
                 glb.music = gprev.music
                 glb.music_count += 1
             if activity.inherits_camera_vr_offset and gprev is not None:
@@ -552,53 +556,53 @@ class Session:
                 glb.vr_overlay_center = gprev.vr_overlay_center
                 glb.vr_overlay_center_enabled = gprev.vr_overlay_center_enabled
 
-            # if they want to inherit tint from the previous activity..
+            # If they want to inherit tint from the previous activity.
             if activity.inherits_tint and gprev is not None:
                 glb.tint = gprev.tint
                 glb.vignette_outer = gprev.vignette_outer
                 glb.vignette_inner = gprev.vignette_inner
 
-            # let the activity do its thing..
+            # Let the activity do its thing.
             activity.start_transition_in()
 
         self._next_activity = activity
 
-        # if we have a current activity, tell it it's transitioning out;
+        # If we have a current activity, tell it it's transitioning out;
         # the next one will become current once this one dies.
         if prev_activity is not None:
             # pylint: disable=protected-access
             prev_activity._transitioning_out = True
             # pylint: enable=protected-access
 
-            # activity will be None until the next one begins
+            # activity will be None until the next one begins.
             with _ba.Context(prev_activity):
                 prev_activity.on_transition_out()
 
-            # setting this to None should free up the old activity to die
+            # Setting this to None should free up the old activity to die,
             # which will call begin_next_activity.
-            # we can still access our old activity through
+            # We can still access our old activity through
             # self._activity_weak() to keep it up to date on player
-            # joins/departures/etc until it dies
+            # joins/departures/etc until it dies.
             self._activity_retained = None
 
-        # there's no existing activity; lets just go ahead with the begin call
+        # There's no existing activity; lets just go ahead with the begin call.
         else:
             self.begin_next_activity()
 
-        # tell the C layer that this new activity is now 'foregrounded'
-        # this means that its globals node controls global stuff and
-        # stuff like console operations, keyboard shortcuts, etc will run in it
+        # Tell the C layer that this new activity is now 'foregrounded'.
+        # This means that its globals node controls global stuff and stuff
+        # like console operations, keyboard shortcuts, etc will run in it.
         # pylint: disable=protected-access
         # noinspection PyProtectedMember
         activity._activity_data.make_foreground()
         # pylint: enable=protected-access
 
-        # we want to call _destroy() for the previous activity once it should
+        # We want to call _destroy() for the previous activity once it should
         # tear itself down, clear out any self-refs, etc.  If the new activity
         # has a transition-time, set it up to be called after that passes;
         # otherwise call it immediately. After this call the activity should
         # have no refs left to it and should die (which will trigger the next
-        # activity to run)
+        # activity to run).
         if prev_activity is not None:
             if activity.transition_time > 0.0:
                 # FIXME: We should tweak the activity to not allow
@@ -631,11 +635,11 @@ class Session:
 
     def _request_player(self, player: ba.Player) -> bool:
 
-        # if we're ending, allow no new players
+        # If we're ending, allow no new players.
         if self._ending:
             return False
 
-        # ask the user
+        # Ask the user.
         try:
             with _ba.Context(self):
                 result = self.on_player_request(player)
@@ -644,11 +648,11 @@ class Session:
             _error.print_exception('error in on_player_request call for', self)
             result = False
 
-        # if the user said yes, add the player to the session list
+        # If the user said yes, add the player to the session list.
         if result:
             self.players.append(player)
 
-            # if we have a current activity with a lobby,
+            # If we have a current activity with a lobby,
             # ask it to bring up a chooser for this player.
             # otherwise they'll have to wait around for the next activity.
             with _ba.Context(self):
@@ -674,16 +678,16 @@ class Session:
         """
         if self._next_activity is not None:
 
-            # we store both a weak and a strong ref to the new activity;
+            # We store both a weak and a strong ref to the new activity;
             # the strong is to keep it alive and the weak is so we can access
-            # it even after we've released the strong-ref to allow it to die
+            # it even after we've released the strong-ref to allow it to die.
             self._activity_retained = self._next_activity
             self._activity_weak = weakref.ref(self._next_activity)
             self._next_activity = None
 
-            # lets kick out any players sitting in the lobby since
+            # Lets kick out any players sitting in the lobby since
             # new activities such as score screens could cover them up;
-            # better to have them rejoin
+            # better to have them rejoin.
             self.lobby.remove_all_choosers_and_kick_players()
             activity = self._activity_weak()
             assert activity is not None
@@ -695,8 +699,8 @@ class Session:
         lobby = chooser.lobby
         activity = self._activity_weak()
 
-        # in joining activities, we wait till all choosers are ready
-        # and then create all players at once
+        # In joining activities, we wait till all choosers are ready
+        # and then create all players at once.
         if activity is not None and activity.is_joining_activity:
             if lobby.check_all_ready():
                 choosers = lobby.get_choosers()
@@ -705,7 +709,8 @@ class Session:
                     for lch in lobby.get_choosers():
                         self._add_chosen_player(lch)
                     lobby.remove_all_choosers()
-                    # get our next activity going..
+
+                    # Get our next activity going.
                     self._complete_end_activity(activity, {})
                 else:
                     _ba.screenmessage(Lstr(resource='notEnoughPlayersText',
@@ -715,7 +720,7 @@ class Session:
                     _ba.playsound(_ba.getsound('error'))
             else:
                 return
-        # otherwise just add players on the fly
+        # Otherwise just add players on the fly.
         else:
             self._add_chosen_player(chooser)
             lobby.remove_chooser(chooser.getplayer())
@@ -735,17 +740,17 @@ class Session:
         activity = self._activity_weak()
         assert activity is not None
 
-        # we need to reset the player's input here, as it is currently
-        # referencing the chooser which could inadvertently keep it alive
+        # We need to reset the player's input here, as it is currently
+        # referencing the chooser which could inadvertently keep it alive.
         player.reset_input()
 
-        # pass it to the current activity if it has already begun
-        # (otherwise it'll get passed once begin is called)
+        # Pass it to the current activity if it has already begun
+        # (otherwise it'll get passed once begin is called).
         pass_to_activity = (activity is not None and activity.has_begun()
                             and not activity.is_joining_activity)
 
-        # if we're not allowing mid-game joins, don't pass; just announce
-        # the arrival
+        # If we're not allowing mid-game joins, don't pass; just announce
+        # the arrival.
         if pass_to_activity:
             if not self._allow_mid_activity_joins:
                 pass_to_activity = False
@@ -756,8 +761,8 @@ class Session:
                                                  ]),
                                       color=(0, 1, 0))
 
-        # if we're a non-team game, each player gets their own team
-        # (keeps mini-game coding simpler if we can always deal with teams)
+        # If we're a non-team game, each player gets their own team
+        # (keeps mini-game coding simpler if we can always deal with teams).
         if self._use_teams:
             team = chooser.get_team()
         else:

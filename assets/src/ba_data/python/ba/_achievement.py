@@ -188,7 +188,10 @@ def _display_next_achievement() -> None:
 
 
 class Achievement:
-    """Represents attributes and state for an individual achievement."""
+    """Represents attributes and state for an individual achievement.
+
+    Category: App Classes
+    """
 
     def __init__(self,
                  name: str,

@@ -34,7 +34,10 @@ if TYPE_CHECKING:
 
 
 class OldWindow:
-    """Temp for transitioning windows over to UILocationWindows."""
+    """Temp for transitioning windows over to UILocationWindows.
+
+    Category: User Interface Classes
+    """
 
     def __init__(self, root_widget: ba.Widget):
         self._root_widget = root_widget
@@ -112,7 +115,10 @@ class UIEntry:
 
 
 class UIController:
-    """Wrangles UILocations."""
+    """Wrangles UILocations.
+
+    Category: User Interface Classes
+    """
 
     def __init__(self) -> None:
 

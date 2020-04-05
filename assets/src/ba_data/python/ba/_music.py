@@ -35,7 +35,10 @@ if TYPE_CHECKING:
 
 
 class MusicType(Enum):
-    """Types of music available to play in-game."""
+    """Types of music available to play in-game.
+
+    Category: Enums
+    """
     MENU = 'Menu'
     VICTORY = 'Victory'
     CHAR_SELECT = 'CharSelect'
@@ -61,13 +64,18 @@ class MusicType(Enum):
 
 
 class MusicPlayMode(Enum):
-    """Influences behavior when playing music."""
+    """Influences behavior when playing music.
+
+    Category: Enums
+    """
     REGULAR = 'regular'
     TEST = 'test'
 
 
 class MusicPlayer:
     """Wrangles soundtrack music playback.
+
+    Category: App Classes
 
     Music can be played either through the game itself
     or via a platform-specific external player.

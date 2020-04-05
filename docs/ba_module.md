@@ -18,8 +18,10 @@
    <ul>
       <li><a href="#class_ba_Map">ba.Map</a></li>
    </ul>
+   <li><a href="#class_ba_Chooser">ba.Chooser</a></li>
    <li><a href="#class_ba_InputDevice">ba.InputDevice</a></li>
    <li><a href="#class_ba_Level">ba.Level</a></li>
+   <li><a href="#class_ba_Lobby">ba.Lobby</a></li>
    <li><a href="#class_ba_Material">ba.Material</a></li>
    <li><a href="#class_ba_Node">ba.Node</a></li>
    <li><a href="#class_ba_Player">ba.Player</a></li>
@@ -53,11 +55,10 @@
    <li><a href="#function_ba_printnodes">ba.printnodes()</a></li>
    <li><a href="#function_ba_setmusic">ba.setmusic()</a></li>
    <li><a href="#function_ba_sharedobj">ba.sharedobj()</a></li>
+   <li><a href="#function_ba_show_damage_count">ba.show_damage_count()</a></li>
 </ul>
 <h4><a name="class_category_General_Utility_Classes">General Utility Classes</a></h4>
 <ul>
-   <li><a href="#class_ba_App">ba.App</a></li>
-   <li><a href="#class_ba_AppConfig">ba.AppConfig</a></li>
    <li><a href="#class_ba_Call">ba.Call</a></li>
    <li><a href="#class_ba_Context">ba.Context</a></li>
    <li><a href="#class_ba_ContextCall">ba.ContextCall</a></li>
@@ -93,6 +94,7 @@
 </ul>
 <h4><a name="class_category_Asset_Classes">Asset Classes</a></h4>
 <ul>
+   <li><a href="#class_ba_AssetPackage">ba.AssetPackage</a></li>
    <li><a href="#class_ba_CollideModel">ba.CollideModel</a></li>
    <li><a href="#class_ba_Data">ba.Data</a></li>
    <li><a href="#class_ba_Model">ba.Model</a></li>
@@ -125,8 +127,19 @@
    <li><a href="#class_ba_StandMessage">ba.StandMessage</a></li>
    <li><a href="#class_ba_ThawMessage">ba.ThawMessage</a></li>
 </ul>
+<h4><a name="class_category_App_Classes">App Classes</a></h4>
+<ul>
+   <li><a href="#class_ba_Achievement">ba.Achievement</a></li>
+   <li><a href="#class_ba_App">ba.App</a></li>
+   <li><a href="#class_ba_AppConfig">ba.AppConfig</a></li>
+   <li><a href="#class_ba_AppDelegate">ba.AppDelegate</a></li>
+   <li><a href="#class_ba_Campaign">ba.Campaign</a></li>
+   <li><a href="#class_ba_MusicPlayer">ba.MusicPlayer</a></li>
+</ul>
 <h4><a name="class_category_User_Interface_Classes">User Interface Classes</a></h4>
 <ul>
+   <li><a href="#class_ba_OldWindow">ba.OldWindow</a></li>
+   <li><a href="#class_ba_UIController">ba.UIController</a></li>
    <li><a href="#class_ba_UILocation">ba.UILocation</a></li>
    <ul>
       <li><a href="#class_ba_UILocationWindow">ba.UILocationWindow</a></li>
@@ -151,9 +164,12 @@
 <ul>
    <li><a href="#class_ba_Dependency">ba.Dependency</a></li>
    <li><a href="#class_ba_DependencyComponent">ba.DependencyComponent</a></li>
+   <li><a href="#class_ba_DependencySet">ba.DependencySet</a></li>
 </ul>
 <h4><a name="class_category_Enums">Enums</a></h4>
 <ul>
+   <li><a href="#class_ba_MusicPlayMode">ba.MusicPlayMode</a></li>
+   <li><a href="#class_ba_MusicType">ba.MusicType</a></li>
    <li><a href="#class_ba_Permission">ba.Permission</a></li>
    <li><a href="#class_ba_SpecialChar">ba.SpecialChar</a></li>
    <li><a href="#class_ba_TimeFormat">ba.TimeFormat</a></li>
@@ -174,30 +190,14 @@
       <li><a href="#class_ba_WidgetNotFoundError">ba.WidgetNotFoundError</a></li>
    </ul>
 </ul>
-<h4><a name="class_category_Misc_Classes">Misc Classes</a></h4>
-<ul>
-   <li><a href="#class_ba_Achievement">ba.Achievement</a></li>
-   <li><a href="#class_ba_AppDelegate">ba.AppDelegate</a></li>
-   <li><a href="#class_ba_AssetPackage">ba.AssetPackage</a></li>
-   <li><a href="#class_ba_Campaign">ba.Campaign</a></li>
-   <li><a href="#class_ba_Chooser">ba.Chooser</a></li>
-   <li><a href="#class_ba_DependencySet">ba.DependencySet</a></li>
-   <li><a href="#class_ba_Lobby">ba.Lobby</a></li>
-   <li><a href="#class_ba_MusicPlayer">ba.MusicPlayer</a></li>
-   <li><a href="#class_ba_MusicPlayMode">ba.MusicPlayMode</a></li>
-   <li><a href="#class_ba_MusicType">ba.MusicType</a></li>
-   <li><a href="#class_ba_OldWindow">ba.OldWindow</a></li>
-   <li><a href="#class_ba_UIController">ba.UIController</a></li>
-</ul>
-<h4><a name="function_category_Misc_Functions">Misc Functions</a></h4>
-<ul>
-   <li><a href="#function_ba_show_damage_count">ba.show_damage_count()</a></li>
-</ul>
 <hr>
 <h2><strong><a name="class_ba_Achievement">ba.Achievement</a></strong></h3>
 <p><em>&lt;top level class&gt;</em>
 </p>
 <p>Represents attributes and state for an individual achievement.</p>
+
+<p>Category: <a href="#class_category_App_Classes">App Classes</a>
+</p>
 
 <h3>Attributes:</h3>
 <h5><a href="#attr_ba_Achievement__complete">complete</a>, <a href="#attr_ba_Achievement__description">description</a>, <a href="#attr_ba_Achievement__description_complete">description_complete</a>, <a href="#attr_ba_Achievement__description_full">description_full</a>, <a href="#attr_ba_Achievement__description_full_complete">description_full_complete</a>, <a href="#attr_ba_Achievement__display_name">display_name</a>, <a href="#attr_ba_Achievement__hard_mode_only">hard_mode_only</a>, <a href="#attr_ba_Achievement__level_name">level_name</a>, <a href="#attr_ba_Achievement__name">name</a>, <a href="#attr_ba_Achievement__power_ranking_value">power_ranking_value</a></h5>
@@ -709,7 +709,7 @@ likely result in errors.</p>
 </p>
 <p>A class for high level app functionality and state.</p>
 
-<p>Category: <a href="#class_category_General_Utility_Classes">General Utility Classes</a></p>
+<p>Category: <a href="#class_category_App_Classes">App Classes</a></p>
 
 <p>    Use ba.app to access the single shared instance of this class.</p>
 
@@ -909,7 +909,7 @@ to resume.</p>
 <p>inherits from: dict</p>
 <p>A special dict that holds the game's persistent configuration values.</p>
 
-<p>Category: <a href="#class_category_General_Utility_Classes">General Utility Classes</a></p>
+<p>Category: <a href="#class_category_App_Classes">App Classes</a></p>
 
 <p>    It also provides methods for fetching values with app-defined fallback
     defaults, applying contained values to the game, and committing the
@@ -1003,6 +1003,9 @@ manually.</p>
 </p>
 <p>Defines handlers for high level app functionality.</p>
 
+<p>Category: <a href="#class_category_App_Classes">App Classes</a>
+</p>
+
 <h3>Methods:</h3>
 <dl>
 <dt><h4><a name="method_ba_AppDelegate__create_default_game_config_ui">create_default_game_config_ui()</a></dt></h4><dd>
@@ -1018,7 +1021,10 @@ when done.</p>
 <hr>
 <h2><strong><a name="class_ba_AssetPackage">ba.AssetPackage</a></strong></h3>
 <p>inherits from: <a href="#class_ba_DependencyComponent">ba.DependencyComponent</a></p>
-<p>DependencyComponent representing a bundled package of game assets.</p>
+<p><a href="#class_ba_DependencyComponent">ba.DependencyComponent</a> representing a bundled package of game assets.</p>
+
+<p>Category: <a href="#class_category_Asset_Classes">Asset Classes</a>
+</p>
 
 <h3>Methods Inherited:</h3>
 <h5><a href="#method_ba_DependencyComponent__get_dynamic_deps">get_dynamic_deps()</a></h5>
@@ -1119,6 +1125,9 @@ mycall()</pre>
 </p>
 <p>Represents a unique set or series of <a href="#class_ba_Level">ba.Levels</a>.</p>
 
+<p>Category: <a href="#class_category_App_Classes">App Classes</a>
+</p>
+
 <h3>Attributes:</h3>
 <h5><a href="#attr_ba_Campaign__name">name</a>, <a href="#attr_ba_Campaign__sequential">sequential</a></h5>
 <dl>
@@ -1187,7 +1196,10 @@ mycall()</pre>
 <h2><strong><a name="class_ba_Chooser">ba.Chooser</a></strong></h3>
 <p><em>&lt;top level class&gt;</em>
 </p>
-<p>A character/team selector for a single player.</p>
+<p>A character/team selector for a <a href="#class_ba_Player">ba.Player</a>.</p>
+
+<p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a>
+</p>
 
 <h3>Attributes:</h3>
 <h5><a href="#attr_ba_Chooser__lobby">lobby</a>, <a href="#attr_ba_Chooser__player">player</a>, <a href="#attr_ba_Chooser__ready">ready</a></h5>
@@ -1674,6 +1686,8 @@ on the dep config value. (for instance a map required by a game type)</p>
 <h2><strong><a name="class_ba_DependencySet">ba.DependencySet</a></strong></h3>
 <p>inherits from: <a href="#class_typing_Generic">typing.Generic</a></p>
 <p>Set of resolved dependencies and their associated data.</p>
+
+<p>Category: <a href="#class_category_Dependency_Classes">Dependency Classes</a></p>
 
 <p>    To use DependencyComponents, a set must be created, resolved, and then
     loaded. The DependencyComponents are only valid while the set remains
@@ -2571,7 +2585,10 @@ can be changed to separate its new high score lists/etc. from the old.</p>
 <h2><strong><a name="class_ba_Lobby">ba.Lobby</a></strong></h3>
 <p><em>&lt;top level class&gt;</em>
 </p>
-<p>Container for choosers.</p>
+<p>Container for <a href="#class_ba_Chooser">ba.Choosers</a>.</p>
+
+<p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a>
+</p>
 
 <h3>Attributes:</h3>
 <h5><a href="#attr_ba_Lobby__teams">teams</a>, <a href="#attr_ba_Lobby__use_team_colors">use_team_colors</a></h5>
@@ -3072,6 +3089,8 @@ Use <a href="#function_ba_getmodel">ba.getmodel</a>() to instantiate one.</p>
 </p>
 <p>Wrangles soundtrack music playback.</p>
 
+<p>Category: <a href="#class_category_App_Classes">App Classes</a></p>
+
 <p>    Music can be played either through the game itself
     or via a platform-specific external player.
 </p>
@@ -3152,6 +3171,9 @@ signify that the default soundtrack should be used..</p>
 <p>inherits from: enum.Enum</p>
 <p>Influences behavior when playing music.</p>
 
+<p>Category: <a href="#class_category_Enums">Enums</a>
+</p>
+
 <h3>Values:</h3>
 <ul>
 <li>REGULAR</li>
@@ -3161,6 +3183,9 @@ signify that the default soundtrack should be used..</p>
 <h2><strong><a name="class_ba_MusicType">ba.MusicType</a></strong></h3>
 <p>inherits from: enum.Enum</p>
 <p>Types of music available to play in-game.</p>
+
+<p>Category: <a href="#class_category_Enums">Enums</a>
+</p>
 
 <h3>Values:</h3>
 <ul>
@@ -3317,6 +3342,9 @@ acting as an alternative to setting node attributes.</p>
 <p><em>&lt;top level class&gt;</em>
 </p>
 <p>Temp for transitioning windows over to UILocationWindows.</p>
+
+<p>Category: <a href="#class_category_User_Interface_Classes">User Interface Classes</a>
+</p>
 
 <h3>Methods:</h3>
 <h5><a href="#method_ba_OldWindow____init__">&lt;constructor&gt;</a>, <a href="#method_ba_OldWindow__get_root_widget">get_root_widget()</a></h5>
@@ -4694,6 +4722,9 @@ self.t = <a href="#class_ba_Timer">ba.Timer</a>(0.3, say_it, repeat=True)
 </p>
 <p>Wrangles UILocations.</p>
 
+<p>Category: <a href="#class_category_User_Interface_Classes">User Interface Classes</a>
+</p>
+
 <h3>Methods:</h3>
 <h5><a href="#method_ba_UIController____init__">&lt;constructor&gt;</a>, <a href="#method_ba_UIController__show_main_menu">show_main_menu()</a></h5>
 <dl>
@@ -5737,6 +5768,8 @@ playing, the playing track will not be restarted.</p>
 <p><span>show_damage_count(damage: str, position: Sequence[float], direction: Sequence[float]) -&gt; None</span></p>
 
 <p>Pop up a damage count at a position in space.</p>
+
+<p>Category: <a href="#function_category_Gameplay_Functions">Gameplay Functions</a></p>
 
 <hr>
 <h2><strong><a name="function_ba_textwidget">ba.textwidget()</a></strong></h3>

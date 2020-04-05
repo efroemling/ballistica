@@ -135,7 +135,10 @@ class ChangeMessage:
 
 
 class Chooser:
-    """A character/team selector for a single player."""
+    """A character/team selector for a ba.Player.
+
+    Category: Gameplay Classes
+    """
 
     def __del__(self) -> None:
 
@@ -858,7 +861,10 @@ class Chooser:
 
 
 class Lobby:
-    """Container for choosers."""
+    """Container for ba.Choosers.
+
+    Category: Gameplay Classes
+    """
 
     def __del__(self) -> None:
 

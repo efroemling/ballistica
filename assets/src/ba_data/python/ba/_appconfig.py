@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 class AppConfig(dict):
     """A special dict that holds the game's persistent configuration values.
 
-    Category: General Utility Classes
+    Category: App Classes
 
     It also provides methods for fetching values with app-defined fallback
     defaults, applying contained values to the game, and committing the

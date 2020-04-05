@@ -184,6 +184,8 @@ class DependencyEntry:
 class DependencySet(Generic[T]):
     """Set of resolved dependencies and their associated data.
 
+    Category: Dependency Classes
+
     To use DependencyComponents, a set must be created, resolved, and then
     loaded. The DependencyComponents are only valid while the set remains
     in existence.
@@ -306,7 +308,10 @@ class DependencySet(Generic[T]):
 
 
 class AssetPackage(DependencyComponent):
-    """DependencyComponent representing a bundled package of game assets."""
+    """ba.DependencyComponent representing a bundled package of game assets.
+
+    Category: Asset Classes
+    """
 
     def __init__(self) -> None:
         super().__init__()

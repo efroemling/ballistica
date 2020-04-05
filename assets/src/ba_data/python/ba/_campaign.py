@@ -41,7 +41,10 @@ def get_campaign(name: str) -> ba.Campaign:
 
 
 class Campaign:
-    """Represents a unique set or series of ba.Levels."""
+    """Represents a unique set or series of ba.Levels.
+
+    Category: App Classes
+    """
 
     def __init__(self, name: str, sequential: bool = True):
         self._name = name
