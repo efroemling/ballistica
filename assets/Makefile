@@ -17713,6 +17713,7 @@ DATA_TARGETS = \
   build/ba_data/data/languages/romanian.json \
   build/ba_data/data/languages/english.json \
   build/ba_data/data/languages/russian.json \
+  build/ba_data/data/languages/slovak.json \
   build/ba_data/data/languages/ukrainian.json \
   build/ba_data/data/languages/swedish.json \
   build/ba_data/data/languages/gibberish.json \

@@ -95,6 +95,7 @@ class App:
         languages = {
             'de': 'German',
             'es': 'Spanish',
+            'sk': 'Slovak',
             'it': 'Italian',
             'nl': 'Dutch',
             'da': 'Danish',
