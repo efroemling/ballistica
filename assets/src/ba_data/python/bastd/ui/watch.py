@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from typing import Any, Optional, Tuple, Dict
 
 
-class WatchWindow(ba.OldWindow):
+class WatchWindow(ba.Window):
     """Window for watching replays."""
 
     def __init__(self,

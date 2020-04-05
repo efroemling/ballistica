@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from typing import Type, Any, Dict, Callable, Optional, Union
 
 
-class PlaylistEditGameWindow(ba.OldWindow):
+class PlaylistEditGameWindow(ba.Window):
     """Window for editing a game in a playlist."""
 
     def __init__(self,

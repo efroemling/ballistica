@@ -26,7 +26,7 @@ import _ba
 import ba
 
 
-class ShowURLWindow(ba.OldWindow):
+class ShowURLWindow(ba.Window):
     """A window presenting a URL to the user visually."""
 
     def __init__(self, address: str):

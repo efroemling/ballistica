@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from typing import Any, Optional, List, Tuple, Dict
 
 
-class SoundtrackBrowserWindow(ba.OldWindow):
+class SoundtrackBrowserWindow(ba.Window):
     """Window for browsing soundtracks."""
 
     def __init__(self,

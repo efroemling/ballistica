@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from typing import Tuple, Any, Optional, List, Dict
 
 
-class AdvancedSettingsWindow(ba.OldWindow):
+class AdvancedSettingsWindow(ba.Window):
     """Window for editing advanced game settings."""
 
     def __init__(self,
@@ -178,7 +178,7 @@ class AdvancedSettingsWindow(ba.OldWindow):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
-        from bastd.ui import config
+        from bastd.ui.config import ConfigCheckBox
         from ba.internal import show_user_scripts
 
         # Don't rebuild if the menu is open or if our language and
@@ -348,7 +348,7 @@ class AdvancedSettingsWindow(ba.OldWindow):
 
         v -= self._spacing * 3.0
 
-        self._kick_idle_players_check_box = config.ConfigCheckBox(
+        self._kick_idle_players_check_box = ConfigCheckBox(
             parent=self._subcontainer,
             position=(50, v),
             size=(self._sub_width - 100, 30),
@@ -357,21 +357,19 @@ class AdvancedSettingsWindow(ba.OldWindow):
             scale=1.0,
             maxwidth=430)
 
-        self._always_use_internal_keyboard_check_box: Optional[
-            config.ConfigCheckBox]
+        self._always_use_internal_keyboard_check_box: Optional[ConfigCheckBox]
         if self._show_always_use_internal_keyboard:
             v -= 42
-            self._always_use_internal_keyboard_check_box = (
-                config.ConfigCheckBox(
-                    parent=self._subcontainer,
-                    position=(50, v),
-                    size=(self._sub_width - 100, 30),
-                    configkey="Always Use Internal Keyboard",
-                    autoselect=True,
-                    displayname=ba.Lstr(resource=self._r +
-                                        '.alwaysUseInternalKeyboardText'),
-                    scale=1.0,
-                    maxwidth=430))
+            self._always_use_internal_keyboard_check_box = ConfigCheckBox(
+                parent=self._subcontainer,
+                position=(50, v),
+                size=(self._sub_width - 100, 30),
+                configkey="Always Use Internal Keyboard",
+                autoselect=True,
+                displayname=ba.Lstr(resource=self._r +
+                                    '.alwaysUseInternalKeyboardText'),
+                scale=1.0,
+                maxwidth=430)
             ba.textwidget(
                 parent=self._subcontainer,
                 position=(90, v - 10),
@@ -427,18 +425,13 @@ class AdvancedSettingsWindow(ba.OldWindow):
 
         v -= self._spacing * 1.8
 
-        def doit(val: Any) -> None:
-            del val  # Unused.
-            ba.screenmessage(ba.Lstr(resource=self._r + '.mustRestartText'),
-                             color=(1, 1, 0))
-
-        self._enable_package_mods_checkbox = config.ConfigCheckBox(
+        self._enable_package_mods_checkbox = ConfigCheckBox(
             parent=self._subcontainer,
             position=(80, v),
             size=(self._sub_width - 100, 30),
             configkey="Enable Package Mods",
             autoselect=True,
-            value_change_call=doit,
+            value_change_call=ba.WeakCall(self._show_restart_needed),
             displayname=ba.Lstr(resource=self._r + '.enablePackageModsText'),
             scale=1.0,
             maxwidth=400)
@@ -514,6 +507,11 @@ class AdvancedSettingsWindow(ba.OldWindow):
                           left_widget=_ba.get_special_widget('back_button'))
 
         self._restore_state()
+
+    def _show_restart_needed(self, value: Any) -> None:
+        del value  # Unused.
+        ba.screenmessage(ba.Lstr(resource=self._r + '.mustRestartText'),
+                         color=(1, 1, 0))
 
     def _on_lang_inform_value_change(self, val: bool) -> None:
         _ba.add_transaction({

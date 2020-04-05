@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-04-04 for Ballistica version 1.5.0 build 20001</em></h4>
+<h4><em>last updated on 2020-04-05 for Ballistica version 1.5.0 build 20001</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -138,13 +138,13 @@
 </ul>
 <h4><a name="class_category_User_Interface_Classes">User Interface Classes</a></h4>
 <ul>
-   <li><a href="#class_ba_OldWindow">ba.OldWindow</a></li>
    <li><a href="#class_ba_UIController">ba.UIController</a></li>
    <li><a href="#class_ba_UILocation">ba.UILocation</a></li>
    <ul>
       <li><a href="#class_ba_UILocationWindow">ba.UILocationWindow</a></li>
    </ul>
    <li><a href="#class_ba_Widget">ba.Widget</a></li>
+   <li><a href="#class_ba_Window">ba.Window</a></li>
 </ul>
 <h4><a name="function_category_User_Interface_Functions">User Interface Functions</a></h4>
 <ul>
@@ -3338,29 +3338,6 @@ acting as an alternative to setting node attributes.</p>
 <h3>Methods:</h3>
 <p>&lt;all methods inherited from <a href="#class_builtins_Exception">builtins.Exception</a>&gt;</p>
 <hr>
-<h2><strong><a name="class_ba_OldWindow">ba.OldWindow</a></strong></h3>
-<p><em>&lt;top level class&gt;</em>
-</p>
-<p>Temp for transitioning windows over to UILocationWindows.</p>
-
-<p>Category: <a href="#class_category_User_Interface_Classes">User Interface Classes</a>
-</p>
-
-<h3>Methods:</h3>
-<h5><a href="#method_ba_OldWindow____init__">&lt;constructor&gt;</a>, <a href="#method_ba_OldWindow__get_root_widget">get_root_widget()</a></h5>
-<dl>
-<dt><h4><a name="method_ba_OldWindow____init__">&lt;constructor&gt;</a></dt></h4><dd>
-<p><span>ba.OldWindow(root_widget: <a href="#class_ba_Widget">ba.Widget</a>)</span></p>
-
-</dd>
-<dt><h4><a name="method_ba_OldWindow__get_root_widget">get_root_widget()</a></dt></h4><dd>
-<p><span>get_root_widget(self) -&gt; <a href="#class_ba_Widget">ba.Widget</a></span></p>
-
-<p>Return the root widget.</p>
-
-</dd>
-</dl>
-<hr>
 <h2><strong><a name="class_ba_OutOfBoundsMessage">ba.OutOfBoundsMessage</a></strong></h3>
 <p><em>&lt;top level class&gt;</em>
 </p>
@@ -4998,6 +4975,29 @@ widgets.</p>
 
 <h3>Methods:</h3>
 <p>&lt;all methods inherited from <a href="#class_ba_NotFoundError">ba.NotFoundError</a>&gt;</p>
+<hr>
+<h2><strong><a name="class_ba_Window">ba.Window</a></strong></h3>
+<p><em>&lt;top level class&gt;</em>
+</p>
+<p>A basic window.</p>
+
+<p>Category: <a href="#class_category_User_Interface_Classes">User Interface Classes</a>
+</p>
+
+<h3>Methods:</h3>
+<h5><a href="#method_ba_Window____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Window__get_root_widget">get_root_widget()</a></h5>
+<dl>
+<dt><h4><a name="method_ba_Window____init__">&lt;constructor&gt;</a></dt></h4><dd>
+<p><span>ba.Window(root_widget: <a href="#class_ba_Widget">ba.Widget</a>)</span></p>
+
+</dd>
+<dt><h4><a name="method_ba_Window__get_root_widget">get_root_widget()</a></dt></h4><dd>
+<p><span>get_root_widget(self) -&gt; <a href="#class_ba_Widget">ba.Widget</a></span></p>
+
+<p>Return the root widget.</p>
+
+</dd>
+</dl>
 <hr>
 <h2><strong><a name="function_ba_animate">ba.animate()</a></strong></h3>
 <p><span>animate(node: <a href="#class_ba_Node">ba.Node</a>, attr: str, keys: Dict[float, float], loop: bool = False, offset: float = 0, timetype: <a href="#class_ba_TimeType">ba.TimeType</a> = &lt;TimeType.SIM: 0&gt;, timeformat: <a href="#class_ba_TimeFormat">ba.TimeFormat</a> = &lt;TimeFormat.SECONDS: 0&gt;, suppress_format_warning: bool = False) -&gt; <a href="#class_ba_Node">ba.Node</a></span></p>

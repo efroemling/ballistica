@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from typing import List, Tuple, Optional
 
 
-class OnScreenKeyboardWindow(ba.OldWindow):
+class OnScreenKeyboardWindow(ba.Window):
     """Simple built-in on-screen keyboard."""
 
     def __init__(self, textwidget: ba.Widget, label: str, max_chars: int):

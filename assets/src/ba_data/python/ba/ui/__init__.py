@@ -22,7 +22,9 @@
 
 from __future__ import annotations
 
+import os
 import weakref
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast, Type
 
 import _ba
@@ -30,11 +32,17 @@ from ba._enums import TimeType
 
 if TYPE_CHECKING:
     from typing import Optional, List, Any
+    from weakref import ReferenceType
+
     import ba
 
+# Set environment variable BA_DEBUG_UI_CLEANUP_CHECKS to 1
+# to print detailed info about what is getting cleaned up when.
+DEBUG_UI_CLEANUP_CHECKS = os.environ.get('BA_DEBUG_UI_CLEANUP_CHECKS') == '1'
 
-class OldWindow:
-    """Temp for transitioning windows over to UILocationWindows.
+
+class Window:
+    """A basic window.
 
     Category: User Interface Classes
     """
@@ -45,6 +53,14 @@ class OldWindow:
     def get_root_widget(self) -> ba.Widget:
         """Return the root widget."""
         return self._root_widget
+
+
+@dataclass
+class UICleanupCheck:
+    """Holds info about a uicleanupcheck target."""
+    obj: ReferenceType
+    widget: ba.Widget
+    widget_death_time: Optional[float]
 
 
 class UILocation:
@@ -143,7 +159,7 @@ class UIController:
         self._update_ui()
 
     def _update_ui(self) -> None:
-        """Instantiates the topmost ui in our stacks."""
+        """Instantiate the topmost ui in our stacks."""
 
         # First tell any existing UIs to get outta here.
         for stack in (self._dialog_stack, self._main_stack):
@@ -173,19 +189,21 @@ def uicleanupcheck(obj: Any, widget: ba.Widget) -> None:
     strong referencing can lead to such objects never getting destroyed,
     however, and this helps detect such cases to avoid memory leaks.
     """
+    if DEBUG_UI_CLEANUP_CHECKS:
+        print(f'adding uicleanup to {obj}')
     if not isinstance(widget, _ba.Widget):
         raise Exception('widget arg is not a ba.Widget')
 
     def foobar() -> None:
         """Just testing."""
-        print('uicleanupcheck widget dying...')
+        if DEBUG_UI_CLEANUP_CHECKS:
+            print('uicleanupcheck widget dying...')
 
     widget.add_delete_callback(foobar)
-    _ba.app.uicleanupchecks.append({
-        'obj': weakref.ref(obj),
-        'widget': widget,
-        'widgetdeathtime': None
-    })
+    _ba.app.uicleanupchecks.append(
+        UICleanupCheck(obj=weakref.ref(obj),
+                       widget=widget,
+                       widget_death_time=None))
 
 
 def upkeep() -> None:
@@ -194,20 +212,22 @@ def upkeep() -> None:
     remainingchecks = []
     now = _ba.time(TimeType.REAL)
     for check in app.uicleanupchecks:
-        obj = check['obj']()
+        obj = check.obj()
 
         # If the object has died, ignore and don't re-add.
         if obj is None:
+            if DEBUG_UI_CLEANUP_CHECKS:
+                print('uicleanupcheck object is dead; hooray!')
             continue
 
         # If the widget hadn't died yet, note if it has.
-        if check['widgetdeathtime'] is None:
+        if check.widget_death_time is None:
             remainingchecks.append(check)
-            if not check['widget']:
-                check['widgetdeathtime'] = now
+            if not check.widget:
+                check.widget_death_time = now
         else:
             # Widget was already dead; complain if its been too long.
-            if now - check['widgetdeathtime'] > 5.0:
+            if now - check.widget_death_time > 5.0:
                 print(
                     'WARNING:', obj,
                     'is still alive 5 second after its widget died;'

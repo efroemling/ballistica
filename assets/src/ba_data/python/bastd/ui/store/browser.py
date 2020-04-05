@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     from typing import Any, Callable, Optional, Tuple, Dict, Union, Sequence
 
 
-class StoreBrowserWindow(ba.OldWindow):
+class StoreBrowserWindow(ba.Window):
     """Window for browsing the store."""
 
     def _update_get_tickets_button_pos(self) -> None:

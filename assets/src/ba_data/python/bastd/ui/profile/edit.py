@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from bastd.ui.colorpicker import ColorPicker
 
 
-class EditProfileWindow(ba.OldWindow):
+class EditProfileWindow(ba.Window):
     """Window for editing a player profile."""
 
     # FIXME: WILL NEED TO CHANGE THIS FOR UILOCATION.

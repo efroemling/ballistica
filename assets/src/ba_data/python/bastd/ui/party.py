@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     from typing import List, Sequence, Optional, Dict, Any
 
 
-class PartyWindow(ba.OldWindow):
+class PartyWindow(ba.Window):
     """Party list/chat window."""
 
     def __del__(self) -> None:

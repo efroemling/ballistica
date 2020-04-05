@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from bastd.ui.settings import gamepad as gpsui
 
 
-class GamepadAdvancedSettingsWindow(ba.OldWindow):
+class GamepadAdvancedSettingsWindow(ba.Window):
     """Window for advanced gamepad configuration."""
 
     def __init__(self, parent_window: gpsui.GamepadSettingsWindow):

@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from typing import Dict, Tuple, Any, Optional
 
 
-class ConfigKeyboardWindow(ba.OldWindow):
+class ConfigKeyboardWindow(ba.Window):
     """Window for configuring keyboards."""
 
     def __init__(self, c: ba.InputDevice, transition: str = 'in_right'):
@@ -258,7 +258,7 @@ class ConfigKeyboardWindow(ba.OldWindow):
             transition='in_left').get_root_widget())
 
 
-class AwaitKeyboardInputWindow(ba.OldWindow):
+class AwaitKeyboardInputWindow(ba.Window):
     """Window for capturing a keypress."""
 
     def __init__(self, button: str, ui: ba.Widget, settings: Dict[str, Any]):

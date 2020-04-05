@@ -25,7 +25,7 @@ from __future__ import annotations
 import ba
 
 
-class CoopLevelLockedWindow(ba.OldWindow):
+class CoopLevelLockedWindow(ba.Window):
     """Window showing that a level is locked."""
 
     def __init__(self, name: ba.Lstr, dep_name: ba.Lstr):

@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from typing import Optional, Tuple
 
 
-class PromoCodeWindow(ba.OldWindow):
+class PromoCodeWindow(ba.Window):
     """Window for entering promo codes."""
 
     def __init__(self, modal: bool = False, origin_widget: ba.Widget = None):

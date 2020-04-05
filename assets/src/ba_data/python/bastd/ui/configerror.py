@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     pass
 
 
-class ConfigErrorWindow(ba.OldWindow):
+class ConfigErrorWindow(ba.Window):
     """Window for dealing with a broken config."""
 
     def __init__(self) -> None:

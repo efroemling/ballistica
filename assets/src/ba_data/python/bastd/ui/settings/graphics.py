@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from typing import Tuple, Optional
 
 
-class GraphicsSettingsWindow(ba.OldWindow):
+class GraphicsSettingsWindow(ba.Window):
     """Window for graphics settings."""
 
     def __init__(self,
@@ -41,7 +41,7 @@ class GraphicsSettingsWindow(ba.OldWindow):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
         from bastd.ui import popup
-        from bastd.ui import config as cfgui
+        from bastd.ui.config import ConfigCheckBox, ConfigNumberEdit
         # if they provided an origin-widget, scale up from that
         scale_origin: Optional[Tuple[float, float]]
         if origin_widget is not None:
@@ -123,7 +123,7 @@ class GraphicsSettingsWindow(ba.OldWindow):
         self._fullscreen_checkbox: Optional[ba.Widget]
         if self._show_fullscreen:
             v -= fullscreen_spacing_top
-            self._fullscreen_checkbox = cfgui.ConfigCheckBox(
+            self._fullscreen_checkbox = ConfigCheckBox(
                 parent=self._root_widget,
                 position=(100, v),
                 maxwidth=200,
@@ -140,9 +140,9 @@ class GraphicsSettingsWindow(ba.OldWindow):
         else:
             self._fullscreen_checkbox = None
 
-        self._gamma_controls: Optional[cfgui.ConfigNumberEdit]
+        self._gamma_controls: Optional[ConfigNumberEdit]
         if show_gamma:
-            self._gamma_controls = gmc = cfgui.ConfigNumberEdit(
+            self._gamma_controls = gmc = ConfigNumberEdit(
                 parent=self._root_widget,
                 position=(90, v),
                 configkey="Screen Gamma",
@@ -325,25 +325,25 @@ class GraphicsSettingsWindow(ba.OldWindow):
                 on_value_change_call=self._set_vsync)
 
         v -= 90
-        fpsc = cfgui.ConfigCheckBox(parent=self._root_widget,
-                                    position=(69, v - 6),
-                                    size=(210, 30),
-                                    scale=0.86,
-                                    configkey="Show FPS",
-                                    displayname=ba.Lstr(resource=self._r +
-                                                        '.showFPSText'),
-                                    maxwidth=130)
+        fpsc = ConfigCheckBox(parent=self._root_widget,
+                              position=(69, v - 6),
+                              size=(210, 30),
+                              scale=0.86,
+                              configkey="Show FPS",
+                              displayname=ba.Lstr(resource=self._r +
+                                                  '.showFPSText'),
+                              maxwidth=130)
 
         # (tv mode doesnt apply to vr)
         if not ba.app.vr_mode:
-            tvc = cfgui.ConfigCheckBox(parent=self._root_widget,
-                                       position=(240, v - 6),
-                                       size=(210, 30),
-                                       scale=0.86,
-                                       configkey="TV Border",
-                                       displayname=ba.Lstr(resource=self._r +
-                                                           '.tvBorderText'),
-                                       maxwidth=130)
+            tvc = ConfigCheckBox(parent=self._root_widget,
+                                 position=(240, v - 6),
+                                 size=(210, 30),
+                                 scale=0.86,
+                                 configkey="TV Border",
+                                 displayname=ba.Lstr(resource=self._r +
+                                                     '.tvBorderText'),
+                                 maxwidth=130)
             # grumble..
             ba.widget(edit=fpsc.widget, right_widget=tvc.widget)
         try:

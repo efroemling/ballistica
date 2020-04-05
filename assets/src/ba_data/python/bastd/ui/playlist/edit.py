@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from bastd.ui.playlist.editcontroller import PlaylistEditController
 
 
-class PlaylistEditWindow(ba.OldWindow):
+class PlaylistEditWindow(ba.Window):
     """Window for editing an individual game playlist."""
 
     def __init__(self,

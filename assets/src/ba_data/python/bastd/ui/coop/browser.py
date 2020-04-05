@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     from typing import Any, Optional, Tuple, Dict, List, Union
 
 
-class CoopBrowserWindow(ba.OldWindow):
+class CoopBrowserWindow(ba.Window):
     """Window for browsing co-op levels/games/etc."""
 
     def _update_corner_button_positions(self) -> None:

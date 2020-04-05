@@ -79,7 +79,7 @@ class SharePlaylistImportWindow(promocode.PromoCodeWindow):
         ba.screenmessage(ba.Lstr(resource='importingText'))
 
 
-class SharePlaylistResultsWindow(ba.OldWindow):
+class SharePlaylistResultsWindow(ba.Window):
     """Window for sharing playlists."""
 
     def __init__(self,

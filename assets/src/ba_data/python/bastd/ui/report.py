@@ -26,7 +26,7 @@ import _ba
 import ba
 
 
-class ReportPlayerWindow(ba.OldWindow):
+class ReportPlayerWindow(ba.Window):
     """Player for reporting naughty players."""
 
     def __init__(self, account_id: str, origin_widget: ba.Widget):

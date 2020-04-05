@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from typing import Any, Dict, Optional
 
 
-class ServerDialogWindow(ba.OldWindow):
+class ServerDialogWindow(ba.Window):
     """A dialog window driven by the master-server."""
 
     def __init__(self, data: Dict[str, Any]):

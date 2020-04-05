@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from typing import Type, Any, Callable, Dict, List, Tuple, Optional
 
 
-class PlaylistMapSelectWindow(ba.OldWindow):
+class PlaylistMapSelectWindow(ba.Window):
     """Window to select a map."""
 
     def __init__(self,

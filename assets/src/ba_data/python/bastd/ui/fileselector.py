@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     from typing import Any, Callable, Sequence, List, Optional
 
 
-class FileSelectorWindow(ba.OldWindow):
+class FileSelectorWindow(ba.Window):
     """Window for selecting files."""
 
     def __init__(self,

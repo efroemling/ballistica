@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from typing import Tuple, Optional
 
 
-class ControlsSettingsWindow(ba.OldWindow):
+class ControlsSettingsWindow(ba.Window):
     """Top level control settings window."""
 
     def __init__(self,

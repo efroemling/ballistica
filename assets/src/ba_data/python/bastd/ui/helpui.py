@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from typing import Optional, Tuple
 
 
-class HelpWindow(ba.OldWindow):
+class HelpWindow(ba.Window):
     """A window providing help on how to play."""
 
     def __init__(self,

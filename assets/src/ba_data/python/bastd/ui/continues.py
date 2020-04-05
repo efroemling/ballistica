@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from typing import Any, Callable, Optional
 
 
-class ContinuesWindow(ba.OldWindow):
+class ContinuesWindow(ba.Window):
     """A window to continue a game."""
 
     def __init__(self, activity: ba.Activity, cost: int,

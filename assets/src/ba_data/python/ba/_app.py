@@ -29,6 +29,7 @@ import _ba
 if TYPE_CHECKING:
     import ba
     from ba import _lang, _meta
+    from ba.ui import UICleanupCheck
     from bastd.actor import spazappearance
     from typing import (Optional, Dict, Tuple, Set, Any, List, Type, Tuple,
                         Callable)
@@ -429,7 +430,7 @@ class App:
         self.title_color = (0.72, 0.7, 0.75)
         self.heading_color = (0.72, 0.7, 0.75)
         self.infotextcolor = (0.7, 0.9, 0.7)
-        self.uicleanupchecks: List[dict] = []
+        self.uicleanupchecks: List[UICleanupCheck] = []
         self.uiupkeeptimer: Optional[ba.Timer] = None
         self.delegate: Optional[ba.AppDelegate] = None
 

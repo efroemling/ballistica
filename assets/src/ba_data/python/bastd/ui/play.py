@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from typing import Optional, Tuple
 
 
-class PlayWindow(ba.OldWindow):
+class PlayWindow(ba.Window):
     """Window for selecting overall play type."""
 
     def __init__(self,

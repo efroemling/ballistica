@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from typing import Tuple, Optional, Union
 
 
-class AllSettingsWindow(ba.OldWindow):
+class AllSettingsWindow(ba.Window):
     """Window for selecting a settings category."""
 
     def __init__(self,

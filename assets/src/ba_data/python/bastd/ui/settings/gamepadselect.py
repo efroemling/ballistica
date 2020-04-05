@@ -84,7 +84,7 @@ def gamepad_configure_callback(event: Dict[str, Any]) -> None:
                         on_activate_call=_ok)
 
 
-class GamepadSelectWindow(ba.OldWindow):
+class GamepadSelectWindow(ba.Window):
     """Window for selecting a gamepad to configure."""
 
     def __init__(self) -> None:

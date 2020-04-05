@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from typing import Any, Callable, Optional
 
 
-class SoundtrackEntryTypeSelectWindow(ba.OldWindow):
+class SoundtrackEntryTypeSelectWindow(ba.Window):
     """Window for selecting a soundtrack entry type."""
 
     def __init__(self,

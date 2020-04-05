@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from typing import Any, Dict, List
 
 
-class TestingWindow(ba.OldWindow):
+class TestingWindow(ba.Window):
     """Window for conveniently testing various settings."""
 
     def __init__(self,

@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from typing import Any, Optional, Dict, Union
 
 
-class AppInviteWindow(ba.OldWindow):
+class AppInviteWindow(ba.Window):
     """Window for showing different ways to invite people to try the game."""
 
     def __init__(self) -> None:
@@ -164,7 +164,7 @@ class AppInviteWindow(ba.OldWindow):
         ba.containerwidget(edit=self._root_widget, transition='out_scale')
 
 
-class ShowFriendCodeWindow(ba.OldWindow):
+class ShowFriendCodeWindow(ba.Window):
     """Window showing a code for sharing with friends."""
 
     def __init__(self, data: Dict[str, Any]):

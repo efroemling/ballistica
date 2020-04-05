@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from typing import Dict, Any, Optional, Union, Tuple, Callable
 
 
-class GamepadSettingsWindow(ba.OldWindow):
+class GamepadSettingsWindow(ba.Window):
     """Window for configuring a gamepad."""
 
     def __init__(self,
@@ -765,7 +765,7 @@ class GamepadSettingsWindow(ba.OldWindow):
                 transition='in_left').get_root_widget())
 
 
-class AwaitGamepadInputWindow(ba.OldWindow):
+class AwaitGamepadInputWindow(ba.Window):
     """Window for capturing a gamepad button press."""
 
     def __init__(

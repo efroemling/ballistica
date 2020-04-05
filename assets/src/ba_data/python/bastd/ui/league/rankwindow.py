@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from typing import Any, Optional, Tuple, List, Dict, Union
 
 
-class LeagueRankWindow(ba.OldWindow):
+class LeagueRankWindow(ba.Window):
     """Window for showing league rank."""
 
     def __init__(self,

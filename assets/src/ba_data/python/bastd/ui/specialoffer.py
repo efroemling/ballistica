@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from typing import Any, Dict, Optional, Union
 
 
-class SpecialOfferWindow(ba.OldWindow):
+class SpecialOfferWindow(ba.Window):
     """Window for presenting sales/etc."""
 
     def __init__(self, offer: Dict[str, Any], transition: str = 'in_right'):

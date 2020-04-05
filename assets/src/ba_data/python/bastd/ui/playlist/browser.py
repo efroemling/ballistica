@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from typing import Type, Optional, Tuple, Union
 
 
-class PlaylistBrowserWindow(ba.OldWindow):
+class PlaylistBrowserWindow(ba.Window):
     """Window for starting teams games."""
 
     def __init__(self,

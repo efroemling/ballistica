@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from typing import Optional, Tuple, List, Union
 
 
-class AccountSettingsWindow(ba.OldWindow):
+class AccountSettingsWindow(ba.Window):
     """Window for account related functionality."""
 
     def __init__(self,

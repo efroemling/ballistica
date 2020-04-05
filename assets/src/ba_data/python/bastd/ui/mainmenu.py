@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from typing import Any, Callable, List, Dict, Tuple, Optional, Union
 
 
-class MainMenuWindow(ba.OldWindow):
+class MainMenuWindow(ba.Window):
     """The main menu window, both in-game and in the main menu."""
 
     def __init__(self, transition: str = 'in_right'):

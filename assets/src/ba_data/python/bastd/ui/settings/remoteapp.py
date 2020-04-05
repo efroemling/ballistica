@@ -25,7 +25,7 @@ from __future__ import annotations
 import ba
 
 
-class RemoteAppSettingsWindow(ba.OldWindow):
+class RemoteAppSettingsWindow(ba.Window):
     """Window showing info/settings related to the remote app."""
 
     def __init__(self) -> None:

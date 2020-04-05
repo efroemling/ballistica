@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     pass
 
 
-class XBox360ControllerSettingsWindow(ba.OldWindow):
+class XBox360ControllerSettingsWindow(ba.Window):
     """UI showing info about xbox 360 controllers."""
 
     def __init__(self) -> None:

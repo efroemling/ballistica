@@ -26,7 +26,7 @@ import _ba
 import ba
 
 
-class PS3ControllerSettingsWindow(ba.OldWindow):
+class PS3ControllerSettingsWindow(ba.Window):
     """UI showing info about using PS3 controllers."""
 
     def __init__(self) -> None:

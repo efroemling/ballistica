@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from typing import Any, List, Optional, Callable
 
 
-class MacMusicAppPlaylistSelectWindow(ba.OldWindow):
+class MacMusicAppPlaylistSelectWindow(ba.Window):
     """Window for selecting an iTunes playlist."""
 
     def __init__(self, callback: Callable[[Any], Any],

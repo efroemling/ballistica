@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     from typing import Any, Optional, Tuple, Dict, List, Union, Callable
 
 
-class GatherWindow(ba.OldWindow):
+class GatherWindow(ba.Window):
     """Window for joining/inviting friends."""
 
     def __del__(self) -> None:

@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from typing import Any, Dict, Union, Optional
 
 
-class SoundtrackEditWindow(ba.OldWindow):
+class SoundtrackEditWindow(ba.Window):
     """Window for editing a soundtrack."""
 
     def __init__(self,

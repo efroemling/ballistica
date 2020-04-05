@@ -81,7 +81,7 @@ from ba._messages import (OutOfBoundsMessage, DieMessage, StandMessage,
 from ba._music import setmusic, MusicPlayer, MusicType, MusicPlayMode
 from ba._powerup import PowerupMessage, PowerupAcceptMessage
 from ba._teambasesession import TeamBaseSession
-from ba.ui import (OldWindow, UILocation, UILocationWindow, UIController,
+from ba.ui import (Window, UILocation, UILocationWindow, UIController,
                    uicleanupcheck)
 
 app: App

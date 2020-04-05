@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from typing import Optional
 
 
-class KioskWindow(ba.OldWindow):
+class KioskWindow(ba.Window):
     """Kiosk mode window."""
 
     def __init__(self, transition: str = 'in_right'):

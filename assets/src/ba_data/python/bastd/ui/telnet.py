@@ -26,7 +26,7 @@ import _ba
 import ba
 
 
-class TelnetAccessRequestWindow(ba.OldWindow):
+class TelnetAccessRequestWindow(ba.Window):
     """Window asking the user whether to allow a telnet connection."""
 
     def __init__(self) -> None:

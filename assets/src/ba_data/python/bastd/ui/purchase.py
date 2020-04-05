@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from typing import Any, Dict, List, Optional
 
 
-class PurchaseWindow(ba.OldWindow):
+class PurchaseWindow(ba.Window):
     """Window for purchasing one or more items."""
 
     def __init__(self,

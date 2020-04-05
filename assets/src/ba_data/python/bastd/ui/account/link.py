@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from typing import Any, Tuple, Optional, Dict
 
 
-class AccountLinkWindow(ba.OldWindow):
+class AccountLinkWindow(ba.Window):
     """Window for linking accounts."""
 
     def __init__(self, origin_widget: ba.Widget = None):
@@ -125,7 +125,7 @@ class AccountLinkWindow(ba.OldWindow):
                            transition=self._transition_out)
 
 
-class AccountLinkCodeWindow(ba.OldWindow):
+class AccountLinkCodeWindow(ba.Window):
     """Window showing code for account-linking."""
 
     def __init__(self, data: Dict[str, Any]):

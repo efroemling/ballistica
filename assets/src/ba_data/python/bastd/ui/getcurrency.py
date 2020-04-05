@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from typing import Any, Optional, Tuple, Union, Dict
 
 
-class GetCurrencyWindow(ba.OldWindow):
+class GetCurrencyWindow(ba.Window):
     """Window for purchasing/acquiring currency."""
 
     def __init__(self,

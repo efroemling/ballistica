@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from typing import Any, Optional, Tuple, List, Dict
 
 
-class ProfileBrowserWindow(ba.OldWindow):
+class ProfileBrowserWindow(ba.Window):
     """Window for browsing player profiles."""
 
     def __init__(self,

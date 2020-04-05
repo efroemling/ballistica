@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     from bastd.ui.profile.edit import EditProfileWindow
 
 
-class ProfileUpgradeWindow(ba.OldWindow):
+class ProfileUpgradeWindow(ba.Window):
     """Window for player profile upgrades to global."""
 
     def __init__(self,

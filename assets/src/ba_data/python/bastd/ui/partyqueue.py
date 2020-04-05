@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from typing import Any, Optional, Sequence, List, Dict
 
 
-class PartyQueueWindow(ba.OldWindow):
+class PartyQueueWindow(ba.Window):
     """Window showing players waiting to join a server."""
 
     # ewww this needs quite a bit of de-linting if/when i revisit it..

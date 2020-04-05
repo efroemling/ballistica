@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from typing import Tuple, Optional, Sequence
 
 
-class CreditsListWindow(ba.OldWindow):
+class CreditsListWindow(ba.Window):
     """Window for displaying game credits."""
 
     def __init__(self, origin_widget: ba.Widget = None):

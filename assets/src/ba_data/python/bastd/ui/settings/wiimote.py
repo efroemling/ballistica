@@ -25,7 +25,7 @@ import _ba
 import ba
 
 
-class WiimoteSettingsWindow(ba.OldWindow):
+class WiimoteSettingsWindow(ba.Window):
     """Window for setting up Wiimotes."""
 
     def __init__(self) -> None:
@@ -112,7 +112,7 @@ class WiimoteSettingsWindow(ba.OldWindow):
             transition='in_left').get_root_widget())
 
 
-class WiimoteListenWindow(ba.OldWindow):
+class WiimoteListenWindow(ba.Window):
     """Window shown while listening for a wiimote connection."""
 
     def __init__(self) -> None:
@@ -181,7 +181,7 @@ class WiimoteListenWindow(ba.OldWindow):
         _ba.stop_listening_for_wii_remotes()
 
 
-class WiimoteLicenseWindow(ba.OldWindow):
+class WiimoteLicenseWindow(ba.Window):
     """Window displaying the Darwiinremote software license."""
 
     def __init__(self) -> None:

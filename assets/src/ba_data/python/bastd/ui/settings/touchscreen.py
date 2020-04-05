@@ -25,7 +25,7 @@ import _ba
 import ba
 
 
-class TouchscreenSettingsWindow(ba.OldWindow):
+class TouchscreenSettingsWindow(ba.Window):
     """Settings window for touchscreens."""
 
     def __del__(self) -> None:

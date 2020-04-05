@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from bastd.ui.playlist.editcontroller import PlaylistEditController
 
 
-class PlaylistAddGameWindow(ba.OldWindow):
+class PlaylistAddGameWindow(ba.Window):
     """Window for selecting a game type to add to a playlist."""
 
     def __init__(self,

@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from typing import Any, Optional, Tuple, Dict
 
 
-class AccountUnlinkWindow(ba.OldWindow):
+class AccountUnlinkWindow(ba.Window):
     """A window to kick off account unlinks."""
 
     def __init__(self, origin_widget: ba.Widget = None):

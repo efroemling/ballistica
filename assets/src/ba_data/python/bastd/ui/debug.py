@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     pass
 
 
-class DebugWindow(ba.OldWindow):
+class DebugWindow(ba.Window):
     """Window for debugging internal values."""
 
     def __init__(self, transition: str = 'in_right'):

@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from typing import Tuple, Optional
 
 
-class AudioSettingsWindow(ba.OldWindow):
+class AudioSettingsWindow(ba.Window):
     """Window for editing audio settings."""
 
     def __init__(self,
