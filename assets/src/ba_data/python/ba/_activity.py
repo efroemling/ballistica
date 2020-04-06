@@ -558,12 +558,12 @@ class Activity(DependencyComponent):
 
     def create_player_node(self, player: ba.Player) -> ba.Node:
         """Create the 'player' node associated with the provided ba.Player."""
-        from ba import _actor
+        from ba._nodeactor import NodeActor
         with _ba.Context(self):
             node = _ba.newnode('player', attrs={'playerID': player.get_id()})
             # FIXME: Should add a dedicated slot for this on ba.Player
             #  instead of cluttering up their gamedata dict.
-            player.gamedata['_playernode'] = _actor.Actor(node)
+            player.gamedata['_playernode'] = NodeActor(node)
             return node
 
     def begin(self, session: ba.Session) -> None:

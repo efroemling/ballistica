@@ -157,7 +157,7 @@ class FootballTeamGame(ba.TeamGameActivity):
         self._spawn_flag()
         defs = self.map.defs
         self._score_regions.append(
-            ba.Actor(
+            ba.NodeActor(
                 ba.newnode('region',
                            attrs={
                                'position': defs.boxes['goal1'][0:3],
@@ -166,7 +166,7 @@ class FootballTeamGame(ba.TeamGameActivity):
                                'materials': (self.score_region_material, )
                            })))
         self._score_regions.append(
-            ba.Actor(
+            ba.NodeActor(
                 ba.newnode('region',
                            attrs={
                                'position': defs.boxes['goal2'][0:3],
@@ -279,7 +279,7 @@ class FootballTeamGame(ba.TeamGameActivity):
         elif isinstance(msg, stdflag.FlagDeathMessage):
             if not self.has_ended():
                 self._flag_respawn_timer = ba.Timer(3.0, self._spawn_flag)
-                self._flag_respawn_light = ba.Actor(
+                self._flag_respawn_light = ba.NodeActor(
                     ba.newnode('light',
                                attrs={
                                    'position': self._flag_spawn_pos,
@@ -406,7 +406,7 @@ class FootballCoopGame(ba.CoopGameActivity):
         # Set up the two score regions.
         defs = self.map.defs
         self.score_regions.append(
-            ba.Actor(
+            ba.NodeActor(
                 ba.newnode('region',
                            attrs={
                                'position': defs.boxes['goal1'][0:3],
@@ -415,7 +415,7 @@ class FootballCoopGame(ba.CoopGameActivity):
                                'materials': [self._score_region_material]
                            })))
         self.score_regions.append(
-            ba.Actor(
+            ba.NodeActor(
                 ba.newnode('region',
                            attrs={
                                'position': defs.boxes['goal2'][0:3],
@@ -516,7 +516,7 @@ class FootballCoopGame(ba.CoopGameActivity):
         starttime_ms = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)
         assert isinstance(starttime_ms, int)
         self._starttime_ms = starttime_ms
-        self._time_text = ba.Actor(
+        self._time_text = ba.NodeActor(
             ba.newnode('text',
                        attrs={
                            'v_attach': 'top',
@@ -529,7 +529,7 @@ class FootballCoopGame(ba.CoopGameActivity):
                            'scale': 1.3,
                            'text': ''
                        }))
-        self._time_text_input = ba.Actor(
+        self._time_text_input = ba.NodeActor(
             ba.newnode('timedisplay', attrs={'showsubseconds': True}))
         ba.sharedobj('globals').connectattr('time', self._time_text_input.node,
                                             'time2')
@@ -844,7 +844,7 @@ class FootballCoopGame(ba.CoopGameActivity):
         elif isinstance(msg, stdflag.FlagDeathMessage):
             assert isinstance(msg.flag, FootballFlag)
             msg.flag.respawn_timer = ba.Timer(3.0, self._spawn_flag)
-            self._flag_respawn_light = ba.Actor(
+            self._flag_respawn_light = ba.NodeActor(
                 ba.newnode('light',
                            attrs={
                                'position': self._flag_spawn_pos,

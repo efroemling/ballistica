@@ -638,7 +638,8 @@ class App:
         activity = _ba.get_foreground_host_activity()
         if (activity is not None and activity.allow_pausing
                 and not _ba.have_connected_clients()):
-            from ba import _gameutils, _actor, _lang
+            from ba import _gameutils, _lang
+            from ba._nodeactor import NodeActor
             # FIXME: Shouldn't be touching scene stuff here;
             #  should just pass the request on to the host-session.
             with _ba.Context(activity):
@@ -648,7 +649,7 @@ class App:
                     globs.paused = True
 
                 # FIXME: This should not be an attr on Actor.
-                activity.paused_text = _actor.Actor(
+                activity.paused_text = NodeActor(
                     _ba.newnode(
                         'text',
                         attrs={

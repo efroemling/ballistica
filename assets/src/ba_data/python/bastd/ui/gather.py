@@ -180,7 +180,7 @@ class GatherWindow(ba.Window):
         self._scroll_width = self._width - scroll_buffer_h
         self._scroll_height = self._height - 180.0
 
-        # not actually using a scroll widget anymore; just an image
+        # Not actually using a scroll widget anymore; just an image.
         scroll_left = (self._width - self._scroll_width) * 0.5
         scroll_bottom = self._height - self._scroll_height - 79 - 48
         buffer_h = 10
@@ -214,8 +214,8 @@ class GatherWindow(ba.Window):
                 or _ba.get_account_type() != 'Google Play'):
             account.show_sign_in_prompt('Google Play')
         else:
-            # if there's google play people connected to us, inform the user
-            # that they will get disconnected.. otherwise just go ahead..
+            # If there's google play people connected to us, inform the user
+            # that they will get disconnected. Otherwise just go ahead.
             google_player_count = (_ba.get_google_play_party_client_count())
             if google_player_count > 0:
                 confirm.ConfirmWindow(
@@ -246,25 +246,25 @@ class GatherWindow(ba.Window):
             return
         self._current_tab = tab
 
-        # we wanna preserve our current tab between runs
+        # We wanna preserve our current tab between runs.
         cfg = ba.app.config
         cfg['Gather Tab'] = tab
         cfg.commit()
 
-        # update tab colors based on which is selected
+        # Update tab colors based on which is selected.
         tabs.update_tab_button_colors(self._tab_buttons, tab)
 
-        # (re)create scroll widget
+        # (Re)create scroll widget.
         if self._tab_container:
             self._tab_container.delete()
         scroll_left = (self._width - self._scroll_width) * 0.5
         scroll_bottom = self._height - self._scroll_height - 79 - 48
 
-        # a place where tabs can store data to get cleared when switching to
-        # a different tab
+        # A place where tabs can store data to get cleared when switching to
+        # a different tab.
         self._tab_data = {}
 
-        # so we can still select root level widgets with direction buttons
+        # So we can still select root level widgets with direction buttons.
         def _simple_message(tab2: str,
                             message: ba.Lstr,
                             string_height: float,
@@ -331,7 +331,7 @@ class GatherWindow(ba.Window):
                                 ('${BUTTON}',
                                  ba.charstr(ba.SpecialChar.TOP_BUTTON))])
 
-            # let's not talk about sharing in vr-mode; its tricky to fit more
+            # Let's not talk about sharing in vr-mode; its tricky to fit more
             # than one head in a VR-headset ;-)
             if not ba.app.vr_mode:
                 msg = ba.Lstr(
@@ -472,8 +472,8 @@ class GatherWindow(ba.Window):
                       up_widget=self._tab_buttons[tab])
             ba.widget(edit=self._internet_join_text, right_widget=txt)
 
-            # attempt to fetch our local address so we have it for
-            # error messages
+            # Attempt to fetch our local address so we have it for
+            # error messages.
             self._internet_local_address = None
 
             class AddrFetchThread(threading.Thread):
@@ -501,9 +501,9 @@ class GatherWindow(ba.Window):
                         ba.pushcall(ba.Call(self._call, val),
                                     from_other_thread=True)
                     except Exception:
+                        # FIXME: Should filter out expected errors and
+                        # report others here.
                         ba.print_exception()
-                        # FIXME: Should screen out expected errors and
-                        #  report others here.
 
             AddrFetchThread(ba.WeakCall(
                 self._internet_fetch_local_addr_cb)).start()
@@ -518,8 +518,8 @@ class GatherWindow(ba.Window):
                              timetype=ba.TimeType.REAL)
             }
 
-            # also update it immediately so we don't have to wait for the
-            # initial query..
+            # Also update it immediately so we don't have to wait for the
+            # initial query.
             self._update_internet_tab()
 
         elif tab == 'local_network':
@@ -545,8 +545,8 @@ class GatherWindow(ba.Window):
                                                   ba.WeakCall(self.update),
                                                   timetype=ba.TimeType.REAL,
                                                   repeat=True)
-                    # go ahead and run a few *almost* immediately so we don't
-                    # have to wait a second
+                    # Go ahead and run a few *almost* immediately so we don't
+                    # have to wait a second.
                     self.update()
                     ba.timer(0.25,
                              ba.WeakCall(self.update),
@@ -566,7 +566,8 @@ class GatherWindow(ba.Window):
                     t_scale = 1.6
                     for child in self._columnwidget.get_children():
                         child.delete()
-                    # grab this now this since adding widgets will change it
+
+                    # Grab this now this since adding widgets will change it.
                     last_selected_host = self._last_selected_host
                     hosts = _ba.host_scan_cycle()
                     for i, host in enumerate(hosts):
@@ -843,7 +844,7 @@ class GatherWindow(ba.Window):
                                          color=(1, 0, 0))
                         ba.playsound(ba.getsound('error'))
                     else:
-                        # store for later
+                        # Store for later.
                         cfg2 = ba.app.config
                         cfg2['Last Manual Party Connect Address'] = addr2
                         cfg2.commit()
@@ -866,7 +867,6 @@ class GatherWindow(ba.Window):
             tscl = 0.85
             tspc = 25
 
-            # v -= 35
             def _safe_set_text(txt3: ba.Widget,
                                val: Union[str, ba.Lstr],
                                success: bool = True) -> None:
@@ -875,11 +875,10 @@ class GatherWindow(ba.Window):
                                   text=val,
                                   color=(0, 1, 0) if success else (1, 1, 0))
 
-            # this currently doesn't work from china since we go through a
-            # reverse proxy there
-            # EDIT - it should work now; our proxy server forwards along
-            # original IPs
-            # app = ba.app
+            # This currently doesn't work from china since we go through a
+            # reverse proxy there.
+            # UPDATE: it should work now; our proxy server forwards along
+            # original IPs.
             do_internet_check = True
 
             def do_it(v2: float, cnt2: Optional[ba.Widget]) -> None:
@@ -940,6 +939,7 @@ class GatherWindow(ba.Window):
                                         from_other_thread=True)
                         except Exception as exc:
                             err_str = str(exc)
+
                             # FIXME: Should look at exception types here,
                             #  not strings.
                             if 'Network is unreachable' in err_str:
@@ -1024,14 +1024,15 @@ class GatherWindow(ba.Window):
                                                    text='')
 
                 self._doing_access_check = False
-                self._access_check_count = 0  # cap our refreshes eventually..
+                self._access_check_count = 0  # Cap our refreshes eventually.
                 self._tab_data['access_check_timer'] = ba.Timer(
                     10.0,
                     ba.WeakCall(self._access_check_update, t_addr,
                                 t_accessible, t_accessible_extra),
                     repeat=True,
                     timetype=ba.TimeType.REAL)
-                # kick initial off
+
+                # Kick initial off.
                 self._access_check_update(t_addr, t_accessible,
                                           t_accessible_extra)
                 if check_button:
@@ -1061,7 +1062,7 @@ class GatherWindow(ba.Window):
         if playsound:
             ba.playsound(ba.getsound('click01'))
 
-        # if we're switching in from elsewhere, reset our selection
+        # If we're switching in from elsewhere, reset our selection.
         # (prevents selecting something way down the list if we switched away
         # and came back)
         if self._internet_tab != value:
@@ -1077,7 +1078,7 @@ class GatherWindow(ba.Window):
             edit=self._internet_host_text,
             color=active_color if value == 'host' else inactive_color)
 
-        # clear anything in existence..
+        # Clear anything in existence.
         for widget in [
                 self._internet_host_scrollwidget,
                 self._internet_host_name_text,
@@ -1095,7 +1096,6 @@ class GatherWindow(ba.Window):
                 self._internet_join_status_text,
                 self._internet_host_dedicated_server_info_text
         ]:
-            # widget = getattr(self, attr, None)
             if widget is not None:
                 widget.delete()
 
@@ -1107,9 +1107,10 @@ class GatherWindow(ba.Window):
         v -= 25
         is_public_enabled = _ba.get_public_party_enabled()
         if value == 'join':
-            # reset this so we do an immediate refresh query
+            # Reset this so we do an immediate refresh query.
             self._internet_join_last_refresh_time = -99999.0
-            # reset our list of public parties
+
+            # Reset our list of public parties.
             self._public_parties = {}
             self._last_public_party_list_rebuild_time = 0
             self._first_public_party_list_rebuild_time = None
@@ -1125,8 +1126,7 @@ class GatherWindow(ba.Window):
                 shadow=0.0,
                 h_align='center',
                 v_align='center')
-            # noinspection PyUnreachableCode
-            if False:  # pylint: disable=using-constant-test
+            if bool(False):
                 self._internet_join_party_language_label = ba.textwidget(
                     text=ba.Lstr(
                         resource='settingsWindowAdvanced.languageText'),
@@ -1191,8 +1191,6 @@ class GatherWindow(ba.Window):
                 maxwidth=c_width,
                 color=(0.6, 0.6, 0.6),
                 position=(c_width * 0.5, c_height * 0.5))
-
-            # t_scale = 1.6
 
         if value == 'host':
             v -= 30
@@ -1313,15 +1311,15 @@ class GatherWindow(ba.Window):
                 color=ba.app.infotextcolor,
                 position=(c_width * 0.5, v))
 
-            # if public sharing is already on,
-            # launch a status-check immediately
+            # If public sharing is already on,
+            # launch a status-check immediately.
             if _ba.get_public_party_enabled():
                 self._do_internet_status_check()
 
-        # now add a lock icon overlay for if we don't have pro
+        # Now add a lock icon overlay for if we don't have pro.
         icon = self._internet_lock_icon
         if icon and self._internet_lock_icon:
-            self._internet_lock_icon.delete()  # kill any existing
+            self._internet_lock_icon.delete()  # Kill any existing.
         self._internet_lock_icon = ba.imagewidget(
             parent=self._tab_container,
             position=(c_width * 0.5 - 60, c_height * 0.5 - 50),
@@ -1354,11 +1352,11 @@ class GatherWindow(ba.Window):
     def _on_public_party_query_result(
             self, result: Optional[Dict[str, Any]]) -> None:
         with ba.Context('ui'):
-            # any time we get any result at all, kill our loading status
+            # Any time we get any result at all, kill our loading status.
             status_text = self._internet_join_status_text
             if status_text:
-                # don't show results if not signed in (probably didn't get any
-                # anyway)
+                # Don't show results if not signed in
+                # (probably didn't get any anyway).
                 if _ba.get_account_state() != 'signed_in':
                     ba.textwidget(edit=status_text,
                                   text=ba.Lstr(resource='notSignedInText'))
@@ -1378,11 +1376,11 @@ class GatherWindow(ba.Window):
                 partyval['claimed'] = False
 
             for party_in in parties_in:
-                # party is indexed by (ADDR)_(PORT)
+                # Party is indexed by (ADDR)_(PORT)
                 party_key = party_in['a'] + '_' + str(party_in['p'])
                 party = self._public_parties.get(party_key)
                 if party is None:
-                    # if this party is new to us, init it..
+                    # If this party is new to us, init it.
                     index = self._next_public_party_entry_index
                     self._next_public_party_entry_index = index + 1
                     party = self._public_parties[party_key] = {
@@ -1395,7 +1393,8 @@ class GatherWindow(ba.Window):
                         'index':
                             index,
                     }
-                # now, new or not, update its values
+
+                # Now, new or not, update its values.
                 party['queue'] = party_in.get('q')
                 party['port'] = party_in.get('p')
                 party['name'] = party_in['n']
@@ -1407,7 +1406,7 @@ class GatherWindow(ba.Window):
                 party['ping_interval'] = 0.001 * party_in['pi']
                 party['stats_addr'] = party_in['sa']
 
-            # prune unclaimed party entries
+            # Prune unclaimed party entries.
             self._public_parties = {
                 key: val
                 for key, val in list(self._public_parties.items())
@@ -1423,8 +1422,9 @@ class GatherWindow(ba.Window):
         cur_time = ba.time(ba.TimeType.REAL)
         if self._first_public_party_list_rebuild_time is None:
             self._first_public_party_list_rebuild_time = cur_time
-        # update faster for the first few seconds;
-        # then ease off to keep the list from jumping around
+
+        # Update faster for the first few seconds;
+        # then ease off to keep the list from jumping around.
         since_first = cur_time - self._first_public_party_list_rebuild_time
         wait_time = (1.0 if since_first < 2.0 else
                      2.5 if since_first < 10.0 else 5.0)
@@ -1433,23 +1433,23 @@ class GatherWindow(ba.Window):
             return
         self._last_public_party_list_rebuild_time = cur_time
 
-        # first off, check for the existence of our column widget;
-        # if we don't have this, we're done
+        # First off, check for the existence of our column widget;
+        # if we don't have this, we're done.
         columnwidget = self._internet_host_columnwidget
         if not columnwidget:
             return
 
         with ba.Context('ui'):
 
-            # now kill and recreate all widgets
+            # Now kill and recreate all widgets.
             for widget in columnwidget.get_children():
                 widget.delete()
 
-            # sort - show queue-enabled ones first and sort by lowest ping
+            # Sort - show queue-enabled ones first and sort by lowest ping.
             ordered_parties = sorted(
                 list(self._public_parties.values()),
                 key=lambda p: (
-                    p['queue'] is None,  # show non-queued last
+                    p['queue'] is None,  # Show non-queued last.
                     p['ping'] if p['ping'] is not None else 999999,
                     p['index'],
                     p))
@@ -1457,22 +1457,19 @@ class GatherWindow(ba.Window):
             first = True
 
             sub_scroll_width = 830
-            # rval = random.randrange(4, 10)
-            # print 'doing', rval
-            # ordered_parties = ordered_parties[:rval]
             lineheight = 42
             sub_scroll_height = lineheight * len(ordered_parties) + 50
             ba.containerwidget(edit=columnwidget,
                                size=(sub_scroll_width, sub_scroll_height))
 
-            # ew; this rebuilding generates deferred selection callbacks
-            # so we need to generated deferred ignore notices for ourself
+            # Ew; this rebuilding generates deferred selection callbacks
+            # so we need to generated deferred ignore notices for ourself.
             def refresh_on() -> None:
                 self._refreshing_public_party_list = True
 
             ba.pushcall(refresh_on)
 
-            # janky - allow escaping if there's nothing in us
+            # Janky - allow escaping if there's nothing in us.
             ba.containerwidget(edit=self._internet_host_scrollwidget,
                                claims_up_down=(len(ordered_parties) > 0))
 
@@ -1504,8 +1501,7 @@ class GatherWindow(ba.Window):
                 if existing_selection == (party['address'], 'name'):
                     ba.containerwidget(edit=columnwidget,
                                        selected_child=party['name_widget'])
-                # noinspection PyUnreachableCode
-                if False:  # pylint: disable=using-constant-test
+                if bool(False):
                     party['language_widget'] = ba.textwidget(
                         text=ba.Lstr(translate=('languages',
                                                 party['language'])),
@@ -1621,20 +1617,20 @@ class GatherWindow(ba.Window):
     def _update_internet_tab(self) -> None:
         # pylint: disable=too-many-statements
 
-        # special case - if a party-queue window is up, don't do any of this
-        # (keeps things smoother)
+        # Special case: if a party-queue window is up, don't do any of this
+        # (keeps things smoother).
         if ba.app.have_party_queue_window:
             return
 
-        # if we've got a party-name text widget, keep its value plugged
-        # into our public host name...
+        # If we've got a party-name text widget, keep its value plugged
+        # into our public host name.
         text = self._internet_host_name_text
         if text:
             name = cast(str,
                         ba.textwidget(query=self._internet_host_name_text))
             _ba.set_public_party_name(name)
 
-        # show/hide the lock icon depending on if we've got pro
+        # Show/hide the lock icon depending on if we've got pro.
         icon = self._internet_lock_icon
         if icon:
             if self._is_internet_locked():
@@ -1657,17 +1653,17 @@ class GatherWindow(ba.Window):
                     callback=ba.WeakCall(self._on_public_party_query_result))
                 _ba.run_transactions()
 
-            # go through our existing public party entries firing off pings
-            # for any that have timed out
+            # Go through our existing public party entries firing off pings
+            # for any that have timed out.
             for party in list(self._public_parties.values()):
                 if (party['next_ping_time'] <= now
                         and ba.app.ping_thread_count < 15):
 
-                    # make sure to fully catch up and not to multi-ping if
-                    # we're way behind somehow..
+                    # Make sure to fully catch up and not to multi-ping if
+                    # we're way behind somehow.
                     while party['next_ping_time'] <= now:
-                        # crank the interval up for high-latency parties to
-                        # save us some work
+                        # Crank the interval up for high-latency parties to
+                        # save us some work.
                         mult = 1
                         if party['ping'] is not None:
                             mult = (10 if party['ping'] > 300 else
@@ -1682,8 +1678,6 @@ class GatherWindow(ba.Window):
                                      call: Callable[[str, int, Optional[int]],
                                                     Optional[int]]):
                             super().__init__()
-                            # need utf8 here to avoid an error on our minimum
-                            # bundled python
                             self._address = address
                             self._port = port
                             self._call = call
@@ -1701,11 +1695,9 @@ class GatherWindow(ba.Window):
 
                                 accessible = False
                                 starttime = time.time()
-                                # send a simple ping and wait for a response;
-                                # if we get it, they're accessible...
 
-                                # send a few pings and wait a second for
-                                # a response
+                                # Send a few pings and wait a second for
+                                # a response.
                                 sock.settimeout(1)
                                 for _i in range(3):
                                     sock.send(b'\x0b')
@@ -1728,12 +1720,25 @@ class GatherWindow(ba.Window):
                                             from_other_thread=True)
                             except OSError as exc:
                                 import errno
-                                # ignore harmless errors
-                                if exc.errno != errno.EHOSTUNREACH:
-                                    ba.print_exception('error on ping',
+
+                                # Ignore harmless errors.
+                                if exc.errno == errno.EHOSTUNREACH:
+                                    pass
+                                elif exc.errno == errno.EADDRNOTAVAIL:
+                                    if self._port == 0:
+                                        # This has happened. Ignore.
+                                        pass
+                                    elif ba.do_once():
+                                        print(
+                                            f'Got EADDRNOTAVAIL on gather ping'
+                                            f' for addr {self._address}'
+                                            f' port {self._port}.')
+                                else:
+                                    ba.print_exception('Error on gather ping.',
                                                        once=True)
                             except Exception:
-                                ba.print_exception('error on ping', once=True)
+                                ba.print_exception('Error on gather ping',
+                                                   once=True)
                             ba.app.ping_thread_count -= 1
 
                     PingThread(party['address'], party['port'],
@@ -1741,8 +1746,8 @@ class GatherWindow(ba.Window):
 
     def _ping_callback(self, address: str, port: Optional[int],
                        result: Optional[int]) -> None:
-        # Look for a widget corresponding to this target; if we find one,
-        # update our list.
+        # Look for a widget corresponding to this target.
+        # If we find one, update our list.
         party = self._public_parties.get(address + '_' + str(port))
         if party is not None:
             # We now smooth ping a bit to reduce jumping around in the list
@@ -1755,9 +1760,11 @@ class GatherWindow(ba.Window):
                                     (1.0 - smoothing) * result)
             else:
                 party['ping'] = result
-            if 'ping_widget' not in party:
-                pass  # This can happen if we switch away and then back to the
+
+            # This can happen if we switch away and then back to the
             # client tab while pings are in flight.
+            if 'ping_widget' not in party:
+                pass
             elif party['ping_widget']:
                 self._rebuild_public_party_list()
 
@@ -1946,7 +1953,7 @@ class GatherWindow(ba.Window):
             ba.app.window_states[self.__class__.__name__] = {
                 'sel_name': sel_name,
                 'tab': self._current_tab,
-                'internetTab': self._internet_tab
+                'internet_tab': self._internet_tab
             }
         except Exception:
             ba.print_exception('error saving state for', self.__class__)
@@ -1955,7 +1962,7 @@ class GatherWindow(ba.Window):
         try:
             winstate = ba.app.window_states.get(self.__class__.__name__, {})
             sel_name = winstate.get('sel_name', None)
-            self._internet_tab = winstate.get('internetTab', 'join')
+            self._internet_tab = winstate.get('internet_tab', 'join')
             current_tab = ba.app.config.get('Gather Tab', None)
             if current_tab is None or current_tab not in self._tab_buttons:
                 current_tab = 'about'

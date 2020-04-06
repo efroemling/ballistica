@@ -65,7 +65,7 @@ class TeamBaseSession(Session):
             team_names = None
             team_colors = None
 
-        print('FIXME: TEAM BASE SESSION WOULD CALC DEPS.')
+        # print('FIXME: TEAM BASE SESSION WOULD CALC DEPS.')
         depsets: Sequence[ba.DependencySet] = []
         super().__init__(depsets,
                          team_names=team_names,

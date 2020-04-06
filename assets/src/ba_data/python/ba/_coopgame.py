@@ -80,8 +80,8 @@ class CoopGameActivity(GameActivity):
 
     def _show_standard_scores_to_beat_ui(self,
                                          scores: List[Dict[str, Any]]) -> None:
-        from ba import _gameutils
-        from ba import _actor
+        from ba._gameutils import timestring, animate
+        from ba._nodeactor import NodeActor
         from ba._enums import TimeFormat
         display_type = self.get_score_type()
         if scores is not None:
@@ -92,16 +92,14 @@ class CoopGameActivity(GameActivity):
             # Now make a display for the most recent challenge.
             for score in scores:
                 if score['type'] == 'score_challenge':
-                    tval = (
-                        score['player'] + ':  ' +
-                        (_gameutils.timestring(
-                            int(score['value']) * 10,
-                            timeformat=TimeFormat.MILLISECONDS).evaluate()
-                         if display_type == 'time' else str(score['value'])))
+                    tval = (score['player'] + ':  ' + timestring(
+                        int(score['value']) * 10,
+                        timeformat=TimeFormat.MILLISECONDS).evaluate()
+                            if display_type == 'time' else str(score['value']))
                     hattach = 'center' if display_type == 'time' else 'left'
                     halign = 'center' if display_type == 'time' else 'left'
                     pos = (20, -70) if display_type == 'time' else (20, -130)
-                    txt = _actor.Actor(
+                    txt = NodeActor(
                         _ba.newnode('text',
                                     attrs={
                                         'v_attach': 'top',
@@ -115,11 +113,7 @@ class CoopGameActivity(GameActivity):
                                         'text': tval
                                     })).autoretain()
                     assert txt.node is not None
-                    _gameutils.animate(txt.node, 'scale', {
-                        1.0: 0.0,
-                        1.1: 0.7,
-                        1.2: 0.6
-                    })
+                    animate(txt.node, 'scale', {1.0: 0.0, 1.1: 0.7, 1.2: 0.6})
                     break
 
     # FIXME: this is now redundant with activityutils.get_score_info();
@@ -279,8 +273,8 @@ class CoopGameActivity(GameActivity):
                     should_beep = True
                     break
         if should_beep and self._life_warning_beep is None:
-            from ba import _actor
-            self._life_warning_beep = _actor.Actor(
+            from ba._nodeactor import NodeActor
+            self._life_warning_beep = NodeActor(
                 _ba.newnode('sound',
                             attrs={
                                 'sound': self._warn_beeps_sound,

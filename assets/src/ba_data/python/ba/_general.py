@@ -159,7 +159,7 @@ class _WeakCall:
         Instantiate a WeakCall; pass a callable as the first
         arg, followed by any number of arguments or keywords.
 
-        # example: wrap a method call with some positional and
+        # Example: wrap a method call with some positional and
         # keyword args:
         myweakcall = ba.WeakCall(myobj.dostuff, argval1, namedarg=argval2)
 
@@ -211,7 +211,7 @@ class _Call:
         Instantiate a Call; pass a callable as the first
         arg, followed by any number of arguments or keywords.
 
-        # Example: wrap a method call with 1 positional and 1 keyword arg.
+        # Example: wrap a method call with 1 positional and 1 keyword arg:
         mycall = ba.Call(myobj.dostuff, argval1, namedarg=argval2)
 
         # Now we have a single callable to run that whole mess.

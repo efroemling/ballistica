@@ -354,7 +354,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity):
             team.gamedata['touch_return_timer_ticking'] = None
             return  # No need to return when its at home.
         if team.gamedata['touch_return_timer_ticking'] is None:
-            team.gamedata['touch_return_timer_ticking'] = ba.Actor(
+            team.gamedata['touch_return_timer_ticking'] = ba.NodeActor(
                 ba.newnode('sound',
                            attrs={
                                'sound': self._ticking_sound,

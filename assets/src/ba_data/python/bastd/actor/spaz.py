@@ -58,10 +58,10 @@ class BombDiedMessage:
 def get_factory() -> SpazFactory:
     """Return the shared ba.SpazFactory object, creating it if necessary."""
     # pylint: disable=cyclic-import
+    from bastd.actor.spazfactory import SpazFactory
     activity = ba.getactivity()
     factory = getattr(activity, 'shared_spaz_factory', None)
     if factory is None:
-        from bastd.actor.spazfactory import SpazFactory
         # noinspection PyTypeHints
         factory = activity.shared_spaz_factory = SpazFactory()  # type: ignore
     assert isinstance(factory, SpazFactory)
@@ -693,11 +693,11 @@ class Spaz(ba.Actor):
         # pylint: disable=too-many-branches
         if __debug__ is True:
             self._handlemessage_sanity_check()
-        assert self.node
 
         if isinstance(msg, ba.PickedUpMessage):
-            self.node.handlemessage("hurt_sound")
-            self.node.handlemessage("picked_up")
+            if self.node:
+                self.node.handlemessage("hurt_sound")
+                self.node.handlemessage("picked_up")
             # this counts as a hit
             self._num_times_hit += 1
 
@@ -713,7 +713,7 @@ class Spaz(ba.Actor):
             ba.timer(0.001, ba.WeakCall(self._hit_self, msg.intensity))
 
         elif isinstance(msg, ba.PowerupMessage):
-            if self._dead:
+            if self._dead or not self.node:
                 return True
             if self.pick_up_powerup_callback is not None:
                 self.pick_up_powerup_callback(self)
@@ -1069,14 +1069,15 @@ class Spaz(ba.Actor):
                     newdamage = max(damage - 200, self.hitpoints - 10)
                     damage = newdamage
                 self.node.handlemessage("flash")
-                # if we're holding something, drop it
+
+                # If we're holding something, drop it.
                 if damage > 0.0 and self.node.hold_node:
                     # self.node.hold_node = ba.Node(None)
                     self.node.hold_node = None
                 self.hitpoints -= damage
                 self.node.hurt = 1.0 - float(
                     self.hitpoints) / self.hitpoints_max
-                # if we're cursed, *any* damage blows us up
+                # If we're cursed, *any* damage blows us up.
                 if self._cursed and damage > 0:
                     ba.timer(
                         0.05, ba.WeakCall(self.curse_explode,
@@ -1103,7 +1104,8 @@ class Spaz(ba.Actor):
             self._dead = True
             self.hitpoints = 0
             if msg.immediate:
-                self.node.delete()
+                if self.node:
+                    self.node.delete()
             elif self.node:
                 self.node.hurt = 1.0
                 if self.play_big_death_sound and not wasdead:
@@ -1117,11 +1119,15 @@ class Spaz(ba.Actor):
         elif isinstance(msg, ba.StandMessage):
             self._last_stand_pos = (msg.position[0], msg.position[1],
                                     msg.position[2])
-            self.node.handlemessage("stand", msg.position[0], msg.position[1],
-                                    msg.position[2], msg.angle)
+            if self.node:
+                self.node.handlemessage("stand", msg.position[0],
+                                        msg.position[1], msg.position[2],
+                                        msg.angle)
         elif isinstance(msg, CurseExplodeMessage):
             self.curse_explode()
         elif isinstance(msg, PunchHitMessage):
+            if not self.node:
+                return None
             node = ba.get_collision_info("opposing_node")
 
             # only allow one hit per node per punch
@@ -1178,6 +1184,9 @@ class Spaz(ba.Actor):
                                             ppos[2], punchdir[0], punchdir[1],
                                             punchdir[2], mag)
         elif isinstance(msg, PickupMessage):
+            if not self.node:
+                return None
+
             opposing_node, opposing_body = ba.get_collision_info(
                 'opposing_node', 'opposing_body')
 

@@ -89,7 +89,7 @@ class RespawnIcon:
         texture = icon['texture']
         h_offs = -10
         ipos = (-40 - h_offs if on_right else 40 + h_offs, -180 + offs)
-        self._image: Optional[ba.Actor] = ba.Actor(
+        self._image: Optional[ba.NodeActor] = ba.NodeActor(
             ba.newnode('image',
                        attrs={
                            'texture': texture,
@@ -108,7 +108,7 @@ class RespawnIcon:
         ba.animate(self._image.node, 'opacity', {0.0: 0, 0.2: 0.7})
 
         npos = (-40 - h_offs if on_right else 40 + h_offs, -205 + 49 + offs)
-        self._name: Optional[ba.Actor] = ba.Actor(
+        self._name: Optional[ba.NodeActor] = ba.NodeActor(
             ba.newnode('text',
                        attrs={
                            'v_attach': 'top',
@@ -128,7 +128,7 @@ class RespawnIcon:
         ba.animate(self._name.node, 'scale', {0: 0, 0.1: 0.5})
 
         tpos = (-60 - h_offs if on_right else 60 + h_offs, -192 + offs)
-        self._text: Optional[ba.Actor] = ba.Actor(
+        self._text: Optional[ba.NodeActor] = ba.NodeActor(
             ba.newnode('text',
                        attrs={
                            'position': tpos,

@@ -17,6 +17,7 @@
    <li><a href="#class_ba_Actor">ba.Actor</a></li>
    <ul>
       <li><a href="#class_ba_Map">ba.Map</a></li>
+      <li><a href="#class_ba_NodeActor">ba.NodeActor</a></li>
    </ul>
    <li><a href="#class_ba_Chooser">ba.Chooser</a></li>
    <li><a href="#class_ba_InputDevice">ba.InputDevice</a></li>
@@ -537,21 +538,22 @@ is a convenient way to access this same functionality.</p>
 <p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a></p>
 
 <p>    Actors act as controllers, combining some number of <a href="#class_ba_Node">ba.Nodes</a>,
-    <a href="#class_ba_Texture">ba.Textures</a>, <a href="#class_ba_Sound">ba.Sounds</a>, etc. into one cohesive unit.</p>
+    <a href="#class_ba_Texture">ba.Textures</a>, <a href="#class_ba_Sound">ba.Sounds</a>, etc. into a high-level cohesive unit.</p>
 
-<p>    Some example actors include ba.Bomb, ba.Flag, and ba.Spaz.</p>
+<p>    Some example actors include Bomb, Flag, and Spaz classes in bastd.</p>
 
 <p>    One key feature of Actors is that they generally 'die'
     (killing off or transitioning out their nodes) when the last Python
     reference to them disappears, so you can use logic such as:</p>
 
-<pre><span><em><small>    # create a flag Actor in our game activity</small></em></span>
-    self.flag = ba.Flag(position=(0, 10, 0))</pre>
+<pre><span><em><small>    # Create a flag Actor in our game activity:</small></em></span>
+    from bastd.actor.flag import Flag
+    self.flag = Flag(position=(0, 10, 0))</pre>
 
-<pre><span><em><small>    # later, destroy the flag..</small></em></span>
+<pre><span><em><small>    # Later, destroy the flag.</small></em></span>
 <span><em><small>    # (provided nothing else is holding a reference to it)</small></em></span>
-<span><em><small>    # we could also just assign a new flag to this value.</small></em></span>
-<span><em><small>    # either way, the old flag disappears.</small></em></span>
+<span><em><small>    # We could also just assign a new flag to this value.</small></em></span>
+<span><em><small>    # Either way, the old flag disappears.</small></em></span>
     self.flag = None</pre>
 
 <p>    This is in contrast to the behavior of the more low level <a href="#class_ba_Node">ba.Nodes</a>,
@@ -566,13 +568,13 @@ is a convenient way to access this same functionality.</p>
     takes a single arbitrary object as an argument. This provides a safe way
     to communicate between <a href="#class_ba_Actor">ba.Actor</a>, <a href="#class_ba_Activity">ba.Activity</a>, <a href="#class_ba_Session">ba.Session</a>, and any other
     class providing a handlemessage() method.  The most universally handled
-    message type for actors is the <a href="#class_ba_DieMessage">ba.DieMessage</a>.</p>
+    message type for Actors is the <a href="#class_ba_DieMessage">ba.DieMessage</a>.</p>
 
-<pre><span><em><small>    # another way to kill the flag from the example above:</small></em></span>
-<span><em><small>    # we can safely call this on any type with a 'handlemessage' method</small></em></span>
-<span><em><small>    # (though its not guaranteed to always have a meaningful effect)</small></em></span>
-<span><em><small>    # in this case the Actor instance will still be around, but its exists()</small></em></span>
-<span><em><small>    # and is_alive() methods will both return False</small></em></span>
+<pre><span><em><small>    # Another way to kill the flag from the example above:</small></em></span>
+<span><em><small>    # We can safely call this on any type with a 'handlemessage' method</small></em></span>
+<span><em><small>    # (though its not guaranteed to always have a meaningful effect).</small></em></span>
+<span><em><small>    # In this case the Actor instance will still be around, but its exists()</small></em></span>
+<span><em><small>    # and is_alive() methods will both return False.</small></em></span>
     self.flag.handlemessage(<a href="#class_ba_DieMessage">ba.DieMessage</a>())
 </pre>
 
@@ -590,14 +592,9 @@ is a convenient way to access this same functionality.</p>
 <h5><a href="#method_ba_Actor____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Actor__autoretain">autoretain()</a>, <a href="#method_ba_Actor__exists">exists()</a>, <a href="#method_ba_Actor__getactivity">getactivity()</a>, <a href="#method_ba_Actor__handlemessage">handlemessage()</a>, <a href="#method_ba_Actor__is_alive">is_alive()</a>, <a href="#method_ba_Actor__is_expired">is_expired()</a>, <a href="#method_ba_Actor__on_expire">on_expire()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_Actor____init__">&lt;constructor&gt;</a></dt></h4><dd>
-<p><span>ba.Actor(node: <a href="#class_ba_Node">ba.Node</a> = None)</span></p>
+<p><span>ba.Actor()</span></p>
 
 <p>Instantiates an Actor in the current <a href="#class_ba_Activity">ba.Activity</a>.</p>
-
-<p>If 'node' is provided, it is stored as the 'node' attribute
-and the default <a href="#method_ba_Actor__handlemessage">ba.Actor.handlemessage</a>() and <a href="#method_ba_Actor__exists">ba.Actor.exists</a>()
-implementations will apply to it. This allows the creation of
-simple node-wrapping Actors without having to create a new subclass.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Actor__autoretain">autoretain()</a></dt></h4><dd>
@@ -627,8 +624,7 @@ their corpse is visible; this is about presence, not being 'alive'
 deleted without affecting the game; this call is often used
 when pruning lists of Actors, such as with <a href="#method_ba_Actor__autoretain">ba.Actor.autoretain</a>()</p>
 
-<p>The default implementation of this method returns 'node.exists()'
-if the Actor has a 'node' attr; otherwise True.</p>
+<p>The default implementation of this method always return True.</p>
 
 <p>Note that the boolean operator for the Actor class calls this method,
 so a simple "if myactor" test will conveniently do the right thing
@@ -1106,7 +1102,7 @@ when done.</p>
 <p>Instantiate a Call; pass a callable as the first
 arg, followed by any number of arguments or keywords.</p>
 
-<pre><span><em><small># Example: wrap a method call with 1 positional and 1 keyword arg.</small></em></span>
+<pre><span><em><small># Example: wrap a method call with 1 positional and 1 keyword arg:</small></em></span>
 mycall = ba.Call(myobj.dostuff, argval1, namedarg=argval2)</pre>
 
 <pre><span><em><small># Now we have a single callable to run that whole mess.</small></em></span>
@@ -1345,8 +1341,8 @@ Usage:</strong></p>
 sets the context as current on entry and resets it to the previous
 value on exit.</p>
 
-<pre><span><em><small># example: load a few textures into the UI context</small></em></span>
-<span><em><small># (for use in widgets, etc)</small></em></span>
+<pre><span><em><small># Example: load a few textures into the UI context</small></em></span>
+<span><em><small># (for use in widgets, etc):</small></em></span>
 with <a href="#class_ba_Context">ba.Context</a>('ui'):
    tex1 = <a href="#function_ba_gettexture">ba.gettexture</a>('foo_tex_1')
    tex2 = <a href="#function_ba_gettexture">ba.gettexture</a>('foo_tex_2')</pre>
@@ -3250,7 +3246,7 @@ the two nodes exist.  The connection can be severed by setting the
 target attribute to any value or connecting another node attribute
 to it.</p>
 
-<pre><span><em><small># example: create a locator and attach a light to it</small></em></span>
+<pre><span><em><small># Example: create a locator and attach a light to it:</small></em></span>
 light = <a href="#function_ba_newnode">ba.newnode</a>('light')
 loc = <a href="#function_ba_newnode">ba.newnode</a>('locator', attrs={'position': (0,10,0)})
 loc.connectattr('position', light, 'position')</pre>
@@ -3310,6 +3306,48 @@ as additional arguments.
 Node-messages communicate directly with the low-level node layer
 and are delivered simultaneously on all game clients,
 acting as an alternative to setting node attributes.</p>
+
+</dd>
+</dl>
+<hr>
+<h2><strong><a name="class_ba_NodeActor">ba.NodeActor</a></strong></h3>
+<p>inherits from: <a href="#class_ba_Actor">ba.Actor</a></p>
+<p>A simple <a href="#class_ba_Actor">ba.Actor</a> type that wraps a single <a href="#class_ba_Node">ba.Node</a>.</p>
+
+<p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a></p>
+
+<p>    This Actor will delete its Node when told to die, and it's
+    exists() call will return whether the Node still exists or not.
+</p>
+
+<h3>Attributes:</h3>
+<dl>
+<dt><h4><a name="attr_ba_NodeActor__activity">activity</a></h4></dt><dd>
+<p><span><a href="#class_ba_Activity">ba.Activity</a></span></p>
+<p>The Activity this Actor was created in.</p>
+
+<p>        Raises a <a href="#class_ba_ActivityNotFoundError">ba.ActivityNotFoundError</a> if the Activity no longer exists.</p>
+
+</dd>
+</dl>
+<h3>Methods Inherited:</h3>
+<h5><a href="#method_ba_Actor__autoretain">autoretain()</a>, <a href="#method_ba_Actor__exists">exists()</a>, <a href="#method_ba_Actor__getactivity">getactivity()</a>, <a href="#method_ba_Actor__is_alive">is_alive()</a>, <a href="#method_ba_Actor__is_expired">is_expired()</a>, <a href="#method_ba_Actor__on_expire">on_expire()</a></h5>
+<h3>Methods Defined or Overridden:</h3>
+<h5><a href="#method_ba_NodeActor____init__">&lt;constructor&gt;</a>, <a href="#method_ba_NodeActor__handlemessage">handlemessage()</a></h5>
+<dl>
+<dt><h4><a name="method_ba_NodeActor____init__">&lt;constructor&gt;</a></dt></h4><dd>
+<p><span>ba.NodeActor(node: <a href="#class_ba_Node">ba.Node</a>)</span></p>
+
+<p>Instantiates an Actor in the current <a href="#class_ba_Activity">ba.Activity</a>.</p>
+
+</dd>
+<dt><h4><a name="method_ba_NodeActor__handlemessage">handlemessage()</a></dt></h4><dd>
+<p><span>handlemessage(self, msg: Any) -&gt; Any</span></p>
+
+<p>General message handling; can be passed any <a href="#class_category_Message_Classes">message object</a>.</p>
+
+<p>The default implementation will handle <a href="#class_ba_DieMessage">ba.DieMessages</a> by
+calling self.node.delete() if self contains a 'node' attribute.</p>
 
 </dd>
 </dl>
@@ -4652,7 +4690,7 @@ Real time timers are currently only available in the UI context.</p>
 <p>the 'timeformat' arg defaults to SECONDS but can also be MILLISECONDS
 if you want to pass time as milliseconds.</p>
 
-<pre><span><em><small># example: use a Timer object to print repeatedly for a few seconds:</small></em></span>
+<pre><span><em><small># Example: use a Timer object to print repeatedly for a few seconds:</small></em></span>
 def say_it():
     <a href="#function_ba_screenmessage">ba.screenmessage</a>('BADGER!')
 def stop_saying_it():
@@ -4817,7 +4855,7 @@ self.t = <a href="#class_ba_Timer">ba.Timer</a>(0.3, say_it, repeat=True)
 <p>Instantiate a WeakCall; pass a callable as the first
 arg, followed by any number of arguments or keywords.</p>
 
-<pre><span><em><small># example: wrap a method call with some positional and</small></em></span>
+<pre><span><em><small># Example: wrap a method call with some positional and</small></em></span>
 <span><em><small># keyword args:</small></em></span>
 myweakcall = ba.WeakCall(myobj.dostuff, argval1, namedarg=argval2)</pre>
 
@@ -5148,6 +5186,11 @@ are applied to the Widget.</p>
 logs. The call functions by registering the filename and line where
 The call is made from.  Returns True if this location has not been
 registered already, and False if it has.</p>
+
+<pre><span><em><small># Example: this print will only fire for the first loop iteration:</small></em></span>
+for i in range(10):
+    if <a href="#function_ba_do_once">ba.do_once</a>():
+        print('Hello once from loop!')</pre>
 
 <hr>
 <h2><strong><a name="function_ba_emitfx">ba.emitfx()</a></strong></h3>

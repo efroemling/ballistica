@@ -867,7 +867,7 @@ class CoopScoreScreen(ba.Activity):
         ba.timer(5.0, ba.WeakCall(self._show_tips))
 
     def _play_drumroll(self) -> None:
-        ba.Actor(
+        ba.NodeActor(
             ba.newnode('sound',
                        attrs={
                            'sound': self.drum_roll_sound,
@@ -1314,7 +1314,7 @@ class CoopScoreScreen(ba.Activity):
                 star_tex = ba.gettexture('star')
                 star_x = 135 + offs_x
                 for _i in range(stars):
-                    img = ba.Actor(
+                    img = ba.NodeActor(
                         ba.newnode('image',
                                    attrs={
                                        'texture': star_tex,
@@ -1329,7 +1329,7 @@ class CoopScoreScreen(ba.Activity):
                     ba.animate(img.node, 'opacity', {0.15: 0, 0.4: 1})
                     star_x += 60
                 for _i in range(3 - stars):
-                    img = ba.Actor(
+                    img = ba.NodeActor(
                         ba.newnode('image',
                                    attrs={
                                        'texture': star_tex,
@@ -1355,7 +1355,7 @@ class CoopScoreScreen(ba.Activity):
                          transition_delay=1.0).autoretain()
                     stx = xval + 20
                     for _i2 in range(count):
-                        img2 = ba.Actor(
+                        img2 = ba.NodeActor(
                             ba.newnode('image',
                                        attrs={
                                            'texture': star_tex,

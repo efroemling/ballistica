@@ -479,6 +479,7 @@
       <w>dxml</w>
       <w>dynload</w>
       <w>eachother</w>
+      <w>eaddrnotavail</w>
       <w>easteregghunt</w>
       <w>edcc</w>
       <w>editcontroller</w>
@@ -1132,6 +1133,7 @@
       <w>nline</w>
       <w>nlines</w>
       <w>nntplib</w>
+      <w>nodeactor</w>
       <w>nodepos</w>
       <w>nodpi</w>
       <w>nofiles</w>

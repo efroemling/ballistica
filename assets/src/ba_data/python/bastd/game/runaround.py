@@ -134,7 +134,7 @@ class RunaroundGame(ba.CoopGameActivity):
         super().on_transition_in()
         self._scoreboard = Scoreboard(label=ba.Lstr(resource='scoreText'),
                                       score_split=0.5)
-        self._score_region = ba.Actor(
+        self._score_region = ba.NodeActor(
             ba.newnode(
                 'region',
                 attrs={
@@ -365,7 +365,7 @@ class RunaroundGame(ba.CoopGameActivity):
         l_offs = (-80 if interface_type == 'small' else
                   -40 if interface_type == 'medium' else 0)
 
-        self._lives_bg = ba.Actor(
+        self._lives_bg = ba.NodeActor(
             ba.newnode('image',
                        attrs={
                            'texture': self._heart_tex,
@@ -379,7 +379,7 @@ class RunaroundGame(ba.CoopGameActivity):
         # FIXME; should not set things based on vr mode.
         #  (won't look right to non-vr connected clients, etc)
         vrmode = ba.app.vr_mode
-        self._lives_text = ba.Actor(
+        self._lives_text = ba.NodeActor(
             ba.newnode(
                 'text',
                 attrs={
@@ -943,7 +943,7 @@ class RunaroundGame(ba.CoopGameActivity):
             subs=[('${A}', ba.Lstr(resource='timeBonusText')),
                   ('${B}', str(int(self._time_bonus * self._time_bonus_mult)))
                   ])
-        self._time_bonus_text = ba.Actor(
+        self._time_bonus_text = ba.NodeActor(
             ba.newnode('text',
                        attrs={
                            'v_attach': 'top',
@@ -973,7 +973,7 @@ class RunaroundGame(ba.CoopGameActivity):
                  ('' if self._preset in ['endless', 'endless_tournament'] else
                   ('/' + str(len(self._waves)))))
             ])
-        self._wave_text = ba.Actor(
+        self._wave_text = ba.NodeActor(
             ba.newnode('text',
                        attrs={
                            'v_attach': 'top',

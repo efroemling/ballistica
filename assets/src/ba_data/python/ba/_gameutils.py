@@ -441,7 +441,7 @@ def cameraflash(duration: float = 999.0) -> None:
     """
     # pylint: disable=too-many-locals
     import random
-    from ba._actor import Actor
+    from ba._nodeactor import NodeActor
     x_spread = 10
     y_spread = 5
     positions = [[-x_spread, -y_spread], [0, -y_spread], [0, y_spread],
@@ -455,7 +455,7 @@ def cameraflash(duration: float = 999.0) -> None:
     # noinspection PyTypeHints
     activity.camera_flash_data = []  # type: ignore
     for i in range(6):
-        light = Actor(
+        light = NodeActor(
             _ba.newnode("light",
                         attrs={
                             'position': (positions[i][0], 0, positions[i][1]),

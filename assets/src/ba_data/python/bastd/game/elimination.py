@@ -449,7 +449,7 @@ class EliminationGame(ba.TeamGameActivity):
         self.setup_standard_time_limit(self.settings['Time Limit'])
         self.setup_standard_powerup_drops()
         if self._solo_mode:
-            self._vs_text = ba.Actor(
+            self._vs_text = ba.NodeActor(
                 ba.newnode("text",
                            attrs={
                                'position': (0, 105),

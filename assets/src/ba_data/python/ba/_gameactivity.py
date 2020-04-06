@@ -703,7 +703,7 @@ class GameActivity(Activity):
         # pylint: disable=too-many-locals
         from ba._freeforallsession import FreeForAllSession
         from ba._gameutils import animate
-        from ba._actor import Actor
+        from ba._nodeactor import NodeActor
         sb_name = self.get_instance_scoreboard_display_string()
 
         # the description can be either a string or a sequence with args
@@ -731,7 +731,7 @@ class GameActivity(Activity):
         yval -= 16
         sbpos = ((15, yval) if isinstance(self.session, FreeForAllSession) else
                  (15, yval))
-        self._game_scoreboard_name_text = Actor(
+        self._game_scoreboard_name_text = NodeActor(
             _ba.newnode("text",
                         attrs={
                             'text': sb_name,
@@ -756,7 +756,7 @@ class GameActivity(Activity):
         descpos = (((17, -44 +
                      10) if isinstance(self.session, FreeForAllSession) else
                     (17, -44 + 10)))
-        self._game_scoreboard_description_text = Actor(
+        self._game_scoreboard_description_text = NodeActor(
             _ba.newnode(
                 "text",
                 attrs={
@@ -1163,13 +1163,13 @@ class GameActivity(Activity):
         """
         from ba._gameutils import sharedobj
         from ba._general import WeakCall
-        from ba._actor import Actor
+        from ba._nodeactor import NodeActor
         if duration <= 0.0:
             return
         self._standard_time_limit_time = int(duration)
         self._standard_time_limit_timer = _ba.Timer(
             1.0, WeakCall(self._standard_time_limit_tick), repeat=True)
-        self._standard_time_limit_text = Actor(
+        self._standard_time_limit_text = NodeActor(
             _ba.newnode('text',
                         attrs={
                             'v_attach': 'top',
@@ -1180,7 +1180,7 @@ class GameActivity(Activity):
                             'flatness': 1.0,
                             'scale': 0.9
                         }))
-        self._standard_time_limit_text_input = Actor(
+        self._standard_time_limit_text_input = NodeActor(
             _ba.newnode('timedisplay',
                         attrs={
                             'time2': duration * 1000,
@@ -1237,7 +1237,7 @@ class GameActivity(Activity):
         If the time-limit expires, end_game() will be called.
         """
         from ba._general import WeakCall
-        from ba._actor import Actor
+        from ba._nodeactor import NodeActor
         from ba._enums import TimeType
         if duration <= 0.0:
             return
@@ -1251,7 +1251,7 @@ class GameActivity(Activity):
             WeakCall(self._tournament_time_limit_tick),
             repeat=True,
             timetype=TimeType.BASE)
-        self._tournament_time_limit_title_text = Actor(
+        self._tournament_time_limit_title_text = NodeActor(
             _ba.newnode('text',
                         attrs={
                             'v_attach': 'bottom',
@@ -1266,7 +1266,7 @@ class GameActivity(Activity):
                             'scale': 0.5,
                             'text': Lstr(resource='tournamentText')
                         }))
-        self._tournament_time_limit_text = Actor(
+        self._tournament_time_limit_text = NodeActor(
             _ba.newnode('text',
                         attrs={
                             'v_attach': 'bottom',
@@ -1280,7 +1280,7 @@ class GameActivity(Activity):
                             'flatness': 1.0,
                             'scale': 0.9
                         }))
-        self._tournament_time_limit_text_input = Actor(
+        self._tournament_time_limit_text_input = NodeActor(
             _ba.newnode('timedisplay',
                         attrs={
                             'timemin': 0,

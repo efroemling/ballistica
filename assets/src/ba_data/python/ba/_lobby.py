@@ -42,8 +42,8 @@ class JoinInfo:
         # pylint: disable=too-many-locals
         from ba import _input
         from ba._lang import Lstr
-        from ba import _actor
-        from ba import _general
+        from ba._nodeactor import NodeActor
+        from ba._general import WeakCall
         from ba._enums import SpecialChar
         can_switch_teams = (len(lobby.teams) > 1)
         self._state = 0
@@ -79,7 +79,7 @@ class JoinInfo:
             join_str = Lstr(resource='pressAnyButtonToJoinText')
 
         flatness = 1.0 if _ba.app.vr_mode else 0.0
-        self._text = _actor.Actor(
+        self._text = NodeActor(
             _ba.newnode('text',
                         attrs={
                             'position': (0, -40),
@@ -109,9 +109,7 @@ class JoinInfo:
                             ' ' + _ba.charstr(SpecialChar.RIGHT_ARROW))])
             ] if can_switch_teams else []) + [msg1] + [msg3] + [join_str])
 
-        self._timer = _ba.Timer(4.0,
-                                _general.WeakCall(self._update),
-                                repeat=True)
+        self._timer = _ba.Timer(4.0, WeakCall(self._update), repeat=True)
 
     def _update(self) -> None:
         assert self._text.node
@@ -393,7 +391,7 @@ class Chooser:
 
     def reload_profiles(self) -> None:
         """Reload all player profiles."""
-        from ba import _general
+        from ba._general import json_prep
         app = _ba.app
 
         # Re-construct our profile index and other stuff since the profile
@@ -422,7 +420,7 @@ class Chooser:
         # (non-unicode/non-json) version.
         # Make sure they conform to our standards
         # (unicode strings, no tuples, etc)
-        self.profiles = _general.json_prep(self.profiles)
+        self.profiles = json_prep(self.profiles)
 
         # Filter out any characters we're unaware of.
         for profile in list(self.profiles.items()):
@@ -551,7 +549,7 @@ class Chooser:
     def _set_ready(self, ready: bool) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.profile import browser as pbrowser
-        from ba import _general
+        from ba._general import Call
         profilename = self._profilenames[self._profileindex]
 
         # Handle '_edit' as a special case.
@@ -566,26 +564,23 @@ class Chooser:
 
         if not ready:
             self._player.assign_input_call(
-                'leftPress',
-                _general.Call(self.handlemessage, ChangeMessage('team', -1)))
+                'leftPress', Call(self.handlemessage,
+                                  ChangeMessage('team', -1)))
             self._player.assign_input_call(
-                'rightPress',
-                _general.Call(self.handlemessage, ChangeMessage('team', 1)))
+                'rightPress', Call(self.handlemessage,
+                                   ChangeMessage('team', 1)))
             self._player.assign_input_call(
                 'bombPress',
-                _general.Call(self.handlemessage,
-                              ChangeMessage('character', 1)))
+                Call(self.handlemessage, ChangeMessage('character', 1)))
             self._player.assign_input_call(
                 'upPress',
-                _general.Call(self.handlemessage,
-                              ChangeMessage('profileindex', -1)))
+                Call(self.handlemessage, ChangeMessage('profileindex', -1)))
             self._player.assign_input_call(
                 'downPress',
-                _general.Call(self.handlemessage,
-                              ChangeMessage('profileindex', 1)))
+                Call(self.handlemessage, ChangeMessage('profileindex', 1)))
             self._player.assign_input_call(
                 ('jumpPress', 'pickUpPress', 'punchPress'),
-                _general.Call(self.handlemessage, ChangeMessage('ready', 1)))
+                Call(self.handlemessage, ChangeMessage('ready', 1)))
             self._ready = False
             self._update_text()
             self._player.set_name('untitled', real=False)
@@ -595,7 +590,7 @@ class Chooser:
                  'jumpPress', 'bombPress', 'pickUpPress'), self._do_nothing)
             self._player.assign_input_call(
                 ('jumpPress', 'bombPress', 'pickUpPress', 'punchPress'),
-                _general.Call(self.handlemessage, ChangeMessage('ready', 0)))
+                Call(self.handlemessage, ChangeMessage('ready', 0)))
 
             # Store the last profile picked by this input for reuse.
             input_device = self._player.get_input_device()

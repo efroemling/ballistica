@@ -293,7 +293,7 @@ class ChosenOneGame(ba.TeamGameActivity):
                             0.3 + c * 0.7
                             for c in ba.normalized_color(player.team.color)
                         ]
-                        light = player.gamedata['chosen_light'] = ba.Actor(
+                        light = player.gamedata['chosen_light'] = ba.NodeActor(
                             ba.newnode('light',
                                        attrs={
                                            "intensity": 0.6,

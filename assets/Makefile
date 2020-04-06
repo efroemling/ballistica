@@ -207,6 +207,7 @@ SCRIPT_TARGETS_PY_1 = \
   build/ba_data/python/ba/_account.py \
   build/ba_data/python/ba/_music.py \
   build/ba_data/python/ba/_lang.py \
+  build/ba_data/python/ba/_nodeactor.py \
   build/ba_data/python/ba/_teamgame.py \
   build/ba_data/python/ba/ui/__init__.py \
   build/ba_data/python/bastd/mainmenu.py \
@@ -444,6 +445,7 @@ SCRIPT_TARGETS_PYC_1 = \
   build/ba_data/python/ba/__pycache__/_account.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_music.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_lang.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_nodeactor.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_teamgame.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/ui/__pycache__/__init__.cpython-37.opt-1.pyc \
   build/ba_data/python/bastd/__pycache__/mainmenu.cpython-37.opt-1.pyc \
@@ -950,6 +952,11 @@ build/ba_data/python/ba/__pycache__/_music.cpython-37.opt-1.pyc: \
 
 build/ba_data/python/ba/__pycache__/_lang.cpython-37.opt-1.pyc: \
       build/ba_data/python/ba/_lang.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python/ba/__pycache__/_nodeactor.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_nodeactor.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 

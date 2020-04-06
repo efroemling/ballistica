@@ -75,7 +75,7 @@ class CallbackSet(Generic[CT]):
 # passed.
 
 # To use this, simply assign your call type to this Call for type checking:
-# example:
+# Example:
 #  class _MyCallWrapper:
 #    <runtime class defined here>
 #  if TYPE_CHECKING:

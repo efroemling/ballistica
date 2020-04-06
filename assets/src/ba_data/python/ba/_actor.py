@@ -37,24 +37,25 @@ T = TypeVar('T', bound='Actor')
 class Actor:
     """High level logical entities in a game/activity.
 
-    category: Gameplay Classes
+    Category: Gameplay Classes
 
     Actors act as controllers, combining some number of ba.Nodes,
-    ba.Textures, ba.Sounds, etc. into one cohesive unit.
+    ba.Textures, ba.Sounds, etc. into a high-level cohesive unit.
 
-    Some example actors include ba.Bomb, ba.Flag, and ba.Spaz.
+    Some example actors include Bomb, Flag, and Spaz classes in bastd.
 
     One key feature of Actors is that they generally 'die'
     (killing off or transitioning out their nodes) when the last Python
     reference to them disappears, so you can use logic such as:
 
-    # create a flag Actor in our game activity
-    self.flag = ba.Flag(position=(0, 10, 0))
+    # Create a flag Actor in our game activity:
+    from bastd.actor.flag import Flag
+    self.flag = Flag(position=(0, 10, 0))
 
-    # later, destroy the flag..
+    # Later, destroy the flag.
     # (provided nothing else is holding a reference to it)
-    # we could also just assign a new flag to this value.
-    # either way, the old flag disappears.
+    # We could also just assign a new flag to this value.
+    # Either way, the old flag disappears.
     self.flag = None
 
     This is in contrast to the behavior of the more low level ba.Nodes,
@@ -69,30 +70,25 @@ class Actor:
     takes a single arbitrary object as an argument. This provides a safe way
     to communicate between ba.Actor, ba.Activity, ba.Session, and any other
     class providing a handlemessage() method.  The most universally handled
-    message type for actors is the ba.DieMessage.
+    message type for Actors is the ba.DieMessage.
 
-    # another way to kill the flag from the example above:
-    # we can safely call this on any type with a 'handlemessage' method
-    # (though its not guaranteed to always have a meaningful effect)
-    # in this case the Actor instance will still be around, but its exists()
-    # and is_alive() methods will both return False
+    # Another way to kill the flag from the example above:
+    # We can safely call this on any type with a 'handlemessage' method
+    # (though its not guaranteed to always have a meaningful effect).
+    # In this case the Actor instance will still be around, but its exists()
+    # and is_alive() methods will both return False.
     self.flag.handlemessage(ba.DieMessage())
     """
 
-    def __init__(self, node: ba.Node = None):
-        """Instantiates an Actor in the current ba.Activity.
+    def __init__(self) -> None:
+        """Instantiates an Actor in the current ba.Activity."""
 
-        If 'node' is provided, it is stored as the 'node' attribute
-        and the default ba.Actor.handlemessage() and ba.Actor.exists()
-        implementations will apply to it. This allows the creation of
-        simple node-wrapping Actors without having to create a new subclass.
-        """
+        # FIXME: Actor should not be require to have a 'node' attr.
         self.node: Optional[ba.Node] = None
+
         activity = _ba.getactivity()
         self._activity = weakref.ref(activity)
         activity.add_actor_weak_ref(self)
-        if node is not None:
-            self.node = node
 
     def __del__(self) -> None:
         try:
@@ -112,14 +108,9 @@ class Actor:
         The default implementation will handle ba.DieMessages by
         calling self.node.delete() if self contains a 'node' attribute.
         """
-        from ba import _messages
-        from ba import _error
-        if isinstance(msg, _messages.DieMessage):
-            node = getattr(self, 'node', None)
-            if node is not None:
-                node.delete()
-            return None
-        return _error.UNHANDLED
+        from ba._error import UNHANDLED
+        del msg  # Unused.
+        return UNHANDLED
 
     def _handlemessage_sanity_check(self) -> None:
         if self.is_expired():
@@ -178,18 +169,13 @@ class Actor:
         deleted without affecting the game; this call is often used
         when pruning lists of Actors, such as with ba.Actor.autoretain()
 
-        The default implementation of this method returns 'node.exists()'
-        if the Actor has a 'node' attr; otherwise True.
+        The default implementation of this method always return True.
 
         Note that the boolean operator for the Actor class calls this method,
         so a simple "if myactor" test will conveniently do the right thing
         even if myactor is set to None.
         """
 
-        # As a default, if we have a 'node' attr, return whether it exists.
-        node: ba.Node = getattr(self, 'node', None)
-        if node is not None:
-            return node.exists()
         return True
 
     def __bool__(self) -> bool:

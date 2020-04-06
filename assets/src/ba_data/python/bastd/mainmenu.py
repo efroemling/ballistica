@@ -67,7 +67,7 @@ class MainMenuActivity(ba.Activity):
             # FIXME: Need a node attr for vr-specific-scale.
             scale = (0.9 if
                      (app.interface_type == 'small' or vr_mode) else 0.7)
-            self.my_name = ba.Actor(
+            self.my_name = ba.NodeActor(
                 ba.newnode('text',
                            attrs={
                                'v_attach': 'bottom',
@@ -86,7 +86,7 @@ class MainMenuActivity(ba.Activity):
         # empty-ish screen.
         tval = ba.Lstr(resource='hostIsNavigatingMenusText',
                        subs=[('${HOST}', _ba.get_account_display_string())])
-        self._host_is_navigating_text = ba.Actor(
+        self._host_is_navigating_text = ba.NodeActor(
             ba.newnode('text',
                        attrs={
                            'text': tval,
@@ -130,7 +130,7 @@ class MainMenuActivity(ba.Activity):
                 text = ba.Lstr(value='${V}', subs=[('${V}', app.version)])
             scale = 0.9 if (interface_type == 'small' or vr_mode) else 0.7
             color = (1, 1, 1, 1) if vr_mode else (0.5, 0.6, 0.5, 0.7)
-            self.version = ba.Actor(
+            self.version = ba.NodeActor(
                 ba.newnode(
                     'text',
                     attrs={
@@ -153,7 +153,7 @@ class MainMenuActivity(ba.Activity):
         self.beta_info = self.beta_info_2 = None
         if app.test_build and not app.kiosk_mode:
             pos = (230, 125) if app.kiosk_mode else (230, 35)
-            self.beta_info = ba.Actor(
+            self.beta_info = ba.NodeActor(
                 ba.newnode('text',
                            attrs={
                                'v_attach': 'center',
@@ -191,7 +191,7 @@ class MainMenuActivity(ba.Activity):
         gnode.vignette_outer = (0.45, 0.55, 0.54)
         gnode.vignette_inner = (0.99, 0.98, 0.98)
 
-        self.bottom = ba.Actor(
+        self.bottom = ba.NodeActor(
             ba.newnode('terrain',
                        attrs={
                            'model': bottom_model,
@@ -200,7 +200,7 @@ class MainMenuActivity(ba.Activity):
                            'reflection_scale': [0.45],
                            'color_texture': color_texture
                        }))
-        self.vr_bottom_fill = ba.Actor(
+        self.vr_bottom_fill = ba.NodeActor(
             ba.newnode('terrain',
                        attrs={
                            'model': vr_bottom_fill_model,
@@ -208,7 +208,7 @@ class MainMenuActivity(ba.Activity):
                            'vr_only': True,
                            'color_texture': color_texture
                        }))
-        self.vr_top_fill = ba.Actor(
+        self.vr_top_fill = ba.NodeActor(
             ba.newnode('terrain',
                        attrs={
                            'model': vr_top_fill_model,
@@ -216,7 +216,7 @@ class MainMenuActivity(ba.Activity):
                            'lighting': False,
                            'color_texture': bgtex
                        }))
-        self.terrain = ba.Actor(
+        self.terrain = ba.NodeActor(
             ba.newnode('terrain',
                        attrs={
                            'model': model,
@@ -224,7 +224,7 @@ class MainMenuActivity(ba.Activity):
                            'reflection': 'soft',
                            'reflection_scale': [0.3]
                        }))
-        self.trees = ba.Actor(
+        self.trees = ba.NodeActor(
             ba.newnode('terrain',
                        attrs={
                            'model': trees_model,
@@ -233,7 +233,7 @@ class MainMenuActivity(ba.Activity):
                            'reflection_scale': [0.1],
                            'color_texture': trees_texture
                        }))
-        self.bgterrain = ba.Actor(
+        self.bgterrain = ba.NodeActor(
             ba.newnode('terrain',
                        attrs={
                            'model': bgmodel,
@@ -380,7 +380,7 @@ class MainMenuActivity(ba.Activity):
                     color2 = ((1, 1, 1, 1) if ba.app.vr_mode else
                               (0.7, 0.65, 0.75, 1.0))
                     shadow = (1.0 if ba.app.vr_mode else 0.4)
-                    self._text = ba.Actor(
+                    self._text = ba.NodeActor(
                         ba.newnode('text',
                                    attrs={
                                        'v_attach': 'top',
@@ -652,7 +652,7 @@ class MainMenuActivity(ba.Activity):
                    vr_depth_offset: float = 0.0,
                    shadow: bool = False) -> None:
         if shadow:
-            word_obj = ba.Actor(
+            word_obj = ba.NodeActor(
                 ba.newnode('text',
                            attrs={
                                'position': (x, y),
@@ -669,7 +669,7 @@ class MainMenuActivity(ba.Activity):
                            }))
             self._word_actors.append(word_obj)
         else:
-            word_obj = ba.Actor(
+            word_obj = ba.NodeActor(
                 ba.newnode('text',
                            attrs={
                                'position': (x, y),
@@ -776,7 +776,7 @@ class MainMenuActivity(ba.Activity):
         mopaque = (None if custom_texture is not None else ba.getmodel('logo'))
         mtrans = (None if custom_texture is not None else
                   ba.getmodel('logoTransparent'))
-        logo = ba.Actor(
+        logo = ba.NodeActor(
             ba.newnode('image',
                        attrs={
                            'texture': ltex,

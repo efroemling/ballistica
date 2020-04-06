@@ -406,7 +406,7 @@ class RaceGame(ba.TeamGameActivity):
         self._team_finish_pts = 100
 
         # Throw a timer up on-screen.
-        self._time_text = ba.Actor(
+        self._time_text = ba.NodeActor(
             ba.newnode('text',
                        attrs={
                            'v_attach': 'top',

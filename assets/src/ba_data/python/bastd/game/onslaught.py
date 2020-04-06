@@ -170,7 +170,7 @@ class OnslaughtGame(ba.CoopGameActivity):
                     'sound': ba.getsound('ding')
                 }]
 
-        self._spawn_info_text = ba.Actor(
+        self._spawn_info_text = ba.NodeActor(
             ba.newnode("text",
                        attrs={
                            'position': (15, -130),
@@ -1049,7 +1049,7 @@ class OnslaughtGame(ba.CoopGameActivity):
                              ('${A}', ba.Lstr(resource='timeBonusText')),
                              ('${B}', str(self._time_bonus)),
                          ])
-        self._time_bonus_text = ba.Actor(
+        self._time_bonus_text = ba.NodeActor(
             ba.newnode('text',
                        attrs={
                            'v_attach': 'top',
@@ -1075,7 +1075,7 @@ class OnslaughtGame(ba.CoopGameActivity):
                  ('' if self._preset in ['endless', 'endless_tournament'] else
                   ('/' + str(len(self._waves)))))
             ])
-        self._wave_text = ba.Actor(
+        self._wave_text = ba.NodeActor(
             ba.newnode('text',
                        attrs={
                            'v_attach': 'top',

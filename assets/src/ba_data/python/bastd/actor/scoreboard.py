@@ -72,7 +72,7 @@ class _Entry:
             self._backing_color = [0.05 + c * 0.1 for c in safe_team_color]
 
         opacity = (0.8 if vrmode else 0.8) if self._do_cover else 0.5
-        self._backing = ba.Actor(
+        self._backing = ba.NodeActor(
             ba.newnode('image',
                        attrs={
                            'scale': (self._width, self._height),
@@ -84,7 +84,7 @@ class _Entry:
                        }))
 
         self._barcolor = safe_team_color
-        self._bar = ba.Actor(
+        self._bar = ba.NodeActor(
             ba.newnode('image',
                        attrs={
                            'opacity': 0.7,
@@ -112,7 +112,7 @@ class _Entry:
         self._bar_position.connectattr('output', self._bar.node, 'position')
         self._cover_color = safe_team_color
         if self._do_cover:
-            self._cover = ba.Actor(
+            self._cover = ba.NodeActor(
                 ba.newnode('image',
                            attrs={
                                'scale':
@@ -128,7 +128,7 @@ class _Entry:
         clr = safe_team_color
         maxwidth = 130.0 * (1.0 - scoreboard.score_split)
         flatness = ((1.0 if vrmode else 0.5) if self._do_cover else 1.0)
-        self._score_text = ba.Actor(
+        self._score_text = ba.NodeActor(
             ba.newnode('text',
                        attrs={
                            'h_attach': 'left',
@@ -169,7 +169,7 @@ class _Entry:
                 team_name_label = ba.Lstr(value=team_name_label)
 
         flatness = ((1.0 if vrmode else 0.5) if self._do_cover else 1.0)
-        self._name_text = ba.Actor(
+        self._name_text = ba.NodeActor(
             ba.newnode('text',
                        attrs={
                            'h_attach': 'left',

@@ -222,7 +222,7 @@ class HockeyGame(ba.TeamGameActivity):
         defs = self.map.defs
         self._score_regions = []
         self._score_regions.append(
-            ba.Actor(
+            ba.NodeActor(
                 ba.newnode("region",
                            attrs={
                                'position': defs.boxes["goal1"][0:3],
@@ -231,7 +231,7 @@ class HockeyGame(ba.TeamGameActivity):
                                'materials': [self._score_region_material]
                            })))
         self._score_regions.append(
-            ba.Actor(
+            ba.NodeActor(
                 ba.newnode("region",
                            attrs={
                                'position': defs.boxes["goal2"][0:3],
