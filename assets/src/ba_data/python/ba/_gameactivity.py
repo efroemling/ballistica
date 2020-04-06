@@ -658,7 +658,7 @@ class GameActivity(Activity):
 
     def on_player_leave(self, player: ba.Player) -> None:
         from ba._general import Call
-        from ba._messages import DieMessage
+        from ba._messages import DieMessage, DeathType
 
         super().on_player_leave(player)
 
@@ -668,7 +668,8 @@ class GameActivity(Activity):
         # will incorrectly try to respawn them, etc.
         actor = player.actor
         if actor is not None:
-            _ba.pushcall(Call(actor.handlemessage, DieMessage(how='leftGame')))
+            _ba.pushcall(
+                Call(actor.handlemessage, DieMessage(how=DeathType.LEFT_GAME)))
             player.set_actor(None)
 
     def handlemessage(self, msg: Any) -> Any:

@@ -24,6 +24,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
+from enum import Enum
 
 import _ba
 
@@ -38,6 +39,18 @@ class OutOfBoundsMessage:
 
     Category: Message Classes
     """
+
+
+class DeathType(Enum):
+    """A reason for a death.
+
+    Category: Enums
+    """
+    GENERIC = 'generic'
+    IMPACT = 'impact'
+    FALL = 'fall'
+    REACHED_GOAL = 'reached_goal'
+    LEFT_GAME = 'left_game'
 
 
 @dataclass
@@ -57,12 +70,11 @@ class DieMessage:
             its time with lingering corpses, sound effects, etc.
 
         how
-            The particular reason for death; 'fall', 'impact', 'leftGame', etc.
-            This can be examined for scoring or other purposes.
+            The particular reason for death.
 
     """
     immediate: bool = False
-    how: str = 'generic'
+    how: DeathType = DeathType.GENERIC
 
 
 @dataclass

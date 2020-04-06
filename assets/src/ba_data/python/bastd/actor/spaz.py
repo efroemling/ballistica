@@ -588,11 +588,12 @@ class Spaz(ba.Actor):
     def on_punched(self, damage: int) -> None:
         """Called when this spaz gets punched."""
 
-    def get_death_points(self, how: str) -> Tuple[int, int]:
+    def get_death_points(self, how: ba.DeathType) -> Tuple[int, int]:
         """Get the points awarded for killing this spaz."""
-        del how  # unused arg
+        del how  # Unused.
         num_hits = float(max(1, self._num_times_hit))
-        # base points is simply 10 for 1-hit-kills and 5 otherwise
+
+        # Base points is simply 10 for 1-hit-kills and 5 otherwise.
         importance = 2 if num_hits < 2 else 1
         return (10 if num_hits < 2 else 5) * self.points_mult, importance
 
@@ -604,7 +605,8 @@ class Spaz(ba.Actor):
         if not self._cursed:
             factory = get_factory()
             self._cursed = True
-            # add the curse material..
+
+            # Add the curse material.
             for attr in ['materials', 'roller_materials']:
                 materials = getattr(self.node, attr)
                 if factory.curse_material not in materials:
@@ -616,7 +618,7 @@ class Spaz(ba.Actor):
             if self.curse_time is None:
                 self.node.curse_death_time = -1
             else:
-                # note: curse-death-time takes milliseconds
+                # Note: curse-death-time takes milliseconds.
                 tval = ba.time()
                 assert isinstance(tval, int)
                 self.node.curse_death_time = int(1000.0 *
@@ -629,7 +631,7 @@ class Spaz(ba.Actor):
         """
         assert self.node
         self.node.boxing_gloves = True
-        if self._demo_mode:  # preserve old behavior
+        if self._demo_mode:  # Preserve old behavior.
             self._punch_power_scale = 1.7
             self._punch_cooldown = 300
         else:
@@ -664,7 +666,7 @@ class Spaz(ba.Actor):
             self.shield_decay_timer = ba.Timer(0.5,
                                                ba.WeakCall(self.shield_decay),
                                                repeat=True)
-            # so user can see the decay
+            # So user can see the decay.
             self.shield.always_show_health_bar = True
 
     def shield_decay(self) -> None:
@@ -698,17 +700,18 @@ class Spaz(ba.Actor):
             if self.node:
                 self.node.handlemessage("hurt_sound")
                 self.node.handlemessage("picked_up")
-            # this counts as a hit
+
+            # This counts as a hit.
             self._num_times_hit += 1
 
         elif isinstance(msg, ba.ShouldShatterMessage):
-            # eww; seems we have to do this in a timer or it wont work right
+            # Eww; seems we have to do this in a timer or it wont work right.
             # (since we're getting called from within update() perhaps?..)
-            # NOTE: should test to see if that's still the case
+            # NOTE: should test to see if that's still the case.
             ba.timer(0.001, ba.WeakCall(self.shatter))
 
         elif isinstance(msg, ba.ImpactDamageMessage):
-            # eww; seems we have to do this in a timer or it wont work right
+            # Eww; seems we have to do this in a timer or it wont work right.
             # (since we're getting called from within update() perhaps?..)
             ba.timer(0.001, ba.WeakCall(self._hit_self, msg.intensity))
 
@@ -799,7 +802,8 @@ class Spaz(ba.Actor):
                         timeformat=ba.TimeFormat.MILLISECONDS))
             elif msg.poweruptype == 'shield':
                 factory = get_factory()
-                # let's allow powerup-equipped shields to lose hp over time
+
+                # Let's allow powerup-equipped shields to lose hp over time.
                 self.equip_shields(decay=factory.shield_decay_rate > 0)
             elif msg.poweruptype == 'curse':
                 self.curse()
@@ -825,7 +829,8 @@ class Spaz(ba.Actor):
             elif msg.poweruptype == 'health':
                 if self._cursed:
                     self._cursed = False
-                    # remove cursed material
+
+                    # Remove cursed material.
                     factory = get_factory()
                     for attr in ['materials', 'roller_materials']:
                         materials = getattr(self.node, attr)
@@ -861,7 +866,7 @@ class Spaz(ba.Actor):
                 self.node.frozen = True
                 ba.timer(5.0, ba.WeakCall(self.handlemessage,
                                           ba.ThawMessage()))
-                # instantly shatter if we're already dead
+                # Instantly shatter if we're already dead.
                 # (otherwise its hard to tell we're dead)
                 if self.hitpoints <= 0:
                     self.shatter()
@@ -880,7 +885,7 @@ class Spaz(ba.Actor):
                              position=self.node.position)
                 return True
 
-            # if we were recently hit, don't count this as another
+            # If we were recently hit, don't count this as another.
             # (so punch flurries and bomb pileups essentially count as 1 hit)
             local_time = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)
             assert isinstance(local_time, int)
@@ -893,13 +898,13 @@ class Spaz(ba.Actor):
             velocity_mag = msg.velocity_magnitude * self.impact_scale
             damage_scale = 0.22
 
-            # if they've got a shield, deliver it to that instead..
+            # If they've got a shield, deliver it to that instead.
             if self.shield:
                 if msg.flat_damage:
                     damage = msg.flat_damage * self.impact_scale
                 else:
-                    # hit our spaz with an impulse but tell it to only return
-                    # theoretical damage; not apply the impulse..
+                    # Hit our spaz with an impulse but tell it to only return
+                    # theoretical damage; not apply the impulse.
                     assert msg.force_direction is not None
                     self.node.handlemessage(
                         "impulse", msg.pos[0], msg.pos[1], msg.pos[2],
@@ -1086,7 +1091,8 @@ class Spaz(ba.Actor):
                 if self.frozen and (damage > 200 or self.hitpoints <= 0):
                     self.shatter()
                 elif self.hitpoints <= 0:
-                    self.node.handlemessage(ba.DieMessage(how='impact'))
+                    self.node.handlemessage(
+                        ba.DieMessage(how=ba.DeathType.IMPACT))
 
             # if we're dead, take a look at the smoothed damage val
             # (which gives us a smoothed average of recent damage) and shatter
@@ -1114,8 +1120,8 @@ class Spaz(ba.Actor):
                 ba.timer(2.0, self.node.delete)
 
         elif isinstance(msg, ba.OutOfBoundsMessage):
-            # by default we just die here
-            self.handlemessage(ba.DieMessage(how='fall'))
+            # By default we just die here.
+            self.handlemessage(ba.DieMessage(how=ba.DeathType.FALL))
         elif isinstance(msg, ba.StandMessage):
             self._last_stand_pos = (msg.position[0], msg.position[1],
                                     msg.position[2])

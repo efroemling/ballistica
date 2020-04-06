@@ -301,12 +301,13 @@ class CoopBrowserWindow(ba.Window):
             self._fg_state = ba.app.fg_state
             self._last_tournament_query_time = cur_time
             self._doing_tournament_query = True
-            _ba.tournament_query(args={
-                'source': 'coop window refresh',
-                'numScores': 1
-            },
-                                 callback=ba.WeakCall(
-                                     self._on_tournament_query_response))
+            _ba.tournament_query(
+                args={
+                    'source': 'coop window refresh',
+                    'numScores': 1
+                },
+                callback=ba.WeakCall(self._on_tournament_query_response),
+            )
 
         # Decrement time on our tournament buttons.
         ads_enabled = _ba.have_incentivized_ad()

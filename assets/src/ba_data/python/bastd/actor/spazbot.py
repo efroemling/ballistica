@@ -80,7 +80,7 @@ class SpazBotDeathMessage:
     """
 
     def __init__(self, badguy: SpazBot, killerplayer: Optional[ba.Player],
-                 how: str):
+                 how: ba.DeathType):
         """Instantiate with given values."""
         self.badguy = badguy
         self.killerplayer = killerplayer
