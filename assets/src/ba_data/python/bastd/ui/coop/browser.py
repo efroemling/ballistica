@@ -61,7 +61,7 @@ class CoopBrowserWindow(ba.Window):
         app = ba.app
         cfg = app.config
 
-        # if they provided an origin-widget, scale up from that
+        # If they provided an origin-widget, scale up from that.
         scale_origin: Optional[Tuple[float, float]]
         if origin_widget is not None:
             self._transition_out = 'out_scale'
@@ -71,8 +71,8 @@ class CoopBrowserWindow(ba.Window):
             self._transition_out = 'out_right'
             scale_origin = None
 
-        # try to recreate the same number of buttons we had last time so our
-        # re-selection code works
+        # Try to recreate the same number of buttons we had last time so our
+        # re-selection code works.
         try:
             self._tournament_button_count = app.config['Tournament Rows']
         except Exception:
@@ -159,7 +159,7 @@ class CoopBrowserWindow(ba.Window):
             self._store_button_widget = None
             self._league_rank_button_widget = None
 
-        # move our corner buttons dynamically to keep them out of the way of
+        # Move our corner buttons dynamically to keep them out of the way of
         # the party icon :-(
         self._update_corner_button_positions()
         self._update_corner_button_positions_timer = ba.Timer(
@@ -179,7 +179,7 @@ class CoopBrowserWindow(ba.Window):
         self._selected_challenge_level = (cfg.get(
             'Selected Coop Challenge Level', None))
 
-        # Don't want initial construction affecting our last-selected
+        # Don't want initial construction affecting our last-selected.
         self._do_selection_callbacks = False
         v = self._height - 95
         txt = ba.textwidget(
@@ -229,22 +229,23 @@ class CoopBrowserWindow(ba.Window):
             simple_culling_v=10.0)
         self._subcontainer: Optional[ba.Widget] = None
 
-        # take note of our account state; we'll refresh later if this changes
+        # Take note of our account state; we'll refresh later if this changes.
         self._account_state_num = _ba.get_account_state_num()
-        # same for fg/bg state..
+
+        # Same for fg/bg state.
         self._fg_state = app.fg_state
 
         self._refresh()
         self._restore_state()
 
-        # even though we might display cached tournament data immediately, we
-        # don't consider it valid until we've pinged
+        # Even though we might display cached tournament data immediately, we
+        # don't consider it valid until we've pinged.
         # the server for an update
         self._tourney_data_up_to_date = False
 
-        # if we've got a cached tournament list for our account and info for
-        # each one of those tournaments,
-        # go ahead and display it as a starting point...
+        # If we've got a cached tournament list for our account and info for
+        # each one of those tournaments, go ahead and display it as a
+        # starting point.
         if (app.account_tournament_list is not None and
                 app.account_tournament_list[0] == _ba.get_account_state_num()
                 and all([
@@ -257,7 +258,7 @@ class CoopBrowserWindow(ba.Window):
             ]
             self._update_for_data(tourney_data)
 
-        # this will pull new data periodically, update timers, etc..
+        # This will pull new data periodically, update timers, etc.
         self._update_timer = ba.Timer(1.0,
                                       ba.WeakCall(self._update),
                                       timetype=ba.TimeType.REAL,
@@ -267,31 +268,32 @@ class CoopBrowserWindow(ba.Window):
     def _update(self) -> None:
         cur_time = ba.time(ba.TimeType.REAL)
 
-        # if its been a while since we got a tournament update, consider the
+        # If its been a while since we got a tournament update, consider the
         # data invalid (prevents us from joining tournaments if our internet
-        # connection goes down for a while)
+        # connection goes down for a while).
         if (self._last_tournament_query_response_time is None
                 or ba.time(ba.TimeType.REAL) -
                 self._last_tournament_query_response_time > 60.0 * 2):
             self._tourney_data_up_to_date = False
 
-        # if our account state has changed, do a full request
+        # If our account state has changed, do a full request.
         account_state_num = _ba.get_account_state_num()
         if account_state_num != self._account_state_num:
             self._account_state_num = account_state_num
             self._save_state()
             self._refresh()
-            # also encourage a new tournament query since this will clear out
-            # our current results..
+
+            # Also encourage a new tournament query since this will clear out
+            # our current results.
             if not self._doing_tournament_query:
                 self._last_tournament_query_time = None
 
-        # if we've been backgrounded/foregrounded, invalidate our
-        # tournament entries (they will be refreshed below asap)
+        # If we've been backgrounded/foregrounded, invalidate our
+        # tournament entries (they will be refreshed below asap).
         if self._fg_state != ba.app.fg_state:
             self._tourney_data_up_to_date = False
 
-        # send off a new tournament query if its been long enough or whatnot..
+        # Send off a new tournament query if its been long enough or whatnot.
         if not self._doing_tournament_query and (
                 self._last_tournament_query_time is None
                 or cur_time - self._last_tournament_query_time > 30.0
@@ -306,17 +308,20 @@ class CoopBrowserWindow(ba.Window):
                                  callback=ba.WeakCall(
                                      self._on_tournament_query_response))
 
-        # decrement time on our tournament buttons..
+        # Decrement time on our tournament buttons.
         ads_enabled = _ba.have_incentivized_ad()
         for tbtn in self._tournament_buttons:
             tbtn['time_remaining'] = max(0, tbtn['time_remaining'] - 1)
             if tbtn['time_remaining_value_text'] is not None:
                 ba.textwidget(
                     edit=tbtn['time_remaining_value_text'],
-                    text=ba.timestring(tbtn['time_remaining'], centi=False) if
+                    text=ba.timestring(tbtn['time_remaining'],
+                                       centi=False,
+                                       suppress_format_warning=True) if
                     (tbtn['has_time_remaining']
                      and self._tourney_data_up_to_date) else '-')
-            # also adjust the ad icon visibility
+
+            # Also adjust the ad icon visibility.
             if tbtn.get('allow_ads', False) and _ba.has_video_ads():
                 ba.imagewidget(edit=tbtn['entry_fee_ad_image'],
                                opacity=1.0 if ads_enabled else 0.25)
@@ -427,7 +432,8 @@ class CoopBrowserWindow(ba.Window):
                 leader_score = (
                     ba.timestring(score[0] * 10,
                                   centi=True,
-                                  timeformat=ba.TimeFormat.MILLISECONDS)
+                                  timeformat=ba.TimeFormat.MILLISECONDS,
+                                  suppress_format_warning=True)
                     if entry['scoreType'] == 'time' else str(score[0]))
             else:
                 tbtn['leader'] = None
@@ -445,7 +451,9 @@ class CoopBrowserWindow(ba.Window):
                 '-' if entry is None or 'totalTime' not in entry else ba.Lstr(
                     resource=self._r + '.ofTotalTimeText',
                     subs=[('${TOTAL}',
-                           ba.timestring(entry['totalTime'], centi=False))]))
+                           ba.timestring(entry['totalTime'],
+                                         centi=False,
+                                         suppress_format_warning=True))]))
             ba.textwidget(edit=tbtn['time_remaining_out_of_text'],
                           text=out_of_time_text)
 
@@ -516,18 +524,14 @@ class CoopBrowserWindow(ba.Window):
                     final_fee_str = (
                         ba.charstr(ba.SpecialChar.TICKET_BACKING) +
                         str(final_fee))
-            # final_fee_str: Union[str, ba.Lstr] = (
-            #     '' if fee_var is None else ba.Lstr(
-            #         resource='getTicketsWindow.freeText') if final_fee == 0
-            #     else (ba.specialchar('ticket_backing') + str(final_fee)))
 
             ad_tries_remaining = ba.app.tournament_info[
                 tbtn['tournament_id']]['adTriesRemaining']
             free_tries_remaining = ba.app.tournament_info[
                 tbtn['tournament_id']]['freeTriesRemaining']
 
-            # now, if this fee allows ads and we support video ads, show
-            # the 'or ad' version
+            # Now, if this fee allows ads and we support video ads, show
+            # the 'or ad' version.
             if allow_ads and _ba.has_video_ads():
                 ads_enabled = _ba.have_incentivized_ad()
                 ba.imagewidget(edit=tbtn['entry_fee_ad_image'],
@@ -542,7 +546,8 @@ class CoopBrowserWindow(ba.Window):
                               tbtn['button_y'] + tbtn['button_scale_y'] - 60),
                     scale=1.3,
                     text=final_fee_str)
-                # possibly show number of ad-plays remaining
+
+                # Possibly show number of ad-plays remaining.
                 ba.textwidget(
                     edit=tbtn['entry_fee_text_remaining'],
                     position=(tbtn['button_x'] + 360,
@@ -559,7 +564,8 @@ class CoopBrowserWindow(ba.Window):
                               tbtn['button_y'] + tbtn['button_scale_y'] - 80),
                     scale=1.3,
                     text=final_fee_str)
-                # possibly show number of free-plays remaining
+
+                # Possibly show number of free-plays remaining.
                 ba.textwidget(
                     edit=tbtn['entry_fee_text_remaining'],
                     position=(tbtn['button_x'] + 360,
@@ -927,15 +933,8 @@ class CoopBrowserWindow(ba.Window):
             'Challenges:Meteor Shower',
             'Challenges:Target Practice B',
             'Challenges:Target Practice',
-            # 'Challenges:Lake Frigid Race',
-            # 'Challenges:Uber Runaround',
-            # 'Challenges:Runaround',
-            # 'Challenges:Pro Race',
-            # 'Challenges:Pro Football',
-            # 'Challenges:Epic Meteor Shower',
-            # 'Challenges:Testing',
-            # 'User:Ninja Fight',
         ]
+
         # Show easter-egg-hunt either if its easter or we own it.
         if _ba.get_account_misc_read_val(
                 'easter', False) or _ba.get_purchased('games.easter_egg_hunt'):
@@ -1456,7 +1455,7 @@ class CoopBrowserWindow(ba.Window):
                 ba.playsound(ba.getsound('error'))
                 return
 
-            # game is whatever the tournament tells us it is
+            # Game is whatever the tournament tells us it is.
             game = ba.app.tournament_info[
                 tournament_button['tournament_id']]['game']
 
@@ -1469,7 +1468,7 @@ class CoopBrowserWindow(ba.Window):
                                   height=130)
             return
 
-        # infinite onslaught/runaround require pro; bring up a store link if
+        # Infinite onslaught/runaround require pro; bring up a store link if
         # need be.
         if tournament_button is None and game in (
                 'Challenges:Infinite Runaround',
