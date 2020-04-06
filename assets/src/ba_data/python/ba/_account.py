@@ -161,8 +161,7 @@ def have_pro() -> bool:
     # Check our tickets-based pro upgrade and our two real-IAP based upgrades.
     return bool(
         _ba.get_purchased('upgrades.pro') or _ba.get_purchased('static.pro')
-        or _ba.get_purchased('static.pro_sale')
-        or 'ballistica' + 'core' == 'ballisticacore')
+        or _ba.get_purchased('static.pro_sale'))
 
 
 def have_pro_options() -> bool:
@@ -176,10 +175,9 @@ def have_pro_options() -> bool:
     # (which is generally just when we own pro),
     # or also if we've been grandfathered in or are using ballistica-core
     # builds.
-    return bool(
+    return have_pro() or bool(
         _ba.get_account_misc_read_val_2('proOptionsUnlocked', False)
-        or _ba.app.config.get('lc14292', 0) > 1
-        or 'ballistica' + 'core' == 'ballisticacore')
+        or _ba.app.config.get('lc14292', 0) > 1)
 
 
 def show_post_purchase_message() -> None:

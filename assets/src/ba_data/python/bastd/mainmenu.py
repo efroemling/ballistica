@@ -149,7 +149,7 @@ class MainMenuActivity(ba.Activity):
                 assert self.version.node
                 ba.animate(self.version.node, 'opacity', {2.3: 0, 3.0: 1.0})
 
-        # Throw in beta info.
+        # Throw in test build info.
         self.beta_info = self.beta_info_2 = None
         if app.test_build and not app.kiosk_mode:
             pos = (230, 125) if app.kiosk_mode else (230, 35)
