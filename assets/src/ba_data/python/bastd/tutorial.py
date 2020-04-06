@@ -205,7 +205,7 @@ class TutorialActivity(ba.Activity):
         self._have_skipped = False
         self.stick_image_position_x = self.stick_image_position_y = 0.0
         self.spawn_sound = ba.getsound('spawn')
-        self._map: Optional[ba.Map] = None
+        self.map: Optional[ba.Map] = None
         self.text: Optional[ba.Node] = None
         self._skip_text: Optional[ba.Node] = None
         self._skip_count_text: Optional[ba.Node] = None
@@ -235,7 +235,7 @@ class TutorialActivity(ba.Activity):
     def on_transition_in(self) -> None:
         super().on_transition_in()
         ba.setmusic(ba.MusicType.CHAR_SELECT, continuous=True)
-        self._map = self._map_type()
+        self.map = self._map_type()
 
     def on_begin(self) -> None:
         super().on_begin()
