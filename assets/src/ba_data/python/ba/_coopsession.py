@@ -72,7 +72,7 @@ class CoopSession(Session):
                 except Exception:
                     max_players = 4
 
-        print('FIXME: COOP SESSION WOULD CALC DEPS.')
+        # print('FIXME: COOP SESSION WOULD CALC DEPS.')
         depsets: Sequence[ba.DependencySet] = []
 
         super().__init__(depsets,

@@ -128,8 +128,10 @@ class Spaz(ba.Actor):
         else:
             self._punch_power_scale = factory.punch_power_scale
         self.fly = ba.sharedobj('globals').happy_thoughts_mode
-        assert isinstance(activity, ba.GameActivity)
-        self._hockey = activity.map.is_hockey
+        if isinstance(activity, ba.GameActivity):
+            self._hockey = activity.map.is_hockey
+        else:
+            self._hockey = False
         self._punched_nodes: Set[ba.Node] = set()
         self._cursed = False
         self._connected_to_player: Optional[ba.Player] = None
@@ -693,7 +695,7 @@ class Spaz(ba.Actor):
         # pylint: disable=too-many-return-statements
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
-        if __debug__ is True:
+        if __debug__:
             self._handlemessage_sanity_check()
 
         if isinstance(msg, ba.PickedUpMessage):
@@ -1122,6 +1124,7 @@ class Spaz(ba.Actor):
         elif isinstance(msg, ba.OutOfBoundsMessage):
             # By default we just die here.
             self.handlemessage(ba.DieMessage(how=ba.DeathType.FALL))
+
         elif isinstance(msg, ba.StandMessage):
             self._last_stand_pos = (msg.position[0], msg.position[1],
                                     msg.position[2])
@@ -1129,8 +1132,10 @@ class Spaz(ba.Actor):
                 self.node.handlemessage("stand", msg.position[0],
                                         msg.position[1], msg.position[2],
                                         msg.angle)
+
         elif isinstance(msg, CurseExplodeMessage):
             self.curse_explode()
+
         elif isinstance(msg, PunchHitMessage):
             if not self.node:
                 return None

@@ -122,7 +122,7 @@ class PopupText(ba.Actor):
             lifespan, ba.WeakCall(self.handlemessage, ba.DieMessage()))
 
     def handlemessage(self, msg: Any) -> Any:
-        if __debug__ is True:
+        if __debug__:
             self._handlemessage_sanity_check()
         if isinstance(msg, ba.DieMessage):
             if self.node:

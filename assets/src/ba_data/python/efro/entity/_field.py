@@ -96,7 +96,7 @@ class CompoundField(BaseField, Generic[TC]):
                  value: TC,
                  store_default: bool = True) -> None:
         super().__init__(d_key)
-        if __debug__ is True:
+        if __debug__:
             from efro.entity._value import CompoundValue
             assert isinstance(value, CompoundValue)
             assert not hasattr(value, 'd_data')

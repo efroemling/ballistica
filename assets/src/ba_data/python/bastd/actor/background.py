@@ -150,7 +150,7 @@ class Background(ba.Actor):
                         ba.timer(self.fade_time + 0.1, self.node.delete)
 
     def handlemessage(self, msg: Any) -> Any:
-        if __debug__ is True:
+        if __debug__:
             self._handlemessage_sanity_check()
         if isinstance(msg, ba.DieMessage):
             self._die(msg.immediate)
