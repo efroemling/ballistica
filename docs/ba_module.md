@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-04-05 for Ballistica version 1.5.0 build 20001</em></h4>
+<h4><em>last updated on 2020-04-06 for Ballistica version 1.5.0 build 20001</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -165,6 +165,7 @@
 </ul>
 <h4><a name="class_category_Enums">Enums</a></h4>
 <ul>
+   <li><a href="#class_ba_DeathType">ba.DeathType</a></li>
    <li><a href="#class_ba_MusicPlayMode">ba.MusicPlayMode</a></li>
    <li><a href="#class_ba_MusicType">ba.MusicType</a></li>
    <li><a href="#class_ba_Permission">ba.Permission</a></li>
@@ -1575,6 +1576,22 @@ the data object is requested and when it's value is accessed.</p>
 </dd>
 </dl>
 <hr>
+<h2><strong><a name="class_ba_DeathType">ba.DeathType</a></strong></h3>
+<p>inherits from: enum.Enum</p>
+<p>A reason for a death.</p>
+
+<p>Category: <a href="#class_category_Enums">Enums</a>
+</p>
+
+<h3>Values:</h3>
+<ul>
+<li>GENERIC</li>
+<li>IMPACT</li>
+<li>FALL</li>
+<li>REACHED_GOAL</li>
+<li>LEFT_GAME</li>
+</ul>
+<hr>
 <h2><strong><a name="class_ba_Dependency">ba.Dependency</a></strong></h3>
 <p>inherits from: <a href="#class_typing_Generic">typing.Generic</a></p>
 <p>A dependency on a DependencyComponent (with an optional config).</p>
@@ -1747,9 +1764,8 @@ Exception types on other errors).</p>
 <h5><a href="#attr_ba_DieMessage__how">how</a>, <a href="#attr_ba_DieMessage__immediate">immediate</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_DieMessage__how">how</a></h4></dt><dd>
-<p><span>str</span></p>
-<p>The particular reason for death; 'fall', 'impact', 'leftGame', etc.
-This can be examined for scoring or other purposes.</p>
+<p><span>DeathType</span></p>
+<p>The particular reason for death.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_DieMessage__immediate">immediate</a></h4></dt><dd>
@@ -1764,7 +1780,7 @@ its time with lingering corpses, sound effects, etc.</p>
 <h3>Methods:</h3>
 <dl>
 <dt><h4><a name="method_ba_DieMessage____init__">&lt;constructor&gt;</a></dt></h4><dd>
-<p><span>ba.DieMessage(immediate: 'bool' = False, how: 'str' = 'generic')</span></p>
+<p><span>ba.DieMessage(immediate: bool = False, how: DeathType = &lt;DeathType.GENERIC: generic&gt;)</span></p>
 
 </dd>
 </dl>
