@@ -3682,7 +3682,7 @@ other players.</p>
 </dd>
 </dl>
 <h3>Methods:</h3>
-<h5><a href="#method_ba_PlayerRecord____init__">&lt;constructor&gt;</a>, <a href="#method_ba_PlayerRecord__associate_with_player">associate_with_player()</a>, <a href="#method_ba_PlayerRecord__cancel_multi_kill_timer">cancel_multi_kill_timer()</a>, <a href="#method_ba_PlayerRecord__get_icon">get_icon()</a>, <a href="#method_ba_PlayerRecord__get_last_player">get_last_player()</a>, <a href="#method_ba_PlayerRecord__get_name">get_name()</a>, <a href="#method_ba_PlayerRecord__get_spaz">get_spaz()</a>, <a href="#method_ba_PlayerRecord__getactivity">getactivity()</a>, <a href="#method_ba_PlayerRecord__submit_kill">submit_kill()</a></h5>
+<h5><a href="#method_ba_PlayerRecord____init__">&lt;constructor&gt;</a>, <a href="#method_ba_PlayerRecord__associate_with_player">associate_with_player()</a>, <a href="#method_ba_PlayerRecord__cancel_multi_kill_timer">cancel_multi_kill_timer()</a>, <a href="#method_ba_PlayerRecord__get_icon">get_icon()</a>, <a href="#method_ba_PlayerRecord__get_last_player">get_last_player()</a>, <a href="#method_ba_PlayerRecord__get_name">get_name()</a>, <a href="#method_ba_PlayerRecord__getactivity">getactivity()</a>, <a href="#method_ba_PlayerRecord__submit_kill">submit_kill()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_PlayerRecord____init__">&lt;constructor&gt;</a></dt></h4><dd>
 <p><span>ba.PlayerRecord(name: str, name_full: str, player: <a href="#class_ba_Player">ba.Player</a>, stats: <a href="#class_ba_Stats">ba.Stats</a>)</span></p>
@@ -3716,12 +3716,6 @@ other players.</p>
 <p><span>get_name(self, full: bool = False) -&gt; str</span></p>
 
 <p>Return the player entry's name.</p>
-
-</dd>
-<dt><h4><a name="method_ba_PlayerRecord__get_spaz">get_spaz()</a></dt></h4><dd>
-<p><span>get_spaz(self) -&gt; Optional[<a href="#class_ba_Actor">ba.Actor</a>]</span></p>
-
-<p>Return the player entry's spaz.</p>
 
 </dd>
 <dt><h4><a name="method_ba_PlayerRecord__getactivity">getactivity()</a></dt></h4><dd>
@@ -4161,7 +4155,7 @@ session.set_activity(foo) and then <a href="#function_ba_newnode">ba.newnode</a>
 </p>
 
 <h3>Methods:</h3>
-<h5><a href="#method_ba_Stats____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Stats__get_records">get_records()</a>, <a href="#method_ba_Stats__getactivity">getactivity()</a>, <a href="#method_ba_Stats__player_got_hit">player_got_hit()</a>, <a href="#method_ba_Stats__player_got_new_spaz">player_got_new_spaz()</a>, <a href="#method_ba_Stats__player_lost_spaz">player_lost_spaz()</a>, <a href="#method_ba_Stats__player_scored">player_scored()</a>, <a href="#method_ba_Stats__register_player">register_player()</a>, <a href="#method_ba_Stats__reset">reset()</a>, <a href="#method_ba_Stats__reset_accum">reset_accum()</a>, <a href="#method_ba_Stats__set_activity">set_activity()</a></h5>
+<h5><a href="#method_ba_Stats____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Stats__get_records">get_records()</a>, <a href="#method_ba_Stats__getactivity">getactivity()</a>, <a href="#method_ba_Stats__player_got_hit">player_got_hit()</a>, <a href="#method_ba_Stats__player_scored">player_scored()</a>, <a href="#method_ba_Stats__player_was_killed">player_was_killed()</a>, <a href="#method_ba_Stats__register_player">register_player()</a>, <a href="#method_ba_Stats__reset">reset()</a>, <a href="#method_ba_Stats__reset_accum">reset_accum()</a>, <a href="#method_ba_Stats__set_activity">set_activity()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_Stats____init__">&lt;constructor&gt;</a></dt></h4><dd>
 <p><span>ba.Stats()</span></p>
@@ -4187,24 +4181,18 @@ session.set_activity(foo) and then <a href="#function_ba_newnode">ba.newnode</a>
 <p>Call this when a player got hit.</p>
 
 </dd>
-<dt><h4><a name="method_ba_Stats__player_got_new_spaz">player_got_new_spaz()</a></dt></h4><dd>
-<p><span>player_got_new_spaz(self, player: <a href="#class_ba_Player">ba.Player</a>, spaz: <a href="#class_ba_Actor">ba.Actor</a>) -&gt; None</span></p>
-
-<p>Call this when a player gets a new Spaz.</p>
-
-</dd>
-<dt><h4><a name="method_ba_Stats__player_lost_spaz">player_lost_spaz()</a></dt></h4><dd>
-<p><span>player_lost_spaz(self, player: <a href="#class_ba_Player">ba.Player</a>, killed: bool = False, killer: <a href="#class_ba_Player">ba.Player</a> = None) -&gt; None</span></p>
-
-<p>Should be called when a player loses a spaz.</p>
-
-</dd>
 <dt><h4><a name="method_ba_Stats__player_scored">player_scored()</a></dt></h4><dd>
 <p><span>player_scored(self, player: <a href="#class_ba_Player">ba.Player</a>, base_points: int = 1, target: Sequence[float] = None, kill: bool = False, victim_player: <a href="#class_ba_Player">ba.Player</a> = None, scale: float = 1.0, color: Sequence[float] = None, title: Union[str, <a href="#class_ba_Lstr">ba.Lstr</a>] = None, screenmessage: bool = True, display: bool = True, importance: int = 1, showpoints: bool = True, big_message: bool = False) -&gt; int</span></p>
 
 <p>Register a score for the player.</p>
 
 <p>Return value is actual score with multipliers and such factored in.</p>
+
+</dd>
+<dt><h4><a name="method_ba_Stats__player_was_killed">player_was_killed()</a></dt></h4><dd>
+<p><span>player_was_killed(self, player: <a href="#class_ba_Player">ba.Player</a>, killed: bool = False, killer: <a href="#class_ba_Player">ba.Player</a> = None) -&gt; None</span></p>
+
+<p>Should be called when a player is killed.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Stats__register_player">register_player()</a></dt></h4><dd>
