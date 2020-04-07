@@ -186,6 +186,7 @@ class EasterEggHuntGame(ba.TeamGameActivity):
         xpos = random.uniform(-7.1, 6.0)
         ypos = random.uniform(3.5, 3.5)
         zpos = random.uniform(-8.2, 3.7)
+
         def _is_exists(egg: Egg) -> bool:
             if egg.node is None:
                 return False
