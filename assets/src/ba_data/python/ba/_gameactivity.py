@@ -658,7 +658,7 @@ class GameActivity(Activity):
 
     def on_player_leave(self, player: ba.Player) -> None:
         from ba._general import Call
-        from ba._messages import DieMessage
+        from ba._messages import DieMessage, DeathType
 
         super().on_player_leave(player)
 
@@ -668,7 +668,8 @@ class GameActivity(Activity):
         # will incorrectly try to respawn them, etc.
         actor = player.actor
         if actor is not None:
-            _ba.pushcall(Call(actor.handlemessage, DieMessage(how='leftGame')))
+            _ba.pushcall(
+                Call(actor.handlemessage, DieMessage(how=DeathType.LEFT_GAME)))
             player.set_actor(None)
 
     def handlemessage(self, msg: Any) -> Any:
@@ -679,9 +680,9 @@ class GameActivity(Activity):
             killer = msg.killerplayer
 
             # Inform our score-set of the demise.
-            self.stats.player_lost_spaz(player,
-                                        killed=msg.killed,
-                                        killer=killer)
+            self.stats.player_was_killed(player,
+                                         killed=msg.killed,
+                                         killer=killer)
 
             # Award the killer points if he's on a different team.
             if killer and killer.team is not player.team:
@@ -1070,7 +1071,6 @@ class GameActivity(Activity):
         spaz.node.name = name
         spaz.node.name_color = display_color
         spaz.connect_controls_to_player()
-        self.stats.player_got_new_spaz(player, spaz)
 
         # Move to the stand position and add a flash of light.
         spaz.handlemessage(

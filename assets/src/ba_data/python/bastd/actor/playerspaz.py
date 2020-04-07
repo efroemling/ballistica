@@ -53,7 +53,7 @@ class PlayerSpazDeathMessage:
     """
 
     def __init__(self, spaz: PlayerSpaz, was_killed: bool,
-                 killerplayer: Optional[ba.Player], how: str):
+                 killerplayer: Optional[ba.Player], how: ba.DeathType):
         """Instantiate a message with the given values."""
         self.spaz = spaz
         self.killed = was_killed
@@ -252,7 +252,8 @@ class PlayerSpaz(basespaz.Spaz):
             if not self._dead:
 
                 # Immediate-mode or left-game deaths don't count as 'kills'.
-                killed = (not msg.immediate and msg.how != 'leftGame')
+                killed = (not msg.immediate
+                          and msg.how is not ba.DeathType.LEFT_GAME)
 
                 activity = self._activity()
 

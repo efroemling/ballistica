@@ -415,7 +415,8 @@ class RunaroundGame(ba.CoopGameActivity):
                            })
         ba.animate(light, 'intensity', {0.0: 0, 0.1: 1, 0.5: 0}, loop=False)
         ba.timer(1.0, light.delete)
-        spaz.handlemessage(ba.DieMessage(immediate=True, how='goal'))
+        spaz.handlemessage(
+            ba.DieMessage(immediate=True, how=ba.DeathType.REACHED_GOAL))
 
         if self._lives > 0:
             self._lives -= 1
@@ -1130,7 +1131,7 @@ class RunaroundGame(ba.CoopGameActivity):
                 return
             if not player:
                 return
-            self.stats.player_lost_spaz(player)
+            self.stats.player_was_killed(player)
 
             # Respawn them shortly.
             assert self.initial_player_info is not None
@@ -1141,7 +1142,7 @@ class RunaroundGame(ba.CoopGameActivity):
                 player, respawn_time)
 
         elif isinstance(msg, spazbot.SpazBotDeathMessage):
-            if msg.how == 'goal':
+            if msg.how is ba.DeathType.REACHED_GOAL:
                 return
             pts, importance = msg.badguy.get_death_points(msg.how)
             if msg.killerplayer is not None:

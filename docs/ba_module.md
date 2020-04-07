@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-04-05 for Ballistica version 1.5.0 build 20001</em></h4>
+<h4><em>last updated on 2020-04-06 for Ballistica version 1.5.0 build 20001</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -165,6 +165,7 @@
 </ul>
 <h4><a name="class_category_Enums">Enums</a></h4>
 <ul>
+   <li><a href="#class_ba_DeathType">ba.DeathType</a></li>
    <li><a href="#class_ba_MusicPlayMode">ba.MusicPlayMode</a></li>
    <li><a href="#class_ba_MusicType">ba.MusicType</a></li>
    <li><a href="#class_ba_Permission">ba.Permission</a></li>
@@ -1575,6 +1576,22 @@ the data object is requested and when it's value is accessed.</p>
 </dd>
 </dl>
 <hr>
+<h2><strong><a name="class_ba_DeathType">ba.DeathType</a></strong></h3>
+<p>inherits from: enum.Enum</p>
+<p>A reason for a death.</p>
+
+<p>Category: <a href="#class_category_Enums">Enums</a>
+</p>
+
+<h3>Values:</h3>
+<ul>
+<li>GENERIC</li>
+<li>IMPACT</li>
+<li>FALL</li>
+<li>REACHED_GOAL</li>
+<li>LEFT_GAME</li>
+</ul>
+<hr>
 <h2><strong><a name="class_ba_Dependency">ba.Dependency</a></strong></h3>
 <p>inherits from: <a href="#class_typing_Generic">typing.Generic</a></p>
 <p>A dependency on a DependencyComponent (with an optional config).</p>
@@ -1747,9 +1764,8 @@ Exception types on other errors).</p>
 <h5><a href="#attr_ba_DieMessage__how">how</a>, <a href="#attr_ba_DieMessage__immediate">immediate</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_DieMessage__how">how</a></h4></dt><dd>
-<p><span>str</span></p>
-<p>The particular reason for death; 'fall', 'impact', 'leftGame', etc.
-This can be examined for scoring or other purposes.</p>
+<p><span>DeathType</span></p>
+<p>The particular reason for death.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_DieMessage__immediate">immediate</a></h4></dt><dd>
@@ -1764,7 +1780,7 @@ its time with lingering corpses, sound effects, etc.</p>
 <h3>Methods:</h3>
 <dl>
 <dt><h4><a name="method_ba_DieMessage____init__">&lt;constructor&gt;</a></dt></h4><dd>
-<p><span>ba.DieMessage(immediate: 'bool' = False, how: 'str' = 'generic')</span></p>
+<p><span>ba.DieMessage(immediate: bool = False, how: DeathType = &lt;DeathType.GENERIC: generic&gt;)</span></p>
 
 </dd>
 </dl>
@@ -3666,7 +3682,7 @@ other players.</p>
 </dd>
 </dl>
 <h3>Methods:</h3>
-<h5><a href="#method_ba_PlayerRecord____init__">&lt;constructor&gt;</a>, <a href="#method_ba_PlayerRecord__associate_with_player">associate_with_player()</a>, <a href="#method_ba_PlayerRecord__cancel_multi_kill_timer">cancel_multi_kill_timer()</a>, <a href="#method_ba_PlayerRecord__get_icon">get_icon()</a>, <a href="#method_ba_PlayerRecord__get_last_player">get_last_player()</a>, <a href="#method_ba_PlayerRecord__get_name">get_name()</a>, <a href="#method_ba_PlayerRecord__get_spaz">get_spaz()</a>, <a href="#method_ba_PlayerRecord__getactivity">getactivity()</a>, <a href="#method_ba_PlayerRecord__submit_kill">submit_kill()</a></h5>
+<h5><a href="#method_ba_PlayerRecord____init__">&lt;constructor&gt;</a>, <a href="#method_ba_PlayerRecord__associate_with_player">associate_with_player()</a>, <a href="#method_ba_PlayerRecord__cancel_multi_kill_timer">cancel_multi_kill_timer()</a>, <a href="#method_ba_PlayerRecord__get_icon">get_icon()</a>, <a href="#method_ba_PlayerRecord__get_last_player">get_last_player()</a>, <a href="#method_ba_PlayerRecord__get_name">get_name()</a>, <a href="#method_ba_PlayerRecord__getactivity">getactivity()</a>, <a href="#method_ba_PlayerRecord__submit_kill">submit_kill()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_PlayerRecord____init__">&lt;constructor&gt;</a></dt></h4><dd>
 <p><span>ba.PlayerRecord(name: str, name_full: str, player: <a href="#class_ba_Player">ba.Player</a>, stats: <a href="#class_ba_Stats">ba.Stats</a>)</span></p>
@@ -3700,12 +3716,6 @@ other players.</p>
 <p><span>get_name(self, full: bool = False) -&gt; str</span></p>
 
 <p>Return the player entry's name.</p>
-
-</dd>
-<dt><h4><a name="method_ba_PlayerRecord__get_spaz">get_spaz()</a></dt></h4><dd>
-<p><span>get_spaz(self) -&gt; Optional[<a href="#class_ba_Actor">ba.Actor</a>]</span></p>
-
-<p>Return the player entry's spaz.</p>
 
 </dd>
 <dt><h4><a name="method_ba_PlayerRecord__getactivity">getactivity()</a></dt></h4><dd>
@@ -4145,7 +4155,7 @@ session.set_activity(foo) and then <a href="#function_ba_newnode">ba.newnode</a>
 </p>
 
 <h3>Methods:</h3>
-<h5><a href="#method_ba_Stats____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Stats__get_records">get_records()</a>, <a href="#method_ba_Stats__getactivity">getactivity()</a>, <a href="#method_ba_Stats__player_got_hit">player_got_hit()</a>, <a href="#method_ba_Stats__player_got_new_spaz">player_got_new_spaz()</a>, <a href="#method_ba_Stats__player_lost_spaz">player_lost_spaz()</a>, <a href="#method_ba_Stats__player_scored">player_scored()</a>, <a href="#method_ba_Stats__register_player">register_player()</a>, <a href="#method_ba_Stats__reset">reset()</a>, <a href="#method_ba_Stats__reset_accum">reset_accum()</a>, <a href="#method_ba_Stats__set_activity">set_activity()</a></h5>
+<h5><a href="#method_ba_Stats____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Stats__get_records">get_records()</a>, <a href="#method_ba_Stats__getactivity">getactivity()</a>, <a href="#method_ba_Stats__player_got_hit">player_got_hit()</a>, <a href="#method_ba_Stats__player_scored">player_scored()</a>, <a href="#method_ba_Stats__player_was_killed">player_was_killed()</a>, <a href="#method_ba_Stats__register_player">register_player()</a>, <a href="#method_ba_Stats__reset">reset()</a>, <a href="#method_ba_Stats__reset_accum">reset_accum()</a>, <a href="#method_ba_Stats__set_activity">set_activity()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_Stats____init__">&lt;constructor&gt;</a></dt></h4><dd>
 <p><span>ba.Stats()</span></p>
@@ -4171,24 +4181,18 @@ session.set_activity(foo) and then <a href="#function_ba_newnode">ba.newnode</a>
 <p>Call this when a player got hit.</p>
 
 </dd>
-<dt><h4><a name="method_ba_Stats__player_got_new_spaz">player_got_new_spaz()</a></dt></h4><dd>
-<p><span>player_got_new_spaz(self, player: <a href="#class_ba_Player">ba.Player</a>, spaz: <a href="#class_ba_Actor">ba.Actor</a>) -&gt; None</span></p>
-
-<p>Call this when a player gets a new Spaz.</p>
-
-</dd>
-<dt><h4><a name="method_ba_Stats__player_lost_spaz">player_lost_spaz()</a></dt></h4><dd>
-<p><span>player_lost_spaz(self, player: <a href="#class_ba_Player">ba.Player</a>, killed: bool = False, killer: <a href="#class_ba_Player">ba.Player</a> = None) -&gt; None</span></p>
-
-<p>Should be called when a player loses a spaz.</p>
-
-</dd>
 <dt><h4><a name="method_ba_Stats__player_scored">player_scored()</a></dt></h4><dd>
 <p><span>player_scored(self, player: <a href="#class_ba_Player">ba.Player</a>, base_points: int = 1, target: Sequence[float] = None, kill: bool = False, victim_player: <a href="#class_ba_Player">ba.Player</a> = None, scale: float = 1.0, color: Sequence[float] = None, title: Union[str, <a href="#class_ba_Lstr">ba.Lstr</a>] = None, screenmessage: bool = True, display: bool = True, importance: int = 1, showpoints: bool = True, big_message: bool = False) -&gt; int</span></p>
 
 <p>Register a score for the player.</p>
 
 <p>Return value is actual score with multipliers and such factored in.</p>
+
+</dd>
+<dt><h4><a name="method_ba_Stats__player_was_killed">player_was_killed()</a></dt></h4><dd>
+<p><span>player_was_killed(self, player: <a href="#class_ba_Player">ba.Player</a>, killed: bool = False, killer: <a href="#class_ba_Player">ba.Player</a> = None) -&gt; None</span></p>
+
+<p>Should be called when a player is killed.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Stats__register_player">register_player()</a></dt></h4><dd>

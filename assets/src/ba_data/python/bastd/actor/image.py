@@ -51,8 +51,9 @@ class Image(ba.Actor):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
         super().__init__()
-        # if they provided a dict as texture, assume its an icon..
-        # otherwise its just a texture value itself
+
+        # If they provided a dict as texture, assume its an icon.
+        # otherwise its just a texture value itself.
         mask_texture: Optional[ba.Texture]
         if isinstance(texture, dict):
             tint_color = texture['tint_color']
@@ -156,13 +157,13 @@ class Image(ba.Actor):
             cmb.input1 = position[1]
         cmb.connectattr('output', self.node, 'position')
 
-        # if we're transitioning out, die at the end of it
+        # If we're transitioning out, die at the end of it.
         if transition_out_delay is not None:
             ba.timer(transition_delay + transition_out_delay + 1.0,
                      ba.WeakCall(self.handlemessage, ba.DieMessage()))
 
     def handlemessage(self, msg: Any) -> Any:
-        if __debug__ is True:
+        if __debug__:
             self._handlemessage_sanity_check()
         if isinstance(msg, ba.DieMessage):
             if self.node:

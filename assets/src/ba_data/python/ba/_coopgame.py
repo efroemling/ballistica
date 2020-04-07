@@ -172,16 +172,16 @@ class CoopGameActivity(GameActivity):
                  shadow=1.0 if vrmode else 0.5,
                  transition_delay=0.0,
                  transition_out_delay=1.3
-                 if self.slow_motion else 4000).autoretain()
+                 if self.slow_motion else 4.0).autoretain()
             hval = 70
             vval = -50
-            tdelay = 0
+            tdelay = 0.0
             for ach in achievements:
-                tdelay += 50
+                tdelay += 0.05
                 ach.create_display(hval + 40,
                                    vval + v_offs,
                                    0 + tdelay,
-                                   outdelay=1300 if self.slow_motion else 4000,
+                                   outdelay=1.3 if self.slow_motion else 4.0,
                                    style='in_game')
                 vval -= 55
 

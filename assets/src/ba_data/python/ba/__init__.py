@@ -74,11 +74,11 @@ from ba._general import WeakCall, Call
 from ba._level import Level
 from ba._lobby import Lobby, Chooser
 from ba._math import normalized_color, is_point_in_box, vec3validate
-from ba._messages import (OutOfBoundsMessage, DieMessage, StandMessage,
-                          PickUpMessage, DropMessage, PickedUpMessage,
-                          DroppedMessage, ShouldShatterMessage,
-                          ImpactDamageMessage, FreezeMessage, ThawMessage,
-                          HitMessage)
+from ba._messages import (OutOfBoundsMessage, DeathType, DieMessage,
+                          StandMessage, PickUpMessage, DropMessage,
+                          PickedUpMessage, DroppedMessage,
+                          ShouldShatterMessage, ImpactDamageMessage,
+                          FreezeMessage, ThawMessage, HitMessage)
 from ba._music import setmusic, MusicPlayer, MusicType, MusicPlayMode
 from ba._powerup import PowerupMessage, PowerupAcceptMessage
 from ba._teambasesession import TeamBaseSession

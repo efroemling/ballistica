@@ -350,7 +350,7 @@ class Flag(ba.Actor):
         elif isinstance(msg, ba.OutOfBoundsMessage):
             # We just kill ourselves when out-of-bounds.. would we ever not
             # want this?..
-            self.handlemessage(ba.DieMessage(how='fall'))
+            self.handlemessage(ba.DieMessage(how=ba.DeathType.FALL))
         elif isinstance(msg, ba.PickedUpMessage):
             self._held_count += 1
             if self._held_count == 1 and self._counter is not None:

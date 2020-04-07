@@ -66,9 +66,11 @@ class CoopScoreScreen(ba.Activity):
             self._menu_icon_texture = ba.gettexture('menuIcon')
             self._next_level_icon_texture = ba.gettexture('nextLevelIcon')
 
+        self._campaign: ba.Campaign = settings['campaign']
+
         self._have_achievements = bool(
-            get_achievements_for_coop_level(settings['campaign'].get_name() +
-                                            ":" + settings['level']))
+            get_achievements_for_coop_level(self._campaign.name + ":" +
+                                            settings['level']))
 
         self._account_type = (_ba.get_account_type() if
                               _ba.get_account_state() == 'signed_in' else None)
@@ -122,12 +124,12 @@ class CoopScoreScreen(ba.Activity):
         self._next_level_error: Optional[ba.Actor] = None
 
         # Score/gameplay bits.
-        self._was_complete = None
-        self._is_complete = None
-        self._newly_complete = None
-        self._is_more_levels = None
-        self._next_level_name = None
-        self._show_friend_scores = None
+        self._was_complete: Optional[bool] = None
+        self._is_complete: Optional[bool] = None
+        self._newly_complete: Optional[bool] = None
+        self._is_more_levels: Optional[bool] = None
+        self._next_level_name: Optional[str] = None
+        self._show_friend_scores: Optional[bool] = None
         self._show_info: Optional[Dict[str, Any]] = None
         self._name_str: Optional[str] = None
         self._friends_loading_status: Optional[ba.Actor] = None
@@ -135,9 +137,15 @@ class CoopScoreScreen(ba.Activity):
         self._tournament_time_remaining_text_timer: Optional[ba.Timer] = None
 
         self._player_info = settings['player_info']
-        self._score = settings['score']
-        self._fail_message = settings['fail_message']
+        self._score: Optional[int] = settings['score']
+        assert isinstance(self._score, (int, type(None)))
+
+        self._fail_message: Optional[str] = settings['fail_message']
+        assert isinstance(self._fail_message, (str, type(None)))
+
         self._begin_time = ba.time()
+
+        self._score_order: str
         if 'score_order' in settings:
             if not settings['score_order'] in ['increasing', 'decreasing']:
                 raise Exception("Invalid score order: " +
@@ -145,7 +153,9 @@ class CoopScoreScreen(ba.Activity):
             self._score_order = settings['score_order']
         else:
             self._score_order = 'increasing'
+        assert isinstance(self._score_order, str)
 
+        self._score_type: str
         if 'score_type' in settings:
             if not settings['score_type'] in ['points', 'time']:
                 raise Exception("Invalid score type: " +
@@ -153,12 +163,12 @@ class CoopScoreScreen(ba.Activity):
             self._score_type = settings['score_type']
         else:
             self._score_type = 'points'
+        assert isinstance(self._score_type, str)
 
-        self._campaign = settings['campaign']
-        self._level_name = settings['level']
+        self._level_name: str = settings['level']
+        assert isinstance(self._level_name, str)
 
-        self._game_name_str = self._campaign.get_name(
-        ) + ":" + self._level_name
+        self._game_name_str = self._campaign.name + ":" + self._level_name
         self._game_config_str = str(len(
             self._player_info)) + "p" + self._campaign.get_level(
                 self._level_name).get_score_version_string().replace(' ', '_')
@@ -170,11 +180,11 @@ class CoopScoreScreen(ba.Activity):
 
         try:
             self._old_best_rank = self._campaign.get_level(
-                self._level_name).get_rating()
+                self._level_name).rating
         except Exception:
             self._old_best_rank = 0.0
 
-        self._victory = (settings['outcome'] == 'victory')
+        self._victory: bool = settings['outcome'] == 'victory'
 
     def __del__(self) -> None:
         super().__del__()
@@ -255,6 +265,7 @@ class CoopScoreScreen(ba.Activity):
         # next one, set it as current (this won't happen otherwise).
         if (self._is_complete and self._is_more_levels
                 and not self._newly_complete):
+            assert self._next_level_name is not None
             self._campaign.set_selected_level(self._next_level_name)
         ba.containerwidget(edit=self._root_ui, transition='out_left')
         with ba.Context(self):
@@ -294,7 +305,7 @@ class CoopScoreScreen(ba.Activity):
                             ba.DieMessage()))
 
     def _should_show_worlds_best_button(self) -> bool:
-        # link is too complicated to display with no browser
+        # Link is too complicated to display with no browser.
         return ba.is_browser_likely_available()
 
     def request_ui(self) -> None:
@@ -511,26 +522,26 @@ class CoopScoreScreen(ba.Activity):
         # Calc whether the level is complete and other stuff.
         levels = self._campaign.get_levels()
         level = self._campaign.get_level(self._level_name)
-        self._was_complete = level.get_complete()
+        self._was_complete = level.complete
         self._is_complete = (self._was_complete or self._victory)
         self._newly_complete = (self._is_complete and not self._was_complete)
-        self._is_more_levels = ((level.get_index() < len(levels) - 1)
-                                and self._campaign.is_sequential())
+        self._is_more_levels = ((level.index < len(levels) - 1)
+                                and self._campaign.sequential)
 
         # Any time we complete a level, set the next one as unlocked.
         if self._is_complete and self._is_more_levels:
             _ba.add_transaction({
                 'type': 'COMPLETE_LEVEL',
-                'campaign': self._campaign.get_name(),
+                'campaign': self._campaign.name,
                 'level': self._level_name
             })
-            self._next_level_name = levels[level.get_index() + 1].get_name()
+            self._next_level_name = levels[level.index + 1].name
 
             # If this is the first time we completed it, set the next one
             # as current.
             if self._newly_complete:
                 cfg = ba.app.config
-                cfg['Selected Coop Game'] = (self._campaign.get_name() + ":" +
+                cfg['Selected Coop Game'] = (self._campaign.name + ":" +
                                              self._next_level_name)
                 cfg.commit()
                 self._campaign.set_selected_level(self._next_level_name)
@@ -577,8 +588,7 @@ class CoopScoreScreen(ba.Activity):
             pstr = ba.Lstr(value='- ${A} -',
                            subs=[('${A}',
                                   ba.Lstr(resource='singlePlayerCountText'))])
-        ZoomText(self._campaign.get_level(
-            self._level_name).get_display_string(),
+        ZoomText(self._campaign.get_level(self._level_name).displayname,
                  maxwidth=800,
                  flash=False,
                  trail=False,
@@ -614,7 +624,7 @@ class CoopScoreScreen(ba.Activity):
             ba.timer(0.35,
                      ba.Call(ba.playsound, self._score_display_sound_small))
 
-        # Vestigial remain.. this stuff should just be instance vars.
+        # Vestigial remain; this stuff should just be instance vars.
         self._show_info = {}
 
         if self._score is not None:
@@ -678,13 +688,13 @@ class CoopScoreScreen(ba.Activity):
                 self._level_name).get_score_version_string())
             _ba.add_transaction({
                 'type': 'SET_LEVEL_LOCAL_HIGH_SCORES',
-                'campaign': self._campaign.get_name(),
+                'campaign': self._campaign.name,
                 'level': self._level_name,
                 'scoreVersion': sver,
                 'scores': our_high_scores_all
             })
         if _ba.get_account_state() != 'signed_in':
-            # we expect this only in kiosk mode; complain otherwise..
+            # We expect this only in kiosk mode; complain otherwise.
             if not ba.app.kiosk_mode:
                 print('got not-signed-in at score-submit; unexpected')
             if self._show_friend_scores:
@@ -703,7 +713,7 @@ class CoopScoreScreen(ba.Activity):
                              order=self._score_order,
                              tournament_id=self.session.tournament_id,
                              score_type=self._score_type,
-                             campaign=self._campaign.get_name()
+                             campaign=self._campaign.name
                              if self._campaign is not None else None,
                              level=self._level_name)
 
@@ -1373,8 +1383,7 @@ class CoopScoreScreen(ba.Activity):
                 dostar(2, 10 - 30, -112, '7.5')
                 dostar(3, 77 - 30, -112, '9.5')
             try:
-                best_rank = self._campaign.get_level(
-                    self._level_name).get_rating()
+                best_rank = self._campaign.get_level(self._level_name).rating
             except Exception:
                 best_rank = 0.0
 
@@ -1449,6 +1458,8 @@ class CoopScoreScreen(ba.Activity):
     def _show_score_val(self, offs_x: float) -> None:
         from bastd.actor.text import Text
         from bastd.actor.zoomtext import ZoomText
+        assert self._score_type is not None
+        assert self._score is not None
         ZoomText((str(self._score) if self._score_type == 'points' else
                   ba.timestring(self._score * 10,
                                 timeformat=ba.TimeFormat.MILLISECONDS)),

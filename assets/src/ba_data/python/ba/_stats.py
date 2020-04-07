@@ -72,12 +72,11 @@ class PlayerRecord:
         self.killed_count = 0
         self.accum_killed_count = 0
         self._multi_kill_timer: Optional[ba.Timer] = None
-        self._multikillcount = 0
+        self._multi_kill_count = 0
         self._stats = weakref.ref(stats)
         self._last_player: Optional[ba.Player] = None
         self._player: Optional[ba.Player] = None
         self.associate_with_player(player)
-        self._spaz: Optional[ReferenceType[ba.Actor]] = None
         self._team: Optional[ReferenceType[ba.Team]] = None
         self.streak = 0
 
@@ -115,16 +114,6 @@ class PlayerRecord:
         assert player is not None
         return player.get_icon()
 
-    def get_spaz(self) -> Optional[ba.Actor]:
-        """Return the player entry's spaz."""
-        if self._spaz is None:
-            return None
-        return self._spaz()
-
-    def set_spaz(self, spaz: Optional[ba.Actor]) -> None:
-        """(internal)"""
-        self._spaz = weakref.ref(spaz) if spaz is not None else None
-
     def cancel_multi_kill_timer(self) -> None:
         """Cancel any multi-kill timer for this player entry."""
         self._multi_kill_timer = None
@@ -144,12 +133,11 @@ class PlayerRecord:
         self.character = player.character
         self._last_player = player
         self._player = player
-        self._spaz = None
         self.streak = 0
 
     def _end_multi_kill(self) -> None:
         self._multi_kill_timer = None
-        self._multikillcount = 0
+        self._multi_kill_count = 0
 
     def get_last_player(self) -> ba.Player:
         """Return the last ba.Player we were associated with."""
@@ -162,52 +150,51 @@ class PlayerRecord:
         # pylint: disable=too-many-statements
         from ba._lang import Lstr
         from ba._general import Call
-        from ba._enums import TimeFormat
-        self._multikillcount += 1
+        self._multi_kill_count += 1
         stats = self._stats()
         assert stats
-        if self._multikillcount == 1:
+        if self._multi_kill_count == 1:
             score = 0
             name = None
-            delay = 0
+            delay = 0.0
             color = (0.0, 0.0, 0.0, 1.0)
             scale = 1.0
             sound = None
-        elif self._multikillcount == 2:
+        elif self._multi_kill_count == 2:
             score = 20
             name = Lstr(resource='twoKillText')
             color = (0.1, 1.0, 0.0, 1)
             scale = 1.0
-            delay = 0
+            delay = 0.0
             sound = stats.orchestrahitsound1
-        elif self._multikillcount == 3:
+        elif self._multi_kill_count == 3:
             score = 40
             name = Lstr(resource='threeKillText')
             color = (1.0, 0.7, 0.0, 1)
             scale = 1.1
-            delay = 300
+            delay = 0.3
             sound = stats.orchestrahitsound2
-        elif self._multikillcount == 4:
+        elif self._multi_kill_count == 4:
             score = 60
             name = Lstr(resource='fourKillText')
             color = (1.0, 1.0, 0.0, 1)
             scale = 1.2
-            delay = 600
+            delay = 0.6
             sound = stats.orchestrahitsound3
-        elif self._multikillcount == 5:
+        elif self._multi_kill_count == 5:
             score = 80
             name = Lstr(resource='fiveKillText')
             color = (1.0, 0.5, 0.0, 1)
             scale = 1.3
-            delay = 900
+            delay = 0.9
             sound = stats.orchestrahitsound4
         else:
             score = 100
             name = Lstr(resource='multiKillText',
-                        subs=[('${COUNT}', str(self._multikillcount))])
+                        subs=[('${COUNT}', str(self._multi_kill_count))])
             color = (1.0, 0.5, 0.0, 1)
             scale = 1.3
-            delay = 1000
+            delay = 1.0
             sound = stats.orchestrahitsound4
 
         def _apply(name2: Lstr, score2: int, showpoints2: bool,
@@ -217,12 +204,9 @@ class PlayerRecord:
 
             # Only award this if they're still alive and we can get
             # their pos.
-            try:
-                actor = self.get_spaz()
-                assert actor is not None
-                assert actor.node
-                our_pos = actor.node.position
-            except Exception:
+            if self._player is not None and self._player.node:
+                our_pos = self._player.node.position
+            else:
                 return
 
             # Jitter position a bit since these often come in clusters.
@@ -249,10 +233,9 @@ class PlayerRecord:
                 activity.handlemessage(PlayerScoredMessage(score=score2))
 
         if name is not None:
-            _ba.timer(300 + delay,
-                      Call(_apply, name, score, showpoints, color, scale,
-                           sound),
-                      timeformat=TimeFormat.MILLISECONDS)
+            _ba.timer(
+                0.3 + delay,
+                Call(_apply, name, score, showpoints, color, scale, sound))
 
         # Keep the tally rollin'...
         # set a timer for a bit in the future.
@@ -304,6 +287,7 @@ class Stats:
 
     def reset(self) -> None:
         """Reset the stats instance completely."""
+
         # Just to be safe, lets make sure no multi-kill timers are gonna go off
         # for no-longer-on-the-list players.
         for p_entry in list(self._player_records.values()):
@@ -345,17 +329,6 @@ class Stats:
                 records[record_id] = record
         return records
 
-    def _get_spaz(self, player: ba.Player) -> Optional[ba.Actor]:
-        return self._player_records[player.get_name()].get_spaz()
-
-    def player_got_new_spaz(self, player: ba.Player, spaz: ba.Actor) -> None:
-        """Call this when a player gets a new Spaz."""
-        record = self._player_records[player.get_name()]
-        if record.get_spaz() is not None:
-            raise Exception("got 2 player_got_new_spaz() messages in a row"
-                            " without a lost-spaz message")
-        record.set_spaz(spaz)
-
     def player_got_hit(self, player: ba.Player) -> None:
         """Call this when a player got hit."""
         s_player = self._player_records[player.get_name()]
@@ -388,7 +361,7 @@ class Stats:
         from ba import _math
         from ba._gameactivity import GameActivity
         from ba._lang import Lstr
-        del victim_player  # currently unused
+        del victim_player  # Currently unused.
         name = player.get_name()
         s_player = self._player_records[name]
 
@@ -418,16 +391,9 @@ class Stats:
                 from ba import _error
                 _error.print_exception('error showing big_message')
 
-        # If we currently have a spaz, pop up a score over it.
+        # If we currently have a actor, pop up a score over it.
         if display and showpoints:
-            our_pos: Optional[Sequence[float]]
-            try:
-                spaz = s_player.get_spaz()
-                assert spaz is not None
-                assert spaz.node
-                our_pos = spaz.node.position
-            except Exception:
-                our_pos = None
+            our_pos = player.node.position if player.node else None
             if our_pos is not None:
                 if target is None:
                     target = our_pos
@@ -478,15 +444,14 @@ class Stats:
 
         return points
 
-    def player_lost_spaz(self,
-                         player: ba.Player,
-                         killed: bool = False,
-                         killer: ba.Player = None) -> None:
-        """Should be called when a player loses a spaz."""
+    def player_was_killed(self,
+                          player: ba.Player,
+                          killed: bool = False,
+                          killer: ba.Player = None) -> None:
+        """Should be called when a player is killed."""
         from ba._lang import Lstr
         name = player.get_name()
         prec = self._player_records[name]
-        prec.set_spaz(None)
         prec.streak = 0
         if killed:
             prec.accum_killed_count += 1
