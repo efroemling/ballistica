@@ -776,7 +776,7 @@ class Bomb(ba.Actor):
             self.arm_timer = ba.Timer(
                 0.2, ba.WeakCall(self.handlemessage, ArmMessage()))
             self.warn_timer = ba.Timer(
-                0.001 * (fuse_time - 1700),
+                0.001 * (fuse_time - 1.7),
                 ba.WeakCall(self.handlemessage, WarnMessage()))
 
         else:
