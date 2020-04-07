@@ -814,7 +814,7 @@ class FootballCoopGame(ba.CoopGameActivity):
 
             # Respawn dead players.
             player = msg.spaz.player
-            self.stats.player_lost_spaz(player)
+            self.stats.player_was_killed(player)
             assert self.initial_player_info is not None
             respawn_time = 2.0 + len(self.initial_player_info) * 1.0
 

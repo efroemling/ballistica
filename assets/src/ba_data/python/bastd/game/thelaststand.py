@@ -263,7 +263,7 @@ class TheLastStandGame(ba.CoopGameActivity):
                 return
             if not player:
                 return
-            self.stats.player_lost_spaz(player)
+            self.stats.player_was_killed(player)
             ba.timer(0.1, self._checkroundover)
 
         elif isinstance(msg, ba.PlayerScoredMessage):
