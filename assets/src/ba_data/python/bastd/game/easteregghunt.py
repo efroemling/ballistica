@@ -147,7 +147,7 @@ class EasterEggHuntGame(ba.TeamGameActivity):
                 player = (spaz.getplayer()
                           if hasattr(spaz, 'getplayer') else None)
                 if player and egg:
-                    player.get_team().gamedata['score'] += 1
+                    player.team.gamedata['score'] += 1
 
                     # Displays a +1 (and adds to individual player score in
                     # teams mode).
@@ -186,9 +186,13 @@ class EasterEggHuntGame(ba.TeamGameActivity):
         xpos = random.uniform(-7.1, 6.0)
         ypos = random.uniform(3.5, 3.5)
         zpos = random.uniform(-8.2, 3.7)
+        def _is_exists(egg: Egg) -> bool:
+            if egg.node is None:
+                return False
+            return egg.node.exists()
 
         # Prune dead eggs from our list.
-        self._eggs = [e for e in self._eggs if e]
+        self._eggs = [e for e in self._eggs if _is_exists(e)]
 
         # Spawn more eggs if we've got space.
         if len(self._eggs) < int(self._max_eggs):

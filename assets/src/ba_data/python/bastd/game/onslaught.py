@@ -258,7 +258,7 @@ class OnslaughtGame(ba.CoopGameActivity):
                 {'entries': [
                     {'type': spazbot.BomberBotStaticLite,
                      'point': 'turret_bottom_left'},
-                    {'type': spazbot.TriggerBot, 'point': 'Left'},
+                    {'type': spazbot.TriggerBot, 'point': 'left'},
                     {'type': spazbot.TriggerBot, 'point': 'left_lower'}
                         if player_count > 1 else None,
                     {'type': spazbot.TriggerBot, 'point': 'left_upper'}
@@ -405,8 +405,8 @@ class OnslaughtGame(ba.CoopGameActivity):
                     {'type': spazbot.ExplodeyBot, 'point': 'top_left'},
                 ]},
                 {'entries': [
-                    {'type': spazbot.ChargerBot, 'point': 'Left'},
-                    {'type': spazbot.ChargerBot, 'point': 'Right'},
+                    {'type': spazbot.ChargerBot, 'point': 'left'},
+                    {'type': spazbot.ChargerBot, 'point': 'right'},
                     {'type': spazbot.ChargerBot, 'point': 'right_upper_more'}
                         if player_count > 2 else None,
                     {'type': spazbot.BomberBotProStatic,
@@ -454,9 +454,9 @@ class OnslaughtGame(ba.CoopGameActivity):
                     {'type': spazbot.BrawlerBotProShielded,
                      'point': 'right_upper_more'},
                     {'type': 'delay', 'duration': 4.0},
-                    {'type': spazbot.ExplodeyBot, 'point': 'Left'},
+                    {'type': spazbot.ExplodeyBot, 'point': 'left'},
                     {'type': 'delay', 'duration': 5.0},
-                    {'type': spazbot.ExplodeyBot, 'point': 'Right'},
+                    {'type': spazbot.ExplodeyBot, 'point': 'right'},
                 ]},
                 {'entries': [
                     {'type': spazbot.BomberBotProStatic,

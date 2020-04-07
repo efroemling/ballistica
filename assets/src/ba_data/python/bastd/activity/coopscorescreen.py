@@ -1157,7 +1157,9 @@ class CoopScoreScreen(ba.Activity):
         self._tournament_time_remaining = max(
             0, self._tournament_time_remaining - 1)
         if self._tournament_time_remaining_text is not None:
-            val = ba.timestring(self._tournament_time_remaining, centi=False)
+            val = ba.timestring(self._tournament_time_remaining,
+                                suppress_format_warning=True,
+                                centi=False)
             self._tournament_time_remaining_text.node.text = val
 
     def _show_world_rank(self, offs_x: float) -> None:
