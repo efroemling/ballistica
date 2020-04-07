@@ -1051,6 +1051,8 @@ class RunaroundGame(ba.CoopGameActivity):
         # Yup; that's a lot of return statements right there.
         # pylint: disable=too-many-return-statements
         assert bot.node
+        if not bot.is_alive() or not bot.node.exists():
+            return True
 
         # FIXME: Do this in a type safe way.
         r_walk_speed: float = bot.r_walk_speed  # type: ignore
