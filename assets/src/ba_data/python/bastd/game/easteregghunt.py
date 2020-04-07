@@ -213,7 +213,7 @@ class EasterEggHuntGame(ba.TeamGameActivity):
             player = msg.spaz.getplayer()
             if not player:
                 return
-            self.stats.player_lost_spaz(player)
+            self.stats.player_was_killed(player)
 
             # Respawn them shortly.
             assert self.initial_player_info is not None

@@ -111,9 +111,9 @@ class SpazBot(basespaz.Spaz):
     static = False
     bouncy = False
     run = False
-    charge_dist_min = 0.0  # when we can start a new charge
-    charge_dist_max = 2.0  # when we can start a new charge
-    run_dist_min = 0.0  # how close we can be to continue running
+    charge_dist_min = 0.0  # When we can start a new charge.
+    charge_dist_max = 2.0  # When we can start a new charge.
+    run_dist_min = 0.0  # How close we can be to continue running.
     charge_speed_min = 0.4
     charge_speed_max = 1.0
     throw_dist_min = 5.0
@@ -193,6 +193,7 @@ class SpazBot(basespaz.Spaz):
         assert self._player_pts
         for plpt, plvel in self._player_pts:
             dist = (plpt - botpt).length()
+
             # Ignore player-points that are significantly below the bot
             # (keeps bots from following players off cliffs).
             if (closest_dist is None
@@ -218,9 +219,12 @@ class SpazBot(basespaz.Spaz):
         # pylint: disable=too-many-locals
         if self.update_callback is not None:
             if self.update_callback(self):
-                return  # true means bot has been handled
+                # Bot has been handled.
+                return
 
-        assert self.node
+        if not self.node:
+            return
+
         pos = self.node.position
         our_pos = ba.Vec3(pos[0], 0, pos[2])
         can_attack = True
@@ -239,11 +243,13 @@ class SpazBot(basespaz.Spaz):
                     holding_flag = False
             else:
                 holding_flag = False
+
             # If we're holding the flag, just walk left.
             if holding_flag:
-                # just walk left
+                # Just walk left.
                 self.node.move_left_right = -1.0
                 self.node.move_up_down = 0.0
+
             # Otherwise try to go pick it up.
             else:
                 assert self.target_flag.node
@@ -273,6 +279,7 @@ class SpazBot(basespaz.Spaz):
                     self.node.pickup_pressed = True
                     self.node.pickup_pressed = False
             return
+
         # Not a flag-bearer. If we're holding anything but a bomb, drop it.
         if self.node.hold_node:
             try:
@@ -289,12 +296,13 @@ class SpazBot(basespaz.Spaz):
         target_pt_raw, target_vel = self._get_target_player_pt()
 
         if target_pt_raw is None:
-            # use default target if we've got one
+            # Use default target if we've got one.
             if self.target_point_default is not None:
                 target_pt_raw = self.target_point_default
                 target_vel = ba.Vec3(0, 0, 0)
                 can_attack = False
-            # with no target, we stop moving and drop whatever we're holding
+
+            # With no target, we stop moving and drop whatever we're holding.
             else:
                 self.node.move_left_right = 0
                 self.node.move_up_down = 0
@@ -303,13 +311,14 @@ class SpazBot(basespaz.Spaz):
                     self.node.pickup_pressed = False
                 return
 
-        # we don't want height to come into play
+        # We don't want height to come into play.
         target_pt_raw[1] = 0.0
         assert target_vel is not None
         target_vel[1] = 0.0
 
         dist_raw = (target_pt_raw - our_pos).length()
-        # use a point out in front of them as real target
+
+        # Use a point out in front of them as real target.
         # (more out in front the farther from us they are)
         target_pt = (target_pt_raw +
                      target_vel * dist_raw * 0.3 * self._lead_amount)
@@ -319,25 +328,26 @@ class SpazBot(basespaz.Spaz):
         to_target = diff.normalized()
 
         if self._mode == 'throw':
-            # we can only throw if alive and well..
+            # We can only throw if alive and well.
             if not self._dead and not self.node.knockout:
 
                 assert self._throw_release_time is not None
                 time_till_throw = self._throw_release_time - ba.time()
 
                 if not self.node.hold_node:
-                    # if we haven't thrown yet, whip out the bomb
+                    # If we haven't thrown yet, whip out the bomb.
                     if not self._have_dropped_throw_bomb:
                         self.drop_bomb()
                         self._have_dropped_throw_bomb = True
-                    # otherwise our lack of held node means we successfully
-                    # released our bomb.. lets retreat now
+
+                    # Otherwise our lack of held node means we successfully
+                    # released our bomb; lets retreat now.
                     else:
                         self._mode = 'flee'
 
-                # oh crap we're holding a bomb.. better throw it.
+                # Oh crap, we're holding a bomb; better throw it.
                 elif time_till_throw <= 0.0:
-                    # jump and throw..
+                    # Jump and throw.
                     def _safe_pickup(node: ba.Node) -> None:
                         if node and self.node:
                             self.node.pickup_pressed = True
@@ -346,25 +356,26 @@ class SpazBot(basespaz.Spaz):
                     if dist > 5.0:
                         self.node.jump_pressed = True
                         self.node.jump_pressed = False
-                        # throws:
+
+                        # Throws:
                         ba.timer(0.1, ba.Call(_safe_pickup, self.node))
                     else:
-                        # throws:
+                        # Throws:
                         ba.timer(0.1, ba.Call(_safe_pickup, self.node))
 
                 if self.static:
                     if time_till_throw < 0.3:
                         speed = 1.0
                     elif time_till_throw < 0.7 and dist > 3.0:
-                        speed = -1.0  # whiplash for long throws
+                        speed = -1.0  # Whiplash for long throws.
                     else:
                         speed = 0.02
                 else:
                     if time_till_throw < 0.7:
-                        # right before throw charge full speed towards target
+                        # Right before throw charge full speed towards target.
                         speed = 1.0
                     else:
-                        # earlier we can hold or move backward for a whiplash
+                        # Earlier we can hold or move backward for a whiplash.
                         speed = 0.0125
                 self.node.move_left_right = to_target.x * speed
                 self.node.move_up_down = to_target.z * -1.0 * speed
@@ -373,8 +384,9 @@ class SpazBot(basespaz.Spaz):
             if random.random() < 0.3:
                 self._charge_speed = random.uniform(self.charge_speed_min,
                                                     self.charge_speed_max)
-                # if we're a runner we run during charges *except when near
-                # an edge (otherwise we tend to fly off easily)
+
+                # If we're a runner we run during charges *except when near
+                # an edge (otherwise we tend to fly off easily).
                 if self.run and dist_raw > self.run_dist_min:
                     self._lead_amount = 0.3
                     self._running = True
@@ -388,8 +400,8 @@ class SpazBot(basespaz.Spaz):
             self.node.move_up_down = to_target.z * -1.0 * self._charge_speed
 
         elif self._mode == 'wait':
-            # every now and then, aim towards our target..
-            # other than that, just stand there
+            # Every now and then, aim towards our target.
+            # Other than that, just stand there.
             if ba.time(timeformat=ba.TimeFormat.MILLISECONDS) % 1234 < 100:
                 self.node.move_left_right = to_target.x * (400.0 / 33000)
                 self.node.move_up_down = to_target.z * (-400.0 / 33000)
@@ -398,8 +410,8 @@ class SpazBot(basespaz.Spaz):
                 self.node.move_up_down = 0
 
         elif self._mode == 'flee':
-            # even if we're a runner, only run till we get away from our
-            # target (if we keep running we tend to run off edges)
+            # Even if we're a runner, only run till we get away from our
+            # target (if we keep running we tend to run off edges).
             if self.run and dist < 3.0:
                 self._running = True
                 self.node.run = 1.0
@@ -409,20 +421,20 @@ class SpazBot(basespaz.Spaz):
             self.node.move_left_right = to_target.x * -1.0
             self.node.move_up_down = to_target.z
 
-        # we might wanna switch states unless we're doing a throw
-        # (in which case that's our sole concern)
+        # We might wanna switch states unless we're doing a throw
+        # (in which case that's our sole concern).
         if self._mode != 'throw':
 
-            # if we're currently charging, keep track of how far we are
-            # from our target.. when this value increases it means our charge
-            # is over (ran by them or something)
+            # If we're currently charging, keep track of how far we are
+            # from our target. When this value increases it means our charge
+            # is over (ran by them or something).
             if self._mode == 'charge':
                 if (self._charge_closing_in
                         and self._last_charge_dist < dist < 3.0):
                     self._charge_closing_in = False
                 self._last_charge_dist = dist
 
-            # if we have a clean shot, throw!
+            # If we have a clean shot, throw!
             if (self.throw_dist_min <= dist < self.throw_dist_max
                     and random.random() < self.throwiness and can_attack):
                 self._mode = 'throw'
@@ -434,15 +446,15 @@ class SpazBot(basespaz.Spaz):
                                             (1.0 / self.throw_rate) *
                                             (0.8 + 1.3 * random.random()))
 
-            # if we're static, always charge (which for us means barely move)
+            # If we're static, always charge (which for us means barely move).
             elif self.static:
                 self._mode = 'wait'
 
-            # if we're too close to charge (and aren't in the middle of an
-            # existing charge) run away
+            # If we're too close to charge (and aren't in the middle of an
+            # existing charge) run away.
             elif dist < self.charge_dist_min and not self._charge_closing_in:
-                # ..unless we're near an edge, in which case we got no choice
-                # but to charge..
+                # ..unless we're near an edge, in which case we've got no
+                # choice but to charge.
                 if self.map.is_point_near_edge(our_pos, self._running):
                     if self._mode != 'charge':
                         self._mode = 'charge'
@@ -452,7 +464,7 @@ class SpazBot(basespaz.Spaz):
                 else:
                     self._mode = 'flee'
 
-            # we're within charging distance, backed against an edge,
+            # We're within charging distance, backed against an edge,
             # or farther than our max throw distance.. chaaarge!
             elif (dist < self.charge_dist_max or dist > self.throw_dist_max
                   or self.map.is_point_near_edge(our_pos, self._running)):
@@ -462,11 +474,11 @@ class SpazBot(basespaz.Spaz):
                     self._charge_closing_in = True
                     self._last_charge_dist = dist
 
-            # we're too close to throw but too far to charge - either run
-            # away or just chill if we're near an edge
+            # We're too close to throw but too far to charge - either run
+            # away or just chill if we're near an edge.
             elif dist < self.throw_dist_min:
-                # charge if either we're within charge range or
-                # cant retreat to throw
+                # Charge if either we're within charge range or
+                # cant retreat to throw.
                 self._mode = 'flee'
 
             # Do some awesome jumps if we're running.
@@ -494,29 +506,30 @@ class SpazBot(basespaz.Spaz):
 
     def on_expire(self) -> None:
         basespaz.Spaz.on_expire(self)
-        # we're being torn down; release
-        # our callback(s) so there's no chance of them
-        # keeping activities or other things alive..
+
+        # We're being torn down; release our callback(s) so there's
+        # no chance of them keeping activities or other things alive.
         self.update_callback = None
 
     def handlemessage(self, msg: Any) -> Any:
         # pylint: disable=too-many-branches
         self._handlemessage_sanity_check()
 
-        # keep track of if we're being held and by who most recently
+        # Keep track of if we're being held and by who most recently.
         if isinstance(msg, ba.PickedUpMessage):
-            super().handlemessage(msg)  # augment standard behavior
+            super().handlemessage(msg)  # Augment standard behavior.
             self.held_count += 1
             picked_up_by = msg.node.source_player
             if picked_up_by:
                 self.last_player_held_by = picked_up_by
 
         elif isinstance(msg, ba.DroppedMessage):
-            super().handlemessage(msg)  # augment standard behavior
+            super().handlemessage(msg)  # Augment standard behavior.
             self.held_count -= 1
             if self.held_count < 0:
                 print("ERROR: spaz held_count < 0")
-            # let's count someone dropping us as an attack..
+
+            # Let's count someone dropping us as an attack.
             try:
                 if msg.node:
                     picked_up_by = msg.node.source_player
@@ -533,18 +546,19 @@ class SpazBot(basespaz.Spaz):
 
         elif isinstance(msg, ba.DieMessage):
 
-            # report normal deaths for scoring purposes
+            # Report normal deaths for scoring purposes.
             if not self._dead and not msg.immediate:
 
                 killerplayer: Optional[ba.Player]
-                # if this guy was being held at the time of death, the
-                # holder is the killer
+
+                # If this guy was being held at the time of death, the
+                # holder is the killer.
                 if self.held_count > 0 and self.last_player_held_by:
                     killerplayer = self.last_player_held_by
                 else:
-                    # otherwise if they were attacked by someone in the
-                    # last few seconds that person's the killer..
-                    # otherwise it was a suicide
+                    # If they were attacked by someone in the last few
+                    # seconds that person's the killer.
+                    # Otherwise it was a suicide.
                     if (self.last_player_attacked_by
                             and ba.time() - self.last_attacked_time < 4.0):
                         killerplayer = self.last_player_attacked_by
@@ -552,15 +566,15 @@ class SpazBot(basespaz.Spaz):
                         killerplayer = None
                 activity = self._activity()
 
-                # (convert dead refs to None)
+                # (convert dead player refs to None)
                 if not killerplayer:
                     killerplayer = None
                 if activity is not None:
                     activity.handlemessage(
                         SpazBotDeathMessage(self, killerplayer, msg.how))
-            super().handlemessage(msg)  # augment standard behavior
+            super().handlemessage(msg)  # Augment standard behavior.
 
-        # keep track of the player who last hit us for point rewarding
+        # Keep track of the player who last hit us for point rewarding.
         elif isinstance(msg, ba.HitMessage):
             if msg.source_player:
                 self.last_player_attacked_by = msg.source_player
@@ -889,8 +903,9 @@ class BotSet:
 
     def __init__(self) -> None:
         """Create a bot-set."""
-        # we spread our bots out over a few lists so we can update
-        # them in a staggered fashion
+
+        # We spread our bots out over a few lists so we can update
+        # them in a staggered fashion.
         self._bot_list_count = 5
         self._bot_add_list = 0
         self._bot_update_list = 0
@@ -963,7 +978,7 @@ class BotSet:
         self._bot_update_list = (self._bot_update_list +
                                  1) % self._bot_list_count
 
-        # update our list of player points for the bots to use
+        # Update our list of player points for the bots to use.
         player_pts = []
         for player in ba.getactivity().players:
             try:
@@ -980,7 +995,8 @@ class BotSet:
 
     def clear(self) -> None:
         """Immediately clear out any bots in the set."""
-        # don't do this if the activity is shutting down or dead
+
+        # Don't do this if the activity is shutting down or dead.
         activity = ba.getactivity(doraise=False)
         if activity is None or activity.is_expired():
             return
@@ -1025,7 +1041,8 @@ class BotSet:
         Use this when the bots have won a game.
         """
         self._bot_update_timer = None
-        # at this point stop doing anything but jumping and celebrating
+
+        # At this point stop doing anything but jumping and celebrating.
         for botlist in self._bot_lists:
             for bot in botlist:
                 if bot.node:

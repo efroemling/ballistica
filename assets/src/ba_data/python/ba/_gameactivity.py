@@ -680,9 +680,9 @@ class GameActivity(Activity):
             killer = msg.killerplayer
 
             # Inform our score-set of the demise.
-            self.stats.player_lost_spaz(player,
-                                        killed=msg.killed,
-                                        killer=killer)
+            self.stats.player_was_killed(player,
+                                         killed=msg.killed,
+                                         killer=killer)
 
             # Award the killer points if he's on a different team.
             if killer and killer.team is not player.team:
@@ -1071,7 +1071,6 @@ class GameActivity(Activity):
         spaz.node.name = name
         spaz.node.name_color = display_color
         spaz.connect_controls_to_player()
-        self.stats.player_got_new_spaz(player, spaz)
 
         # Move to the stand position and add a flash of light.
         spaz.handlemessage(
