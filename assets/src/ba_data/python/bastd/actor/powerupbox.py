@@ -290,7 +290,7 @@ class PowerupBox(ba.Actor):
     def handlemessage(self, msg: Any) -> Any:
         # pylint: disable=too-many-branches
         if __debug__:
-          self._handlemessage_sanity_check()
+            self._handlemessage_sanity_check()
 
         if isinstance(msg, ba.PowerupAcceptMessage):
             factory = get_factory()

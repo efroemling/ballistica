@@ -333,6 +333,7 @@ class Flag(ba.Actor):
             1.0, ba.WeakCall(self._hide_score_text))
 
     def handlemessage(self, msg: Any) -> Any:
+        # pylint: disable=too-many-branches
         if __debug__:
             self._handlemessage_sanity_check()
         if isinstance(msg, ba.DieMessage):
