@@ -27,18 +27,18 @@ from typing import TYPE_CHECKING, TypeVar
 
 from ba._messages import DieMessage, DeathType, OutOfBoundsMessage
 from ba import _error
-
 import _ba
 
 if TYPE_CHECKING:
     from typing import Any, Optional
+
     import ba
 
 T = TypeVar('T', bound='Actor')
 
 
 class Actor:
-    """High level logical entities in a game/activity.
+    """High level logical entities in a ba.Activity.
 
     Category: Gameplay Classes
 
@@ -85,9 +85,6 @@ class Actor:
 
     def __init__(self) -> None:
         """Instantiates an Actor in the current ba.Activity."""
-
-        # FIXME: Actor should not be assumed to have a 'node' attr.
-        # self.node: Optional[ba.Node] = None
 
         if __debug__:
             self._root_actor_init_called = True

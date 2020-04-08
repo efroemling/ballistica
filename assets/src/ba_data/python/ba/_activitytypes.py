@@ -179,7 +179,7 @@ class ScoreScreenActivity(Activity):
 
     def on_begin(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.actor import text
+        from bastd.actor.text import Text
         from ba import _lang
         super().on_begin()
 
@@ -193,17 +193,17 @@ class ScoreScreenActivity(Activity):
         else:
             sval = _lang.Lstr(resource='pressAnyButtonText')
 
-        text.Text(self._custom_continue_message
-                  if self._custom_continue_message is not None else sval,
-                  v_attach='bottom',
-                  h_align='center',
-                  flash=True,
-                  vr_depth=50,
-                  position=(0, 10),
-                  scale=0.8,
-                  color=(0.5, 0.7, 0.5, 0.5),
-                  transition='in_bottom_slow',
-                  transition_delay=self._min_view_time).autoretain()
+        Text(self._custom_continue_message
+             if self._custom_continue_message is not None else sval,
+             v_attach=Text.VAttach.BOTTOM,
+             h_align=Text.HAlign.CENTER,
+             flash=True,
+             vr_depth=50,
+             position=(0, 10),
+             scale=0.8,
+             color=(0.5, 0.7, 0.5, 0.5),
+             transition=Text.Transition.IN_BOTTOM_SLOW,
+             transition_delay=self._min_view_time).autoretain()
 
     def _player_press(self) -> None:
 

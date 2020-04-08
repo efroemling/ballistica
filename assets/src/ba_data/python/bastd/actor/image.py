@@ -146,7 +146,7 @@ class Image(ba.Actor):
             cmb.input0 = position[0]
             ba.animate(cmb, 'input1', keys)
             ba.animate(self.node, 'opacity', o_keys)
-        elif transition == 'inTopSlow':
+        elif transition == 'in_top_slow':
             keys = {transition_delay: 400, transition_delay + 3.5: position[1]}
             o_keys = {transition_delay: 0.0, transition_delay + 1.0: 1.0}
             cmb.input0 = position[0]

@@ -286,7 +286,7 @@ class MainMenuActivity(ba.Activity):
                     self._got_news(news)
 
             def _change_phrase(self) -> None:
-                from bastd.actor import text
+                from bastd.actor.text import Text
 
                 # If our news is way out of date, lets re-request it;
                 # otherwise, rotate our phrase.
@@ -302,22 +302,22 @@ class MainMenuActivity(ba.Activity):
                         val = self._phrases.pop()
                         if val == '__ACH__':
                             vrmode = app.vr_mode
-                            text.Text(ba.Lstr(resource='nextAchievementsText'),
-                                      color=((1, 1, 1, 1) if vrmode else
-                                             (0.95, 0.9, 1, 0.4)),
-                                      host_only=True,
-                                      maxwidth=200,
-                                      position=(-300, -35),
-                                      h_align='right',
-                                      transition='fade_in',
-                                      scale=0.9 if vrmode else 0.7,
-                                      flatness=1.0 if vrmode else 0.6,
-                                      shadow=1.0 if vrmode else 0.5,
-                                      h_attach="center",
-                                      v_attach="top",
-                                      transition_delay=1.0,
-                                      transition_out_delay=self.
-                                      _message_duration).autoretain()
+                            Text(ba.Lstr(resource='nextAchievementsText'),
+                                 color=((1, 1, 1, 1) if vrmode else
+                                        (0.95, 0.9, 1, 0.4)),
+                                 host_only=True,
+                                 maxwidth=200,
+                                 position=(-300, -35),
+                                 h_align=Text.HAlign.RIGHT,
+                                 transition=Text.Transition.FADE_IN,
+                                 scale=0.9 if vrmode else 0.7,
+                                 flatness=1.0 if vrmode else 0.6,
+                                 shadow=1.0 if vrmode else 0.5,
+                                 h_attach=Text.HAttach.CENTER,
+                                 v_attach=Text.VAttach.TOP,
+                                 transition_delay=1.0,
+                                 transition_out_delay=self._message_duration
+                                 ).autoretain()
                             achs = [
                                 a for a in app.achievements if not a.complete
                             ]

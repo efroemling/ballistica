@@ -382,18 +382,20 @@ class Achievement:
         if style == 'post_game':
             in_game_colors = False
             in_main_menu = False
-            h_attach = v_attach = attach = 'center'
+            h_attach = Text.HAttach.CENTER
+            v_attach = Text.VAttach.CENTER
+            attach = 'center'
         elif style == 'in_game':
             in_game_colors = True
             in_main_menu = False
-            h_attach = 'left'
-            v_attach = 'top'
+            h_attach = Text.HAttach.LEFT
+            v_attach = Text.VAttach.TOP
             attach = 'topLeft'
         elif style == 'news':
             in_game_colors = True
             in_main_menu = True
-            h_attach = 'center'
-            v_attach = 'top'
+            h_attach = Text.HAttach.CENTER
+            v_attach = Text.VAttach.TOP
             attach = 'topCenter'
         else:
             raise Exception('invalid style "' + style + '"')
@@ -449,7 +451,7 @@ class Achievement:
                      host_only=True,
                      maxwidth=txt_max_w,
                      position=(x, y + 2),
-                     transition='fade_in',
+                     transition=Text.Transition.FADE_IN,
                      scale=txt_s,
                      flatness=0.6,
                      shadow=0.5,
@@ -466,7 +468,7 @@ class Achievement:
                      host_only=True,
                      maxwidth=txt2_max_w,
                      position=(x, y - 14),
-                     transition='fade_in',
+                     transition=Text.Transition.FADE_IN,
                      vr_depth=-5,
                      h_attach=h_attach,
                      v_attach=v_attach,
@@ -483,19 +485,18 @@ class Achievement:
                     host_only=True,
                     maxwidth=txt2_max_w * 0.7,
                     position=(x + 60, y + 5),
-                    transition='fade_in',
+                    transition=Text.Transition.FADE_IN,
                     vr_depth=-5,
                     h_attach=h_attach,
                     v_attach=v_attach,
-                    h_align='center',
-                    v_align='center',
+                    h_align=Text.HAlign.CENTER,
+                    v_align=Text.VAlign.CENTER,
                     scale=txt_s * 0.8,
                     flatness=1.0,
                     shadow=0.5,
                     color=(1, 1, 0.6, 1),
                     transition_delay=delay + 0.1,
                     transition_out_delay=out_delay_fin).autoretain()
-                assert txtactor.node
                 txtactor.node.rotate = 10
                 objs.append(txtactor)
 
@@ -505,12 +506,12 @@ class Achievement:
                 Text(_ba.charstr(SpecialChar.TICKET),
                      host_only=True,
                      position=(x + award_x + 33, y + 7),
-                     transition='fade_in',
+                     transition=Text.Transition.FADE_IN,
                      scale=1.5,
                      h_attach=h_attach,
                      v_attach=v_attach,
-                     h_align='center',
-                     v_align='center',
+                     h_align=Text.HAlign.CENTER,
+                     v_align=Text.VAlign.CENTER,
                      color=(1, 1, 1, 0.2 if hmo else 0.4),
                      transition_delay=delay + 0.05,
                      transition_out_delay=out_delay_fin).autoretain())
@@ -518,13 +519,13 @@ class Achievement:
                 Text('+' + str(self.get_award_ticket_value()),
                      host_only=True,
                      position=(x + award_x + 28, y + 16),
-                     transition='fade_in',
+                     transition=Text.Transition.FADE_IN,
                      scale=0.7,
                      flatness=1,
                      h_attach=h_attach,
                      v_attach=v_attach,
-                     h_align='center',
-                     v_align='center',
+                     h_align=Text.HAlign.CENTER,
+                     v_align=Text.VAlign.CENTER,
                      color=cl2,
                      transition_delay=delay + 0.05,
                      transition_out_delay=out_delay_fin).autoretain())
@@ -566,12 +567,12 @@ class Achievement:
                         Text(_ba.charstr(SpecialChar.TICKET),
                              host_only=True,
                              position=(x + award_x + 33, y + 7),
-                             transition='in_right',
+                             transition=Text.Transition.IN_RIGHT,
                              scale=1.5,
                              h_attach=h_attach,
                              v_attach=v_attach,
-                             h_align='center',
-                             v_align='center',
+                             h_align=Text.HAlign.CENTER,
+                             v_align=Text.VAlign.CENTER,
                              color=(1, 1, 1, 0.4) if complete else
                              (1, 1, 1, (0.1 if hmo else 0.2)),
                              transition_delay=delay + 0.05,
@@ -580,13 +581,13 @@ class Achievement:
                         Text('+' + str(self.get_award_ticket_value()),
                              host_only=True,
                              position=(x + award_x + 28, y + 16),
-                             transition='in_right',
+                             transition=Text.Transition.IN_RIGHT,
                              scale=0.7,
                              flatness=1,
                              h_attach=h_attach,
                              v_attach=v_attach,
-                             h_align='center',
-                             v_align='center',
+                             h_align=Text.HAlign.CENTER,
+                             v_align=Text.VAlign.CENTER,
                              color=((0.8, 0.93, 0.8, 1.0) if complete else
                                     (0.6, 0.6, 0.6, (0.2 if hmo else 0.4))),
                              transition_delay=delay + 0.05,
@@ -595,23 +596,25 @@ class Achievement:
                     # Show 'hard-mode-only' only over incomplete achievements
                     # when that's the case.
                     if hmo:
+                        print('DOING HMO WITH STYLE', style)
                         txtactor = Text(
                             Lstr(resource='difficultyHardOnlyText'),
                             host_only=True,
                             maxwidth=300 * 0.7,
                             position=(x + 60, y + 5),
-                            transition='fade_in',
+                            transition=Text.Transition.FADE_IN,
                             vr_depth=-5,
                             h_attach=h_attach,
                             v_attach=v_attach,
-                            h_align='center',
-                            v_align='center',
+                            h_align=Text.HAlign.CENTER,
+                            v_align=Text.VAlign.CENTER,
                             scale=0.85 * 0.8,
                             flatness=1.0,
                             shadow=0.5,
                             color=(1, 1, 0.6, 1),
                             transition_delay=delay + 0.05,
                             transition_out_delay=None).autoretain()
+                        print('DID HMO')
                         assert txtactor.node
                         txtactor.node.rotate = 10
                         objs.append(txtactor)
@@ -621,7 +624,7 @@ class Achievement:
                      host_only=True,
                      maxwidth=300,
                      position=(x, y + 2),
-                     transition='in_right',
+                     transition=Text.Transition.IN_RIGHT,
                      scale=0.85,
                      flatness=0.6,
                      h_attach=h_attach,
@@ -636,7 +639,7 @@ class Achievement:
                      host_only=True,
                      maxwidth=400,
                      position=(x, y - 14),
-                     transition='in_right',
+                     transition=Text.Transition.IN_RIGHT,
                      vr_depth=-5,
                      h_attach=h_attach,
                      v_attach=v_attach,
@@ -862,9 +865,9 @@ class Achievement:
                          subs=[('${A}', Lstr(resource='achievementText'))]),
                     position=(-120, 91 + y_offs),
                     front=True,
-                    v_attach='bottom',
+                    v_attach=Text.VAttach.BOTTOM,
                     vr_depth=base_vr_depth - 10,
-                    transition='in_bottom',
+                    transition=Text.Transition.IN_BOTTOM,
                     flatness=0.5,
                     transition_delay=in_time,
                     transition_out_delay=out_time,
@@ -877,8 +880,8 @@ class Achievement:
         objt = Text(self.display_name,
                     position=(-120, 50 + y_offs),
                     front=True,
-                    v_attach='bottom',
-                    transition='in_bottom',
+                    v_attach=Text.VAttach.BOTTOM,
+                    transition=Text.Transition.IN_BOTTOM,
                     vr_depth=base_vr_depth,
                     flatness=0.5,
                     transition_delay=in_time,
@@ -893,10 +896,10 @@ class Achievement:
         objt = Text(_ba.charstr(SpecialChar.TICKET),
                     position=(-120 - 170 + 5, 75 + y_offs - 20),
                     front=True,
-                    v_attach='bottom',
-                    h_align='center',
-                    v_align='center',
-                    transition='in_bottom',
+                    v_attach=Text.VAttach.BOTTOM,
+                    h_align=Text.HAlign.CENTER,
+                    v_align=Text.VAlign.CENTER,
+                    transition=Text.Transition.IN_BOTTOM,
                     vr_depth=base_vr_depth,
                     transition_delay=in_time,
                     transition_out_delay=out_time,
@@ -909,11 +912,11 @@ class Achievement:
 
         objt = Text('+' + str(self.get_award_ticket_value()),
                     position=(-120 - 180 + 5, 80 + y_offs - 20),
-                    v_attach='bottom',
+                    v_attach=Text.VAttach.BOTTOM,
                     front=True,
-                    h_align='center',
-                    v_align='center',
-                    transition='in_bottom',
+                    h_align=Text.HAlign.CENTER,
+                    v_align=Text.VAlign.CENTER,
+                    transition=Text.Transition.IN_BOTTOM,
                     vr_depth=base_vr_depth,
                     flatness=0.5,
                     shadow=1.0,
@@ -930,11 +933,11 @@ class Achievement:
         if _account.have_pro():
             objt = Text('x 2',
                         position=(-120 - 180 + 45, 80 + y_offs - 50),
-                        v_attach='bottom',
+                        v_attach=Text.VAttach.BOTTOM,
                         front=True,
-                        h_align='center',
-                        v_align='center',
-                        transition='in_bottom',
+                        h_align=Text.HAlign.CENTER,
+                        v_align=Text.VAlign.CENTER,
+                        transition=Text.Transition.IN_BOTTOM,
                         vr_depth=base_vr_depth,
                         flatness=0.5,
                         shadow=1.0,
@@ -950,8 +953,8 @@ class Achievement:
         objt = Text(self.description_complete,
                     position=(-120, 30 + y_offs),
                     front=True,
-                    v_attach='bottom',
-                    transition='in_bottom',
+                    v_attach=Text.VAttach.BOTTOM,
+                    transition=Text.Transition.IN_BOTTOM,
                     vr_depth=base_vr_depth - 10,
                     flatness=0.5,
                     transition_delay=in_time,

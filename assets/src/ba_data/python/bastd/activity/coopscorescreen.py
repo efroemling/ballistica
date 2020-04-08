@@ -140,8 +140,8 @@ class CoopScoreScreen(ba.Activity):
         self._score: Optional[int] = settings['score']
         assert isinstance(self._score, (int, type(None)))
 
-        self._fail_message: Optional[str] = settings['fail_message']
-        assert isinstance(self._fail_message, (str, type(None)))
+        self._fail_message: Optional[ba.Lstr] = settings['fail_message']
+        assert isinstance(self._fail_message, (ba.Lstr, type(None)))
 
         self._begin_time = ba.time()
 
@@ -295,7 +295,7 @@ class CoopScoreScreen(ba.Activity):
                 flash=True,
                 maxwidth=360,
                 scale=0.54,
-                h_align='center',
+                h_align=Text.HAlign.CENTER,
                 color=(0.5, 0.7, 0.5, 1),
                 position=(300, -235))
             ba.playsound(ba.getsound('error'))
@@ -555,20 +555,20 @@ class CoopScoreScreen(ba.Activity):
                                ]) if self._newly_complete else
                  ba.Lstr(value='${A}:\n',
                          subs=[('${A}', ba.Lstr(resource='nextLevelText'))]),
-                 transition='in_right',
+                 transition=Text.Transition.IN_RIGHT,
                  transition_delay=5.2,
                  flash=self._newly_complete,
                  scale=0.54,
-                 h_align='center',
+                 h_align=Text.HAlign.CENTER,
                  maxwidth=270,
                  color=(0.5, 0.7, 0.5, 1),
                  position=(270, -235)).autoretain()
             Text(ba.Lstr(translate=('coopLevelNames', self._next_level_name)),
-                 transition='in_right',
+                 transition=Text.Transition.IN_RIGHT,
                  transition_delay=5.2,
                  flash=self._newly_complete,
                  scale=0.7,
-                 h_align='center',
+                 h_align=Text.HAlign.CENTER,
                  maxwidth=205,
                  color=(0.5, 0.7, 0.5, 1),
                  position=(270, -255)).autoretain()
@@ -599,10 +599,10 @@ class CoopScoreScreen(ba.Activity):
                  jitter=1.0).autoretain()
         Text(pstr,
              maxwidth=300,
-             transition='fade_in',
+             transition=Text.Transition.FADE_IN,
              scale=0.7,
-             h_align='center',
-             v_align='center',
+             h_align=Text.HAlign.CENTER,
+             v_align=Text.VAlign.CENTER,
              color=(0.5, 0.7, 0.5, 1),
              position=(0, 230)).autoretain()
 
@@ -610,11 +610,11 @@ class CoopScoreScreen(ba.Activity):
         txt = Text(ba.Lstr(resource='waitingForHostText',
                            subs=[('${HOST}', adisp)]),
                    maxwidth=300,
-                   transition='fade_in',
+                   transition=Text.Transition.FADE_IN,
                    transition_delay=8.0,
                    scale=0.85,
-                   h_align='center',
-                   v_align='center',
+                   h_align=Text.HAlign.CENTER,
+                   v_align=Text.VAlign.CENTER,
                    color=(1, 1, 0, 1),
                    position=(0, -230)).autoretain()
         assert txt.node
@@ -636,19 +636,19 @@ class CoopScoreScreen(ba.Activity):
             [p['name'] for p in self._player_info])
 
         if self._show_friend_scores:
-            self._friends_loading_status = Text(ba.Lstr(
-                value='${A}...',
-                subs=[('${A}', ba.Lstr(resource='loadingText'))]),
-                                                position=(-405, 150 + 30),
-                                                color=(1, 1, 1, 0.4),
-                                                transition='fade_in',
-                                                scale=0.7,
-                                                transition_delay=2.0)
+            self._friends_loading_status = Text(
+                ba.Lstr(value='${A}...',
+                        subs=[('${A}', ba.Lstr(resource='loadingText'))]),
+                position=(-405, 150 + 30),
+                color=(1, 1, 1, 0.4),
+                transition=Text.Transition.FADE_IN,
+                scale=0.7,
+                transition_delay=2.0)
         self._score_loading_status = Text(ba.Lstr(
             value='${A}...', subs=[('${A}', ba.Lstr(resource='loadingText'))]),
                                           position=(280, 150 + 30),
                                           color=(1, 1, 1, 0.4),
-                                          transition='fade_in',
+                                          transition=Text.Transition.FADE_IN,
                                           scale=0.7,
                                           transition_delay=2.0)
 
@@ -732,8 +732,8 @@ class CoopScoreScreen(ba.Activity):
                        resource='worldsBestTimesText'),
                    maxwidth=210,
                    position=(ts_h_offs - 10, ts_height / 2 + 25 + v_offs + 20),
-                   transition='in_left',
-                   v_align='center',
+                   transition=Text.Transition.IN_LEFT,
+                   v_align=Text.VAlign.CENTER,
                    scale=1.2,
                    transition_delay=2.2).autoretain()
 
@@ -753,8 +753,8 @@ class CoopScoreScreen(ba.Activity):
                        maxwidth=210,
                        position=(ts_h_offs - 10,
                                  ts_height / 2 + 25 + v_offs + 20),
-                       transition='in_right',
-                       v_align='center',
+                       transition=Text.Transition.IN_RIGHT,
+                       v_align=Text.VAlign.CENTER,
                        scale=1.2,
                        transition_delay=1.8).autoretain()
             assert txt.node
@@ -769,8 +769,8 @@ class CoopScoreScreen(ba.Activity):
                      resource='yourBestTimesText'),
                  maxwidth=210,
                  position=(ts_h_offs - 10, ts_height / 2 + 25 + v_offs + 20),
-                 transition='in_right',
-                 v_align='center',
+                 transition=Text.Transition.IN_RIGHT,
+                 v_align=Text.VAlign.CENTER,
                  scale=1.2,
                  transition_delay=1.8).autoretain()
 
@@ -825,11 +825,11 @@ class CoopScoreScreen(ba.Activity):
                      position=(ts_h_offs + 20 + h_offs_extra,
                                v_offs_extra + ts_height / 2 + -ts_height *
                                (i + 1) / 10 + v_offs + 11.0),
-                     h_align='right',
-                     v_align='center',
+                     h_align=Text.HAlign.RIGHT,
+                     v_align=Text.VAlign.CENTER,
                      color=color0,
                      flash=flash,
-                     transition='in_right',
+                     transition=Text.Transition.IN_RIGHT,
                      transition_delay=tdelay1).autoretain()
 
                 Text(ba.Lstr(value=name_str),
@@ -837,11 +837,11 @@ class CoopScoreScreen(ba.Activity):
                                v_offs_extra + ts_height / 2 + -ts_height *
                                (i + 1) / 10 + v_offs_names + v_offs + 11.0),
                      maxwidth=80.0 + 100.0 * len(self._player_info),
-                     v_align='center',
+                     v_align=Text.VAlign.CENTER,
                      color=color1,
                      flash=flash,
                      scale=scale,
-                     transition='in_right',
+                     transition=Text.Transition.IN_RIGHT,
                      transition_delay=tdelay2).autoretain()
 
         # Show achievements for this level.
@@ -859,8 +859,8 @@ class CoopScoreScreen(ba.Activity):
                                ts_height / 2 + 25 + v_offs + 3),
                      maxwidth=210,
                      host_only=True,
-                     transition='in_right',
-                     v_align='center',
+                     transition=Text.Transition.IN_RIGHT,
+                     v_align=Text.VAlign.CENTER,
                      scale=1.2,
                      transition_delay=2.8).autoretain()
 
@@ -905,7 +905,7 @@ class CoopScoreScreen(ba.Activity):
                 maxwidth=330,
                 position=(-475, 150 + v_offs),
                 color=(1, 1, 1, 0.4),
-                transition='fade_in',
+                transition=Text.Transition.FADE_IN,
                 transition_delay=base_delay + 0.8,
                 scale=0.7)
             return
@@ -976,11 +976,11 @@ class CoopScoreScreen(ba.Activity):
                      position=(ts_h_offs + 20 + h_offs_extra,
                                v_offs_extra + ts_height / 2 + -ts_height *
                                (i + 1) / 10 + v_offs + 11.0),
-                     h_align='right',
-                     v_align='center',
+                     h_align=Text.HAlign.RIGHT,
+                     v_align=Text.VAlign.CENTER,
                      color=color0,
                      flash=flash,
-                     transition='in_right',
+                     transition=Text.Transition.IN_RIGHT,
                      transition_delay=tdelay1).autoretain()
             else:
                 if is_me:
@@ -992,10 +992,10 @@ class CoopScoreScreen(ba.Activity):
                            (i + 1) / 10 + v_offs_names + v_offs + 11.0),
                  color=color1,
                  maxwidth=160.0,
-                 v_align='center',
+                 v_align=Text.VAlign.CENTER,
                  flash=flash,
                  scale=scale,
-                 transition='in_right',
+                 transition=Text.Transition.IN_RIGHT,
                  transition_delay=tdelay2).autoretain()
 
     def _got_score_results(self, results: Optional[Dict[str, Any]]) -> None:
@@ -1020,7 +1020,7 @@ class CoopScoreScreen(ba.Activity):
                     ba.Lstr(resource='worldScoresUnavailableText'),
                     position=(230, 150 + v_offs),
                     color=(1, 1, 1, 0.4),
-                    transition='fade_in',
+                    transition=Text.Transition.FADE_IN,
                     transition_delay=base_delay + 0.3,
                     scale=0.7)
             else:
@@ -1071,7 +1071,7 @@ class CoopScoreScreen(ba.Activity):
                                    ts_height / 2 + 6 + v_offs),
                          color=(0.4, 0.4, 0.4, 1.0),
                          scale=0.7,
-                         transition='in_right',
+                         transition=Text.Transition.IN_RIGHT,
                          transition_delay=base_delay + 0.3).autoretain()
                 else:
                     v_offs += 20
@@ -1129,22 +1129,22 @@ class CoopScoreScreen(ba.Activity):
                              position=(ts_h_offs + 20 + h_offs_extra,
                                        ts_height / 2 + -ts_height *
                                        (i + 1) / 10 + v_offs + 11.0),
-                             h_align='right',
-                             v_align='center',
+                             h_align=Text.HAlign.RIGHT,
+                             v_align=Text.VAlign.CENTER,
                              color=color0,
                              flash=flash,
-                             transition='in_left',
+                             transition=Text.Transition.IN_LEFT,
                              transition_delay=tdelay1).autoretain()
                     Text(ba.Lstr(value=name_str),
                          position=(ts_h_offs + 35 + h_offs_extra,
                                    ts_height / 2 + -ts_height * (i + 1) / 10 +
                                    v_offs_names + v_offs + 11.0),
                          maxwidth=80.0 + 100.0 * len(self._player_info),
-                         v_align='center',
+                         v_align=Text.VAlign.CENTER,
                          color=color1,
                          flash=flash,
                          scale=scale,
-                         transition='in_left',
+                         transition=Text.Transition.IN_LEFT,
                          transition_delay=tdelay2).autoretain()
 
     def _show_tips(self) -> None:
@@ -1222,9 +1222,9 @@ class CoopScoreScreen(ba.Activity):
                     Text(ba.Lstr(resource='coopSelectWindow.prizesText'),
                          position=(-360, -70 + 77),
                          color=(1, 1, 1, 0.7),
-                         h_align='center',
-                         v_align='center',
-                         transition='fade_in',
+                         h_align=Text.HAlign.CENTER,
+                         v_align=Text.VAlign.CENTER,
+                         transition=Text.Transition.FADE_IN,
                          scale=1.0,
                          maxwidth=300,
                          transition_delay=2.0).autoretain()
@@ -1233,18 +1233,18 @@ class CoopScoreScreen(ba.Activity):
                         Text(rng,
                              position=(-410 + 10, vval),
                              color=(1, 1, 1, 0.7),
-                             h_align='right',
-                             v_align='center',
-                             transition='fade_in',
+                             h_align=Text.HAlign.RIGHT,
+                             v_align=Text.VAlign.CENTER,
+                             transition=Text.Transition.FADE_IN,
                              scale=0.6,
                              maxwidth=300,
                              transition_delay=2.0).autoretain()
                         Text(val,
                              position=(-390 + 10, vval),
                              color=(0.7, 0.7, 0.7, 1.0),
-                             h_align='left',
-                             v_align='center',
-                             transition='fade_in',
+                             h_align=Text.HAlign.LEFT,
+                             v_align=Text.VAlign.CENTER,
+                             transition=Text.Transition.FADE_IN,
                              scale=0.8,
                              maxwidth=300,
                              transition_delay=2.0).autoretain()
@@ -1266,9 +1266,9 @@ class CoopScoreScreen(ba.Activity):
                 Text(ba.Lstr(translate=('serverResponses', error)),
                      position=(0, -140),
                      color=(1, 1, 1, 0.7),
-                     h_align='center',
-                     v_align='center',
-                     transition='fade_in',
+                     h_align=Text.HAlign.CENTER,
+                     v_align=Text.VAlign.CENTER,
+                     transition=Text.Transition.FADE_IN,
                      scale=0.9,
                      maxwidth=400,
                      transition_delay=1.0).autoretain()
@@ -1288,9 +1288,9 @@ class CoopScoreScreen(ba.Activity):
                              subs=[('${A}', ba.Lstr(resource='rankText'))]),
                      position=(0, 36),
                      maxwidth=300,
-                     transition='fade_in',
-                     h_align='center',
-                     v_align='center',
+                     transition=Text.Transition.FADE_IN,
+                     h_align=Text.HAlign.CENTER,
+                     v_align=Text.VAlign.CENTER,
                      transition_delay=0).autoretain()
                 if best_player_rank is not None:
                     Text(ba.Lstr(resource='currentStandingText',
@@ -1298,8 +1298,8 @@ class CoopScoreScreen(ba.Activity):
                                  subs=[('${RANK}', str(best_player_rank))]),
                          position=(0, -155),
                          color=(1, 1, 1, 0.7),
-                         h_align='center',
-                         transition='fade_in',
+                         h_align=Text.HAlign.CENTER,
+                         transition=Text.Transition.FADE_IN,
                          scale=0.7,
                          transition_delay=1.0).autoretain()
         else:
@@ -1360,9 +1360,9 @@ class CoopScoreScreen(ba.Activity):
                     Text(score + ' =',
                          position=(xval, -64 + offs_y),
                          color=(0.6, 0.6, 0.6, 0.6),
-                         h_align='center',
-                         v_align='center',
-                         transition='fade_in',
+                         h_align=Text.HAlign.CENTER,
+                         v_align=Text.VAlign.CENTER,
+                         transition=Text.Transition.FADE_IN,
                          scale=0.4,
                          transition_delay=1.0).autoretain()
                     stx = xval + 20
@@ -1398,8 +1398,8 @@ class CoopScoreScreen(ba.Activity):
                           ]),
                      position=(0, -155 if self._newly_complete else -145),
                      color=(1, 1, 1, 0.7),
-                     h_align='center',
-                     transition='fade_in',
+                     h_align=Text.HAlign.CENTER,
+                     transition=Text.Transition.FADE_IN,
                      scale=0.55,
                      transition_delay=1.0).autoretain()
 
@@ -1418,8 +1418,9 @@ class CoopScoreScreen(ba.Activity):
                      position=(0, -165),
                      color=(1, 1, 1, 0.7),
                      flash=new_best,
-                     h_align='center',
-                     transition='in_right' if new_best else 'fade_in',
+                     h_align=Text.HAlign.CENTER,
+                     transition=(Text.Transition.IN_RIGHT
+                                 if new_best else Text.Transition.FADE_IN),
                      scale=0.5,
                      transition_delay=1.0).autoretain()
 
@@ -1427,9 +1428,9 @@ class CoopScoreScreen(ba.Activity):
                          subs=[('${A}', ba.Lstr(resource='ratingText'))]),
                  position=(0, 36),
                  maxwidth=300,
-                 transition='fade_in',
-                 h_align='center',
-                 v_align='center',
+                 transition=Text.Transition.FADE_IN,
+                 h_align=Text.HAlign.CENTER,
+                 v_align=Text.VAlign.CENTER,
                  transition_delay=0).autoretain()
 
         ba.timer(0.35, ba.Call(ba.playsound, self._score_display_sound))
@@ -1449,11 +1450,11 @@ class CoopScoreScreen(ba.Activity):
                  jitter=1.0).autoretain()
         if self._fail_message is not None:
             Text(self._fail_message,
-                 h_align='center',
+                 h_align=Text.HAlign.CENTER,
                  position=(0, -130),
                  maxwidth=300,
                  color=(1, 1, 1, 0.5),
-                 transition='fade_in',
+                 transition=Text.Transition.FADE_IN,
                  transition_delay=1.0).autoretain()
         ba.timer(0.35, ba.Call(ba.playsound, self._score_display_sound))
 
@@ -1480,8 +1481,8 @@ class CoopScoreScreen(ba.Activity):
                           subs=[('${A}', ba.Lstr(resource='finalTimeText'))]),
              maxwidth=300,
              position=(0, 200),
-             transition='fade_in',
-             h_align='center',
-             v_align='center',
+             transition=Text.Transition.FADE_IN,
+             h_align=Text.HAlign.CENTER,
+             v_align=Text.VAlign.CENTER,
              transition_delay=0).autoretain()
         ba.timer(0.35, ba.Call(ba.playsound, self._score_display_sound))

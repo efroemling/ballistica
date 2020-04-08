@@ -59,14 +59,14 @@ class TeamsScoreScreenActivity(ScoreScreenActivity):
                           ])
             Text(txt,
                  maxwidth=900,
-                 h_attach='center',
-                 v_attach='bottom',
-                 h_align='center',
-                 v_align='center',
+                 h_attach=Text.HAttach.CENTER,
+                 v_attach=Text.VAttach.BOTTOM,
+                 h_align=Text.HAlign.CENTER,
+                 v_align=Text.VAlign.CENTER,
                  position=(0, 53),
                  flash=False,
                  color=(0.3, 0.3, 0.35, 1.0),
-                 transition='fade_in',
+                 transition=Text.Transition.FADE_IN,
                  transition_delay=2.0).autoretain()
 
     def show_player_scores(self,
@@ -150,7 +150,7 @@ class TeamsScoreScreenActivity(ScoreScreenActivity):
         def _txt(x_offs: float,
                  y_offs: float,
                  text: ba.Lstr,
-                 h_align: str = 'right',
+                 h_align: Text.HAlign = Text.HAlign.RIGHT,
                  extrascale: float = 1.0,
                  maxwidth: Optional[float] = 120.0) -> None:
             Text(text,
@@ -158,18 +158,23 @@ class TeamsScoreScreenActivity(ScoreScreenActivity):
                  position=(ts_h_offs + x_offs * scale,
                            ts_v_offset + (v_offs + y_offs + 4.0) * scale),
                  h_align=h_align,
-                 v_align='center',
+                 v_align=Text.VAlign.CENTER,
                  scale=0.8 * scale * extrascale,
                  maxwidth=maxwidth,
-                 transition='in_left',
+                 transition=Text.Transition.IN_LEFT,
                  transition_delay=tdelay).autoretain()
 
         session = self.session
         assert isinstance(session, ba.TeamBaseSession)
         tval = ba.Lstr(resource='gameLeadersText',
                        subs=[('${COUNT}', str(session.get_game_number()))])
-        _txt(180, 43, tval, h_align='center', extrascale=1.4, maxwidth=None)
-        _txt(-15, 4, ba.Lstr(resource='playerText'), h_align='left')
+        _txt(180,
+             43,
+             tval,
+             h_align=Text.HAlign.CENTER,
+             extrascale=1.4,
+             maxwidth=None)
+        _txt(-15, 4, ba.Lstr(resource='playerText'), h_align=Text.HAlign.LEFT)
         _txt(180, 4, ba.Lstr(resource='killsText'))
         _txt(280, 4, ba.Lstr(resource='deathsText'), maxwidth=100)
 
@@ -198,10 +203,10 @@ class TeamsScoreScreenActivity(ScoreScreenActivity):
                  scale=scale,
                  color=(1.0, 0.9, 0.5, 1.0) if highlight else
                  (0.5, 0.5, 0.6, 0.5),
-                 h_align='right',
-                 v_align='center',
+                 h_align=Text.HAlign.RIGHT,
+                 v_align=Text.VAlign.CENTER,
                  maxwidth=maxwidth,
-                 transition='in_left',
+                 transition=Text.Transition.IN_LEFT,
                  transition_delay=tdelay + delay2).autoretain()
 
         for playerrec in player_records:
@@ -218,10 +223,10 @@ class TeamsScoreScreenActivity(ScoreScreenActivity):
                  scale=0.75 * scale,
                  position=(ts_h_offs + 10.0 * scale,
                            ts_v_offset + (v_offs + 15) * scale),
-                 h_align='left',
-                 v_align='center',
+                 h_align=Text.HAlign.LEFT,
+                 v_align=Text.VAlign.CENTER,
                  color=ba.safecolor(playerrec.team.color + (1, )),
-                 transition='in_left',
+                 transition=Text.Transition.IN_LEFT,
                  transition_delay=tdelay).autoretain()
             _scoretxt(str(playerrec.accum_kill_count), 180,
                       playerrec.accum_kill_count == topkillcount, 100)

@@ -97,8 +97,8 @@ class FreeForAllVictoryScoreScreenActivity(TeamsScoreScreenActivity):
                         scale=scale * extrascale,
                         color=((1.0, 0.7, 0.3, 1.0) if highlight else
                                (0.7, 0.7, 0.7, 0.7)),
-                        h_align='right',
-                        transition='in_left',
+                        h_align=Text.HAlign.RIGHT,
+                        transition=Text.Transition.IN_LEFT,
                         transition_delay=tdelay + delay,
                         flash=flash).autoretain()
 
@@ -115,9 +115,9 @@ class FreeForAllVictoryScoreScreenActivity(TeamsScoreScreenActivity):
                      scale=1.05 * scale,
                      position=(ts_h_offs - 0.0 * scale,
                                y_base + (v_offs + 50.0) * scale),
-                     h_align='center',
+                     h_align=Text.HAlign.CENTER,
                      color=(0.5, 0.5, 0.5, 0.5),
-                     transition='in_left',
+                     transition=Text.Transition.IN_LEFT,
                      transition_delay=tdelay).autoretain()
 
         v_offs -= 25
@@ -163,10 +163,10 @@ class FreeForAllVictoryScoreScreenActivity(TeamsScoreScreenActivity):
                        scale=0.75 * scale,
                        position=(ts_h_offs - 50.0 * scale,
                                  y_base + (v_offs + 15.0) * scale),
-                       h_align='left',
-                       v_align='center',
+                       h_align=Text.HAlign.LEFT,
+                       v_align=Text.VAlign.CENTER,
                        color=ba.safecolor(player.team.color + (1, )),
-                       transition='in_left',
+                       transition=Text.Transition.IN_LEFT,
                        transition_delay=tdelay).autoretain()
             ba.timer(
                 tdelay + delay2,
@@ -187,9 +187,9 @@ class FreeForAllVictoryScoreScreenActivity(TeamsScoreScreenActivity):
                            scale=0.55 * scale,
                            position=(ts_h_offs - 95.0 * scale,
                                      y_base + (v_offs + 8.0) * scale),
-                           h_align='right',
+                           h_align=Text.HAlign.RIGHT,
                            color=(0.6, 0.6, 0.6, 0.6),
-                           transition='in_left',
+                           transition=Text.Transition.IN_LEFT,
                            transition_delay=tdelay).autoretain()
             ba.timer(
                 tdelay + delay3,

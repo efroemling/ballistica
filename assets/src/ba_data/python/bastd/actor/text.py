@@ -21,29 +21,62 @@
 """Defines Actor(s)."""
 
 from __future__ import annotations
+from enum import Enum
 
 from typing import TYPE_CHECKING
 
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Union, Tuple, Sequence
+    from typing import Any, Union, Tuple, Sequence, Optional
 
 
 class Text(ba.Actor):
-    """ Text with some tricks """
+    """Text with some tricks."""
+
+    class Transition(Enum):
+        """Transition types for text."""
+        FADE_IN = 'fade_in'
+        IN_RIGHT = 'in_right'
+        IN_LEFT = 'in_left'
+        IN_BOTTOM = 'in_bottom'
+        IN_BOTTOM_SLOW = 'in_bottom_slow'
+        IN_TOP_SLOW = 'in_top_slow'
+
+    class HAlign(Enum):
+        """Horizontal alignment type."""
+        LEFT = 'left'
+        CENTER = 'center'
+        RIGHT = 'right'
+
+    class VAlign(Enum):
+        """Vertical alignment type."""
+        NONE = 'none'
+        CENTER = 'center'
+
+    class HAttach(Enum):
+        """Horizontal attach type."""
+        LEFT = 'left'
+        CENTER = 'center'
+        RIGHT = 'right'
+
+    class VAttach(Enum):
+        """Vertical attach type."""
+        BOTTOM = 'bottom'
+        CENTER = 'center'
+        TOP = 'top'
 
     def __init__(self,
                  text: Union[str, ba.Lstr],
                  position: Tuple[float, float] = (0.0, 0.0),
-                 h_align: str = 'left',
-                 v_align: str = 'none',
+                 h_align: HAlign = HAlign.LEFT,
+                 v_align: VAlign = VAlign.NONE,
                  color: Sequence[float] = (1.0, 1.0, 1.0, 1.0),
-                 transition: str = None,
+                 transition: Optional[Transition] = None,
                  transition_delay: float = 0.0,
                  flash: bool = False,
-                 v_attach: str = 'center',
-                 h_attach: str = 'center',
+                 v_attach: VAttach = VAttach.CENTER,
+                 h_attach: HAttach = HAttach.CENTER,
                  scale: float = 1.0,
                  transition_out_delay: float = None,
                  maxwidth: float = None,
@@ -63,11 +96,11 @@ class Text(ba.Actor):
                 'text': text,
                 'color': color,
                 'position': position,
-                'h_align': h_align,
+                'h_align': h_align.value,
                 'vr_depth': vr_depth,
-                'v_align': v_align,
-                'h_attach': h_attach,
-                'v_attach': v_attach,
+                'v_align': v_align.value,
+                'h_attach': h_attach.value,
+                'v_attach': v_attach.value,
                 'shadow': shadow,
                 'flatness': flatness,
                 'maxwidth': 0.0 if maxwidth is None else maxwidth,
@@ -76,7 +109,7 @@ class Text(ba.Actor):
                 'scale': scale
             })
 
-        if transition == 'fade_in':
+        if transition is self.Transition.FADE_IN:
             if flash:
                 raise Exception("fixme: flash and fade-in"
                                 " currently cant both be on")
@@ -127,18 +160,19 @@ class Text(ba.Actor):
         cmb = self.position_combine = ba.newnode('combine',
                                                  owner=self.node,
                                                  attrs={'size': 2})
-        if transition == 'in_right':
+
+        if transition is self.Transition.IN_RIGHT:
             keys = {
-                transition_delay: position[0] + 1.3,
+                transition_delay: position[0] + 1300,
                 transition_delay + 0.2: position[0]
             }
             o_keys = {transition_delay: 0.0, transition_delay + 0.05: 1.0}
             ba.animate(cmb, 'input0', keys)
             cmb.input1 = position[1]
             ba.animate(self.node, 'opacity', o_keys)
-        elif transition == 'in_left':
+        elif transition is self.Transition.IN_LEFT:
             keys = {
-                transition_delay: position[0] - 1.3,
+                transition_delay: position[0] - 1300,
                 transition_delay + 0.2: position[0]
             }
             o_keys = {transition_delay: 0.0, transition_delay + 0.05: 1.0}
@@ -151,7 +185,7 @@ class Text(ba.Actor):
             ba.animate(cmb, 'input0', keys)
             cmb.input1 = position[1]
             ba.animate(self.node, 'opacity', o_keys)
-        elif transition == 'in_bottom_slow':
+        elif transition is self.Transition.IN_BOTTOM_SLOW:
             keys = {
                 transition_delay: -100.0,
                 transition_delay + 1.0: position[1]
@@ -160,7 +194,7 @@ class Text(ba.Actor):
             cmb.input0 = position[0]
             ba.animate(cmb, 'input1', keys)
             ba.animate(self.node, 'opacity', o_keys)
-        elif transition == 'in_bottom':
+        elif transition is self.Transition.IN_BOTTOM:
             keys = {
                 transition_delay: -100.0,
                 transition_delay + 0.2: position[1]
@@ -174,18 +208,21 @@ class Text(ba.Actor):
             cmb.input0 = position[0]
             ba.animate(cmb, 'input1', keys)
             ba.animate(self.node, 'opacity', o_keys)
-        elif transition == 'inTopSlow':
+        elif transition is self.Transition.IN_TOP_SLOW:
             keys = {transition_delay: 0.4, transition_delay + 3.5: position[1]}
             o_keys = {transition_delay: 0.0, transition_delay + 1.0: 1.0}
             cmb.input0 = position[0]
             ba.animate(cmb, 'input1', keys)
             ba.animate(self.node, 'opacity', o_keys)
         else:
+            if (transition is not self.Transition.FADE_IN
+                    and transition is not None):
+                ba.print_error(f'Invalid transition: "{transition}"')
             cmb.input0 = position[0]
             cmb.input1 = position[1]
         cmb.connectattr('output', self.node, 'position')
 
-        # if we're transitioning out, die at the end of it
+        # If we're transitioning out, die at the end of it.
         if transition_out_delay is not None:
             ba.timer(transition_delay + transition_out_delay + 1.0,
                      ba.WeakCall(self.handlemessage, ba.DieMessage()))

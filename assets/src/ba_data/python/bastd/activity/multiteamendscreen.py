@@ -132,13 +132,13 @@ class TeamSeriesVictoryScoreScreenActivity(TeamsScoreScreenActivity):
                           ])
 
         Text(txt,
-             v_align='center',
+             v_align=Text.VAlign.CENTER,
              maxwidth=300,
              color=(0.5, 0.5, 0.5, 1.0),
              position=(0, 220),
              scale=1.2,
-             transition='inTopSlow',
-             h_align='center',
+             transition=Text.Transition.IN_TOP_SLOW,
+             h_align=Text.HAlign.CENTER,
              transition_delay=t_incr * 4).autoretain()
 
         win_score = (session.get_series_length() - 1) / 2 + 1
@@ -153,11 +153,11 @@ class TeamSeriesVictoryScoreScreenActivity(TeamsScoreScreenActivity):
                                ('${LOSECOUNT}', str(lose_score))]),
                  color=(0.5, 0.5, 0.5, 1.0),
                  maxwidth=160,
-                 v_align='center',
+                 v_align=Text.VAlign.CENTER,
                  position=(0, -215),
                  scale=1.8,
-                 transition='in_left',
-                 h_align='center',
+                 transition=Text.Transition.IN_LEFT,
+                 h_align=Text.HAlign.CENTER,
                  transition_delay=4.8 + t_incr * 4).autoretain()
 
         if self._is_ffa:
@@ -179,11 +179,11 @@ class TeamSeriesVictoryScoreScreenActivity(TeamsScoreScreenActivity):
             if mvp is not None:
                 Text(ba.Lstr(resource='mostValuablePlayerText'),
                      color=(0.5, 0.5, 0.5, 1.0),
-                     v_align='center',
+                     v_align=Text.VAlign.CENTER,
                      maxwidth=300,
                      position=(180, ts_height / 2 + 15),
-                     transition='in_left',
-                     h_align='left',
+                     transition=Text.Transition.IN_LEFT,
+                     h_align=Text.HAlign.LEFT,
                      transition_delay=tval).autoretain()
                 tval += 4 * t_incr
 
@@ -194,12 +194,12 @@ class TeamSeriesVictoryScoreScreenActivity(TeamsScoreScreenActivity):
                       transition_delay=tval).autoretain()
                 Text(ba.Lstr(value=mvp_name),
                      position=(280, ts_height / 2 - 55 + 15 - 5),
-                     h_align='left',
-                     v_align='center',
+                     h_align=Text.HAlign.LEFT,
+                     v_align=Text.VAlign.CENTER,
                      maxwidth=170,
                      scale=1.3,
                      color=ba.safecolor(mvp.team.color + (1, )),
-                     transition='in_left',
+                     transition=Text.Transition.IN_LEFT,
                      transition_delay=tval).autoretain()
                 tval += 4 * t_incr
 
@@ -213,11 +213,11 @@ class TeamSeriesVictoryScoreScreenActivity(TeamsScoreScreenActivity):
         if mvp is not None:
             Text(ba.Lstr(resource='mostViolentPlayerText'),
                  color=(0.5, 0.5, 0.5, 1.0),
-                 v_align='center',
+                 v_align=Text.VAlign.CENTER,
                  maxwidth=300,
                  position=(180, ts_height / 2 - 150 + v_extra + 15),
-                 transition='in_left',
-                 h_align='left',
+                 transition=Text.Transition.IN_LEFT,
+                 h_align=Text.HAlign.LEFT,
                  transition_delay=tval).autoretain()
             Text(ba.Lstr(value='(${A})',
                          subs=[('${A}',
@@ -227,8 +227,8 @@ class TeamSeriesVictoryScoreScreenActivity(TeamsScoreScreenActivity):
                  position=(260, ts_height / 2 - 150 - 15 + v_extra),
                  color=(0.3, 0.3, 0.3, 1.0),
                  scale=0.6,
-                 h_align='left',
-                 transition='in_left',
+                 h_align=Text.HAlign.LEFT,
+                 transition=Text.Transition.IN_LEFT,
                  transition_delay=tval).autoretain()
             tval += 4 * t_incr
 
@@ -239,11 +239,11 @@ class TeamSeriesVictoryScoreScreenActivity(TeamsScoreScreenActivity):
                   transition_delay=tval).autoretain()
             Text(ba.Lstr(value=mvp_name),
                  position=(270, ts_height / 2 - 150 - 30 - 36 + v_extra + 15),
-                 h_align='left',
-                 v_align='center',
+                 h_align=Text.HAlign.LEFT,
+                 v_align=Text.VAlign.CENTER,
                  maxwidth=180,
                  color=ba.safecolor(mvp.team.color + (1, )),
-                 transition='in_left',
+                 transition=Text.Transition.IN_LEFT,
                  transition_delay=tval).autoretain()
             tval += 4 * t_incr
 
@@ -258,11 +258,11 @@ class TeamSeriesVictoryScoreScreenActivity(TeamsScoreScreenActivity):
         if mkp is not None:
             Text(ba.Lstr(resource='mostViolatedPlayerText'),
                  color=(0.5, 0.5, 0.5, 1.0),
-                 v_align='center',
+                 v_align=Text.VAlign.CENTER,
                  maxwidth=300,
                  position=(180, ts_height / 2 - 300 + v_extra + 15),
-                 transition='in_left',
-                 h_align='left',
+                 transition=Text.Transition.IN_LEFT,
+                 h_align=Text.HAlign.LEFT,
                  transition_delay=tval).autoretain()
             Text(ba.Lstr(value='(${A})',
                          subs=[('${A}',
@@ -270,10 +270,10 @@ class TeamSeriesVictoryScoreScreenActivity(TeamsScoreScreenActivity):
                                         subs=[('${COUNT}', str(most_killed))]))
                                ]),
                  position=(260, ts_height / 2 - 300 - 15 + v_extra),
-                 h_align='left',
+                 h_align=Text.HAlign.LEFT,
                  scale=0.6,
                  color=(0.3, 0.3, 0.3, 1.0),
-                 transition='in_left',
+                 transition=Text.Transition.IN_LEFT,
                  transition_delay=tval).autoretain()
             tval += 4 * t_incr
             Image(mkp.get_icon(),
@@ -283,11 +283,11 @@ class TeamSeriesVictoryScoreScreenActivity(TeamsScoreScreenActivity):
                   transition_delay=tval).autoretain()
             Text(ba.Lstr(value=mkp_name),
                  position=(270, ts_height / 2 - 300 - 30 - 36 + v_extra + 15),
-                 h_align='left',
-                 v_align='center',
+                 h_align=Text.HAlign.LEFT,
+                 v_align=Text.VAlign.CENTER,
                  color=ba.safecolor(mkp.team.color + (1, )),
                  maxwidth=180,
-                 transition='in_left',
+                 transition=Text.Transition.IN_LEFT,
                  transition_delay=tval).autoretain()
             tval += 4 * t_incr
 
@@ -296,7 +296,7 @@ class TeamSeriesVictoryScoreScreenActivity(TeamsScoreScreenActivity):
         Text(ba.Lstr(resource='finalScoresText'),
              color=(0.5, 0.5, 0.5, 1.0),
              position=(ts_h_offs, ts_height / 2),
-             transition='in_right',
+             transition=Text.Transition.IN_RIGHT,
              transition_delay=tdelay).autoretain()
         tdelay += 4 * t_incr
 
@@ -309,8 +309,8 @@ class TeamSeriesVictoryScoreScreenActivity(TeamsScoreScreenActivity):
                  if self._is_ffa else str(prec.score),
                  color=(0.5, 0.5, 0.5, 1.0),
                  position=(ts_h_offs + 230, ts_height / 2 + v_offs),
-                 h_align='right',
-                 transition='in_right',
+                 h_align=Text.HAlign.RIGHT,
+                 transition=Text.Transition.IN_RIGHT,
                  transition_delay=tdelay).autoretain()
             tdelay -= 4 * t_incr
 
@@ -321,11 +321,11 @@ class TeamSeriesVictoryScoreScreenActivity(TeamsScoreScreenActivity):
                   transition_delay=tdelay).autoretain()
             Text(ba.Lstr(value=name),
                  position=(ts_h_offs - 50, ts_height / 2 + v_offs + 15),
-                 h_align='left',
-                 v_align='center',
+                 h_align=Text.HAlign.LEFT,
+                 v_align=Text.VAlign.CENTER,
                  maxwidth=180,
                  color=ba.safecolor(prec.team.color + (1, )),
-                 transition='in_right',
+                 transition=Text.Transition.IN_RIGHT,
                  transition_delay=tdelay).autoretain()
 
         ba.timer(15.0, ba.WeakCall(self._show_tips))
