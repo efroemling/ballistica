@@ -135,12 +135,17 @@ class FootballTeamGame(ba.TeamGameActivity):
 
     def get_instance_description(self) -> Union[str, Sequence]:
         touchdowns = self.settings['Score to Win'] / 7
+        # NOTE: if use just touchdowns = self.settings['Score to Win'] // 7
+        # and we will need to score, for example, 27 points,
+        # we will be required to score 3 (not 4) goals ..
+        touchdowns = math.ceil(touchdowns)
         if touchdowns > 1:
             return 'Score ${ARG1} touchdowns.', touchdowns
         return 'Score a touchdown.'
 
     def get_instance_scoreboard_description(self) -> Union[str, Sequence]:
         touchdowns = self.settings['Score to Win'] / 7
+        touchdowns = math.ceil(touchdowns)
         if touchdowns > 1:
             return 'score ${ARG1} touchdowns', touchdowns
         return 'score a touchdown'
