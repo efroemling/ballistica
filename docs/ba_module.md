@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-04-07 for Ballistica version 1.5.0 build 20001</em></h4>
+<h4><em>last updated on 2020-04-08 for Ballistica version 1.5.0 build 20001</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -535,7 +535,7 @@ is a convenient way to access this same functionality.</p>
 <h2><strong><a name="class_ba_Actor">ba.Actor</a></strong></h3>
 <p><em>&lt;top level class&gt;</em>
 </p>
-<p>High level logical entities in a game/activity.</p>
+<p>High level logical entities in a <a href="#class_ba_Activity">ba.Activity</a>.</p>
 
 <p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a></p>
 
