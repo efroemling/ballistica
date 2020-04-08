@@ -478,6 +478,7 @@ class OnslaughtGame(ba.CoopGameActivity):
         elif self._preset in ['endless', 'endless_tournament']:
             self._have_tnt = True
             self._excludepowerups = []
+            self._waves = []
 
         else:
             raise Exception("Invalid preset: " + str(self._preset))
