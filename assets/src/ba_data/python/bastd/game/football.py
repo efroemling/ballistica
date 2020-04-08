@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import random
 from typing import TYPE_CHECKING
+import math
 
 import ba
 from bastd.actor import bomb as stdbomb
@@ -34,8 +35,6 @@ from bastd.actor import flag as stdflag
 from bastd.actor import playerspaz
 from bastd.actor import spazbot
 from bastd.actor.scoreboard import Scoreboard
-
-import math
 
 if TYPE_CHECKING:
     from typing import (Any, List, Tuple, Type, Dict, Sequence, Optional,
