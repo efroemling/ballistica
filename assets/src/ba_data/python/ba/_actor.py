@@ -194,7 +194,9 @@ class Actor:
         messages after the activity has ended, which should be explicitly
         avoided.
         """
-        assert __debug__, "This should only be called in __debug__ mode."
+        if not __debug__:
+            _error.print_error('This should only be called in __debug__ mode.',
+                               once=True)
         if not getattr(self, '_root_actor_init_called', False):
             _error.print_error('Root Actor __init__() not called.')
         if self.is_expired():
