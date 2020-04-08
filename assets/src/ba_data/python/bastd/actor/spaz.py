@@ -625,7 +625,7 @@ class Spaz(ba.Actor):
             else:
                 # Note: curse-death-time takes milliseconds.
                 tval = ba.time()
-                assert isinstance(tval, int)
+                assert isinstance(tval, (float, int))
                 self.node.curse_death_time = int(1000.0 *
                                                  (tval + self.curse_time))
                 ba.timer(5.0, ba.WeakCall(self.curse_explode))
