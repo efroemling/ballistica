@@ -340,12 +340,14 @@ class FootballCoopGame(ba.CoopGameActivity):
 
     def get_instance_description(self) -> Union[str, Sequence]:
         touchdowns = self._score_to_win / 7
+        touchdowns = math.ceil(touchdowns)
         if touchdowns > 1:
             return 'Score ${ARG1} touchdowns.', touchdowns
         return 'Score a touchdown.'
 
     def get_instance_scoreboard_description(self) -> Union[str, Sequence]:
         touchdowns = self._score_to_win / 7
+        touchdowns = math.ceil(touchdowns)
         if touchdowns > 1:
             return 'score ${ARG1} touchdowns', touchdowns
         return 'score a touchdown'
