@@ -69,7 +69,7 @@ from ba._appdelegate import AppDelegate
 from ba._apputils import is_browser_likely_available
 from ba._campaign import Campaign
 from ba._gameutils import (animate, animate_array, show_damage_count,
-                           sharedobj, timestring, cameraflash)
+                           sharedobj, timestring, cameraflash, distance)
 from ba._general import WeakCall, Call
 from ba._level import Level
 from ba._lobby import Lobby, Chooser
