@@ -596,7 +596,6 @@ class Achievement:
                     # Show 'hard-mode-only' only over incomplete achievements
                     # when that's the case.
                     if hmo:
-                        print('DOING HMO WITH STYLE', style)
                         txtactor = Text(
                             Lstr(resource='difficultyHardOnlyText'),
                             host_only=True,
@@ -614,7 +613,6 @@ class Achievement:
                             color=(1, 1, 0.6, 1),
                             transition_delay=delay + 0.05,
                             transition_out_delay=None).autoretain()
-                        print('DID HMO')
                         assert txtactor.node
                         txtactor.node.rotate = 10
                         objs.append(txtactor)
