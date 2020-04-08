@@ -221,7 +221,8 @@ class PlayerSpaz(Spaz):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-nested-blocks
-        self._handlemessage_sanity_check()
+        if __debug__:
+            self._handlemessage_sanity_check()
 
         # Keep track of if we're being held and by who most recently.
         if isinstance(msg, ba.PickedUpMessage):

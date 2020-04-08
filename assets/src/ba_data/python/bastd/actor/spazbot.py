@@ -513,7 +513,8 @@ class SpazBot(basespaz.Spaz):
 
     def handlemessage(self, msg: Any) -> Any:
         # pylint: disable=too-many-branches
-        self._handlemessage_sanity_check()
+        if __debug__:
+            self._handlemessage_sanity_check()
 
         # Keep track of if we're being held and by who most recently.
         if isinstance(msg, ba.PickedUpMessage):

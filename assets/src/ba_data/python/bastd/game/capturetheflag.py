@@ -63,7 +63,8 @@ class CTFFlag(stdflag.Flag):
         self.touch_return_time = float(
             self.activity.settings['Flag Touch Return Time'])
 
-    def get_team(self) -> ba.Team:
+    @property
+    def team(self) -> ba.Team:
         """return the flag's team."""
         return self._team
 
@@ -224,7 +225,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity):
         flag = ba.get_collision_info("opposing_node").getdelegate()
         assert isinstance(flag, CTFFlag)
 
-        if flag.get_team() is team:
+        if flag.team is team:
             team.gamedata['home_flag_at_base'] = True
 
             # If the enemy flag is already here, score!
@@ -331,7 +332,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity):
         except Exception:
             return  # Can happen when we kill a flag.
 
-        if flag.get_team() is team:
+        if flag.team is team:
 
             # Check times here to prevent too much flashing.
             if ('last_flag_leave_time' not in team.gamedata
@@ -487,7 +488,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity):
         elif isinstance(msg, stdflag.FlagDeathMessage):
             assert isinstance(msg.flag, CTFFlag)
             ba.timer(0.1,
-                     ba.Call(self._spawn_flag_for_team, msg.flag.get_team()))
+                     ba.Call(self._spawn_flag_for_team, msg.flag.team))
         elif isinstance(msg, stdflag.FlagPickedUpMessage):
             # Store the last player to hold the flag for scoring purposes.
             assert isinstance(msg.flag, CTFFlag)

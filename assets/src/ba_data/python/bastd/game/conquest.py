@@ -228,10 +228,10 @@ class ConquestGame(ba.TeamGameActivity):
         except Exception:
             return  # Player may have left and his body hit the flag.
 
-        if flag.get_team() is not player.get_team():
-            flag.set_team(player.get_team())
-            flag.light.color = player.get_team().color
-            flag.node.color = player.get_team().color
+        if flag.team is not player.team:
+            flag.set_team(player.team)
+            flag.light.color = player.team.color
+            flag.node.color = player.team.color
             self.stats.player_scored(player, 10, screenmessage=False)
             ba.playsound(self._swipsound)
             self._flash_flag(flag)
