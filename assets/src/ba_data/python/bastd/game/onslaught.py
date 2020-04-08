@@ -105,7 +105,7 @@ class OnslaughtGame(ba.CoopGameActivity):
         self._can_end_wave = True
         self._score = 0
         self._time_bonus = 0
-        self._spawn_info_text: Optional[ba.Actor] = None
+        self._spawn_info_text: Optional[ba.NodeActor] = None
         self._dingsound = ba.getsound('dingSmall')
         self._dingsoundhigh = ba.getsound('dingSmallHigh')
         self._have_tnt = False
@@ -115,9 +115,9 @@ class OnslaughtGame(ba.CoopGameActivity):
         self._bots: Optional[spazbot.BotSet] = None
         self._powerup_drop_timer: Optional[ba.Timer] = None
         self._time_bonus_timer: Optional[ba.Timer] = None
-        self._time_bonus_text: Optional[ba.Actor] = None
+        self._time_bonus_text: Optional[ba.NodeActor] = None
         self._flawless_bonus: Optional[int] = None
-        self._wave_text: Optional[ba.Actor] = None
+        self._wave_text: Optional[ba.NodeActor] = None
         self._wave_update_timer: Optional[ba.Timer] = None
         self._throw_off_kills = 0
         self._land_mine_kills = 0
@@ -873,7 +873,7 @@ class OnslaughtGame(ba.CoopGameActivity):
         if self._game_over:
             return
 
-        # respawn applicable players
+        # Respawn applicable players.
         if self._wave > 1 and not self.is_waiting_for_continue():
             for player in self.players:
                 if (not player.is_alive()

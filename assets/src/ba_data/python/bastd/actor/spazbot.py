@@ -190,7 +190,7 @@ class SpazBot(basespaz.Spaz):
         closest_dist = None
         closest_vel = None
         closest = None
-        assert self._player_pts
+        assert self._player_pts is not None
         for plpt, plvel in self._player_pts:
             dist = (plpt - botpt).length()
 
@@ -983,6 +983,7 @@ class BotSet:
         for player in ba.getactivity().players:
             try:
                 if player.is_alive():
+                    assert isinstance(player.actor, basespaz.Spaz)
                     assert player.actor is not None and player.actor.node
                     player_pts.append((ba.Vec3(player.actor.node.position),
                                        ba.Vec3(player.actor.node.velocity)))
@@ -1006,16 +1007,6 @@ class BotSet:
                 bot.handlemessage(ba.DieMessage(immediate=True))
             self._bot_lists[i] = []
 
-    def celebrate(self, duration: float) -> None:
-        """Tell all living bots in the set to celebrate momentarily.
-
-        Duration is given in seconds.
-        """
-        for botlist in self._bot_lists:
-            for bot in botlist:
-                if bot.node:
-                    bot.node.handlemessage('celebrate', int(duration * 1000))
-
     def start_moving(self) -> None:
         """Start processing bot AI updates so they start doing their thing."""
         self._bot_update_timer = ba.Timer(0.05,
@@ -1035,6 +1026,17 @@ class BotSet:
                     bot.node.move_left_right = 0
                     bot.node.move_up_down = 0
 
+    def celebrate(self, duration: float) -> None:
+        """Tell all living bots in the set to celebrate momentarily.
+
+        Duration is given in seconds.
+        """
+        msg = ba.CelebrateMessage(duration=duration)
+        for botlist in self._bot_lists:
+            for bot in botlist:
+                if bot:
+                    bot.handlemessage(msg)
+
     def final_celebrate(self) -> None:
         """Tell all bots in the set to stop what they were doing and celebrate.
 
@@ -1045,12 +1047,12 @@ class BotSet:
         # At this point stop doing anything but jumping and celebrating.
         for botlist in self._bot_lists:
             for bot in botlist:
-                if bot.node:
+                if bot:
+                    assert bot.node  # (should exist if 'if bot' was True)
                     bot.node.move_left_right = 0
                     bot.node.move_up_down = 0
-                    ba.timer(
-                        0.5 * random.random(),
-                        ba.Call(bot.node.handlemessage, 'celebrate', 10.0))
+                    ba.timer(0.5 * random.random(),
+                             ba.Call(bot.handlemessage, ba.CelebrateMessage()))
                     jump_duration = random.randrange(400, 500)
                     j = random.randrange(0, 200)
                     for _i in range(10):

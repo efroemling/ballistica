@@ -143,7 +143,9 @@ class EasterEggHuntGame(ba.TeamGameActivity):
                 'source_node', 'opposing_node')
             if egg_node is not None and playernode is not None:
                 egg = egg_node.getdelegate()
+                assert isinstance(egg, Egg)
                 spaz = playernode.getdelegate()
+                assert isinstance(spaz, playerspaz.PlayerSpaz)
                 player = (spaz.getplayer()
                           if hasattr(spaz, 'getplayer') else None)
                 if player and egg:
@@ -187,13 +189,8 @@ class EasterEggHuntGame(ba.TeamGameActivity):
         ypos = random.uniform(3.5, 3.5)
         zpos = random.uniform(-8.2, 3.7)
 
-        def _is_exists(egg: Egg) -> bool:
-            if egg.node is None:
-                return False
-            return egg.node.exists()
-
         # Prune dead eggs from our list.
-        self._eggs = [e for e in self._eggs if _is_exists(e)]
+        self._eggs = [e for e in self._eggs if e]
 
         # Spawn more eggs if we've got space.
         if len(self._eggs) < int(self._max_eggs):
@@ -283,12 +280,13 @@ class Egg(ba.Actor):
                                    'materials': mats
                                })
 
+    def exists(self) -> bool:
+        return bool(self.node)
+
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, ba.DieMessage):
             if self.node:
                 self.node.delete()
-        elif isinstance(msg, ba.OutOfBoundsMessage):
-            self.handlemessage(ba.DieMessage())
         elif isinstance(msg, ba.HitMessage):
             if self.node:
                 assert msg.force_direction is not None

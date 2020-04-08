@@ -25,7 +25,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import ba
-from bastd.actor import spaz as basespaz
+from bastd.actor.spaz import Spaz
 
 if TYPE_CHECKING:
     from typing import Any, Optional, Sequence, Tuple
@@ -77,7 +77,7 @@ class PlayerSpazHurtMessage:
         self.spaz = spaz
 
 
-class PlayerSpaz(basespaz.Spaz):
+class PlayerSpaz(Spaz):
     """A ba.Spaz subclass meant to be controlled by a ba.Player.
 
     category: Gameplay Classes
@@ -102,13 +102,12 @@ class PlayerSpaz(basespaz.Spaz):
         you must call connect_controls_to_player() to do so.
         """
 
-        basespaz.Spaz.__init__(self,
-                               color=color,
-                               highlight=highlight,
-                               character=character,
-                               source_player=player,
-                               start_invincible=True,
-                               powerups_expire=powerups_expire)
+        super().__init__(color=color,
+                         highlight=highlight,
+                         character=character,
+                         source_player=player,
+                         start_invincible=True,
+                         powerups_expire=powerups_expire)
         self.last_player_attacked_by: Optional[ba.Player] = None
         self.last_attacked_time = 0.0
         self.last_attacked_type: Optional[Tuple[str, str]] = None

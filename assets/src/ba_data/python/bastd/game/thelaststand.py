@@ -197,6 +197,7 @@ class TheLastStandGame(ba.CoopGameActivity):
         for player in self.players:
             try:
                 if player.is_alive():
+                    assert isinstance(player.actor, playerspaz.PlayerSpaz)
                     assert player.actor is not None and player.actor.node
                     playerpts.append(player.actor.node.position)
             except Exception as exc:

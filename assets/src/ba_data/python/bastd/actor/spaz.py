@@ -155,7 +155,7 @@ class Spaz(ba.Actor):
         media = factory.get_media(character)
         punchmats = (factory.punch_material, ba.sharedobj('attack_material'))
         pickupmats = (factory.pickup_material, ba.sharedobj('pickup_material'))
-        self.node = ba.newnode(
+        self.node: ba.Node = ba.newnode(
             type="spaz",
             delegate=self,
             attrs={
@@ -256,10 +256,13 @@ class Spaz(ba.Actor):
         self.punch_callback: Optional[Callable[[Spaz], Any]] = None
         self.pick_up_powerup_callback: Optional[Callable[[Spaz], Any]] = None
 
+    def exists(self) -> bool:
+        return bool(self.node)
+
     def on_expire(self) -> None:
         super().on_expire()
 
-        # release callbacks/refs so we don't wind up with dependency loops..
+        # Release callbacks/refs so we don't wind up with dependency loops.
         self._dropped_bomb_callbacks = []
         self.punch_callback = None
         self.pick_up_powerup_callback = None
@@ -296,8 +299,8 @@ class Spaz(ba.Actor):
         assert isinstance(t_ms, int)
         t_bucket = int(t_ms / 1000)
         if t_bucket == self._turbo_filter_time_bucket:
-            # add only once per timestep (filter out buttons triggering
-            # multiple actions)
+            # Add only once per timestep (filter out buttons triggering
+            # multiple actions).
             if t_ms != self._turbo_filter_times.get(source, 0):
                 self._turbo_filter_counts[source] = (
                     self._turbo_filter_counts.get(source, 0) + 1)
@@ -306,11 +309,11 @@ class Spaz(ba.Actor):
                 # ba.screenmessage( str(source) + " "
                 #                   + str(self._turbo_filter_counts[source]))
                 if self._turbo_filter_counts[source] == 15:
-                    # knock 'em out.  That'll learn 'em.
+                    # Knock 'em out.  That'll learn 'em.
                     assert self.node
                     self.node.handlemessage("knockout", 500.0)
 
-                    # also issue periodic notices about who is turbo-ing
+                    # Also issue periodic notices about who is turbo-ing.
                     now = ba.time(ba.TimeType.REAL)
                     if now > ba.app.last_spaz_turbo_warn_time + 30.0:
                         ba.app.last_spaz_turbo_warn_time = now
@@ -1226,6 +1229,10 @@ class Spaz(ba.Actor):
             # hold_body needs to be set before hold_node.
             self.node.hold_body = opposing_body
             self.node.hold_node = opposing_node
+        elif isinstance(msg, ba.CelebrateMessage):
+            if self.node:
+                self.node.handlemessage('celebrate', int(msg.duration * 1000))
+
         else:
             return super().handlemessage(msg)
         return None

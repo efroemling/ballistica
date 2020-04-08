@@ -254,22 +254,23 @@ class TeamBaseSession(Session):
         announcement of the same.
         """
         # pylint: disable=cyclic-import
+        # pylint: disable=too-many-locals
         from ba import _math
         from ba import _general
         from ba._gameutils import cameraflash
         from ba import _lang
         from ba._freeforallsession import FreeForAllSession
+        from ba._messages import CelebrateMessage
         _ba.timer(delay,
                   _general.Call(_ba.playsound, _ba.getsound("boxingBell")))
         if announce_winning_team:
             winning_team = results.get_winning_team()
             if winning_team is not None:
                 # Have all players celebrate.
+                celebrate_msg = CelebrateMessage(duration=10.0)
                 for player in winning_team.players:
-                    if player.actor is not None and player.actor.node:
-                        # Note: celebrate message takes milliseconds
-                        # for historical reasons.
-                        player.actor.node.handlemessage('celebrate', 10000)
+                    if player.actor:
+                        player.actor.handlemessage(celebrate_msg)
                 cameraflash()
 
                 # Some languages say "FOO WINS" different for teams vs players.

@@ -188,7 +188,6 @@ def print_live_object_warnings(when: Any,
                                ignore_session: ba.Session = None,
                                ignore_activity: ba.Activity = None) -> None:
     """Print warnings for remaining objects in the current context."""
-    # pylint: disable=too-many-branches
     # pylint: disable=cyclic-import
     import gc
     from ba import _session as bs_session
@@ -252,13 +251,14 @@ def print_live_object_warnings(when: Any,
     for actor in actors:
         _ba.app.printed_live_object_warning = True
         print('ERROR: Actor found', when, ':', actor)
-        if isinstance(actor, bs_actor.Actor):
-            try:
-                if actor.node:
-                    print('   - contains node:', actor.node.getnodetype(), ';',
-                          actor.node.get_name())
-            except Exception as exc:
-                print('   - exception checking actor node:', exc)
+        # if isinstance(actor, bs_actor.Actor):
+        #     try:
+        #         if actor.node:
+        #             print('   - contains node:',
+        # actor.node.getnodetype(), ';',
+        #                   actor.node.get_name())
+        #     except Exception as exc:
+        #         print('   - exception checking actor node:', exc)
         # refs = list(gc.get_referrers(actor))
         # i = 1
         # for ref in refs:

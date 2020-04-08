@@ -47,6 +47,7 @@ class DeathType(Enum):
     Category: Enums
     """
     GENERIC = 'generic'
+    OUT_OF_BOUNDS = 'out_of_bounds'
     IMPACT = 'impact'
     FALL = 'fall'
     REACHED_GOAL = 'reached_goal'
@@ -185,6 +186,20 @@ class ThawMessage:
 
     Category: Message Classes
     """
+
+
+@dataclass
+class CelebrateMessage:
+    """Tells an object to celebrate.
+
+    Category: Message Classes
+
+    Attributes:
+
+        duration
+            Amount of time to celebrate in seconds.
+    """
+    duration: float = 10.0
 
 
 @dataclass(init=False)

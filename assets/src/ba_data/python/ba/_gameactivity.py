@@ -337,13 +337,13 @@ class GameActivity(Activity):
         self._game_scoreboard_description_text: Optional[ba.Actor] = None
         self._standard_time_limit_time: Optional[int] = None
         self._standard_time_limit_timer: Optional[ba.Timer] = None
-        self._standard_time_limit_text: Optional[ba.Actor] = None
-        self._standard_time_limit_text_input: Optional[ba.Actor] = None
+        self._standard_time_limit_text: Optional[ba.NodeActor] = None
+        self._standard_time_limit_text_input: Optional[ba.NodeActor] = None
         self._tournament_time_limit: Optional[int] = None
         self._tournament_time_limit_timer: Optional[ba.Timer] = None
-        self._tournament_time_limit_title_text: Optional[ba.Actor] = None
-        self._tournament_time_limit_text: Optional[ba.Actor] = None
-        self._tournament_time_limit_text_input: Optional[ba.Actor] = None
+        self._tournament_time_limit_title_text: Optional[ba.NodeActor] = None
+        self._tournament_time_limit_text: Optional[ba.NodeActor] = None
+        self._tournament_time_limit_text_input: Optional[ba.NodeActor] = None
         self._zoom_message_times: Dict[int, float] = {}
         self._is_waiting_for_continue = False
 
@@ -1042,17 +1042,18 @@ class GameActivity(Activity):
         from ba import _messages
         from ba._gameutils import animate
         from ba._coopsession import CoopSession
-        from bastd.actor import playerspaz
+        from bastd.actor.playerspaz import PlayerSpaz
         name = player.get_name()
         color = player.color
         highlight = player.highlight
 
         light_color = _math.normalized_color(color)
         display_color = _ba.safecolor(color, target_intensity=0.75)
-        spaz = playerspaz.PlayerSpaz(color=color,
-                                     highlight=highlight,
-                                     character=player.character,
-                                     player=player)
+        spaz = PlayerSpaz(color=color,
+                          highlight=highlight,
+                          character=player.character,
+                          player=player)
+
         player.set_actor(spaz)
         assert spaz.node
 

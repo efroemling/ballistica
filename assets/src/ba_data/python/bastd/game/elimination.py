@@ -386,8 +386,8 @@ class EliminationGame(ba.TeamGameActivity):
             for team in self.teams:
                 for tplayer in team.players:
                     if tplayer.is_alive():
-                        assert tplayer.actor is not None and tplayer.actor.node
-                        ppos = tplayer.actor.node.position
+                        assert tplayer.node
+                        ppos = tplayer.node.position
                         living_player = tplayer
                         living_player_pos = ppos
                         break
@@ -416,20 +416,16 @@ class EliminationGame(ba.TeamGameActivity):
 
     def _print_lives(self, player: ba.Player) -> None:
         from bastd.actor import popuptext
-        if not player or not player.is_alive():
+        assert player  # Shouldn't be passing invalid refs around.
+        if not player or not player.is_alive() or not player.node:
             return
-        try:
-            assert player.actor is not None and player.actor.node
-            pos = player.actor.node.position
-        except Exception as exc:
-            print('EXC getting player pos in bs_elim', exc)
-            return
+
         popuptext.PopupText('x' + str(player.gamedata['lives'] - 1),
                             color=(1, 1, 0, 1),
                             offset=(0, -0.8, 0),
                             random_offset=0.0,
                             scale=1.8,
-                            position=pos).autoretain()
+                            position=player.node.position).autoretain()
 
     def on_player_leave(self, player: ba.Player) -> None:
         ba.TeamGameActivity.on_player_leave(self, player)

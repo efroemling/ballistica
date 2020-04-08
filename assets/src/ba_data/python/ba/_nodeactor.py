@@ -51,3 +51,6 @@ class NodeActor(Actor):
                 self.node.delete()
                 return None
         return super().handlemessage(msg)
+
+    def exists(self) -> bool:
+        return bool(self.node)

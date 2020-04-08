@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-04-06 for Ballistica version 1.5.0 build 20001</em></h4>
+<h4><em>last updated on 2020-04-07 for Ballistica version 1.5.0 build 20001</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -112,6 +112,7 @@
 </ul>
 <h4><a name="class_category_Message_Classes">Message Classes</a></h4>
 <ul>
+   <li><a href="#class_ba_CelebrateMessage">ba.CelebrateMessage</a></li>
    <li><a href="#class_ba_DieMessage">ba.DieMessage</a></li>
    <li><a href="#class_ba_DropMessage">ba.DropMessage</a></li>
    <li><a href="#class_ba_DroppedMessage">ba.DroppedMessage</a></li>
@@ -645,9 +646,6 @@ or returns None depending on whether 'doraise' is set.</p>
 <p><span>handlemessage(self, msg: Any) -&gt; Any</span></p>
 
 <p>General message handling; can be passed any <a href="#class_category_Message_Classes">message object</a>.</p>
-
-<p>The default implementation will handle <a href="#class_ba_DieMessage">ba.DieMessages</a> by
-calling self.node.delete() if self contains a 'node' attribute.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Actor__is_alive">is_alive()</a></dt></h4><dd>
@@ -1186,6 +1184,29 @@ mycall()</pre>
 </dd>
 </dl>
 <hr>
+<h2><strong><a name="class_ba_CelebrateMessage">ba.CelebrateMessage</a></strong></h3>
+<p><em>&lt;top level class&gt;</em>
+</p>
+<p>Tells an object to celebrate.</p>
+
+<p>Category: <a href="#class_category_Message_Classes">Message Classes</a></p>
+
+<h3>Attributes:</h3>
+<dl>
+<dt><h4><a name="attr_ba_CelebrateMessage__duration">duration</a></h4></dt><dd>
+<p><span>float</span></p>
+<p>Amount of time to celebrate in seconds.</p>
+
+</dd>
+</dl>
+<h3>Methods:</h3>
+<dl>
+<dt><h4><a name="method_ba_CelebrateMessage____init__">&lt;constructor&gt;</a></dt></h4><dd>
+<p><span>ba.CelebrateMessage(duration: float = 10.0)</span></p>
+
+</dd>
+</dl>
+<hr>
 <h2><strong><a name="class_ba_Chooser">ba.Chooser</a></strong></h3>
 <p><em>&lt;top level class&gt;</em>
 </p>
@@ -1586,6 +1607,7 @@ the data object is requested and when it's value is accessed.</p>
 <h3>Values:</h3>
 <ul>
 <li>GENERIC</li>
+<li>OUT_OF_BOUNDS</li>
 <li>IMPACT</li>
 <li>FALL</li>
 <li>REACHED_GOAL</li>
@@ -2782,14 +2804,34 @@ etc.</p>
 </dd>
 </dl>
 <h3>Methods Inherited:</h3>
-<h5><a href="#method_ba_Actor__autoretain">autoretain()</a>, <a href="#method_ba_Actor__exists">exists()</a>, <a href="#method_ba_Actor__getactivity">getactivity()</a>, <a href="#method_ba_Actor__is_alive">is_alive()</a>, <a href="#method_ba_Actor__is_expired">is_expired()</a>, <a href="#method_ba_Actor__on_expire">on_expire()</a></h5>
+<h5><a href="#method_ba_Actor__autoretain">autoretain()</a>, <a href="#method_ba_Actor__getactivity">getactivity()</a>, <a href="#method_ba_Actor__is_alive">is_alive()</a>, <a href="#method_ba_Actor__is_expired">is_expired()</a>, <a href="#method_ba_Actor__on_expire">on_expire()</a></h5>
 <h3>Methods Defined or Overridden:</h3>
-<h5><a href="#method_ba_Map____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Map__get_def_bound_box">get_def_bound_box()</a>, <a href="#method_ba_Map__get_def_point">get_def_point()</a>, <a href="#method_ba_Map__get_def_points">get_def_points()</a>, <a href="#method_ba_Map__get_ffa_start_position">get_ffa_start_position()</a>, <a href="#method_ba_Map__get_flag_position">get_flag_position()</a>, <a href="#method_ba_Map__get_music_type">get_music_type()</a>, <a href="#method_ba_Map__get_name">get_name()</a>, <a href="#method_ba_Map__get_play_types">get_play_types()</a>, <a href="#method_ba_Map__get_preview_texture_name">get_preview_texture_name()</a>, <a href="#method_ba_Map__get_start_position">get_start_position()</a>, <a href="#method_ba_Map__handlemessage">handlemessage()</a>, <a href="#method_ba_Map__is_point_near_edge">is_point_near_edge()</a>, <a href="#method_ba_Map__on_preload">on_preload()</a>, <a href="#method_ba_Map__preload">preload()</a></h5>
+<h5><a href="#method_ba_Map____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Map__exists">exists()</a>, <a href="#method_ba_Map__get_def_bound_box">get_def_bound_box()</a>, <a href="#method_ba_Map__get_def_point">get_def_point()</a>, <a href="#method_ba_Map__get_def_points">get_def_points()</a>, <a href="#method_ba_Map__get_ffa_start_position">get_ffa_start_position()</a>, <a href="#method_ba_Map__get_flag_position">get_flag_position()</a>, <a href="#method_ba_Map__get_music_type">get_music_type()</a>, <a href="#method_ba_Map__get_name">get_name()</a>, <a href="#method_ba_Map__get_play_types">get_play_types()</a>, <a href="#method_ba_Map__get_preview_texture_name">get_preview_texture_name()</a>, <a href="#method_ba_Map__get_start_position">get_start_position()</a>, <a href="#method_ba_Map__handlemessage">handlemessage()</a>, <a href="#method_ba_Map__is_point_near_edge">is_point_near_edge()</a>, <a href="#method_ba_Map__on_preload">on_preload()</a>, <a href="#method_ba_Map__preload">preload()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_Map____init__">&lt;constructor&gt;</a></dt></h4><dd>
 <p><span>ba.Map(vr_overlay_offset: Optional[Sequence[float]] = None)</span></p>
 
 <p>Instantiate a map.</p>
+
+</dd>
+<dt><h4><a name="method_ba_Map__exists">exists()</a></dt></h4><dd>
+<p><span>exists(self) -&gt; bool</span></p>
+
+<p>Returns whether the Actor is still present in a meaningful way.</p>
+
+<p>Note that a dying character should still return True here as long as
+their corpse is visible; this is about presence, not being 'alive'
+(see <a href="#method_ba_Actor__is_alive">ba.Actor.is_alive</a>() for that).</p>
+
+<p>If this returns False, it is assumed the Actor can be completely
+deleted without affecting the game; this call is often used
+when pruning lists of Actors, such as with <a href="#method_ba_Actor__autoretain">ba.Actor.autoretain</a>()</p>
+
+<p>The default implementation of this method always return True.</p>
+
+<p>Note that the boolean operator for the Actor class calls this method,
+so a simple "if myactor" test will conveniently do the right thing
+even if myactor is set to None.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Map__get_def_bound_box">get_def_bound_box()</a></dt></h4><dd>
@@ -2871,9 +2913,6 @@ as far from these players as possible.</p>
 <p><span>handlemessage(self, msg: Any) -&gt; Any</span></p>
 
 <p>General message handling; can be passed any <a href="#class_category_Message_Classes">message object</a>.</p>
-
-<p>The default implementation will handle <a href="#class_ba_DieMessage">ba.DieMessages</a> by
-calling self.node.delete() if self contains a 'node' attribute.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Map__is_point_near_edge">is_point_near_edge()</a></dt></h4><dd>
@@ -3347,9 +3386,9 @@ acting as an alternative to setting node attributes.</p>
 </dd>
 </dl>
 <h3>Methods Inherited:</h3>
-<h5><a href="#method_ba_Actor__autoretain">autoretain()</a>, <a href="#method_ba_Actor__exists">exists()</a>, <a href="#method_ba_Actor__getactivity">getactivity()</a>, <a href="#method_ba_Actor__is_alive">is_alive()</a>, <a href="#method_ba_Actor__is_expired">is_expired()</a>, <a href="#method_ba_Actor__on_expire">on_expire()</a></h5>
+<h5><a href="#method_ba_Actor__autoretain">autoretain()</a>, <a href="#method_ba_Actor__getactivity">getactivity()</a>, <a href="#method_ba_Actor__is_alive">is_alive()</a>, <a href="#method_ba_Actor__is_expired">is_expired()</a>, <a href="#method_ba_Actor__on_expire">on_expire()</a></h5>
 <h3>Methods Defined or Overridden:</h3>
-<h5><a href="#method_ba_NodeActor____init__">&lt;constructor&gt;</a>, <a href="#method_ba_NodeActor__handlemessage">handlemessage()</a></h5>
+<h5><a href="#method_ba_NodeActor____init__">&lt;constructor&gt;</a>, <a href="#method_ba_NodeActor__exists">exists()</a>, <a href="#method_ba_NodeActor__handlemessage">handlemessage()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_NodeActor____init__">&lt;constructor&gt;</a></dt></h4><dd>
 <p><span>ba.NodeActor(node: <a href="#class_ba_Node">ba.Node</a>)</span></p>
@@ -3357,13 +3396,30 @@ acting as an alternative to setting node attributes.</p>
 <p>Instantiates an Actor in the current <a href="#class_ba_Activity">ba.Activity</a>.</p>
 
 </dd>
+<dt><h4><a name="method_ba_NodeActor__exists">exists()</a></dt></h4><dd>
+<p><span>exists(self) -&gt; bool</span></p>
+
+<p>Returns whether the Actor is still present in a meaningful way.</p>
+
+<p>Note that a dying character should still return True here as long as
+their corpse is visible; this is about presence, not being 'alive'
+(see <a href="#method_ba_Actor__is_alive">ba.Actor.is_alive</a>() for that).</p>
+
+<p>If this returns False, it is assumed the Actor can be completely
+deleted without affecting the game; this call is often used
+when pruning lists of Actors, such as with <a href="#method_ba_Actor__autoretain">ba.Actor.autoretain</a>()</p>
+
+<p>The default implementation of this method always return True.</p>
+
+<p>Note that the boolean operator for the Actor class calls this method,
+so a simple "if myactor" test will conveniently do the right thing
+even if myactor is set to None.</p>
+
+</dd>
 <dt><h4><a name="method_ba_NodeActor__handlemessage">handlemessage()</a></dt></h4><dd>
 <p><span>handlemessage(self, msg: Any) -&gt; Any</span></p>
 
 <p>General message handling; can be passed any <a href="#class_category_Message_Classes">message object</a>.</p>
-
-<p>The default implementation will handle <a href="#class_ba_DieMessage">ba.DieMessages</a> by
-calling self.node.delete() if self contains a 'node' attribute.</p>
 
 </dd>
 </dl>
@@ -4267,7 +4323,7 @@ of the session.</p>
 </dd>
 </dl>
 <h3>Methods:</h3>
-<h5><a href="#method_ba_Team____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Team__celebrate">celebrate()</a>, <a href="#method_ba_Team__get_id">get_id()</a></h5>
+<h5><a href="#method_ba_Team____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Team__get_id">get_id()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_Team____init__">&lt;constructor&gt;</a></dt></h4><dd>
 <p><span>ba.Team(team_id: 'int' = 0, name: 'Union[<a href="#class_ba_Lstr">ba.Lstr</a>, str]' = '', color: 'Sequence[float]' = (1.0, 1.0, 1.0))</span></p>
@@ -4276,14 +4332,6 @@ of the session.</p>
 
 <p>In most cases, all teams are provided to you by the <a href="#class_ba_Session">ba.Session</a>,
 <a href="#class_ba_Session">ba.Session</a>, so calling this shouldn't be necessary.</p>
-
-</dd>
-<dt><h4><a name="method_ba_Team__celebrate">celebrate()</a></dt></h4><dd>
-<p><span>celebrate(self, duration: float = 10.0) -&gt; None</span></p>
-
-<p>Tells all players on the team to celebrate.</p>
-
-<p>duration is given in seconds.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Team__get_id">get_id()</a></dt></h4><dd>

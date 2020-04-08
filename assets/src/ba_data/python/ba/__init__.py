@@ -78,7 +78,8 @@ from ba._messages import (OutOfBoundsMessage, DeathType, DieMessage,
                           StandMessage, PickUpMessage, DropMessage,
                           PickedUpMessage, DroppedMessage,
                           ShouldShatterMessage, ImpactDamageMessage,
-                          FreezeMessage, ThawMessage, HitMessage)
+                          FreezeMessage, ThawMessage, HitMessage,
+                          CelebrateMessage)
 from ba._music import setmusic, MusicPlayer, MusicType, MusicPlayMode
 from ba._powerup import PowerupMessage, PowerupAcceptMessage
 from ba._teambasesession import TeamBaseSession

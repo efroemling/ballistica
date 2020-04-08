@@ -25,6 +25,9 @@ from __future__ import annotations
 import weakref
 from typing import TYPE_CHECKING, TypeVar
 
+from ba._messages import DieMessage, DeathType, OutOfBoundsMessage
+from ba import _error
+
 import _ba
 
 if TYPE_CHECKING:
@@ -83,9 +86,11 @@ class Actor:
     def __init__(self) -> None:
         """Instantiates an Actor in the current ba.Activity."""
 
-        # FIXME: Actor should not be require to have a 'node' attr.
-        self.node: Optional[ba.Node] = None
+        # FIXME: Actor should not be assumed to have a 'node' attr.
+        # self.node: Optional[ba.Node] = None
 
+        if __debug__:
+            self._root_actor_init_called = True
         activity = _ba.getactivity()
         self._activity = weakref.ref(activity)
         activity.add_actor_weak_ref(self)
@@ -96,27 +101,20 @@ class Actor:
             # That way we can treat DieMessage handling as the single
             # point-of-action for death.
             if not self.is_expired():
-                from ba import _messages
-                self.handlemessage(_messages.DieMessage())
+                self.handlemessage(DieMessage())
         except Exception:
-            from ba import _error
             _error.print_exception('exception in ba.Actor.__del__() for', self)
 
     def handlemessage(self, msg: Any) -> Any:
-        """General message handling; can be passed any message object.
+        """General message handling; can be passed any message object."""
+        if __debug__:
+            self._handlemessage_sanity_check()
 
-        The default implementation will handle ba.DieMessages by
-        calling self.node.delete() if self contains a 'node' attribute.
-        """
-        from ba._error import UNHANDLED
-        del msg  # Unused.
-        return UNHANDLED
+        # By default, actors going out-of-bounds simply kill themselves.
+        if isinstance(msg, OutOfBoundsMessage):
+            return self.handlemessage(DieMessage(how=DeathType.OUT_OF_BOUNDS))
 
-    def _handlemessage_sanity_check(self) -> None:
-        if self.is_expired():
-            from ba import _error
-            _error.print_error(
-                f'handlemessage called on expired actor: {self}')
+        return _error.UNHANDLED
 
     def autoretain(self: T) -> T:
         """Keep this Actor alive without needing to hold a reference to it.
@@ -131,8 +129,7 @@ class Actor:
         """
         activity = self._activity()
         if activity is None:
-            from ba._error import ActivityNotFoundError
-            raise ActivityNotFoundError()
+            raise _error.ActivityNotFoundError()
         activity.retain_actor(self)
         return self
 
@@ -192,6 +189,21 @@ class Actor:
         """
         return True
 
+    def _handlemessage_sanity_check(self) -> None:
+        """Make sure things are kosher in handlemessage().
+
+        Place this in an 'if __debug__:' clause at the top of handlemessage()
+        overrides. This will will complain if anything is sending the Actor
+        messages after the activity has ended, which should be explicitly
+        avoided.
+        """
+        assert __debug__, "This should only be called in __debug__ mode."
+        if not getattr(self, '_root_actor_init_called', False):
+            _error.print_error('Root Actor __init__() not called.')
+        if self.is_expired():
+            _error.print_error(
+                f'handlemessage() called on expired actor: {self}')
+
     @property
     def activity(self) -> ba.Activity:
         """The Activity this Actor was created in.
@@ -200,8 +212,7 @@ class Actor:
         """
         activity = self._activity()
         if activity is None:
-            from ba._error import ActivityNotFoundError
-            raise ActivityNotFoundError()
+            raise _error.ActivityNotFoundError()
         return activity
 
     def getactivity(self, doraise: bool = True) -> Optional[ba.Activity]:
@@ -212,6 +223,5 @@ class Actor:
         """
         activity = self._activity()
         if activity is None and doraise:
-            from ba._error import ActivityNotFoundError
-            raise ActivityNotFoundError()
+            raise _error.ActivityNotFoundError()
         return activity

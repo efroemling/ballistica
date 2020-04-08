@@ -1169,8 +1169,8 @@ class TowerD(ba.Map):
                            running: bool = False) -> bool:
         # see if we're within edge_box
         boxes = self.defs.boxes
-        box_position = boxes['edge_box1'][0:3]
-        box_scale = boxes['edge_box1'][6:9]
+        box_position = boxes['edge_box'][0:3]
+        box_scale = boxes['edge_box'][6:9]
         box_position2 = boxes['edge_box2'][0:3]
         box_scale2 = boxes['edge_box2'][6:9]
         xpos = (point.x - box_position[0]) / box_scale[0]

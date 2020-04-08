@@ -315,7 +315,6 @@ class AssetPackage(DependencyComponent):
 
     def __init__(self) -> None:
         super().__init__()
-        # pylint: disable=no-member
 
         # This is used internally by the get_package_xxx calls.
         self.context = _ba.Context('current')

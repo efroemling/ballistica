@@ -193,7 +193,7 @@ class HockeyGame(ba.TeamGameActivity):
                       True), ("modify_part_collision", "physical", False),
                      ("call", "at_connect", self._handle_score)))
         self._puck_spawn_pos: Optional[Sequence[float]] = None
-        self._score_regions: Optional[List[ba.Actor]] = None
+        self._score_regions: Optional[List[ba.NodeActor]] = None
         self._puck: Optional[Puck] = None
 
     def get_instance_description(self) -> Union[str, Sequence]:
@@ -284,10 +284,8 @@ class HockeyGame(ba.TeamGameActivity):
 
                 # Tell all players to celebrate.
                 for player in team.players:
-                    if player.actor is not None and player.actor.node:
-                        # Note: celebrate message takes milliseconds
-                        # (for historical reasons).
-                        player.actor.node.handlemessage('celebrate', 2000)
+                    if player.actor:
+                        player.actor.handlemessage(ba.CelebrateMessage(2.0))
 
                 # If we've got the player from the scoring team that last
                 # touched us, give them points.

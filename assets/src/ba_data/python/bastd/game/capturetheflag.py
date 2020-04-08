@@ -306,10 +306,8 @@ class CaptureTheFlagGame(ba.TeamGameActivity):
 
         # Have teammates celebrate
         for player in team.players:
-            if player.actor is not None and player.actor.node:
-                # Note: celebrate message is milliseconds
-                # for historical reasons.
-                player.actor.node.handlemessage('celebrate', 2000)
+            if player.actor:
+                player.actor.handlemessage(ba.CelebrateMessage(2.0))
 
         # Reset all flags/state.
         for reset_team in self.teams:

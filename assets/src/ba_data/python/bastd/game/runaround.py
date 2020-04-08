@@ -117,15 +117,15 @@ class RunaroundGame(ba.CoopGameActivity):
         self._waves: Optional[List[Dict[str, Any]]] = None
         self._bots = spazbot.BotSet()
         self._tntspawner: Optional[TNTSpawner] = None
-        self._lives_bg: Optional[ba.Actor] = None
+        self._lives_bg: Optional[ba.NodeActor] = None
         self._start_lives = 10
         self._lives = self._start_lives
-        self._lives_text: Optional[ba.Actor] = None
+        self._lives_text: Optional[ba.NodeActor] = None
         self._flawless = True
         self._time_bonus_timer: Optional[ba.Timer] = None
-        self._time_bonus_text: Optional[ba.Actor] = None
+        self._time_bonus_text: Optional[ba.NodeActor] = None
         self._time_bonus_mult: Optional[float] = None
-        self._wave_text: Optional[ba.Actor] = None
+        self._wave_text: Optional[ba.NodeActor] = None
         self._flawless_bonus: Optional[int] = None
         self._wave_update_timer: Optional[ba.Timer] = None
 
@@ -1050,9 +1050,11 @@ class RunaroundGame(ba.CoopGameActivity):
     def _update_bot(self, bot: spazbot.SpazBot) -> bool:
         # Yup; that's a lot of return statements right there.
         # pylint: disable=too-many-return-statements
-        assert bot.node
-        if not bot.is_alive() or not bot.node.exists():
+
+        if not bool(bot):
             return True
+
+        assert bot.node
 
         # FIXME: Do this in a type safe way.
         r_walk_speed: float = bot.r_walk_speed  # type: ignore

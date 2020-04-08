@@ -98,21 +98,6 @@ class Team:
         """Returns the numeric team ID."""
         return self._team_id
 
-    def celebrate(self, duration: float = 10.0) -> None:
-        """Tells all players on the team to celebrate.
-
-        duration is given in seconds.
-        """
-        for player in self.players:
-            try:
-                if player.actor is not None and player.actor.node:
-                    # Internal node-message is in milliseconds.
-                    player.actor.node.handlemessage('celebrate',
-                                                    int(duration * 1000))
-            except Exception:
-                from ba import _error
-                _error.print_exception('Error on celebrate')
-
     def reset(self) -> None:
         """(internal)"""
         self.reset_gamedata()

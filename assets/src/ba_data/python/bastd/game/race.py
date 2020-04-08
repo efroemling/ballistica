@@ -189,6 +189,7 @@ class RaceGame(ba.TeamGameActivity):
             self._regions.append(RaceRegion(rpt, len(self._regions)))
 
     def _flash_player(self, player: ba.Player, scale: float) -> None:
+        assert isinstance(player.actor, PlayerSpaz)
         assert player.actor is not None and player.actor.node
         pos = player.actor.node.position
         light = ba.newnode('light',
@@ -523,6 +524,7 @@ class RaceGame(ba.TeamGameActivity):
         for player in self.players:
             pos: Optional[ba.Vec3]
             try:
+                assert isinstance(player.actor, PlayerSpaz)
                 assert player.actor is not None and player.actor.node
                 pos = ba.Vec3(player.actor.node.position)
             except Exception:

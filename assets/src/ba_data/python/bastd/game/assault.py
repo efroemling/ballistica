@@ -225,12 +225,8 @@ class AssaultGame(ba.TeamGameActivity):
 
                 # Have teammates celebrate.
                 for player in player_team.players:
-                    try:
-                        # Note: celebrate message is milliseconds
-                        # for historical reasons.
-                        player.actor.node.handlemessage('celebrate', 2000)
-                    except Exception:
-                        pass
+                    if player.actor:
+                        player.actor.handlemessage(ba.CelebrateMessage(2.0))
 
                 player_team.gamedata['score'] += 1
                 self._update_scoreboard()

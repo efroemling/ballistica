@@ -194,7 +194,7 @@ class KeepAwayGame(ba.TeamGameActivity):
         for player in self.players:
             holding_flag = False
             try:
-                assert player.actor is not None
+                assert isinstance(player.actor, playerspaz.PlayerSpaz)
                 if (player.actor.is_alive() and player.actor.node
                         and player.actor.node.hold_node):
                     holding_flag = (

@@ -135,10 +135,10 @@ class CoopGameActivity(GameActivity):
         a wave.
         duration is given in seconds.
         """
+        from ba._messages import CelebrateMessage
         for player in self.players:
-            if player.actor is not None and player.actor.node:
-                player.actor.node.handlemessage('celebrate',
-                                                int(duration * 1000))
+            if player.actor:
+                player.actor.handlemessage(CelebrateMessage(duration))
 
     def _preload_achievements(self) -> None:
         from ba import _achievement

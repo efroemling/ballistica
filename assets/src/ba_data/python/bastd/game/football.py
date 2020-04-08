@@ -128,10 +128,10 @@ class FootballTeamGame(ba.TeamGameActivity):
                       True), ("modify_part_collision", "physical", False),
                      ("call", "at_connect", self._handle_score)))
         self._flag_spawn_pos: Optional[Sequence[float]] = None
-        self._score_regions: List[ba.Actor] = []
+        self._score_regions: List[ba.NodeActor] = []
         self._flag: Optional[FootballFlag] = None
         self._flag_respawn_timer: Optional[ba.Timer] = None
-        self._flag_respawn_light: Optional[ba.Actor] = None
+        self._flag_respawn_light: Optional[ba.NodeActor] = None
 
     def get_instance_description(self) -> Union[str, Sequence]:
         touchdowns = self.settings['Score to Win'] / 7
@@ -203,13 +203,8 @@ class FootballTeamGame(ba.TeamGameActivity):
 
                 # Tell all players to celebrate.
                 for player in team.players:
-                    if player.actor is not None and player.actor.node:
-                        try:
-                            # Note: celebrate message is milliseconds
-                            # (for historical reasons).
-                            player.actor.node.handlemessage('celebrate', 2000)
-                        except Exception:
-                            ba.print_exception('Error on celebrate')
+                    if player.actor:
+                        player.actor.handlemessage(ba.CelebrateMessage(2.0))
 
                 # If someone on this team was last to touch it,
                 # give them points.
@@ -376,7 +371,7 @@ class FootballCoopGame(ba.CoopGameActivity):
         self._player_has_punched = False
         self._scoreboard: Optional[Scoreboard] = None
         self._flag_spawn_pos: Optional[Sequence[float]] = None
-        self.score_regions: List[ba.Actor] = []
+        self.score_regions: List[ba.NodeActor] = []
         self._exclude_powerups: List[str] = []
         self._have_tnt = False
         self._bot_types_initial: Optional[List[Type[spazbot.SpazBot]]] = None
@@ -384,8 +379,8 @@ class FootballCoopGame(ba.CoopGameActivity):
         self._bot_types_14: Optional[List[Type[spazbot.SpazBot]]] = None
         self._bot_team: Optional[ba.Team] = None
         self._starttime_ms: Optional[int] = None
-        self._time_text: Optional[ba.Actor] = None
-        self._time_text_input: Optional[ba.Actor] = None
+        self._time_text: Optional[ba.NodeActor] = None
+        self._time_text_input: Optional[ba.NodeActor] = None
         self._tntspawner: Optional[stdbomb.TNTSpawner] = None
         self._bots = spazbot.BotSet()
         self._bot_spawn_timer: Optional[ba.Timer] = None
@@ -580,13 +575,11 @@ class FootballCoopGame(ba.CoopGameActivity):
         assert self._flag is not None
         if self._flag.node:
             for player in self.players:
-                try:
-                    assert player.actor is not None and player.actor.node
+                if player.actor:
+                    assert isinstance(player.actor, playerspaz.PlayerSpaz)
                     if (player.actor.is_alive() and
                             player.actor.node.hold_node == self._flag.node):
                         return
-                except Exception:
-                    ba.print_exception("exception checking hold node")
 
             flagpos = ba.Vec3(self._flag.node.position)
             closest_bot = None
@@ -651,7 +644,6 @@ class FootballCoopGame(ba.CoopGameActivity):
         """ a point has been scored """
         # FIXME tidy this up
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-nested-blocks
 
         # Our flag might stick around for a second or two;
         # we don't want it to be able to score again.
@@ -674,16 +666,11 @@ class FootballCoopGame(ba.CoopGameActivity):
                 # Tell all players (or bots) to celebrate.
                 if i == 0:
                     for player in team.players:
-                        try:
-                            # Note: celebrate message is milliseconds
-                            # (for historical reasons).
-                            if player.actor is not None and player.actor.node:
-                                player.actor.node.handlemessage(
-                                    'celebrate', 2000)
-                        except Exception:
-                            ba.print_exception()
+                        if player.actor:
+                            player.actor.handlemessage(
+                                ba.CelebrateMessage(2.0))
                 else:
-                    self._bots.celebrate(2000)
+                    self._bots.celebrate(2.0)
 
         # If the good guys scored, add more enemies.
         if i == 0:

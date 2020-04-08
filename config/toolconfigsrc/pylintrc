@@ -80,6 +80,12 @@ good-names=i,
            U,
            _
 
+[TYPECHECK]
+# Mypy does most all the type checking we need, and in some cases
+# Pylint has conflicting views about what types it thinks things are,
+# so let's just flip stuff off here.
+disable=no-member
+
 [MISCELLANEOUS]
 # We've got various TODO and FIXME notes in scripts, but don't want
 # lint to trigger over that fact.

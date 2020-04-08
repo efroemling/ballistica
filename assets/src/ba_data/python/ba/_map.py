@@ -211,7 +211,7 @@ class Map(Actor):
 
         # This is expected to always be a ba.Node object (whether valid or not)
         # should be set to something meaningful by child classes.
-        self.node = None
+        self.node: Optional[_ba.Node] = None
 
         # Make our class' preload-data available to us
         # (and instruct the user if we weren't preloaded properly).
@@ -365,9 +365,8 @@ class Map(Actor):
         player_pts = []
         for player in players:
             try:
-                if player.actor is not None and player.actor.is_alive():
-                    assert player.actor.node
-                    pnt = _ba.Vec3(player.actor.node.position)
+                if player.node:
+                    pnt = _ba.Vec3(player.node.position)
                     player_pts.append(pnt)
             except Exception as exc:
                 print('EXC in get_ffa_start_position:', exc)
@@ -412,12 +411,17 @@ class Map(Actor):
             return self.flag_points_default[:3]
         return self.flag_points[team_index % len(self.flag_points)][:3]
 
+    def exists(self) -> bool:
+        return bool(self.node)
+
     def handlemessage(self, msg: Any) -> Any:
         from ba import _messages
         if isinstance(msg, _messages.DieMessage):
             if self.node:
                 self.node.delete()
-        super().handlemessage(msg)
+        else:
+            return super().handlemessage(msg)
+        return None
 
 
 def register_map(maptype: Type[Map]) -> None:

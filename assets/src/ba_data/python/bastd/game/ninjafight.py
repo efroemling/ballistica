@@ -188,7 +188,9 @@ class NinjaFightGame(ba.TeamGameActivity):
             ba.cameraflash()
             ba.playsound(self._winsound)
             for team in self.teams:
-                team.celebrate()  # Woooo! par-tay!
+                for player in team.players:
+                    if player.actor:
+                        player.actor.handlemessage(ba.CelebrateMessage())
                 results.set_team_score(team, elapsed_time_ms)
 
         # Ends the activity.

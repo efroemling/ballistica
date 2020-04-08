@@ -279,7 +279,7 @@ class ChosenOneGame(ba.TeamGameActivity):
                     self._flag = None
                     self._chosen_one_player = player
 
-                    if player.actor.node:
+                    if player.actor:
                         if self.settings['Chosen One Gets Shield']:
                             player.actor.handlemessage(
                                 ba.PowerupMessage('shield'))
@@ -311,8 +311,10 @@ class ChosenOneGame(ba.TeamGameActivity):
                                        0.4: 1.0
                                    },
                                    loop=True)
+                        assert isinstance(player.actor, playerspaz.PlayerSpaz)
                         player.actor.node.connectattr('position', light.node,
                                                       'position')
+
         except Exception:
             ba.print_exception('EXC in _set_chosen_one_player')
 

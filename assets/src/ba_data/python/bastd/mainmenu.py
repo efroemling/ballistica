@@ -262,7 +262,7 @@ class MainMenuActivity(ba.Activity):
                 self._valid = True
                 self._message_duration = 10.0
                 self._message_spacing = 2.0
-                self._text: Optional[ba.Actor] = None
+                self._text: Optional[ba.NodeActor] = None
                 self._activity = weakref.ref(activity)
 
                 # If we're signed in, fetch news immediately.
@@ -290,8 +290,8 @@ class MainMenuActivity(ba.Activity):
 
                 # If our news is way out of date, lets re-request it;
                 # otherwise, rotate our phrase.
-                assert app.main_menu_last_news_fetch_time is not None
-                if time.time() - app.main_menu_last_news_fetch_time > 600.0:
+                assert ba.app.main_menu_last_news_fetch_time is not None
+                if time.time() - ba.app.main_menu_last_news_fetch_time > 600.0:
                     self._fetch_news()
                     self._text = None
                 else:
