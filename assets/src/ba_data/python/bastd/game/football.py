@@ -35,6 +35,8 @@ from bastd.actor import playerspaz
 from bastd.actor import spazbot
 from bastd.actor.scoreboard import Scoreboard
 
+import math
+
 if TYPE_CHECKING:
     from typing import (Any, List, Tuple, Type, Dict, Sequence, Optional,
                         Union)
