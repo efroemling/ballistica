@@ -140,8 +140,8 @@ class CoopScoreScreen(ba.Activity):
         self._score: Optional[int] = settings['score']
         assert isinstance(self._score, (int, type(None)))
 
-        self._fail_message: Optional[str] = settings['fail_message']
-        assert isinstance(self._fail_message, (str, type(None)))
+        self._fail_message: Optional[bs.Lstr] = settings['fail_message']
+        assert isinstance(self._fail_message, (ba.Lstr, type(None)))
 
         self._begin_time = ba.time()
 
