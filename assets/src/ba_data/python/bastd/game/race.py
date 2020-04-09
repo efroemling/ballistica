@@ -241,7 +241,7 @@ class RaceGame(ba.TeamGameActivity):
 
                 player.gamedata['last_region'] = this_region
                 if last_region >= len(self._regions) - 2 and this_region == 0:
-                    team = player.get_team()
+                    team = player.team
                     player.gamedata['lap'] = min(self.settings['Laps'],
                                                  player.gamedata['lap'] + 1)
 
@@ -283,10 +283,10 @@ class RaceGame(ba.TeamGameActivity):
                         # If the whole team has finished the race.
                         if team.gamedata['lap'] == self.settings['Laps']:
                             ba.playsound(self._score_sound)
-                            player.get_team().gamedata['finished'] = True
+                            player.team.gamedata['finished'] = True
                             assert self._timer is not None
                             self._last_team_time = (
-                                player.get_team().gamedata['time']) = (
+                                player.team.gamedata['time']) = (
                                     ba.time() - self._timer.getstarttime())
                             self._check_end_game()
 

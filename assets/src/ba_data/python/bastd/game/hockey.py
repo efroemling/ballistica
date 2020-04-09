@@ -255,7 +255,7 @@ class HockeyGame(ba.TeamGameActivity):
         except Exception:
             player = puck = None
         if player and puck:
-            puck.last_players_to_touch[player.get_team().get_id()] = player
+            puck.last_players_to_touch[player.team.get_id()] = player
 
     def _kill_puck(self) -> None:
         self._puck = None

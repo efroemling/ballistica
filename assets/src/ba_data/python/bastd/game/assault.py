@@ -176,7 +176,7 @@ class AssaultGame(ba.TeamGameActivity):
             return
 
         # If its another team's player, they scored.
-        player_team = player.get_team()
+        player_team = player.team
         if player_team is not team:
 
             # Prevent multiple simultaneous scores.
