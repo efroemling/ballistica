@@ -821,7 +821,8 @@ class CoopScoreScreen(ba.Activity):
                     tdelay2 = times[i][1]
                 Text(str(display_scores[i][0]) if self._score_type == 'points'
                      else ba.timestring(display_scores[i][0] * 10,
-                                        timeformat=ba.TimeFormat.MILLISECONDS),
+                                        timeformat=ba.TimeFormat.MILLISECONDS,
+                                        suppress_format_warning=True),
                      position=(ts_h_offs + 20 + h_offs_extra,
                                v_offs_extra + ts_height / 2 + -ts_height *
                                (i + 1) / 10 + v_offs + 11.0),
