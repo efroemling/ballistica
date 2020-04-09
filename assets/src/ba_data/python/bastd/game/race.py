@@ -708,7 +708,7 @@ class RaceGame(ba.TeamGameActivity):
         assert self._timer is not None
         if self._timer.has_started():
             _cur_time = self._timer.getstarttime(
-                            timeformat=ba.TimeFormat.MILLISECONDS)
+                timeformat=ba.TimeFormat.MILLISECONDS)
             self._timer.stop(
                 endtime=None if self._last_team_time is None else (
                     _cur_time + self._last_team_time))

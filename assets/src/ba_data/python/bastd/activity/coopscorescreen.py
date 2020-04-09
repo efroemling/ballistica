@@ -1199,16 +1199,16 @@ class CoopScoreScreen(ba.Activity):
                  scale=0.8,
                  maxwidth=300,
                  transition_delay=2.0).autoretain()
-            self._tournament_time_remaining_text = Text('',
-                                                        position=(-360,
-                                                                  -110 - 100),
-                                                        color=(1, 1, 1, 0.7),
-                                                        h_align=Text.VAlign.CENTER,
-                                                        v_align=Text.VAlign.CENTER,
-                                                        transition=Text.Transition.FADE_IN,
-                                                        scale=1.6,
-                                                        maxwidth=150,
-                                                        transition_delay=2.0)
+            self._tournament_time_remaining_text = Text(
+                '',
+                position=(-360, -110 - 100),
+                color=(1, 1, 1, 0.7),
+                h_align=Text.VAlign.CENTER,
+                v_align=Text.VAlign.CENTER,
+                transition=Text.Transition.FADE_IN,
+                scale=1.6,
+                maxwidth=150,
+                transition_delay=2.0)
 
         # If we're a tournament, show prizes.
         try:

@@ -284,7 +284,7 @@ class MeteorShowerGame(ba.TeamGameActivity):
             longest_life = 0
             for player in team.players:
                 longest_life = max(longest_life,
-                    player.gamedata['death_time'] - start_time)
+                                   player.gamedata['death_time'] - start_time)
             results.set_team_score(team, longest_life)
 
         self.end(results=results)
