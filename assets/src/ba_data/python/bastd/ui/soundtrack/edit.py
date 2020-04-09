@@ -275,6 +275,8 @@ class SoundtrackEditWindow(ba.Window):
                 ba.widget(edit=prev_type_button, down_widget=btn)
             prev_type_button = btn
             ba.textwidget(parent=row, size=(10, 32), text='')  # spacing
+            # (looks like a PyCharm false positive)
+            # noinspection PyArgumentList
             btn = ba.buttonwidget(
                 parent=row,
                 size=(50, 32),

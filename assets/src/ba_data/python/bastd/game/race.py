@@ -550,6 +550,7 @@ class RaceGame(ba.TeamGameActivity):
             try:
                 plr[1].gamedata['rank'] = i
                 if plr[1].actor is not None:
+                    # noinspection PyUnresolvedReferences
                     node = plr[1].actor.distance_txt
                     if node:
                         node.text = str(i + 1) if plr[1].is_alive() else ''

@@ -363,6 +363,7 @@ class BaseEnumValue(TypedValue[T]):
         else:
             # At this point we assume its an enum value
             try:
+                # noinspection PyArgumentList
                 self._enumtype(data)
             except ValueError:
                 if error:
@@ -376,6 +377,7 @@ class BaseEnumValue(TypedValue[T]):
     def filter_output(self, data: Any) -> Any:
         if self._allow_none and data is None:
             return None
+        # noinspection PyArgumentList
         return self._enumtype(data)
 
 

@@ -645,6 +645,7 @@
       <w>fsettings</w>
       <w>fsplit</w>
       <w>fsrc</w>
+      <w>fstab</w>
       <w>fstrs</w>
       <w>ftmp</w>
       <w>ftplib</w>
@@ -818,6 +819,7 @@
       <w>imghdr</w>
       <w>imgw</w>
       <w>incentivized</w>
+      <w>includetest</w>
       <w>incr</w>
       <w>incrementbuild</w>
       <w>indentfilter</w>
@@ -924,12 +926,21 @@
       <w>levelname</w>
       <w>lfull</w>
       <w>libcrypto</w>
+      <w>libegl</w>
       <w>libinst</w>
       <w>liblzma</w>
       <w>libmain</w>
+      <w>libopena</w>
+      <w>libopenal</w>
       <w>libpython</w>
+      <w>libsd</w>
+      <w>libsdl</w>
       <w>libsqlite</w>
       <w>libssl</w>
+      <w>libvorbi</w>
+      <w>libvorbis</w>
+      <w>libxm</w>
+      <w>libxmu</w>
       <w>libxz</w>
       <w>lindex</w>
       <w>lindexorig</w>
@@ -1177,6 +1188,7 @@
       <w>opcode</w>
       <w>opdir</w>
       <w>opendiff</w>
+      <w>openssh</w>
       <w>operasinger</w>
       <w>oppnode</w>
       <w>opstr</w>

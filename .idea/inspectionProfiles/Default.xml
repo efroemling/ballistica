@@ -87,20 +87,12 @@
           <option value="devtool.*" />
           <option value="AppKit" />
           <option value="typing.Sequence.register" />
+          <option value="xml.dom.*" />
         </list>
       </option>
     </inspection_tool>
     <inspection_tool class="PyUnusedLocalInspection" enabled="false" level="WEAK WARNING" enabled_by_default="false">
-      <scope name="UncheckedPython" level="WEAK WARNING" enabled="false">
-        <option name="ignoreTupleUnpacking" value="true" />
-        <option name="ignoreLambdaParameters" value="true" />
-        <option name="ignoreLoopIterationVariables" value="true" />
-        <option name="ignoreVariablesStartingWithUnderscore" value="true" />
-      </scope>
-      <option name="ignoreTupleUnpacking" value="true" />
-      <option name="ignoreLambdaParameters" value="true" />
-      <option name="ignoreLoopIterationVariables" value="true" />
-      <option name="ignoreVariablesStartingWithUnderscore" value="true" />
+      <scope name="UncheckedPython" level="WEAK WARNING" enabled="false" />
     </inspection_tool>
   </profile>
 </component>
