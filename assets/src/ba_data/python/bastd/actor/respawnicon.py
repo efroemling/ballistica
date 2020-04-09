@@ -45,6 +45,7 @@ class RespawnIcon:
         """
         # FIXME; tidy up
         # pylint: disable=too-many-locals
+
         activity = ba.getactivity()
         self._visible = True
         if isinstance(ba.getsession(), ba.TeamsSession):
@@ -158,7 +159,7 @@ class RespawnIcon:
 
     def _update(self) -> None:
         remaining = int(
-            round(self._respawn_time -
+            round(int(1000.0 * self._respawn_time) -
                   ba.time(timeformat=ba.TimeFormat.MILLISECONDS)) / 1000.0)
         if remaining > 0:
             assert self._text is not None
