@@ -928,7 +928,8 @@ class CoopScoreScreen(ba.Activity):
                     results.remove(score)
                     break
             results.append(our_score_entry)
-            results.sort(reverse=self._score_order == 'increasing')
+            results.sort(reverse=self._score_order == 'increasing',
+                         key=lambda x: x[0])
 
         # If we're not submitting our own score, we still want to change the
         # name of our own score to 'Me'.
