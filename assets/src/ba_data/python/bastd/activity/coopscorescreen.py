@@ -676,7 +676,8 @@ class CoopScoreScreen(ba.Activity):
             our_score = None
 
         try:
-            our_high_scores.sort(reverse=self._score_order == 'increasing')
+            our_high_scores.sort(reverse=self._score_order == 'increasing',
+                                 key=lambda x: x[0])
         except Exception:
             ba.print_exception('Error sorting scores')
             print('our_high_scores:', our_high_scores)
