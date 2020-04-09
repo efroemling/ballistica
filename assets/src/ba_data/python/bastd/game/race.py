@@ -287,7 +287,9 @@ class RaceGame(ba.TeamGameActivity):
                             assert self._timer is not None
                             self._last_team_time = (
                                 player.team.gamedata['time']) = (
-                                    ba.time() - self._timer.getstarttime())
+                                    ba.time(
+                                        timeformat=ba.TimeFormat.MILLISECONDS) - \
+                                        self._timer.getstarttime(timeformat=ba.TimeFormat.MILLISECONDS))
                             self._check_end_game()
 
                         # Team has yet to finish.
@@ -707,7 +709,11 @@ class RaceGame(ba.TeamGameActivity):
         results = ba.TeamGameResults()
 
         for team in self.teams:
-            results.set_team_score(team, team.gamedata['time'])
+            if team.gamedata['time'] is not None:
+                results.set_team_score(team, team.gamedata['time'])
+            else:
+                # If game have ended before we get any result, use 'fail' screen
+                results.set_team_score(team, None)
 
         # We don't announce a winner in ffa mode since its probably been a
         # while since the first place guy crossed the finish line so it seems
@@ -725,6 +731,6 @@ class RaceGame(ba.TeamGameActivity):
                 ba.print_error('got no player in PlayerSpazDeathMessage')
                 return
             if not player.gamedata['finished']:
-                self.respawn_player(player, respawn_time=1000)
+                self.respawn_player(player, respawn_time=1)
         else:
             super().handlemessage(msg)
