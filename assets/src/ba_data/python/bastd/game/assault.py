@@ -150,7 +150,7 @@ class AssaultGame(ba.TeamGameActivity):
 
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, playerspaz.PlayerSpazDeathMessage):
-            super().handlemessage(msg)  # augment standard
+            super().handlemessage(msg)  # Augment standard.
             self.respawn_player(msg.spaz.player)
         else:
             super().handlemessage(msg)
@@ -167,11 +167,14 @@ class AssaultGame(ba.TeamGameActivity):
         ba.timer(length, light.delete)
 
     def _handle_base_collide(self, team: ba.Team) -> None:
-        cval = ba.get_collision_info('opposing_node')
-        try:
-            player = cval.getdelegate().getplayer()
-        except Exception:
+
+        # Attempt to pull a living ba.Player from what we hit.
+        cnode = ba.get_collision_info('opposing_node')
+        assert isinstance(cnode, ba.Node)
+        actor = cnode.getdelegate()
+        if not isinstance(actor, playerspaz.PlayerSpaz):
             return
+        player = actor.getplayer()
         if not player or not player.is_alive():
             return
 
@@ -190,20 +193,21 @@ class AssaultGame(ba.TeamGameActivity):
                 # and add flashes of light so its noticeable.
                 for player in player_team.players:
                     if player.is_alive():
-                        pos = player.actor.node.position
-                        light = ba.newnode('light',
-                                           attrs={
-                                               'position': pos,
-                                               'color': player_team.color,
-                                               'height_attenuated': False,
-                                               'radius': 0.4
-                                           })
-                        ba.timer(0.5, light.delete)
-                        ba.animate(light, 'intensity', {
-                            0: 0,
-                            0.1: 1.0,
-                            0.5: 0
-                        })
+                        if player.node:
+                            pos = player.node.position
+                            light = ba.newnode('light',
+                                               attrs={
+                                                   'position': pos,
+                                                   'color': player_team.color,
+                                                   'height_attenuated': False,
+                                                   'radius': 0.4
+                                               })
+                            ba.timer(0.5, light.delete)
+                            ba.animate(light, 'intensity', {
+                                0: 0,
+                                0.1: 1.0,
+                                0.5: 0
+                            })
 
                         new_pos = (self.map.get_start_position(
                             player_team.get_id()))
@@ -220,8 +224,10 @@ class AssaultGame(ba.TeamGameActivity):
                             0.1: 1.0,
                             0.5: 0
                         })
-                        player.actor.handlemessage(
-                            ba.StandMessage(new_pos, random.uniform(0, 360)))
+                        if player.actor:
+                            player.actor.handlemessage(
+                                ba.StandMessage(new_pos,
+                                                random.uniform(0, 360)))
 
                 # Have teammates celebrate.
                 for player in player_team.players:

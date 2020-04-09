@@ -126,21 +126,19 @@ class PlayerSpaz(Spaz):
     def player(self) -> ba.Player:
         """The ba.Player associated with this Spaz.
 
-        If the player no longer exists, raises an Exception.
+        If the player no longer exists, raises an ba.PlayerNotFoundError.
         """
-        player = self._player
-        if not player:
-            raise Exception("player no longer exists")
-        return player
+        if not self._player:
+            raise ba.PlayerNotFoundError()
+        return self._player
 
     def getplayer(self) -> Optional[ba.Player]:
         """Get the ba.Player associated with this Spaz.
 
-        Note that this may return None or an invalidated ba.Player,
-        so always test it with 'if playerval' before using it to
-        cover both cases.
+        Note that this may return None if the player has left.
         """
-        return self._player
+        # Convert invalid references to None.
+        return self._player if self._player else None
 
     def connect_controls_to_player(self,
                                    enable_jump: bool = True,

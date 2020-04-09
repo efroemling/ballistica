@@ -28,7 +28,6 @@ import weakref
 from typing import TYPE_CHECKING
 
 import ba
-from ba import distance
 from bastd.actor import spaz as basespaz
 
 if TYPE_CHECKING:
@@ -41,6 +40,7 @@ DEFAULT_BOT_COLOR = (0.6, 0.6, 0.6)
 DEFAULT_BOT_HIGHLIGHT = (0.1, 0.3, 0.1)
 PRO_BOT_COLOR = (1.0, 0.2, 0.1)
 PRO_BOT_HIGHLIGHT = (0.6, 0.1, 0.05)
+
 
 class SpazBotPunchedMessage:
     """A message saying a ba.SpazBot got punched.
@@ -192,9 +192,8 @@ class SpazBot(basespaz.Spaz):
         closest = None
         assert self._player_pts is not None
         for plpt, plvel in self._player_pts:
-            dist = distance(
-                (plpt.x, plpt.y, plpt.z),
-                (botpt.x, botpt.y, botpt.z))
+            dist = (plpt - botpt).length()
+
             # Ignore player-points that are significantly below the bot
             # (keeps bots from following players off cliffs).
             if (closest_dist is None
@@ -256,10 +255,8 @@ class SpazBot(basespaz.Spaz):
                 assert self.target_flag.node
                 target_pt_raw = ba.Vec3(*self.target_flag.node.position)
                 diff = (target_pt_raw - our_pos)
-                diff = ba.Vec3(diff[0], 0, diff[2])  # don't care about y
-                dist = distance(
-                    (target_pt_raw.x, 0, target_pt_raw.z),
-                    (our_pos.x, 0, our_pos.z))
+                diff = ba.Vec3(diff[0], 0, diff[2])  # Don't care about y.
+                dist = diff.length()
                 to_target = diff.normalized()
 
                 # If we're holding some non-flag item, drop it.
@@ -327,9 +324,7 @@ class SpazBot(basespaz.Spaz):
                      target_vel * dist_raw * 0.3 * self._lead_amount)
 
         diff = (target_pt - our_pos)
-        dist = distance(
-            (target_pt.x, target_pt.y, target_pt.z),
-            (our_pos.x, our_pos.y, our_pos.z))
+        dist = diff.length()
         to_target = diff.normalized()
 
         if self._mode == 'throw':

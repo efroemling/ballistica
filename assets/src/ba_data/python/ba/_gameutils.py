@@ -22,13 +22,12 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-import math
 
 import _ba
 from ba._enums import TimeType, TimeFormat, SpecialChar
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Sequence, Tuple
+    from typing import Any, Dict, Sequence
     import ba
 
 TROPHY_CHARS = {
@@ -47,14 +46,6 @@ def get_trophy_string(trophy_id: str) -> str:
         return _ba.charstr(TROPHY_CHARS[trophy_id])
     return '?'
 
-def distance(vec1: Tuple[float, float, float],
-             vec2: Tuple[float, float, float]) -> float:
-    """Find distance between two positions"""
-    xlen = vec1[0] - vec2[0]
-    ylen = vec1[1] - vec2[1]
-    zlen = vec1[2] - vec2[2]
-    xylen = math.sqrt(xlen**2 + ylen**2)
-    return math.sqrt(xylen**2 + zlen**2)
 
 def sharedobj(name: str) -> Any:
     """Return a predefined object for the current Activity, creating if needed.

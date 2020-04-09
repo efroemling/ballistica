@@ -487,8 +487,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity):
             self.respawn_player(msg.spaz.player)
         elif isinstance(msg, stdflag.FlagDeathMessage):
             assert isinstance(msg.flag, CTFFlag)
-            ba.timer(0.1,
-                     ba.Call(self._spawn_flag_for_team, msg.flag.team))
+            ba.timer(0.1, ba.Call(self._spawn_flag_for_team, msg.flag.team))
         elif isinstance(msg, stdflag.FlagPickedUpMessage):
             # Store the last player to hold the flag for scoring purposes.
             assert isinstance(msg.flag, CTFFlag)
