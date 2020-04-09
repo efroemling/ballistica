@@ -28,7 +28,7 @@ from typing import TYPE_CHECKING
 import ba
 
 if TYPE_CHECKING:
-    from typing import Optional
+    from typing import Optional, Dict, Tuple
 
 
 class RespawnIcon:
@@ -43,34 +43,9 @@ class RespawnIcon:
         """
         Instantiate with a given ba.Player and respawn_time (in seconds)
         """
-        # FIXME; tidy up
-        # pylint: disable=too-many-locals
-
-        activity = ba.getactivity()
         self._visible = True
-        if isinstance(ba.getsession(), ba.TeamsSession):
-            on_right = player.team.get_id() % 2 == 1
-            # store a list of icons in the team
-            try:
-                respawn_icons = (
-                    player.team.gamedata['_spaz_respawn_icons_right'])
-            except Exception:
-                respawn_icons = (
-                    player.team.gamedata['_spaz_respawn_icons_right']) = {}
-            offs_extra = -20
-        else:
-            on_right = False
-            # Store a list of icons in the activity.
-            # FIXME: Need an elegant way to store our
-            #  shared stuff with the activity.
-            try:
-                respawn_icons = activity.spaz_respawn_icons_right
-            except Exception:
-                respawn_icons = activity.spaz_respawn_icons_right = {}
-            if isinstance(activity.session, ba.FreeForAllSession):
-                offs_extra = -150
-            else:
-                offs_extra = -20
+
+        on_right, offs_extra, respawn_icons = self._get_context(player)
 
         try:
             mask_tex = (player.team.gamedata['_spaz_respawn_icons_mask_tex'])
@@ -78,7 +53,7 @@ class RespawnIcon:
             mask_tex = player.team.gamedata['_spaz_respawn_icons_mask_tex'] = (
                 ba.gettexture('characterIconMask'))
 
-        # now find the first unused slot and use that
+        # Now find the first unused slot and use that.
         index = 0
         while (index in respawn_icons and respawn_icons[index]() is not None
                and respawn_icons[index]().visible):
@@ -157,17 +132,42 @@ class RespawnIcon:
         """Is this icon still visible?"""
         return self._visible
 
+    def _get_context(self, player: ba.Player) -> Tuple[bool, float, Dict]:
+        """Return info on where we should be shown and stored."""
+        activity = ba.getactivity()
+        if isinstance(ba.getsession(), ba.TeamsSession):
+            on_right = player.team.get_id() % 2 == 1
+
+            # Store a list of icons in the team.
+            try:
+                respawn_icons = (
+                    player.team.gamedata['_spaz_respawn_icons_right'])
+            except Exception:
+                respawn_icons = (
+                    player.team.gamedata['_spaz_respawn_icons_right']) = {}
+            offs_extra = -20
+        else:
+            on_right = False
+
+            # Store a list of icons in the activity.
+            # FIXME: Need an elegant way to store our shared stuff with
+            # the activity.
+            try:
+                respawn_icons = activity.spaz_respawn_icons_right
+            except Exception:
+                respawn_icons = activity.spaz_respawn_icons_right = {}
+            if isinstance(activity.session, ba.FreeForAllSession):
+                offs_extra = -150
+            else:
+                offs_extra = -20
+        return on_right, offs_extra, respawn_icons
+
     def _update(self) -> None:
-        remaining = int(
-            round(int(1000.0 * self._respawn_time) -
-                  ba.time(timeformat=ba.TimeFormat.MILLISECONDS)) / 1000.0)
+        remaining = int(round(self._respawn_time - ba.time()))
         if remaining > 0:
             assert self._text is not None
             if self._text.node:
                 self._text.node.text = str(remaining)
         else:
-            self._clear()
-
-    def _clear(self) -> None:
-        self._visible = False
-        self._image = self._text = self._timer = self._name = None
+            self._visible = False
+            self._image = self._text = self._timer = self._name = None
