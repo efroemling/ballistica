@@ -35,19 +35,22 @@ def gamepad_configure_callback(event: Dict[str, Any]) -> None:
     """Respond to a gamepad button press during config selection."""
     from ba.internal import get_remote_app_name
     from bastd.ui.settings import gamepad
-    # ignore all but button-presses
+
+    # Ignore all but button-presses.
     if event['type'] not in ['BUTTONDOWN', 'HATMOTION']:
         return
     _ba.release_gamepad_input()
     try:
         ba.containerwidget(edit=ba.app.main_menu_window, transition='out_left')
     except Exception:
-        ba.print_exception("error transitioning out main_menu_window")
+        ba.print_exception("Error transitioning out main_menu_window.")
     ba.playsound(ba.getsound('activateBeep'))
     ba.playsound(ba.getsound('swish'))
-    if event['input_device'].get_allows_configuring():
-        ba.app.main_menu_window = (gamepad.GamepadSettingsWindow(
-            event["input_device"]).get_root_widget())
+    inputdevice = event['input_device']
+    assert isinstance(inputdevice, ba.InputDevice)
+    if inputdevice.allows_configuring:
+        ba.app.main_menu_window = (
+            gamepad.GamepadSettingsWindow(inputdevice).get_root_widget())
     else:
         width = 700
         height = 200
@@ -56,7 +59,7 @@ def gamepad_configure_callback(event: Dict[str, Any]) -> None:
             scale=1.7 if ba.app.small_ui else 1.4 if ba.app.med_ui else 1.0,
             size=(width, height),
             transition='in_right'))
-        device_name = event['input_device'].get_name()
+        device_name = inputdevice.name
         if device_name == 'iDevice':
             msg = ba.Lstr(resource='bsRemoteConfigureInAppText',
                           subs=[('${REMOTE_APP_NAME}', get_remote_app_name())])

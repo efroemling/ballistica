@@ -22,6 +22,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import ba
@@ -119,48 +120,45 @@ def get_factory() -> FlagFactory:
     return factory
 
 
+@dataclass
 class FlagPickedUpMessage:
     """A message saying a ba.Flag has been picked up.
 
-    category: Message Classes
+        category: Message Classes
 
-    Attributes:
+        Attrs:
 
-       flag
-          The ba.Flag that has been picked up.
+           flag
+              The ba.Flag that has been picked up.
 
-       node
-          The ba.Node doing the picking up.
-    """
-
-    def __init__(self, flag: Flag, node: ba.Node):
-        """Instantiate with given values."""
-        self.flag = flag
-        self.node = node
+           node
+              The ba.Node doing the picking up.
+        """
+    flag: Flag
+    node: ba.Node
 
 
+@dataclass
 class FlagDeathMessage:
     """A message saying a ba.Flag has died.
 
     category: Message Classes
 
-    Attributes:
+    Attrs:
 
        flag
           The ba.Flag that died.
     """
-
-    def __init__(self, flag: Flag):
-        """Instantiate with given values."""
-        self.flag = flag
+    flag: Flag
 
 
+@dataclass
 class FlagDroppedMessage:
     """A message saying a ba.Flag has been dropped.
 
     category: Message Classes
 
-    Attributes:
+    Attrs:
 
        flag
           The ba.Flag that was dropped.
@@ -168,11 +166,8 @@ class FlagDroppedMessage:
        node
           The ba.Node that was holding it.
     """
-
-    def __init__(self, flag: Flag, node: ba.Node):
-        """Instantiate with given values."""
-        self.flag = flag
-        self.node = node
+    flag: Flag
+    node: ba.Node
 
 
 class Flag(ba.Actor):
