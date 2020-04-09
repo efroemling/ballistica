@@ -285,13 +285,13 @@ class RaceGame(ba.TeamGameActivity):
                             ba.playsound(self._score_sound)
                             player.team.gamedata['finished'] = True
                             assert self._timer is not None
-                            _cur_time = ba.time(
+                            cur_time = ba.time(
                                 timeformat=ba.TimeFormat.MILLISECONDS)
-                            _start_time = self._timer.getstarttime(
+                            start_time = self._timer.getstarttime(
                                 timeformat=ba.TimeFormat.MILLISECONDS)
                             self._last_team_time = (
-                                player.team.gamedata['time']) = (_cur_time -
-                                                                 _start_time)
+                                player.team.gamedata['time']) = (cur_time -
+                                                                 start_time)
                             self._check_end_game()
 
                         # Team has yet to finish.
@@ -707,11 +707,11 @@ class RaceGame(ba.TeamGameActivity):
         # final time differs from what they see onscreen by a tiny bit)
         assert self._timer is not None
         if self._timer.has_started():
-            _cur_time = self._timer.getstarttime(
+            cur_time = self._timer.getstarttime(
                 timeformat=ba.TimeFormat.MILLISECONDS)
             self._timer.stop(
                 endtime=None if self._last_team_time is None else (
-                    _cur_time + self._last_team_time))
+                    cur_time + self._last_team_time))
 
         results = ba.TeamGameResults()
 
