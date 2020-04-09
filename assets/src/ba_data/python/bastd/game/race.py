@@ -285,11 +285,13 @@ class RaceGame(ba.TeamGameActivity):
                             ba.playsound(self._score_sound)
                             player.team.gamedata['finished'] = True
                             assert self._timer is not None
+                            _cur_time = ba.time(
+                                timeformat=ba.TimeFormat.MILLISECONDS)
+                            _start_time = self._timer.getstarttime(
+                                timeformat=ba.TimeFormat.MILLISECONDS)
                             self._last_team_time = (
-                                player.team.gamedata['time']) = (
-                                    ba.time(
-                                        timeformat=ba.TimeFormat.MILLISECONDS) - \
-                                        self._timer.getstarttime(timeformat=ba.TimeFormat.MILLISECONDS))
+                                player.team.gamedata['time']) = (_cur_time -
+                                                                 _start_time)
                             self._check_end_game()
 
                         # Team has yet to finish.
@@ -547,7 +549,10 @@ class RaceGame(ba.TeamGameActivity):
         # Sort players by distance and update their ranks.
         p_list = [[player.gamedata['distance'], player]
                   for player in self.players]
-        p_list.sort(reverse=True)
+
+        p_list.sort(reverse=True) 
+        # FIXME - need another way to sort p_list.
+        # It tries to compare ba.Player objects.
         for i, plr in enumerate(p_list):
             try:
                 plr[1].gamedata['rank'] = i
@@ -702,18 +707,19 @@ class RaceGame(ba.TeamGameActivity):
         # final time differs from what they see onscreen by a tiny bit)
         assert self._timer is not None
         if self._timer.has_started():
+            _cur_time = self._timer.getstarttime(
+                            timeformat=ba.TimeFormat.MILLISECONDS)
             self._timer.stop(
                 endtime=None if self._last_team_time is None else (
-                    self._timer.getstarttime() + self._last_team_time))
+                    _cur_time + self._last_team_time))
 
         results = ba.TeamGameResults()
 
         for team in self.teams:
             if team.gamedata['time'] is not None:
                 results.set_team_score(team, team.gamedata['time'])
-            else:
-                # If game have ended before we get any result, use 'fail' screen
-                results.set_team_score(team, None)
+            # If game have ended before we
+            # get any result, use 'fail' screen
 
         # We don't announce a winner in ffa mode since its probably been a
         # while since the first place guy crossed the finish line so it seems
