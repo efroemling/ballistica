@@ -216,7 +216,7 @@ class TeamsScoreScreenActivity(ScoreScreenActivity):
                   position=(ts_h_offs - 12 * scale,
                             ts_v_offset + (v_offs + 15.0) * scale),
                   scale=(30.0 * scale, 30.0 * scale),
-                  transition='in_left',
+                  transition=Image.Transition.IN_LEFT,
                   transition_delay=tdelay).autoretain()
             Text(ba.Lstr(value=playerrec.get_name(full=True)),
                  maxwidth=160,

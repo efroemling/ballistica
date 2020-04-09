@@ -384,19 +384,19 @@ class Achievement:
             in_main_menu = False
             h_attach = Text.HAttach.CENTER
             v_attach = Text.VAttach.CENTER
-            attach = 'center'
+            attach = Image.Attach.CENTER
         elif style == 'in_game':
             in_game_colors = True
             in_main_menu = False
             h_attach = Text.HAttach.LEFT
             v_attach = Text.VAttach.TOP
-            attach = 'topLeft'
+            attach = Image.Attach.TOP_LEFT
         elif style == 'news':
             in_game_colors = True
             in_main_menu = True
             h_attach = Text.HAttach.CENTER
             v_attach = Text.VAttach.TOP
-            attach = 'topCenter'
+            attach = Image.Attach.TOP_CENTER
         else:
             raise Exception('invalid style "' + style + '"')
 
@@ -438,7 +438,7 @@ class Achievement:
                       color=cl1,
                       position=(x - 25, y + 5),
                       attach=attach,
-                      transition='fade_in',
+                      transition=Image.Transition.FADE_IN,
                       transition_delay=delay,
                       vr_depth=4,
                       transition_out_delay=out_delay_fin,
@@ -543,7 +543,7 @@ class Achievement:
                       position=(x - 25, y + 5),
                       attach=attach,
                       vr_depth=4,
-                      transition='in_right',
+                      transition=Image.Transition.IN_RIGHT,
                       transition_delay=delay,
                       transition_out_delay=None,
                       scale=(40, 40)).autoretain())
@@ -556,7 +556,7 @@ class Achievement:
                           vr_depth=8,
                           position=(x - 25, y + 5),
                           attach=attach,
-                          transition='in_right',
+                          transition=Image.Transition.IN_RIGHT,
                           transition_delay=delay,
                           transition_out_delay=None,
                           scale=(40, 40)).autoretain())
@@ -726,8 +726,8 @@ class Achievement:
         obj = Image(_ba.gettexture('shadow'),
                     position=(-30, 30 + y_offs),
                     front=True,
-                    attach='bottomCenter',
-                    transition='in_bottom',
+                    attach=Image.Attach.BOTTOM_CENTER,
+                    transition=Image.Transition.IN_BOTTOM,
                     vr_depth=base_vr_depth - 100,
                     transition_delay=in_time,
                     transition_out_delay=out_time,
@@ -739,9 +739,9 @@ class Achievement:
         obj = Image(_ba.gettexture('light'),
                     position=(-180, 60 + y_offs),
                     front=True,
-                    attach='bottomCenter',
+                    attach=Image.Attach.BOTTOM_CENTER,
                     vr_depth=base_vr_depth,
-                    transition='in_bottom',
+                    transition=Image.Transition.IN_BOTTOM,
                     transition_delay=in_time,
                     transition_out_delay=out_time,
                     color=(1.8, 1.8, 1.0, 0.0),
@@ -776,10 +776,10 @@ class Achievement:
                            loop=True)
         obj = Image(self.get_icon_texture(True),
                     position=(-180, 60 + y_offs),
-                    attach='bottomCenter',
+                    attach=Image.Attach.BOTTOM_CENTER,
                     front=True,
                     vr_depth=base_vr_depth - 10,
-                    transition='in_bottom',
+                    transition=Image.Transition.IN_BOTTOM,
                     transition_delay=in_time,
                     transition_out_delay=out_time,
                     scale=(100, 100)).autoretain()
@@ -820,9 +820,9 @@ class Achievement:
                     model_transparent=_ba.getmodel('achievementOutline'),
                     position=(-180, 60 + y_offs),
                     front=True,
-                    attach='bottomCenter',
+                    attach=Image.Attach.BOTTOM_CENTER,
                     vr_depth=base_vr_depth,
-                    transition='in_bottom',
+                    transition=Image.Transition.IN_BOTTOM,
                     transition_delay=in_time,
                     transition_out_delay=out_time,
                     scale=(100, 100)).autoretain()

@@ -22,6 +22,7 @@
 
 from __future__ import annotations
 
+from enum import Enum
 from typing import TYPE_CHECKING
 
 import ba
@@ -33,12 +34,28 @@ if TYPE_CHECKING:
 class Image(ba.Actor):
     """Just a wrapped up image node with a few tricks up its sleeve."""
 
+    class Transition(Enum):
+        """Transition types we support."""
+        FADE_IN = 'fade_in'
+        IN_RIGHT = 'in_right'
+        IN_LEFT = 'in_left'
+        IN_BOTTOM = 'in_bottom'
+        IN_BOTTOM_SLOW = 'in_bottom_slow'
+        IN_TOP_SLOW = 'in_top_slow'
+
+    class Attach(Enum):
+        """Attach types we support."""
+        CENTER = 'center'
+        TOP_CENTER = 'topCenter'
+        TOP_LEFT = 'topLeft'
+        BOTTOM_CENTER = 'bottomCenter'
+
     def __init__(self,
                  texture: Union[ba.Texture, Dict[str, Any]],
                  position: Tuple[float, float] = (0, 0),
-                 transition: str = None,
+                 transition: Optional[Transition] = None,
                  transition_delay: float = 0.0,
-                 attach: str = 'center',
+                 attach: Attach = Attach.CENTER,
                  color: Sequence[float] = (1.0, 1.0, 1.0, 1.0),
                  scale: Tuple[float, float] = (100.0, 100.0),
                  transition_out_delay: float = None,
@@ -80,7 +97,7 @@ class Image(ba.Actor):
                                    'absolute_scale': True,
                                    'host_only': host_only,
                                    'front': front,
-                                   'attach': attach
+                                   'attach': attach.value
                                },
                                delegate=self)
 
@@ -90,7 +107,7 @@ class Image(ba.Actor):
             self.node.model_transparent = model_transparent
         if tint2_color is not None:
             self.node.tint2_color = tint2_color
-        if transition == 'fade_in':
+        if transition is self.Transition.FADE_IN:
             keys = {transition_delay: 0, transition_delay + 0.5: color[3]}
             if transition_out_delay is not None:
                 keys[transition_delay + transition_out_delay] = color[3]
@@ -99,7 +116,7 @@ class Image(ba.Actor):
         cmb = self.position_combine = ba.newnode('combine',
                                                  owner=self.node,
                                                  attrs={'size': 2})
-        if transition == 'in_right':
+        if transition is self.Transition.IN_RIGHT:
             keys = {
                 transition_delay: position[0] + 1200,
                 transition_delay + 0.2: position[0]
@@ -108,7 +125,7 @@ class Image(ba.Actor):
             ba.animate(cmb, 'input0', keys)
             cmb.input1 = position[1]
             ba.animate(self.node, 'opacity', o_keys)
-        elif transition == 'in_left':
+        elif transition is self.Transition.IN_LEFT:
             keys = {
                 transition_delay: position[0] - 1200,
                 transition_delay + 0.2: position[0]
@@ -123,7 +140,7 @@ class Image(ba.Actor):
             ba.animate(cmb, 'input0', keys)
             cmb.input1 = position[1]
             ba.animate(self.node, 'opacity', o_keys)
-        elif transition == 'in_bottom_slow':
+        elif transition is self.Transition.IN_BOTTOM_SLOW:
             keys = {
                 transition_delay: -400,
                 transition_delay + 3.5: position[1]
@@ -132,7 +149,7 @@ class Image(ba.Actor):
             cmb.input0 = position[0]
             ba.animate(cmb, 'input1', keys)
             ba.animate(self.node, 'opacity', o_keys)
-        elif transition == 'in_bottom':
+        elif transition is self.Transition.IN_BOTTOM:
             keys = {
                 transition_delay: -400,
                 transition_delay + 0.2: position[1]
@@ -146,13 +163,16 @@ class Image(ba.Actor):
             cmb.input0 = position[0]
             ba.animate(cmb, 'input1', keys)
             ba.animate(self.node, 'opacity', o_keys)
-        elif transition == 'in_top_slow':
+        elif transition is self.Transition.IN_TOP_SLOW:
             keys = {transition_delay: 400, transition_delay + 3.5: position[1]}
             o_keys = {transition_delay: 0.0, transition_delay + 1.0: 1.0}
             cmb.input0 = position[0]
             ba.animate(cmb, 'input1', keys)
             ba.animate(self.node, 'opacity', o_keys)
         else:
+            if (transition is not self.Transition.FADE_IN
+                    and transition is not None):
+                ba.print_error(f'Invalid transition: "{transition}"')
             cmb.input0 = position[0]
             cmb.input1 = position[1]
         cmb.connectattr('output', self.node, 'position')

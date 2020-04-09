@@ -36,7 +36,8 @@ class FreeForAllVictoryScoreScreenActivity(TeamsScoreScreenActivity):
 
     def __init__(self, settings: Dict[str, Any]):
         super().__init__(settings=settings)
-        # keeps prev activity alive while we fade in
+
+        # Keep prev activity alive while we fade in.
         self.transition_time = 0.5
         self._cymbal_sound = ba.getsound('cymbal')
 
@@ -44,7 +45,7 @@ class FreeForAllVictoryScoreScreenActivity(TeamsScoreScreenActivity):
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
         from bastd.actor.text import Text
-        from bastd.actor import image
+        from bastd.actor.image import Image
         ba.set_analytics_screen('FreeForAll Score Screen')
         super().on_begin()
 
@@ -54,8 +55,8 @@ class FreeForAllVictoryScoreScreenActivity(TeamsScoreScreenActivity):
         scale = 1.2
         spacing = 37.0
 
-        # we include name and previous score in the sort to reduce the amount
-        # of random jumping around the list we do in cases of ties
+        # We include name and previous score in the sort to reduce the amount
+        # of random jumping around the list we do in cases of ties.
         player_order_prev = list(self.players)
         player_order_prev.sort(
             reverse=True,
@@ -138,12 +139,12 @@ class FreeForAllVictoryScoreScreenActivity(TeamsScoreScreenActivity):
             if order_change:
                 ba.timer(tdelay + delay2 + 0.1,
                          ba.Call(ba.playsound, self._cymbal_sound))
-            img = image.Image(player.get_icon(),
-                              position=(ts_h_offs - 72.0 * scale,
-                                        y_base + (v_offs + 15.0) * scale),
-                              scale=(30.0 * scale, 30.0 * scale),
-                              transition='in_left',
-                              transition_delay=tdelay).autoretain()
+            img = Image(player.get_icon(),
+                        position=(ts_h_offs - 72.0 * scale,
+                                  y_base + (v_offs + 15.0) * scale),
+                        scale=(30.0 * scale, 30.0 * scale),
+                        transition=Image.Transition.IN_LEFT,
+                        transition_delay=tdelay).autoretain()
             ba.timer(
                 tdelay + delay2,
                 ba.WeakCall(

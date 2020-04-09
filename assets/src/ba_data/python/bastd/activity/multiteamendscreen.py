@@ -190,7 +190,7 @@ class TeamSeriesVictoryScoreScreenActivity(TeamsScoreScreenActivity):
                 Image(mvp.get_icon(),
                       position=(230, ts_height / 2 - 55 + 14 - 5),
                       scale=(70, 70),
-                      transition='in_left',
+                      transition=Image.Transition.IN_LEFT,
                       transition_delay=tval).autoretain()
                 Text(ba.Lstr(value=mvp_name),
                      position=(280, ts_height / 2 - 55 + 15 - 5),
@@ -235,7 +235,7 @@ class TeamSeriesVictoryScoreScreenActivity(TeamsScoreScreenActivity):
             Image(mvp.get_icon(),
                   position=(233, ts_height / 2 - 150 - 30 - 46 + 25 + v_extra),
                   scale=(50, 50),
-                  transition='in_left',
+                  transition=Image.Transition.IN_LEFT,
                   transition_delay=tval).autoretain()
             Text(ba.Lstr(value=mvp_name),
                  position=(270, ts_height / 2 - 150 - 30 - 36 + v_extra + 15),
@@ -279,7 +279,7 @@ class TeamSeriesVictoryScoreScreenActivity(TeamsScoreScreenActivity):
             Image(mkp.get_icon(),
                   position=(233, ts_height / 2 - 300 - 30 - 46 + 25 + v_extra),
                   scale=(50, 50),
-                  transition='in_left',
+                  transition=Image.Transition.IN_LEFT,
                   transition_delay=tval).autoretain()
             Text(ba.Lstr(value=mkp_name),
                  position=(270, ts_height / 2 - 300 - 30 - 36 + v_extra + 15),
@@ -317,7 +317,7 @@ class TeamSeriesVictoryScoreScreenActivity(TeamsScoreScreenActivity):
             Image(prec.get_icon(),
                   position=(ts_h_offs - 72, ts_height / 2 + v_offs + 15),
                   scale=(30, 30),
-                  transition='in_left',
+                  transition=Image.Transition.IN_LEFT,
                   transition_delay=tdelay).autoretain()
             Text(ba.Lstr(value=name),
                  position=(ts_h_offs - 50, ts_height / 2 + v_offs + 15),
