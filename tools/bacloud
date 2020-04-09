@@ -65,12 +65,11 @@ class StateData:
     login_token: Optional[str] = None
 
 
-# noinspection PyUnresolvedReferences
 @dataclass
 class Response:
     """Response sent from the bacloud server to the client.
 
-    Attributes:
+    Attrs:
       message: If present, client should print this message before any other
         response processing (including error handling) occurs.
       message_end: end arg for message print() call.

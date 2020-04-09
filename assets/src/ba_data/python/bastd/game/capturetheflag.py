@@ -29,7 +29,7 @@ from typing import TYPE_CHECKING
 
 import ba
 from bastd.actor import flag as stdflag
-from bastd.actor import playerspaz
+from bastd.actor.playerspaz import PlayerSpaz, PlayerSpazDeathMessage
 
 if TYPE_CHECKING:
     from typing import Any, Type, List, Dict, Tuple, Sequence, Union, Optional
@@ -67,6 +67,14 @@ class CTFFlag(stdflag.Flag):
     def team(self) -> ba.Team:
         """return the flag's team."""
         return self._team
+
+    @classmethod
+    def from_node(cls, node: Optional[ba.Node]) -> Optional[CTFFlag]:
+        """Attempt to get a CTFFlag from a flag node."""
+        if not node:
+            return None
+        delegate = node.getdelegate()
+        return delegate if isinstance(delegate, CTFFlag) else None
 
 
 # ba_meta export game
@@ -222,8 +230,12 @@ class CaptureTheFlagGame(ba.TeamGameActivity):
         ba.playsound(self._swipsound, position=flag.node.position)
 
     def _handle_flag_entered_base(self, team: ba.Team) -> None:
-        flag = ba.get_collision_info("opposing_node").getdelegate()
-        assert isinstance(flag, CTFFlag)
+        node = ba.get_collision_info("opposing_node")
+        assert isinstance(node, (ba.Node, type(None)))
+        flag = CTFFlag.from_node(node)
+        if not flag:
+            print('Unable to get flag in _handle_flag_entered_base')
+            return
 
         if flag.team is team:
             team.gamedata['home_flag_at_base'] = True
@@ -327,10 +339,10 @@ class CaptureTheFlagGame(ba.TeamGameActivity):
     def _handle_flag_left_base(self, team: ba.Team) -> None:
         cur_time = ba.time()
         op_node = ba.get_collision_info("opposing_node")
-        try:
-            flag = op_node.getdelegate()
-        except Exception:
-            return  # Can happen when we kill a flag.
+        assert isinstance(op_node, (ba.Node, type(None)))
+        flag = CTFFlag.from_node(op_node)
+        if not flag:
+            return
 
         if flag.team is team:
 
@@ -380,23 +392,26 @@ class CaptureTheFlagGame(ba.TeamGameActivity):
                                          return_score,
                                          screenmessage=False)
 
+    @staticmethod
+    def _player_from_node(node: Optional[ba.Node]) -> Optional[ba.Player]:
+        """Return a player if given a node that is part of one's actor."""
+        if not node:
+            return None
+        delegate = node.getdelegate()
+        if not isinstance(delegate, PlayerSpaz):
+            return None
+        return delegate.getplayer()
+
     def _handle_hit_own_flag(self, team: ba.Team, val: int) -> None:
         """
         keep track of when each player is touching their
         own flag so we can award points when returned
         """
-        # I wear the cone of shame.
-        # pylint: disable=too-many-branches
         srcnode = ba.get_collision_info('source_node')
-        try:
-            player = srcnode.getdelegate().getplayer()
-        except Exception:
-            player = None
+        assert isinstance(srcnode, (ba.Node, type(None)))
+        player = self._player_from_node(srcnode)
         if player:
-            if val:
-                player.gamedata['touching_own_flag'] += 1
-            else:
-                player.gamedata['touching_own_flag'] -= 1
+            player.gamedata['touching_own_flag'] += (1 if val else -1)
 
         # If return-time is zero, just kill it immediately.. otherwise keep
         # track of touches and count down.
@@ -481,7 +496,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity):
                                             self.settings['Score to Win'])
 
     def handlemessage(self, msg: Any) -> Any:
-        if isinstance(msg, playerspaz.PlayerSpazDeathMessage):
+        if isinstance(msg, PlayerSpazDeathMessage):
             # Augment standard behavior.
             super().handlemessage(msg)
             self.respawn_player(msg.spaz.player)
