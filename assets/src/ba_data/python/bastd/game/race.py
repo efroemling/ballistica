@@ -550,7 +550,7 @@ class RaceGame(ba.TeamGameActivity):
         p_list = [[player.gamedata['distance'], player]
                   for player in self.players]
 
-        p_list.sort(reverse=True) 
+        p_list.sort(reverse=True)
         # FIXME - need another way to sort p_list.
         # It tries to compare ba.Player objects.
         for i, plr in enumerate(p_list):
