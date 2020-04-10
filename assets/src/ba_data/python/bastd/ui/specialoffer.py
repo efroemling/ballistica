@@ -209,8 +209,9 @@ class SpecialOfferWindow(ba.Window):
             # Total-value if they supplied it.
             total_worth_item = offer.get('valueItem', None)
             if total_worth_item is not None:
-                total_worth_price = get_clean_price(
-                    _ba.get_price(total_worth_item))
+                price = _ba.get_price(total_worth_item)
+                assert price is not None
+                total_worth_price = get_clean_price(price)
                 if total_worth_price is not None:
                     total_worth_text = ba.Lstr(resource='store.totalWorthText',
                                                subs=[('${TOTAL_WORTH}',
