@@ -164,7 +164,7 @@ class MeteorShowerGame(ba.TeamGameActivity):
             # Augment standard behavior.
             super().handlemessage(msg)
 
-            death_time = ba.time()
+            death_time = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)
 
             # Record the player's moment of death.
             msg.spaz.player.gamedata['death_time'] = death_time
@@ -240,8 +240,10 @@ class MeteorShowerGame(ba.TeamGameActivity):
         self._meteor_time = max(0.01, self._meteor_time * 0.9)
 
     def end_game(self) -> None:
-        cur_time = ba.time()
+        cur_time = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)
         assert self._timer is not None
+        start_time = self._timer.getstarttime(
+            timeformat=ba.TimeFormat.MILLISECONDS)
 
         # Mark 'death-time' as now for any still-living players
         # and award players points for how long they lasted.
@@ -252,13 +254,14 @@ class MeteorShowerGame(ba.TeamGameActivity):
                 # Throw an extra fudge factor in so teams that
                 # didn't die come out ahead of teams that did.
                 if 'death_time' not in player.gamedata:
-                    player.gamedata['death_time'] = cur_time + 0.001
+                    player.gamedata['death_time'] = cur_time + 1
 
                 # Award a per-player score depending on how many seconds
                 # they lasted (per-player scores only affect teams mode;
                 # everywhere else just looks at the per-team score).
                 score = int(player.gamedata['death_time'] -
-                            self._timer.getstarttime())
+                            self._timer.getstarttime(
+                                timeformat=ba.TimeFormat.MILLISECONDS))
                 if 'death_time' not in player.gamedata:
                     score += 50  # a bit extra for survivors
                 self.stats.player_scored(player, score, screenmessage=False)
@@ -281,8 +284,7 @@ class MeteorShowerGame(ba.TeamGameActivity):
             longest_life = 0
             for player in team.players:
                 longest_life = max(longest_life,
-                                   (player.gamedata['death_time'] -
-                                    self._timer.getstarttime()))
+                                   player.gamedata['death_time'] - start_time)
             results.set_team_score(team, longest_life)
 
         self.end(results=results)
