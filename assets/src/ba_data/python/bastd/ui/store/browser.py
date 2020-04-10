@@ -88,7 +88,7 @@ class StoreBrowserWindow(ba.Window):
 
         self._request: Any = None
         self._r = 'store'
-        self._last_buy_time = None
+        self._last_buy_time: Optional[Union[float, int]] = None
 
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height + extra_top),
@@ -479,7 +479,8 @@ class StoreBrowserWindow(ba.Window):
         # Prevent pressing buy within a few seconds of the last press
         # (gives the buttons time to disable themselves and whatnot).
         curtime = ba.time(ba.TimeType.REAL)
-        if self._last_buy_time is None or curtime - self._last_buy_time < 2.0:
+        if self._last_buy_time is not None and (curtime -
+                                                self._last_buy_time) < 2.0:
             ba.playsound(ba.getsound('error'))
         else:
             if _ba.get_account_state() != 'signed_in':
