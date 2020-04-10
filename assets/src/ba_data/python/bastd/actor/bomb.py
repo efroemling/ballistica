@@ -1047,17 +1047,17 @@ class TNTSpawner:
     category: Gameplay Classes
     """
 
-    def __init__(self, position: Sequence[float], respawn_time: float = 30.0):
+    def __init__(self, position: Sequence[float], respawn_time: float = 20.0):
         """Instantiate with given position and respawn_time (in seconds)."""
         self._position = position
         self._tnt: Optional[Bomb] = None
+        self._respawn_time = random.uniform(0.8, 1.2) * respawn_time
+        self._wait_time = 0.0
         self._update()
         # (go with slightly more than 1 second to avoid timer stacking)
         self._update_timer = ba.Timer(1.1,
                                       ba.WeakCall(self._update),
                                       repeat=True)
-        self._respawn_time = random.uniform(0.8, 1.2) * respawn_time
-        self._wait_time = 0.0
 
     def _update(self) -> None:
         tnt_alive = self._tnt is not None and self._tnt.node
