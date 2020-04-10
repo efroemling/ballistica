@@ -34,6 +34,7 @@ if TYPE_CHECKING:
     from typing import (List, Optional, Dict, Type, Any, Callable, Sequence,
                         Tuple, Union)
     from bastd.actor.playerspaz import PlayerSpaz
+    from bastd.actor.bomb import TNTSpawner
     import ba
 
 
@@ -330,7 +331,7 @@ class GameActivity(Activity):
         self._map_type.preload()
         self._map: Optional[ba.Map] = None
         self._powerup_drop_timer: Optional[ba.Timer] = None
-        self._tnt_spawners: Optional[Dict[int, Any]] = None
+        self._tnt_spawners: Optional[Dict[int, TNTSpawner]] = None
         self._tnt_drop_timer: Optional[ba.Timer] = None
         self.initial_player_info: Optional[List[Dict[str, Any]]] = None
         self._game_scoreboard_name_text: Optional[ba.Actor] = None
@@ -1135,12 +1136,12 @@ class GameActivity(Activity):
     def _setup_standard_tnt_drops(self) -> None:
         """Standard tnt drop."""
         # pylint: disable=cyclic-import
-        from bastd.actor import bomb
+        from bastd.actor.bomb import TNTSpawner
 
         for i, point in enumerate(self.map.tnt_points):
             assert self._tnt_spawners is not None
             if self._tnt_spawners.get(i) is None:
-                self._tnt_spawners[i] = bomb.TNTSpawner(point)
+                self._tnt_spawners[i] = TNTSpawner(point)
 
     def setup_standard_time_limit(self, duration: float) -> None:
         """
