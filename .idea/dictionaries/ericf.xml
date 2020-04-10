@@ -1216,6 +1216,7 @@
       <w>painttxtattr</w>
       <w>palmos</w>
       <w>pandoc</w>
+      <w>pandroid</w>
       <w>parsermodule</w>
       <w>partyqueue</w>
       <w>partyval</w>
@@ -1555,6 +1556,7 @@
       <w>spammy</w>
       <w>sparx</w>
       <w>spawner</w>
+      <w>spawners</w>
       <w>spawnpoints</w>
       <w>spawnpt</w>
       <w>spawntype</w>
