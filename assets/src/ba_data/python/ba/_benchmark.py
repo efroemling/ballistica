@@ -147,7 +147,9 @@ def _reset_stress_test(args: Dict[str, Any]) -> None:
     from ba._enums import TimeType
     _ba.set_stress_testing(False, args['player_count'])
     _ba.screenmessage('Resetting stress test...')
-    _ba.get_foreground_host_session().end()
+    session = _ba.get_foreground_host_session()
+    assert session is not None
+    session.end()
     _ba.timer(1.0, Call(start_stress_test, args), timetype=TimeType.REAL)
 
 
