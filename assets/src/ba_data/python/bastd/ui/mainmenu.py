@@ -703,7 +703,6 @@ class MainMenuWindow(ba.Window):
             v += v_offset
             h += h_offset
             h_offset += d_h_offset
-        custom_menu_entries = []
         self._start_button = None
         ba.app.pause()
 
