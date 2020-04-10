@@ -34,6 +34,7 @@ if TYPE_CHECKING:
     from typing import (List, Optional, Dict, Type, Any, Callable, Sequence,
                         Tuple, Union)
     from bastd.actor.playerspaz import PlayerSpaz
+    from bastd.actor.bomb import TNTSpawner
     import ba
 
 
@@ -330,7 +331,7 @@ class GameActivity(Activity):
         self._map_type.preload()
         self._map: Optional[ba.Map] = None
         self._powerup_drop_timer: Optional[ba.Timer] = None
-        self._tnt_objs: Optional[Dict[int, Any]] = None
+        self._tnt_spawners: Optional[Dict[int, TNTSpawner]] = None
         self._tnt_drop_timer: Optional[ba.Timer] = None
         self.initial_player_info: Optional[List[Dict[str, Any]]] = None
         self._game_scoreboard_name_text: Optional[ba.Actor] = None
@@ -1111,12 +1112,8 @@ class GameActivity(Activity):
             repeat=True)
         self._standard_drop_powerups()
         if enable_tnt:
-            self._tnt_objs = {}
-            self._tnt_drop_timer = _ba.Timer(5.5,
-                                             _general.WeakCall(
-                                                 self._standard_drop_tnt),
-                                             repeat=True)
-            self._standard_drop_tnt()
+            self._tnt_spawners = {}
+            self._setup_standard_tnt_drops()
 
     def _standard_drop_powerup(self, index: int, expire: bool = True) -> None:
         # pylint: disable=cyclic-import
@@ -1136,24 +1133,15 @@ class GameActivity(Activity):
             _ba.timer(i * 0.4, _general.WeakCall(self._standard_drop_powerup,
                                                  i))
 
-    def _standard_drop_tnt(self) -> None:
+    def _setup_standard_tnt_drops(self) -> None:
         """Standard tnt drop."""
         # pylint: disable=cyclic-import
-        from bastd.actor import bomb
+        from bastd.actor.bomb import TNTSpawner
 
-        # Drop TNT on the map for any tnt location with no existing tnt box.
         for i, point in enumerate(self.map.tnt_points):
-            assert self._tnt_objs is not None
-            if i not in self._tnt_objs:
-                self._tnt_objs[i] = {'absent_ticks': 9999, 'obj': None}
-            tnt_obj = self._tnt_objs[i]
-
-            # Respawn once its been dead for a while.
-            if not tnt_obj['obj']:
-                tnt_obj['absent_ticks'] += 1
-                if tnt_obj['absent_ticks'] > 3:
-                    tnt_obj['obj'] = bomb.Bomb(position=point, bomb_type='tnt')
-                    tnt_obj['absent_ticks'] = 0
+            assert self._tnt_spawners is not None
+            if self._tnt_spawners.get(i) is None:
+                self._tnt_spawners[i] = TNTSpawner(point)
 
     def setup_standard_time_limit(self, duration: float) -> None:
         """

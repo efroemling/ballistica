@@ -87,16 +87,18 @@ class ServerCallThread(threading.Thread):
             activity) if activity is not None else None
 
     def _run_callback(self, arg: Union[None, Dict[str, Any]]) -> None:
-
         # If we were created in an activity context and that activity has
-        # since died, do nothing (hmm should we be using a context-call
-        # instead of doing this manually?).
-        activity = None if self._activity is None else self._activity()
-        if activity is None or activity.is_expired():
-            return
+        # since died, do nothing.
+        # FIXME: Should we just be using a ContextCall instead of doing
+        # this check manually?
+        if self._activity is not None:
+            activity = self._activity()
+            if activity is None or activity.is_expired():
+                return
 
         # Technically we could do the same check for session contexts,
         # but not gonna worry about it for now.
+        assert self._context is not None
         assert self._callback is not None
         with self._context:
             self._callback(arg)
