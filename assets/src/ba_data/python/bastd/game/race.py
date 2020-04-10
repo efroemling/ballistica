@@ -550,9 +550,7 @@ class RaceGame(ba.TeamGameActivity):
         p_list = [[player.gamedata['distance'], player]
                   for player in self.players]
 
-        p_list.sort(reverse=True)
-        # FIXME - need another way to sort p_list.
-        # It tries to compare ba.Player objects.
+        p_list.sort(reverse=True, key=lambda x: x[0])
         for i, plr in enumerate(p_list):
             try:
                 plr[1].gamedata['rank'] = i
