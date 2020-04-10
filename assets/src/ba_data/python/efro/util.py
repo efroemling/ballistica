@@ -303,4 +303,6 @@ def make_hash(obj: Any) -> int:
     for k, v in new_obj.items():
         new_obj[k] = make_hash(v)
 
+    # NOTE: there is sorted works correctly because it compares only
+    # unique first values (i.e. dict keys)
     return hash(tuple(frozenset(sorted(new_obj.items()))))
