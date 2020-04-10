@@ -83,7 +83,7 @@ def award_local_achievement(achname: str) -> None:
     """For non-game-based achievements such as controller-connection ones."""
     try:
         ach = get_achievement(achname)
-        if ach is not None and not ach.complete:
+        if not ach.complete:
 
             # Report new achievements to the game-service.
             _ba.report_achievement(achname)
@@ -680,7 +680,7 @@ class Achievement:
 
         # Just piggy-back onto any current activity
         # (should we use the session instead?..)
-        activity = _ba.getactivity(doraise=False)
+        activity: Optional[ba.Activity] = _ba.getactivity(doraise=False)
 
         # If this gets called while this achievement is occupying a slot
         # already, ignore it. (probably should never happen in real

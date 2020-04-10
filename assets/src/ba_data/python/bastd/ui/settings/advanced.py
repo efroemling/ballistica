@@ -69,7 +69,7 @@ class AdvancedSettingsWindow(ba.Window):
             stack_offset=(0, -25) if app.small_ui else (0, 0)))
         self._prev_lang = ""
         self._prev_lang_list: List[str] = []
-        self._complete_langs_list = None
+        self._complete_langs_list: Optional[List] = None
         self._complete_langs_error = False
         self._language_popup: Optional[popup_ui.PopupMenu] = None
 

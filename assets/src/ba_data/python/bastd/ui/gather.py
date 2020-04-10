@@ -149,7 +149,7 @@ class GatherWindow(ba.Window):
         tabs_def: List[Tuple[str, ba.Lstr]] = [
             ('about', ba.Lstr(resource=self._r + '.aboutText'))
         ]
-        if True and _ba.get_account_misc_read_val('enablePublicParties', True):
+        if _ba.get_account_misc_read_val('enablePublicParties', True):
             tabs_def.append(
                 ('internet', ba.Lstr(resource=self._r + '.internetText')))
         if platform == 'android' and subplatform == 'google':

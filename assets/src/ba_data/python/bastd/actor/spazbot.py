@@ -187,9 +187,9 @@ class SpazBot(basespaz.Spaz):
         """
         assert self.node
         botpt = ba.Vec3(self.node.position)
-        closest_dist = None
-        closest_vel = None
-        closest = None
+        closest_dist: Optional[float] = None
+        closest_vel: Optional[ba.Vec3] = None
+        closest: Optional[ba.Vec3] = None
         assert self._player_pts is not None
         for plpt, plvel in self._player_pts:
             dist = (plpt - botpt).length()
@@ -985,7 +985,7 @@ class BotSet:
             try:
                 if player.is_alive():
                     assert isinstance(player.actor, basespaz.Spaz)
-                    assert player.actor is not None and player.actor.node
+                    assert player.actor.node
                     player_pts.append((ba.Vec3(player.actor.node.position),
                                        ba.Vec3(player.actor.node.velocity)))
             except Exception:
@@ -999,7 +999,7 @@ class BotSet:
         """Immediately clear out any bots in the set."""
 
         # Don't do this if the activity is shutting down or dead.
-        activity = ba.getactivity(doraise=False)
+        activity: Optional[ba.Activity] = ba.getactivity(doraise=False)
         if activity is None or activity.is_expired():
             return
 

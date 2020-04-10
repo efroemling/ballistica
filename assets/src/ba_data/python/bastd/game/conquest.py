@@ -45,15 +45,16 @@ class ConquestFlag(Flag):
         self._team: Optional[ba.Team] = None
         self.light: Optional[ba.Node] = None
 
-    def set_team(self, team: ba.Team) -> None:
-        """Set the team that owns this flag."""
-        self._team = None if team is None else team
-
     @property
     def team(self) -> ba.Team:
         """The team that owns this flag."""
         assert self._team is not None
         return self._team
+
+    @team.setter
+    def team(self, team: ba.Team) -> None:
+        """Set the team that owns this flag."""
+        self._team = team
 
 
 # ba_meta export game
@@ -165,7 +166,7 @@ class ConquestGame(ba.TeamGameActivity):
 
         # Give teams a flag to start with.
         for i in range(len(self.teams)):
-            self._flags[i].set_team(self.teams[i])
+            self._flags[i].team = self.teams[i]
             light = self._flags[i].light
             assert light
             node = self._flags[i].node
@@ -227,9 +228,12 @@ class ConquestGame(ba.TeamGameActivity):
             flag = flagnode.getdelegate()
         except Exception:
             return  # Player may have left and his body hit the flag.
+        assert isinstance(player, ba.Player)
+        assert isinstance(flag, ConquestFlag)
+        assert flag.light
 
         if flag.team is not player.team:
-            flag.set_team(player.team)
+            flag.team = player.team
             flag.light.color = player.team.color
             flag.node.color = player.team.color
             self.stats.player_scored(player, 10, screenmessage=False)

@@ -264,7 +264,8 @@ class ControlsGuide(ba.Actor):
 
         # If we have a touchscreen, we only fade in if we have a player with
         # an input device that is *not* the touchscreen.
-        touchscreen = _ba.get_input_device('TouchScreen', '#1', doraise=False)
+        touchscreen: Optional[ba.InputDevice] = _ba.get_input_device(
+            'TouchScreen', '#1', doraise=False)
 
         if touchscreen is not None:
             # We look at the session's players; not the activity's.

@@ -30,7 +30,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Type, Optional, Tuple, List
+    from typing import Any, Type, Optional, Tuple, List, Dict
 
 
 class PlaylistCustomizeBrowserWindow(ba.Window):
@@ -562,6 +562,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
             return
         if self._selected_playlist_name is None:
             return
+        plst: Optional[List[Dict[str, Any]]]
         if self._selected_playlist_name == '__default__':
             plst = self._pvars.get_default_list_call()
         else:

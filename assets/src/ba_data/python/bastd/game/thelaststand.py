@@ -198,7 +198,7 @@ class TheLastStandGame(ba.CoopGameActivity):
             try:
                 if player.is_alive():
                     assert isinstance(player.actor, playerspaz.PlayerSpaz)
-                    assert player.actor is not None and player.actor.node
+                    assert player.actor.node
                     playerpts.append(player.actor.node.position)
             except Exception as exc:
                 print('ERROR in _update_bots', exc)

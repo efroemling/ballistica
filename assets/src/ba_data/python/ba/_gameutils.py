@@ -97,7 +97,7 @@ def sharedobj(name: str) -> Any:
 
     # We store these on the current context; whether its an activity or
     # session.
-    activity = _ba.getactivity(doraise=False)
+    activity: Optional[ba.Activity] = _ba.getactivity(doraise=False)
     if activity is not None:
 
         # Grab shared-objs dict.

@@ -959,9 +959,9 @@ class OnslaughtGame(ba.CoopGameActivity):
                                                   max_dudes, group_count,
                                                   max_level)
 
-            all_entries: List[Dict[str, Any]] = []
+            all_entries: List[Optional[Dict[str, Any]]] = []
             for group in distribution:
-                entries: List[Dict[str, Any]] = []
+                entries: List[Optional[Dict[str, Any]]] = []
                 for entry in group:
                     bot_level = bot_levels[entry[0] - 1]
                     bot_type = bot_level[random.randrange(len(bot_level))]

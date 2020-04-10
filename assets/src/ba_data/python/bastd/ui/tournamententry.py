@@ -518,10 +518,10 @@ class TournamentEntryWindow(popup.PopupWindow):
         try:
             ticket_count = _ba.get_account_ticket_count()
         except Exception:
+            # FIXME: should add a ba.NotSignedInError we can use here.
             ticket_count = None
         ticket_cost = self._purchase_price
-        if (ticket_count is not None and ticket_cost is not None
-                and ticket_count < ticket_cost):
+        if ticket_count is not None and ticket_count < ticket_cost:
             getcurrency.show_get_tickets_prompt()
             ba.playsound(ba.getsound('error'))
             return

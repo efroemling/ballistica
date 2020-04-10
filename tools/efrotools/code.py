@@ -644,10 +644,12 @@ def _run_idea_inspections(projroot: Path,
     if result.returncode != 0:
         # In verbose mode this stuff got printed already.
         if not verbose:
-            stdout = (result.stdout.decode() if isinstance( # type: ignore
-                result.stdout, bytes) else str(result.stdout))
-            stderr = (result.stderr.decode() if isinstance( # type: ignore
-                result.stdout, bytes) else str(result.stdout))
+            stdout = (
+                result.stdout.decode() if isinstance(  # type: ignore
+                    result.stdout, bytes) else str(result.stdout))
+            stderr = (
+                result.stderr.decode() if isinstance(  # type: ignore
+                    result.stdout, bytes) else str(result.stdout))
             print(f'{displayname} inspection failure stdout:\n{stdout}' +
                   f'{displayname} inspection failure stderr:\n{stderr}')
         raise RuntimeError(f"{displayname} inspection failed.")

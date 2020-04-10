@@ -398,13 +398,13 @@ class App:
         # Gameplay.
         self.teams_series_length = 7
         self.ffa_series_length = 24
-        self.coop_session_args: dict = {}
+        self.coop_session_args: Dict = {}
 
         # UI.
         self.uicontroller: Optional[ba.UIController] = None
         self.main_menu_window: Optional[_ba.Widget] = None  # FIXME: Kill this.
-        self.window_states: dict = {}  # FIXME: Kill this.
-        self.windows: dict = {}  # FIXME: Kill this.
+        self.window_states: Dict = {}  # FIXME: Kill this.
+        self.windows: Dict = {}  # FIXME: Kill this.
         self.main_window: Optional[str] = None  # FIXME: Kill this.
         self.main_menu_selection: Optional[str] = None  # FIXME: Kill this.
         self.have_party_queue_window = False
@@ -416,9 +416,9 @@ class App:
         self.first_main_menu = True  # FIXME: Move to mainmenu class.
         self.did_menu_intro = False  # FIXME: Move to mainmenu class.
         self.main_menu_resume_callbacks: list = []  # can probably go away
-        self.special_offer = None
-        self.league_rank_cache: dict = {}
-        self.tournament_info: dict = {}
+        self.special_offer: Optional[Dict] = None
+        self.league_rank_cache: Dict = {}
+        self.tournament_info: Dict = {}
         self.account_tournament_list: Optional[Tuple[int, List[str]]] = None
         self.ping_thread_count = 0
         self.invite_confirm_windows: List[Any] = []  # FIXME: Don't use Any.

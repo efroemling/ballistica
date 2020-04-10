@@ -725,7 +725,7 @@ class RunaroundGame(ba.CoopGameActivity):
         t_sec = 0.0
         base_delay = 0.5
         delay = 0.0
-        bot_types: List[Dict[str, Any]] = []
+        bot_types: List[Optional[Dict[str, Any]]] = []
 
         if self._preset in ['endless', 'endless_tournament']:
             level = self._wave

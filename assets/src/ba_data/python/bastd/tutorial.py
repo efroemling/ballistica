@@ -243,8 +243,7 @@ class TutorialActivity(ba.Activity):
         ba.set_analytics_screen('Tutorial Start')
         _ba.increment_analytics_count('Tutorial start')
 
-        # noinspection PyUnreachableCode
-        if 0:  # pylint: disable=using-constant-test
+        if bool(False):
             # Buttons on top.
             text_y = 140
             buttons_y = 250

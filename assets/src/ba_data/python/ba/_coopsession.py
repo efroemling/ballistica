@@ -192,7 +192,7 @@ class CoopSession(Session):
         # If there's *no* players left in the current activity but there *is*
         # in the session, restart the activity to pull them into the game
         # (or quit if they're just in the lobby).
-        if activity is not None and not activity.players and self.players:
+        if not activity.players and self.players:
 
             # Special exception for tourney games; don't auto-restart these.
             if self.tournament_id is not None:

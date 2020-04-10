@@ -711,8 +711,7 @@ class CoopScoreScreen(ba.Activity):
                              order=self._score_order,
                              tournament_id=self.session.tournament_id,
                              score_type=self._score_type,
-                             campaign=self._campaign.name
-                             if self._campaign is not None else None,
+                             campaign=self._campaign.name,
                              level=self._level_name)
 
         # Apply the transactions we've been adding locally.
@@ -1401,10 +1400,10 @@ class CoopScoreScreen(ba.Activity):
                      transition_delay=1.0).autoretain()
 
             new_best = (best_rank > self._old_best_rank and best_rank > 0.0)
-            was_string = ('' if self._old_best_rank is None else ba.Lstr(
-                value=' ${A}',
-                subs=[('${A}', ba.Lstr(resource='scoreWasText')),
-                      ('${COUNT}', str(self._old_best_rank))]))
+            was_string = ba.Lstr(value=' ${A}',
+                                 subs=[('${A}',
+                                        ba.Lstr(resource='scoreWasText')),
+                                       ('${COUNT}', str(self._old_best_rank))])
             if not self._newly_complete:
                 Text(ba.Lstr(value='${A}${B}',
                              subs=[('${A}',

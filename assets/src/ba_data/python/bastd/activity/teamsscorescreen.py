@@ -135,7 +135,8 @@ class TeamsScoreScreenActivity(ScoreScreenActivity):
                         if player_entry is not None:
                             player_records.append(player_entry)
         else:
-            raise Exception('FIXME; CODE PATH NEEDS FIXING')
+            print('FIXME; CODE PATH NEEDS FIXING')
+            player_records = []
             # player_records = [[
             #     _get_prec_score(p), name, p
             # ] for name, p in list(self.stats.get_records().items())]

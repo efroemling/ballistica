@@ -141,14 +141,7 @@ class PopupMenuWindow(PopupWindow):
         #  we need to flatten them.
         choices_display_fin: List[str] = []
         for choice_display in choices_display:
-            if isinstance(choice_display, ba.Lstr):
-                choices_display_fin.append(choice_display.evaluate())
-            else:
-                ba.print_error(
-                    'PopupMenuWindow got a raw string in \'choices_display\';'
-                    ' please pass ba.Lstr values only',
-                    once=True)
-                choices_display_fin.append(choice_display)
+            choices_display_fin.append(choice_display.evaluate())
 
         if maxwidth is None:
             maxwidth = width * 1.5
