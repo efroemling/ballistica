@@ -191,7 +191,7 @@ class TeamGameResults:
             sval.append(team)
         results: List[Tuple[Optional[int],
                             List[ba.Team]]] = list(winners.items())
-        results.sort(reverse=not self._lower_is_better)
+        results.sort(reverse=not self._lower_is_better, key=lambda x: x[0])
 
         # Also group the 'None' scores.
         none_teams: List[ba.Team] = []
