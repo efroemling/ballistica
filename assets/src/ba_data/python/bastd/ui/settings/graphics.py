@@ -256,6 +256,7 @@ class GraphicsSettingsWindow(ba.Window):
                         on_value_change_call=self._set_gvr_render_target_scale)
                 else:
                     native_res = _ba.get_display_resolution()
+                    assert native_res is not None
                     choices = ['Auto', 'Native']
                     choices_display = [
                         ba.Lstr(resource='autoText'),
@@ -283,7 +284,7 @@ class GraphicsSettingsWindow(ba.Window):
                 # set pixel-scale instead
                 current_res = _ba.get_display_resolution()
                 if current_res is None:
-                    current_res = (str(min(100, max(10, int(round(
+                    current_res2 = (str(min(100, max(10, int(round(
                         ba.app.config.resolve('Screen Pixel Scale')
                         * 100.0))))) + '%')  # yapf: disable
                     popup.PopupMenu(
@@ -292,7 +293,7 @@ class GraphicsSettingsWindow(ba.Window):
                         width=120,
                         scale=popup_menu_scale,
                         choices=['100%', '88%', '75%', '63%', '50%'],
-                        current_choice=current_res,
+                        current_choice=current_res2,
                         on_value_change_call=self._set_pixel_scale)
                 else:
                     raise Exception('obsolete path; discrete resolutions'

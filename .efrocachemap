@@ -4114,10 +4114,10 @@
   "assets/build/windows/x64/python.exe": "https://files.ballistica.net/cache/ba1/25/a7/dc87c1be41605eb6fefd0145144c",
   "assets/build/windows/x64/python37.dll": "https://files.ballistica.net/cache/ba1/b9/e4/d912f56e42e9991bcbb4c804cfcb",
   "assets/build/windows/x64/pythonw.exe": "https://files.ballistica.net/cache/ba1/6c/bb/b6f52c306aa4e88061510e96cefe",
-  "build/prefab/linux/debug/ballisticacore": "https://files.ballistica.net/cache/ba1/ff/6b/d0873927a179b2a85a3dea2da18a",
-  "build/prefab/linux/release/ballisticacore": "https://files.ballistica.net/cache/ba1/ac/48/72f261d7884a21cb79feef2d0a02",
-  "build/prefab/mac/debug/ballisticacore": "https://files.ballistica.net/cache/ba1/e7/e8/6cb5ba8c688986b322dd998c0320",
-  "build/prefab/mac/release/ballisticacore": "https://files.ballistica.net/cache/ba1/91/76/6037c47265319bcbf4e448307a57",
-  "build/prefab/windows/debug/BallisticaCore.exe": "https://files.ballistica.net/cache/ba1/43/23/d3e915b7c5222535ea723538d778",
-  "build/prefab/windows/release/BallisticaCore.exe": "https://files.ballistica.net/cache/ba1/ce/98/72177f47655d61fedb069cb2e279"
+  "build/prefab/linux/debug/ballisticacore": "https://files.ballistica.net/cache/ba1/6b/88/a8f82a340a0fba36edfe95298871",
+  "build/prefab/linux/release/ballisticacore": "https://files.ballistica.net/cache/ba1/d3/72/4ad974215d1cfd0db7f14af5f6c3",
+  "build/prefab/mac/debug/ballisticacore": "https://files.ballistica.net/cache/ba1/82/c3/388d9a77f8bde608d7cdf2891ad3",
+  "build/prefab/mac/release/ballisticacore": "https://files.ballistica.net/cache/ba1/6c/6f/d2ffeecb1e9a18678b1ec1695198",
+  "build/prefab/windows/debug/BallisticaCore.exe": "https://files.ballistica.net/cache/ba1/77/68/e7ac990ee0ec25dd6a459e637d9f",
+  "build/prefab/windows/release/BallisticaCore.exe": "https://files.ballistica.net/cache/ba1/e8/ce/1091fea9004ca76f6b8ccde8b839"
 }
