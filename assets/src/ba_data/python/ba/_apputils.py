@@ -320,8 +320,9 @@ def call_after_ad(call: Callable[[], Any]) -> None:
     if have_pro():
         show = False  # Pro disables interstitials.
     try:
-        is_tournament = (_ba.get_foreground_host_session().tournament_id is
-                         not None)
+        session = _ba.get_foreground_host_session()
+        assert session is not None
+        is_tournament = session.tournament_id is not None
     except Exception:
         is_tournament = False
     if is_tournament:
