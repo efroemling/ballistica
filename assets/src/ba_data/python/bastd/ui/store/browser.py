@@ -88,7 +88,7 @@ class StoreBrowserWindow(ba.Window):
 
         self._request: Any = None
         self._r = 'store'
-        self._last_buy_time: Optional[Union[float, int]] = None
+        self._last_buy_time: Optional[float] = None
 
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height + extra_top),
