@@ -179,7 +179,7 @@ class StoreBrowserWindow(ba.Window):
             ('minigames', ba.Lstr(resource=self._r + '.miniGamesText')),
             ('characters', ba.Lstr(resource=self._r + '.charactersText')),
             ('icons', ba.Lstr(resource=self._r + '.iconsText')),
-        ]  # yapf : disable
+        ]
 
         tab_results = tabs.create_tab_buttons(self._root_widget,
                                               tabs_def,
@@ -454,16 +454,19 @@ class StoreBrowserWindow(ba.Window):
         # purchase this. Better to fail now than after we've
         # paid locally.
         app = ba.app
-        serverget('bsAccountPurchaseCheck', {
-            'item': item,
-            'platform': app.platform,
-            'subplatform': app.subplatform,
-            'version': app.version,
-            'buildNumber': app.build_number,
-            'purchaseType': 'ticket' if is_ticket_purchase else 'real'
-        },
-                  callback=ba.WeakCall(self._purchase_check_result, item,
-                                       is_ticket_purchase))
+        serverget(
+            'bsAccountPurchaseCheck',
+            {
+                'item': item,
+                'platform': app.platform,
+                'subplatform': app.subplatform,
+                'version': app.version,
+                'buildNumber': app.build_number,
+                'purchaseType': 'ticket' if is_ticket_purchase else 'real'
+            },
+            callback=ba.WeakCall(self._purchase_check_result, item,
+                                 is_ticket_purchase),
+        )
 
     def buy(self, item: str) -> None:
         """Attempt to purchase the provided item."""
@@ -537,8 +540,7 @@ class StoreBrowserWindow(ba.Window):
         sales_raw = _ba.get_account_misc_read_val('sales', {})
         sales = {}
         try:
-            # look at the current set of sales; filter any with
-            # time remaining..
+            # Look at the current set of sales; filter any with time remaining.
             for sale_item, sale_info in list(sales_raw.items()):
                 to_end = (datetime.datetime.utcfromtimestamp(sale_info['e']) -
                           datetime.datetime.utcnow()).total_seconds()
@@ -548,7 +550,7 @@ class StoreBrowserWindow(ba.Window):
                         'original_price': sale_info['op']
                     }
         except Exception:
-            ba.print_exception("Error parsing sales")
+            ba.print_exception("Error parsing sales.")
 
         assert self.button_infos is not None
         for b_type, b_info in self.button_infos.items():
@@ -602,7 +604,8 @@ class StoreBrowserWindow(ba.Window):
                         price_text_right = ''
                 else:
                     price = _ba.get_account_misc_read_val('price.' + b_type, 0)
-                    # color button differently if we cant afford this
+
+                    # Color the button differently if we cant afford this.
                     if _ba.get_account_state() == 'signed_in':
                         if _ba.get_account_ticket_count() < price:
                             color = (0.6, 0.61, 0.6)
