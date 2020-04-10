@@ -1999,7 +1999,7 @@ def get_display_resolution() -> Tuple[int, int]:
 
 
 def get_foreground_host_activity() -> ba.Activity:
-    """get_foreground_host_activity() -> ba.Activity
+    """get_foreground_host_activity() -> Optional[ba.Activity]
 
     (internal)
 
@@ -2011,7 +2011,7 @@ def get_foreground_host_activity() -> ba.Activity:
 
 
 def get_foreground_host_session() -> ba.Session:
-    """get_foreground_host_session() -> ba.Session
+    """get_foreground_host_session() -> Optional[ba.Session]
 
     (internal)
 
