@@ -1052,7 +1052,8 @@ class TNTSpawner:
         self._position = position
         self._tnt: Optional[Bomb] = None
         self._update()
-        # (go with slightly more than 1 second to avoid timer stacking)
+
+        # Go with slightly more than 1 second to avoid timer stacking.
         self._update_timer = ba.Timer(1.1,
                                       ba.WeakCall(self._update),
                                       repeat=True)
@@ -1062,8 +1063,8 @@ class TNTSpawner:
     def _update(self) -> None:
         tnt_alive = self._tnt is not None and self._tnt.node
         if not tnt_alive:
-            # respawn if its been long enough.. otherwise just increment our
-            # how-long-since-we-died value
+            # Respawn if its been long enough.. otherwise just increment our
+            # how-long-since-we-died value.
             if self._tnt is None or self._wait_time >= self._respawn_time:
                 self._tnt = Bomb(position=self._position, bomb_type='tnt')
                 self._wait_time = 0.0

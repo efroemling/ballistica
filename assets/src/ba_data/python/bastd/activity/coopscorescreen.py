@@ -29,6 +29,8 @@ from typing import TYPE_CHECKING
 import _ba
 import ba
 from ba.internal import get_achievements_for_coop_level
+from bastd.actor.text import Text
+from bastd.actor.zoomtext import ZoomText
 
 if TYPE_CHECKING:
     from typing import Optional, Tuple, List, Dict, Any, Sequence
@@ -49,9 +51,6 @@ class CoopScoreScreen(ba.Activity):
         self.inherits_camera_vr_offset = True
         self.inherits_music = True
         self.use_fixed_vr_overlay = True
-
-        self._tournament_time_remaining = None
-        self._tournament_time_remaining_text = None
 
         self._do_new_rating: bool = self.session.tournament_id is not None
 
@@ -134,6 +133,8 @@ class CoopScoreScreen(ba.Activity):
         self._name_str: Optional[str] = None
         self._friends_loading_status: Optional[ba.Actor] = None
         self._score_loading_status: Optional[ba.Actor] = None
+        self._tournament_time_remaining: Optional[float] = None
+        self._tournament_time_remaining_text: Optional[Text] = None
         self._tournament_time_remaining_text_timer: Optional[ba.Timer] = None
 
         self._player_info = settings['player_info']
@@ -288,7 +289,6 @@ class CoopScoreScreen(ba.Activity):
             ba.open_url(self._score_link)
 
     def _ui_error(self) -> None:
-        from bastd.actor.text import Text
         with ba.Context(self):
             self._next_level_error = Text(
                 ba.Lstr(resource='completeThisLevelToProceedText'),
@@ -515,8 +515,6 @@ class CoopScoreScreen(ba.Activity):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
-        from bastd.actor.text import Text
-        from bastd.actor.zoomtext import ZoomText
         super().on_begin()
 
         # Calc whether the level is complete and other stuff.
@@ -893,7 +891,6 @@ class CoopScoreScreen(ba.Activity):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
         # delay a bit if results come in too fast
-        from bastd.actor.text import Text
         base_delay = max(0, 1.9 - (ba.time() - self._begin_time))
         ts_height = 300
         ts_h_offs = -550
@@ -1009,7 +1006,6 @@ class CoopScoreScreen(ba.Activity):
         # We need to manually run this in the context of our activity
         # and only if we aren't shutting down.
         # (really should make the submit_score call handle that stuff itself)
-        from bastd.actor.text import Text
         if self.is_expired():
             return
         with ba.Context(self):
@@ -1169,10 +1165,9 @@ class CoopScoreScreen(ba.Activity):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
         from ba.internal import get_tournament_prize_strings
-        from bastd.actor.text import Text
-        from bastd.actor.zoomtext import ZoomText
         assert self._show_info is not None
         available = (self._show_info['results'] is not None)
+
         if available:
             error = (self._show_info['results']['error']
                      if 'error' in self._show_info['results'] else None)
@@ -1193,22 +1188,22 @@ class CoopScoreScreen(ba.Activity):
             Text(ba.Lstr(resource='coopSelectWindow.timeRemainingText'),
                  position=(-360, -70 - 100),
                  color=(1, 1, 1, 0.7),
-                 h_align='center',
-                 v_align='center',
-                 transition='fade_in',
+                 h_align=Text.HAlign.CENTER,
+                 v_align=Text.VAlign.CENTER,
+                 transition=Text.Transition.FADE_IN,
                  scale=0.8,
                  maxwidth=300,
                  transition_delay=2.0).autoretain()
-            self._tournament_time_remaining_text = Text('',
-                                                        position=(-360,
-                                                                  -110 - 100),
-                                                        color=(1, 1, 1, 0.7),
-                                                        h_align='center',
-                                                        v_align='center',
-                                                        transition='fade_in',
-                                                        scale=1.6,
-                                                        maxwidth=150,
-                                                        transition_delay=2.0)
+            self._tournament_time_remaining_text = Text(
+                '',
+                position=(-360, -110 - 100),
+                color=(1, 1, 1, 0.7),
+                h_align=Text.HAlign.CENTER,
+                v_align=Text.VAlign.CENTER,
+                transition=Text.Transition.FADE_IN,
+                scale=1.6,
+                maxwidth=150,
+                transition_delay=2.0)
 
         # If we're a tournament, show prizes.
         try:
@@ -1439,8 +1434,6 @@ class CoopScoreScreen(ba.Activity):
             ba.timer(0.35, ba.Call(ba.playsound, self.cymbal_sound))
 
     def _show_fail(self) -> None:
-        from bastd.actor.text import Text
-        from bastd.actor.zoomtext import ZoomText
         ZoomText(ba.Lstr(resource='failText'),
                  maxwidth=300,
                  flash=False,
@@ -1460,8 +1453,6 @@ class CoopScoreScreen(ba.Activity):
         ba.timer(0.35, ba.Call(ba.playsound, self._score_display_sound))
 
     def _show_score_val(self, offs_x: float) -> None:
-        from bastd.actor.text import Text
-        from bastd.actor.zoomtext import ZoomText
         assert self._score_type is not None
         assert self._score is not None
         ZoomText((str(self._score) if self._score_type == 'points' else
