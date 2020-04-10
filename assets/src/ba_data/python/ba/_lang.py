@@ -432,6 +432,7 @@ def get_valid_languages() -> List[str]:
 
 def is_custom_unicode_char(char: str) -> bool:
     """Return whether a char is in the custom unicode range we use."""
-    if not isinstance(char, str) or len(char) != 1:
-        raise Exception("Invalid Input; not unicode or not length 1")
+    assert isinstance(char, str)
+    if len(char) != 1:
+        raise Exception("Invalid Input; must be length 1")
     return 0xE000 <= ord(char) <= 0xF8FF

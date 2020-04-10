@@ -1028,8 +1028,9 @@ class CoopScoreScreen(ba.Activity):
                                         self._score_link)
                 self._score_loading_status = None
                 if 'tournamentSecondsRemaining' in results:
-                    self._tournament_time_remaining = (
-                        results['tournamentSecondsRemaining'])
+                    secs_remaining = results['tournamentSecondsRemaining']
+                    assert isinstance(secs_remaining, int)
+                    self._tournament_time_remaining = secs_remaining
                     self._tournament_time_remaining_text_timer = ba.Timer(
                         1.0,
                         ba.WeakCall(
@@ -1088,7 +1089,7 @@ class CoopScoreScreen(ba.Activity):
                 elif p_count == 4:
                     scale = 0.5
 
-                # make sure there's at least 10..
+                # Make sure there's at least 10.
                 while len(self._show_info['tops']) < 10:
                     self._show_info['tops'].append([0, '-'])
 

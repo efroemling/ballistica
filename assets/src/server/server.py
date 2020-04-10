@@ -34,7 +34,7 @@ import traceback
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Dict, Any, Sequence
+    from typing import Dict, Any, Sequence, Optional
 
 
 def _get_default_config() -> Dict[str, Any]:
@@ -176,7 +176,8 @@ def _run_process_until_exit(process: subprocess.Popen,
             process.stdin.flush()
             config_dirty = False
 
-        code = process.poll()
+        code: Optional[int] = process.poll()
+
         if code is not None:
             print('BallisticaCore exited with code ' + str(code))
             break

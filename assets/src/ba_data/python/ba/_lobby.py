@@ -55,7 +55,8 @@ class JoinInfo:
         # If we have a keyboard, grab keys for punch and pickup.
         # FIXME: This of course is only correct on the local device;
         #  Should change this for net games.
-        keyboard = _ba.get_input_device('Keyboard', '#1', doraise=False)
+        keyboard: Optional[ba.InputDevice] = _ba.get_input_device(
+            'Keyboard', '#1', doraise=False)
         if keyboard is not None:
             punch_key = keyboard.get_button_name(
                 _input.get_device_value(keyboard, 'buttonPunch'))
@@ -398,8 +399,7 @@ class Chooser:
         # list might have changed.
         input_device = self._player.get_input_device()
         is_remote = input_device.is_remote_client
-        is_test_input = (input_device is not None
-                         and input_device.name.startswith('TestInput'))
+        is_test_input = input_device.name.startswith('TestInput')
 
         # Pull this player's list of unlocked characters.
         if is_remote:

@@ -635,7 +635,7 @@ class App:
         If there's a foreground host-activity that says it's pausable, tell it
         to pause ..we now no longer pause if there are connected clients.
         """
-        activity = _ba.get_foreground_host_activity()
+        activity: Optional[ba.Activity] = _ba.get_foreground_host_activity()
         if (activity is not None and activity.allow_pausing
                 and not _ba.have_connected_clients()):
             from ba import _gameutils, _lang
@@ -698,7 +698,7 @@ class App:
 
         # If we're in a host-session, tell them to end.
         # This lets them tear themselves down gracefully.
-        host_session = _ba.get_foreground_host_session()
+        host_session: Optional[ba.Session] = _ba.get_foreground_host_session()
         if host_session is not None:
 
             # Kick off a little transaction so we'll hopefully have all the

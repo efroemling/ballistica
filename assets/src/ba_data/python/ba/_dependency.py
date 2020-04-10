@@ -409,8 +409,7 @@ class TestClass(DependencyComponent):
 
 def test_depset() -> None:
     """Test call to try this stuff out..."""
-    # noinspection PyUnreachableCode
-    if False:  # pylint: disable=using-constant-test
+    if bool(False):
         print('running test_depset()...')
 
         def doit() -> None:

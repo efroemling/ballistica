@@ -117,7 +117,8 @@ class Level:
     def set_complete(self, val: bool) -> None:
         """Set whether or not this level is complete."""
         old_val = self.complete
-        assert isinstance(old_val, bool) and isinstance(val, bool)
+        assert isinstance(old_val, bool)
+        assert isinstance(val, bool)
         if val != old_val:
             config = self._get_config_dict()
             config['Complete'] = val

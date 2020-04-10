@@ -467,8 +467,7 @@ def _apply_pylint_run_to_cache(projroot: Path, run: Any, dirtyfiles: List[str],
     # Let's print a list of modules with no detected deps so we can make sure
     # this is behaving.
     if no_deps_modules:
-        # noinspection PyUnreachableCode
-        if False:  # pylint: disable=using-constant-test
+        if bool(False):
             print('NOTE: no dependencies found for:',
                   ', '.join(no_deps_modules))
 
@@ -487,7 +486,7 @@ def _apply_pylint_run_to_cache(projroot: Path, run: Any, dirtyfiles: List[str],
         mname2 = paths_to_names.get(fname)
         if mname2 is None:
             raise Exception('unable to get module name for "' + fname + '"')
-        counts = (None if mname2 is None else stats_by_module.get(mname2))
+        counts = stats_by_module.get(mname2)
 
         # 'statement' count seems to be new and always non-zero; ignore it
         if counts is not None:
@@ -645,9 +644,9 @@ def _run_idea_inspections(projroot: Path,
     if result.returncode != 0:
         # In verbose mode this stuff got printed already.
         if not verbose:
-            stdout = (result.stdout.decode() if isinstance(
+            stdout = (result.stdout.decode() if isinstance( # type: ignore
                 result.stdout, bytes) else str(result.stdout))
-            stderr = (result.stderr.decode() if isinstance(
+            stderr = (result.stderr.decode() if isinstance( # type: ignore
                 result.stdout, bytes) else str(result.stdout))
             print(f'{displayname} inspection failure stdout:\n{stdout}' +
                   f'{displayname} inspection failure stderr:\n{stderr}')
