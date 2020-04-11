@@ -146,11 +146,6 @@ class Session:
         # print('Would set host-session asset-reqs to:',
         # required_asset_packages)
 
-        if team_names is None:
-            team_names = ['Good Guys']
-        if team_colors is None:
-            team_colors = [(0.6, 0.2, 1.0)]
-
         # First thing, wire up our internal engine data.
         self._sessiondata = _ba.register_session(self)
 
