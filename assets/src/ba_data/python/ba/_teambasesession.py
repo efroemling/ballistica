@@ -53,7 +53,7 @@ class TeamBaseSession(Session):
     def __init__(self) -> None:
         """Set up playlists and launches a ba.Activity to accept joiners."""
         # pylint: disable=cyclic-import
-        from ba import _playlist as bsplaylist
+        from ba import _playlist
         from bastd.activity import multiteamjoinscreen
         app = _ba.app
         cfg = app.config
@@ -67,6 +67,7 @@ class TeamBaseSession(Session):
 
         # print('FIXME: TEAM BASE SESSION WOULD CALC DEPS.')
         depsets: Sequence[ba.DependencySet] = []
+
         super().__init__(depsets,
                          team_names=team_names,
                          team_colors=team_colors,
@@ -105,17 +106,17 @@ class TeamBaseSession(Session):
             playlist = copy.deepcopy(playlists[self._playlist_name])
         else:
             if self._use_teams:
-                playlist = bsplaylist.get_default_teams_playlist()
+                playlist = _playlist.get_default_teams_playlist()
             else:
-                playlist = bsplaylist.get_default_free_for_all_playlist()
+                playlist = _playlist.get_default_free_for_all_playlist()
 
         # Resolve types and whatnot to get our final playlist.
-        playlist_resolved = bsplaylist.filter_playlist(playlist,
-                                                       sessiontype=type(self),
-                                                       add_resolved_type=True)
+        playlist_resolved = _playlist.filter_playlist(playlist,
+                                                      sessiontype=type(self),
+                                                      add_resolved_type=True)
 
         if not playlist_resolved:
-            raise Exception("playlist contains no valid games")
+            raise RuntimeError("Playlist contains no valid games.")
 
         self._playlist = ShuffleList(playlist_resolved,
                                      shuffle=self._playlist_randomize)
