@@ -192,6 +192,8 @@ class Session:
         self.max_players = max_players
 
         if self._use_teams:
+            assert team_names is not None
+            assert team_colors is not None
             for i, color in enumerate(team_colors):
                 team = Team(team_id=self._next_team_id,
                             name=GameActivity.get_team_display_string(
