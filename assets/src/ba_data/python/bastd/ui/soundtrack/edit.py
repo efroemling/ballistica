@@ -205,8 +205,8 @@ class SoundtrackEditWindow(ba.Window):
         ]
         # FIXME: We should probably convert this to use translations.
         type_names_translated = get_resource('soundtrackTypeNames')
-        prev_type_button = None
-        prev_test_button = None
+        prev_type_button: Optional[ba.Widget] = None
+        prev_test_button: Optional[ba.Widget] = None
 
         for index, song_type in enumerate(types):
             row = ba.rowwidget(parent=self._col, size=(self._width - 40, 40))

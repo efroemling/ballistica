@@ -173,8 +173,7 @@ def garbage_collect(session_end: bool = True) -> None:
     gc.collect()
 
     # Can be handy to print this to check for leaks between games.
-    # noinspection PyUnreachableCode
-    if False:  # pylint: disable=using-constant-test
+    if bool(False):
         print('PY OBJ COUNT', len(gc.get_objects()))
     if gc.garbage:
         print('PYTHON GC FOUND', len(gc.garbage), 'UNCOLLECTIBLE OBJECTS:')

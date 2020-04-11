@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     from typing import Dict, List, Any
 
 
-def get_tournament_prize_strings(entry: Dict[str, Any]) -> List:
+def get_tournament_prize_strings(entry: Dict[str, Any]) -> List[str]:
     """Given a tournament entry, return strings for its prize levels."""
     # pylint: disable=too-many-locals
     from ba._enums import SpecialChar
@@ -54,22 +54,9 @@ def get_tournament_prize_strings(entry: Dict[str, Any]) -> List:
         pvval = ''
         if trophy_type is not None:
             pvval += get_trophy_string(trophy_type)
-            # trophy_chars = {
-            #     '1': SpecialChar.TROPHY1,
-            #     '2': SpecialChar.TROPHY2,
-            #     '3': SpecialChar.TROPHY3,
-            #     '0a': SpecialChar.TROPHY0A,
-            #     '0b': SpecialChar.TROPHY0B,
-            #     '4': SpecialChar.TROPHY4
-            # }
-            # if trophy_type in trophy_chars:
-            #     pvval += _bs.specialchar(trophy_chars[trophy_type])
-            # else:
-            #     from ba import err
-            #     err.print_error(
-            #         f"unrecognized trophy type: {trophy_type}", once=True)
-        # if we've got trophies but not for this entry, throw some space
-        # in to compensate so the ticket counts line up
+
+        # If we've got trophies but not for this entry, throw some space
+        # in to compensate so the ticket counts line up.
         if prize is not None:
             pvval = _ba.charstr(
                 SpecialChar.TICKET_BACKING) + str(prize) + pvval

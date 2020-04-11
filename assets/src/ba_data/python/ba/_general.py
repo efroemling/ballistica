@@ -39,9 +39,8 @@ def getclass(name: str, subclassof: Type[T]) -> Type[T]:
 
     Category: General Utility Functions
 
-    If 'subclassof' is given, the class will be checked to make sure
-    it is a subclass of the provided class, and a TypeError will be
-    raised if not.
+    The class will be checked to make sure it is a subclass of the provided
+    'subclassof' class, and a TypeError will be raised if not.
     """
     import importlib
     splits = name.split('.')
@@ -50,7 +49,7 @@ def getclass(name: str, subclassof: Type[T]) -> Type[T]:
     module = importlib.import_module(modulename)
     cls: Type = getattr(module, classname)
 
-    if subclassof is not None and not issubclass(cls, subclassof):
+    if not issubclass(cls, subclassof):
         raise TypeError(name + ' is not a subclass of ' + str(subclassof))
     return cls
 

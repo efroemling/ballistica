@@ -256,7 +256,7 @@ class Stats:
         self.orchestrahitsound3: Optional[ba.Sound] = None
         self.orchestrahitsound4: Optional[ba.Sound] = None
 
-    def set_activity(self, activity: ba.Activity) -> None:
+    def set_activity(self, activity: Optional[ba.Activity]) -> None:
         """Set the current activity for this instance."""
 
         self._activity = None if activity is None else weakref.ref(activity)

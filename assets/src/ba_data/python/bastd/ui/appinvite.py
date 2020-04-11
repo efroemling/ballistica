@@ -322,6 +322,7 @@ def handle_app_invites_press(force_code: bool = False) -> None:
                           'enableAppInvites', False) and not app.on_tv)
     if force_code:
         do_app_invites = False
+
     # FIXME: Should update this to grab a code before showing the invite UI.
     if do_app_invites:
         AppInviteWindow()
@@ -330,7 +331,7 @@ def handle_app_invites_press(force_code: bool = False) -> None:
             ba.Lstr(resource='gatherWindow.requestingAPromoCodeText'),
             color=(0, 1, 0))
 
-        def handle_result(result: Dict[str, Any]) -> None:
+        def handle_result(result: Optional[Dict[str, Any]]) -> None:
             with ba.Context('ui'):
                 if result is None:
                     ba.screenmessage(ba.Lstr(resource='errorText'),

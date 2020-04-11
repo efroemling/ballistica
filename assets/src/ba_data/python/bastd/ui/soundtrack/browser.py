@@ -289,10 +289,7 @@ class SoundtrackBrowserWindow(ba.Window):
         copy_word = copy_text.replace('${NAME}', '').strip()
         base_name = self._get_soundtrack_display_name(
             self._selected_soundtrack).evaluate()
-        if not isinstance(base_name, str):
-            print('expected uni base_name 3fj0')
-            assert isinstance(base_name, bytes)
-            base_name = base_name.decode('utf-8')
+        assert isinstance(base_name, str)
 
         # If it looks like a copy, strip digits and spaces off the end.
         if copy_word in base_name:

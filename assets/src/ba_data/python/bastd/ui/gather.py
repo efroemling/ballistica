@@ -149,7 +149,7 @@ class GatherWindow(ba.Window):
         tabs_def: List[Tuple[str, ba.Lstr]] = [
             ('about', ba.Lstr(resource=self._r + '.aboutText'))
         ]
-        if True and _ba.get_account_misc_read_val('enablePublicParties', True):
+        if _ba.get_account_misc_read_val('enablePublicParties', True):
             tabs_def.append(
                 ('internet', ba.Lstr(resource=self._r + '.internetText')))
         if platform == 'android' and subplatform == 'google':
@@ -1451,8 +1451,7 @@ class GatherWindow(ba.Window):
                 key=lambda p: (
                     p['queue'] is None,  # Show non-queued last.
                     p['ping'] if p['ping'] is not None else 999999,
-                    p['index'],
-                    p))
+                    p['index']))
             existing_selection = self._public_party_list_selection
             first = True
 

@@ -317,6 +317,7 @@ def tool_config_install() -> None:
     warn_unused_ignores = True
     warn_return_any = True
     warn_redundant_casts = True
+    warn_unreachable=True
     disallow_incomplete_defs = True
     disallow_untyped_defs = True
     disallow_untyped_decorators = True

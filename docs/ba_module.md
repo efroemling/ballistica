@@ -4270,7 +4270,7 @@ session.set_activity(foo) and then <a href="#function_ba_newnode">ba.newnode</a>
 
 </dd>
 <dt><h4><a name="method_ba_Stats__set_activity">set_activity()</a></dt></h4><dd>
-<p><span>set_activity(self, activity: <a href="#class_ba_Activity">ba.Activity</a>) -&gt; None</span></p>
+<p><span>set_activity(self, activity: Optional[<a href="#class_ba_Activity">ba.Activity</a>]) -&gt; None</span></p>
 
 <p>Set the current activity for this instance.</p>
 

@@ -134,7 +134,7 @@ class LeagueRankWindow(ba.Window):
 
         self._season_popup_menu: Optional[popup_ui.PopupMenu] = None
         self._requested_season: Optional[str] = None
-        self._season = None
+        self._season: Optional[str] = None
 
         # take note of our account state; we'll refresh later if this changes
         self._account_state = _ba.get_account_state()

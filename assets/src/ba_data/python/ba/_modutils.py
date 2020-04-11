@@ -19,10 +19,15 @@
 # SOFTWARE.
 # -----------------------------------------------------------------------------
 """Functionality related to modding."""
+from __future__ import annotations
 
+from typing import TYPE_CHECKING
 import os
 
 import _ba
+
+if TYPE_CHECKING:
+    from typing import Optional
 
 
 def get_human_readable_user_scripts_path() -> str:
@@ -32,7 +37,7 @@ def get_human_readable_user_scripts_path() -> str:
     """
     from ba import _lang
     app = _ba.app
-    path = app.user_scripts_directory
+    path: Optional[str] = app.user_scripts_directory
     if path is None:
         return '<Not Available>'
 
@@ -40,7 +45,8 @@ def get_human_readable_user_scripts_path() -> str:
     # only visible to the user's processes and thus not really useful printed
     # in its entirety; lets print it as <External Storage>/myfilepath.
     if app.platform == 'android':
-        ext_storage_path = (_ba.android_get_external_storage_path())
+        ext_storage_path: Optional[str] = (
+            _ba.android_get_external_storage_path())
         if (ext_storage_path is not None
                 and app.user_scripts_directory.startswith(ext_storage_path)):
             path = ('<' +
@@ -75,7 +81,7 @@ def show_user_scripts() -> None:
     # they can see it.
     if app.platform == 'android':
         try:
-            usd = app.user_scripts_directory
+            usd: Optional[str] = app.user_scripts_directory
             if usd is not None and os.path.isdir(usd):
                 file_name = usd + '/about_this_folder.txt'
                 with open(file_name, 'w') as outfile:

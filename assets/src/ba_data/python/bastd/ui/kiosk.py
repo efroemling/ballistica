@@ -203,8 +203,7 @@ class KioskWindow(ba.Window):
         self._b5: Optional[ba.Widget]
         self._b6: Optional[ba.Widget]
 
-        # noinspection PyUnreachableCode
-        if False:  # pylint: disable=using-constant-test
+        if bool(False):
             ba.textwidget(
                 parent=self._root_widget,
                 size=(0, 0),
@@ -312,8 +311,7 @@ class KioskWindow(ba.Window):
             self._b4 = self._b5 = self._b6 = None
 
         self._b7: Optional[ba.Widget]
-        # noinspection PyUnreachableCode
-        if False:  # pylint: disable=using-constant-test
+        if bool(False):
             self._b7 = ba.buttonwidget(
                 parent=self._root_widget,
                 autoselect=True,

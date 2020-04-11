@@ -293,7 +293,7 @@ class PartyQueueWindow(ba.Window):
         """(internal)"""
         return self._line_bottom
 
-    def on_account_press(self, account_id: str,
+    def on_account_press(self, account_id: Optional[str],
                          origin_widget: ba.Widget) -> None:
         """A dude was clicked so we should show his account info."""
         from bastd.ui.account import viewer

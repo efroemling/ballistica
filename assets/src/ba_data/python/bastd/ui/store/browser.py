@@ -31,7 +31,8 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional, Tuple, Dict, Union, Sequence
+    from typing import (Any, Callable, Optional, Tuple, Dict, Union, Sequence,
+                        List)
 
 
 class StoreBrowserWindow(ba.Window):
@@ -850,7 +851,7 @@ class StoreBrowserWindow(ba.Window):
                                       maxwidth=700,
                                       transition_delay=0.4)
 
-                    prev_row_buttons = None
+                    prev_row_buttons: Optional[List] = None
                     this_row_buttons = []
 
                     delay = 0.3

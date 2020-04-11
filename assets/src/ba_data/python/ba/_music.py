@@ -83,7 +83,7 @@ class MusicPlayer:
 
     def __init__(self) -> None:
         self._have_set_initial_volume = False
-        self._entry_to_play = None
+        self._entry_to_play: Optional[Any] = None
         self._volume = 1.0
         self._actually_playing = False
 

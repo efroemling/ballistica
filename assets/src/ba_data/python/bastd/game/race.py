@@ -139,7 +139,7 @@ class RaceGame(ba.TeamGameActivity):
         self._score_sound = ba.getsound('score')
         self._swipsound = ba.getsound('swip')
         self._last_team_time: Optional[float] = None
-        self._front_race_region = None
+        self._front_race_region: Optional[int] = None
         self._nub_tex = ba.gettexture('nub')
         self._beep_1_sound = ba.getsound('raceBeep1')
         self._beep_2_sound = ba.getsound('raceBeep2')
@@ -190,7 +190,7 @@ class RaceGame(ba.TeamGameActivity):
 
     def _flash_player(self, player: ba.Player, scale: float) -> None:
         assert isinstance(player.actor, PlayerSpaz)
-        assert player.actor is not None and player.actor.node
+        assert player.actor.node
         pos = player.actor.node.position
         light = ba.newnode('light',
                            attrs={
@@ -213,9 +213,11 @@ class RaceGame(ba.TeamGameActivity):
             player = playernode.getdelegate().getplayer()
         except Exception:
             player = None
+        assert isinstance(player, ba.Player)
         region = region_node.getdelegate()
         if not player or not region:
             return
+        assert isinstance(region, RaceRegion)
 
         last_region = player.gamedata['last_region']
         this_region = region.index
@@ -227,6 +229,7 @@ class RaceGame(ba.TeamGameActivity):
             # blown over a region, etc).
             if this_region > last_region + 2:
                 if player.is_alive():
+                    assert player.actor
                     player.actor.handlemessage(ba.DieMessage())
                     ba.screenmessage(ba.Lstr(
                         translate=('statements', 'Killing ${NAME} for'
@@ -273,6 +276,7 @@ class RaceGame(ba.TeamGameActivity):
                         # Flash where the player is.
                         self._flash_player(player, 1.0)
                         player.gamedata['finished'] = True
+                        assert player.actor
                         player.actor.handlemessage(
                             ba.DieMessage(immediate=True))
 
@@ -305,6 +309,7 @@ class RaceGame(ba.TeamGameActivity):
 
                         # Print their lap number over their head.
                         try:
+                            assert isinstance(player.actor, PlayerSpaz)
                             mathnode = ba.newnode('math',
                                                   owner=player.actor.node,
                                                   attrs={
@@ -529,7 +534,7 @@ class RaceGame(ba.TeamGameActivity):
             pos: Optional[ba.Vec3]
             try:
                 assert isinstance(player.actor, PlayerSpaz)
-                assert player.actor is not None and player.actor.node
+                assert player.actor.node
                 pos = ba.Vec3(player.actor.node.position)
             except Exception:
                 pos = None
@@ -550,9 +555,7 @@ class RaceGame(ba.TeamGameActivity):
         p_list = [[player.gamedata['distance'], player]
                   for player in self.players]
 
-        p_list.sort(reverse=True)
-        # FIXME - need another way to sort p_list.
-        # It tries to compare ba.Player objects.
+        p_list.sort(reverse=True, key=lambda x: x[0])
         for i, plr in enumerate(p_list):
             try:
                 plr[1].gamedata['rank'] = i

@@ -215,9 +215,7 @@ class Text(ba.Actor):
             ba.animate(cmb, 'input1', keys)
             ba.animate(self.node, 'opacity', o_keys)
         else:
-            if (transition is not self.Transition.FADE_IN
-                    and transition is not None):
-                ba.print_error(f'Invalid transition: "{transition}"')
+            assert transition is self.Transition.FADE_IN or transition is None
             cmb.input0 = position[0]
             cmb.input1 = position[1]
         cmb.connectattr('output', self.node, 'position')

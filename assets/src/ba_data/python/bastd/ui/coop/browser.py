@@ -357,19 +357,14 @@ class CoopBrowserWindow(ba.Window):
 
         # Update all of our tourney buttons based on whats in data.
         for i, tbtn in enumerate(self._tournament_buttons):
-            entry: Optional[Dict[str, Any]]
-            try:
-                assert data is not None
-                entry = data[i]
-            except Exception:
-                entry = None
-            prize_y_offs = (0 if entry is None else 34 if 'prizeRange3' in
-                            entry else 20 if 'prizeRange2' in entry else 12)
+            assert data is not None
+            entry: Dict[str, Any] = data[i]
+            prize_y_offs = (34 if 'prizeRange3' in entry else
+                            20 if 'prizeRange2' in entry else 12)
             x_offs = 90
 
             # This seems to be a false alarm.
             # pylint: disable=unbalanced-tuple-unpacking
-            assert entry is not None
             pr1, pv1, pr2, pv2, pr3, pv3 = (
                 get_tournament_prize_strings(entry))
             # pylint: enable=unbalanced-tuple-unpacking
@@ -427,7 +422,7 @@ class CoopBrowserWindow(ba.Window):
 
             leader_name = '-'
             leader_score: Union[str, ba.Lstr] = '-'
-            if entry is not None and entry['scores']:
+            if entry['scores']:
                 score = tbtn['leader'] = copy.deepcopy(entry['scores'][0])
                 leader_name = score[1]
                 leader_score = (
@@ -441,15 +436,13 @@ class CoopBrowserWindow(ba.Window):
 
             ba.textwidget(edit=tbtn['current_leader_name_text'],
                           text=ba.Lstr(value=leader_name))
-            self._tournament_leader_score_type = (None if entry is None else
-                                                  entry['scoreType'])
+            self._tournament_leader_score_type = (entry['scoreType'])
             ba.textwidget(edit=tbtn['current_leader_score_text'],
                           text=leader_score)
             ba.buttonwidget(edit=tbtn['more_scores_button'],
-                            label='-' if entry is None else ba.Lstr(
-                                resource=self._r + '.seeMoreText'))
+                            label=ba.Lstr(resource=self._r + '.seeMoreText'))
             out_of_time_text: Union[str, ba.Lstr] = (
-                '-' if entry is None or 'totalTime' not in entry else ba.Lstr(
+                '-' if 'totalTime' not in entry else ba.Lstr(
                     resource=self._r + '.ofTotalTimeText',
                     subs=[('${TOTAL}',
                            ba.timestring(entry['totalTime'],
@@ -458,16 +451,13 @@ class CoopBrowserWindow(ba.Window):
             ba.textwidget(edit=tbtn['time_remaining_out_of_text'],
                           text=out_of_time_text)
 
-            tbtn['time_remaining'] = 0 if entry is None else entry[
-                'timeRemaining']
+            tbtn['time_remaining'] = entry['timeRemaining']
             tbtn['has_time_remaining'] = entry is not None
-            tbtn['tournament_id'] = (None if entry is None else
-                                     entry['tournamentID'])
+            tbtn['tournament_id'] = entry['tournamentID']
             tbtn['required_league'] = (None if 'requiredLeague' not in entry
                                        else entry['requiredLeague'])
 
-            game = (None if entry is None else
-                    ba.app.tournament_info[tbtn['tournament_id']]['game'])
+            game = ba.app.tournament_info[tbtn['tournament_id']]['game']
 
             if game is None:
                 ba.textwidget(edit=tbtn['button_text'], text='-')
@@ -491,7 +481,7 @@ class CoopBrowserWindow(ba.Window):
                                    levelname).get_preview_texture(),
                                opacity=1.0 if enabled else 0.5)
 
-            fee = None if entry is None else entry['fee']
+            fee = entry['fee']
 
             if fee is None:
                 fee_var = None

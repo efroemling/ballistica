@@ -52,7 +52,8 @@ class TeamGameResults:
     def __init__(self) -> None:
         """Instantiate a results instance."""
         self._game_set = False
-        self._scores: Dict[int, Tuple[ReferenceType[ba.Team], int]] = {}
+        self._scores: Dict[int, Tuple[ReferenceType[ba.Team],
+                                      Optional[int]]] = {}
         self._teams: Optional[List[ReferenceType[ba.Team]]] = None
         self._player_info: Optional[List[Dict[str, Any]]] = None
         self._lower_is_better: Optional[bool] = None
@@ -183,19 +184,21 @@ class TeamGameResults:
             if score[0]() is not None and score[1] is not None
         ]
         for score in scores:
+            assert score[1] is not None
             sval = winners.setdefault(score[1], [])
             team = score[0]()
             assert team is not None
             sval.append(team)
         results: List[Tuple[Optional[int],
                             List[ba.Team]]] = list(winners.items())
-        results.sort(reverse=not self._lower_is_better)
+        results.sort(reverse=not self._lower_is_better, key=lambda x: x[0])
 
         # Also group the 'None' scores.
         none_teams: List[ba.Team] = []
         for score in self._scores.values():
-            if score[0]() is not None and score[1] is None:
-                none_teams.append(score[0]())
+            scoreteam = score[0]()
+            if scoreteam is not None and score[1] is None:
+                none_teams.append(scoreteam)
 
         # Add the Nones to the list (either as winners or losers
         # depending on the rules).

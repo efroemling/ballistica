@@ -103,8 +103,7 @@ class ControlsSettingsWindow(ba.Window):
             show_space_2 = True
             height += space_height
 
-        # noinspection PyUnreachableCode
-        if True:  # pylint: disable=using-constant-test
+        if bool(True):
             show_remote = True
             height += spacing
         else:

@@ -30,7 +30,7 @@ import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Type, Any, Dict, Callable, Optional, Union
+    from typing import Type, Any, Dict, Callable, Optional, Union, List
 
 
 class PlaylistEditGameWindow(ba.Window):
@@ -197,7 +197,7 @@ class PlaylistEditGameWindow(ba.Window):
 
         # Keep track of all the selectable widgets we make so we can wire
         # them up conveniently.
-        widget_column = []
+        widget_column: List[List[ba.Widget]] = []
 
         # Map select button.
         ba.textwidget(parent=self._subcontainer,
@@ -419,16 +419,17 @@ class PlaylistEditGameWindow(ba.Window):
             else:
                 raise Exception()
 
-        # ok now wire up the column
+        # Ok now wire up the column.
         try:
             # pylint: disable=unsubscriptable-object
-            prev_widgets = None
+            prev_widgets: Optional[List[ba.Widget]] = None
             for cwdg in widget_column:
                 if prev_widgets is not None:
-                    # wire our rightmost to their rightmost
+                    # Wire our rightmost to their rightmost.
                     ba.widget(edit=prev_widgets[-1], down_widget=cwdg[-1])
                     ba.widget(cwdg[-1], up_widget=prev_widgets[-1])
-                    # wire our leftmost to their leftmost
+
+                    # Wire our leftmost to their leftmost.
                     ba.widget(edit=prev_widgets[0], down_widget=cwdg[0])
                     ba.widget(cwdg[0], up_widget=prev_widgets[0])
                 prev_widgets = cwdg
@@ -452,14 +453,14 @@ class PlaylistEditGameWindow(ba.Window):
 
     def _select_map(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.playlist import mapselect
+        from bastd.ui.playlist.mapselect import PlaylistMapSelectWindow
 
         # Replace ourself with the map-select UI.
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (mapselect.PlaylistMapSelectWindow(
+        ba.app.main_menu_window = PlaylistMapSelectWindow(
             self._gameclass, self._sessiontype,
             copy.deepcopy(self._getconfig()), self._edit_info,
-            self._completion_call).get_root_widget())
+            self._completion_call).get_root_widget()
 
     def _choice_inc(self, setting_name: str, widget: ba.Widget,
                     setting: Dict[str, Any], increment: int) -> None:

@@ -746,7 +746,7 @@ class Session:
 
         # Pass it to the current activity if it has already begun
         # (otherwise it'll get passed once begin is called).
-        pass_to_activity = (activity is not None and activity.has_begun()
+        pass_to_activity = (activity.has_begun()
                             and not activity.is_joining_activity)
 
         # If we're not allowing mid-game joins, don't pass; just announce

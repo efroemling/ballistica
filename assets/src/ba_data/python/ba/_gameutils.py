@@ -27,7 +27,7 @@ import _ba
 from ba._enums import TimeType, TimeFormat, SpecialChar
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Sequence
+    from typing import Any, Dict, Sequence, Optional
     import ba
 
 TROPHY_CHARS = {
@@ -97,7 +97,7 @@ def sharedobj(name: str) -> Any:
 
     # We store these on the current context; whether its an activity or
     # session.
-    activity = _ba.getactivity(doraise=False)
+    activity: Optional[ba.Activity] = _ba.getactivity(doraise=False)
     if activity is not None:
 
         # Grab shared-objs dict.
@@ -141,7 +141,7 @@ def sharedobj(name: str) -> Any:
                 "unrecognized shared object (activity context): '" + name +
                 "'")
     else:
-        session = _ba.getsession(doraise=False)
+        session: Optional[ba.Session] = _ba.getsession(doraise=False)
         if session is not None:
 
             # Grab shared-objs dict (creating if necessary).

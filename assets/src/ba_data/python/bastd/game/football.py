@@ -590,8 +590,8 @@ class FootballCoopGame(ba.CoopGameActivity):
                         return
 
             flagpos = ba.Vec3(self._flag.node.position)
-            closest_bot = None
-            closest_dist = None
+            closest_bot: Optional[spazbot.SpazBot] = None
+            closest_dist = 0.0  # Always gets assigned first time through.
             for bot in bots:
                 # If a bot is picked up, he should forget about the flag.
                 if bot.held_count > 0:
@@ -600,8 +600,8 @@ class FootballCoopGame(ba.CoopGameActivity):
                 botpos = ba.Vec3(bot.node.position)
                 botdist = (botpos - flagpos).length()
                 if closest_bot is None or botdist < closest_dist:
-                    closest_dist = botdist
                     closest_bot = bot
+                    closest_dist = botdist
             if closest_bot is not None:
                 closest_bot.target_flag = self._flag
 
