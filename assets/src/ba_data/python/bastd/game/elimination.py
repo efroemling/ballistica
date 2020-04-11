@@ -59,7 +59,7 @@ class Icon(ba.Actor):
 
         icon = player.get_icon()
         self.node = ba.newnode('image',
-                               owner=self,
+                               delegate=self,
                                attrs={
                                    'texture': icon['texture'],
                                    'tint_texture': icon['tint_texture'],

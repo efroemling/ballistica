@@ -97,7 +97,6 @@ class Session:
         instances; one for each ba.Activity the session may potentially run.
         """
         # pylint: disable=too-many-statements
-        # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
         from ba._lobby import Lobby
@@ -146,11 +145,6 @@ class Session:
         # print('Would set host-session asset-reqs to:',
         # required_asset_packages)
 
-        if team_names is None:
-            team_names = ['Good Guys']
-        if team_colors is None:
-            team_colors = [(0.6, 0.2, 1.0)]
-
         # First thing, wire up our internal engine data.
         self._sessiondata = _ba.register_session(self)
 
@@ -197,6 +191,8 @@ class Session:
         self.max_players = max_players
 
         if self._use_teams:
+            assert team_names is not None
+            assert team_colors is not None
             for i, color in enumerate(team_colors):
                 team = Team(team_id=self._next_team_id,
                             name=GameActivity.get_team_display_string(
