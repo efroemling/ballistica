@@ -430,11 +430,11 @@ class OnslaughtGame(ba.CoopGameActivity):
                 {'entries': [
                     {'type': spazbot.ChargerBotProShielded,
                      'point': 'bottom_right'},
-                    {'type': spazbot.ChargerBotProShielded, 'point': 'Bottom'}
+                    {'type': spazbot.ChargerBotProShielded, 'point': 'bottom'}
                         if player_count > 2 else None,
                     {'type': spazbot.ChargerBotProShielded,
                      'point': 'bottom_left'},
-                    {'type': spazbot.ChargerBotProShielded, 'point': 'Top'}
+                    {'type': spazbot.ChargerBotProShielded, 'point': 'top'}
                         if hard else None,
                     {'type': spazbot.BomberBotProStatic,
                      'point': 'turret_top_middle'},
