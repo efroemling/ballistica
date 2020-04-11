@@ -290,6 +290,8 @@ class CaptureTheFlagGame(ba.TeamGameActivity):
             if (not team.gamedata['home_flag_at_base']
                     and flag.held_count == 0):
                 time_out_counting_down = True
+                if flag.time_out_respawn_time is None:
+                    flag.reset_return_times()
                 flag.time_out_respawn_time -= 1
                 if flag.time_out_respawn_time <= 0:
                     flag.handlemessage(ba.DieMessage())
