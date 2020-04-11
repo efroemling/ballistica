@@ -97,7 +97,6 @@ class Session:
         instances; one for each ba.Activity the session may potentially run.
         """
         # pylint: disable=too-many-statements
-        # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
         from ba._lobby import Lobby
