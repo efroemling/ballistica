@@ -80,11 +80,11 @@ class TeamSeriesVictoryScoreScreenActivity(TeamsScoreScreenActivity):
                     player_entries.append(
                         (prec.player.team.sessiondata['score'],
                          prec.get_name(full=True), prec))
-            player_entries.sort(reverse=True)
+            player_entries.sort(reverse=True, key=lambda x: x[0])
         else:
             for _pkey, prec in self.stats.get_records().items():
                 player_entries.append((prec.score, prec.name_full, prec))
-            player_entries.sort(reverse=True)
+            player_entries.sort(reverse=True, key=lambda x: x[0])
 
         ts_height = 300.0
         ts_h_offs = -390.0

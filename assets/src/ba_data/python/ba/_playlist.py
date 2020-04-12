@@ -60,26 +60,29 @@ def filter_playlist(playlist: PlaylistType,
         unowned_game_types = set()
 
     for entry in copy.deepcopy(playlist):
-        # 'map' used to be called 'level' here
+        # 'map' used to be called 'level' here.
         if 'level' in entry:
             entry['map'] = entry['level']
             del entry['level']
-        # we now stuff map into settings instead of it being its own thing
+
+        # We now stuff map into settings instead of it being its own thing.
         if 'map' in entry:
             entry['settings']['map'] = entry['map']
             del entry['map']
-        # update old map names to new ones
+
+        # Update old map names to new ones.
         entry['settings']['map'] = _map.get_filtered_map_name(
             entry['settings']['map'])
         if remove_unowned and entry['settings']['map'] in unowned_maps:
             continue
-        # ok, for each game in our list, try to import the module and grab
+
+        # Ok, for each game in our list, try to import the module and grab
         # the actual game class. add successful ones to our initial list
-        # to present to the user
+        # to present to the user.
         if not isinstance(entry['type'], str):
             raise Exception("invalid entry format")
         try:
-            # do some type filters for backwards compat.
+            # Do some type filters for backwards compat.
             if entry['type'] in ('Assault.AssaultGame',
                                  'Happy_Thoughts.HappyThoughtsGame',
                                  'bsAssault.AssaultGame',
@@ -147,7 +150,7 @@ def filter_playlist(playlist: PlaylistType,
             if mark_unowned and gameclass in unowned_game_types:
                 entry['is_unowned_game'] = True
 
-            # make sure all settings the game defines are present
+            # Make sure all settings the game defines are present.
             neededsettings = gameclass.get_settings(sessiontype)
             for setting_name, setting in neededsettings:
                 if (setting_name not in entry['settings']
@@ -164,6 +167,7 @@ def filter_playlist(playlist: PlaylistType,
 
 def get_default_free_for_all_playlist() -> PlaylistType:
     """Return a default playlist for free-for-all mode."""
+
     # NOTE: these are currently using old type/map names,
     # but filtering translates them properly to the new ones.
     # (is kinda a handy way to ensure filtering is working).
@@ -177,8 +181,7 @@ def get_default_free_for_all_playlist() -> PlaylistType:
             'map': 'Doom Shroom'
         },
         'type': 'bs_death_match.DeathMatchGame'
-    },
-    {
+    }, {
         'settings': {
             'Chosen One Gets Gloves': True,
             'Chosen One Gets Shield': False,
@@ -189,8 +192,7 @@ def get_default_free_for_all_playlist() -> PlaylistType:
             'map': 'Monkey Face'
         },
         'type': 'bs_chosen_one.ChosenOneGame'
-    },
-    {
+    }, {
         'settings': {
             'Hold Time': 30,
             'Respawn Times': 1.0,
@@ -198,15 +200,13 @@ def get_default_free_for_all_playlist() -> PlaylistType:
             'map': 'Zigzag'
         },
         'type': 'bs_king_of_the_hill.KingOfTheHillGame'
-    },
-    {
+    }, {
         'settings': {
             'Epic Mode': False,
             'map': 'Rampage'
         },
         'type': 'bs_meteor_shower.MeteorShowerGame'
-    },
-    {
+    }, {
         'settings': {
             'Epic Mode': 1,
             'Lives Per Player': 1,
@@ -215,8 +215,7 @@ def get_default_free_for_all_playlist() -> PlaylistType:
             'map': 'Tip Top'
         },
         'type': 'bs_elimination.EliminationGame'
-    },
-    {
+    }, {
         'settings': {
             'Hold Time': 30,
             'Respawn Times': 1.0,
@@ -224,8 +223,7 @@ def get_default_free_for_all_playlist() -> PlaylistType:
             'map': 'The Pad'
         },
         'type': 'bs_keep_away.KeepAwayGame'
-    },
-    {
+    }, {
         'settings': {
             'Epic Mode': True,
             'Kills to Win Per Player': 10,
@@ -234,8 +232,7 @@ def get_default_free_for_all_playlist() -> PlaylistType:
             'map': 'Rampage'
         },
         'type': 'bs_death_match.DeathMatchGame'
-    },
-    {
+    }, {
         'settings': {
             'Bomb Spawning': 1000,
             'Epic Mode': False,
@@ -246,8 +243,7 @@ def get_default_free_for_all_playlist() -> PlaylistType:
             'map': 'Big G'
         },
         'type': 'bs_race.RaceGame'
-    },
-    {
+    }, {
         'settings': {
             'Hold Time': 30,
             'Respawn Times': 1.0,
@@ -255,8 +251,7 @@ def get_default_free_for_all_playlist() -> PlaylistType:
             'map': 'Happy Thoughts'
         },
         'type': 'bs_king_of_the_hill.KingOfTheHillGame'
-    },
-    {
+    }, {
         'settings': {
             'Enable Impact Bombs': 1,
             'Enable Triple Bombs': False,
@@ -264,8 +259,7 @@ def get_default_free_for_all_playlist() -> PlaylistType:
             'map': 'Doom Shroom'
         },
         'type': 'bs_target_practice.TargetPracticeGame'
-    },
-    {
+    }, {
         'settings': {
             'Epic Mode': False,
             'Lives Per Player': 5,
@@ -274,8 +268,7 @@ def get_default_free_for_all_playlist() -> PlaylistType:
             'map': 'Step Right Up'
         },
         'type': 'bs_elimination.EliminationGame'
-    },
-    {
+    }, {
         'settings': {
             'Epic Mode': False,
             'Kills to Win Per Player': 10,
@@ -284,8 +277,7 @@ def get_default_free_for_all_playlist() -> PlaylistType:
             'map': 'Crag Castle'
         },
         'type': 'bs_death_match.DeathMatchGame'
-    },
-    {
+    }, {
         'map': 'Lake Frigid',
         'settings': {
             'Bomb Spawning': 0,
@@ -296,7 +288,7 @@ def get_default_free_for_all_playlist() -> PlaylistType:
             'map': 'Lake Frigid'
         },
         'type': 'bs_race.RaceGame'
-    }]  # yapf: disable
+    }]
 
 
 def get_default_teams_playlist() -> PlaylistType:
@@ -317,8 +309,7 @@ def get_default_teams_playlist() -> PlaylistType:
             'map': 'Bridgit'
         },
         'type': 'bs_capture_the_flag.CTFGame'
-    },
-    {
+    }, {
         'settings': {
             'Epic Mode': False,
             'Respawn Times': 1.0,
@@ -327,8 +318,7 @@ def get_default_teams_playlist() -> PlaylistType:
             'map': 'Step Right Up'
         },
         'type': 'bs_assault.AssaultGame'
-    },
-    {
+    }, {
         'settings': {
             'Balance Total Lives': False,
             'Epic Mode': False,
@@ -339,8 +329,7 @@ def get_default_teams_playlist() -> PlaylistType:
             'map': 'Rampage'
         },
         'type': 'bs_elimination.EliminationGame'
-    },
-    {
+    }, {
         'settings': {
             'Epic Mode': False,
             'Kills to Win Per Player': 5,
@@ -349,8 +338,7 @@ def get_default_teams_playlist() -> PlaylistType:
             'map': 'Roundabout'
         },
         'type': 'bs_death_match.DeathMatchGame'
-    },
-    {
+    }, {
         'settings': {
             'Respawn Times': 1.0,
             'Score to Win': 1,
@@ -358,8 +346,7 @@ def get_default_teams_playlist() -> PlaylistType:
             'map': 'Hockey Stadium'
         },
         'type': 'bs_hockey.HockeyGame'
-    },
-    {
+    }, {
         'settings': {
             'Hold Time': 30,
             'Respawn Times': 1.0,
@@ -367,8 +354,7 @@ def get_default_teams_playlist() -> PlaylistType:
             'map': 'Monkey Face'
         },
         'type': 'bs_keep_away.KeepAwayGame'
-    },
-    {
+    }, {
         'settings': {
             'Balance Total Lives': False,
             'Epic Mode': True,
@@ -379,8 +365,7 @@ def get_default_teams_playlist() -> PlaylistType:
             'map': 'Tip Top'
         },
         'type': 'bs_elimination.EliminationGame'
-    },
-    {
+    }, {
         'settings': {
             'Epic Mode': False,
             'Respawn Times': 1.0,
@@ -389,8 +374,7 @@ def get_default_teams_playlist() -> PlaylistType:
             'map': 'Crag Castle'
         },
         'type': 'bs_assault.AssaultGame'
-    },
-    {
+    }, {
         'settings': {
             'Epic Mode': False,
             'Kills to Win Per Player': 5,
@@ -399,15 +383,13 @@ def get_default_teams_playlist() -> PlaylistType:
             'map': 'Doom Shroom'
         },
         'type': 'bs_death_match.DeathMatchGame'
-    },
-    {
+    }, {
         'settings': {
             'Epic Mode': False,
             'map': 'Rampage'
         },
         'type': 'bs_meteor_shower.MeteorShowerGame'
-    },
-    {
+    }, {
         'settings': {
             'Epic Mode': False,
             'Flag Idle Return Time': 30,
@@ -418,8 +400,7 @@ def get_default_teams_playlist() -> PlaylistType:
             'map': 'Roundabout'
         },
         'type': 'bs_capture_the_flag.CTFGame'
-    },
-    {
+    }, {
         'settings': {
             'Respawn Times': 1.0,
             'Score to Win': 21,
@@ -427,8 +408,7 @@ def get_default_teams_playlist() -> PlaylistType:
             'map': 'Football Stadium'
         },
         'type': 'bs_football.FootballTeamGame'
-    },
-    {
+    }, {
         'settings': {
             'Epic Mode': True,
             'Respawn Times': 0.25,
@@ -437,8 +417,7 @@ def get_default_teams_playlist() -> PlaylistType:
             'map': 'Bridgit'
         },
         'type': 'bs_assault.AssaultGame'
-    },
-    {
+    }, {
         'map': 'Doom Shroom',
         'settings': {
             'Enable Impact Bombs': 1,
@@ -447,8 +426,7 @@ def get_default_teams_playlist() -> PlaylistType:
             'map': 'Doom Shroom'
         },
         'type': 'bs_target_practice.TargetPracticeGame'
-    },
-    {
+    }, {
         'settings': {
             'Hold Time': 30,
             'Respawn Times': 1.0,
@@ -456,8 +434,7 @@ def get_default_teams_playlist() -> PlaylistType:
             'map': 'Tip Top'
         },
         'type': 'bs_king_of_the_hill.KingOfTheHillGame'
-    },
-    {
+    }, {
         'settings': {
             'Epic Mode': False,
             'Respawn Times': 1.0,
@@ -466,8 +443,7 @@ def get_default_teams_playlist() -> PlaylistType:
             'map': 'Zigzag'
         },
         'type': 'bs_assault.AssaultGame'
-    },
-    {
+    }, {
         'settings': {
             'Epic Mode': False,
             'Flag Idle Return Time': 30,
@@ -478,8 +454,7 @@ def get_default_teams_playlist() -> PlaylistType:
             'map': 'Happy Thoughts'
         },
         'type': 'bs_capture_the_flag.CTFGame'
-    },
-    {
+    }, {
         'settings': {
             'Bomb Spawning': 1000,
             'Epic Mode': True,
@@ -489,8 +464,7 @@ def get_default_teams_playlist() -> PlaylistType:
             'map': 'Big G'
         },
         'type': 'bs_race.RaceGame'
-    },
-    {
+    }, {
         'settings': {
             'Epic Mode': False,
             'Kills to Win Per Player': 5,
@@ -499,8 +473,7 @@ def get_default_teams_playlist() -> PlaylistType:
             'map': 'Monkey Face'
         },
         'type': 'bs_death_match.DeathMatchGame'
-    },
-    {
+    }, {
         'settings': {
             'Hold Time': 30,
             'Respawn Times': 1.0,
@@ -508,8 +481,7 @@ def get_default_teams_playlist() -> PlaylistType:
             'map': 'Lake Frigid'
         },
         'type': 'bs_keep_away.KeepAwayGame'
-    },
-    {
+    }, {
         'settings': {
             'Epic Mode': False,
             'Flag Idle Return Time': 30,
@@ -520,8 +492,7 @@ def get_default_teams_playlist() -> PlaylistType:
             'map': 'Tip Top'
         },
         'type': 'bs_capture_the_flag.CTFGame'
-    },
-    {
+    }, {
         'settings': {
             'Balance Total Lives': False,
             'Epic Mode': False,
@@ -532,8 +503,7 @@ def get_default_teams_playlist() -> PlaylistType:
             'map': 'Crag Castle'
         },
         'type': 'bs_elimination.EliminationGame'
-    },
-    {
+    }, {
         'settings': {
             'Epic Mode': True,
             'Respawn Times': 0.25,
@@ -541,4 +511,4 @@ def get_default_teams_playlist() -> PlaylistType:
             'map': 'Zigzag'
         },
         'type': 'bs_conquest.ConquestGame'
-    }]  # yapf: disable
+    }]

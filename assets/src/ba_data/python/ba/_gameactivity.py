@@ -289,10 +289,10 @@ class GameActivity(Activity):
     @classmethod
     def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
         """Return whether this game supports the provided Session type."""
-        from ba import _teambasesession
+        from ba._teambasesession import TeamBaseSession
 
         # By default, games support any versus mode
-        return issubclass(sessiontype, _teambasesession.TeamBaseSession)
+        return issubclass(sessiontype, TeamBaseSession)
 
     def __init__(self, settings: Dict[str, Any]):
         """Instantiate the Activity."""
@@ -546,6 +546,7 @@ class GameActivity(Activity):
 
         self.end_game()
 
+    # FIXME: this logic should live in the session classes.
     def _game_begin_analytics(self) -> None:
         """Update analytics events for the start of the game."""
         # pylint: disable=too-many-branches

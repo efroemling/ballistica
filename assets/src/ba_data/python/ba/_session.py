@@ -75,13 +75,14 @@ class Session:
 
     """
 
-    # Annotate our attrs at class level so they're available for introspection.
-    teams: List[ba.Team]
+    # Note: even though these are instance vars, we annotate them at the
+    # class level so that docs generation can access their types.
     campaign: Optional[ba.Campaign]
     lobby: ba.Lobby
-    min_players: int
     max_players: int
+    min_players: int
     players: List[ba.Player]
+    teams: List[ba.Team]
 
     def __init__(self,
                  depsets: Sequence[ba.DependencySet],
@@ -97,7 +98,6 @@ class Session:
         instances; one for each ba.Activity the session may potentially run.
         """
         # pylint: disable=too-many-statements
-        # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
         from ba._lobby import Lobby
@@ -108,26 +108,23 @@ class Session:
         from ba._error import DependencyError
         from ba._dependency import Dependency, AssetPackage
 
-        # print(' WOULD LOOK AT DEP SETS', depsets)
-
-        # first off, resolve all dep-sets we were passed.
-        # if things are missing, we'll try to gather them into
-        # a single missing-deps exception if possible
-        # to give the caller a clean path to download missing
-        # stuff and try again.
+        # First off, resolve all dependency-sets we were passed.
+        # If things are missing, we'll try to gather them into a single
+        # missing-deps exception if possible to give the caller a clean
+        # path to download missing stuff and try again.
         missing_asset_packages: Set[str] = set()
         for depset in depsets:
             try:
                 depset.resolve()
             except DependencyError as exc:
-                # we gather/report missing assets only; barf on anything else
+                # Gather/report missing assets only; barf on anything else.
                 if all(issubclass(d.cls, AssetPackage) for d in exc.deps):
                     for dep in exc.deps:
                         assert isinstance(dep.config, str)
                         missing_asset_packages.add(dep.config)
                 else:
                     missing_info = [(d.cls, d.config) for d in exc.deps]
-                    raise Exception(
+                    raise RuntimeError(
                         f'Missing non-asset dependencies: {missing_info}')
 
         # Throw a combined exception if we found anything missing.
@@ -146,11 +143,6 @@ class Session:
         # print('Would set host-session asset-reqs to:',
         # required_asset_packages)
 
-        if team_names is None:
-            team_names = ['Good Guys']
-        if team_colors is None:
-            team_colors = [(0.6, 0.2, 1.0)]
-
         # First thing, wire up our internal engine data.
         self._sessiondata = _ba.register_session(self)
 
@@ -159,8 +151,8 @@ class Session:
         # FIXME: This stuff shouldn't be here.
         self.sharedobjs: Dict[str, Any] = {}
 
-        # TeamGameActivity uses this to display a help overlay on
-        # the first activity only.
+        # TeamGameActivity uses this to display a help overlay on the first
+        # activity only.
         self.have_shown_controls_help_overlay = False
 
         self.campaign = None
@@ -186,9 +178,8 @@ class Session:
 
         self._activity_weak: ReferenceType[ba.Activity]
         self._activity_weak = weakref.ref(_EmptyObj())  # type: ignore
-
         if self._activity_weak() is not None:
-            raise Exception("error creating empty weak ref")
+            raise Exception("Error creating empty activity weak ref.")
 
         self._next_activity: Optional[ba.Activity] = None
         self.wants_to_end = False
@@ -196,7 +187,10 @@ class Session:
         self.min_players = min_players
         self.max_players = max_players
 
+        # Create Teams.
         if self._use_teams:
+            assert team_names is not None
+            assert team_colors is not None
             for i, color in enumerate(team_colors):
                 team = Team(team_id=self._next_team_id,
                             name=GameActivity.get_team_display_string(
@@ -210,8 +204,8 @@ class Session:
                         self.on_team_join(team)
                 except Exception:
                     from ba import _error
-                    _error.print_exception('exception in on_team_join for',
-                                           self)
+                    _error.print_exception(
+                        f'Error in on_team_join for {self}.')
 
         self.lobby = Lobby()
         self.stats = Stats()
@@ -242,8 +236,8 @@ class Session:
 
             if len(self.players) >= self.max_players:
 
-                # Print a rejection message *only* to the client trying to join
-                # (prevents spamming everyone else in the game).
+                # Print a rejection message *only* to the client trying to
+                # join (prevents spamming everyone else in the game).
                 _ba.playsound(_ba.getsound('error'))
                 _ba.screenmessage(
                     Lstr(resource='playerLimitReachedText',
@@ -291,7 +285,7 @@ class Session:
                         _error.print_exception(
                             'Error in Lobby.remove_chooser()')
 
-            # *if* he was actually in the game, announce his departure
+            # *If* they were actually in the game, announce their departure.
             if team is not None:
                 _ba.screenmessage(
                     Lstr(resource='playerLeftText',
@@ -302,7 +296,7 @@ class Session:
             # team lists every activity)
             if team is not None and player in team.players:
 
-                # Testing.. can remove this eventually.
+                # Testing; can remove this eventually.
                 if isinstance(self, FreeForAllSession):
                     if len(team.players) != 1:
                         _error.print_error("expected 1 player in FFA team")
@@ -328,7 +322,7 @@ class Session:
                 player.set_activity(None)
                 player.set_node(None)
 
-                # reset the player - this will remove its actor-ref and clear
+                # Reset the player; this will remove its actor-ref and clear
                 # its calls/etc
                 try:
                     with _ba.Context(activity):
@@ -377,6 +371,7 @@ class Session:
                 except Exception:
                     _error.print_exception(
                         'exception in on_team_leave for session', self)
+
                 # Clear the team's session-data (so dying stuff will
                 # have proper context).
                 try:
@@ -454,20 +449,22 @@ class Session:
         """
         from ba._general import Call
         from ba._enums import TimeType
-        # only pay attention if this is coming from our current activity..
+
+        # Only pay attention if this is coming from our current activity.
         if activity is not self._activity_retained:
             return
 
-        # if this activity hasn't begun yet, just set it up to end immediately
-        # once it does
+        # If this activity hasn't begun yet, just set it up to end immediately
+        # once it does.
         if not activity.has_begun():
             activity.set_immediate_end(results, delay, force)
 
-        # the activity has already begun; get ready to end it..
+        # The activity has already begun; get ready to end it.
         else:
             if (not activity.has_ended()) or force:
                 activity.set_has_ended(True)
-                # set a timer to set in motion this activity's demise
+
+                # Set a timer to set in motion this activity's demise.
                 self._activity_end_timer = _ba.Timer(
                     delay,
                     Call(self._complete_end_activity, activity, results),
@@ -483,8 +480,8 @@ class Session:
             return None
 
         if isinstance(msg, PlayerProfilesChangedMessage):
-            # if we have a current activity with a lobby, ask it to
-            # reload profiles
+            # If we have a current activity with a lobby, ask it to reload
+            # profiles.
             with _ba.Context(self):
                 self.lobby.reload_profiles()
             return None
@@ -511,7 +508,7 @@ class Session:
                 "Session.set_activity() cannot be called recursively.")
 
         if activity.session is not _ba.getsession():
-            raise Exception("provided activity's session is not current")
+            raise Exception("Provided Activity's Session is not current.")
 
         # Quietly ignore this if the whole session is going down.
         if self._ending:
@@ -574,7 +571,7 @@ class Session:
             prev_activity._transitioning_out = True
             # pylint: enable=protected-access
 
-            # activity will be None until the next one begins.
+            # Activity will be None until the next one begins.
             with _ba.Context(prev_activity):
                 prev_activity.on_transition_out()
 
@@ -613,6 +610,7 @@ class Session:
                     _ba.timer(activity.transition_time,
                               prev_activity._destroy,
                               timetype=TimeType.REAL)
+
             # Just run immediately.
             else:
                 # noinspection PyProtectedMember
@@ -720,6 +718,7 @@ class Session:
                     _ba.playsound(_ba.getsound('error'))
             else:
                 return
+
         # Otherwise just add players on the fly.
         else:
             self._add_chosen_player(chooser)

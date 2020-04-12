@@ -69,6 +69,7 @@ class Puck(ba.Actor):
                                    'position': self._spawn_pos,
                                    'materials': pmats
                                })
+        ba.animate(self.node, "model_scale", {0: 0, 0.2: 1.3, 0.26: 1})
 
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, ba.DieMessage):

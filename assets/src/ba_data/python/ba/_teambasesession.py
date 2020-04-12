@@ -53,7 +53,7 @@ class TeamBaseSession(Session):
     def __init__(self) -> None:
         """Set up playlists and launches a ba.Activity to accept joiners."""
         # pylint: disable=cyclic-import
-        from ba import _playlist as bsplaylist
+        from ba import _playlist
         from bastd.activity import multiteamjoinscreen
         app = _ba.app
         cfg = app.config
@@ -67,6 +67,7 @@ class TeamBaseSession(Session):
 
         # print('FIXME: TEAM BASE SESSION WOULD CALC DEPS.')
         depsets: Sequence[ba.DependencySet] = []
+
         super().__init__(depsets,
                          team_names=team_names,
                          team_colors=team_colors,
@@ -100,22 +101,23 @@ class TeamBaseSession(Session):
 
         if (self._playlist_name != '__default__'
                 and self._playlist_name in playlists):
+
             # Make sure to copy this, as we muck with it in place once we've
             # got it and we don't want that to affect our config.
             playlist = copy.deepcopy(playlists[self._playlist_name])
         else:
             if self._use_teams:
-                playlist = bsplaylist.get_default_teams_playlist()
+                playlist = _playlist.get_default_teams_playlist()
             else:
-                playlist = bsplaylist.get_default_free_for_all_playlist()
+                playlist = _playlist.get_default_free_for_all_playlist()
 
         # Resolve types and whatnot to get our final playlist.
-        playlist_resolved = bsplaylist.filter_playlist(playlist,
-                                                       sessiontype=type(self),
-                                                       add_resolved_type=True)
+        playlist_resolved = _playlist.filter_playlist(playlist,
+                                                      sessiontype=type(self),
+                                                      add_resolved_type=True)
 
         if not playlist_resolved:
-            raise Exception("playlist contains no valid games")
+            raise RuntimeError("Playlist contains no valid games.")
 
         self._playlist = ShuffleList(playlist_resolved,
                                      shuffle=self._playlist_randomize)
@@ -176,22 +178,21 @@ class TeamBaseSession(Session):
             TeamSeriesVictoryScoreScreenActivity)
         from ba import _activitytypes
 
-        # If we have a tutorial to show,
-        # that's the first thing we do no matter what.
+        # If we have a tutorial to show, that's the first thing we do no
+        # matter what.
         if self._tutorial_activity_instance is not None:
             self.set_activity(self._tutorial_activity_instance)
             self._tutorial_activity_instance = None
 
-        # If we're leaving the tutorial activity,
-        # pop a transition activity to transition
-        # us into a round gracefully (otherwise we'd
-        # snap from one terrain to another instantly).
+        # If we're leaving the tutorial activity, pop a transition activity
+        # to transition us into a round gracefully (otherwise we'd snap from
+        # one terrain to another instantly).
         elif isinstance(activity, TutorialActivity):
             self.set_activity(
                 _ba.new_activity(_activitytypes.TransitionActivity))
 
-        # If we're in a between-round activity or a restart-activity,
-        # hop into a round.
+        # If we're in a between-round activity or a restart-activity, hop
+        # into a round.
         elif isinstance(
                 activity,
             (_activitytypes.JoiningActivity, _activitytypes.TransitionActivity,
@@ -203,6 +204,7 @@ class TeamBaseSession(Session):
                 self._game_number = 0
                 for team in self.teams:
                     team.sessiondata['score'] = 0
+
             # Otherwise just set accum (per-game) scores.
             else:
                 self.stats.reset_accum()
@@ -216,7 +218,7 @@ class TeamBaseSession(Session):
             # Instantiate the next now so they have plenty of time to load.
             self._instantiate_next_game()
 
-            # (re)register all players and wire stats to our next activity
+            # (Re)register all players and wire stats to our next activity.
             for player in self.players:
                 # ..but only ones who have been placed on a team
                 # (ie: no longer sitting in the lobby).
@@ -321,6 +323,7 @@ class ShuffleList:
                         continue
                     if test_obj['type'] == self.last_gotten['type']:
                         continue
+
                 # Sufficiently different; lets go with it.
                 break
 

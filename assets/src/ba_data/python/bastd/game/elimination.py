@@ -59,7 +59,7 @@ class Icon(ba.Actor):
 
         icon = player.get_icon()
         self.node = ba.newnode('image',
-                               owner=self,
+                               delegate=self,
                                attrs={
                                    'texture': icon['texture'],
                                    'tint_texture': icon['tint_texture'],
@@ -400,7 +400,8 @@ class EliminationGame(ba.TeamGameActivity):
                         self.map.get_start_position(team.get_id()))
                     points.append(
                         ((start_pos - player_pos).length(), start_pos))
-                points.sort()
+                # Hmm.. we need to sorting vectors too?
+                points.sort(key=lambda x: x[0])
                 return points[-1][1]
         return None
 

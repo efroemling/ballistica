@@ -353,6 +353,7 @@ class CoopSession(Session):
                 if results.get_score_type() in ('seconds', 'milliseconds',
                                                 'time'):
                     score_type = 'time'
+
                     # Results contains milliseconds; ScoreScreen wants
                     # hundredths; need to fix :-/
                     if score is not None:

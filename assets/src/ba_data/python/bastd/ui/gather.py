@@ -1451,8 +1451,7 @@ class GatherWindow(ba.Window):
                 key=lambda p: (
                     p['queue'] is None,  # Show non-queued last.
                     p['ping'] if p['ping'] is not None else 999999,
-                    p['index'],
-                    p))
+                    p['index']))
             existing_selection = self._public_party_list_selection
             first = True
 
