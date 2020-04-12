@@ -75,6 +75,15 @@ class Session:
 
     """
 
+    # Note: even though these are instance vars, we annotate them at the
+    # class level so that docs generation can access their types.
+    campaign: Optional[ba.Campaign]
+    lobby: ba.Lobby
+    max_players: int
+    min_players: int
+    players: List[ba.Player]
+    teams: List[ba.Team]
+
     def __init__(self,
                  depsets: Sequence[ba.DependencySet],
                  team_names: Sequence[str] = None,
@@ -146,7 +155,7 @@ class Session:
         # activity only.
         self.have_shown_controls_help_overlay = False
 
-        self.campaign: Optional[ba.Campaign] = None
+        self.campaign = None
 
         # FIXME: Should be able to kill this I think.
         self.campaign_state: Dict[str, str] = {}
@@ -156,8 +165,8 @@ class Session:
         self._in_set_activity = False
         self._allow_mid_activity_joins = allow_mid_activity_joins
 
-        self.teams: List[ba.Team] = []
-        self.players: List[ba.Player] = []
+        self.teams = []
+        self.players = []
         self._next_team_id = 0
         self._activity_retained: Optional[ba.Activity] = None
         self.launch_end_session_activity_time: Optional[float] = None
@@ -198,7 +207,7 @@ class Session:
                     _error.print_exception(
                         f'Error in on_team_join for {self}.')
 
-        self.lobby: ba.Lobby = Lobby()
+        self.lobby = Lobby()
         self.stats = Stats()
 
         # Instantiate our session globals node
