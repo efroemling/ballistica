@@ -101,6 +101,7 @@ class TeamBaseSession(Session):
 
         if (self._playlist_name != '__default__'
                 and self._playlist_name in playlists):
+
             # Make sure to copy this, as we muck with it in place once we've
             # got it and we don't want that to affect our config.
             playlist = copy.deepcopy(playlists[self._playlist_name])
@@ -177,22 +178,21 @@ class TeamBaseSession(Session):
             TeamSeriesVictoryScoreScreenActivity)
         from ba import _activitytypes
 
-        # If we have a tutorial to show,
-        # that's the first thing we do no matter what.
+        # If we have a tutorial to show, that's the first thing we do no
+        # matter what.
         if self._tutorial_activity_instance is not None:
             self.set_activity(self._tutorial_activity_instance)
             self._tutorial_activity_instance = None
 
-        # If we're leaving the tutorial activity,
-        # pop a transition activity to transition
-        # us into a round gracefully (otherwise we'd
-        # snap from one terrain to another instantly).
+        # If we're leaving the tutorial activity, pop a transition activity
+        # to transition us into a round gracefully (otherwise we'd snap from
+        # one terrain to another instantly).
         elif isinstance(activity, TutorialActivity):
             self.set_activity(
                 _ba.new_activity(_activitytypes.TransitionActivity))
 
-        # If we're in a between-round activity or a restart-activity,
-        # hop into a round.
+        # If we're in a between-round activity or a restart-activity, hop
+        # into a round.
         elif isinstance(
                 activity,
             (_activitytypes.JoiningActivity, _activitytypes.TransitionActivity,
@@ -204,6 +204,7 @@ class TeamBaseSession(Session):
                 self._game_number = 0
                 for team in self.teams:
                     team.sessiondata['score'] = 0
+
             # Otherwise just set accum (per-game) scores.
             else:
                 self.stats.reset_accum()
@@ -217,7 +218,7 @@ class TeamBaseSession(Session):
             # Instantiate the next now so they have plenty of time to load.
             self._instantiate_next_game()
 
-            # (re)register all players and wire stats to our next activity
+            # (Re)register all players and wire stats to our next activity.
             for player in self.players:
                 # ..but only ones who have been placed on a team
                 # (ie: no longer sitting in the lobby).
@@ -322,6 +323,7 @@ class ShuffleList:
                         continue
                     if test_obj['type'] == self.last_gotten['type']:
                         continue
+
                 # Sufficiently different; lets go with it.
                 break
 

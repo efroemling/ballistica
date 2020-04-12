@@ -771,7 +771,10 @@ class App:
                     return False
 
         # Ok, we're good to go.
-        self.coop_session_args = {'campaign': campaignname, 'level': levelname}
+        self.coop_session_args = {
+            'campaign': campaignname,
+            'level': levelname,
+        }
         for arg_name, arg_val in list(args.items()):
             self.coop_session_args[arg_name] = arg_val
 
@@ -782,8 +785,8 @@ class App:
             except Exception:
                 from ba import _error
                 _error.print_exception()
-                from bastd import mainmenu
-                _ba.new_host_session(mainmenu.MainMenuSession)
+                from bastd.mainmenu import MainMenuSession
+                _ba.new_host_session(MainMenuSession)
 
         _ba.fade_screen(False, endcall=_fade_end)
         return True
