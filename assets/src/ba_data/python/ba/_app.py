@@ -86,9 +86,10 @@ class App:
         """
 
         # We don't yet support full unicode display on windows or linux :-(.
-        if (language in ('Chinese', 'ChineseTraditional', 'Persian', 'Korean',
-                         'Arabic', 'Hindi')
-                and self.platform in ('windows', 'linux')):
+        if (language in {
+                'Chinese', 'ChineseTraditional', 'Persian', 'Korean', 'Arabic',
+                'Hindi', 'Vietnamese'
+        } and self.platform in ('windows', 'linux')):
             return False
         return True
 
@@ -120,6 +121,7 @@ class App:
             'id': 'Indonesian',
             'sr': 'Serbian',
             'uk': 'Ukrainian',
+            'vi': 'Vietnamese',
             'hi': 'Hindi'
         }
 

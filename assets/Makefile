@@ -17714,6 +17714,7 @@ DATA_TARGETS = \
   build/ba_data/data/languages/croatian.json \
   build/ba_data/data/languages/turkish.json \
   build/ba_data/data/languages/german.json \
+  build/ba_data/data/languages/vietnamese.json \
   build/ba_data/data/languages/spanish.json \
   build/ba_data/data/languages/portuguese.json \
   build/ba_data/data/languages/korean.json \
