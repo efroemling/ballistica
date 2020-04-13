@@ -253,31 +253,32 @@ class SpazBot(basespaz.Spaz):
             # Otherwise try to go pick it up.
             else:
                 assert self.target_flag.node
-                target_pt_raw = ba.Vec3(*self.target_flag.node.position)
-                diff = (target_pt_raw - our_pos)
-                diff = ba.Vec3(diff[0], 0, diff[2])  # Don't care about y.
-                dist = diff.length()
-                to_target = diff.normalized()
+                if self.target_flag.node.exists():
+                    target_pt_raw = ba.Vec3(*self.target_flag.node.position)
+                    diff = (target_pt_raw - our_pos)
+                    diff = ba.Vec3(diff[0], 0, diff[2])  # Don't care about y.
+                    dist = diff.length()
+                    to_target = diff.normalized()
 
-                # If we're holding some non-flag item, drop it.
-                if self.node.hold_node:
-                    self.node.pickup_pressed = True
-                    self.node.pickup_pressed = False
-                    return
+                    # If we're holding some non-flag item, drop it.
+                    if self.node.hold_node:
+                        self.node.pickup_pressed = True
+                        self.node.pickup_pressed = False
+                        return
 
-                # If we're a runner, run only when not super-near the flag.
-                if self.run and dist > 3.0:
-                    self._running = True
-                    self.node.run = 1.0
-                else:
-                    self._running = False
-                    self.node.run = 0.0
+                    # If we're a runner, run only when not super-near the flag.
+                    if self.run and dist > 3.0:
+                        self._running = True
+                        self.node.run = 1.0
+                    else:
+                        self._running = False
+                        self.node.run = 0.0
 
-                self.node.move_left_right = to_target.x
-                self.node.move_up_down = -to_target.z
-                if dist < 1.25:
-                    self.node.pickup_pressed = True
-                    self.node.pickup_pressed = False
+                    self.node.move_left_right = to_target.x
+                    self.node.move_up_down = -to_target.z
+                    if dist < 1.25:
+                        self.node.pickup_pressed = True
+                        self.node.pickup_pressed = False
             return
 
         # Not a flag-bearer. If we're holding anything but a bomb, drop it.
