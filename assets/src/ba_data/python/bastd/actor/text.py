@@ -209,8 +209,11 @@ class Text(ba.Actor):
             ba.animate(cmb, 'input1', keys)
             ba.animate(self.node, 'opacity', o_keys)
         elif transition is self.Transition.IN_TOP_SLOW:
-            keys = {transition_delay: 0.4, transition_delay + 3.5: position[1]}
-            o_keys = {transition_delay: 0.0, transition_delay + 1.0: 1.0}
+            keys = {
+                transition_delay: 400.0,
+                transition_delay + 3.5: position[1]
+            }
+            o_keys = {transition_delay: 0, transition_delay + 1.0: 1.0}
             cmb.input0 = position[0]
             ba.animate(cmb, 'input1', keys)
             ba.animate(self.node, 'opacity', o_keys)

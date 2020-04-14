@@ -70,16 +70,18 @@ class FreeForAllSession(TeamBaseSession):
 
     def _switch_to_score_screen(self, results: ba.TeamGameResults) -> None:
         # pylint: disable=cyclic-import
-        from bastd.activity import drawscreen
-        from bastd.activity import multiteamendscreen
-        from bastd.activity import freeforallendscreen
+        from bastd.activity.drawscreen import DrawScoreScreenActivity
+        from bastd.activity.multiteamendscreen import (
+            TeamSeriesVictoryScoreScreenActivity)
+        from bastd.activity.freeforallendscreen import (
+            FreeForAllVictoryScoreScreenActivity)
         winners = results.get_winners()
 
         # If there's multiple players and everyone has the same score,
         # call it a draw.
         if len(self.players) > 1 and len(winners) < 2:
             self.set_activity(
-                _ba.new_activity(drawscreen.DrawScoreScreenActivity,
+                _ba.new_activity(DrawScoreScreenActivity,
                                  {'results': results}))
         else:
             # Award different point amounts based on number of players.
@@ -103,13 +105,9 @@ class FreeForAllSession(TeamBaseSession):
                         and series_winners[0].sessiondata['score'] !=
                         series_winners[1].sessiondata['score'])):
                 self.set_activity(
-                    _ba.new_activity(
-                        multiteamendscreen.
-                        TeamSeriesVictoryScoreScreenActivity,
-                        {'winner': series_winners[0]}))
+                    _ba.new_activity(TeamSeriesVictoryScoreScreenActivity,
+                                     {'winner': series_winners[0]}))
             else:
                 self.set_activity(
-                    _ba.new_activity(
-                        freeforallendscreen.
-                        FreeForAllVictoryScoreScreenActivity,
-                        {'results': results}))
+                    _ba.new_activity(FreeForAllVictoryScoreScreenActivity,
+                                     {'results': results}))

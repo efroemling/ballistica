@@ -78,8 +78,10 @@ class FreeForAllVictoryScoreScreenActivity(TeamsScoreScreenActivity):
             delay3 += 1.5
 
         ba.timer(0.3, ba.Call(ba.playsound, self._score_display_sound))
+        results = self.settings['results']
+        assert isinstance(results, ba.TeamGameResults)
         self.show_player_scores(delay=0.001,
-                                results=self.settings['results'],
+                                results=results,
                                 scale=1.2,
                                 x_offset=-110.0)
 
@@ -256,12 +258,12 @@ class FreeForAllVictoryScoreScreenActivity(TeamsScoreScreenActivity):
                     ba.Call(_safesetattr, s_txt.node, 'color', (1, 1, 1, 1)))
                 for j in range(score_change):
                     ba.timer(
-                        0.001 * (tdelay + delay1 + 150 * j),
+                        (tdelay + delay1 + 0.15 * j),
                         ba.Call(
                             _safesetattr, s_txt.node, 'text',
                             str(player.team.sessiondata['previous_score'] + j +
                                 1)))
-                    tfin = tdelay + delay1 + 150 * j
+                    tfin = tdelay + delay1 + 0.15 * j
                     if tfin not in sound_times:
                         sound_times.add(tfin)
                         ba.timer(
@@ -272,5 +274,6 @@ class FreeForAllVictoryScoreScreenActivity(TeamsScoreScreenActivity):
 
     def _safe_animate(self, node: Optional[ba.Node], attr: str,
                       keys: Dict[float, float]) -> None:
+        """Run an animation on a node if the node still exists."""
         if node:
             ba.animate(node, attr, keys)

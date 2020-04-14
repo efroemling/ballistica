@@ -71,7 +71,7 @@ class TeamsScoreScreenActivity(ScoreScreenActivity):
 
     def show_player_scores(self,
                            delay: float = 2.5,
-                           results: Any = None,
+                           results: Optional[ba.TeamGameResults] = None,
                            scale: float = 1.0,
                            x_offset: float = 0.0,
                            y_offset: float = 0.0) -> None:
@@ -105,7 +105,7 @@ class TeamsScoreScreenActivity(ScoreScreenActivity):
                 return val
             return str(p_rec.accumscore)
 
-        # get_records() can return players that are no longer in
+        # stats.get_records() can return players that are no longer in
         # the game.. if we're using results we have to filter those out
         # (since they're not in results and that's where we pull their
         # scores from)
@@ -121,7 +121,6 @@ class TeamsScoreScreenActivity(ScoreScreenActivity):
                     # PyCharm incorrectly thinks valid_players is a List[str]
                     # noinspection PyUnresolvedReferences
                     if p_rec[1].player is player:
-                        # noinspection PyTypeChecker
                         return p_rec[1]
                 return None
 
@@ -230,8 +229,8 @@ class TeamsScoreScreenActivity(ScoreScreenActivity):
                  transition=Text.Transition.IN_LEFT,
                  transition_delay=tdelay).autoretain()
             _scoretxt(str(playerrec.accum_kill_count), 180,
-                      playerrec.accum_kill_count == topkillcount, 100)
+                      playerrec.accum_kill_count == topkillcount, 0.1)
             _scoretxt(str(playerrec.accum_killed_count), 280,
-                      playerrec.accum_killed_count == topkilledcount, 100)
+                      playerrec.accum_killed_count == topkilledcount, 0.1)
             _scoretxt(_get_prec_score_str(playerrec), 390,
-                      _get_prec_score(playerrec) == top_score, 200)
+                      _get_prec_score(playerrec) == top_score, 0.2)

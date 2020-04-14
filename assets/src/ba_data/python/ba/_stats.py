@@ -76,9 +76,9 @@ class PlayerRecord:
         self._stats = weakref.ref(stats)
         self._last_player: Optional[ba.Player] = None
         self._player: Optional[ba.Player] = None
-        self.associate_with_player(player)
         self._team: Optional[ReferenceType[ba.Team]] = None
         self.streak = 0
+        self.associate_with_player(player)
 
     @property
     def team(self) -> ba.Team:
