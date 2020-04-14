@@ -144,7 +144,7 @@ class CoopScoreScreen(ba.Activity):
         self._fail_message: Optional[ba.Lstr] = settings['fail_message']
         assert isinstance(self._fail_message, (ba.Lstr, type(None)))
 
-        self._begin_time = ba.time()
+        self._begin_time: Optional[float] = None
 
         self._score_order: str
         if 'score_order' in settings:
@@ -516,6 +516,8 @@ class CoopScoreScreen(ba.Activity):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
         super().on_begin()
+
+        self._begin_time = ba.time()
 
         # Calc whether the level is complete and other stuff.
         levels = self._campaign.get_levels()
@@ -891,6 +893,7 @@ class CoopScoreScreen(ba.Activity):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
         # delay a bit if results come in too fast
+        assert self._begin_time is not None
         base_delay = max(0, 1.9 - (ba.time() - self._begin_time))
         ts_height = 300
         ts_h_offs = -550
@@ -1011,6 +1014,7 @@ class CoopScoreScreen(ba.Activity):
             return
         with ba.Context(self):
             # Delay a bit if results come in too fast.
+            assert self._begin_time is not None
             base_delay = max(0, 2.7 - (ba.time() - self._begin_time))
             v_offs = 20
             if results is None:
