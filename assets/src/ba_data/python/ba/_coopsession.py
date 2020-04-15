@@ -48,7 +48,7 @@ class CoopSession(Session):
         """Instantiate a co-op mode session."""
         # pylint: disable=cyclic-import
         from ba._campaign import get_campaign
-        from bastd.activity.coopjoinscreen import CoopJoiningActivity
+        from bastd.activity.coopjoin import CoopJoinActivity
 
         _ba.increment_analytics_count('Co-op session start')
 
@@ -100,7 +100,7 @@ class CoopSession(Session):
         self._custom_menu_ui: List[Dict[str, Any]] = []
 
         # Start our joining screen.
-        self.set_activity(_ba.new_activity(CoopJoiningActivity))
+        self.set_activity(_ba.new_activity(CoopJoinActivity))
 
         self._next_game_instance: Optional[ba.GameActivity] = None
         self._next_game_name: Optional[str] = None
@@ -249,13 +249,13 @@ class CoopSession(Session):
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
         # pylint: disable=cyclic-import
-        from ba._activitytypes import JoiningActivity, TransitionActivity
+        from ba._activitytypes import JoinActivity, TransitionActivity
         from ba._lang import Lstr
         from ba._general import WeakCall
         from ba._coopgame import CoopGameActivity
         from ba._gameresults import TeamGameResults
         from bastd.tutorial import TutorialActivity
-        from bastd.activity.coopscorescreen import CoopScoreScreen
+        from bastd.activity.coopscore import CoopScoreScreen
 
         app = _ba.app
 
@@ -279,9 +279,8 @@ class CoopSession(Session):
 
         # If we're in a between-round activity or a restart-activity,
         # hop into a round.
-        if (isinstance(
-                activity,
-            (JoiningActivity, CoopScoreScreen, TransitionActivity))):
+        if (isinstance(activity,
+                       (JoinActivity, CoopScoreScreen, TransitionActivity))):
 
             if outcome == 'next_level':
                 if self._next_game_instance is None:
@@ -295,7 +294,7 @@ class CoopSession(Session):
             # Special case: if we're coming from a joining-activity
             # and will be going into onslaught-training, show the
             # tutorial first.
-            if (isinstance(activity, JoiningActivity)
+            if (isinstance(activity, JoinActivity)
                     and self.campaign_state['level'] == 'Onslaught Training'
                     and not app.kiosk_mode):
                 if self._tutorial_activity is None:

@@ -71,7 +71,7 @@ class ConquestGame(ba.TeamGameActivity):
 
     @classmethod
     def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
-        return issubclass(sessiontype, ba.TeamsSession)
+        return issubclass(sessiontype, ba.DualTeamSession)
 
     @classmethod
     def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:

@@ -109,7 +109,7 @@ def stop_stress_test() -> None:
 def start_stress_test(args: Dict[str, Any]) -> None:
     """(internal)"""
     from ba._general import Call
-    from ba._teamssession import TeamsSession
+    from ba._dualteamsession import DualTeamSession
     from ba._freeforallsession import FreeForAllSession
     from ba._enums import TimeType, TimeFormat
     bs_config = _ba.app.config
@@ -125,7 +125,8 @@ def start_stress_test(args: Dict[str, Any]) -> None:
         bs_config['Team Tournament Playlist Selection'] = args['playlist_name']
         bs_config['Team Tournament Playlist Randomize'] = 1
         _ba.timer(1.0,
-                  Call(_ba.pushcall, Call(_ba.new_host_session, TeamsSession)),
+                  Call(_ba.pushcall, Call(_ba.new_host_session,
+                                          DualTeamSession)),
                   timetype=TimeType.REAL)
     else:
         bs_config['Free-for-All Playlist Selection'] = args['playlist_name']

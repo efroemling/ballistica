@@ -158,6 +158,7 @@ SCRIPT_TARGETS_PY_1 = \
   build/ba_data/python/bacommon/__init__.py \
   build/ba_data/python/bacommon/assets.py \
   build/ba_data/python/bacommon/err.py \
+  build/ba_data/python/ba/_dualteamsession.py \
   build/ba_data/python/ba/_gameactivity.py \
   build/ba_data/python/ba/_apputils.py \
   build/ba_data/python/ba/_coopsession.py \
@@ -172,7 +173,6 @@ SCRIPT_TARGETS_PY_1 = \
   build/ba_data/python/ba/_error.py \
   build/ba_data/python/ba/_achievement.py \
   build/ba_data/python/ba/_map.py \
-  build/ba_data/python/ba/_teambasesession.py \
   build/ba_data/python/ba/_gameutils.py \
   build/ba_data/python/ba/_activity.py \
   build/ba_data/python/ba/deprecated.py \
@@ -190,10 +190,10 @@ SCRIPT_TARGETS_PY_1 = \
   build/ba_data/python/ba/_benchmark.py \
   build/ba_data/python/ba/_tournament.py \
   build/ba_data/python/ba/_messages.py \
-  build/ba_data/python/ba/_teamssession.py \
   build/ba_data/python/ba/_freeforallsession.py \
   build/ba_data/python/ba/_playlist.py \
   build/ba_data/python/ba/_team.py \
+  build/ba_data/python/ba/_multiteamsession.py \
   build/ba_data/python/ba/_actor.py \
   build/ba_data/python/ba/_powerup.py \
   build/ba_data/python/ba/_campaign.py \
@@ -310,15 +310,15 @@ SCRIPT_TARGETS_PY_1 = \
   build/ba_data/python/bastd/ui/store/browser.py \
   build/ba_data/python/bastd/ui/store/button.py \
   build/ba_data/python/bastd/ui/store/item.py \
-  build/ba_data/python/bastd/activity/freeforallendscreen.py \
+  build/ba_data/python/bastd/activity/coopjoin.py \
+  build/ba_data/python/bastd/activity/multiteamvictory.py \
+  build/ba_data/python/bastd/activity/dualteamscore.py \
+  build/ba_data/python/bastd/activity/drawscore.py \
   build/ba_data/python/bastd/activity/__init__.py \
-  build/ba_data/python/bastd/activity/coopscorescreen.py \
-  build/ba_data/python/bastd/activity/dualteamscorescreen.py \
-  build/ba_data/python/bastd/activity/coopjoinscreen.py \
-  build/ba_data/python/bastd/activity/multiteamendscreen.py \
-  build/ba_data/python/bastd/activity/teamsscorescreen.py \
-  build/ba_data/python/bastd/activity/multiteamjoinscreen.py \
-  build/ba_data/python/bastd/activity/drawscreen.py \
+  build/ba_data/python/bastd/activity/freeforallvictory.py \
+  build/ba_data/python/bastd/activity/coopscore.py \
+  build/ba_data/python/bastd/activity/multiteamjoin.py \
+  build/ba_data/python/bastd/activity/multiteamscore.py \
   build/ba_data/python/bastd/game/capturetheflag.py \
   build/ba_data/python/bastd/game/targetpractice.py \
   build/ba_data/python/bastd/game/ninjafight.py \
@@ -362,6 +362,7 @@ SCRIPT_TARGETS_PY_1 = \
   build/ba_data/python/bastd/actor/flag.py \
   build/ba_data/python/bastd/actor/scoreboard.py \
   build/ba_data/python/bastd/actor/popuptext.py \
+  build/ba_data/python/bastd/actor/multiteamvictory.py \
   build/ba_data/python/bastd/actor/background.py \
   build/ba_data/python/bastd/actor/__init__.py \
   build/ba_data/python/bastd/actor/zoomtext.py \
@@ -396,6 +397,7 @@ SCRIPT_TARGETS_PYC_1 = \
   build/ba_data/python/bacommon/__pycache__/__init__.cpython-37.opt-1.pyc \
   build/ba_data/python/bacommon/__pycache__/assets.cpython-37.opt-1.pyc \
   build/ba_data/python/bacommon/__pycache__/err.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_dualteamsession.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_gameactivity.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_apputils.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_coopsession.cpython-37.opt-1.pyc \
@@ -410,7 +412,6 @@ SCRIPT_TARGETS_PYC_1 = \
   build/ba_data/python/ba/__pycache__/_error.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_achievement.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_map.cpython-37.opt-1.pyc \
-  build/ba_data/python/ba/__pycache__/_teambasesession.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_gameutils.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_activity.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/deprecated.cpython-37.opt-1.pyc \
@@ -428,10 +429,10 @@ SCRIPT_TARGETS_PYC_1 = \
   build/ba_data/python/ba/__pycache__/_benchmark.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_tournament.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_messages.cpython-37.opt-1.pyc \
-  build/ba_data/python/ba/__pycache__/_teamssession.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_freeforallsession.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_playlist.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_team.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_multiteamsession.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_actor.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_powerup.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_campaign.cpython-37.opt-1.pyc \
@@ -548,15 +549,15 @@ SCRIPT_TARGETS_PYC_1 = \
   build/ba_data/python/bastd/ui/store/__pycache__/browser.cpython-37.opt-1.pyc \
   build/ba_data/python/bastd/ui/store/__pycache__/button.cpython-37.opt-1.pyc \
   build/ba_data/python/bastd/ui/store/__pycache__/item.cpython-37.opt-1.pyc \
-  build/ba_data/python/bastd/activity/__pycache__/freeforallendscreen.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/activity/__pycache__/coopjoin.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/activity/__pycache__/multiteamvictory.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/activity/__pycache__/dualteamscore.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/activity/__pycache__/drawscore.cpython-37.opt-1.pyc \
   build/ba_data/python/bastd/activity/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/ba_data/python/bastd/activity/__pycache__/coopscorescreen.cpython-37.opt-1.pyc \
-  build/ba_data/python/bastd/activity/__pycache__/dualteamscorescreen.cpython-37.opt-1.pyc \
-  build/ba_data/python/bastd/activity/__pycache__/coopjoinscreen.cpython-37.opt-1.pyc \
-  build/ba_data/python/bastd/activity/__pycache__/multiteamendscreen.cpython-37.opt-1.pyc \
-  build/ba_data/python/bastd/activity/__pycache__/teamsscorescreen.cpython-37.opt-1.pyc \
-  build/ba_data/python/bastd/activity/__pycache__/multiteamjoinscreen.cpython-37.opt-1.pyc \
-  build/ba_data/python/bastd/activity/__pycache__/drawscreen.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/activity/__pycache__/freeforallvictory.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/activity/__pycache__/coopscore.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/activity/__pycache__/multiteamjoin.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/activity/__pycache__/multiteamscore.cpython-37.opt-1.pyc \
   build/ba_data/python/bastd/game/__pycache__/capturetheflag.cpython-37.opt-1.pyc \
   build/ba_data/python/bastd/game/__pycache__/targetpractice.cpython-37.opt-1.pyc \
   build/ba_data/python/bastd/game/__pycache__/ninjafight.cpython-37.opt-1.pyc \
@@ -600,6 +601,7 @@ SCRIPT_TARGETS_PYC_1 = \
   build/ba_data/python/bastd/actor/__pycache__/flag.cpython-37.opt-1.pyc \
   build/ba_data/python/bastd/actor/__pycache__/scoreboard.cpython-37.opt-1.pyc \
   build/ba_data/python/bastd/actor/__pycache__/popuptext.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/actor/__pycache__/multiteamvictory.cpython-37.opt-1.pyc \
   build/ba_data/python/bastd/actor/__pycache__/background.cpython-37.opt-1.pyc \
   build/ba_data/python/bastd/actor/__pycache__/__init__.cpython-37.opt-1.pyc \
   build/ba_data/python/bastd/actor/__pycache__/zoomtext.cpython-37.opt-1.pyc \
@@ -710,6 +712,11 @@ build/ba_data/python/bacommon/__pycache__/err.cpython-37.opt-1.pyc: \
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
+build/ba_data/python/ba/__pycache__/_dualteamsession.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_dualteamsession.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
 build/ba_data/python/ba/__pycache__/_gameactivity.cpython-37.opt-1.pyc: \
       build/ba_data/python/ba/_gameactivity.py
 	@echo Compiling script: $^
@@ -777,11 +784,6 @@ build/ba_data/python/ba/__pycache__/_achievement.cpython-37.opt-1.pyc: \
 
 build/ba_data/python/ba/__pycache__/_map.cpython-37.opt-1.pyc: \
       build/ba_data/python/ba/_map.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/ba_data/python/ba/__pycache__/_teambasesession.cpython-37.opt-1.pyc: \
-      build/ba_data/python/ba/_teambasesession.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
@@ -870,11 +872,6 @@ build/ba_data/python/ba/__pycache__/_messages.cpython-37.opt-1.pyc: \
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/ba_data/python/ba/__pycache__/_teamssession.cpython-37.opt-1.pyc: \
-      build/ba_data/python/ba/_teamssession.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
 build/ba_data/python/ba/__pycache__/_freeforallsession.cpython-37.opt-1.pyc: \
       build/ba_data/python/ba/_freeforallsession.py
 	@echo Compiling script: $^
@@ -887,6 +884,11 @@ build/ba_data/python/ba/__pycache__/_playlist.cpython-37.opt-1.pyc: \
 
 build/ba_data/python/ba/__pycache__/_team.cpython-37.opt-1.pyc: \
       build/ba_data/python/ba/_team.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python/ba/__pycache__/_multiteamsession.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_multiteamsession.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
@@ -1470,8 +1472,23 @@ build/ba_data/python/bastd/ui/store/__pycache__/item.cpython-37.opt-1.pyc: \
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/ba_data/python/bastd/activity/__pycache__/freeforallendscreen.cpython-37.opt-1.pyc: \
-      build/ba_data/python/bastd/activity/freeforallendscreen.py
+build/ba_data/python/bastd/activity/__pycache__/coopjoin.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/activity/coopjoin.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python/bastd/activity/__pycache__/multiteamvictory.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/activity/multiteamvictory.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python/bastd/activity/__pycache__/dualteamscore.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/activity/dualteamscore.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python/bastd/activity/__pycache__/drawscore.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/activity/drawscore.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
@@ -1480,38 +1497,23 @@ build/ba_data/python/bastd/activity/__pycache__/__init__.cpython-37.opt-1.pyc: \
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/ba_data/python/bastd/activity/__pycache__/coopscorescreen.cpython-37.opt-1.pyc: \
-      build/ba_data/python/bastd/activity/coopscorescreen.py
+build/ba_data/python/bastd/activity/__pycache__/freeforallvictory.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/activity/freeforallvictory.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/ba_data/python/bastd/activity/__pycache__/dualteamscorescreen.cpython-37.opt-1.pyc: \
-      build/ba_data/python/bastd/activity/dualteamscorescreen.py
+build/ba_data/python/bastd/activity/__pycache__/coopscore.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/activity/coopscore.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/ba_data/python/bastd/activity/__pycache__/coopjoinscreen.cpython-37.opt-1.pyc: \
-      build/ba_data/python/bastd/activity/coopjoinscreen.py
+build/ba_data/python/bastd/activity/__pycache__/multiteamjoin.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/activity/multiteamjoin.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/ba_data/python/bastd/activity/__pycache__/multiteamendscreen.cpython-37.opt-1.pyc: \
-      build/ba_data/python/bastd/activity/multiteamendscreen.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/ba_data/python/bastd/activity/__pycache__/teamsscorescreen.cpython-37.opt-1.pyc: \
-      build/ba_data/python/bastd/activity/teamsscorescreen.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/ba_data/python/bastd/activity/__pycache__/multiteamjoinscreen.cpython-37.opt-1.pyc: \
-      build/ba_data/python/bastd/activity/multiteamjoinscreen.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/ba_data/python/bastd/activity/__pycache__/drawscreen.cpython-37.opt-1.pyc: \
-      build/ba_data/python/bastd/activity/drawscreen.py
+build/ba_data/python/bastd/activity/__pycache__/multiteamscore.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/activity/multiteamscore.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
@@ -1727,6 +1729,11 @@ build/ba_data/python/bastd/actor/__pycache__/scoreboard.cpython-37.opt-1.pyc: \
 
 build/ba_data/python/bastd/actor/__pycache__/popuptext.cpython-37.opt-1.pyc: \
       build/ba_data/python/bastd/actor/popuptext.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python/bastd/actor/__pycache__/multiteamvictory.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/actor/multiteamvictory.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 

@@ -55,7 +55,7 @@ class PlaylistBrowserWindow(ba.Window):
             scale_origin = None
 
         # Store state for when we exit the next game.
-        if issubclass(sessiontype, ba.TeamsSession):
+        if issubclass(sessiontype, ba.DualTeamSession):
             ba.app.main_window = "Team Game Select"
             ba.set_analytics_screen('Teams Window')
         elif issubclass(sessiontype, ba.FreeForAllSession):
@@ -412,7 +412,7 @@ class PlaylistBrowserWindow(ba.Window):
                     if name == '__default__':
                         if self._sessiontype is ba.FreeForAllSession:
                             playlist = (get_default_free_for_all_playlist())
-                        elif self._sessiontype is ba.TeamsSession:
+                        elif self._sessiontype is ba.DualTeamSession:
                             playlist = get_default_teams_playlist()
                         else:
                             raise Exception("unrecognized session-type: " +

@@ -438,7 +438,7 @@ class PlayWindow(ba.Window):
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         ba.app.main_menu_window = (browser.PlaylistBrowserWindow(
             origin_widget=self._teams_button,
-            sessiontype=ba.TeamsSession).get_root_widget())
+            sessiontype=ba.DualTeamSession).get_root_widget())
 
     def _free_for_all(self) -> None:
         # pylint: disable=cyclic-import

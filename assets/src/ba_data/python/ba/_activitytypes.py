@@ -62,7 +62,7 @@ class EndSessionActivity(Activity):
         call_after_ad(Call(_ba.new_host_session, MainMenuSession))
 
 
-class JoiningActivity(Activity):
+class JoinActivity(Activity):
     """Standard activity for waiting for players to join.
 
     It shows tips and other info and waits for all players to check ready.

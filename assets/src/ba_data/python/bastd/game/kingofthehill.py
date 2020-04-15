@@ -61,7 +61,7 @@ class KingOfTheHillGame(ba.TeamGameActivity):
 
     @classmethod
     def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
-        return issubclass(sessiontype, ba.TeamBaseSession)
+        return issubclass(sessiontype, ba.MultiTeamSession)
 
     @classmethod
     def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:

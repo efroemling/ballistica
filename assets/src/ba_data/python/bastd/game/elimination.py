@@ -185,7 +185,7 @@ class EliminationGame(ba.TeamGameActivity):
 
     @classmethod
     def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
-        return (issubclass(sessiontype, ba.TeamsSession)
+        return (issubclass(sessiontype, ba.DualTeamSession)
                 or issubclass(sessiontype, ba.FreeForAllSession))
 
     @classmethod
@@ -214,7 +214,7 @@ class EliminationGame(ba.TeamGameActivity):
             }),
             ("Epic Mode", {'default': False})]  # yapf: disable
 
-        if issubclass(sessiontype, ba.TeamsSession):
+        if issubclass(sessiontype, ba.DualTeamSession):
             settings.append(("Solo Mode", {'default': False}))
             settings.append(("Balance Total Lives", {'default': False}))
 
@@ -237,11 +237,11 @@ class EliminationGame(ba.TeamGameActivity):
 
     def get_instance_description(self) -> Union[str, Sequence]:
         return 'Last team standing wins.' if isinstance(
-            self.session, ba.TeamsSession) else 'Last one standing wins.'
+            self.session, ba.DualTeamSession) else 'Last one standing wins.'
 
     def get_instance_scoreboard_description(self) -> Union[str, Sequence]:
         return 'last team standing wins' if isinstance(
-            self.session, ba.TeamsSession) else 'last one standing wins'
+            self.session, ba.DualTeamSession) else 'last one standing wins'
 
     def on_transition_in(self) -> None:
         self.default_music = (ba.MusicType.EPIC if self.settings['Epic Mode']
@@ -463,7 +463,7 @@ class EliminationGame(ba.TeamGameActivity):
 
         # If balance-team-lives is on, add lives to the smaller team until
         # total lives match.
-        if (isinstance(self.session, ba.TeamsSession)
+        if (isinstance(self.session, ba.DualTeamSession)
                 and self.settings['Balance Total Lives']
                 and self.teams[0].players and self.teams[1].players):
             if self._get_total_team_lives(

@@ -434,7 +434,7 @@ class MainMenuActivity(ba.Activity):
                         from bastd.ui.playlist.browser import (
                             PlaylistBrowserWindow)
                         ba.app.main_menu_window = PlaylistBrowserWindow(
-                            sessiontype=ba.TeamsSession,
+                            sessiontype=ba.DualTeamSession,
                             transition=None).get_root_widget()
                     elif main_window == 'Free-for-All Game Select':
                         # pylint: disable=cyclic-import

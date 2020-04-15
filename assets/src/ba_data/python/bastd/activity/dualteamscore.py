@@ -25,14 +25,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import ba
-from bastd.activity.teamsscorescreen import TeamsScoreScreenActivity
+from bastd.activity.multiteamscore import MultiTeamScoreScreenActivity
 from bastd.actor.zoomtext import ZoomText
 
 if TYPE_CHECKING:
     from typing import Any, Dict
 
 
-class TeamVictoryScoreScreenActivity(TeamsScoreScreenActivity):
+class TeamVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
     """Scorescreen between rounds of a dual-team session."""
 
     def __init__(self, settings: Dict[str, Any]):
@@ -52,7 +52,7 @@ class TeamVictoryScoreScreenActivity(TeamsScoreScreenActivity):
         # Usually we say 'Best of 7', but if the language prefers we can say
         # 'First to 4'.
         session = self.session
-        assert isinstance(session, ba.TeamBaseSession)
+        assert isinstance(session, ba.MultiTeamSession)
         if get_resource('bestOfUseFirstToInstead'):
             best_txt = ba.Lstr(resource='firstToSeriesText',
                                subs=[('${COUNT}',

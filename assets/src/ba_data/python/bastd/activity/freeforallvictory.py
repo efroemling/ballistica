@@ -25,14 +25,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import ba
-from bastd.activity.teamsscorescreen import TeamsScoreScreenActivity
+from bastd.activity.multiteamscore import MultiTeamScoreScreenActivity
 
 if TYPE_CHECKING:
     from typing import Any, Dict, Optional, Set
 
 
-class FreeForAllVictoryScoreScreenActivity(TeamsScoreScreenActivity):
-    """Score screen shown at the end of a free-for-all series."""
+class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
+    """Score screen shown at after free-for-all rounds."""
 
     def __init__(self, settings: Dict[str, Any]):
         super().__init__(settings=settings)

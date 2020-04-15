@@ -36,8 +36,8 @@ DEFAULT_TEAM_COLORS = ((0.1, 0.25, 1.0), (1.0, 0.25, 0.2))
 DEFAULT_TEAM_NAMES = ("Blue", "Red")
 
 
-class TeamBaseSession(Session):
-    """Common base class for ba.TeamsSession and ba.FreeForAllSession.
+class MultiTeamSession(Session):
+    """Common base class for ba.DualTeamSession and ba.FreeForAllSession.
 
     Category: Gameplay Classes
 
@@ -54,7 +54,7 @@ class TeamBaseSession(Session):
         """Set up playlists and launches a ba.Activity to accept joiners."""
         # pylint: disable=cyclic-import
         from ba import _playlist
-        from bastd.activity import multiteamjoinscreen
+        from bastd.activity.multiteamjoin import MultiTeamJoinActivity
         app = _ba.app
         cfg = app.config
 
@@ -133,8 +133,7 @@ class TeamBaseSession(Session):
         self._instantiate_next_game()
 
         # Start in our custom join screen.
-        self.set_activity(
-            _ba.new_activity(multiteamjoinscreen.TeamJoiningActivity))
+        self.set_activity(_ba.new_activity(MultiTeamJoinActivity))
 
     def get_ffa_series_length(self) -> int:
         """Return free-for-all series length."""
@@ -174,7 +173,7 @@ class TeamBaseSession(Session):
         # pylint: disable=cyclic-import
         from ba import _error
         from bastd.tutorial import TutorialActivity
-        from bastd.activity.multiteamendscreen import (
+        from bastd.activity.multiteamvictory import (
             TeamSeriesVictoryScoreScreenActivity)
         from ba import _activitytypes
 
@@ -195,7 +194,7 @@ class TeamBaseSession(Session):
         # into a round.
         elif isinstance(
                 activity,
-            (_activitytypes.JoiningActivity, _activitytypes.TransitionActivity,
+            (_activitytypes.JoinActivity, _activitytypes.TransitionActivity,
              _activitytypes.ScoreScreenActivity)):
 
             # If we're coming from a series-end activity, reset scores.

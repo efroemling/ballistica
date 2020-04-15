@@ -38,15 +38,15 @@ class PlaylistTypeVars:
         from ba.internal import (get_default_teams_playlist,
                                  get_default_free_for_all_playlist)
         self.sessiontype: Type[ba.Session]
-        if issubclass(sessiontype, ba.TeamsSession):
+        if issubclass(sessiontype, ba.DualTeamSession):
             play_mode_name = ba.Lstr(resource='playModes.teamsText',
                                      fallback_resource='teamsText')
             self.get_default_list_call = get_default_teams_playlist
-            self.session_type_name = 'ba.TeamsSession'
+            self.session_type_name = 'ba.DualTeamSession'
             self.config_name = 'Team Tournament'
             self.window_title_name = ba.Lstr(resource='playModes.teamsText',
                                              fallback_resource='teamsText')
-            self.sessiontype = ba.TeamsSession
+            self.sessiontype = ba.DualTeamSession
         elif issubclass(sessiontype, ba.FreeForAllSession):
             play_mode_name = ba.Lstr(resource='playModes.freeForAllText',
                                      fallback_resource='freeForAllText')

@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-04-14 for Ballistica version 1.5.0 build 20001</em></h4>
+<h4><em>last updated on 2020-04-15 for Ballistica version 1.5.0 build 20001</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -30,10 +30,10 @@
    <li><a href="#class_ba_Session">ba.Session</a></li>
    <ul>
       <li><a href="#class_ba_CoopSession">ba.CoopSession</a></li>
-      <li><a href="#class_ba_TeamBaseSession">ba.TeamBaseSession</a></li>
+      <li><a href="#class_ba_MultiTeamSession">ba.MultiTeamSession</a></li>
       <ul>
+         <li><a href="#class_ba_DualTeamSession">ba.DualTeamSession</a></li>
          <li><a href="#class_ba_FreeForAllSession">ba.FreeForAllSession</a></li>
-         <li><a href="#class_ba_TeamsSession">ba.TeamsSession</a></li>
       </ul>
    </ul>
    <li><a href="#class_ba_Stats">ba.Stats</a></li>
@@ -1846,8 +1846,29 @@ its time with lingering corpses, sound effects, etc.</p>
 </dd>
 </dl>
 <hr>
+<h2><strong><a name="class_ba_DualTeamSession">ba.DualTeamSession</a></strong></h3>
+<p>inherits from: <a href="#class_ba_MultiTeamSession">ba.MultiTeamSession</a>, <a href="#class_ba_Session">ba.Session</a></p>
+<p><a href="#class_ba_Session">ba.Session</a> type for teams mode games.</p>
+
+<p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a>
+</p>
+
+<h3>Attributes Inherited:</h3>
+<h5><a href="#attr_ba_Session__campaign">campaign</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__teams">teams</a></h5>
+<h3>Methods Inherited:</h3>
+<h5><a href="#method_ba_MultiTeamSession__announce_game_results">announce_game_results()</a>, <a href="#method_ba_MultiTeamSession__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_MultiTeamSession__end">end()</a>, <a href="#method_ba_MultiTeamSession__end_activity">end_activity()</a>, <a href="#method_ba_MultiTeamSession__get_custom_menu_entries">get_custom_menu_entries()</a>, <a href="#method_ba_MultiTeamSession__get_ffa_series_length">get_ffa_series_length()</a>, <a href="#method_ba_MultiTeamSession__get_game_number">get_game_number()</a>, <a href="#method_ba_MultiTeamSession__get_max_players">get_max_players()</a>, <a href="#method_ba_MultiTeamSession__get_next_game_description">get_next_game_description()</a>, <a href="#method_ba_MultiTeamSession__get_series_length">get_series_length()</a>, <a href="#method_ba_MultiTeamSession__getactivity">getactivity()</a>, <a href="#method_ba_MultiTeamSession__handlemessage">handlemessage()</a>, <a href="#method_ba_MultiTeamSession__launch_end_session_activity">launch_end_session_activity()</a>, <a href="#method_ba_MultiTeamSession__on_activity_end">on_activity_end()</a>, <a href="#method_ba_MultiTeamSession__on_player_leave">on_player_leave()</a>, <a href="#method_ba_MultiTeamSession__on_player_request">on_player_request()</a>, <a href="#method_ba_MultiTeamSession__on_team_join">on_team_join()</a>, <a href="#method_ba_MultiTeamSession__on_team_leave">on_team_leave()</a>, <a href="#method_ba_MultiTeamSession__set_activity">set_activity()</a></h5>
+<h3>Methods Defined or Overridden:</h3>
+<dl>
+<dt><h4><a name="method_ba_DualTeamSession____init__">&lt;constructor&gt;</a></dt></h4><dd>
+<p><span>ba.DualTeamSession()</span></p>
+
+<p>Set up playlists and launches a <a href="#class_ba_Activity">ba.Activity</a> to accept joiners.</p>
+
+</dd>
+</dl>
+<hr>
 <h2><strong><a name="class_ba_FreeForAllSession">ba.FreeForAllSession</a></strong></h3>
-<p>inherits from: <a href="#class_ba_TeamBaseSession">ba.TeamBaseSession</a>, <a href="#class_ba_Session">ba.Session</a></p>
+<p>inherits from: <a href="#class_ba_MultiTeamSession">ba.MultiTeamSession</a>, <a href="#class_ba_Session">ba.Session</a></p>
 <p><a href="#class_ba_Session">ba.Session</a> type for free-for-all mode games.</p>
 
 <p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a>
@@ -1856,7 +1877,7 @@ its time with lingering corpses, sound effects, etc.</p>
 <h3>Attributes Inherited:</h3>
 <h5><a href="#attr_ba_Session__campaign">campaign</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__teams">teams</a></h5>
 <h3>Methods Inherited:</h3>
-<h5><a href="#method_ba_TeamBaseSession__announce_game_results">announce_game_results()</a>, <a href="#method_ba_TeamBaseSession__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_TeamBaseSession__end">end()</a>, <a href="#method_ba_TeamBaseSession__end_activity">end_activity()</a>, <a href="#method_ba_TeamBaseSession__get_custom_menu_entries">get_custom_menu_entries()</a>, <a href="#method_ba_TeamBaseSession__get_ffa_series_length">get_ffa_series_length()</a>, <a href="#method_ba_TeamBaseSession__get_game_number">get_game_number()</a>, <a href="#method_ba_TeamBaseSession__get_max_players">get_max_players()</a>, <a href="#method_ba_TeamBaseSession__get_next_game_description">get_next_game_description()</a>, <a href="#method_ba_TeamBaseSession__get_series_length">get_series_length()</a>, <a href="#method_ba_TeamBaseSession__getactivity">getactivity()</a>, <a href="#method_ba_TeamBaseSession__handlemessage">handlemessage()</a>, <a href="#method_ba_TeamBaseSession__launch_end_session_activity">launch_end_session_activity()</a>, <a href="#method_ba_TeamBaseSession__on_activity_end">on_activity_end()</a>, <a href="#method_ba_TeamBaseSession__on_player_leave">on_player_leave()</a>, <a href="#method_ba_TeamBaseSession__on_player_request">on_player_request()</a>, <a href="#method_ba_TeamBaseSession__on_team_join">on_team_join()</a>, <a href="#method_ba_TeamBaseSession__on_team_leave">on_team_leave()</a>, <a href="#method_ba_TeamBaseSession__set_activity">set_activity()</a></h5>
+<h5><a href="#method_ba_MultiTeamSession__announce_game_results">announce_game_results()</a>, <a href="#method_ba_MultiTeamSession__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_MultiTeamSession__end">end()</a>, <a href="#method_ba_MultiTeamSession__end_activity">end_activity()</a>, <a href="#method_ba_MultiTeamSession__get_custom_menu_entries">get_custom_menu_entries()</a>, <a href="#method_ba_MultiTeamSession__get_ffa_series_length">get_ffa_series_length()</a>, <a href="#method_ba_MultiTeamSession__get_game_number">get_game_number()</a>, <a href="#method_ba_MultiTeamSession__get_max_players">get_max_players()</a>, <a href="#method_ba_MultiTeamSession__get_next_game_description">get_next_game_description()</a>, <a href="#method_ba_MultiTeamSession__get_series_length">get_series_length()</a>, <a href="#method_ba_MultiTeamSession__getactivity">getactivity()</a>, <a href="#method_ba_MultiTeamSession__handlemessage">handlemessage()</a>, <a href="#method_ba_MultiTeamSession__launch_end_session_activity">launch_end_session_activity()</a>, <a href="#method_ba_MultiTeamSession__on_activity_end">on_activity_end()</a>, <a href="#method_ba_MultiTeamSession__on_player_leave">on_player_leave()</a>, <a href="#method_ba_MultiTeamSession__on_player_request">on_player_request()</a>, <a href="#method_ba_MultiTeamSession__on_team_join">on_team_join()</a>, <a href="#method_ba_MultiTeamSession__on_team_leave">on_team_leave()</a>, <a href="#method_ba_MultiTeamSession__set_activity">set_activity()</a></h5>
 <h3>Methods Defined or Overridden:</h3>
 <h5><a href="#method_ba_FreeForAllSession____init__">&lt;constructor&gt;</a>, <a href="#method_ba_FreeForAllSession__get_ffa_point_awards">get_ffa_point_awards()</a></h5>
 <dl>
@@ -3131,6 +3152,87 @@ m.add_actions(conditions=('they_have_material',
 Use <a href="#function_ba_getmodel">ba.getmodel</a>() to instantiate one.</p>
 
 <hr>
+<h2><strong><a name="class_ba_MultiTeamSession">ba.MultiTeamSession</a></strong></h3>
+<p>inherits from: <a href="#class_ba_Session">ba.Session</a></p>
+<p>Common base class for <a href="#class_ba_DualTeamSession">ba.DualTeamSession</a> and <a href="#class_ba_FreeForAllSession">ba.FreeForAllSession</a>.</p>
+
+<p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a></p>
+
+<p>    Free-for-all-mode is essentially just teams-mode with each <a href="#class_ba_Player">ba.Player</a> having
+    their own <a href="#class_ba_Team">ba.Team</a>, so there is much overlap in functionality.
+</p>
+
+<h3>Attributes Inherited:</h3>
+<h5><a href="#attr_ba_Session__campaign">campaign</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__teams">teams</a></h5>
+<h3>Methods Inherited:</h3>
+<h5><a href="#method_ba_Session__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_Session__end">end()</a>, <a href="#method_ba_Session__end_activity">end_activity()</a>, <a href="#method_ba_Session__get_custom_menu_entries">get_custom_menu_entries()</a>, <a href="#method_ba_Session__getactivity">getactivity()</a>, <a href="#method_ba_Session__handlemessage">handlemessage()</a>, <a href="#method_ba_Session__launch_end_session_activity">launch_end_session_activity()</a>, <a href="#method_ba_Session__on_player_leave">on_player_leave()</a>, <a href="#method_ba_Session__on_player_request">on_player_request()</a>, <a href="#method_ba_Session__on_team_leave">on_team_leave()</a>, <a href="#method_ba_Session__set_activity">set_activity()</a></h5>
+<h3>Methods Defined or Overridden:</h3>
+<h5><a href="#method_ba_MultiTeamSession____init__">&lt;constructor&gt;</a>, <a href="#method_ba_MultiTeamSession__announce_game_results">announce_game_results()</a>, <a href="#method_ba_MultiTeamSession__get_ffa_series_length">get_ffa_series_length()</a>, <a href="#method_ba_MultiTeamSession__get_game_number">get_game_number()</a>, <a href="#method_ba_MultiTeamSession__get_max_players">get_max_players()</a>, <a href="#method_ba_MultiTeamSession__get_next_game_description">get_next_game_description()</a>, <a href="#method_ba_MultiTeamSession__get_series_length">get_series_length()</a>, <a href="#method_ba_MultiTeamSession__on_activity_end">on_activity_end()</a>, <a href="#method_ba_MultiTeamSession__on_team_join">on_team_join()</a></h5>
+<dl>
+<dt><h4><a name="method_ba_MultiTeamSession____init__">&lt;constructor&gt;</a></dt></h4><dd>
+<p><span>ba.MultiTeamSession()</span></p>
+
+<p>Set up playlists and launches a <a href="#class_ba_Activity">ba.Activity</a> to accept joiners.</p>
+
+</dd>
+<dt><h4><a name="method_ba_MultiTeamSession__announce_game_results">announce_game_results()</a></dt></h4><dd>
+<p><span>announce_game_results(self, activity: <a href="#class_ba_GameActivity">ba.GameActivity</a>, results: <a href="#class_ba_TeamGameResults">ba.TeamGameResults</a>, delay: float, announce_winning_team: bool = True) -&gt; None</span></p>
+
+<p>Show basic game result at the end of a game.</p>
+
+<p>(before transitioning to a score screen).
+This will include a zoom-text of 'BLUE WINS'
+or whatnot, along with a possible audio
+announcement of the same.</p>
+
+</dd>
+<dt><h4><a name="method_ba_MultiTeamSession__get_ffa_series_length">get_ffa_series_length()</a></dt></h4><dd>
+<p><span>get_ffa_series_length(self) -&gt; int</span></p>
+
+<p>Return free-for-all series length.</p>
+
+</dd>
+<dt><h4><a name="method_ba_MultiTeamSession__get_game_number">get_game_number()</a></dt></h4><dd>
+<p><span>get_game_number(self) -&gt; int</span></p>
+
+<p>Returns which game in the series is currently being played.</p>
+
+</dd>
+<dt><h4><a name="method_ba_MultiTeamSession__get_max_players">get_max_players()</a></dt></h4><dd>
+<p><span>get_max_players(self) -&gt; int</span></p>
+
+<p>Return max number of <a href="#class_ba_Player">ba.Players</a> allowed to join the game at once.</p>
+
+</dd>
+<dt><h4><a name="method_ba_MultiTeamSession__get_next_game_description">get_next_game_description()</a></dt></h4><dd>
+<p><span>get_next_game_description(self) -&gt; <a href="#class_ba_Lstr">ba.Lstr</a></span></p>
+
+<p>Returns a description of the next game on deck.</p>
+
+</dd>
+<dt><h4><a name="method_ba_MultiTeamSession__get_series_length">get_series_length()</a></dt></h4><dd>
+<p><span>get_series_length(self) -&gt; int</span></p>
+
+<p>Return teams series length.</p>
+
+</dd>
+<dt><h4><a name="method_ba_MultiTeamSession__on_activity_end">on_activity_end()</a></dt></h4><dd>
+<p><span>on_activity_end(self, activity: <a href="#class_ba_Activity">ba.Activity</a>, results: Any) -&gt; None</span></p>
+
+<p>Called when the current <a href="#class_ba_Activity">ba.Activity</a> has ended.</p>
+
+<p>The <a href="#class_ba_Session">ba.Session</a> should look at the results and start
+another <a href="#class_ba_Activity">ba.Activity</a>.</p>
+
+</dd>
+<dt><h4><a name="method_ba_MultiTeamSession__on_team_join">on_team_join()</a></dt></h4><dd>
+<p><span>on_team_join(self, team: <a href="#class_ba_Team">ba.Team</a>) -&gt; None</span></p>
+
+<p>Called when a new <a href="#class_ba_Team">ba.Team</a> joins the session.</p>
+
+</dd>
+</dl>
+<hr>
 <h2><strong><a name="class_ba_MusicPlayer">ba.MusicPlayer</a></strong></h3>
 <p><em>&lt;top level class&gt;</em>
 </p>
@@ -3874,7 +3976,7 @@ cause the powerup box to make a sound and disappear or whatnot.</p>
 
 <p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a></p>
 
-<p>    Examples of sessions are <a href="#class_ba_FreeForAllSession">ba.FreeForAllSession</a>, <a href="#class_ba_TeamsSession">ba.TeamsSession</a>, and
+<p>    Examples of sessions are <a href="#class_ba_FreeForAllSession">ba.FreeForAllSession</a>, <a href="#class_ba_DualTeamSession">ba.DualTeamSession</a>, and
     <a href="#class_ba_CoopSession">ba.CoopSession</a>.</p>
 
 <p>    A Session is responsible for wrangling and transitioning between various
@@ -4342,87 +4444,6 @@ of the session.</p>
 </dd>
 </dl>
 <hr>
-<h2><strong><a name="class_ba_TeamBaseSession">ba.TeamBaseSession</a></strong></h3>
-<p>inherits from: <a href="#class_ba_Session">ba.Session</a></p>
-<p>Common base class for <a href="#class_ba_TeamsSession">ba.TeamsSession</a> and <a href="#class_ba_FreeForAllSession">ba.FreeForAllSession</a>.</p>
-
-<p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a></p>
-
-<p>    Free-for-all-mode is essentially just teams-mode with each <a href="#class_ba_Player">ba.Player</a> having
-    their own <a href="#class_ba_Team">ba.Team</a>, so there is much overlap in functionality.
-</p>
-
-<h3>Attributes Inherited:</h3>
-<h5><a href="#attr_ba_Session__campaign">campaign</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__teams">teams</a></h5>
-<h3>Methods Inherited:</h3>
-<h5><a href="#method_ba_Session__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_Session__end">end()</a>, <a href="#method_ba_Session__end_activity">end_activity()</a>, <a href="#method_ba_Session__get_custom_menu_entries">get_custom_menu_entries()</a>, <a href="#method_ba_Session__getactivity">getactivity()</a>, <a href="#method_ba_Session__handlemessage">handlemessage()</a>, <a href="#method_ba_Session__launch_end_session_activity">launch_end_session_activity()</a>, <a href="#method_ba_Session__on_player_leave">on_player_leave()</a>, <a href="#method_ba_Session__on_player_request">on_player_request()</a>, <a href="#method_ba_Session__on_team_leave">on_team_leave()</a>, <a href="#method_ba_Session__set_activity">set_activity()</a></h5>
-<h3>Methods Defined or Overridden:</h3>
-<h5><a href="#method_ba_TeamBaseSession____init__">&lt;constructor&gt;</a>, <a href="#method_ba_TeamBaseSession__announce_game_results">announce_game_results()</a>, <a href="#method_ba_TeamBaseSession__get_ffa_series_length">get_ffa_series_length()</a>, <a href="#method_ba_TeamBaseSession__get_game_number">get_game_number()</a>, <a href="#method_ba_TeamBaseSession__get_max_players">get_max_players()</a>, <a href="#method_ba_TeamBaseSession__get_next_game_description">get_next_game_description()</a>, <a href="#method_ba_TeamBaseSession__get_series_length">get_series_length()</a>, <a href="#method_ba_TeamBaseSession__on_activity_end">on_activity_end()</a>, <a href="#method_ba_TeamBaseSession__on_team_join">on_team_join()</a></h5>
-<dl>
-<dt><h4><a name="method_ba_TeamBaseSession____init__">&lt;constructor&gt;</a></dt></h4><dd>
-<p><span>ba.TeamBaseSession()</span></p>
-
-<p>Set up playlists and launches a <a href="#class_ba_Activity">ba.Activity</a> to accept joiners.</p>
-
-</dd>
-<dt><h4><a name="method_ba_TeamBaseSession__announce_game_results">announce_game_results()</a></dt></h4><dd>
-<p><span>announce_game_results(self, activity: <a href="#class_ba_GameActivity">ba.GameActivity</a>, results: <a href="#class_ba_TeamGameResults">ba.TeamGameResults</a>, delay: float, announce_winning_team: bool = True) -&gt; None</span></p>
-
-<p>Show basic game result at the end of a game.</p>
-
-<p>(before transitioning to a score screen).
-This will include a zoom-text of 'BLUE WINS'
-or whatnot, along with a possible audio
-announcement of the same.</p>
-
-</dd>
-<dt><h4><a name="method_ba_TeamBaseSession__get_ffa_series_length">get_ffa_series_length()</a></dt></h4><dd>
-<p><span>get_ffa_series_length(self) -&gt; int</span></p>
-
-<p>Return free-for-all series length.</p>
-
-</dd>
-<dt><h4><a name="method_ba_TeamBaseSession__get_game_number">get_game_number()</a></dt></h4><dd>
-<p><span>get_game_number(self) -&gt; int</span></p>
-
-<p>Returns which game in the series is currently being played.</p>
-
-</dd>
-<dt><h4><a name="method_ba_TeamBaseSession__get_max_players">get_max_players()</a></dt></h4><dd>
-<p><span>get_max_players(self) -&gt; int</span></p>
-
-<p>Return max number of <a href="#class_ba_Player">ba.Players</a> allowed to join the game at once.</p>
-
-</dd>
-<dt><h4><a name="method_ba_TeamBaseSession__get_next_game_description">get_next_game_description()</a></dt></h4><dd>
-<p><span>get_next_game_description(self) -&gt; <a href="#class_ba_Lstr">ba.Lstr</a></span></p>
-
-<p>Returns a description of the next game on deck.</p>
-
-</dd>
-<dt><h4><a name="method_ba_TeamBaseSession__get_series_length">get_series_length()</a></dt></h4><dd>
-<p><span>get_series_length(self) -&gt; int</span></p>
-
-<p>Return teams series length.</p>
-
-</dd>
-<dt><h4><a name="method_ba_TeamBaseSession__on_activity_end">on_activity_end()</a></dt></h4><dd>
-<p><span>on_activity_end(self, activity: <a href="#class_ba_Activity">ba.Activity</a>, results: Any) -&gt; None</span></p>
-
-<p>Called when the current <a href="#class_ba_Activity">ba.Activity</a> has ended.</p>
-
-<p>The <a href="#class_ba_Session">ba.Session</a> should look at the results and start
-another <a href="#class_ba_Activity">ba.Activity</a>.</p>
-
-</dd>
-<dt><h4><a name="method_ba_TeamBaseSession__on_team_join">on_team_join()</a></dt></h4><dd>
-<p><span>on_team_join(self, team: <a href="#class_ba_Team">ba.Team</a>) -&gt; None</span></p>
-
-<p>Called when a new <a href="#class_ba_Team">ba.Team</a> joins the session.</p>
-
-</dd>
-</dl>
-<hr>
 <h2><strong><a name="class_ba_TeamGameActivity">ba.TeamGameActivity</a></strong></h3>
 <p>inherits from: <a href="#class_ba_GameActivity">ba.GameActivity</a>, <a href="#class_ba_Activity">ba.Activity</a>, <a href="#class_ba_DependencyComponent">ba.DependencyComponent</a></p>
 <p>Base class for teams and free-for-all mode games.</p>
@@ -4514,7 +4535,7 @@ on the <a href="#class_ba_Player">ba.Player</a> and their <a href="#class_ba_Tea
 <p><span>supports_session_type(sessiontype: Type[<a href="#class_ba_Session">ba.Session</a>]) -&gt; bool </span></p>
 
 <p>Class method override;
-returns True for <a href="#class_ba_TeamsSession">ba.TeamsSessions</a> and <a href="#class_ba_FreeForAllSession">ba.FreeForAllSessions</a>;
+returns True for <a href="#class_ba_DualTeamSession">ba.DualTeamSessions</a> and <a href="#class_ba_FreeForAllSession">ba.FreeForAllSessions</a>;
 False otherwise.</p>
 
 </dd>
@@ -4628,27 +4649,6 @@ Results for a completed <a href="#class_ba_TeamGameActivity">ba.TeamGameActivity
 
 <h3>Methods:</h3>
 <p>&lt;all methods inherited from <a href="#class_ba_NotFoundError">ba.NotFoundError</a>&gt;</p>
-<hr>
-<h2><strong><a name="class_ba_TeamsSession">ba.TeamsSession</a></strong></h3>
-<p>inherits from: <a href="#class_ba_TeamBaseSession">ba.TeamBaseSession</a>, <a href="#class_ba_Session">ba.Session</a></p>
-<p><a href="#class_ba_Session">ba.Session</a> type for teams mode games.</p>
-
-<p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a>
-</p>
-
-<h3>Attributes Inherited:</h3>
-<h5><a href="#attr_ba_Session__campaign">campaign</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__teams">teams</a></h5>
-<h3>Methods Inherited:</h3>
-<h5><a href="#method_ba_TeamBaseSession__announce_game_results">announce_game_results()</a>, <a href="#method_ba_TeamBaseSession__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_TeamBaseSession__end">end()</a>, <a href="#method_ba_TeamBaseSession__end_activity">end_activity()</a>, <a href="#method_ba_TeamBaseSession__get_custom_menu_entries">get_custom_menu_entries()</a>, <a href="#method_ba_TeamBaseSession__get_ffa_series_length">get_ffa_series_length()</a>, <a href="#method_ba_TeamBaseSession__get_game_number">get_game_number()</a>, <a href="#method_ba_TeamBaseSession__get_max_players">get_max_players()</a>, <a href="#method_ba_TeamBaseSession__get_next_game_description">get_next_game_description()</a>, <a href="#method_ba_TeamBaseSession__get_series_length">get_series_length()</a>, <a href="#method_ba_TeamBaseSession__getactivity">getactivity()</a>, <a href="#method_ba_TeamBaseSession__handlemessage">handlemessage()</a>, <a href="#method_ba_TeamBaseSession__launch_end_session_activity">launch_end_session_activity()</a>, <a href="#method_ba_TeamBaseSession__on_activity_end">on_activity_end()</a>, <a href="#method_ba_TeamBaseSession__on_player_leave">on_player_leave()</a>, <a href="#method_ba_TeamBaseSession__on_player_request">on_player_request()</a>, <a href="#method_ba_TeamBaseSession__on_team_join">on_team_join()</a>, <a href="#method_ba_TeamBaseSession__on_team_leave">on_team_leave()</a>, <a href="#method_ba_TeamBaseSession__set_activity">set_activity()</a></h5>
-<h3>Methods Defined or Overridden:</h3>
-<dl>
-<dt><h4><a name="method_ba_TeamsSession____init__">&lt;constructor&gt;</a></dt></h4><dd>
-<p><span>ba.TeamsSession()</span></p>
-
-<p>Set up playlists and launches a <a href="#class_ba_Activity">ba.Activity</a> to accept joiners.</p>
-
-</dd>
-</dl>
 <hr>
 <h2><strong><a name="class_ba_Texture">ba.Texture</a></strong></h3>
 <p><em>&lt;top level class&gt;</em>

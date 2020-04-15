@@ -450,7 +450,7 @@ class KioskWindow(ba.Window):
                                 endcall=ba.Call(
                                     ba.pushcall,
                                     ba.Call(_ba.new_host_session,
-                                            ba.TeamsSession)))
+                                            ba.DualTeamSession)))
             ba.containerwidget(edit=self._root_widget, transition='out_left')
             return
 

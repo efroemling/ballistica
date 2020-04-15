@@ -25,14 +25,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import _ba
-from ba._teambasesession import TeamBaseSession
+from ba._multiteamsession import MultiTeamSession
 
 if TYPE_CHECKING:
     from typing import Dict
     import ba
 
 
-class FreeForAllSession(TeamBaseSession):
+class FreeForAllSession(MultiTeamSession):
     """ba.Session type for free-for-all mode games.
 
     Category: Gameplay Classes
@@ -70,10 +70,10 @@ class FreeForAllSession(TeamBaseSession):
 
     def _switch_to_score_screen(self, results: ba.TeamGameResults) -> None:
         # pylint: disable=cyclic-import
-        from bastd.activity.drawscreen import DrawScoreScreenActivity
-        from bastd.activity.multiteamendscreen import (
+        from bastd.activity.drawscore import DrawScoreScreenActivity
+        from bastd.activity.multiteamvictory import (
             TeamSeriesVictoryScoreScreenActivity)
-        from bastd.activity.freeforallendscreen import (
+        from bastd.activity.freeforallvictory import (
             FreeForAllVictoryScoreScreenActivity)
         winners = results.get_winners()
 

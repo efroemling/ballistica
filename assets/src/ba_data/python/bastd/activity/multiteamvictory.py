@@ -25,13 +25,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import ba
-from bastd.activity.teamsscorescreen import TeamsScoreScreenActivity
+from bastd.activity.multiteamscore import MultiTeamScoreScreenActivity
 
 if TYPE_CHECKING:
     from typing import Any, Dict, List, Tuple, Optional
 
 
-class TeamSeriesVictoryScoreScreenActivity(TeamsScoreScreenActivity):
+class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
     """Final score screen for a team series."""
 
     def __init__(self, settings: Dict[str, Any]):
@@ -104,7 +104,7 @@ class TeamSeriesVictoryScoreScreenActivity(TeamsScoreScreenActivity):
                                       str(session.get_ffa_series_length()))]))
                       ])
         else:
-            assert isinstance(session, ba.TeamBaseSession)
+            assert isinstance(session, ba.MultiTeamSession)
 
             # Some languages may prefer to always show 'first to X' instead of
             # 'best of X'.

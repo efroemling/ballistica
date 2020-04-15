@@ -289,10 +289,10 @@ class GameActivity(Activity):
     @classmethod
     def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
         """Return whether this game supports the provided Session type."""
-        from ba._teambasesession import TeamBaseSession
+        from ba._multiteamsession import MultiTeamSession
 
         # By default, games support any versus mode
-        return issubclass(sessiontype, TeamBaseSession)
+        return issubclass(sessiontype, MultiTeamSession)
 
     def __init__(self, settings: Dict[str, Any]):
         """Instantiate the Activity."""
@@ -550,7 +550,7 @@ class GameActivity(Activity):
     def _game_begin_analytics(self) -> None:
         """Update analytics events for the start of the game."""
         # pylint: disable=too-many-branches
-        from ba._teamssession import TeamsSession
+        from ba._dualteamsession import DualTeamSession
         from ba._freeforallsession import FreeForAllSession
         from ba._coopsession import CoopSession
         session = self.session
@@ -573,7 +573,7 @@ class GameActivity(Activity):
             elif len(self.players) >= 4:
                 _ba.increment_analytics_count(
                     'Co-op round start 4+ human players')
-        elif isinstance(session, TeamsSession):
+        elif isinstance(session, DualTeamSession):
             _ba.set_analytics_screen('Teams Game: ' + self.get_name())
             _ba.increment_analytics_count('Teams round start')
             if len(self.players) == 1:
