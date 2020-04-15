@@ -38,7 +38,7 @@ class Session:
 
     category: Gameplay Classes
 
-    Examples of sessions are ba.FreeForAllSession, ba.TeamsSession, and
+    Examples of sessions are ba.FreeForAllSession, ba.DualTeamSession, and
     ba.CoopSession.
 
     A Session is responsible for wrangling and transitioning between various

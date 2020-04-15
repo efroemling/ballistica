@@ -143,7 +143,7 @@ def launch_server_session() -> None:
     """Kick off a host-session based on the current server config."""
     from ba._netutils import serverget
     from ba import _freeforallsession
-    from ba import _teamssession
+    from ba import _dualteamsession
     app = _ba.app
     servercfg = copy.deepcopy(app.server_config)
     appcfg = app.config
@@ -155,7 +155,7 @@ def launch_server_session() -> None:
     if session_type_name == 'ffa':
         sessiontype = _freeforallsession.FreeForAllSession
     elif session_type_name == 'teams':
-        sessiontype = _teamssession.TeamsSession
+        sessiontype = _dualteamsession.DualTeamSession
     else:
         raise Exception('invalid session_type value: ' + session_type_name)
 

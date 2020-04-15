@@ -31,6 +31,8 @@ from __future__ import annotations
 import os
 import subprocess
 from typing import TYPE_CHECKING
+from multiprocessing import cpu_count
+from concurrent.futures import ThreadPoolExecutor
 
 if TYPE_CHECKING:
     from typing import List, Dict, Tuple, Set
@@ -250,10 +252,7 @@ def _write_cache_file(staging_dir: str, fname: str) -> Tuple[str, str]:
 
 def _write_cache_files(fnames1: List[str], fnames2: List[str],
                        staging_dir: str, mapping_file: str) -> None:
-    # pylint: disable=too-many-locals
     fhashes1: Set[str] = set()
-    from multiprocessing import cpu_count
-    from concurrent.futures import ThreadPoolExecutor
     import functools
     import json
     mapping: Dict[str, str] = {}
@@ -271,7 +270,6 @@ def _write_cache_files(fnames1: List[str], fnames2: List[str],
     # on the server than it is to build it here and upload the whole thing.
     # ...so let's simply write a script to generate it and upload that.
 
-    # yapf: disable
     script = (
         'import os\n'
         'import subprocess\n'
@@ -289,7 +287,6 @@ def _write_cache_files(fnames1: List[str], fnames2: List[str],
         ' check=True)\n'
         'subprocess.run(["rm", "-rf", "efrocache", "genstartercache.py"])\n'
         'print("Starter cache generation complete!", flush=True)\n')
-    # yapf: enable
 
     with open('build/efrocache/genstartercache.py', 'w') as outfile:
         outfile.write(script)
@@ -320,8 +317,6 @@ def _check_warm_start_entry(entry: Tuple[str, str]) -> None:
 
 
 def _check_warm_start_entries(entries: List[Tuple[str, str]]) -> None:
-    from multiprocessing import cpu_count
-    from concurrent.futures import ThreadPoolExecutor
     with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
         # Converting this to a list pulls results and propagates errors)
         list(executor.map(_check_warm_start_entry, entries))

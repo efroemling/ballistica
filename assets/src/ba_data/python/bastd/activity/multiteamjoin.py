@@ -25,14 +25,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import ba
-from ba.internal import JoiningActivity
+from ba.internal import JoinActivity
 from bastd.actor.text import Text
 
 if TYPE_CHECKING:
     from typing import Any, Dict, Optional
 
 
-class TeamJoiningActivity(JoiningActivity):
+class MultiTeamJoinActivity(JoinActivity):
     """Join screen for teams sessions."""
 
     def __init__(self, settings: Dict[str, Any]):
@@ -41,12 +41,12 @@ class TeamJoiningActivity(JoiningActivity):
 
     def on_transition_in(self) -> None:
         from bastd.actor.controlsguide import ControlsGuide
-        from ba import TeamsSession
+        from ba import DualTeamSession
         super().on_transition_in()
         ControlsGuide(delay=1.0).autoretain()
 
         session = self.session
-        assert isinstance(session, ba.TeamBaseSession)
+        assert isinstance(session, ba.MultiTeamSession)
 
         # Show info about the next up game.
         self._next_up_text = Text(ba.Lstr(
@@ -65,7 +65,7 @@ class TeamJoiningActivity(JoiningActivity):
 
         # In teams mode, show our two team names.
         # FIXME: Lobby should handle this.
-        if isinstance(ba.getsession(), TeamsSession):
+        if isinstance(ba.getsession(), DualTeamSession):
             team_names = [team.name for team in ba.getsession().teams]
             team_colors = [
                 tuple(team.color) + (0.5, ) for team in ba.getsession().teams

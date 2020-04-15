@@ -330,7 +330,9 @@
       <w>cooldown</w>
       <w>cooldowns</w>
       <w>coopgame</w>
+      <w>coopjoin</w>
       <w>coopjoinscreen</w>
+      <w>coopscore</w>
       <w>coopscorescreen</w>
       <w>coopsession</w>
       <w>coords</w>
@@ -447,6 +449,7 @@
       <w>downmix</w>
       <w>dpad</w>
       <w>dpath</w>
+      <w>drawscore</w>
       <w>drawscreen</w>
       <w>dripity</w>
       <w>dropbox</w>
@@ -469,7 +472,9 @@
       <w>dstvar</w>
       <w>dtest</w>
       <w>dtime</w>
+      <w>dualteamscore</w>
       <w>dualteamscorescreen</w>
+      <w>dualteamsession</w>
       <w>duckdns</w>
       <w>dummymodule</w>
       <w>dummyname</w>
@@ -637,6 +642,7 @@
       <w>freefly</w>
       <w>freeforallendscreen</w>
       <w>freeforallsession</w>
+      <w>freeforallvictory</w>
       <w>freepik</w>
       <w>freesound</w>
       <w>froemling</w>
@@ -1088,7 +1094,11 @@
       <w>multiline</w>
       <w>multiplayer</w>
       <w>multiteamendscreen</w>
+      <w>multiteamjoin</w>
       <w>multiteamjoinscreen</w>
+      <w>multiteamscore</w>
+      <w>multiteamsession</w>
+      <w>multiteamvictory</w>
       <w>multithreaded</w>
       <w>musicinfo</w>
       <w>musicinfos</w>

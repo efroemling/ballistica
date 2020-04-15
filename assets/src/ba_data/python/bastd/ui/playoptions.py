@@ -66,7 +66,7 @@ class PlayOptionsWindow(popup.PopupWindow):
         self._height = 330.0 - 50.0
 
         # In teams games, show the custom names/colors button.
-        if self._sessiontype is ba.TeamsSession:
+        if self._sessiontype is ba.DualTeamSession:
             self._height += 50.0
 
         self._row_height = 45.0
@@ -90,7 +90,7 @@ class PlayOptionsWindow(popup.PopupWindow):
             if name == '__default__':
                 if self._sessiontype is ba.FreeForAllSession:
                     plst = get_default_free_for_all_playlist()
-                elif self._sessiontype is ba.TeamsSession:
+                elif self._sessiontype is ba.DualTeamSession:
                     plst = get_default_teams_playlist()
                 else:
                     raise Exception("unrecognized session-type: " +
@@ -262,7 +262,7 @@ class PlayOptionsWindow(popup.PopupWindow):
 
         # Team names/colors.
         self._custom_colors_names_button: Optional[ba.Widget]
-        if self._sessiontype is ba.TeamsSession:
+        if self._sessiontype is ba.DualTeamSession:
             y_offs = 50 if show_shuffle_check_box else 0
             self._custom_colors_names_button = ba.buttonwidget(
                 parent=self.root_widget,

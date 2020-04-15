@@ -62,7 +62,7 @@ from ba._session import Session
 from ba._stats import PlayerScoredMessage, PlayerRecord, Stats
 from ba._team import Team
 from ba._teamgame import TeamGameActivity
-from ba._teamssession import TeamsSession
+from ba._dualteamsession import DualTeamSession
 from ba._achievement import Achievement
 from ba._appconfig import AppConfig
 from ba._appdelegate import AppDelegate
@@ -82,7 +82,7 @@ from ba._messages import (OutOfBoundsMessage, DeathType, DieMessage,
                           CelebrateMessage)
 from ba._music import setmusic, MusicPlayer, MusicType, MusicPlayMode
 from ba._powerup import PowerupMessage, PowerupAcceptMessage
-from ba._teambasesession import TeamBaseSession
+from ba._multiteamsession import MultiTeamSession
 from ba.ui import Window, UIController, uicleanupcheck
 
 app: App

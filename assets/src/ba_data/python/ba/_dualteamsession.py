@@ -24,13 +24,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import _ba
-from ba import _teambasesession
+from ba import _multiteamsession
 
 if TYPE_CHECKING:
     import ba
 
 
-class TeamsSession(_teambasesession.TeamBaseSession):
+class DualTeamSession(_multiteamsession.MultiTeamSession):
     """ba.Session type for teams mode games.
 
     Category: Gameplay Classes
@@ -46,15 +46,16 @@ class TeamsSession(_teambasesession.TeamBaseSession):
 
     def _switch_to_score_screen(self, results: ba.TeamGameResults) -> None:
         # pylint: disable=cyclic-import
-        from bastd.activity import drawscreen
-        from bastd.activity import dualteamscorescreen
-        from bastd.activity import multiteamendscreen
+        from bastd.activity.drawscore import DrawScoreScreenActivity
+        from bastd.activity.dualteamscore import (
+            TeamVictoryScoreScreenActivity)
+        from bastd.activity.multiteamvictory import (
+            TeamSeriesVictoryScoreScreenActivity)
         winners = results.get_winners()
 
         # If everyone has the same score, call it a draw.
         if len(winners) < 2:
-            self.set_activity(
-                _ba.new_activity(drawscreen.DrawScoreScreenActivity))
+            self.set_activity(_ba.new_activity(DrawScoreScreenActivity))
         else:
             winner = winners[0].teams[0]
             winner.sessiondata['score'] += 1
@@ -63,12 +64,9 @@ class TeamsSession(_teambasesession.TeamBaseSession):
             if winner.sessiondata['score'] >= (self._series_length -
                                                1) / 2 + 1:
                 self.set_activity(
-                    _ba.new_activity(
-                        multiteamendscreen.
-                        TeamSeriesVictoryScoreScreenActivity,
-                        {'winner': winner}))
+                    _ba.new_activity(TeamSeriesVictoryScoreScreenActivity,
+                                     {'winner': winner}))
             else:
                 self.set_activity(
-                    _ba.new_activity(
-                        dualteamscorescreen.TeamVictoryScoreScreenActivity,
-                        {'winner': winner}))
+                    _ba.new_activity(TeamVictoryScoreScreenActivity,
+                                     {'winner': winner}))

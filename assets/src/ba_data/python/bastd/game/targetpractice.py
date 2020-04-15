@@ -57,7 +57,7 @@ class TargetPracticeGame(ba.TeamGameActivity):
     def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
         # We support any teams or versus sessions.
         return (issubclass(sessiontype, ba.CoopSession)
-                or issubclass(sessiontype, ba.TeamBaseSession))
+                or issubclass(sessiontype, ba.MultiTeamSession))
 
     @classmethod
     def get_settings(

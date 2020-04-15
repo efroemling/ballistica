@@ -48,7 +48,7 @@ class DeathMatchGame(ba.TeamGameActivity):
 
     @classmethod
     def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
-        return (issubclass(sessiontype, ba.TeamsSession)
+        return (issubclass(sessiontype, ba.DualTeamSession)
                 or issubclass(sessiontype, ba.FreeForAllSession))
 
     @classmethod

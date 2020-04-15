@@ -111,7 +111,7 @@ def instantiate_store_item_display(item_name: str,
         modes_l = []
         if gametype.supports_session_type(ba.CoopSession):
             modes_l.append(ba.Lstr(resource='playModes.coopText'))
-        if gametype.supports_session_type(ba.TeamsSession):
+        if gametype.supports_session_type(ba.DualTeamSession):
             modes_l.append(ba.Lstr(resource='playModes.teamsText'))
         if gametype.supports_session_type(ba.FreeForAllSession):
             modes_l.append(ba.Lstr(resource='playModes.freeForAllText'))

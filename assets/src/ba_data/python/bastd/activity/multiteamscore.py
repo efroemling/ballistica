@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from ba import PlayerRecord
 
 
-class TeamsScoreScreenActivity(ScoreScreenActivity):
+class MultiTeamScoreScreenActivity(ScoreScreenActivity):
     """Base class for score screens."""
 
     def __init__(self, settings: Dict[str, Any]):
@@ -46,7 +46,7 @@ class TeamsScoreScreenActivity(ScoreScreenActivity):
         from bastd.actor.text import Text
         super().on_begin()
         session = self.session
-        if self._show_up_next and isinstance(session, ba.TeamBaseSession):
+        if self._show_up_next and isinstance(session, ba.MultiTeamSession):
             txt = ba.Lstr(value='${A}   ${B}',
                           subs=[
                               ('${A}',
@@ -165,7 +165,7 @@ class TeamsScoreScreenActivity(ScoreScreenActivity):
                  transition_delay=tdelay).autoretain()
 
         session = self.session
-        assert isinstance(session, ba.TeamBaseSession)
+        assert isinstance(session, ba.MultiTeamSession)
         tval = ba.Lstr(resource='gameLeadersText',
                        subs=[('${COUNT}', str(session.get_game_number()))])
         _txt(180,

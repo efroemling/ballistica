@@ -40,7 +40,7 @@ from ba._account import (on_account_state_changed,
                          ensure_have_account_player_profile,
                          get_purchased_icons, get_cached_league_rank_data,
                          get_league_rank_points, cache_league_rank_data)
-from ba._activitytypes import JoiningActivity, ScoreScreenActivity
+from ba._activitytypes import JoinActivity, ScoreScreenActivity
 from ba._achievement import (get_achievement, set_completed_achievements,
                              display_achievement_banner,
                              get_achievements_for_coop_level)
@@ -52,7 +52,7 @@ from ba._campaign import get_campaign
 from ba._messages import PlayerProfilesChangedMessage
 from ba._meta import get_game_types
 from ba._modutils import show_user_scripts
-from ba._teambasesession import DEFAULT_TEAM_COLORS, DEFAULT_TEAM_NAMES
+from ba._multiteamsession import DEFAULT_TEAM_COLORS, DEFAULT_TEAM_NAMES
 from ba._music import (have_music_player, music_volume_changed, do_play_music,
                        get_soundtrack_entry_name, get_soundtrack_entry_type,
                        get_music_player, set_music_play_mode,

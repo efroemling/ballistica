@@ -26,13 +26,13 @@ from typing import TYPE_CHECKING
 
 import _ba
 import ba
-from ba.internal import JoiningActivity
+from ba.internal import JoinActivity
 
 if TYPE_CHECKING:
     from typing import Any, Dict, List, Optional, Sequence, Union
 
 
-class CoopJoiningActivity(JoiningActivity):
+class CoopJoinActivity(JoinActivity):
     """Join-screen for co-op mode."""
 
     def __init__(self, settings: Dict[str, Any]):

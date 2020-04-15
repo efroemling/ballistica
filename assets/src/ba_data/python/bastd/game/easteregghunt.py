@@ -63,7 +63,7 @@ class EasterEggHuntGame(ba.TeamGameActivity):
     @classmethod
     def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
         return (issubclass(sessiontype, ba.CoopSession)
-                or issubclass(sessiontype, ba.TeamsSession)
+                or issubclass(sessiontype, ba.DualTeamSession)
                 or issubclass(sessiontype, ba.FreeForAllSession))
 
     @classmethod

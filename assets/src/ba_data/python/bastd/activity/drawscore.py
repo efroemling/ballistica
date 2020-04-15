@@ -25,13 +25,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import ba
-from bastd.activity.teamsscorescreen import TeamsScoreScreenActivity
+from bastd.activity.multiteamscore import MultiTeamScoreScreenActivity
 
 if TYPE_CHECKING:
     from typing import Any, Dict
 
 
-class DrawScoreScreenActivity(TeamsScoreScreenActivity):
+class DrawScoreScreenActivity(MultiTeamScoreScreenActivity):
     """Score screen shown after a draw."""
 
     def __init__(self, settings: Dict[str, Any]):

@@ -88,7 +88,7 @@ class RaceGame(ba.TeamGameActivity):
 
     @classmethod
     def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
-        return issubclass(sessiontype, ba.TeamBaseSession)
+        return issubclass(sessiontype, ba.MultiTeamSession)
 
     @classmethod
     def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
@@ -125,7 +125,7 @@ class RaceGame(ba.TeamGameActivity):
                 'default': False
             })]  # yapf: disable
 
-        if issubclass(sessiontype, ba.TeamsSession):
+        if issubclass(sessiontype, ba.DualTeamSession):
             settings.append(('Entire Team Must Finish', {'default': False}))
         return settings
 
@@ -156,7 +156,7 @@ class RaceGame(ba.TeamGameActivity):
         self._bomb_spawn_timer: Optional[ba.Timer] = None
 
     def get_instance_description(self) -> Union[str, Sequence]:
-        if isinstance(self.session, ba.TeamsSession) and self.settings.get(
+        if isinstance(self.session, ba.DualTeamSession) and self.settings.get(
                 'Entire Team Must Finish', False):
             t_str = ' Your entire team has to finish.'
         else:
@@ -252,7 +252,7 @@ class RaceGame(ba.TeamGameActivity):
                     # value is the min of all team players.
                     # Otherwise its the max.
                     if isinstance(self.session,
-                                  ba.TeamsSession) and self.settings.get(
+                                  ba.DualTeamSession) and self.settings.get(
                                       'Entire Team Must Finish'):
                         team.gamedata['lap'] = min(
                             [p.gamedata['lap'] for p in team.players])
@@ -265,7 +265,7 @@ class RaceGame(ba.TeamGameActivity):
 
                         # In teams mode, hand out points based on the order
                         # players come in.
-                        if isinstance(self.session, ba.TeamsSession):
+                        if isinstance(self.session, ba.DualTeamSession):
                             assert self._team_finish_pts is not None
                             if self._team_finish_pts > 0:
                                 self.stats.player_scored(player,
@@ -364,7 +364,7 @@ class RaceGame(ba.TeamGameActivity):
         # A player leaving disqualifies the team if 'Entire Team Must Finish'
         # is on (otherwise in teams mode everyone could just leave except the
         # leading player to win).
-        if (isinstance(self.session, ba.TeamsSession)
+        if (isinstance(self.session, ba.DualTeamSession)
                 and self.settings.get('Entire Team Must Finish')):
             ba.screenmessage(ba.Lstr(
                 translate=('statements',
@@ -396,7 +396,7 @@ class RaceGame(ba.TeamGameActivity):
             if not distances:
                 teams_dist = 0
             else:
-                if (isinstance(self.session, ba.TeamsSession)
+                if (isinstance(self.session, ba.DualTeamSession)
                         and self.settings.get('Entire Team Must Finish')):
                     teams_dist = min(distances)
                 else:
@@ -690,7 +690,7 @@ class RaceGame(ba.TeamGameActivity):
             # In teams mode its over as soon as any team finishes the race
 
             # FIXME: The get_ffa_point_awards code looks dangerous.
-            if isinstance(session, ba.TeamsSession):
+            if isinstance(session, ba.DualTeamSession):
                 self.end_game()
             else:
                 # In ffa we keep the race going while there's still any points
@@ -729,7 +729,7 @@ class RaceGame(ba.TeamGameActivity):
         # odd to be announcing that now.
         self.end(results=results,
                  announce_winning_team=isinstance(self.session,
-                                                  ba.TeamsSession))
+                                                  ba.DualTeamSession))
 
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, PlayerSpazDeathMessage):

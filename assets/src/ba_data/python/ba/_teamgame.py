@@ -28,7 +28,7 @@ import _ba
 from ba._freeforallsession import FreeForAllSession
 from ba._gameactivity import GameActivity
 from ba._gameresults import TeamGameResults
-from ba._teamssession import TeamsSession
+from ba._dualteamsession import DualTeamSession
 
 if TYPE_CHECKING:
     from typing import Any, Dict, Type, Sequence
@@ -49,10 +49,10 @@ class TeamGameActivity(GameActivity):
     def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
         """
         Class method override;
-        returns True for ba.TeamsSessions and ba.FreeForAllSessions;
+        returns True for ba.DualTeamSessions and ba.FreeForAllSessions;
         False otherwise.
         """
-        return (issubclass(sessiontype, TeamsSession)
+        return (issubclass(sessiontype, DualTeamSession)
                 or issubclass(sessiontype, FreeForAllSession))
 
     def __init__(self, settings: Dict[str, Any]):
@@ -95,7 +95,7 @@ class TeamGameActivity(GameActivity):
                 if len(self.players) >= 2:
                     from ba import _achievement
                     _achievement.award_local_achievement('Free Loader')
-            elif isinstance(self.session, TeamsSession):
+            elif isinstance(self.session, DualTeamSession):
                 if len(self.players) >= 4:
                     from ba import _achievement
                     _achievement.award_local_achievement('Team Player')
@@ -116,7 +116,7 @@ class TeamGameActivity(GameActivity):
         """
         if position is None:
             # In teams-mode get our team-start-location.
-            if isinstance(self.session, TeamsSession):
+            if isinstance(self.session, DualTeamSession):
                 position = (self.map.get_start_position(player.team.get_id()))
             else:
                 # Otherwise do free-for-all spawn locations.
@@ -137,7 +137,7 @@ class TeamGameActivity(GameActivity):
         """
         # pylint: disable=arguments-differ
         from ba._coopsession import CoopSession
-        from ba._teambasesession import TeamBaseSession
+        from ba._multiteamsession import MultiTeamSession
         from ba._general import Call
 
         # Announce win (but only for the first finish() call)
@@ -148,7 +148,7 @@ class TeamGameActivity(GameActivity):
             super().end(results, delay=2.0 + announce_delay, force=force)
             # Need to do this *after* end end call so that results is valid.
             assert isinstance(results, TeamGameResults)
-            if do_announce and isinstance(session, TeamBaseSession):
+            if do_announce and isinstance(session, MultiTeamSession):
                 session.announce_game_results(
                     self,
                     results,

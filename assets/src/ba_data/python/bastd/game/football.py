@@ -77,7 +77,7 @@ class FootballTeamGame(ba.TeamGameActivity):
     @classmethod
     def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
         # We only support two-team play.
-        return issubclass(sessiontype, ba.TeamsSession)
+        return issubclass(sessiontype, ba.DualTeamSession)
 
     @classmethod
     def get_description(cls, sessiontype: Type[ba.Session]) -> str:
