@@ -174,7 +174,7 @@ class TeamBaseSession(Session):
         # pylint: disable=cyclic-import
         from ba import _error
         from bastd.tutorial import TutorialActivity
-        from bastd.activity.multiteamendscreen import (
+        from bastd.activity.multiteamvictory import (
             TeamSeriesVictoryScoreScreenActivity)
         from ba import _activitytypes
 
