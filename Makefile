@@ -28,6 +28,23 @@
 # Prefix used for output of docs/changelogs/etc targets for use in webpages.
 DOCPREFIX = "ballisticacore_"
 
+# This setup lets us set up files "bfiles" for expensive dummy targets
+# to avoid re-running them every time. An good use case is VM build targets
+# where just spinning up the VM to confirm that nothing needs rebuilding is
+# time-consuming. To use these, do the following:
+# - create a physical file for the target: ${BFILEDIR}/targetname
+#   (targets that are already physical files work too)
+# - add this dependency to it: ${shell ${BSOURCES} <category>}
+#   (where <category> covers all files that could affect the target)
+# - always touch the target file as the last build step:
+#   mkdir -p `dirname ${@}` && touch ${@}
+#   (even if the build step usually does; the build may not actually run
+#    which could leave one of the overly-broad dep files newer than it)
+# Note that this mechanism slows builds a bit if category contains a lot of
+# files, so is not always a win.
+BFILEDIR = .cache/bfile
+BSOURCES = tools/snippets sources
+
 
 ################################################################################
 #                                                                              #
@@ -85,6 +102,18 @@ assets-android: prereqs
 # Clean all assets.
 assets-clean:
 	@cd assets && $(MAKE) clean
+
+# A bfile for the resources target so we don't always have to run it.
+RESOURCES_F = ${BFILEDIR}/resources
+${RESOURCES_F}: ${PREREQS} resources/Makefile ${shell ${BSOURCES} resources}
+	@cd resources && $(MAKE) -j${CPUS} resources
+	@mkdir -p `dirname ${@}` && touch ${@}
+
+# A bfile for the code target so we don't always have to run it.
+CODE_F = ${BFILEDIR}/code
+${CODE_F}: ${PREREQS} ${shell ${BSOURCES} gen}
+	@cd src/generated_src && $(MAKE) -j${CPUS} generated_code
+	@mkdir -p `dirname ${@}` && touch ${@}
 
 # Remove *ALL* files and directories that aren't managed by git
 # (except for a few things such as localconfig.json).

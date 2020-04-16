@@ -202,6 +202,12 @@ def update_cache(makefile_dirs: List[str]) -> None:
             else:
                 fnames2.append(fullpath)
 
+    # if bool(True):
+    #     print("1", fnames1)
+    #     print("2", fnames2)
+    #     print('SO FAR SO GOOD')
+    #     sys.exit(0)
+
     staging_dir = 'build/efrocache'
     mapping_file = 'build/efrocachemap'
     run(f'rm -rf {staging_dir}')
@@ -222,32 +228,6 @@ def update_cache(makefile_dirs: List[str]) -> None:
         ' "cd files.ballistica.net/cache/ba1 && python3 genstartercache.py"')
 
     print(f'Cache update successful!')
-
-
-def _write_cache_file(staging_dir: str, fname: str) -> Tuple[str, str]:
-    import hashlib
-    from efrotools import run
-    print(f'Caching {fname}')
-    if ' ' in fname:
-        raise RuntimeError('Spaces in paths not supported.')
-
-    # Just going with ol' md5 here; we're the only ones creating these so
-    # security isn't a concern.
-    md5 = hashlib.md5()
-    with open(fname, 'rb') as infile:
-        md5.update(infile.read())
-    md5.update(fname.encode())
-    finalhash = md5.hexdigest()
-    hashpath = os.path.join(finalhash[:2], finalhash[2:4], finalhash[4:])
-    path = os.path.join(staging_dir, hashpath)
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-
-    # Fancy pipe stuff which will give us deterministic
-    # tar.gz files (no embedded timestamps)
-    # Note: The 'COPYFILE_DISABLE' prevents mac tar from adding
-    # file attributes/resource-forks to the archive as as ._filename.
-    run(f'COPYFILE_DISABLE=1 tar cf - {fname} | gzip -n > {path}')
-    return fname, hashpath
 
 
 def _write_cache_files(fnames1: List[str], fnames2: List[str],
@@ -299,6 +279,32 @@ def _write_cache_files(fnames1: List[str], fnames2: List[str],
 
     with open(mapping_file, 'w') as outfile:
         outfile.write(json.dumps(mapping, indent=2, sort_keys=True))
+
+
+def _write_cache_file(staging_dir: str, fname: str) -> Tuple[str, str]:
+    import hashlib
+    from efrotools import run
+    print(f'Caching {fname}')
+    if ' ' in fname:
+        raise RuntimeError('Spaces in paths not supported.')
+
+    # Just going with ol' md5 here; we're the only ones creating these so
+    # security isn't a concern.
+    md5 = hashlib.md5()
+    with open(fname, 'rb') as infile:
+        md5.update(infile.read())
+    md5.update(fname.encode())
+    finalhash = md5.hexdigest()
+    hashpath = os.path.join(finalhash[:2], finalhash[2:4], finalhash[4:])
+    path = os.path.join(staging_dir, hashpath)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+
+    # Fancy pipe stuff which will give us deterministic
+    # tar.gz files (no embedded timestamps)
+    # Note: The 'COPYFILE_DISABLE' prevents mac tar from adding
+    # file attributes/resource-forks to the archive as as ._filename.
+    run(f'COPYFILE_DISABLE=1 tar cf - {fname} | gzip -n > {path}')
+    return fname, hashpath
 
 
 def _check_warm_start_entry(entry: Tuple[str, str]) -> None:

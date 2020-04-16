@@ -151,8 +151,11 @@
       <w>bbot</w>
       <w>bbtn</w>
       <w>bcppcompiler</w>
+      <w>bdfl</w>
       <w>belarussian</w>
       <w>benboncan</w>
+      <w>bfiledir</w>
+      <w>bfiles</w>
       <w>bgmodel</w>
       <w>bgterrain</w>
       <w>bgtex</w>
@@ -191,6 +194,7 @@
       <w>bsfoundation</w>
       <w>bsmaster</w>
       <w>bsmusic</w>
+      <w>bsources</w>
       <w>bsplaylist</w>
       <w>bsremote</w>
       <w>bsstd</w>
@@ -290,6 +294,7 @@
       <w>clrhdr</w>
       <w>clrred</w>
       <w>cmathmodule</w>
+      <w>cmds</w>
       <w>cmembers</w>
       <w>cmodel</w>
       <w>cnode</w>
@@ -845,6 +850,7 @@
       <w>inits</w>
       <w>inmobi</w>
       <w>inpath</w>
+      <w>inpaths</w>
       <w>inputdevice</w>
       <w>inputfiles</w>
       <w>inputhash</w>
@@ -1322,6 +1328,7 @@
       <w>priceraw</w>
       <w>printnodes</w>
       <w>printobjects</w>
+      <w>printpaths</w>
       <w>priv</w>
       <w>proactor</w>
       <w>proc</w>
@@ -1675,6 +1682,7 @@
       <w>taobaomascot</w>
       <w>targ</w>
       <w>targetdir</w>
+      <w>targetname</w>
       <w>targetpath</w>
       <w>targetpractice</w>
       <w>tbtcolor</w>

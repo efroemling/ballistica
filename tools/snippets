@@ -876,5 +876,68 @@ def update_makebob() -> None:
     print('All builds complete!', flush=True)
 
 
+def _printpaths(inpaths: List[str], category: str) -> None:
+    paths: List[str] = []
+    for inpath in inpaths:
+        # Add files verbatim; recurse through dirs.
+        if os.path.isfile(inpath):
+            paths.append(inpath)
+            continue
+        for root, _dnames, fnames in os.walk(inpath):
+            # Always skip these..
+            if (root.startswith('src/generated_src')
+                    or root.startswith('src/tools')):
+                continue
+            # Skip some of these...
+            if root.startswith('src/external'):
+                if category == 'win' and root.startswith(
+                        'src/external/windows'):
+                    pass
+                else:
+                    continue
+            # Ignore python cache files.
+            if '__pycache__' in root:
+                continue
+            for fname in fnames:
+                # Ignore dot files
+                if fname.startswith('.'):
+                    continue
+                path = os.path.join(root, fname)
+                if ' ' in path:
+                    raise RuntimeError(f'Invalid path with space: {path}')
+                paths.append(path)
+    print(' '.join(paths))
+
+
+def sources() -> None:
+    """Print source files of different categories.
+
+    These are used as broad, redundant filters for expensive build ops.
+    For instance, when running a build through a VM we might want to skip
+    even spinning up the VM if absolutely no source files have changed.
+    """
+    try:
+        if len(sys.argv) != 3:
+            raise CleanError('Expected one argument.')
+        category = sys.argv[2]
+        if category == 'gen':
+            _printpaths(['tools', 'src/generated_src'], category)
+        elif category == 'assets':
+            _printpaths(['tools', 'assets/src'], category)
+        elif category in ('cmake', 'win'):
+            _printpaths(['tools', 'src'], category)
+        elif category == 'resources':
+            _printpaths(['tools', 'resources/src', 'resources/Makefile'],
+                        category)
+        else:
+            raise ValueError(f'Invalid source category: {category}')
+
+    except Exception as exc:
+        # We're used by ${shell} cmds in Makefiles so need to fail in a
+        # fashion that is noticeable there:
+        print(f'Error in sources snippet: {exc}', file=sys.stderr)
+        print('__nonexistent_error_output__')
+
+
 if __name__ == '__main__':
     snippets_main(globals())
