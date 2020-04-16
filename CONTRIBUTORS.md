@@ -5,3 +5,6 @@
 - Original author
 - BDFL (benevolent dictator for life).
   
+### Dmitry450
+- Modder
+- Fixed some game modes
