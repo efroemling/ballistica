@@ -910,7 +910,7 @@ def _printpaths(inpaths: List[str], category: str) -> None:
 
 
 def sources() -> None:
-    """Print source files of different categories.
+    """Print source files of different categories for use as Makefile deps.
 
     These are used as broad, redundant filters for expensive build ops.
     For instance, when running a build through a VM we might want to skip
