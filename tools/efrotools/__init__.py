@@ -24,6 +24,9 @@ This stuff can be a bit more sloppy/loosey-goosey since it is not used in
 live client or server code.
 """
 
+# FIXME: should migrate everything here into submodules since this adds
+# overhead to anything importing from any efrotools submodule.
+
 from __future__ import annotations
 
 import os

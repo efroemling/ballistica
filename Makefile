@@ -34,10 +34,10 @@ DOCPREFIX = "ballisticacore_"
 # time-consuming. To use these, do the following:
 # - create a physical file for the target: ${BFILEDIR}/targetname
 #   (targets that are already physical files work too)
-# - add this dependency to it: ${shell ${BSOURCES} <category>}
+# - add this dependency to it: ${shell ${BSOURCES} <category> $@}
 #   (where <category> covers all files that could affect the target)
 # - always touch the target file as the last build step:
-#   mkdir -p `dirname ${@}` && touch ${@}
+#   mkdir -p `dirname $@` && touch $@
 #   (even if the build step usually does; the build may not actually run
 #    which could leave one of the overly-broad dep files newer than it)
 # Note that this mechanism slows builds a bit if category contains a lot of
@@ -105,15 +105,15 @@ assets-clean:
 
 # A bfile for the resources target so we don't always have to run it.
 RESOURCES_F = ${BFILEDIR}/resources
-${RESOURCES_F}: ${PREREQS} resources/Makefile ${shell ${BSOURCES} resources}
+${RESOURCES_F}: ${PREREQS} resources/Makefile ${shell ${BSOURCES} resources $@}
 	@cd resources && $(MAKE) -j${CPUS} resources
-	@mkdir -p `dirname ${@}` && touch ${@}
+	@mkdir -p `dirname $@` && touch $@
 
 # A bfile for the code target so we don't always have to run it.
 CODE_F = ${BFILEDIR}/code
-${CODE_F}: ${PREREQS} ${shell ${BSOURCES} gen}
+${CODE_F}: ${PREREQS} ${shell ${BSOURCES} gen $@}
 	@cd src/generated_src && $(MAKE) -j${CPUS} generated_code
-	@mkdir -p `dirname ${@}` && touch ${@}
+	@mkdir -p `dirname $@` && touch $@
 
 # Remove *ALL* files and directories that aren't managed by git
 # (except for a few things such as localconfig.json).

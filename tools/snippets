@@ -876,12 +876,13 @@ def update_makebob() -> None:
     print('All builds complete!', flush=True)
 
 
-def _printpaths(inpaths: List[str], category: str) -> None:
-    paths: List[str] = []
+def _printpaths(inpaths: List[str], category: str,
+                target: Optional[str]) -> None:
+    allpaths: List[str] = []
     for inpath in inpaths:
         # Add files verbatim; recurse through dirs.
         if os.path.isfile(inpath):
-            paths.append(inpath)
+            allpaths.append(inpath)
             continue
         for root, _dnames, fnames in os.walk(inpath):
             # Always skip these..
@@ -905,8 +906,8 @@ def _printpaths(inpaths: List[str], category: str) -> None:
                 path = os.path.join(root, fname)
                 if ' ' in path:
                     raise RuntimeError(f'Invalid path with space: {path}')
-                paths.append(path)
-    print(' '.join(paths))
+                allpaths.append(path)
+    print(' '.join(allpaths))
 
 
 def sources() -> None:
@@ -915,20 +916,25 @@ def sources() -> None:
     These are used as broad, redundant filters for expensive build ops.
     For instance, when running a build through a VM we might want to skip
     even spinning up the VM if absolutely no source files have changed.
+
+    With a single category arg, all input files for that category are printed.
+    If a target filename is passed as a second arg, sources older than the
+    target may be withheld to speed up the Make process.
     """
     try:
-        if len(sys.argv) != 3:
-            raise CleanError('Expected one argument.')
+        if len(sys.argv) not in (3, 4):
+            raise CleanError('Expected one or two arguments.')
         category = sys.argv[2]
+        target = sys.argv[3] if len(sys.argv) > 3 else None
         if category == 'gen':
-            _printpaths(['tools', 'src/generated_src'], category)
+            _printpaths(['tools', 'src/generated_src'], category, target)
         elif category == 'assets':
-            _printpaths(['tools', 'assets/src'], category)
+            _printpaths(['tools', 'assets/src'], category, target)
         elif category in ('cmake', 'win'):
-            _printpaths(['tools', 'src'], category)
+            _printpaths(['tools', 'src'], category, target)
         elif category == 'resources':
             _printpaths(['tools', 'resources/src', 'resources/Makefile'],
-                        category)
+                        category, target)
         else:
             raise ValueError(f'Invalid source category: {category}')
 
