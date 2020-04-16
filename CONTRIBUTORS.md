@@ -3,5 +3,5 @@
 
 ### Eric Froemling
 - Original author
-- BDFL (benevolent dictator for life)
+- BDFL (benevolent dictator for life).
   
