@@ -10,9 +10,9 @@ https://github.com/efroemling/ballistica/wiki/Contributing
 
 ## Steps
 
-- [ ] Ensure `make preflight` completes successfully.
 - [ ] Add yourself to CONTRIBUTORS if you are a new contributor.
 - [ ] Add a CHANGELOG entry describing what your PR does.
+- [ ] Ensure `make preflight` completes successfully.
 - [ ] Write a good description on what the PR does.
 
 ## Description
