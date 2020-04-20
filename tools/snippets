@@ -32,7 +32,6 @@ to functionality contained in efrotools or other standalone tool modules.
 from __future__ import annotations
 
 import os
-import subprocess
 import sys
 from typing import TYPE_CHECKING
 
@@ -47,20 +46,7 @@ from efrotools.snippets import (  # pylint: disable=unused-import
     makefile_target_list, spelling, spelling_all, compile_python_files, pytest)
 
 if TYPE_CHECKING:
-    from typing import Optional, List, Sequence
-
-# Python modules we require for this project.
-# (module name, required version, pip package (if it differs from module name))
-REQUIRED_PYTHON_MODULES = [
-    ('pylint', [2, 4, 4], None),
-    ('mypy', [0, 770], None),
-    ('yapf', [0, 29, 0], None),
-    ('typing_extensions', None, None),
-    ('pytz', None, None),
-    ('yaml', None, 'PyYAML'),
-    ('requests', None, None),
-    ('pytest', None, None),
-]
+    from typing import Optional
 
 
 def archive_old_builds() -> None:
@@ -69,7 +55,12 @@ def archive_old_builds() -> None:
     (called after we push newer ones)
     """
     import batools.build
-    batools.build.archive_old_builds()
+    if len(sys.argv) < 3:
+        raise Exception('invalid arguments')
+    ssh_server = sys.argv[2]
+    builds_dir = sys.argv[3]
+    ssh_args = sys.argv[4:]
+    batools.build.archive_old_builds(ssh_server, builds_dir, ssh_args)
 
 
 def gen_fulltest_buildfile_android() -> None:
@@ -153,6 +144,7 @@ def check_clean_safety() -> None:
 
 def get_master_asset_src_dir() -> None:
     """Print master-asset-source dir for this repo."""
+    import subprocess
 
     # Ok, for now lets simply use our hard-coded master-src
     # path if we're on master in and not otherwise.  Should
@@ -177,6 +169,7 @@ def androidaddr() -> None:
 
     command line args: archive_dir architecture addr
     """
+    import subprocess
     if len(sys.argv) != 5:
         print('ERROR: expected 4 args; got ' + str(len(sys.argv) - 1) + '.\n' +
               'Usage: "tools/snippets android_addr'
@@ -417,6 +410,7 @@ def efrocache_get() -> None:
 def get_modern_make() -> None:
     """Print name of a modern make command."""
     import platform
+    import subprocess
 
     # Mac gnu make is outdated (due to newer versions using GPL3 I believe).
     # so let's return 'gmake' there which will point to homebrew make which
@@ -436,6 +430,7 @@ def get_modern_make() -> None:
 
 def warm_start_asset_build() -> None:
     """Prep asset builds to run faster."""
+    import subprocess
     from pathlib import Path
     from efrotools import get_config
     public: bool = get_config(PROJROOT)['public']
@@ -450,10 +445,6 @@ def warm_start_asset_build() -> None:
         subprocess.run(
             [str(Path(PROJROOT, 'tools/convert_util')), '--init-asset-cache'],
             check=True)
-
-
-def _vstr(nums: Sequence[int]) -> str:
-    return '.'.join(str(i) for i in nums)
 
 
 def update_docs_md() -> None:
@@ -511,168 +502,63 @@ def update_docs_md() -> None:
     print(f'{docs_path} is up to date.')
 
 
-def _get_pip_reqs() -> List[str]:
-    out: List[str] = []
-    for module in REQUIRED_PYTHON_MODULES:
-        name = module[0] if module[2] is None else module[2]
-        assert isinstance(name, str)
-        out.append(name)
-    return out
-
-
 def list_pip_reqs() -> None:
     """List Python Pip packages needed for this project."""
-    print(' '.join(_get_pip_reqs()))
+    from batools.build import get_pip_reqs
+    print(' '.join(get_pip_reqs()))
 
 
 def install_pip_reqs() -> None:
     """Install Python Pip packages needed for this project."""
+    import subprocess
     from efrotools import PYTHON_BIN
+    from batools.build import get_pip_reqs
     subprocess.run([PYTHON_BIN, '-m', 'pip', 'install', '--upgrade'] +
-                   _get_pip_reqs(),
+                   get_pip_reqs(),
                    check=True)
     print(f'All pip requirements installed!')
 
 
 def checkenv() -> None:
     """Check for tools necessary to build and run the app."""
-    from efrotools import PYTHON_BIN
-    print('Checking environment...', flush=True)
-
-    # Make sure they've got curl.
-    if subprocess.run(['which', 'curl'], check=False,
-                      capture_output=True).returncode != 0:
-        raise CleanError(f'curl is required; please install it.')
-
-    # Make sure they've got our target python version.
-    if subprocess.run(['which', PYTHON_BIN], check=False,
-                      capture_output=True).returncode != 0:
-        raise CleanError(f'{PYTHON_BIN} is required; please install it.')
-
-    # Make sure they've got pip for that python version.
-    if subprocess.run(f"{PYTHON_BIN} -m pip --version",
-                      shell=True,
-                      check=False,
-                      capture_output=True).returncode != 0:
-        raise CleanError(
-            'pip (for {PYTHON_BIN}) is required; please install it.')
-
-    # Check for some required python modules.
-    for modname, minver, packagename in REQUIRED_PYTHON_MODULES:
-        if packagename is None:
-            packagename = modname
-        if minver is not None:
-            results = subprocess.run(f'{PYTHON_BIN} -m {modname} --version',
-                                     shell=True,
-                                     check=False,
-                                     capture_output=True)
-        else:
-            results = subprocess.run(f'{PYTHON_BIN} -c "import {modname}"',
-                                     shell=True,
-                                     check=False,
-                                     capture_output=True)
-        if results.returncode != 0:
-            raise CleanError(f'{packagename} (for {PYTHON_BIN}) is required.\n'
-                             f'To install it, try: "{PYTHON_BIN}'
-                             f' -m pip install {packagename}"')
-        if minver is not None:
-            ver_line = results.stdout.decode().splitlines()[0]
-            assert modname in ver_line
-            vnums = [int(x) for x in ver_line.split()[-1].split('.')]
-            assert len(vnums) == len(minver)
-            if vnums < minver:
-                raise CleanError(
-                    f'{packagename} ver. {_vstr(minver)} or newer required;'
-                    f' found {_vstr(vnums)}')
-
-    print('Environment ok.', flush=True)
+    import batools.build
+    try:
+        batools.build.checkenv()
+    except RuntimeError as exc:
+        raise CleanError(exc)
 
 
 def make_prefab() -> None:
     """Run prefab builds for the current platform."""
-    from efrotools import run
-    import platform
-
-    system = platform.system()
-    machine = platform.machine()
-
-    if system == 'Darwin':
-        # Currently there's just x86_64 on mac; will need to revisit when arm
-        # cpus happen.
-        base = 'mac'
-    elif system == 'Linux':
-        # If it looks like we're in Windows Subsystem for Linux,
-        # go with the Windows version.
-        if 'microsoft' in platform.uname()[3].lower():
-            base = 'windows'
-        else:
-            # We currently only support x86_64 linux.
-            if machine == 'x86_64':
-                base = 'linux'
-            else:
-                raise RuntimeError(
-                    f'make_prefab: unsupported linux machine type:'
-                    f' {machine}.')
-    else:
-        raise RuntimeError(f'make_prefab: unrecognized platform:'
-                           f' {platform.system()}.')
-
+    import batools.build
     if len(sys.argv) != 3:
         raise RuntimeError('Expected one argument')
-
-    arg = sys.argv[2]
-
-    if arg == 'debug':
-        target = f'prefab-{base}-debug'
-    elif arg == 'debug-build':
-        target = f'prefab-{base}-debug-build'
-    elif arg == 'release':
-        target = f'prefab-{base}-release'
-    elif arg == 'release-build':
-        target = f'prefab-{base}-release-build'
-    else:
-        raise RuntimeError(f'Invalid target: {arg}')
-
-    run(f'make {target}')
+    target = batools.build.PrefabTarget(sys.argv[2])
+    batools.build.make_prefab(target)
 
 
 def update_makebob() -> None:
     """Build fresh make_bob binaries for all relevant platforms."""
-    print('Building mac_x86_64...', flush=True)
-    env = dict(os.environ)
-    env['CMAKE_BUILD_TYPE'] = 'Release'
-    subprocess.run(['make', 'cmake-build'], check=True, env=env)
-    subprocess.run(
-        [
-            'cp', '-v', 'ballisticacore-cmake/build/release/make_bob',
-            'tools/make_bob/mac_x86_64/'
-        ],
-        check=True,
-    )
-    print('Building linux_x86_64...', flush=True)
-    subprocess.run(['make', 'linux-build'], check=True, env=env)
-    subprocess.run(
-        [
-            'cp', '-v', 'build/linux-release/make_bob',
-            'tools/make_bob/linux_x86_64/'
-        ],
-        check=True,
-    )
-    print('All builds complete!', flush=True)
+    import batools.build
+    batools.build.update_makebob()
 
 
 def lazybuild() -> None:
-    """Testing."""
-    from batools.build import lazy_build, SourceCategory
+    """Run a build command only if an input has changed."""
+    import subprocess
+    import batools.build
     if len(sys.argv) < 5:
         raise CleanError('Expected at least 3 args')
     try:
-        category = SourceCategory(sys.argv[2])
+        category = batools.build.SourceCategory(sys.argv[2])
     except ValueError as exc:
         raise CleanError(exc)
     target = sys.argv[3]
-    cmd = ' '.join(sys.argv[4:])
-    lazy_build(target, category, cmd)
+    command = ' '.join(sys.argv[4:])
+    try:
+        batools.build.lazy_build(target, category, command)
+    except subprocess.CalledProcessError as exc:
+        raise CleanError(exc)
 
 
 if __name__ == '__main__':

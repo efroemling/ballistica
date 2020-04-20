@@ -1096,6 +1096,7 @@
       <w>msbuild</w>
       <w>mshell</w>
       <w>msvccompiler</w>
+      <w>mtarget</w>
       <w>mtime</w>
       <w>mtrans</w>
       <w>mtvos</w>

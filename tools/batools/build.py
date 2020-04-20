@@ -29,11 +29,24 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import List
+    from typing import List, Sequence
 
 CLRBLU = '\033[94m'  # Blue.
 CLRHDR = '\033[95m'  # Header.
 CLREND = '\033[0m'  # End.
+
+# Python modules we require for this project.
+# (module name, required version, pip package (if it differs from module name))
+REQUIRED_PYTHON_MODULES = [
+    ('pylint', [2, 4, 4], None),
+    ('mypy', [0, 770], None),
+    ('yapf', [0, 29, 0], None),
+    ('typing_extensions', None, None),
+    ('pytz', None, None),
+    ('yaml', None, 'PyYAML'),
+    ('requests', None, None),
+    ('pytest', None, None),
+]
 
 # Parts of full-tests suite we only run on particular days.
 # (This runs in listed order so should be randomized by hand to avoid
@@ -66,6 +79,14 @@ class SourceCategory(Enum):
     ASSETS = 'assets_src'
     CMAKE = 'cmake_src'
     WIN = 'win_src'
+
+
+class PrefabTarget(Enum):
+    """Types of prefab builds able to be run."""
+    DEBUG = 'debug'
+    DEBUG_BUILD = 'debug-build'
+    RELEASE = 'release'
+    RELEASE_BUILD = 'release-build'
 
 
 def _checkpaths(inpaths: List[str], category: SourceCategory,
@@ -170,16 +191,12 @@ def lazy_build(target: str, category: SourceCategory, command: str) -> None:
         Path(target).touch()
 
 
-def archive_old_builds() -> None:
+def archive_old_builds(ssh_server: str, builds_dir: str,
+                       ssh_args: List[str]) -> None:
     """Stuff our old public builds into the 'old' dir.
 
     (called after we push newer ones)
     """
-    if len(sys.argv) < 3:
-        raise Exception('invalid arguments')
-    ssh_server = sys.argv[2]
-    builds_dir = sys.argv[3]
-    ssh_args = sys.argv[4:]
 
     def ssh_run(cmd: str) -> str:
         val: str = subprocess.check_output(['ssh'] + ssh_args +
@@ -407,3 +424,140 @@ def gen_fulltest_buildfile_linux() -> None:
 
     with open('_fulltest_buildfile_linux', 'w') as outfile:
         outfile.write('\n'.join(lines))
+
+
+def make_prefab(target: PrefabTarget) -> None:
+    """Run prefab builds for the current platform."""
+    from efrotools import run
+    import platform
+
+    system = platform.system()
+    machine = platform.machine()
+
+    if system == 'Darwin':
+        # Currently there's just x86_64 on mac; will need to revisit when arm
+        # cpus happen.
+        base = 'mac'
+    elif system == 'Linux':
+        # If it looks like we're in Windows Subsystem for Linux,
+        # go with the Windows version.
+        if 'microsoft' in platform.uname()[3].lower():
+            base = 'windows'
+        else:
+            # We currently only support x86_64 linux.
+            if machine == 'x86_64':
+                base = 'linux'
+            else:
+                raise RuntimeError(
+                    f'make_prefab: unsupported linux machine type:'
+                    f' {machine}.')
+    else:
+        raise RuntimeError(f'make_prefab: unrecognized platform:'
+                           f' {platform.system()}.')
+
+    if target is PrefabTarget.DEBUG:
+        mtarget = f'prefab-{base}-debug'
+    elif target is PrefabTarget.DEBUG_BUILD:
+        mtarget = f'prefab-{base}-debug-build'
+    elif target is PrefabTarget.RELEASE:
+        mtarget = f'prefab-{base}-release'
+    elif target is PrefabTarget.RELEASE_BUILD:
+        mtarget = f'prefab-{base}-release-build'
+    else:
+        raise RuntimeError(f'Invalid target: {target}')
+
+    run(f'make {target}')
+
+
+def _vstr(nums: Sequence[int]) -> str:
+    return '.'.join(str(i) for i in nums)
+
+
+def checkenv() -> None:
+    """Check for tools necessary to build and run the app."""
+    from efrotools import PYTHON_BIN
+    print('Checking environment...', flush=True)
+
+    # Make sure they've got curl.
+    if subprocess.run(['which', 'curl'], check=False,
+                      capture_output=True).returncode != 0:
+        raise RuntimeError(f'curl is required; please install it.')
+
+    # Make sure they've got our target python version.
+    if subprocess.run(['which', PYTHON_BIN], check=False,
+                      capture_output=True).returncode != 0:
+        raise RuntimeError(f'{PYTHON_BIN} is required; please install it.')
+
+    # Make sure they've got pip for that python version.
+    if subprocess.run(f"{PYTHON_BIN} -m pip --version",
+                      shell=True,
+                      check=False,
+                      capture_output=True).returncode != 0:
+        raise RuntimeError(
+            'pip (for {PYTHON_BIN}) is required; please install it.')
+
+    # Check for some required python modules.
+    for modname, minver, packagename in REQUIRED_PYTHON_MODULES:
+        if packagename is None:
+            packagename = modname
+        if minver is not None:
+            results = subprocess.run(f'{PYTHON_BIN} -m {modname} --version',
+                                     shell=True,
+                                     check=False,
+                                     capture_output=True)
+        else:
+            results = subprocess.run(f'{PYTHON_BIN} -c "import {modname}"',
+                                     shell=True,
+                                     check=False,
+                                     capture_output=True)
+        if results.returncode != 0:
+            raise RuntimeError(
+                f'{packagename} (for {PYTHON_BIN}) is required.\n'
+                f'To install it, try: "{PYTHON_BIN}'
+                f' -m pip install {packagename}"')
+        if minver is not None:
+            ver_line = results.stdout.decode().splitlines()[0]
+            assert modname in ver_line
+            vnums = [int(x) for x in ver_line.split()[-1].split('.')]
+            assert len(vnums) == len(minver)
+            if vnums < minver:
+                raise RuntimeError(
+                    f'{packagename} ver. {_vstr(minver)} or newer required;'
+                    f' found {_vstr(vnums)}')
+
+    print('Environment ok.', flush=True)
+
+
+def get_pip_reqs() -> List[str]:
+    """Return the pip requirements needed to build/run stuff."""
+    out: List[str] = []
+    for module in REQUIRED_PYTHON_MODULES:
+        name = module[0] if module[2] is None else module[2]
+        assert isinstance(name, str)
+        out.append(name)
+    return out
+
+
+def update_makebob() -> None:
+    """Build fresh make_bob binaries for all relevant platforms."""
+    print('Building mac_x86_64...', flush=True)
+    env = dict(os.environ)
+    env['CMAKE_BUILD_TYPE'] = 'Release'
+    subprocess.run(['make', 'cmake-build'], check=True, env=env)
+    subprocess.run(
+        [
+            'cp', '-v', 'ballisticacore-cmake/build/release/make_bob',
+            'tools/make_bob/mac_x86_64/'
+        ],
+        check=True,
+    )
+    print('Building linux_x86_64...', flush=True)
+    subprocess.run(['make', 'linux-build'], check=True, env=env)
+    subprocess.run(
+        [
+            'cp', '-v', 'build/linux-release/make_bob',
+            'tools/make_bob/linux_x86_64/'
+        ],
+        check=True,
+    )
+    print('All builds complete!', flush=True)
