@@ -205,44 +205,44 @@ def update_cache(makefile_dirs: List[str]) -> None:
     # Ok, we've got 2 lists of filenames that we need to cache in the cloud.
     # First, however, let's look up modtimes for everything and if everything
     # is exactly the same as last time we can skip this step.
-    mtimes = _gen_modtimes(fnames1 + fnames2)
+    hashes = _gen_hashes(fnames1 + fnames2)
     if os.path.isfile(UPLOAD_STATE_CACHE_FILE):
         with open(UPLOAD_STATE_CACHE_FILE) as infile:
-            mtimes_existing = infile.read()
+            hashes_existing = infile.read()
     else:
-        mtimes_existing = ''
-    if mtimes == mtimes_existing:
+        hashes_existing = ''
+    if hashes == hashes_existing:
         print(
             f'{CLRBLU}Efrocache state unchanged;'
             f' skipping cache push.{CLREND}',
             flush=True)
     else:
-        _upload_cache(fnames1, fnames2, mtimes, mtimes_existing)
+        _upload_cache(fnames1, fnames2, hashes, hashes_existing)
 
     print(f'{CLRBLU}Efrocache update successful!{CLREND}')
 
     # Write the cache state so we can skip the next run if nothing changes.
     os.makedirs(os.path.dirname(UPLOAD_STATE_CACHE_FILE), exist_ok=True)
     with open(UPLOAD_STATE_CACHE_FILE, 'w') as outfile:
-        outfile.write(mtimes)
+        outfile.write(hashes)
 
 
-def _upload_cache(fnames1: List[str], fnames2: List[str], mtimes_str: str,
-                  mtimes_existing_str: str) -> None:
+def _upload_cache(fnames1: List[str], fnames2: List[str], hashes_str: str,
+                  hashes_existing_str: str) -> None:
     from efrotools import run
 
     # First, if we've run before, print the files causing us to re-run:
-    if mtimes_existing_str != '':
+    if hashes_existing_str != '':
         changed_files: Set[str] = set()
-        mtimes = json.loads(mtimes_str)
-        mtimes_existing = json.loads(mtimes_existing_str)
-        for fname, ftime in mtimes.items():
-            if ftime != mtimes_existing.get(fname, ''):
+        hashes = json.loads(hashes_str)
+        hashes_existing = json.loads(hashes_existing_str)
+        for fname, ftime in hashes.items():
+            if ftime != hashes_existing.get(fname, ''):
                 changed_files.add(fname)
 
         # We've covered modifications and additions; add deletions:
-        for fname in mtimes_existing:
-            if fname not in mtimes:
+        for fname in hashes_existing:
+            if fname not in hashes:
                 changed_files.add(fname)
         print(f'{CLRBLU}Updating cache with'
               f' {len(changed_files)} changes:{CLREND}')
@@ -270,10 +270,10 @@ def _upload_cache(fnames1: List[str], fnames2: List[str], mtimes_str: str,
         ' "cd files.ballistica.net/cache/ba1 && python3 genstartercache.py"')
 
 
-def _gen_modtimes(fnames: List[str]) -> str:
-    fdict: Dict[str, float] = {}
+def _gen_hashes(fnames: List[str]) -> str:
+    fdict: Dict[str, str] = {}
     for fname in fnames:
-        fdict[fname] = os.path.getmtime(fname)
+        fdict[fname] = str(os.path.getmtime(fname))
     return json.dumps(fdict, separators=(',', ':'))
 
 
