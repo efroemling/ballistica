@@ -49,29 +49,6 @@ from efrotools.snippets import (  # pylint: disable=unused-import
 if TYPE_CHECKING:
     from typing import Optional, List, Sequence
 
-# Parts of full-tests suite we only run on particular days.
-# (This runs in listed order so should be randomized by hand to avoid
-# clustering similar tests too much)
-SPARSE_TEST_BUILDS: List[List[str]] = [
-    ['ios.pylibs.debug', 'android.pylibs.arm'],
-    ['linux.package', 'android.pylibs.arm64'],
-    ['windows.package', 'mac.pylibs'],
-    ['tvos.pylibs', 'android.pylibs.x86'],
-    ['android.pylibs.arm.debug'],
-    ['windows.package.server'],
-    ['ios.pylibs', 'android.pylibs.arm64.debug'],
-    ['linux.package.server'],
-    ['android.pylibs.x86.debug', 'mac.package'],
-    ['mac.package.server', 'android.pylibs.x86_64'],
-    ['windows.package.oculus'],
-    ['android.pylibs.x86_64.debug'],
-    ['mac.pylibs.debug', 'android.package'],
-]
-
-# Currently only doing sparse-tests in core; not spinoffs.
-# (whole word will get subbed out in spinoffs so this will be false)
-DO_SPARSE_TEST_BUILDS = 'ballistica' + 'core' == 'ballisticacore'
-
 # Python modules we require for this project.
 # (module name, required version, pip package (if it differs from module name))
 REQUIRED_PYTHON_MODULES = [
@@ -91,35 +68,8 @@ def archive_old_builds() -> None:
 
     (called after we push newer ones)
     """
-    if len(sys.argv) < 3:
-        raise Exception('invalid arguments')
-    ssh_server = sys.argv[2]
-    builds_dir = sys.argv[3]
-    ssh_args = sys.argv[4:]
-
-    def ssh_run(cmd: str) -> str:
-        val: str = subprocess.check_output(['ssh'] + ssh_args +
-                                           [ssh_server, cmd]).decode()
-        return val
-
-    files = ssh_run('ls -1t "' + builds_dir + '"').splitlines()
-
-    # For every file we find, gather all the ones with the same prefix;
-    # we'll want to archive all but the first one.
-    files_to_archive = set()
-    for fname in files:
-        if '_' not in fname:
-            continue
-        prefix = '_'.join(fname.split('_')[:-1])
-        for old_file in [f for f in files if f.startswith(prefix)][1:]:
-            files_to_archive.add(old_file)
-
-    # Would be faster to package this into a single command but
-    # this works.
-    for fname in sorted(files_to_archive):
-        print('Archiving ' + fname, file=sys.stderr)
-        ssh_run('mv "' + builds_dir + '/' + fname + '" "' + builds_dir +
-                '/old/"')
+    import batools.build
+    batools.build.archive_old_builds()
 
 
 def gen_fulltest_buildfile_android() -> None:
@@ -127,59 +77,8 @@ def gen_fulltest_buildfile_android() -> None:
 
     (so we see nice pretty split-up build trees)
     """
-    # pylint: disable=too-many-branches
-    import datetime
-
-    # Its a pretty big time-suck building all architectures for
-    # all of our subplatforms, so lets usually just build a single one.
-    # We'll rotate it though and occasionally do all 4 at once just to
-    # be safe.
-    dayoffset = datetime.datetime.now().timetuple().tm_yday
-
-    # Let's only do a full 'prod' once every two times through the loop.
-    # (it really should never catch anything that individual platforms don't)
-    modes = ['arm', 'arm64', 'x86', 'x86_64']
-    modes += modes
-    modes.append('prod')
-
-    lines = []
-    for i, flavor in enumerate(
-            sorted(os.listdir('ballisticacore-android/BallisticaCore/src'))):
-        if flavor == 'main' or flavor.startswith('.'):
-            continue
-        mode = modes[(dayoffset + i) % len(modes)]
-        lines.append('ANDROID_PLATFORM=' + flavor + ' ANDROID_MODE=' + mode +
-                     ' nice -n 15 make android-build')
-
-    # Now add sparse tests that land on today.
-    if DO_SPARSE_TEST_BUILDS:
-        extras = SPARSE_TEST_BUILDS[dayoffset % len(SPARSE_TEST_BUILDS)]
-        extras = [e for e in extras if e.startswith('android.')]
-        for extra in extras:
-            if extra == 'android.pylibs.arm':
-                lines.append('tools/snippets python_build_android arm')
-            elif extra == 'android.pylibs.arm.debug':
-                lines.append('tools/snippets python_build_android_debug arm')
-            elif extra == 'android.pylibs.arm64':
-                lines.append('tools/snippets python_build_android arm64')
-            elif extra == 'android.pylibs.arm64.debug':
-                lines.append('tools/snippets python_build_android_debug arm64')
-            elif extra == 'android.pylibs.x86':
-                lines.append('tools/snippets python_build_android x86')
-            elif extra == 'android.pylibs.x86.debug':
-                lines.append('tools/snippets python_build_android_debug x86')
-            elif extra == 'android.pylibs.x86_64':
-                lines.append('tools/snippets python_build_android x86_64')
-            elif extra == 'android.pylibs.x86_64.debug':
-                lines.append(
-                    'tools/snippets python_build_android_debug x86_64')
-            elif extra == 'android.package':
-                lines.append('make android-package')
-            else:
-                raise RuntimeError(f'Unknown extra: {extra}')
-
-    with open('_fulltest_buildfile_android', 'w') as outfile:
-        outfile.write('\n'.join(lines))
+    import batools.build
+    batools.build.gen_fulltest_buildfile_android()
 
 
 def gen_fulltest_buildfile_windows() -> None:
@@ -187,46 +86,8 @@ def gen_fulltest_buildfile_windows() -> None:
 
     (so we see nice pretty split-up build trees)
     """
-    import datetime
-
-    dayoffset = datetime.datetime.now().timetuple().tm_yday
-
-    lines: List[str] = []
-
-    # We want to do one regular, one headless, and one oculus build,
-    # but let's switch up 32 or 64 bit based on the day.
-    # Also occasionally throw a release build in but stick to
-    # mostly debug builds to keep build times speedier.
-    pval1 = 'Win32' if dayoffset % 2 == 0 else 'x64'
-    pval2 = 'Win32' if (dayoffset + 1) % 2 == 0 else 'x64'
-    pval3 = 'Win32' if (dayoffset + 2) % 2 == 0 else 'x64'
-    cfg1 = 'Release' if dayoffset % 7 == 0 else 'Debug'
-    cfg2 = 'Release' if (dayoffset + 1) % 7 == 0 else 'Debug'
-    cfg3 = 'Release' if (dayoffset + 2) % 7 == 0 else 'Debug'
-
-    lines.append(f'WINDOWS_PROJECT= WINDOWS_PLATFORM={pval1} '
-                 f'WINDOWS_CONFIGURATION={cfg1} make windows-build')
-    lines.append(f'WINDOWS_PROJECT=Headless WINDOWS_PLATFORM={pval2} '
-                 f'WINDOWS_CONFIGURATION={cfg2} make windows-build')
-    lines.append(f'WINDOWS_PROJECT=Oculus WINDOWS_PLATFORM={pval3} '
-                 f'WINDOWS_CONFIGURATION={cfg3} make windows-build')
-
-    # Now add sparse tests that land on today.
-    if DO_SPARSE_TEST_BUILDS:
-        extras = SPARSE_TEST_BUILDS[dayoffset % len(SPARSE_TEST_BUILDS)]
-        extras = [e for e in extras if e.startswith('windows.')]
-        for extra in extras:
-            if extra == 'windows.package':
-                lines.append('make windows-package')
-            elif extra == 'windows.package.server':
-                lines.append('make windows-server-package')
-            elif extra == 'windows.package.oculus':
-                lines.append('make windows-oculus-package')
-            else:
-                raise RuntimeError(f'Unknown extra: {extra}')
-
-    with open('_fulltest_buildfile_windows', 'w') as outfile:
-        outfile.write('\n'.join(lines))
+    import batools.build
+    batools.build.gen_fulltest_buildfile_windows()
 
 
 def gen_fulltest_buildfile_apple() -> None:
@@ -234,65 +95,8 @@ def gen_fulltest_buildfile_apple() -> None:
 
     (so we see nice pretty split-up build trees)
     """
-    # pylint: disable=too-many-branches
-    import datetime
-
-    dayoffset = datetime.datetime.now().timetuple().tm_yday
-
-    # noinspection PyListCreation
-    lines = []
-
-    # iOS stuff
-    lines.append('nice -n 18 make ios-build')
-    lines.append('nice -n 18 make ios-new-build')
-    if DO_SPARSE_TEST_BUILDS:
-        extras = SPARSE_TEST_BUILDS[dayoffset % len(SPARSE_TEST_BUILDS)]
-        extras = [e for e in extras if e.startswith('ios.')]
-        for extra in extras:
-            if extra == 'ios.pylibs':
-                lines.append('tools/snippets python_build_apple ios')
-            elif extra == 'ios.pylibs.debug':
-                lines.append('tools/snippets python_build_apple_debug ios')
-            else:
-                raise RuntimeError(f'Unknown extra: {extra}')
-
-    # tvOS stuff
-    lines.append('nice -n 18 make tvos-build')
-    if DO_SPARSE_TEST_BUILDS:
-        extras = SPARSE_TEST_BUILDS[dayoffset % len(SPARSE_TEST_BUILDS)]
-        extras = [e for e in extras if e.startswith('tvos.')]
-        for extra in extras:
-            if extra == 'tvos.pylibs':
-                lines.append('tools/snippets python_build_apple tvos')
-            elif extra == 'tvos.pylibs.debug':
-                lines.append('tools/snippets python_build_apple_debug tvos')
-            else:
-                raise RuntimeError(f'Unknown extra: {extra}')
-
-    # macOS stuff
-    lines.append('nice -n 18 make mac-build')
-    # (throw release build in the mix to hopefully catch opt-mode-only errors).
-    lines.append('nice -n 18 make mac-appstore-release-build')
-    lines.append('nice -n 18 make mac-new-build')
-    lines.append('nice -n 18 make mac-server-build')
-    lines.append('nice -n 18 make cmake-build')
-    if DO_SPARSE_TEST_BUILDS:
-        extras = SPARSE_TEST_BUILDS[dayoffset % len(SPARSE_TEST_BUILDS)]
-        extras = [e for e in extras if e.startswith('mac.')]
-        for extra in extras:
-            if extra == 'mac.package':
-                lines.append('make mac-package')
-            elif extra == 'mac.package.server':
-                lines.append('make mac-server-package')
-            elif extra == 'mac.pylibs':
-                lines.append('tools/snippets python_build_apple mac')
-            elif extra == 'mac.pylibs.debug':
-                lines.append('tools/snippets python_build_apple_debug mac')
-            else:
-                raise RuntimeError(f'Unknown extra: {extra}')
-
-    with open('_fulltest_buildfile_apple', 'w') as outfile:
-        outfile.write('\n'.join(lines))
+    import batools.build
+    batools.build.gen_fulltest_buildfile_apple()
 
 
 def gen_fulltest_buildfile_linux() -> None:
@@ -300,29 +104,8 @@ def gen_fulltest_buildfile_linux() -> None:
 
     (so we see nice pretty split-up build trees)
     """
-    import datetime
-
-    dayoffset = datetime.datetime.now().timetuple().tm_yday
-
-    targets = ['build', 'server-build']
-    linflav = 'LINUX_FLAVOR=u18s'
-    lines = []
-    for target in targets:
-        lines.append(f'{linflav} make linux-{target}')
-
-    if DO_SPARSE_TEST_BUILDS:
-        extras = SPARSE_TEST_BUILDS[dayoffset % len(SPARSE_TEST_BUILDS)]
-        extras = [e for e in extras if e.startswith('linux.')]
-        for extra in extras:
-            if extra == 'linux.package':
-                lines.append(f'{linflav} make linux-package')
-            elif extra == 'linux.package.server':
-                lines.append(f'{linflav} make linux-server-package')
-            else:
-                raise RuntimeError(f'Unknown extra: {extra}')
-
-    with open('_fulltest_buildfile_linux', 'w') as outfile:
-        outfile.write('\n'.join(lines))
+    import batools.build
+    batools.build.gen_fulltest_buildfile_linux()
 
 
 def resize_image() -> None:
