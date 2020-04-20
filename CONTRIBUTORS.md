@@ -2,8 +2,7 @@
 (please add your name and info here if you have contributed to the project)
 
 ### Eric Froemling
-- Original author
-- BDFL (benevolent dictator for life).
+- Original BombSquad/Ballistica author and BDFL (benevolent dictator for life).
 
 ### Dmitry450
 - Modder

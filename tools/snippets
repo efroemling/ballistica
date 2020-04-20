@@ -34,7 +34,6 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import efrotools
@@ -540,6 +539,7 @@ def clean_orphaned_assets() -> None:
 
 def py_examine() -> None:
     """Run a python examination at a given point in a given file."""
+    from pathlib import Path
     if len(sys.argv) != 7:
         print('ERROR: expected 7 args')
         sys.exit(255)
@@ -567,6 +567,7 @@ def py_examine() -> None:
 
 def push_ipa() -> None:
     """Construct and push ios IPA for testing."""
+    from pathlib import Path
     from efrotools import ios
     root = Path(sys.argv[0], '../..').resolve()
     if len(sys.argv) != 3:
@@ -652,6 +653,7 @@ def get_modern_make() -> None:
 
 def warm_start_asset_build() -> None:
     """Prep asset builds to run faster."""
+    from pathlib import Path
     from efrotools import get_config
     public: bool = get_config(PROJROOT)['public']
 
@@ -876,73 +878,18 @@ def update_makebob() -> None:
     print('All builds complete!', flush=True)
 
 
-def _printpaths(inpaths: List[str], category: str,
-                target: Optional[str]) -> None:
-    allpaths: List[str] = []
-    for inpath in inpaths:
-        # Add files verbatim; recurse through dirs.
-        if os.path.isfile(inpath):
-            allpaths.append(inpath)
-            continue
-        for root, _dnames, fnames in os.walk(inpath):
-            # Always skip these..
-            if (root.startswith('src/generated_src')
-                    or root.startswith('src/tools')):
-                continue
-            # Skip some of these...
-            if root.startswith('src/external'):
-                if category == 'win' and root.startswith(
-                        'src/external/windows'):
-                    pass
-                else:
-                    continue
-            # Ignore python cache files.
-            if '__pycache__' in root:
-                continue
-            for fname in fnames:
-                # Ignore dot files
-                if fname.startswith('.'):
-                    continue
-                path = os.path.join(root, fname)
-                if ' ' in path:
-                    raise RuntimeError(f'Invalid path with space: {path}')
-                allpaths.append(path)
-    print(' '.join(allpaths))
-
-
-def sources() -> None:
-    """Print source files of different categories for use as Makefile deps.
-
-    These are used as broad, redundant filters for expensive build ops.
-    For instance, when running a build through a VM we might want to skip
-    even spinning up the VM if absolutely no source files have changed.
-
-    With a single category arg, all input files for that category are printed.
-    If a target filename is passed as a second arg, sources older than the
-    target may be withheld to speed up the Make process.
-    """
+def lazybuild() -> None:
+    """Testing."""
+    from batools.build import lazy_build, SourceCategory
+    if len(sys.argv) < 5:
+        raise CleanError('Expected at least 3 args')
     try:
-        if len(sys.argv) not in (3, 4):
-            raise CleanError('Expected one or two arguments.')
-        category = sys.argv[2]
-        target = sys.argv[3] if len(sys.argv) > 3 else None
-        if category == 'gen':
-            _printpaths(['tools', 'src/generated_src'], category, target)
-        elif category == 'assets':
-            _printpaths(['tools', 'assets/src'], category, target)
-        elif category in ('cmake', 'win'):
-            _printpaths(['tools', 'src'], category, target)
-        elif category == 'resources':
-            _printpaths(['tools', 'resources/src', 'resources/Makefile'],
-                        category, target)
-        else:
-            raise ValueError(f'Invalid source category: {category}')
-
-    except Exception as exc:
-        # We're used by ${shell} cmds in Makefiles so need to fail in a
-        # fashion that is noticeable there:
-        print(f'Error in sources snippet: {exc}', file=sys.stderr)
-        print('__nonexistent_error_output__')
+        category = SourceCategory(sys.argv[2])
+    except ValueError as exc:
+        raise CleanError(exc)
+    target = sys.argv[3]
+    cmd = ' '.join(sys.argv[4:])
+    lazy_build(target, category, cmd)
 
 
 if __name__ == '__main__':

@@ -28,23 +28,6 @@
 # Prefix used for output of docs/changelogs/etc targets for use in webpages.
 DOCPREFIX = "ballisticacore_"
 
-# This setup lets us set up files "bfiles" for expensive dummy targets
-# to avoid re-running them every time. An good use case is VM build targets
-# where just spinning up the VM to confirm that nothing needs rebuilding is
-# time-consuming. To use these, do the following:
-# - create a physical file for the target: ${BFILEDIR}/targetname
-#   (targets that are already physical files work too)
-# - add this dependency to it: ${shell ${BSOURCES} <category> $@}
-#   (where <category> covers all files that could affect the target)
-# - always touch the target file as the last build step:
-#   mkdir -p `dirname $@` && touch $@
-#   (even if the build step usually does; the build may not actually run
-#    which could leave one of the overly-broad dep files newer than it)
-# Note that this mechanism slows builds a bit if category contains a lot of
-# files, so is not always a win.
-BFILEDIR = .cache/bfile
-BSOURCES = tools/snippets sources
-
 
 ################################################################################
 #                                                                              #
@@ -73,47 +56,35 @@ assets: prereqs
 
 # Build assets required for cmake builds (linux, mac)
 assets-cmake: prereqs
-	@cd assets && $(MAKE) -j${CPUS} cmake
+	@cd assets && ${MAKE} -j${CPUS} cmake
 
 # Build assets required for WINDOWS_PLATFORM windows builds.
 assets-windows: prereqs
-	@cd assets && $(MAKE) -j${CPUS} win-${WINDOWS_PLATFORM}
+	@cd assets && ${MAKE} -j${CPUS} win-${WINDOWS_PLATFORM}
 
 # Build assets required for Win32 windows builds.
 assets-windows-Win32: prereqs
-	@cd assets && $(MAKE) -j${CPUS} win-Win32
+	@cd assets && ${MAKE} -j${CPUS} win-Win32
 
 # Build assets required for x64 windows builds.
 assets-windows-x64: prereqs
-	@cd assets && $(MAKE) -j${CPUS} win-x64
+	@cd assets && ${MAKE} -j${CPUS} win-x64
 
 # Build assets required for mac xcode builds
 assets-mac: prereqs
-	@cd assets && $(MAKE) -j${CPUS} mac
+	@cd assets && ${MAKE} -j${CPUS} mac
 
 # Build assets required for ios.
 assets-ios: prereqs
-	@cd assets && $(MAKE) -j${CPUS} ios
+	@cd assets && ${MAKE} -j${CPUS} ios
 
 # Build assets required for android.
 assets-android: prereqs
-	@cd assets && $(MAKE) -j${CPUS} android
+	@cd assets && ${MAKE} -j${CPUS} android
 
 # Clean all assets.
 assets-clean:
-	@cd assets && $(MAKE) clean
-
-# A bfile for the resources target so we don't always have to run it.
-RESOURCES_F = ${BFILEDIR}/resources
-${RESOURCES_F}: ${PREREQS} resources/Makefile ${shell ${BSOURCES} resources $@}
-	@cd resources && $(MAKE) -j${CPUS} resources
-	@mkdir -p `dirname $@` && touch $@
-
-# A bfile for the code target so we don't always have to run it.
-CODE_F = ${BFILEDIR}/code
-${CODE_F}: ${PREREQS} ${shell ${BSOURCES} gen $@}
-	@cd src/generated_src && $(MAKE) -j${CPUS} generated_code
-	@mkdir -p `dirname $@` && touch $@
+	@cd assets && ${MAKE} clean
 
 # Remove *ALL* files and directories that aren't managed by git
 # (except for a few things such as localconfig.json).
@@ -257,12 +228,12 @@ update-check: prereqs
 
 # Run formatting on all files in the project considered 'dirty'.
 format:
-	@$(MAKE) -j3 format-code format-scripts format-makefile
+	@${MAKE} -j3 format-code format-scripts format-makefile
 	@echo Formatting complete!
 
 # Same but always formats; ignores dirty state.
 format-full:
-	@$(MAKE) -j3 format-code-full format-scripts-full format-makefile
+	@${MAKE} -j3 format-code-full format-scripts-full format-makefile
 	@echo Formatting complete!
 
 # Run formatting for compiled code sources (.cc, .h, etc.).
@@ -297,22 +268,22 @@ format-makefile: prereqs
 
 # Run all project checks. (static analysis)
 check: update-check
-	@$(MAKE) -j3 cpplint pylint mypy
+	@${MAKE} -j3 cpplint pylint mypy
 	@echo ALL CHECKS PASSED!
 
 # Same as check but no caching (all files are checked).
 check-full: update-check
-	@$(MAKE) -j3 cpplint-full pylint-full mypy-full
+	@${MAKE} -j3 cpplint-full pylint-full mypy-full
 	@echo ALL CHECKS PASSED!
 
 # Same as 'check' plus optional/slow extra checks.
 check2: update-check
-	@$(MAKE) -j4 cpplint pylint mypy pycharm
+	@${MAKE} -j4 cpplint pylint mypy pycharm
 	@echo ALL CHECKS PASSED!
 
 # Same as check2 but no caching (all files are checked).
 check2-full: update-check
-	@$(MAKE) -j4 cpplint-full pylint-full mypy-full pycharm-full
+	@${MAKE} -j4 cpplint-full pylint-full mypy-full pycharm-full
 	@echo ALL CHECKS PASSED!
 
 # Run Cpplint checks on all C/C++ code.
@@ -391,30 +362,30 @@ test-assetmanager:
 
 # Format, update, check, & test the project. Do this before commits.
 preflight:
-	@$(MAKE) format
-	@$(MAKE) update
-	@$(MAKE) -j4 cpplint pylint mypy test
+	@${MAKE} format
+	@${MAKE} update
+	@${MAKE} -j4 cpplint pylint mypy test
 	@echo PREFLIGHT SUCCESSFUL!
 
 # Same as 'preflight' without caching (all files are visited).
 preflight-full:
-	@$(MAKE) format-full
-	@$(MAKE) update
-	@$(MAKE) -j4 cpplint-full pylint-full mypy-full test-full
+	@${MAKE} format-full
+	@${MAKE} update
+	@${MAKE} -j4 cpplint-full pylint-full mypy-full test-full
 	@echo PREFLIGHT SUCCESSFUL!
 
 # Same as 'preflight' plus optional/slow extra checks.
 preflight2:
-	@$(MAKE) format
-	@$(MAKE) update
-	@$(MAKE) -j5 cpplint pylint mypy pycharm test
+	@${MAKE} format
+	@${MAKE} update
+	@${MAKE} -j5 cpplint pylint mypy pycharm test
 	@echo PREFLIGHT SUCCESSFUL!
 
 # Same as 'preflight2' but without caching (all files visited).
 preflight2-full:
-	@$(MAKE) format-full
-	@$(MAKE) update
-	@$(MAKE) -j5 cpplint-full pylint-full mypy-full pycharm-full test-full
+	@${MAKE} format-full
+	@${MAKE} update
+	@${MAKE} -j5 cpplint-full pylint-full mypy-full pycharm-full test-full
 	@echo PREFLIGHT SUCCESSFUL!
 
 # Tell make which of these targets don't represent files.
@@ -434,7 +405,7 @@ PROJ_DIR = ${abspath ${CURDIR}}
 VERSION = $(shell tools/version_utils version)
 BUILD_NUMBER = $(shell tools/version_utils build)
 BUILD_DIR = ${PROJ_DIR}/build
-
+LAZYBUILDDIR = .cache/lazybuild
 STAGE_ASSETS = ${PROJ_DIR}/tools/stage_assets
 
 # Things to ignore when doing root level cleans.

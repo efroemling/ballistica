@@ -268,6 +268,7 @@
       <w>checkfast</w>
       <w>checkfull</w>
       <w>checkins</w>
+      <w>checkpaths</w>
       <w>checkroundover</w>
       <w>checksums</w>
       <w>childnode</w>
@@ -430,6 +431,7 @@
       <w>distros</w>
       <w>dline</w>
       <w>dlls</w>
+      <w>dmitry</w>
       <w>dmodule</w>
       <w>dmypy</w>
       <w>dname</w>
@@ -572,6 +574,7 @@
       <w>fcount</w>
       <w>fdata</w>
       <w>fdesc</w>
+      <w>fdict</w>
       <w>fecfc</w>
       <w>feedparser</w>
       <w>ffap</w>
@@ -658,6 +661,7 @@
       <w>fsrc</w>
       <w>fstab</w>
       <w>fstrs</w>
+      <w>ftime</w>
       <w>ftmp</w>
       <w>ftplib</w>
       <w>ftst</w>
@@ -924,6 +928,8 @@
       <w>lastpoweruptype</w>
       <w>laststand</w>
       <w>launchtest</w>
+      <w>lazybuild</w>
+      <w>lazybuilddir</w>
       <w>lbits</w>
       <w>lcfg</w>
       <w>lcolor</w>
@@ -1726,6 +1732,7 @@
       <w>testmock</w>
       <w>testobj</w>
       <w>testpatch</w>
+      <w>testpath</w>
       <w>testpt</w>
       <w>testsealable</w>
       <w>testsentinel</w>
@@ -1761,6 +1768,7 @@
       <w>tmpf</w>
       <w>tmppath</w>
       <w>tname</w>
+      <w>tnamepretty</w>
       <w>tnode</w>
       <w>tntspawner</w>
       <w>tntspawnpos</w>
@@ -1781,6 +1789,7 @@
       <w>tracemalloc</w>
       <w>trailcolor</w>
       <w>transtime</w>
+      <w>trapeznikov</w>
       <w>tref</w>
       <w>tret</w>
       <w>trophystr</w>

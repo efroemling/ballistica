@@ -47,7 +47,7 @@ if TYPE_CHECKING:
 
 CLRHDR = '\033[95m'  # Header.
 CLRGRN = '\033[92m'  # Green.
-CLRBLU = '\033[94m'  # Glue.
+CLRBLU = '\033[94m'  # Blue.
 CLRRED = '\033[91m'  # Red.
 CLREND = '\033[0m'  # End.
 

@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import os
 import subprocess
+import json
 from typing import TYPE_CHECKING
 from multiprocessing import cpu_count
 from concurrent.futures import ThreadPoolExecutor
@@ -52,6 +53,8 @@ STRIP_END_TAG = '#__EFROCACHE_STRIP_END__'
 CACHE_DIR_NAME = '.efrocache'
 CACHE_MAP_NAME = '.efrocachemap'
 
+UPLOAD_STATE_CACHE_FILE = '.cache/efrocache_upload_state'
+
 
 def get_file_hash(path: str) -> str:
     """Return the hash used for caching.
@@ -69,7 +72,6 @@ def get_file_hash(path: str) -> str:
 def get_target(path: str) -> None:
     """Fetch a target path from the cache, downloading if need be."""
 
-    import json
     from efrotools import run
     with open(CACHE_MAP_NAME) as infile:
         efrocachemap = json.loads(infile.read())
@@ -160,20 +162,18 @@ def filter_makefile(makefile_dir: str, contents: str) -> str:
 
 
 def update_cache(makefile_dirs: List[str]) -> None:
-    """Given a list of directories containing makefiles, update caches."""
+    """Given a list of directories containing Makefiles, update caches."""
 
     import multiprocessing
-    from efrotools import run
     cpus = multiprocessing.cpu_count()
     fnames1: List[str] = []
     fnames2: List[str] = []
-    fhashes1: Set[str] = set()
     for path in makefile_dirs:
         cdp = f'cd {path} && ' if path else ''
 
         # First, make sure all cache files are built.
         mfpath = os.path.join(path, 'Makefile')
-        print(f'Building cache targets for {mfpath}...')
+        print(f'Building efrocache targets for {CLRBLU}{mfpath}{CLREND}...')
         subprocess.run(f'{cdp}make -j{cpus} efrocache-build',
                        shell=True,
                        check=True)
@@ -196,18 +196,60 @@ def update_cache(makefile_dirs: List[str]) -> None:
 
             # The main reason for this cache is to reduce round trips to
             # the staging server for tiny files, so let's include small files
-            # only here. For larger stuff its ok to have a request per file.
+            # only here. For larger stuff its ok to have a request per file..
             if os.path.getsize(fullpath) < 100000:
                 fnames1.append(fullpath)
             else:
                 fnames2.append(fullpath)
 
-    # if bool(True):
-    #     print("1", fnames1)
-    #     print("2", fnames2)
-    #     print('SO FAR SO GOOD')
-    #     sys.exit(0)
+    # Ok, we've got 2 lists of filenames that we need to cache in the cloud.
+    # First, however, let's look up modtimes for everything and if everything
+    # is exactly the same as last time we can skip this step.
+    mtimes = _gen_modtimes(fnames1 + fnames2)
+    if os.path.isfile(UPLOAD_STATE_CACHE_FILE):
+        with open(UPLOAD_STATE_CACHE_FILE) as infile:
+            mtimes_existing = infile.read()
+    else:
+        mtimes_existing = ''
+    if mtimes == mtimes_existing:
+        print(
+            f'{CLRBLU}Efrocache state unchanged;'
+            f' skipping cache push.{CLREND}',
+            flush=True)
+    else:
+        _upload_cache(fnames1, fnames2, mtimes, mtimes_existing)
 
+    print(f'{CLRBLU}Efrocache update successful!{CLREND}')
+
+    # Write the cache state so we can skip the next run if nothing changes.
+    os.makedirs(os.path.dirname(UPLOAD_STATE_CACHE_FILE), exist_ok=True)
+    with open(UPLOAD_STATE_CACHE_FILE, 'w') as outfile:
+        outfile.write(mtimes)
+
+
+def _upload_cache(fnames1: List[str], fnames2: List[str], mtimes_str: str,
+                  mtimes_existing_str: str) -> None:
+    from efrotools import run
+
+    # First, if we've run before, print the files causing us to re-run:
+    if mtimes_existing_str != '':
+        changed_files: Set[str] = set()
+        mtimes = json.loads(mtimes_str)
+        mtimes_existing = json.loads(mtimes_existing_str)
+        for fname, ftime in mtimes.items():
+            if ftime != mtimes_existing.get(fname, ''):
+                changed_files.add(fname)
+
+        # We've covered modifications and additions; add deletions:
+        for fname in mtimes_existing:
+            if fname not in mtimes:
+                changed_files.add(fname)
+        print(f'{CLRBLU}Updating cache with'
+              f' {len(changed_files)} changes:{CLREND}')
+        for fname in sorted(changed_files):
+            print(f'  {CLRBLU}{fname}{CLREND}')
+
+    # Now do the thing.
     staging_dir = 'build/efrocache'
     mapping_file = 'build/efrocachemap'
     run(f'rm -rf {staging_dir}')
@@ -215,11 +257,11 @@ def update_cache(makefile_dirs: List[str]) -> None:
 
     _write_cache_files(fnames1, fnames2, staging_dir, mapping_file)
 
-    print(f"Starter cache includes {len(fnames1)} items;"
-          f" excludes {len(fnames2)}")
+    print(f"{CLRBLU}Starter cache includes {len(fnames1)} items;"
+          f" excludes {len(fnames2)}{CLREND}")
 
     # Sync all individual cache files to the staging server.
-    print('Pushing cache to staging...', flush=True)
+    print(f'{CLRBLU}Pushing cache to staging...{CLREND}', flush=True)
     run('rsync --progress --recursive build/efrocache/'
         ' ubuntu@ballistica.net:files.ballistica.net/cache/ba1/')
 
@@ -227,14 +269,18 @@ def update_cache(makefile_dirs: List[str]) -> None:
     run('ssh -oBatchMode=yes -oStrictHostKeyChecking=yes ubuntu@ballistica.net'
         ' "cd files.ballistica.net/cache/ba1 && python3 genstartercache.py"')
 
-    print(f'Cache update successful!')
+
+def _gen_modtimes(fnames: List[str]) -> str:
+    fdict: Dict[str, float] = {}
+    for fname in fnames:
+        fdict[fname] = os.path.getmtime(fname)
+    return json.dumps(fdict, separators=(',', ':'))
 
 
 def _write_cache_files(fnames1: List[str], fnames2: List[str],
                        staging_dir: str, mapping_file: str) -> None:
     fhashes1: Set[str] = set()
     import functools
-    import json
     mapping: Dict[str, str] = {}
     call = functools.partial(_write_cache_file, staging_dir)
 
@@ -299,8 +345,8 @@ def _write_cache_file(staging_dir: str, fname: str) -> Tuple[str, str]:
     path = os.path.join(staging_dir, hashpath)
     os.makedirs(os.path.dirname(path), exist_ok=True)
 
-    # Fancy pipe stuff which will give us deterministic
-    # tar.gz files (no embedded timestamps)
+    # Fancy pipe stuff which will give us deterministic tar.gz files
+    # with no embedded timestamps.
     # Note: The 'COPYFILE_DISABLE' prevents mac tar from adding
     # file attributes/resource-forks to the archive as as ._filename.
     run(f'COPYFILE_DISABLE=1 tar cf - {fname} | gzip -n > {path}')
@@ -330,7 +376,6 @@ def _check_warm_start_entries(entries: List[Tuple[str, str]]) -> None:
 
 def warm_start_cache() -> None:
     """Run a pre-pass on the efrocache to improve efficiency."""
-    import json
     from efrotools import run
 
     # We maintain a starter-cache on the staging server, which
