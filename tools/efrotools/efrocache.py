@@ -277,7 +277,7 @@ def _gen_hashes(fnames: List[str]) -> str:
         md5 = hashlib.md5()
         with open(fname, mode='rb') as infile:
             md5.update(infile.read())
-        return (fname, md5.hexdigest())
+        return fname, md5.hexdigest()
 
     # Now use all procs to hash the files efficiently.
     with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
