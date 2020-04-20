@@ -244,7 +244,7 @@ def _upload_cache(fnames1: List[str], fnames2: List[str], hashes_str: str,
         for fname in hashes_existing:
             if fname not in hashes:
                 changed_files.add(fname)
-        print(f'{CLRBLU}Updating cache with'
+        print(f'{CLRBLU}Updating efrocache due to'
               f' {len(changed_files)} changes:{CLREND}')
         for fname in sorted(changed_files):
             print(f'  {CLRBLU}{fname}{CLREND}')
@@ -271,10 +271,19 @@ def _upload_cache(fnames1: List[str], fnames2: List[str], hashes_str: str,
 
 
 def _gen_hashes(fnames: List[str]) -> str:
-    fdict: Dict[str, str] = {}
-    for fname in fnames:
-        fdict[fname] = str(os.path.getmtime(fname))
-    return json.dumps(fdict, separators=(',', ':'))
+    import hashlib
+
+    def _get_file_hash(fname: str) -> Tuple[str, str]:
+        md5 = hashlib.md5()
+        with open(fname, mode='rb') as infile:
+            md5.update(infile.read())
+        return (fname, md5.hexdigest())
+
+    # Now use all procs to hash the files efficiently.
+    with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
+        hashes = dict(executor.map(_get_file_hash, fnames))
+
+    return json.dumps(hashes, separators=(',', ':'))
 
 
 def _write_cache_files(fnames1: List[str], fnames2: List[str],
