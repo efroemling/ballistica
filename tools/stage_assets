@@ -174,7 +174,7 @@ def md5sum(filename: str) -> str:
     """Generate an md5sum given a filename."""
     md5 = hashlib.md5()
     with open(filename, mode='rb') as infile:
-        for buf in iter(partial(infile.read, 128), b''):
+        for buf in iter(partial(infile.read, 1024), b''):
             md5.update(buf)
     return md5.hexdigest()
 
