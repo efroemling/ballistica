@@ -466,7 +466,7 @@ def make_prefab(target: PrefabTarget) -> None:
     else:
         raise RuntimeError(f'Invalid target: {target}')
 
-    run(f'make {target}')
+    run(f'make {mtarget}')
 
 
 def _vstr(nums: Sequence[int]) -> str:
