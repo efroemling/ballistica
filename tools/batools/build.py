@@ -167,18 +167,20 @@ def lazy_build(target: str, category: SourceCategory, command: str) -> None:
     paths: List[str]
     if category is SourceCategory.CODE_GEN:
         # Everything possibly affecting generated code.
-        paths = ['tools/generate_code', 'src/generated_src']
+        paths = ['Makefile', 'tools/generate_code', 'src/generated_src']
     elif category is SourceCategory.ASSETS:
-        paths = ['tools/convert_util', 'assets/src']
+        paths = ['Makefile', 'tools/convert_util', 'assets/src']
     elif category is SourceCategory.CMAKE:
         # Everything possibly affecting CMake builds.
-        paths = ['src', 'ballisticacore-cmake/CMakeLists.txt']
+        paths = ['Makefile', 'src', 'ballisticacore-cmake/CMakeLists.txt']
     elif category is SourceCategory.WIN:
         # Everything possibly affecting Windows binary builds.
-        paths = ['src', 'resources/src']
+        paths = ['Makefile', 'src', 'resources/src']
     elif category is SourceCategory.RESOURCES:
         # Everything possibly affecting resources builds.
-        paths = ['resources/src', 'resources/Makefile']
+        paths = [
+            'Makefile', 'tools/snippets', 'resources/src', 'resources/Makefile'
+        ]
     else:
         raise ValueError(f'Invalid source category: {category}')
 
