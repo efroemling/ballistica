@@ -151,6 +151,26 @@ prefab-mac-release-build: prereqs assets-cmake \
 build/prefab/mac/release/ballisticacore: .efrocachemap
 	@tools/snippets efrocache_get $@
 
+prefab-mac-server-debug: prefab-mac-server-debug-build
+	@cd build/prefab/mac-server/debug && ./ballisticacore_server
+
+prefab-mac-server-debug-build: prereqs assets-cmake \
+ build/prefab/mac-server/debug/dist/ballisticacore_headless \
+ build/prefab/mac-server/debug/ballisticacore_server \
+ build/prefab/mac-server/debug/config_template.yaml
+	@${STAGE_ASSETS} -cmake-server build/prefab/mac-server/debug/dist
+
+build/prefab/mac-server/debug/ballisticacore_server: \
+ assets/src/server/server.py
+	cp $< $@
+
+build/prefab/mac-server/debug/config_template.yaml: \
+ assets/src/server/config.yaml
+	cp $< $@
+
+build/prefab/mac-server/debug/dist/ballisticacore_headless: .efrocachemap
+	@tools/snippets efrocache_get $@
+
 prefab-linux-debug: prefab-linux-debug-build
 	@cd build/prefab/linux/debug && ./ballisticacore
 

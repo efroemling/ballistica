@@ -143,7 +143,6 @@ ASSET_TARGETS_WIN_X64 += $(EXTRAS_TARGETS_WIN_X64)
 
 SCRIPT_TARGETS_PY_1 = \
   build/server/server.py \
-  build/server/config.py \
   build/ba_data/python/efro/executils.py \
   build/ba_data/python/efro/util.py \
   build/ba_data/python/efro/__init__.py \
@@ -382,7 +381,6 @@ SCRIPT_TARGETS_PY_1 = \
 
 SCRIPT_TARGETS_PYC_1 = \
   build/server/__pycache__/server.cpython-37.opt-1.pyc \
-  build/server/__pycache__/config.cpython-37.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/executils.cpython-37.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/util.cpython-37.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/__init__.cpython-37.opt-1.pyc \
@@ -634,11 +632,6 @@ $(SCRIPT_TARGETS_PY_1) : build/%.py : src/%.py
 
 build/server/__pycache__/server.cpython-37.opt-1.pyc: \
       build/server/server.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/server/__pycache__/config.cpython-37.opt-1.pyc: \
-      build/server/config.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 

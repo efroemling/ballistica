@@ -151,7 +151,6 @@ class Config:
             self.include_textures = False
             self.include_audio = False
             self.include_models = False
-
         elif '-xcode-mac' in sys.argv:
             self.src = os.environ['SOURCE_ROOT'] + '/assets/build'
             self.dst = (os.environ['TARGET_BUILD_DIR'] + '/' +
