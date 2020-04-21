@@ -187,6 +187,26 @@ build/prefab/mac-server/debug/config_template.yaml: \
 build/prefab/mac-server/debug/dist/ballisticacore_headless: .efrocachemap
 	@tools/snippets efrocache_get $@
 
+prefab-mac-server-release: prefab-mac-server-release-build
+	@cd build/prefab/mac-server/release && ./ballisticacore_server
+
+prefab-mac-server-release-build: prereqs assets-cmake \
+ build/prefab/mac-server/release/dist/ballisticacore_headless \
+ build/prefab/mac-server/release/ballisticacore_server \
+ build/prefab/mac-server/release/config_template.yaml
+	@${STAGE_ASSETS} -cmake-server build/prefab/mac-server/release/dist
+
+build/prefab/mac-server/release/ballisticacore_server: \
+ assets/src/server/server.py
+	cp $< $@
+
+build/prefab/mac-server/release/config_template.yaml: \
+ assets/src/server/config.yaml
+	cp $< $@
+
+build/prefab/mac-server/release/dist/ballisticacore_headless: .efrocachemap
+	@tools/snippets efrocache_get $@
+
 prefab-linux-debug: prefab-linux-debug-build
 	@cd build/prefab/linux/debug && ./ballisticacore
 
@@ -205,6 +225,46 @@ prefab-linux-release-build: prereqs assets-cmake \
 	@${STAGE_ASSETS} -cmake build/prefab/linux/release
 
 build/prefab/linux/release/ballisticacore: .efrocachemap
+	@tools/snippets efrocache_get $@
+
+prefab-linux-server-debug: prefab-linux-server-debug-build
+	@cd build/prefab/linux-server/debug && ./ballisticacore_server
+
+prefab-linux-server-debug-build: prereqs assets-cmake \
+ build/prefab/linux-server/debug/dist/ballisticacore_headless \
+ build/prefab/linux-server/debug/ballisticacore_server \
+ build/prefab/linux-server/debug/config_template.yaml
+	@${STAGE_ASSETS} -cmake-server build/prefab/linux-server/debug/dist
+
+build/prefab/linux-server/debug/ballisticacore_server: \
+ assets/src/server/server.py
+	cp $< $@
+
+build/prefab/linux-server/debug/config_template.yaml: \
+ assets/src/server/config.yaml
+	cp $< $@
+
+build/prefab/linux-server/debug/dist/ballisticacore_headless: .efrocachemap
+	@tools/snippets efrocache_get $@
+
+prefab-linux-server-release: prefab-linux-server-release-build
+	@cd build/prefab/linux-server/release && ./ballisticacore_server
+
+prefab-linux-server-release-build: prereqs assets-cmake \
+ build/prefab/linux-server/release/dist/ballisticacore_headless \
+ build/prefab/linux-server/release/ballisticacore_server \
+ build/prefab/linux-server/release/config_template.yaml
+	@${STAGE_ASSETS} -cmake-server build/prefab/linux-server/release/dist
+
+build/prefab/linux-server/release/ballisticacore_server: \
+ assets/src/server/server.py
+	cp $< $@
+
+build/prefab/linux-server/release/config_template.yaml: \
+ assets/src/server/config.yaml
+	cp $< $@
+
+build/prefab/linux-server/release/dist/ballisticacore_headless: .efrocachemap
 	@tools/snippets efrocache_get $@
 
 PREFAB_WINDOWS_PLATFORM = x64
