@@ -534,7 +534,12 @@ def make_prefab() -> None:
     if len(sys.argv) != 3:
         raise RuntimeError('Expected one argument')
     target = batools.build.PrefabTarget(sys.argv[2])
-    batools.build.make_prefab(target)
+    try:
+        batools.build.make_prefab(target)
+    except (Exception, KeyboardInterrupt) as exc:
+        if str(exc):
+            print(f'make_prefab failed with error: {exc}')
+        sys.exit(-1)
 
 
 def update_makebob() -> None:

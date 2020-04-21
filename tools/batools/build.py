@@ -85,8 +85,12 @@ class PrefabTarget(Enum):
     """Types of prefab builds able to be run."""
     DEBUG = 'debug'
     DEBUG_BUILD = 'debug-build'
+    SERVER_DEBUG = 'server-debug'
+    SERVER_DEBUG_BUILD = 'server-debug-build'
     RELEASE = 'release'
     RELEASE_BUILD = 'release-build'
+    SERVER_RELEASE = 'server-release'
+    SERVER_RELEASE_BUILD = 'server-release-build'
 
 
 def _checkpaths(inpaths: List[str], category: SourceCategory,
@@ -455,18 +459,7 @@ def make_prefab(target: PrefabTarget) -> None:
         raise RuntimeError(f'make_prefab: unrecognized platform:'
                            f' {platform.system()}.')
 
-    if target is PrefabTarget.DEBUG:
-        mtarget = f'prefab-{base}-debug'
-    elif target is PrefabTarget.DEBUG_BUILD:
-        mtarget = f'prefab-{base}-debug-build'
-    elif target is PrefabTarget.RELEASE:
-        mtarget = f'prefab-{base}-release'
-    elif target is PrefabTarget.RELEASE_BUILD:
-        mtarget = f'prefab-{base}-release-build'
-    else:
-        raise RuntimeError(f'Invalid target: {target}')
-
-    run(f'make {mtarget}')
+    run(f'make prefab-{base}-{target.value}')
 
 
 def _vstr(nums: Sequence[int]) -> str:

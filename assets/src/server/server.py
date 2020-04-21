@@ -225,7 +225,7 @@ def _run_server_cycle(binary_path: str, config: Dict[str, Any],
     # If we hit ANY Exceptions (including KeyboardInterrupt) we want to kill
     # the server binary, so we need to catch BaseException.
     except BaseException:
-        print("Killing server binary...")
+        print("Stopping server...")
 
         # First, ask it nicely to die and give it a moment.
         # If that doesn't work, bring down the hammer.
@@ -234,7 +234,7 @@ def _run_server_cycle(binary_path: str, config: Dict[str, Any],
             process.wait(timeout=10)
         except subprocess.TimeoutExpired:
             process.kill()
-        print("Server binary's dead, Jim.")
+        print("Server stopped.")
         raise
 
 
@@ -245,23 +245,23 @@ def main() -> None:
     the game binary to keep things fresh.
     """
 
-    # We expect to be running from the dir where this script lives.
-    script_dir = os.path.dirname(sys.argv[0])
-    if script_dir != '':
-        os.chdir(script_dir)
+    # We want to actually run from the 'dist' subdir.
+    if not os.path.isdir('dist'):
+        raise RuntimeError('"dist" directory not found.')
+    os.chdir('dist')
 
-    config_path = './config.py'
+    config_path = '../config.yaml'
     binary_path = None
     if os.name == 'nt':
-        test_paths = 'bs_headless.exe', 'BallisticaCore.exe'
+        test_paths = ['ballisticacore_headless.exe']
     else:
-        test_paths = './bs_headless', './ballisticacore'
+        test_paths = ['./ballisticacore_headless']
     for path in test_paths:
         if os.path.exists(path):
             binary_path = path
             break
     if binary_path is None:
-        raise Exception('Unable to locate bs_headless binary.')
+        raise RuntimeError('Unable to locate ballisticacore_headless binary.')
 
     config = _get_default_config()
 
@@ -278,10 +278,10 @@ def main() -> None:
     # Print a little spiel in interactive mode (make sure we do this before our
     # thread reads stdin).
     if sys.stdin.isatty():
-        print("ballisticacore server wrapper starting up...\n"
-              "tip: enter python commands via stdin to "
-              "reconfigure the server on the fly:\n"
-              "example: config['party_name'] = 'New Party Name'")
+        print("BallisticaCore server wrapper starting up...")
+        # "tip: enter python commands via stdin to "
+        # "reconfigure the server on the fly:\n"
+        # "example: config['party_name'] = 'New Party Name'")
 
     class InputThread(threading.Thread):
         """A thread that just sits around waiting for input from stdin."""
@@ -289,7 +289,6 @@ def main() -> None:
         def run(self) -> None:
             while True:
                 line = sys.stdin.readline()
-                print('GOT LINE', line)
                 input_commands.append(line.strip())
 
     thread = InputThread()
@@ -309,7 +308,8 @@ def main() -> None:
     del __builtins__.exit
     del __builtins__.quit
 
-    # Sleep for a moment to allow initial stdin data to get through.
+    # Sleep for a moment to allow initial stdin data to get through
+    # (since it is being read in another thread).
     time.sleep(0.25)
 
     # Restart indefinitely until we're told not to.
@@ -318,4 +318,7 @@ def main() -> None:
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        sys.exit(-1)
