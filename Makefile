@@ -113,21 +113,37 @@ clean-list:
 
 # Prebuilt binaries for various platforms.
 
-# Download/assemble/run a debug build for this platform.
+# Assemble/run a debug build for this platform.
 prefab-debug:
 	@tools/snippets make_prefab debug
 
-# Download/assemble/run a release build for this platform.
+# Assemble/run a release build for this platform.
 prefab-release:
 	@tools/snippets make_prefab release
 
-# Download/assemble a debug build for this platform.
+# Assemble a debug build for this platform.
 prefab-debug-build:
 	@tools/snippets make_prefab debug-build
 
-# Download/assemble a release build for this platform.
+# Assemble a release build for this platform.
 prefab-release-build:
 	@tools/snippets make_prefab release-build
+
+# Assemble/run a server debug build for this platform.
+prefab-server-debug:
+	@tools/snippets make_prefab server-debug
+
+# Assemble/run a server release build for this platform.
+prefab-server-release:
+	@tools/snippets make_prefab server-release
+
+# Assemble a server debug build for this platform.
+prefab-server-debug-build:
+	@tools/snippets make_prefab server-debug-build
+
+# Assemble a server release build for this platform.
+prefab-server-release-build:
+	@tools/snippets make_prefab server-release-build
 
 # Specific platform prefab targets:
 
