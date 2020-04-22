@@ -84,13 +84,9 @@ class SourceCategory(Enum):
 class PrefabTarget(Enum):
     """Types of prefab builds able to be run."""
     DEBUG = 'debug'
-    DEBUG_BUILD = 'debug-build'
     SERVER_DEBUG = 'server-debug'
-    SERVER_DEBUG_BUILD = 'server-debug-build'
     RELEASE = 'release'
-    RELEASE_BUILD = 'release-build'
     SERVER_RELEASE = 'server-release'
-    SERVER_RELEASE_BUILD = 'server-release-build'
 
 
 def _checkpaths(inpaths: List[str], category: SourceCategory,
@@ -463,7 +459,7 @@ def make_prefab(target: PrefabTarget) -> None:
     """Make a prefab build for the current platform."""
     from efrotools import run
     platform = get_current_prefab_platform()
-    run(f'make prefab-{platform}-{target.value}')
+    run(f'make prefab-{platform}-{target.value}-build')
 
 
 def _vstr(nums: Sequence[int]) -> str:

@@ -123,27 +123,27 @@ prefab-release: prefab-release-build
 
 # Assemble a debug build for this platform.
 prefab-debug-build:
-	@tools/snippets make_prefab debug-build
+	@tools/snippets make_prefab debug
 
 # Assemble a release build for this platform.
 prefab-release-build:
-	@tools/snippets make_prefab release-build
+	@tools/snippets make_prefab release
 
 # Assemble/run a server debug build for this platform.
 prefab-server-debug: prefab-server-debug-build
 	${${shell tools/snippets prefab_run_var server-debug}}
 
 # Assemble/run a server release build for this platform.
-prefab-server-release:
-	@tools/snippets make_prefab server-release
+prefab-server-release: prefab-server-release-build
+	${${shell tools/snippets prefab_run_var server-release}}
 
 # Assemble a server debug build for this platform.
 prefab-server-debug-build:
-	@tools/snippets make_prefab server-debug-build
+	@tools/snippets make_prefab server-debug
 
 # Assemble a server release build for this platform.
 prefab-server-release-build:
-	@tools/snippets make_prefab server-release-build
+	@tools/snippets make_prefab server-release
 
 # Specific platform prefab targets:
 
