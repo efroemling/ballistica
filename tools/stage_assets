@@ -221,7 +221,7 @@ def _write_payload_file(assets_root: str, full: bool) -> None:
         pass
 
 
-def _sync_windows_extras(cfg: Config) -> str:
+def _sync_windows_extras(cfg: Config) -> None:
     assert cfg.win_extras_src is not None
     if not os.path.isdir(cfg.win_extras_src):
         raise Exception('win extras src dir not found: ' + cfg.win_extras_src)
@@ -258,11 +258,8 @@ def _sync_windows_extras(cfg: Config) -> str:
     # unless they're marked executable, so do that here.
     _run(f'chmod +x {cfg.dst}/*.exe')
 
-    # We may want to add some site-packages on top; say where they should go.
-    return 'Lib'
 
-
-def _sync_pylib(cfg: Config) -> str:
+def _sync_pylib(cfg: Config) -> None:
     assert cfg.pylib_src_name is not None
     assert cfg.dst is not None
     _run(f'mkdir -p "{cfg.dst}/pylib"')
@@ -273,9 +270,6 @@ def _sync_pylib(cfg: Config) -> str:
            f" \"{cfg.src}/{cfg.pylib_src_name}/\" "
            f"\"{cfg.dst}/pylib/\"")
     _run(cmd)
-
-    # We may want to add some site-packages on top; say where they should go.
-    return 'pylib'
 
 
 def main() -> None:
@@ -291,27 +285,14 @@ def main() -> None:
     # we no longer have to try to preserve timestamps to get .pyc files
     # to behave (hooray!)
 
-    site_packages_target: Optional[str] = None
-
     # Do our stripped down pylib dir for platforms that use that.
     if cfg.include_pylib:
-        site_packages_target = _sync_pylib(cfg)
+        _sync_pylib(cfg)
 
     # On windows we need to pull in some dlls and this and that
     # (we also include a non-stripped-down set of python libs).
     if cfg.win_extras_src is not None:
-        site_packages_target = _sync_windows_extras(cfg)
-
-    # Lastly, drop our site-packages into the python sys dir if desired.
-    # Ideally we should have a separate directory for these, but
-    # there's so few of them that this is simpler at the moment..
-    if site_packages_target is not None:
-        cmd = (f"rsync --recursive "
-               f" --include '*.py' --include '*.{OPT_PYC_SUFFIX}'"
-               f" --include '*/' --exclude '*'"
-               f" \"{cfg.src}/pylib-site-packages/\" "
-               f"\"{cfg.dst}/{site_packages_target}/\"")
-        _run(cmd)
+        _sync_windows_extras(cfg)
 
     # Now standard common game data.
     assert cfg.dst is not None

@@ -437,7 +437,8 @@ def get_current_prefab_platform() -> str:
     system = platform.system()
     machine = platform.machine()
     if system == 'Darwin':
-        # Currently there's just x86_64 on mac; will need to revisit when arm
+        # Currently there's just x86_64 on mac;
+        # will need to revisit when arm
         # cpus happen.
         return 'mac'
     if system == 'Linux':
@@ -453,13 +454,6 @@ def get_current_prefab_platform() -> str:
                            f' {machine}.')
     raise RuntimeError(f'make_prefab: unrecognized platform:'
                        f' {platform.system()}.')
-
-
-def make_prefab(target: PrefabTarget) -> None:
-    """Make a prefab build for the current platform."""
-    from efrotools import run
-    platform = get_current_prefab_platform()
-    run(f'make prefab-{platform}-{target.value}-build')
 
 
 def _vstr(nums: Sequence[int]) -> str:

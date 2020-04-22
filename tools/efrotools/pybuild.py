@@ -425,19 +425,6 @@ def gather() -> None:
     for existing_dir in existing_dirs:
         efrotools.run('rm -rf "' + existing_dir + '"')
 
-    # Build our set of site-packages that we'll bundle in addition
-    # to the base system.
-    # FIXME: Should we perhaps make this part more explicit?..
-    #  we might get unexpected changes sneaking if we're just
-    #  pulling from installed python. But then again, anytime we're doing
-    #  a new python build/gather we should expect *some* changes even if
-    #  only at the build-system level since we pull some of that directly
-    #  from latest git stuff.
-    efrotools.run('mkdir -p "assets/src/pylib-site-packages"')
-    efrotools.run('cp "/usr/local/lib/python' + PYTHON_VERSION_MAJOR +
-                  '/site-packages/typing_extensions.py"'
-                  ' "assets/src/pylib-site-packages/"')
-
     for buildtype in ['debug', 'release']:
         debug = buildtype == 'debug'
         bsuffix = '_debug' if buildtype == 'debug' else ''

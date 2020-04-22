@@ -37,7 +37,7 @@ def get_human_readable_user_scripts_path() -> str:
     """
     from ba import _lang
     app = _ba.app
-    path: Optional[str] = app.user_scripts_directory
+    path: Optional[str] = app.python_directory_user
     if path is None:
         return '<Not Available>'
 
@@ -48,10 +48,10 @@ def get_human_readable_user_scripts_path() -> str:
         ext_storage_path: Optional[str] = (
             _ba.android_get_external_storage_path())
         if (ext_storage_path is not None
-                and app.user_scripts_directory.startswith(ext_storage_path)):
+                and app.python_directory_user.startswith(ext_storage_path)):
             path = ('<' +
                     _lang.Lstr(resource='externalStorageText').evaluate() +
-                    '>' + app.user_scripts_directory[len(ext_storage_path):])
+                    '>' + app.python_directory_user[len(ext_storage_path):])
     return path
 
 
@@ -70,8 +70,8 @@ def show_user_scripts() -> None:
         return
 
     # Secondly, if the dir doesn't exist, attempt to make it.
-    if not os.path.exists(app.user_scripts_directory):
-        os.makedirs(app.user_scripts_directory)
+    if not os.path.exists(app.python_directory_user):
+        os.makedirs(app.python_directory_user)
 
     # On android, attempt to write a file in their user-scripts dir telling
     # them about modding. This also has the side-effect of allowing us to
@@ -81,7 +81,7 @@ def show_user_scripts() -> None:
     # they can see it.
     if app.platform == 'android':
         try:
-            usd: Optional[str] = app.user_scripts_directory
+            usd: Optional[str] = app.python_directory_user
             if usd is not None and os.path.isdir(usd):
                 file_name = usd + '/about_this_folder.txt'
                 with open(file_name, 'w') as outfile:
@@ -95,7 +95,7 @@ def show_user_scripts() -> None:
 
     # On a few platforms we try to open the dir in the UI.
     if app.platform in ['mac', 'windows']:
-        _ba.open_dir_externally(app.user_scripts_directory)
+        _ba.open_dir_externally(app.python_directory_user)
 
     # Otherwise we just print a pretty version of it.
     else:
@@ -109,7 +109,7 @@ def create_user_system_scripts() -> None:
     """
     app = _ba.app
     import shutil
-    path = (app.user_scripts_directory + '/sys/' + app.version)
+    path = (app.python_directory_user + '/sys/' + app.version)
     if os.path.exists(path):
         shutil.rmtree(path)
     if os.path.exists(path + "_tmp"):
@@ -118,9 +118,10 @@ def create_user_system_scripts() -> None:
 
     # Hmm; shutil.copytree doesn't seem to work nicely on android,
     # so lets do it manually.
-    src_dir = app.system_scripts_directory
+    # NOTE: Should retry this now that we have 3.7 (this note was for 2.7)
+    src_dir = app.python_directory_ba
     dst_dir = path + "_tmp"
-    filenames = os.listdir(app.system_scripts_directory)
+    filenames = os.listdir(app.python_directory_ba)
     for fname in filenames:
         print('COPYING', src_dir + '/' + fname, '->', dst_dir)
         shutil.copyfile(src_dir + '/' + fname, dst_dir + '/' + fname)
@@ -140,7 +141,7 @@ def delete_user_system_scripts() -> None:
     """Clean out the scripts created by create_user_system_scripts()."""
     import shutil
     app = _ba.app
-    path = (app.user_scripts_directory + '/sys/' + app.version)
+    path = (app.python_directory_user + '/sys/' + app.version)
     if os.path.exists(path):
         shutil.rmtree(path)
         print(
@@ -150,6 +151,6 @@ def delete_user_system_scripts() -> None:
         print('User system scripts not found.')
 
     # If the sys path is empty, kill it.
-    dpath = app.user_scripts_directory + '/sys'
+    dpath = app.python_directory_user + '/sys'
     if os.path.isdir(dpath) and not os.listdir(dpath):
         os.rmdir(dpath)

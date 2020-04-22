@@ -56,7 +56,7 @@ def start_scan() -> None:
     app = _ba.app
     if app.metascan is not None:
         print('WARNING: meta scan run more than once.')
-    scriptdirs = [app.system_scripts_directory, app.user_scripts_directory]
+    scriptdirs = [app.python_directory_ba, app.python_directory_user]
     thread = ScanThread(scriptdirs)
     thread.start()
 

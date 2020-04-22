@@ -180,14 +180,19 @@ class App:
         return self._test_build
 
     @property
-    def user_scripts_directory(self) -> str:
-        """Path where the game is looking for custom user scripts."""
-        return self._user_scripts_directory
+    def python_directory_user(self) -> str:
+        """Path where the app looks for custom user scripts."""
+        return self._python_directory_user
 
     @property
-    def system_scripts_directory(self) -> str:
-        """Path where the game is looking for its bundled scripts."""
-        return self._system_scripts_directory
+    def python_directory_ba(self) -> str:
+        """Path where the app looks for its bundled scripts."""
+        return self._python_directory_ba
+
+    @property
+    def python_directory_site(self) -> str:
+        """Path containing pip packages bundled with the app."""
+        return self._python_directory_site
 
     @property
     def config(self) -> ba.AppConfig:
@@ -293,10 +298,12 @@ class App:
         assert isinstance(self._debug_build, bool)
         self._test_build: bool = env['test_build']
         assert isinstance(self._test_build, bool)
-        self._user_scripts_directory: str = env['user_scripts_directory']
-        assert isinstance(self._user_scripts_directory, str)
-        self._system_scripts_directory: str = env['system_scripts_directory']
-        assert isinstance(self._system_scripts_directory, str)
+        self._python_directory_user: str = env['python_directory_user']
+        assert isinstance(self._python_directory_user, str)
+        self._python_directory_ba: str = env['python_directory_ba']
+        assert isinstance(self._python_directory_ba, str)
+        self._python_directory_site: str = env['python_directory_site']
+        assert isinstance(self._python_directory_site, str)
         self._platform: str = env['platform']
         assert isinstance(self._platform, str)
         self._subplatform: str = env['subplatform']
@@ -541,7 +548,7 @@ class App:
         # Notify the user if we're using custom system scripts.
         # FIXME: This no longer works since sys-scripts is an absolute path;
         #  need to just add a proper call to query this.
-        # if env['system_scripts_directory'] != 'data/scripts':
+        # if env['python_directory_ba'] != 'data/scripts':
         #     ba.screenmessage("Using custom system scripts...",
         #                     color=(0, 1, 0))
 

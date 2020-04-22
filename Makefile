@@ -113,11 +113,11 @@ clean-list:
 
 # Prebuilt binaries for various platforms.
 
-# Assemble/run a debug build for this platform.
+# Assemble & run a debug build for this platform.
 prefab-debug: prefab-debug-build
 	${${shell tools/snippets prefab_run_var debug}}
 
-# Assemble/run a release build for this platform.
+# Assemble & run a release build for this platform.
 prefab-release: prefab-release-build
 	${${shell tools/snippets prefab_run_var release}}
 
@@ -129,11 +129,11 @@ prefab-debug-build:
 prefab-release-build:
 	@tools/snippets make_prefab release
 
-# Assemble/run a server debug build for this platform.
+# Assemble & run a server debug build for this platform.
 prefab-server-debug: prefab-server-debug-build
 	${${shell tools/snippets prefab_run_var server-debug}}
 
-# Assemble/run a server release build for this platform.
+# Assemble & run a server release build for this platform.
 prefab-server-release: prefab-server-release-build
 	${${shell tools/snippets prefab_run_var server-release}}
 

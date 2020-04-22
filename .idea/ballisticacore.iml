@@ -13,6 +13,7 @@
       <excludeFolder url="file://$MODULE_DIR$/assets/src/ba_data/data/maps" />
       <excludeFolder url="file://$MODULE_DIR$/assets/src/ba_data/fonts" />
       <excludeFolder url="file://$MODULE_DIR$/assets/src/ba_data/models" />
+      <excludeFolder url="file://$MODULE_DIR$/assets/src/ba_data/python-site-packages" />
       <excludeFolder url="file://$MODULE_DIR$/assets/src/ba_data/textures" />
       <excludeFolder url="file://$MODULE_DIR$/assets/src/pylib-android" />
       <excludeFolder url="file://$MODULE_DIR$/assets/src/pylib-apple" />

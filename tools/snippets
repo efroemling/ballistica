@@ -194,15 +194,15 @@ def androidaddr() -> None:
     sdkutils = os.path.abspath(
         os.path.join(os.path.dirname(sys.argv[0]), 'android_sdk_utils'))
     rootdir = os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), '..'))
-    ndkpath = subprocess.check_output([sdkutils, 'get-ndk-path'
-                                       ]).decode('utf-8').strip()
+    ndkpath = subprocess.check_output([sdkutils,
+                                       'get-ndk-path']).decode().strip()
     if not os.path.isdir(ndkpath):
         print("ERROR: ndk-path '" + ndkpath + '" does not exist')
         sys.exit(255)
     lines = subprocess.check_output(
         ['find',
          os.path.join(ndkpath, 'toolchains'), '-name',
-         '*addr2line']).decode('utf-8').strip().splitlines()
+         '*addr2line']).decode().strip().splitlines()
     lines = [line for line in lines if archs[arch]['prefix'] in line]
     if len(lines) != 1:
         print("ERROR: couldn't find addr2line binary")
@@ -558,12 +558,15 @@ def prefab_run_var() -> None:
 
 def make_prefab() -> None:
     """Run prefab builds for the current platform."""
+    import subprocess
     import batools.build
     if len(sys.argv) != 3:
         raise RuntimeError('Expected one argument')
     target = batools.build.PrefabTarget(sys.argv[2])
+    platform = batools.build.get_current_prefab_platform()
     try:
-        batools.build.make_prefab(target)
+        subprocess.run(['make', f'prefab-{platform}-{target.value}-build'],
+                       check=True)
     except (Exception, KeyboardInterrupt) as exc:
         if str(exc):
             print(f'make_prefab failed with error: {exc}')

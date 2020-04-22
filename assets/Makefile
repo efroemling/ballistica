@@ -7807,10 +7807,10 @@ build/pylib-android/email/mime/__pycache__/base.cpython-37.opt-1.pyc: \
 
 
 SCRIPT_TARGETS_PY_2_COMMON = \
-  build/pylib-site-packages/typing_extensions.py
+  build/ba_data/python-site-packages/typing_extensions.py
 
 SCRIPT_TARGETS_PYC_2_COMMON = \
-  build/pylib-site-packages/__pycache__/typing_extensions.cpython-37.opt-1.pyc
+  build/ba_data/python-site-packages/__pycache__/typing_extensions.cpython-37.opt-1.pyc
 
 # Rule to copy src asset scripts to dst.
 # (and make non-writable so I'm less likely to accidentally edit them there)
@@ -7821,8 +7821,8 @@ $(SCRIPT_TARGETS_PY_2_COMMON) : ../.efrocachemap
 # just generating explicit targets for each. Could perhaps look into using a
 # fancy for-loop instead, but perhaps listing these explicitly isn't so bad.
 
-build/pylib-site-packages/__pycache__/typing_extensions.cpython-37.opt-1.pyc: \
-      build/pylib-site-packages/typing_extensions.py
+build/ba_data/python-site-packages/__pycache__/typing_extensions.cpython-37.opt-1.pyc: \
+      build/ba_data/python-site-packages/typing_extensions.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
