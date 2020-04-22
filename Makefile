@@ -291,7 +291,7 @@ build/prefab/windows/release/BallisticaCore.exe: .efrocachemap
 	@tools/snippets efrocache_get $@
 
 prefab-windows-server-debug: prefab-windows-server-debug-build
-	build/prefab/windows-server/debug/dist/Python.exe \
+	build/prefab/windows-server/debug/dist/python.exe \
  build/prefab/windows-server/debug/ballisticacore_server.py
 
 prefab-windows-server-debug-build: prereqs \
@@ -319,7 +319,7 @@ build/prefab/windows-server/debug/config_template.yaml: \
 	cp $< $@
 
 prefab-windows-server-release: prefab-windows-server-release-build
-	build/prefab/windows-server/release/dist/Python.exe \
+	build/prefab/windows-server/release/dist/python.exe \
  build/prefab/windows-server/release/ballisticacore_server.py
 
 prefab-windows-server-release-build: prereqs \

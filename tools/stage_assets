@@ -232,11 +232,11 @@ def _sync_windows_extras(cfg: Config) -> str:
     # It'll technically be possible to orphaned top level
     # files in dst, but we should be pulling those into dists
     # individually by name anyway so it should be safe.
+    assert cfg.dst is not None
     for dirname in ('DLLs', 'Lib'):
         # We also need to be more particular about which pyc files we pull
         # over. The Python stuff in Extras is also used by some scripts
         # so there may be arbitrary non-opt pycs hanging around.
-        assert cfg.dst is not None
         _run(f'mkdir -p "{cfg.dst}/{dirname}"')
         cmd = ("rsync --recursive --update --delete --delete-excluded "
                " --prune-empty-dirs"
@@ -248,11 +248,15 @@ def _sync_windows_extras(cfg: Config) -> str:
                "\"" + cfg.dst + "/" + dirname + "/\"")
         _run(cmd)
 
-        # Now sync the top level individual files.
-        cmd = ("rsync --update " + cfg.win_extras_src + "/*.dll " +
-               cfg.win_extras_src + "/*.exe"
-               " \"" + cfg.dst + "/\"")
-        _run(cmd)
+    # Now sync the top level individual files.
+    cmd = ("rsync --update " + cfg.win_extras_src + "/*.dll " +
+           cfg.win_extras_src + "/*.exe"
+           " \"" + cfg.dst + "/\"")
+    _run(cmd)
+
+    # If we're running under WSL we won't be able to launch these .exe files
+    # unless they're marked executable, so do that here.
+    _run(f'chmod +x {cfg.dst}/*.exe')
 
     # We may want to add some site-packages on top; say where they should go.
     return 'Lib'
