@@ -67,12 +67,22 @@ def config_server(config_file: str = None) -> None:
     # Launch the server only the first time through;
     # after that it will be self-sustaining.
     if not app.launched_server:
+        app.next_server_account_warn_time = time.time() + 10.0
 
         # Now sit around until we're signed in and then kick off the server.
         with _ba.Context('ui'):
 
             def do_it() -> None:
-                if _ba.get_account_state() == 'signed_in':
+
+                signed_in = _ba.get_account_state() == 'signed_in'
+
+                if not signed_in:
+                    curtime = time.time()
+                    assert app.next_server_account_warn_time is not None
+                    if curtime > app.next_server_account_warn_time:
+                        print('Still waiting for account sign-in...')
+                        app.next_server_account_warn_time = curtime + 10.0
+                else:
                     can_launch = False
 
                     # If we're trying to fetch a playlist, we do that first.
@@ -165,7 +175,7 @@ def launch_server_session() -> None:
 
     if app.run_server_first_run:
         print((('BallisticaCore headless '
-                if app.subplatform == 'headless' else 'BallisticaCore ') +
+                if app.headless_build else 'BallisticaCore ') +
                str(app.version) + ' (' + str(app.build_number) +
                ') entering server-mode ' + time.strftime('%c')))
 

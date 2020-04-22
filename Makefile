@@ -290,12 +290,76 @@ prefab-windows-release-build: prereqs \
 build/prefab/windows/release/BallisticaCore.exe: .efrocachemap
 	@tools/snippets efrocache_get $@
 
+prefab-windows-server-debug: prefab-windows-server-debug-build
+	build/prefab/windows-server/debug/dist/Python.exe \
+ build/prefab/windows-server/debug/ballisticacore_server.py
+
+prefab-windows-server-debug-build: prereqs \
+ assets-windows-${PREFAB_WINDOWS_PLATFORM} \
+ build/prefab/windows-server/debug/dist/ballisticacore_headless.exe \
+ build/prefab/windows-server/debug/launch_ballisticacore_server.bat \
+ build/prefab/windows-server/debug/ballisticacore_server.py \
+ build/prefab/windows-server/debug/config_template.yaml
+	@${STAGE_ASSETS} -win-$(PREFAB_WINDOWS_PLATFORM) \
+ build/prefab/windows-server/debug/dist
+
+build/prefab/windows-server/debug/dist/ballisticacore_headless.exe: .efrocachemap
+	@tools/snippets efrocache_get $@
+
+build/prefab/windows-server/debug/ballisticacore_server.py: \
+ assets/src/server/server.py
+	cp $< $@
+
+build/prefab/windows-server/debug/launch_ballisticacore_server.bat: \
+ assets/src/server/server.bat
+	cp $< $@
+
+build/prefab/windows-server/debug/config_template.yaml: \
+ assets/src/server/config.yaml
+	cp $< $@
+
+prefab-windows-server-release: prefab-windows-server-release-build
+	build/prefab/windows-server/release/dist/Python.exe \
+ build/prefab/windows-server/release/ballisticacore_server.py
+
+prefab-windows-server-release-build: prereqs \
+ assets-windows-${PREFAB_WINDOWS_PLATFORM} \
+ build/prefab/windows-server/release/dist/ballisticacore_headless.exe \
+ build/prefab/windows-server/release/launch_ballisticacore_server.bat \
+ build/prefab/windows-server/release/ballisticacore_server.py \
+ build/prefab/windows-server/release/config_template.yaml
+	@${STAGE_ASSETS} -win-$(PREFAB_WINDOWS_PLATFORM) \
+ build/prefab/windows-server/release/dist
+
+build/prefab/windows-server/release/dist/ballisticacore_headless.exe: .efrocachemap
+	@tools/snippets efrocache_get $@
+
+build/prefab/windows-server/release/ballisticacore_server.py: \
+ assets/src/server/server.py
+	cp $< $@
+
+build/prefab/windows-server/release/launch_ballisticacore_server.bat: \
+ assets/src/server/server.bat
+	cp $< $@
+
+build/prefab/windows-server/release/config_template.yaml: \
+ assets/src/server/config.yaml
+	cp $< $@
+
 # Tell make which of these targets don't represent files.
 .PHONY: prefab-debug prefab-debug-build prefab-release prefab-release-build \
- prefab-mac-debug prefab-mac-debug-build prefab-mac-release \
- prefab-mac-release-build prefab-linux-debug prefab-linux-debug-build \
- prefab-linux-release prefab-linux-release-build prefab-windows-debug \
- prefab-windows-debug-build prefab-windows-release prefab-windows-release-build
+ prefab-server-debug prefab-server-debug-build prefab-server-release \
+ prefab-server-release-build prefab-mac-debug prefab-mac-debug-build \
+ prefab-mac-release prefab-mac-release-build prefab-mac-server-debug \
+ prefab-mac-server-debug-build prefab-mac-server-release \
+ prefab-mac-server-release-build prefab-linux-debug prefab-linux-debug-build \
+ prefab-linux-release prefab-linux-release-build prefab-linux-server-debug \
+ prefab-linux-server-debug-build prefab-linux-server-release \
+ prefab-linux-server-release-build prefab-windows-debug \
+ prefab-windows-debug-build prefab-windows-release \
+ prefab-windows-release-build prefab-windows-server-debug \
+ prefab-windows-server-debug-build prefab-windows-server-release \
+ prefab-windows-server-release-build
 
 
 ################################################################################

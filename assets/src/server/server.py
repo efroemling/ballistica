@@ -193,23 +193,23 @@ def _run_server_cycle(binary_path: str, config: Dict[str, Any],
     # Most of our config values we can feed to ballisticacore as it is running
     # (see below). However certain things such as network-port need to be
     # present in the config file at launch, so let's write that out first.
-    if not os.path.exists('bacfg'):
-        os.mkdir('bacfg')
-    if os.path.exists('bacfg/config.json'):
-        with open('bacfg/config.json') as infile:
-            bacfg = json.loads(infile.read())
+    if not os.path.exists('ba_root'):
+        os.mkdir('ba_root')
+    if os.path.exists('ba_root/config.json'):
+        with open('ba_root/config.json') as infile:
+            ba_root = json.loads(infile.read())
     else:
-        bacfg = {}
-    bacfg['Port'] = config['port']
-    bacfg['Enable Telnet'] = config['enable_telnet']
-    bacfg['Telnet Port'] = config['telnet_port']
-    bacfg['Telnet Password'] = config['telnet_password']
-    with open('bacfg/config.json', 'w') as outfile:
-        outfile.write(json.dumps(bacfg))
+        ba_root = {}
+    ba_root['Port'] = config['port']
+    ba_root['Enable Telnet'] = config['enable_telnet']
+    ba_root['Telnet Port'] = config['telnet_port']
+    ba_root['Telnet Password'] = config['telnet_password']
+    with open('ba_root/config.json', 'w') as outfile:
+        outfile.write(json.dumps(ba_root))
 
     # Launch our binary and grab its stdin; we'll use this to feed
     # it commands.
-    process = subprocess.Popen([binary_path, '-cfgdir', 'bacfg'],
+    process = subprocess.Popen([binary_path, '-cfgdir', 'ba_root'],
                                stdin=subprocess.PIPE)
 
     # Set quit to True any time after launching the server to gracefully

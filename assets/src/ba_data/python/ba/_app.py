@@ -313,6 +313,8 @@ class App:
         assert isinstance(self.toolbar_test, bool)
         self.kiosk_mode: bool = env['kiosk_mode']
         assert isinstance(self.kiosk_mode, bool)
+        self.headless_build: bool = env['headless_build']
+        assert isinstance(self.headless_build, bool)
 
         # Misc.
         self.default_language = self._get_default_language()
@@ -350,6 +352,7 @@ class App:
         self.server_config_dirty = False
         self.run_server_wait_timer: Optional[ba.Timer] = None
         self.server_playlist_fetch: Optional[Dict[str, Any]] = None
+        self.next_server_account_warn_time: Optional[float] = None
         self.launched_server = False
         self.run_server_first_run = True
 
@@ -606,7 +609,7 @@ class App:
                 self.special_offer = config['pendingSpecialOffer']['o']
                 specialoffer.show_offer()
 
-        if self.subplatform != 'headless':
+        if not self.headless_build:
             _ba.timer(3.0, check_special_offer, timetype=TimeType.REAL)
 
         # Start scanning for things exposed via ba_meta.
@@ -614,7 +617,7 @@ class App:
 
         # Auto-sign-in to a local account in a moment if we're set to.
         def do_auto_sign_in() -> None:
-            if self.subplatform == 'headless':
+            if self.headless_build:
                 _ba.sign_in('Local')
             elif cfg.get('Auto Account State') == 'Local':
                 _ba.sign_in('Local')
