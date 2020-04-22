@@ -114,12 +114,12 @@ clean-list:
 # Prebuilt binaries for various platforms.
 
 # Assemble/run a debug build for this platform.
-prefab-debug:
-	@tools/snippets make_prefab debug
+prefab-debug: prefab-debug-build
+	${${shell tools/snippets prefab_run_var debug}}
 
 # Assemble/run a release build for this platform.
-prefab-release:
-	@tools/snippets make_prefab release
+prefab-release: prefab-release-build
+	${${shell tools/snippets prefab_run_var release}}
 
 # Assemble a debug build for this platform.
 prefab-debug-build:
@@ -130,8 +130,8 @@ prefab-release-build:
 	@tools/snippets make_prefab release-build
 
 # Assemble/run a server debug build for this platform.
-prefab-server-debug:
-	@tools/snippets make_prefab server-debug
+prefab-server-debug: prefab-server-debug-build
+	${${shell tools/snippets prefab_run_var server-debug}}
 
 # Assemble/run a server release build for this platform.
 prefab-server-release:
@@ -147,8 +147,11 @@ prefab-server-release-build:
 
 # Specific platform prefab targets:
 
+RUN_PREFAB_MAC_DEBUG = cd build/prefab/mac/debug && ./ballisticacore
+
 prefab-mac-debug: prefab-mac-debug-build
-	@cd build/prefab/mac/debug && ./ballisticacore
+	@tools/snippets ensure_prefab_platform mac
+	@${RUN_PREFAB_MAC_DEBUG}
 
 prefab-mac-debug-build: prereqs assets-cmake \
  build/prefab/mac/debug/ballisticacore
@@ -157,8 +160,11 @@ prefab-mac-debug-build: prereqs assets-cmake \
 build/prefab/mac/debug/ballisticacore: .efrocachemap
 	@tools/snippets efrocache_get $@
 
+RUN_PREFAB_MAC_RELEASE = cd build/prefab/mac/release && ./ballisticacore
+
 prefab-mac-release: prefab-mac-release-build
-	@cd build/prefab/mac/release && ./ballisticacore
+	@tools/snippets ensure_prefab_platform mac
+	@${RUN_PREFAB_MAC_RELEASE}
 
 prefab-mac-release-build: prereqs assets-cmake \
  build/prefab/mac/release/ballisticacore
@@ -167,8 +173,12 @@ prefab-mac-release-build: prereqs assets-cmake \
 build/prefab/mac/release/ballisticacore: .efrocachemap
 	@tools/snippets efrocache_get $@
 
+RUN_PREFAB_MAC_SERVER_DEBUG = cd build/prefab/mac-server/debug \
+ && ./ballisticacore_server
+
 prefab-mac-server-debug: prefab-mac-server-debug-build
-	@cd build/prefab/mac-server/debug && ./ballisticacore_server
+	@tools/snippets ensure_prefab_platform mac
+	@${RUN_PREFAB_MAC_SERVER_DEBUG}
 
 prefab-mac-server-debug-build: prereqs assets-cmake \
  build/prefab/mac-server/debug/dist/ballisticacore_headless \
@@ -178,17 +188,21 @@ prefab-mac-server-debug-build: prereqs assets-cmake \
 
 build/prefab/mac-server/debug/ballisticacore_server: \
  assets/src/server/server.py
-	cp $< $@
+	@cp $< $@
 
 build/prefab/mac-server/debug/config_template.yaml: \
  assets/src/server/config.yaml
-	cp $< $@
+	@cp $< $@
 
 build/prefab/mac-server/debug/dist/ballisticacore_headless: .efrocachemap
 	@tools/snippets efrocache_get $@
 
+RUN_PREFAB_MAC_SERVER_RELEASE = cd build/prefab/mac-server/release \
+ && ./ballisticacore_server
+
 prefab-mac-server-release: prefab-mac-server-release-build
-	@cd build/prefab/mac-server/release && ./ballisticacore_server
+	@tools/snippets ensure_prefab_platform mac
+	@${RUN_PREFAB_MAC_SERVER_RELEASE}
 
 prefab-mac-server-release-build: prereqs assets-cmake \
  build/prefab/mac-server/release/dist/ballisticacore_headless \
@@ -198,17 +212,20 @@ prefab-mac-server-release-build: prereqs assets-cmake \
 
 build/prefab/mac-server/release/ballisticacore_server: \
  assets/src/server/server.py
-	cp $< $@
+	@cp $< $@
 
 build/prefab/mac-server/release/config_template.yaml: \
  assets/src/server/config.yaml
-	cp $< $@
+	@cp $< $@
 
 build/prefab/mac-server/release/dist/ballisticacore_headless: .efrocachemap
 	@tools/snippets efrocache_get $@
 
+RUN_PREFAB_LINUX_DEBUG = cd build/prefab/linux/debug && ./ballisticacore
+
 prefab-linux-debug: prefab-linux-debug-build
-	@cd build/prefab/linux/debug && ./ballisticacore
+	@tools/snippets ensure_prefab_platform linux
+	@${RUN_PREFAB_LINUX_DEBUG}
 
 prefab-linux-debug-build: prereqs assets-cmake \
  build/prefab/linux/debug/ballisticacore
@@ -217,8 +234,11 @@ prefab-linux-debug-build: prereqs assets-cmake \
 build/prefab/linux/debug/ballisticacore: .efrocachemap
 	@tools/snippets efrocache_get $@
 
+RUN_PREFAB_LINUX_RELEASE = cd build/prefab/linux/release && ./ballisticacore
+
 prefab-linux-release: prefab-linux-release-build
-	@cd build/prefab/linux/release && ./ballisticacore
+	@tools/snippets ensure_prefab_platform linux
+	@${RUN_PREFAB_LINUX_RELEASE}
 
 prefab-linux-release-build: prereqs assets-cmake \
  build/prefab/linux/release/ballisticacore
@@ -227,8 +247,12 @@ prefab-linux-release-build: prereqs assets-cmake \
 build/prefab/linux/release/ballisticacore: .efrocachemap
 	@tools/snippets efrocache_get $@
 
+RUN_PREFAB_LINUX_SERVER_DEBUG = cd build/prefab/linux-server/debug \
+ && ./ballisticacore_server
+
 prefab-linux-server-debug: prefab-linux-server-debug-build
-	@cd build/prefab/linux-server/debug && ./ballisticacore_server
+	@tools/snippets ensure_prefab_platform linux
+	@${RUN_PREFAB_LINUX_SERVER_DEBUG}
 
 prefab-linux-server-debug-build: prereqs assets-cmake \
  build/prefab/linux-server/debug/dist/ballisticacore_headless \
@@ -238,17 +262,21 @@ prefab-linux-server-debug-build: prereqs assets-cmake \
 
 build/prefab/linux-server/debug/ballisticacore_server: \
  assets/src/server/server.py
-	cp $< $@
+	@cp $< $@
 
 build/prefab/linux-server/debug/config_template.yaml: \
  assets/src/server/config.yaml
-	cp $< $@
+	@cp $< $@
 
 build/prefab/linux-server/debug/dist/ballisticacore_headless: .efrocachemap
 	@tools/snippets efrocache_get $@
 
+RUN_PREFAB_LINUX_SERVER_RELEASE = cd build/prefab/linux-server/release \
+ && ./ballisticacore_server
+
 prefab-linux-server-release: prefab-linux-server-release-build
-	@cd build/prefab/linux-server/release && ./ballisticacore_server
+	@tools/snippets ensure_prefab_platform linux
+	@${RUN_PREFAB_LINUX_SERVER_RELEASE}
 
 prefab-linux-server-release-build: prereqs assets-cmake \
  build/prefab/linux-server/release/dist/ballisticacore_headless \
@@ -258,19 +286,22 @@ prefab-linux-server-release-build: prereqs assets-cmake \
 
 build/prefab/linux-server/release/ballisticacore_server: \
  assets/src/server/server.py
-	cp $< $@
+	@cp $< $@
 
 build/prefab/linux-server/release/config_template.yaml: \
  assets/src/server/config.yaml
-	cp $< $@
+	@cp $< $@
 
 build/prefab/linux-server/release/dist/ballisticacore_headless: .efrocachemap
 	@tools/snippets efrocache_get $@
 
 PREFAB_WINDOWS_PLATFORM = x64
 
+RUN_PREFAB_WINDOWS_DEBUG = cd build/prefab/windows/debug && ./BallisticaCore.exe
+
 prefab-windows-debug: prefab-windows-debug-build
-	build/prefab/windows/debug/BallisticaCore.exe
+	@tools/snippets ensure_prefab_platform windows
+	@{RUN_PREFAB_WINDOWS_DEBUG}
 
 prefab-windows-debug-build: prereqs assets-windows-${PREFAB_WINDOWS_PLATFORM} \
  build/prefab/windows/debug/BallisticaCore.exe
@@ -279,8 +310,12 @@ prefab-windows-debug-build: prereqs assets-windows-${PREFAB_WINDOWS_PLATFORM} \
 build/prefab/windows/debug/BallisticaCore.exe: .efrocachemap
 	@tools/snippets efrocache_get $@
 
+RUN_PREFAB_WINDOWS_RELEASE = cd build/prefab/windows/release \
+ && ./BallisticaCore.exe
+
 prefab-windows-release: prefab-windows-release-build
-	build/prefab/windows/release/BallisticaCore.exe
+	@tools/snippets ensure_prefab_platform windows
+	@{RUN_PREFAB_WINDOWS_RELEASE}
 
 prefab-windows-release-build: prereqs \
  assets-windows-${PREFAB_WINDOWS_PLATFORM} \
@@ -290,9 +325,12 @@ prefab-windows-release-build: prereqs \
 build/prefab/windows/release/BallisticaCore.exe: .efrocachemap
 	@tools/snippets efrocache_get $@
 
-prefab-windows-server-debug: prefab-windows-server-debug-build
-	cd build/prefab/windows-server/debug \
+RUN_PREFAB_WINDOWS_SERVER_DEBUG = cd build/prefab/windows-server/debug \
  && dist/python.exe ballisticacore_server.py
+
+prefab-windows-server-debug: prefab-windows-server-debug-build
+	@tools/snippets ensure_prefab_platform windows
+	@{RUN_PREFAB_WINDOWS_SERVER_DEBUG}
 
 prefab-windows-server-debug-build: prereqs \
  assets-windows-${PREFAB_WINDOWS_PLATFORM} \
@@ -308,19 +346,22 @@ build/prefab/windows-server/debug/dist/ballisticacore_headless.exe: .efrocachema
 
 build/prefab/windows-server/debug/ballisticacore_server.py: \
  assets/src/server/server.py
-	cp $< $@
+	@cp $< $@
 
 build/prefab/windows-server/debug/launch_ballisticacore_server.bat: \
  assets/src/server/server.bat
-	cp $< $@
+	@cp $< $@
 
 build/prefab/windows-server/debug/config_template.yaml: \
  assets/src/server/config.yaml
-	cp $< $@
+	@cp $< $@
+
+RUN_PREFAB_WINDOWS_SERVER_RELEASE = cd build/prefab/windows-server/release \
+ && dist/python.exe ballisticacore_server.py
 
 prefab-windows-server-release: prefab-windows-server-release-build
-	cd build/prefab/windows-server/release \
- && dist/python.exe ballisticacore_server.py
+	@tools/snippets ensure_prefab_platform windows
+	@{RUN_PREFAB_WINDOWS_SERVER_RELEASE}
 
 prefab-windows-server-release-build: prereqs \
  assets-windows-${PREFAB_WINDOWS_PLATFORM} \
@@ -336,15 +377,18 @@ build/prefab/windows-server/release/dist/ballisticacore_headless.exe: .efrocache
 
 build/prefab/windows-server/release/ballisticacore_server.py: \
  assets/src/server/server.py
-	cp $< $@
+	@cp $< $@
 
 build/prefab/windows-server/release/launch_ballisticacore_server.bat: \
  assets/src/server/server.bat
-	cp $< $@
+	@cp $< $@
 
 build/prefab/windows-server/release/config_template.yaml: \
  assets/src/server/config.yaml
-	cp $< $@
+	@cp $< $@
+
+prefab-clean:
+	rm -rf build/prefab
 
 # Tell make which of these targets don't represent files.
 .PHONY: prefab-debug prefab-debug-build prefab-release prefab-release-build \
@@ -359,7 +403,7 @@ build/prefab/windows-server/release/config_template.yaml: \
  prefab-windows-debug-build prefab-windows-release \
  prefab-windows-release-build prefab-windows-server-debug \
  prefab-windows-server-debug-build prefab-windows-server-release \
- prefab-windows-server-release-build
+ prefab-windows-server-release-build prefab-clean
 
 
 ################################################################################
@@ -505,7 +549,7 @@ test: prereqs
 # Run tests with any caching disabled.
 test-full: test
 
-# Iterating on individual tests with extra debug output enabled.
+# Iterate on individual tests with extra debug output enabled.
 test-assetmanager:
 	@tools/snippets pytest -o log_cli=true -o log_cli_level=debug -s -v \
       tests/test_ba/test_assetmanager.py::test_assetmanager

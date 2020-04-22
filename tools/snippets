@@ -528,6 +528,34 @@ def checkenv() -> None:
         raise CleanError(exc)
 
 
+def ensure_prefab_platform() -> None:
+    """Ensure we are running on a particular prefab platform."""
+    import batools.build
+    if len(sys.argv) != 3:
+        raise CleanError('Expected 1 platform name arg.')
+    needed = sys.argv[2]
+    current = batools.build.get_current_prefab_platform()
+    if current != needed:
+        raise CleanError(
+            f'Incorrect platform: we are {current}, this requires {needed}.')
+
+
+def prefab_run_var() -> None:
+    """Print a variable for running a prefab run for the current platform.
+
+    We use this mechanism instead of just having a command recursively run
+    a make target so that ctrl-c can be handled cleanly and directly by the
+    command getting run instead of generating extra errors in the recursive
+    processes.
+    """
+    import batools.build
+    if len(sys.argv) != 3:
+        raise RuntimeError('Expected 1 arg.')
+    base = sys.argv[2].replace('-', '_').upper()
+    platform = batools.build.get_current_prefab_platform().upper()
+    print(f'RUN_PREFAB_{platform}_{base}', end='')
+
+
 def make_prefab() -> None:
     """Run prefab builds for the current platform."""
     import batools.build

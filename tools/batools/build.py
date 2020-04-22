@@ -432,36 +432,38 @@ def gen_fulltest_buildfile_linux() -> None:
         outfile.write('\n'.join(lines))
 
 
-def make_prefab(target: PrefabTarget) -> None:
-    """Run prefab builds for the current platform."""
-    from efrotools import run
-    import platform
+def get_current_prefab_platform() -> str:
+    """Get the name of the running platform.
 
+    Throws a RuntimeError on unsupported platforms.
+    """
+    import platform
     system = platform.system()
     machine = platform.machine()
-
     if system == 'Darwin':
         # Currently there's just x86_64 on mac; will need to revisit when arm
         # cpus happen.
-        base = 'mac'
-    elif system == 'Linux':
+        return 'mac'
+    if system == 'Linux':
         # If it looks like we're in Windows Subsystem for Linux,
         # go with the Windows version.
         if 'microsoft' in platform.uname()[3].lower():
-            base = 'windows'
-        else:
-            # We currently only support x86_64 linux.
-            if machine == 'x86_64':
-                base = 'linux'
-            else:
-                raise RuntimeError(
-                    f'make_prefab: unsupported linux machine type:'
-                    f' {machine}.')
-    else:
-        raise RuntimeError(f'make_prefab: unrecognized platform:'
-                           f' {platform.system()}.')
+            return 'windows'
 
-    run(f'make prefab-{base}-{target.value}')
+        # We currently only support x86_64 linux.
+        if machine == 'x86_64':
+            return 'linux'
+        raise RuntimeError(f'make_prefab: unsupported linux machine type:'
+                           f' {machine}.')
+    raise RuntimeError(f'make_prefab: unrecognized platform:'
+                       f' {platform.system()}.')
+
+
+def make_prefab(target: PrefabTarget) -> None:
+    """Make a prefab build for the current platform."""
+    from efrotools import run
+    platform = get_current_prefab_platform()
+    run(f'make prefab-{platform}-{target.value}')
 
 
 def _vstr(nums: Sequence[int]) -> str:
