@@ -7807,10 +7807,44 @@ build/pylib-android/email/mime/__pycache__/base.cpython-37.opt-1.pyc: \
 
 
 SCRIPT_TARGETS_PY_2_COMMON = \
-  build/ba_data/python-site-packages/typing_extensions.py
+  build/ba_data/python-site-packages/typing_extensions.py \
+  build/ba_data/python-site-packages/yaml/scanner.py \
+  build/ba_data/python-site-packages/yaml/error.py \
+  build/ba_data/python-site-packages/yaml/constructor.py \
+  build/ba_data/python-site-packages/yaml/composer.py \
+  build/ba_data/python-site-packages/yaml/events.py \
+  build/ba_data/python-site-packages/yaml/__init__.py \
+  build/ba_data/python-site-packages/yaml/representer.py \
+  build/ba_data/python-site-packages/yaml/tokens.py \
+  build/ba_data/python-site-packages/yaml/dumper.py \
+  build/ba_data/python-site-packages/yaml/cyaml.py \
+  build/ba_data/python-site-packages/yaml/parser.py \
+  build/ba_data/python-site-packages/yaml/reader.py \
+  build/ba_data/python-site-packages/yaml/loader.py \
+  build/ba_data/python-site-packages/yaml/resolver.py \
+  build/ba_data/python-site-packages/yaml/serializer.py \
+  build/ba_data/python-site-packages/yaml/nodes.py \
+  build/ba_data/python-site-packages/yaml/emitter.py
 
 SCRIPT_TARGETS_PYC_2_COMMON = \
-  build/ba_data/python-site-packages/__pycache__/typing_extensions.cpython-37.opt-1.pyc
+  build/ba_data/python-site-packages/__pycache__/typing_extensions.cpython-37.opt-1.pyc \
+  build/ba_data/python-site-packages/yaml/__pycache__/scanner.cpython-37.opt-1.pyc \
+  build/ba_data/python-site-packages/yaml/__pycache__/error.cpython-37.opt-1.pyc \
+  build/ba_data/python-site-packages/yaml/__pycache__/constructor.cpython-37.opt-1.pyc \
+  build/ba_data/python-site-packages/yaml/__pycache__/composer.cpython-37.opt-1.pyc \
+  build/ba_data/python-site-packages/yaml/__pycache__/events.cpython-37.opt-1.pyc \
+  build/ba_data/python-site-packages/yaml/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/ba_data/python-site-packages/yaml/__pycache__/representer.cpython-37.opt-1.pyc \
+  build/ba_data/python-site-packages/yaml/__pycache__/tokens.cpython-37.opt-1.pyc \
+  build/ba_data/python-site-packages/yaml/__pycache__/dumper.cpython-37.opt-1.pyc \
+  build/ba_data/python-site-packages/yaml/__pycache__/cyaml.cpython-37.opt-1.pyc \
+  build/ba_data/python-site-packages/yaml/__pycache__/parser.cpython-37.opt-1.pyc \
+  build/ba_data/python-site-packages/yaml/__pycache__/reader.cpython-37.opt-1.pyc \
+  build/ba_data/python-site-packages/yaml/__pycache__/loader.cpython-37.opt-1.pyc \
+  build/ba_data/python-site-packages/yaml/__pycache__/resolver.cpython-37.opt-1.pyc \
+  build/ba_data/python-site-packages/yaml/__pycache__/serializer.cpython-37.opt-1.pyc \
+  build/ba_data/python-site-packages/yaml/__pycache__/nodes.cpython-37.opt-1.pyc \
+  build/ba_data/python-site-packages/yaml/__pycache__/emitter.cpython-37.opt-1.pyc
 
 # Rule to copy src asset scripts to dst.
 # (and make non-writable so I'm less likely to accidentally edit them there)
@@ -7823,6 +7857,91 @@ $(SCRIPT_TARGETS_PY_2_COMMON) : ../.efrocachemap
 
 build/ba_data/python-site-packages/__pycache__/typing_extensions.cpython-37.opt-1.pyc: \
       build/ba_data/python-site-packages/typing_extensions.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python-site-packages/yaml/__pycache__/scanner.cpython-37.opt-1.pyc: \
+      build/ba_data/python-site-packages/yaml/scanner.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python-site-packages/yaml/__pycache__/error.cpython-37.opt-1.pyc: \
+      build/ba_data/python-site-packages/yaml/error.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python-site-packages/yaml/__pycache__/constructor.cpython-37.opt-1.pyc: \
+      build/ba_data/python-site-packages/yaml/constructor.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python-site-packages/yaml/__pycache__/composer.cpython-37.opt-1.pyc: \
+      build/ba_data/python-site-packages/yaml/composer.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python-site-packages/yaml/__pycache__/events.cpython-37.opt-1.pyc: \
+      build/ba_data/python-site-packages/yaml/events.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python-site-packages/yaml/__pycache__/__init__.cpython-37.opt-1.pyc: \
+      build/ba_data/python-site-packages/yaml/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python-site-packages/yaml/__pycache__/representer.cpython-37.opt-1.pyc: \
+      build/ba_data/python-site-packages/yaml/representer.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python-site-packages/yaml/__pycache__/tokens.cpython-37.opt-1.pyc: \
+      build/ba_data/python-site-packages/yaml/tokens.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python-site-packages/yaml/__pycache__/dumper.cpython-37.opt-1.pyc: \
+      build/ba_data/python-site-packages/yaml/dumper.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python-site-packages/yaml/__pycache__/cyaml.cpython-37.opt-1.pyc: \
+      build/ba_data/python-site-packages/yaml/cyaml.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python-site-packages/yaml/__pycache__/parser.cpython-37.opt-1.pyc: \
+      build/ba_data/python-site-packages/yaml/parser.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python-site-packages/yaml/__pycache__/reader.cpython-37.opt-1.pyc: \
+      build/ba_data/python-site-packages/yaml/reader.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python-site-packages/yaml/__pycache__/loader.cpython-37.opt-1.pyc: \
+      build/ba_data/python-site-packages/yaml/loader.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python-site-packages/yaml/__pycache__/resolver.cpython-37.opt-1.pyc: \
+      build/ba_data/python-site-packages/yaml/resolver.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python-site-packages/yaml/__pycache__/serializer.cpython-37.opt-1.pyc: \
+      build/ba_data/python-site-packages/yaml/serializer.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python-site-packages/yaml/__pycache__/nodes.cpython-37.opt-1.pyc: \
+      build/ba_data/python-site-packages/yaml/nodes.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python-site-packages/yaml/__pycache__/emitter.cpython-37.opt-1.pyc: \
+      build/ba_data/python-site-packages/yaml/emitter.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
