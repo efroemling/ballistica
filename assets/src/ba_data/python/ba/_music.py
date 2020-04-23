@@ -606,6 +606,8 @@ def setmusic(musictype: Optional[MusicType], continuous: bool = False) -> None:
     and also supports custom user soundtracks on specific platforms so the
     user can override particular game music with their own.
 
+    Pass ba.MusicType('<music_name>') to use custom music.
+
     Pass None to stop music.
 
     if 'continuous' is True the musictype passed is the same as what is already
