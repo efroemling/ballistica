@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-04-22 for Ballistica version 1.5.0 build 20001</em></h4>
+<h4><em>last updated on 2020-04-24 for Ballistica version 1.5.0 build 20001</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -137,6 +137,7 @@
    <li><a href="#class_ba_AppDelegate">ba.AppDelegate</a></li>
    <li><a href="#class_ba_Campaign">ba.Campaign</a></li>
    <li><a href="#class_ba_MusicPlayer">ba.MusicPlayer</a></li>
+   <li><a href="#class_ba_Server">ba.Server</a></li>
 </ul>
 <h4><a name="class_category_User_Interface_Classes">User Interface Classes</a></h4>
 <ul>
@@ -2736,7 +2737,7 @@ needs a chooser.</p>
 <h2><strong><a name="class_ba_Lstr">ba.Lstr</a></strong></h3>
 <p><em>&lt;top level class&gt;</em>
 </p>
-<p>Used to specify strings in a language-independent way.</p>
+<p>Used to define strings in a language-independent way.</p>
 
 <p>Category: <a href="#class_category_General_Utility_Classes">General Utility Classes</a></p>
 
@@ -3970,6 +3971,40 @@ cause the powerup box to make a sound and disappear or whatnot.</p>
 <dl>
 <dt><h4><a name="method_ba_PowerupMessage____init__">&lt;constructor&gt;</a></dt></h4><dd>
 <p><span>ba.PowerupMessage(poweruptype: str, source_node: Optional[<a href="#class_ba_Node">ba.Node</a>] = None)</span></p>
+
+</dd>
+</dl>
+<hr>
+<h2><strong><a name="class_ba_Server">ba.Server</a></strong></h3>
+<p><em>&lt;top level class&gt;</em>
+</p>
+<p>Overall controller for the app in server mode.</p>
+
+<p>Category: <a href="#class_category_App_Classes">App Classes</a>
+</p>
+
+<h3>Methods:</h3>
+<h5><a href="#method_ba_Server____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Server__handle_transition">handle_transition()</a>, <a href="#method_ba_Server__launch_server_session">launch_server_session()</a></h5>
+<dl>
+<dt><h4><a name="method_ba_Server____init__">&lt;constructor&gt;</a></dt></h4><dd>
+<p><span>ba.Server(config: ServerConfig)</span></p>
+
+</dd>
+<dt><h4><a name="method_ba_Server__handle_transition">handle_transition()</a></dt></h4><dd>
+<p><span>handle_transition(self) -&gt; bool</span></p>
+
+<p>Handle transitioning to a new <a href="#class_ba_Session">ba.Session</a> or quitting the app.</p>
+
+<p>Will be called once at the end of an activity that is marked as
+a good 'end-point' (such as a final score screen).
+Should return True if action will be handled by us; False if the
+session should just continue on it's merry way.</p>
+
+</dd>
+<dt><h4><a name="method_ba_Server__launch_server_session">launch_server_session()</a></dt></h4><dd>
+<p><span>launch_server_session(self) -&gt; None</span></p>
+
+<p>Kick off a host-session based on the current server config.</p>
 
 </dd>
 </dl>

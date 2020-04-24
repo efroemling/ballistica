@@ -23,16 +23,16 @@ from __future__ import annotations
 
 import json
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, overload
 
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, List, Optional
+    from typing import Any, Dict, List, Optional, Tuple, Union, Sequence
 
 
 class Lstr:
-    """Used to specify strings in a language-independent way.
+    """Used to define strings in a language-independent way.
 
     category: General Utility Classes
 
@@ -62,6 +62,38 @@ class Lstr:
     mytextnode.text = ba.Lstr(resource='res_a',
                               subs=[('${NAME}', ba.Lstr(resource='res_b'))])
     """
+
+    # pylint: disable=redefined-outer-name
+    # noinspection PyDefaultArgument
+    @overload
+    def __init__(self,
+                 *,
+                 resource: str,
+                 fallback_resource: str = '',
+                 fallback_value: str = '',
+                 subs: Sequence[Tuple[str, Union[str, Lstr]]] = []) -> None:
+        """Create an Lstr from a string resource."""
+        ...
+
+    # noinspection PyShadowingNames,PyDefaultArgument
+    @overload
+    def __init__(self,
+                 *,
+                 translate: Tuple[str, str],
+                 subs: Sequence[Tuple[str, Union[str, Lstr]]] = []) -> None:
+        """Create an Lstr by translating a string in a category."""
+        ...
+
+    # noinspection PyDefaultArgument
+    @overload
+    def __init__(self,
+                 *,
+                 value: str,
+                 subs: Sequence[Tuple[str, Union[str, Lstr]]] = []) -> None:
+        """Create an Lstr from a raw string value."""
+        ...
+
+    # pylint: enable=redefined-outer-name
 
     def __init__(self, *args: Any, **keywds: Any) -> None:
         """Instantiate a Lstr.

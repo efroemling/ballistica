@@ -862,6 +862,7 @@ class GameActivity(Activity):
                 if 'sound' in tip:
                     sound = tip['sound']
                 tip = tip['tip']
+                assert isinstance(tip, str)
 
             # a few subs..
             tip_lstr = Lstr(translate=('tips', tip),

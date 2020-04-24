@@ -21,13 +21,14 @@
 """Functionality related to running the game in server-mode."""
 from __future__ import annotations
 
-import copy
-import json
-import os
 import sys
 import time
 from typing import TYPE_CHECKING
 
+from ba._enums import TimeType
+from ba._freeforallsession import FreeForAllSession
+from ba._dualteamsession import DualTeamSession
+from bacommon.serverutils import ServerConfig, ServerCommand
 import _ba
 
 if TYPE_CHECKING:
@@ -35,223 +36,266 @@ if TYPE_CHECKING:
     import ba
 
 
-def config_server(config_file: str = None) -> None:
-    """Run the game in server mode with the provided server config file."""
+def _cmd(command_data: bytes) -> None:
+    """Handle commands coming in from the server wrapper."""
+    import pickle
+    command, payload = pickle.loads(command_data)
+    assert isinstance(command, ServerCommand)
 
-    from ba._enums import TimeType
+    # We expect to receive a config command to kick things off.
+    if command is ServerCommand.CONFIG:
+        assert isinstance(payload, ServerConfig)
+        assert _ba.app.server is None
+        _ba.app.server = Server(payload)
+        return
 
-    app = _ba.app
-
-    # Read and store the provided server config and then delete the file it
-    # came from.
-    if config_file is not None:
-        with open(config_file) as infile:
-            app.server_config = json.loads(infile.read())
-        os.remove(config_file)
-    else:
-        app.server_config = {}
-
-    # Make note if they want us to import a playlist;
-    # we'll need to do that first if so.
-    playlist_code = app.server_config.get('playlist_code')
-    if playlist_code is not None:
-        app.server_playlist_fetch = {
-            'sent_request': False,
-            'got_response': False,
-            'playlist_code': str(playlist_code)
-        }
-
-    # Apply config stuff that can take effect immediately (party name, etc).
-    _config_server()
-
-    # Launch the server only the first time through;
-    # after that it will be self-sustaining.
-    if not app.launched_server:
-        app.next_server_account_warn_time = time.time() + 10.0
-
-        # Now sit around until we're signed in and then kick off the server.
-        with _ba.Context('ui'):
-
-            def do_it() -> None:
-
-                signed_in = _ba.get_account_state() == 'signed_in'
-
-                if not signed_in:
-                    curtime = time.time()
-                    assert app.next_server_account_warn_time is not None
-                    if curtime > app.next_server_account_warn_time:
-                        print('Still waiting for account sign-in...')
-                        app.next_server_account_warn_time = curtime + 10.0
-                else:
-                    can_launch = False
-
-                    # If we're trying to fetch a playlist, we do that first.
-                    if app.server_playlist_fetch is not None:
-
-                        # Send request if we haven't.
-                        if not app.server_playlist_fetch['sent_request']:
-
-                            def on_playlist_fetch_response(
-                                    result: Optional[Dict[str, Any]]) -> None:
-                                if result is None:
-                                    print('Error fetching playlist; aborting.')
-                                    sys.exit(-1)
-
-                                # Once we get here we simply modify our
-                                # config to use this playlist.
-                                type_name = (
-                                    'teams' if
-                                    result['playlistType'] == 'Team Tournament'
-                                    else 'ffa' if result['playlistType'] ==
-                                    'Free-for-All' else '??')
-                                print(('Playlist \'' + result['playlistName'] +
-                                       '\' (' + type_name +
-                                       ') downloaded; running...'))
-                                assert app.server_playlist_fetch is not None
-                                app.server_playlist_fetch['got_response'] = (
-                                    True)
-                                app.server_config['session_type'] = type_name
-                                app.server_config['playlist_name'] = (
-                                    result['playlistName'])
-
-                            print(('Requesting shared-playlist ' + str(
-                                app.server_playlist_fetch['playlist_code']) +
-                                   '...'))
-                            app.server_playlist_fetch['sent_request'] = True
-                            _ba.add_transaction(
-                                {
-                                    'type':
-                                        'IMPORT_PLAYLIST',
-                                    'code':
-                                        app.
-                                        server_playlist_fetch['playlist_code'],
-                                    'overwrite':
-                                        True
-                                },
-                                callback=on_playlist_fetch_response)
-                            _ba.run_transactions()
-
-                        # If we got a valid result, forget the fetch ever
-                        # existed and move on.
-                        if app.server_playlist_fetch['got_response']:
-                            app.server_playlist_fetch = None
-                            can_launch = True
-                    else:
-                        can_launch = True
-                    if can_launch:
-                        app.run_server_wait_timer = None
-                        _ba.pushcall(launch_server_session)
-
-            app.run_server_wait_timer = _ba.Timer(0.25,
-                                                  do_it,
-                                                  timetype=TimeType.REAL,
-                                                  repeat=True)
-        app.launched_server = True
+    assert _ba.app.server is not None
+    print('WOULD DO OTHER SERVER COMMAND')
 
 
-def launch_server_session() -> None:
-    """Kick off a host-session based on the current server config."""
-    from ba._netutils import serverget
-    from ba import _freeforallsession
-    from ba import _dualteamsession
-    app = _ba.app
-    servercfg = copy.deepcopy(app.server_config)
-    appcfg = app.config
+class Server:
+    """Overall controller for the app in server mode.
 
-    # Convert string session type to the class.
-    # Hmm should we just keep this as a string?
-    session_type_name = servercfg.get('session_type', 'ffa')
-    sessiontype: Type[ba.Session]
-    if session_type_name == 'ffa':
-        sessiontype = _freeforallsession.FreeForAllSession
-    elif session_type_name == 'teams':
-        sessiontype = _dualteamsession.DualTeamSession
-    else:
-        raise Exception('invalid session_type value: ' + session_type_name)
-
-    if _ba.get_account_state() != 'signed_in':
-        print('WARNING: launch_server_session() expects to run '
-              'with a signed in server account')
-
-    if app.run_server_first_run:
-        print((('BallisticaCore headless '
-                if app.headless_build else 'BallisticaCore ') +
-               str(app.version) + ' (' + str(app.build_number) +
-               ') entering server-mode ' + time.strftime('%c')))
-
-    playlist_shuffle = servercfg.get('playlist_shuffle', True)
-    appcfg['Show Tutorial'] = False
-    appcfg['Free-for-All Playlist Selection'] = (servercfg.get(
-        'playlist_name', '__default__') if session_type_name == 'ffa' else
-                                                 '__default__')
-    appcfg['Free-for-All Playlist Randomize'] = playlist_shuffle
-    appcfg['Team Tournament Playlist Selection'] = (servercfg.get(
-        'playlist_name', '__default__') if session_type_name == 'teams' else
-                                                    '__default__')
-    appcfg['Team Tournament Playlist Randomize'] = playlist_shuffle
-    appcfg['Port'] = servercfg.get('port', 43210)
-
-    # Set series lengths.
-    app.teams_series_length = servercfg.get('teams_series_length', 7)
-    app.ffa_series_length = servercfg.get('ffa_series_length', 24)
-
-    # And here we go.
-    _ba.new_host_session(sessiontype)
-
-    # Also lets fire off an access check if this is our first time
-    # through (and they want a public party).
-    if app.run_server_first_run:
-
-        def access_check_response(data: Optional[Dict[str, Any]]) -> None:
-            gameport = _ba.get_game_port()
-            if data is None:
-                print('error on UDP port access check (internet down?)')
-            else:
-                if data['accessible']:
-                    print('UDP port', gameport,
-                          ('access check successful. Your '
-                           'server appears to be joinable '
-                           'from the internet.'))
-                else:
-                    print('UDP port', gameport,
-                          ('access check failed. Your server '
-                           'does not appear to be joinable '
-                           'from the internet.'))
-
-        port = _ba.get_game_port()
-        serverget('bsAccessCheck', {
-            'port': port,
-            'b': app.build_number
-        },
-                  callback=access_check_response)
-    app.run_server_first_run = False
-    app.server_config_dirty = False
-
-
-def _config_server() -> None:
-    """Apply server config changes that can take effect immediately.
-
-    (party name, etc)
+    Category: App Classes
     """
-    config = copy.deepcopy(_ba.app.server_config)
 
-    # FIXME: Should make a proper low level config entry for this or
-    #  else not store in in app.config. Probably shouldn't be going through
-    #  the app config for this anyway since it should just be for this run.
-    _ba.app.config['Auto Balance Teams'] = (config.get('auto_balance_teams',
-                                                       True))
+    def __init__(self, config: ServerConfig) -> None:
+        print('Server()')
 
-    _ba.set_public_party_max_size(config.get('max_party_size', 9))
-    _ba.set_public_party_name(config.get('party_name', 'party'))
-    _ba.set_public_party_stats_url(config.get('stats_url', ''))
+        self._config = config
+        self._playlist_name = '__default__'
 
-    # Call set-enabled last (will push state).
-    _ba.set_public_party_enabled(config.get('party_is_public', True))
+        self._ran_access_check = False
+        self._run_server_wait_timer: Optional[ba.Timer] = None
 
-    if not _ba.app.run_server_first_run:
-        print('server config updated.')
+        self._first_run = True
 
-    # FIXME: We could avoid setting this as dirty if the only changes have
-    #  been ones here we can apply immediately. Could reduce cases where
-    #  players have to rejoin.
-    _ba.app.server_config_dirty = True
+        # Make note if they want us to import a playlist;
+        # we'll need to do that first if so.
+        self._playlist_fetch_running = self._config.playlist_code is not None
+        self._playlist_fetch_sent_request = False
+        self._playlist_fetch_got_response = False
+        self._playlist_fetch_code = -1
+
+        self._config_server()
+
+        # Launch the server only the first time through;
+        # after that it will be self-sustaining.
+        self._next_server_account_warn_time = time.time() + 10.0
+
+        # Now sit around until we're signed in and then
+        # kick off the server.
+        with _ba.Context('ui'):
+            self._run_server_wait_timer = _ba.Timer(
+                0.25,
+                self._update_server_playlist_fetch,
+                timetype=TimeType.REAL,
+                repeat=True)
+
+    def launch_server_session(self) -> None:
+        """Kick off a host-session based on the current server config."""
+        app = _ba.app
+        appcfg = app.config
+
+        sessiontype = self._get_session_type()
+
+        if _ba.get_account_state() != 'signed_in':
+            print('WARNING: launch_server_session() expects to run '
+                  'with a signed in server account')
+
+        if self._first_run:
+            print((('BallisticaCore headless '
+                    if app.headless_build else 'BallisticaCore ') +
+                   str(app.version) + ' (' + str(app.build_number) +
+                   ') entering server-mode ' + time.strftime('%c')))
+
+        appcfg['Show Tutorial'] = False
+
+        if sessiontype is FreeForAllSession:
+            appcfg['Free-for-All Playlist Selection'] = self._playlist_name
+            appcfg['Free-for-All Playlist Randomize'] = (
+                self._config.playlist_shuffle)
+        elif sessiontype is DualTeamSession:
+            appcfg['Team Tournament Playlist Selection'] = self._playlist_name
+            appcfg['Team Tournament Playlist Randomize'] = (
+                self._config.playlist_shuffle)
+        else:
+            raise RuntimeError(f'Unknown session type {sessiontype}')
+
+        appcfg['Port'] = self._config.port
+
+        # Set series lengths.
+        app.teams_series_length = self._config.teams_series_length
+        app.ffa_series_length = self._config.ffa_series_length
+
+        # And here we go.
+        _ba.new_host_session(sessiontype)
+
+        if not self._ran_access_check:
+            self._run_access_check()
+            self._ran_access_check = True
+
+    def handle_transition(self) -> bool:
+        """Handle transitioning to a new ba.Session or quitting the app.
+
+        Will be called once at the end of an activity that is marked as
+        a good 'end-point' (such as a final score screen).
+        Should return True if action will be handled by us; False if the
+        session should just continue on it's merry way.
+        """
+        print('FIXME: fill out server handle_transition()')
+        # If the app is in server mode and this activity
+        # if self._allow_server_transition and _ba.app.server_config_dirty:
+        #     from ba import _server
+        #     from ba._lang import Lstr
+        #     from ba._general import Call
+        #     from ba._enums import TimeType
+        #     if _ba.app.server_config.get('quit', False):
+        #         if not self._kicked_off_server_shutdown:
+        #             if _ba.app.server_config.get(
+        #                     'quit_reason') == 'restarting':
+        #                 # FIXME: Should add a server-screen-message call
+        #                 #  or something.
+        #                 _ba.chat_message(
+        #                     Lstr(resource='internal.serverRestartingText').
+        #                     evaluate())
+        #                 print(('Exiting for server-restart at ' +
+        #                        time.strftime('%c')))
+        #             else:
+        #                 print(('Exiting for server-shutdown at ' +
+        #                        time.strftime('%c')))
+        #             with _ba.Context('ui'):
+        #                 _ba.timer(2.0, _ba.quit, timetype=TimeType.REAL)
+        #             self._kicked_off_server_shutdown = True
+        #             return True
+        #     else:
+        #         if not self._kicked_off_server_restart:
+        #             print(('Running updated server config at ' +
+        #                    time.strftime('%c')))
+        #             with _ba.Context('ui'):
+        #                 _ba.timer(1.0,
+        #                           Call(_ba.pushcall,
+        #                                _server.launch_server_session),
+        #                           timetype=TimeType.REAL)
+        #             self._kicked_off_server_restart = True
+        #             return True
+        return False
+
+    def _get_session_type(self) -> Type[ba.Session]:
+
+        # Convert string session type to the class.
+        # Hmm should we just keep this as a string?
+        if self._config.session_type == 'ffa':
+            return FreeForAllSession
+        if self._config.session_type == 'teams':
+            return DualTeamSession
+        raise RuntimeError(
+            f'Invalid session_type: "{self._config.session_type}"')
+
+    def _update_server_playlist_fetch(self) -> None:
+
+        signed_in = _ba.get_account_state() == 'signed_in'
+
+        if not signed_in:
+            curtime = time.time()
+            if curtime > self._next_server_account_warn_time:
+                print('Still waiting for account sign-in...')
+                self._next_server_account_warn_time = curtime + 10.0
+        else:
+            can_launch = False
+
+            # If we're trying to fetch a playlist, we do that first.
+            # if self._server_playlist_fetch is not None:
+            if self._playlist_fetch_running:
+
+                # Send request if we haven't.
+                if not self._playlist_fetch_sent_request:
+
+                    print(f'Requesting shared-playlist'
+                          f' {self._config.playlist_code}...')
+
+                    _ba.add_transaction(
+                        {
+                            'type': 'IMPORT_PLAYLIST',
+                            'code': str(self._config.playlist_code),
+                            'overwrite': True
+                        },
+                        callback=self._on_playlist_fetch_response)
+                    _ba.run_transactions()
+
+                    self._playlist_fetch_sent_request = True
+
+                # If we got a valid result, forget the fetch ever
+                # existed and move on.
+                if self._playlist_fetch_got_response:
+                    self._playlist_fetch_running = False
+                    can_launch = True
+            else:
+                can_launch = True
+
+            if can_launch:
+                self._run_server_wait_timer = None
+                _ba.pushcall(self.launch_server_session)
+
+    def _on_playlist_fetch_response(
+            self,
+            result: Optional[Dict[str, Any]],
+    ) -> None:
+        if result is None:
+            print('Error fetching playlist;' ' aborting.')
+            sys.exit(-1)
+
+        # Once we get here we simply modify our
+        # config to use this playlist.
+        type_name = (
+            'teams' if result['playlistType'] == 'Team Tournament' else
+            'ffa' if result['playlistType'] == 'Free-for-All' else '??')
+        print(('Playlist \'' + result['playlistName'] + '\' (' + type_name +
+               ') downloaded; running...'))
+
+        self._playlist_fetch_got_response = True
+        self._config.session_type = type_name
+        self._playlist_name = (result['playlistName'])
+
+    def _run_access_check(self) -> None:
+        """Check with the master server to see if we're likely joinable."""
+        from ba._netutils import serverget
+        serverget(
+            'bsAccessCheck',
+            {
+                'port': _ba.get_game_port(),
+                'b': _ba.app.build_number
+            },
+            callback=self._access_check_response,
+        )
+
+    def _access_check_response(self, data: Optional[Dict[str, Any]]) -> None:
+        gameport = _ba.get_game_port()
+        if data is None:
+            print('error on UDP port access check (internet down?)')
+        else:
+            if data['accessible']:
+                print('UDP port', gameport, ('access check successful. Your '
+                                             'server appears to be joinable '
+                                             'from the internet.'))
+            else:
+                print('UDP port', gameport,
+                      ('access check failed. Your server '
+                       'does not appear to be joinable '
+                       'from the internet.'))
+
+    def _config_server(self) -> None:
+        """Apply server config changes that can take effect immediately.
+
+        (party name, etc)
+        """
+
+        _ba.app.config['Auto Balance Teams'] = (
+            self._config.auto_balance_teams)
+
+        _ba.set_public_party_max_size(self._config.max_party_size)
+        _ba.set_public_party_name(self._config.party_name)
+        _ba.set_public_party_stats_url(self._config.stats_url)
+
+        # Call set-enabled last (will push state to the cloud).
+        _ba.set_public_party_enabled(self._config.party_is_public)

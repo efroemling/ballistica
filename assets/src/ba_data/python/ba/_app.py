@@ -355,13 +355,14 @@ class App:
         self.campaigns: Dict[str, ba.Campaign] = {}
 
         # Server-Mode.
-        self.server_config: Dict[str, Any] = {}
-        self.server_config_dirty = False
-        self.run_server_wait_timer: Optional[ba.Timer] = None
-        self.server_playlist_fetch: Optional[Dict[str, Any]] = None
-        self.next_server_account_warn_time: Optional[float] = None
-        self.launched_server = False
-        self.run_server_first_run = True
+        self.server: Optional[ba.Server] = None
+        # self.server_config: Dict[str, Any] = {}
+        # self.server_config_dirty = False
+        # self.run_server_wait_timer: Optional[ba.Timer] = None
+        # self.server_playlist_fetch: Optional[Dict[str, Any]] = None
+        # self.next_server_account_warn_time: Optional[float] = None
+        # self.launched_server = False
+        # self.run_server_first_run = True
 
         # Ads.
         self.last_ad_network = 'unknown'

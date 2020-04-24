@@ -38,7 +38,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         super().__init__(settings=settings)
         self._min_view_time = 15.0
         self._is_ffa = isinstance(self.session, ba.FreeForAllSession)
-        self._allow_server_restart = True
+        self._allow_server_transition = True
         self._tips_text = None
 
     def on_transition_in(self) -> None:
@@ -192,6 +192,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                       scale=(70, 70),
                       transition=Image.Transition.IN_LEFT,
                       transition_delay=tval).autoretain()
+                assert mvp_name is not None
                 Text(ba.Lstr(value=mvp_name),
                      position=(280, ts_height / 2 - 55 + 15 - 5),
                      h_align=Text.HAlign.LEFT,
@@ -237,6 +238,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                   scale=(50, 50),
                   transition=Image.Transition.IN_LEFT,
                   transition_delay=tval).autoretain()
+            assert mvp_name is not None
             Text(ba.Lstr(value=mvp_name),
                  position=(270, ts_height / 2 - 150 - 30 - 36 + v_extra + 15),
                  h_align=Text.HAlign.LEFT,
@@ -281,6 +283,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                   scale=(50, 50),
                   transition=Image.Transition.IN_LEFT,
                   transition_delay=tval).autoretain()
+            assert mkp_name is not None
             Text(ba.Lstr(value=mkp_name),
                  position=(270, ts_height / 2 - 300 - 30 - 36 + v_extra + 15),
                  h_align=Text.HAlign.LEFT,

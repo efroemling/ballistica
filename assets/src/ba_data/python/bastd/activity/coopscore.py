@@ -563,6 +563,7 @@ class CoopScoreScreen(ba.Activity):
                  maxwidth=270,
                  color=(0.5, 0.7, 0.5, 1),
                  position=(270, -235)).autoretain()
+            assert self._next_level_name is not None
             Text(ba.Lstr(translate=('coopLevelNames', self._next_level_name)),
                  transition=Text.Transition.IN_RIGHT,
                  transition_delay=5.2,

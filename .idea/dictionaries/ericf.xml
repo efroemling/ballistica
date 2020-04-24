@@ -148,6 +148,7 @@
       <w>baseurl</w>
       <w>basew</w>
       <w>bastd</w>
+      <w>batools</w>
       <w>bbot</w>
       <w>bbtn</w>
       <w>bcppcompiler</w>
@@ -374,6 +375,7 @@
       <w>cutscenes</w>
       <w>cval</w>
       <w>cwdg</w>
+      <w>cyaml</w>
       <w>cygwinccompiler</w>
       <w>darwiin</w>
       <w>darwiinremote</w>
@@ -835,6 +837,7 @@
       <w>imgw</w>
       <w>incentivized</w>
       <w>includetest</w>
+      <w>incmd</w>
       <w>incr</w>
       <w>incrementbuild</w>
       <w>indentfilter</w>
@@ -1452,6 +1455,7 @@
       <w>relpath</w>
       <w>remainingchecks</w>
       <w>remoteapp</w>
+      <w>representer</w>
       <w>reprlib</w>
       <w>reqs</w>
       <w>resample</w>
@@ -1533,6 +1537,7 @@
       <w>serverdialog</w>
       <w>serverget</w>
       <w>serverput</w>
+      <w>serverutils</w>
       <w>sessionclass</w>
       <w>sessiondata</w>
       <w>sessionglobals</w>
@@ -1638,6 +1643,7 @@
       <w>storable</w>
       <w>storedhash</w>
       <w>storeitemui</w>
+      <w>strftime</w>
       <w>stringprep</w>
       <w>stringptr</w>
       <w>strobing</w>
@@ -1888,6 +1894,7 @@
       <w>virotic</w>
       <w>vmaddr</w>
       <w>vmcfg</w>
+      <w>vmhgfs</w>
       <w>vmrun</w>
       <w>vmshell</w>
       <w>vmware</w>

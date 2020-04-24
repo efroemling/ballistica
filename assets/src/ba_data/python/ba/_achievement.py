@@ -326,24 +326,22 @@ class Achievement:
     def description_full(self) -> ba.Lstr:
         """Get a ba.Lstr for the Achievement's full description."""
         from ba._lang import Lstr
-        return Lstr(resource='achievements.' + self._name + '.descriptionFull',
-                    subs=[('${LEVEL}',
-                           Lstr(translate=[
-                               'coopLevelNames',
-                               ACH_LEVEL_NAMES.get(self._name, '?')
-                           ]))])
+
+        return Lstr(
+            resource='achievements.' + self._name + '.descriptionFull',
+            subs=[('${LEVEL}',
+                   Lstr(translate=('coopLevelNames',
+                                   ACH_LEVEL_NAMES.get(self._name, '?'))))])
 
     @property
     def description_full_complete(self) -> ba.Lstr:
         """Get a ba.Lstr for the Achievement's full desc. when completed."""
         from ba._lang import Lstr
-        return Lstr(resource='achievements.' + self._name +
-                    '.descriptionFullComplete',
-                    subs=[('${LEVEL}',
-                           Lstr(translate=[
-                               'coopLevelNames',
-                               ACH_LEVEL_NAMES.get(self._name, '?')
-                           ]))])
+        return Lstr(
+            resource='achievements.' + self._name + '.descriptionFullComplete',
+            subs=[('${LEVEL}',
+                   Lstr(translate=('coopLevelNames',
+                                   ACH_LEVEL_NAMES.get(self._name, '?'))))])
 
     def get_award_ticket_value(self, include_pro_bonus: bool = False) -> int:
         """Get the ticket award value for this achievement."""

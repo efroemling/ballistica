@@ -309,14 +309,14 @@ class ProfileBrowserWindow(ba.Window):
                 continue
             color, _highlight = get_player_profile_colors(p_name)
             scl = 1.1
+            tval = (account_name if p_name == '__account__' else
+                    get_player_profile_icon(p_name) + p_name)
+            assert isinstance(tval, str)
             txtw = ba.textwidget(
                 parent=self._columnwidget,
                 position=(0, 32),
                 size=((self._width - 40) / scl, 28),
-                text=ba.Lstr(
-                    value=account_name if p_name ==
-                    '__account__' else get_player_profile_icon(p_name) +
-                    p_name),
+                text=ba.Lstr(value=tval),
                 h_align='left',
                 v_align='center',
                 on_select_call=ba.WeakCall(self._select, p_name, index),

@@ -156,6 +156,7 @@ SCRIPT_TARGETS_PY_1 = \
   build/ba_data/python/efro/entity/_value.py \
   build/ba_data/python/bacommon/__init__.py \
   build/ba_data/python/bacommon/assets.py \
+  build/ba_data/python/bacommon/serverutils.py \
   build/ba_data/python/bacommon/err.py \
   build/ba_data/python/ba/_dualteamsession.py \
   build/ba_data/python/ba/_gameactivity.py \
@@ -361,7 +362,6 @@ SCRIPT_TARGETS_PY_1 = \
   build/ba_data/python/bastd/actor/flag.py \
   build/ba_data/python/bastd/actor/scoreboard.py \
   build/ba_data/python/bastd/actor/popuptext.py \
-  build/ba_data/python/bastd/actor/multiteamvictory.py \
   build/ba_data/python/bastd/actor/background.py \
   build/ba_data/python/bastd/actor/__init__.py \
   build/ba_data/python/bastd/actor/zoomtext.py \
@@ -394,6 +394,7 @@ SCRIPT_TARGETS_PYC_1 = \
   build/ba_data/python/efro/entity/__pycache__/_value.cpython-37.opt-1.pyc \
   build/ba_data/python/bacommon/__pycache__/__init__.cpython-37.opt-1.pyc \
   build/ba_data/python/bacommon/__pycache__/assets.cpython-37.opt-1.pyc \
+  build/ba_data/python/bacommon/__pycache__/serverutils.cpython-37.opt-1.pyc \
   build/ba_data/python/bacommon/__pycache__/err.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_dualteamsession.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_gameactivity.cpython-37.opt-1.pyc \
@@ -599,7 +600,6 @@ SCRIPT_TARGETS_PYC_1 = \
   build/ba_data/python/bastd/actor/__pycache__/flag.cpython-37.opt-1.pyc \
   build/ba_data/python/bastd/actor/__pycache__/scoreboard.cpython-37.opt-1.pyc \
   build/ba_data/python/bastd/actor/__pycache__/popuptext.cpython-37.opt-1.pyc \
-  build/ba_data/python/bastd/actor/__pycache__/multiteamvictory.cpython-37.opt-1.pyc \
   build/ba_data/python/bastd/actor/__pycache__/background.cpython-37.opt-1.pyc \
   build/ba_data/python/bastd/actor/__pycache__/__init__.cpython-37.opt-1.pyc \
   build/ba_data/python/bastd/actor/__pycache__/zoomtext.cpython-37.opt-1.pyc \
@@ -697,6 +697,11 @@ build/ba_data/python/bacommon/__pycache__/__init__.cpython-37.opt-1.pyc: \
 
 build/ba_data/python/bacommon/__pycache__/assets.cpython-37.opt-1.pyc: \
       build/ba_data/python/bacommon/assets.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python/bacommon/__pycache__/serverutils.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bacommon/serverutils.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
@@ -1722,11 +1727,6 @@ build/ba_data/python/bastd/actor/__pycache__/scoreboard.cpython-37.opt-1.pyc: \
 
 build/ba_data/python/bastd/actor/__pycache__/popuptext.cpython-37.opt-1.pyc: \
       build/ba_data/python/bastd/actor/popuptext.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/ba_data/python/bastd/actor/__pycache__/multiteamvictory.cpython-37.opt-1.pyc: \
-      build/ba_data/python/bastd/actor/multiteamvictory.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 

@@ -21,7 +21,6 @@
 """Some handy base class and special purpose Activity types."""
 from __future__ import annotations
 
-import time
 from typing import TYPE_CHECKING
 
 import _ba
@@ -40,7 +39,7 @@ class EndSessionActivity(Activity):
     def __init__(self, settings: Dict[str, Any]):
         super().__init__(settings)
 
-        # Keeps prev activity alive while we fadeout.
+        # Keeps prev activity alive while we fade out.
         self.transition_time = 0.25
         self.inherits_tint = True
         self.inherits_slow_motion = True
@@ -147,13 +146,14 @@ class ScoreScreenActivity(Activity):
         self.default_music: Optional[MusicType] = MusicType.SCORES
         self._birth_time = _ba.time()
         self._min_view_time = 5.0
-        self._allow_server_restart = False
+        self._allow_server_transition = False
         self._background: Optional[ba.Actor] = None
         self._tips_text: Optional[ba.Actor] = None
         self._kicked_off_server_shutdown = False
         self._kicked_off_server_restart = False
         self._default_show_tips = True
         self._custom_continue_message: Optional[ba.Lstr] = None
+        self._server_transitioning: Optional[bool] = None
 
     def on_player_join(self, player: ba.Player) -> None:
         from ba import _general
@@ -207,10 +207,18 @@ class ScoreScreenActivity(Activity):
 
     def _player_press(self) -> None:
 
-        # If we're running in server-mode and it wants to shut down
-        # or restart, this is a good place to do it
-        if self._handle_server_restarts():
+        # If this activity is a good 'end point', ask server-mode just once if
+        # it wants to do anything special like switch sessions or kill the app.
+        if (self._allow_server_transition and _ba.app.server is not None
+                and self._server_transitioning is None):
+            self._server_transitioning = _ba.app.server.handle_transition()
+            assert isinstance(self._server_transitioning, bool)
+
+        # If server-mode is handling this, don't do anything ourself.
+        if self._server_transitioning is True:
             return
+
+        # Otherwise end the activity normally.
         self.end()
 
     def _safe_assign(self, player: ba.Player) -> None:
@@ -221,48 +229,3 @@ class ScoreScreenActivity(Activity):
             player.assign_input_call(
                 ('jumpPress', 'punchPress', 'bombPress', 'pickUpPress'),
                 self._player_press)
-
-    def _handle_server_restarts(self) -> bool:
-        """Handle automatic restarts/shutdowns in server mode.
-
-        Returns True if an action was taken; otherwise default action
-        should occur (starting next round, etc).
-        """
-        # pylint: disable=cyclic-import
-
-        # FIXME: Move server stuff to its own module.
-        if self._allow_server_restart and _ba.app.server_config_dirty:
-            from ba import _server
-            from ba._lang import Lstr
-            from ba._general import Call
-            from ba._enums import TimeType
-            if _ba.app.server_config.get('quit', False):
-                if not self._kicked_off_server_shutdown:
-                    if _ba.app.server_config.get(
-                            'quit_reason') == 'restarting':
-                        # FIXME: Should add a server-screen-message call
-                        #  or something.
-                        _ba.chat_message(
-                            Lstr(resource='internal.serverRestartingText').
-                            evaluate())
-                        print(('Exiting for server-restart at ' +
-                               time.strftime('%c')))
-                    else:
-                        print(('Exiting for server-shutdown at ' +
-                               time.strftime('%c')))
-                    with _ba.Context('ui'):
-                        _ba.timer(2.0, _ba.quit, timetype=TimeType.REAL)
-                    self._kicked_off_server_shutdown = True
-                    return True
-            else:
-                if not self._kicked_off_server_restart:
-                    print(('Running updated server config at ' +
-                           time.strftime('%c')))
-                    with _ba.Context('ui'):
-                        _ba.timer(1.0,
-                                  Call(_ba.pushcall,
-                                       _server.launch_server_session),
-                                  timetype=TimeType.REAL)
-                    self._kicked_off_server_restart = True
-                    return True
-        return False
