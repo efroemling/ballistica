@@ -311,7 +311,7 @@ class SoundtrackBrowserWindow(ba.Window):
         self._refresh(select_soundtrack=test_name)
 
     def _select(self, name: str, index: int) -> None:
-        from ba.internal import do_play_music
+        music = ba.app.music
         self._selected_soundtrack_index = index
         self._selected_soundtrack = name
         cfg = ba.app.config
@@ -322,9 +322,10 @@ class SoundtrackBrowserWindow(ba.Window):
             ba.playsound(ba.getsound('gunCocking'))
             cfg['Soundtrack'] = self._selected_soundtrack
             cfg.commit()
+
             # Just play whats already playing.. this'll grab it from the
             # new soundtrack.
-            do_play_music(ba.app.music_types[ba.MusicPlayMode.REGULAR])
+            music.do_play_music(music.music_types[ba.MusicPlayMode.REGULAR])
 
     def _back(self) -> None:
         # pylint: disable=cyclic-import

@@ -31,8 +31,7 @@ if TYPE_CHECKING:
     from ba import _lang, _meta
     from ba.ui import UICleanupCheck
     from bastd.actor import spazappearance
-    from typing import (Optional, Dict, Tuple, Set, Any, List, Type, Tuple,
-                        Callable)
+    from typing import Optional, Dict, Set, Any, Type, Tuple, Callable, List
 
 
 class App:
@@ -268,9 +267,7 @@ class App:
         the single shared instance.
         """
         # pylint: disable=too-many-statements
-        from ba._music import MusicPlayMode
-
-        # _test_https()
+        from ba._music import MusicController
 
         # Config.
         self.config_file_healthy = False
@@ -281,8 +278,7 @@ class App:
         self.fg_state = 0
 
         # Environment stuff.
-        # (pulling these into attrs so we can type-check them)
-
+        # (pulling these into attrs so we can type-check them and provide docs)
         env = _ba.env()
         self._build_number: int = env['build_number']
         assert isinstance(self._build_number, int)
@@ -332,7 +328,7 @@ class App:
         self.last_ad_completion_time: Optional[float] = None
         self.last_ad_was_short = False
         self.did_weak_call_warning = False
-        self.ran_on_launch = False
+        self.ran_on_app_launch = False
 
         # If we try to run promo-codes due to launch-args/etc we might
         # not be signed in yet; go ahead and queue them up in that case.
@@ -354,15 +350,8 @@ class App:
         # Co-op Campaigns.
         self.campaigns: Dict[str, ba.Campaign] = {}
 
-        # Server-Mode.
-        self.server: Optional[ba.Server] = None
-        # self.server_config: Dict[str, Any] = {}
-        # self.server_config_dirty = False
-        # self.run_server_wait_timer: Optional[ba.Timer] = None
-        # self.server_playlist_fetch: Optional[Dict[str, Any]] = None
-        # self.next_server_account_warn_time: Optional[float] = None
-        # self.launched_server = False
-        # self.run_server_first_run = True
+        # Server Mode.
+        self.server: Optional[ba.ServerController] = None
 
         # Ads.
         self.last_ad_network = 'unknown'
@@ -372,14 +361,7 @@ class App:
         self.attempted_first_ad = False
 
         # Music.
-        self.music: Optional[ba.Node] = None
-        self.music_mode: ba.MusicPlayMode = MusicPlayMode.REGULAR
-        self.music_player: Optional[ba.MusicPlayer] = None
-        self.music_player_type: Optional[Type[ba.MusicPlayer]] = None
-        self.music_types: Dict[ba.MusicPlayMode, Optional[ba.MusicType]] = {
-            MusicPlayMode.REGULAR: None,
-            MusicPlayMode.TEST: None
-        }
+        self.music = MusicController()
 
         # Language.
         self.language_target: Optional[_lang.AttrDict] = None
@@ -453,13 +435,12 @@ class App:
         self.large_ui = env['interface_type'] == 'large'
         self.toolbars = env.get('toolbar_test', True)
 
-    def on_launch(self) -> None:
+    def on_app_launch(self) -> None:
         """Runs after the app finishes bootstrapping.
 
         (internal)"""
         # FIXME: Break this up.
         # pylint: disable=too-many-statements
-        # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
         from ba import _apputils
@@ -468,7 +449,6 @@ class App:
         from ba import _achievement
         from ba import _map
         from ba import _meta
-        from ba import _music
         from ba import _campaign
         from bastd import appdelegate
         from bastd import maps as stdmaps
@@ -483,11 +463,6 @@ class App:
         _achievement.init_achievements()
         spazappearance.register_appearances()
         _campaign.init_campaigns()
-        if _ba.env()['platform'] == 'android':
-            self.music_player_type = _music.InternalMusicPlayer
-        elif _ba.env()['platform'] == 'mac' and hasattr(
-                _ba, 'mac_music_app_init'):
-            self.music_player_type = _music.MacMusicAppMusicPlayer
 
         # FIXME: This should not be hard-coded.
         for maptype in [
@@ -566,17 +541,7 @@ class App:
             # to disk.
             _appconfig.commit_app_config(force=True)
 
-        # If we're using a non-default playlist, lets go ahead and get our
-        # music-player going since it may hitch (better while we're faded
-        # out than later).
-        try:
-            if ('Soundtrack' in cfg and cfg['Soundtrack'] not in [
-                    '__default__', 'Default Soundtrack'
-            ]):
-                _music.get_music_player()
-        except Exception:
-            from ba import _error
-            _error.print_exception('error prepping music-player')
+        self.music.on_app_launch()
 
         launch_count = cfg.get('launchCount', 0)
         launch_count += 1
@@ -632,7 +597,7 @@ class App:
 
         _ba.pushcall(do_auto_sign_in)
 
-        self.ran_on_launch = True
+        self.ran_on_app_launch = True
 
         # from ba._dependency import test_depset
         # test_depset()
@@ -744,10 +709,8 @@ class App:
     def handle_app_resume(self) -> None:
         """Run when the app resumes from a suspended state."""
 
-        # If there's music playing externally, make sure we aren't playing
-        # ours.
-        from ba import _music
-        _music.handle_app_resume()
+        self.music.handle_app_resume()
+
         self.fg_state += 1
 
         # Mark our cached tourneys as invalid so anyone using them knows
@@ -827,8 +790,7 @@ class App:
 
     def shutdown(self) -> None:
         """(internal)"""
-        if self.music_player is not None:
-            self.music_player.shutdown()
+        self.music.on_app_shutdown()
 
     def handle_deep_link(self, url: str) -> None:
         """Handle a deep link URL."""

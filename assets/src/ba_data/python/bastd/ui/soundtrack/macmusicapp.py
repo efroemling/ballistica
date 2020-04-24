@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # -----------------------------------------------------------------------------
-"""UI functionality related to using iTunes for soundtracks."""
+"""UI functionality related to using the macOS Music app for soundtracks."""
 
 from __future__ import annotations
 
@@ -36,7 +36,7 @@ class MacMusicAppPlaylistSelectWindow(ba.Window):
 
     def __init__(self, callback: Callable[[Any], Any],
                  existing_playlist: Optional[str], existing_entry: Any):
-        from ba.internal import get_music_player, MacMusicAppMusicPlayer
+        from ba.macmusicapp import MacMusicAppMusicPlayer
         self._r = 'editSoundtrackWindow'
         self._callback = callback
         self._existing_playlist = existing_playlist
@@ -83,7 +83,7 @@ class MacMusicAppPlaylistSelectWindow(ba.Window):
                       text=ba.Lstr(resource=self._r + '.fetchingITunesText'),
                       color=(0.6, 0.9, 0.6, 1.0),
                       scale=0.8)
-        musicplayer = get_music_player()
+        musicplayer = ba.app.music.get_music_player()
         assert isinstance(musicplayer, MacMusicAppMusicPlayer)
         musicplayer.get_playlists(self._playlists_cb)
         ba.containerwidget(edit=self._root_widget,

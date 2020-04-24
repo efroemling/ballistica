@@ -291,7 +291,8 @@ class SoundtrackEditWindow(ba.Window):
     @classmethod
     def _restore_editor(cls, state: Dict[str, Any], musictype: str,
                         entry: Any) -> None:
-        from ba.internal import get_soundtrack_entry_type
+        music = ba.app.music
+
         # Apply the change and recreate the window.
         soundtrack = state['soundtrack']
         existing_entry = (None if musictype not in soundtrack else
@@ -303,7 +304,7 @@ class SoundtrackEditWindow(ba.Window):
         if entry is not None:
             entry = copy.deepcopy(entry)
 
-        entry_type = get_soundtrack_entry_type(entry)
+        entry_type = music.get_soundtrack_entry_type(entry)
         if entry_type == 'default':
             # For 'default' entries simply exclude them from the list.
             if musictype in soundtrack:
@@ -316,7 +317,7 @@ class SoundtrackEditWindow(ba.Window):
 
     def _get_entry(self, song_type: str, entry: Any,
                    selection_target_name: str) -> None:
-        from ba.internal import get_music_player
+        music = ba.app.music
         if selection_target_name != '':
             selection_target_name = "'" + selection_target_name + "'"
         state = {
@@ -326,12 +327,12 @@ class SoundtrackEditWindow(ba.Window):
             'last_edited_song_type': song_type
         }
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (get_music_player().select_entry(
+        ba.app.main_menu_window = (music.get_music_player().select_entry(
             ba.Call(self._restore_editor, state, song_type), entry,
             selection_target_name).get_root_widget())
 
     def _test(self, song_type: ba.MusicType) -> None:
-        from ba.internal import set_music_play_mode, do_play_music
+        music = ba.app.music
 
         # Warn if volume is zero.
         if ba.app.config.resolve("Music Volume") < 0.01:
@@ -339,28 +340,27 @@ class SoundtrackEditWindow(ba.Window):
             ba.screenmessage(ba.Lstr(resource=self._r +
                                      '.musicVolumeZeroWarning'),
                              color=(1, 0.5, 0))
-        set_music_play_mode(ba.MusicPlayMode.TEST)
-        do_play_music(song_type,
-                      mode=ba.MusicPlayMode.TEST,
-                      testsoundtrack=self._soundtrack)
+        music.set_music_play_mode(ba.MusicPlayMode.TEST)
+        music.do_play_music(song_type,
+                            mode=ba.MusicPlayMode.TEST,
+                            testsoundtrack=self._soundtrack)
 
     def _get_entry_button_display_name(self,
                                        entry: Any) -> Union[str, ba.Lstr]:
-        from ba.internal import (get_soundtrack_entry_type,
-                                 get_soundtrack_entry_name)
-        etype = get_soundtrack_entry_type(entry)
+        music = ba.app.music
+        etype = music.get_soundtrack_entry_type(entry)
         ename: Union[str, ba.Lstr]
         if etype == 'default':
             ename = ba.Lstr(resource=self._r + '.defaultGameMusicText')
         elif etype in ('musicFile', 'musicFolder'):
-            ename = os.path.basename(get_soundtrack_entry_name(entry))
+            ename = os.path.basename(music.get_soundtrack_entry_name(entry))
         else:
-            ename = get_soundtrack_entry_name(entry)
+            ename = music.get_soundtrack_entry_name(entry)
         return ename
 
     def _get_entry_button_display_icon_type(self, entry: Any) -> Optional[str]:
-        from ba.internal import get_soundtrack_entry_type
-        etype = get_soundtrack_entry_type(entry)
+        music = ba.app.music
+        etype = music.get_soundtrack_entry_type(entry)
         if etype == 'musicFile':
             return 'file'
         if etype == 'musicFolder':
@@ -368,17 +368,18 @@ class SoundtrackEditWindow(ba.Window):
         return None
 
     def _cancel(self) -> None:
-        from ba.internal import set_music_play_mode
         from bastd.ui.soundtrack import browser as stb
+        music = ba.app.music
+
         # Resets music back to normal.
-        set_music_play_mode(ba.MusicPlayMode.REGULAR)
+        music.set_music_play_mode(ba.MusicPlayMode.REGULAR)
         ba.containerwidget(edit=self._root_widget, transition='out_right')
         ba.app.main_menu_window = (stb.SoundtrackBrowserWindow(
             transition='in_left').get_root_widget())
 
     def _do_it(self) -> None:
-        from ba.internal import set_music_play_mode
         from bastd.ui.soundtrack import browser as stb
+        music = ba.app.music
         cfg = ba.app.config
         new_name = cast(str, ba.textwidget(query=self._text_field))
         if (new_name != self._soundtrack_name
@@ -413,7 +414,7 @@ class SoundtrackEditWindow(ba.Window):
         ba.containerwidget(edit=self._root_widget, transition='out_right')
 
         # Resets music back to normal.
-        set_music_play_mode(ba.MusicPlayMode.REGULAR, force_restart=True)
+        music.set_music_play_mode(ba.MusicPlayMode.REGULAR, force_restart=True)
 
         ba.app.main_menu_window = (stb.SoundtrackBrowserWindow(
             transition='in_left').get_root_widget())

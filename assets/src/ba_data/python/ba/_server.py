@@ -46,14 +46,14 @@ def _cmd(command_data: bytes) -> None:
     if command is ServerCommand.CONFIG:
         assert isinstance(payload, ServerConfig)
         assert _ba.app.server is None
-        _ba.app.server = Server(payload)
+        _ba.app.server = ServerController(payload)
         return
 
     assert _ba.app.server is not None
     print('WOULD DO OTHER SERVER COMMAND')
 
 
-class Server:
+class ServerController:
     """Overall controller for the app in server mode.
 
     Category: App Classes
@@ -79,8 +79,6 @@ class Server:
 
         self._config_server()
 
-        # Launch the server only the first time through;
-        # after that it will be self-sustaining.
         self._next_server_account_warn_time = time.time() + 10.0
 
         # Now sit around until we're signed in and then
@@ -197,6 +195,9 @@ class Server:
         signed_in = _ba.get_account_state() == 'signed_in'
 
         if not signed_in:
+
+            # Signing in to the local server account should not take long;
+            # complain if it does...
             curtime = time.time()
             if curtime > self._next_server_account_warn_time:
                 print('Still waiting for account sign-in...')
@@ -205,7 +206,6 @@ class Server:
             can_launch = False
 
             # If we're trying to fetch a playlist, we do that first.
-            # if self._server_playlist_fetch is not None:
             if self._playlist_fetch_running:
 
                 # Send request if we haven't.

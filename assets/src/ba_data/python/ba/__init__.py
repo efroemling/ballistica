@@ -59,7 +59,7 @@ from ba._gameresults import TeamGameResults
 from ba._lang import Lstr, setlanguage, get_valid_languages
 from ba._map import Map, getmaps
 from ba._session import Session
-from ba._server import Server
+from ba._server import ServerController
 from ba._stats import PlayerScoredMessage, PlayerRecord, Stats
 from ba._team import Team
 from ba._teamgame import TeamGameActivity
@@ -89,7 +89,7 @@ from ba.ui import Window, UIController, uicleanupcheck
 app: App
 
 
-# Change everything's listed module to ba (instead of ba.foo.bar.etc).
+# Change everything's listed module to simply 'ba' (instead of 'ba.foo.bar').
 def _simplify_module_names() -> None:
     for attr, obj in globals().items():
         if not attr.startswith('_'):

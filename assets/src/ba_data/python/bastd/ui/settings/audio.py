@@ -40,9 +40,10 @@ class AudioSettingsWindow(ba.Window):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
-        from ba.internal import have_music_player, music_volume_changed
-        from bastd.ui import popup as popup_ui
-        from bastd.ui import config as cfgui
+        from bastd.ui.popup import PopupMenu
+        from bastd.ui.config import ConfigNumberEdit
+
+        music = ba.app.music
 
         # If they provided an origin-widget, scale up from that.
         scale_origin: Optional[Tuple[float, float]]
@@ -60,8 +61,8 @@ class AudioSettingsWindow(ba.Window):
         width = 460.0
         height = 210.0
 
-        # Update: hard-coding head-relative audio to true now, so not showing
-        # options.
+        # Update: hard-coding head-relative audio to true now,
+        # so not showing options.
         # show_vr_head_relative_audio = True if ba.app.vr_mode else False
         show_vr_head_relative_audio = False
 
@@ -69,7 +70,7 @@ class AudioSettingsWindow(ba.Window):
             height += 70
 
         show_soundtracks = False
-        if have_music_player():
+        if music.have_music_player():
             show_soundtracks = True
             height += spacing * 2.0
 
@@ -111,7 +112,7 @@ class AudioSettingsWindow(ba.Window):
                         size=(60, 60),
                         label=ba.charstr(ba.SpecialChar.BACK))
 
-        self._sound_volume_numedit = svne = cfgui.ConfigNumberEdit(
+        self._sound_volume_numedit = svne = ConfigNumberEdit(
             parent=self._root_widget,
             position=(40, v),
             xoffset=10,
@@ -124,7 +125,7 @@ class AudioSettingsWindow(ba.Window):
             ba.widget(edit=svne.plusbutton,
                       right_widget=_ba.get_special_widget('party_button'))
         v -= spacing
-        self._music_volume_numedit = cfgui.ConfigNumberEdit(
+        self._music_volume_numedit = ConfigNumberEdit(
             parent=self._root_widget,
             position=(40, v),
             xoffset=10,
@@ -133,7 +134,7 @@ class AudioSettingsWindow(ba.Window):
             minval=0.0,
             maxval=1.0,
             increment=0.1,
-            callback=music_volume_changed,
+            callback=music.music_volume_changed,
             changesound=False)
 
         v -= 0.5 * spacing
@@ -151,7 +152,7 @@ class AudioSettingsWindow(ba.Window):
                           h_align="left",
                           v_align="center")
 
-            popup = popup_ui.PopupMenu(
+            popup = PopupMenu(
                 parent=self._root_widget,
                 position=(290, v),
                 width=120,

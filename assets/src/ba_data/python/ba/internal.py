@@ -53,11 +53,7 @@ from ba._messages import PlayerProfilesChangedMessage
 from ba._meta import get_game_types
 from ba._modutils import show_user_scripts
 from ba._multiteamsession import DEFAULT_TEAM_COLORS, DEFAULT_TEAM_NAMES
-from ba._music import (have_music_player, music_volume_changed, do_play_music,
-                       get_soundtrack_entry_name, get_soundtrack_entry_type,
-                       get_music_player, set_music_play_mode,
-                       supports_soundtrack_entry_type,
-                       get_valid_music_file_extensions, MacMusicAppMusicPlayer)
+from ba._music import do_play_music
 from ba._netutils import serverget, serverput, get_ip_address_type
 from ba._powerup import get_default_powerup_distribution
 from ba._profile import (get_player_profile_colors, get_player_profile_icon,

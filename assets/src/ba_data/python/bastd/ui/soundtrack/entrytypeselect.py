@@ -39,8 +39,7 @@ class SoundtrackEntryTypeSelectWindow(ba.Window):
                  current_entry: Any,
                  selection_target_name: str,
                  transition: str = 'in_right'):
-        from ba.internal import (get_soundtrack_entry_type,
-                                 supports_soundtrack_entry_type)
+        music = ba.app.music
         self._r = 'editSoundtrackWindow'
 
         self._callback = callback
@@ -50,11 +49,13 @@ class SoundtrackEntryTypeSelectWindow(ba.Window):
         self._height = 220
         spacing = 80
 
+        # FIXME: Generalize this so new custom soundtrack types can add
+        # themselves here.
         do_default = True
-        do_mac_music_app_playlist = supports_soundtrack_entry_type(
+        do_mac_music_app_playlist = music.supports_soundtrack_entry_type(
             'iTunesPlaylist')
-        do_music_file = supports_soundtrack_entry_type('musicFile')
-        do_music_folder = supports_soundtrack_entry_type('musicFolder')
+        do_music_file = music.supports_soundtrack_entry_type('musicFile')
+        do_music_folder = music.supports_soundtrack_entry_type('musicFolder')
 
         if do_mac_music_app_playlist:
             self._height += spacing
@@ -96,7 +97,7 @@ class SoundtrackEntryTypeSelectWindow(ba.Window):
 
         v = self._height - 155
 
-        current_entry_type = get_soundtrack_entry_type(current_entry)
+        current_entry_type = music.get_soundtrack_entry_type(current_entry)
 
         if do_default:
             btn = ba.buttonwidget(parent=self._root_widget,
@@ -147,23 +148,23 @@ class SoundtrackEntryTypeSelectWindow(ba.Window):
             v -= spacing
 
     def _on_mac_music_app_playlist_press(self) -> None:
-        from ba.internal import (get_soundtrack_entry_type,
-                                 get_soundtrack_entry_name)
-        from bastd.ui.soundtrack import itunes
+        music = ba.app.music
+        from bastd.ui.soundtrack import macmusicapp
         ba.containerwidget(edit=self._root_widget, transition='out_left')
 
         current_playlist_entry: Optional[str]
-        if get_soundtrack_entry_type(self._current_entry) == 'iTunesPlaylist':
-            current_playlist_entry = get_soundtrack_entry_name(
+        if (music.get_soundtrack_entry_type(
+                self._current_entry) == 'iTunesPlaylist'):
+            current_playlist_entry = music.get_soundtrack_entry_name(
                 self._current_entry)
         else:
             current_playlist_entry = None
-        ba.app.main_menu_window = (itunes.MacMusicAppPlaylistSelectWindow(
+        ba.app.main_menu_window = (macmusicapp.MacMusicAppPlaylistSelectWindow(
             self._callback, current_playlist_entry,
             self._current_entry).get_root_widget())
 
     def _on_music_file_press(self) -> None:
-        from ba.internal import get_valid_music_file_extensions
+        from ba.osmusic import OSMusicPlayer
         from bastd.ui import fileselector
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         base_path = _ba.android_get_external_storage_path()
@@ -171,7 +172,8 @@ class SoundtrackEntryTypeSelectWindow(ba.Window):
             base_path,
             callback=self._music_file_selector_cb,
             show_base_path=False,
-            valid_file_extensions=get_valid_music_file_extensions(),
+            valid_file_extensions=(
+                OSMusicPlayer.get_valid_music_file_extensions()),
             allow_folders=False).get_root_widget())
 
     def _on_music_folder_press(self) -> None:

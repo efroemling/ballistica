@@ -137,7 +137,7 @@
    <li><a href="#class_ba_AppDelegate">ba.AppDelegate</a></li>
    <li><a href="#class_ba_Campaign">ba.Campaign</a></li>
    <li><a href="#class_ba_MusicPlayer">ba.MusicPlayer</a></li>
-   <li><a href="#class_ba_Server">ba.Server</a></li>
+   <li><a href="#class_ba_ServerController">ba.ServerController</a></li>
 </ul>
 <h4><a name="class_category_User_Interface_Classes">User Interface Classes</a></h4>
 <ul>
@@ -3251,10 +3251,16 @@ another <a href="#class_ba_Activity">ba.Activity</a>.</p>
 </p>
 
 <h3>Methods:</h3>
-<h5><a href="#method_ba_MusicPlayer____init__">&lt;constructor&gt;</a>, <a href="#method_ba_MusicPlayer__on_play">on_play()</a>, <a href="#method_ba_MusicPlayer__on_select_entry">on_select_entry()</a>, <a href="#method_ba_MusicPlayer__on_set_volume">on_set_volume()</a>, <a href="#method_ba_MusicPlayer__on_shutdown">on_shutdown()</a>, <a href="#method_ba_MusicPlayer__on_stop">on_stop()</a>, <a href="#method_ba_MusicPlayer__play">play()</a>, <a href="#method_ba_MusicPlayer__select_entry">select_entry()</a>, <a href="#method_ba_MusicPlayer__set_volume">set_volume()</a>, <a href="#method_ba_MusicPlayer__shutdown">shutdown()</a>, <a href="#method_ba_MusicPlayer__stop">stop()</a></h5>
+<h5><a href="#method_ba_MusicPlayer____init__">&lt;constructor&gt;</a>, <a href="#method_ba_MusicPlayer__on_app_shutdown">on_app_shutdown()</a>, <a href="#method_ba_MusicPlayer__on_play">on_play()</a>, <a href="#method_ba_MusicPlayer__on_select_entry">on_select_entry()</a>, <a href="#method_ba_MusicPlayer__on_set_volume">on_set_volume()</a>, <a href="#method_ba_MusicPlayer__on_stop">on_stop()</a>, <a href="#method_ba_MusicPlayer__play">play()</a>, <a href="#method_ba_MusicPlayer__select_entry">select_entry()</a>, <a href="#method_ba_MusicPlayer__set_volume">set_volume()</a>, <a href="#method_ba_MusicPlayer__shutdown">shutdown()</a>, <a href="#method_ba_MusicPlayer__stop">stop()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_MusicPlayer____init__">&lt;constructor&gt;</a></dt></h4><dd>
 <p><span>ba.MusicPlayer()</span></p>
+
+</dd>
+<dt><h4><a name="method_ba_MusicPlayer__on_app_shutdown">on_app_shutdown()</a></dt></h4><dd>
+<p><span>on_app_shutdown(self) -&gt; None</span></p>
+
+<p>Called on final app shutdown.</p>
 
 </dd>
 <dt><h4><a name="method_ba_MusicPlayer__on_play">on_play()</a></dt></h4><dd>
@@ -3276,12 +3282,6 @@ signify that the default soundtrack should be used..</p>
 <p><span>on_set_volume(self, volume: float) -&gt; None</span></p>
 
 <p>Called when the volume should be changed.</p>
-
-</dd>
-<dt><h4><a name="method_ba_MusicPlayer__on_shutdown">on_shutdown()</a></dt></h4><dd>
-<p><span>on_shutdown(self) -&gt; None</span></p>
-
-<p>Called on final app shutdown.</p>
 
 </dd>
 <dt><h4><a name="method_ba_MusicPlayer__on_stop">on_stop()</a></dt></h4><dd>
@@ -3975,7 +3975,7 @@ cause the powerup box to make a sound and disappear or whatnot.</p>
 </dd>
 </dl>
 <hr>
-<h2><strong><a name="class_ba_Server">ba.Server</a></strong></h3>
+<h2><strong><a name="class_ba_ServerController">ba.ServerController</a></strong></h3>
 <p><em>&lt;top level class&gt;</em>
 </p>
 <p>Overall controller for the app in server mode.</p>
@@ -3984,13 +3984,13 @@ cause the powerup box to make a sound and disappear or whatnot.</p>
 </p>
 
 <h3>Methods:</h3>
-<h5><a href="#method_ba_Server____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Server__handle_transition">handle_transition()</a>, <a href="#method_ba_Server__launch_server_session">launch_server_session()</a></h5>
+<h5><a href="#method_ba_ServerController____init__">&lt;constructor&gt;</a>, <a href="#method_ba_ServerController__handle_transition">handle_transition()</a>, <a href="#method_ba_ServerController__launch_server_session">launch_server_session()</a></h5>
 <dl>
-<dt><h4><a name="method_ba_Server____init__">&lt;constructor&gt;</a></dt></h4><dd>
-<p><span>ba.Server(config: ServerConfig)</span></p>
+<dt><h4><a name="method_ba_ServerController____init__">&lt;constructor&gt;</a></dt></h4><dd>
+<p><span>ba.ServerController(config: ServerConfig)</span></p>
 
 </dd>
-<dt><h4><a name="method_ba_Server__handle_transition">handle_transition()</a></dt></h4><dd>
+<dt><h4><a name="method_ba_ServerController__handle_transition">handle_transition()</a></dt></h4><dd>
 <p><span>handle_transition(self) -&gt; bool</span></p>
 
 <p>Handle transitioning to a new <a href="#class_ba_Session">ba.Session</a> or quitting the app.</p>
@@ -4001,7 +4001,7 @@ Should return True if action will be handled by us; False if the
 session should just continue on it's merry way.</p>
 
 </dd>
-<dt><h4><a name="method_ba_Server__launch_server_session">launch_server_session()</a></dt></h4><dd>
+<dt><h4><a name="method_ba_ServerController__launch_server_session">launch_server_session()</a></dt></h4><dd>
 <p><span>launch_server_session(self) -&gt; None</span></p>
 
 <p>Kick off a host-session based on the current server config.</p>
@@ -5774,17 +5774,17 @@ are applied to the Widget.</p>
 <h2><strong><a name="function_ba_setmusic">ba.setmusic()</a></strong></h3>
 <p><span>setmusic(musictype: Optional[MusicType], continuous: bool = False) -&gt; None</span></p>
 
-<p>Set or stop the current music based on a string musictype.</p>
+<p>Tell the game to play (or stop playing) a certain type of music.</p>
 
 <p>Category: <a href="#function_category_Gameplay_Functions">Gameplay Functions</a></p>
 
-<p>This function will handle loading and playing sound media as necessary,
+<p>This function will handle loading and playing sound assets as necessary,
 and also supports custom user soundtracks on specific platforms so the
 user can override particular game music with their own.</p>
 
 <p>Pass None to stop music.</p>
 
-<p>if 'continuous' is True the musictype passed is the same as what is already
+<p>if 'continuous' is True and musictype is the same as what is already
 playing, the playing track will not be restarted.</p>
 
 <hr>

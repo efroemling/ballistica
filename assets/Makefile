@@ -163,6 +163,7 @@ SCRIPT_TARGETS_PY_1 = \
   build/ba_data/python/ba/_apputils.py \
   build/ba_data/python/ba/_coopsession.py \
   build/ba_data/python/ba/_appdelegate.py \
+  build/ba_data/python/ba/macmusicapp.py \
   build/ba_data/python/ba/internal.py \
   build/ba_data/python/ba/_coopgame.py \
   build/ba_data/python/ba/_meta.py \
@@ -196,6 +197,7 @@ SCRIPT_TARGETS_PY_1 = \
   build/ba_data/python/ba/_multiteamsession.py \
   build/ba_data/python/ba/_actor.py \
   build/ba_data/python/ba/_powerup.py \
+  build/ba_data/python/ba/osmusic.py \
   build/ba_data/python/ba/_campaign.py \
   build/ba_data/python/ba/_lobby.py \
   build/ba_data/python/ba/_stats.py \
@@ -285,8 +287,8 @@ SCRIPT_TARGETS_PY_1 = \
   build/ba_data/python/bastd/ui/playlist/editgame.py \
   build/ba_data/python/bastd/ui/playlist/editcontroller.py \
   build/ba_data/python/bastd/ui/playlist/addgame.py \
+  build/ba_data/python/bastd/ui/soundtrack/macmusicapp.py \
   build/ba_data/python/bastd/ui/soundtrack/entrytypeselect.py \
-  build/ba_data/python/bastd/ui/soundtrack/itunes.py \
   build/ba_data/python/bastd/ui/soundtrack/__init__.py \
   build/ba_data/python/bastd/ui/soundtrack/edit.py \
   build/ba_data/python/bastd/ui/soundtrack/browser.py \
@@ -401,6 +403,7 @@ SCRIPT_TARGETS_PYC_1 = \
   build/ba_data/python/ba/__pycache__/_apputils.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_coopsession.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_appdelegate.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/macmusicapp.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/internal.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_coopgame.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_meta.cpython-37.opt-1.pyc \
@@ -434,6 +437,7 @@ SCRIPT_TARGETS_PYC_1 = \
   build/ba_data/python/ba/__pycache__/_multiteamsession.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_actor.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_powerup.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/osmusic.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_campaign.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_lobby.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_stats.cpython-37.opt-1.pyc \
@@ -523,8 +527,8 @@ SCRIPT_TARGETS_PYC_1 = \
   build/ba_data/python/bastd/ui/playlist/__pycache__/editgame.cpython-37.opt-1.pyc \
   build/ba_data/python/bastd/ui/playlist/__pycache__/editcontroller.cpython-37.opt-1.pyc \
   build/ba_data/python/bastd/ui/playlist/__pycache__/addgame.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/soundtrack/__pycache__/macmusicapp.cpython-37.opt-1.pyc \
   build/ba_data/python/bastd/ui/soundtrack/__pycache__/entrytypeselect.cpython-37.opt-1.pyc \
-  build/ba_data/python/bastd/ui/soundtrack/__pycache__/itunes.cpython-37.opt-1.pyc \
   build/ba_data/python/bastd/ui/soundtrack/__pycache__/__init__.cpython-37.opt-1.pyc \
   build/ba_data/python/bastd/ui/soundtrack/__pycache__/edit.cpython-37.opt-1.pyc \
   build/ba_data/python/bastd/ui/soundtrack/__pycache__/browser.cpython-37.opt-1.pyc \
@@ -735,6 +739,11 @@ build/ba_data/python/ba/__pycache__/_appdelegate.cpython-37.opt-1.pyc: \
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
+build/ba_data/python/ba/__pycache__/macmusicapp.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/macmusicapp.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
 build/ba_data/python/ba/__pycache__/internal.cpython-37.opt-1.pyc: \
       build/ba_data/python/ba/internal.py
 	@echo Compiling script: $^
@@ -897,6 +906,11 @@ build/ba_data/python/ba/__pycache__/_actor.cpython-37.opt-1.pyc: \
 
 build/ba_data/python/ba/__pycache__/_powerup.cpython-37.opt-1.pyc: \
       build/ba_data/python/ba/_powerup.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python/ba/__pycache__/osmusic.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/osmusic.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
@@ -1345,13 +1359,13 @@ build/ba_data/python/bastd/ui/playlist/__pycache__/addgame.cpython-37.opt-1.pyc:
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/ba_data/python/bastd/ui/soundtrack/__pycache__/entrytypeselect.cpython-37.opt-1.pyc: \
-      build/ba_data/python/bastd/ui/soundtrack/entrytypeselect.py
+build/ba_data/python/bastd/ui/soundtrack/__pycache__/macmusicapp.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/soundtrack/macmusicapp.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/ba_data/python/bastd/ui/soundtrack/__pycache__/itunes.cpython-37.opt-1.pyc: \
-      build/ba_data/python/bastd/ui/soundtrack/itunes.py
+build/ba_data/python/bastd/ui/soundtrack/__pycache__/entrytypeselect.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/ui/soundtrack/entrytypeselect.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
