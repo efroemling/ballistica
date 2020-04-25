@@ -71,10 +71,10 @@ class AssetManager:
             logging.warning('AssetManager dying in a started state.')
 
     def launch_gather(
-            self,
-            packages: List[str],
-            flavor: AssetPackageFlavor,
-            account_token: str,
+        self,
+        packages: List[str],
+        flavor: AssetPackageFlavor,
+        account_token: str,
     ) -> AssetGather:
         """Spawn an asset-gather operation from this manager."""
         print('would gather', packages, 'and flavor', flavor, 'with token',

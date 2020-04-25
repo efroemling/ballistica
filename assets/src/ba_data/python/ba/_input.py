@@ -223,9 +223,8 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
                 'triggerRun2': 6,
                 'buttonIgnored': 11
             }.get(name, -1)
-        if (devicename in [
-                'Logitech Dual Action', 'Logitech Cordless RumblePad 2'
-        ]):
+        if (devicename
+                in ['Logitech Dual Action', 'Logitech Cordless RumblePad 2']):
             return {
                 'buttonJump': 2,
                 'buttonPunch': 1,

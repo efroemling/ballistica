@@ -566,8 +566,8 @@ class PlaylistBrowserWindow(ba.Window):
         from bastd.ui import playoptions
         # Make sure the target playlist still exists.
         try:
-            exists = (playlist_name == '__default__' or
-                      playlist_name in ba.app.config[self._config_name_full])
+            exists = (playlist_name == '__default__' or playlist_name
+                      in ba.app.config[self._config_name_full])
         except Exception:
             exists = False
         if not exists:

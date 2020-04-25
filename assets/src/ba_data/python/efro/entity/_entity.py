@@ -162,12 +162,11 @@ class EntityMixin:
                 cls=ExtendedJSONEncoder)
 
         # When not doing pretty, go for quick and compact.
-        return json.dumps(
-            data,
-            separators=(',', ':'),
-            sort_keys=(sort_keys_override
-                       if sort_keys_override is not None else False),
-            cls=ExtendedJSONEncoder)
+        return json.dumps(data,
+                          separators=(',', ':'),
+                          sort_keys=(sort_keys_override if sort_keys_override
+                                     is not None else False),
+                          cls=ExtendedJSONEncoder)
 
     @staticmethod
     def json_loads(s: str) -> Any:

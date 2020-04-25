@@ -228,9 +228,9 @@ class FileSelectorWindow(ba.Window):
         if not self._root_widget:
             return
 
-        scrollwidget_selected = (
-            self._scrollwidget is None
-            or self._root_widget.get_selected_child() == self._scrollwidget)
+        scrollwidget_selected = (self._scrollwidget is None
+                                 or self._root_widget.get_selected_child()
+                                 == self._scrollwidget)
 
         in_top_folder = (self._path == self._base_path)
         hide_top_folder = in_top_folder and self._show_base_path is False

@@ -167,9 +167,8 @@ class MusicController:
         # out than later).
         try:
             cfg = _ba.app.config
-            if ('Soundtrack' in cfg and cfg['Soundtrack'] not in [
-                    '__default__', 'Default Soundtrack'
-            ]):
+            if ('Soundtrack' in cfg and cfg['Soundtrack']
+                    not in ['__default__', 'Default Soundtrack']):
                 self.get_music_player()
         except Exception:
             from ba import _error

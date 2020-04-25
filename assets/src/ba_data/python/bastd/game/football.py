@@ -585,8 +585,8 @@ class FootballCoopGame(ba.CoopGameActivity):
             for player in self.players:
                 if player.actor:
                     assert isinstance(player.actor, playerspaz.PlayerSpaz)
-                    if (player.actor.is_alive() and
-                            player.actor.node.hold_node == self._flag.node):
+                    if (player.actor.is_alive() and player.actor.node.hold_node
+                            == self._flag.node):
                         return
 
             flagpos = ba.Vec3(self._flag.node.position)

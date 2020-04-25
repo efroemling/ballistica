@@ -238,8 +238,8 @@ class ServerController:
                 _ba.pushcall(self.launch_server_session)
 
     def _on_playlist_fetch_response(
-            self,
-            result: Optional[Dict[str, Any]],
+        self,
+        result: Optional[Dict[str, Any]],
     ) -> None:
         if result is None:
             print('Error fetching playlist;' ' aborting.')

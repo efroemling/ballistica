@@ -386,9 +386,8 @@ class CoopScoreScreen(ba.Activity):
                 size=(350, 62),
                 label=ba.Lstr(resource='tournamentStandingsText')
                 if self.session.tournament_id is not None else ba.Lstr(
-                    resource='worldsBestScoresText')
-                if self._score_type == 'points' else ba.Lstr(
-                    resource='worldsBestTimesText'),
+                    resource='worldsBestScoresText') if self._score_type
+                == 'points' else ba.Lstr(resource='worldsBestTimesText'),
                 autoselect=True,
                 on_activate_call=ba.WeakCall(self._ui_worlds_best),
                 transition_delay=delay + 1.9,
@@ -728,9 +727,8 @@ class CoopScoreScreen(ba.Activity):
         v_offs = 40
         txt = Text(ba.Lstr(resource='tournamentStandingsText')
                    if self.session.tournament_id is not None else ba.Lstr(
-                       resource='worldsBestScoresText')
-                   if self._score_type == 'points' else ba.Lstr(
-                       resource='worldsBestTimesText'),
+                       resource='worldsBestScoresText') if self._score_type
+                   == 'points' else ba.Lstr(resource='worldsBestTimesText'),
                    maxwidth=210,
                    position=(ts_h_offs - 10, ts_height / 2 + 25 + v_offs + 20),
                    transition=Text.Transition.IN_LEFT,
@@ -765,9 +763,8 @@ class CoopScoreScreen(ba.Activity):
             ts_height = 300
             ts_h_offs = -480
             v_offs = 40
-            Text(ba.Lstr(resource='yourBestScoresText')
-                 if self._score_type == 'points' else ba.Lstr(
-                     resource='yourBestTimesText'),
+            Text(ba.Lstr(resource='yourBestScoresText') if self._score_type
+                 == 'points' else ba.Lstr(resource='yourBestTimesText'),
                  maxwidth=210,
                  position=(ts_h_offs - 10, ts_height / 2 + 25 + v_offs + 20),
                  transition=Text.Transition.IN_RIGHT,

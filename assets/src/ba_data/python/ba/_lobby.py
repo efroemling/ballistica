@@ -268,9 +268,9 @@ class Chooser:
                         # Cycle through our non-random profiles once; after
                         # that, everyone gets random.
                         while (app.lobby_random_profile_index <
-                               len(profilenames) and
-                               profilenames[app.lobby_random_profile_index] in
-                               ('_random', '__account__', '_edit')):
+                               len(profilenames)
+                               and profilenames[app.lobby_random_profile_index]
+                               in ('_random', '__account__', '_edit')):
                             app.lobby_random_profile_index += 1
                         if (app.lobby_random_profile_index <
                                 len(profilenames)):

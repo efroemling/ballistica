@@ -490,11 +490,10 @@ class AdvancedSettingsWindow(ba.Window):
             text_scale=1.0,
             on_activate_call=self._on_benchmark_press)
 
-        ba.widget(
-            edit=self._vr_test_button
-            if self._vr_test_button is not None else self._net_test_button
-            if self._net_test_button is not None else self._benchmarks_button,
-            up_widget=cbw)
+        ba.widget(edit=self._vr_test_button if self._vr_test_button is not None
+                  else self._net_test_button if self._net_test_button
+                  is not None else self._benchmarks_button,
+                  up_widget=cbw)
 
         for child in self._subcontainer.get_children():
             ba.widget(edit=child, show_buffer_bottom=30, show_buffer_top=20)
@@ -580,8 +579,8 @@ class AdvancedSettingsWindow(ba.Window):
                 elif sel == self._kick_idle_players_check_box.widget:
                     sel_name = 'KickIdlePlayers'
                 elif (self._always_use_internal_keyboard_check_box is not None
-                      and sel ==
-                      self._always_use_internal_keyboard_check_box.widget):
+                      and sel
+                      == self._always_use_internal_keyboard_check_box.widget):
                     sel_name = 'AlwaysUseInternalKeyboard'
                 elif (self._language_popup is not None
                       and sel == self._language_popup.get_button()):
@@ -632,8 +631,8 @@ class AdvancedSettingsWindow(ba.Window):
                 elif sel_name == 'KickIdlePlayers':
                     sel = self._kick_idle_players_check_box.widget
                 elif (sel_name == 'AlwaysUseInternalKeyboard'
-                      and self._always_use_internal_keyboard_check_box is
-                      not None):
+                      and self._always_use_internal_keyboard_check_box
+                      is not None):
                     sel = self._always_use_internal_keyboard_check_box.widget
                 elif (sel_name == 'Languages'
                       and self._language_popup is not None):

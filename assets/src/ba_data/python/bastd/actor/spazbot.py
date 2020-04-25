@@ -282,9 +282,8 @@ class SpazBot(basespaz.Spaz):
         # Not a flag-bearer. If we're holding anything but a bomb, drop it.
         if self.node.hold_node:
             try:
-                holding_bomb = (self.node.hold_node.getnodetype() in [
-                    'bomb', 'prop'
-                ])
+                holding_bomb = (self.node.hold_node.getnodetype()
+                                in ['bomb', 'prop'])
             except Exception:
                 holding_bomb = False
             if not holding_bomb:

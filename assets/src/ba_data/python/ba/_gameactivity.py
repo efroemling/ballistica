@@ -49,8 +49,10 @@ class GameActivity(Activity):
 
     @classmethod
     def create_config_ui(
-        cls, sessionclass: Type[ba.Session], config: Optional[Dict[str, Any]],
-        completion_call: Callable[[Optional[Dict[str, Any]]], None]
+        cls,
+        sessionclass: Type[ba.Session],
+        config: Optional[Dict[str, Any]],
+        completion_call: Callable[[Optional[Dict[str, Any]]], None],
     ) -> None:
         """Launch an in-game UI to configure settings for a game type.
 

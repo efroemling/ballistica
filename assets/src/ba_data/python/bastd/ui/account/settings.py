@@ -213,22 +213,22 @@ class AccountSettingsWindow(ba.Window):
         show_signing_in_text = account_state == 'signing_in'
         signing_in_text_space = 80.0
 
-        show_google_play_sign_in_button = (
-            account_state == 'signed_out'
-            and 'Google Play' in self._show_sign_in_buttons)
-        show_game_circle_sign_in_button = (
-            account_state == 'signed_out'
-            and 'Game Circle' in self._show_sign_in_buttons)
+        show_google_play_sign_in_button = (account_state == 'signed_out'
+                                           and 'Google Play'
+                                           in self._show_sign_in_buttons)
+        show_game_circle_sign_in_button = (account_state == 'signed_out'
+                                           and 'Game Circle'
+                                           in self._show_sign_in_buttons)
         show_ali_sign_in_button = (account_state == 'signed_out'
                                    and 'Ali' in self._show_sign_in_buttons)
         show_test_sign_in_button = (account_state == 'signed_out'
                                     and 'Test' in self._show_sign_in_buttons)
-        show_device_sign_in_button = (account_state == 'signed_out' and
-                                      'Local' in self._show_sign_in_buttons)
+        show_device_sign_in_button = (account_state == 'signed_out' and 'Local'
+                                      in self._show_sign_in_buttons)
         sign_in_button_space = 70.0
 
-        show_game_service_button = (
-            self._signed_in and account_type in ['Game Center', 'Game Circle'])
+        show_game_service_button = (self._signed_in and account_type
+                                    in ['Game Center', 'Game Circle'])
         game_service_button_space = 60.0
 
         show_linked_accounts_text = (self._signed_in
@@ -236,9 +236,9 @@ class AccountSettingsWindow(ba.Window):
                                          'allowAccountLinking2', False))
         linked_accounts_text_space = 60.0
 
-        show_achievements_button = (self._signed_in and
-                                    account_type in ('Google Play', 'Alibaba',
-                                                     'Local', 'OUYA', 'Test'))
+        show_achievements_button = (self._signed_in and account_type
+                                    in ('Google Play', 'Alibaba', 'Local',
+                                        'OUYA', 'Test'))
         achievements_button_space = 60.0
 
         show_achievements_text = (self._signed_in
@@ -268,9 +268,8 @@ class AccountSettingsWindow(ba.Window):
         show_unlink_accounts_button = show_link_accounts_button
         unlink_accounts_button_space = 90.0
 
-        show_sign_out_button = (
-            self._signed_in
-            and account_type in ['Test', 'Local', 'Google Play'])
+        show_sign_out_button = (self._signed_in and account_type
+                                in ['Test', 'Local', 'Google Play'])
         sign_out_button_space = 70.0
 
         if self._subcontainer is not None:

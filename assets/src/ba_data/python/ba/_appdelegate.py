@@ -35,10 +35,10 @@ class AppDelegate:
     """
 
     def create_default_game_config_ui(
-        self, gameclass: Type[ba.GameActivity], sessionclass: Type[ba.Session],
-        config: Optional[Dict[str, Any]],
-        completion_call: Callable[[Optional[Dict[str, Any]]], None]
-    ) -> None:
+            self, gameclass: Type[ba.GameActivity],
+            sessionclass: Type[ba.Session], config: Optional[Dict[str, Any]],
+            completion_call: Callable[[Optional[Dict[str, Any]]],
+                                      None]) -> None:
         """Launch a UI to configure the given game config.
 
         It should manipulate the contents of config and call completion_call

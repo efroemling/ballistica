@@ -109,8 +109,8 @@ def have_matching_fields(val1: CompoundValue, val2: CompoundValue) -> bool:
 
 
 def get_compound_value_and_data(
-    obj: Union[BoundCompoundValue, CompoundValue]
-) -> Tuple[CompoundValue, Any]:
+    obj: Union[BoundCompoundValue,
+               CompoundValue]) -> Tuple[CompoundValue, Any]:
     """Return value and data for bound or unbound compound values."""
     # pylint: disable=cyclic-import
     from efro.entity._support import BoundCompoundValue

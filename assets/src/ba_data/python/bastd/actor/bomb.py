@@ -858,11 +858,10 @@ class Bomb(ba.Actor):
         except Exception:
             node_delegate = None
         if node:
-            if (self.bomb_type == 'impact'
-                    and (node is self.owner or
-                         (isinstance(node_delegate, Bomb)
-                          and node_delegate.bomb_type == 'impact'
-                          and node_delegate.owner is self.owner))):
+            if (self.bomb_type == 'impact' and
+                (node is self.owner or
+                 (isinstance(node_delegate, Bomb) and node_delegate.bomb_type
+                  == 'impact' and node_delegate.owner is self.owner))):
                 return
             self.handlemessage(ExplodeMessage())
 

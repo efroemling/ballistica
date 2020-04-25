@@ -732,8 +732,8 @@ class StoreBrowserWindow(ba.Window):
                             dummy_name = ''
                         section['button_size'] = get_store_item_display_size(
                             dummy_name)
-                        section['v_spacing'] = (
-                            -17 if self._tab == 'characters' else 0)
+                        section['v_spacing'] = (-17 if self._tab
+                                                == 'characters' else 0)
                         if 'title' not in section:
                             section['title'] = ''
                         section['x_offs'] = (130 if self._tab == 'extras' else

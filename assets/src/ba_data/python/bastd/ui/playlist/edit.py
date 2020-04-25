@@ -268,8 +268,9 @@ class PlaylistEditWindow(ba.Window):
         from bastd.ui.playlist import customizebrowser as cb
         new_name = cast(str, ba.textwidget(query=self._text_field))
         if (new_name != self._editcontroller.get_existing_playlist_name()
-                and new_name in ba.app.config[
-                    self._editcontroller.get_config_name() + ' Playlists']):
+                and new_name
+                in ba.app.config[self._editcontroller.get_config_name() +
+                                 ' Playlists']):
             ba.screenmessage(
                 ba.Lstr(resource=self._r + '.cantSaveAlreadyExistsText'))
             ba.playsound(ba.getsound('error'))

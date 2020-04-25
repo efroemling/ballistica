@@ -388,8 +388,8 @@ class CoopBrowserWindow(ba.Window):
 
             ba.textwidget(edit=tbtn['prize_value_1_text'],
                           text='-' if pv1 == '' else pv1,
-                          scale=prize_value_scale_large if
-                          ticket_char not in pv1 else prize_value_scale_small,
+                          scale=prize_value_scale_large if ticket_char
+                          not in pv1 else prize_value_scale_small,
                           position=(tbtn['button_x'] + 380 + x_offs,
                                     tbtn['button_y'] + tbtn['button_scale_y'] -
                                     93 + prize_y_offs))
@@ -401,8 +401,8 @@ class CoopBrowserWindow(ba.Window):
                                     93 - 45 + prize_y_offs))
             ba.textwidget(edit=tbtn['prize_value_2_text'],
                           text=pv2,
-                          scale=prize_value_scale_large if
-                          ticket_char not in pv2 else prize_value_scale_small,
+                          scale=prize_value_scale_large if ticket_char
+                          not in pv2 else prize_value_scale_small,
                           position=(tbtn['button_x'] + 380 + x_offs,
                                     tbtn['button_y'] + tbtn['button_scale_y'] -
                                     93 - 45 + prize_y_offs))
@@ -414,8 +414,8 @@ class CoopBrowserWindow(ba.Window):
                                     93 - 90 + prize_y_offs))
             ba.textwidget(edit=tbtn['prize_value_3_text'],
                           text=pv3,
-                          scale=prize_value_scale_large if
-                          ticket_char not in pv3 else prize_value_scale_small,
+                          scale=prize_value_scale_large if ticket_char
+                          not in pv3 else prize_value_scale_small,
                           position=(tbtn['button_x'] + 380 + x_offs,
                                     tbtn['button_y'] + tbtn['button_scale_y'] -
                                     93 - 90 + prize_y_offs))
@@ -425,12 +425,12 @@ class CoopBrowserWindow(ba.Window):
             if entry['scores']:
                 score = tbtn['leader'] = copy.deepcopy(entry['scores'][0])
                 leader_name = score[1]
-                leader_score = (
-                    ba.timestring(score[0] * 10,
-                                  centi=True,
-                                  timeformat=ba.TimeFormat.MILLISECONDS,
-                                  suppress_format_warning=True)
-                    if entry['scoreType'] == 'time' else str(score[0]))
+                leader_score = (ba.timestring(
+                    score[0] * 10,
+                    centi=True,
+                    timeformat=ba.TimeFormat.MILLISECONDS,
+                    suppress_format_warning=True) if entry['scoreType']
+                                == 'time' else str(score[0]))
             else:
                 tbtn['leader'] = None
 

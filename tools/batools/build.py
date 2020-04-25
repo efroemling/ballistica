@@ -40,7 +40,7 @@ CLREND = '\033[0m'  # End.
 REQUIRED_PYTHON_MODULES = [
     ('pylint', [2, 4, 4], None),
     ('mypy', [0, 770], None),
-    ('yapf', [0, 29, 0], None),
+    ('yapf', [0, 30, 0], None),
     ('typing_extensions', None, None),
     ('pytz', None, None),
     ('yaml', None, 'PyYAML'),

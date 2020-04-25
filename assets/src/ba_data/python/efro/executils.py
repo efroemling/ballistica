@@ -170,8 +170,9 @@ if TYPE_CHECKING:
         """Seven argument variant of call wrapper"""
 
         def __init__(
-            self, _call: Callable[[In1T, In2T, In3T, In4T, In5T, In6T, In7T],
-                                  OutT]):
+                self,
+                _call: Callable[[In1T, In2T, In3T, In4T, In5T, In6T, In7T],
+                                OutT]):
             ...
 
         def __call__(self, _arg1: In1T, _arg2: In2T, _arg3: In3T, _arg4: In4T,

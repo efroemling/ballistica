@@ -73,10 +73,9 @@ class SoundtrackEditWindow(ba.Window):
             parent=self._root_widget,
             position=(0, self._height - 50),
             size=(self._width, 25),
-            text=ba.Lstr(
-                resource=self._r +
-                ('.editSoundtrackText' if existing_soundtrack is not None else
-                 '.newSoundtrackText')),
+            text=ba.Lstr(resource=self._r +
+                         ('.editSoundtrackText' if existing_soundtrack
+                          is not None else '.newSoundtrackText')),
             color=ba.app.title_color,
             h_align="center",
             v_align="center",

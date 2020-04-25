@@ -234,9 +234,8 @@ class AccountViewerWindow(popup.PopupWindow):
                             character = ba.app.spaz_appearances.get(
                                 profile['character'], None)
                             if character is not None:
-                                tint_color = (profile['color']
-                                              if 'color' in profile else
-                                              (1, 1, 1))
+                                tint_color = (profile['color'] if 'color'
+                                              in profile else (1, 1, 1))
                                 tint2_color = (profile['highlight']
                                                if 'highlight' in profile else
                                                (1, 1, 1))

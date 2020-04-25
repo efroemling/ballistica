@@ -497,13 +497,11 @@ class GamepadSettingsWindow(ba.Window):
 
             # This actually shows both LR and UD.
             sval1 = (self._settings['analogStickLR' +
-                                    self._ext] if 'analogStickLR' +
-                     self._ext in self._settings else
-                     5 if self._is_secondary else 1)
+                                    self._ext] if 'analogStickLR' + self._ext
+                     in self._settings else 5 if self._is_secondary else 1)
             sval2 = (self._settings['analogStickUD' +
-                                    self._ext] if 'analogStickUD' +
-                     self._ext in self._settings else
-                     6 if self._is_secondary else 2)
+                                    self._ext] if 'analogStickUD' + self._ext
+                     in self._settings else 6 if self._is_secondary else 2)
             return self._input.get_axis_name(
                 sval1) + ' / ' + self._input.get_axis_name(sval2)
 
@@ -769,13 +767,13 @@ class AwaitGamepadInputWindow(ba.Window):
     """Window for capturing a gamepad button press."""
 
     def __init__(
-        self,
-        gamepad: ba.InputDevice,
-        button: str,
-        callback: Callable[[str, Dict[str, Any], AwaitGamepadInputWindow],
-                           Any],
-        message: ba.Lstr = None,
-        message2: ba.Lstr = None):
+            self,
+            gamepad: ba.InputDevice,
+            button: str,
+            callback: Callable[[str, Dict[str, Any], AwaitGamepadInputWindow],
+                               Any],
+            message: ba.Lstr = None,
+            message2: ba.Lstr = None):
         if message is None:
             print('AwaitGamepadInputWindow message is None!')
             message = ba.Lstr(

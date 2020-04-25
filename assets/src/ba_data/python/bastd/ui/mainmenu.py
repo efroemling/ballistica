@@ -402,8 +402,8 @@ class MainMenuWindow(ba.Window):
                 scale=3.0 * t_scale)
 
     def _refresh_not_in_game(
-        self, positions: List[Tuple[float, float, float]]
-    ) -> Tuple[float, float, float]:
+        self, positions: List[Tuple[float, float,
+                                    float]]) -> Tuple[float, float, float]:
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
@@ -659,8 +659,8 @@ class MainMenuWindow(ba.Window):
         return h, v, scale
 
     def _refresh_in_game(
-        self, positions: List[Tuple[float, float, float]]
-    ) -> Tuple[float, float, float]:
+        self, positions: List[Tuple[float, float,
+                                    float]]) -> Tuple[float, float, float]:
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
