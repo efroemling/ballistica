@@ -850,20 +850,8 @@ likely result in errors.</p>
 </dd>
 </dl>
 <h3>Methods:</h3>
-<h5><a href="#method_ba_App__handle_app_pause">handle_app_pause()</a>, <a href="#method_ba_App__handle_app_resume">handle_app_resume()</a>, <a href="#method_ba_App__handle_deep_link">handle_deep_link()</a>, <a href="#method_ba_App__launch_coop_game">launch_coop_game()</a>, <a href="#method_ba_App__pause">pause()</a>, <a href="#method_ba_App__resume">resume()</a>, <a href="#method_ba_App__return_to_main_menu_session_gracefully">return_to_main_menu_session_gracefully()</a></h5>
+<h5><a href="#method_ba_App__handle_deep_link">handle_deep_link()</a>, <a href="#method_ba_App__launch_coop_game">launch_coop_game()</a>, <a href="#method_ba_App__on_app_pause">on_app_pause()</a>, <a href="#method_ba_App__on_app_resume">on_app_resume()</a>, <a href="#method_ba_App__pause">pause()</a>, <a href="#method_ba_App__resume">resume()</a>, <a href="#method_ba_App__return_to_main_menu_session_gracefully">return_to_main_menu_session_gracefully()</a></h5>
 <dl>
-<dt><h4><a name="method_ba_App__handle_app_pause">handle_app_pause()</a></dt></h4><dd>
-<p><span>handle_app_pause(self) -&gt; None</span></p>
-
-<p>Called when the app goes to a suspended state.</p>
-
-</dd>
-<dt><h4><a name="method_ba_App__handle_app_resume">handle_app_resume()</a></dt></h4><dd>
-<p><span>handle_app_resume(self) -&gt; None</span></p>
-
-<p>Run when the app resumes from a suspended state.</p>
-
-</dd>
 <dt><h4><a name="method_ba_App__handle_deep_link">handle_deep_link()</a></dt></h4><dd>
 <p><span>handle_deep_link(self, url: str) -&gt; None</span></p>
 
@@ -874,6 +862,18 @@ likely result in errors.</p>
 <p><span>launch_coop_game(self, game: str, force: bool = False, args: Dict = None) -&gt; bool</span></p>
 
 <p>High level way to launch a co-op session locally.</p>
+
+</dd>
+<dt><h4><a name="method_ba_App__on_app_pause">on_app_pause()</a></dt></h4><dd>
+<p><span>on_app_pause(self) -&gt; None</span></p>
+
+<p>Called when the app goes to a suspended state.</p>
+
+</dd>
+<dt><h4><a name="method_ba_App__on_app_resume">on_app_resume()</a></dt></h4><dd>
+<p><span>on_app_resume(self) -&gt; None</span></p>
+
+<p>Run when the app resumes from a suspended state.</p>
 
 </dd>
 <dt><h4><a name="method_ba_App__pause">pause()</a></dt></h4><dd>

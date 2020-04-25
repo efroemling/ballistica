@@ -410,7 +410,7 @@ class App:
         self.main_menu_window_refresh_check_count = 0
         self.first_main_menu = True  # FIXME: Move to mainmenu class.
         self.did_menu_intro = False  # FIXME: Move to mainmenu class.
-        self.main_menu_resume_callbacks: list = []  # can probably go away
+        self.main_menu_resume_callbacks: list = []  # Can probably go away.
         self.special_offer: Optional[Dict] = None
         self.league_rank_cache: Dict = {}
         self.tournament_info: Dict = {}
@@ -427,6 +427,7 @@ class App:
         self.infotextcolor = (0.7, 0.9, 0.7)
         self.uicleanupchecks: List[UICleanupCheck] = []
         self.uiupkeeptimer: Optional[ba.Timer] = None
+
         self.delegate: Optional[ba.AppDelegate] = None
 
         # A few shortcuts.
@@ -643,14 +644,14 @@ class App:
         If there's a foreground host-activity that's currently paused, tell it
         to resume.
         """
-        from ba import _gameutils
+        from ba._gameutils import sharedobj
 
         # FIXME: Shouldn't be touching scene stuff here;
         #  should just pass the request on to the host-session.
         activity = _ba.get_foreground_host_activity()
         if activity is not None:
             with _ba.Context(activity):
-                globs = _gameutils.sharedobj('globals')
+                globs = sharedobj('globals')
                 if globs.paused:
                     _ba.playsound(_ba.getsound('refWhistle'))
                     globs.paused = False
@@ -663,10 +664,9 @@ class App:
         # pylint: disable=cyclic-import
         from ba import _benchmark
         from ba._general import Call
-        from bastd import mainmenu
+        from bastd.mainmenu import MainMenuSession
         _ba.app.main_window = None
-        if isinstance(_ba.get_foreground_host_session(),
-                      mainmenu.MainMenuSession):
+        if isinstance(_ba.get_foreground_host_session(), MainMenuSession):
             # It may be possible we're on the main menu but the screen is faded
             # so fade back in.
             _ba.fade_screen(True)
@@ -691,7 +691,7 @@ class App:
 
         # Otherwise just force the issue.
         else:
-            _ba.pushcall(Call(_ba.new_host_session, mainmenu.MainMenuSession))
+            _ba.pushcall(Call(_ba.new_host_session, MainMenuSession))
 
     def add_main_menu_close_callback(self, call: Callable[[], Any]) -> None:
         """(internal)"""
@@ -703,13 +703,13 @@ class App:
         else:
             self.main_menu_resume_callbacks.append(call)
 
-    def handle_app_pause(self) -> None:
+    def on_app_pause(self) -> None:
         """Called when the app goes to a suspended state."""
 
-    def handle_app_resume(self) -> None:
+    def on_app_resume(self) -> None:
         """Run when the app resumes from a suspended state."""
 
-        self.music.handle_app_resume()
+        self.music.on_app_resume()
 
         self.fg_state += 1
 

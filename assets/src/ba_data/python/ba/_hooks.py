@@ -137,8 +137,12 @@ def orientation_reset_message() -> None:
                       color=(0, 1, 0))
 
 
-def handle_app_resume() -> None:
-    _ba.app.handle_app_resume()
+def on_app_pause() -> None:
+    _ba.app.on_app_pause()
+
+
+def on_app_resume() -> None:
+    _ba.app.on_app_resume()
 
 
 def launch_main_menu_session() -> None:
@@ -285,10 +289,6 @@ def remove_in_game_ads_message() -> None:
 def telnet_access_request() -> None:
     from bastd.ui.telnet import TelnetAccessRequestWindow
     TelnetAccessRequestWindow()
-
-
-def app_pause() -> None:
-    _ba.app.handle_app_pause()
 
 
 def do_quit() -> None:

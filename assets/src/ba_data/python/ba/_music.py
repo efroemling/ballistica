@@ -274,7 +274,7 @@ class MusicController:
             _error.print_exception()
             return 'default'
 
-    def handle_app_resume(self) -> None:
+    def on_app_resume(self) -> None:
         """Should be run when the app resumes from a suspended state."""
         if _ba.is_os_playing_music():
             self.do_play_music(None)
