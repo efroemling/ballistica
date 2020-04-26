@@ -181,11 +181,23 @@ def androidaddr() -> None:
         sys.exit(255)
     arch = sys.argv[3]
     archs = {
-        'x86': {'prefix': 'x86-', 'libmain': 'libmain_x86.so'},
-        'arm': {'prefix': 'arm-', 'libmain': 'libmain_arm.so'},
-        'arm64': {'prefix': 'aarch64-', 'libmain': 'libmain_arm64.so'},
-        'x86-64': {'prefix': 'x86_64-', 'libmain': 'libmain_x86-64.so'}
-    }  # yapf: disable
+        'x86': {
+            'prefix': 'x86-',
+            'libmain': 'libmain_x86.so'
+        },
+        'arm': {
+            'prefix': 'arm-',
+            'libmain': 'libmain_arm.so'
+        },
+        'arm64': {
+            'prefix': 'aarch64-',
+            'libmain': 'libmain_arm64.so'
+        },
+        'x86-64': {
+            'prefix': 'x86_64-',
+            'libmain': 'libmain_x86-64.so'
+        }
+    }
     if arch not in archs:
         print('ERROR: invalid arch "' + arch + '"; (choices are ' +
               ', '.join(archs.keys()) + ')')

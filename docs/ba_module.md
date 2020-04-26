@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-04-25 for Ballistica version 1.5.0 build 20001</em></h4>
+<h4><em>last updated on 2020-04-26 for Ballistica version 1.5.0 build 20001</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -3339,7 +3339,11 @@ signify that the default soundtrack should be used..</p>
 <p>inherits from: enum.Enum</p>
 <p>Types of music available to play in-game.</p>
 
-<p>Category: <a href="#class_category_Enums">Enums</a>
+<p>Category: <a href="#class_category_Enums">Enums</a></p>
+
+<p>    These do not correspond to specific pieces of music, but rather to
+    'situations'. The actual music played for each type can be overridden
+    by the game or by the user.
 </p>
 
 <h3>Values:</h3>

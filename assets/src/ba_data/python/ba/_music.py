@@ -36,6 +36,10 @@ class MusicType(Enum):
     """Types of music available to play in-game.
 
     Category: Enums
+
+    These do not correspond to specific pieces of music, but rather to
+    'situations'. The actual music played for each type can be overridden
+    by the game or by the user.
     """
     MENU = 'Menu'
     VICTORY = 'Victory'
@@ -453,6 +457,7 @@ class MusicPlayer:
         signify that the default soundtrack should be used.."""
 
     # Subclasses should override the following:
+
     def on_set_volume(self, volume: float) -> None:
         """Called when the volume should be changed."""
 
