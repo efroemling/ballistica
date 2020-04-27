@@ -32,5 +32,5 @@ class RemoteError(Exception):
     """An error occurred on the other end of some connection."""
 
     def __str__(self) -> str:
-        s = ''.join(str(arg) for arg in self.args)  # pylint: disable=E1133
+        s = ''.join(str(arg) for arg in self.args)
         return f'Remote Exception Follows:\n{s}'

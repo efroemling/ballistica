@@ -24,28 +24,38 @@ from __future__ import annotations
 import os
 import sys
 from enum import Enum
+import datetime
+from dataclasses import dataclass
 import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import List, Sequence
+    from typing import List, Sequence, Optional
 
 CLRBLU = '\033[94m'  # Blue.
 CLRHDR = '\033[95m'  # Header.
 CLREND = '\033[0m'  # End.
 
-# Python modules we require for this project.
-# (module name, required version, pip package (if it differs from module name))
-REQUIRED_PYTHON_MODULES = [
-    ('pylint', [2, 4, 4], None),
-    ('mypy', [0, 770], None),
-    ('yapf', [0, 30, 0], None),
-    ('typing_extensions', None, None),
-    ('pytz', None, None),
-    ('yaml', None, 'PyYAML'),
-    ('requests', None, None),
-    ('pytest', None, None),
+
+# Python pip packages we require for this project.
+@dataclass
+class PipRequirement:
+    """A pip package required by our project."""
+    modulename: str
+    minversion: Optional[List[int]] = None  # None implies no min version.
+    pipname: Optional[str] = None  # None implies same as modulename.
+
+
+PIP_REQUIREMENTS = [
+    PipRequirement(modulename='pylint', minversion=[2, 5, 0]),
+    PipRequirement(modulename='mypy', minversion=[0, 770]),
+    PipRequirement(modulename='yapf', minversion=[0, 30, 0]),
+    PipRequirement(modulename='typing_extensions'),
+    PipRequirement(modulename='pytz'),
+    PipRequirement(modulename='yaml', pipname='PyYAML'),
+    PipRequirement(modulename='requests'),
+    PipRequirement(modulename='pytest'),
 ]
 
 # Parts of full-tests suite we only run on particular days.
@@ -231,7 +241,6 @@ def gen_fulltest_buildfile_android() -> None:
     (so we see nice pretty split-up build trees)
     """
     # pylint: disable=too-many-branches
-    import datetime
 
     # Its a pretty big time-suck building all architectures for
     # all of our subplatforms, so lets usually just build a single one.
@@ -290,7 +299,6 @@ def gen_fulltest_buildfile_windows() -> None:
 
     (so we see nice pretty split-up build trees)
     """
-    import datetime
 
     dayoffset = datetime.datetime.now().timetuple().tm_yday
 
@@ -338,7 +346,6 @@ def gen_fulltest_buildfile_apple() -> None:
     (so we see nice pretty split-up build trees)
     """
     # pylint: disable=too-many-branches
-    import datetime
 
     dayoffset = datetime.datetime.now().timetuple().tm_yday
 
@@ -403,7 +410,6 @@ def gen_fulltest_buildfile_linux() -> None:
 
     (so we see nice pretty split-up build trees)
     """
-    import datetime
 
     dayoffset = datetime.datetime.now().timetuple().tm_yday
 
@@ -468,7 +474,7 @@ def checkenv() -> None:
     # Make sure they've got curl.
     if subprocess.run(['which', 'curl'], check=False,
                       capture_output=True).returncode != 0:
-        raise RuntimeError(f'curl is required; please install it.')
+        raise RuntimeError('curl is required; please install it.')
 
     # Make sure they've got our target python version.
     if subprocess.run(['which', PYTHON_BIN], check=False,
@@ -484,7 +490,10 @@ def checkenv() -> None:
             'pip (for {PYTHON_BIN}) is required; please install it.')
 
     # Check for some required python modules.
-    for modname, minver, packagename in REQUIRED_PYTHON_MODULES:
+    for req in PIP_REQUIREMENTS:
+        modname = req.modulename
+        minver = req.minversion
+        packagename = req.pipname
         if packagename is None:
             packagename = modname
         if minver is not None:
@@ -510,7 +519,9 @@ def checkenv() -> None:
             if vnums < minver:
                 raise RuntimeError(
                     f'{packagename} ver. {_vstr(minver)} or newer required;'
-                    f' found {_vstr(vnums)}')
+                    f' found {_vstr(vnums)}.\n'
+                    f'To upgrade it, try: "{PYTHON_BIN}'
+                    f' -m pip install {packagename} --upgrade"')
 
     print('Environment ok.', flush=True)
 
@@ -518,8 +529,8 @@ def checkenv() -> None:
 def get_pip_reqs() -> List[str]:
     """Return the pip requirements needed to build/run stuff."""
     out: List[str] = []
-    for module in REQUIRED_PYTHON_MODULES:
-        name = module[0] if module[2] is None else module[2]
+    for req in PIP_REQUIREMENTS:
+        name = req.modulename if req.pipname is None else req.pipname
         assert isinstance(name, str)
         out.append(name)
     return out

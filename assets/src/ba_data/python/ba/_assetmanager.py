@@ -176,14 +176,13 @@ def fetch_url(url: str, filename: Path, asset_gather: AssetGather) -> None:
     """Fetch a given url to a given filename for a given AssetGather.
 
     """
-    # pylint: disable=too-many-locals
 
     import socket
 
     # We don't want to keep the provided AssetGather alive, but we want
     # to abort if it dies.
     assert isinstance(asset_gather, AssetGather)
-    weak_gather = weakref.ref(asset_gather)
+    # weak_gather = weakref.ref(asset_gather)
 
     # Pass a very short timeout to urllib so we have opportunities
     # to cancel even with network blockage.

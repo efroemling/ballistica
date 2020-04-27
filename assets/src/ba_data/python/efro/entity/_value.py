@@ -89,7 +89,7 @@ class SimpleValue(TypedValue[T]):
     def __repr__(self) -> str:
         if self._target_type is not None:
             return f'<Value of type {self._target_type.__name__}>'
-        return f'<Value of unknown type>'
+        return '<Value of unknown type>'
 
     def get_default_data(self) -> Any:
         return self._default_data
@@ -286,7 +286,7 @@ class Float3Value(SimpleValue[Tuple[float, float, float]]):
         super().__init__(default, store_default)
 
     def __repr__(self) -> str:
-        return f'<Value of type float3>'
+        return '<Value of type float3>'
 
     def filter_input(self, data: Any, error: bool) -> Any:
         if (not isinstance(data, abc.Sequence) or len(data) != 3

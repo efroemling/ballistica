@@ -528,7 +528,7 @@ def install_pip_reqs() -> None:
     subprocess.run([PYTHON_BIN, '-m', 'pip', 'install', '--upgrade'] +
                    get_pip_reqs(),
                    check=True)
-    print(f'All pip requirements installed!')
+    print('All pip requirements installed!')
 
 
 def checkenv() -> None:

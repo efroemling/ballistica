@@ -40,7 +40,7 @@ _pytz_utc: Any
 # (in which case it should be installed as a dependency anyway)
 try:
     import pytz
-    _pytz_utc = pytz.utc  # pylint: disable=invalid-name
+    _pytz_utc = pytz.utc
 except ModuleNotFoundError:
     _pytz_utc = None  # pylint: disable=invalid-name
 
@@ -48,7 +48,7 @@ except ModuleNotFoundError:
 class ExtendedJSONEncoder(json.JSONEncoder):
     """Custom json encoder supporting additional types."""
 
-    def default(self, obj: Any) -> Any:  # pylint: disable=E0202, W0221
+    def default(self, obj: Any) -> Any:  # pylint: disable=W0221
         if isinstance(obj, datetime.datetime):
 
             # We only support timezone-aware utc times.

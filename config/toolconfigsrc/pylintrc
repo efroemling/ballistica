@@ -47,12 +47,16 @@ disable=bad-continuation
 #   with having a bunch of optional args in some cases.
 # similarities
 #   Not gonna touch this for now; maybe later. Bigger fish to fry.
+# not-callable
+#   Seeming to get a number of false positives for this, and mypy covers
+#   this case well.
 disable=broad-except,
         too-few-public-methods,
         no-self-use,
         too-many-instance-attributes,
         too-many-arguments,
-        similarities
+        similarities,
+        not-callable
 
 # We want to know whenever we can get rid of suppression statements.
 enable=useless-suppression

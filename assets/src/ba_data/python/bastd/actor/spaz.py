@@ -462,7 +462,7 @@ class Spaz(ba.Actor):
         if t_ms - self.last_punch_time_ms >= self._punch_cooldown:
             if self.punch_callback is not None:
                 self.punch_callback(self)
-            self._punched_nodes = set()  # reset this..
+            self._punched_nodes = set()  # Reset this.
             self.last_punch_time_ms = t_ms
             self.node.punch_pressed = True
             if not self.node.hold_node:

@@ -400,7 +400,7 @@ def warm_start_cache() -> None:
         print('Decompressing starter-cache...', flush=True)
         run('tar -xf startercache.tar.xz')
         run(f'mv efrocache {CACHE_DIR_NAME}')
-        run(f'rm startercache.tar.xz')
+        run('rm startercache.tar.xz')
         print('Starter-cache fetched successfully!'
               ' (should speed up asset builds)')
 

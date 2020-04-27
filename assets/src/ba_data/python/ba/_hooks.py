@@ -182,9 +182,6 @@ def purchases_restored_message() -> None:
 def dismiss_wii_remotes_window() -> None:
     call = _ba.app.dismiss_wii_remotes_window_call
     if call is not None:
-        # Weird; this seems to trigger pylint only sometimes.
-        # pylint: disable=useless-suppression
-        # pylint: disable=not-callable
         call()
 
 

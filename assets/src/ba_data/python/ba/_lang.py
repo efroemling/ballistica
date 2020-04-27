@@ -63,7 +63,7 @@ class Lstr:
                               subs=[('${NAME}', ba.Lstr(resource='res_b'))])
     """
 
-    # pylint: disable=redefined-outer-name
+    # pylint: disable=redefined-outer-name, dangerous-default-value
     # noinspection PyDefaultArgument
     @overload
     def __init__(self,
@@ -93,7 +93,7 @@ class Lstr:
         """Create an Lstr from a raw string value."""
         ...
 
-    # pylint: enable=redefined-outer-name
+    # pylint: enable=redefined-outer-name, dangerous-default-value
 
     def __init__(self, *args: Any, **keywds: Any) -> None:
         """Instantiate a Lstr.

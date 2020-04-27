@@ -1076,6 +1076,7 @@
       <w>minusbutton</w>
       <w>minval</w>
       <w>minver</w>
+      <w>minversion</w>
       <w>mios</w>
       <w>mipmap</w>
       <w>mipmaps</w>
@@ -1275,6 +1276,7 @@
       <w>pickletools</w>
       <w>pickupmats</w>
       <w>pipestatus</w>
+      <w>pipname</w>
       <w>pkey</w>
       <w>pkgutil</w>
       <w>playerlostspaz</w>
