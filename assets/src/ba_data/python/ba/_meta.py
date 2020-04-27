@@ -360,5 +360,5 @@ def get_unowned_game_types() -> Set[Type[ba.GameActivity]]:
         return unowned_games
     except Exception:
         from ba import _error
-        _error.print_exception("error calcing un-owned games")
+        _error.print_exception('error calcing un-owned games')
         return set()

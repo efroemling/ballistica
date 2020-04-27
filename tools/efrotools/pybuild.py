@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from typing import List, Dict, Any
 
 # Overall version we're using for the game currently.
-PYTHON_VERSION_MAJOR = "3.7"
+PYTHON_VERSION_MAJOR = '3.7'
 
 ENABLE_OPENSSL = True
 
@@ -170,7 +170,7 @@ def build_apple(arch: str, debug: bool = False) -> None:
         dline = '--with-doc-strings --enable-ipv6 --without-ensurepip'
         splitlen = len(txt.split(dline))
         if splitlen != 3:
-            raise Exception("unexpected configure lines")
+            raise Exception('unexpected configure lines')
         txt = txt.replace(dline, '--with-pydebug ' + dline)
 
         # Debug has a different name.
@@ -178,7 +178,7 @@ def build_apple(arch: str, debug: bool = False) -> None:
         dline = 'python$(PYTHON_VER)m'
         splitlen = len(txt.split(dline))
         if splitlen != 14:
-            raise Exception("unexpected configure lines")
+            raise Exception('unexpected configure lines')
         txt = txt.replace(dline, 'python$(PYTHON_VER)dm')
 
     efrotools.writefile('Makefile', txt)
@@ -214,7 +214,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     # gettext homebrew formula.
     if (subprocess.run('which autopoint', shell=True, check=False).returncode
             != 0):
-        print("Updating path for mac autopoint...")
+        print('Updating path for mac autopoint...')
         appath = subprocess.run('brew ls gettext | grep bin/autopoint',
                                 shell=True,
                                 check=True,
@@ -233,7 +233,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     # Set the packages we build.
     ftxt = efrotools.replace_one(
         ftxt, 'packages = (', "packages = ('zlib', 'sqlite', 'xz'," +
-        (" 'openssl'" if ENABLE_OPENSSL else "") + ")\n# packages = (")
+        (" 'openssl'" if ENABLE_OPENSSL else '') + ')\n# packages = (')
 
     # Don't wanna bother with gpg signing stuff.
     ftxt = efrotools.replace_one(ftxt, 'verify_source = True',
@@ -253,7 +253,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     ftxt = efrotools.readfile('pybuild/packages/python.py')
 
     # We currently build as a static lib.
-    ftxt = efrotools.replace_one(ftxt, "            '--enable-shared',\n", "")
+    ftxt = efrotools.replace_one(ftxt, "            '--enable-shared',\n", '')
     ftxt = efrotools.replace_one(
         ftxt, "super().__init__('https://github.com/python/cpython/')",
         "super().__init__('https://github.com/python/cpython/', branch='3.7')")
@@ -266,7 +266,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
                                      "'./configure', '--with-pydebug',")
 
     # We don't use this stuff so lets strip it out to simplify.
-    ftxt = efrotools.replace_one(ftxt, "'--without-ensurepip',", "")
+    ftxt = efrotools.replace_one(ftxt, "'--without-ensurepip',", '')
 
     # This builds all modules as dynamic libs, but we want to be consistent
     # with our other embedded builds and just static-build the ones we
@@ -290,12 +290,12 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
         # Check out a particular commit right after the clone.
         ftxt = efrotools.replace_one(
             ftxt, "'git', 'clone', '--single-branch', '-b',"
-            " self.branch, self.source_url, self.dest])",
+            ' self.branch, self.source_url, self.dest])',
             "'git', 'clone', '-b',"
-            " self.branch, self.source_url, self.dest])\n"
-            "        # efro: hack to get the python we want.\n"
+            ' self.branch, self.source_url, self.dest])\n'
+            '        # efro: hack to get the python we want.\n'
             "        print('DOING URL', self.source_url)\n"
-            "        if self.source_url == "
+            '        if self.source_url == '
             "'https://github.com/python/cpython/':\n"
             "            run_in_dir(['git', 'checkout', '" + commit +
             "'], self.source_dir)")
@@ -402,7 +402,7 @@ def android_patch() -> None:
         '		[A-Z]*=*)	DEFS="$line$NL$DEFS"; continue;;')
     efrotools.writefile(fname, txt)
 
-    print("APPLIED EFROTOOLS ANDROID BUILD PATCHES.")
+    print('APPLIED EFROTOOLS ANDROID BUILD PATCHES.')
 
 
 def gather() -> None:

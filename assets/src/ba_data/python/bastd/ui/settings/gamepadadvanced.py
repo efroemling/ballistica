@@ -61,8 +61,8 @@ class GamepadAdvancedSettingsWindow(ba.Window):
                       text=ba.Lstr(resource=self._r + '.advancedTitleText'),
                       maxwidth=320,
                       color=ba.app.title_color,
-                      h_align="center",
-                      v_align="center")
+                      h_align='center',
+                      v_align='center')
 
         back_button = btn = ba.buttonwidget(
             parent=self._root_widget,
@@ -435,8 +435,8 @@ class GamepadAdvancedSettingsWindow(ba.Window):
                       size=(100, 30),
                       text=displayname,
                       color=(0.8, 0.8, 0.8, 1.0),
-                      h_align="left",
-                      v_align="center",
+                      h_align='left',
+                      v_align='center',
                       scale=1.0,
                       maxwidth=280)
         self._textwidgets[control] = ba.textwidget(
@@ -445,15 +445,15 @@ class GamepadAdvancedSettingsWindow(ba.Window):
             size=(60, 28),
             editable=False,
             color=(0.3, 1.0, 0.3, 1.0),
-            h_align="right",
-            v_align="center",
+            h_align='right',
+            v_align='center',
             text=self._parent_window.get_control_value_name(control),
             padding=2)
         btn = ba.buttonwidget(parent=self._subcontainer,
                               autoselect=True,
                               position=(330 + x_offset, position[1] + 4),
                               size=(28, 28),
-                              label="-",
+                              label='-',
                               on_activate_call=ba.Call(self._inc, control,
                                                        min_val, max_val,
                                                        -increment),
@@ -463,7 +463,7 @@ class GamepadAdvancedSettingsWindow(ba.Window):
                                autoselect=True,
                                position=(380 + x_offset, position[1] + 4),
                                size=(28, 28),
-                               label="+",
+                               label='+',
                                on_activate_call=ba.Call(
                                    self._inc, control, min_val, max_val,
                                    increment),

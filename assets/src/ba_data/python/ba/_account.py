@@ -83,7 +83,7 @@ def get_league_rank_points(data: Optional[Dict[str, Any]],
         assert isinstance(trophies_total, int)
         return trophies_total
     if subset is not None:
-        raise Exception("invalid subset value: " + str(subset))
+        raise Exception('invalid subset value: ' + str(subset))
 
     if data['p']:
         pro_mult = 1.0 + float(

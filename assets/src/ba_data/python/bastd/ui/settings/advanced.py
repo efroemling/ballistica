@@ -67,7 +67,7 @@ class AdvancedSettingsWindow(ba.Window):
             scale_origin_stack_offset=scale_origin,
             scale=2.06 if app.small_ui else 1.4 if app.med_ui else 1.0,
             stack_offset=(0, -25) if app.small_ui else (0, 0)))
-        self._prev_lang = ""
+        self._prev_lang = ''
         self._prev_lang_list: List[str] = []
         self._complete_langs_list: Optional[List] = None
         self._complete_langs_error = False
@@ -119,8 +119,8 @@ class AdvancedSettingsWindow(ba.Window):
                                          text=ba.Lstr(resource=self._r +
                                                       '.titleText'),
                                          color=app.title_color,
-                                         h_align="center",
-                                         v_align="top")
+                                         h_align='center',
+                                         v_align='top')
 
         if self._back_button is not None:
             ba.buttonwidget(edit=self._back_button,
@@ -352,7 +352,7 @@ class AdvancedSettingsWindow(ba.Window):
             parent=self._subcontainer,
             position=(50, v),
             size=(self._sub_width - 100, 30),
-            configkey="Kick Idle Players",
+            configkey='Kick Idle Players',
             displayname=ba.Lstr(resource=self._r + '.kickIdlePlayersText'),
             scale=1.0,
             maxwidth=430)
@@ -364,7 +364,7 @@ class AdvancedSettingsWindow(ba.Window):
                 parent=self._subcontainer,
                 position=(50, v),
                 size=(self._sub_width - 100, 30),
-                configkey="Always Use Internal Keyboard",
+                configkey='Always Use Internal Keyboard',
                 autoselect=True,
                 displayname=ba.Lstr(resource=self._r +
                                     '.alwaysUseInternalKeyboardText'),
@@ -429,7 +429,7 @@ class AdvancedSettingsWindow(ba.Window):
             parent=self._subcontainer,
             position=(80, v),
             size=(self._sub_width - 100, 30),
-            configkey="Enable Package Mods",
+            configkey='Enable Package Mods',
             autoselect=True,
             value_change_call=ba.WeakCall(self._show_restart_needed),
             displayname=ba.Lstr(resource=self._r + '.enablePackageModsText'),
@@ -596,11 +596,11 @@ class AdvancedSettingsWindow(ba.Window):
                 elif sel == self._language_inform_checkbox:
                     sel_name = 'LangInform'
                 else:
-                    raise Exception("unrecognized selection")
+                    raise Exception('unrecognized selection')
             elif sel == self._back_button:
                 sel_name = 'Back'
             else:
-                raise Exception("unrecognized selection")
+                raise Exception('unrecognized selection')
             ba.app.window_states[self.__class__.__name__] = {
                 'sel_name': sel_name
             }

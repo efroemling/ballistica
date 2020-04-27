@@ -106,3 +106,7 @@ max-parents=10
 [IMPORTS]
 # We do quite a bit of this. Perhaps can reconsider if its a good idea later.
 disable=import-outside-toplevel
+
+[STRING]
+# PEP-8 says to be consistent with quotes; let's remind ourself...
+check-quote-consistency=yes

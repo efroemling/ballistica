@@ -93,7 +93,7 @@ class PlayOptionsWindow(popup.PopupWindow):
                 elif self._sessiontype is ba.DualTeamSession:
                     plst = get_default_teams_playlist()
                 else:
-                    raise Exception("unrecognized session-type: " +
+                    raise Exception('unrecognized session-type: ' +
                                     str(self._sessiontype))
             else:
                 try:
@@ -141,7 +141,7 @@ class PlayOptionsWindow(popup.PopupWindow):
                 self._height += self._row_height * rows
 
         except Exception:
-            ba.print_exception("error listing playlist maps")
+            ba.print_exception('error listing playlist maps')
 
         show_shuffle_check_box = game_count > 1
 
@@ -165,8 +165,8 @@ class PlayOptionsWindow(popup.PopupWindow):
                                          scale=1.4,
                                          color=(1, 1, 1),
                                          maxwidth=self._width * 0.7,
-                                         h_align="center",
-                                         v_align="center")
+                                         h_align='center',
+                                         v_align='center')
 
         self._cancel_button = ba.buttonwidget(
             parent=self.root_widget,
@@ -439,7 +439,7 @@ class PlayOptionsWindow(popup.PopupWindow):
             _ba.new_host_session(self._sessiontype)
         except Exception:
             from bastd import mainmenu
-            ba.print_exception("exception running session", self._sessiontype)
+            ba.print_exception('exception running session', self._sessiontype)
 
             # Drop back into a main menu session.
             _ba.new_host_session(mainmenu.MainMenuSession)

@@ -105,15 +105,15 @@ def resize_image() -> None:
     args: xres, yres, src, dst
     """
     if len(sys.argv) != 6:
-        raise Exception("expected 5 args")
+        raise Exception('expected 5 args')
     width = int(sys.argv[2])
     height = int(sys.argv[3])
     src = sys.argv[4]
     dst = sys.argv[5]
     if not dst.endswith('.png'):
-        raise Exception("dst must be a png")
+        raise Exception('dst must be a png')
     if not src.endswith('.png'):
-        raise Exception("src must be a png")
+        raise Exception('src must be a png')
     print('Creating: ' + os.path.basename(dst), file=sys.stderr)
 
     # Switching to imagemagick from sips - hopefully this goes well
@@ -251,7 +251,7 @@ def _python_build_apple(debug: bool) -> None:
     os.chdir(PROJROOT)
     archs = ('mac', 'ios', 'tvos')
     if len(sys.argv) != 3:
-        print("ERROR: expected one <ARCH> arg: " + ', '.join(archs))
+        print('ERROR: expected one <ARCH> arg: ' + ', '.join(archs))
         sys.exit(255)
     arch = sys.argv[2]
     if arch not in archs:
@@ -275,7 +275,7 @@ def _python_build_android(debug: bool) -> None:
     os.chdir(PROJROOT)
     archs = ('arm', 'arm64', 'x86', 'x86_64')
     if len(sys.argv) != 3:
-        print("ERROR: expected one <ARCH> arg: " + ', '.join(archs))
+        print('ERROR: expected one <ARCH> arg: ' + ', '.join(archs))
         sys.exit(255)
     arch = sys.argv[2]
     if arch not in archs:
@@ -318,7 +318,7 @@ def clean_orphaned_assets() -> None:
             fpath = os.path.join(root, fname)
             fpathrel = fpath[13:]  # paths are relative to assets/build
             if fpathrel not in manifest:
-                print(f"Removing orphaned asset file: {fpath}")
+                print(f'Removing orphaned asset file: {fpath}')
                 os.unlink(fpath)
 
     # Lastly, clear empty dirs.
@@ -431,7 +431,7 @@ def get_modern_make() -> None:
         if subprocess.run(['which', 'gmake'], check=False,
                           capture_output=True).returncode != 0:
             print(
-                "WARNING: this requires gmake (mac system make is too old)."
+                'WARNING: this requires gmake (mac system make is too old).'
                 " Install it with 'brew install make'",
                 file=sys.stderr,
                 flush=True)

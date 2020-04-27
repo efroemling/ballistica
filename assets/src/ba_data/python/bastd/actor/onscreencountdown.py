@@ -105,9 +105,9 @@ class OnScreenCountdown(ba.Actor):
             self.node.scale *= 1.2
             cmb = ba.newnode('combine', owner=self.node, attrs={'size': 4})
             cmb.connectattr('output', self.node, 'color')
-            ba.animate(cmb, "input0", {0: 1.0, 0.15: 1.0}, loop=True)
-            ba.animate(cmb, "input1", {0: 1.0, 0.15: 0.5}, loop=True)
-            ba.animate(cmb, "input2", {0: 0.1, 0.15: 0.0}, loop=True)
+            ba.animate(cmb, 'input0', {0: 1.0, 0.15: 1.0}, loop=True)
+            ba.animate(cmb, 'input1', {0: 1.0, 0.15: 0.5}, loop=True)
+            ba.animate(cmb, 'input2', {0: 0.1, 0.15: 0.0}, loop=True)
             cmb.input3 = 1.0
         if tval <= 10 and not self._ended:
             ba.playsound(ba.getsound('tick'))

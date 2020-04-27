@@ -74,9 +74,9 @@ class DebugWindow(ba.Window):
                       position=(0, height - 60),
                       size=(width, 30),
                       text=ba.Lstr(resource=self._r + '.titleText'),
-                      h_align="center",
+                      h_align='center',
                       color=ba.app.title_color,
-                      v_align="center",
+                      v_align='center',
                       maxwidth=260)
 
         self._scrollwidget = ba.scrollwidget(
@@ -130,8 +130,8 @@ class DebugWindow(ba.Window):
                       maxwidth=200,
                       color=ba.app.heading_color,
                       scale=0.85,
-                      h_align="center",
-                      v_align="center")
+                      h_align='center',
+                      v_align='center')
         v -= 45
 
         x_offs = 165
@@ -143,8 +143,8 @@ class DebugWindow(ba.Window):
                       maxwidth=130,
                       color=ba.app.heading_color,
                       scale=0.65,
-                      h_align="right",
-                      v_align="center")
+                      h_align='right',
+                      v_align='center')
 
         popup.PopupMenu(
             parent=self._subcontainer,
@@ -169,16 +169,16 @@ class DebugWindow(ba.Window):
                       maxwidth=130,
                       color=ba.app.heading_color,
                       scale=0.65,
-                      h_align="right",
-                      v_align="center")
+                      h_align='right',
+                      v_align='center')
 
         self._stress_test_playlist_name_field = ba.textwidget(
             parent=self._subcontainer,
             position=(x_offs + 5, v - 5),
             size=(250, 46),
             text=self._stress_test_playlist,
-            h_align="left",
-            v_align="center",
+            h_align='left',
+            v_align='center',
             autoselect=True,
             color=(0.9, 0.9, 0.9, 1.0),
             description=ba.Lstr(resource=self._r +
@@ -195,8 +195,8 @@ class DebugWindow(ba.Window):
                       text=ba.Lstr(resource=self._r +
                                    '.stressTestPlayerCountText'),
                       color=(0.8, 0.8, 0.8, 1.0),
-                      h_align="right",
-                      v_align="center",
+                      h_align='right',
+                      v_align='center',
                       scale=0.65,
                       maxwidth=130)
         self._stress_test_player_count_text = ba.textwidget(
@@ -205,14 +205,14 @@ class DebugWindow(ba.Window):
             size=(60, 28),
             editable=False,
             color=(0.3, 1.0, 0.3, 1.0),
-            h_align="right",
-            v_align="center",
+            h_align='right',
+            v_align='center',
             text=str(self._stress_test_player_count),
             padding=2)
         ba.buttonwidget(parent=self._subcontainer,
                         position=(330 - x_sub, v - 11),
                         size=(28, 28),
-                        label="-",
+                        label='-',
                         autoselect=True,
                         on_activate_call=ba.Call(
                             self._stress_test_player_count_decrement),
@@ -221,7 +221,7 @@ class DebugWindow(ba.Window):
         ba.buttonwidget(parent=self._subcontainer,
                         position=(380 - x_sub, v - 11),
                         size=(28, 28),
-                        label="+",
+                        label='+',
                         autoselect=True,
                         on_activate_call=ba.Call(
                             self._stress_test_player_count_increment),
@@ -236,8 +236,8 @@ class DebugWindow(ba.Window):
                       text=ba.Lstr(resource=self._r +
                                    '.stressTestRoundDurationText'),
                       color=(0.8, 0.8, 0.8, 1.0),
-                      h_align="right",
-                      v_align="center",
+                      h_align='right',
+                      v_align='center',
                       scale=0.65,
                       maxwidth=130)
         self._stress_test_round_duration_text = ba.textwidget(
@@ -246,14 +246,14 @@ class DebugWindow(ba.Window):
             size=(60, 28),
             editable=False,
             color=(0.3, 1.0, 0.3, 1.0),
-            h_align="right",
-            v_align="center",
+            h_align='right',
+            v_align='center',
             text=str(self._stress_test_round_duration),
             padding=2)
         ba.buttonwidget(parent=self._subcontainer,
                         position=(330 - x_sub, v - 11),
                         size=(28, 28),
-                        label="-",
+                        label='-',
                         autoselect=True,
                         on_activate_call=ba.Call(
                             self._stress_test_round_duration_decrement),
@@ -262,7 +262,7 @@ class DebugWindow(ba.Window):
         ba.buttonwidget(parent=self._subcontainer,
                         position=(380 - x_sub, v - 11),
                         size=(28, 28),
-                        label="+",
+                        label='+',
                         autoselect=True,
                         on_activate_call=ba.Call(
                             self._stress_test_round_duration_increment),

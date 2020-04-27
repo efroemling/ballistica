@@ -37,7 +37,7 @@ class HockeyStadium(ba.Map):
 
     # noinspection PyUnresolvedReferences
     from bastd.mapdata import hockey_stadium as defs
-    name = "Hockey Stadium"
+    name = 'Hockey Stadium'
 
     @classmethod
     def get_play_types(cls) -> List[str]:
@@ -66,7 +66,7 @@ class HockeyStadium(ba.Map):
 
     def __init__(self) -> None:
         super().__init__()
-        self.node = ba.newnode("terrain",
+        self.node = ba.newnode('terrain',
                                delegate=self,
                                attrs={
                                    'model':
@@ -91,20 +91,20 @@ class HockeyStadium(ba.Map):
         mats = [
             ba.sharedobj('footing_material'), self.preloaddata['ice_material']
         ]
-        self.floor = ba.newnode("terrain",
+        self.floor = ba.newnode('terrain',
                                 attrs={
-                                    "model": self.preloaddata['models'][1],
-                                    "color_texture": self.preloaddata['tex'],
-                                    "opacity": 0.92,
-                                    "opacity_in_low_or_medium_quality": 1.0,
-                                    "materials": mats
+                                    'model': self.preloaddata['models'][1],
+                                    'color_texture': self.preloaddata['tex'],
+                                    'opacity': 0.92,
+                                    'opacity_in_low_or_medium_quality': 1.0,
+                                    'materials': mats
                                 })
         self.stands = ba.newnode(
-            "terrain",
+            'terrain',
             attrs={
-                "model": self.preloaddata['models'][2],
-                "visible_in_reflections": False,
-                "color_texture": self.preloaddata['stands_tex']
+                'model': self.preloaddata['models'][2],
+                'visible_in_reflections': False,
+                'color_texture': self.preloaddata['stands_tex']
             })
         gnode = ba.sharedobj('globals')
         gnode.floor_reflection = True
@@ -123,7 +123,7 @@ class FootballStadium(ba.Map):
     """Stadium map for football games."""
     from bastd.mapdata import football_stadium as defs
 
-    name = "Football Stadium"
+    name = 'Football Stadium'
 
     @classmethod
     def get_play_types(cls) -> List[str]:
@@ -137,10 +137,10 @@ class FootballStadium(ba.Map):
     @classmethod
     def on_preload(cls) -> Any:
         data: Dict[str, Any] = {
-            'model': ba.getmodel("footballStadium"),
+            'model': ba.getmodel('footballStadium'),
             'vr_fill_model': ba.getmodel('footballStadiumVRFill'),
-            'collide_model': ba.getcollidemodel("footballStadiumCollide"),
-            'tex': ba.gettexture("footballStadium")
+            'collide_model': ba.getcollidemodel('footballStadiumCollide'),
+            'tex': ba.gettexture('footballStadium')
         }
         return data
 
@@ -202,16 +202,16 @@ class Bridgit(ba.Map):
     @classmethod
     def on_preload(cls) -> Any:
         data: Dict[str, Any] = {
-            'model_top': ba.getmodel("bridgitLevelTop"),
-            'model_bottom': ba.getmodel("bridgitLevelBottom"),
-            'model_bg': ba.getmodel("natureBackground"),
+            'model_top': ba.getmodel('bridgitLevelTop'),
+            'model_bottom': ba.getmodel('bridgitLevelBottom'),
+            'model_bg': ba.getmodel('natureBackground'),
             'bg_vr_fill_model': ba.getmodel('natureBackgroundVRFill'),
-            'collide_model': ba.getcollidemodel("bridgitLevelCollide"),
-            'tex': ba.gettexture("bridgitLevelColor"),
-            'model_bg_tex': ba.gettexture("natureBackgroundColor"),
-            'collide_bg': ba.getcollidemodel("natureBackgroundCollide"),
+            'collide_model': ba.getcollidemodel('bridgitLevelCollide'),
+            'tex': ba.gettexture('bridgitLevelColor'),
+            'model_bg_tex': ba.gettexture('natureBackgroundColor'),
+            'collide_bg': ba.getcollidemodel('natureBackgroundCollide'),
             'railing_collide_model':
-                (ba.getcollidemodel("bridgitLevelRailingCollide")),
+                (ba.getcollidemodel('bridgitLevelRailingCollide')),
             'bg_material': ba.Material()
         }
         data['bg_material'].add_actions(actions=('modify_part_collision',

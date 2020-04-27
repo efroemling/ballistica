@@ -150,7 +150,7 @@ def print_exception(*args: Any, **keywds: Any) -> None:
     if keywds:
         allowed_keywds = ['once']
         if any(keywd not in allowed_keywds for keywd in keywds):
-            raise Exception("invalid keyword(s)")
+            raise Exception('invalid keyword(s)')
     try:
         # If we're only printing once and already have, bail.
         if keywds.get('once', False):

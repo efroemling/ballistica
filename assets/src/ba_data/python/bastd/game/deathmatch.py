@@ -53,19 +53,19 @@ class DeathMatchGame(ba.TeamGameActivity):
 
     @classmethod
     def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
-        return ba.getmaps("melee")
+        return ba.getmaps('melee')
 
     @classmethod
     def get_settings(
             cls,
             sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
         settings: List[Tuple[str, Dict[str, Any]]] = [
-            ("Kills to Win Per Player", {
+            ('Kills to Win Per Player', {
                 'min_value': 1,
                 'default': 5,
                 'increment': 1
             }),
-            ("Time Limit", {
+            ('Time Limit', {
                  'choices':
                  [('None', 0),
                   ('1 Minute', 60), ('2 Minutes', 120),
@@ -73,14 +73,14 @@ class DeathMatchGame(ba.TeamGameActivity):
                   ('20 Minutes', 1200)],
                  'default': 0
             }),
-            ("Respawn Times", {
+            ('Respawn Times', {
                  'choices':
                  [('Shorter', 0.25), ('Short', 0.5),
                   ('Normal', 1.0), ('Long', 2.0),
                   ('Longer', 4.0)],
                  'default': 1.0
             }),
-            ("Epic Mode", {
+            ('Epic Mode', {
                 'default': False
             })
         ]  # yapf: disable
@@ -91,7 +91,7 @@ class DeathMatchGame(ba.TeamGameActivity):
         # be able to go negative. (to avoid a strategy of just
         # suiciding until you get a good drop)
         if issubclass(sessiontype, ba.FreeForAllSession):
-            settings.append(("Allow Negative Scores", {'default': False}))
+            settings.append(('Allow Negative Scores', {'default': False}))
 
         return settings
 

@@ -50,7 +50,7 @@ class WatchWindow(ba.Window):
         else:
             self._transition_out = 'out_right'
             scale_origin = None
-        ba.app.main_window = "Watch"
+        ba.app.main_window = 'Watch'
         self._tab_data: Dict[str, Any] = {}
         self._my_replays_scroll_width: Optional[float] = None
         self._my_replays_watch_replay_button: Optional[ba.Widget] = None
@@ -101,8 +101,8 @@ class WatchWindow(ba.Window):
                       size=(0, 0),
                       color=ba.app.title_color,
                       scale=1.5,
-                      h_align="center",
-                      v_align="center",
+                      h_align='center',
+                      v_align='center',
                       text=ba.Lstr(resource=self._r + '.titleText'),
                       maxwidth=400)
 
@@ -293,7 +293,7 @@ class WatchWindow(ba.Window):
                 _ba.new_replay_session(_ba.get_replays_dir() + '/' +
                                        self._my_replay_selected)
             except Exception:
-                ba.print_exception("exception running replay session")
+                ba.print_exception('exception running replay session')
                 # drop back into a fresh main menu session
                 # in case we half-launched or something..
                 from bastd import mainmenu
@@ -448,7 +448,7 @@ class WatchWindow(ba.Window):
             names = [n for n in names if n.endswith('.brp')]
             names.sort(key=lambda x: x.lower())
         except Exception:
-            ba.print_exception("error listing replays dir")
+            ba.print_exception('error listing replays dir')
             names = []
 
         assert self._my_replays_scroll_width is not None
@@ -482,7 +482,7 @@ class WatchWindow(ba.Window):
             elif sel == self._tab_container:
                 sel_name = 'TabContainer'
             else:
-                raise Exception("unrecognized selection")
+                raise Exception('unrecognized selection')
             ba.app.window_states[self.__class__.__name__] = {
                 'sel_name': sel_name,
                 'tab': self._current_tab

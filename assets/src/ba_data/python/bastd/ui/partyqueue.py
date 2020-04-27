@@ -248,8 +248,8 @@ class PartyQueueWindow(ba.Window):
             size=(0, 0),
             color=(1.0, 3.0, 1.0),
             scale=1.3,
-            h_align="center",
-            v_align="center",
+            h_align='center',
+            v_align='center',
             text=ba.Lstr(resource='internal.connectingToPartyText'),
             maxwidth=self._width * 0.65)
 
@@ -259,8 +259,8 @@ class PartyQueueWindow(ba.Window):
                                            size=(0, 0),
                                            color=(0.2, 1.0, 0.2),
                                            scale=0.7,
-                                           h_align="center",
-                                           v_align="center",
+                                           h_align='center',
+                                           v_align='center',
                                            text='')
 
         # update at roughly 30fps
@@ -420,8 +420,8 @@ class PartyQueueWindow(ba.Window):
                         size=(0, 0),
                         color=(0.8, 1.0, 0.8),
                         scale=1.5,
-                        h_align="center",
-                        v_align="center",
+                        h_align='center',
+                        v_align='center',
                         text=ba.Lstr(resource='boostText'),
                         maxwidth=150)
                     self._boost_price = ba.textwidget(
@@ -431,8 +431,8 @@ class PartyQueueWindow(ba.Window):
                         size=(0, 0),
                         color=(0, 1, 0),
                         scale=0.9,
-                        h_align="center",
-                        v_align="center",
+                        h_align='center',
+                        v_align='center',
                         text=ba.charstr(ba.SpecialChar.TICKET) +
                         str(self._boost_tickets),
                         maxwidth=150)

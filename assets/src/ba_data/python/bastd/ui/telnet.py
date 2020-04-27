@@ -42,8 +42,8 @@ class TelnetAccessRequestWindow(ba.Window):
         ba.textwidget(parent=self._root_widget,
                       position=(padding, padding + 33),
                       size=(width - 2 * padding, height - 2 * padding),
-                      h_align="center",
-                      v_align="top",
+                      h_align='center',
+                      v_align='top',
                       text=text)
         btn = ba.buttonwidget(parent=self._root_widget,
                               position=(20, 20),

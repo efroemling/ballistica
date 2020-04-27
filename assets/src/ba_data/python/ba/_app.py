@@ -558,14 +558,14 @@ class App:
         server_addr = _ba.get_master_server_address()
         if 'localhost' in server_addr:
             _ba.timer(2.0,
-                      lambda: _ba.screenmessage("Note: using local server",
+                      lambda: _ba.screenmessage('Note: using local server',
                                                 (1, 1, 0),
                                                 log=True),
                       timetype=TimeType.REAL)
         elif 'test' in server_addr:
             _ba.timer(
                 2.0,
-                lambda: _ba.screenmessage("Note: using test server-module",
+                lambda: _ba.screenmessage('Note: using test server-module',
                                           (1, 1, 0),
                                           log=True),
                 timetype=TimeType.REAL)
@@ -729,7 +729,7 @@ class App:
         if args is None:
             args = {}
         if game == '':
-            raise Exception("empty game name")
+            raise Exception('empty game name')
         campaignname, levelname = game.split(':')
         campaign = get_campaign(campaignname)
         levels = campaign.get_levels()
@@ -839,6 +839,6 @@ class App:
         import urllib.request
         try:
             val = urllib.request.urlopen('https://example.com').read()
-            print("HTTPS TEST SUCCESS", len(val))
+            print('HTTPS TEST SUCCESS', len(val))
         except Exception as exc:
-            print("HTTPS TEST FAIL:", exc)
+            print('HTTPS TEST FAIL:', exc)

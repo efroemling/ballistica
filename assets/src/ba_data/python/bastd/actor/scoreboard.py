@@ -232,22 +232,22 @@ class _Entry:
         if flash:
             scale = 2.0
             _safesetattr(
-                self._backing.node, "color",
+                self._backing.node, 'color',
                 (self._backing_color[0] * scale, self._backing_color[1] *
                  scale, self._backing_color[2] * scale))
-            _safesetattr(self._bar.node, "color",
+            _safesetattr(self._bar.node, 'color',
                          (self._barcolor[0] * scale, self._barcolor[1] * scale,
                           self._barcolor[2] * scale))
             if self._do_cover:
                 _safesetattr(
-                    self._cover.node, "color",
+                    self._cover.node, 'color',
                     (self._cover_color[0] * scale, self._cover_color[1] *
                      scale, self._cover_color[2] * scale))
         else:
-            _safesetattr(self._backing.node, "color", self._backing_color)
-            _safesetattr(self._bar.node, "color", self._barcolor)
+            _safesetattr(self._backing.node, 'color', self._backing_color)
+            _safesetattr(self._bar.node, 'color', self._barcolor)
             if self._do_cover:
-                _safesetattr(self._cover.node, "color", self._cover_color)
+                _safesetattr(self._cover.node, 'color', self._cover_color)
 
     def _do_flash(self) -> None:
         assert self._flash_counter is not None
@@ -338,7 +338,7 @@ class Scoreboard:
         Label can be something like 'points' and will
         show up on boards if provided.
         """
-        self._flat_tex = ba.gettexture("null")
+        self._flat_tex = ba.gettexture('null')
         self._entries: Dict[int, _Entry] = {}
         self._label = label
         self.score_split = score_split
@@ -371,7 +371,7 @@ class Scoreboard:
             # create a proxy in the team which will kill
             # our entry when it dies (for convenience)
             if '_scoreboard_entry' in team.gamedata:
-                raise Exception("existing _EntryProxy found")
+                raise Exception('existing _EntryProxy found')
             team.gamedata['_scoreboard_entry'] = _EntryProxy(self, team)
         # now set the entry..
         self._entries[team.get_id()].set_value(score=score,

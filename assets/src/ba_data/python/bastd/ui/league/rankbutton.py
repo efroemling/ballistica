@@ -193,7 +193,7 @@ class LeagueRankButton:
                     size=(0, 0),
                     h_align='center',
                     v_align='center',
-                    text='+' + self._improvement_text + "!",
+                    text='+' + self._improvement_text + '!',
                     position=(self._position[0] +
                               self._size[0] * 0.5 * self._scale,
                               self._position[1] +

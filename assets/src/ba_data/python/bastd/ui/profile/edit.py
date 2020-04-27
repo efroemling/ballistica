@@ -103,8 +103,8 @@ class EditProfileWindow(ba.Window):
                       color=ba.app.title_color,
                       maxwidth=290,
                       scale=1.0,
-                      h_align="center",
-                      v_align="center")
+                      h_align='center',
+                      v_align='center')
 
         # Make a list of spaz icons.
         self.refresh_characters()
@@ -546,7 +546,7 @@ class EditProfileWindow(ba.Window):
         elif picker_type == 'highlight':
             initial_color = self._highlight
         else:
-            raise Exception("invalid picker_type: " + picker_type)
+            raise Exception('invalid picker_type: ' + picker_type)
         colorpicker.ColorPicker(
             parent=self._root_widget,
             position=origin,

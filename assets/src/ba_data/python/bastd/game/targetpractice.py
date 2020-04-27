@@ -63,12 +63,12 @@ class TargetPracticeGame(ba.TeamGameActivity):
     def get_settings(
             cls,
             sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
-        return [("Target Count", {
+        return [('Target Count', {
             'min_value': 1,
             'default': 3
-        }), ("Enable Impact Bombs", {
+        }), ('Enable Impact Bombs', {
             'default': True
-        }), ("Enable Triple Bombs", {
+        }), ('Enable Triple Bombs', {
             'default': True
         })]
 
@@ -345,7 +345,7 @@ class Target(ba.Actor):
 
             # Award points/etc.. (technically should probably leave this up
             # to the activity).
-            popupstr = "+" + str(points)
+            popupstr = '+' + str(points)
 
             # If there's more than 1 player in the game, include their
             # names and colors so they know who got the hit.

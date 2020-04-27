@@ -622,7 +622,7 @@ def _run_idea_inspections(projroot: Path,
     if not iprof.exists():
         iprof = Path(projroot, '.idea/inspectionProfiles/Project_Default.xml')
         if not iprof.exists():
-            raise Exception("No default inspection profile found.")
+            raise Exception('No default inspection profile found.')
     cmd = [str(inspect), str(projroot), str(iprof), tmpdir.name, '-v2']
     if inspectdir is not None:
         cmd += ['-d', str(inspectdir)]
@@ -632,7 +632,7 @@ def _run_idea_inspections(projroot: Path,
         """Print the time occasionally to make the log more informative."""
         while running:
             time.sleep(60)
-            print("Heartbeat", datetime.datetime.now(), flush=True)
+            print('Heartbeat', datetime.datetime.now(), flush=True)
 
     if verbose:
         import threading
@@ -652,7 +652,7 @@ def _run_idea_inspections(projroot: Path,
                     result.stdout, bytes) else str(result.stdout))
             print(f'{displayname} inspection failure stdout:\n{stdout}' +
                   f'{displayname} inspection failure stderr:\n{stderr}')
-        raise RuntimeError(f"{displayname} inspection failed.")
+        raise RuntimeError(f'{displayname} inspection failed.')
     files = [f for f in os.listdir(tmpdir.name) if not f.startswith('.')]
     total_errors = 0
     if files:
@@ -660,7 +660,7 @@ def _run_idea_inspections(projroot: Path,
             total_errors += _parse_idea_results(Path(tmpdir.name, fname))
     if total_errors > 0:
         raise RuntimeError(
-            f"{displayname} inspection found {total_errors} error(s).")
+            f'{displayname} inspection found {total_errors} error(s).')
     duration = time.time() - start_time
 
     print(

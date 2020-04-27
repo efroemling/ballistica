@@ -54,7 +54,7 @@ class NoIndentEncoder(json.JSONEncoder):
         if isinstance(o, NoIndent):
             key = uuid.uuid4().hex
             self._replacement_map[key] = json.dumps(o.value, **self.kwargs)
-            return "@@%s@@" % (key, )
+            return '@@%s@@' % (key, )
         return super(NoIndentEncoder, self).default(o)
 
     def encode(self, o: Any) -> Any:

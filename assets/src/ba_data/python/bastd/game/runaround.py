@@ -70,7 +70,7 @@ class RunaroundGame(ba.CoopGameActivity):
 
     @classmethod
     def get_description(cls, sessiontype: Type[ba.Session]) -> str:
-        return "Prevent enemies from reaching the exit."
+        return 'Prevent enemies from reaching the exit.'
 
     def __init__(self, settings: Dict[str, Any]):
         settings['map'] = 'Tower D'
@@ -79,9 +79,9 @@ class RunaroundGame(ba.CoopGameActivity):
 
         self._player_death_sound = ba.getsound('playerDeath')
         self._new_wave_sound = ba.getsound('scoreHit01')
-        self._winsound = ba.getsound("score")
+        self._winsound = ba.getsound('score')
         self._cashregistersound = ba.getsound('cashRegister')
-        self._bad_guy_score_sound = ba.getsound("shieldDown")
+        self._bad_guy_score_sound = ba.getsound('shieldDown')
         self._heart_tex = ba.gettexture('heart')
         self._heart_model_opaque = ba.getmodel('heartOpaque')
         self._heart_model_transparent = ba.getmodel('heartTransparent')
@@ -96,10 +96,10 @@ class RunaroundGame(ba.CoopGameActivity):
 
         self._score_region_material = ba.Material()
         self._score_region_material.add_actions(
-            conditions=("they_have_material", ba.sharedobj('player_material')),
-            actions=(("modify_part_collision", "collide",
-                      True), ("modify_part_collision", "physical", False),
-                     ("call", "at_connect", self._handle_reached_end)))
+            conditions=('they_have_material', ba.sharedobj('player_material')),
+            actions=(('modify_part_collision', 'collide',
+                      True), ('modify_part_collision', 'physical', False),
+                     ('call', 'at_connect', self._handle_reached_end)))
 
         self._last_wave_end_time = ba.time()
         self._player_has_picked_up_powerup = False
@@ -398,7 +398,7 @@ class RunaroundGame(ba.CoopGameActivity):
         ba.timer(2.0, self._start_updating_waves)
 
     def _handle_reached_end(self) -> None:
-        oppnode = ba.get_collision_info("opposing_node")
+        oppnode = ba.get_collision_info('opposing_node')
         spaz = oppnode.getdelegate()
 
         if not spaz.is_alive():

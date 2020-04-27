@@ -52,17 +52,17 @@ class CallbackSet(Generic[CT]):
 
         def run(self, *args, **keywds):
             """Run all callbacks."""
-            print("HELLO FROM RUN", *args, **keywds)
+            print('HELLO FROM RUN', *args, **keywds)
 
     def __init__(self) -> None:
-        print("CallbackSet()")
+        print('CallbackSet()')
 
     def __del__(self) -> None:
-        print("~CallbackSet()")
+        print('~CallbackSet()')
 
     def add(self, call: CT) -> None:
         """Add a callback to be run."""
-        print("Would add call", call)
+        print('Would add call', call)
 
 
 # Define Call() which can be used in type-checking call-wrappers that behave

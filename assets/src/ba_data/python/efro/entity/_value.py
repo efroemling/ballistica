@@ -130,7 +130,7 @@ class SimpleValue(TypedValue[T]):
 class StringValue(SimpleValue[str]):
     """Value consisting of a single string."""
 
-    def __init__(self, default: str = "", store_default: bool = True) -> None:
+    def __init__(self, default: str = '', store_default: bool = True) -> None:
         super().__init__(default, store_default, str)
 
 
@@ -180,8 +180,8 @@ def verify_time_input(data: Any, error: bool, allow_none: bool) -> Any:
     # Filter unallowed None values.
     if not allow_none and data is None:
         if error:
-            raise ValueError("datetime value cannot be None")
-        logging.error("ignoring datetime value of None")
+            raise ValueError('datetime value cannot be None')
+        logging.error('ignoring datetime value of None')
         data = (None if allow_none else datetime.datetime.now(
             datetime.timezone.utc))
 
@@ -192,9 +192,9 @@ def verify_time_input(data: Any, error: bool, allow_none: bool) -> Any:
           and (pytz_utc is None or data.tzinfo is not pytz_utc)):
         if error:
             raise ValueError(
-                "datetime values must have timezone set as timezone.utc")
+                'datetime values must have timezone set as timezone.utc')
         logging.error(
-            "ignoring datetime value without timezone.utc set: %s %s",
+            'ignoring datetime value without timezone.utc set: %s %s',
             type(datetime.timezone.utc), type(data.tzinfo))
         data = (None if allow_none else datetime.datetime.now(
             datetime.timezone.utc))
@@ -292,7 +292,7 @@ class Float3Value(SimpleValue[Tuple[float, float, float]]):
         if (not isinstance(data, abc.Sequence) or len(data) != 3
                 or any(not isinstance(i, (int, float)) for i in data)):
             if error:
-                raise TypeError("Sequence of 3 float values expected.")
+                raise TypeError('Sequence of 3 float values expected.')
             logging.error('Ignoring non-3-float-sequence data for %s: %s',
                           self, data)
             data = self.get_default_data()
@@ -367,7 +367,7 @@ class BaseEnumValue(TypedValue[T]):
             except ValueError:
                 if error:
                     raise ValueError(
-                        f"Invalid value for {self._enumtype}: {data}")
+                        f'Invalid value for {self._enumtype}: {data}')
                 logging.error('Ignoring invalid value for %s: %s',
                               self._enumtype, data)
                 data = self._default_data

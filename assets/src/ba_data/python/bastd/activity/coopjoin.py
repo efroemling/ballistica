@@ -41,10 +41,10 @@ class CoopJoinActivity(JoinActivity):
 
         # Let's show a list of scores-to-beat for 1 player at least.
         assert session.campaign is not None
-        level_name_full = (session.campaign.name + ":" +
+        level_name_full = (session.campaign.name + ':' +
                            session.campaign_state['level'])
         config_str = (
-            "1p" + session.campaign.get_level(session.campaign_state['level']).
+            '1p' + session.campaign.get_level(session.campaign_state['level']).
             get_score_version_string().replace(' ', '_'))
         _ba.get_scores_to_beat(level_name_full, config_str,
                                ba.WeakCall(self._on_got_scores_to_beat))
@@ -163,7 +163,7 @@ class CoopJoinActivity(JoinActivity):
 
             # Now list our remaining achievements for this level.
             assert self.session.campaign is not None
-            levelname = (self.session.campaign.name + ":" +
+            levelname = (self.session.campaign.name + ':' +
                          self.session.campaign_state['level'])
             ts_h_offs = 60
 

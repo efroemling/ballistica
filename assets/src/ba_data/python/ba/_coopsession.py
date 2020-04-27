@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     import ba
 
 TEAM_COLORS = ((0.2, 0.4, 1.6), )
-TEAM_NAMES = ("Good Guys", )
+TEAM_NAMES = ('Good Guys', )
 
 
 class CoopSession(Session):
@@ -298,7 +298,7 @@ class CoopSession(Session):
                     and self.campaign_state['level'] == 'Onslaught Training'
                     and not app.kiosk_mode):
                 if self._tutorial_activity is None:
-                    raise Exception("tutorial not preloaded properly")
+                    raise Exception('tutorial not preloaded properly')
                 self.set_activity(self._tutorial_activity)
                 self._tutorial_activity = None
                 self._ran_tutorial_activity = True

@@ -63,7 +63,7 @@ def snippets_main(globs: Dict[str, Any]) -> None:
     show_help = False
     retval = 0
     if len(sys.argv) < 2:
-        print("ERROR: command expected.")
+        print('ERROR: command expected.')
         show_help = True
         retval = 255
     else:
@@ -89,8 +89,8 @@ def snippets_main(globs: Dict[str, Any]) -> None:
             retval = 255
 
     if show_help:
-        print("Snippets contains project related commands too small"
-              " to warrant full scripts.")
+        print('Snippets contains project related commands too small'
+              ' to warrant full scripts.')
         print("Run 'snippets help <COMMAND>' for full command documentation.")
         print('Available commands:')
         for func, obj in sorted(funcs.items()):
@@ -165,7 +165,7 @@ def spelling_all() -> None:
         if 'Typo: In word' in line
     ]
     words = [
-        line.split('Typo: In word')[1].strip().replace("'", "")
+        line.split('Typo: In word')[1].strip().replace("'", '')
         for line in lines
     ]
     _spelling(words)
@@ -297,7 +297,7 @@ def tool_config_install() -> None:
     from efrotools import get_config
     import textwrap
     if len(sys.argv) != 4:
-        raise Exception("expected 2 args")
+        raise Exception('expected 2 args')
     src = Path(sys.argv[2])
     dst = Path(sys.argv[3])
     with src.open() as infile:
@@ -396,12 +396,12 @@ def sync_all() -> None:
         # Real mode
         for i in range(2):
             if i == 0:
-                print(CLRBLU + "Running sync pass 1:"
-                      " (ensures all changes at dsts are pushed to src)" +
+                print(CLRBLU + 'Running sync pass 1:'
+                      ' (ensures all changes at dsts are pushed to src)' +
                       CLREND)
             else:
-                print(CLRBLU + "Running sync pass 2:"
-                      " (ensures latest src is pulled to all dsts)" + CLREND)
+                print(CLRBLU + 'Running sync pass 2:'
+                      ' (ensures latest src is pulled to all dsts)' + CLREND)
             for project in projects_str.split(':'):
                 cmd = f'cd "{project}" && make sync-full'
                 print(cmd)
@@ -481,7 +481,7 @@ def makefile_target_list() -> None:
         title: str
 
     if len(sys.argv) != 3:
-        raise RuntimeError("Expected exactly one filename arg.")
+        raise RuntimeError('Expected exactly one filename arg.')
 
     with open(sys.argv[2]) as infile:
         lines = infile.readlines()

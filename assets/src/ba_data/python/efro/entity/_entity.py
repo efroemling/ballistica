@@ -94,7 +94,7 @@ class EntityMixin:
         assert isinstance(self, CompoundValue)
         if not have_matching_fields(self, tvalue):
             raise ValueError(
-                f"Fields for target {type(tvalue)} do not match ours"
+                f'Fields for target {type(tvalue)} do not match ours'
                 f" ({type(self)}); can't copy data.")
         self.d_data = copy.deepcopy(target_data)
 
@@ -115,7 +115,7 @@ class EntityMixin:
         assert isinstance(self, CompoundValue)
         if not have_matching_fields(self, target):
             raise ValueError(
-                f"Fields for target {type(target)} do not match ours"
+                f'Fields for target {type(target)} do not match ours'
                 f" ({type(self)}); can't steal data.")
         assert target.d_data is not None
         self.d_data = target.d_data

@@ -87,8 +87,8 @@ class PlaylistMapSelectWindow(ba.Window):
                                           self._gameclass.get_display_string())
                                          ]),
                       color=ba.app.title_color,
-                      h_align="center",
-                      v_align="center")
+                      h_align='center',
+                      v_align='center')
         v = height - 70
         self._scroll_width = width - (80 + 2 * x_inset)
         self._scroll_height = height - 140
@@ -183,7 +183,7 @@ class PlaylistMapSelectWindow(ba.Window):
                 if x == columns - 1 and ba.app.toolbars:
                     ba.widget(
                         edit=btn,
-                        right_widget=_ba.get_special_widget("party_button"))
+                        right_widget=_ba.get_special_widget('party_button'))
 
                 ba.widget(edit=btn, show_buffer_top=60, show_buffer_bottom=60)
                 if self._maps[index][0] == self._previous_map:

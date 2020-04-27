@@ -70,7 +70,7 @@ class EasterEggHuntGame(ba.TeamGameActivity):
     def get_settings(
             cls,
             sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
-        return [("Pro Mode", {'default': False})]
+        return [('Pro Mode', {'default': False})]
 
     def __init__(self, settings: Dict[str, Any]):
         from bastd.actor.scoreboard import Scoreboard
@@ -86,8 +86,8 @@ class EasterEggHuntGame(ba.TeamGameActivity):
         self._max_eggs = 1.0
         self.egg_material = ba.Material()
         self.egg_material.add_actions(
-            conditions=("they_have_material", ba.sharedobj('player_material')),
-            actions=(("call", "at_connect", self._on_egg_player_collide), ))
+            conditions=('they_have_material', ba.sharedobj('player_material')),
+            actions=(('call', 'at_connect', self._on_egg_player_collide), ))
         self._eggs: List[Egg] = []
         self._update_timer: Optional[ba.Timer] = None
         self._countdown: Optional[OnScreenCountdown] = None
@@ -264,7 +264,7 @@ class Egg(ba.Actor):
         ctex = (activity.egg_tex_1, activity.egg_tex_2,
                 activity.egg_tex_3)[random.randrange(3)]
         mats = [ba.sharedobj('object_material'), activity.egg_material]
-        self.node = ba.newnode("prop",
+        self.node = ba.newnode('prop',
                                delegate=self,
                                attrs={
                                    'model': activity.egg_model,
@@ -291,7 +291,7 @@ class Egg(ba.Actor):
             if self.node:
                 assert msg.force_direction is not None
                 self.node.handlemessage(
-                    "impulse", msg.pos[0], msg.pos[1], msg.pos[2],
+                    'impulse', msg.pos[0], msg.pos[1], msg.pos[2],
                     msg.velocity[0], msg.velocity[1], msg.velocity[2],
                     1.0 * msg.magnitude, 1.0 * msg.velocity_magnitude,
                     msg.radius, 0, msg.force_direction[0],

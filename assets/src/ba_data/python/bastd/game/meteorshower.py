@@ -66,7 +66,7 @@ class MeteorShowerGame(ba.TeamGameActivity):
     def get_settings(
             cls,
             sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
-        return [("Epic Mode", {'default': False})]
+        return [('Epic Mode', {'default': False})]
 
     # We support teams, free-for-all, and co-op sessions.
     @classmethod

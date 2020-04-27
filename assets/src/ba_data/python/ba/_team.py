@@ -69,7 +69,7 @@ class Team:
 
     def __init__(self,
                  team_id: int = 0,
-                 name: Union[ba.Lstr, str] = "",
+                 name: Union[ba.Lstr, str] = '',
                  color: Sequence[float] = (1.0, 1.0, 1.0)):
         """Instantiate a ba.Team.
 

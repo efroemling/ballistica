@@ -98,8 +98,8 @@ class ProfileBrowserWindow(ba.Window):
                       maxwidth=300,
                       color=ba.app.title_color,
                       scale=0.9,
-                      h_align="center",
-                      v_align="center")
+                      h_align='center',
+                      v_align='center')
 
         if self._in_main_menu:
             ba.buttonwidget(edit=btn,
@@ -160,8 +160,8 @@ class ProfileBrowserWindow(ba.Window):
                       color=ba.app.infotextcolor,
                       maxwidth=self._width * 0.83,
                       scale=0.6,
-                      h_align="center",
-                      v_align="center")
+                      h_align='center',
+                      v_align='center')
 
         self._scrollwidget = ba.scrollwidget(parent=self._root_widget,
                                              highlight=False,

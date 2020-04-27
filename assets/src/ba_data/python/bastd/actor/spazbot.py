@@ -526,7 +526,7 @@ class SpazBot(basespaz.Spaz):
             super().handlemessage(msg)  # Augment standard behavior.
             self.held_count -= 1
             if self.held_count < 0:
-                print("ERROR: spaz held_count < 0")
+                print('ERROR: spaz held_count < 0')
 
             # Let's count someone dropping us as an attack.
             try:
@@ -938,7 +938,7 @@ class BotSet:
         spaz = bot_type()
         ba.playsound(self._spawn_sound, position=pos)
         assert spaz.node
-        spaz.node.handlemessage("flash")
+        spaz.node.handlemessage('flash')
         spaz.node.is_area_of_interest = False
         spaz.handlemessage(ba.StandMessage(pos, random.uniform(0, 360)))
         self.add_bot(spaz)
@@ -972,7 +972,7 @@ class BotSet:
             ])
         except Exception:
             bot_list = []
-            ba.print_exception("error updating bot list: " +
+            ba.print_exception('error updating bot list: ' +
                                str(self._bot_lists[self._bot_update_list]))
         self._bot_update_list = (self._bot_update_list +
                                  1) % self._bot_list_count

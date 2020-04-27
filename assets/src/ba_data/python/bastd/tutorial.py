@@ -94,7 +94,7 @@ class ButtonPress:
             img = None
             color = None
         else:
-            raise Exception(f"invalid button: {self._button}")
+            raise Exception(f'invalid button: {self._button}')
 
         brightness = 4.0
         if color is not None:
@@ -167,7 +167,7 @@ class ButtonRelease:
             img = None
             color = None
         else:
-            raise Exception("invalid button: " + self._button)
+            raise Exception('invalid button: ' + self._button)
         if self._delay == 0:
             call()
         else:
@@ -445,8 +445,8 @@ class TutorialActivity(ba.Activity):
                         diff = tval
                         a.cycle_times.append(diff)
                         ba.screenmessage(
-                            "cycle time: " + str(diff) + " (average: " +
-                            str(sum(a.cycle_times) / len(a.cycle_times)) + ")")
+                            'cycle time: ' + str(diff) + ' (average: ' +
+                            str(sum(a.cycle_times) / len(a.cycle_times)) + ')')
                     tval = ba.time(ba.TimeType.REAL,
                                    ba.TimeFormat.MILLISECONDS)
                     assert isinstance(tval, int)
@@ -823,7 +823,7 @@ class TutorialActivity(ba.Activity):
                     elif self._celebrate_type == 'both':
                         s.node.handlemessage('celebrate', self._duration)
                     else:
-                        raise Exception("invalid celebrate type " +
+                        raise Exception('invalid celebrate type ' +
                                         self._celebrate_type)
 
             self._entries = [
@@ -2275,7 +2275,7 @@ class TutorialActivity(ba.Activity):
                 Celebrate(),
                 DelayOld(2000),
                 KillSpaz(1),
-                Text(""),
+                Text(''),
                 Move(0.5, -0.5),
                 DelayOld(1000),
                 Move(0, -0.1),
@@ -2389,7 +2389,7 @@ class TutorialActivity(ba.Activity):
 
         # test...
         if not all(self.players):
-            ba.print_error("Nonexistent player in _player_pressed_button: " +
+            ba.print_error('Nonexistent player in _player_pressed_button: ' +
                            str([str(p) for p in self.players]) + ': we are ' +
                            str(player))
 
@@ -2412,7 +2412,7 @@ class TutorialActivity(ba.Activity):
 
     def on_player_leave(self, player: ba.Player) -> None:
         if not all(self.players):
-            ba.print_error("Nonexistent player in on_player_leave: " +
+            ba.print_error('Nonexistent player in on_player_leave: ' +
                            str([str(p) for p in self.players]) + ': we are ' +
                            str(player))
         super().on_player_leave(player)

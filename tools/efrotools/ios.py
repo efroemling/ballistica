@@ -93,7 +93,7 @@ def push_ipa(root: pathlib.Path, modename: str) -> None:
         capture_output=True).stdout.decode().strip()
     built_app_path = pathlib.Path(app_dir, cfg.app_bundle_name)
 
-    workdir = pathlib.Path(root, 'build', "push_ipa")
+    workdir = pathlib.Path(root, 'build', 'push_ipa')
     workdir.mkdir(parents=True, exist_ok=True)
 
     pathlib.Path(root, 'build').mkdir(parents=True, exist_ok=True)

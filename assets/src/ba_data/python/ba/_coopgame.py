@@ -69,7 +69,7 @@ class CoopGameActivity(GameActivity):
         levelname = self._get_coop_level_name()
         campaign = self.session.campaign
         assert campaign is not None
-        config_str = (str(len(self.players)) + "p" + campaign.get_level(
+        config_str = (str(len(self.players)) + 'p' + campaign.get_level(
             self.settings['name']).get_score_version_string().replace(
                 ' ', '_'))
         _ba.get_scores_to_beat(levelname, config_str,
@@ -126,7 +126,7 @@ class CoopGameActivity(GameActivity):
 
     def _get_coop_level_name(self) -> str:
         assert self.session.campaign is not None
-        return self.session.campaign.name + ":" + str(self.settings['name'])
+        return self.session.campaign.name + ':' + str(self.settings['name'])
 
     def celebrate(self, duration: float) -> None:
         """Tells all existing player-controlled characters to celebrate.
@@ -244,7 +244,7 @@ class CoopGameActivity(GameActivity):
         """Fade the screen to red; (such as when the good guys have lost)."""
         from ba import _gameutils
         c_existing = _gameutils.sharedobj('globals').tint
-        cnode = _ba.newnode("combine",
+        cnode = _ba.newnode('combine',
                             attrs={
                                 'input0': c_existing[0],
                                 'input1': c_existing[1],

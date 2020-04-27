@@ -96,7 +96,7 @@ def test_entity_values() -> None:
 
     # Simple float field.
     with pytest.raises(TypeError):
-        ent.fval = "foo"  # type: ignore
+        ent.fval = 'foo'  # type: ignore
     assert static_type_equals(ent.fval, float)
     ent.fval = 2
     ent.fval = True

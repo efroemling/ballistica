@@ -97,11 +97,11 @@ class LeagueRankWindow(ba.Window):
             text=ba.Lstr(
                 resource='league.leagueRankText',
                 fallback_resource='coopSelectWindow.powerRankingText'),
-            h_align="center",
+            h_align='center',
             color=ba.app.title_color,
             scale=1.4,
             maxwidth=600,
-            v_align="center")
+            v_align='center')
 
         ba.buttonwidget(edit=btn,
                         button_type='backSmall',

@@ -47,7 +47,7 @@ class ZoomText(ba.Actor):
                  lifespan: float = None,
                  flash: bool = True,
                  trail: bool = True,
-                 h_align: str = "center",
+                 h_align: str = 'center',
                  color: Sequence[float] = (0.9, 0.4, 0.0),
                  jitter: float = 0.0,
                  trailcolor: Sequence[float] = (1.0, 0.35, 0.1, 0.0),

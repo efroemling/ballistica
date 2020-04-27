@@ -78,8 +78,8 @@ class HelpWindow(ba.Window):
                                    subs=[('${APP_NAME}',
                                           ba.Lstr(resource='titleText'))]),
                       color=ba.app.title_color,
-                      h_align="center",
-                      v_align="top")
+                      h_align='center',
+                      v_align='top')
 
         self._scrollwidget = ba.scrollwidget(
             parent=self._root_widget,
@@ -110,7 +110,7 @@ class HelpWindow(ba.Window):
                 size=(140, 60),
                 scale=0.7 if ba.app.small_ui else 0.8,
                 label=ba.Lstr(
-                    resource='backText') if self._main_menu else "Close",
+                    resource='backText') if self._main_menu else 'Close',
                 button_type='back' if self._main_menu else None,
                 extra_touch_border_scale=2.0,
                 autoselect=True,
@@ -158,9 +158,9 @@ class HelpWindow(ba.Window):
                       flatness=0.5,
                       res_scale=1.5,
                       text=txt,
-                      h_align="center",
+                      h_align='center',
                       color=header,
-                      v_align="center",
+                      v_align='center',
                       maxwidth=txt_maxwidth)
         txt_width = min(
             txt_maxwidth,
@@ -223,9 +223,9 @@ class HelpWindow(ba.Window):
                           scale=1.2,
                           maxwidth=self._sub_width * 0.9,
                           text=txt,
-                          h_align="center",
+                          h_align='center',
                           color=paragraph,
-                          v_align="center",
+                          v_align='center',
                           flatness=1.0)
             v -= (spacing * 25.0 +
                   get_resource(self._r + '.someDaysExtraSpace'))
@@ -238,9 +238,9 @@ class HelpWindow(ba.Window):
                           scale=txt_scale,
                           maxwidth=self._sub_width * 0.9,
                           text=txt,
-                          h_align="center",
+                          h_align='center',
                           color=paragraph,
-                          v_align="center",
+                          v_align='center',
                           flatness=1.0)
             v -= (spacing * 27.0 +
                   get_resource(self._r + '.orPunchingSomethingExtraSpace'))
@@ -254,9 +254,9 @@ class HelpWindow(ba.Window):
                           scale=txt_scale,
                           flatness=1.0,
                           text=txt,
-                          h_align="center",
+                          h_align='center',
                           color=paragraph,
-                          v_align="center")
+                          v_align='center')
 
             v -= spacing * 70.0
             txt_scale = 1.0
@@ -267,9 +267,9 @@ class HelpWindow(ba.Window):
                           scale=txt_scale,
                           maxwidth=self._sub_width * 0.9,
                           text=txt,
-                          h_align="center",
+                          h_align='center',
                           color=header,
-                          v_align="center",
+                          v_align='center',
                           flatness=1.0)
 
             v -= spacing * 40.0
@@ -282,9 +282,9 @@ class HelpWindow(ba.Window):
                           scale=txt_scale,
                           maxwidth=100,
                           text=txt,
-                          h_align="right",
+                          h_align='right',
                           color=header,
-                          v_align="center",
+                          v_align='center',
                           flatness=1.0)
 
             txt = ba.Lstr(resource=self._r + '.friendsGoodText',
@@ -297,7 +297,7 @@ class HelpWindow(ba.Window):
                           scale=txt_scale,
                           maxwidth=500,
                           text=txt,
-                          h_align="left",
+                          h_align='left',
                           color=paragraph,
                           flatness=1.0)
 
@@ -315,9 +315,9 @@ class HelpWindow(ba.Window):
                           scale=txt_scale,
                           maxwidth=100,
                           text=txt,
-                          h_align="right",
+                          h_align='right',
                           color=header,
-                          v_align="center",
+                          v_align='center',
                           flatness=1.0)
 
             txt_scale = 0.7
@@ -340,7 +340,7 @@ class HelpWindow(ba.Window):
                           maxwidth=500,
                           max_height=105,
                           text=txt,
-                          h_align="left",
+                          h_align='left',
                           color=paragraph,
                           flatness=1.0)
 
@@ -355,9 +355,9 @@ class HelpWindow(ba.Window):
                       scale=txt_scale,
                       flatness=0.5,
                       text=txt,
-                      h_align="center",
+                      h_align='center',
                       color=header,
-                      v_align="center",
+                      v_align='center',
                       res_scale=1.5,
                       maxwidth=txt_maxwidth)
         txt_width = min(
@@ -385,9 +385,9 @@ class HelpWindow(ba.Window):
                       maxwidth=self._sub_width * 0.9,
                       flatness=1.0,
                       text=txt,
-                      h_align="center",
+                      h_align='center',
                       color=paragraph,
-                      v_align="center")
+                      v_align='center')
         v -= spacing * 160.0
 
         sep = 70
@@ -410,9 +410,9 @@ class HelpWindow(ba.Window):
                       scale=txt_scale,
                       flatness=1.0,
                       text=txt,
-                      h_align="center",
+                      h_align='center',
                       color=(1, 0.7, 0.3, 1.0),
-                      v_align="top")
+                      v_align='top')
 
         hval2 = h + sep
         vval2 = v
@@ -432,9 +432,9 @@ class HelpWindow(ba.Window):
                       flatness=1.0,
                       maxwidth=270,
                       text=txt,
-                      h_align="center",
+                      h_align='center',
                       color=(1, 0.3, 0.3, 1.0),
-                      v_align="top")
+                      v_align='top')
 
         hval2 = h
         vval2 = v + sep
@@ -453,9 +453,9 @@ class HelpWindow(ba.Window):
                       scale=txt_scale,
                       flatness=1.0,
                       text=txtl,
-                      h_align="center",
+                      h_align='center',
                       color=(0.5, 0.5, 1, 1.0),
-                      v_align="top")
+                      v_align='top')
 
         hval2 = h
         vval2 = v - sep
@@ -474,9 +474,9 @@ class HelpWindow(ba.Window):
                       scale=txt_scale,
                       flatness=1.0,
                       text=txt,
-                      h_align="center",
+                      h_align='center',
                       color=(0.4, 1, 0.4, 1.0),
-                      v_align="top")
+                      v_align='top')
 
         txt = ba.Lstr(resource=self._r + '.runInfoText').evaluate()
         txt_scale = get_resource(self._r + '.runInfoTextScale')
@@ -487,9 +487,9 @@ class HelpWindow(ba.Window):
                       maxwidth=self._sub_width * 0.93,
                       flatness=1.0,
                       text=txt,
-                      h_align="center",
+                      h_align='center',
                       color=(0.7, 0.7, 1.0, 1.0),
-                      v_align="center")
+                      v_align='center')
 
         v -= spacing * 280.0
 
@@ -502,9 +502,9 @@ class HelpWindow(ba.Window):
                       scale=txt_scale,
                       flatness=0.5,
                       text=txt,
-                      h_align="center",
+                      h_align='center',
                       color=header,
-                      v_align="center",
+                      v_align='center',
                       maxwidth=txt_maxwidth)
         txt_width = min(
             txt_maxwidth,
@@ -526,9 +526,9 @@ class HelpWindow(ba.Window):
                       scale=txt_scale,
                       maxwidth=self._sub_width * 0.9,
                       text=txt,
-                      h_align="center",
+                      h_align='center',
                       color=paragraph,
-                      v_align="center",
+                      v_align='center',
                       flatness=1.0)
 
         v -= spacing * 1.0
@@ -578,9 +578,9 @@ class HelpWindow(ba.Window):
                           maxwidth=200,
                           flatness=1.0,
                           text=txtl,
-                          h_align="left",
+                          h_align='left',
                           color=header2,
-                          v_align="center")
+                          v_align='center')
             txt_scale = t_small
             txtl = desc
             ba.textwidget(parent=self._subcontainer,
@@ -590,9 +590,9 @@ class HelpWindow(ba.Window):
                           maxwidth=300,
                           flatness=1.0,
                           text=txtl,
-                          h_align="left",
+                          h_align='left',
                           color=paragraph,
-                          v_align="center",
+                          v_align='center',
                           res_scale=0.5)
 
     def _close(self) -> None:

@@ -79,7 +79,7 @@ class AssaultGame(ba.TeamGameActivity):
         if self.settings['Epic Mode']:
             self.slow_motion = True
         self._last_score_time = 0.0
-        self._score_sound = ba.getsound("score")
+        self._score_sound = ba.getsound('score')
         self._base_region_materials: Dict[int, ba.Material] = {}
 
     def get_instance_description(self) -> Union[str, Sequence]:
@@ -163,7 +163,7 @@ class AssaultGame(ba.TeamGameActivity):
                                'radius': 0.3,
                                'color': team.color
                            })
-        ba.animate(light, "intensity", {0: 0, 0.25: 2.0, 0.5: 0}, loop=True)
+        ba.animate(light, 'intensity', {0: 0, 0.25: 2.0, 0.5: 0}, loop=True)
         ba.timer(length, light.delete)
 
     def _handle_base_collide(self, team: ba.Team) -> None:

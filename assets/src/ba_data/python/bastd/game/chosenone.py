@@ -65,27 +65,27 @@ class ChosenOneGame(ba.TeamGameActivity):
     def get_settings(
             cls,
             sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
-        return [("Chosen One Time", {
+        return [('Chosen One Time', {
             'min_value': 10,
             'default': 30,
             'increment': 10
-        }), ("Chosen One Gets Gloves", {
+        }), ('Chosen One Gets Gloves', {
             'default': True
-        }), ("Chosen One Gets Shield", {
+        }), ('Chosen One Gets Shield', {
             'default': False
         }),
-                ("Time Limit", {
+                ('Time Limit', {
                     'choices': [('None', 0), ('1 Minute', 60),
                                 ('2 Minutes', 120), ('5 Minutes', 300),
                                 ('10 Minutes', 600), ('20 Minutes', 1200)],
                     'default': 0
                 }),
-                ("Respawn Times", {
+                ('Respawn Times', {
                     'choices': [('Shorter', 0.25), ('Short', 0.5),
                                 ('Normal', 1.0), ('Long', 2.0),
                                 ('Longer', 4.0)],
                     'default': 1.0
-                }), ("Epic Mode", {
+                }), ('Epic Mode', {
                     'default': False
                 })]
 
@@ -96,7 +96,7 @@ class ChosenOneGame(ba.TeamGameActivity):
             self.slow_motion = True
         self._scoreboard = Scoreboard()
         self._chosen_one_player: Optional[ba.Player] = None
-        self._swipsound = ba.getsound("swip")
+        self._swipsound = ba.getsound('swip')
         self._countdownsounds: Dict[int, ba.Sound] = {
             10: ba.getsound('announceTen'),
             9: ba.getsound('announceNine'),
@@ -123,7 +123,7 @@ class ChosenOneGame(ba.TeamGameActivity):
         super().on_transition_in()
 
     def on_team_join(self, team: ba.Team) -> None:
-        team.gamedata['time_remaining'] = self.settings["Chosen One Time"]
+        team.gamedata['time_remaining'] = self.settings['Chosen One Time']
         self._update_scoreboard()
 
     def on_player_leave(self, player: ba.Player) -> None:
@@ -170,7 +170,7 @@ class ChosenOneGame(ba.TeamGameActivity):
             return
         try:
             player = (ba.get_collision_info(
-                "opposing_node").getdelegate().getplayer())
+                'opposing_node').getdelegate().getplayer())
         except Exception:
             return
         if player is not None and player.is_alive():
@@ -184,7 +184,7 @@ class ChosenOneGame(ba.TeamGameActivity):
                                'radius': 0.3,
                                'height_attenuated': False
                            })
-        ba.animate(light, "intensity", {0: 0, 0.25: 0.5, 0.5: 0}, loop=True)
+        ba.animate(light, 'intensity', {0: 0, 0.25: 0.5, 0.5: 0}, loop=True)
         ba.timer(1.0, light.delete)
 
     def _tick(self) -> None:
@@ -296,11 +296,11 @@ class ChosenOneGame(ba.TeamGameActivity):
                         light = player.gamedata['chosen_light'] = ba.NodeActor(
                             ba.newnode('light',
                                        attrs={
-                                           "intensity": 0.6,
-                                           "height_attenuated": False,
-                                           "volume_intensity_scale": 0.1,
-                                           "radius": 0.13,
-                                           "color": color
+                                           'intensity': 0.6,
+                                           'height_attenuated': False,
+                                           'volume_intensity_scale': 0.1,
+                                           'radius': 0.13,
+                                           'color': color
                                        }))
 
                         assert light.node

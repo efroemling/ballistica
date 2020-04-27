@@ -80,7 +80,7 @@ def filter_playlist(playlist: PlaylistType,
         # the actual game class. add successful ones to our initial list
         # to present to the user.
         if not isinstance(entry['type'], str):
-            raise Exception("invalid entry format")
+            raise Exception('invalid entry format')
         try:
             # Do some type filters for backwards compat.
             if entry['type'] in ('Assault.AssaultGame',

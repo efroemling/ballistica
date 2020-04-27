@@ -208,7 +208,7 @@ class AccountViewerWindow(popup.PopupWindow):
                     if trophystr == '':
                         trophystr = '-'
                 except Exception:
-                    ba.print_exception("Error displaying trophies")
+                    ba.print_exception('Error displaying trophies')
                 account_name_spacing = 15
                 tscale = 0.65
                 ts_height = _ba.get_string_height(trophystr,
@@ -255,7 +255,7 @@ class AccountViewerWindow(popup.PopupWindow):
                                     tint2_color=tint2_color)
                                 v -= 95
                     except Exception:
-                        ba.print_exception("Error displaying character")
+                        ba.print_exception('Error displaying character')
                     ba.textwidget(
                         parent=self._subcontainer,
                         size=(0, 0),

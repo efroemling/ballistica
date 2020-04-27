@@ -92,10 +92,10 @@ class CreditsListWindow(ba.Window):
                       text=ba.Lstr(resource=self._r + '.titleText',
                                    subs=[('${APP_NAME}',
                                           ba.Lstr(resource='titleText'))]),
-                      h_align="center",
+                      h_align='center',
                       color=ba.app.title_color,
                       maxwidth=330,
-                      v_align="center")
+                      v_align='center')
 
         scroll = ba.scrollwidget(parent=self._root_widget,
                                  position=(40 + x_inset, 35),

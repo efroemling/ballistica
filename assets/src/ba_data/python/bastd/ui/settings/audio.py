@@ -104,8 +104,8 @@ class AudioSettingsWindow(ba.Window):
                       text=ba.Lstr(resource=self._r + '.titleText'),
                       color=ba.app.title_color,
                       maxwidth=180,
-                      h_align="center",
-                      v_align="center")
+                      h_align='center',
+                      v_align='center')
 
         ba.buttonwidget(edit=self._back_button,
                         button_type='backSmall',
@@ -116,7 +116,7 @@ class AudioSettingsWindow(ba.Window):
             parent=self._root_widget,
             position=(40, v),
             xoffset=10,
-            configkey="Sound Volume",
+            configkey='Sound Volume',
             displayname=ba.Lstr(resource=self._r + '.soundVolumeText'),
             minval=0.0,
             maxval=1.0,
@@ -129,7 +129,7 @@ class AudioSettingsWindow(ba.Window):
             parent=self._root_widget,
             position=(40, v),
             xoffset=10,
-            configkey="Music Volume",
+            configkey='Music Volume',
             displayname=ba.Lstr(resource=self._r + '.musicVolumeText'),
             minval=0.0,
             maxval=1.0,
@@ -149,8 +149,8 @@ class AudioSettingsWindow(ba.Window):
                                        '.headRelativeVRAudioText'),
                           color=(0.8, 0.8, 0.8),
                           maxwidth=230,
-                          h_align="left",
-                          v_align="center")
+                          h_align='left',
+                          v_align='center')
 
             popup = PopupMenu(
                 parent=self._root_widget,
@@ -176,8 +176,8 @@ class AudioSettingsWindow(ba.Window):
                           color=(0.7, 0.8, 0.7),
                           maxwidth=400,
                           flatness=1.0,
-                          h_align="center",
-                          v_align="center")
+                          h_align='center',
+                          v_align='center')
             v -= 30
         else:
             self._vr_head_relative_audio_button = None
@@ -266,7 +266,7 @@ class AudioSettingsWindow(ba.Window):
             elif sel == self._vr_head_relative_audio_button:
                 sel_name = 'VRHeadRelative'
             else:
-                raise Exception("unrecognized selected widget")
+                raise Exception('unrecognized selected widget')
             ba.app.window_states[self.__class__.__name__] = sel_name
         except Exception:
             ba.print_exception('error saving state for', self.__class__)

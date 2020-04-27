@@ -43,7 +43,7 @@ def gamepad_configure_callback(event: Dict[str, Any]) -> None:
     try:
         ba.containerwidget(edit=ba.app.main_menu_window, transition='out_left')
     except Exception:
-        ba.print_exception("Error transitioning out main_menu_window.")
+        ba.print_exception('Error transitioning out main_menu_window.')
     ba.playsound(ba.getsound('activateBeep'))
     ba.playsound(ba.getsound('swish'))
     inputdevice = event['input_device']
@@ -71,8 +71,8 @@ def gamepad_configure_callback(event: Dict[str, Any]) -> None:
                       size=(width, 25),
                       text=msg,
                       scale=0.8,
-                      h_align="center",
-                      v_align="top")
+                      h_align='center',
+                      v_align='top')
 
         def _ok() -> None:
             from bastd.ui.settings import controls
@@ -120,8 +120,8 @@ class GamepadSelectWindow(ba.Window):
                       text=ba.Lstr(resource=self._r + '.titleText'),
                       maxwidth=250,
                       color=ba.app.title_color,
-                      h_align="center",
-                      v_align="center")
+                      h_align='center',
+                      v_align='center')
 
         ba.buttonwidget(edit=btn,
                         button_type='backSmall',
@@ -137,8 +137,8 @@ class GamepadSelectWindow(ba.Window):
                       text=ba.Lstr(resource=self._r + '.pressAnyButtonText'),
                       maxwidth=width * 0.95,
                       color=ba.app.infotextcolor,
-                      h_align="center",
-                      v_align="top")
+                      h_align='center',
+                      v_align='top')
         v -= spacing * 1.24
         if ba.app.platform == 'android':
             ba.textwidget(parent=self._root_widget,
@@ -148,8 +148,8 @@ class GamepadSelectWindow(ba.Window):
                           text=ba.Lstr(resource=self._r + '.androidNoteText'),
                           maxwidth=width * 0.95,
                           color=(0.7, 0.9, 0.7, 0.5),
-                          h_align="center",
-                          v_align="top")
+                          h_align='center',
+                          v_align='top')
 
         _ba.capture_gamepad_input(gamepad_configure_callback)
 

@@ -109,13 +109,13 @@ class Background(ba.Actor):
                     for _i in range(10):
                         keys[timeval] = (random.random() - 0.5) * 0.0015
                         timeval += random.random() * 0.1
-                    ba.animate(cmb, "input0", keys, loop=True)
+                    ba.animate(cmb, 'input0', keys, loop=True)
                     keys = {}
                     timeval = 0.0
                     for _i in range(10):
                         keys[timeval] = (random.random() - 0.5) * 0.0015 + 0.05
                         timeval += random.random() * 0.1
-                    ba.animate(cmb, "input1", keys, loop=True)
+                    ba.animate(cmb, 'input1', keys, loop=True)
 
     def __del__(self) -> None:
         # Normal actors don't get sent DieMessages when their
@@ -132,8 +132,8 @@ class Background(ba.Actor):
             # since it was part of the session's scene.
             # Let's make sure that's the case.
             # (since otherwise we have no way to kill it)
-            ba.print_error("got None session on Background _die"
-                           " (and node still exists!)")
+            ba.print_error('got None session on Background _die'
+                           ' (and node still exists!)')
         elif session is not None:
             with ba.Context(session):
                 if not self._dying and self.node:
@@ -142,7 +142,7 @@ class Background(ba.Actor):
                         self.node.delete()
                     else:
                         ba.animate(self.node,
-                                   "opacity", {
+                                   'opacity', {
                                        0.0: 1.0,
                                        self.fade_time: 0.0
                                    },

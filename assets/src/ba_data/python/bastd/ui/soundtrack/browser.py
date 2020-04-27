@@ -88,8 +88,8 @@ class SoundtrackBrowserWindow(ba.Window):
                       maxwidth=300,
                       text=ba.Lstr(resource=self._r + '.titleText'),
                       color=ba.app.title_color,
-                      h_align="center",
-                      v_align="center")
+                      h_align='center',
+                      v_align='center')
 
         h = 43 + x_inset
         v = self._height - 60
@@ -261,7 +261,7 @@ class SoundtrackBrowserWindow(ba.Window):
         else:
             confirm.ConfirmWindow(
                 ba.Lstr(resource=self._r + '.deleteConfirmText',
-                        subs=[("${NAME}", self._selected_soundtrack)]),
+                        subs=[('${NAME}', self._selected_soundtrack)]),
                 self._do_delete_soundtrack, 450, 150)
 
     def _duplicate_soundtrack(self) -> None:
@@ -485,7 +485,7 @@ class SoundtrackBrowserWindow(ba.Window):
             elif sel == self._back_button:
                 sel_name = 'Back'
             else:
-                raise Exception("unrecognized selection")
+                raise Exception('unrecognized selection')
             ba.app.window_states[self.__class__.__name__] = sel_name
         except Exception:
             ba.print_exception('error saving state for', self.__class__)

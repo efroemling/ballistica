@@ -72,8 +72,8 @@ class FileSelectorWindow(ba.Window):
             position=(self._width * 0.5, self._height - 42),
             size=(0, 0),
             color=ba.app.title_color,
-            h_align="center",
-            v_align="center",
+            h_align='center',
+            v_align='center',
             text=ba.Lstr(resource=self._r + '.titleFolderText') if
             (allow_folders and not valid_file_extensions) else ba.Lstr(
                 resource=self._r +
@@ -120,8 +120,8 @@ class FileSelectorWindow(ba.Window):
                                                   self._height - 98),
                                         size=(0, 0),
                                         color=ba.app.title_color,
-                                        h_align="center",
-                                        v_align="center",
+                                        h_align='center',
+                                        v_align='center',
                                         text=self._path,
                                         maxwidth=self._width * 0.9)
         self._scrollwidget: Optional[ba.Widget] = None

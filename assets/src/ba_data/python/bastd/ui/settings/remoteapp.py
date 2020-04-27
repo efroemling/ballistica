@@ -57,8 +57,8 @@ class RemoteAppSettingsWindow(ba.Window):
                       maxwidth=370,
                       color=ba.app.title_color,
                       scale=0.8,
-                      h_align="center",
-                      v_align="center")
+                      h_align='center',
+                      v_align='center')
 
         ba.buttonwidget(edit=btn,
                         button_type='backSmall',
@@ -79,8 +79,8 @@ class RemoteAppSettingsWindow(ba.Window):
                                          ('${REMOTE_APP_NAME}',
                                           get_remote_app_name())]),
                       max_height=100,
-                      h_align="center",
-                      v_align="center")
+                      h_align='center',
+                      v_align='center')
         v -= 90
 
         # hmm the itms:// version doesnt bounce through safari but is kinda
@@ -95,8 +95,8 @@ class RemoteAppSettingsWindow(ba.Window):
                       text='bombsquadgame.com/remote',
                       maxwidth=width * 0.95,
                       max_height=60,
-                      h_align="center",
-                      v_align="center")
+                      h_align='center',
+                      v_align='center')
         v -= 30
 
         ba.textwidget(parent=self._root_widget,
@@ -107,8 +107,8 @@ class RemoteAppSettingsWindow(ba.Window):
                       text=ba.Lstr(resource=self._r + '.bestResultsText'),
                       maxwidth=width * 0.95,
                       max_height=height * 0.19,
-                      h_align="center",
-                      v_align="center")
+                      h_align='center',
+                      v_align='center')
 
         ba.checkboxwidget(
             parent=self._root_widget,

@@ -71,18 +71,18 @@ class KeepAwayGame(ba.TeamGameActivity):
             cls,
             sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
         return [
-            ("Hold Time", {
+            ('Hold Time', {
                 'min_value': 10,
                 'default': 30,
                 'increment': 10
             }),
-            ("Time Limit", {
+            ('Time Limit', {
                 'choices': [('None', 0), ('1 Minute', 60), ('2 Minutes', 120),
                             ('5 Minutes', 300), ('10 Minutes', 600),
                             ('20 Minutes', 1200)],
                 'default': 0
             }),
-            ("Respawn Times", {
+            ('Respawn Times', {
                 'choices': [('Shorter', 0.25), ('Short', 0.5), ('Normal', 1.0),
                             ('Long', 2.0), ('Longer', 4.0)],
                 'default': 1.0
@@ -93,7 +93,7 @@ class KeepAwayGame(ba.TeamGameActivity):
         from bastd.actor.scoreboard import Scoreboard
         super().__init__(settings)
         self._scoreboard = Scoreboard()
-        self._swipsound = ba.getsound("swip")
+        self._swipsound = ba.getsound('swip')
         self._tick_sound = ba.getsound('tick')
         self._countdownsounds = {
             10: ba.getsound('announceTen'),
@@ -128,7 +128,7 @@ class KeepAwayGame(ba.TeamGameActivity):
         super().on_transition_in()
 
     def on_team_join(self, team: ba.Team) -> None:
-        team.gamedata['time_remaining'] = self.settings["Hold Time"]
+        team.gamedata['time_remaining'] = self.settings['Hold Time']
         self._update_scoreboard()
 
     def on_begin(self) -> None:
@@ -200,7 +200,7 @@ class KeepAwayGame(ba.TeamGameActivity):
                     holding_flag = (
                         player.actor.node.hold_node.getnodetype() == 'flag')
             except Exception:
-                ba.print_exception("exception checking hold flag")
+                ba.print_exception('exception checking hold flag')
             if holding_flag:
                 self._holding_players.append(player)
                 player.team.gamedata['holding_flag'] = True

@@ -90,8 +90,8 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
                                           self._pvars.window_title_name)]),
                       color=ba.app.heading_color,
                       maxwidth=290,
-                      h_align="center",
-                      v_align="center")
+                      h_align='center',
+                      v_align='center')
 
         ba.buttonwidget(edit=btn,
                         button_type='backSmall',
@@ -300,7 +300,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
             _ba.new_host_session(self._sessiontype)
         except Exception:
             from bastd import mainmenu
-            ba.print_exception("exception running session", self._sessiontype)
+            ba.print_exception('exception running session', self._sessiontype)
 
             # Drop back into a main menu session.
             _ba.new_host_session(mainmenu.MainMenuSession)

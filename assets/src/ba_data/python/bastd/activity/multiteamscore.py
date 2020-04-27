@@ -37,8 +37,8 @@ class MultiTeamScoreScreenActivity(ScoreScreenActivity):
 
     def __init__(self, settings: Dict[str, Any]):
         super().__init__(settings=settings)
-        self._score_display_sound = ba.getsound("scoreHit01")
-        self._score_display_sound_small = ba.getsound("scoreHit02")
+        self._score_display_sound = ba.getsound('scoreHit01')
+        self._score_display_sound_small = ba.getsound('scoreHit02')
 
         self._show_up_next: bool = True
 

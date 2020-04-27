@@ -140,8 +140,8 @@ class AccountSettingsWindow(ba.Window):
                       text=ba.Lstr(resource=self._r + '.titleText'),
                       color=ba.app.title_color,
                       maxwidth=self._width - 340,
-                      h_align="center",
-                      v_align="center")
+                      h_align='center',
+                      v_align='center')
 
         self._scrollwidget = ba.scrollwidget(
             parent=self._root_widget,
@@ -346,8 +346,8 @@ class AccountSettingsWindow(ba.Window):
                 color=(0.5, 0.5, 0.6),
                 maxwidth=self._sub_width * 0.9,
                 flatness=1.0,
-                h_align="center",
-                v_align="center")
+                h_align='center',
+                v_align='center')
             v -= local_signed_in_as_space * 0.4
 
         self._account_name_text: Optional[ba.Widget]
@@ -363,8 +363,8 @@ class AccountSettingsWindow(ba.Window):
                           scale=0.9,
                           color=ba.app.title_color,
                           maxwidth=self._sub_width * 0.9,
-                          h_align="center",
-                          v_align="center")
+                          h_align='center',
+                          v_align='center')
             v -= signed_in_as_space * 0.4
             self._account_name_text = ba.textwidget(
                 parent=self._subcontainer,
@@ -374,8 +374,8 @@ class AccountSettingsWindow(ba.Window):
                 maxwidth=self._sub_width * 0.9,
                 res_scale=1.5,
                 color=(1, 1, 1, 1),
-                h_align="center",
-                v_align="center")
+                h_align='center',
+                v_align='center')
             self._refresh_account_name_text()
             v -= signed_in_as_space * 0.4
         else:
@@ -412,8 +412,8 @@ class AccountSettingsWindow(ba.Window):
                           scale=0.9,
                           color=(0.75, 0.7, 0.8),
                           maxwidth=self._sub_width * 0.8,
-                          h_align="center",
-                          v_align="center")
+                          h_align='center',
+                          v_align='center')
 
         if show_signing_in_text:
             v -= signing_in_text_space
@@ -427,8 +427,8 @@ class AccountSettingsWindow(ba.Window):
                 scale=0.9,
                 color=(0, 1, 0),
                 maxwidth=self._sub_width * 0.8,
-                h_align="center",
-                v_align="center")
+                h_align='center',
+                v_align='center')
 
         if show_google_play_sign_in_button:
             button_width = 350
@@ -658,8 +658,8 @@ class AccountSettingsWindow(ba.Window):
                 scale=0.9,
                 color=(0.75, 0.7, 0.8),
                 maxwidth=self._sub_width * 0.8,
-                h_align="center",
-                v_align="center")
+                h_align='center',
+                v_align='center')
             v -= achievements_text_space * 0.5
         else:
             self._achievements_text = None
@@ -728,8 +728,8 @@ class AccountSettingsWindow(ba.Window):
                 scale=0.9,
                 color=(0.75, 0.7, 0.8),
                 maxwidth=self._sub_width * 0.8,
-                h_align="center",
-                v_align="center")
+                h_align='center',
+                v_align='center')
             v -= campaign_progress_space * 0.5
             self._refresh_campaign_progress_text()
         else:
@@ -746,8 +746,8 @@ class AccountSettingsWindow(ba.Window):
                                                color=(0.75, 0.7, 0.8),
                                                maxwidth=self._sub_width * 0.8,
                                                flatness=1.0,
-                                               h_align="center",
-                                               v_align="center")
+                                               h_align='center',
+                                               v_align='center')
             v -= tickets_space * 0.5
             self._refresh_tickets_text()
 
@@ -795,8 +795,8 @@ class AccountSettingsWindow(ba.Window):
                 scale=0.9,
                 color=(0.75, 0.7, 0.8),
                 maxwidth=self._sub_width * 0.95,
-                h_align="center",
-                v_align="center")
+                h_align='center',
+                v_align='center')
             v -= linked_accounts_text_space * 0.2
             self._update_linked_accounts_text()
         else:
@@ -1041,7 +1041,7 @@ class AccountSettingsWindow(ba.Window):
         # pylint: disable=cyclic-import
         from bastd.ui.profile import browser as pbrowser
         self._save_state()
-        ba.containerwidget(edit=self._root_widget, transition="out_left")
+        ba.containerwidget(edit=self._root_widget, transition='out_left')
         pbrowser.ProfileBrowserWindow(
             origin_widget=self._player_profiles_button)
 
@@ -1105,7 +1105,7 @@ class AccountSettingsWindow(ba.Window):
             elif sel == self._scrollwidget:
                 sel_name = 'Scroll'
             else:
-                raise Exception("unrecognized selection")
+                raise Exception('unrecognized selection')
             ba.app.window_states[self.__class__.__name__] = sel_name
         except Exception:
             ba.print_exception('exception saving state for', self.__class__)

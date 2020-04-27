@@ -156,7 +156,7 @@ class Map(Actor):
     functionality comprising a game map.
     """
     defs: Any = None
-    name = "Map"
+    name = 'Map'
     _playtypes: List[str] = []
 
     @classmethod
@@ -226,14 +226,14 @@ class Map(Actor):
         gnode = _gameutils.sharedobj('globals')
 
         # Set area-of-interest bounds.
-        aoi_bounds = self.get_def_bound_box("area_of_interest_bounds")
+        aoi_bounds = self.get_def_bound_box('area_of_interest_bounds')
         if aoi_bounds is None:
             print('WARNING: no "aoi_bounds" found for map:', self.get_name())
             aoi_bounds = (-1, -1, -1, 1, 1, 1)
         gnode.area_of_interest_bounds = aoi_bounds
 
         # Set map bounds.
-        map_bounds = self.get_def_bound_box("map_bounds")
+        map_bounds = self.get_def_bound_box('map_bounds')
         if map_bounds is None:
             print('WARNING: no "map_bounds" found for map:', self.get_name())
             map_bounds = (-30, -10, -30, 30, 100, 30)
@@ -268,7 +268,7 @@ class Map(Actor):
                                  or [(0, 0, 0, 0, 0, 0)])
         self.spawn_by_flag_points = (self.get_def_points('spawn_by_flag')
                                      or [(0, 0, 0, 0, 0, 0)])
-        self.flag_points = self.get_def_points("flag") or [(0, 0, 0)]
+        self.flag_points = self.get_def_points('flag') or [(0, 0, 0)]
 
         # We just want points.
         self.flag_points = [p[:3] for p in self.flag_points]
@@ -282,7 +282,7 @@ class Map(Actor):
         self.powerup_spawn_points = ([
             p[:3] for p in self.powerup_spawn_points
         ])
-        self.tnt_points = self.get_def_points("tnt") or []
+        self.tnt_points = self.get_def_points('tnt') or []
 
         # We just want points.
         self.tnt_points = [p[:3] for p in self.tnt_points]
@@ -331,7 +331,7 @@ class Map(Actor):
         If none are defined, returns an empty list.
         """
         point_list = []
-        if self.defs and name + "1" in self.defs.points:
+        if self.defs and name + '1' in self.defs.points:
             i = 1
             while name + str(i) in self.defs.points:
                 pts = self.defs.points[name + str(i)]
@@ -339,7 +339,7 @@ class Map(Actor):
                     point_list.append(pts)
                 else:
                     if len(pts) != 3:
-                        raise Exception("invalid point")
+                        raise Exception('invalid point')
                     point_list.append(pts + (0, 0, 0))
                 i += 1
         return point_list
@@ -427,5 +427,5 @@ class Map(Actor):
 def register_map(maptype: Type[Map]) -> None:
     """Register a map class with the game."""
     if maptype.name in _ba.app.maps:
-        raise Exception("map \"" + maptype.name + "\" already registered")
+        raise Exception('map "' + maptype.name + '" already registered')
     _ba.app.maps[maptype.name] = maptype

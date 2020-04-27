@@ -255,7 +255,7 @@ class GameActivity(Activity):
         """
         from ba import _map
         del sessiontype  # unused arg
-        return _map.getmaps("melee")
+        return _map.getmaps('melee')
 
     @classmethod
     def get_config_display_string(cls, config: Dict[str, Any]) -> ba.Lstr:
@@ -270,14 +270,14 @@ class GameActivity(Activity):
         # In newer configs, map is in settings; it used to be in the
         # config root.
         if 'map' in config['settings']:
-            sval = Lstr(value="${NAME} @ ${MAP}",
+            sval = Lstr(value='${NAME} @ ${MAP}',
                         subs=[('${NAME}', name),
                               ('${MAP}',
                                _map.get_map_display_string(
                                    _map.get_filtered_map_name(
                                        config['settings']['map'])))])
         elif 'map' in config:
-            sval = Lstr(value="${NAME} @ ${MAP}",
+            sval = Lstr(value='${NAME} @ ${MAP}',
                         subs=[('${NAME}', name),
                               ('${MAP}',
                                _map.get_map_display_string(
@@ -327,7 +327,7 @@ class GameActivity(Activity):
             ]
             if not valid_maps:
                 _ba.screenmessage(Lstr(resource='noValidMapsErrorText'))
-                raise Exception("No valid maps")
+                raise Exception('No valid maps')
             map_name = valid_maps[random.randrange(len(valid_maps))]
         self._map_type = _map.get_map_class(map_name)
         self._map_type.preload()
@@ -544,7 +544,7 @@ class GameActivity(Activity):
 
         except Exception:
             from ba import _error
-            _error.print_exception("error continuing game")
+            _error.print_exception('error continuing game')
 
         self.end_game()
 
@@ -613,7 +613,7 @@ class GameActivity(Activity):
             self._game_begin_analytics()
         except Exception:
             from ba import _error
-            _error.print_exception("error in game-begin-analytics")
+            _error.print_exception('error in game-begin-analytics')
 
         # We don't do this in on_transition_in because it may depend on
         # players/teams which aren't available until now.
@@ -720,7 +720,7 @@ class GameActivity(Activity):
         else:
             sb_desc_l = sb_desc_in
         if not isinstance(sb_desc_l[0], str):
-            raise Exception("Invalid format for instance description")
+            raise Exception('Invalid format for instance description')
 
         is_empty = (sb_desc_l[0] == '')
         subs = []
@@ -737,14 +737,14 @@ class GameActivity(Activity):
         sbpos = ((15, yval) if isinstance(self.session, FreeForAllSession) else
                  (15, yval))
         self._game_scoreboard_name_text = NodeActor(
-            _ba.newnode("text",
+            _ba.newnode('text',
                         attrs={
                             'text': sb_name,
                             'maxwidth': 300,
                             'position': sbpos,
-                            'h_attach': "left",
+                            'h_attach': 'left',
                             'vr_depth': 10,
-                            'v_attach': "top",
+                            'v_attach': 'top',
                             'v_align': 'bottom',
                             'color': (1.0, 1.0, 1.0, 1.0),
                             'shadow': 1.0 if vrmode else 0.6,
@@ -763,14 +763,14 @@ class GameActivity(Activity):
                     (17, -44 + 10)))
         self._game_scoreboard_description_text = NodeActor(
             _ba.newnode(
-                "text",
+                'text',
                 attrs={
                     'text': sb_desc,
                     'maxwidth': 480,
                     'position': descpos,
                     'scale': 0.7,
-                    'h_attach': "left",
-                    'v_attach': "top",
+                    'h_attach': 'left',
+                    'v_attach': 'top',
                     'v_align': 'top',
                     'shadow': 1.0 if vrmode else 0.7,
                     'flatness': 1.0 if vrmode else 0.8,
@@ -808,7 +808,7 @@ class GameActivity(Activity):
         else:
             desc_l = desc_in
         if not isinstance(desc_l[0], str):
-            raise Exception("Invalid format for instance description")
+            raise Exception('Invalid format for instance description')
         subs = []
         for i in range(len(desc_l) - 1):
             subs.append(('${ARG' + str(i + 1) + '}', str(desc_l[i + 1])))
@@ -834,7 +834,7 @@ class GameActivity(Activity):
                                 'maxwidth': 700,
                                 'text': translation
                             })
-        cnode = _ba.newnode("combine",
+        cnode = _ba.newnode('combine',
                             owner=dnode,
                             attrs={
                                 'input0': 1.0,
@@ -844,7 +844,7 @@ class GameActivity(Activity):
                             })
         cnode.connectattr('output', dnode, 'color')
         keys = {0.5: 0, 1.0: 1.0, 2.5: 1.0, 4.0: 0.0}
-        animate(cnode, "input3", keys)
+        animate(cnode, 'input3', keys)
         _ba.timer(4.0, dnode.delete)
 
     def _show_tip(self) -> None:
@@ -924,7 +924,7 @@ class GameActivity(Activity):
             if sound is not None:
                 _ba.playsound(sound)
 
-            combine = _ba.newnode("combine",
+            combine = _ba.newnode('combine',
                                   owner=tnode,
                                   attrs={
                                       'input0': 1.0,
@@ -1201,9 +1201,9 @@ class GameActivity(Activity):
                                     attrs={'size': 4})
                 cnode.connectattr('output',
                                   self._standard_time_limit_text.node, 'color')
-                animate(cnode, "input0", {0: 1, 0.15: 1}, loop=True)
-                animate(cnode, "input1", {0: 1, 0.15: 0.5}, loop=True)
-                animate(cnode, "input2", {0: 0.1, 0.15: 0.0}, loop=True)
+                animate(cnode, 'input0', {0: 1, 0.15: 1}, loop=True)
+                animate(cnode, 'input1', {0: 1, 0.15: 0.5}, loop=True)
+                animate(cnode, 'input2', {0: 0.1, 0.15: 0.0}, loop=True)
                 cnode.input3 = 1.0
             _ba.playsound(_ba.getsound('tick'))
         if self._standard_time_limit_time <= 0:
@@ -1220,7 +1220,7 @@ class GameActivity(Activity):
                                    'text': Lstr(resource='timeExpiredText')
                                })
             _ba.playsound(_ba.getsound('refWhistle'))
-            animate(node, "scale", {0.0: 0.0, 0.1: 1.4, 0.15: 1.2})
+            animate(node, 'scale', {0.0: 0.0, 0.1: 1.4, 0.15: 1.2})
 
     def _setup_tournament_time_limit(self, duration: float) -> None:
         """
@@ -1308,9 +1308,9 @@ class GameActivity(Activity):
                 cnode.connectattr('output',
                                   self._tournament_time_limit_text.node,
                                   'color')
-                animate(cnode, "input0", {0: 1, 0.15: 1}, loop=True)
-                animate(cnode, "input1", {0: 1, 0.15: 0.5}, loop=True)
-                animate(cnode, "input2", {0: 0.1, 0.15: 0.0}, loop=True)
+                animate(cnode, 'input0', {0: 1, 0.15: 1}, loop=True)
+                animate(cnode, 'input1', {0: 1, 0.15: 0.5}, loop=True)
+                animate(cnode, 'input2', {0: 0.1, 0.15: 0.0}, loop=True)
                 cnode.input3 = 1.0
             _ba.playsound(_ba.getsound('tick'))
         if self._tournament_time_limit <= 0:
@@ -1329,7 +1329,7 @@ class GameActivity(Activity):
                                    'text': tval
                                })
             _ba.playsound(_ba.getsound('refWhistle'))
-            animate(node, "scale", {0: 0.0, 0.1: 1.4, 0.15: 1.2})
+            animate(node, 'scale', {0: 0.0, 0.1: 1.4, 0.15: 1.2})
 
         # Normally we just connect this to time, but since this is a bit of a
         # funky setup we just update it manually once per second.

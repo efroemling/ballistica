@@ -51,7 +51,7 @@ def ask_for_rating() -> Optional[ba.Widget]:
     ba.imagewidget(parent=dlg,
                    position=(width / 2 - 100, v + 10),
                    size=(200, 200),
-                   texture=ba.gettexture("cuteSpaz"))
+                   texture=ba.gettexture('cuteSpaz'))
     ba.textwidget(parent=dlg,
                   position=(15, v - 55),
                   size=(width - 30, 30),
@@ -62,8 +62,8 @@ def ask_for_rating() -> Optional[ba.Widget]:
                   maxwidth=width * 0.95,
                   max_height=130,
                   scale=0.85,
-                  h_align="center",
-                  v_align="center")
+                  h_align='center',
+                  v_align='center')
 
     def do_rating() -> None:
         if platform == 'android':

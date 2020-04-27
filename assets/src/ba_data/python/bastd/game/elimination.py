@@ -190,33 +190,33 @@ class EliminationGame(ba.TeamGameActivity):
 
     @classmethod
     def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
-        return ba.getmaps("melee")
+        return ba.getmaps('melee')
 
     @classmethod
     def get_settings(
             cls,
             sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
         settings: List[Tuple[str, Dict[str, Any]]] = [
-            ("Lives Per Player", {
+            ('Lives Per Player', {
                 'default': 1, 'min_value': 1,
                 'max_value': 10, 'increment': 1
             }),
-            ("Time Limit", {
+            ('Time Limit', {
                 'choices': [('None', 0), ('1 Minute', 60),
                             ('2 Minutes', 120), ('5 Minutes', 300),
                             ('10 Minutes', 600), ('20 Minutes', 1200)],
                 'default': 0
             }),
-            ("Respawn Times", {
+            ('Respawn Times', {
                 'choices': [('Shorter', 0.25), ('Short', 0.5), ('Normal', 1.0),
                             ('Long', 2.0), ('Longer', 4.0)],
                 'default': 1.0
             }),
-            ("Epic Mode", {'default': False})]  # yapf: disable
+            ('Epic Mode', {'default': False})]  # yapf: disable
 
         if issubclass(sessiontype, ba.DualTeamSession):
-            settings.append(("Solo Mode", {'default': False}))
-            settings.append(("Balance Total Lives", {'default': False}))
+            settings.append(('Solo Mode', {'default': False}))
+            settings.append(('Balance Total Lives', {'default': False}))
 
         return settings
 
@@ -447,16 +447,16 @@ class EliminationGame(ba.TeamGameActivity):
         self.setup_standard_powerup_drops()
         if self._solo_mode:
             self._vs_text = ba.NodeActor(
-                ba.newnode("text",
+                ba.newnode('text',
                            attrs={
                                'position': (0, 105),
-                               'h_attach': "center",
+                               'h_attach': 'center',
                                'h_align': 'center',
                                'maxwidth': 200,
                                'shadow': 0.5,
                                'vr_depth': 390,
                                'scale': 0.6,
-                               'v_attach': "bottom",
+                               'v_attach': 'bottom',
                                'color': (0.8, 0.8, 0.3, 1.0),
                                'text': ba.Lstr(resource='vsText')
                            }))

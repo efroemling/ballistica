@@ -86,7 +86,7 @@ class CoopBrowserWindow(ba.Window):
         self._width = 1320 if app.small_ui else 1120
         self._x_inset = x_inset = 100 if app.small_ui else 0
         self._height = (657 if app.small_ui else 730 if app.med_ui else 800)
-        app.main_window = "Coop Select"
+        app.main_window = 'Coop Select'
         self._r = 'coopSelectWindow'
         top_extra = 20 if app.small_ui else 0
 
@@ -188,11 +188,11 @@ class CoopBrowserWindow(ba.Window):
             size=(0, 0),
             text=ba.Lstr(resource='playModes.singlePlayerCoopText',
                          fallback_resource='playModes.coopText'),
-            h_align="center",
+            h_align='center',
             color=app.title_color,
             scale=1.5,
             maxwidth=500,
-            v_align="center")
+            v_align='center')
 
         if app.toolbars and app.small_ui:
             ba.textwidget(edit=txt, text='')
@@ -786,7 +786,7 @@ class CoopBrowserWindow(ba.Window):
                                                               v + 30),
                                                     size=(0, 0),
                                                     text='',
-                                                    h_align="left",
+                                                    h_align='left',
                                                     v_align='center',
                                                     color=ba.app.title_color,
                                                     scale=1.1)
@@ -831,7 +831,7 @@ class CoopBrowserWindow(ba.Window):
                       position=(h_base + 27, v + 30),
                       size=(0, 0),
                       text=txt,
-                      h_align="left",
+                      h_align='left',
                       v_align='center',
                       color=ba.app.title_color,
                       scale=1.1)
@@ -865,7 +865,7 @@ class CoopBrowserWindow(ba.Window):
                           position=(h_base + 47, v),
                           size=(0, 0),
                           text=unavailable_text,
-                          h_align="left",
+                          h_align='left',
                           v_align='center',
                           color=ba.app.title_color,
                           scale=0.9)
@@ -911,7 +911,7 @@ class CoopBrowserWindow(ba.Window):
                       text=ba.Lstr(
                           resource='practiceText',
                           fallback_resource='coopSelectWindow.customText'),
-                      h_align="left",
+                      h_align='left',
                       v_align='center',
                       color=ba.app.title_color,
                       scale=1.1)
@@ -1555,7 +1555,7 @@ class CoopBrowserWindow(ba.Window):
             elif sel == self._scrollwidget:
                 sel_name = 'Scroll'
             else:
-                raise Exception("unrecognized selection")
+                raise Exception('unrecognized selection')
             ba.app.window_states[self.__class__.__name__] = {
                 'sel_name': sel_name
             }

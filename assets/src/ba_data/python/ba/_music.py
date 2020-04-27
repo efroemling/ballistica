@@ -191,7 +191,7 @@ class MusicController:
         """Returns the system music player, instantiating if necessary."""
         if self._music_player is None:
             if self._music_player_type is None:
-                raise Exception("no music player type set")
+                raise Exception('no music player type set')
             self._music_player = self._music_player_type()
         return self._music_player
 
@@ -248,11 +248,11 @@ class MusicController:
                   and isinstance(entry['name'], str)):
                 entry_type = entry['type']
             else:
-                raise Exception("invalid soundtrack entry: " + str(entry) +
-                                " (type " + str(type(entry)) + ")")
+                raise Exception('invalid soundtrack entry: ' + str(entry) +
+                                ' (type ' + str(type(entry)) + ')')
             if self.supports_soundtrack_entry_type(entry_type):
                 return entry_type
-            raise Exception("invalid soundtrack entry:" + str(entry))
+            raise Exception('invalid soundtrack entry:' + str(entry))
         except Exception as exc:
             print('EXC on get_soundtrack_entry_type', exc)
             return 'default'
@@ -272,7 +272,7 @@ class MusicController:
                     and isinstance(entry['type'], str) and 'name' in entry
                     and isinstance(entry['name'], str)):
                 return entry['name']
-            raise Exception("invalid soundtrack entry:" + str(entry))
+            raise Exception('invalid soundtrack entry:' + str(entry))
         except Exception:
             from ba import _error
             _error.print_exception()
@@ -352,7 +352,7 @@ class MusicController:
             try:
                 soundtrack = cfg.get('Soundtracks', {})[soundtrackname]
             except Exception as exc:
-                print(f"Error looking up user soundtrack: {exc}")
+                print(f'Error looking up user soundtrack: {exc}')
                 soundtrack = {}
         return soundtrack
 

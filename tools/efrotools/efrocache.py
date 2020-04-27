@@ -257,8 +257,8 @@ def _upload_cache(fnames1: List[str], fnames2: List[str], hashes_str: str,
 
     _write_cache_files(fnames1, fnames2, staging_dir, mapping_file)
 
-    print(f"{CLRBLU}Starter cache includes {len(fnames1)} items;"
-          f" excludes {len(fnames2)}{CLREND}")
+    print(f'{CLRBLU}Starter cache includes {len(fnames1)} items;'
+          f' excludes {len(fnames2)}{CLREND}')
 
     # Sync all individual cache files to the staging server.
     print(f'{CLRBLU}Pushing cache to staging...{CLREND}', flush=True)

@@ -56,10 +56,10 @@ class PlaylistBrowserWindow(ba.Window):
 
         # Store state for when we exit the next game.
         if issubclass(sessiontype, ba.DualTeamSession):
-            ba.app.main_window = "Team Game Select"
+            ba.app.main_window = 'Team Game Select'
             ba.set_analytics_screen('Teams Window')
         elif issubclass(sessiontype, ba.FreeForAllSession):
-            ba.app.main_window = "Free-for-All Game Select"
+            ba.app.main_window = 'Free-for-All Game Select'
             ba.set_analytics_screen('FreeForAll Window')
         else:
             raise Exception(f'invalid sessiontype: {sessiontype}')
@@ -237,8 +237,8 @@ class PlaylistBrowserWindow(ba.Window):
             scale=1.3,
             res_scale=1.5,
             color=ba.app.heading_color,
-            h_align="center",
-            v_align="center")
+            h_align='center',
+            v_align='center')
         if ba.app.small_ui and ba.app.toolbars:
             ba.textwidget(edit=txt, text='')
 
@@ -415,7 +415,7 @@ class PlaylistBrowserWindow(ba.Window):
                         elif self._sessiontype is ba.DualTeamSession:
                             playlist = get_default_teams_playlist()
                         else:
-                            raise Exception("unrecognized session-type: " +
+                            raise Exception('unrecognized session-type: ' +
                                             str(self._sessiontype))
                     else:
                         if name not in bs_config[self._pvars.config_name +
@@ -507,7 +507,7 @@ class PlaylistBrowserWindow(ba.Window):
                             v -= scl * 130.0
 
                 except Exception:
-                    ba.print_exception("error listing playlist maps")
+                    ba.print_exception('error listing playlist maps')
 
                 if not map_images:
                     ba.textwidget(parent=self._subcontainer,
@@ -625,7 +625,7 @@ class PlaylistBrowserWindow(ba.Window):
                 else:
                     sel_name = 'Scroll'
             else:
-                raise Exception("unrecognized selected widget")
+                raise Exception('unrecognized selected widget')
             ba.app.window_states[self.__class__.__name__] = sel_name
         except Exception:
             ba.print_exception('error saving state for', self.__class__)

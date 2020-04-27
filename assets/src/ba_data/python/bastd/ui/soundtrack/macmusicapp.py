@@ -59,8 +59,8 @@ class MacMusicAppPlaylistSelectWindow(ba.Window):
                       size=(self._width, 25),
                       text=ba.Lstr(resource=self._r + '.selectAPlaylistText'),
                       color=ba.app.title_color,
-                      h_align="center",
-                      v_align="center",
+                      h_align='center',
+                      v_align='center',
                       maxwidth=200)
         self._scrollwidget = ba.scrollwidget(parent=self._root_widget,
                                              position=(40, v - 340),

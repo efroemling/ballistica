@@ -348,7 +348,7 @@ class MainMenuActivity(ba.Activity):
                                 spc + self._message_duration: 0.0
                             }
                             assert self._text.node
-                            ba.animate(self._text.node, "opacity", keys)
+                            ba.animate(self._text.node, 'opacity', keys)
                             # {k: v
                             #  for k, v in list(keys.items())})
                             self._text.node.text = val
@@ -692,13 +692,13 @@ class MainMenuActivity(ba.Activity):
             cmb: Optional[ba.Node]
             cmb2: Optional[ba.Node]
             if not shadow:
-                cmb = ba.newnode("combine",
+                cmb = ba.newnode('combine',
                                  owner=word_obj.node,
                                  attrs={'size': 2})
             else:
                 cmb = None
             if shadow:
-                cmb2 = ba.newnode("combine",
+                cmb2 = ba.newnode('combine',
                                   owner=word_obj.node,
                                   attrs={'size': 2})
             else:
@@ -719,9 +719,9 @@ class MainMenuActivity(ba.Activity):
                 keys2[time_v * self._ts] = val2 + 5
                 time_v += random.random() * 0.1
             if cmb is not None:
-                ba.animate(cmb, "input0", keys, loop=True)
+                ba.animate(cmb, 'input0', keys, loop=True)
             if cmb2 is not None:
-                ba.animate(cmb2, "input0", keys2, loop=True)
+                ba.animate(cmb2, 'input0', keys2, loop=True)
             keys = {}
             keys2 = {}
             time_v = 0
@@ -732,20 +732,20 @@ class MainMenuActivity(ba.Activity):
                 keys2[time_v * self._ts] = val2 - 9
                 time_v += random.random() * 0.1
             if cmb is not None:
-                ba.animate(cmb, "input1", keys, loop=True)
+                ba.animate(cmb, 'input1', keys, loop=True)
             if cmb2 is not None:
-                ba.animate(cmb2, "input1", keys2, loop=True)
+                ba.animate(cmb2, 'input1', keys2, loop=True)
 
         if not shadow:
             assert word_obj.node
-            ba.animate(word_obj.node, "project_scale", {
+            ba.animate(word_obj.node, 'project_scale', {
                 delay: 0.0,
                 delay + 0.1: scale * 1.1,
                 delay + 0.2: scale
             })
         else:
             assert word_obj.node
-            ba.animate(word_obj.node, "project_scale", {
+            ba.animate(word_obj.node, 'project_scale', {
                 delay: 0.0,
                 delay + 0.1: scale * 1.1,
                 delay + 0.2: scale
@@ -784,7 +784,7 @@ class MainMenuActivity(ba.Activity):
                            'model_transparent': mtrans,
                            'vr_depth': -10 + vr_depth_offset,
                            'rotate': rotate,
-                           'attach': "center",
+                           'attach': 'center',
                            'tilt_translate': 0.21,
                            'absolute_scale': True
                        }))
@@ -796,7 +796,7 @@ class MainMenuActivity(ba.Activity):
         # leave things still).
         assert logo.node
         if not ba.app.vr_mode:
-            cmb = ba.newnode("combine", owner=logo.node, attrs={'size': 2})
+            cmb = ba.newnode('combine', owner=logo.node, attrs={'size': 2})
             cmb.connectattr('output', logo.node, 'position')
             keys = {}
             time_v = 0.0
@@ -805,27 +805,27 @@ class MainMenuActivity(ba.Activity):
             for _i in range(10):
                 keys[time_v] = x + (random.random() - 0.5) * 0.7 * jitter_scale
                 time_v += random.random() * 0.1
-            ba.animate(cmb, "input0", keys, loop=True)
+            ba.animate(cmb, 'input0', keys, loop=True)
             keys = {}
             time_v = 0.0
             for _i in range(10):
                 keys[time_v * self._ts] = y + (random.random() -
                                                0.5) * 0.7 * jitter_scale
                 time_v += random.random() * 0.1
-            ba.animate(cmb, "input1", keys, loop=True)
+            ba.animate(cmb, 'input1', keys, loop=True)
         else:
             logo.node.position = (x, y)
 
-        cmb = ba.newnode("combine", owner=logo.node, attrs={"size": 2})
+        cmb = ba.newnode('combine', owner=logo.node, attrs={'size': 2})
 
         keys = {
             delay: 0.0,
             delay + 0.1: 700.0 * scale,
             delay + 0.2: 600.0 * scale
         }
-        ba.animate(cmb, "input0", keys)
-        ba.animate(cmb, "input1", keys)
-        cmb.connectattr("output", logo.node, "scale")
+        ba.animate(cmb, 'input0', keys)
+        ba.animate(cmb, 'input1', keys)
+        cmb.connectattr('output', logo.node, 'scale')
 
     def _start_preloads(self) -> None:
         # FIXME: The func that calls us back doesn't save/restore state
@@ -850,14 +850,14 @@ def _preload1() -> None:
             'scrollWidgetShort', 'windowBGBlotch'
     ]:
         ba.getmodel(mname)
-    for tname in ["playerLineup", "lock"]:
+    for tname in ['playerLineup', 'lock']:
         ba.gettexture(tname)
     for tex in [
             'iconRunaround', 'iconOnslaught', 'medalComplete', 'medalBronze',
             'medalSilver', 'medalGold', 'characterIconMask'
     ]:
         ba.gettexture(tex)
-    ba.gettexture("bg")
+    ba.gettexture('bg')
     from bastd.actor import powerupbox
     powerupbox.get_factory()
     ba.timer(0.1, _preload2)
@@ -867,17 +867,17 @@ def _preload2() -> None:
     # FIXME: Could integrate these loads with the classes that use them
     #  so they don't have to redundantly call the load
     #  (even if the actual result is cached).
-    for mname in ["powerup", "powerupSimple"]:
+    for mname in ['powerup', 'powerupSimple']:
         ba.getmodel(mname)
     for tname in [
-            "powerupBomb", "powerupSpeed", "powerupPunch", "powerupIceBombs",
-            "powerupStickyBombs", "powerupShield", "powerupImpactBombs",
-            "powerupHealth"
+            'powerupBomb', 'powerupSpeed', 'powerupPunch', 'powerupIceBombs',
+            'powerupStickyBombs', 'powerupShield', 'powerupImpactBombs',
+            'powerupHealth'
     ]:
         ba.gettexture(tname)
     for sname in [
-            "powerup01", "boxDrop", "boxingBell", "scoreHit01", "scoreHit02",
-            "dripity", "spawn", "gong"
+            'powerup01', 'boxDrop', 'boxingBell', 'scoreHit01', 'scoreHit02',
+            'dripity', 'spawn', 'gong'
     ]:
         ba.getsound(sname)
     from bastd.actor import bomb
@@ -886,14 +886,14 @@ def _preload2() -> None:
 
 
 def _preload3() -> None:
-    for mname in ["bomb", "bombSticky", "impactBomb"]:
+    for mname in ['bomb', 'bombSticky', 'impactBomb']:
         ba.getmodel(mname)
     for tname in [
-            "bombColor", "bombColorIce", "bombStickyColor", "impactBombColor",
-            "impactBombColorLit"
+            'bombColor', 'bombColorIce', 'bombStickyColor', 'impactBombColor',
+            'impactBombColorLit'
     ]:
         ba.gettexture(tname)
-    for sname in ["freeze", "fuse01", "activateBeep", "warnBeep"]:
+    for sname in ['freeze', 'fuse01', 'activateBeep', 'warnBeep']:
         ba.getsound(sname)
     spaz.get_factory()
     ba.timer(0.2, _preload4)

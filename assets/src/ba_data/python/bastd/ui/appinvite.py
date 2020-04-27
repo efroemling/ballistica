@@ -201,8 +201,8 @@ class ShowFriendCodeWindow(ba.Window):
             color=ba.app.infotextcolor,
             scale=1.0,
             flatness=1.0,
-            h_align="center",
-            v_align="center",
+            h_align='center',
+            v_align='center',
             text=ba.Lstr(resource='gatherWindow.shareThisCodeWithFriendsText'),
             maxwidth=self._width * 0.85)
 
@@ -211,8 +211,8 @@ class ShowFriendCodeWindow(ba.Window):
                       size=(0, 0),
                       color=(1.0, 3.0, 1.0),
                       scale=2.0,
-                      h_align="center",
-                      v_align="center",
+                      h_align='center',
+                      v_align='center',
                       text=data['code'],
                       maxwidth=self._width * 0.85)
 
@@ -230,8 +230,8 @@ class ShowFriendCodeWindow(ba.Window):
             color=ba.app.infotextcolor,
             scale=1.0,
             flatness=1.0,
-            h_align="center",
-            v_align="center",
+            h_align='center',
+            v_align='center',
             text=ba.Lstr(
                 value='${A}\n${B}\n${C}\n${D}',
                 subs=[

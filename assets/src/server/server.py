@@ -71,7 +71,7 @@ class App:
 
         # Print basic usage info in interactive mode.
         if sys.stdin.isatty():
-            print("BallisticaCore Server wrapper starting up...")
+            print('BallisticaCore Server wrapper starting up...')
 
         # The server-binary will get relaunched after this amount of time
         # (combats memory leaks or other cruft that has built up).
@@ -165,7 +165,7 @@ class App:
 
             # Pass along any commands that have come in through stdin.
             for incmd in self._input_commands:
-                print("WOULD PASS ALONG COMMAND", incmd)
+                print('WOULD PASS ALONG COMMAND', incmd)
             self._input_commands = []
 
             # Request a restart after a while.
@@ -190,7 +190,7 @@ class App:
 
     def _kill_process(self) -> None:
         """Forcefully end the server process."""
-        print("Stopping server process...")
+        print('Stopping server process...')
         assert self._process is not None
 
         # First, ask it nicely to die and give it a moment.
@@ -200,7 +200,7 @@ class App:
             self._process.wait(timeout=10)
         except subprocess.TimeoutExpired:
             self._process.kill()
-        print("Server process stopped.")
+        print('Server process stopped.')
 
 
 if __name__ == '__main__':

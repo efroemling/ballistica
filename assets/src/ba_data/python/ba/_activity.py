@@ -91,14 +91,14 @@ class Activity(DependencyComponent):
 
         session = _ba.getsession()
         if session is None:
-            raise Exception("No current session")
+            raise Exception('No current session')
         self._session = weakref.ref(session)
 
         # Preloaded data for actors, maps, etc; indexed by type.
         self.preloads: Dict[Type, Any] = {}
 
         if not isinstance(settings, dict):
-            raise Exception("expected dict for settings")
+            raise Exception('expected dict for settings')
         if _ba.getactivity(doraise=False) is not self:
             raise Exception('invalid context state')
 
@@ -308,7 +308,7 @@ class Activity(DependencyComponent):
             with _ba.Context('empty'):
                 self._expire()
         else:
-            raise Exception("_destroy() called multiple times")
+            raise Exception('_destroy() called multiple times')
 
     @classmethod
     def _check_activity_death(cls, activity_ref: ReferenceType[Activity],
@@ -420,7 +420,7 @@ class Activity(DependencyComponent):
         from ba import _actor as bsactor
         from ba import _error
         if not isinstance(actor, bsactor.Actor):
-            raise Exception("non-actor passed to _retain_actor")
+            raise Exception('non-actor passed to _retain_actor')
         if (self.has_transitioned_in()
                 and _ba.time() - self._last_dead_object_prune_time > 10.0):
             _error.print_error('it looks like nodes/actors are not'
@@ -438,7 +438,7 @@ class Activity(DependencyComponent):
         from ba import _actor as bsactor
         from ba import _error
         if not isinstance(actor, bsactor.Actor):
-            raise Exception("non-actor passed to _add_actor_weak_ref")
+            raise Exception('non-actor passed to _add_actor_weak_ref')
         if (self.has_transitioned_in()
                 and _ba.time() - self._last_dead_object_prune_time > 10.0):
             _error.print_error('it looks like nodes/actors are '
@@ -603,12 +603,12 @@ class Activity(DependencyComponent):
                     chooser_players.append(player)
             else:
                 _error.print_error(
-                    "got nonexistent player in Activity._begin()")
+                    'got nonexistent player in Activity._begin()')
 
         # Add teams in one by one and send team-joined messages for each.
         for team in session.teams:
             if team in self.teams:
-                raise Exception("Duplicate Team Entry")
+                raise Exception('Duplicate Team Entry')
             self.teams.append(team)
             try:
                 with _ba.Context(self):
@@ -639,15 +639,15 @@ class Activity(DependencyComponent):
         # at some point.
         if not self._called_activity_on_transition_in:
             _error.print_error(
-                "ba.Activity.on_transition_in() never got called for " +
-                str(self) + "; did you forget to call it"
-                " in your on_transition_in override?")
+                'ba.Activity.on_transition_in() never got called for ' +
+                str(self) + '; did you forget to call it'
+                ' in your on_transition_in override?')
 
         # Make sure that ba.Activity.on_begin() got called at some point.
         if not self._called_activity_on_begin:
             _error.print_error(
-                "ba.Activity.on_begin() never got called for " + str(self) +
-                "; did you forget to call it in your on_begin override?")
+                'ba.Activity.on_begin() never got called for ' + str(self) +
+                '; did you forget to call it in your on_begin override?')
 
         # If the whole session wants to die and was waiting on us, can get
         # that going now.

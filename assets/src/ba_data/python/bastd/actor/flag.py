@@ -214,7 +214,7 @@ class Flag(ba.Actor):
         finalmaterials = (
             [ba.sharedobj('object_material'), factory.flagmaterial] +
             materials)
-        self.node = ba.newnode("flag",
+        self.node = ba.newnode('flag',
                                attrs={
                                    'position':
                                        (position[0], position[1] + 0.75,
@@ -340,7 +340,7 @@ class Flag(ba.Actor):
             assert self.node
             assert msg.force_direction is not None
             self.node.handlemessage(
-                "impulse", msg.pos[0], msg.pos[1], msg.pos[2], msg.velocity[0],
+                'impulse', msg.pos[0], msg.pos[1], msg.pos[2], msg.velocity[0],
                 msg.velocity[1], msg.velocity[2], msg.magnitude,
                 msg.velocity_magnitude, msg.radius, 0, msg.force_direction[0],
                 msg.force_direction[1], msg.force_direction[2])

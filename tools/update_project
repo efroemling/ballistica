@@ -214,8 +214,8 @@ class App:
         # If there are any manual-only entries, list then and bail.
         # (Don't wanna allow auto-apply unless it fixes everything)
         if manual_changes:
-            print(f"{CLRRED}Found erroneous lines "
-                  f"requiring manual correction:{CLREND}")
+            print(f'{CLRRED}Found erroneous lines '
+                  f'requiring manual correction:{CLREND}')
             for change in manual_changes:
                 print(f'{CLRRED}{change[0]}:{change[1].line_number + 1}:'
                       f' Expected line to be:\n  {change[1].expected}{CLREND}')
@@ -393,8 +393,8 @@ class App:
                     'tools/devtool', 'tools/version_utils', 'tools/vmshell'
             ]:
                 if not contents.startswith('#!/usr/bin/env python3.7'):
-                    print(f"{CLRRED}Incorrect shebang (first line) for "
-                          f"{fname}.{CLREND}")
+                    print(f'{CLRRED}Incorrect shebang (first line) for '
+                          f'{fname}.{CLREND}')
                     sys.exit(255)
         else:
             copyrightline = 0

@@ -99,7 +99,7 @@ class Spaz(ba.Actor):
     def __init__(self,
                  color: Sequence[float] = (1.0, 1.0, 1.0),
                  highlight: Sequence[float] = (0.5, 0.5, 0.5),
-                 character: str = "Spaz",
+                 character: str = 'Spaz',
                  source_player: ba.Player = None,
                  start_invincible: bool = True,
                  can_accept_powerups: bool = True,
@@ -156,7 +156,7 @@ class Spaz(ba.Actor):
         punchmats = (factory.punch_material, ba.sharedobj('attack_material'))
         pickupmats = (factory.pickup_material, ba.sharedobj('pickup_material'))
         self.node: ba.Node = ba.newnode(
-            type="spaz",
+            type='spaz',
             delegate=self,
             attrs={
                 'color': color,
@@ -311,7 +311,7 @@ class Spaz(ba.Actor):
                 if self._turbo_filter_counts[source] == 15:
                     # Knock 'em out.  That'll learn 'em.
                     assert self.node
-                    self.node.handlemessage("knockout", 500.0)
+                    self.node.handlemessage('knockout', 500.0)
 
                     # Also issue periodic notices about who is turbo-ing.
                     now = ba.time(ba.TimeType.REAL)
@@ -368,7 +368,7 @@ class Spaz(ba.Actor):
             start_scale = self._score_text.scale
             self._score_text.text = text
         if flash:
-            combine = ba.newnode("combine",
+            combine = ba.newnode('combine',
                                  owner=self._score_text,
                                  attrs={'size': 3})
             scl = 1.8
@@ -566,7 +566,7 @@ class Spaz(ba.Actor):
         """
         if not self.node:
             return
-        self.node.handlemessage("move", x, y)
+        self.node.handlemessage('move', x, y)
 
     def on_move_up_down(self, value: float) -> None:
         """
@@ -703,8 +703,8 @@ class Spaz(ba.Actor):
 
         if isinstance(msg, ba.PickedUpMessage):
             if self.node:
-                self.node.handlemessage("hurt_sound")
-                self.node.handlemessage("picked_up")
+                self.node.handlemessage('hurt_sound')
+                self.node.handlemessage('picked_up')
 
             # This counts as a hit.
             self._num_times_hit += 1
@@ -851,7 +851,7 @@ class Spaz(ba.Actor):
                 self._last_hit_time = None
                 self._num_times_hit = 0
 
-            self.node.handlemessage("flash")
+            self.node.handlemessage('flash')
             if msg.source_node:
                 msg.source_node.handlemessage(ba.PowerupAcceptMessage())
             return True
@@ -912,7 +912,7 @@ class Spaz(ba.Actor):
                     # theoretical damage; not apply the impulse.
                     assert msg.force_direction is not None
                     self.node.handlemessage(
-                        "impulse", msg.pos[0], msg.pos[1], msg.pos[2],
+                        'impulse', msg.pos[0], msg.pos[1], msg.pos[2],
                         msg.velocity[0], msg.velocity[1], msg.velocity[2], mag,
                         velocity_mag, msg.radius, 1, msg.force_direction[0],
                         msg.force_direction[1], msg.force_direction[2])
@@ -984,13 +984,13 @@ class Spaz(ba.Actor):
                 # Hit it with an impulse and get the resulting damage.
                 assert msg.force_direction is not None
                 self.node.handlemessage(
-                    "impulse", msg.pos[0], msg.pos[1], msg.pos[2],
+                    'impulse', msg.pos[0], msg.pos[1], msg.pos[2],
                     msg.velocity[0], msg.velocity[1], msg.velocity[2], mag,
                     velocity_mag, msg.radius, 0, msg.force_direction[0],
                     msg.force_direction[1], msg.force_direction[2])
 
                 damage = int(damage_scale * self.node.damage)
-            self.node.handlemessage("hurt_sound")
+            self.node.handlemessage('hurt_sound')
 
             # Play punch impact sound based on damage if it was a punch.
             if msg.hit_type == 'punch':
@@ -999,7 +999,7 @@ class Spaz(ba.Actor):
                 # If damage was significant, lets show it.
                 if damage > 350:
                     assert msg.force_direction is not None
-                    ba.show_damage_count('-' + str(int(damage / 10)) + "%",
+                    ba.show_damage_count('-' + str(int(damage / 10)) + '%',
                                          msg.pos, msg.force_direction)
 
                 # Let's always add in a super-punch sound with boxing
@@ -1041,7 +1041,7 @@ class Spaz(ba.Actor):
                             msg.pos[2] + msg.force_direction[2] * 0.02)
                 flash_color = (1.0, 0.8, 0.4)
                 light = ba.newnode(
-                    "light",
+                    'light',
                     attrs={
                         'position': punchpos,
                         'radius': 0.12 + hurtiness * 0.12,
@@ -1051,7 +1051,7 @@ class Spaz(ba.Actor):
                     })
                 ba.timer(0.06, light.delete)
 
-                flash = ba.newnode("flash",
+                flash = ba.newnode('flash',
                                    attrs={
                                        'position': punchpos,
                                        'size': 0.17 + 0.17 * hurtiness,
@@ -1078,7 +1078,7 @@ class Spaz(ba.Actor):
                     # (so it *can* still kill us if its high enough)
                     newdamage = max(damage - 200, self.hitpoints - 10)
                     damage = newdamage
-                self.node.handlemessage("flash")
+                self.node.handlemessage('flash')
 
                 # If we're holding something, drop it.
                 if damage > 0.0 and self.node.hold_node:
@@ -1132,7 +1132,7 @@ class Spaz(ba.Actor):
             self._last_stand_pos = (msg.position[0], msg.position[1],
                                     msg.position[2])
             if self.node:
-                self.node.handlemessage("stand", msg.position[0],
+                self.node.handlemessage('stand', msg.position[0],
                                         msg.position[1], msg.position[2],
                                         msg.angle)
 
@@ -1142,7 +1142,7 @@ class Spaz(ba.Actor):
         elif isinstance(msg, PunchHitMessage):
             if not self.node:
                 return None
-            node = ba.get_collision_info("opposing_node")
+            node = ba.get_collision_info('opposing_node')
 
             # only allow one hit per node per punch
             if node and (node not in self._punched_nodes):
@@ -1194,7 +1194,7 @@ class Spaz(ba.Actor):
                 if self._hockey:
                     mag *= 0.5
                 if len(self._punched_nodes) == 1:
-                    self.node.handlemessage("kick_back", ppos[0], ppos[1],
+                    self.node.handlemessage('kick_back', ppos[0], ppos[1],
                                             ppos[2], punchdir[0], punchdir[1],
                                             punchdir[2], mag)
         elif isinstance(msg, PickupMessage):
@@ -1365,7 +1365,7 @@ class Spaz(ba.Actor):
                           pos=pos,
                           force_direction=self.node.velocity,
                           hit_type='impact'))
-        self.node.handlemessage("knockout", max(0.0, 50.0 * intensity))
+        self.node.handlemessage('knockout', max(0.0, 50.0 * intensity))
         sounds: Sequence[ba.Sound]
         if intensity > 5.0:
             sounds = get_factory().impact_sounds_harder
@@ -1390,7 +1390,7 @@ class Spaz(ba.Actor):
         assert self.node
         self.node.billboard_texture = tex
         self.node.billboard_cross_out = False
-        ba.animate(self.node, "billboard_opacity", {
+        ba.animate(self.node, 'billboard_opacity', {
             0.0: 0.0,
             0.1: 1.0,
             0.4: 1.0,

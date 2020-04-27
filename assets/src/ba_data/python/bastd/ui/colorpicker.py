@@ -50,7 +50,7 @@ class ColorPicker(popup.PopupWindow):
 
         c_raw = get_player_colors()
         if len(c_raw) != 16:
-            raise Exception("expected 16 player colors")
+            raise Exception('expected 16 player colors')
         self.colors = [c_raw[0:4], c_raw[4:8], c_raw[8:12], c_raw[12:16]]
 
         if scale is None:
@@ -189,7 +189,7 @@ class ColorPickerExact(popup.PopupWindow):
         from ba.internal import get_player_colors
         c_raw = get_player_colors()
         if len(c_raw) != 16:
-            raise Exception("expected 16 player colors")
+            raise Exception('expected 16 player colors')
         self.colors = [c_raw[0:4], c_raw[4:8], c_raw[8:12], c_raw[12:16]]
 
         if scale is None:

@@ -58,7 +58,7 @@ class OnslaughtGame(ba.CoopGameActivity):
 
     @classmethod
     def get_description(cls, sessiontype: Type[ba.Session]) -> str:
-        return "Defeat all enemies."
+        return 'Defeat all enemies.'
 
     def __init__(self, settings: Dict[str, Any]):
 
@@ -81,7 +81,7 @@ class OnslaughtGame(ba.CoopGameActivity):
         self.announce_player_deaths = True
 
         self._new_wave_sound = ba.getsound('scoreHit01')
-        self._winsound = ba.getsound("score")
+        self._winsound = ba.getsound('score')
         self._cashregistersound = ba.getsound('cashRegister')
         self._a_player_has_been_hurt = False
         self._player_has_dropped_bomb = False
@@ -98,7 +98,7 @@ class OnslaughtGame(ba.CoopGameActivity):
             self._powerup_center = (0, 5, -1.6)
             self._powerup_spread = (4.6, 2.7)
         else:
-            raise Exception("Unsupported map: " + str(settings['map']))
+            raise Exception('Unsupported map: ' + str(settings['map']))
         self._scoreboard: Optional[Scoreboard] = None
         self._game_over = False
         self._wave = 0
@@ -136,8 +136,8 @@ class OnslaughtGame(ba.CoopGameActivity):
                 ba.getsession(  # type: ignore
                 )._g_showed_onslaught_land_mine_tip = True
                 self.tips = [{
-                    'tip': "Land-mines are a good way"
-                           " to stop speedy enemies.",
+                    'tip': 'Land-mines are a good way'
+                           ' to stop speedy enemies.',
                     'icon': ba.gettexture('powerupLandMines'),
                     'sound': ba.getsound('ding')
                 }]
@@ -150,8 +150,8 @@ class OnslaughtGame(ba.CoopGameActivity):
                 ba.getsession(  # type: ignore
                 )._g_showed_onslaught_tnt_tip = True
                 self.tips = [{
-                    'tip': "Take out a group of enemies by\n"
-                           "setting off a bomb near a TNT box.",
+                    'tip': 'Take out a group of enemies by\n'
+                           'setting off a bomb near a TNT box.',
                     'icon': ba.gettexture('tnt'),
                     'sound': ba.getsound('ding')
                 }]
@@ -164,18 +164,18 @@ class OnslaughtGame(ba.CoopGameActivity):
                 ba.getsession(  # type: ignore
                 )._g_showed_onslaught_curse_tip = True
                 self.tips = [{
-                    'tip': "Curse boxes turn you into a ticking time bomb.\n"
-                           "The only cure is to quickly grab a health-pack.",
+                    'tip': 'Curse boxes turn you into a ticking time bomb.\n'
+                           'The only cure is to quickly grab a health-pack.',
                     'icon': ba.gettexture('powerupCurse'),
                     'sound': ba.getsound('ding')
                 }]
 
         self._spawn_info_text = ba.NodeActor(
-            ba.newnode("text",
+            ba.newnode('text',
                        attrs={
                            'position': (15, -130),
-                           'h_attach': "left",
-                           'v_attach': "top",
+                           'h_attach': 'left',
+                           'v_attach': 'top',
                            'scale': 0.55,
                            'color': (0.3, 0.8, 0.3, 1.0),
                            'text': ''
@@ -481,7 +481,7 @@ class OnslaughtGame(ba.CoopGameActivity):
             self._waves = []
 
         else:
-            raise Exception("Invalid preset: " + str(self._preset))
+            raise Exception('Invalid preset: ' + str(self._preset))
 
         # FIXME: Should migrate to use setup_standard_powerup_drops().
 
@@ -976,19 +976,19 @@ class OnslaughtGame(ba.CoopGameActivity):
                     for i in range(entry[1]):
                         if split and i % 2 == 0:
                             entries.insert(0, {
-                                "type": bot_type,
-                                "spacing": spacing
+                                'type': bot_type,
+                                'spacing': spacing
                             })
                         else:
                             entries.append({
-                                "type": bot_type,
-                                "spacing": spacing
+                                'type': bot_type,
+                                'spacing': spacing
                             })
                 if entries:
                     all_entries += entries
                     all_entries.append({
-                        "type": None,
-                        "spacing": 40 if random.random() < 0.5 else 80
+                        'type': None,
+                        'spacing': 40 if random.random() < 0.5 else 80
                     })
 
             angle_rand = random.random()

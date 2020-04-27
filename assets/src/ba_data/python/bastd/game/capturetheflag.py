@@ -171,7 +171,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity):
         base_region_mat = team.gamedata['base_region_material'] = ba.Material()
         pos = team.gamedata['base_pos']
         team.gamedata['base_region'] = ba.newnode(
-            "region",
+            'region',
             attrs={
                 'position': (pos[0], pos[1] + 0.75, pos[2]),
                 'scale': (0.5, 0.5, 0.5),
@@ -230,7 +230,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity):
         ba.playsound(self._swipsound, position=flag.node.position)
 
     def _handle_flag_entered_base(self, team: ba.Team) -> None:
-        node = ba.get_collision_info("opposing_node")
+        node = ba.get_collision_info('opposing_node')
         assert isinstance(node, (ba.Node, type(None)))
         flag = CTFFlag.from_node(node)
         if not flag:
@@ -341,7 +341,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity):
 
     def _handle_flag_left_base(self, team: ba.Team) -> None:
         cur_time = ba.time()
-        op_node = ba.get_collision_info("opposing_node")
+        op_node = ba.get_collision_info('opposing_node')
         assert isinstance(op_node, (ba.Node, type(None)))
         flag = CTFFlag.from_node(op_node)
         if not flag:
@@ -378,7 +378,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity):
         flag = team.gamedata['flag']
         flag.touch_return_time -= 0.1
         if flag.counter:
-            flag.counter.text = "%.1f" % flag.touch_return_time
+            flag.counter.text = '%.1f' % flag.touch_return_time
             flag.counter.color = (1, 1, 0, 1)
             flag.counter.scale = 0.02
 
@@ -425,7 +425,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity):
                 # Use a node message to kill the flag instead of just killing
                 # our team's. (avoids redundantly killing new flags if
                 # multiple body parts generate callbacks in one step).
-                node = ba.get_collision_info("opposing_node")
+                node = ba.get_collision_info('opposing_node')
                 if node:
                     self._award_players_touching_own_flag(team)
                     node.handlemessage(ba.DieMessage())

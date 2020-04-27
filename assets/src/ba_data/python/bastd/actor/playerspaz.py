@@ -93,7 +93,7 @@ class PlayerSpaz(Spaz):
     def __init__(self,
                  color: Sequence[float] = (1.0, 1.0, 1.0),
                  highlight: Sequence[float] = (0.5, 0.5, 0.5),
-                 character: str = "Spaz",
+                 character: str = 'Spaz',
                  player: ba.Player = None,
                  powerups_expire: bool = True):
         """Create a spaz for the provided ba.Player.
@@ -233,7 +233,7 @@ class PlayerSpaz(Spaz):
             super().handlemessage(msg)  # Augment standard behavior.
             self.held_count -= 1
             if self.held_count < 0:
-                print("ERROR: spaz held_count < 0")
+                print('ERROR: spaz held_count < 0')
 
             # Let's count someone dropping us as an attack.
             try:

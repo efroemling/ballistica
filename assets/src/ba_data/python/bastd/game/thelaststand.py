@@ -49,7 +49,7 @@ class TheLastStandGame(ba.CoopGameActivity):
 
     @classmethod
     def get_description(cls, sessiontype: Type[ba.Session]) -> str:
-        return "Final glorious epic slow motion battle to the death."
+        return 'Final glorious epic slow motion battle to the death.'
 
     def __init__(self, settings: Dict[str, Any]):
         settings['map'] = 'Rampage'
@@ -62,7 +62,7 @@ class TheLastStandGame(ba.CoopGameActivity):
         self.slow_motion = True
 
         self._new_wave_sound = ba.getsound('scoreHit01')
-        self._winsound = ba.getsound("score")
+        self._winsound = ba.getsound('score')
         self._cashregistersound = ba.getsound('cashRegister')
         self._spawn_center = (0, 5.5, -4.14)
         self._tntspawnpos = (0, 5.5, -6)

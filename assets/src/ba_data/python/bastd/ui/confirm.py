@@ -35,7 +35,7 @@ class ConfirmWindow:
     """Window for answering simple yes/no questions."""
 
     def __init__(self,
-                 text: Union[str, ba.Lstr] = "Are you sure?",
+                 text: Union[str, ba.Lstr] = 'Are you sure?',
                  action: Callable[[], Any] = None,
                  width: float = 360.0,
                  height: float = 100.0,
@@ -79,8 +79,8 @@ class ConfirmWindow:
         ba.textwidget(parent=self.root_widget,
                       position=(width * 0.5, height - 5 - (height - 75) * 0.5),
                       size=(0, 0),
-                      h_align="center",
-                      v_align="center",
+                      h_align='center',
+                      v_align='center',
                       text=text,
                       scale=text_scale,
                       color=color,

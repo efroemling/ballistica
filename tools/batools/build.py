@@ -482,7 +482,7 @@ def checkenv() -> None:
         raise RuntimeError(f'{PYTHON_BIN} is required; please install it.')
 
     # Make sure they've got pip for that python version.
-    if subprocess.run(f"{PYTHON_BIN} -m pip --version",
+    if subprocess.run(f'{PYTHON_BIN} -m pip --version',
                       shell=True,
                       check=False,
                       capture_output=True).returncode != 0:

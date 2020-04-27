@@ -61,8 +61,8 @@ class ReportPlayerWindow(ba.Window):
                       size=(0, 0),
                       color=(1, 1, 1, 0.8),
                       scale=1.2,
-                      h_align="center",
-                      v_align="center",
+                      h_align='center',
+                      v_align='center',
                       text=ba.Lstr(resource='reportThisPlayerReasonText'),
                       maxwidth=self._width * 0.85)
         ba.buttonwidget(parent=self._root_widget,

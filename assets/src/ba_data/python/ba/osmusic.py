@@ -124,7 +124,7 @@ class _PickFolderSongThread(threading.Thread):
         from ba import _lang
         from ba._general import Call
         try:
-            _ba.set_thread_name("BA_PickFolderSongThread")
+            _ba.set_thread_name('BA_PickFolderSongThread')
             all_files: List[str] = []
             valid_extensions = ['.' + x for x in self._valid_extensions]
             for root, _subdirs, filenames in os.walk(self._path):

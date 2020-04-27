@@ -88,8 +88,8 @@ class PlaylistEditWindow(ba.Window):
                       text=ba.Lstr(resource=self._r + '.titleText'),
                       color=ba.app.title_color,
                       scale=1.05,
-                      h_align="center",
-                      v_align="center",
+                      h_align='center',
+                      v_align='center',
                       maxwidth=270)
 
         v = self._height - 115.0
@@ -111,8 +111,8 @@ class PlaylistEditWindow(ba.Window):
             position=(210 + x_inset, v + 7),
             size=(self._scroll_width - 53, 43),
             text=self._editcontroller.get_name(),
-            h_align="left",
-            v_align="center",
+            h_align='left',
+            v_align='center',
             max_chars=40,
             autoselect=True,
             color=(0.9, 0.9, 0.9, 1.0),

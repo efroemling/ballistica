@@ -86,8 +86,8 @@ class PlayWindow(ba.Window):
                             res_scale=2.0,
                             maxwidth=400,
                             color=ba.app.heading_color,
-                            h_align="center",
-                            v_align="center")
+                            h_align='center',
+                            v_align='center')
 
         ba.buttonwidget(edit=btn,
                         button_type='backSmall',
@@ -123,7 +123,7 @@ class PlayWindow(ba.Window):
             size=(scl * button_width, scl * (300 if new_style else 360)),
             extra_touch_border_scale=0.1,
             autoselect=True,
-            label="",
+            label='',
             button_type='square',
             text_scale=1.13,
             on_activate_call=self._coop)
@@ -206,7 +206,7 @@ class PlayWindow(ba.Window):
             size=(scl * button_width, scl * (300 if new_style else 360)),
             extra_touch_border_scale=0.1,
             autoselect=True,
-            label="",
+            label='',
             button_type='square',
             text_scale=1.13,
             on_activate_call=self._team_tourney)
@@ -310,7 +310,7 @@ class PlayWindow(ba.Window):
             size=(scl * button_width, scl * (300 if new_style else 360)),
             extra_touch_border_scale=0.1,
             autoselect=True,
-            label="",
+            label='',
             button_type='square',
             text_scale=1.13,
             on_activate_call=self._free_for_all)
@@ -538,7 +538,7 @@ class PlayWindow(ba.Window):
             elif sel == self._back_button:
                 sel_name = 'Back'
             else:
-                raise Exception("unrecognized selected widget")
+                raise Exception('unrecognized selected widget')
             ba.app.window_states[self.__class__.__name__] = sel_name
         except Exception:
             ba.print_exception('error saving state for', self.__class__)

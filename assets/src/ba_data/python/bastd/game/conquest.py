@@ -75,14 +75,14 @@ class ConquestGame(ba.TeamGameActivity):
 
     @classmethod
     def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
-        return ba.getmaps("conquest")
+        return ba.getmaps('conquest')
 
     @classmethod
     def get_settings(
             cls,
             sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
         return [
-            ("Time Limit", {
+            ('Time Limit', {
                 'choices': [('None', 0), ('1 Minute', 60),
                             ('2 Minutes', 120),
                             ('5 Minutes', 300),
@@ -217,12 +217,12 @@ class ConquestGame(ba.TeamGameActivity):
                                'height_attenuated': False,
                                'color': flag.light.color
                            })
-        ba.animate(light, "intensity", {0: 0, 0.25: 1, 0.5: 0}, loop=True)
+        ba.animate(light, 'intensity', {0: 0, 0.25: 1, 0.5: 0}, loop=True)
         ba.timer(length, light.delete)
 
     def _handle_flag_player_collide(self) -> None:
-        flagnode, playernode = ba.get_collision_info("source_node",
-                                                     "opposing_node")
+        flagnode, playernode = ba.get_collision_info('source_node',
+                                                     'opposing_node')
         try:
             player = playernode.getdelegate().getplayer()
             flag = flagnode.getdelegate()

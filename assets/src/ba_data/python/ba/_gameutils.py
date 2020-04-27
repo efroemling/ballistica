@@ -156,10 +156,10 @@ def sharedobj(name: str) -> Any:
             if name == 'globals':
                 obj = _ba.newnode('sessionglobals')
             else:
-                raise Exception("unrecognized shared object "
+                raise Exception('unrecognized shared object '
                                 "(session context): '" + name + "'")
         else:
-            raise Exception("no current activity or session context")
+            raise Exception('no current activity or session context')
 
     # Ok, got a shiny new shared obj; store it for quick access next time.
     sharedobjs[name] = obj
@@ -188,7 +188,7 @@ def animate(node: ba.Node,
     if timetype is TimeType.SIM:
         driver = 'time'
     else:
-        raise Exception("FIXME; only SIM timetype is supported currently.")
+        raise Exception('FIXME; only SIM timetype is supported currently.')
     items = list(keys.items())
     items.sort()
 
@@ -200,7 +200,7 @@ def animate(node: ba.Node,
             # noinspection PyUnresolvedReferences
             _ba.time_format_check(timeformat, item[0])
 
-    curve = _ba.newnode("animcurve",
+    curve = _ba.newnode('animcurve',
                         owner=node,
                         name='Driving ' + str(node) + ' \'' + attr + '\'')
 
@@ -230,8 +230,8 @@ def animate(node: ba.Node,
 
     # Do the connects last so all our attrs are in place when we push initial
     # values through.
-    sharedobj('globals').connectattr(driver, curve, "in")
-    curve.connectattr("out", node, attr)
+    sharedobj('globals').connectattr(driver, curve, 'in')
+    curve.connectattr('out', node, attr)
     return curve
 
 
@@ -255,7 +255,7 @@ def animate_array(node: ba.Node,
     if timetype is TimeType.SIM:
         driver = 'time'
     else:
-        raise Exception("FIXME: Only SIM timetype is supported currently.")
+        raise Exception('FIXME: Only SIM timetype is supported currently.')
     items = list(keys.items())
     items.sort()
 
@@ -275,17 +275,17 @@ def animate_array(node: ba.Node,
         raise Exception('invalid timeformat value: "' + str(timeformat) + '"')
 
     for i in range(size):
-        curve = _ba.newnode("animcurve",
+        curve = _ba.newnode('animcurve',
                             owner=node,
                             name=('Driving ' + str(node) + ' \'' + attr +
                                   '\' member ' + str(i)))
-        sharedobj('globals').connectattr(driver, curve, "in")
+        sharedobj('globals').connectattr(driver, curve, 'in')
         curve.times = [int(mult * time) for time, val in items]
         curve.values = [val[i] for time, val in items]
         curve.offset = _ba.time(timeformat=TimeFormat.MILLISECONDS) + int(
             mult * offset)
         curve.loop = loop
-        curve.connectattr("out", combine, 'input' + str(i))
+        curve.connectattr('out', combine, 'input' + str(i))
 
         # If we're not looping, set a timer to kill this
         # curve after its done its job.
@@ -333,7 +333,7 @@ def show_damage_count(damage: str, position: Sequence[float],
                               'scale': 0.015 if do_big else 0.01
                           })
     # Translate upward.
-    tcombine = _ba.newnode("combine", owner=txtnode, attrs={'size': 3})
+    tcombine = _ba.newnode('combine', owner=txtnode, attrs={'size': 3})
     tcombine.connectattr('output', txtnode, 'position')
     v_vals = []
     pval = 0.0
@@ -345,17 +345,17 @@ def show_damage_count(damage: str, position: Sequence[float],
         vval *= 0.5
     p_start = position[0]
     p_dir = direction[0]
-    animate(tcombine, "input0",
+    animate(tcombine, 'input0',
             {i[0] * lifespan: p_start + p_dir * i[1]
              for i in v_vals})
     p_start = position[1]
     p_dir = direction[1]
-    animate(tcombine, "input1",
+    animate(tcombine, 'input1',
             {i[0] * lifespan: p_start + p_dir * i[1]
              for i in v_vals})
     p_start = position[2]
     p_dir = direction[2]
-    animate(tcombine, "input2",
+    animate(tcombine, 'input2',
             {i[0] * lifespan: p_start + p_dir * i[1]
              for i in v_vals})
     animate(txtnode, 'opacity', {0.7 * lifespan: 1.0, lifespan: 0.0})
@@ -456,7 +456,7 @@ def cameraflash(duration: float = 999.0) -> None:
     activity.camera_flash_data = []  # type: ignore
     for i in range(6):
         light = NodeActor(
-            _ba.newnode("light",
+            _ba.newnode('light',
                         attrs={
                             'position': (positions[i][0], 0, positions[i][1]),
                             'radius': 1.0,
@@ -466,7 +466,7 @@ def cameraflash(duration: float = 999.0) -> None:
                         }))
         sval = 1.87
         iscale = 1.3
-        tcombine = _ba.newnode("combine",
+        tcombine = _ba.newnode('combine',
                                owner=light.node,
                                attrs={
                                    'size': 3,
@@ -497,7 +497,7 @@ def cameraflash(duration: float = 999.0) -> None:
                 },
                 loop=True)
         animate(light.node,
-                "intensity", {
+                'intensity', {
                     0.0: 0,
                     0.02 * sval: 0,
                     0.05 * sval: 0.8 * iscale,

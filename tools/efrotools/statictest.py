@@ -62,7 +62,7 @@ class StaticTestFile:
         # Types Mypy gave us for lines
         self.linetypes_mypy: Dict[int, str] = {}
 
-        print(f"Running Mypy static testing on \"{filename}\"...")
+        print(f'Running Mypy static testing on "{filename}"...')
         with open(filename, 'r') as infile:
             fdata = infile.read()
 
@@ -98,7 +98,7 @@ class StaticTestFile:
         lines = results.stdout.decode().splitlines()
         for line in lines:
             if ': error: ' in line:
-                print("Full mypy output:\n", results.stdout.decode())
+                print('Full mypy output:\n', results.stdout.decode())
                 raise RuntimeError('Errors detected in mypy output.')
             if 'Revealed type is ' in line:
                 finfo = line.split(' ')[0]
@@ -136,15 +136,15 @@ class StaticTestFile:
                     tree = ast.parse(line[offset:])
                 except Exception:
                     raise RuntimeError(
-                        f"{self._filename} line {lineno+1}: unable to "
-                        f"parse line (static_type_equals() call cannot"
-                        f" be split across lines).") from None
+                        f'{self._filename} line {lineno+1}: unable to '
+                        f'parse line (static_type_equals() call cannot'
+                        f' be split across lines).') from None
                 assert isinstance(tree, ast.Module)
                 if (len(tree.body) != 1
                         or not isinstance(tree.body[0], ast.Assert)):
                     raise RuntimeError(
-                        f"{self._filename} line {lineno+1}: expected "
-                        f" a single assert statement.")
+                        f'{self._filename} line {lineno+1}: expected '
+                        f' a single assert statement.')
                 assertnode = tree.body[0]
                 callnode = assertnode.test
                 if (not isinstance(callnode, ast.Call)
@@ -152,8 +152,8 @@ class StaticTestFile:
                         or callnode.func.id != 'static_type_equals'
                         or len(callnode.args) != 2):
                     raise RuntimeError(
-                        f"{self._filename} line {lineno+1}: expected "
-                        f" a single static_type_equals() call with 2 args.")
+                        f'{self._filename} line {lineno+1}: expected '
+                        f' a single static_type_equals() call with 2 args.')
 
                 # Use the column offsets for the 2 args along with our end
                 # paren offset to cut out the substrings representing the args.

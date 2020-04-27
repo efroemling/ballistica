@@ -56,7 +56,7 @@ def get_ip_address_type(addr: str) -> socket.AddressFamily:
         except OSError:
             pass
     if socket_type is None:
-        raise Exception("addr seems to be neither v4 or v6: " + str(addr))
+        raise Exception('addr seems to be neither v4 or v6: ' + str(addr))
     return socket_type
 
 
@@ -111,7 +111,7 @@ class ServerCallThread(threading.Thread):
         from ba import _general
         try:
             self._data = _general.utf8_all(self._data)
-            _ba.set_thread_name("BA_ServerCallThread")
+            _ba.set_thread_name('BA_ServerCallThread')
 
             # Seems pycharm doesn't know about urllib.parse.
             # noinspection PyUnresolvedReferences
@@ -129,7 +129,7 @@ class ServerCallThread(threading.Thread):
                         parse.urlencode(self._data).encode(),
                         {'User-Agent': _ba.app.user_agent_string}))
             else:
-                raise Exception("Invalid request_type: " + self._request_type)
+                raise Exception('Invalid request_type: ' + self._request_type)
 
             # If html request failed.
             if response.getcode() != 200:

@@ -69,7 +69,7 @@ class TournamentEntryWindow(popup.PopupWindow):
             self._purchase_price_name = 'price.tournament_entry_1'
         else:
             if self._fee != 0:
-                raise Exception("invalid fee: " + str(self._fee))
+                raise Exception('invalid fee: ' + str(self._fee))
             self._purchase_name = 'tournament_entry_0'
             self._purchase_price_name = 'price.tournament_entry_0'
 
@@ -294,7 +294,7 @@ class TournamentEntryWindow(popup.PopupWindow):
                 self._have_valid_data = True
                 self._last_query_time = ba.time(ba.TimeType.REAL)
             except Exception:
-                ba.print_exception("error using valid tourney data")
+                ba.print_exception('error using valid tourney data')
                 self._have_valid_data = False
         else:
             self._have_valid_data = False

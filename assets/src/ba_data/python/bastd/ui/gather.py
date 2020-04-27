@@ -55,7 +55,7 @@ class GatherWindow(ba.Window):
         else:
             self._transition_out = 'out_right'
             scale_origin = None
-        ba.app.main_window = "Gather"
+        ba.app.main_window = 'Gather'
         _ba.set_party_icon_always_visible(True)
         self._public_parties: Dict[str, Dict[str, Any]] = {}
         self._width = 1240 if ba.app.small_ui else 1040
@@ -138,8 +138,8 @@ class GatherWindow(ba.Window):
                       size=(0, 0),
                       color=ba.app.title_color,
                       scale=1.5,
-                      h_align="center",
-                      v_align="center",
+                      h_align='center',
+                      v_align='center',
                       text=ba.Lstr(resource=self._r + '.titleText'),
                       maxwidth=550)
 
@@ -1948,7 +1948,7 @@ class GatherWindow(ba.Window):
             elif sel == self._tab_container:
                 sel_name = 'TabContainer'
             else:
-                raise Exception("unrecognized selection: " + str(sel))
+                raise Exception('unrecognized selection: ' + str(sel))
             ba.app.window_states[self.__class__.__name__] = {
                 'sel_name': sel_name,
                 'tab': self._current_tab,

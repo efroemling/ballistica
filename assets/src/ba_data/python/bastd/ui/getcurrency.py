@@ -100,8 +100,8 @@ class GetCurrencyWindow(ba.Window):
                       size=(0, 0),
                       color=ba.app.title_color,
                       scale=1.2,
-                      h_align="center",
-                      v_align="center",
+                      h_align='center',
+                      v_align='center',
                       text=ba.Lstr(resource=self._r + '.titleText'),
                       maxwidth=290)
 

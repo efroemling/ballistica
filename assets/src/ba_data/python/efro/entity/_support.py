@@ -209,7 +209,7 @@ class BoundListField(Generic[T]):
 
     def __setitem__(self, key: int, value: T) -> None:
         if not isinstance(key, int):
-            raise TypeError("Expected int index.")
+            raise TypeError('Expected int index.')
         self.d_data[key] = self.d_field.d_value.filter_input(value, error=True)
 
 
@@ -260,7 +260,7 @@ class BoundDictField(Generic[TKey, T]):
 
     def __setitem__(self, key: TKey, value: T) -> None:
         if not isinstance(key, self._keytype):
-            raise TypeError("Expected str index.")
+            raise TypeError('Expected str index.')
         self.d_data[key] = self.d_field.d_value.filter_input(value, error=True)
 
     def __contains__(self, key: TKey) -> bool:

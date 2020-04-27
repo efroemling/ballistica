@@ -74,8 +74,8 @@ class ShowURLWindow(ba.Window):
                           position=(self._width * 0.5, self._height - 10),
                           size=(0, 0),
                           color=ba.app.title_color,
-                          h_align="center",
-                          v_align="center",
+                          h_align='center',
+                          v_align='center',
                           text=ba.Lstr(resource='directBrowserToURLText'),
                           maxwidth=self._width * 0.95)
             ba.textwidget(parent=self._root_widget,
@@ -84,8 +84,8 @@ class ShowURLWindow(ba.Window):
                           size=(0, 0),
                           scale=1.3,
                           color=ba.app.infotextcolor,
-                          h_align="center",
-                          v_align="center",
+                          h_align='center',
+                          v_align='center',
                           text=address,
                           maxwidth=self._width * 0.95)
             button_width = 200

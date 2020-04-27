@@ -180,7 +180,7 @@ def _display_next_achievement() -> None:
             ach.show_completion_banner(sound)
         except Exception:
             from ba import _error
-            _error.print_exception("error showing next achievement")
+            _error.print_exception('error showing next achievement')
             app.achievements_to_display = []
             app.achievement_display_timer = None
     else:
@@ -409,7 +409,7 @@ class Achievement:
                 hmo = (self._hard_mode_only and campaign.name == 'Easy')
             except Exception:
                 from ba import _error
-                _error.print_exception("unable to determine campaign")
+                _error.print_exception('unable to determine campaign')
                 hmo = False
 
         objs: List[ba.Actor]

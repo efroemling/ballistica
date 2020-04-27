@@ -65,24 +65,24 @@ class KingOfTheHillGame(ba.TeamGameActivity):
 
     @classmethod
     def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
-        return ba.getmaps("king_of_the_hill")
+        return ba.getmaps('king_of_the_hill')
 
     @classmethod
     def get_settings(
             cls,
             sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
-        return [("Hold Time", {
+        return [('Hold Time', {
             'min_value': 10,
             'default': 30,
             'increment': 10
         }),
-                ("Time Limit", {
+                ('Time Limit', {
                     'choices': [('None', 0), ('1 Minute', 60),
                                 ('2 Minutes', 120), ('5 Minutes', 300),
                                 ('10 Minutes', 600), ('20 Minutes', 1200)],
                     'default': 0
                 }),
-                ("Respawn Times", {
+                ('Respawn Times', {
                     'choices': [('Shorter', 0.25), ('Short', 0.5),
                                 ('Normal', 1.0), ('Long', 2.0),
                                 ('Longer', 4.0)],
@@ -93,7 +93,7 @@ class KingOfTheHillGame(ba.TeamGameActivity):
         from bastd.actor.scoreboard import Scoreboard
         super().__init__(settings)
         self._scoreboard = Scoreboard()
-        self._swipsound = ba.getsound("swip")
+        self._swipsound = ba.getsound('swip')
         self._tick_sound = ba.getsound('tick')
         self._countdownsounds = {
             10: ba.getsound('announceTen'),
@@ -115,12 +115,12 @@ class KingOfTheHillGame(ba.TeamGameActivity):
 
         self._flag_region_material = ba.Material()
         self._flag_region_material.add_actions(
-            conditions=("they_have_material", ba.sharedobj('player_material')),
-            actions=(("modify_part_collision", "collide",
-                      True), ("modify_part_collision", "physical", False),
-                     ("call", "at_connect",
+            conditions=('they_have_material', ba.sharedobj('player_material')),
+            actions=(('modify_part_collision', 'collide',
+                      True), ('modify_part_collision', 'physical', False),
+                     ('call', 'at_connect',
                       ba.Call(self._handle_player_flag_region_collide, True)),
-                     ("call", "at_disconnect",
+                     ('call', 'at_disconnect',
                       ba.Call(self._handle_player_flag_region_collide,
                               False))))
 
@@ -137,7 +137,7 @@ class KingOfTheHillGame(ba.TeamGameActivity):
         super().on_transition_in()
 
     def on_team_join(self, team: ba.Team) -> None:
-        team.gamedata['time_remaining'] = self.settings["Hold Time"]
+        team.gamedata['time_remaining'] = self.settings['Hold Time']
         self._update_scoreboard()
 
     def on_player_join(self, player: ba.Player) -> None:
@@ -253,7 +253,7 @@ class KingOfTheHillGame(ba.TeamGameActivity):
             ba.playsound(self._swipsound)
 
     def _handle_player_flag_region_collide(self, colliding: bool) -> None:
-        playernode = ba.get_collision_info("opposing_node")
+        playernode = ba.get_collision_info('opposing_node')
         try:
             player = playernode.getdelegate().getplayer()
         except Exception:

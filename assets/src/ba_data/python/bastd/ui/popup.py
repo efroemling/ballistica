@@ -43,7 +43,7 @@ class PopupWindow:
                  bg_color: Tuple[float, float, float] = (0.35, 0.55, 0.15),
                  focus_position: Tuple[float, float] = (0, 0),
                  focus_size: Tuple[float, float] = None,
-                 toolbar_visibility: str = "menu_minimal_no_back"):
+                 toolbar_visibility: str = 'menu_minimal_no_back'):
         # pylint: disable=too-many-locals
         if focus_size is None:
             focus_size = size
@@ -153,7 +153,7 @@ class PopupMenuWindow(PopupWindow):
         self._choices_disabled = list(choices_disabled)
         self._done_building = False
         if not choices:
-            raise Exception("Must pass at least one choice")
+            raise Exception('Must pass at least one choice')
         self._width = width
         self._scale = scale
         if len(choices) > 8:
@@ -302,7 +302,7 @@ class PopupMenu:
             current_choice = None
         self._choices = list(choices)
         if not choices:
-            raise Exception("no choices given")
+            raise Exception('no choices given')
         self._choices_display = list(choices_display)
         self._choices_disabled = list(choices_disabled)
         self._width = width
@@ -313,7 +313,7 @@ class PopupMenu:
         self._position = position
         self._parent = parent
         if not choices:
-            raise Exception("Must pass at least one choice")
+            raise Exception('Must pass at least one choice')
         self._parent = parent
         self._button_size = button_size
 

@@ -88,7 +88,7 @@ class _MacMusicAppThread(threading.Thread):
         from ba._general import Call
         from ba._lang import Lstr
         from ba._enums import TimeType
-        _ba.set_thread_name("BA_MacMusicAppThread")
+        _ba.set_thread_name('BA_MacMusicAppThread')
         _ba.mac_music_app_init()
 
         # Let's mention to the user we're launching Music.app in case
@@ -244,7 +244,7 @@ class _MacMusicAppThread(threading.Thread):
         except Exception:
             from ba import _error
             _error.print_exception(
-                f"error playing playlist {self._current_playlist}")
+                f'error playing playlist {self._current_playlist}')
 
     def _update_mac_music_app_volume(self) -> None:
         _ba.mac_music_app_set_volume(

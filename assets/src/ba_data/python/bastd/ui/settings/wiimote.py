@@ -53,8 +53,8 @@ class WiimoteSettingsWindow(ba.Window):
                       text=ba.Lstr(resource=self._r + '.titleText'),
                       maxwidth=270,
                       color=ba.app.title_color,
-                      h_align="center",
-                      v_align="center")
+                      h_align='center',
+                      v_align='center')
 
         ba.buttonwidget(edit=btn,
                         button_type='backSmall',
@@ -71,8 +71,8 @@ class WiimoteSettingsWindow(ba.Window):
                       text=ba.Lstr(resource=self._r + '.macInstructionsText'),
                       maxwidth=width * 0.95,
                       max_height=height * 0.5,
-                      h_align="center",
-                      v_align="center")
+                      h_align='center',
+                      v_align='center')
         v -= 230
         button_width = 200
         v -= 30
@@ -91,8 +91,8 @@ class WiimoteSettingsWindow(ba.Window):
                       scale=0.8,
                       maxwidth=width * 0.95,
                       text=ba.Lstr(resource=self._r + '.thanksText'),
-                      h_align="center",
-                      v_align="center")
+                      h_align='center',
+                      v_align='center')
         v -= 30
         this_button_width = 200
         ba.buttonwidget(parent=self._root_widget,
@@ -138,8 +138,8 @@ class WiimoteListenWindow(ba.Window):
                       text=ba.Lstr(resource=self._r + '.listeningText'),
                       color=ba.app.title_color,
                       maxwidth=320,
-                      h_align="center",
-                      v_align="center")
+                      h_align='center',
+                      v_align='center')
         ba.textwidget(parent=self._root_widget,
                       position=(15, height - 110),
                       size=(width - 30, 30),
@@ -147,8 +147,8 @@ class WiimoteListenWindow(ba.Window):
                       text=ba.Lstr(resource=self._r + '.pressText'),
                       maxwidth=width * 0.9,
                       color=(0.7, 0.9, 0.7, 1.0),
-                      h_align="center",
-                      v_align="center")
+                      h_align='center',
+                      v_align='center')
         ba.textwidget(parent=self._root_widget,
                       position=(15, height - 140),
                       size=(width - 30, 30),
@@ -156,15 +156,15 @@ class WiimoteListenWindow(ba.Window):
                       scale=0.55,
                       text=ba.Lstr(resource=self._r + '.pressText2'),
                       maxwidth=width * 0.95,
-                      h_align="center",
-                      v_align="center")
+                      h_align='center',
+                      v_align='center')
         self._counter_text = ba.textwidget(parent=self._root_widget,
                                            position=(15, 23),
                                            size=(width - 30, 30),
                                            scale=1.2,
-                                           text="15",
-                                           h_align="center",
-                                           v_align="top")
+                                           text='15',
+                                           h_align='center',
+                                           v_align='top')
         for i in range(1, 15):
             ba.timer(1.0 * i,
                      ba.WeakCall(self._decrement),
@@ -203,9 +203,9 @@ class WiimoteLicenseWindow(ba.Window):
                       position=(0, height - 48),
                       size=(width, 30),
                       text=ba.Lstr(resource=self._r + '.titleText'),
-                      h_align="center",
+                      h_align='center',
                       color=ba.app.title_color,
-                      v_align="center")
+                      v_align='center')
         license_text = (
             'Copyright (c) 2007, DarwiinRemote Team\n'
             'All rights reserved.\n'
@@ -255,8 +255,8 @@ class WiimoteLicenseWindow(ba.Window):
         ba.textwidget(parent=self._root_widget,
                       position=(100, height * 0.45),
                       size=(0, 0),
-                      h_align="left",
-                      v_align="center",
+                      h_align='left',
+                      v_align='center',
                       padding=4,
                       color=(0.7, 0.9, 0.7, 1.0),
                       scale=license_text_scale,

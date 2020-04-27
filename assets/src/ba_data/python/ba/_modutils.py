@@ -112,22 +112,22 @@ def create_user_system_scripts() -> None:
     path = (app.python_directory_user + '/sys/' + app.version)
     if os.path.exists(path):
         shutil.rmtree(path)
-    if os.path.exists(path + "_tmp"):
-        shutil.rmtree(path + "_tmp")
+    if os.path.exists(path + '_tmp'):
+        shutil.rmtree(path + '_tmp')
     os.makedirs(path + '_tmp', exist_ok=True)
 
     # Hmm; shutil.copytree doesn't seem to work nicely on android,
     # so lets do it manually.
     # NOTE: Should retry this now that we have 3.7 (this note was for 2.7)
     src_dir = app.python_directory_ba
-    dst_dir = path + "_tmp"
+    dst_dir = path + '_tmp'
     filenames = os.listdir(app.python_directory_ba)
     for fname in filenames:
         print('COPYING', src_dir + '/' + fname, '->', dst_dir)
         shutil.copyfile(src_dir + '/' + fname, dst_dir + '/' + fname)
 
-    print('MOVING', path + "_tmp", path)
-    shutil.move(path + "_tmp", path)
+    print('MOVING', path + '_tmp', path)
+    shutil.move(path + '_tmp', path)
     print(
         ('Created system scripts at :\'' + path +
          '\'\nRestart Ballistica to use them. (use ba.quit() to exit the game)'

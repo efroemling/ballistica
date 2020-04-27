@@ -165,5 +165,5 @@ class TeamGameActivity(GameActivity):
                 delay = 0.0
             else:
                 delay = 2.0
-                _ba.timer(0.1, Call(_ba.playsound, _ba.getsound("boxingBell")))
+                _ba.timer(0.1, Call(_ba.playsound, _ba.getsound('boxingBell')))
             super().end(results, delay=delay, force=force)

@@ -160,8 +160,8 @@ class StoreBrowserWindow(ba.Window):
                       size=(0, 0),
                       color=app.title_color,
                       scale=1.5,
-                      h_align="center",
-                      v_align="center",
+                      h_align='center',
+                      v_align='center',
                       text=ba.Lstr(resource='storeText'),
                       maxwidth=420)
 
@@ -372,8 +372,8 @@ class StoreBrowserWindow(ba.Window):
             position=(self._width * 0.5, self._height * 0.5),
             size=(0, 0),
             color=(1, 0.7, 1, 0.5),
-            h_align="center",
-            v_align="center",
+            h_align='center',
+            v_align='center',
             text=ba.Lstr(resource=self._r + '.loadingText'),
             maxwidth=self._scroll_width * 0.9)
 
@@ -552,7 +552,7 @@ class StoreBrowserWindow(ba.Window):
                         'original_price': sale_info['op']
                     }
         except Exception:
-            ba.print_exception("Error parsing sales.")
+            ba.print_exception('Error parsing sales.')
 
         assert self.button_infos is not None
         for b_type, b_info in self.button_infos.items():
@@ -699,8 +699,8 @@ class StoreBrowserWindow(ba.Window):
                 scale=1.3,
                 transition_delay=0.1,
                 color=(1, 0.3, 0.3, 1.0),
-                h_align="center",
-                v_align="center",
+                h_align='center',
+                v_align='center',
                 text=ba.Lstr(resource=self._r + '.loadErrorText'),
                 maxwidth=self._scroll_width * 0.9)
         else:
@@ -864,8 +864,8 @@ class StoreBrowserWindow(ba.Window):
                                 scale=1.0,
                                 transition_delay=delay,
                                 color=(0.7, 0.9, 0.7, 1),
-                                h_align="left",
-                                v_align="center",
+                                h_align='left',
+                                v_align='center',
                                 text=ba.Lstr(resource=section['title']),
                                 maxwidth=self._width * 0.7)
                             v -= title_spacing
@@ -984,8 +984,8 @@ class StoreBrowserWindow(ba.Window):
                     scale=1.3,
                     transition_delay=0.1,
                     color=(1, 1, 0.3, 1.0),
-                    h_align="center",
-                    v_align="center",
+                    h_align='center',
+                    v_align='center',
                     text=ba.Lstr(resource=self._r + '.comingSoonText'),
                     maxwidth=self._scroll_width * 0.9)
 
@@ -1002,7 +1002,7 @@ class StoreBrowserWindow(ba.Window):
                 sel_name = 'Tab:' + list(self._tab_buttons.keys())[list(
                     self._tab_buttons.values()).index(sel)]
             else:
-                raise Exception("unrecognized selection")
+                raise Exception('unrecognized selection')
             ba.app.window_states[self.__class__.__name__] = {
                 'sel_name': sel_name,
                 'tab': self._current_tab

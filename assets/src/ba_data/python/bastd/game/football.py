@@ -92,18 +92,18 @@ class FootballTeamGame(ba.TeamGameActivity):
             cls,
             sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
         return [
-            ("Score to Win", {
+            ('Score to Win', {
                 'min_value': 7,
                 'default': 21,
                 'increment': 7
             }),
-            ("Time Limit", {
+            ('Time Limit', {
                 'choices': [('None', 0), ('1 Minute', 60), ('2 Minutes', 120),
                             ('5 Minutes', 300), ('10 Minutes', 600),
                             ('20 Minutes', 1200)],
                 'default': 0
             }),
-            ("Respawn Times", {
+            ('Respawn Times', {
                 'choices': [('Shorter', 0.25), ('Short', 0.5), ('Normal', 1.0),
                             ('Long', 2.0), ('Longer', 4.0)],
                 'default': 1.0
@@ -115,19 +115,19 @@ class FootballTeamGame(ba.TeamGameActivity):
         self._scoreboard: Optional[Scoreboard] = Scoreboard()
 
         # Load some media we need.
-        self._cheer_sound = ba.getsound("cheer")
-        self._chant_sound = ba.getsound("crowdChant")
-        self._score_sound = ba.getsound("score")
-        self._swipsound = ba.getsound("swip")
-        self._whistle_sound = ba.getsound("refWhistle")
+        self._cheer_sound = ba.getsound('cheer')
+        self._chant_sound = ba.getsound('crowdChant')
+        self._score_sound = ba.getsound('score')
+        self._swipsound = ba.getsound('swip')
+        self._whistle_sound = ba.getsound('refWhistle')
 
         self.score_region_material = ba.Material()
         self.score_region_material.add_actions(
-            conditions=("they_have_material",
+            conditions=('they_have_material',
                         stdflag.get_factory().flagmaterial),
-            actions=(("modify_part_collision", "collide",
-                      True), ("modify_part_collision", "physical", False),
-                     ("call", "at_connect", self._handle_score)))
+            actions=(('modify_part_collision', 'collide',
+                      True), ('modify_part_collision', 'physical', False),
+                     ('call', 'at_connect', self._handle_score)))
         self._flag_spawn_pos: Optional[Sequence[float]] = None
         self._score_regions: List[ba.NodeActor] = []
         self._flag: Optional[FootballFlag] = None
@@ -198,7 +198,7 @@ class FootballTeamGame(ba.TeamGameActivity):
         assert self._flag is not None
         if self._flag.scored:
             return
-        region = ba.get_collision_info("source_node")
+        region = ba.get_collision_info('source_node')
         i = None
         for i in range(len(self._score_regions)):
             if region == self._score_regions[i].node:
@@ -263,7 +263,7 @@ class FootballTeamGame(ba.TeamGameActivity):
                     msg.flag.last_holding_player = player
                 msg.flag.held_count += 1
             except Exception:
-                ba.print_exception("exception in Football FlagPickedUpMessage;"
+                ba.print_exception('exception in Football FlagPickedUpMessage;'
                                    " this shouldn't happen")
 
         elif isinstance(msg, stdflag.FlagDroppedMessage):
@@ -290,7 +290,7 @@ class FootballTeamGame(ba.TeamGameActivity):
                                }))
                 assert self._flag_respawn_light.node
                 ba.animate(self._flag_respawn_light.node,
-                           "intensity", {
+                           'intensity', {
                                0.0: 0,
                                0.25: 0.15,
                                0.5: 0
@@ -359,20 +359,20 @@ class FootballCoopGame(ba.CoopGameActivity):
         self._preset = self.settings.get('preset', 'rookie')
 
         # Load some media we need.
-        self._cheer_sound = ba.getsound("cheer")
-        self._boo_sound = ba.getsound("boo")
-        self._chant_sound = ba.getsound("crowdChant")
-        self._score_sound = ba.getsound("score")
-        self._swipsound = ba.getsound("swip")
-        self._whistle_sound = ba.getsound("refWhistle")
+        self._cheer_sound = ba.getsound('cheer')
+        self._boo_sound = ba.getsound('boo')
+        self._chant_sound = ba.getsound('crowdChant')
+        self._score_sound = ba.getsound('score')
+        self._swipsound = ba.getsound('swip')
+        self._whistle_sound = ba.getsound('refWhistle')
         self._score_to_win = 21
         self._score_region_material = ba.Material()
         self._score_region_material.add_actions(
-            conditions=("they_have_material",
+            conditions=('they_have_material',
                         stdflag.get_factory().flagmaterial),
-            actions=(("modify_part_collision", "collide",
-                      True), ("modify_part_collision", "physical", False),
-                     ("call", "at_connect", self._handle_score)))
+            actions=(('modify_part_collision', 'collide',
+                      True), ('modify_part_collision', 'physical', False),
+                     ('call', 'at_connect', self._handle_score)))
         self._powerup_center = (0, 2, 0)
         self._powerup_spread = (10, 5.5)
         self._player_has_dropped_bomb = False
@@ -660,7 +660,7 @@ class FootballCoopGame(ba.CoopGameActivity):
             return
 
         # See which score region it was.
-        region = ba.get_collision_info("source_node")
+        region = ba.get_collision_info('source_node')
         i = None
         for i in range(len(self.score_regions)):
             if region == self.score_regions[i].node:
@@ -849,7 +849,7 @@ class FootballCoopGame(ba.CoopGameActivity):
                            }))
             assert self._flag_respawn_light.node
             ba.animate(self._flag_respawn_light.node,
-                       "intensity", {
+                       'intensity', {
                            0: 0,
                            0.25: 0.15,
                            0.5: 0

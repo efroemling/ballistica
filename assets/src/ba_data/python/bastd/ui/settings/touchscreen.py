@@ -65,8 +65,8 @@ class TouchscreenSettingsWindow(ba.Window):
                       text=ba.Lstr(resource=self._r + '.titleText'),
                       color=ba.app.title_color,
                       maxwidth=280,
-                      h_align="center",
-                      v_align="center")
+                      h_align='center',
+                      v_align='center')
 
         ba.buttonwidget(edit=btn,
                         button_type='backSmall',
@@ -117,8 +117,8 @@ class TouchscreenSettingsWindow(ba.Window):
                       color=(0, 0.9, 0.1, 0.7),
                       maxwidth=self._sub_width * 0.9,
                       scale=0.55,
-                      h_align="center",
-                      v_align="center")
+                      h_align='center',
+                      v_align='center')
         cur_val = ba.app.config.get('Touch Movement Control Type', 'swipe')
         ba.textwidget(parent=self._subcontainer,
                       position=(h, v - 2),
@@ -150,7 +150,7 @@ class TouchscreenSettingsWindow(ba.Window):
             parent=self._subcontainer,
             position=(h, v),
             xoffset=65,
-            configkey="Touch Controls Scale Movement",
+            configkey='Touch Controls Scale Movement',
             displayname=ba.Lstr(resource=self._r +
                                 '.movementControlScaleText'),
             changesound=False,
@@ -187,7 +187,7 @@ class TouchscreenSettingsWindow(ba.Window):
         cfgui.ConfigNumberEdit(parent=self._subcontainer,
                                position=(h, v),
                                xoffset=65,
-                               configkey="Touch Controls Scale Actions",
+                               configkey='Touch Controls Scale Actions',
                                displayname=ba.Lstr(resource=self._r +
                                                    '.actionControlScaleText'),
                                changesound=False,
@@ -200,7 +200,7 @@ class TouchscreenSettingsWindow(ba.Window):
                              position=(h, v),
                              size=(400, 30),
                              maxwidth=400,
-                             configkey="Touch Controls Swipe Hidden",
+                             configkey='Touch Controls Swipe Hidden',
                              displayname=ba.Lstr(resource=self._r +
                                                  '.swipeControlsHiddenText'))
         v -= 65

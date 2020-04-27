@@ -48,14 +48,14 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
     bs_config = _ba.app.config
 
     # If there's an entry in our config for this controller, use it.
-    if "Controllers" in bs_config:
-        ccfgs = bs_config["Controllers"]
+    if 'Controllers' in bs_config:
+        ccfgs = bs_config['Controllers']
         if devicename in ccfgs:
             mapping = None
             if unique_id in ccfgs[devicename]:
                 mapping = ccfgs[devicename][unique_id]
-            elif "default" in ccfgs[devicename]:
-                mapping = ccfgs[devicename]["default"]
+            elif 'default' in ccfgs[devicename]:
+                mapping = ccfgs[devicename]['default']
             if mapping is not None:
                 return mapping.get(name, -1)
 
@@ -375,7 +375,7 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
                 'triggerRun1': 18
             }.get(name, -1)
 
-        if devicename == "virtual-remote":
+        if devicename == 'virtual-remote':
             return {
                 'triggerRun2': 19,
                 'unassignedButtonsRun': False,
@@ -602,7 +602,7 @@ def get_input_device_config(device: ba.InputDevice,
     """
     cfg = _ba.app.config
     name = device.name
-    ccfgs: Dict[str, Any] = cfg.setdefault("Controllers", {})
+    ccfgs: Dict[str, Any] = cfg.setdefault('Controllers', {})
     ccfgs.setdefault(name, {})
     unique_id = device.unique_identifier
     if default:

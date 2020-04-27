@@ -177,8 +177,8 @@ class ControlsSettingsWindow(ba.Window):
                       size=(width, 25),
                       text=ba.Lstr(resource=self._r + '.titleText'),
                       color=ba.app.title_color,
-                      h_align="center",
-                      v_align="top")
+                      h_align='center',
+                      v_align='top')
         ba.buttonwidget(edit=btn,
                         button_type='backSmall',
                         size=(60, 60),

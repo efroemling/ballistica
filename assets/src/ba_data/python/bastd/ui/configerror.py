@@ -44,31 +44,31 @@ class ConfigErrorWindow(ba.Window):
             parent=self._root_widget,
             position=(padding, 220),
             size=(width - 2 * padding, 100 - 2 * padding),
-            h_align="center",
-            v_align="top",
+            h_align='center',
+            v_align='top',
             scale=0.73,
-            text=("Error reading BallisticaCore config file"
-                  ":\n\n\nCheck the console"
-                  " (press ~ twice) for details.\n\nWould you like to quit and"
-                  " try to fix it by hand\nor overwrite it with defaults?\n\n"
-                  "(high scores, player profiles, etc will be lost if you"
-                  " overwrite)"))
+            text=('Error reading BallisticaCore config file'
+                  ':\n\n\nCheck the console'
+                  ' (press ~ twice) for details.\n\nWould you like to quit and'
+                  ' try to fix it by hand\nor overwrite it with defaults?\n\n'
+                  '(high scores, player profiles, etc will be lost if you'
+                  ' overwrite)'))
         ba.textwidget(parent=self._root_widget,
                       position=(padding, 198),
                       size=(width - 2 * padding, 100 - 2 * padding),
-                      h_align="center",
-                      v_align="top",
+                      h_align='center',
+                      v_align='top',
                       scale=0.5,
                       text=self._config_file_path)
         quit_button = ba.buttonwidget(parent=self._root_widget,
                                       position=(35, 30),
                                       size=(240, 54),
-                                      label="Quit and Edit",
+                                      label='Quit and Edit',
                                       on_activate_call=self._quit)
         ba.buttonwidget(parent=self._root_widget,
                         position=(width - 370, 30),
                         size=(330, 54),
-                        label="Overwrite with Defaults",
+                        label='Overwrite with Defaults',
                         on_activate_call=self._defaults)
         ba.containerwidget(edit=self._root_widget,
                            cancel_button=quit_button,
@@ -86,7 +86,7 @@ class ConfigErrorWindow(ba.Window):
         from ba.internal import commit_app_config
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         ba.playsound(ba.getsound('gunCocking'))
-        ba.screenmessage("settings reset.", color=(1, 1, 0))
+        ba.screenmessage('settings reset.', color=(1, 1, 0))
 
         # At this point settings are already set; lets just commit them
         # to disk.

@@ -44,7 +44,7 @@ class ConfigKeyboardWindow(ba.Window):
             dname_raw += ' ' + self._unique_id.replace('#', 'P')
         self._displayname = ba.Lstr(translate=('inputDeviceNames', dname_raw))
         self._width = 700
-        if self._unique_id != "#1":
+        if self._unique_id != '#1':
             self._height = 450
         else:
             self._height = 345
@@ -108,7 +108,7 @@ class ConfigKeyboardWindow(ba.Window):
                       scale=0.83)
         v -= 20
 
-        if self._unique_id != "#1":
+        if self._unique_id != '#1':
             v -= 20
             v -= self._spacing
             ba.textwidget(parent=self._root_widget,
@@ -120,8 +120,8 @@ class ConfigKeyboardWindow(ba.Window):
                           maxwidth=self._width * 0.75,
                           max_height=110,
                           color=ba.app.infotextcolor,
-                          h_align="center",
-                          v_align="top")
+                          h_align='center',
+                          v_align='top')
             v -= 45
         v -= 10
         v -= self._spacing * 2.2
@@ -151,7 +151,7 @@ class ConfigKeyboardWindow(ba.Window):
                              texture=ba.gettexture('downButton'),
                              scale=1.0)
 
-        if self._unique_id == "#2":
+        if self._unique_id == '#2':
             self._capture_button(pos=(self._width * 0.5, v + 0.1 * dist),
                                  color=(0.4, 0.4, 0.6),
                                  button='buttonStart',
@@ -277,8 +277,8 @@ class AwaitKeyboardInputWindow(ba.Window):
                       position=(0, height - 60),
                       size=(width, 25),
                       text=ba.Lstr(resource='pressAnyKeyText'),
-                      h_align="center",
-                      v_align="top")
+                      h_align='center',
+                      v_align='top')
 
         self._counter = 5
         self._count_down_text = ba.textwidget(parent=self._root_widget,
@@ -304,9 +304,9 @@ class AwaitKeyboardInputWindow(ba.Window):
             ba.containerwidget(edit=self._root_widget, transition='out_left')
 
     def _button_callback(self, event: Dict[str, Any]) -> None:
-        self._settings[self._capture_button] = event["button"]
+        self._settings[self._capture_button] = event['button']
         if event['type'] == 'BUTTONDOWN':
-            bname = event['input_device'].get_button_name(event["button"])
+            bname = event['input_device'].get_button_name(event['button'])
             ba.textwidget(edit=self._capture_key_ui, text=bname)
             ba.playsound(ba.getsound('gunCocking'))
             self._die()

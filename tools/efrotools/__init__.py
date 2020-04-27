@@ -213,7 +213,7 @@ def py_examine(filename: Path, line: int, column: int,
 
         # Insert a line after the provided one which is just the symbol so we
         # can ask for its value alone.
-        match = re.match(r"\s*", flines[line - 1])
+        match = re.match(r'\s*', flines[line - 1])
         whitespace = match.group() if match is not None else ''
         sline = whitespace + symbol + ' #@'
         flines = flines[:line] + [sline] + flines[line:]
@@ -228,7 +228,7 @@ def py_examine(filename: Path, line: int, column: int,
 
         # Insert a line after the provided one which is just the symbol so we
         # can ask for its value alone.
-        match = re.match(r"\s*", flines[line - 1])
+        match = re.match(r'\s*', flines[line - 1])
         whitespace = match.group() if match is not None else ''
         if operation == 'mypy_infer':
             sline = whitespace + 'reveal_type(' + symbol + ')'

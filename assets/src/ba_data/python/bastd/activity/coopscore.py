@@ -54,8 +54,8 @@ class CoopScoreScreen(ba.Activity):
 
         self._do_new_rating: bool = self.session.tournament_id is not None
 
-        self._score_display_sound = ba.getsound("scoreHit01")
-        self._score_display_sound_small = ba.getsound("scoreHit02")
+        self._score_display_sound = ba.getsound('scoreHit01')
+        self._score_display_sound_small = ba.getsound('scoreHit02')
         self.drum_roll_sound = ba.getsound('drumRoll')
         self.cymbal_sound = ba.getsound('cymbal')
 
@@ -68,7 +68,7 @@ class CoopScoreScreen(ba.Activity):
         self._campaign: ba.Campaign = settings['campaign']
 
         self._have_achievements = bool(
-            get_achievements_for_coop_level(self._campaign.name + ":" +
+            get_achievements_for_coop_level(self._campaign.name + ':' +
                                             settings['level']))
 
         self._account_type = (_ba.get_account_type() if
@@ -149,7 +149,7 @@ class CoopScoreScreen(ba.Activity):
         self._score_order: str
         if 'score_order' in settings:
             if not settings['score_order'] in ['increasing', 'decreasing']:
-                raise Exception("Invalid score order: " +
+                raise Exception('Invalid score order: ' +
                                 settings['score_order'])
             self._score_order = settings['score_order']
         else:
@@ -159,7 +159,7 @@ class CoopScoreScreen(ba.Activity):
         self._score_type: str
         if 'score_type' in settings:
             if not settings['score_type'] in ['points', 'time']:
-                raise Exception("Invalid score type: " +
+                raise Exception('Invalid score type: ' +
                                 settings['score_type'])
             self._score_type = settings['score_type']
         else:
@@ -169,9 +169,9 @@ class CoopScoreScreen(ba.Activity):
         self._level_name: str = settings['level']
         assert isinstance(self._level_name, str)
 
-        self._game_name_str = self._campaign.name + ":" + self._level_name
+        self._game_name_str = self._campaign.name + ':' + self._level_name
         self._game_config_str = str(len(
-            self._player_info)) + "p" + self._campaign.get_level(
+            self._player_info)) + 'p' + self._campaign.get_level(
                 self._level_name).get_score_version_string().replace(' ', '_')
 
         # If game-center/etc scores are available we show our friends'
@@ -540,7 +540,7 @@ class CoopScoreScreen(ba.Activity):
             # as current.
             if self._newly_complete:
                 cfg = ba.app.config
-                cfg['Selected Coop Game'] = (self._campaign.name + ":" +
+                cfg['Selected Coop Game'] = (self._campaign.name + ':' +
                                              self._next_level_name)
                 cfg.commit()
                 self._campaign.set_selected_level(self._next_level_name)
@@ -660,10 +660,10 @@ class CoopScoreScreen(ba.Activity):
             self._level_name).get_high_scores()
         try:
             our_high_scores = our_high_scores_all[str(len(self._player_info)) +
-                                                  " Player"]
+                                                  ' Player']
         except Exception:
             our_high_scores = our_high_scores_all[str(len(self._player_info)) +
-                                                  " Player"] = []
+                                                  ' Player'] = []
 
         if self._score is not None:
             our_score: Optional[list] = [
@@ -1027,7 +1027,7 @@ class CoopScoreScreen(ba.Activity):
                 self._score_link = results['link']
                 assert self._score_link is not None
                 if not self._score_link.startswith('http://'):
-                    self._score_link = (_ba.get_master_server_address() + "/" +
+                    self._score_link = (_ba.get_master_server_address() + '/' +
                                         self._score_link)
                 self._score_loading_status = None
                 if 'tournamentSecondsRemaining' in results:
@@ -1250,7 +1250,7 @@ class CoopScoreScreen(ba.Activity):
                              transition_delay=2.0).autoretain()
                         vval -= 35
         except Exception:
-            ba.print_exception("error showing prize ranges")
+            ba.print_exception('error showing prize ranges')
 
         if self._do_new_rating:
             if error:

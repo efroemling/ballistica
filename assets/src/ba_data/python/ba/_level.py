@@ -105,7 +105,7 @@ class Level:
         Campaign.
         """
         if self._index is None:
-            raise RuntimeError("Level is not part of a Campaign")
+            raise RuntimeError('Level is not part of a Campaign')
         return self._index
 
     @property
@@ -170,7 +170,7 @@ class Level:
         can be modified in place."""
         campaign = self.get_campaign()
         if campaign is None:
-            raise Exception("level is not in a campaign")
+            raise Exception('level is not in a campaign')
         campaign_config = campaign.get_config_dict()
         val: Dict[str,
                   Any] = campaign_config.setdefault(self._name, {

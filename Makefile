@@ -625,6 +625,9 @@ TOOL_CFG_INST = tools/snippets tool_config_install
 # Anything that affects tool-config generation.
 TOOL_CFG_SRC = tools/efrotools/snippets.py config/config.json
 
+# Anything that should trigger an environment-check when changed.
+ENV_SRC = tools/snippets tools/batools/build.py
+
 .clang-format: config/toolconfigsrc/clang-format ${TOOL_CFG_SRC}
 	${TOOL_CFG_INST} $< $@
 
@@ -649,7 +652,8 @@ TOOL_CFG_SRC = tools/efrotools/snippets.py config/config.json
 .pycheckers: config/toolconfigsrc/pycheckers ${TOOL_CFG_SRC}
 	${TOOL_CFG_INST} $< $@
 
-.cache/checkenv: tools/snippets
+# Include anything as sources here that should require
+.cache/checkenv: ${ENV_SRC}
 	@tools/snippets checkenv
 	@mkdir -p .cache
 	@touch .cache/checkenv

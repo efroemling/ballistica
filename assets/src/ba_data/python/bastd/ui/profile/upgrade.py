@@ -86,8 +86,8 @@ class ProfileUpgradeWindow(ba.Window):
                       color=ba.app.title_color,
                       maxwidth=self._width * 0.45,
                       scale=1.0,
-                      h_align="center",
-                      v_align="center")
+                      h_align='center',
+                      v_align='center')
 
         ba.textwidget(parent=self._root_widget,
                       position=(self._width * 0.5, self._height - 100),
@@ -97,8 +97,8 @@ class ProfileUpgradeWindow(ba.Window):
                       color=ba.app.infotextcolor,
                       maxwidth=self._width * 0.8,
                       scale=0.7,
-                      h_align="center",
-                      v_align="center")
+                      h_align='center',
+                      v_align='center')
 
         self._status_text = ba.textwidget(
             parent=self._root_widget,
@@ -109,8 +109,8 @@ class ProfileUpgradeWindow(ba.Window):
             color=(0.8, 0.4, 0.0),
             maxwidth=self._width * 0.8,
             scale=0.65,
-            h_align="center",
-            v_align="center")
+            h_align='center',
+            v_align='center')
 
         self._price_text = ba.textwidget(parent=self._root_widget,
                                          position=(self._width * 0.5,
@@ -120,8 +120,8 @@ class ProfileUpgradeWindow(ba.Window):
                                          color=(0.2, 1, 0.2),
                                          maxwidth=self._width * 0.8,
                                          scale=1.5,
-                                         h_align="center",
-                                         v_align="center")
+                                         h_align='center',
+                                         v_align='center')
 
         self._tickets_text: Optional[ba.Widget]
         if not ba.app.toolbars:
@@ -133,8 +133,8 @@ class ProfileUpgradeWindow(ba.Window):
                 color=(0.2, 1, 0.2),
                 maxwidth=100,
                 scale=0.5,
-                h_align="right",
-                v_align="center")
+                h_align='right',
+                v_align='center')
         else:
             self._tickets_text = None
 

@@ -82,8 +82,8 @@ class SoundtrackEntryTypeSelectWindow(ba.Window):
                       text=ba.Lstr(resource=self._r + '.selectASourceText'),
                       color=ba.app.title_color,
                       maxwidth=230,
-                      h_align="center",
-                      v_align="center")
+                      h_align='center',
+                      v_align='center')
 
         ba.textwidget(parent=self._root_widget,
                       position=(self._width * 0.5, self._height - 56),
@@ -92,8 +92,8 @@ class SoundtrackEntryTypeSelectWindow(ba.Window):
                       color=ba.app.infotextcolor,
                       scale=0.7,
                       maxwidth=230,
-                      h_align="center",
-                      v_align="center")
+                      h_align='center',
+                      v_align='center')
 
         v = self._height - 155
 

@@ -64,7 +64,7 @@ class Campaign:
     def add_level(self, level: ba.Level) -> None:
         """Adds a ba.Level to the Campaign."""
         if level.get_campaign() is not None:
-            raise Exception("level already belongs to a campaign")
+            raise Exception('level already belongs to a campaign')
         level.set_campaign(self, len(self._levels))
         self._levels.append(level)
 

@@ -204,8 +204,8 @@ class GamepadSettingsWindow(ba.Window):
                           text=ba.Lstr(resource=self._r + '.titleText'),
                           color=ba.app.title_color,
                           maxwidth=310,
-                          h_align="center",
-                          v_align="center")
+                          h_align='center',
+                          v_align='center')
             v -= 48
 
             ba.textwidget(parent=self._root_widget,
@@ -214,8 +214,8 @@ class GamepadSettingsWindow(ba.Window):
                           text=self._name,
                           color=ba.app.infotextcolor,
                           maxwidth=self._width * 0.9,
-                          h_align="center",
-                          v_align="center")
+                          h_align='center',
+                          v_align='center')
             v -= self._spacing * 1
 
             ba.textwidget(parent=self._root_widget,
@@ -237,8 +237,8 @@ class GamepadSettingsWindow(ba.Window):
                           text=ba.Lstr(resource=self._r + '.secondaryText'),
                           color=ba.app.title_color,
                           maxwidth=300,
-                          h_align="center",
-                          v_align="center")
+                          h_align='center',
+                          v_align='center')
             v -= self._spacing * 1
 
             ba.textwidget(parent=self._root_widget,
@@ -478,7 +478,7 @@ class GamepadSettingsWindow(ba.Window):
         """(internal)"""
         assert self._settings is not None
         if not self._is_secondary:
-            raise Exception("enable value only applies to secondary editor")
+            raise Exception('enable value only applies to secondary editor')
         return self._settings.get('enableSecondary', False)
 
     def show_secondary_editor(self) -> None:
@@ -793,8 +793,8 @@ class AwaitGamepadInputWindow(ba.Window):
                       size=(width, 25),
                       text=message,
                       maxwidth=width * 0.9,
-                      h_align="center",
-                      v_align="center")
+                      h_align='center',
+                      v_align='center')
         if message2 is not None:
             ba.textwidget(parent=self._root_widget,
                           position=(width * 0.5, height - 60),
@@ -803,8 +803,8 @@ class AwaitGamepadInputWindow(ba.Window):
                           maxwidth=width * 0.9,
                           scale=0.47,
                           color=(0.7, 1.0, 0.7, 0.6),
-                          h_align="center",
-                          v_align="center")
+                          h_align='center',
+                          v_align='center')
         self._counter = 5
         self._count_down_text = ba.textwidget(parent=self._root_widget,
                                               h_align='center',

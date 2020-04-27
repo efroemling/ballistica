@@ -77,8 +77,8 @@ class SoundtrackEditWindow(ba.Window):
                          ('.editSoundtrackText' if existing_soundtrack
                           is not None else '.newSoundtrackText')),
             color=ba.app.title_color,
-            h_align="center",
-            v_align="center",
+            h_align='center',
+            v_align='center',
             maxwidth=280)
         v = self._height - 110
         if 'Soundtracks' not in bs_config:
@@ -138,8 +138,8 @@ class SoundtrackEditWindow(ba.Window):
             position=(120 + x_inset, v - 5),
             size=(self._width - (160 + 2 * x_inset), 43),
             text=self._soundtrack_name,
-            h_align="left",
-            v_align="center",
+            h_align='left',
+            v_align='center',
             max_chars=32,
             autoselect=True,
             description=ba.Lstr(resource=self._r + '.nameText'),
@@ -334,7 +334,7 @@ class SoundtrackEditWindow(ba.Window):
         music = ba.app.music
 
         # Warn if volume is zero.
-        if ba.app.config.resolve("Music Volume") < 0.01:
+        if ba.app.config.resolve('Music Volume') < 0.01:
             ba.playsound(ba.getsound('error'))
             ba.screenmessage(ba.Lstr(resource=self._r +
                                      '.musicVolumeZeroWarning'),

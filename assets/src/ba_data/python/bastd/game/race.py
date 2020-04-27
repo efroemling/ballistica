@@ -61,7 +61,7 @@ class RaceRegion(ba.Actor):
             attrs={
                 'position': pt[:3],
                 'scale': (pt[3] * 2.0, pt[4] * 2.0, pt[5] * 2.0),
-                'type': "box",
+                'type': 'box',
                 'materials': [activity.race_region_material]
             })
 
@@ -383,7 +383,7 @@ class RaceGame(ba.TeamGameActivity):
                     if otherplayer.actor is not None:
                         otherplayer.actor.handlemessage(ba.DieMessage())
                 except Exception:
-                    ba.print_exception("Error sending diemessages")
+                    ba.print_exception('Error sending diemessages')
 
         # Defer so team/player lists will be updated.
         ba.pushcall(self._check_end_game)

@@ -318,7 +318,7 @@ class Blast(ba.Actor):
                  position: Sequence[float] = (0.0, 1.0, 0.0),
                  velocity: Sequence[float] = (0.0, 0.0, 0.0),
                  blast_radius: float = 2.0,
-                 blast_type: str = "normal",
+                 blast_type: str = 'normal',
                  source_player: ba.Player = None,
                  hit_type: str = 'explosion',
                  hit_subtype: str = 'normal'):
@@ -355,14 +355,14 @@ class Blast(ba.Actor):
 
         # throw in an explosion and flash
         evel = (velocity[0], max(-1.0, velocity[1]), velocity[2])
-        explosion = ba.newnode("explosion",
+        explosion = ba.newnode('explosion',
                                attrs={
                                    'position': position,
                                    'velocity': evel,
                                    'radius': self.radius,
                                    'big': (self.blast_type == 'tnt')
                                })
-        if self.blast_type == "ice":
+        if self.blast_type == 'ice':
             explosion.color = (0, 0.05, 0.4)
 
         ba.timer(1.0, explosion.delete)
@@ -535,7 +535,7 @@ class Blast(ba.Actor):
 
         iscale = 1.6
         ba.animate(
-            light, "intensity", {
+            light, 'intensity', {
                 0: 2.0 * iscale,
                 scl * 0.02: 0.1 * iscale,
                 scl * 0.025: 0.2 * iscale,
@@ -547,7 +547,7 @@ class Blast(ba.Actor):
                 scl * 3.0: 0.0
             })
         ba.animate(
-            light, "radius", {
+            light, 'radius', {
                 0: light_radius * 0.2,
                 scl * 0.05: light_radius * 0.55,
                 scl * 0.1: light_radius * 0.3,
@@ -566,7 +566,7 @@ class Blast(ba.Actor):
         if self.blast_type == 'ice':
             scorch.color = (1, 1, 1.5)
 
-        ba.animate(scorch, "presence", {3.000: 1, 13.000: 0})
+        ba.animate(scorch, 'presence', {3.000: 1, 13.000: 0})
         ba.timer(13.0, scorch.delete)
 
         if self.blast_type == 'ice':
@@ -602,7 +602,7 @@ class Blast(ba.Actor):
                 self.node.delete()
 
         elif isinstance(msg, ExplodeHitMessage):
-            node = ba.get_collision_info("opposing_node")
+            node = ba.get_collision_info('opposing_node')
             if node:
                 assert self.node
                 nodepos = self.node.position
@@ -624,7 +624,7 @@ class Blast(ba.Actor):
                                   hit_subtype=self.hit_subtype,
                                   radius=self.radius,
                                   source_player=self.source_player))
-                if self.blast_type == "ice":
+                if self.blast_type == 'ice':
                     ba.playsound(get_factory().freeze_sound,
                                  10,
                                  position=nodepos)
@@ -664,7 +664,7 @@ class Bomb(ba.Actor):
 
         if bomb_type not in ('ice', 'impact', 'land_mine', 'normal', 'sticky',
                              'tnt'):
-            raise Exception("invalid bomb type: " + bomb_type)
+            raise Exception('invalid bomb type: ' + bomb_type)
         self.bomb_type = bomb_type
 
         self._exploded = False
@@ -828,7 +828,7 @@ class Bomb(ba.Actor):
             ba.timer(fuse_time,
                      ba.WeakCall(self.handlemessage, ExplodeMessage()))
 
-        ba.animate(self.node, "model_scale", {0: 0, 0.2: 1.3, 0.26: 1})
+        ba.animate(self.node, 'model_scale', {0: 0, 0.2: 1.3, 0.26: 1})
 
     def get_source_player(self) -> Optional[ba.Player]:
         """Returns a ba.Player representing the source of this bomb.
@@ -849,7 +849,7 @@ class Bomb(ba.Actor):
         self.handlemessage(ba.DieMessage())
 
     def _handle_impact(self) -> None:
-        node = ba.get_collision_info("opposing_node")
+        node = ba.get_collision_info('opposing_node')
         # if we're an impact bomb and we came from this node, don't explode...
         # alternately if we're hitting another impact-bomb from the same
         # source, don't explode...
@@ -882,7 +882,7 @@ class Bomb(ba.Actor):
                      lambda: _safesetattr(self.node, 'stick_to_owner', True))
 
     def _handle_splat(self) -> None:
-        node = ba.get_collision_info("opposing_node")
+        node = ba.get_collision_info('opposing_node')
         if (node is not self.owner
                 and ba.time() - self._last_sticky_sound_time > 1.0):
             self._last_sticky_sound_time = ba.time()
@@ -1001,7 +1001,7 @@ class Bomb(ba.Actor):
                      ba.WeakCall(self.handlemessage, ExplodeMessage()),
                      timeformat=ba.TimeFormat.MILLISECONDS)
         assert self.node
-        self.node.handlemessage("impulse", msg.pos[0], msg.pos[1], msg.pos[2],
+        self.node.handlemessage('impulse', msg.pos[0], msg.pos[1], msg.pos[2],
                                 msg.velocity[0], msg.velocity[1],
                                 msg.velocity[2], msg.magnitude,
                                 msg.velocity_magnitude, msg.radius, 0,

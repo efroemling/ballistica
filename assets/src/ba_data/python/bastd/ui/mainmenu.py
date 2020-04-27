@@ -673,7 +673,7 @@ class MainMenuWindow(ba.Window):
                     if (not isinstance(cme, dict) or 'label' not in cme
                             or not isinstance(cme['label'], (str, ba.Lstr))
                             or 'call' not in cme or not callable(cme['call'])):
-                        raise Exception("invalid custom menu entry: " +
+                        raise Exception('invalid custom menu entry: ' +
                                         str(cme))
             except Exception:
                 custom_menu_entries = []

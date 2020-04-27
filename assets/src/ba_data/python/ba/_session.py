@@ -179,7 +179,7 @@ class Session:
         self._activity_weak: ReferenceType[ba.Activity]
         self._activity_weak = weakref.ref(_EmptyObj())  # type: ignore
         if self._activity_weak() is not None:
-            raise Exception("Error creating empty activity weak ref.")
+            raise Exception('Error creating empty activity weak ref.')
 
         self._next_activity: Optional[ba.Activity] = None
         self.wants_to_end = False
@@ -299,7 +299,7 @@ class Session:
                 # Testing; can remove this eventually.
                 if isinstance(self, FreeForAllSession):
                     if len(team.players) != 1:
-                        _error.print_error("expected 1 player in FFA team")
+                        _error.print_error('expected 1 player in FFA team')
                 team.players.remove(player)
 
             # Remove player from any current activity.
@@ -316,7 +316,7 @@ class Session:
                             'exception in on_player_leave for activity',
                             activity)
                 else:
-                    _error.print_error("expired activity in on_player_leave;"
+                    _error.print_error('expired activity in on_player_leave;'
                                        " shouldn't happen")
 
                 player.set_activity(None)
@@ -350,7 +350,7 @@ class Session:
                                 activity)
                     else:
                         _error.print_error(
-                            "expired activity in on_player_leave p2"
+                            'expired activity in on_player_leave p2'
                             "; shouldn't happen")
 
                     # Clear the team's game-data (so dying stuff will
@@ -413,8 +413,8 @@ class Session:
                 if since_last < 30.0:
                     return
                 _error.print_error(
-                    "launch_end_session_activity called twice (since_last=" +
-                    str(since_last) + ")")
+                    'launch_end_session_activity called twice (since_last=' +
+                    str(since_last) + ')')
             self.launch_end_session_activity_time = curtime
             self.set_activity(_ba.new_activity(EndSessionActivity))
             self.wants_to_end = False
@@ -505,7 +505,7 @@ class Session:
         # Sanity test: make sure this doesn't get called recursively.
         if self._in_set_activity:
             raise Exception(
-                "Session.set_activity() cannot be called recursively.")
+                'Session.set_activity() cannot be called recursively.')
 
         if activity.session is not _ba.getsession():
             raise Exception("Provided Activity's Session is not current.")
@@ -515,12 +515,12 @@ class Session:
             return
 
         if activity is self._activity_retained:
-            _error.print_error("activity set to already-current activity")
+            _error.print_error('activity set to already-current activity')
             return
 
         if self._next_activity is not None:
-            raise Exception("Activity switch already in progress (to " +
-                            str(self._next_activity) + ")")
+            raise Exception('Activity switch already in progress (to ' +
+                            str(self._next_activity) + ')')
 
         self._in_set_activity = True
 
@@ -781,7 +781,7 @@ class Session:
             if pass_to_activity:
                 if team in activity.teams:
                     _error.print_error(
-                        "Duplicate team ID in ba.Session._add_chosen_player")
+                        'Duplicate team ID in ba.Session._add_chosen_player')
                 activity.teams.append(team)
                 try:
                     with _ba.Context(activity):
@@ -799,7 +799,7 @@ class Session:
         if pass_to_activity:
             if isinstance(self, _freeforallsession.FreeForAllSession):
                 if player.team.players:
-                    _error.print_error("expected 0 players in FFA team")
+                    _error.print_error('expected 0 players in FFA team')
 
             # Don't actually add the player to their team list if we're not
             # in an activity. (players get (re)added to their team lists

@@ -86,8 +86,8 @@ class AllSettingsWindow(ba.Window):
                       size=(width, 25),
                       text=ba.Lstr(resource=self._r + '.titleText'),
                       color=ba.app.title_color,
-                      h_align="center",
-                      v_align="center",
+                      h_align='center',
+                      v_align='center',
                       maxwidth=130)
 
         if self._back_button is not None:
@@ -252,7 +252,7 @@ class AllSettingsWindow(ba.Window):
             elif sel == self._back_button:
                 sel_name = 'Back'
             else:
-                raise Exception("unrecognized selection")
+                raise Exception('unrecognized selection')
             ba.app.window_states[self.__class__.__name__] = {
                 'sel_name': sel_name
             }

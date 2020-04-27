@@ -57,8 +57,8 @@ class ServerDialogWindow(ba.Window):
                       size=(0, 0),
                       color=(1.0, 3.0, 1.0),
                       scale=txt_scale,
-                      h_align="center",
-                      v_align="center",
+                      h_align='center',
+                      v_align='center',
                       text=txt,
                       maxwidth=self._width * 0.85,
                       max_height=(self._height - 110))

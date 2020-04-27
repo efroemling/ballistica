@@ -111,8 +111,8 @@ class Text(ba.Actor):
 
         if transition is self.Transition.FADE_IN:
             if flash:
-                raise Exception("fixme: flash and fade-in"
-                                " currently cant both be on")
+                raise Exception('fixme: flash and fade-in'
+                                ' currently cant both be on')
             cmb = ba.newnode('combine',
                              owner=self.node,
                              attrs={
@@ -125,7 +125,7 @@ class Text(ba.Actor):
             if transition_out_delay is not None:
                 keys[transition_delay + transition_out_delay] = color[3]
                 keys[transition_delay + transition_out_delay + 0.5] = 0.0
-            ba.animate(cmb, "input3", keys)
+            ba.animate(cmb, 'input3', keys)
             cmb.connectattr('output', self.node, 'color')
 
         if flash:
@@ -134,21 +134,21 @@ class Text(ba.Actor):
             tm2 = 0.3
             cmb = ba.newnode('combine', owner=self.node, attrs={'size': 4})
             ba.animate(cmb,
-                       "input0", {
+                       'input0', {
                            0.0: color[0] * mult,
                            tm1: color[0],
                            tm2: color[0] * mult
                        },
                        loop=True)
             ba.animate(cmb,
-                       "input1", {
+                       'input1', {
                            0.0: color[1] * mult,
                            tm1: color[1],
                            tm2: color[1] * mult
                        },
                        loop=True)
             ba.animate(cmb,
-                       "input2", {
+                       'input2', {
                            0.0: color[2] * mult,
                            tm1: color[2],
                            tm2: color[2] * mult

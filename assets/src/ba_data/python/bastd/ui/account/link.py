@@ -156,8 +156,8 @@ class AccountLinkCodeWindow(ba.Window):
                       size=(0, 0),
                       color=(1.0, 3.0, 1.0),
                       scale=2.0,
-                      h_align="center",
-                      v_align="center",
+                      h_align='center',
+                      v_align='center',
                       text=data['code'],
                       maxwidth=self._width * 0.85)
 

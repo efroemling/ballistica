@@ -71,10 +71,10 @@ class Dependency(Generic[T]):
         if not isinstance(obj, DependencyComponent):
             if obj is None:
                 raise TypeError(
-                    "Dependency must be accessed through an instance.")
+                    'Dependency must be accessed through an instance.')
             raise TypeError(
-                f"Dependency cannot be added to class of type {type(obj)}"
-                " (class must inherit from ba.DependencyComponent).")
+                f'Dependency cannot be added to class of type {type(obj)}'
+                ' (class must inherit from ba.DependencyComponent).')
 
         # We expect to be instantiated from an already living
         # DependencyComponent with valid dep-data in place..
@@ -84,7 +84,7 @@ class Dependency(Generic[T]):
         # there get back to the DependencySet
         entry = getattr(obj, '_dep_entry')
         if entry is None:
-            raise RuntimeError("Invalid dependency access.")
+            raise RuntimeError('Invalid dependency access.')
         entry = entry()
         assert isinstance(entry, DependencyEntry)
         depset = entry.depset()
@@ -211,7 +211,7 @@ class DependencySet(Generic[T]):
         """
 
         if self._resolved:
-            raise Exception("DependencySet has already been resolved.")
+            raise Exception('DependencySet has already been resolved.')
 
         # print('RESOLVING DEP SET')
 
@@ -273,7 +273,7 @@ class DependencySet(Generic[T]):
     def root(self) -> T:
         """The instantiated root DependencyComponent instance for the set."""
         if not self._loaded:
-            raise RuntimeError("DependencySet is not loaded.")
+            raise RuntimeError('DependencySet is not loaded.')
 
         rootdata = self.entries[self._root_dependency.get_hash()].component
         assert isinstance(rootdata, self._root_dependency.cls)
@@ -377,7 +377,7 @@ class TestClassFactory(DependencyComponent):
 
     def __init__(self) -> None:
         super().__init__()
-        print("Instantiating TestClassFactory")
+        print('Instantiating TestClassFactory')
         self.tex = self._assets.gettexture('black')
         self.model = self._assets.getmodel('landMine')
         self.sound = self._assets.getsound('error')
@@ -396,7 +396,7 @@ class TestClass(DependencyComponent):
     _factoryclass2 = Dependency(TestClassFactory, 123)
 
     def __del__(self) -> None:
-        print("~TestClass()")
+        print('~TestClass()')
 
     def __init__(self) -> None:
         super().__init__()
@@ -430,7 +430,7 @@ def test_depset() -> None:
                 depset.load()
                 testobj = depset.root
                 # instance = testclass(123)
-                print("INSTANTIATED ROOT:", testobj)
+                print('INSTANTIATED ROOT:', testobj)
 
         doit()
 

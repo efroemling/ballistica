@@ -50,7 +50,7 @@ def run_cpu_benchmark() -> None:
             # Store old graphics settings.
             self._old_quality = _ba.app.config.resolve('Graphics Quality')
             cfg = _ba.app.config
-            cfg['Graphics Quality'] = "Low"
+            cfg['Graphics Quality'] = 'Low'
             cfg.apply()
             self.benchmark_type = 'cpu'
             self.set_activity(_ba.new_activity(tutorial.TutorialActivity))
@@ -100,7 +100,7 @@ def stop_stress_test() -> None:
     _ba.set_stress_testing(False, 0)
     try:
         if _ba.app.stress_test_reset_timer is not None:
-            _ba.screenmessage("Ending stress test...", color=(1, 1, 0))
+            _ba.screenmessage('Ending stress test...', color=(1, 1, 0))
     except Exception:
         pass
     _ba.app.stress_test_reset_timer = None
@@ -156,7 +156,7 @@ def _reset_stress_test(args: Dict[str, Any]) -> None:
 
 def run_gpu_benchmark() -> None:
     """Kick off a benchmark to test gpu speeds."""
-    _ba.screenmessage("FIXME: Not wired up yet.", color=(1, 0, 0))
+    _ba.screenmessage('FIXME: Not wired up yet.', color=(1, 0, 0))
 
 
 def run_media_reload_benchmark() -> None:
@@ -174,7 +174,7 @@ def run_media_reload_benchmark() -> None:
                 _lang.get_resource('debugWindow.totalReloadTimeText').replace(
                     '${TIME}', str(_ba.time(TimeType.REAL) - start_time_2)))
             _ba.print_load_info()
-            if _ba.app.config.resolve("Texture Quality") != 'High':
+            if _ba.app.config.resolve('Texture Quality') != 'High':
                 _ba.screenmessage(_lang.get_resource(
                     'debugWindow.reloadBenchmarkBestResultsText'),
                                   color=(1, 1, 0))

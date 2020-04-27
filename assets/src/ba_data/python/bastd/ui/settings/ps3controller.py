@@ -57,8 +57,8 @@ class PS3ControllerSettingsWindow(ba.Window):
                                    subs=[('${APP_NAME}',
                                           ba.Lstr(resource='titleText'))]),
                       color=ba.app.title_color,
-                      h_align="center",
-                      v_align="center")
+                      h_align='center',
+                      v_align='center')
 
         ba.buttonwidget(edit=btn,
                         button_type='backSmall',
@@ -78,8 +78,8 @@ class PS3ControllerSettingsWindow(ba.Window):
                           scale=1.0,
                           text=ba.Lstr(resource=self._r +
                                        '.ouyaInstructionsText'),
-                          h_align="center",
-                          v_align="center")
+                          h_align='center',
+                          v_align='center')
         else:
             txts = ba.Lstr(resource=self._r +
                            '.macInstructionsText').evaluate().split('\n\n\n')
@@ -91,8 +91,8 @@ class PS3ControllerSettingsWindow(ba.Window):
                           max_height=170,
                           scale=1.0,
                           text=txts[0].strip(),
-                          h_align="center",
-                          v_align="center")
+                          h_align='center',
+                          v_align='center')
             if txts:
                 ba.textwidget(parent=self._root_widget,
                               position=(width * 0.5, v - 280),
@@ -102,8 +102,8 @@ class PS3ControllerSettingsWindow(ba.Window):
                               max_height=170,
                               scale=1.0,
                               text=txts[1].strip(),
-                              h_align="center",
-                              v_align="center")
+                              h_align='center',
+                              v_align='center')
 
             ba.buttonwidget(parent=self._root_widget,
                             position=(225, v - 176),

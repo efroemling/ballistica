@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     import ba
 
 DEFAULT_TEAM_COLORS = ((0.1, 0.25, 1.0), (1.0, 0.25, 0.2))
-DEFAULT_TEAM_NAMES = ("Blue", "Red")
+DEFAULT_TEAM_NAMES = ('Blue', 'Red')
 
 
 class MultiTeamSession(Session):
@@ -117,7 +117,7 @@ class MultiTeamSession(Session):
                                                       add_resolved_type=True)
 
         if not playlist_resolved:
-            raise RuntimeError("Playlist contains no valid games.")
+            raise RuntimeError('Playlist contains no valid games.')
 
         self._playlist = ShuffleList(playlist_resolved,
                                      shuffle=self._playlist_randomize)
@@ -263,7 +263,7 @@ class MultiTeamSession(Session):
         from ba._freeforallsession import FreeForAllSession
         from ba._messages import CelebrateMessage
         _ba.timer(delay,
-                  _general.Call(_ba.playsound, _ba.getsound("boxingBell")))
+                  _general.Call(_ba.playsound, _ba.getsound('boxingBell')))
         if announce_winning_team:
             winning_team = results.get_winning_team()
             if winning_team is not None:

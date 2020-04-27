@@ -163,8 +163,8 @@ class PlaylistAddGameWindow(ba.Window):
                                 position=(0, 0),
                                 size=(self._width - 88, 24),
                                 text=gametype.get_display_string(),
-                                h_align="left",
-                                v_align="center",
+                                h_align='left',
+                                v_align='center',
                                 color=(0.8, 0.8, 0.8, 1.0),
                                 maxwidth=self._scroll_width * 0.8,
                                 on_select_call=ba.Call(

@@ -112,8 +112,8 @@ class GraphicsSettingsWindow(ba.Window):
                       size=(width, 25),
                       text=ba.Lstr(resource=self._r + '.titleText'),
                       color=ba.app.title_color,
-                      h_align="center",
-                      v_align="top")
+                      h_align='center',
+                      v_align='top')
 
         ba.buttonwidget(edit=btn,
                         button_type='backSmall',
@@ -128,7 +128,7 @@ class GraphicsSettingsWindow(ba.Window):
                 position=(100, v),
                 maxwidth=200,
                 size=(300, 30),
-                configkey="Fullscreen",
+                configkey='Fullscreen',
                 displayname=ba.Lstr(resource=self._r +
                                     ('.fullScreenCmdText' if app.platform ==
                                      'mac' else '.fullScreenCtrlText'))).widget
@@ -145,7 +145,7 @@ class GraphicsSettingsWindow(ba.Window):
             self._gamma_controls = gmc = ConfigNumberEdit(
                 parent=self._root_widget,
                 position=(90, v),
-                configkey="Screen Gamma",
+                configkey='Screen Gamma',
                 displayname=ba.Lstr(resource=self._r + '.gammaText'),
                 minval=0.1,
                 maxval=2.0,
@@ -174,8 +174,8 @@ class GraphicsSettingsWindow(ba.Window):
                       color=ba.app.heading_color,
                       scale=0.65,
                       maxwidth=150,
-                      h_align="center",
-                      v_align="center")
+                      h_align='center',
+                      v_align='center')
         popup.PopupMenu(
             parent=self._root_widget,
             position=(60, v - 50),
@@ -202,8 +202,8 @@ class GraphicsSettingsWindow(ba.Window):
                       color=ba.app.heading_color,
                       scale=0.65,
                       maxwidth=150,
-                      h_align="center",
-                      v_align="center")
+                      h_align='center',
+                      v_align='center')
         textures_popup = popup.PopupMenu(
             parent=self._root_widget,
             position=(230, v - 50),
@@ -234,8 +234,8 @@ class GraphicsSettingsWindow(ba.Window):
                           color=ba.app.heading_color,
                           scale=0.65,
                           maxwidth=150,
-                          h_align="center",
-                          v_align="center")
+                          h_align='center',
+                          v_align='center')
 
             # on standard android we have 'Auto', 'Native', and a few
             # HD standards
@@ -308,8 +308,8 @@ class GraphicsSettingsWindow(ba.Window):
                           color=ba.app.heading_color,
                           scale=0.65,
                           maxwidth=150,
-                          h_align="center",
-                          v_align="center")
+                          h_align='center',
+                          v_align='center')
 
             popup.PopupMenu(
                 parent=self._root_widget,
@@ -330,7 +330,7 @@ class GraphicsSettingsWindow(ba.Window):
                               position=(69, v - 6),
                               size=(210, 30),
                               scale=0.86,
-                              configkey="Show FPS",
+                              configkey='Show FPS',
                               displayname=ba.Lstr(resource=self._r +
                                                   '.showFPSText'),
                               maxwidth=130)
@@ -341,7 +341,7 @@ class GraphicsSettingsWindow(ba.Window):
                                  position=(240, v - 6),
                                  size=(210, 30),
                                  scale=0.86,
-                                 configkey="TV Border",
+                                 configkey='TV Border',
                                  displayname=ba.Lstr(resource=self._r +
                                                      '.tvBorderText'),
                                  maxwidth=130)

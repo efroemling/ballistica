@@ -64,7 +64,7 @@ class TeamGameResults:
     def set_game(self, game: ba.GameActivity) -> None:
         """Set the game instance these results are applying to."""
         if self._game_set:
-            raise RuntimeError("Game set twice for TeamGameResults.")
+            raise RuntimeError('Game set twice for TeamGameResults.')
         self._game_set = True
         self._teams = [weakref.ref(team) for team in game.teams]
         score_info = game.get_resolved_score_info()

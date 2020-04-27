@@ -116,8 +116,8 @@ class SharePlaylistResultsWindow(ba.Window):
                       color=ba.app.infotextcolor,
                       scale=1.0,
                       flatness=1.0,
-                      h_align="center",
-                      v_align="center",
+                      h_align='center',
+                      v_align='center',
                       text=ba.Lstr(resource='exportSuccessText',
                                    subs=[('${NAME}', name)]),
                       maxwidth=self._width * 0.85)
@@ -129,8 +129,8 @@ class SharePlaylistResultsWindow(ba.Window):
             color=ba.app.infotextcolor,
             scale=0.6,
             flatness=1.0,
-            h_align="center",
-            v_align="center",
+            h_align='center',
+            v_align='center',
             text=ba.Lstr(resource='importPlaylistCodeInstructionsText'),
             maxwidth=self._width * 0.85)
 
@@ -139,8 +139,8 @@ class SharePlaylistResultsWindow(ba.Window):
                       size=(0, 0),
                       color=(1.0, 3.0, 1.0),
                       scale=2.3,
-                      h_align="center",
-                      v_align="center",
+                      h_align='center',
+                      v_align='center',
                       text=data,
                       maxwidth=self._width * 0.85)
 

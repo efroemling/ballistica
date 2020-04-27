@@ -669,7 +669,7 @@ class Chooser:
             # If we've been removed from the lobby, ignore this stuff.
             if self._dead:
                 from ba import _error
-                _error.print_error("chooser got ChangeMessage after dying")
+                _error.print_error('chooser got ChangeMessage after dying')
                 return
 
             if not self._text_node:

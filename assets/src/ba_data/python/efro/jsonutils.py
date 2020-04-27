@@ -58,8 +58,8 @@ class ExtendedJSONEncoder(json.JSONEncoder):
                     'datetime values must have timezone set as timezone.utc')
             return {
                 TYPE_TAG:
-                    "dt",
-                "v": [
+                    'dt',
+                'v': [
                     obj.year, obj.month, obj.day, obj.hour, obj.minute,
                     obj.second, obj.microsecond
                 ],
@@ -84,7 +84,7 @@ class ExtendedJSONDecoder(json.JSONDecoder):
         if objtype == 'dt':
             vals = obj.get('v', [])
             if len(vals) != 7:
-                raise ValueError("malformed datetime value")
+                raise ValueError('malformed datetime value')
             return datetime.datetime(  # type: ignore
                 *vals, tzinfo=datetime.timezone.utc)
         return obj

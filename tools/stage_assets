@@ -238,20 +238,20 @@ def _sync_windows_extras(cfg: Config) -> None:
         # over. The Python stuff in Extras is also used by some scripts
         # so there may be arbitrary non-opt pycs hanging around.
         _run(f'mkdir -p "{cfg.dst}/{dirname}"')
-        cmd = ("rsync --recursive --update --delete --delete-excluded "
-               " --prune-empty-dirs"
+        cmd = ('rsync --recursive --update --delete --delete-excluded '
+               ' --prune-empty-dirs'
                " --include '*.ico' --include '*.cat'"
                " --include '*.dll' --include '*.pyd'"
                " --include '*.py' --include '*." + OPT_PYC_SUFFIX + "'"
                " --include '*/' --exclude '*' \"" +
-               os.path.join(cfg.win_extras_src, dirname) + "/\" "
-               "\"" + cfg.dst + "/" + dirname + "/\"")
+               os.path.join(cfg.win_extras_src, dirname) + '/" '
+               '"' + cfg.dst + '/' + dirname + '/"')
         _run(cmd)
 
     # Now sync the top level individual files.
-    cmd = ("rsync --update " + cfg.win_extras_src + "/*.dll " +
-           cfg.win_extras_src + "/*.exe"
-           " \"" + cfg.dst + "/\"")
+    cmd = ('rsync --update ' + cfg.win_extras_src + '/*.dll ' +
+           cfg.win_extras_src + '/*.exe'
+           ' "' + cfg.dst + '/"')
     _run(cmd)
 
     # If we're running under WSL we won't be able to launch these .exe files
@@ -263,12 +263,12 @@ def _sync_pylib(cfg: Config) -> None:
     assert cfg.pylib_src_name is not None
     assert cfg.dst is not None
     _run(f'mkdir -p "{cfg.dst}/pylib"')
-    cmd = (f"rsync --recursive --update --delete --delete-excluded "
-           f" --prune-empty-dirs"
+    cmd = (f'rsync --recursive --update --delete --delete-excluded '
+           f' --prune-empty-dirs'
            f" --include '*.py' --include '*.{OPT_PYC_SUFFIX}'"
            f" --include '*/' --exclude '*'"
-           f" \"{cfg.src}/{cfg.pylib_src_name}/\" "
-           f"\"{cfg.dst}/pylib/\"")
+           f' "{cfg.src}/{cfg.pylib_src_name}/" '
+           f'"{cfg.dst}/pylib/"')
     _run(cmd)
 
 
@@ -297,8 +297,8 @@ def main() -> None:
     # Now standard common game data.
     assert cfg.dst is not None
     _run('mkdir -p "' + cfg.dst + '/ba_data"')
-    cmd = ("rsync --recursive --update --delete --delete-excluded"
-           " --prune-empty-dirs")
+    cmd = ('rsync --recursive --update --delete --delete-excluded'
+           ' --prune-empty-dirs')
 
     if cfg.include_scripts:
         cmd += " --include '*.py' --include '*." + OPT_PYC_SUFFIX + "'"
@@ -322,8 +322,8 @@ def main() -> None:
     if cfg.include_collide_models:
         cmd += " --include '*.cob'"
 
-    cmd += (" --include='*/' --exclude='*' \"" + cfg.src + "/ba_data/\" \"" +
-            cfg.dst + "/ba_data/\"")
+    cmd += (" --include='*/' --exclude='*' \"" + cfg.src + '/ba_data/" "' +
+            cfg.dst + '/ba_data/"')
     _run(cmd)
 
     # On Android we need to build a payload file so it knows

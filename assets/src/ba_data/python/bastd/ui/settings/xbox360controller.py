@@ -63,8 +63,8 @@ class XBox360ControllerSettingsWindow(ba.Window):
                                           ba.Lstr(resource='titleText'))]),
                       color=ba.app.title_color,
                       maxwidth=400,
-                      h_align="center",
-                      v_align="center")
+                      h_align='center',
+                      v_align='center')
 
         ba.buttonwidget(edit=btn,
                         button_type='backSmall',
@@ -84,8 +84,8 @@ class XBox360ControllerSettingsWindow(ba.Window):
                           scale=0.7,
                           text=ba.Lstr(resource=self._r +
                                        '.ouyaInstructionsText'),
-                          h_align="center",
-                          v_align="center")
+                          h_align='center',
+                          v_align='center')
         else:
             ba.textwidget(parent=self._root_widget,
                           position=(width * 0.5, v - 1),
@@ -96,8 +96,8 @@ class XBox360ControllerSettingsWindow(ba.Window):
                           text=ba.Lstr(resource=self._r +
                                        '.macInstructionsText'),
                           scale=0.7,
-                          h_align="center",
-                          v_align="center")
+                          h_align='center',
+                          v_align='center')
             v -= 90
             b_width = 300
             btn = ba.buttonwidget(
@@ -120,8 +120,8 @@ class XBox360ControllerSettingsWindow(ba.Window):
                           scale=0.7,
                           text=ba.Lstr(resource=self._r +
                                        '.macInstructions2Text'),
-                          h_align="center",
-                          v_align="center")
+                          h_align='center',
+                          v_align='center')
 
     def _back(self) -> None:
         from bastd.ui.settings import controls
