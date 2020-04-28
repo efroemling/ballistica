@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import random
 import weakref
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import _ba
@@ -118,19 +119,17 @@ class JoinInfo:
         self._state = (self._state + 1) % len(self._messages)
 
 
+@dataclass
 class PlayerReadyMessage:
     """Tells an object a player has been selected from the given chooser."""
-
-    def __init__(self, chooser: ba.Chooser):
-        self.chooser = chooser
+    chooser: ba.Chooser
 
 
+@dataclass
 class ChangeMessage:
-    """Tells an object a selection is being changed."""
-
-    def __init__(self, what: str, value: int):
-        self.what = what
-        self.value = value
+    """Tells an object that a selection is being changed."""
+    what: str
+    value: int
 
 
 class Chooser:
