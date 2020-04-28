@@ -170,13 +170,11 @@ class App:
         self._config.quit_reason = None
 
         # Do the thing.
-        # If we hit ANY Exceptions (including KeyboardInterrupt),
-        # we want to kill the server binary, so we need to catch BaseException.
+        # No matter how this ends up, make sure the process is dead after.
         try:
             self._run_process_until_exit()
-        except BaseException:
+        finally:
             self._kill_process()
-            raise
 
     def _subprocess_pre_exec(self) -> None:
         """To ignore CTRL+C signal in the new process."""
@@ -207,15 +205,14 @@ class App:
         self._process.stdin.write(cmd)
         self._process.stdin.flush()
 
-        # Now just sleep and run commands until the process exits.
         while True:
 
-            # If the app is trying to shut down, crap out of the subprocess.
+            # If the app is trying to shut down, nope out immediately.
             if self._done:
-                self._kill_process()
-                return
+                break
 
-            # Pass along any commands that have come in through stdin.
+            # Pass along any commands to the subprocess..
+            # FIXME add a lock for this...
             for incmd in self._input_commands:
                 print('WOULD PASS ALONG COMMAND', incmd)
             self._input_commands = []
@@ -235,16 +232,17 @@ class App:
             if code is not None:
                 print(f'Server process exited with code {code}.')
                 time.sleep(1.0)  # Keep things from moving too fast.
-                self._process = None
-                self._process_launch_time = None
+                self._process = self._process_launch_time = None
                 break
 
             time.sleep(0.25)
 
     def _kill_process(self) -> None:
-        """Forcefully end the server process."""
+        """End the server process if it still exists."""
+        if self._process is None:
+            return
+
         print('Stopping server process...')
-        assert self._process is not None
 
         # First, ask it nicely to die and give it a moment.
         # If that doesn't work, bring down the hammer.
@@ -253,6 +251,7 @@ class App:
             self._process.wait(timeout=10)
         except subprocess.TimeoutExpired:
             self._process.kill()
+        self._process = self._process_launch_time = None
         print('Server process stopped.')
 
 
