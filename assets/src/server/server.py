@@ -19,7 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # -----------------------------------------------------------------------------
-"""Functionality for running a BallisticaCore server."""
+"""BallisticaCore server management."""
 from __future__ import annotations
 
 import sys
@@ -46,11 +46,11 @@ if TYPE_CHECKING:
     from types import FrameType
 
 
-class App:
-    """Runs a BallisticaCore server.
+class ServerManagerApp:
+    """An app which manages BallisticaCore server execution.
 
-    Handles passing config values to the game and periodically restarting
-    the game binary to keep things fresh.
+    Handles configuring, launching, re-launching, and controlling
+    BallisticaCore binaries operating in server mode.
     """
 
     def __init__(self) -> None:
@@ -63,16 +63,14 @@ class App:
         self._binary_path = self._get_binary_path()
         self._config = ServerConfig()
 
-        # Print basic usage info in interactive mode.
-        if sys.stdin.isatty():
-            print('BallisticaCore server manager starting up...')
-
-        self._input_commands: List[str] = []
+        self._binary_commands: List[str] = []
+        self._binary_commands_lock = threading.Lock()
 
         # The server-binary will get relaunched after this amount of time
         # (combats memory leaks or other cruft that has built up).
         self._restart_minutes = 360.0
 
+        self._running_interactive = False
         self._done = False
         self._process: Optional[subprocess.Popen[bytes]] = None
         self._process_launch_time: Optional[float] = None
@@ -88,16 +86,20 @@ class App:
                 return path
         raise RuntimeError('Unable to locate ballisticacore_headless binary.')
 
-    def _read_input(self) -> None:
-        """Read from stdin and queue results for the app to handle."""
-        while True:
-            line = sys.stdin.readline()
-            self._input_commands.append(line.strip())
-
     def run_interactive(self) -> None:
         """Run the app loop to completion."""
         import code
         import signal
+
+        if self._running_interactive:
+            raise RuntimeError('Already running interactively.')
+        self._running_interactive = True
+
+        # Print basic usage info in interactive mode.
+        if sys.stdin.isatty():
+            print('BallisticaCore server manager starting up...\n'
+                  'Use the "mgr" object to make live server adjustments.\n'
+                  'Type "help(mgr)" for more information.')
 
         # Python will handle SIGINT for us (as KeyboardInterrupt) but we
         # need to register a SIGTERM handler if we want a chance to clean
@@ -109,9 +111,14 @@ class App:
         bgthread = threading.Thread(target=self._bg_thread_main)
         bgthread.start()
 
+        # According to Python docs, default locals dict has __name__ set
+        # to __console__ and __doc__ set to None; using that as start point.
+        # https://docs.python.org/3/library/code.html
+        locs = {'__name__': '__console__', '__doc__': None, 'mgr': self}
+
         # Now just sit in an interpreter.
         try:
-            code.interact(banner='', exitmsg='')
+            code.interact(local=locs, banner='', exitmsg='')
         except SystemExit:
             # We get this from the builtin quit(), etc.
             # Need to catch this so we can clean up, otherwise we'll be
@@ -123,6 +130,33 @@ class App:
         # Mark ourselves as shutting down and wait for bgthread to wrap up.
         self._done = True
         bgthread.join()
+
+    def cmd(self, statement: str) -> None:
+        """Exec a Python command on the current running server binary.
+
+        Note that commands are executed asynchronously and no status or
+        return value is accessible from this manager app.
+        """
+        if not isinstance(statement, str):
+            raise TypeError(f'Expected a string arg; got {type(statement)}')
+        with self._binary_commands_lock:
+            self._binary_commands.append(statement)
+
+        # Ideally we'd block here until the command was run so our prompt would
+        # print after it's results. We currently don't get any response from
+        # the app so the best we can do is block until our bg thread has sent
+        # it.
+        # In the future we can perhaps add a proper 'command port' interface
+        # for proper blocking two way communication.
+        while True:
+            with self._binary_commands_lock:
+                if not self._binary_commands:
+                    break
+            time.sleep(0.1)
+
+        # One last short delay so if we come out *just* as the command is sent
+        # we'll hopefully still give it enough time to process/print.
+        time.sleep(0.1)
 
     def _bg_thread_main(self) -> None:
         while not self._done:
@@ -136,7 +170,7 @@ class App:
     def _run_server_cycle(self) -> None:
         """Bring up the server binary and run it until exit."""
 
-        self._setup_process_config()
+        self._prep_process_environment()
 
         # Launch the binary and grab its stdin;
         # we'll use this to feed it commands.
@@ -181,7 +215,7 @@ class App:
         import signal
         signal.signal(signal.SIGINT, signal.SIG_IGN)
 
-    def _setup_process_config(self) -> None:
+    def _prep_process_environment(self) -> None:
         """Write files that must exist at process launch."""
         os.makedirs('ba_root', exist_ok=True)
         if os.path.exists('ba_root/config.json'):
@@ -213,9 +247,13 @@ class App:
 
             # Pass along any commands to the subprocess..
             # FIXME add a lock for this...
-            for incmd in self._input_commands:
-                print('WOULD PASS ALONG COMMAND', incmd)
-            self._input_commands = []
+            with self._binary_commands_lock:
+                for incmd in self._binary_commands:
+                    # We're passing a raw string to exec; no need to wrap it
+                    # in any proper structure.
+                    self._process.stdin.write((incmd + '\n').encode())
+                    self._process.stdin.flush()
+                self._binary_commands = []
 
             # Request a restart after a while.
             assert self._process_launch_time is not None
@@ -242,7 +280,7 @@ class App:
         if self._process is None:
             return
 
-        print('Stopping server process...')
+        print('Stopping server subprocess...')
 
         # First, ask it nicely to die and give it a moment.
         # If that doesn't work, bring down the hammer.
@@ -252,8 +290,8 @@ class App:
         except subprocess.TimeoutExpired:
             self._process.kill()
         self._process = self._process_launch_time = None
-        print('Server process stopped.')
+        print('Server subprocess stopped.')
 
 
 if __name__ == '__main__':
-    App().run_interactive()
+    ServerManagerApp().run_interactive()
