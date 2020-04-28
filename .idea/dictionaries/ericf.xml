@@ -86,6 +86,7 @@
       <w>armeabi</w>
       <w>arraymodule</w>
       <w>asdict</w>
+      <w>aspx</w>
       <w>assertnode</w>
       <w>assetbundle</w>
       <w>assetcache</w>
@@ -161,6 +162,7 @@
       <w>bgmodel</w>
       <w>bgterrain</w>
       <w>bgtex</w>
+      <w>bgthread</w>
       <w>bhval</w>
       <w>binc</w>
       <w>bindcode</w>
@@ -1328,6 +1330,7 @@
       <w>pragmas</w>
       <w>prch</w>
       <w>prec</w>
+      <w>preexec</w>
       <w>preflightfast</w>
       <w>preflightfull</w>
       <w>preflighting</w>

@@ -60,7 +60,6 @@ class ServerController:
     """
 
     def __init__(self, config: ServerConfig) -> None:
-        print('Server()')
 
         self._config = config
         self._playlist_name = '__default__'
@@ -102,7 +101,7 @@ class ServerController:
                   'with a signed in server account')
 
         if self._first_run:
-            print((('BallisticaCore headless '
+            print((('BallisticaCore '
                     if app.headless_build else 'BallisticaCore ') +
                    str(app.version) + ' (' + str(app.build_number) +
                    ') entering server-mode ' + time.strftime('%c')))

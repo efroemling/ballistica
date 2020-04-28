@@ -43,6 +43,7 @@ from bacommon.serverutils import (ServerConfig, ServerCommand,
 
 if TYPE_CHECKING:
     from typing import Optional, List
+    from types import FrameType
 
 
 class App:
@@ -62,31 +63,22 @@ class App:
         self._binary_path = self._get_binary_path()
         self._config = ServerConfig()
 
-        # Launch a thread to listen for input
-        # (in daemon mode so it won't prevent us from dying)
-        self._input_commands: List[str] = []
-        thread = threading.Thread(target=self._read_input)
-        thread.daemon = True
-        thread.start()
-
         # Print basic usage info in interactive mode.
         if sys.stdin.isatty():
-            print('BallisticaCore Server wrapper starting up...')
+            print('BallisticaCore server manager starting up...')
+
+        self._input_commands: List[str] = []
 
         # The server-binary will get relaunched after this amount of time
         # (combats memory leaks or other cruft that has built up).
         self._restart_minutes = 360.0
 
+        self._done = False
         self._process: Optional[subprocess.Popen[bytes]] = None
         self._process_launch_time: Optional[float] = None
 
-        # The standard python exit/quit help messages don't apply here
-        # so let's get rid of them.
-        del __builtins__.exit
-        del __builtins__.quit
-
     def _get_binary_path(self) -> str:
-        """Locate the game binary we'll run."""
+        """Locate the game binary that we'll use."""
         if os.name == 'nt':
             test_paths = ['ballisticacore_headless.exe']
         else:
@@ -100,15 +92,46 @@ class App:
         """Read from stdin and queue results for the app to handle."""
         while True:
             line = sys.stdin.readline()
-            print('read line', line)
             self._input_commands.append(line.strip())
 
-    def run(self) -> None:
+    def run_interactive(self) -> None:
         """Run the app loop to completion."""
+        import code
+        import signal
 
-        # We currently never stop until explicitly killed.
-        while True:
+        # Python will handle SIGINT for us (as KeyboardInterrupt) but we
+        # need to register a SIGTERM handler if we want a chance to clean
+        # up our child process when someone tells us to die. (and avoid
+        # zombie processes)
+        signal.signal(signal.SIGTERM, self._handle_term_signal)
+
+        # Fire off a background thread to wrangle our server binaries.
+        bgthread = threading.Thread(target=self._bg_thread_main)
+        bgthread.start()
+
+        # Now just sit in an interpreter.
+        try:
+            code.interact(banner='', exitmsg='')
+        except SystemExit:
+            # We get this from the builtin quit(), etc.
+            # Need to catch this so we can clean up, otherwise we'll be
+            # left in limbo with our BG thread still running.
+            pass
+        except BaseException as exc:
+            print('Got unexpected exception: ', exc)
+
+        # Mark ourselves as shutting down and wait for bgthread to wrap up.
+        self._done = True
+        bgthread.join()
+
+    def _bg_thread_main(self) -> None:
+        while not self._done:
             self._run_server_cycle()
+
+    def _handle_term_signal(self, sig: int, frame: FrameType) -> None:
+        """Handle signals (will always run in the main thread)."""
+        del sig, frame  # Unused.
+        raise SystemExit()
 
     def _run_server_cycle(self) -> None:
         """Bring up the server binary and run it until exit."""
@@ -118,8 +141,27 @@ class App:
         # Launch the binary and grab its stdin;
         # we'll use this to feed it commands.
         self._process_launch_time = time.time()
-        self._process = subprocess.Popen(
-            [self._binary_path, '-cfgdir', 'ba_root'], stdin=subprocess.PIPE)
+
+        # We don't want our subprocess to respond to Ctrl-C; we want to handle
+        # that ourself. So we need to do a bit of magic to accomplish that.
+        args = [self._binary_path, '-cfgdir', 'ba_root']
+        if sys.platform.startswith('win'):
+            # https://msdn.microsoft.com/en-us/library/windows/
+            # desktop/ms684863(v=vs.85).aspx
+            # CREATE_NEW_PROCESS_GROUP=0x00000200 -> If this flag is
+            # specified, CTRL+C signals will be disabled
+            self._process = subprocess.Popen(args,
+                                             stdin=subprocess.PIPE,
+                                             creationflags=0x00000200)
+        else:
+            # Note: Python docs tell us preexec_fn is unsafe with threads.
+            # https://docs.python.org/3/library/subprocess.html
+            # Perhaps we should just give the ballistica binary itself an
+            # option to ignore interrupt signals.
+            self._process = subprocess.Popen(  # pylint: disable=W1509
+                args,
+                stdin=subprocess.PIPE,
+                preexec_fn=self._subprocess_pre_exec)
 
         # Set quit to True any time after launching the server
         # to gracefully quit it at the next clean opportunity
@@ -135,6 +177,11 @@ class App:
         except BaseException:
             self._kill_process()
             raise
+
+    def _subprocess_pre_exec(self) -> None:
+        """To ignore CTRL+C signal in the new process."""
+        import signal
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
 
     def _setup_process_config(self) -> None:
         """Write files that must exist at process launch."""
@@ -163,6 +210,11 @@ class App:
         # Now just sleep and run commands until the process exits.
         while True:
 
+            # If the app is trying to shut down, crap out of the subprocess.
+            if self._done:
+                self._kill_process()
+                return
+
             # Pass along any commands that have come in through stdin.
             for incmd in self._input_commands:
                 print('WOULD PASS ALONG COMMAND', incmd)
@@ -181,7 +233,8 @@ class App:
             # Watch for the process exiting.
             code: Optional[int] = self._process.poll()
             if code is not None:
-                print('Server process exited with code ' + str(code))
+                print(f'Server process exited with code {code}.')
+                time.sleep(1.0)  # Keep things from moving too fast.
                 self._process = None
                 self._process_launch_time = None
                 break
@@ -204,7 +257,4 @@ class App:
 
 
 if __name__ == '__main__':
-    try:
-        App().run()
-    except KeyboardInterrupt:
-        pass
+    App().run_interactive()
