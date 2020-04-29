@@ -538,7 +538,7 @@ def checkenv() -> None:
                     f' found {_vstr(vnums)}.\n'
                     f'To upgrade it, try: "{PYTHON_BIN}'
                     f' -m pip install --upgrade {packagename}".\n'
-                    'Alternately, "tools/snippets intall_pip_reqs"'
+                    'Alternately, "tools/snippets install_pip_reqs"'
                     ' will update all pip requirements.')
 
     print('Environment ok.', flush=True)
