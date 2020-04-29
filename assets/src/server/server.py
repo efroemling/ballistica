@@ -42,7 +42,7 @@ from bacommon.serverutils import (ServerConfig, ServerCommand,
                                   make_server_command)
 
 if TYPE_CHECKING:
-    from typing import Optional, List
+    from typing import Optional, List, Dict
     from types import FrameType
 
 
@@ -86,6 +86,17 @@ class ServerManagerApp:
                 return path
         raise RuntimeError('Unable to locate ballisticacore_headless binary.')
 
+    def _enable_tab_completion(self, locs: Dict) -> None:
+        """Enable tab-completion on platforms where available (linux/mac)."""
+        try:
+            import readline
+            import rlcompleter
+            readline.set_completer(rlcompleter.Completer(locs).complete)
+            readline.parse_and_bind('tab:complete')
+        except ImportError:
+            # readline doesn't exist under windows; this is expected.
+            pass
+
     def run_interactive(self) -> None:
         """Run the app loop to completion."""
         import code
@@ -115,6 +126,9 @@ class ServerManagerApp:
         # to __console__ and __doc__ set to None; using that as start point.
         # https://docs.python.org/3/library/code.html
         locs = {'__name__': '__console__', '__doc__': None, 'mgr': self}
+
+        # Enable tab-completion if possible.
+        self._enable_tab_completion(locs)
 
         # Now just sit in an interpreter.
         try:
@@ -176,26 +190,27 @@ class ServerManagerApp:
         # we'll use this to feed it commands.
         self._process_launch_time = time.time()
 
+        # Set an environment var so the server process knows its being
+        # run under us. This causes it to ignore ctrl-c presses and other
+        # slight behavior tweaks.
+        os.environ['BA_SERVER_WRAPPER_MANAGED'] = '1'
+
         # We don't want our subprocess to respond to Ctrl-C; we want to handle
         # that ourself. So we need to do a bit of magic to accomplish that.
+        # FIXME: should just have the server itself handle that
         args = [self._binary_path, '-cfgdir', 'ba_root']
         if sys.platform.startswith('win'):
             # https://msdn.microsoft.com/en-us/library/windows/
             # desktop/ms684863(v=vs.85).aspx
             # CREATE_NEW_PROCESS_GROUP=0x00000200 -> If this flag is
             # specified, CTRL+C signals will be disabled
-            self._process = subprocess.Popen(args,
-                                             stdin=subprocess.PIPE,
-                                             creationflags=0x00000200)
-        else:
-            # Note: Python docs tell us preexec_fn is unsafe with threads.
-            # https://docs.python.org/3/library/subprocess.html
-            # Perhaps we should just give the ballistica binary itself an
-            # option to ignore interrupt signals.
-            self._process = subprocess.Popen(  # pylint: disable=W1509
+            self._process = subprocess.Popen(
                 args,
                 stdin=subprocess.PIPE,
-                preexec_fn=self._subprocess_pre_exec)
+                # creationflags=0x00000200
+            )
+        else:
+            self._process = subprocess.Popen(args, stdin=subprocess.PIPE)
 
         # Set quit to True any time after launching the server
         # to gracefully quit it at the next clean opportunity
@@ -210,10 +225,10 @@ class ServerManagerApp:
         finally:
             self._kill_process()
 
-    def _subprocess_pre_exec(self) -> None:
-        """To ignore CTRL+C signal in the new process."""
-        import signal
-        signal.signal(signal.SIGINT, signal.SIG_IGN)
+    # def _subprocess_pre_exec(self) -> None:
+    #     """To ignore CTRL+C signal in the new process."""
+    #     import signal
+    #     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
     def _prep_process_environment(self) -> None:
         """Write files that must exist at process launch."""
@@ -280,7 +295,7 @@ class ServerManagerApp:
         if self._process is None:
             return
 
-        print('Stopping server subprocess...')
+        print('Stopping server process...')
 
         # First, ask it nicely to die and give it a moment.
         # If that doesn't work, bring down the hammer.
@@ -290,7 +305,7 @@ class ServerManagerApp:
         except subprocess.TimeoutExpired:
             self._process.kill()
         self._process = self._process_launch_time = None
-        print('Server subprocess stopped.')
+        print('Server process stopped.')
 
 
 if __name__ == '__main__':

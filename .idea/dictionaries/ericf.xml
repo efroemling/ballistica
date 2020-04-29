@@ -360,6 +360,7 @@
       <w>cpus</w>
       <w>cpython</w>
       <w>crashlytics</w>
+      <w>creationflags</w>
       <w>creditslist</w>
       <w>cryptmodule</w>
       <w>cssclass</w>
@@ -1456,6 +1457,7 @@
       <w>rcfile</w>
       <w>rdict</w>
       <w>rdir</w>
+      <w>readline</w>
       <w>readlines</w>
       <w>realpath</w>
       <w>realsies</w>

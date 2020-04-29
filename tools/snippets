@@ -115,9 +115,6 @@ def resize_image() -> None:
     if not src.endswith('.png'):
         raise Exception('src must be a png')
     print('Creating: ' + os.path.basename(dst), file=sys.stderr)
-
-    # Switching to imagemagick from sips - hopefully this goes well
-    # so we'll be nice and cross-platform...
     efrotools.run('convert "' + src + '" -resize ' + str(width) + 'x' +
                   str(height) + ' "' + dst + '"')
 
