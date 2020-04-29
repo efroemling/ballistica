@@ -99,8 +99,8 @@ class PrefabTarget(Enum):
     SERVER_RELEASE = 'server-release'
 
 
-def _checkpaths(inpaths: List[str], category: SourceCategory,
-                target: str) -> bool:
+def _lazybuild_check_paths(inpaths: List[str], category: SourceCategory,
+                           target: str) -> bool:
     # pylint: disable=too-many-branches
 
     mtime = None if not os.path.exists(target) else os.path.getmtime(target)
@@ -159,31 +159,48 @@ def _checkpaths(inpaths: List[str], category: SourceCategory,
                 if _testpath(fpath):
                     return True
                 unchanged_count += 1
-    print(f'{CLRBLU}Skipping build of {tnamepretty}'
-          f' ({unchanged_count} inputs unchanged){CLREND}')
+    print(f'{CLRBLU}Lazybuild: skipping "{tnamepretty}"'
+          f' ({unchanged_count} inputs unchanged).{CLREND}')
     return False
 
 
-def lazy_build(target: str, category: SourceCategory, command: str) -> None:
-    """Run a build if anything in category is newer than target.
+def lazybuild(target: str, category: SourceCategory, command: str) -> None:
+    """Run a build if anything in some category is newer than a target.
 
-    Note that target's mod-time will always be updated when the build happens
-    regardless of whether the build itself did so itself.
+    This can be used as an optimization for build targets that *always* run.
+    As an example, a target that spins up a VM and runs a build can be
+    expensive even if the VM build process determines that nothing has changed
+    and does no work. We can use this to examine a broad swath of source files
+    and skip firing up the VM if nothing has changed. We can be overly broad
+    in the sources we look at since the worst result of a false positive change
+    is the VM spinning up and determining that no actual inputs have changed.
+    We could recreate this mechanism purely in the Makefile, but large numbers
+    of target sources can add significant overhead each time the Makefile is
+    invoked; in our case the cost is only incurred when a build is triggered.
+
+    Note that target's mod-time will *always* be updated to match the newest
+    source regardless of whether the build itself was triggered.
     """
     paths: List[str]
+
+    # Everything possibly affecting generated code.
     if category is SourceCategory.CODE_GEN:
-        # Everything possibly affecting generated code.
         paths = ['Makefile', 'tools/generate_code', 'src/generated_src']
+
+    # Everything possibly affecting asset builds.
     elif category is SourceCategory.ASSETS:
         paths = ['Makefile', 'tools/convert_util', 'assets/src']
+
+    # Everything possibly affecting CMake builds.
     elif category is SourceCategory.CMAKE:
-        # Everything possibly affecting CMake builds.
         paths = ['Makefile', 'src', 'ballisticacore-cmake/CMakeLists.txt']
+
+    # Everything possibly affecting Windows binary builds.
     elif category is SourceCategory.WIN:
-        # Everything possibly affecting Windows binary builds.
         paths = ['Makefile', 'src', 'resources/src']
+
+    # Everything possibly affecting resource builds.
     elif category is SourceCategory.RESOURCES:
-        # Everything possibly affecting resources builds.
         paths = [
             'Makefile', 'tools/snippets', 'resources/src', 'resources/Makefile'
         ]
@@ -191,8 +208,7 @@ def lazy_build(target: str, category: SourceCategory, command: str) -> None:
         raise ValueError(f'Invalid source category: {category}')
 
     # Now do the thing if any our our input mod times changed.
-    if _checkpaths(paths, category, target):
-
+    if _lazybuild_check_paths(paths, category, target):
         subprocess.run(command, shell=True, check=True)
 
         # We also explicitly update the mod-time of the target;
@@ -559,3 +575,58 @@ def update_makebob() -> None:
         check=True,
     )
     print('All builds complete!', flush=True)
+
+
+def _get_server_config_raw_contents() -> str:
+    import textwrap
+    with open('tools/bacommon/servermanager.py') as infile:
+        lines = infile.read().splitlines()
+    firstline = lines.index('class ServerConfig:') + 1
+    lastline = firstline + 1
+    while True:
+        line = lines[lastline]
+        if line != '' and not line.startswith('    '):
+            break
+        lastline += 1
+
+    # Move first line past doc-string to the first comment.
+    while not lines[firstline].startswith('    #'):
+        firstline += 1
+
+    # Back last line up to before last empty lines.
+    lastline -= 1
+    while lines[lastline] == '':
+        lastline -= 1
+
+    return textwrap.dedent('\n'.join(lines[firstline:lastline + 1]))
+
+
+def _get_server_config_template_yaml() -> str:
+    import yaml
+    lines_in = _get_server_config_raw_contents().splitlines()
+    lines_out: List[str] = []
+    for line in lines_in:
+        if line != '' and not line.startswith('#'):
+            vname, _vtype, veq, vval_raw = line.split()
+            assert vname.endswith(':')
+            vname = vname[:-1]
+            assert veq == '='
+            vval = eval(vval_raw)  # pylint: disable=eval-used
+
+            # Override a few specifics:
+            if vname == 'playlist_code':
+                vval = 12345
+            lines_out.append('#' + yaml.dump({vname: vval}).strip())
+        else:
+            lines_out.append(line)
+    return '\n'.join(lines_out)
+
+
+def filter_server_config(infilename: str, outfilename: str) -> None:
+    """Add commented-out config options to a server config."""
+    with open(infilename) as infile:
+        cfg = infile.read()
+    cfg = cfg.replace('#__CONFIG_TEMPLATE_VALUES__',
+                      _get_server_config_template_yaml())
+    with open(outfilename, 'w') as outfile:
+        outfile.write(cfg)

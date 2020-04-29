@@ -28,7 +28,7 @@ from typing import TYPE_CHECKING
 from ba._enums import TimeType
 from ba._freeforallsession import FreeForAllSession
 from ba._dualteamsession import DualTeamSession
-from bacommon.serverutils import ServerConfig, ServerCommand
+from bacommon.servermanager import ServerConfig, ServerCommand
 import _ba
 
 if TYPE_CHECKING:
@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 
 
 def _cmd(command_data: bytes) -> None:
-    """Handle commands coming in from the server wrapper."""
+    """Handle commands coming in from the server manager."""
     import pickle
     command, payload = pickle.loads(command_data)
     assert isinstance(command, ServerCommand)

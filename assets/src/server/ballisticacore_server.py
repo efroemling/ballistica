@@ -19,7 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # -----------------------------------------------------------------------------
-"""BallisticaCore server management."""
+"""BallisticaCore server manager."""
 from __future__ import annotations
 
 import sys
@@ -38,8 +38,8 @@ sys.path += [
     str(Path(os.getcwd(), 'dist', 'ba_data', 'python-site-packages'))
 ]
 
-from bacommon.serverutils import (ServerConfig, ServerCommand,
-                                  make_server_command)
+from bacommon.servermanager import (ServerConfig, ServerCommand,
+                                    make_server_command)
 
 if TYPE_CHECKING:
     from typing import Optional, List, Dict
@@ -113,7 +113,7 @@ class ServerManagerApp:
                   'Type "help(mgr)" for more information.')
 
         # Python will handle SIGINT for us (as KeyboardInterrupt) but we
-        # need to register a SIGTERM handler if we want a chance to clean
+        # need to register a SIGTERM handler so we have a chance to clean
         # up our child process when someone tells us to die. (and avoid
         # zombie processes)
         signal.signal(signal.SIGTERM, self._handle_term_signal)
@@ -159,9 +159,8 @@ class ServerManagerApp:
         # Ideally we'd block here until the command was run so our prompt would
         # print after it's results. We currently don't get any response from
         # the app so the best we can do is block until our bg thread has sent
-        # it.
-        # In the future we can perhaps add a proper 'command port' interface
-        # for proper blocking two way communication.
+        # it. In the future we can perhaps add a proper 'command port'
+        # interface for proper blocking two way communication.
         while True:
             with self._binary_commands_lock:
                 if not self._binary_commands:
@@ -241,8 +240,7 @@ class ServerManagerApp:
             if self._done:
                 break
 
-            # Pass along any commands to the subprocess..
-            # FIXME add a lock for this...
+            # Pass along any commands to the subprocess.
             with self._binary_commands_lock:
                 for incmd in self._binary_commands:
                     # We're passing a raw string to exec; no need to wrap it

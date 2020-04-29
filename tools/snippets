@@ -550,7 +550,7 @@ def ensure_prefab_platform() -> None:
 
 
 def prefab_run_var() -> None:
-    """Print a variable for running a prefab run for the current platform.
+    """Print a var for running a prefab run for the current platform.
 
     We use this mechanism instead of just having a command recursively run
     a make target so that ctrl-c can be handled cleanly and directly by the
@@ -601,9 +601,17 @@ def lazybuild() -> None:
     target = sys.argv[3]
     command = ' '.join(sys.argv[4:])
     try:
-        batools.build.lazy_build(target, category, command)
+        batools.build.lazybuild(target, category, command)
     except subprocess.CalledProcessError as exc:
         raise CleanError(exc)
+
+
+def filter_server_config() -> None:
+    """Add commented-out config options to a server config."""
+    import batools.build
+    if len(sys.argv) != 4:
+        raise CleanError('Expected 2 args (infile and outfile).')
+    batools.build.filter_server_config(sys.argv[2], sys.argv[3])
 
 
 if __name__ == '__main__':

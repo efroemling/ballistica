@@ -1,0 +1,7 @@
+# To configure your server, create a config.yaml file in the same directory
+# as the ballisticacore_server script. This template config file can be
+# copied or renamed as a convenient starting point.
+
+# Uncomment any of these values to set them.
+
+#__CONFIG_TEMPLATE_VALUES__

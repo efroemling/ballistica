@@ -610,6 +610,7 @@
       <w>firebase</w>
       <w>firestore</w>
       <w>firetv</w>
+      <w>firstline</w>
       <w>flac</w>
       <w>flagmat</w>
       <w>flagmaterial</w>
@@ -853,6 +854,7 @@
       <w>inet</w>
       <w>inext</w>
       <w>infileb</w>
+      <w>infilename</w>
       <w>infos</w>
       <w>infotextcolor</w>
       <w>inidividual</w>
@@ -931,6 +933,7 @@
       <w>langs</w>
       <w>langtarget</w>
       <w>langval</w>
+      <w>lastline</w>
       <w>lastplayer</w>
       <w>lastpoweruptype</w>
       <w>laststand</w>
@@ -1237,6 +1240,7 @@
       <w>outdata</w>
       <w>outdelay</w>
       <w>outext</w>
+      <w>outfilename</w>
       <w>outname</w>
       <w>outpath</w>
       <w>ouya</w>
@@ -1547,6 +1551,7 @@
       <w>servercmd</w>
       <w>serverdialog</w>
       <w>serverget</w>
+      <w>servermanager</w>
       <w>serverput</w>
       <w>serverutils</w>
       <w>sessionclass</w>
@@ -1910,6 +1915,7 @@
       <w>vmshell</w>
       <w>vmware</w>
       <w>vmwarevm</w>
+      <w>vname</w>
       <w>vnums</w>
       <w>vobj</w>
       <w>voffs</w>
@@ -1921,6 +1927,7 @@
       <w>vstr</w>
       <w>vsync</w>
       <w>vsyncs</w>
+      <w>vtype</w>
       <w>vval</w>
       <w>waaah</w>
       <w>wanttype</w>

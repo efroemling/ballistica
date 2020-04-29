@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # -----------------------------------------------------------------------------
-"""Functionality related to running standalone server."""
+"""Functionality related to the server manager script."""
 from __future__ import annotations
 
 from enum import Enum
@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 
 @dataclass
 class ServerConfig:
-    """Configuration for running a standalone server."""
+    """Configuration for the server manager script."""
 
     # Name of our server in the public parties list.
     party_name: str = 'FFA'
@@ -116,8 +116,8 @@ class ServerConfig:
     quit_reason: Optional[str] = None
 
 
-# NOTE: as much as possible, communication from the server-wrapper to the
-# server-binary should go through this and not ad-hoc python string commands
+# NOTE: as much as possible, communication from the server-manager to the
+# child binary should go through this and not ad-hoc python string commands
 # since this way is type safe.
 class ServerCommand(Enum):
     """Command types that can be sent to the app in server-mode."""

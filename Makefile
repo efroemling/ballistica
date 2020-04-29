@@ -183,15 +183,22 @@ prefab-mac-server-debug: prefab-mac-server-debug-build
 prefab-mac-server-debug-build: prereqs assets-cmake \
  build/prefab/mac-server/debug/dist/ballisticacore_headless \
  build/prefab/mac-server/debug/ballisticacore_server \
- build/prefab/mac-server/debug/config_template.yaml
+ build/prefab/mac-server/debug/config_template.yaml \
+ build/prefab/mac-server/debug/README.txt
 	@${STAGE_ASSETS} -cmake-server build/prefab/mac-server/debug/dist
 
 build/prefab/mac-server/debug/ballisticacore_server: \
- assets/src/server/server.py
+ assets/src/server/ballisticacore_server.py
 	@cp $< $@
 
 build/prefab/mac-server/debug/config_template.yaml: \
- assets/src/server/config.yaml
+ assets/src/server/config_template.yaml \
+ tools/batools/build.py \
+ tools/bacommon/servermanager.py
+	@tools/snippets filter_server_config $< $@
+
+build/prefab/mac-server/debug/README.txt: \
+ assets/src/server/README.txt
 	@cp $< $@
 
 build/prefab/mac-server/debug/dist/ballisticacore_headless: .efrocachemap
@@ -207,15 +214,22 @@ prefab-mac-server-release: prefab-mac-server-release-build
 prefab-mac-server-release-build: prereqs assets-cmake \
  build/prefab/mac-server/release/dist/ballisticacore_headless \
  build/prefab/mac-server/release/ballisticacore_server \
- build/prefab/mac-server/release/config_template.yaml
+ build/prefab/mac-server/release/config_template.yaml \
+ build/prefab/mac-server/release/README.txt
 	@${STAGE_ASSETS} -cmake-server build/prefab/mac-server/release/dist
 
 build/prefab/mac-server/release/ballisticacore_server: \
- assets/src/server/server.py
+ assets/src/server/ballisticacore_server.py
 	@cp $< $@
 
 build/prefab/mac-server/release/config_template.yaml: \
- assets/src/server/config.yaml
+ assets/src/server/config_template.yaml \
+ tools/batools/build.py \
+ tools/bacommon/servermanager.py
+	@tools/snippets filter_server_config $< $@
+
+build/prefab/mac-server/release/README.txt: \
+ assets/src/server/README.txt
 	@cp $< $@
 
 build/prefab/mac-server/release/dist/ballisticacore_headless: .efrocachemap
@@ -257,15 +271,22 @@ prefab-linux-server-debug: prefab-linux-server-debug-build
 prefab-linux-server-debug-build: prereqs assets-cmake \
  build/prefab/linux-server/debug/dist/ballisticacore_headless \
  build/prefab/linux-server/debug/ballisticacore_server \
- build/prefab/linux-server/debug/config_template.yaml
+ build/prefab/linux-server/debug/config_template.yaml \
+ build/prefab/linux-server/debug/README.txt
 	@${STAGE_ASSETS} -cmake-server build/prefab/linux-server/debug/dist
 
 build/prefab/linux-server/debug/ballisticacore_server: \
- assets/src/server/server.py
+ assets/src/server/ballisticacore_server.py
 	@cp $< $@
 
 build/prefab/linux-server/debug/config_template.yaml: \
- assets/src/server/config.yaml
+ assets/src/server/config_template.yaml \
+ tools/batools/build.py \
+ tools/bacommon/servermanager.py
+	@tools/snippets filter_server_config $< $@
+
+build/prefab/linux-server/debug/README.txt: \
+ assets/src/server/README.txt
 	@cp $< $@
 
 build/prefab/linux-server/debug/dist/ballisticacore_headless: .efrocachemap
@@ -281,15 +302,22 @@ prefab-linux-server-release: prefab-linux-server-release-build
 prefab-linux-server-release-build: prereqs assets-cmake \
  build/prefab/linux-server/release/dist/ballisticacore_headless \
  build/prefab/linux-server/release/ballisticacore_server \
- build/prefab/linux-server/release/config_template.yaml
+ build/prefab/linux-server/release/config_template.yaml \
+ build/prefab/linux-server/release/README.txt
 	@${STAGE_ASSETS} -cmake-server build/prefab/linux-server/release/dist
 
 build/prefab/linux-server/release/ballisticacore_server: \
- assets/src/server/server.py
+ assets/src/server/ballisticacore_server.py
 	@cp $< $@
 
 build/prefab/linux-server/release/config_template.yaml: \
- assets/src/server/config.yaml
+ assets/src/server/config_template.yaml \
+ tools/batools/build.py \
+ tools/bacommon/servermanager.py
+	@tools/snippets filter_server_config $< $@
+
+build/prefab/linux-server/release/README.txt: \
+ assets/src/server/README.txt
 	@cp $< $@
 
 build/prefab/linux-server/release/dist/ballisticacore_headless: .efrocachemap
@@ -337,7 +365,8 @@ prefab-windows-server-debug-build: prereqs \
  build/prefab/windows-server/debug/dist/ballisticacore_headless.exe \
  build/prefab/windows-server/debug/launch_ballisticacore_server.bat \
  build/prefab/windows-server/debug/ballisticacore_server.py \
- build/prefab/windows-server/debug/config_template.yaml
+ build/prefab/windows-server/debug/config_template.yaml \
+ build/prefab/windows-server/debug/README.txt
 	@${STAGE_ASSETS} -win-$(PREFAB_WINDOWS_PLATFORM) \
  build/prefab/windows-server/debug/dist
 
@@ -345,15 +374,21 @@ build/prefab/windows-server/debug/dist/ballisticacore_headless.exe: .efrocachema
 	@tools/snippets efrocache_get $@
 
 build/prefab/windows-server/debug/ballisticacore_server.py: \
- assets/src/server/server.py
+ assets/src/server/ballisticacore_server.py
 	@cp $< $@
 
 build/prefab/windows-server/debug/launch_ballisticacore_server.bat: \
- assets/src/server/server.bat
+ assets/src/server/launch_ballisticacore_server.bat
 	@cp $< $@
 
 build/prefab/windows-server/debug/config_template.yaml: \
- assets/src/server/config.yaml
+ assets/src/server/config_template.yaml \
+ tools/batools/build.py \
+ tools/bacommon/servermanager.py
+	@tools/snippets filter_server_config $< $@
+
+build/prefab/windows-server/debug/README.txt: \
+ assets/src/server/README.txt
 	@cp $< $@
 
 RUN_PREFAB_WINDOWS_SERVER_RELEASE = cd build/prefab/windows-server/release \
@@ -368,7 +403,8 @@ prefab-windows-server-release-build: prereqs \
  build/prefab/windows-server/release/dist/ballisticacore_headless.exe \
  build/prefab/windows-server/release/launch_ballisticacore_server.bat \
  build/prefab/windows-server/release/ballisticacore_server.py \
- build/prefab/windows-server/release/config_template.yaml
+ build/prefab/windows-server/release/config_template.yaml \
+ build/prefab/windows-server/release/README.txt
 	@${STAGE_ASSETS} -win-$(PREFAB_WINDOWS_PLATFORM) \
  build/prefab/windows-server/release/dist
 
@@ -376,15 +412,21 @@ build/prefab/windows-server/release/dist/ballisticacore_headless.exe: .efrocache
 	@tools/snippets efrocache_get $@
 
 build/prefab/windows-server/release/ballisticacore_server.py: \
- assets/src/server/server.py
+ assets/src/server/ballisticacore_server.py
 	@cp $< $@
 
 build/prefab/windows-server/release/launch_ballisticacore_server.bat: \
- assets/src/server/server.bat
+ assets/src/server/launch_ballisticacore_server.bat
 	@cp $< $@
 
 build/prefab/windows-server/release/config_template.yaml: \
- assets/src/server/config.yaml
+ assets/src/server/config_template.yaml \
+ tools/batools/build.py \
+ tools/bacommon/servermanager.py
+	@tools/snippets filter_server_config $< $@
+
+build/prefab/windows-server/release/README.txt: \
+ assets/src/server/README.txt
 	@cp $< $@
 
 prefab-clean:

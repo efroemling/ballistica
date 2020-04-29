@@ -63,7 +63,7 @@ def snippets_main(globs: Dict[str, Any]) -> None:
     show_help = False
     retval = 0
     if len(sys.argv) < 2:
-        print('ERROR: command expected.')
+        print(f'{CLRRED}ERROR: command expected.{CLREND}')
         show_help = True
         retval = 255
     else:

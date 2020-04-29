@@ -111,10 +111,10 @@
  "ba_data/python/bacommon/__pycache__/__init__.cpython-37.opt-1.pyc",
  "ba_data/python/bacommon/__pycache__/assets.cpython-37.opt-1.pyc",
  "ba_data/python/bacommon/__pycache__/err.cpython-37.opt-1.pyc",
- "ba_data/python/bacommon/__pycache__/serverutils.cpython-37.opt-1.pyc",
+ "ba_data/python/bacommon/__pycache__/servermanager.cpython-37.opt-1.pyc",
  "ba_data/python/bacommon/assets.py",
  "ba_data/python/bacommon/err.py",
- "ba_data/python/bacommon/serverutils.py",
+ "ba_data/python/bacommon/servermanager.py",
  "ba_data/python/bastd/__init__.py",
  "ba_data/python/bastd/__pycache__/__init__.cpython-37.opt-1.pyc",
  "ba_data/python/bastd/__pycache__/appdelegate.cpython-37.opt-1.pyc",
@@ -473,6 +473,6 @@
  "ba_data/python/efro/executils.py",
  "ba_data/python/efro/jsonutils.py",
  "ba_data/python/efro/util.py",
- "server/__pycache__/server.cpython-37.opt-1.pyc",
- "server/server.py"
+ "server/__pycache__/ballisticacore_server.cpython-37.opt-1.pyc",
+ "server/ballisticacore_server.py"
 ]
