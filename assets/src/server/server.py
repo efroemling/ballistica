@@ -192,25 +192,11 @@ class ServerManagerApp:
 
         # Set an environment var so the server process knows its being
         # run under us. This causes it to ignore ctrl-c presses and other
-        # slight behavior tweaks.
+        # slight behavior tweaks. Hmm; should this be an argument instead?
         os.environ['BA_SERVER_WRAPPER_MANAGED'] = '1'
 
-        # We don't want our subprocess to respond to Ctrl-C; we want to handle
-        # that ourself. So we need to do a bit of magic to accomplish that.
-        # FIXME: should just have the server itself handle that
-        args = [self._binary_path, '-cfgdir', 'ba_root']
-        if sys.platform.startswith('win'):
-            # https://msdn.microsoft.com/en-us/library/windows/
-            # desktop/ms684863(v=vs.85).aspx
-            # CREATE_NEW_PROCESS_GROUP=0x00000200 -> If this flag is
-            # specified, CTRL+C signals will be disabled
-            self._process = subprocess.Popen(
-                args,
-                stdin=subprocess.PIPE,
-                # creationflags=0x00000200
-            )
-        else:
-            self._process = subprocess.Popen(args, stdin=subprocess.PIPE)
+        self._process = subprocess.Popen(
+            [self._binary_path, '-cfgdir', 'ba_root'], stdin=subprocess.PIPE)
 
         # Set quit to True any time after launching the server
         # to gracefully quit it at the next clean opportunity
@@ -224,11 +210,6 @@ class ServerManagerApp:
             self._run_process_until_exit()
         finally:
             self._kill_process()
-
-    # def _subprocess_pre_exec(self) -> None:
-    #     """To ignore CTRL+C signal in the new process."""
-    #     import signal
-    #     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
     def _prep_process_environment(self) -> None:
         """Write files that must exist at process launch."""
