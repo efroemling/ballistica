@@ -165,6 +165,7 @@
       <w>bgthread</w>
       <w>bhval</w>
       <w>binc</w>
+      <w>bincfg</w>
       <w>bindcode</w>
       <w>bindvals</w>
       <w>bisectmodule</w>
@@ -512,6 +513,7 @@
       <w>efrotool</w>
       <w>efrotools</w>
       <w>eftools</w>
+      <w>efxjtp</w>
       <w>eids</w>
       <w>elementtree</w>
       <w>elim</w>
@@ -588,6 +590,8 @@
       <w>fhashes</w>
       <w>fhdr</w>
       <w>fieldattr</w>
+      <w>fieldsdict</w>
+      <w>fieldtype</w>
       <w>fieldtypes</w>
       <w>filebytes</w>
       <w>filecmp</w>
@@ -941,6 +945,7 @@
       <w>lazybuild</w>
       <w>lazybuilddir</w>
       <w>lbits</w>
+      <w>lbld</w>
       <w>lcfg</w>
       <w>lcolor</w>
       <w>lcrypto</w>
@@ -1208,13 +1213,16 @@
       <w>objs</w>
       <w>objt</w>
       <w>objtype</w>
+      <w>obval</w>
       <w>occurrances</w>
       <w>oculus</w>
       <w>offsanchor</w>
+      <w>ofval</w>
       <w>oggenc</w>
       <w>oghash</w>
       <w>oghashes</w>
       <w>ogval</w>
+      <w>oival</w>
       <w>oldlady</w>
       <w>onln</w>
       <w>onscreencountdown</w>
@@ -1234,6 +1242,7 @@
       <w>osascript</w>
       <w>osmusic</w>
       <w>ostype</w>
+      <w>osval</w>
       <w>otherplayer</w>
       <w>otherspawn</w>
       <w>ourself</w>
@@ -1473,6 +1482,8 @@
       <w>representer</w>
       <w>reprlib</w>
       <w>reqs</w>
+      <w>reqtype</w>
+      <w>reqtypes</w>
       <w>resample</w>
       <w>resourcetypeinfo</w>
       <w>respawn</w>
@@ -1573,6 +1584,7 @@
       <w>shiftposition</w>
       <w>shouldn</w>
       <w>showpoints</w>
+      <w>showstats</w>
       <w>showsubseconds</w>
       <w>shroom</w>
       <w>shutil</w>
@@ -1720,6 +1732,7 @@
       <w>tbutton</w>
       <w>tcall</w>
       <w>tchar</w>
+      <w>tclass</w>
       <w>tcombine</w>
       <w>tdelay</w>
       <w>tdval</w>
@@ -1833,6 +1846,7 @@
       <w>txtval</w>
       <w>txtw</w>
       <w>typeargs</w>
+      <w>typecheck</w>
       <w>typechecker</w>
       <w>typedval</w>
       <w>typeshed</w>

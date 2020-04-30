@@ -615,11 +615,17 @@ def _get_server_config_template_yaml() -> str:
             assert veq == '='
             vval = eval(vval_raw)  # pylint: disable=eval-used
 
-            # Override a few specifics:
+            # Filter/override a few things.
             if vname == 'playlist_code':
+                # User wouldn't want to pass the default of None here.
                 vval = 12345
+            elif vname == 'stats_url':
+                vval = ('https://mystatssite.com/'
+                        'showstats?player=${ACCOUNT}')
             lines_out.append('#' + yaml.dump({vname: vval}).strip())
         else:
+            # Convert comments referring to python bools to yaml bools.
+            line = line.replace('True', 'true').replace('False', 'false')
             lines_out.append(line)
     return '\n'.join(lines_out)
 

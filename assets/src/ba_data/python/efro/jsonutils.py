@@ -30,8 +30,8 @@ if TYPE_CHECKING:
     from typing import Any
 
 # Special attr we included for our extended type information
-# (extended-json-type)
-TYPE_TAG = '_xjtp'
+# (efro-extended-json-type)
+TYPE_TAG = '_efxjtp'
 
 _pytz_utc: Any
 

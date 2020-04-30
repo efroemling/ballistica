@@ -104,8 +104,8 @@ class ServerConfig:
     # this to provide a convenient in-game link to it in the server-browser
     # beside the server name.
     # if ${ACCOUNT} is present in the string, it will be replaced by the
-    # currently-signed-in account's id.  To get info about an account,
-    # you can use the following url:
+    # currently-signed-in account's id. To fetch info about an account,
+    # your backend server can use the following url:
     # http://bombsquadgame.com/accountquery?id=ACCOUNT_ID_HERE
     stats_url: Optional[str] = None
 

@@ -31,8 +31,8 @@ import time
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-# We make use of the bacommon package and site-packages included
-# with our bundled Ballistica dist.
+# We make use of the bacommon and efro packages as well as site-packages
+# included with our bundled Ballistica dist.
 sys.path += [
     str(Path(os.getcwd(), 'dist', 'ba_data', 'python')),
     str(Path(os.getcwd(), 'dist', 'ba_data', 'python-site-packages'))
@@ -40,6 +40,7 @@ sys.path += [
 
 from bacommon.servermanager import (ServerConfig, ServerCommand,
                                     make_server_command)
+from efro.dataclassutils import dataclass_assign
 
 if TYPE_CHECKING:
     from typing import Optional, List, Dict
@@ -55,13 +56,14 @@ class ServerManagerApp:
 
     def __init__(self) -> None:
 
-        # We actually run from the 'dist' subdir.
+        self._config = self._load_config()
+
+        # We actually operate from the 'dist' subdir.
         if not os.path.isdir('dist'):
             raise RuntimeError('"dist" directory not found.')
         os.chdir('dist')
 
         self._binary_path = self._get_binary_path()
-        self._config = ServerConfig()
 
         self._binary_commands: List[str] = []
         self._binary_commands_lock = threading.Lock()
@@ -74,6 +76,31 @@ class ServerManagerApp:
         self._done = False
         self._process: Optional[subprocess.Popen[bytes]] = None
         self._process_launch_time: Optional[float] = None
+
+    @property
+    def config(self) -> ServerConfig:
+        """The current config settings for the app."""
+        return self._config
+
+    def _load_config(self) -> ServerConfig:
+        user_config_path = 'config.yaml'
+
+        # Start with a default config, and if there is a config.yaml,
+        # override parts of it.
+        config = ServerConfig()
+        if os.path.exists(user_config_path):
+            import yaml
+            with open(user_config_path) as infile:
+                user_config = yaml.safe_load(infile.read())
+                dataclass_assign(config, user_config)
+
+            # An empty config file will yield None, and that's ok.
+            if user_config is not None:
+                if not isinstance(user_config, dict):
+                    raise RuntimeError(f'Invalid config format; expected dict,'
+                                       f' got {type(user_config)}.')
+
+        return config
 
     def _get_binary_path(self) -> str:
         """Locate the game binary that we'll use."""
@@ -215,15 +242,15 @@ class ServerManagerApp:
         os.makedirs('ba_root', exist_ok=True)
         if os.path.exists('ba_root/config.json'):
             with open('ba_root/config.json') as infile:
-                bacfg = json.loads(infile.read())
+                bincfg = json.loads(infile.read())
         else:
-            bacfg = {}
-        bacfg['Port'] = self._config.port
-        bacfg['Enable Telnet'] = self._config.enable_telnet
-        bacfg['Telnet Port'] = self._config.telnet_port
-        bacfg['Telnet Password'] = self._config.telnet_password
+            bincfg = {}
+        bincfg['Port'] = self._config.port
+        bincfg['Enable Telnet'] = self._config.enable_telnet
+        bincfg['Telnet Port'] = self._config.telnet_port
+        bincfg['Telnet Password'] = self._config.telnet_password
         with open('ba_root/config.json', 'w') as outfile:
-            outfile.write(json.dumps(bacfg))
+            outfile.write(json.dumps(bincfg))
 
     def _run_process_until_exit(self) -> None:
         assert self._process is not None
