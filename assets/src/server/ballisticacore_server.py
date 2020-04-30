@@ -38,9 +38,9 @@ sys.path += [
     str(Path(os.getcwd(), 'dist', 'ba_data', 'python-site-packages'))
 ]
 
+from efro.dataclassutils import dataclass_assign, dataclass_validate
 from bacommon.servermanager import (ServerConfig, ServerCommand,
                                     make_server_command)
-from efro.dataclassutils import dataclass_assign
 
 if TYPE_CHECKING:
     from typing import Optional, List, Dict
@@ -50,8 +50,8 @@ if TYPE_CHECKING:
 class ServerManagerApp:
     """An app which manages BallisticaCore server execution.
 
-    Handles configuring, launching, re-launching, and controlling
-    BallisticaCore binaries operating in server mode.
+    Handles configuring, launching, re-launching, and otherwise
+    managing a BallisticaCore binary operating as a server.
     """
 
     def __init__(self) -> None:
@@ -82,11 +82,16 @@ class ServerManagerApp:
         """The current config settings for the app."""
         return self._config
 
+    @config.setter
+    def config(self, value: ServerConfig) -> None:
+        dataclass_validate(value)
+        self._config = value
+
     def _load_config(self) -> ServerConfig:
         user_config_path = 'config.yaml'
 
         # Start with a default config, and if there is a config.yaml,
-        # override parts of it.
+        # assign whatever is contained within.
         config = ServerConfig()
         if os.path.exists(user_config_path):
             import yaml
@@ -99,7 +104,6 @@ class ServerManagerApp:
                 if not isinstance(user_config, dict):
                     raise RuntimeError(f'Invalid config format; expected dict,'
                                        f' got {type(user_config)}.')
-
         return config
 
     def _get_binary_path(self) -> str:
@@ -256,6 +260,8 @@ class ServerManagerApp:
         assert self._process is not None
 
         # Send the initial server config which should kick things off.
+        # (but make sure its values are still valid first)
+        dataclass_validate(self._config)
         cmd = make_server_command(ServerCommand.CONFIG, self._config)
         assert self._process.stdin is not None
         self._process.stdin.write(cmd)

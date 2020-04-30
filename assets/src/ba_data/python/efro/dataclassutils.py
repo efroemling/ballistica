@@ -27,9 +27,9 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Any, Dict, Type, Tuple
 
-# For fields with these type strings, we require a passed value's type
+# For fields with these string types, we require a passed value's type
 # to exactly match one of the tuple values to consider the assignment valid.
-_ASSIGN_TYPES: Dict[str, Tuple[Type, ...]] = {
+_SIMPLE_ASSIGN_TYPES: Dict[str, Tuple[Type, ...]] = {
     'bool': (bool, ),
     'str': (str, ),
     'int': (int, ),
@@ -55,9 +55,9 @@ def dataclass_assign(instance: Any, values: Dict[str, Any]) -> None:
     An AttributeError will be raised if attributes are passed which are
     not present on the dataclass as fields.
 
-    This function may be significantly slower than simply passing dict
+    This function may add significant overhead compared to passing dict
     values to a dataclass' constructor or other more direct methods, but
-    the increased safety checks may be worth the extra overhead in some
+    the increased safety checks may be worth the speed tradeoff in some
     cases.
     """
     if not dataclasses.is_dataclass(instance):
@@ -72,8 +72,8 @@ def dataclass_assign(instance: Any, values: Dict[str, Any]) -> None:
                                  f" no '{key}' field.")
         field = fieldsdict[key]
 
-        # We expect to be operating with 'from __future__ import annotations'
-        # so this should always be a string for us; not an actual type.
+        # We expect to be operating under 'from __future__ import annotations'
+        # so field types should always be strings for us; not an actual types.
         # Complain if we come across an actual type.
         fieldtype: str = field.type  # type: ignore
         if not isinstance(fieldtype, str):
@@ -82,11 +82,10 @@ def dataclass_assign(instance: Any, values: Dict[str, Any]) -> None:
                 f' been created without "from __future__ import annotations";'
                 f' those dataclasses are unsupported here.')
 
-        reqtypes = _ASSIGN_TYPES.get(fieldtype)
+        reqtypes = _SIMPLE_ASSIGN_TYPES.get(fieldtype)
         if reqtypes is not None:
             # pylint: disable=unidiomatic-typecheck
             if not any(type(value) is t for t in reqtypes):
-                # if not isinstance(value, reqtype):
                 if len(reqtypes) == 1:
                     expected = reqtypes[0].__name__
                 else:
@@ -105,8 +104,8 @@ def dataclass_assign(instance: Any, values: Dict[str, Any]) -> None:
 def dataclass_validate(instance: Any) -> None:
     """Ensure values in a dataclass are correct types.
 
-    Note that this will always fail if a dataclass has value types
-    unsupported by this module.
+    Note that this will always fail if a dataclass contains field types
+    not supported by this module.
     """
     # We currently simply operate by grabbing dataclass values as a dict
     # and passing them through dataclass_assign().
