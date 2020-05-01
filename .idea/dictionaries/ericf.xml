@@ -553,6 +553,7 @@
       <w>errored</w>
       <w>erroring</w>
       <w>errorsound</w>
+      <w>errstr</w>
       <w>etcpack</w>
       <w>etsel</w>
       <w>etxt</w>
@@ -867,6 +868,7 @@
       <w>inext</w>
       <w>infileb</w>
       <w>infilename</w>
+      <w>infilepath</w>
       <w>infos</w>
       <w>infotextcolor</w>
       <w>inidividual</w>
@@ -1259,6 +1261,7 @@
       <w>outdelay</w>
       <w>outext</w>
       <w>outfilename</w>
+      <w>outfilepath</w>
       <w>outname</w>
       <w>outpath</w>
       <w>ouya</w>

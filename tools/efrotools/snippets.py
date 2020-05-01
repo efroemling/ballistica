@@ -31,15 +31,11 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from efro.error import CleanError
 from efro.terminal import Clr
 
 if TYPE_CHECKING:
     from typing import Dict, Any, List
-
-
-class CleanError(Exception):
-    """Exception resulting in a clean error string print and exit."""
-
 
 # Absolute path of the project root.
 PROJROOT = Path(__file__).resolve().parents[2]
@@ -76,7 +72,7 @@ def snippets_main(globs: Dict[str, Any]) -> None:
             try:
                 funcs[sys.argv[1]]()
             except CleanError as exc:
-                print(Clr.SRED + str(exc) + Clr.RST)
+                exc.print()
                 sys.exit(-1)
         else:
             print('Unknown snippets command: "' + sys.argv[1] + '"',

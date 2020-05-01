@@ -165,70 +165,15 @@ def androidaddr() -> None:
 
     command line args: archive_dir architecture addr
     """
-    import subprocess
+    import batools.android
     if len(sys.argv) != 5:
-        print('ERROR: expected 4 args; got ' + str(len(sys.argv) - 1) + '.\n' +
-              'Usage: "tools/snippets android_addr'
-              ' <ARCHIVE-PATH> <ARCH> <ADDR>"')
-        sys.exit(255)
+        raise CleanError(f'ERROR: expected 3 args; got {len(sys.argv) - 2}\n'
+                         f'Usage: "tools/snippets android_addr'
+                         f' <ARCHIVE-PATH> <ARCH> <ADDR>"')
     archive_dir = sys.argv[2]
-    if not os.path.isdir(archive_dir):
-        print('ERROR: invalid archive dir: "' + archive_dir + '"')
-        sys.exit(255)
     arch = sys.argv[3]
-    archs = {
-        'x86': {
-            'prefix': 'x86-',
-            'libmain': 'libmain_x86.so'
-        },
-        'arm': {
-            'prefix': 'arm-',
-            'libmain': 'libmain_arm.so'
-        },
-        'arm64': {
-            'prefix': 'aarch64-',
-            'libmain': 'libmain_arm64.so'
-        },
-        'x86-64': {
-            'prefix': 'x86_64-',
-            'libmain': 'libmain_x86-64.so'
-        }
-    }
-    if arch not in archs:
-        print('ERROR: invalid arch "' + arch + '"; (choices are ' +
-              ', '.join(archs.keys()) + ')')
-        sys.exit(255)
     addr = sys.argv[4]
-    sdkutils = os.path.abspath(
-        os.path.join(os.path.dirname(sys.argv[0]), 'android_sdk_utils'))
-    rootdir = os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), '..'))
-    ndkpath = subprocess.check_output([sdkutils,
-                                       'get-ndk-path']).decode().strip()
-    if not os.path.isdir(ndkpath):
-        print("ERROR: ndk-path '" + ndkpath + '" does not exist')
-        sys.exit(255)
-    lines = subprocess.check_output(
-        ['find',
-         os.path.join(ndkpath, 'toolchains'), '-name',
-         '*addr2line']).decode().strip().splitlines()
-    lines = [line for line in lines if archs[arch]['prefix'] in line]
-    if len(lines) != 1:
-        print("ERROR: couldn't find addr2line binary")
-        sys.exit(255)
-    addr2line = lines[0]
-    efrotools.run('mkdir -p "' + os.path.join(rootdir, 'android_addr_tmp') +
-                  '"')
-    try:
-        efrotools.run('cd "' + os.path.join(rootdir, 'android_addr_tmp') +
-                      '" && tar -xf "' +
-                      os.path.join(archive_dir, 'unstripped_libs',
-                                   archs[arch]['libmain'] + '.tgz') + '"')
-        efrotools.run(
-            addr2line + ' -e "' +
-            os.path.join(rootdir, 'android_addr_tmp', archs[arch]['libmain']) +
-            '" ' + addr)
-    finally:
-        os.system('rm -rf "' + os.path.join(rootdir, 'android_addr_tmp') + '"')
+    batools.android.androidaddr(archive_dir=archive_dir, arch=arch, addr=addr)
 
 
 def python_build_apple() -> None:
@@ -457,57 +402,8 @@ def warm_start_asset_build() -> None:
 
 def update_docs_md() -> None:
     """Updates docs markdown files if necessary."""
-    # pylint: disable=too-many-locals
-    from efrotools import get_files_hash, run
-
-    check = ('--check' in sys.argv)
-
-    docs_path = 'docs/ba_module.md'
-
-    # We store the hash in a separate file that only exists on private
-    # so public isn't full of constant hash change commits.
-    # (don't care so much on private)
-    docs_hash_path = 'docs/ba_module_hash'
-
-    # Generate a hash from all c/c++ sources under the python subdir
-    # as well as all python scripts.
-    pysources = []
-    exts = ['.cc', '.c', '.h', '.py']
-    for basedir in [
-            'src/ballistica/python',
-            'tools/efro',
-            'tools/bacommon',
-            'assets/src/ba_data/python/ba',
-    ]:
-        assert os.path.isdir(basedir), f'{basedir} is not a dir.'
-        for root, _dirs, files in os.walk(basedir):
-            for fname in files:
-                if any(fname.endswith(ext) for ext in exts):
-                    pysources.append(os.path.join(root, fname))
-    curhash = get_files_hash(pysources)
-
-    # Extract the current embedded hash.
-    with open(docs_hash_path) as infile:
-        storedhash = infile.read()
-
-    if curhash != storedhash or not os.path.exists(docs_path):
-        if check:
-            raise CleanError('Docs markdown is out of date.')
-
-        print(f'Updating {docs_path}...', flush=True)
-        run('make docs')
-
-        # Our docs markdown is just the docs html with a few added
-        # bits at the top.
-        with open('build/docs.html') as infile:
-            docs = infile.read()
-        docs = ('<!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->\n'
-                ) + docs
-        with open(docs_path, 'w') as outfile:
-            outfile.write(docs)
-        with open(docs_hash_path, 'w') as outfile:
-            outfile.write(curhash)
-    print(f'{docs_path} is up to date.')
+    import batools.build
+    batools.build.update_docs_md(check='--check' in sys.argv)
 
 
 def list_pip_reqs() -> None:
@@ -610,7 +506,7 @@ def filter_server_config() -> None:
     import batools.build
     if len(sys.argv) != 4:
         raise CleanError('Expected 2 args (infile and outfile).')
-    batools.build.filter_server_config(sys.argv[2], sys.argv[3])
+    batools.build.filter_server_config(str(PROJROOT), sys.argv[2], sys.argv[3])
 
 
 def printcolors() -> None:

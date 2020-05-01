@@ -36,6 +36,7 @@ import tempfile
 
 import requests
 
+from efro.error import CleanError
 from efro.terminal import Clr
 
 if TYPE_CHECKING:
@@ -113,10 +114,6 @@ class Response:
     end_message: Optional[str] = None
     end_message_end: str = '\n'
     end_command: Optional[Tuple[str, Dict]] = None
-
-
-class CleanError(Exception):
-    """Exception resulting in a clean error string print and exit."""
 
 
 def get_tz_offset_seconds() -> float:
@@ -443,6 +440,5 @@ if __name__ == '__main__':
         # Can make this optional if a backtrace is ever useful..
         sys.exit(-1)
     except CleanError as exc:
-        if str(exc):
-            print(f'{Clr.SRED}{exc}{Clr.RST}')
+        exc.print()
         sys.exit(-1)

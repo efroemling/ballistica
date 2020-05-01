@@ -577,9 +577,10 @@ def update_makebob() -> None:
     print('All builds complete!', flush=True)
 
 
-def _get_server_config_raw_contents() -> str:
+def _get_server_config_raw_contents(projroot: str) -> str:
     import textwrap
-    with open('tools/bacommon/servermanager.py') as infile:
+    with open(os.path.join(projroot,
+                           'tools/bacommon/servermanager.py')) as infile:
         lines = infile.read().splitlines()
     firstline = lines.index('class ServerConfig:') + 1
     lastline = firstline + 1
@@ -601,9 +602,9 @@ def _get_server_config_raw_contents() -> str:
     return textwrap.dedent('\n'.join(lines[firstline:lastline + 1]))
 
 
-def _get_server_config_template_yaml() -> str:
+def _get_server_config_template_yaml(projroot: str) -> str:
     import yaml
-    lines_in = _get_server_config_raw_contents().splitlines()
+    lines_in = _get_server_config_raw_contents(projroot).splitlines()
     lines_out: List[str] = []
     for line in lines_in:
         if line != '' and not line.startswith('#'):
@@ -628,11 +629,65 @@ def _get_server_config_template_yaml() -> str:
     return '\n'.join(lines_out)
 
 
-def filter_server_config(infilename: str, outfilename: str) -> None:
+def filter_server_config(projroot: str, infilepath: str,
+                         outfilepath: str) -> None:
     """Add commented-out config options to a server config."""
-    with open(infilename) as infile:
+    with open(infilepath) as infile:
         cfg = infile.read()
     cfg = cfg.replace('#__CONFIG_TEMPLATE_VALUES__',
-                      _get_server_config_template_yaml())
-    with open(outfilename, 'w') as outfile:
+                      _get_server_config_template_yaml(projroot))
+    with open(outfilepath, 'w') as outfile:
         outfile.write(cfg)
+
+
+def update_docs_md(check: bool) -> None:
+    """Updates docs markdown files if necessary."""
+    # pylint: disable=too-many-locals
+    from efrotools import get_files_hash, run
+
+    docs_path = 'docs/ba_module.md'
+
+    # We store the hash in a separate file that only exists on private
+    # so public isn't full of constant hash change commits.
+    # (don't care so much on private)
+    docs_hash_path = 'docs/ba_module_hash'
+
+    # Generate a hash from all c/c++ sources under the python subdir
+    # as well as all python scripts.
+    pysources = []
+    exts = ['.cc', '.c', '.h', '.py']
+    for basedir in [
+            'src/ballistica/python',
+            'tools/efro',
+            'tools/bacommon',
+            'assets/src/ba_data/python/ba',
+    ]:
+        assert os.path.isdir(basedir), f'{basedir} is not a dir.'
+        for root, _dirs, files in os.walk(basedir):
+            for fname in files:
+                if any(fname.endswith(ext) for ext in exts):
+                    pysources.append(os.path.join(root, fname))
+    curhash = get_files_hash(pysources)
+
+    # Extract the current embedded hash.
+    with open(docs_hash_path) as infile:
+        storedhash = infile.read()
+
+    if curhash != storedhash or not os.path.exists(docs_path):
+        if check:
+            raise RuntimeError('Docs markdown is out of date.')
+
+        print(f'Updating {docs_path}...', flush=True)
+        run('make docs')
+
+        # Our docs markdown is just the docs html with a few added
+        # bits at the top.
+        with open('build/docs.html') as infile:
+            docs = infile.read()
+        docs = ('<!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->\n'
+                ) + docs
+        with open(docs_path, 'w') as outfile:
+            outfile.write(docs)
+        with open(docs_hash_path, 'w') as outfile:
+            outfile.write(curhash)
+    print(f'{docs_path} is up to date.')
