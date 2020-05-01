@@ -306,9 +306,9 @@ def clean_orphaned_assets() -> None:
     os.chdir(PROJROOT)
 
     # Our manifest is split into 2 files (public and non-public)
-    with open('assets/.asset_manifest_1.json') as infile:
+    with open('assets/.asset_manifest_public.json') as infile:
         manifest = set(json.loads(infile.read()))
-    with open('assets/.asset_manifest_2.json') as infile:
+    with open('assets/.asset_manifest_private.json') as infile:
         manifest.update(set(json.loads(infile.read())))
     for root, _dirs, fnames in os.walk('assets/build'):
         for fname in fnames:
@@ -476,11 +476,11 @@ def update_docs_md() -> None:
     exts = ['.cc', '.c', '.h', '.py']
     for basedir in [
             'src/ballistica/python',
-            'assets/src/ba_data/python/efro',
-            'assets/src/ba_data/python/bacommon',
+            'tools/efro',
+            'tools/bacommon',
             'assets/src/ba_data/python/ba',
     ]:
-        assert os.path.isdir(basedir)
+        assert os.path.isdir(basedir), f'{basedir} is not a dir.'
         for root, _dirs, files in os.walk(basedir):
             for fname in files:
                 if any(fname.endswith(ext) for ext in exts):
