@@ -30,12 +30,10 @@ import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from efro.terminal import Clr
+
 if TYPE_CHECKING:
     from typing import List, Sequence, Optional
-
-CLRBLU = '\033[94m'  # Blue.
-CLRHDR = '\033[95m'  # Header.
-CLREND = '\033[0m'  # End.
 
 
 # Python pip packages we require for this project.
@@ -113,8 +111,8 @@ def _lazybuild_check_paths(inpaths: List[str], category: SourceCategory,
     def _testpath(path: str) -> bool:
         # Now see this path is newer than our target..
         if mtime is None or os.path.getmtime(path) >= mtime:
-            print(f'{CLRHDR}Build of {tnamepretty} triggered by'
-                  f' {path}{CLREND}')
+            print(f'{Clr.SMAG}Build of {tnamepretty} triggered by'
+                  f' {path}{Clr.RST}')
             return True
         return False
 
@@ -159,8 +157,8 @@ def _lazybuild_check_paths(inpaths: List[str], category: SourceCategory,
                 if _testpath(fpath):
                     return True
                 unchanged_count += 1
-    print(f'{CLRBLU}Lazybuild: skipping "{tnamepretty}"'
-          f' ({unchanged_count} inputs unchanged).{CLREND}')
+    print(f'{Clr.SBLU}Lazybuild: skipping "{tnamepretty}"'
+          f' ({unchanged_count} inputs unchanged).{Clr.RST}')
     return False
 
 

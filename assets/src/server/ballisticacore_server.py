@@ -67,7 +67,7 @@ class ServerManagerApp:
 
     @property
     def config(self) -> ServerConfig:
-        """The current config settings for the app."""
+        """The current config for the app."""
         return self._config
 
     @config.setter

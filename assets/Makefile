@@ -145,6 +145,7 @@ SCRIPT_TARGETS_PY_1 = \
   build/server/ballisticacore_server.py \
   build/ba_data/python/efro/executils.py \
   build/ba_data/python/efro/dataclassutils.py \
+  build/ba_data/python/efro/terminal.py \
   build/ba_data/python/efro/util.py \
   build/ba_data/python/efro/__init__.py \
   build/ba_data/python/efro/jsonutils.py \
@@ -386,6 +387,7 @@ SCRIPT_TARGETS_PYC_1 = \
   build/server/__pycache__/ballisticacore_server.cpython-37.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/executils.cpython-37.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/dataclassutils.cpython-37.opt-1.pyc \
+  build/ba_data/python/efro/__pycache__/terminal.cpython-37.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/util.cpython-37.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/__init__.cpython-37.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/jsonutils.cpython-37.opt-1.pyc \
@@ -648,6 +650,11 @@ build/ba_data/python/efro/__pycache__/executils.cpython-37.opt-1.pyc: \
 
 build/ba_data/python/efro/__pycache__/dataclassutils.cpython-37.opt-1.pyc: \
       build/ba_data/python/efro/dataclassutils.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python/efro/__pycache__/terminal.cpython-37.opt-1.pyc: \
+      build/ba_data/python/efro/terminal.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 

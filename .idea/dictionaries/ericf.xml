@@ -151,15 +151,19 @@
       <w>basew</w>
       <w>bastd</w>
       <w>batools</w>
+      <w>bblk</w>
+      <w>bblu</w>
       <w>bbot</w>
       <w>bbtn</w>
       <w>bcppcompiler</w>
+      <w>bcyn</w>
       <w>bdfl</w>
       <w>belarussian</w>
       <w>benboncan</w>
       <w>bfiledir</w>
       <w>bfiles</w>
       <w>bgmodel</w>
+      <w>bgrn</w>
       <w>bgterrain</w>
       <w>bgtex</w>
       <w>bgthread</w>
@@ -175,6 +179,7 @@
       <w>bldtp</w>
       <w>blocksize</w>
       <w>bluetooth</w>
+      <w>bmag</w>
       <w>bname</w>
       <w>bndl</w>
       <w>boffs</w>
@@ -217,6 +222,8 @@
       <w>buttondown</w>
       <w>buttonwidget</w>
       <w>bval</w>
+      <w>bwht</w>
+      <w>bylw</w>
       <w>bytecount</w>
       <w>byteswap</w>
       <w>cachable</w>
@@ -536,6 +543,7 @@
       <w>enumtype</w>
       <w>enumval</w>
       <w>envhash</w>
+      <w>envval</w>
       <w>epath</w>
       <w>epicfail</w>
       <w>ericf</w>
@@ -883,6 +891,7 @@
       <w>ipaddress</w>
       <w>ipos</w>
       <w>iprof</w>
+      <w>isatty</w>
       <w>iscale</w>
       <w>iserverget</w>
       <w>iserverput</w>
@@ -1528,8 +1537,18 @@
       <w>sandboxing</w>
       <w>sandyrb</w>
       <w>saxutils</w>
+      <w>sbblk</w>
+      <w>sbblu</w>
+      <w>sbcyn</w>
+      <w>sbgrn</w>
+      <w>sblk</w>
+      <w>sblu</w>
+      <w>sbmag</w>
       <w>sbpos</w>
+      <w>sbred</w>
       <w>sbtn</w>
+      <w>sbwht</w>
+      <w>sbylw</w>
       <w>scenefile</w>
       <w>scenefiles</w>
       <w>scenename</w>
@@ -1550,6 +1569,7 @@
       <w>scrlw</w>
       <w>scrollw</w>
       <w>scrollwidget</w>
+      <w>scyn</w>
       <w>sdata</w>
       <w>sdkutils</w>
       <w>sdtk</w>
@@ -1576,6 +1596,7 @@
       <w>setmusic</w>
       <w>settingname</w>
       <w>setversion</w>
+      <w>sgrn</w>
       <w>shakaharu</w>
       <w>sharedctypes</w>
       <w>sharedobj</w>
@@ -1595,6 +1616,7 @@
       <w>skey</w>
       <w>sline</w>
       <w>slval</w>
+      <w>smag</w>
       <w>smlh</w>
       <w>smtpd</w>
       <w>smtplib</w>
@@ -1644,6 +1666,7 @@
       <w>srcpydata</w>
       <w>srcstr</w>
       <w>srctxt</w>
+      <w>sred</w>
       <w>sshd</w>
       <w>sslproto</w>
       <w>stackstr</w>
@@ -1703,8 +1726,10 @@
       <w>sver</w>
       <w>svne</w>
       <w>svvv</w>
+      <w>swht</w>
       <w>swip</w>
       <w>swipsound</w>
+      <w>sylw</w>
       <w>symlinked</w>
       <w>syncable</w>
       <w>syncall</w>
@@ -1749,6 +1774,7 @@
       <w>tempfile</w>
       <w>tempfilepath</w>
       <w>templatecb</w>
+      <w>termcolors</w>
       <w>termios</w>
       <w>testbuffer</w>
       <w>testcall</w>
