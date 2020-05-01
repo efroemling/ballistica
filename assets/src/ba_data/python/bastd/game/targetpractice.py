@@ -148,9 +148,8 @@ class TargetPracticeGame(ba.TeamGameActivity):
 
         self._targets.append(Target(position=point))
 
-    # noinspection PyUnusedLocal
     def _on_spaz_dropped_bomb(self, spaz: ba.Actor, bomb: ba.Actor) -> None:
-        # pylint: disable=unused-argument
+        del spaz  # Unused.
         from bastd.actor.bomb import Bomb
 
         # Wire up this bomb to inform us when it blows up.

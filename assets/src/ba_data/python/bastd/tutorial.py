@@ -462,7 +462,6 @@ class TutorialActivity(ba.Activity):
                         n.opacity = 0.0
                     a.set_stick_image_position(0, 0)
 
-            # noinspection PyUnusedLocal
             class SetSpeed:
 
                 def __init__(self, speed: int):
@@ -552,7 +551,6 @@ class TutorialActivity(ba.Activity):
                     if self._flash:
                         ba.playsound(a.spawn_sound, position=pos)
 
-            # noinspection PyUnusedLocal
             class Powerup:
 
                 def __init__(self,
@@ -581,7 +579,6 @@ class TutorialActivity(ba.Activity):
                     powerupbox.PowerupBox(position=pos,
                                           poweruptype='punch').autoretain()
 
-            # noinspection PyUnusedLocal
             class Delay:
 
                 def __init__(self, time: int) -> None:
@@ -590,7 +587,6 @@ class TutorialActivity(ba.Activity):
                 def run(self, a: TutorialActivity) -> int:
                     return self._time
 
-            # noinspection PyUnusedLocal
             class AnalyticsScreen:
 
                 def __init__(self, screen: str) -> None:
@@ -599,7 +595,6 @@ class TutorialActivity(ba.Activity):
                 def run(self, a: TutorialActivity) -> None:
                     ba.set_analytics_screen(self._screen)
 
-            # noinspection PyUnusedLocal
             class DelayOld:
 
                 def __init__(self, time: int) -> None:
@@ -608,7 +603,6 @@ class TutorialActivity(ba.Activity):
                 def run(self, a: TutorialActivity) -> int:
                     return int(0.9 * self._time)
 
-            # noinspection PyUnusedLocal
             class DelayOld2:
 
                 def __init__(self, time: int) -> None:
@@ -745,7 +739,6 @@ class TutorialActivity(ba.Activity):
                 def __init__(self, delay: int = 0):
                     super().__init__('punch', delay=delay)
 
-            # noinspection PyUnusedLocal
             class PickUpRelease(ButtonRelease):
 
                 def __init__(self, delay: int = 0):
@@ -774,7 +767,6 @@ class TutorialActivity(ba.Activity):
                     assert a.text
                     a.text.text = self.text
 
-            # noinspection PyUnusedLocal
             class PrintPos:
 
                 def __init__(self, spaz_num: int = None):
@@ -789,7 +781,6 @@ class TutorialActivity(ba.Activity):
                     t = list(s.node.position)
                     print('RestorePos(' + str((t[0], t[1] - 1.0, t[2])) + '),')
 
-            # noinspection PyUnusedLocal
             class RestorePos:
 
                 def __init__(self, pos: Sequence[float]) -> None:

@@ -375,9 +375,9 @@ class EliminationGame(ba.TeamGameActivity):
                             icon.update_for_lives()
                         xval += x_offs
 
-    # noinspection PyUnusedLocal
     def _get_spawn_point(self, player: ba.Player) -> Optional[ba.Vec3]:
-        # pylint: disable=unused-argument
+        del player  # Unused.
+
         # In solo-mode, if there's an existing live player on the map, spawn at
         # whichever spot is farthest from them (keeps the action spread out).
         if self._solo_mode:

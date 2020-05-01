@@ -475,9 +475,8 @@ class RunaroundGame(ba.CoopGameActivity):
         spaz.pick_up_powerup_callback = self._on_player_picked_up_powerup
         return spaz
 
-    # noinspection PyUnusedLocal
     def _on_player_picked_up_powerup(self, player: ba.Actor) -> None:
-        # pylint: disable=unused-argument
+        del player  # Unused.
         self._player_has_picked_up_powerup = True
 
     def _drop_powerup(self, index: int, poweruptype: str = None) -> None:
