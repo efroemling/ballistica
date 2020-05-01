@@ -35,14 +35,10 @@ from typing import TYPE_CHECKING
 from multiprocessing import cpu_count
 from concurrent.futures import ThreadPoolExecutor
 
+from efro.terminal import Clr
+
 if TYPE_CHECKING:
     from typing import List, Dict, Tuple, Set
-
-CLRHDR = '\033[95m'  # Header.
-CLRGRN = '\033[92m'  # Green.
-CLRBLU = '\033[94m'  # Glue.
-CLRRED = '\033[91m'  # Red.
-CLREND = '\033[0m'  # End.
 
 BASE_URL = 'https://files.ballistica.net/cache/ba1/'
 
@@ -102,7 +98,7 @@ def get_target(path: str) -> None:
     # download it.
     if not os.path.exists(local_cache_path):
         os.makedirs(os.path.dirname(local_cache_path), exist_ok=True)
-        print(f'Downloading: {CLRBLU}{path}{CLREND}')
+        print(f'Downloading: {Clr.SBLU}{path}{Clr.RST}')
         run(f'curl --silent {url} > {local_cache_path_dl}')
         run(f'mv {local_cache_path_dl} {local_cache_path}')
 
@@ -173,7 +169,7 @@ def update_cache(makefile_dirs: List[str]) -> None:
 
         # First, make sure all cache files are built.
         mfpath = os.path.join(path, 'Makefile')
-        print(f'Building efrocache targets for {CLRBLU}{mfpath}{CLREND}...')
+        print(f'Building efrocache targets for {Clr.SBLU}{mfpath}{Clr.RST}...')
         subprocess.run(f'{cdp}make -j{cpus} efrocache-build',
                        shell=True,
                        check=True)
@@ -213,13 +209,13 @@ def update_cache(makefile_dirs: List[str]) -> None:
         hashes_existing = ''
     if hashes == hashes_existing:
         print(
-            f'{CLRBLU}Efrocache state unchanged;'
-            f' skipping cache push.{CLREND}',
+            f'{Clr.SBLU}Efrocache state unchanged;'
+            f' skipping cache push.{Clr.RST}',
             flush=True)
     else:
         _upload_cache(fnames1, fnames2, hashes, hashes_existing)
 
-    print(f'{CLRBLU}Efrocache update successful!{CLREND}')
+    print(f'{Clr.SBLU}Efrocache update successful!{Clr.RST}')
 
     # Write the cache state so we can skip the next run if nothing changes.
     os.makedirs(os.path.dirname(UPLOAD_STATE_CACHE_FILE), exist_ok=True)
@@ -244,10 +240,10 @@ def _upload_cache(fnames1: List[str], fnames2: List[str], hashes_str: str,
         for fname in hashes_existing:
             if fname not in hashes:
                 changed_files.add(fname)
-        print(f'{CLRBLU}Updating efrocache due to'
-              f' {len(changed_files)} changes:{CLREND}')
+        print(f'{Clr.SBLU}Updating efrocache due to'
+              f' {len(changed_files)} changes:{Clr.RST}')
         for fname in sorted(changed_files):
-            print(f'  {CLRBLU}{fname}{CLREND}')
+            print(f'  {Clr.SBLU}{fname}{Clr.RST}')
 
     # Now do the thing.
     staging_dir = 'build/efrocache'
@@ -257,11 +253,11 @@ def _upload_cache(fnames1: List[str], fnames2: List[str], hashes_str: str,
 
     _write_cache_files(fnames1, fnames2, staging_dir, mapping_file)
 
-    print(f'{CLRBLU}Starter cache includes {len(fnames1)} items;'
-          f' excludes {len(fnames2)}{CLREND}')
+    print(f'{Clr.SBLU}Starter cache includes {len(fnames1)} items;'
+          f' excludes {len(fnames2)}{Clr.RST}')
 
     # Sync all individual cache files to the staging server.
-    print(f'{CLRBLU}Pushing cache to staging...{CLREND}', flush=True)
+    print(f'{Clr.SBLU}Pushing cache to staging...{Clr.RST}', flush=True)
     run('rsync --progress --recursive build/efrocache/'
         ' ubuntu@ballistica.net:files.ballistica.net/cache/ba1/')
 

@@ -36,6 +36,8 @@ import tempfile
 
 import requests
 
+from efro.terminal import Clr
+
 if TYPE_CHECKING:
     from typing import Optional, Dict, Tuple, List, BinaryIO
 
@@ -51,12 +53,6 @@ MASTER_SERVER_ADDRESS = (
     'http://localhost:23524' if os.environ.get('BACLOUD_SERVER') == 'LOCAL'
     else 'https://1-dot-test-dot-bamaster.appspot.com' if os.environ.get(
         'BACLOUD_SERVER') == 'TEST' else 'https://bamaster.appspot.com')
-
-CLRHDR = '\033[95m'  # Header.
-CLRGRN = '\033[92m'  # Green.
-CLRBLU = '\033[94m'  # Glue.
-CLRRED = '\033[91m'  # Red.
-CLREND = '\033[0m'  # End.
 
 
 @dataclass
@@ -244,8 +240,8 @@ class App:
             with open(self._state_data_path, 'r') as infile:
                 self._state = StateData(**json.loads(infile.read()))
         except Exception:
-            print(f'{CLRRED}Error loading {TOOL_NAME} data;'
-                  f' resetting to defaults.{CLREND}')
+            print(f'{Clr.SRED}Error loading {TOOL_NAME} data;'
+                  f' resetting to defaults.{Clr.RST}')
 
     def _save_state(self) -> None:
         if not self._state_dir.exists():
@@ -292,7 +288,7 @@ class App:
         return response
 
     def _upload_file(self, filename: str, call: str, args: Dict) -> None:
-        print(f'{CLRBLU}Uploading {filename}{CLREND}', flush=True)
+        print(f'{Clr.SBLU}Uploading {filename}{Clr.RST}', flush=True)
         with tempfile.TemporaryDirectory() as tempdir:
             srcpath = Path(filename)
             gzpath = Path(tempdir, 'file.gz')
@@ -448,5 +444,5 @@ if __name__ == '__main__':
         sys.exit(-1)
     except CleanError as exc:
         if str(exc):
-            print(f'{CLRRED}{exc}{CLREND}')
+            print(f'{Clr.SRED}{exc}{Clr.RST}')
         sys.exit(-1)

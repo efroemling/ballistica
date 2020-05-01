@@ -30,14 +30,10 @@ from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from efro.terminal import Clr
+
 if TYPE_CHECKING:
     from typing import List, Tuple, Optional, Sequence
-
-CLRHDR = '\033[95m'
-CLRGRN = '\033[92m'
-CLRBLU = '\033[94m'
-CLRRED = '\033[91m'
-CLREND = '\033[0m'
 
 
 class Mode(Enum):
@@ -147,9 +143,9 @@ def sync_paths(src_proj: str, src: Path, dst: Path, mode: Mode) -> int:
         if not dstfile.is_file() or mode == Mode.FORCE:
             if mode == Mode.LIST:
                 print(f'Would pull from {src_proj}:'
-                      f' {CLRGRN}{dstfile}{CLREND}')
+                      f' {Clr.SGRN}{dstfile}{Clr.RST}')
             else:
-                print(f'Pulling from {src_proj}: {CLRGRN}{dstfile}{CLREND}')
+                print(f'Pulling from {src_proj}: {Clr.SGRN}{dstfile}{Clr.RST}')
 
                 # No dst file; pull src across.
                 with dstfile.open('w') as outfile:
@@ -164,9 +160,9 @@ def sync_paths(src_proj: str, src: Path, dst: Path, mode: Mode) -> int:
         if src_hash != marker_hash and dst_hash == marker_hash:
             if mode == Mode.LIST:
                 print(f'Would pull from {src_proj}:'
-                      f' {CLRGRN}{dstfile}{CLREND}')
+                      f' {Clr.SGRN}{dstfile}{Clr.RST}')
             else:
-                print(f'Pulling from {src_proj}: {CLRGRN}{dstfile}{CLREND}')
+                print(f'Pulling from {src_proj}: {Clr.SGRN}{dstfile}{Clr.RST}')
 
                 # Src has changed; simply pull across to dst.
                 with dstfile.open('w') as outfile:
@@ -177,9 +173,10 @@ def sync_paths(src_proj: str, src: Path, dst: Path, mode: Mode) -> int:
             # Dst has changed; we only copy backwards to src
             # if we're in full mode.
             if mode == Mode.LIST:
-                print(f'Would push to {src_proj}: {CLRBLU}{dstfile}{CLREND}')
+                print(f'Would push to {src_proj}:'
+                      f' {Clr.SBLU}{dstfile}{Clr.RST}')
             elif mode == Mode.FULL:
-                print(f'Pushing to {src_proj}: {CLRBLU}{dstfile}{CLREND}')
+                print(f'Pushing to {src_proj}: {Clr.SBLU}{dstfile}{Clr.RST}')
                 with srcfile.open('w') as outfile:
                     outfile.write(dstdata)
 
@@ -201,10 +198,10 @@ def sync_paths(src_proj: str, src: Path, dst: Path, mode: Mode) -> int:
                 if mode == Mode.LIST:
                     print(f'Would update dst hash (both files changed'
                           f' identically) from {src_proj}:'
-                          f' {CLRGRN}{dstfile}{CLREND}')
+                          f' {Clr.SGRN}{dstfile}{Clr.RST}')
                 else:
                     print(f'Updating hash (both files changed)'
-                          f' from {src_proj}: {CLRGRN}{dstfile}{CLREND}')
+                          f' from {src_proj}: {Clr.SGRN}{dstfile}{Clr.RST}')
                     with dstfile.open('w') as outfile:
                         outfile.write(add_marker(src_proj, srcdata))
                 continue
@@ -237,10 +234,10 @@ def sync_paths(src_proj: str, src: Path, dst: Path, mode: Mode) -> int:
             if os.path.exists(killpath):
                 if mode == Mode.LIST:
                     print(f'Would remove orphaned sync path:'
-                          f' {CLRRED}{killpath}{CLREND}')
+                          f' {Clr.SRED}{killpath}{Clr.RST}')
                 else:
                     print(f'Removing orphaned sync path:'
-                          f' {CLRRED}{killpath}{CLREND}')
+                          f' {Clr.SRED}{killpath}{Clr.RST}')
                     os.system('rm -rf "' + str(killpath) + '"')
 
     # Lastly throw an error if we found any changed dst files and aren't

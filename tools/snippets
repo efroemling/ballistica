@@ -28,7 +28,6 @@ Functions can be placed here when they're not complex enough to warrant
 their own files. Often these functions act as user-facing entry points
 to functionality contained in efrotools or other standalone tool modules.
 """
-
 from __future__ import annotations
 
 import os

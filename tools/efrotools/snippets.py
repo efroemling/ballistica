@@ -24,14 +24,14 @@ A snippet is a mini-program that directly takes input from stdin and does
 some focused task. This module is a repository of common snippets that can
 be imported into projects' snippets script for easy reuse.
 """
-
 from __future__ import annotations
 
 import os
-import subprocess
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
+
+from efro.terminal import Clr
 
 if TYPE_CHECKING:
     from typing import Dict, Any, List
@@ -43,11 +43,6 @@ class CleanError(Exception):
 
 # Absolute path of the project root.
 PROJROOT = Path(__file__).resolve().parents[2]
-
-CLRHDR = '\033[95m'
-CLRRED = '\033[91m'
-CLRBLU = '\033[94m'
-CLREND = '\033[0m'
 
 
 def snippets_main(globs: Dict[str, Any]) -> None:
@@ -63,7 +58,7 @@ def snippets_main(globs: Dict[str, Any]) -> None:
     show_help = False
     retval = 0
     if len(sys.argv) < 2:
-        print(f'{CLRRED}ERROR: command expected.{CLREND}')
+        print(f'{Clr.SRED}ERROR: command expected.{Clr.RST}')
         show_help = True
         retval = 255
     else:
@@ -81,7 +76,7 @@ def snippets_main(globs: Dict[str, Any]) -> None:
             try:
                 funcs[sys.argv[1]]()
             except CleanError as exc:
-                print(CLRRED + str(exc) + CLREND)
+                print(Clr.SRED + str(exc) + Clr.RST)
                 sys.exit(-1)
         else:
             print('Unknown snippets command: "' + sys.argv[1] + '"',
@@ -95,7 +90,7 @@ def snippets_main(globs: Dict[str, Any]) -> None:
         print('Available commands:')
         for func, obj in sorted(funcs.items()):
             doc = getattr(obj, '__doc__', '').splitlines()[0].strip()
-            print(f'{CLRHDR}{func}{CLRBLU} - {doc}{CLREND}')
+            print(f'{Clr.SMAG}{func}{Clr.SBLU} - {doc}{Clr.RST}')
     sys.exit(retval)
 
 
@@ -156,6 +151,7 @@ def _spelling(words: List[str]) -> None:
 
 def spelling_all() -> None:
     """Add all misspellings from a pycharm run."""
+    import subprocess
 
     print('Running "make pycharm-full"...')
     lines = [
@@ -182,6 +178,7 @@ def check_clean_safety() -> None:
     Use to avoid losing work if we accidentally do a clean without
     adding something.
     """
+    import subprocess
     if len(sys.argv) != 2:
         raise Exception('invalid arguments')
 
@@ -364,8 +361,9 @@ def sync_all() -> None:
     This assumes that there is a 'sync-full' and 'sync-list' Makefile target
     under each project.
     """
+    import subprocess
     import concurrent.futures
-    print(f'{CLRBLU}Updating formatting for all projects...{CLREND}')
+    print(f'{Clr.SBLU}Updating formatting for all projects...{Clr.RST}')
     projects_str = os.environ.get('EFROTOOLS_SYNC_PROJECTS')
     if projects_str is None:
         raise CleanError('EFROTOOL_SYNC_PROJECTS is not defined.')
@@ -396,17 +394,17 @@ def sync_all() -> None:
         # Real mode
         for i in range(2):
             if i == 0:
-                print(CLRBLU + 'Running sync pass 1:'
+                print(Clr.SBLU + 'Running sync pass 1:'
                       ' (ensures all changes at dsts are pushed to src)' +
-                      CLREND)
+                      Clr.RST)
             else:
-                print(CLRBLU + 'Running sync pass 2:'
-                      ' (ensures latest src is pulled to all dsts)' + CLREND)
+                print(Clr.SBLU + 'Running sync pass 2:'
+                      ' (ensures latest src is pulled to all dsts)' + Clr.RST)
             for project in projects_str.split(':'):
                 cmd = f'cd "{project}" && make sync-full'
                 print(cmd)
                 subprocess.run(cmd, shell=True, check=True)
-        print(CLRBLU + 'Sync-all successful!' + CLREND)
+        print(Clr.SBLU + 'Sync-all successful!' + Clr.RST)
 
 
 def sync() -> None:
@@ -446,6 +444,7 @@ def compile_python_files() -> None:
 def pytest() -> None:
     """Run pytest with project environment set up properly."""
     import platform
+    import subprocess
     from efrotools import get_config, PYTHON_BIN
 
     # Grab our python paths for the project and stuff them in PYTHONPATH.
@@ -522,5 +521,5 @@ def makefile_target_list() -> None:
                 continue
             print('\n' + entry.title + '\n' + '-' * len(entry.title))
         elif entry.kind == 'target':
-            print(CLRHDR + entry.title + CLRBLU + _docstr(lines, entry.line) +
-                  CLREND)
+            print(Clr.SMAG + entry.title + Clr.SBLU +
+                  _docstr(lines, entry.line) + Clr.RST)
