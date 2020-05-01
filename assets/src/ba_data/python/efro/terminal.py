@@ -32,7 +32,11 @@ if TYPE_CHECKING:
 
 @unique
 class TerminalColor(Enum):
-    """Color codes for printing to terminals."""
+    """Color codes for printing to terminals.
+
+    Generally the Clr class should be used when incorporating color into
+    terminal output, as it handles non-color-supporting terminals/etc.
+    """
 
     # Styles
     RESET = '\033[0m'

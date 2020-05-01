@@ -614,5 +614,16 @@ def filter_server_config() -> None:
     batools.build.filter_server_config(sys.argv[2], sys.argv[3])
 
 
+def printcolors() -> None:
+    """Print all colors available in efro.terminals.TerminalColor."""
+    from efro.terminal import TerminalColor
+    for value in TerminalColor:
+        if value is TerminalColor.RESET:
+            continue
+        print(f'{value.name}: {value.value}'
+              f'The quick brown fox jumps over the lazy dog.'
+              f'{TerminalColor.RESET.value}')
+
+
 if __name__ == '__main__':
     snippets_main(globals())
