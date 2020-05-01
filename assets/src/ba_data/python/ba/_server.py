@@ -63,10 +63,9 @@ class ServerController:
 
         self._config = config
         self._playlist_name = '__default__'
-
         self._ran_access_check = False
         self._run_server_wait_timer: Optional[ba.Timer] = None
-
+        self._next_stuck_login_warn_time = time.time() + 10.0
         self._first_run = True
 
         # Make note if they want us to import a playlist;
@@ -77,8 +76,6 @@ class ServerController:
         self._playlist_fetch_code = -1
 
         self._config_server()
-
-        self._next_server_account_warn_time = time.time() + 10.0
 
         # Now sit around until we're signed in and then
         # kick off the server.
@@ -198,9 +195,9 @@ class ServerController:
             # Signing in to the local server account should not take long;
             # complain if it does...
             curtime = time.time()
-            if curtime > self._next_server_account_warn_time:
+            if curtime > self._next_stuck_login_warn_time:
                 print('Still waiting for account sign-in...')
-                self._next_server_account_warn_time = curtime + 10.0
+                self._next_stuck_login_warn_time = curtime + 10.0
         else:
             can_launch = False
 

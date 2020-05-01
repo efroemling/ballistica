@@ -26,8 +26,8 @@ import sys
 import os
 import json
 import subprocess
-import threading
 import time
+from threading import Thread, Lock, current_thread
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -51,31 +51,19 @@ class ServerManagerApp:
     """An app which manages BallisticaCore server execution.
 
     Handles configuring, launching, re-launching, and otherwise
-    managing a BallisticaCore binary operating as a server.
+    managing BallisticaCore operating in server mode.
     """
 
     def __init__(self) -> None:
-
         self._config = self._load_config()
-
-        # We actually operate from the 'dist' subdir.
-        if not os.path.isdir('dist'):
-            raise RuntimeError('"dist" directory not found.')
-        os.chdir('dist')
-
-        self._binary_path = self._get_binary_path()
-
-        self._binary_commands: List[str] = []
-        self._binary_commands_lock = threading.Lock()
-
-        # The server-binary will get relaunched after this amount of time
-        # (combats memory leaks or other cruft that has built up).
-        self._restart_minutes = 360.0
-
-        self._running_interactive = False
         self._done = False
+        self._process_commands: List[str] = []
+        self._process_commands_lock = Lock()
+        self._restart_minutes: Optional[float] = 360.0
+        self._running_interactive = False
         self._process: Optional[subprocess.Popen[bytes]] = None
         self._process_launch_time: Optional[float] = None
+        self._process_thread: Optional[Thread] = None
 
     @property
     def config(self) -> ServerConfig:
@@ -87,6 +75,15 @@ class ServerManagerApp:
         dataclass_validate(value)
         self._config = value
 
+    @property
+    def restart_minutes(self) -> Optional[float]:
+        """The time between automatic server restarts.
+
+        Restarting the server periodically can minimize the effect of
+        memory leaks or other built-up cruft.
+        """
+        return self._restart_minutes
+
     def _load_config(self) -> ServerConfig:
         user_config_path = 'config.yaml'
 
@@ -97,25 +94,12 @@ class ServerManagerApp:
             import yaml
             with open(user_config_path) as infile:
                 user_config = yaml.safe_load(infile.read())
-                dataclass_assign(config, user_config)
 
             # An empty config file will yield None, and that's ok.
             if user_config is not None:
-                if not isinstance(user_config, dict):
-                    raise RuntimeError(f'Invalid config format; expected dict,'
-                                       f' got {type(user_config)}.')
-        return config
+                dataclass_assign(config, user_config)
 
-    def _get_binary_path(self) -> str:
-        """Locate the game binary that we'll use."""
-        if os.name == 'nt':
-            test_paths = ['ballisticacore_headless.exe']
-        else:
-            test_paths = ['./ballisticacore_headless']
-        for path in test_paths:
-            if os.path.exists(path):
-                return path
-        raise RuntimeError('Unable to locate ballisticacore_headless binary.')
+        return config
 
     def _enable_tab_completion(self, locs: Dict) -> None:
         """Enable tab-completion on platforms where available (linux/mac)."""
@@ -125,7 +109,7 @@ class ServerManagerApp:
             readline.set_completer(rlcompleter.Completer(locs).complete)
             readline.parse_and_bind('tab:complete')
         except ImportError:
-            # readline doesn't exist under windows; this is expected.
+            # This is expected (readline doesn't exist under windows).
             pass
 
     def run_interactive(self) -> None:
@@ -150,8 +134,8 @@ class ServerManagerApp:
         signal.signal(signal.SIGTERM, self._handle_term_signal)
 
         # Fire off a background thread to wrangle our server binaries.
-        bgthread = threading.Thread(target=self._bg_thread_main)
-        bgthread.start()
+        self._process_thread = Thread(target=self._bg_thread_main)
+        self._process_thread.start()
 
         # According to Python docs, default locals dict has __name__ set
         # to __console__ and __doc__ set to None; using that as start point.
@@ -162,6 +146,7 @@ class ServerManagerApp:
         self._enable_tab_completion(locs)
 
         # Now just sit in an interpreter.
+        # TODO: make it possible to use IPython if the user has it available.
         try:
             code.interact(local=locs, banner='', exitmsg='')
         except SystemExit:
@@ -172,9 +157,9 @@ class ServerManagerApp:
         except BaseException as exc:
             print('Got unexpected exception: ', exc)
 
-        # Mark ourselves as shutting down and wait for bgthread to wrap up.
+        # Mark ourselves as shutting down and wait for the process to wrap up.
         self._done = True
-        bgthread.join()
+        self._process_thread.join()
 
     def cmd(self, statement: str) -> None:
         """Exec a Python command on the current running server binary.
@@ -184,8 +169,8 @@ class ServerManagerApp:
         """
         if not isinstance(statement, str):
             raise TypeError(f'Expected a string arg; got {type(statement)}')
-        with self._binary_commands_lock:
-            self._binary_commands.append(statement)
+        with self._process_commands_lock:
+            self._process_commands.append(statement)
 
         # Ideally we'd block here until the command was run so our prompt would
         # print after it's results. We currently don't get any response from
@@ -193,8 +178,8 @@ class ServerManagerApp:
         # it. In the future we can perhaps add a proper 'command port'
         # interface for proper blocking two way communication.
         while True:
-            with self._binary_commands_lock:
-                if not self._binary_commands:
+            with self._process_commands_lock:
+                if not self._process_commands:
                     break
             time.sleep(0.1)
 
@@ -203,6 +188,7 @@ class ServerManagerApp:
         time.sleep(0.1)
 
     def _bg_thread_main(self) -> None:
+        """Top level method run by our bg thread."""
         while not self._done:
             self._run_server_cycle()
 
@@ -212,7 +198,7 @@ class ServerManagerApp:
         raise SystemExit()
 
     def _run_server_cycle(self) -> None:
-        """Bring up the server binary and run it until exit."""
+        """Spin up the server process and run it until exit."""
 
         self._prep_process_environment()
 
@@ -225,8 +211,11 @@ class ServerManagerApp:
         # slight behavior tweaks. Hmm; should this be an argument instead?
         os.environ['BA_SERVER_WRAPPER_MANAGED'] = '1'
 
-        self._process = subprocess.Popen(
-            [self._binary_path, '-cfgdir', 'ba_root'], stdin=subprocess.PIPE)
+        binary_name = ('ballisticacore_headless.exe'
+                       if os.name == 'nt' else './ballisticacore_headless')
+        self._process = subprocess.Popen([binary_name, '-cfgdir', 'ba_root'],
+                                         stdin=subprocess.PIPE,
+                                         cwd='dist')
 
         # Set quit to True any time after launching the server
         # to gracefully quit it at the next clean opportunity
@@ -243,9 +232,9 @@ class ServerManagerApp:
 
     def _prep_process_environment(self) -> None:
         """Write files that must exist at process launch."""
-        os.makedirs('ba_root', exist_ok=True)
-        if os.path.exists('ba_root/config.json'):
-            with open('ba_root/config.json') as infile:
+        os.makedirs('dist/ba_root', exist_ok=True)
+        if os.path.exists('dist/ba_root/config.json'):
+            with open('dist/ba_root/config.json') as infile:
                 bincfg = json.loads(infile.read())
         else:
             bincfg = {}
@@ -253,7 +242,7 @@ class ServerManagerApp:
         bincfg['Enable Telnet'] = self._config.enable_telnet
         bincfg['Telnet Port'] = self._config.telnet_port
         bincfg['Telnet Password'] = self._config.telnet_password
-        with open('ba_root/config.json', 'w') as outfile:
+        with open('dist/ba_root/config.json', 'w') as outfile:
             outfile.write(json.dumps(bincfg))
 
     def _run_process_until_exit(self) -> None:
@@ -273,21 +262,22 @@ class ServerManagerApp:
             if self._done:
                 break
 
-            # Pass along any commands to the subprocess.
-            with self._binary_commands_lock:
-                for incmd in self._binary_commands:
+            # Pass along any commands to our process.
+            with self._process_commands_lock:
+                for incmd in self._process_commands:
                     # We're passing a raw string to exec; no need to wrap it
                     # in any proper structure.
                     self._process.stdin.write((incmd + '\n').encode())
                     self._process.stdin.flush()
-                self._binary_commands = []
+                self._process_commands = []
 
             # Request a restart after a while.
             assert self._process_launch_time is not None
-            if (time.time() - self._process_launch_time >
+            if (self._restart_minutes is not None
+                    and time.time() - self._process_launch_time >
                 (self._restart_minutes * 60.0) and not self._config.quit):
                 print('restart_minutes (' + str(self._restart_minutes) +
-                      'm) elapsed; requesting server restart '
+                      'm) elapsed; will restart server process '
                       'at next clean opportunity...')
                 self._config.quit = True
                 self._config.quit_reason = 'restarting'
@@ -304,6 +294,7 @@ class ServerManagerApp:
 
     def _kill_process(self) -> None:
         """End the server process if it still exists."""
+        assert current_thread() is self._process_thread
         if self._process is None:
             return
 
