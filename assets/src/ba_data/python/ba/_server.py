@@ -25,6 +25,7 @@ import sys
 import time
 from typing import TYPE_CHECKING
 
+from efro.terminal import Clr
 from ba._enums import TimeType
 from ba._freeforallsession import FreeForAllSession
 from ba._dualteamsession import DualTeamSession
@@ -271,14 +272,13 @@ class ServerController:
             print('error on UDP port access check (internet down?)')
         else:
             if data['accessible']:
-                print('UDP port', gameport, ('access check successful. Your '
-                                             'server appears to be joinable '
-                                             'from the internet.'))
+                print(f'{Clr.SGRN}UDP port {gameport} access check successful.'
+                      f' Your server appears to be joinable from the'
+                      f' internet.{Clr.RST}')
             else:
-                print('UDP port', gameport,
-                      ('access check failed. Your server '
-                       'does not appear to be joinable '
-                       'from the internet.'))
+                print(f'{Clr.SRED}UDP port {gameport} access check failed.'
+                      f' Your server does not appear to be joinable'
+                      f' from the internet.{Clr.RST}')
 
     def _config_server(self) -> None:
         """Apply server config changes that can take effect immediately.

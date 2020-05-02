@@ -38,6 +38,7 @@ sys.path += [
     str(Path(os.getcwd(), 'dist', 'ba_data', 'python-site-packages'))
 ]
 
+from efro.terminal import Clr
 from efro.dataclassutils import dataclass_assign, dataclass_validate
 from bacommon.servermanager import (ServerConfig, ServerCommand,
                                     make_server_command)
@@ -123,9 +124,9 @@ class ServerManagerApp:
 
         # Print basic usage info in interactive mode.
         if sys.stdin.isatty():
-            print('BallisticaCore server manager starting up...\n'
-                  'Use the "mgr" object to make live server adjustments.\n'
-                  'Type "help(mgr)" for more information.')
+            print(f'{Clr.SBLU}BallisticaCore server manager starting up...\n'
+                  f'Use the "mgr" object to make live server adjustments.\n'
+                  f'Type "help(mgr)" for more information.{Clr.RST}')
 
         # Python will handle SIGINT for us (as KeyboardInterrupt) but we
         # need to register a SIGTERM handler so we have a chance to clean
@@ -144,6 +145,10 @@ class ServerManagerApp:
 
         # Enable tab-completion if possible.
         self._enable_tab_completion(locs)
+
+        # Give ourself a lovely color prompt.
+        sys.ps1 = f'{Clr.SGRN}>>> {Clr.RST}'
+        sys.ps2 = f'{Clr.SGRN}... {Clr.RST}'
 
         # Now just sit in an interpreter.
         # TODO: make it possible to use IPython if the user has it available.
@@ -298,7 +303,7 @@ class ServerManagerApp:
         if self._process is None:
             return
 
-        print('Stopping server process...')
+        print(f'{Clr.SBLU}Stopping server process...{Clr.RST}')
 
         # First, ask it nicely to die and give it a moment.
         # If that doesn't work, bring down the hammer.
@@ -308,7 +313,7 @@ class ServerManagerApp:
         except subprocess.TimeoutExpired:
             self._process.kill()
         self._process = self._process_launch_time = None
-        print('Server process stopped.')
+        print(f'{Clr.SBLU}Server process stopped.{Clr.RST}')
 
 
 if __name__ == '__main__':
