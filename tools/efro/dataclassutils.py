@@ -68,8 +68,8 @@ def dataclass_assign(instance: Any, values: Dict[str, Any]) -> None:
     fieldsdict = {f.name: f for f in fields}
     for key, value in values.items():
         if key not in fieldsdict:
-            raise AttributeError(f"'{type(instance).__name__}' dataclass has"
-                                 f" no '{key}' field.")
+            raise AttributeError(
+                f"'{type(instance).__name__}' has no '{key}' field")
         field = fieldsdict[key]
 
         # We expect to be operating under 'from __future__ import annotations'

@@ -39,6 +39,7 @@ sys.path += [
 ]
 
 from efro.terminal import Clr
+from efro.error import CleanError
 from efro.dataclassutils import dataclass_assign, dataclass_validate
 from bacommon.servermanager import (ServerConfig, StartServerModeCommand)
 
@@ -56,7 +57,10 @@ class ServerManagerApp:
     """
 
     def __init__(self) -> None:
-        self._config = self._load_config()
+        try:
+            self._config = self._load_config()
+        except Exception as exc:
+            raise CleanError(f'Error loading config: {exc}')
         self._done = False
         self._process_commands: List[Union[str, ServerCommand]] = []
         self._process_commands_lock = Lock()
@@ -357,4 +361,9 @@ class ServerManagerApp:
 
 
 if __name__ == '__main__':
-    ServerManagerApp().run_interactive()
+    try:
+        ServerManagerApp().run_interactive()
+    except CleanError as clean_exc:
+        # For clean errors, do a simple print and fail; no tracebacks/etc.
+        clean_exc.print()
+        sys.exit(1)

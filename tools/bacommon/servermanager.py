@@ -79,13 +79,6 @@ class ServerConfig:
     # over a secure ssh connection.
     enable_telnet: bool = False
 
-    # Port used for telnet.
-    telnet_port: int = 43250
-
-    # This can be None for no password but PLEASE do not expose that to the
-    # world or your machine will likely get owned.
-    telnet_password: Optional[str] = 'changeme'
-
     # Series length in teams mode (7 == 'best-of-7' series; a team must
     # get 4 wins)
     teams_series_length: int = 7
