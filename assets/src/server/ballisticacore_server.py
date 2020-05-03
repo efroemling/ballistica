@@ -40,12 +40,12 @@ sys.path += [
 
 from efro.terminal import Clr
 from efro.dataclassutils import dataclass_assign, dataclass_validate
-from bacommon.servermanager import (ServerConfig, ServerCommand,
-                                    make_server_command)
+from bacommon.servermanager import (ServerConfig, StartServerModeCommand)
 
 if TYPE_CHECKING:
-    from typing import Optional, List, Dict
+    from typing import Optional, List, Dict, Union
     from types import FrameType
+    from bacommon.servermanager import ServerCommand
 
 
 class ServerManagerApp:
@@ -58,12 +58,13 @@ class ServerManagerApp:
     def __init__(self) -> None:
         self._config = self._load_config()
         self._done = False
-        self._process_commands: List[str] = []
+        self._process_commands: List[Union[str, ServerCommand]] = []
         self._process_commands_lock = Lock()
         self._restart_minutes: Optional[float] = 360.0
         self._running_interactive = False
         self._process: Optional[subprocess.Popen[bytes]] = None
         self._process_launch_time: Optional[float] = None
+        self._process_sent_auto_restart = False
         self._process_thread: Optional[Thread] = None
 
     @property
@@ -84,6 +85,95 @@ class ServerManagerApp:
         memory leaks or other built-up cruft.
         """
         return self._restart_minutes
+
+    def run_interactive(self) -> None:
+        """Run the app loop to completion."""
+        import code
+        import signal
+
+        if self._running_interactive:
+            raise RuntimeError('Already running interactively.')
+        self._running_interactive = True
+
+        # Print basic usage info in interactive mode.
+        if sys.stdin.isatty():
+            print(f'{Clr.SMAG}BallisticaCore server manager starting up...\n'
+                  f'Use the "mgr" object to make live server adjustments.\n'
+                  f'Type "help(mgr)" for more information.{Clr.RST}')
+
+        # Python will handle SIGINT for us (as KeyboardInterrupt) but we
+        # need to register a SIGTERM handler so we have a chance to clean
+        # up our child-process when someone tells us to die. (and avoid
+        # zombie processes)
+        signal.signal(signal.SIGTERM, self._handle_term_signal)
+
+        # Fire off a background thread to wrangle our server binaries.
+        self._process_thread = Thread(target=self._bg_thread_main)
+        self._process_thread.start()
+
+        # According to Python docs, default locals dict has __name__ set
+        # to __console__ and __doc__ set to None; using that as start point.
+        # https://docs.python.org/3/library/code.html
+        locs = {'__name__': '__console__', '__doc__': None, 'mgr': self}
+
+        # Enable tab-completion if possible.
+        self._enable_tab_completion(locs)
+
+        # Now just sit in an interpreter.
+        # TODO: make it possible to use IPython if the user has it available.
+        try:
+            code.interact(local=locs, banner='', exitmsg='')
+        except SystemExit:
+            # We get this from the builtin quit(), etc.
+            # Need to catch this so we can clean up, otherwise we'll be
+            # left in limbo with our BG thread still running.
+            pass
+        except BaseException as exc:
+            print(f'{Clr.SRED}Unexpected interpreter exception:'
+                  f' {exc}{Clr.RST}')
+
+        # Mark ourselves as shutting down and wait for the process to wrap up.
+        self._done = True
+        self._process_thread.join()
+
+    def cmd(self, statement: str) -> None:
+        """Exec a Python command on the current running server child-process.
+
+        Note that commands are executed asynchronously and no status or
+        return value is accessible from this manager app.
+        """
+        if not isinstance(statement, str):
+            raise TypeError(f'Expected a string arg; got {type(statement)}')
+        with self._process_commands_lock:
+            self._process_commands.append(statement)
+
+        # Ideally we'd block here until the command was run so our prompt would
+        # print after it's results. We currently don't get any response from
+        # the app so the best we can do is block until our bg thread has sent
+        # it. In the future we can perhaps add a proper 'command port'
+        # interface for proper blocking two way communication.
+        while True:
+            with self._process_commands_lock:
+                if not self._process_commands:
+                    break
+            time.sleep(0.1)
+
+        # One last short delay so if we come out *just* as the command is sent
+        # we'll hopefully still give it enough time to process/print.
+        time.sleep(0.1)
+
+    def restart(self, immediate: bool = False) -> None:
+        """Restart the server child-process.
+
+        This can be necessary for some config changes to take effect.
+        By default, the server will restart at the next good transition
+        point (end of a series, etc) but passing immediate=True will restart
+        it immediately.
+        """
+        from bacommon.servermanager import ShutdownCommand, ShutdownReason
+        self._enqueue_server_command(
+            ShutdownCommand(reason=ShutdownReason.RESTARTING,
+                            immediate=immediate))
 
     def _load_config(self) -> ServerConfig:
         user_config_path = 'config.yaml'
@@ -113,85 +203,6 @@ class ServerManagerApp:
             # This is expected (readline doesn't exist under windows).
             pass
 
-    def run_interactive(self) -> None:
-        """Run the app loop to completion."""
-        import code
-        import signal
-
-        if self._running_interactive:
-            raise RuntimeError('Already running interactively.')
-        self._running_interactive = True
-
-        # Print basic usage info in interactive mode.
-        if sys.stdin.isatty():
-            print(f'{Clr.SBLU}BallisticaCore server manager starting up...\n'
-                  f'Use the "mgr" object to make live server adjustments.\n'
-                  f'Type "help(mgr)" for more information.{Clr.RST}')
-
-        # Python will handle SIGINT for us (as KeyboardInterrupt) but we
-        # need to register a SIGTERM handler so we have a chance to clean
-        # up our child process when someone tells us to die. (and avoid
-        # zombie processes)
-        signal.signal(signal.SIGTERM, self._handle_term_signal)
-
-        # Fire off a background thread to wrangle our server binaries.
-        self._process_thread = Thread(target=self._bg_thread_main)
-        self._process_thread.start()
-
-        # According to Python docs, default locals dict has __name__ set
-        # to __console__ and __doc__ set to None; using that as start point.
-        # https://docs.python.org/3/library/code.html
-        locs = {'__name__': '__console__', '__doc__': None, 'mgr': self}
-
-        # Enable tab-completion if possible.
-        self._enable_tab_completion(locs)
-
-        # Give ourself a lovely color prompt.
-        sys.ps1 = f'{Clr.SGRN}>>> {Clr.RST}'
-        sys.ps2 = f'{Clr.SGRN}... {Clr.RST}'
-
-        # Now just sit in an interpreter.
-        # TODO: make it possible to use IPython if the user has it available.
-        try:
-            code.interact(local=locs, banner='', exitmsg='')
-        except SystemExit:
-            # We get this from the builtin quit(), etc.
-            # Need to catch this so we can clean up, otherwise we'll be
-            # left in limbo with our BG thread still running.
-            pass
-        except BaseException as exc:
-            print('Got unexpected exception: ', exc)
-
-        # Mark ourselves as shutting down and wait for the process to wrap up.
-        self._done = True
-        self._process_thread.join()
-
-    def cmd(self, statement: str) -> None:
-        """Exec a Python command on the current running server binary.
-
-        Note that commands are executed asynchronously and no status or
-        return value is accessible from this manager app.
-        """
-        if not isinstance(statement, str):
-            raise TypeError(f'Expected a string arg; got {type(statement)}')
-        with self._process_commands_lock:
-            self._process_commands.append(statement)
-
-        # Ideally we'd block here until the command was run so our prompt would
-        # print after it's results. We currently don't get any response from
-        # the app so the best we can do is block until our bg thread has sent
-        # it. In the future we can perhaps add a proper 'command port'
-        # interface for proper blocking two way communication.
-        while True:
-            with self._process_commands_lock:
-                if not self._process_commands:
-                    break
-            time.sleep(0.1)
-
-        # One last short delay so if we come out *just* as the command is sent
-        # we'll hopefully still give it enough time to process/print.
-        time.sleep(0.1)
-
     def _bg_thread_main(self) -> None:
         """Top level method run by our bg thread."""
         while not self._done:
@@ -203,7 +214,7 @@ class ServerManagerApp:
         raise SystemExit()
 
     def _run_server_cycle(self) -> None:
-        """Spin up the server process and run it until exit."""
+        """Spin up the server child-process and run it until exit."""
 
         self._prep_process_environment()
 
@@ -216,17 +227,12 @@ class ServerManagerApp:
         # slight behavior tweaks. Hmm; should this be an argument instead?
         os.environ['BA_SERVER_WRAPPER_MANAGED'] = '1'
 
+        print(f'{Clr.SMAG}Launching server child-process...{Clr.RST}')
         binary_name = ('ballisticacore_headless.exe'
                        if os.name == 'nt' else './ballisticacore_headless')
         self._process = subprocess.Popen([binary_name, '-cfgdir', 'ba_root'],
                                          stdin=subprocess.PIPE,
                                          cwd='dist')
-
-        # Set quit to True any time after launching the server
-        # to gracefully quit it at the next clean opportunity
-        # (the end of the current series, etc).
-        self._config.quit = False
-        self._config.quit_reason = None
 
         # Do the thing.
         # No matter how this ends up, make sure the process is dead after.
@@ -250,16 +256,37 @@ class ServerManagerApp:
         with open('dist/ba_root/config.json', 'w') as outfile:
             outfile.write(json.dumps(bincfg))
 
+    def _enqueue_server_command(self, command: ServerCommand) -> None:
+        """Enqueue a command to be sent to the server.
+
+        Can be called from any thread.
+        """
+        with self._process_commands_lock:
+            self._process_commands.append(command)
+
+    def _send_server_command(self, command: ServerCommand) -> None:
+        """Send a command to the server.
+
+        Must be called from the server process thread.
+        """
+        import pickle
+        assert current_thread() is self._process_thread
+        assert self._process is not None
+        assert self._process.stdin is not None
+        val = repr(pickle.dumps(command))
+        assert '\n' not in val
+        execcode = f'import ba._server; ba._server._cmd({val})\n'.encode()
+        self._process.stdin.write(execcode)
+        self._process.stdin.flush()
+
     def _run_process_until_exit(self) -> None:
         assert self._process is not None
+        assert self._process.stdin is not None
 
         # Send the initial server config which should kick things off.
         # (but make sure its values are still valid first)
         dataclass_validate(self._config)
-        cmd = make_server_command(ServerCommand.CONFIG, self._config)
-        assert self._process.stdin is not None
-        self._process.stdin.write(cmd)
-        self._process.stdin.flush()
+        self._send_server_command(StartServerModeCommand(self._config))
 
         while True:
 
@@ -270,32 +297,42 @@ class ServerManagerApp:
             # Pass along any commands to our process.
             with self._process_commands_lock:
                 for incmd in self._process_commands:
-                    # We're passing a raw string to exec; no need to wrap it
+                    # If we're passing a raw string to exec, no need to wrap it
                     # in any proper structure.
-                    self._process.stdin.write((incmd + '\n').encode())
-                    self._process.stdin.flush()
+                    if isinstance(incmd, str):
+                        self._process.stdin.write((incmd + '\n').encode())
+                        self._process.stdin.flush()
+                    else:
+                        self._send_server_command(incmd)
                 self._process_commands = []
 
-            # Request a restart after a while.
+            # Request a soft restart after a while.
             assert self._process_launch_time is not None
-            if (self._restart_minutes is not None
-                    and time.time() - self._process_launch_time >
-                (self._restart_minutes * 60.0) and not self._config.quit):
-                print('restart_minutes (' + str(self._restart_minutes) +
-                      'm) elapsed; will restart server process '
-                      'at next clean opportunity...')
-                self._config.quit = True
-                self._config.quit_reason = 'restarting'
+            sincelaunch = time.time() - self._process_launch_time
+            if (self._restart_minutes is not None and sincelaunch >
+                (self._restart_minutes * 60.0)
+                    and not self._process_sent_auto_restart):
+                print(f'{Clr.SMAG}restart_minutes ({self._restart_minutes})'
+                      f' elapsed; requesting child-process'
+                      f' soft restart...{Clr.RST}')
+                self.restart()
+                self._process_sent_auto_restart = True
 
             # Watch for the process exiting.
             code: Optional[int] = self._process.poll()
             if code is not None:
-                print(f'Server process exited with code {code}.')
+                print(f'{Clr.SMAG}Server process exited'
+                      f' with code {code}.{Clr.RST}')
                 time.sleep(1.0)  # Keep things from moving too fast.
-                self._process = self._process_launch_time = None
+                self._reset_process_vars()
                 break
 
             time.sleep(0.25)
+
+    def _reset_process_vars(self) -> None:
+        self._process = None
+        self._process_launch_time = None
+        self._process_sent_auto_restart = False
 
     def _kill_process(self) -> None:
         """End the server process if it still exists."""
@@ -303,7 +340,7 @@ class ServerManagerApp:
         if self._process is None:
             return
 
-        print(f'{Clr.SBLU}Stopping server process...{Clr.RST}')
+        print(f'{Clr.SMAG}Stopping server process...{Clr.RST}')
 
         # First, ask it nicely to die and give it a moment.
         # If that doesn't work, bring down the hammer.
@@ -312,8 +349,8 @@ class ServerManagerApp:
             self._process.wait(timeout=10)
         except subprocess.TimeoutExpired:
             self._process.kill()
-        self._process = self._process_launch_time = None
-        print(f'{Clr.SBLU}Server process stopped.{Clr.RST}')
+        self._reset_process_vars()
+        print(f'{Clr.SMAG}Server process stopped.{Clr.RST}')
 
 
 if __name__ == '__main__':

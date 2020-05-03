@@ -153,6 +153,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/ba/_coopgame.py \
   build/ba_data/python/ba/_meta.py \
   build/ba_data/python/ba/_math.py \
+  build/ba_data/python/ba/_servermode.py \
   build/ba_data/python/ba/_appconfig.py \
   build/ba_data/python/ba/_gameresults.py \
   build/ba_data/python/ba/_profile.py \
@@ -190,7 +191,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/ba/_level.py \
   build/ba_data/python/ba/_dependency.py \
   build/ba_data/python/ba/_general.py \
-  build/ba_data/python/ba/_server.py \
   build/ba_data/python/ba/_account.py \
   build/ba_data/python/ba/_music.py \
   build/ba_data/python/ba/_lang.py \
@@ -378,6 +378,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/ba/__pycache__/_coopgame.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_meta.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_math.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_servermode.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_appconfig.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_gameresults.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_profile.cpython-37.opt-1.pyc \
@@ -415,7 +416,6 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/ba/__pycache__/_level.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_dependency.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_general.cpython-37.opt-1.pyc \
-  build/ba_data/python/ba/__pycache__/_server.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_account.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_music.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_lang.cpython-37.opt-1.pyc \
@@ -659,6 +659,11 @@ build/ba_data/python/ba/__pycache__/_math.cpython-37.opt-1.pyc: \
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
+build/ba_data/python/ba/__pycache__/_servermode.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_servermode.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
 build/ba_data/python/ba/__pycache__/_appconfig.cpython-37.opt-1.pyc: \
       build/ba_data/python/ba/_appconfig.py
 	@echo Compiling script: $^
@@ -841,11 +846,6 @@ build/ba_data/python/ba/__pycache__/_dependency.cpython-37.opt-1.pyc: \
 
 build/ba_data/python/ba/__pycache__/_general.cpython-37.opt-1.pyc: \
       build/ba_data/python/ba/_general.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/ba_data/python/ba/__pycache__/_server.cpython-37.opt-1.pyc: \
-      build/ba_data/python/ba/_server.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 

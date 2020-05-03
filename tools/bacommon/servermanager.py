@@ -23,16 +23,15 @@ from __future__ import annotations
 
 from enum import Enum
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Optional, Any, Tuple
-    from typing_extensions import Literal
+    from typing import Optional
 
 
 @dataclass
 class ServerConfig:
-    """Configuration for the server manager script."""
+    """Configuration for the server manager app (ballisticacore_server)."""
 
     # Name of our server in the public parties list.
     party_name: str = 'FFA'
@@ -109,52 +108,28 @@ class ServerConfig:
     # http://bombsquadgame.com/accountquery?id=ACCOUNT_ID_HERE
     stats_url: Optional[str] = None
 
-    # FIXME REMOVE
-    quit: bool = False
-
-    # FIXME REMOVE
-    quit_reason: Optional[str] = None
-
 
 # NOTE: as much as possible, communication from the server-manager to the
-# child binary should go through this and not ad-hoc python string commands
+# child-process should go through these and not ad-hoc Python string commands
 # since this way is type safe.
-class ServerCommand(Enum):
-    """Command types that can be sent to the app in server-mode."""
-    CONFIG = 'config'
-    QUIT = 'quit'
+class ServerCommand:
+    """Base class for commands that can be sent to the server."""
 
 
-@overload
-def make_server_command(command: Literal[ServerCommand.CONFIG],
-                        payload: ServerConfig) -> bytes:
-    """Overload for CONFIG commands."""
-    ...
+@dataclass
+class StartServerModeCommand(ServerCommand):
+    """Tells the app to switch into 'server' mode."""
+    config: ServerConfig
 
 
-@overload
-def make_server_command(command: Literal[ServerCommand.QUIT],
-                        payload: int) -> bytes:
-    """Overload for QUIT commands."""
-    ...
+class ShutdownReason(Enum):
+    """Reason a server is shutting down."""
+    NONE = 'none'
+    RESTARTING = 'restarting'
 
 
-def make_server_command(command: ServerCommand, payload: Any) -> bytes:
-    """Create a command that can be exec'ed on the server binary."""
-    import pickle
-
-    # Pickle this stuff down to bytes and wrap it in a command to
-    # extract/run it on the other end.
-    val = repr(pickle.dumps((command, payload)))
-    assert '\n' not in val
-    return f'import ba._server; ba._server._cmd({val})\n'.encode()
-
-
-def extract_server_command(cmd: str) -> Tuple[ServerCommand, Any]:
-    """Given a server-command string, returns command objects."""
-
-    # Yes, eval is unsafe and all that, but this is only intended
-    # for communication between a parent and child process so we
-    # can live with it here.
-    print('would extract', cmd)
-    return ServerCommand.CONFIG, None
+@dataclass
+class ShutdownCommand(ServerCommand):
+    """Tells the server to shut down."""
+    reason: ShutdownReason
+    immediate: bool

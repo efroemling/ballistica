@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-05-02 for Ballistica version 1.5.0 build 20001</em></h4>
+<h4><em>last updated on 2020-05-03 for Ballistica version 1.5.0 build 20001</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -3988,7 +3988,7 @@ cause the powerup box to make a sound and disappear or whatnot.</p>
 </p>
 
 <h3>Methods:</h3>
-<h5><a href="#method_ba_ServerController____init__">&lt;constructor&gt;</a>, <a href="#method_ba_ServerController__handle_transition">handle_transition()</a>, <a href="#method_ba_ServerController__launch_server_session">launch_server_session()</a></h5>
+<h5><a href="#method_ba_ServerController____init__">&lt;constructor&gt;</a>, <a href="#method_ba_ServerController__handle_transition">handle_transition()</a>, <a href="#method_ba_ServerController__shutdown">shutdown()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_ServerController____init__">&lt;constructor&gt;</a></dt></h4><dd>
 <p><span>ba.ServerController(config: ServerConfig)</span></p>
@@ -4005,10 +4005,10 @@ Should return True if action will be handled by us; False if the
 session should just continue on it's merry way.</p>
 
 </dd>
-<dt><h4><a name="method_ba_ServerController__launch_server_session">launch_server_session()</a></dt></h4><dd>
-<p><span>launch_server_session(self) -&gt; None</span></p>
+<dt><h4><a name="method_ba_ServerController__shutdown">shutdown()</a></dt></h4><dd>
+<p><span>shutdown(self, reason: ShutdownReason, immediate: bool) -&gt; None</span></p>
 
-<p>Kick off a host-session based on the current server config.</p>
+<p>Set the app to quit either now or at the next clean opportunity.</p>
 
 </dd>
 </dl>

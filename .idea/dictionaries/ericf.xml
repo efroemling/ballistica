@@ -383,6 +383,7 @@
       <w>curhashes</w>
       <w>curstate</w>
       <w>curtime</w>
+      <w>curtimestr</w>
       <w>customizebrowser</w>
       <w>cutscenes</w>
       <w>cval</w>
@@ -565,6 +566,7 @@
       <w>excludepowerups</w>
       <w>excludetypes</w>
       <w>excstr</w>
+      <w>execcode</w>
       <w>execlocals</w>
       <w>executils</w>
       <w>exhash</w>
@@ -1323,6 +1325,7 @@
       <w>playtypes</w>
       <w>plines</w>
       <w>plistlib</w>
+      <w>plistname</w>
       <w>plpt</w>
       <w>plst</w>
       <w>plusbutton</w>
@@ -1587,6 +1590,7 @@
       <w>serverdialog</w>
       <w>serverget</w>
       <w>servermanager</w>
+      <w>servermode</w>
       <w>serverput</w>
       <w>serverutils</w>
       <w>sessionclass</w>
@@ -1614,6 +1618,7 @@
       <w>shroom</w>
       <w>shutil</w>
       <w>simplesubclasses</w>
+      <w>sincelaunch</w>
       <w>singledispatch</w>
       <w>sirplus</w>
       <w>sitebuiltins</w>
@@ -1827,6 +1832,7 @@
       <w>timeremaining</w>
       <w>timestep</w>
       <w>timestring</w>
+      <w>timestrval</w>
       <w>timetype</w>
       <w>tipstext</w>
       <w>titletext</w>
