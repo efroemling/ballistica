@@ -249,10 +249,10 @@ class ServerManagerApp:
                 bincfg = json.loads(infile.read())
         else:
             bincfg = {}
+
+        # Some of our config values translate directly into the
+        # ballisticacore config file; the rest we pass at runtime.
         bincfg['Port'] = self._config.port
-        bincfg['Enable Telnet'] = self._config.enable_telnet
-        bincfg['Telnet Port'] = self._config.telnet_port
-        bincfg['Telnet Password'] = self._config.telnet_password
         bincfg['Auto Balance Teams'] = self._config.auto_balance_teams
         bincfg['Show Tutorial'] = False
         with open('dist/ba_root/config.json', 'w') as outfile:

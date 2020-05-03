@@ -72,16 +72,11 @@ class ServerConfig:
     auto_balance_teams: bool = True
 
     # Whether to enable telnet access.
-    # This allows you to run python commands on the server as it is running.
-    # Note: you can now also run live commands via stdin so telnet is generally
-    # unnecessary. BallisticaCore's telnet server is very simple so you may
-    # have to turn off any fancy features in your telnet client to get it to
-    # work. There is no password protection so make sure to only enable this
-    # if access to this port is fully trusted (behind a firewall, etc).
-    # IMPORTANT: Telnet is not encrypted at all, so you really should not
-    # expose it's port to the world. If you need remote access, consider
-    # connecting to your machine via ssh and running telnet to localhost
-    # from there.
+    # IMPORTANT: This option is no longer available, as it was being used
+    # for exploits. Live access to the running server is still possible through
+    # the mgr.cmd() function in ballisticacore_server. Run your server through
+    # tools such as 'screen' or 'tmux' and you can reconnect to it remotely
+    # over a secure ssh connection.
     enable_telnet: bool = False
 
     # Port used for telnet.
