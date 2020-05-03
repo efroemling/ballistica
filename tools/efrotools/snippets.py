@@ -72,7 +72,7 @@ def snippets_main(globs: Dict[str, Any]) -> None:
             try:
                 funcs[sys.argv[1]]()
             except CleanError as exc:
-                exc.print()
+                exc.pretty_print()
                 sys.exit(-1)
         else:
             print('Unknown snippets command: "' + sys.argv[1] + '"',

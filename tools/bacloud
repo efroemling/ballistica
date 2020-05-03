@@ -440,5 +440,5 @@ if __name__ == '__main__':
         # Can make this optional if a backtrace is ever useful..
         sys.exit(-1)
     except CleanError as exc:
-        exc.print()
+        exc.pretty_print()
         sys.exit(-1)

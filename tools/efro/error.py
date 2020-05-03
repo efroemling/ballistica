@@ -42,10 +42,10 @@ class CleanError(Exception):
     more descriptive exception types.
     """
 
-    def print(self, flush: bool = False) -> None:
-        """Print the error to stdout, using colored output if available.
+    def pretty_print(self, flush: bool = False) -> None:
+        """Print the error to stdout, using red colored output if available.
 
-        If the error has no message, nothing will be printed.
+        If the error has an empty message, prints nothing (not even a newline).
         """
         from efro.terminal import Clr
         errstr = str(self)

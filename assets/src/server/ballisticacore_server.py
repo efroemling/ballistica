@@ -365,5 +365,5 @@ if __name__ == '__main__':
         ServerManagerApp().run_interactive()
     except CleanError as clean_exc:
         # For clean errors, do a simple print and fail; no tracebacks/etc.
-        clean_exc.print()
+        clean_exc.pretty_print()
         sys.exit(1)
