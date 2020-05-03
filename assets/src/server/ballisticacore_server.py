@@ -253,6 +253,8 @@ class ServerManagerApp:
         bincfg['Enable Telnet'] = self._config.enable_telnet
         bincfg['Telnet Port'] = self._config.telnet_port
         bincfg['Telnet Password'] = self._config.telnet_password
+        bincfg['Auto Balance Teams'] = self._config.auto_balance_teams
+        bincfg['Show Tutorial'] = False
         with open('dist/ba_root/config.json', 'w') as outfile:
             outfile.write(json.dumps(bincfg))
 

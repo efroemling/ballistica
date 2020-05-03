@@ -71,7 +71,7 @@ class ServerController:
         self._config = config
         self._playlist_name = '__default__'
         self._ran_access_check = False
-        self._run_server_wait_timer: Optional[ba.Timer] = None
+        self._prep_timer: Optional[ba.Timer] = None
         self._next_stuck_login_warn_time = time.time() + 10.0
         self._first_run = True
         self._shutdown_reason: Optional[ShutdownReason] = None
@@ -88,10 +88,10 @@ class ServerController:
         # account sign-in or fetching playlists; this will kick off the
         # session once done.
         with _ba.Context('ui'):
-            self._run_server_wait_timer = _ba.Timer(0.25,
-                                                    self._prepare_to_serve,
-                                                    timetype=TimeType.REAL,
-                                                    repeat=True)
+            self._prep_timer = _ba.Timer(0.25,
+                                         self._prepare_to_serve,
+                                         timetype=TimeType.REAL,
+                                         repeat=True)
 
     def shutdown(self, reason: ShutdownReason, immediate: bool) -> None:
         """Set the app to quit either now or at the next clean opportunity."""
@@ -167,9 +167,7 @@ class ServerController:
                       f' from the internet.{Clr.RST}')
 
     def _prepare_to_serve(self) -> None:
-
         signed_in = _ba.get_account_state() == 'signed_in'
-
         if not signed_in:
 
             # Signing in to the local server account should not take long;
@@ -178,54 +176,49 @@ class ServerController:
             if curtime > self._next_stuck_login_warn_time:
                 print('Still waiting for account sign-in...')
                 self._next_stuck_login_warn_time = curtime + 10.0
+            return
+
+        can_launch = False
+
+        # If we're fetching a playlist, we need to do that first.
+        if not self._playlist_fetch_running:
+            can_launch = True
         else:
-            can_launch = False
+            if not self._playlist_fetch_sent_request:
+                print(f'{Clr.SBLU}Requesting shared-playlist'
+                      f' {self._config.playlist_code}...{Clr.RST}')
+                _ba.add_transaction(
+                    {
+                        'type': 'IMPORT_PLAYLIST',
+                        'code': str(self._config.playlist_code),
+                        'overwrite': True
+                    },
+                    callback=self._on_playlist_fetch_response)
+                _ba.run_transactions()
+                self._playlist_fetch_sent_request = True
 
-            # If we're trying to fetch a playlist, we do that first.
-            if self._playlist_fetch_running:
-
-                # Send request if we haven't.
-                if not self._playlist_fetch_sent_request:
-                    print(f'{Clr.SBLU}Requesting shared-playlist'
-                          f' {self._config.playlist_code}...{Clr.RST}')
-                    _ba.add_transaction(
-                        {
-                            'type': 'IMPORT_PLAYLIST',
-                            'code': str(self._config.playlist_code),
-                            'overwrite': True
-                        },
-                        callback=self._on_playlist_fetch_response)
-                    _ba.run_transactions()
-                    self._playlist_fetch_sent_request = True
-
-                # If we got a valid result, forget the fetch ever
-                # existed and move on.
-                if self._playlist_fetch_got_response:
-                    self._playlist_fetch_running = False
-                    can_launch = True
-            else:
+            if self._playlist_fetch_got_response:
+                self._playlist_fetch_running = False
                 can_launch = True
 
-            if can_launch:
-                self._run_server_wait_timer = None
-                _ba.pushcall(self._launch_server_session)
+        if can_launch:
+            self._prep_timer = None
+            _ba.pushcall(self._launch_server_session)
 
     def _on_playlist_fetch_response(
         self,
         result: Optional[Dict[str, Any]],
     ) -> None:
         if result is None:
-            print('Error fetching playlist;' ' aborting.')
+            print('Error fetching playlist; aborting.')
             sys.exit(-1)
 
-        # Once we get here we simply modify our
-        # config to use this playlist.
+        # Once we get here, simply modify our config to use this playlist.
         typename = (
             'teams' if result['playlistType'] == 'Team Tournament' else
             'ffa' if result['playlistType'] == 'Free-for-All' else '??')
         plistname = result['playlistName']
         print(f'{Clr.SBLU}Got playlist: "{plistname}" ({typename}).{Clr.RST}')
-
         self._playlist_fetch_got_response = True
         self._config.session_type = typename
         self._playlist_name = (result['playlistName'])
@@ -256,8 +249,6 @@ class ServerController:
                   f' ({app.build_number})'
                   f' entering server-mode {curtimestr}{Clr.RST}')
 
-        appcfg['Show Tutorial'] = False
-
         if sessiontype is FreeForAllSession:
             appcfg['Free-for-All Playlist Selection'] = self._playlist_name
             appcfg['Free-for-All Playlist Randomize'] = (
@@ -271,13 +262,11 @@ class ServerController:
 
         app.teams_series_length = self._config.teams_series_length
         app.ffa_series_length = self._config.ffa_series_length
-        appcfg['Port'] = self._config.port
-        appcfg['Auto Balance Teams'] = self._config.auto_balance_teams
+
+        # Call set-enabled last (will push state to the cloud).
         _ba.set_public_party_max_size(self._config.max_party_size)
         _ba.set_public_party_name(self._config.party_name)
         _ba.set_public_party_stats_url(self._config.stats_url)
-
-        # Call set-enabled last (will push state to the cloud).
         _ba.set_public_party_enabled(self._config.party_is_public)
 
         # And here we go.
