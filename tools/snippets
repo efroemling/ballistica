@@ -30,19 +30,18 @@ to functionality contained in efrotools or other standalone tool modules.
 """
 from __future__ import annotations
 
-import os
+# Note: import as little as possible here at the module level to
+# keep launch times fast for small snippets.
 import sys
 from typing import TYPE_CHECKING
-
-import efrotools
 
 # Pull in some standard snippets we want to expose.
 # noinspection PyUnresolvedReferences
 from efrotools.snippets import (  # pylint: disable=unused-import
-    PROJROOT, CleanError, snippets_main, formatcode, formatscripts,
-    formatmakefile, cpplint, pylint, mypy, dmypy, tool_config_install, sync,
-    sync_all, scriptfiles, pycharm, clioncode, androidstudiocode,
-    makefile_target_list, spelling, spelling_all, compile_python_files, pytest)
+    PROJROOT, snippets_main, formatcode, formatscripts, formatmakefile,
+    cpplint, pylint, mypy, dmypy, tool_config_install, sync, sync_all,
+    scriptfiles, pycharm, clioncode, androidstudiocode, makefile_target_list,
+    spelling, spelling_all, compile_python_files, pytest)
 
 if TYPE_CHECKING:
     from typing import Optional
@@ -103,6 +102,8 @@ def resize_image() -> None:
 
     args: xres, yres, src, dst
     """
+    import os
+    import efrotools
     if len(sys.argv) != 6:
         raise Exception('expected 5 args')
     width = int(sys.argv[2])
@@ -114,8 +115,7 @@ def resize_image() -> None:
     if not src.endswith('.png'):
         raise Exception('src must be a png')
     print('Creating: ' + os.path.basename(dst), file=sys.stderr)
-    efrotools.run('convert "' + src + '" -resize ' + str(width) + 'x' +
-                  str(height) + ' "' + dst + '"')
+    efrotools.run(f'convert "{src}" -resize {width}x{height} "{dst}"')
 
 
 def check_clean_safety() -> None:
@@ -124,6 +124,7 @@ def check_clean_safety() -> None:
     Use to avoid losing work if we accidentally do a clean without
     adding something.
     """
+    import os
     from efrotools.snippets import check_clean_safety as std_snippet
 
     # First do standard checks.
@@ -166,6 +167,7 @@ def androidaddr() -> None:
     command line args: archive_dir architecture addr
     """
     import batools.android
+    from efro.error import CleanError
     if len(sys.argv) != 5:
         raise CleanError(f'ERROR: expected 3 args; got {len(sys.argv) - 2}\n'
                          f'Usage: "tools/snippets android_addr'
@@ -188,6 +190,7 @@ def python_build_apple_debug() -> None:
 
 def _python_build_apple(debug: bool) -> None:
     """Build an embeddable python for macOS/iOS/tvOS."""
+    import os
     from efrotools import pybuild
     os.chdir(PROJROOT)
     archs = ('mac', 'ios', 'tvos')
@@ -212,6 +215,7 @@ def python_build_android_debug() -> None:
 
 
 def _python_build_android(debug: bool) -> None:
+    import os
     from efrotools import pybuild
     os.chdir(PROJROOT)
     archs = ('arm', 'arm64', 'x86', 'x86_64')
@@ -227,6 +231,7 @@ def _python_build_android(debug: bool) -> None:
 
 def python_android_patch() -> None:
     """Patches Python to prep for building for Android."""
+    import os
     from efrotools import pybuild
     os.chdir(sys.argv[2])
     pybuild.android_patch()
@@ -237,6 +242,7 @@ def python_gather() -> None:
 
     This assumes all embeddable py builds have been run successfully.
     """
+    import os
     from efrotools import pybuild
     os.chdir(PROJROOT)
     pybuild.gather()
@@ -244,7 +250,9 @@ def python_gather() -> None:
 
 def clean_orphaned_assets() -> None:
     """Remove asset files that are no longer part of the build."""
+    import os
     import json
+    import efrotools
 
     # Operate from dist root..
     os.chdir(PROJROOT)
@@ -268,7 +276,9 @@ def clean_orphaned_assets() -> None:
 
 def py_examine() -> None:
     """Run a python examination at a given point in a given file."""
+    import os
     from pathlib import Path
+    import efrotools
     if len(sys.argv) != 7:
         print('ERROR: expected 7 args')
         sys.exit(255)
@@ -297,12 +307,12 @@ def py_examine() -> None:
 def push_ipa() -> None:
     """Construct and push ios IPA for testing."""
     from pathlib import Path
-    from efrotools import ios
+    import efrotools.ios
     root = Path(sys.argv[0], '../..').resolve()
     if len(sys.argv) != 3:
         raise Exception('expected 1 arg (debug or release)')
     modename = sys.argv[2]
-    ios.push_ipa(root, modename)
+    efrotools.ios.push_ipa(root, modename)
 
 
 def fix_mac_ssh() -> None:
@@ -383,6 +393,7 @@ def get_modern_make() -> None:
 
 def warm_start_asset_build() -> None:
     """Prep asset builds to run faster."""
+    import os
     import subprocess
     from pathlib import Path
     from efrotools import get_config
@@ -426,6 +437,7 @@ def install_pip_reqs() -> None:
 def checkenv() -> None:
     """Check for tools necessary to build and run the app."""
     import batools.build
+    from efro.error import CleanError
     try:
         batools.build.checkenv()
     except RuntimeError as exc:
@@ -435,6 +447,7 @@ def checkenv() -> None:
 def ensure_prefab_platform() -> None:
     """Ensure we are running on a particular prefab platform."""
     import batools.build
+    from efro.error import CleanError
     if len(sys.argv) != 3:
         raise CleanError('Expected 1 platform name arg.')
     needed = sys.argv[2]
@@ -487,6 +500,7 @@ def lazybuild() -> None:
     """Run a build command only if an input has changed."""
     import subprocess
     import batools.build
+    from efro.error import CleanError
     if len(sys.argv) < 5:
         raise CleanError('Expected at least 3 args')
     try:
@@ -504,6 +518,7 @@ def lazybuild() -> None:
 def filter_server_config() -> None:
     """Add commented-out config options to a server config."""
     import batools.build
+    from efro.error import CleanError
     if len(sys.argv) != 4:
         raise CleanError('Expected 2 args (infile and outfile).')
     batools.build.filter_server_config(str(PROJROOT), sys.argv[2], sys.argv[3])

@@ -26,13 +26,11 @@ be imported into projects' snippets script for easy reuse.
 """
 from __future__ import annotations
 
-import os
+# Note: import as little as possible here at the module level to keep
+# launch times fast for small snippets.
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
-
-from efro.error import CleanError
-from efro.terminal import Clr
 
 if TYPE_CHECKING:
     from typing import Dict, Any, List
@@ -48,6 +46,8 @@ def snippets_main(globs: Dict[str, Any]) -> None:
     the one corresponding to the first passed arg.
     """
     import types
+    from efro.error import CleanError
+    from efro.terminal import Clr
     funcs = dict(((name, obj) for name, obj in globs.items()
                   if not name.startswith('_') and name != 'snippets_main'
                   and isinstance(obj, types.FunctionType)))
@@ -174,6 +174,7 @@ def check_clean_safety() -> None:
     Use to avoid losing work if we accidentally do a clean without
     adding something.
     """
+    import os
     import subprocess
     if len(sys.argv) != 2:
         raise Exception('invalid arguments')
@@ -357,8 +358,11 @@ def sync_all() -> None:
     This assumes that there is a 'sync-full' and 'sync-list' Makefile target
     under each project.
     """
+    import os
     import subprocess
     import concurrent.futures
+    from efro.error import CleanError
+    from efro.terminal import Clr
     print(f'{Clr.SBLU}Updating formatting for all projects...{Clr.RST}')
     projects_str = os.environ.get('EFROTOOLS_SYNC_PROJECTS')
     if projects_str is None:
@@ -427,6 +431,7 @@ def compile_python_files() -> None:
     the built-in scripts directly (or go through the asset build system which
     properly recreates the .pyc files).
     """
+    import os
     import py_compile
     for arg in sys.argv[2:]:
         mode = py_compile.PycInvalidationMode.UNCHECKED_HASH
@@ -439,9 +444,11 @@ def compile_python_files() -> None:
 
 def pytest() -> None:
     """Run pytest with project environment set up properly."""
+    import os
     import platform
     import subprocess
     from efrotools import get_config, PYTHON_BIN
+    from efro.error import CleanError
 
     # Grab our python paths for the project and stuff them in PYTHONPATH.
     pypaths = get_config(PROJROOT).get('python_paths')
@@ -468,6 +475,7 @@ def makefile_target_list() -> None:
     Takes a single argument: a path to a Makefile.
     """
     from dataclasses import dataclass
+    from efro.terminal import Clr
 
     @dataclass
     class _Entry:
