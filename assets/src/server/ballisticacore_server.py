@@ -275,7 +275,8 @@ class ServerManagerApp:
         assert self._process.stdin is not None
         val = repr(pickle.dumps(command))
         assert '\n' not in val
-        execcode = f'import ba._server; ba._server._cmd({val})\n'.encode()
+        execcode = (f'import ba._servermode;'
+                    f' ba._servermode._cmd({val})\n').encode()
         self._process.stdin.write(execcode)
         self._process.stdin.flush()
 
