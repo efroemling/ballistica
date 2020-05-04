@@ -135,8 +135,17 @@ class ServerManagerApp:
             # left in limbo with our process thread still running.
             pass
         except BaseException as exc:
-            print(f'{Clr.SRED}Unexpected interpreter exception:'
-                  f' {exc}{Clr.RST}')
+            # Installing Python 3.7 on Ubuntu 18 can lead to this error;
+            # inform the user how to fix it.
+            if "No module named 'apt_pkg'" in str(exc):
+                print(f'{Clr.SRED}Error: Your Python environment needs to'
+                      ' be fixed (apt_pkg cannot be found).\n'
+                      f'See the final step in the Linux instructions here:\n'
+                      f'  https://github.com/efroemling/ballistica/'
+                      f'wiki/Getting-Started#linux{Clr.RST}')
+            else:
+                print(f'{Clr.SRED}Unexpected interpreter exception:'
+                      f' {exc} ({type(exc)}){Clr.RST}')
 
         # Mark ourselves as shutting down and wait for the process to wrap up.
         self._done = True
