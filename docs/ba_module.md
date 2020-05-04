@@ -3988,10 +3988,16 @@ cause the powerup box to make a sound and disappear or whatnot.</p>
 </p>
 
 <h3>Methods:</h3>
-<h5><a href="#method_ba_ServerController____init__">&lt;constructor&gt;</a>, <a href="#method_ba_ServerController__handle_transition">handle_transition()</a>, <a href="#method_ba_ServerController__shutdown">shutdown()</a></h5>
+<h5><a href="#method_ba_ServerController____init__">&lt;constructor&gt;</a>, <a href="#method_ba_ServerController__broadcast_message">broadcast_message()</a>, <a href="#method_ba_ServerController__handle_transition">handle_transition()</a>, <a href="#method_ba_ServerController__kick">kick()</a>, <a href="#method_ba_ServerController__print_client_list">print_client_list()</a>, <a href="#method_ba_ServerController__shutdown">shutdown()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_ServerController____init__">&lt;constructor&gt;</a></dt></h4><dd>
 <p><span>ba.ServerController(config: ServerConfig)</span></p>
+
+</dd>
+<dt><h4><a name="method_ba_ServerController__broadcast_message">broadcast_message()</a></dt></h4><dd>
+<p><span>broadcast_message(self, message: str) -&gt; None</span></p>
+
+<p>Broadcast a message to all connected clients.</p>
 
 </dd>
 <dt><h4><a name="method_ba_ServerController__handle_transition">handle_transition()</a></dt></h4><dd>
@@ -4003,6 +4009,22 @@ cause the powerup box to make a sound and disappear or whatnot.</p>
 a good 'end-point' (such as a final score screen).
 Should return True if action will be handled by us; False if the
 session should just continue on it's merry way.</p>
+
+</dd>
+<dt><h4><a name="method_ba_ServerController__kick">kick()</a></dt></h4><dd>
+<p><span>kick(self, client_id: int, ban_time: Optional[int]) -&gt; None</span></p>
+
+<p>Kick the provided client id.</p>
+
+<p>ban_time is provided in seconds.
+If ban_time is None, ban duration will be determined automatically.
+Pass 0 or a negative number for no ban time.</p>
+
+</dd>
+<dt><h4><a name="method_ba_ServerController__print_client_list">print_client_list()</a></dt></h4><dd>
+<p><span>print_client_list(self) -&gt; None</span></p>
+
+<p>Print info about all connected clients.</p>
 
 </dd>
 <dt><h4><a name="method_ba_ServerController__shutdown">shutdown()</a></dt></h4><dd>

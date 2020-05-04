@@ -48,6 +48,10 @@ if TYPE_CHECKING:
     from types import FrameType
     from bacommon.servermanager import ServerCommand
 
+# Not sure how much versioning we'll do with this, but this will get
+# printed at startup in case we need it.
+VERSION_STR = '1.0'
+
 
 class ServerManagerApp:
     """An app which manages BallisticaCore server execution.
@@ -101,7 +105,8 @@ class ServerManagerApp:
 
         # Print basic usage info in interactive mode.
         if sys.stdin.isatty():
-            print(f'{Clr.SMAG}BallisticaCore server manager starting up...\n'
+            print(f'{Clr.SMAG}BallisticaCore server manager {VERSION_STR}'
+                  f' starting up...\n'
                   f'Use the "mgr" object to make live server adjustments.\n'
                   f'Type "help(mgr)" for more information.{Clr.RST}')
 
@@ -115,22 +120,19 @@ class ServerManagerApp:
         self._process_thread = Thread(target=self._bg_thread_main)
         self._process_thread.start()
 
-        # According to Python docs, default locals dict has __name__ set
-        # to __console__ and __doc__ set to None; using that as start point.
-        # https://docs.python.org/3/library/code.html
-        locs = {'__name__': '__console__', '__doc__': None, 'mgr': self}
+        context = {'__name__': '__console__', '__doc__': None, 'mgr': self}
 
         # Enable tab-completion if possible.
-        self._enable_tab_completion(locs)
+        self._enable_tab_completion(context)
 
         # Now just sit in an interpreter.
         # TODO: make it possible to use IPython if the user has it available.
         try:
-            code.interact(local=locs, banner='', exitmsg='')
+            code.interact(local=context, banner='', exitmsg='')
         except SystemExit:
             # We get this from the builtin quit(), etc.
             # Need to catch this so we can clean up, otherwise we'll be
-            # left in limbo with our BG thread still running.
+            # left in limbo with our process thread still running.
             pass
         except BaseException as exc:
             print(f'{Clr.SRED}Unexpected interpreter exception:'
@@ -150,7 +152,9 @@ class ServerManagerApp:
             raise TypeError(f'Expected a string arg; got {type(statement)}')
         with self._process_commands_lock:
             self._process_commands.append(statement)
+        self._block_for_command_completion()
 
+    def _block_for_command_completion(self) -> None:
         # Ideally we'd block here until the command was run so our prompt would
         # print after it's results. We currently don't get any response from
         # the app so the best we can do is block until our bg thread has sent
@@ -165,6 +169,29 @@ class ServerManagerApp:
         # One last short delay so if we come out *just* as the command is sent
         # we'll hopefully still give it enough time to process/print.
         time.sleep(0.1)
+
+    def broadcast(self, message: str) -> None:
+        """Broadcast a message to all connected clients."""
+        from bacommon.servermanager import BroadcastCommand
+        self._enqueue_server_command(BroadcastCommand(message=message))
+
+    def clientlist(self) -> None:
+        """Print a list of connected clients."""
+        from bacommon.servermanager import ClientListCommand
+        self._enqueue_server_command(ClientListCommand())
+        self._block_for_command_completion()
+
+    def kick(self, client_id: int, ban_time: Optional[int] = None) -> None:
+        """Kick the client with the provided id.
+
+        If ban_time is provided, the client will be banned for that
+        length of time in seconds. If it is None, ban duration will
+        be determined automatically. Pass 0 or a negative number for no
+        ban time.
+        """
+        from bacommon.servermanager import KickCommand
+        self._enqueue_server_command(
+            KickCommand(client_id=client_id, ban_time=ban_time))
 
     def restart(self, immediate: bool = False) -> None:
         """Restart the server child-process.
@@ -360,10 +387,15 @@ class ServerManagerApp:
         print(f'{Clr.SMAG}Server process stopped.{Clr.RST}')
 
 
-if __name__ == '__main__':
+def main() -> None:
+    """Run a BallisticaCore server manager in interactive mode."""
     try:
         ServerManagerApp().run_interactive()
-    except CleanError as clean_exc:
+    except CleanError as exc:
         # For clean errors, do a simple print and fail; no tracebacks/etc.
-        clean_exc.pretty_print()
+        exc.pretty_print()
         sys.exit(1)
+
+
+if __name__ == '__main__':
+    main()

@@ -121,3 +121,21 @@ class ShutdownCommand(ServerCommand):
     """Tells the server to shut down."""
     reason: ShutdownReason
     immediate: bool
+
+
+@dataclass
+class BroadcastCommand(ServerCommand):
+    """Broadcast a message to all clients."""
+    message: str
+
+
+@dataclass
+class ClientListCommand(ServerCommand):
+    """Print a list of clients."""
+
+
+@dataclass
+class KickCommand(ServerCommand):
+    """Kick a client."""
+    client_id: int
+    ban_time: Optional[int]

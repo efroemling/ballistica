@@ -30,7 +30,9 @@ from ba._enums import TimeType
 from ba._freeforallsession import FreeForAllSession
 from ba._dualteamsession import DualTeamSession
 from bacommon.servermanager import (ServerCommand, StartServerModeCommand,
-                                    ShutdownCommand, ShutdownReason)
+                                    ShutdownCommand, ShutdownReason,
+                                    BroadcastCommand, ClientListCommand,
+                                    KickCommand)
 import _ba
 
 if TYPE_CHECKING:
@@ -54,6 +56,22 @@ def _cmd(command_data: bytes) -> None:
         assert _ba.app.server is not None
         _ba.app.server.shutdown(reason=command.reason,
                                 immediate=command.immediate)
+        return
+
+    if isinstance(command, BroadcastCommand):
+        assert _ba.app.server is not None
+        _ba.app.server.broadcast_message(command.message)
+        return
+
+    if isinstance(command, ClientListCommand):
+        assert _ba.app.server is not None
+        _ba.app.server.print_client_list()
+        return
+
+    if isinstance(command, KickCommand):
+        assert _ba.app.server is not None
+        _ba.app.server.kick(client_id=command.client_id,
+                            ban_time=command.ban_time)
         return
 
     print(f'{Clr.SRED}ERROR: server process'
@@ -93,6 +111,48 @@ class ServerController:
                                          timetype=TimeType.REAL,
                                          repeat=True)
 
+    def broadcast_message(self, message: str) -> None:
+        """Broadcast a message to all connected clients."""
+        # FIXME: Should add a proper call for this, which would allow
+        # us to use Lstr values and colors and whatnot.
+        _ba.chat_message(message)
+
+    def print_client_list(self) -> None:
+        """Print info about all connected clients."""
+        import json
+        roster = _ba.get_game_roster()
+        title1 = 'Client ID'
+        title2 = 'Account Name'
+        title3 = 'Players'
+        col1 = 10
+        col2 = 16
+        out = (f'{Clr.BLD}'
+               f'{title1:<{col1}} {title2:<{col2}} {title3}'
+               f'{Clr.RST}')
+        for client in roster:
+            if client['client_id'] == -1:
+                continue
+            spec = json.loads(client['specString'])
+            name = spec['n']
+            players = ', '.join(n['name'] for n in client['players'])
+            clientid = client['client_id']
+            out += f'\n{clientid:<{col1}} {name:<{col2}} {players}'
+        print(out)
+
+    def kick(self, client_id: int, ban_time: Optional[int]) -> None:
+        """Kick the provided client id.
+
+        ban_time is provided in seconds.
+        If ban_time is None, ban duration will be determined automatically.
+        Pass 0 or a negative number for no ban time.
+        """
+
+        # FIXME: this case should be handled under the hood.
+        if ban_time is None:
+            ban_time = 300
+
+        _ba.disconnect_client(client_id=client_id, ban_time=ban_time)
+
     def shutdown(self, reason: ShutdownReason, immediate: bool) -> None:
         """Set the app to quit either now or at the next clean opportunity."""
         self._shutdown_reason = reason
@@ -124,19 +184,15 @@ class ServerController:
         self._executing_shutdown = True
         timestrval = time.strftime('%c')
         if self._shutdown_reason is ShutdownReason.RESTARTING:
-            # FIXME: Should add a server-screen-message call.
-            # (so we could send this an an Lstr)
-            _ba.chat_message(
+            self.broadcast_message(
                 Lstr(resource='internal.serverRestartingText').evaluate())
             print(f'{Clr.SBLU}Exiting for server-restart'
                   f' at {timestrval}{Clr.RST}')
         else:
-            # FIXME: Should add a server-screen-message call.
-            # (so we could send this an an Lstr)
+            self.broadcast_message(
+                Lstr(resource='internal.serverShuttingDownText').evaluate())
             print(f'{Clr.SBLU}Exiting for server-shutdown'
                   f' at {timestrval}{Clr.RST}')
-            _ba.chat_message(
-                Lstr(resource='internal.serverShuttingDownText').evaluate())
         with _ba.Context('ui'):
             _ba.timer(2.0, _ba.quit, timetype=TimeType.REAL)
 
@@ -153,18 +209,22 @@ class ServerController:
         )
 
     def _access_check_response(self, data: Optional[Dict[str, Any]]) -> None:
-        gameport = _ba.get_game_port()
+        # gameport = _ba.get_game_port()
         if data is None:
             print('error on UDP port access check (internet down?)')
         else:
+            addr = data['address']
+            port = data['port']
             if data['accessible']:
-                print(f'{Clr.SBLU}UDP port {gameport} access check successful.'
-                      f' Your server appears to be joinable from the'
-                      f' internet.{Clr.RST}')
+                print(f'{Clr.SBLU}Master server access check of {addr}'
+                      f' udp port {port} succeeded.\n'
+                      f'Your server appears to be'
+                      f' joinable from the internet.{Clr.RST}')
             else:
-                print(f'{Clr.SRED}UDP port {gameport} access check failed.'
-                      f' Your server does not appear to be joinable'
-                      f' from the internet.{Clr.RST}')
+                print(f'{Clr.SRED}Master server access check of {addr}'
+                      f' udp port {port} failed.\n'
+                      f'Your server does not appear to be'
+                      f' joinable from the internet.{Clr.RST}')
 
     def _prepare_to_serve(self) -> None:
         signed_in = _ba.get_account_state() == 'signed_in'
