@@ -209,22 +209,31 @@ class ServerController:
         )
 
     def _access_check_response(self, data: Optional[Dict[str, Any]]) -> None:
-        # gameport = _ba.get_game_port()
+        import os
         if data is None:
             print('error on UDP port access check (internet down?)')
         else:
             addr = data['address']
             port = data['port']
+            show_addr = os.environ.get('BA_VERBOSE_ACCESS_CHECK', '0') == '1'
+            if show_addr:
+                addrstr = f' {addr}'
+                poststr = ''
+            else:
+                addrstr = ''
+                poststr = (
+                    '\nSet environment variable BA_VERBOSE_ACCESS_CHECK=1'
+                    ' for more info.')
             if data['accessible']:
-                print(f'{Clr.SBLU}Master server access check of {addr}'
+                print(f'{Clr.SBLU}Master server access check of{addrstr}'
                       f' udp port {port} succeeded.\n'
                       f'Your server appears to be'
-                      f' joinable from the internet.{Clr.RST}')
+                      f' joinable from the internet.{poststr}{Clr.RST}')
             else:
-                print(f'{Clr.SRED}Master server access check of {addr}'
+                print(f'{Clr.SRED}Master server access check of{addrstr}'
                       f' udp port {port} failed.\n'
                       f'Your server does not appear to be'
-                      f' joinable from the internet.{Clr.RST}')
+                      f' joinable from the internet.{poststr}{Clr.RST}')
 
     def _prepare_to_serve(self) -> None:
         signed_in = _ba.get_account_state() == 'signed_in'
