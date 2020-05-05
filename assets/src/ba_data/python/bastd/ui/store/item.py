@@ -293,8 +293,8 @@ def instantiate_store_item_display(item_name: str,
         total_worth_price: Optional[str]
         if total_worth_item is not None:
             price = _ba.get_price(total_worth_item)
-            assert price is not None
-            total_worth_price = get_clean_price(price)
+            total_worth_price = (get_clean_price(price)
+                                 if price is not None else '??')
         else:
             total_worth_price = None
 
@@ -339,7 +339,8 @@ def instantiate_store_item_display(item_name: str,
                                draw_controller=btn,
                                color=backing_color,
                                texture=b_square_texture))
-            # hack - gotta draw two transparent versions to avoid z issues
+
+            # Hack - gotta draw two transparent versions to avoid z issues.
             for mod in model_opaque, model_transparent:
                 extra_images.append(
                     ba.imagewidget(parent=parent_widget,

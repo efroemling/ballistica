@@ -238,7 +238,7 @@ class Target(ba.Actor):
                           })
         loc2 = ba.newnode('locator',
                           attrs={
-                              'shape': 'circle_outline',
+                              'shape': 'circleOutline',
                               'position': position,
                               'color': (0, 1, 0),
                               'opacity': 0.3,
@@ -247,7 +247,7 @@ class Target(ba.Actor):
                           })
         loc3 = ba.newnode('locator',
                           attrs={
-                              'shape': 'circle_outline',
+                              'shape': 'circleOutline',
                               'position': position,
                               'color': (0, 1, 0),
                               'opacity': 0.1,

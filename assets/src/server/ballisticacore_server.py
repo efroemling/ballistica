@@ -105,9 +105,11 @@ class ServerManagerApp:
 
         # Print basic usage info in interactive mode.
         if sys.stdin.isatty():
-            print(f'{Clr.SMAG}BallisticaCore server manager {VERSION_STR}'
-                  f' starting up...\n'
-                  f'Use the "mgr" object to make live server adjustments.\n'
+            print(f'{Clr.CYN}{Clr.BLD}BallisticaCore server'
+                  f' manager {VERSION_STR}'
+                  f' starting up...{Clr.RST}\n'
+                  f'{Clr.CYN}Use the "mgr" object to make'
+                  f' live server adjustments.\n'
                   f'Type "help(mgr)" for more information.{Clr.RST}')
 
         # Python will handle SIGINT for us (as KeyboardInterrupt) but we
@@ -267,7 +269,7 @@ class ServerManagerApp:
         # slight behavior tweaks. Hmm; should this be an argument instead?
         os.environ['BA_SERVER_WRAPPER_MANAGED'] = '1'
 
-        print(f'{Clr.SMAG}Launching server child-process...{Clr.RST}')
+        print(f'{Clr.CYN}Launching server child-process...{Clr.RST}')
         binary_name = ('ballisticacore_headless.exe'
                        if os.name == 'nt' else './ballisticacore_headless')
         self._process = subprocess.Popen([binary_name, '-cfgdir', 'ba_root'],
@@ -355,7 +357,7 @@ class ServerManagerApp:
             if (self._restart_minutes is not None and sincelaunch >
                 (self._restart_minutes * 60.0)
                     and not self._process_sent_auto_restart):
-                print(f'{Clr.SMAG}restart_minutes ({self._restart_minutes})'
+                print(f'{Clr.CYN}restart_minutes ({self._restart_minutes})'
                       f' elapsed; requesting child-process'
                       f' soft restart...{Clr.RST}')
                 self.restart()
@@ -364,7 +366,7 @@ class ServerManagerApp:
             # Watch for the process exiting.
             code: Optional[int] = self._process.poll()
             if code is not None:
-                print(f'{Clr.SMAG}Server process exited'
+                print(f'{Clr.CYN}Server process exited'
                       f' with code {code}.{Clr.RST}')
                 time.sleep(1.0)  # Keep things from moving too fast.
                 self._reset_process_vars()
@@ -383,7 +385,7 @@ class ServerManagerApp:
         if self._process is None:
             return
 
-        print(f'{Clr.SMAG}Stopping server process...{Clr.RST}')
+        print(f'{Clr.CYN}Stopping server process...{Clr.RST}')
 
         # First, ask it nicely to die and give it a moment.
         # If that doesn't work, bring down the hammer.
@@ -393,7 +395,7 @@ class ServerManagerApp:
         except subprocess.TimeoutExpired:
             self._process.kill()
         self._reset_process_vars()
-        print(f'{Clr.SMAG}Server process stopped.{Clr.RST}')
+        print(f'{Clr.CYN}Server process stopped.{Clr.RST}')
 
 
 def main() -> None:

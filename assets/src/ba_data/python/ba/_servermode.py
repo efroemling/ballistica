@@ -215,14 +215,14 @@ class ServerController:
         else:
             addr = data['address']
             port = data['port']
-            show_addr = os.environ.get('BA_VERBOSE_ACCESS_CHECK', '0') == '1'
+            show_addr = os.environ.get('BA_ACCESS_CHECK_VERBOSE', '0') == '1'
             if show_addr:
                 addrstr = f' {addr}'
                 poststr = ''
             else:
                 addrstr = ''
                 poststr = (
-                    '\nSet environment variable BA_VERBOSE_ACCESS_CHECK=1'
+                    '\nSet environment variable BA_ACCESS_CHECK_VERBOSE=1'
                     ' for more info.')
             if data['accessible']:
                 print(f'{Clr.SBLU}Master server access check of{addrstr}'
@@ -314,7 +314,7 @@ class ServerController:
 
         if self._first_run:
             curtimestr = time.strftime('%c')
-            print(f'{Clr.SBLU}BallisticaCore {app.version}'
+            print(f'{Clr.BLD}{Clr.BLU}BallisticaCore {app.version}'
                   f' ({app.build_number})'
                   f' entering server-mode {curtimestr}{Clr.RST}')
 

@@ -669,10 +669,10 @@ class EditProfileWindow(ba.Window):
             'name': new_name,
             'profile': {
                 'character': self._spazzes[self._icon_index],
-                'color': self._color,
+                'color': list(self._color),
                 'global': self._global,
                 'icon': self._icon,
-                'highlight': self._highlight
+                'highlight': list(self._highlight)
             }
         })
 

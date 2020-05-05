@@ -526,11 +526,23 @@ def filter_server_config() -> None:
 
 def printcolors() -> None:
     """Print all colors available in efro.terminals.TerminalColor."""
-    from efro.terminal import TerminalColor
+    from efro.error import CleanError
+    from efro.terminal import TerminalColor, Clr
+
+    if Clr.RED == '':
+        raise CleanError('Efro color terminal output is disabled.')
+
+    clrnames = {getattr(Clr, s): s for s in dir(Clr) if s.isupper()}
+
+    # Print everything in Clr (since that's what users should be using
+    # but do it in the order of TerminalColor (since Clr is just a class
+    # so is unordered)
     for value in TerminalColor:
         if value is TerminalColor.RESET:
             continue
-        print(f'{value.name}: {value.value}'
+        shortname = f'Clr.{clrnames[value.value]}'
+        longname = f'({value.name})'
+        print(f'{shortname:<12} {longname:<20} {value.value}'
               f'The quick brown fox jumps over the lazy dog.'
               f'{TerminalColor.RESET.value}')
 

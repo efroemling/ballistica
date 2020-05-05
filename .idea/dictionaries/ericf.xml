@@ -307,6 +307,7 @@
       <w>clrend</w>
       <w>clrgrn</w>
       <w>clrhdr</w>
+      <w>clrnames</w>
       <w>clrred</w>
       <w>cmathmodule</w>
       <w>cmds</w>
@@ -1614,6 +1615,7 @@
       <w>sharedobjs</w>
       <w>shiftdelay</w>
       <w>shiftposition</w>
+      <w>shortname</w>
       <w>shouldn</w>
       <w>showpoints</w>
       <w>showstats</w>
