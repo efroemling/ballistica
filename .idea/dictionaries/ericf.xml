@@ -40,6 +40,7 @@
       <w>adbpath</w>
       <w>addgame</w>
       <w>addr</w>
+      <w>addrstr</w>
       <w>adisp</w>
       <w>advertizing</w>
       <w>aidl</w>
@@ -1348,6 +1349,7 @@
       <w>positionadjusted</w>
       <w>posixpath</w>
       <w>posixsubprocess</w>
+      <w>poststr</w>
       <w>powerdown</w>
       <w>powersgiven</w>
       <w>powerup</w>
