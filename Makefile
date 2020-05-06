@@ -596,9 +596,9 @@ test-assetmanager:
 	@tools/snippets pytest -o log_cli=true -o log_cli_level=debug -s -v \
       tests/test_ba/test_assetmanager.py::test_assetmanager
 
-test-dataclassutils:
+test-dataclasses:
 	@tools/snippets pytest -o log_cli=true -o log_cli_level=debug -s -v \
-      tests/test_efro/test_dataclassutils.py
+      tests/test_efro/test_dataclasses.py
 
 # Tell make which of these targets don't represent files.
 .PHONY: test test-full test-assetmanager

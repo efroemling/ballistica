@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # -----------------------------------------------------------------------------
-"""Exec related functionality shared between all efro components."""
+"""Call related functionality shared between all efro components."""
 
 from __future__ import annotations
 

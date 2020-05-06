@@ -1721,13 +1721,13 @@ build/ba_data/python/bastd/session/__pycache__/__init__.cpython-37.opt-1.pyc: \
 
 
 SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
-  build/ba_data/python/efro/executils.py \
   build/ba_data/python/efro/error.py \
-  build/ba_data/python/efro/dataclassutils.py \
   build/ba_data/python/efro/terminal.py \
   build/ba_data/python/efro/util.py \
   build/ba_data/python/efro/__init__.py \
-  build/ba_data/python/efro/jsonutils.py \
+  build/ba_data/python/efro/dataclasses.py \
+  build/ba_data/python/efro/call.py \
+  build/ba_data/python/efro/json.py \
   build/ba_data/python/efro/entity/_base.py \
   build/ba_data/python/efro/entity/_support.py \
   build/ba_data/python/efro/entity/util.py \
@@ -1741,13 +1741,13 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   build/ba_data/python/bacommon/err.py
 
 SCRIPT_TARGETS_PYC_PUBLIC_TOOLS = \
-  build/ba_data/python/efro/__pycache__/executils.cpython-37.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/error.cpython-37.opt-1.pyc \
-  build/ba_data/python/efro/__pycache__/dataclassutils.cpython-37.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/terminal.cpython-37.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/util.cpython-37.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/__init__.cpython-37.opt-1.pyc \
-  build/ba_data/python/efro/__pycache__/jsonutils.cpython-37.opt-1.pyc \
+  build/ba_data/python/efro/__pycache__/dataclasses.cpython-37.opt-1.pyc \
+  build/ba_data/python/efro/__pycache__/call.cpython-37.opt-1.pyc \
+  build/ba_data/python/efro/__pycache__/json.cpython-37.opt-1.pyc \
   build/ba_data/python/efro/entity/__pycache__/_base.cpython-37.opt-1.pyc \
   build/ba_data/python/efro/entity/__pycache__/_support.cpython-37.opt-1.pyc \
   build/ba_data/python/efro/entity/__pycache__/util.cpython-37.opt-1.pyc \
@@ -1773,18 +1773,8 @@ $(SCRIPT_TARGETS_PY_PUBLIC_TOOLS) : build/ba_data/python/%.py : ../tools/%.py
 # just generating explicit targets for each. Could perhaps look into using a
 # fancy for-loop instead, but perhaps listing these explicitly isn't so bad.
 
-build/ba_data/python/efro/__pycache__/executils.cpython-37.opt-1.pyc: \
-      build/ba_data/python/efro/executils.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
 build/ba_data/python/efro/__pycache__/error.cpython-37.opt-1.pyc: \
       build/ba_data/python/efro/error.py
-	@echo Compiling script: $^
-	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
-build/ba_data/python/efro/__pycache__/dataclassutils.cpython-37.opt-1.pyc: \
-      build/ba_data/python/efro/dataclassutils.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
@@ -1803,8 +1793,18 @@ build/ba_data/python/efro/__pycache__/__init__.cpython-37.opt-1.pyc: \
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/ba_data/python/efro/__pycache__/jsonutils.cpython-37.opt-1.pyc: \
-      build/ba_data/python/efro/jsonutils.py
+build/ba_data/python/efro/__pycache__/dataclasses.cpython-37.opt-1.pyc: \
+      build/ba_data/python/efro/dataclasses.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python/efro/__pycache__/call.cpython-37.opt-1.pyc: \
+      build/ba_data/python/efro/call.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python/efro/__pycache__/json.cpython-37.opt-1.pyc: \
+      build/ba_data/python/efro/json.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 

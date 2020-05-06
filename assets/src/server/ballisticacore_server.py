@@ -40,7 +40,7 @@ sys.path += [
 
 from efro.terminal import Clr
 from efro.error import CleanError
-from efro.dataclassutils import dataclass_assign, dataclass_validate
+from efro.dataclasses import dataclass_assign, dataclass_validate
 from bacommon.servermanager import (ServerConfig, StartServerModeCommand)
 
 if TYPE_CHECKING:

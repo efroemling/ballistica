@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # -----------------------------------------------------------------------------
-"""Testing dataclassutils functionality."""
+"""Testing dataclasses functionality."""
 
 from __future__ import annotations
 
@@ -27,7 +27,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from efro.dataclassutils import dataclass_assign, dataclass_validate
+from efro.dataclasses import dataclass_assign, dataclass_validate
 
 if TYPE_CHECKING:
     from typing import Optional

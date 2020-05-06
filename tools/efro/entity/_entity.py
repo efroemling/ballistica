@@ -27,7 +27,7 @@ from typing import TYPE_CHECKING, TypeVar
 
 from efro.entity._support import FieldInspector, BoundCompoundValue
 from efro.entity._value import CompoundValue
-from efro.jsonutils import ExtendedJSONEncoder, ExtendedJSONDecoder
+from efro.json import ExtendedJSONEncoder, ExtendedJSONDecoder
 
 if TYPE_CHECKING:
     from typing import Dict, Any, Type, Union, Optional

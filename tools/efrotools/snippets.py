@@ -302,6 +302,11 @@ def tool_config_install() -> None:
     # Stick project-root wherever they want.
     cfg = cfg.replace('__EFRO_PROJECT_ROOT__', str(PROJROOT))
 
+    # Short project name.
+    short_names = {'ballistica-internal': 'ba-int', 'ballistica': 'ba'}
+    shortname = short_names.get(PROJROOT.name, PROJROOT.name)
+    cfg = cfg.replace('__EFRO_PROJECT_SHORTNAME__', shortname)
+
     stdsettings = textwrap.dedent("""
     # We don't want all of our plain scripts complaining
     # about __main__ being redefined.

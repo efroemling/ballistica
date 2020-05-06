@@ -29,7 +29,7 @@ import _ba
 
 if TYPE_CHECKING:
     from typing import Any, Type
-    from efro import executils
+    from efro.call import Call
 
 T = TypeVar('T')
 
@@ -230,8 +230,8 @@ class _Call:
 
 
 if TYPE_CHECKING:
-    WeakCall = executils.Call
-    Call = executils.Call
+    WeakCall = Call
+    Call = Call
 else:
     WeakCall = _WeakCall
     WeakCall.__name__ = 'WeakCall'
