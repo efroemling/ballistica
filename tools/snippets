@@ -547,5 +547,32 @@ def printcolors() -> None:
               f'{TerminalColor.RESET.value}')
 
 
+def lazy_increment_build() -> None:
+    """Increment build number only if C++ sources have changed.
+
+    This is convenient to place in automatic commit/push scripts.
+    """
+    import os
+    import subprocess
+    from efro.terminal import Clr
+    from efrotools import get_files_hash
+    from efrotools.code import get_code_filenames
+    codehash = get_files_hash(get_code_filenames(PROJROOT))
+    hashfilename = '.cache/lazy_increment_build'
+    try:
+        with open(hashfilename) as infile:
+            lasthash = infile.read()
+    except FileNotFoundError:
+        lasthash = ''
+    if codehash == lasthash:
+        pass
+    else:
+        print(f'{Clr.SMAG}Source(s) changed; incrementing build...{Clr.RST}')
+        subprocess.run(['tools/version_utils', 'incrementbuild'], check=True)
+        os.makedirs(os.path.dirname(hashfilename), exist_ok=True)
+        with open(hashfilename, 'w') as outfile:
+            outfile.write(codehash)
+
+
 if __name__ == '__main__':
     snippets_main(globals())

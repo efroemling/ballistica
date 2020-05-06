@@ -275,6 +275,7 @@
       <w>charmap</w>
       <w>charname</w>
       <w>charstr</w>
+      <w>chatmessage</w>
       <w>checkarg</w>
       <w>checkboxwidget</w>
       <w>checkenv</w>
@@ -316,6 +317,7 @@
       <w>cnode</w>
       <w>codecsmodule</w>
       <w>codefilenames</w>
+      <w>codehash</w>
       <w>codeop</w>
       <w>collapsable</w>
       <w>collidemodel</w>
@@ -800,6 +802,7 @@
       <w>halign</w>
       <w>handlemessage</w>
       <w>hant</w>
+      <w>hashfilename</w>
       <w>hashlines</w>
       <w>hashobj</w>
       <w>hashopenssl</w>
@@ -953,6 +956,7 @@
       <w>langs</w>
       <w>langtarget</w>
       <w>langval</w>
+      <w>lasthash</w>
       <w>lastline</w>
       <w>lastplayer</w>
       <w>lastpoweruptype</w>

@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-05-05 for Ballistica version 1.5.0 build 20002</em></h4>
+<h4><em>last updated on 2020-05-06 for Ballistica version 1.5.0 build 20003</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -3988,16 +3988,10 @@ cause the powerup box to make a sound and disappear or whatnot.</p>
 </p>
 
 <h3>Methods:</h3>
-<h5><a href="#method_ba_ServerController____init__">&lt;constructor&gt;</a>, <a href="#method_ba_ServerController__broadcast_message">broadcast_message()</a>, <a href="#method_ba_ServerController__handle_transition">handle_transition()</a>, <a href="#method_ba_ServerController__kick">kick()</a>, <a href="#method_ba_ServerController__print_client_list">print_client_list()</a>, <a href="#method_ba_ServerController__shutdown">shutdown()</a></h5>
+<h5><a href="#method_ba_ServerController____init__">&lt;constructor&gt;</a>, <a href="#method_ba_ServerController__handle_transition">handle_transition()</a>, <a href="#method_ba_ServerController__kick">kick()</a>, <a href="#method_ba_ServerController__print_client_list">print_client_list()</a>, <a href="#method_ba_ServerController__shutdown">shutdown()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_ServerController____init__">&lt;constructor&gt;</a></dt></h4><dd>
 <p><span>ba.ServerController(config: ServerConfig)</span></p>
-
-</dd>
-<dt><h4><a name="method_ba_ServerController__broadcast_message">broadcast_message()</a></dt></h4><dd>
-<p><span>broadcast_message(self, message: str) -&gt; None</span></p>
-
-<p>Broadcast a message to all connected clients.</p>
 
 </dd>
 <dt><h4><a name="method_ba_ServerController__handle_transition">handle_transition()</a></dt></h4><dd>

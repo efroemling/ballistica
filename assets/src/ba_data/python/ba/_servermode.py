@@ -31,8 +31,8 @@ from ba._freeforallsession import FreeForAllSession
 from ba._dualteamsession import DualTeamSession
 from bacommon.servermanager import (ServerCommand, StartServerModeCommand,
                                     ShutdownCommand, ShutdownReason,
-                                    BroadcastCommand, ClientListCommand,
-                                    KickCommand)
+                                    ChatMessageCommand, ScreenMessageCommand,
+                                    ClientListCommand, KickCommand)
 import _ba
 
 if TYPE_CHECKING:
@@ -58,9 +58,20 @@ def _cmd(command_data: bytes) -> None:
                                 immediate=command.immediate)
         return
 
-    if isinstance(command, BroadcastCommand):
+    if isinstance(command, ChatMessageCommand):
         assert _ba.app.server is not None
-        _ba.app.server.broadcast_message(command.message)
+        _ba.chatmessage(command.message, clients=command.clients)
+        return
+
+    if isinstance(command, ScreenMessageCommand):
+        assert _ba.app.server is not None
+        # Note: we have to do transient messages if
+        # clients is specified, so they won't show up
+        # in replays.
+        _ba.screenmessage(command.message,
+                          color=command.color,
+                          clients=command.clients,
+                          transient=command.clients is not None)
         return
 
     if isinstance(command, ClientListCommand):
@@ -110,12 +121,6 @@ class ServerController:
                                          self._prepare_to_serve,
                                          timetype=TimeType.REAL,
                                          repeat=True)
-
-    def broadcast_message(self, message: str) -> None:
-        """Broadcast a message to all connected clients."""
-        # FIXME: Should add a proper call for this, which would allow
-        # us to use Lstr values and colors and whatnot.
-        _ba.chat_message(message)
 
     def print_client_list(self) -> None:
         """Print info about all connected clients."""
@@ -184,13 +189,13 @@ class ServerController:
         self._executing_shutdown = True
         timestrval = time.strftime('%c')
         if self._shutdown_reason is ShutdownReason.RESTARTING:
-            self.broadcast_message(
-                Lstr(resource='internal.serverRestartingText').evaluate())
+            _ba.screenmessage(Lstr(resource='internal.serverRestartingText'),
+                              color=(1, 0.5, 0.0))
             print(f'{Clr.SBLU}Exiting for server-restart'
                   f' at {timestrval}{Clr.RST}')
         else:
-            self.broadcast_message(
-                Lstr(resource='internal.serverShuttingDownText').evaluate())
+            _ba.screenmessage(Lstr(resource='internal.serverShuttingDownText'),
+                              color=(1, 0.5, 0.0))
             print(f'{Clr.SBLU}Exiting for server-shutdown'
                   f' at {timestrval}{Clr.RST}')
         with _ba.Context('ui'):

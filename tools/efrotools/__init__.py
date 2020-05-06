@@ -149,7 +149,6 @@ def run(cmd: str) -> None:
     subprocess.run(cmd, shell=True, check=True)
 
 
-# 1
 def get_files_hash(filenames: Sequence[Union[str, Path]],
                    extrahash: str = '',
                    int_only: bool = False,

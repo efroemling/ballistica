@@ -412,7 +412,7 @@ class PartyWindow(ba.Window):
         self._popup_party_member_is_host = is_host
 
     def _send_chat_message(self) -> None:
-        _ba.chat_message(cast(str, ba.textwidget(query=self._text_field)))
+        _ba.chatmessage(cast(str, ba.textwidget(query=self._text_field)))
         ba.textwidget(edit=self._text_field, text='')
 
     def close(self) -> None:

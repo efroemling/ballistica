@@ -26,7 +26,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Optional
+    from typing import Optional, Tuple, List
 
 
 @dataclass
@@ -129,9 +129,18 @@ class ShutdownCommand(ServerCommand):
 
 
 @dataclass
-class BroadcastCommand(ServerCommand):
-    """Broadcast a message to all clients."""
+class ChatMessageCommand(ServerCommand):
+    """Chat message from the server."""
     message: str
+    clients: Optional[List[int]]
+
+
+@dataclass
+class ScreenMessageCommand(ServerCommand):
+    """Screen-message from the server."""
+    message: str
+    color: Optional[Tuple[float, float, float]]
+    clients: Optional[List[int]]
 
 
 @dataclass

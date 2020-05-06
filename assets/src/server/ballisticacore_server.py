@@ -44,7 +44,7 @@ from efro.dataclassutils import dataclass_assign, dataclass_validate
 from bacommon.servermanager import (ServerConfig, StartServerModeCommand)
 
 if TYPE_CHECKING:
-    from typing import Optional, List, Dict, Union
+    from typing import Optional, List, Dict, Union, Tuple
     from types import FrameType
     from bacommon.servermanager import ServerCommand
 
@@ -181,10 +181,31 @@ class ServerManagerApp:
         # we'll hopefully still give it enough time to process/print.
         time.sleep(0.1)
 
-    def broadcast(self, message: str) -> None:
-        """Broadcast a message to all connected clients."""
-        from bacommon.servermanager import BroadcastCommand
-        self._enqueue_server_command(BroadcastCommand(message=message))
+    def screenmessage(self,
+                      message: str,
+                      color: Optional[Tuple[float, float, float]] = None,
+                      clients: Optional[List[int]] = None) -> None:
+        """Display a screen-message.
+
+        This will have no name attached and not show up in chat history.
+        They will show up in replays, however (unless clients is passed).
+        """
+        from bacommon.servermanager import ScreenMessageCommand
+        self._enqueue_server_command(
+            ScreenMessageCommand(message=message, color=color,
+                                 clients=clients))
+
+    def chatmessage(self,
+                    message: str,
+                    clients: Optional[List[int]] = None) -> None:
+        """Send a chat message from the server.
+
+        This will have the server's name attached and will be logged
+        in client chat windows, just like other chat messages.
+        """
+        from bacommon.servermanager import ChatMessageCommand
+        self._enqueue_server_command(
+            ChatMessageCommand(message=message, clients=clients))
 
     def clientlist(self) -> None:
         """Print a list of connected clients."""
@@ -366,10 +387,16 @@ class ServerManagerApp:
             # Watch for the process exiting.
             code: Optional[int] = self._process.poll()
             if code is not None:
-                print(f'{Clr.CYN}Server process exited'
+                if code == 0:
+                    clr = Clr.CYN
+                    slp = 0.0
+                else:
+                    clr = Clr.SRED
+                    slp = 5.0  # Avoid super fast death loops.
+                print(f'{clr}Server child-process exited'
                       f' with code {code}.{Clr.RST}')
-                time.sleep(1.0)  # Keep things from moving too fast.
                 self._reset_process_vars()
+                time.sleep(slp)
                 break
 
             time.sleep(0.25)
