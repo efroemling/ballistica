@@ -365,17 +365,16 @@ class Chooser:
             self._profilename = self._profilenames[self._profileindex]
             character = self.profiles[self._profilename]['character']
 
-            # Hmmm; at the moment we're not properly pulling the list
+            # At the moment we're not properly pulling the list
             # of available characters from clients, so profiles might use a
-            # character not in their list. for now, just go ahead and add
-            # the character name to their list as long as we're aware of it
-            # UPDATE: actually we now should be getting their character list,
-            # so this should no longer be happening; adding warning print
-            # for now and can delete later.
+            # character not in their list. For now, just go ahead and add
+            # a character name to their list as long as we're aware of it.
+            # This just means they won't always be able to override their
+            # character to others they own, but profile characters should work
+            # (and we validate profiles on the master server so no exploit
+            # opportunities)
             if (character not in self.character_names
                     and character in _ba.app.spaz_appearances):
-                print('got remote character not in their character list:',
-                      character, self.character_names)
                 self.character_names.append(character)
             self.character_index = self.character_names.index(character)
             self._color, self._highlight = (_profile.get_player_profile_colors(
