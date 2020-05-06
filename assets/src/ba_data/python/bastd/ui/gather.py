@@ -1804,6 +1804,11 @@ class GatherWindow(ba.Window):
         cfg.commit()
         ba.playsound(ba.getsound('shieldUp'))
         _ba.set_public_party_enabled(True)
+
+        # In GUI builds we want to authenticate clients only when hosting
+        # public parties.
+        _ba.set_authenticate_clients(True)
+
         self._do_internet_status_check()
         ba.buttonwidget(
             edit=self._internet_host_toggle_button,
@@ -1856,6 +1861,11 @@ class GatherWindow(ba.Window):
 
     def _on_stop_internet_advertising_press(self) -> None:
         _ba.set_public_party_enabled(False)
+
+        # In GUI builds we want to authenticate clients only when hosting
+        # public parties.
+        _ba.set_authenticate_clients(False)
+
         ba.playsound(ba.getsound('shieldDown'))
         text = self._internet_host_status_text
         if text:

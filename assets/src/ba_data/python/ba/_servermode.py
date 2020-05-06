@@ -332,6 +332,8 @@ class ServerController:
         app.teams_series_length = self._config.teams_series_length
         app.ffa_series_length = self._config.ffa_series_length
 
+        _ba.set_authenticate_clients(self._config.authenticate_clients)
+
         # Call set-enabled last (will push state to the cloud).
         _ba.set_public_party_max_size(self._config.max_party_size)
         _ba.set_public_party_name(self._config.party_name)

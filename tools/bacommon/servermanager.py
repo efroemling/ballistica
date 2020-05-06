@@ -40,6 +40,11 @@ class ServerConfig:
     # Otherwise it will still be joinable via LAN or connecting by IP address.
     party_is_public: bool = True
 
+    # If True, all connecting clients will be authenticated through the master
+    # server to screen for fake account info. Generally this should always
+    # be enabled unless you are hosting on a LAN with no internet connection.
+    authenticate_clients: bool = True
+
     # UDP port to host on. Change this to work around firewalls or run multiple
     # servers on one machine.
     # 43210 is the default and the only port that will show up in the LAN
