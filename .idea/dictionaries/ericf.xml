@@ -17,6 +17,7 @@
       <w>abeb</w>
       <w>abot</w>
       <w>abtn</w>
+      <w>accesstime</w>
       <w>accountname</w>
       <w>accountui</w>
       <w>accum</w>
@@ -687,6 +688,7 @@
       <w>fsplit</w>
       <w>fsrc</w>
       <w>fstab</w>
+      <w>fstat</w>
       <w>fstrs</w>
       <w>ftime</w>
       <w>ftmp</w>

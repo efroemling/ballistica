@@ -284,8 +284,9 @@ def _gen_hashes(fnames: List[str]) -> str:
 
 def _write_cache_files(fnames1: List[str], fnames2: List[str],
                        staging_dir: str, mapping_file: str) -> None:
-    fhashes1: Set[str] = set()
     import functools
+    fhashes1: Set[str] = set()
+    fhashes2: Set[str] = set()
     mapping: Dict[str, str] = {}
     call = functools.partial(_write_cache_file, staging_dir)
 
@@ -296,21 +297,38 @@ def _write_cache_files(fnames1: List[str], fnames2: List[str],
         mapping[result[0]] = BASE_URL + result[1]
         fhashes1.add(result[1])
 
+    # Now finish up with the second set.
+    with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
+        results = executor.map(call, fnames2)
+    for result in results:
+        mapping[result[0]] = BASE_URL + result[1]
+        fhashes2.add(result[1])
+
     # We want the server to have a startercache.tar.xz file which contains
-    # this entire first set. It is much more efficient to build that file
+    # the entire first set. It is much more efficient to build that file
     # on the server than it is to build it here and upload the whole thing.
     # ...so let's simply write a script to generate it and upload that.
 
+    # Also let's have the script touch both sets of files so we can use
+    # mod-times to prune older files. (otherwise files that never change
+    # might have very old mod times)
     script = (
         'import os\n'
+        'import pathlib\n'
         'import subprocess\n'
         'fnames = ' + repr(fhashes1) + '\n'
+        'fnames2 = ' + repr(fhashes2) + '\n'
         'subprocess.run(["rm", "-rf", "efrocache"], check=True)\n'
         'print("Copying starter cache files...", flush=True)\n'
         'for fname in fnames:\n'
         '    dst = os.path.join("efrocache", fname)\n'
         '    os.makedirs(os.path.dirname(dst), exist_ok=True)\n'
         '    subprocess.run(["cp", fname, dst], check=True)\n'
+        'print("Touching full file set...", flush=True)\n'
+        'for fname in list(fnames) + list(fnames2):\n'
+        '    fpath = pathlib.Path(fname)\n'
+        '    assert fpath.exists()\n'
+        '    fpath.touch()\n'
         'print("Compressing starter cache archive...", flush=True)\n'
         'subprocess.run(["tar", "-Jcf", "tmp.tar.xz", "efrocache"],'
         ' check=True)\n'
@@ -321,12 +339,6 @@ def _write_cache_files(fnames1: List[str], fnames2: List[str],
 
     with open('build/efrocache/genstartercache.py', 'w') as outfile:
         outfile.write(script)
-
-    # Now finish up with the second set.
-    with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
-        results = executor.map(call, fnames2)
-        for result in results:
-            mapping[result[0]] = BASE_URL + result[1]
 
     with open(mapping_file, 'w') as outfile:
         outfile.write(json.dumps(mapping, indent=2, sort_keys=True))
