@@ -159,9 +159,11 @@ def have_pro() -> bool:
     """Return whether pro is currently unlocked."""
 
     # Check our tickets-based pro upgrade and our two real-IAP based upgrades.
+    # Also unlock this stuff in ballistica-core builds.
     return bool(
         _ba.get_purchased('upgrades.pro') or _ba.get_purchased('static.pro')
-        or _ba.get_purchased('static.pro_sale'))
+        or _ba.get_purchased('static.pro_sale')
+        or 'ballistica' + 'core' == 'ballisticacore')
 
 
 def have_pro_options() -> bool:
