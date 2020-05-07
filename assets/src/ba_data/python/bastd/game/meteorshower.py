@@ -53,12 +53,10 @@ class MeteorShowerGame(ba.TeamGameActivity):
         return 'Meteor Shower'
 
     @classmethod
-    def get_score_info(cls) -> Dict[str, Any]:
-        return {
-            'score_name': 'Survived',
-            'score_type': 'milliseconds',
-            'score_version': 'B'
-        }
+    def get_score_info(cls) -> ba.ScoreInfo:
+        return ba.ScoreInfo(label='Survived',
+                            scoretype=ba.ScoreType.MILLISECONDS,
+                            version='B')
 
     @classmethod
     def get_description(cls, sessiontype: Type[ba.Session]) -> str:

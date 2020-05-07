@@ -172,12 +172,10 @@ class EliminationGame(ba.TeamGameActivity):
         return 'Elimination'
 
     @classmethod
-    def get_score_info(cls) -> Dict[str, Any]:
-        return {
-            'score_name': 'Survived',
-            'score_type': 'seconds',
-            'none_is_winner': True
-        }
+    def get_score_info(cls) -> ba.ScoreInfo:
+        return ba.ScoreInfo(label='Survived',
+                            scoretype=ba.ScoreType.SECONDS,
+                            none_is_winner=True)
 
     @classmethod
     def get_description(cls, sessiontype: Type[ba.Session]) -> str:

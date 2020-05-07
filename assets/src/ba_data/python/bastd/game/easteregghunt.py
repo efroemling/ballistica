@@ -47,8 +47,8 @@ class EasterEggHuntGame(ba.TeamGameActivity):
         return 'Easter Egg Hunt'
 
     @classmethod
-    def get_score_info(cls) -> Dict[str, Any]:
-        return {'score_name': 'Score', 'score_type': 'points'}
+    def get_score_info(cls) -> ba.ScoreInfo:
+        return ba.ScoreInfo(label='Score', scoretype=ba.ScoreType.POINTS)
 
     @classmethod
     def get_description(cls, sessiontype: Type[ba.Session]) -> str:

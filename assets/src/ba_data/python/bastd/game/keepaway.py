@@ -54,8 +54,8 @@ class KeepAwayGame(ba.TeamGameActivity):
         return 'Carry the flag for a set length of time.'
 
     @classmethod
-    def get_score_info(cls) -> Dict[str, Any]:
-        return {'score_name': 'Time Held'}
+    def get_score_info(cls) -> ba.ScoreInfo:
+        return ba.ScoreInfo(label='Time Held')
 
     @classmethod
     def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:

@@ -179,6 +179,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/ba/_tournament.py \
   build/ba_data/python/ba/_messages.py \
   build/ba_data/python/ba/_freeforallsession.py \
+  build/ba_data/python/ba/_score.py \
   build/ba_data/python/ba/_playlist.py \
   build/ba_data/python/ba/_team.py \
   build/ba_data/python/ba/_multiteamsession.py \
@@ -405,6 +406,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/ba/__pycache__/_tournament.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_messages.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_freeforallsession.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_score.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_playlist.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_team.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_multiteamsession.cpython-37.opt-1.pyc \
@@ -788,6 +790,11 @@ build/ba_data/python/ba/__pycache__/_messages.cpython-37.opt-1.pyc: \
 
 build/ba_data/python/ba/__pycache__/_freeforallsession.cpython-37.opt-1.pyc: \
       build/ba_data/python/ba/_freeforallsession.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python/ba/__pycache__/_score.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_score.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 

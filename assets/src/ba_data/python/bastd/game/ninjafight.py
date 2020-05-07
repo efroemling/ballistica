@@ -49,12 +49,10 @@ class NinjaFightGame(ba.TeamGameActivity):
         return 'Ninja Fight'
 
     @classmethod
-    def get_score_info(cls) -> Dict[str, Any]:
-        return {
-            'score_type': 'milliseconds',
-            'lower_is_better': True,
-            'score_name': 'Time'
-        }
+    def get_score_info(cls) -> ba.ScoreInfo:
+        return ba.ScoreInfo(label='Time',
+                            scoretype=ba.ScoreType.MILLISECONDS,
+                            lower_is_better=True)
 
     @classmethod
     def get_description(cls, sessiontype: Type[ba.Session]) -> str:

@@ -57,9 +57,9 @@ class TeamGameResults:
         self._teams: Optional[List[ReferenceType[ba.Team]]] = None
         self._player_info: Optional[List[Dict[str, Any]]] = None
         self._lower_is_better: Optional[bool] = None
-        self._score_name: Optional[str] = None
+        self._score_label: Optional[str] = None
         self._none_is_winner: Optional[bool] = None
-        self._score_type: Optional[str] = None
+        self._score_type: Optional[ba.ScoreType] = None
 
     def set_game(self, game: ba.GameActivity) -> None:
         """Set the game instance these results are applying to."""
@@ -67,12 +67,12 @@ class TeamGameResults:
             raise RuntimeError('Game set twice for TeamGameResults.')
         self._game_set = True
         self._teams = [weakref.ref(team) for team in game.teams]
-        score_info = game.get_resolved_score_info()
+        score_info = game.get_score_info()
         self._player_info = copy.deepcopy(game.initial_player_info)
-        self._lower_is_better = score_info['lower_is_better']
-        self._score_name = score_info['score_name']
-        self._none_is_winner = score_info['none_is_winner']
-        self._score_type = score_info['score_type']
+        self._lower_is_better = score_info.lower_is_better
+        self._score_label = score_info.label
+        self._none_is_winner = score_info.none_is_winner
+        self._score_type = score_info.scoretype
 
     def set_team_score(self, team: ba.Team, score: int) -> None:
         """Set the score for a given ba.Team.
@@ -118,17 +118,18 @@ class TeamGameResults:
         from ba._gameutils import timestring
         from ba._lang import Lstr
         from ba._enums import TimeFormat
+        from ba._score import ScoreType
         if not self._game_set:
             raise RuntimeError("Can't get team-score-str until game is set.")
         for score in list(self._scores.values()):
             if score[0]() is team:
                 if score[1] is None:
                     return Lstr(value='-')
-                if self._score_type == 'seconds':
+                if self._score_type is ScoreType.SECONDS:
                     return timestring(score[1] * 1000,
                                       centi=False,
                                       timeformat=TimeFormat.MILLISECONDS)
-                if self._score_type == 'milliseconds':
+                if self._score_type is ScoreType.MILLISECONDS:
                     return timestring(score[1],
                                       centi=True,
                                       timeformat=TimeFormat.MILLISECONDS)
@@ -142,7 +143,7 @@ class TeamGameResults:
         assert self._player_info is not None
         return self._player_info
 
-    def get_score_type(self) -> str:
+    def get_score_type(self) -> ba.ScoreType:
         """Get the type of score."""
         if not self._game_set:
             raise RuntimeError("Can't get score-type until game is set.")
@@ -153,8 +154,8 @@ class TeamGameResults:
         """Get the name associated with scores ('points', etc)."""
         if not self._game_set:
             raise RuntimeError("Can't get score-name until game is set.")
-        assert self._score_name is not None
-        return self._score_name
+        assert self._score_label is not None
+        return self._score_label
 
     def get_lower_is_better(self) -> bool:
         """Return whether lower scores are better."""

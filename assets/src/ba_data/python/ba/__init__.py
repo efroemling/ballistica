@@ -61,6 +61,7 @@ from ba._lang import Lstr, setlanguage, get_valid_languages
 from ba._map import Map, getmaps
 from ba._session import Session
 from ba._servermode import ServerController
+from ba._score import ScoreType, ScoreInfo
 from ba._stats import PlayerScoredMessage, PlayerRecord, Stats
 from ba._team import Team
 from ba._teamgame import TeamGameActivity

@@ -332,8 +332,8 @@ class FootballCoopGame(ba.CoopGameActivity):
         return 'Football'
 
     @classmethod
-    def get_score_info(cls) -> Dict[str, Any]:
-        return {'score_type': 'milliseconds', 'score_version': 'B'}
+    def get_score_info(cls) -> ba.ScoreInfo:
+        return ba.ScoreInfo(scoretype=ba.ScoreType.MILLISECONDS, version='B')
 
     # FIXME: Need to update co-op games to use get_score_info.
     def get_score_type(self) -> str:

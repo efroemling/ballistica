@@ -49,8 +49,8 @@ class ChosenOneGame(ba.TeamGameActivity):
         return 'Chosen One'
 
     @classmethod
-    def get_score_info(cls) -> Dict[str, Any]:
-        return {'score_name': 'Time Held'}
+    def get_score_info(cls) -> ba.ScoreInfo:
+        return ba.ScoreInfo(label='Time Held')
 
     @classmethod
     def get_description(cls, sessiontype: Type[ba.Session]) -> str:

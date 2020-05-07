@@ -28,6 +28,7 @@ from typing import TYPE_CHECKING
 
 import _ba
 from ba._activity import Activity
+from ba._score import ScoreInfo
 from ba._lang import Lstr
 
 if TYPE_CHECKING:
@@ -75,58 +76,9 @@ class GameActivity(Activity):
                                                completion_call)
 
     @classmethod
-    def get_score_info(cls) -> Dict[str, Any]:
-        """Return info about game scoring setup; should be overridden by games.
-
-        They should return a dict containing any of the following (missing
-        values will be default):
-
-        'score_name': a label shown to the user for scores; 'Score',
-            'Time Survived', etc. 'Score' is the default.
-
-        'lower_is_better': a boolean telling whether lower scores are
-            preferable instead of higher (the default).
-
-        'none_is_winner': specifies whether a score value of None is considered
-            better than other scores or worse. Default is False.
-
-        'score_type': can be 'seconds', 'milliseconds', or 'points'.
-
-        'score_version': to change high-score lists used by a game without
-            renaming the game, change this. Defaults to empty string.
-        """
-        return {}
-
-    @classmethod
-    def get_resolved_score_info(cls) -> Dict[str, Any]:
-        """
-        Call this to return a game's score info with all missing values
-        filled in with defaults. This should not be overridden; override
-        get_score_info() instead.
-        """
-        values = cls.get_score_info()
-        if 'score_name' not in values:
-            values['score_name'] = 'Score'
-        if 'lower_is_better' not in values:
-            values['lower_is_better'] = False
-        if 'none_is_winner' not in values:
-            values['none_is_winner'] = False
-        if 'score_type' not in values:
-            values['score_type'] = 'points'
-        if 'score_version' not in values:
-            values['score_version'] = ''
-
-        if values['score_type'] not in ['seconds', 'milliseconds', 'points']:
-            raise Exception("invalid score_type value: '" +
-                            values['score_type'] + "'")
-
-        # make sure they didn't misspell anything in there..
-        for name in list(values.keys()):
-            if name not in ('score_name', 'lower_is_better', 'none_is_winner',
-                            'score_type', 'score_version'):
-                print('WARNING: invalid key in score_info: "' + name + '"')
-
-        return values
+    def get_score_info(cls) -> ba.ScoreInfo:
+        """Return info about game scoring setup; can be overridden by games."""
+        return ScoreInfo()
 
     @classmethod
     def get_name(cls) -> str:

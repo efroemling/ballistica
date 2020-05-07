@@ -254,6 +254,7 @@ class CoopSession(Session):
         from ba._general import WeakCall
         from ba._coopgame import CoopGameActivity
         from ba._gameresults import TeamGameResults
+        from ba._score import ScoreType
         from bastd.tutorial import TutorialActivity
         from bastd.activity.coopscore import CoopScoreScreen
 
@@ -349,18 +350,23 @@ class CoopSession(Session):
                 fail_message = None
                 score_order = ('decreasing' if results.get_lower_is_better()
                                else 'increasing')
-                if results.get_score_type() in ('seconds', 'milliseconds',
-                                                'time'):
+                if results.get_score_type() in (ScoreType.SECONDS,
+                                                ScoreType.MILLISECONDS):
                     score_type = 'time'
 
-                    # Results contains milliseconds; ScoreScreen wants
-                    # hundredths; need to fix :-/
+                    # ScoreScreen wants hundredths of a second.
                     if score is not None:
-                        score //= 10
+                        if results.get_score_type() is ScoreType.SECONDS:
+                            score *= 100
+                        elif (results.get_score_type() is
+                              ScoreType.MILLISECONDS):
+                            score //= 10
+                        else:
+                            raise RuntimeError('FIXME')
                 else:
-                    if results.get_score_type() != 'points':
-                        print(("Unknown score type: '" +
-                               results.get_score_type() + "'"))
+                    if results.get_score_type() is not ScoreType.POINTS:
+                        print(f'Unknown ScoreType:'
+                              f' "{results.get_score_type()}"')
                     score_type = 'points'
 
             # Old coop-game-specific results; should migrate away from these.

@@ -79,12 +79,10 @@ class RaceGame(ba.TeamGameActivity):
         return 'Run real fast!'
 
     @classmethod
-    def get_score_info(cls) -> Dict[str, Any]:
-        return {
-            'score_name': 'Time',
-            'lower_is_better': True,
-            'score_type': 'milliseconds'
-        }
+    def get_score_info(cls) -> ba.ScoreInfo:
+        return ba.ScoreInfo(label='Time',
+                            lower_is_better=True,
+                            scoretype=ba.ScoreType.MILLISECONDS)
 
     @classmethod
     def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:

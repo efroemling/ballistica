@@ -144,8 +144,7 @@ class Level:
         can be changed to separate its new high score lists/etc. from the old.
         """
         if self._score_version_string is None:
-            scorever = (
-                self._gametype.get_resolved_score_info()['score_version'])
+            scorever = self._gametype.get_score_info().version
             if scorever != '':
                 scorever = ' ' + scorever
             self._score_version_string = scorever
