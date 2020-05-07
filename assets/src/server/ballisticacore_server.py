@@ -22,16 +22,21 @@
 """BallisticaCore server manager."""
 from __future__ import annotations
 
-import sys
-import os
 import json
+import os
 import subprocess
+import sys
 import time
-from threading import Thread, Lock, current_thread
 from pathlib import Path
+from threading import Lock, Thread, current_thread
 from typing import TYPE_CHECKING
 
-# We change our working directory according to file's path 
+from bacommon.servermanager import ServerConfig, StartServerModeCommand
+from efro.dataclasses import dataclass_assign, dataclass_validate
+from efro.error import CleanError
+from efro.terminal import Clr
+
+# We change our working directory according to file's path
 # so that the script can be properly executed from anywhere
 os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
@@ -42,10 +47,6 @@ sys.path += [
     str(Path(os.getcwd(), 'dist', 'ba_data', 'python-site-packages'))
 ]
 
-from efro.terminal import Clr
-from efro.error import CleanError
-from efro.dataclasses import dataclass_assign, dataclass_validate
-from bacommon.servermanager import (ServerConfig, StartServerModeCommand)
 
 if TYPE_CHECKING:
     from typing import Optional, List, Dict, Union, Tuple
