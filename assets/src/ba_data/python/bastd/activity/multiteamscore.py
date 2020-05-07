@@ -29,7 +29,6 @@ from ba.internal import ScoreScreenActivity
 
 if TYPE_CHECKING:
     from typing import Any, Dict, Optional, Union
-    from ba import PlayerRecord
 
 
 class MultiTeamScoreScreenActivity(ScoreScreenActivity):
@@ -80,16 +79,15 @@ class MultiTeamScoreScreenActivity(ScoreScreenActivity):
         # pylint: disable=too-many-statements
         from bastd.actor.text import Text
         from bastd.actor.image import Image
-        from ba import FreeForAllSession
 
         ts_v_offset = 150.0 + y_offset
         ts_h_offs = 80.0 + x_offset
         tdelay = delay
         spacing = 40
 
-        is_free_for_all = isinstance(self.session, FreeForAllSession)
+        is_free_for_all = isinstance(self.session, ba.FreeForAllSession)
 
-        def _get_prec_score(p_rec: PlayerRecord) -> int:
+        def _get_prec_score(p_rec: ba.PlayerRecord) -> int:
             if is_free_for_all and results is not None:
                 assert isinstance(results, ba.TeamGameResults)
                 val = results.get_team_score(p_rec.team)
@@ -97,7 +95,7 @@ class MultiTeamScoreScreenActivity(ScoreScreenActivity):
                 return val
             return p_rec.accumscore
 
-        def _get_prec_score_str(p_rec: PlayerRecord) -> Union[str, ba.Lstr]:
+        def _get_prec_score_str(p_rec: ba.PlayerRecord) -> Union[str, ba.Lstr]:
             if is_free_for_all and results is not None:
                 assert isinstance(results, ba.TeamGameResults)
                 val = results.get_team_score_str(p_rec.team)
@@ -116,7 +114,7 @@ class MultiTeamScoreScreenActivity(ScoreScreenActivity):
             valid_players = list(self.stats.get_records().items())
 
             def _get_player_score_set_entry(
-                    player: ba.Player) -> Optional[PlayerRecord]:
+                    player: ba.Player) -> Optional[ba.PlayerRecord]:
                 for p_rec in valid_players:
                     # PyCharm incorrectly thinks valid_players is a List[str]
                     # noinspection PyUnresolvedReferences
@@ -134,16 +132,15 @@ class MultiTeamScoreScreenActivity(ScoreScreenActivity):
                         if player_entry is not None:
                             player_records.append(player_entry)
         else:
-            print('FIXME; CODE PATH NEEDS FIXING')
             player_records = []
-            # player_records = [[
-            #     _get_prec_score(p), name, p
-            # ] for name, p in list(self.stats.get_records().items())]
-            # player_records.sort(
-            #     reverse=(results is None
-            #             or not results.get_lower_is_better()))
-            # # just want living player entries
-            # player_records = [p[2] for p in player_records if p[2]]
+            player_records_scores = [
+                (_get_prec_score(p), name, p)
+                for name, p in list(self.stats.get_records().items())
+            ]
+            player_records_scores.sort(reverse=True)
+
+            # Just want living player entries.
+            player_records = [p[2] for p in player_records_scores if p[2]]
 
         v_offs = -140.0 + spacing * len(player_records) * 0.5
 
