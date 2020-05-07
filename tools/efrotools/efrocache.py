@@ -67,7 +67,7 @@ def get_file_hash(path: str) -> str:
 
 def get_target(path: str) -> None:
     """Fetch a target path from the cache, downloading if need be."""
-
+    from efro.error import CleanError
     from efrotools import run
     with open(CACHE_MAP_NAME) as infile:
         efrocachemap = json.loads(infile.read())
@@ -99,7 +99,21 @@ def get_target(path: str) -> None:
     if not os.path.exists(local_cache_path):
         os.makedirs(os.path.dirname(local_cache_path), exist_ok=True)
         print(f'Downloading: {Clr.SBLU}{path}{Clr.RST}')
-        run(f'curl --silent {url} > {local_cache_path_dl}')
+        result = subprocess.run(
+            f'curl --fail --silent {url} --output {local_cache_path_dl}',
+            shell=True,
+            check=False)
+
+        # We prune old cache files on the server, so its possible for one to
+        # be trying to build something the server can no longer provide.
+        # try to explain the situation.
+        if result.returncode == 22:
+            raise CleanError('Server gave an error.'
+                             ' Old build files may no longer be available;'
+                             ' make sure you are using a recent commit.')
+        if result.returncode != 0:
+            raise CleanError('Download failed; is your internet working?')
+
         run(f'mv {local_cache_path_dl} {local_cache_path}')
 
     # Ok we should have a valid .tar.gz file in our cache dir at this point.
@@ -404,7 +418,8 @@ def warm_start_cache() -> None:
     # downloading thousands)
     if not os.path.exists(CACHE_DIR_NAME):
         print('Downloading asset starter-cache...', flush=True)
-        run(f'curl {BASE_URL}startercache.tar.xz > startercache.tar.xz')
+        run(f'curl --fail {BASE_URL}startercache.tar.xz'
+            f' --output startercache.tar.xz')
         print('Decompressing starter-cache...', flush=True)
         run('tar -xf startercache.tar.xz')
         run(f'mv efrocache {CACHE_DIR_NAME}')
