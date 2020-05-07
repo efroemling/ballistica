@@ -19,6 +19,7 @@
       <li><a href="#class_ba_Map">ba.Map</a></li>
       <li><a href="#class_ba_NodeActor">ba.NodeActor</a></li>
    </ul>
+   <li><a href="#class_ba_BasePlayerData">ba.BasePlayerData</a></li>
    <li><a href="#class_ba_Chooser">ba.Chooser</a></li>
    <li><a href="#class_ba_InputDevice">ba.InputDevice</a></li>
    <li><a href="#class_ba_Level">ba.Level</a></li>
@@ -1082,6 +1083,31 @@ when done.</p>
 <p>Load a named <a href="#class_ba_Texture">ba.Texture</a> from the AssetPackage.</p>
 
 <p>Behavior is similar to <a href="#function_ba_gettexture">ba.gettexture</a>()</p>
+
+</dd>
+</dl>
+<hr>
+<h2><strong><a name="class_ba_BasePlayerData">ba.BasePlayerData</a></strong></h3>
+<p><em>&lt;top level class&gt;</em>
+</p>
+<p>Base class for custom player data.</p>
+
+<p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a></p>
+
+<p>    A convenience class that can be used as a base class for custom
+    per-game player data. It simply provides the ability to easily fetch
+    an instance of itself for a given <a href="#class_ba_Player">ba.Player</a>.
+</p>
+
+<h3>Methods:</h3>
+<dl>
+<dt><h4><a name="method_ba_BasePlayerData__get">get()</a></dt></h4><dd>
+<h5><span><em>&lt;class method&gt;</span></em></h5>
+<p><span>get(player: <a href="#class_ba_Player">ba.Player</a>) -&gt; T </span></p>
+
+<p>Return the custom player data associated with a player.</p>
+
+<p>If one does not exist, it will be created.</p>
 
 </dd>
 </dl>

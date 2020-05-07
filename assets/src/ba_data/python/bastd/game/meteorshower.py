@@ -30,23 +30,18 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import ba
-from bastd.actor import bomb
-from bastd.actor import playerspaz
+from bastd.actor.bomb import Bomb
+from bastd.actor.playerspaz import PlayerSpazDeathMessage
 
 if TYPE_CHECKING:
-    from typing import Any, Tuple, Sequence, Optional, List, Dict, Type
+    from typing import Any, Tuple, Sequence, Optional, List, Dict, Type, Type
     from bastd.actor.onscreentimer import OnScreenTimer
 
 
 @dataclass
-class GameSettings:
-    """Configurable settings for our game."""
-    epic_mode: bool
-
-
-@dataclass
-class PlayerData:
+class PlayerData(ba.BasePlayerData):
     """Data we store per player."""
+    death_time: Optional[float] = None
 
 
 # ba_meta export game
@@ -90,23 +85,19 @@ class MeteorShowerGame(ba.TeamGameActivity):
     def __init__(self, settings: Dict[str, Any]):
         super().__init__(settings)
 
-        if self.settings_raw['Epic Mode']:
-            self.slow_motion = True
-
-        # Print messages when players die (since its meaningful in this game).
-        self.announce_player_deaths = True
-
+        self._epic_mode = settings.get('Epic Mode', False)
         self._last_player_death_time: Optional[float] = None
         self._meteor_time = 2.0
         self._timer: Optional[OnScreenTimer] = None
 
-    # Called when our game is transitioning in but not ready to start;
-    # ..we can go ahead and set our music and whatnot.
-    def on_transition_in(self) -> None:
+        # Some base class overrides:
         self.default_music = (ba.MusicType.EPIC
-                              if self.settings_raw['Epic Mode'] else
-                              ba.MusicType.SURVIVAL)
-        super().on_transition_in()
+                              if self._epic_mode else ba.MusicType.SURVIVAL)
+        if self._epic_mode:
+            self.slow_motion = True
+
+        # Print messages when players die (since its meaningful in this game).
+        self.announce_player_deaths = True
 
     # Called when our game actually starts.
     def on_begin(self) -> None:
@@ -118,13 +109,13 @@ class MeteorShowerGame(ba.TeamGameActivity):
         # between waves ..lets have things increase faster if we have fewer
         # players.
         delay = 5.0 if len(self.players) > 2 else 2.5
-        if self.settings_raw['Epic Mode']:
+        if self._epic_mode:
             delay *= 0.25
         ba.timer(delay, self._decrement_meteor_time, repeat=True)
 
         # Kick off the first wave in a few seconds.
         delay = 3.0
-        if self.settings_raw['Epic Mode']:
+        if self._epic_mode:
             delay *= 0.25
         ba.timer(delay, self._set_meteor_timer)
 
@@ -145,7 +136,7 @@ class MeteorShowerGame(ba.TeamGameActivity):
             # For score purposes, mark them as having died right as the
             # game started.
             assert self._timer is not None
-            player.gamedata['death_time'] = self._timer.getstarttime()
+            PlayerData.get(player).death_time = self._timer.getstarttime()
             return
         self.spawn_player(player)
 
@@ -172,15 +163,15 @@ class MeteorShowerGame(ba.TeamGameActivity):
 
     # Various high-level game events come through this method.
     def handlemessage(self, msg: Any) -> Any:
-        if isinstance(msg, playerspaz.PlayerSpazDeathMessage):
+        if isinstance(msg, PlayerSpazDeathMessage):
 
             # Augment standard behavior.
             super().handlemessage(msg)
 
-            death_time = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)
+            curtime = ba.time()
 
             # Record the player's moment of death.
-            msg.spaz.player.gamedata['death_time'] = death_time
+            PlayerData.get(msg.spaz.player).death_time = curtime
 
             # In co-op mode, end the game the instant everyone dies
             # (more accurate looking).
@@ -192,7 +183,7 @@ class MeteorShowerGame(ba.TeamGameActivity):
                 ba.pushcall(self._check_end_game)
 
                 # Also record this for a final setting of the clock.
-                self._last_player_death_time = death_time
+                self._last_player_death_time = curtime
             else:
                 ba.timer(1.0, self._check_end_game)
 
@@ -247,36 +238,36 @@ class MeteorShowerGame(ba.TeamGameActivity):
 
     def _drop_bomb(self, position: Sequence[float],
                    velocity: Sequence[float]) -> None:
-        bomb.Bomb(position=position, velocity=velocity).autoretain()
+        Bomb(position=position, velocity=velocity).autoretain()
 
     def _decrement_meteor_time(self) -> None:
         self._meteor_time = max(0.01, self._meteor_time * 0.9)
 
     def end_game(self) -> None:
-        cur_time = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)
+        cur_time = ba.time()
         assert self._timer is not None
-        start_time = self._timer.getstarttime(
-            timeformat=ba.TimeFormat.MILLISECONDS)
+        start_time = self._timer.getstarttime()
 
-        # Mark 'death-time' as now for any still-living players
+        # Mark death-time as now for any still-living players
         # and award players points for how long they lasted.
         # (these per-player scores are only meaningful in team-games)
         for team in self.teams:
             for player in team.players:
+                playerdata = PlayerData.get(player)
+                survived = False
 
                 # Throw an extra fudge factor in so teams that
                 # didn't die come out ahead of teams that did.
-                if 'death_time' not in player.gamedata:
-                    player.gamedata['death_time'] = cur_time + 1
+                if playerdata.death_time is None:
+                    survived = True
+                    playerdata.death_time = cur_time + 1
 
                 # Award a per-player score depending on how many seconds
                 # they lasted (per-player scores only affect teams mode;
                 # everywhere else just looks at the per-team score).
-                score = int(player.gamedata['death_time'] -
-                            self._timer.getstarttime(
-                                timeformat=ba.TimeFormat.MILLISECONDS))
-                if 'death_time' not in player.gamedata:
-                    score += 50  # a bit extra for survivors
+                score = int(playerdata.death_time - self._timer.getstarttime())
+                if survived:
+                    score += 50  # A bit extra for survivors.
                 self.stats.player_scored(player, score, screenmessage=False)
 
         # Stop updating our time text, and set the final time to match
@@ -294,10 +285,14 @@ class MeteorShowerGame(ba.TeamGameActivity):
 
             # Set the team score to the max time survived by any player on
             # that team.
-            longest_life = 0
+            longest_life = 0.0
             for player in team.players:
+                playerdata = PlayerData.get(player)
+                assert playerdata.death_time is not None
                 longest_life = max(longest_life,
-                                   player.gamedata['death_time'] - start_time)
-            results.set_team_score(team, longest_life)
+                                   playerdata.death_time - start_time)
+
+            # Submit the score value in milliseconds.
+            results.set_team_score(team, int(1000.0 * longest_life))
 
         self.end(results=results)

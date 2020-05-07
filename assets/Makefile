@@ -167,6 +167,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/ba/_tips.py \
   build/ba_data/python/ba/_store.py \
   build/ba_data/python/ba/_activitytypes.py \
+  build/ba_data/python/ba/_player.py \
   build/ba_data/python/ba/__init__.py \
   build/ba_data/python/ba/_assetmanager.py \
   build/ba_data/python/ba/_session.py \
@@ -392,6 +393,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/ba/__pycache__/_tips.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_store.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_activitytypes.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_player.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/__init__.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_assetmanager.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_session.cpython-37.opt-1.pyc \
@@ -726,6 +728,11 @@ build/ba_data/python/ba/__pycache__/_store.cpython-37.opt-1.pyc: \
 
 build/ba_data/python/ba/__pycache__/_activitytypes.cpython-37.opt-1.pyc: \
       build/ba_data/python/ba/_activitytypes.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python/ba/__pycache__/_player.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_player.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
