@@ -47,7 +47,6 @@ sys.path += [
     str(Path(os.getcwd(), 'dist', 'ba_data', 'python-site-packages'))
 ]
 
-
 if TYPE_CHECKING:
     from typing import Optional, List, Dict, Union, Tuple
     from types import FrameType
