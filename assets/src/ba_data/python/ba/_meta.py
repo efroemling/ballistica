@@ -162,9 +162,10 @@ class DirectoryScan:
             try:
                 self.scan_module(moduledir, subpath)
             except Exception:
-                from ba import _error
+                import traceback
                 self.results.warnings += ("Error scanning '" + str(subpath) +
-                                          "': " + _error.exc_str() + '\n')
+                                          "': " + traceback.format_exc() +
+                                          '\n')
 
     def scan_module(self, moduledir: pathlib.Path,
                     subpath: pathlib.Path) -> None:
@@ -207,9 +208,9 @@ class DirectoryScan:
                 for submodule in submodules:
                     self.scan_module(submodule[0], submodule[1])
             except Exception:
-                from ba import _error
+                import traceback
                 self.results.warnings += (
-                    f"Error scanning '{subpath}': {_error.exc_str()}\n")
+                    f"Error scanning '{subpath}': {traceback.format_exc()}\n")
 
     def _process_module_meta_tags(self, subpath: pathlib.Path,
                                   flines: List[str],

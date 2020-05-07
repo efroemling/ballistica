@@ -22,7 +22,6 @@
 
 from __future__ import annotations
 
-import sys
 from typing import TYPE_CHECKING
 
 import _ba
@@ -123,19 +122,6 @@ class WidgetNotFoundError(NotFoundError):
     """
 
 
-def exc_str() -> str:
-    """Returns a tidied up string for the current exception.
-
-    This performs some minor cleanup such as printing paths relative
-    to script dirs (full paths are often unwieldy in game installs).
-    """
-    import traceback
-    excstr = traceback.format_exc()
-    for path in sys.path:
-        excstr = excstr.replace(path + '/', '')
-    return excstr
-
-
 def print_exception(*args: Any, **keywds: Any) -> None:
     """Print info about an exception along with pertinent context state.
 
@@ -157,24 +143,18 @@ def print_exception(*args: Any, **keywds: Any) -> None:
             if not _ba.do_once():
                 return
 
-        # Most tracebacks are gonna have ugly long install directories in them;
-        # lets strip those out when we can.
         err_str = ' '.join([str(a) for a in args])
         print('ERROR:', err_str)
         _ba.print_context()
         print('PRINTED-FROM:')
 
-        # Basically the output of traceback.print_stack() slightly prettified:
+        # Basically the output of traceback.print_stack()
         stackstr = ''.join(traceback.format_stack())
-        for path in sys.path:
-            stackstr = stackstr.replace(path + '/', '')
         print(stackstr, end='')
         print('EXCEPTION:')
 
-        # Basically the output of traceback.print_exc() slightly prettified:
+        # Basically the output of traceback.print_exc()
         excstr = traceback.format_exc()
-        for path in sys.path:
-            excstr = excstr.replace(path + '/', '')
         print('\n'.join('  ' + l for l in excstr.splitlines()))
     except Exception:
         # I suppose using print_exception here would be a bad idea.
@@ -199,15 +179,11 @@ def print_error(err_str: str, once: bool = False) -> None:
             if not _ba.do_once():
                 return
 
-        # Most tracebacks are gonna have ugly long install directories in them;
-        # lets strip those out when we can.
         print('ERROR:', err_str)
         _ba.print_context()
 
-        # Basically the output of traceback.print_stack() slightly prettified:
+        # Basically the output of traceback.print_stack()
         stackstr = ''.join(traceback.format_stack())
-        for path in sys.path:
-            stackstr = stackstr.replace(path + '/', '')
         print(stackstr, end='')
     except Exception:
         print('ERROR: exception in ba.print_error():')
