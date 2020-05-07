@@ -213,10 +213,10 @@ class RaceGame(ba.TeamGameActivity):
             player = playernode.getdelegate().getplayer()
         except Exception:
             player = None
-        assert isinstance(player, ba.Player)
         region = region_node.getdelegate()
         if not player or not region:
             return
+        assert isinstance(player, ba.Player)
         assert isinstance(region, RaceRegion)
 
         last_region = player.gamedata['last_region']

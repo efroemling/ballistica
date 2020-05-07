@@ -46,9 +46,8 @@ class ConquestFlag(Flag):
         self.light: Optional[ba.Node] = None
 
     @property
-    def team(self) -> ba.Team:
+    def team(self) -> Optional[ba.Team]:
         """The team that owns this flag."""
-        assert self._team is not None
         return self._team
 
     @team.setter
@@ -185,10 +184,8 @@ class ConquestGame(ba.TeamGameActivity):
         for team in self.teams:
             team.gamedata['flags_held'] = 0
         for flag in self._flags:
-            try:
+            if flag.team is not None:
                 flag.team.gamedata['flags_held'] += 1
-            except Exception:
-                pass
         for team in self.teams:
 
             # If a team finds themselves with no flags, cancel all

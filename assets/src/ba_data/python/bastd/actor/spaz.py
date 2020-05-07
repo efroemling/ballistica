@@ -454,7 +454,6 @@ class Spaz(ba.Actor):
         Called to 'press punch' on this spaz;
         used for player or AI connections.
         """
-        assert self.node
         if not self.node or self.frozen or self.node.knockout > 0.0:
             return
         t_ms = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)

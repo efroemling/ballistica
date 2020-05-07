@@ -87,11 +87,10 @@ class MultiTeamScoreScreenActivity(ScoreScreenActivity):
 
         is_free_for_all = isinstance(self.session, ba.FreeForAllSession)
 
-        def _get_prec_score(p_rec: ba.PlayerRecord) -> int:
+        def _get_prec_score(p_rec: ba.PlayerRecord) -> Optional[int]:
             if is_free_for_all and results is not None:
                 assert isinstance(results, ba.TeamGameResults)
                 val = results.get_team_score(p_rec.team)
-                assert val is not None
                 return val
             return p_rec.accumscore
 
