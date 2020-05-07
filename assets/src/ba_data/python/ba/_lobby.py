@@ -35,6 +35,10 @@ if TYPE_CHECKING:
     import ba
 
 
+MAX_QUICK_CHANGE_COUNT = 30
+QUICK_CHANGE_INTERVAL = 0.05
+
+
 # Hmm should we move this to actors?..
 class JoinInfo:
     """Display useful info for joiners."""
@@ -169,6 +173,7 @@ class Chooser:
         self._profilenames: List[str] = []
         self._ready: bool = False
         self.character_names: List[str] = []
+        self.last_change: Sequence[Union[float, count]] = (0, 0)
 
         # Hmm does this need to be public?
         self.profiles: Dict[str, Dict[str, Any]] = {}
@@ -663,6 +668,13 @@ class Chooser:
     def handlemessage(self, msg: Any) -> Any:
         """Standard generic message handler."""
         if isinstance(msg, ChangeMessage):
+            now = ba.time()
+            count = self.last_change[1] + 1
+            if now - self.last_change[0] < QUICK_CHANGE_INTERVAL and count > MAX_QUICK_CHANGE_COUNT:
+                # Hmm maybe we should notify client?
+                _ba.disconnect_client(self._player.get_input_device().client_id)
+            self.last_change = (now, count)
+0
 
             # If we've been removed from the lobby, ignore this stuff.
             if self._dead:
