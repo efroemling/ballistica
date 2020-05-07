@@ -31,6 +31,10 @@ from threading import Thread, Lock, current_thread
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+# We change our working directory according to file's path 
+# so that the script can be properly executed from anywhere
+os.chdir(os.path.abspath(os.path.dirname(__file__)))
+
 # We make use of the bacommon and efro packages as well as site-packages
 # included with our bundled Ballistica dist.
 sys.path += [
