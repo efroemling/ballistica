@@ -26,6 +26,7 @@
 from __future__ import annotations
 
 import random
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import ba
@@ -35,6 +36,17 @@ from bastd.actor import playerspaz
 if TYPE_CHECKING:
     from typing import Any, Tuple, Sequence, Optional, List, Dict, Type
     from bastd.actor.onscreentimer import OnScreenTimer
+
+
+@dataclass
+class GameSettings:
+    """Configurable settings for our game."""
+    epic_mode: bool
+
+
+@dataclass
+class PlayerData:
+    """Data we store per player."""
 
 
 # ba_meta export game
@@ -78,7 +90,7 @@ class MeteorShowerGame(ba.TeamGameActivity):
     def __init__(self, settings: Dict[str, Any]):
         super().__init__(settings)
 
-        if self.settings['Epic Mode']:
+        if self.settings_raw['Epic Mode']:
             self.slow_motion = True
 
         # Print messages when players die (since its meaningful in this game).
@@ -91,8 +103,9 @@ class MeteorShowerGame(ba.TeamGameActivity):
     # Called when our game is transitioning in but not ready to start;
     # ..we can go ahead and set our music and whatnot.
     def on_transition_in(self) -> None:
-        self.default_music = (ba.MusicType.EPIC if self.settings['Epic Mode']
-                              else ba.MusicType.SURVIVAL)
+        self.default_music = (ba.MusicType.EPIC
+                              if self.settings_raw['Epic Mode'] else
+                              ba.MusicType.SURVIVAL)
         super().on_transition_in()
 
     # Called when our game actually starts.
@@ -105,13 +118,13 @@ class MeteorShowerGame(ba.TeamGameActivity):
         # between waves ..lets have things increase faster if we have fewer
         # players.
         delay = 5.0 if len(self.players) > 2 else 2.5
-        if self.settings['Epic Mode']:
+        if self.settings_raw['Epic Mode']:
             delay *= 0.25
         ba.timer(delay, self._decrement_meteor_time, repeat=True)
 
         # Kick off the first wave in a few seconds.
         delay = 3.0
-        if self.settings['Epic Mode']:
+        if self.settings_raw['Epic Mode']:
             delay *= 0.25
         ba.timer(delay, self._set_meteor_timer)
 

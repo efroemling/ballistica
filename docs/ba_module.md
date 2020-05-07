@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-05-07 for Ballistica version 1.5.0 build 20015</em></h4>
+<h4><em>last updated on 2020-05-07 for Ballistica version 1.5.0 build 20016</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -320,7 +320,7 @@ actually award achievements.</p>
     can overlap during transitions.</p>
 
 <h3>Attributes:</h3>
-<h5><a href="#attr_ba_Activity__players">players</a>, <a href="#attr_ba_Activity__session">session</a>, <a href="#attr_ba_Activity__settings">settings</a>, <a href="#attr_ba_Activity__stats">stats</a>, <a href="#attr_ba_Activity__teams">teams</a></h5>
+<h5><a href="#attr_ba_Activity__players">players</a>, <a href="#attr_ba_Activity__session">session</a>, <a href="#attr_ba_Activity__settings_raw">settings_raw</a>, <a href="#attr_ba_Activity__stats">stats</a>, <a href="#attr_ba_Activity__teams">teams</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_Activity__players">players</a></h4></dt><dd>
 <p><span>List[<a href="#class_ba_Player">ba.Player</a>]</span></p>
@@ -336,9 +336,12 @@ join or leave the game.</p>
 <p>        Raises a <a href="#class_ba_SessionNotFoundError">ba.SessionNotFoundError</a> if the Session no longer exists.</p>
 
 </dd>
-<dt><h4><a name="attr_ba_Activity__settings">settings</a></h4></dt><dd>
+<dt><h4><a name="attr_ba_Activity__settings_raw">settings_raw</a></h4></dt><dd>
 <p><span>Dict[str, Any]</span></p>
-<p>The settings dict passed in when the activity was made.</p>
+<p>The settings dict passed in when the activity was made.
+This attribute is deprecated and should be avoided when possible;
+activities should pull all values they need from the 'settings' arg
+passed to the Activity __init__ call.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_Activity__stats">stats</a></h4></dt><dd>
@@ -1426,7 +1429,7 @@ start_long_action(callback_when_done=<a href="#class_ba_ContextCall">ba.ContextC
 </p>
 
 <h3>Attributes Inherited:</h3>
-<h5><a href="#attr_ba_Activity__players">players</a>, <a href="#attr_ba_Activity__settings">settings</a>, <a href="#attr_ba_Activity__teams">teams</a></h5>
+<h5><a href="#attr_ba_Activity__players">players</a>, <a href="#attr_ba_Activity__settings_raw">settings_raw</a>, <a href="#attr_ba_Activity__teams">teams</a></h5>
 <h3>Attributes Defined Here:</h3>
 <h5><a href="#attr_ba_CoopGameActivity__map">map</a>, <a href="#attr_ba_CoopGameActivity__session">session</a>, <a href="#attr_ba_CoopGameActivity__stats">stats</a></h5>
 <dl>
@@ -1929,7 +1932,7 @@ its time with lingering corpses, sound effects, etc.</p>
 </p>
 
 <h3>Attributes Inherited:</h3>
-<h5><a href="#attr_ba_Activity__players">players</a>, <a href="#attr_ba_Activity__settings">settings</a>, <a href="#attr_ba_Activity__teams">teams</a></h5>
+<h5><a href="#attr_ba_Activity__players">players</a>, <a href="#attr_ba_Activity__settings_raw">settings_raw</a>, <a href="#attr_ba_Activity__teams">teams</a></h5>
 <h3>Attributes Defined Here:</h3>
 <h5><a href="#attr_ba_GameActivity__map">map</a>, <a href="#attr_ba_GameActivity__session">session</a>, <a href="#attr_ba_GameActivity__stats">stats</a></h5>
 <dl>
@@ -2072,7 +2075,7 @@ form instead of just a string:</p>
 <span><em><small># and can properly translate to 'Anota 3 goles.' in Spanish.</small></em></span>
 <span><em><small># If we just returned the string 'Score 3 Goals' here, there would</small></em></span>
 <span><em><small># have to be a translation entry for each specific number. ew.</small></em></span>
-return ['Score ${ARG1} goals.', self.settings['Score to Win']]</pre>
+return ['Score ${ARG1} goals.', self.settings_raw['Score to Win']]</pre>
 
 <p>This way the first string can be consistently translated, with any arg
 values then substituted into the result. ${ARG1} will be replaced with
@@ -2105,7 +2108,7 @@ instead of just a string:</p>
 <span><em><small># and can properly translate to 'anota 3 goles' in Spanish.</small></em></span>
 <span><em><small># If we just returned the string 'score 3 goals' here, there would</small></em></span>
 <span><em><small># have to be a translation entry for each specific number. ew.</small></em></span>
-return ['score ${ARG1} goals', self.settings['Score to Win']]</pre>
+return ['score ${ARG1} goals', self.settings_raw['Score to Win']]</pre>
 
 <p>This way the first string can be consistently translated, with any arg
 values then substituted into the result. ${ARG1} will be replaced
@@ -4515,7 +4518,7 @@ of the session.</p>
 </p>
 
 <h3>Attributes Inherited:</h3>
-<h5><a href="#attr_ba_Activity__players">players</a>, <a href="#attr_ba_Activity__settings">settings</a>, <a href="#attr_ba_Activity__teams">teams</a></h5>
+<h5><a href="#attr_ba_Activity__players">players</a>, <a href="#attr_ba_Activity__settings_raw">settings_raw</a>, <a href="#attr_ba_Activity__teams">teams</a></h5>
 <h3>Attributes Defined Here:</h3>
 <h5><a href="#attr_ba_TeamGameActivity__map">map</a>, <a href="#attr_ba_TeamGameActivity__session">session</a>, <a href="#attr_ba_TeamGameActivity__stats">stats</a></h5>
 <dl>

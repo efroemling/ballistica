@@ -80,7 +80,7 @@ class TeamVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                             i * 0.2, shift_time - (i * 0.150 + 0.150)))
             ba.timer(i * 0.150 + 0.5,
                      ba.Call(ba.playsound, self._score_display_sound_small))
-            scored = (team is self.settings['winner'])
+            scored = (team is self.settings_raw['winner'])
             delay = 0.2
             if scored:
                 delay = 1.2

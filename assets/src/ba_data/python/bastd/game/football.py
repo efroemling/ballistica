@@ -135,8 +135,8 @@ class FootballTeamGame(ba.TeamGameActivity):
         self._flag_respawn_light: Optional[ba.NodeActor] = None
 
     def get_instance_description(self) -> Union[str, Sequence]:
-        touchdowns = self.settings['Score to Win'] / 7
-        # NOTE: if use just touchdowns = self.settings['Score to Win'] // 7
+        touchdowns = self.settings_raw['Score to Win'] / 7
+        # NOTE: if use just touchdowns = self.settings_raw['Score to Win'] // 7
         # and we will need to score, for example, 27 points,
         # we will be required to score 3 (not 4) goals ..
         touchdowns = math.ceil(touchdowns)
@@ -145,7 +145,7 @@ class FootballTeamGame(ba.TeamGameActivity):
         return 'Score a touchdown.'
 
     def get_instance_scoreboard_description(self) -> Union[str, Sequence]:
-        touchdowns = self.settings['Score to Win'] / 7
+        touchdowns = self.settings_raw['Score to Win'] / 7
         touchdowns = math.ceil(touchdowns)
         if touchdowns > 1:
             return 'score ${ARG1} touchdowns', touchdowns
@@ -157,7 +157,7 @@ class FootballTeamGame(ba.TeamGameActivity):
 
     def on_begin(self) -> None:
         super().on_begin()
-        self.setup_standard_time_limit(self.settings['Time Limit'])
+        self.setup_standard_time_limit(self.settings_raw['Time Limit'])
         self.setup_standard_powerup_drops()
         self._flag_spawn_pos = (self.map.get_flag_position(None))
         self._spawn_flag()
@@ -221,7 +221,7 @@ class FootballTeamGame(ba.TeamGameActivity):
                                              50,
                                              big_message=True)
                 # end game if we won
-                if team.gamedata['score'] >= self.settings['Score to Win']:
+                if team.gamedata['score'] >= self.settings_raw['Score to Win']:
                     self.end_game()
         ba.playsound(self._score_sound)
         ba.playsound(self._cheer_sound)
@@ -248,7 +248,7 @@ class FootballTeamGame(ba.TeamGameActivity):
         self.end(results=results, announce_delay=0.8)
 
     def _update_scoreboard(self) -> None:
-        win_score = self.settings['Score to Win']
+        win_score = self.settings_raw['Score to Win']
         assert self._scoreboard is not None
         for team in self.teams:
             self._scoreboard.set_team_value(team, team.gamedata['score'],
@@ -356,7 +356,7 @@ class FootballCoopGame(ba.CoopGameActivity):
     def __init__(self, settings: Dict[str, Any]):
         settings['map'] = 'Football Stadium'
         super().__init__(settings)
-        self._preset = self.settings.get('preset', 'rookie')
+        self._preset = self.settings_raw.get('preset', 'rookie')
 
         # Load some media we need.
         self._cheer_sound = ba.getsound('cheer')

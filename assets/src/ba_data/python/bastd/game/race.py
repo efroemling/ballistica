@@ -134,7 +134,7 @@ class RaceGame(ba.TeamGameActivity):
         self._race_started = False
         super().__init__(settings)
         self._scoreboard = Scoreboard()
-        if self.settings['Epic Mode']:
+        if self.settings_raw['Epic Mode']:
             self.slow_motion = True
         self._score_sound = ba.getsound('score')
         self._swipsound = ba.getsound('swip')
@@ -156,24 +156,24 @@ class RaceGame(ba.TeamGameActivity):
         self._bomb_spawn_timer: Optional[ba.Timer] = None
 
     def get_instance_description(self) -> Union[str, Sequence]:
-        if isinstance(self.session, ba.DualTeamSession) and self.settings.get(
-                'Entire Team Must Finish', False):
+        if (isinstance(self.session, ba.DualTeamSession)
+                and self.settings_raw.get('Entire Team Must Finish', False)):
             t_str = ' Your entire team has to finish.'
         else:
             t_str = ''
 
-        if self.settings['Laps'] > 1:
-            return 'Run ${ARG1} laps.' + t_str, self.settings['Laps']
+        if self.settings_raw['Laps'] > 1:
+            return 'Run ${ARG1} laps.' + t_str, self.settings_raw['Laps']
         return 'Run 1 lap.' + t_str
 
     def get_instance_scoreboard_description(self) -> Union[str, Sequence]:
-        if self.settings['Laps'] > 1:
-            return 'run ${ARG1} laps', self.settings['Laps']
+        if self.settings_raw['Laps'] > 1:
+            return 'run ${ARG1} laps', self.settings_raw['Laps']
         return 'run 1 lap'
 
     def on_transition_in(self) -> None:
         self.default_music = (ba.MusicType.EPIC_RACE
-                              if self.settings['Epic Mode'] else
+                              if self.settings_raw['Epic Mode'] else
                               ba.MusicType.RACE)
         super().on_transition_in()
 
@@ -245,15 +245,15 @@ class RaceGame(ba.TeamGameActivity):
                 player.gamedata['last_region'] = this_region
                 if last_region >= len(self._regions) - 2 and this_region == 0:
                     team = player.team
-                    player.gamedata['lap'] = min(self.settings['Laps'],
+                    player.gamedata['lap'] = min(self.settings_raw['Laps'],
                                                  player.gamedata['lap'] + 1)
 
                     # In teams mode with all-must-finish on, the team lap
                     # value is the min of all team players.
                     # Otherwise its the max.
-                    if isinstance(self.session,
-                                  ba.DualTeamSession) and self.settings.get(
-                                      'Entire Team Must Finish'):
+                    if isinstance(
+                            self.session, ba.DualTeamSession
+                    ) and self.settings_raw.get('Entire Team Must Finish'):
                         team.gamedata['lap'] = min(
                             [p.gamedata['lap'] for p in team.players])
                     else:
@@ -261,7 +261,7 @@ class RaceGame(ba.TeamGameActivity):
                             [p.gamedata['lap'] for p in team.players])
 
                     # A player is finishing.
-                    if player.gamedata['lap'] == self.settings['Laps']:
+                    if player.gamedata['lap'] == self.settings_raw['Laps']:
 
                         # In teams mode, hand out points based on the order
                         # players come in.
@@ -285,7 +285,7 @@ class RaceGame(ba.TeamGameActivity):
                         player.gamedata['distance'] = 9999.0
 
                         # If the whole team has finished the race.
-                        if team.gamedata['lap'] == self.settings['Laps']:
+                        if team.gamedata['lap'] == self.settings_raw['Laps']:
                             ba.playsound(self._score_sound)
                             player.team.gamedata['finished'] = True
                             assert self._timer is not None
@@ -318,12 +318,12 @@ class RaceGame(ba.TeamGameActivity):
                                                   })
                             player.actor.node.connectattr(
                                 'torso_position', mathnode, 'input2')
-                            tstr = ba.Lstr(resource='lapNumberText',
-                                           subs=[('${CURRENT}',
-                                                  str(player.gamedata['lap'] +
-                                                      1)),
-                                                 ('${TOTAL}',
-                                                  str(self.settings['Laps']))])
+                            tstr = ba.Lstr(
+                                resource='lapNumberText',
+                                subs=[('${CURRENT}',
+                                       str(player.gamedata['lap'] + 1)),
+                                      ('${TOTAL}',
+                                       str(self.settings_raw['Laps']))])
                             txtnode = ba.newnode('text',
                                                  owner=mathnode,
                                                  attrs={
@@ -365,7 +365,7 @@ class RaceGame(ba.TeamGameActivity):
         # is on (otherwise in teams mode everyone could just leave except the
         # leading player to win).
         if (isinstance(self.session, ba.DualTeamSession)
-                and self.settings.get('Entire Team Must Finish')):
+                and self.settings_raw.get('Entire Team Must Finish')):
             ba.screenmessage(ba.Lstr(
                 translate=('statements',
                            '${TEAM} is disqualified because ${PLAYER} left'),
@@ -397,21 +397,21 @@ class RaceGame(ba.TeamGameActivity):
                 teams_dist = 0
             else:
                 if (isinstance(self.session, ba.DualTeamSession)
-                        and self.settings.get('Entire Team Must Finish')):
+                        and self.settings_raw.get('Entire Team Must Finish')):
                     teams_dist = min(distances)
                 else:
                     teams_dist = max(distances)
             self._scoreboard.set_team_value(
                 team,
                 teams_dist,
-                self.settings['Laps'],
-                flash=(teams_dist >= float(self.settings['Laps'])),
+                self.settings_raw['Laps'],
+                flash=(teams_dist >= float(self.settings_raw['Laps'])),
                 show_value=False)
 
     def on_begin(self) -> None:
         from bastd.actor.onscreentimer import OnScreenTimer
         super().on_begin()
-        self.setup_standard_time_limit(self.settings['Time Limit'])
+        self.setup_standard_time_limit(self.settings_raw['Time Limit'])
         self.setup_standard_powerup_drops()
         self._team_finish_pts = 100
 
@@ -431,14 +431,14 @@ class RaceGame(ba.TeamGameActivity):
                        }))
         self._timer = OnScreenTimer()
 
-        if self.settings['Mine Spawning'] != 0:
+        if self.settings_raw['Mine Spawning'] != 0:
             self._race_mines = [
                 RaceMine(point=p, mine=None)
                 for p in self.map.get_def_points('race_mine')
             ]
             if self._race_mines:
                 self._race_mine_timer = ba.Timer(
-                    0.001 * self.settings['Mine Spawning'],
+                    0.001 * self.settings_raw['Mine Spawning'],
                     self._update_race_mine,
                     repeat=True)
 
@@ -518,11 +518,11 @@ class RaceGame(ba.TeamGameActivity):
         assert self._timer is not None
         self._timer.start()
 
-        if self.settings['Bomb Spawning'] != 0:
-            self._bomb_spawn_timer = ba.Timer(0.001 *
-                                              self.settings['Bomb Spawning'],
-                                              self._spawn_bomb,
-                                              repeat=True)
+        if self.settings_raw['Bomb Spawning'] != 0:
+            self._bomb_spawn_timer = ba.Timer(
+                0.001 * self.settings_raw['Bomb Spawning'],
+                self._spawn_bomb,
+                repeat=True)
 
         self._race_started = True
 

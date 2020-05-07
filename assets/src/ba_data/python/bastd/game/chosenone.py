@@ -92,7 +92,7 @@ class ChosenOneGame(ba.TeamGameActivity):
     def __init__(self, settings: Dict[str, Any]):
         from bastd.actor.scoreboard import Scoreboard
         super().__init__(settings)
-        if self.settings['Epic Mode']:
+        if self.settings_raw['Epic Mode']:
             self.slow_motion = True
         self._scoreboard = Scoreboard()
         self._chosen_one_player: Optional[ba.Player] = None
@@ -118,12 +118,13 @@ class ChosenOneGame(ba.TeamGameActivity):
         return 'There can be only one.'
 
     def on_transition_in(self) -> None:
-        self.default_music = (ba.MusicType.EPIC if self.settings['Epic Mode']
-                              else ba.MusicType.CHOSEN_ONE)
+        self.default_music = (ba.MusicType.EPIC
+                              if self.settings_raw['Epic Mode'] else
+                              ba.MusicType.CHOSEN_ONE)
         super().on_transition_in()
 
     def on_team_join(self, team: ba.Team) -> None:
-        team.gamedata['time_remaining'] = self.settings['Chosen One Time']
+        team.gamedata['time_remaining'] = self.settings_raw['Chosen One Time']
         self._update_scoreboard()
 
     def on_player_leave(self, player: ba.Player) -> None:
@@ -133,7 +134,7 @@ class ChosenOneGame(ba.TeamGameActivity):
 
     def on_begin(self) -> None:
         super().on_begin()
-        self.setup_standard_time_limit(self.settings['Time Limit'])
+        self.setup_standard_time_limit(self.settings_raw['Time Limit'])
         self.setup_standard_powerup_drops()
         self._flag_spawn_pos = self.map.get_flag_position(None)
         self.project_flag_stand(self._flag_spawn_pos)
@@ -243,7 +244,7 @@ class ChosenOneGame(ba.TeamGameActivity):
         results = ba.TeamGameResults()
         for team in self.teams:
             results.set_team_score(
-                team, self.settings['Chosen One Time'] -
+                team, self.settings_raw['Chosen One Time'] -
                 team.gamedata['time_remaining'])
         self.end(results=results, announce_delay=0)
 
@@ -280,10 +281,10 @@ class ChosenOneGame(ba.TeamGameActivity):
                     self._chosen_one_player = player
 
                     if player.actor:
-                        if self.settings['Chosen One Gets Shield']:
+                        if self.settings_raw['Chosen One Gets Shield']:
                             player.actor.handlemessage(
                                 ba.PowerupMessage('shield'))
-                        if self.settings['Chosen One Gets Gloves']:
+                        if self.settings_raw['Chosen One Gets Gloves']:
                             player.actor.handlemessage(
                                 ba.PowerupMessage('punch'))
 
@@ -334,7 +335,8 @@ class ChosenOneGame(ba.TeamGameActivity):
 
     def _update_scoreboard(self) -> None:
         for team in self.teams:
-            self._scoreboard.set_team_value(team,
-                                            team.gamedata['time_remaining'],
-                                            self.settings['Chosen One Time'],
-                                            countdown=True)
+            self._scoreboard.set_team_value(
+                team,
+                team.gamedata['time_remaining'],
+                self.settings_raw['Chosen One Time'],
+                countdown=True)

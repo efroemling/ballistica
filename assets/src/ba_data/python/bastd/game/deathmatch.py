@@ -98,7 +98,7 @@ class DeathMatchGame(ba.TeamGameActivity):
     def __init__(self, settings: Dict[str, Any]):
         from bastd.actor.scoreboard import Scoreboard
         super().__init__(settings)
-        if self.settings['Epic Mode']:
+        if self.settings_raw['Epic Mode']:
             self.slow_motion = True
 
         # Print messages when players die since it matters here.
@@ -115,8 +115,9 @@ class DeathMatchGame(ba.TeamGameActivity):
         return 'kill ${ARG1} enemies', self._score_to_win
 
     def on_transition_in(self) -> None:
-        self.default_music = (ba.MusicType.EPIC if self.settings['Epic Mode']
-                              else ba.MusicType.TO_THE_DEATH)
+        self.default_music = (ba.MusicType.EPIC
+                              if self.settings_raw['Epic Mode'] else
+                              ba.MusicType.TO_THE_DEATH)
         super().on_transition_in()
 
     def on_team_join(self, team: ba.Team) -> None:
@@ -126,14 +127,14 @@ class DeathMatchGame(ba.TeamGameActivity):
 
     def on_begin(self) -> None:
         super().on_begin()
-        self.setup_standard_time_limit(self.settings['Time Limit'])
+        self.setup_standard_time_limit(self.settings_raw['Time Limit'])
         self.setup_standard_powerup_drops()
         if self.teams:
             self._score_to_win = (
-                self.settings['Kills to Win Per Player'] *
+                self.settings_raw['Kills to Win Per Player'] *
                 max(1, max(len(t.players) for t in self.teams)))
         else:
-            self._score_to_win = self.settings['Kills to Win Per Player']
+            self._score_to_win = self.settings_raw['Kills to Win Per Player']
         self._update_scoreboard()
 
     def handlemessage(self, msg: Any) -> Any:
@@ -157,7 +158,7 @@ class DeathMatchGame(ba.TeamGameActivity):
                 # In free-for-all, killing yourself loses you a point.
                 if isinstance(self.session, ba.FreeForAllSession):
                     new_score = player.team.gamedata['score'] - 1
-                    if not self.settings['Allow Negative Scores']:
+                    if not self.settings_raw['Allow Negative Scores']:
                         new_score = max(0, new_score)
                     player.team.gamedata['score'] = new_score
 

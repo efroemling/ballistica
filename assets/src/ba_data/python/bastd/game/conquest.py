@@ -102,7 +102,7 @@ class ConquestGame(ba.TeamGameActivity):
     def __init__(self, settings: Dict[str, Any]):
         from bastd.actor.scoreboard import Scoreboard
         super().__init__(settings)
-        if self.settings['Epic Mode']:
+        if self.settings_raw['Epic Mode']:
             self.slow_motion = True
         self._scoreboard = Scoreboard()
         self._score_sound = ba.getsound('score')
@@ -123,8 +123,9 @@ class ConquestGame(ba.TeamGameActivity):
         return 'secure all ${ARG1} flags', len(self.map.flag_points)
 
     def on_transition_in(self) -> None:
-        self.default_music = (ba.MusicType.EPIC if self.settings['Epic Mode']
-                              else ba.MusicType.GRAND_ROMP)
+        self.default_music = (ba.MusicType.EPIC
+                              if self.settings_raw['Epic Mode'] else
+                              ba.MusicType.GRAND_ROMP)
         super().on_transition_in()
 
     def on_team_join(self, team: ba.Team) -> None:
@@ -141,7 +142,7 @@ class ConquestGame(ba.TeamGameActivity):
 
     def on_begin(self) -> None:
         super().on_begin()
-        self.setup_standard_time_limit(self.settings['Time Limit'])
+        self.setup_standard_time_limit(self.settings_raw['Time Limit'])
         self.setup_standard_powerup_drops()
 
         # Set up flags with marker lights.

@@ -45,8 +45,11 @@ class Activity(DependencyComponent):
 
     Attributes:
 
-       settings
+       settings_raw
           The settings dict passed in when the activity was made.
+          This attribute is deprecated and should be avoided when possible;
+          activities should pull all values they need from the 'settings' arg
+          passed to the Activity __init__ call.
 
        teams
           The list of ba.Teams in the Activity. This gets populated just before
@@ -64,7 +67,7 @@ class Activity(DependencyComponent):
     # pylint: disable=too-many-public-methods
 
     # Annotating attr types at the class level lets us introspect them.
-    settings: Dict[str, Any]
+    settings_raw: Dict[str, Any]
     teams: List[ba.Team]
     players: List[ba.Player]
 
@@ -102,7 +105,9 @@ class Activity(DependencyComponent):
         if _ba.getactivity(doraise=False) is not self:
             raise Exception('invalid context state')
 
-        self.settings = settings
+        # Should perhaps kill this; activities should validate/store whatever
+        # settings they need at init time (in a more type-safe way).
+        self.settings_raw = settings
 
         self._has_transitioned_in = False
         self._has_begun = False

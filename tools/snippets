@@ -36,12 +36,14 @@ import sys
 from typing import TYPE_CHECKING
 
 # Pull in some standard snippets we want to expose.
+# pylint: disable=unused-import
 # noinspection PyUnresolvedReferences
-from efrotools.snippets import (  # pylint: disable=unused-import
+from efrotools.snippets import (
     PROJROOT, snippets_main, formatcode, formatscripts, formatmakefile,
     cpplint, pylint, mypy, dmypy, tool_config_install, sync, sync_all,
     scriptfiles, pycharm, clioncode, androidstudiocode, makefile_target_list,
     spelling, spelling_all, compile_python_files, pytest)
+# pylint: enable=unused-import
 
 if TYPE_CHECKING:
     from typing import Optional

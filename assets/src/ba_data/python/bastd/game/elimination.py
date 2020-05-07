@@ -223,7 +223,7 @@ class EliminationGame(ba.TeamGameActivity):
     def __init__(self, settings: Dict[str, Any]):
         from bastd.actor.scoreboard import Scoreboard
         super().__init__(settings)
-        if self.settings['Epic Mode']:
+        if self.settings_raw['Epic Mode']:
             self.slow_motion = True
 
         # Show messages when players die since it's meaningful here.
@@ -244,8 +244,9 @@ class EliminationGame(ba.TeamGameActivity):
             self.session, ba.DualTeamSession) else 'last one standing wins'
 
     def on_transition_in(self) -> None:
-        self.default_music = (ba.MusicType.EPIC if self.settings['Epic Mode']
-                              else ba.MusicType.SURVIVAL)
+        self.default_music = (ba.MusicType.EPIC
+                              if self.settings_raw['Epic Mode'] else
+                              ba.MusicType.SURVIVAL)
         super().on_transition_in()
         self._start_time = ba.time()
 
@@ -273,7 +274,7 @@ class EliminationGame(ba.TeamGameActivity):
                              color=(0, 1, 0))
             return
 
-        player.gamedata['lives'] = self.settings['Lives Per Player']
+        player.gamedata['lives'] = self.settings_raw['Lives Per Player']
 
         if self._solo_mode:
             player.gamedata['icons'] = []
@@ -443,7 +444,7 @@ class EliminationGame(ba.TeamGameActivity):
 
     def on_begin(self) -> None:
         super().on_begin()
-        self.setup_standard_time_limit(self.settings['Time Limit'])
+        self.setup_standard_time_limit(self.settings_raw['Time Limit'])
         self.setup_standard_powerup_drops()
         if self._solo_mode:
             self._vs_text = ba.NodeActor(
@@ -464,7 +465,7 @@ class EliminationGame(ba.TeamGameActivity):
         # If balance-team-lives is on, add lives to the smaller team until
         # total lives match.
         if (isinstance(self.session, ba.DualTeamSession)
-                and self.settings['Balance Total Lives']
+                and self.settings_raw['Balance Total Lives']
                 and self.teams[0].players and self.teams[1].players):
             if self._get_total_team_lives(
                     self.teams[0]) < self._get_total_team_lives(self.teams[1]):

@@ -76,26 +76,27 @@ class AssaultGame(ba.TeamGameActivity):
         from bastd.actor.scoreboard import Scoreboard
         super().__init__(settings)
         self._scoreboard = Scoreboard()
-        if self.settings['Epic Mode']:
+        if self.settings_raw['Epic Mode']:
             self.slow_motion = True
         self._last_score_time = 0.0
         self._score_sound = ba.getsound('score')
         self._base_region_materials: Dict[int, ba.Material] = {}
 
     def get_instance_description(self) -> Union[str, Sequence]:
-        if self.settings['Score to Win'] == 1:
+        if self.settings_raw['Score to Win'] == 1:
             return 'Touch the enemy flag.'
         return ('Touch the enemy flag ${ARG1} times.',
-                self.settings['Score to Win'])
+                self.settings_raw['Score to Win'])
 
     def get_instance_scoreboard_description(self) -> Union[str, Sequence]:
-        if self.settings['Score to Win'] == 1:
+        if self.settings_raw['Score to Win'] == 1:
             return 'touch 1 flag'
-        return 'touch ${ARG1} flags', self.settings['Score to Win']
+        return 'touch ${ARG1} flags', self.settings_raw['Score to Win']
 
     def on_transition_in(self) -> None:
-        self.default_music = (ba.MusicType.EPIC if self.settings['Epic Mode']
-                              else ba.MusicType.FORWARD_MARCH)
+        self.default_music = (ba.MusicType.EPIC
+                              if self.settings_raw['Epic Mode'] else
+                              ba.MusicType.FORWARD_MARCH)
         super().on_transition_in()
 
     def on_team_join(self, team: ba.Team) -> None:
@@ -105,7 +106,7 @@ class AssaultGame(ba.TeamGameActivity):
     def on_begin(self) -> None:
         from bastd.actor.flag import Flag
         super().on_begin()
-        self.setup_standard_time_limit(self.settings['Time Limit'])
+        self.setup_standard_time_limit(self.settings_raw['Time Limit'])
         self.setup_standard_powerup_drops()
         for team in self.teams:
             mat = self._base_region_materials[team.get_id()] = ba.Material()
@@ -237,7 +238,7 @@ class AssaultGame(ba.TeamGameActivity):
                 player_team.gamedata['score'] += 1
                 self._update_scoreboard()
                 if (player_team.gamedata['score'] >=
-                        self.settings['Score to Win']):
+                        self.settings_raw['Score to Win']):
                     self.end_game()
 
     def end_game(self) -> None:
@@ -249,4 +250,4 @@ class AssaultGame(ba.TeamGameActivity):
     def _update_scoreboard(self) -> None:
         for team in self.teams:
             self._scoreboard.set_team_value(team, team.gamedata['score'],
-                                            self.settings['Score to Win'])
+                                            self.settings_raw['Score to Win'])

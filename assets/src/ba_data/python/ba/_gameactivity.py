@@ -370,7 +370,7 @@ class GameActivity(Activity):
 
     def get_instance_display_string(self) -> ba.Lstr:
         """Return a name for this particular game instance."""
-        return self.get_display_string(self.settings)
+        return self.get_display_string(self.settings_raw)
 
     def get_instance_scoreboard_display_string(self) -> ba.Lstr:
         """Return a name for this particular game instance.
@@ -410,7 +410,7 @@ class GameActivity(Activity):
         # and can properly translate to 'Anota 3 goles.' in Spanish.
         # If we just returned the string 'Score 3 Goals' here, there would
         # have to be a translation entry for each specific number. ew.
-        return ['Score ${ARG1} goals.', self.settings['Score to Win']]
+        return ['Score ${ARG1} goals.', self.settings_raw['Score to Win']]
 
         This way the first string can be consistently translated, with any arg
         values then substituted into the result. ${ARG1} will be replaced with
@@ -436,7 +436,7 @@ class GameActivity(Activity):
         # and can properly translate to 'anota 3 goles' in Spanish.
         # If we just returned the string 'score 3 goals' here, there would
         # have to be a translation entry for each specific number. ew.
-        return ['score ${ARG1} goals', self.settings['Score to Win']]
+        return ['score ${ARG1} goals', self.settings_raw['Score to Win']]
 
         This way the first string can be consistently translated, with any arg
         values then substituted into the result. ${ARG1} will be replaced
@@ -816,7 +816,7 @@ class GameActivity(Activity):
                            subs=subs)
 
         # do some standard filters (epic mode, etc)
-        if 'Epic Mode' in self.settings and self.settings['Epic Mode']:
+        if self.settings_raw.get('Epic Mode', False):
             translation = Lstr(resource='epicDescriptionFilterText',
                                subs=[('${DESCRIPTION}', translation)])
         vrmode = _ba.app.vr_mode
@@ -1021,9 +1021,9 @@ class GameActivity(Activity):
             else:
                 respawn_time = 7.0
 
-        # if this standard setting is present, factor it in
-        if 'Respawn Times' in self.settings:
-            respawn_time *= self.settings['Respawn Times']
+        # If this standard setting is present, factor it in
+        if 'Respawn Times' in self.settings_raw:
+            respawn_time *= self.settings_raw['Respawn Times']
 
         # we want whole seconds
         assert respawn_time is not None

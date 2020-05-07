@@ -90,7 +90,7 @@ class NinjaFightGame(ba.TeamGameActivity):
     # Called when our game actually begins.
     def on_begin(self) -> None:
         super().on_begin()
-        is_pro = self.settings.get('preset') == 'pro'
+        is_pro = self.settings_raw.get('preset') == 'pro'
 
         # In pro mode there's no powerups.
         if not is_pro:

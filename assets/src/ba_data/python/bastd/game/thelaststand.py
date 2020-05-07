@@ -68,7 +68,7 @@ class TheLastStandGame(ba.CoopGameActivity):
         self._tntspawnpos = (0, 5.5, -6)
         self._powerup_center = (0, 7, -4.14)
         self._powerup_spread = (7, 2)
-        self._preset = self.settings.get('preset', 'default')
+        self._preset = self.settings_raw.get('preset', 'default')
         self._excludepowerups: List[str] = []
         self._scoreboard: Optional[Scoreboard] = None
         self._score = 0

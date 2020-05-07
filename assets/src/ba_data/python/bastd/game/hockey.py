@@ -198,14 +198,14 @@ class HockeyGame(ba.TeamGameActivity):
         self._puck: Optional[Puck] = None
 
     def get_instance_description(self) -> Union[str, Sequence]:
-        if self.settings['Score to Win'] == 1:
+        if self.settings_raw['Score to Win'] == 1:
             return 'Score a goal.'
-        return 'Score ${ARG1} goals.', self.settings['Score to Win']
+        return 'Score ${ARG1} goals.', self.settings_raw['Score to Win']
 
     def get_instance_scoreboard_description(self) -> Union[str, Sequence]:
-        if self.settings['Score to Win'] == 1:
+        if self.settings_raw['Score to Win'] == 1:
             return 'score a goal'
-        return 'score ${ARG1} goals', self.settings['Score to Win']
+        return 'score ${ARG1} goals', self.settings_raw['Score to Win']
 
     def on_transition_in(self) -> None:
         self.default_music = ba.MusicType.HOCKEY
@@ -214,7 +214,7 @@ class HockeyGame(ba.TeamGameActivity):
     def on_begin(self) -> None:
         super().on_begin()
 
-        self.setup_standard_time_limit(self.settings['Time Limit'])
+        self.setup_standard_time_limit(self.settings_raw['Time Limit'])
         self.setup_standard_powerup_drops()
         self._puck_spawn_pos = self.map.get_flag_position(None)
         self._spawn_puck()
@@ -299,7 +299,7 @@ class HockeyGame(ba.TeamGameActivity):
                                              big_message=True)
 
                 # End game if we won.
-                if team.gamedata['score'] >= self.settings['Score to Win']:
+                if team.gamedata['score'] >= self.settings_raw['Score to Win']:
                     self.end_game()
 
         ba.playsound(self._foghorn_sound)
@@ -330,7 +330,7 @@ class HockeyGame(ba.TeamGameActivity):
 
     def _update_scoreboard(self) -> None:
         """ update scoreboard and check for winners """
-        winscore = self.settings['Score to Win']
+        winscore = self.settings_raw['Score to Win']
         for team in self.teams:
             self._scoreboard.set_team_value(team, team.gamedata['score'],
                                             winscore)

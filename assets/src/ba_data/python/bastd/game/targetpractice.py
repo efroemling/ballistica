@@ -95,7 +95,7 @@ class TargetPracticeGame(ba.TeamGameActivity):
         self.update_scoreboard()
 
         # Number of targets is based on player count.
-        num_targets = self.settings['Target Count']
+        num_targets = self.settings_raw['Target Count']
         for i in range(num_targets):
             ba.timer(5.0 + i * 1.0, self._spawn_target)
 
@@ -114,9 +114,9 @@ class TargetPracticeGame(ba.TeamGameActivity):
 
         # Give players permanent triple impact bombs and wire them up
         # to tell us when they drop a bomb.
-        if self.settings['Enable Impact Bombs']:
+        if self.settings_raw['Enable Impact Bombs']:
             spaz.bomb_type = 'impact'
-        if self.settings['Enable Triple Bombs']:
+        if self.settings_raw['Enable Triple Bombs']:
             spaz.set_bomb_count(3)
         spaz.add_dropped_bomb_callback(self._on_spaz_dropped_bomb)
         return spaz

@@ -54,4 +54,4 @@ class DrawScoreScreenActivity(MultiTeamScoreScreenActivity):
                  trail=False,
                  jitter=1.0).autoretain()
         ba.timer(0.35, ba.Call(ba.playsound, self._score_display_sound))
-        self.show_player_scores(results=self.settings.get('results', None))
+        self.show_player_scores(results=self.settings_raw.get('results', None))

@@ -126,18 +126,18 @@ class KingOfTheHillGame(ba.TeamGameActivity):
 
     def get_instance_description(self) -> Union[str, Sequence]:
         return ('Secure the flag for ${ARG1} seconds.',
-                self.settings['Hold Time'])
+                self.settings_raw['Hold Time'])
 
     def get_instance_scoreboard_description(self) -> Union[str, Sequence]:
         return ('secure the flag for ${ARG1} seconds',
-                self.settings['Hold Time'])
+                self.settings_raw['Hold Time'])
 
     def on_transition_in(self) -> None:
         self.default_music = ba.MusicType.SCARY
         super().on_transition_in()
 
     def on_team_join(self, team: ba.Team) -> None:
-        team.gamedata['time_remaining'] = self.settings['Hold Time']
+        team.gamedata['time_remaining'] = self.settings_raw['Hold Time']
         self._update_scoreboard()
 
     def on_player_join(self, player: ba.Player) -> None:
@@ -146,7 +146,7 @@ class KingOfTheHillGame(ba.TeamGameActivity):
 
     def on_begin(self) -> None:
         super().on_begin()
-        self.setup_standard_time_limit(self.settings['Time Limit'])
+        self.setup_standard_time_limit(self.settings_raw['Time Limit'])
         self.setup_standard_powerup_drops()
         self._flag_pos = self.map.get_flag_position(None)
         ba.timer(1.0, self._tick, repeat=True)
@@ -222,8 +222,8 @@ class KingOfTheHillGame(ba.TeamGameActivity):
         results = ba.TeamGameResults()
         for team in self.teams:
             results.set_team_score(
-                team,
-                self.settings['Hold Time'] - team.gamedata['time_remaining'])
+                team, self.settings_raw['Hold Time'] -
+                team.gamedata['time_remaining'])
         self.end(results=results, announce_delay=0)
 
     def _update_flag_state(self) -> None:
@@ -273,7 +273,7 @@ class KingOfTheHillGame(ba.TeamGameActivity):
         for team in self.teams:
             self._scoreboard.set_team_value(team,
                                             team.gamedata['time_remaining'],
-                                            self.settings['Hold Time'],
+                                            self.settings_raw['Hold Time'],
                                             countdown=True)
 
     def handlemessage(self, msg: Any) -> Any:

@@ -63,11 +63,12 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         self._show_up_next = False
         self._custom_continue_message = sval
         super().on_begin()
-        winning_team = self.settings['winner']
+        winning_team = self.settings_raw['winner']
 
         # Pause a moment before playing victory music.
         ba.timer(0.6, ba.WeakCall(self._play_victory_music))
-        ba.timer(4.4, ba.WeakCall(self._show_winner, self.settings['winner']))
+        ba.timer(4.4,
+                 ba.WeakCall(self._show_winner, self.settings_raw['winner']))
         ba.timer(4.6, ba.Call(ba.playsound, self._score_display_sound))
 
         # Score / Name / Player-record.
