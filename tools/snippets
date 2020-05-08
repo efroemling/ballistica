@@ -559,18 +559,20 @@ def lazy_increment_build() -> None:
     from efro.terminal import Clr
     from efrotools import get_files_hash
     from efrotools.code import get_code_filenames
-    codehash = get_files_hash(get_code_filenames(PROJROOT))
+    codefiles = get_code_filenames(PROJROOT)
+    codehash = get_files_hash(codefiles)
     hashfilename = '.cache/lazy_increment_build'
     try:
         with open(hashfilename) as infile:
             lasthash = infile.read()
     except FileNotFoundError:
         lasthash = ''
-    if codehash == lasthash:
-        pass
-    else:
+    if codehash != lasthash:
         print(f'{Clr.SMAG}Source(s) changed; incrementing build...{Clr.RST}')
         subprocess.run(['tools/version_utils', 'incrementbuild'], check=True)
+
+        # We just changed code, so we need to re-calc the current hash.
+        codehash = get_files_hash(codefiles)
         os.makedirs(os.path.dirname(hashfilename), exist_ok=True)
         with open(hashfilename, 'w') as outfile:
             outfile.write(codehash)

@@ -97,7 +97,6 @@ class MeteorShowerGame(ba.TeamGameActivity):
         # Print messages when players die (since its meaningful in this game).
         self.announce_player_deaths = True
 
-    # Called when our game actually starts.
     def on_begin(self) -> None:
         from bastd.actor.onscreentimer import OnScreenTimer
 
@@ -140,7 +139,7 @@ class MeteorShowerGame(ba.TeamGameActivity):
 
     def on_player_leave(self, player: ba.Player) -> None:
         # Augment default behavior.
-        ba.TeamGameActivity.on_player_leave(self, player)
+        super().on_player_leave(player)
 
         # A departing player may trigger game-over.
         self._check_end_game()

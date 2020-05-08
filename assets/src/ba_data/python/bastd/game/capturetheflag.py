@@ -465,7 +465,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity):
         """Intercept new spazzes and add our team material for them."""
         # (chill pylint; we're passing our exact args to parent call)
         # pylint: disable=signature-differs
-        spaz = ba.TeamGameActivity.spawn_player_spaz(self, *args, **keywds)
+        spaz = super().spawn_player_spaz(*args, **keywds)
         player = spaz.player
         player.gamedata['touching_own_flag'] = 0
 

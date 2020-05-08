@@ -141,7 +141,7 @@ class KingOfTheHillGame(ba.TeamGameActivity):
         self._update_scoreboard()
 
     def on_player_join(self, player: ba.Player) -> None:
-        ba.TeamGameActivity.on_player_join(self, player)
+        super().on_player_join(player)
         player.gamedata['at_flag'] = 0
 
     def on_begin(self) -> None:

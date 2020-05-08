@@ -428,7 +428,7 @@ class EliminationGame(ba.TeamGameActivity):
                             position=player.node.position).autoretain()
 
     def on_player_leave(self, player: ba.Player) -> None:
-        ba.TeamGameActivity.on_player_leave(self, player)
+        super().on_player_leave(player)
         player.gamedata['icons'] = None
 
         # Remove us from spawn-order.

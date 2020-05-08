@@ -354,10 +354,10 @@ class RaceGame(ba.TeamGameActivity):
         player.gamedata['distance'] = 0.0
         player.gamedata['finished'] = False
         player.gamedata['rank'] = None
-        ba.TeamGameActivity.on_player_join(self, player)
+        super().on_player_join(player)
 
     def on_player_leave(self, player: ba.Player) -> None:
-        ba.TeamGameActivity.on_player_leave(self, player)
+        super().on_player_leave(player)
 
         # A player leaving disqualifies the team if 'Entire Team Must Finish'
         # is on (otherwise in teams mode everyone could just leave except the

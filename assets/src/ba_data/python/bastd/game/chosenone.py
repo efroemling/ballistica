@@ -128,7 +128,7 @@ class ChosenOneGame(ba.TeamGameActivity):
         self._update_scoreboard()
 
     def on_player_leave(self, player: ba.Player) -> None:
-        ba.TeamGameActivity.on_player_leave(self, player)
+        super().on_player_leave(player)
         if self._get_chosen_one_player() is player:
             self._set_chosen_one_player(None)
 
