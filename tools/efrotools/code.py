@@ -66,13 +66,8 @@ def formatcode(projroot: Path, full: bool) -> None:
         sys.stdout.flush()
         return {'f': filename, 't': duration}
 
-    # NOTE: using fewer workers than we have logical procs for now;
-    # we're bottlenecked by one or two long running instances
-    # so it actually helps to lighten the load around them.
-    # may want to revisit later when we have everything chopped up
-    # better
-    with concurrent.futures.ThreadPoolExecutor(max_workers=cpu_count() //
-                                               2) as executor:
+    with concurrent.futures.ThreadPoolExecutor(
+            max_workers=cpu_count()) as executor:
         # Converting this to a list will propagate any errors.
         list(executor.map(format_file, dirtyfiles))
 
@@ -122,7 +117,7 @@ def cpplint(projroot: Path, full: bool) -> None:
         if result != 0:
             raise Exception(f'Linting failed for {filename}')
 
-    with ThreadPoolExecutor(max_workers=cpu_count() // 2) as executor:
+    with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
         # Converting this to a list will propagate any errors.
         list(executor.map(lint_file, dirtyfiles))
 
@@ -178,12 +173,7 @@ def formatscripts(projroot: Path, full: bool) -> None:
         print(f'Formatted {filename} in {duration:.2f} seconds.')
         sys.stdout.flush()
 
-    # NOTE: using fewer workers than we have logical procs for now;
-    # we're bottlenecked by one or two long running instances
-    # so it actually helps to lighten the load around them.
-    # may want to revisit later when we have everything chopped up
-    # better
-    with ThreadPoolExecutor(max_workers=cpu_count() // 2) as executor:
+    with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
         # Convert the futures to a list to propagate any errors even
         # though there are no return values we use.
         list(executor.map(format_file, dirtyfiles))
