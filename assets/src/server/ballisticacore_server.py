@@ -31,21 +31,18 @@ from pathlib import Path
 from threading import Lock, Thread, current_thread
 from typing import TYPE_CHECKING
 
+# We make use of the bacommon and efro packages as well as site-packages
+# included with our bundled Ballistica dist, so we need to add those paths
+# before we import them.
+sys.path += [
+    str(Path(Path(__file__).parent, 'dist', 'ba_data', 'python')),
+    str(Path(Path(__file__).parent, 'dist', 'ba_data', 'python-site-packages'))
+]
+
 from bacommon.servermanager import ServerConfig, StartServerModeCommand
 from efro.dataclasses import dataclass_assign, dataclass_validate
 from efro.error import CleanError
 from efro.terminal import Clr
-
-# We change our working directory according to file's path
-# so that the script can be properly executed from anywhere
-os.chdir(os.path.abspath(os.path.dirname(__file__)))
-
-# We make use of the bacommon and efro packages as well as site-packages
-# included with our bundled Ballistica dist.
-sys.path += [
-    str(Path(os.getcwd(), 'dist', 'ba_data', 'python')),
-    str(Path(os.getcwd(), 'dist', 'ba_data', 'python-site-packages'))
-]
 
 if TYPE_CHECKING:
     from typing import Optional, List, Dict, Union, Tuple
@@ -54,7 +51,7 @@ if TYPE_CHECKING:
 
 # Not sure how much versioning we'll do with this, but this will get
 # printed at startup in case we need it.
-VERSION_STR = '1.0'
+VERSION_STR = '1.0.1'
 
 
 class ServerManagerApp:
@@ -432,6 +429,10 @@ class ServerManagerApp:
 def main() -> None:
     """Run a BallisticaCore server manager in interactive mode."""
     try:
+        # Change our working directory according to file's path
+        # so that this script can be run from anywhere.
+        os.chdir(os.path.abspath(os.path.dirname(__file__)))
+
         ServerManagerApp().run_interactive()
     except CleanError as exc:
         # For clean errors, do a simple print and fail; no tracebacks/etc.
