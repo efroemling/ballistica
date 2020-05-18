@@ -22,13 +22,16 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 import ba
 from bastd.actor.spaz import Spaz
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Sequence, Tuple
+    from typing import Any, Sequence, Tuple, Optional
+
+PlayerType = TypeVar('PlayerType', bound=ba.Player)
+TeamType = TypeVar('TeamType', bound=ba.Team)
 
 
 class PlayerSpazDeathMessage:
@@ -37,9 +40,6 @@ class PlayerSpazDeathMessage:
     category: Message Classes
 
     Attributes:
-
-       spaz
-          The ba.PlayerSpaz that died.
 
        killed
           If True, the spaz was killed;
@@ -55,10 +55,21 @@ class PlayerSpazDeathMessage:
     def __init__(self, spaz: PlayerSpaz, was_killed: bool,
                  killerplayer: Optional[ba.Player], how: ba.DeathType):
         """Instantiate a message with the given values."""
-        self.spaz = spaz
+        self._spaz = spaz
         self.killed = was_killed
         self.killerplayer = killerplayer
         self.how = how
+
+    def getspaz(
+            self, activity: ba.Activity[PlayerType,
+                                        TeamType]) -> PlayerSpaz[PlayerType]:
+        """Return the spaz that died.
+
+        The current activity is required as an argument so the exact type of
+        PlayerSpaz can be determined by the type checker.
+        """
+        del activity  # Unused
+        return self._spaz
 
 
 class PlayerSpazHurtMessage:
@@ -77,7 +88,7 @@ class PlayerSpazHurtMessage:
         self.spaz = spaz
 
 
-class PlayerSpaz(Spaz):
+class PlayerSpaz(Spaz, Generic[PlayerType]):
     """A ba.Spaz subclass meant to be controlled by a ba.Player.
 
     category: Gameplay Classes
@@ -91,10 +102,10 @@ class PlayerSpaz(Spaz):
     """
 
     def __init__(self,
+                 player: PlayerType,
                  color: Sequence[float] = (1.0, 1.0, 1.0),
                  highlight: Sequence[float] = (0.5, 0.5, 0.5),
                  character: str = 'Spaz',
-                 player: ba.Player = None,
                  powerups_expire: bool = True):
         """Create a spaz for the provided ba.Player.
 
@@ -108,12 +119,13 @@ class PlayerSpaz(Spaz):
                          source_player=player,
                          start_invincible=True,
                          powerups_expire=powerups_expire)
-        self.last_player_attacked_by: Optional[ba.Player] = None
+        self.last_player_attacked_by: Optional[PlayerType] = None
         self.last_attacked_time = 0.0
         self.last_attacked_type: Optional[Tuple[str, str]] = None
         self.held_count = 0
-        self.last_player_held_by: Optional[ba.Player] = None
+        self.last_player_held_by: Optional[PlayerType] = None
         self._player = player
+        self.playertype = type(player)
 
         # Grab the node for this player and wire it to follow our spaz
         # (so players' controllers know where to draw their guides, etc).
@@ -123,7 +135,7 @@ class PlayerSpaz(Spaz):
             self.node.connectattr('torso_position', player.node, 'position')
 
     @property
-    def player(self) -> ba.Player:
+    def player(self) -> PlayerType:
         """The ba.Player associated with this Spaz.
 
         If the player no longer exists, raises an ba.PlayerNotFoundError.
@@ -132,7 +144,7 @@ class PlayerSpaz(Spaz):
             raise ba.PlayerNotFoundError()
         return self._player
 
-    def getplayer(self) -> Optional[ba.Player]:
+    def getplayer(self) -> Optional[PlayerType]:
         """Get the ba.Player associated with this Spaz.
 
         Note that this may return None if the player has left.
@@ -226,7 +238,8 @@ class PlayerSpaz(Spaz):
         if isinstance(msg, ba.PickedUpMessage):
             super().handlemessage(msg)  # Augment standard behavior.
             self.held_count += 1
-            picked_up_by = msg.node.source_player
+            picked_up_by = ba.playercast_o(self.playertype,
+                                           msg.node.source_player)
             if picked_up_by:
                 self.last_player_held_by = picked_up_by
         elif isinstance(msg, ba.DroppedMessage):
@@ -237,11 +250,12 @@ class PlayerSpaz(Spaz):
 
             # Let's count someone dropping us as an attack.
             try:
-                picked_up_by = msg.node.source_player
+                picked_up_by_2 = ba.playercast_o(self.playertype,
+                                                 msg.node.source_player)
             except Exception:
-                picked_up_by = None
-            if picked_up_by:
-                self.last_player_attacked_by = picked_up_by
+                picked_up_by_2 = None
+            if picked_up_by_2:
+                self.last_player_attacked_by = picked_up_by_2
                 self.last_attacked_time = ba.time()
                 self.last_attacked_type = ('picked_up', 'default')
         elif isinstance(msg, ba.DieMessage):
@@ -296,7 +310,8 @@ class PlayerSpaz(Spaz):
         # Keep track of the player who last hit us for point rewarding.
         elif isinstance(msg, ba.HitMessage):
             if msg.source_player:
-                self.last_player_attacked_by = msg.source_player
+                srcplayer = ba.playercast_o(self.playertype, msg.source_player)
+                self.last_player_attacked_by = srcplayer
                 self.last_attacked_time = ba.time()
                 self.last_attacked_type = (msg.hit_type, msg.hit_subtype)
             super().handlemessage(msg)  # Augment standard behavior.

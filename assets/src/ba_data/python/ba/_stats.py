@@ -19,7 +19,6 @@
 # SOFTWARE.
 # -----------------------------------------------------------------------------
 """Functionality related to scores and statistics."""
-
 from __future__ import annotations
 
 import random
@@ -28,6 +27,8 @@ from typing import TYPE_CHECKING
 from dataclasses import dataclass
 
 import _ba
+from ba._error import (print_exception, print_error, SessionTeamNotFoundError,
+                       SessionPlayerNotFoundError)
 
 if TYPE_CHECKING:
     import ba
@@ -37,12 +38,11 @@ if TYPE_CHECKING:
 
 @dataclass
 class PlayerScoredMessage:
-    # noinspection PyUnresolvedReferences
     """Informs something that a ba.Player scored.
 
     Category: Message Classes
 
-    Attributes:
+    Attrs:
 
         score
             The score value.
@@ -61,7 +61,7 @@ class PlayerRecord:
     """
     character: str
 
-    def __init__(self, name: str, name_full: str, player: ba.Player,
+    def __init__(self, name: str, name_full: str, player: ba.SessionPlayer,
                  stats: ba.Stats):
         self.name = name
         self.name_full = name_full
@@ -74,34 +74,34 @@ class PlayerRecord:
         self._multi_kill_timer: Optional[ba.Timer] = None
         self._multi_kill_count = 0
         self._stats = weakref.ref(stats)
-        self._last_player: Optional[ba.Player] = None
-        self._player: Optional[ba.Player] = None
-        self._team: Optional[ReferenceType[ba.Team]] = None
+        self._last_player: Optional[ba.SessionPlayer] = None
+        self._player: Optional[ba.SessionPlayer] = None
+        self._team: Optional[ReferenceType[ba.SessionTeam]] = None
         self.streak = 0
         self.associate_with_player(player)
 
     @property
-    def team(self) -> ba.Team:
-        """The ba.Team the last associated player was last on.
+    def team(self) -> ba.SessionTeam:
+        """The ba.SessionTeam the last associated player was last on.
 
         This can still return a valid result even if the player is gone.
-        Raises a ba.TeamNotFoundError if the team no longer exists.
+        Raises a ba.SessionTeamNotFoundError if the team no longer exists.
         """
         assert self._team is not None
         team = self._team()
         if team is None:
-            from ba._error import TeamNotFoundError
-            raise TeamNotFoundError()
+            raise SessionTeamNotFoundError()
         return team
 
     @property
-    def player(self) -> ba.Player:
-        """Return the instance's associated ba.Player.
+    def player(self) -> ba.SessionPlayer:
+        """Return the instance's associated ba.SessionPlayer.
 
-        Raises a ba.PlayerNotFoundError if the player no longer exists."""
+        Raises a ba.SessionPlayerNotFoundError if the player
+        no longer exists.
+        """
         if not self._player:
-            from ba._error import PlayerNotFoundError
-            raise PlayerNotFoundError()
+            raise SessionPlayerNotFoundError()
         return self._player
 
     def get_name(self, full: bool = False) -> str:
@@ -127,7 +127,7 @@ class PlayerRecord:
             return stats.getactivity()
         return None
 
-    def associate_with_player(self, player: ba.Player) -> None:
+    def associate_with_player(self, player: ba.SessionPlayer) -> None:
         """Associate this entry with a ba.Player."""
         self._team = weakref.ref(player.team)
         self.character = player.character
@@ -139,7 +139,7 @@ class PlayerRecord:
         self._multi_kill_timer = None
         self._multi_kill_count = 0
 
-    def get_last_player(self) -> ba.Player:
+    def get_last_player(self) -> ba.SessionPlayer:
         """Return the last ba.Player we were associated with."""
         assert self._last_player is not None
         return self._last_player
@@ -203,10 +203,13 @@ class PlayerRecord:
             from bastd.actor.popuptext import PopupText
 
             # Only award this if they're still alive and we can get
-            # their pos.
-            if self._player is not None and self._player.node:
-                our_pos = self._player.node.position
-            else:
+            # a current position for them.
+            our_pos: Optional[Sequence[float]] = None
+            if self._player is not None:
+                if self._player.gameplayer is not None:
+                    if self._player.gameplayer.node:
+                        our_pos = self._player.gameplayer.node.position
+            if our_pos is None:
                 return
 
             # Jitter position a bit since these often come in clusters.
@@ -263,9 +266,8 @@ class Stats:
 
         # Load our media into this activity's context.
         if activity is not None:
-            if activity.is_expired():
-                from ba import _error
-                _error.print_error('unexpected finalized activity')
+            if activity.expired:
+                print_error('unexpected finalized activity')
             else:
                 with _ba.Context(activity):
                     self._load_activity_media()
@@ -303,7 +305,7 @@ class Stats:
             s_player.accum_killed_count = 0
             s_player.streak = 0
 
-    def register_player(self, player: ba.Player) -> None:
+    def register_player(self, player: ba.SessionPlayer) -> None:
         """Register a player with this score-set."""
         name = player.get_name()
         name_full = player.get_name(full=True)
@@ -329,7 +331,7 @@ class Stats:
                 records[record_id] = record
         return records
 
-    def player_got_hit(self, player: ba.Player) -> None:
+    def player_got_hit(self, player: ba.SessionPlayer) -> None:
         """Call this when a player got hit."""
         s_player = self._player_records[player.get_name()]
         s_player.streak = 0
@@ -388,8 +390,7 @@ class Stats:
                              subs=[('${NAME}', name_full)]),
                         color=_math.normalized_color(player.team.color))
             except Exception:
-                from ba import _error
-                _error.print_exception('error showing big_message')
+                print_exception('error showing big_message')
 
         # If we currently have a actor, pop up a score over it.
         if display and showpoints:
@@ -430,8 +431,7 @@ class Stats:
                                   color=player.color,
                                   image=player.get_icon())
         except Exception:
-            from ba import _error
-            _error.print_exception('error announcing score')
+            print_exception('error announcing score')
 
         s_player.score += points
         s_player.accumscore += points
@@ -458,14 +458,14 @@ class Stats:
             prec.killed_count += 1
         try:
             if killed and _ba.getactivity().announce_player_deaths:
-                if killer == player:
+                if killer is player:
                     _ba.screenmessage(Lstr(resource='nameSuicideText',
                                            subs=[('${NAME}', name)]),
                                       top=True,
                                       color=player.color,
                                       image=player.get_icon())
                 elif killer is not None:
-                    if killer.team == player.team:
+                    if killer.team is player.team:
                         _ba.screenmessage(Lstr(resource='nameBetrayedText',
                                                subs=[('${NAME}',
                                                       killer.get_name()),
@@ -488,5 +488,4 @@ class Stats:
                                       color=player.color,
                                       image=player.get_icon())
         except Exception:
-            from ba import _error
-            _error.print_exception('error announcing kill')
+            print_exception('error announcing kill')

@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 
 
 # ba_meta export game
-class DeathMatchGame(ba.TeamGameActivity):
+class DeathMatchGame(ba.TeamGameActivity[ba.Player, ba.Team]):
     """A game type based on acquiring kills."""
 
     @classmethod
@@ -145,7 +145,7 @@ class DeathMatchGame(ba.TeamGameActivity):
             # Augment standard behavior.
             super().handlemessage(msg)
 
-            player = msg.spaz.player
+            player = msg.getspaz(self).player
             self.respawn_player(player)
 
             killer = msg.killerplayer

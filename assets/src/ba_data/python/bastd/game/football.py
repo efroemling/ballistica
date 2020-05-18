@@ -67,7 +67,7 @@ class FootballFlag(stdflag.Flag):
 
 
 # ba_meta export game
-class FootballTeamGame(ba.TeamGameActivity):
+class FootballTeamGame(ba.TeamGameActivity[ba.Player, ba.Team]):
     """Football game for teams mode."""
 
     @classmethod
@@ -204,7 +204,7 @@ class FootballTeamGame(ba.TeamGameActivity):
             if region == self._score_regions[i].node:
                 break
         for team in self.teams:
-            if team.get_id() == i:
+            if team.id == i:
                 team.gamedata['score'] += 7
 
                 # Tell all players to celebrate.
@@ -274,7 +274,7 @@ class FootballTeamGame(ba.TeamGameActivity):
         elif isinstance(msg, playerspaz.PlayerSpazDeathMessage):
             # Augment standard behavior.
             super().handlemessage(msg)
-            self.respawn_player(msg.spaz.player)
+            self.respawn_player(msg.getspaz(self).player)
 
         # Respawn dead flags.
         elif isinstance(msg, stdflag.FlagDeathMessage):
@@ -320,7 +320,7 @@ class FootballTeamGame(ba.TeamGameActivity):
         self._flag = FootballFlag(position=self._flag_spawn_pos)
 
 
-class FootballCoopGame(ba.CoopGameActivity):
+class FootballCoopGame(ba.CoopGameActivity[ba.Player, ba.Team]):
     """
     Co-op variant of football
     """
@@ -508,7 +508,11 @@ class FootballCoopGame(ba.CoopGameActivity):
 
         # Make a bogus team for our bots.
         bad_team_name = self.get_team_display_string('Bad Guys')
-        self._bot_team = ba.Team(1, bad_team_name, (0.5, 0.4, 0.4))
+        # self._bot_team = ba.Team(1, bad_team_name, (0.5, 0.4, 0.4))
+        self._bot_team = ba.Team()
+        self._bot_team.id = 1
+        self._bot_team.name = bad_team_name
+        self._bot_team.color = (0.5, 0.4, 0.4)
 
         for team in [self.teams[0], self._bot_team]:
             team.gamedata['score'] = 0
@@ -562,7 +566,7 @@ class FootballCoopGame(ba.CoopGameActivity):
                    spaz_type: Type[spazbot.SpazBot],
                    immediate: bool = False) -> None:
         assert self._bot_team is not None
-        pos = self.map.get_start_position(self._bot_team.get_id())
+        pos = self.map.get_start_position(self._bot_team.id)
         self._bots.spawn_bot(spaz_type,
                              pos=pos,
                              spawn_time=0.001 if immediate else 3.0,
@@ -668,7 +672,7 @@ class FootballCoopGame(ba.CoopGameActivity):
 
         for team in [self.teams[0], self._bot_team]:
             assert team is not None
-            if team.get_id() == i:
+            if team.id == i:
                 team.gamedata['score'] += 7
 
                 # Tell all players (or bots) to celebrate.
@@ -808,7 +812,7 @@ class FootballCoopGame(ba.CoopGameActivity):
             from bastd.actor import respawnicon
 
             # Respawn dead players.
-            player = msg.spaz.player
+            player = msg.getspaz(self).player
             self.stats.player_was_killed(player)
             assert self.initial_player_info is not None
             respawn_time = 2.0 + len(self.initial_player_info) * 1.0
@@ -871,7 +875,7 @@ class FootballCoopGame(ba.CoopGameActivity):
     def spawn_player(self, player: ba.Player) -> ba.Actor:
         spaz = self.spawn_player_spaz(player,
                                       position=self.map.get_start_position(
-                                          player.team.get_id()))
+                                          player.team.id))
         if self._preset in ['rookie_easy', 'pro_easy', 'uber_easy']:
             spaz.impact_scale = 0.25
         spaz.add_dropped_bomb_callback(self._handle_player_dropped_bomb)

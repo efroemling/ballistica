@@ -319,6 +319,7 @@
       <w>cnode</w>
       <w>codecsmodule</w>
       <w>codefilenames</w>
+      <w>codefiles</w>
       <w>codehash</w>
       <w>codeop</w>
       <w>collapsable</w>
@@ -727,8 +728,10 @@
       <w>gamepads</w>
       <w>gamepadselect</w>
       <w>gameplay</w>
+      <w>gameplayer</w>
       <w>gameport</w>
       <w>gameresults</w>
+      <w>gameteam</w>
       <w>gametype</w>
       <w>gametypes</w>
       <w>gameutils</w>
@@ -762,6 +765,7 @@
       <w>getsession</w>
       <w>getsockname</w>
       <w>getsound</w>
+      <w>getspaz</w>
       <w>getstarttime</w>
       <w>gettext</w>
       <w>gettexture</w>
@@ -893,6 +897,7 @@
       <w>inputfiles</w>
       <w>inputhash</w>
       <w>inputnode</w>
+      <w>inputtype</w>
       <w>inpututils</w>
       <w>inspectdir</w>
       <w>insta</w>
@@ -1319,6 +1324,7 @@
       <w>pipname</w>
       <w>pkey</w>
       <w>pkgutil</w>
+      <w>playercast</w>
       <w>playerdata</w>
       <w>playerlostspaz</w>
       <w>playernode</w>
@@ -1326,6 +1332,8 @@
       <w>playerpts</w>
       <w>playerrec</w>
       <w>playerspaz</w>
+      <w>playerteamdata</w>
+      <w>playertype</w>
       <w>playerval</w>
       <w>playlistui</w>
       <w>playmode</w>
@@ -1358,6 +1366,7 @@
       <w>positionadjusted</w>
       <w>posixpath</w>
       <w>posixsubprocess</w>
+      <w>postinit</w>
       <w>poststr</w>
       <w>powerdown</w>
       <w>powersgiven</w>
@@ -1368,6 +1377,7 @@
       <w>poweruptype</w>
       <w>powervr</w>
       <w>ppos</w>
+      <w>pproxy</w>
       <w>pragmas</w>
       <w>prch</w>
       <w>prec</w>
@@ -1547,6 +1557,7 @@
       <w>runmypy</w>
       <w>runonly</w>
       <w>runpy</w>
+      <w>runpylint</w>
       <w>runswindows</w>
       <w>rval</w>
       <w>safecolor</w>
@@ -1610,6 +1621,8 @@
       <w>sessiondata</w>
       <w>sessionglobals</w>
       <w>sessionname</w>
+      <w>sessionplayer</w>
+      <w>sessionteam</w>
       <w>sessiontype</w>
       <w>setalpha</w>
       <w>setbuild</w>
@@ -1685,6 +1698,7 @@
       <w>srcnode</w>
       <w>srcpath</w>
       <w>srcpathfull</w>
+      <w>srcplayer</w>
       <w>srcpy</w>
       <w>srcpydata</w>
       <w>srcstr</w>
@@ -1720,6 +1734,7 @@
       <w>strftime</w>
       <w>stringprep</w>
       <w>stringptr</w>
+      <w>strippable</w>
       <w>strobing</w>
       <w>strptime</w>
       <w>strt</w>
@@ -1785,11 +1800,13 @@
       <w>tdelay</w>
       <w>tdval</w>
       <w>teambasesession</w>
+      <w>teamdata</w>
       <w>teamgame</w>
       <w>teamnamescolors</w>
       <w>teamsize</w>
       <w>teamsscorescreen</w>
       <w>teamssession</w>
+      <w>teamtype</w>
       <w>teeeeeeeesssssttttdddddddd</w>
       <w>teehee</w>
       <w>teleporting</w>
@@ -1867,11 +1884,13 @@
       <w>toplevel</w>
       <w>totaldudes</w>
       <w>totalpts</w>
+      <w>totype</w>
       <w>touchpad</w>
       <w>tournamententry</w>
       <w>tournamentscores</w>
       <w>tplayer</w>
       <w>tpos</w>
+      <w>tproxy</w>
       <w>tracebacks</w>
       <w>tracemalloc</w>
       <w>tradeoff</w>

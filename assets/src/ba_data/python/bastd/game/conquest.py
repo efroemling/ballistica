@@ -57,7 +57,7 @@ class ConquestFlag(Flag):
 
 
 # ba_meta export game
-class ConquestGame(ba.TeamGameActivity):
+class ConquestGame(ba.TeamGameActivity[ba.Player, ba.Team]):
     """A game where teams try to claim all flags on the map."""
 
     @classmethod
@@ -254,7 +254,7 @@ class ConquestGame(ba.TeamGameActivity):
             super().handlemessage(msg)
 
             # Respawn only if this team has a flag.
-            player = msg.spaz.player
+            player = msg.getspaz(self).player
             if player.team.gamedata['flags_held'] > 0:
                 self.respawn_player(player)
             else:

@@ -33,6 +33,16 @@ if TYPE_CHECKING:
     import ba
 
 
+class _UnhandledType:
+    pass
+
+
+# A special value that should be returned from handlemessage()
+# functions for unhandled message types.  This may result
+# in fallback message types being attempted/etc.
+UNHANDLED = _UnhandledType()
+
+
 @dataclass
 class OutOfBoundsMessage:
     """A message telling an object that it is out of bounds.

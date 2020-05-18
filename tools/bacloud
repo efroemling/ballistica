@@ -237,7 +237,7 @@ class App:
             with open(self._state_data_path, 'r') as infile:
                 self._state = StateData(**json.loads(infile.read()))
         except Exception:
-            print(f'{Clr.SRED}Error loading {TOOL_NAME} data;'
+            print(f'{Clr.RED}Error loading {TOOL_NAME} data;'
                   f' resetting to defaults.{Clr.RST}')
 
     def _save_state(self) -> None:
@@ -285,7 +285,7 @@ class App:
         return response
 
     def _upload_file(self, filename: str, call: str, args: Dict) -> None:
-        print(f'{Clr.SBLU}Uploading {filename}{Clr.RST}', flush=True)
+        print(f'{Clr.BLU}Uploading {filename}{Clr.RST}', flush=True)
         with tempfile.TemporaryDirectory() as tempdir:
             srcpath = Path(filename)
             gzpath = Path(tempdir, 'file.gz')

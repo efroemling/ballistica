@@ -133,9 +133,9 @@ class App:
             self._update_docs_md()
 
         if self._check:
-            print('Check-Builds: Everything up to date.')
+            print(f'{Clr.BLU}Check-Builds: Everything up to date.{Clr.RST}')
         else:
-            print('Update-Builds: SUCCESS!')
+            print(f'{Clr.GRN}Update-Project: SUCCESS!{Clr.RST}')
 
     def _update_dummy_module(self) -> None:
         # Update our dummy _ba module.
@@ -144,8 +144,8 @@ class App:
         # been updated.
         if os.path.exists('tools/gendummymodule.py'):
             if os.system('tools/gendummymodule.py' + self._checkarg) != 0:
-                print(Clr.SRED + 'Error checking/updating dummy module' +
-                      Clr.RST)
+                print(
+                    f'{Clr.RED}Error checking/updating dummy module{Clr.RST}')
                 sys.exit(255)
 
     def _update_docs_md(self) -> None:
@@ -157,8 +157,8 @@ class App:
         if os.path.exists('tools/gendocs.py'):
             if os.system('tools/snippets update_docs_md' +
                          self._checkarg) != 0:
-                print(Clr.SRED + 'Error checking/updating docs markdown.' +
-                      Clr.RST)
+                print(f'{Clr.RED}Error checking/updating'
+                      f' docs markdown.{Clr.RST}')
                 sys.exit(255)
 
     def _update_compile_commands_file(self) -> None:
@@ -166,7 +166,7 @@ class App:
         # our cmake stuff. Do this at end so cmake changes already happened.
         if not self._check and os.path.exists('ballisticacore-cmake'):
             if os.system('make .irony/compile_commands.json') != 0:
-                print(Clr.SRED + 'Error updating compile-commands.' + Clr.RST)
+                print(f'{Clr.RED}Error updating compile-commands.{Clr.RST}')
                 sys.exit(255)
 
     def _apply_file_changes(self) -> None:
@@ -184,11 +184,11 @@ class App:
                 unchanged_project_count += 1
             else:
                 if self._check:
-                    print(f'{Clr.SRED}ERROR: found out-of-date'
+                    print(f'{Clr.RED}ERROR: found out-of-date'
                           f' project file: {fname}{Clr.RST}')
                     sys.exit(255)
 
-                print(f'{Clr.SBLU}Writing project file: {fname}{Clr.RST}')
+                print(f'{Clr.BLU}Writing project file: {fname}{Clr.RST}')
                 with open(fname, 'w') as outfile:
                     outfile.write(fcode)
         if unchanged_project_count > 0:
@@ -211,16 +211,16 @@ class App:
         # If there are any manual-only entries, list then and bail.
         # (Don't wanna allow auto-apply unless it fixes everything)
         if manual_changes:
-            print(f'{Clr.SRED}Found erroneous lines '
+            print(f'{Clr.RED}Found erroneous lines '
                   f'requiring manual correction:{Clr.RST}')
             for change in manual_changes:
                 print(
-                    f'{Clr.SRED}{change[0]}:{change[1].line_number + 1}:'
+                    f'{Clr.RED}{change[0]}:{change[1].line_number + 1}:'
                     f' Expected line to be:\n  {change[1].expected}{Clr.RST}')
 
                 # Make a note on copyright lines that this can be disabled.
                 if 'Copyright' in change[1].expected:
-                    print(f'{Clr.SRED}NOTE: You can disable copyright'
+                    print(f'{Clr.RED}NOTE: You can disable copyright'
                           f' checks by adding "copyright_checks": false\n'
                           f'to the root dict in config/localconfig.json.\n'
                           f'see https://github.com/efroemling/ballistica/wiki'
@@ -232,22 +232,21 @@ class App:
         if auto_changes:
             if not self._fix:
                 for i, change in enumerate(auto_changes):
-                    print(f'{Clr.SRED}#{i}: {change[0]}:{Clr.RST}')
+                    print(f'{Clr.RED}#{i}: {change[0]}:{Clr.RST}')
                     print(
-                        f'{Clr.SRED}  Expected "{change[1].expected}"{Clr.RST}'
-                    )
+                        f'{Clr.RED}  Expected "{change[1].expected}"{Clr.RST}')
                     with open(change[0]) as infile:
                         lines = infile.read().splitlines()
                     line = lines[change[1].line_number]
-                    print(f'{Clr.SRED}  Found "{line}"{Clr.RST}')
-                print(Clr.SRED +
+                    print(f'{Clr.RED}  Found "{line}"{Clr.RST}')
+                print(Clr.RED +
                       f'All {len(auto_changes)} errors are auto-fixable;'
                       ' run tools/update_project --fix to apply corrections.' +
                       Clr.RST)
                 sys.exit(255)
             else:
                 for i, change in enumerate(auto_changes):
-                    print(f'{Clr.SBLU}Correcting file: {change[0]}{Clr.RST}')
+                    print(f'{Clr.BLU}Correcting file: {change[0]}{Clr.RST}')
                     with open(change[0]) as infile:
                         lines = infile.read().splitlines()
                     lines[change[1].line_number] = change[1].expected
@@ -269,7 +268,7 @@ class App:
             # Could just ignore these but it probably means I intended
             # to save something and forgot.
             if '/.#' in fsrc:
-                print(f'{Clr.SRED}'
+                print(f'{Clr.RED}'
                       f'ERROR: Found an unsaved emacs file: "{fsrc}"'
                       f'{Clr.RST}')
                 sys.exit(255)
@@ -393,7 +392,7 @@ class App:
                     'tools/devtool', 'tools/version_utils', 'tools/vmshell'
             ]:
                 if not contents.startswith('#!/usr/bin/env python3.7'):
-                    print(f'{Clr.SRED}Incorrect shebang (first line) for '
+                    print(f'{Clr.RED}Incorrect shebang (first line) for '
                           f'{fname}.{Clr.RST}')
                     sys.exit(255)
         else:
@@ -482,7 +481,7 @@ class App:
                 if ('__pycache__' not in root
                         and os.path.basename(root) != '.vscode'):
                     if '__init__.py' not in files:
-                        print(Clr.SRED +
+                        print(Clr.RED +
                               'Error: no __init__.py in package dir: ' + root +
                               Clr.RST)
                         sys.exit(255)
@@ -630,14 +629,14 @@ class App:
         # Make sure none of our sync targets have been mucked with since
         # their last sync.
         if os.system('tools/snippets sync check') != 0:
-            print(Clr.SRED + 'Sync check failed; you may need to run "sync".' +
+            print(Clr.RED + 'Sync check failed; you may need to run "sync".' +
                   Clr.RST)
             sys.exit(255)
 
     def _update_assets_makefile(self) -> None:
         if os.path.exists('tools/update_assets_makefile'):
             if os.system('tools/update_assets_makefile' + self._checkarg) != 0:
-                print(Clr.SRED + 'Error checking/updating assets Makefile' +
+                print(Clr.RED + 'Error checking/updating assets Makefile' +
                       Clr.RST)
                 sys.exit(255)
 
@@ -645,7 +644,7 @@ class App:
         if os.path.exists('tools/update_generated_code_makefile'):
             if os.system('tools/update_generated_code_makefile' +
                          self._checkarg) != 0:
-                print(Clr.SRED +
+                print(Clr.RED +
                       'Error checking/updating generated-code Makefile' +
                       Clr.RST)
                 sys.exit(255)
@@ -654,7 +653,7 @@ class App:
         if os.path.exists('tools/update_resources_makefile'):
             if os.system('tools/update_resources_makefile' +
                          self._checkarg) != 0:
-                print(Clr.SRED + 'Error checking/updating resources Makefile' +
+                print(Clr.RED + 'Error checking/updating resources Makefile' +
                       Clr.RST)
                 sys.exit(255)
 
@@ -662,8 +661,8 @@ class App:
         if os.path.exists('tools/update_python_enums_module'):
             if os.system('tools/update_python_enums_module' +
                          self._checkarg) != 0:
-                print(Clr.SRED +
-                      'Error checking/updating python enums module' + Clr.RST)
+                print(Clr.RED + 'Error checking/updating python enums module' +
+                      Clr.RST)
                 sys.exit(255)
 
 

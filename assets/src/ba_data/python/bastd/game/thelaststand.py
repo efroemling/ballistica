@@ -35,7 +35,7 @@ if TYPE_CHECKING:
     from bastd.actor.scoreboard import Scoreboard
 
 
-class TheLastStandGame(ba.CoopGameActivity):
+class TheLastStandGame(ba.CoopGameActivity[ba.Player, ba.Team]):
     """Slow motion how-long-can-you-last game."""
 
     tips = [
@@ -257,7 +257,7 @@ class TheLastStandGame(ba.CoopGameActivity):
 
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, playerspaz.PlayerSpazDeathMessage):
-            player = msg.spaz.getplayer()
+            player = msg.getspaz(self).getplayer()
             if player is None:
                 ba.print_error('FIXME: getplayer() should no longer '
                                'ever be returning None.')

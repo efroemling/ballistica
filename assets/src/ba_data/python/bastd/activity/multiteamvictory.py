@@ -142,7 +142,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
              h_align=Text.HAlign.CENTER,
              transition_delay=t_incr * 4).autoretain()
 
-        win_score = (session.get_series_length() - 1) / 2 + 1
+        win_score = (session.get_series_length() - 1) // 2 + 1
         lose_score = 0
         for team in self.teams:
             if team.sessiondata['score'] != win_score:
@@ -344,7 +344,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         if not self.is_transitioning_out():
             ba.setmusic(ba.MusicType.VICTORY)
 
-    def _show_winner(self, team: ba.Team) -> None:
+    def _show_winner(self, team: ba.SessionTeam) -> None:
         from bastd.actor.image import Image
         from bastd.actor.zoomtext import ZoomText
         if not self._is_ffa:

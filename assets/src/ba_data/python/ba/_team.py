@@ -21,15 +21,17 @@
 """Defines Team class."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import weakref
+from typing import TYPE_CHECKING, TypeVar, Generic
 
 if TYPE_CHECKING:
-    from typing import Dict, List, Sequence, Any, Tuple, Union
+    from weakref import ReferenceType
+    from typing import Dict, List, Sequence, Tuple, Union, Optional
     import ba
 
 
-class Team:
-    """A team of one or more ba.Players.
+class SessionTeam:
+    """A team of one or more ba.SessionPlayers.
 
     Category: Gameplay Classes
 
@@ -42,11 +44,14 @@ class Team:
         name
             The team's name.
 
+        id
+            The unique numeric id of the team.
+
         color
             The team's color.
 
         players
-            The list of ba.Players on the team.
+            The list of ba.SessionPlayers on the team.
 
         gamedata
             A dict for use by the current ba.Activity
@@ -62,56 +67,82 @@ class Team:
 
     # Annotate our attr types at the class level so they're introspectable.
     name: Union[ba.Lstr, str]
-    color: Tuple[float, ...]
-    players: List[ba.Player]
+    color: Tuple[float, ...]  # FIXME: can't we make this fixed len?
+    players: List[ba.SessionPlayer]
     gamedata: Dict
     sessiondata: Dict
+    id: int
 
     def __init__(self,
                  team_id: int = 0,
                  name: Union[ba.Lstr, str] = '',
                  color: Sequence[float] = (1.0, 1.0, 1.0)):
-        """Instantiate a ba.Team.
+        """Instantiate a ba.SessionTeam.
 
         In most cases, all teams are provided to you by the ba.Session,
         ba.Session, so calling this shouldn't be necessary.
         """
 
-        # TODO: Once we spin off team copies for each activity, we don't
-        #  need to bother with trying to lock things down, since it won't
-        #  matter at that point if the activity mucks with them.
-
-        # Temporarily allow us to set our own attrs
-        # (keeps pylint happier than using __setattr__ explicitly for all).
-        object.__setattr__(self, '_locked', False)
-        self._team_id: int = team_id
+        self.id = team_id
         self.name = name
         self.color = tuple(color)
         self.players = []
         self.gamedata = {}
         self.sessiondata = {}
-
-        # Now prevent further attr sets.
-        self._locked = True
-
-    def get_id(self) -> int:
-        """Returns the numeric team ID."""
-        return self._team_id
-
-    def reset(self) -> None:
-        """(internal)"""
-        self.reset_gamedata()
-        object.__setattr__(self, 'players', [])
+        self.gameteam: Optional[Team] = None
 
     def reset_gamedata(self) -> None:
         """(internal)"""
-        object.__setattr__(self, 'gamedata', {})
+        self.gamedata = {}
 
     def reset_sessiondata(self) -> None:
         """(internal)"""
-        object.__setattr__(self, 'sessiondata', {})
+        self.sessiondata = {}
 
-    def __setattr__(self, name: str, value: Any) -> None:
-        if self._locked:
-            raise Exception("can't set attrs on ba.Team objects")
-        object.__setattr__(self, name, value)
+
+PlayerType = TypeVar('PlayerType', bound='ba.Player')
+
+
+class Team(Generic[PlayerType]):
+    """Testing."""
+
+    # Defining these types at the class level instead of in __init__ so
+    # that types are introspectable (these are still instance attrs).
+    players: List[PlayerType]
+    id: int
+    name: Union[ba.Lstr, str]
+    color: Tuple[float, ...]  # FIXME: can't we make this fixed len?
+    _sessionteam: ReferenceType[SessionTeam]
+
+    # TODO: kill these.
+    gamedata: Dict
+    sessiondata: Dict
+
+    # NOTE: avoiding having any __init__() here since it seems to not
+    # get called by default if a dataclass inherits from us.
+
+    def postinit(self, sessionteam: SessionTeam) -> None:
+        """Wire up a newly created SessionTeam.
+
+        (internal)
+        """
+        self.players = []
+        self._sessionteam = weakref.ref(sessionteam)
+        self.id = sessionteam.id
+        self.name = sessionteam.name
+        self.color = sessionteam.color
+        self.gamedata = sessionteam.gamedata
+        self.sessiondata = sessionteam.sessiondata
+
+    @property
+    def sessionteam(self) -> SessionTeam:
+        """Return the ba.SessionTeam corresponding to this Team.
+
+        Throws a ba.SessionTeamNotFoundError if there is none.
+        """
+        if self._sessionteam is not None:
+            sessionteam = self._sessionteam()
+            if sessionteam is not None:
+                return sessionteam
+        from ba import _error
+        raise _error.SessionTeamNotFoundError()

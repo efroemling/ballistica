@@ -29,7 +29,7 @@ import _ba
 
 if TYPE_CHECKING:
     from typing import Any, Type
-    from efro.call import Call
+    from efro.call import Call as Call  # 'as Call' so we re-export.
 
 T = TypeVar('T')
 

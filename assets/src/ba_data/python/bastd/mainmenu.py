@@ -27,9 +27,9 @@ import time
 import weakref
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
 from bastd.actor import spaz
+import _ba
 
 if TYPE_CHECKING:
     from typing import Any, List, Optional
@@ -43,7 +43,7 @@ if TYPE_CHECKING:
 # noinspection PyAttributeOutsideInit
 
 
-class MainMenuActivity(ba.Activity):
+class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
     """Activity showing the rotating main menu bg stuff."""
 
     _stdassets = ba.Dependency(ba.AssetPackage, 'stdassets@1')
@@ -358,7 +358,7 @@ class MainMenuActivity(ba.Activity):
                 # need to make nodes and stuff.. should fix the serverget
                 # call so it.
                 activity = self._activity()
-                if activity is None or activity.is_expired():
+                if activity is None or activity.expired:
                     return
                 with ba.Context(activity):
 
@@ -830,7 +830,7 @@ class MainMenuActivity(ba.Activity):
     def _start_preloads(self) -> None:
         # FIXME: The func that calls us back doesn't save/restore state
         #  or check for a dead activity so we have to do that ourself.
-        if self.is_expired():
+        if self.expired:
             return
         with ba.Context(self):
             _preload1()
@@ -929,6 +929,6 @@ class MainMenuSession(ba.Session):
         # Any ending activity leads us into the main menu one.
         self.set_activity(ba.new_activity(MainMenuActivity))
 
-    def on_player_request(self, player: ba.Player) -> bool:
+    def on_player_request(self, player: ba.SessionPlayer) -> bool:
         # Reject all player requests.
         return False

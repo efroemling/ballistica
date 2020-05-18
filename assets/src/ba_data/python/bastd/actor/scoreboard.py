@@ -317,7 +317,7 @@ class _EntryProxy:
         self._scoreboard = weakref.ref(scoreboard)
         # have to store ID here instead of a weak-ref since the team will be
         # dead when we die and need to remove it
-        self._team_id = team.get_id()
+        self._team_id = team.id
 
     def __del__(self) -> None:
         scoreboard = self._scoreboard()
@@ -366,7 +366,7 @@ class Scoreboard:
                        flash: bool = True,
                        show_value: bool = True) -> None:
         """Update the score-board display for the given ba.Team."""
-        if not team.get_id() in self._entries:
+        if not team.id in self._entries:
             self._add_team(team)
             # create a proxy in the team which will kill
             # our entry when it dies (for convenience)
@@ -374,21 +374,21 @@ class Scoreboard:
                 raise Exception('existing _EntryProxy found')
             team.gamedata['_scoreboard_entry'] = _EntryProxy(self, team)
         # now set the entry..
-        self._entries[team.get_id()].set_value(score=score,
-                                               max_score=max_score,
-                                               countdown=countdown,
-                                               flash=flash,
-                                               show_value=show_value)
+        self._entries[team.id].set_value(score=score,
+                                         max_score=max_score,
+                                         countdown=countdown,
+                                         flash=flash,
+                                         show_value=show_value)
 
     def _add_team(self, team: ba.Team) -> None:
-        if team.get_id() in self._entries:
+        if team.id in self._entries:
             raise Exception('Duplicate team add')
-        self._entries[team.get_id()] = _Entry(self,
-                                              team,
-                                              do_cover=self._do_cover,
-                                              scale=self._scale,
-                                              label=self._label,
-                                              flash_length=self._flash_length)
+        self._entries[team.id] = _Entry(self,
+                                        team,
+                                        do_cover=self._do_cover,
+                                        scale=self._scale,
+                                        label=self._label,
+                                        flash_length=self._flash_length)
         self._update_teams()
 
     def remove_team(self, team_id: int) -> None:

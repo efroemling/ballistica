@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 
 
 # ba_meta export game
-class KeepAwayGame(ba.TeamGameActivity):
+class KeepAwayGame(ba.TeamGameActivity[ba.Player, ba.Team]):
     """Game where you try to keep the flag away from your enemies."""
 
     FLAG_NEW = 0
@@ -271,7 +271,7 @@ class KeepAwayGame(ba.TeamGameActivity):
         if isinstance(msg, playerspaz.PlayerSpazDeathMessage):
             # Augment standard behavior.
             super().handlemessage(msg)
-            self.respawn_player(msg.spaz.player)
+            self.respawn_player(msg.getspaz(self).player)
         elif isinstance(msg, stdflag.FlagDeathMessage):
             self._spawn_flag()
         elif isinstance(

@@ -54,7 +54,7 @@ def snippets_main(globs: Dict[str, Any]) -> None:
     show_help = False
     retval = 0
     if len(sys.argv) < 2:
-        print(f'{Clr.SRED}ERROR: command expected.{Clr.RST}')
+        print(f'{Clr.RED}ERROR: command expected.{Clr.RST}')
         show_help = True
         retval = 255
     else:
@@ -67,13 +67,17 @@ def snippets_main(globs: Dict[str, Any]) -> None:
             else:
                 docs = _trim_docstring(
                     getattr(funcs[sys.argv[2]], '__doc__', '<no docs>'))
-                print('\nsnippets ' + sys.argv[2] + ':\n' + docs + '\n')
+                print(f'\n{Clr.MAG}{Clr.BLD}snippets {sys.argv[2]}:{Clr.RST}\n'
+                      f'{Clr.MAG}{docs}{Clr.RST}\n')
         elif sys.argv[1] in funcs:
             try:
                 funcs[sys.argv[1]]()
+            except KeyboardInterrupt as exc:
+                print(f'{Clr.RED}{exc}{Clr.RST}')
+                sys.exit(1)
             except CleanError as exc:
                 exc.pretty_print()
-                sys.exit(-1)
+                sys.exit(1)
         else:
             print('Unknown snippets command: "' + sys.argv[1] + '"',
                   file=sys.stderr)
@@ -82,11 +86,12 @@ def snippets_main(globs: Dict[str, Any]) -> None:
     if show_help:
         print('Snippets contains project related commands too small'
               ' to warrant full scripts.')
-        print("Run 'snippets help <COMMAND>' for full command documentation.")
+        print(f"Run {Clr.MAG}'snippets help {Clr.BLD}<COMMAND>'"
+              f'{Clr.RST} for full command documentation.')
         print('Available commands:')
         for func, obj in sorted(funcs.items()):
             doc = getattr(obj, '__doc__', '').splitlines()[0].strip()
-            print(f'{Clr.SMAG}{func}{Clr.SBLU} - {doc}{Clr.RST}')
+            print(f'{Clr.MAG}{func}{Clr.BLU} - {doc}{Clr.RST}')
     sys.exit(retval)
 
 
@@ -194,16 +199,16 @@ def check_clean_safety() -> None:
 
 def formatcode() -> None:
     """Run clang-format on all of our source code (multithreaded)."""
-    from efrotools import code
+    import efrotools.code
     full = '-full' in sys.argv
-    code.formatcode(PROJROOT, full)
+    efrotools.code.formatcode(PROJROOT, full)
 
 
 def formatscripts() -> None:
     """Run yapf on all our scripts (multithreaded)."""
-    from efrotools import code
+    import efrotools.code
     full = '-full' in sys.argv
-    code.formatscripts(PROJROOT, full)
+    efrotools.code.formatscripts(PROJROOT, full)
 
 
 def formatmakefile() -> None:
@@ -222,9 +227,9 @@ def formatmakefile() -> None:
 
 def cpplint() -> None:
     """Run lint-checking on all code deemed lint-able."""
-    from efrotools import code
+    import efrotools.code
     full = '-full' in sys.argv
-    code.cpplint(PROJROOT, full)
+    efrotools.code.cpplint(PROJROOT, full)
 
 
 def scriptfiles() -> None:
@@ -232,8 +237,8 @@ def scriptfiles() -> None:
 
     Pass -lines to use newlines as separators. The default is spaces.
     """
-    from efrotools import code
-    paths = code.get_script_filenames(projroot=PROJROOT)
+    import efrotools.code
+    paths = efrotools.code.get_script_filenames(projroot=PROJROOT)
     assert not any(' ' in path for path in paths)
     if '-lines' in sys.argv:
         print('\n'.join(paths))
@@ -243,101 +248,102 @@ def scriptfiles() -> None:
 
 def pylint() -> None:
     """Run pylint checks on our scripts."""
-    from efrotools import code
+    from efro.error import CleanError
+    import efrotools.code
     full = ('-full' in sys.argv)
     fast = ('-fast' in sys.argv)
-    code.pylint(PROJROOT, full, fast)
+    try:
+        efrotools.code.pylint(PROJROOT, full, fast)
+    except Exception:
+        raise CleanError('Pylint failed.')
+
+
+def runpylint() -> None:
+    """Run pylint checks on provided filenames."""
+    import os
+    from efro.terminal import Clr
+    from efro.error import CleanError
+    import efrotools.code
+    if len(sys.argv) < 3:
+        raise CleanError('Expected at least 1 filename arg.')
+    filenames = sys.argv[2:]
+    try:
+        efrotools.code.runpylint(PROJROOT, filenames)
+        print(f'{Clr.GRN}Pylint Passed.{Clr.RST}')
+    except Exception:
+        if os.environ.get('VERBOSE') == '1':
+            import traceback
+            traceback.print_exc()
+        raise CleanError('Pylint Failed.')
 
 
 def mypy() -> None:
     """Run mypy checks on our scripts."""
-    from efrotools import code
+    import efrotools.code
     full = ('-full' in sys.argv)
-    code.mypy(PROJROOT, full)
+    efrotools.code.mypy(PROJROOT, full)
+
+
+def runmypy() -> None:
+    """Run mypy checks on provided filenames."""
+    from efro.terminal import Clr
+    from efro.error import CleanError
+    import efrotools.code
+    if len(sys.argv) < 3:
+        raise CleanError('Expected at least 1 filename arg.')
+    filenames = sys.argv[2:]
+    try:
+        efrotools.code.runmypy(PROJROOT, filenames)
+        print(f'{Clr.GRN}Mypy Passed.{Clr.RST}')
+    except Exception:
+        raise CleanError('Mypy Failed.')
 
 
 def dmypy() -> None:
     """Run mypy checks on our scripts using the mypy daemon."""
-    from efrotools import code
-    code.dmypy(PROJROOT)
+    import efrotools.code
+    efrotools.code.dmypy(PROJROOT)
 
 
 def pycharm() -> None:
     """Run PyCharm checks on our scripts."""
-    from efrotools import code
+    import efrotools.code
     full = '-full' in sys.argv
     verbose = '-v' in sys.argv
-    code.pycharm(PROJROOT, full, verbose)
+    efrotools.code.pycharm(PROJROOT, full, verbose)
 
 
 def clioncode() -> None:
     """Run CLion checks on our code."""
-    from efrotools import code
+    import efrotools.code
     full = '-full' in sys.argv
     verbose = '-v' in sys.argv
-    code.clioncode(PROJROOT, full, verbose)
+    efrotools.code.clioncode(PROJROOT, full, verbose)
 
 
 def androidstudiocode() -> None:
     """Run Android Studio checks on our code."""
-    from efrotools import code
+    import efrotools.code
     full = '-full' in sys.argv
     verbose = '-v' in sys.argv
-    code.androidstudiocode(PROJROOT, full, verbose)
+    efrotools.code.androidstudiocode(PROJROOT, full, verbose)
 
 
 def tool_config_install() -> None:
     """Install a tool config file (with some filtering)."""
-    from efrotools import get_config
-    import textwrap
+    from efro.terminal import Clr
     if len(sys.argv) != 4:
         raise Exception('expected 2 args')
     src = Path(sys.argv[2])
     dst = Path(sys.argv[3])
+
+    print(f'Creating tool config: {Clr.BLD}{dst}{Clr.RST}')
+
     with src.open() as infile:
         cfg = infile.read()
 
-    # Do a bit of filtering.
-
-    # Stick project-root wherever they want.
-    cfg = cfg.replace('__EFRO_PROJECT_ROOT__', str(PROJROOT))
-
-    # Short project name.
-    short_names = {'ballistica-internal': 'ba-int', 'ballistica': 'ba'}
-    shortname = short_names.get(PROJROOT.name, PROJROOT.name)
-    cfg = cfg.replace('__EFRO_PROJECT_SHORTNAME__', shortname)
-
-    stdsettings = textwrap.dedent("""
-    # We don't want all of our plain scripts complaining
-    # about __main__ being redefined.
-    scripts_are_modules = True
-
-    # Try to be as strict as we can about using types everywhere.
-    warn_unused_ignores = True
-    warn_return_any = True
-    warn_redundant_casts = True
-    warn_unreachable=True
-    disallow_incomplete_defs = True
-    disallow_untyped_defs = True
-    disallow_untyped_decorators = True
-    disallow_untyped_calls = True
-    disallow_any_unimported = True
-    strict_equality = True
-    """).strip()
-
-    cfg = cfg.replace('__EFRO_MYPY_STANDARD_SETTINGS__', stdsettings)
-
-    # Gen a pylint init to set up our python paths:
-    pylint_init_tag = '__EFRO_PYLINT_INIT__'
-    if pylint_init_tag in cfg:
-        pypaths = get_config(PROJROOT).get('python_paths')
-        if pypaths is None:
-            raise RuntimeError('python_paths not set in project config')
-        cstr = "init-hook='import sys;"
-        for path in pypaths:
-            cstr += f" sys.path.append('{PROJROOT}/{path}');"
-        cstr += "'"
-        cfg = cfg.replace(pylint_init_tag, cstr)
+    # Rome substitutions, etc.
+    cfg = _filter_tool_config(cfg)
 
     # Add an auto-generated notice.
     comment = None
@@ -356,6 +362,57 @@ def tool_config_install() -> None:
         outfile.write(cfg)
 
 
+def _filter_tool_config(cfg: str) -> str:
+    import textwrap
+    from efrotools import get_config
+
+    # Stick project-root wherever they want.
+    cfg = cfg.replace('__EFRO_PROJECT_ROOT__', str(PROJROOT))
+
+    # Short project name.
+    short_names = {'ballistica-internal': 'ba-int', 'ballistica': 'ba'}
+    shortname = short_names.get(PROJROOT.name, PROJROOT.name)
+    cfg = cfg.replace('__EFRO_PROJECT_SHORTNAME__', shortname)
+
+    mypy_standard_settings = textwrap.dedent("""
+    # We don't want all of our plain scripts complaining
+    # about __main__ being redefined.
+    scripts_are_modules = True
+
+    # Try to be as strict as we can about using types everywhere.
+    warn_unused_ignores = True
+    warn_return_any = True
+    warn_redundant_casts = True
+    warn_unreachable = True
+    warn_unused_configs = True
+    disallow_incomplete_defs = True
+    disallow_untyped_defs = True
+    disallow_untyped_decorators = True
+    disallow_untyped_calls = True
+    disallow_any_unimported = True
+    disallow_subclassing_any = True
+    strict_equality = True
+    local_partial_types = True
+    no_implicit_reexport = True
+    """).strip()
+
+    cfg = cfg.replace('__EFRO_MYPY_STANDARD_SETTINGS__',
+                      mypy_standard_settings)
+
+    # Gen a pylint init to set up our python paths:
+    pylint_init_tag = '__EFRO_PYLINT_INIT__'
+    if pylint_init_tag in cfg:
+        pypaths = get_config(PROJROOT).get('python_paths')
+        if pypaths is None:
+            raise RuntimeError('python_paths not set in project config')
+        cstr = "init-hook='import sys;"
+        for path in pypaths:
+            cstr += f" sys.path.append('{PROJROOT}/{path}');"
+        cstr += "'"
+        cfg = cfg.replace(pylint_init_tag, cstr)
+    return cfg
+
+
 def sync_all() -> None:
     """Runs full syncs between all efrotools projects.
 
@@ -368,7 +425,7 @@ def sync_all() -> None:
     import concurrent.futures
     from efro.error import CleanError
     from efro.terminal import Clr
-    print(f'{Clr.SBLU}Updating formatting for all projects...{Clr.RST}')
+    print(f'{Clr.BLU}Updating formatting for all projects...{Clr.RST}')
     projects_str = os.environ.get('EFROTOOLS_SYNC_PROJECTS')
     if projects_str is None:
         raise CleanError('EFROTOOL_SYNC_PROJECTS is not defined.')
@@ -399,17 +456,17 @@ def sync_all() -> None:
         # Real mode
         for i in range(2):
             if i == 0:
-                print(Clr.SBLU + 'Running sync pass 1:'
+                print(Clr.BLU + 'Running sync pass 1:'
                       ' (ensures all changes at dsts are pushed to src)' +
                       Clr.RST)
             else:
-                print(Clr.SBLU + 'Running sync pass 2:'
+                print(Clr.BLU + 'Running sync pass 2:'
                       ' (ensures latest src is pulled to all dsts)' + Clr.RST)
             for project in projects_str.split(':'):
                 cmd = f'cd "{project}" && make sync-full'
                 print(cmd)
                 subprocess.run(cmd, shell=True, check=True)
-        print(Clr.SBLU + 'Sync-all successful!' + Clr.RST)
+        print(Clr.BLU + 'Sync-all successful!' + Clr.RST)
 
 
 def sync() -> None:
@@ -530,5 +587,26 @@ def makefile_target_list() -> None:
                 continue
             print('\n' + entry.title + '\n' + '-' * len(entry.title))
         elif entry.kind == 'target':
-            print(Clr.SMAG + entry.title + Clr.SBLU +
+            print(Clr.MAG + entry.title + Clr.BLU +
                   _docstr(lines, entry.line) + Clr.RST)
+
+
+def echo() -> None:
+    """Echo with support for efro.terminal.Clr args (RED, GRN, BLU, etc).
+
+    Prints a Clr.RST at the end so that can be omitted.
+    """
+    from efro.terminal import Clr
+    clrnames = {n for n in dir(Clr) if n.isupper() and not n.startswith('_')}
+    first = True
+    out: List[str] = []
+    for arg in sys.argv[2:]:
+        if arg in clrnames:
+            out.append(getattr(Clr, arg))
+        else:
+            if not first:
+                out.append(' ')
+            first = False
+            out.append(arg)
+    out.append(Clr.RST)
+    print(''.join(out))

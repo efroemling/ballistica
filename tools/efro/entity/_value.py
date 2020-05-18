@@ -27,7 +27,9 @@ import inspect
 import logging
 from collections import abc
 from enum import Enum
-from typing import TYPE_CHECKING, TypeVar, Tuple, Optional, Generic
+from typing import TYPE_CHECKING, TypeVar, Generic
+# Our Pylint class_generics_filter gives us a false-positive unused-import.
+from typing import Tuple, Optional  # pylint: disable=W0611
 
 from efro.entity._base import DataHandler, BaseField
 from efro.entity.util import compound_eq

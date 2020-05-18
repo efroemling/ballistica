@@ -38,7 +38,7 @@ if TYPE_CHECKING:
     from bastd.actor.scoreboard import Scoreboard
 
 
-class OnslaughtGame(ba.CoopGameActivity):
+class OnslaughtGame(ba.CoopGameActivity[ba.Player, ba.Team]):
     """Co-op game where players try to survive attacking waves of enemies."""
 
     tips: List[Union[str, Dict[str, Any]]] = [
@@ -1163,7 +1163,7 @@ class OnslaughtGame(ba.CoopGameActivity):
 
         elif isinstance(msg, playerspaz.PlayerSpazDeathMessage):
             super().handlemessage(msg)  # Augment standard behavior.
-            player = msg.spaz.getplayer()
+            player = msg.getspaz(self).getplayer()
             assert player is not None
             self._a_player_has_been_hurt = True
 

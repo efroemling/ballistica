@@ -19,13 +19,14 @@
 # SOFTWARE.
 # -----------------------------------------------------------------------------
 """Functionality related to teams mode score screen."""
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 import ba
 from ba.internal import ScoreScreenActivity
+from bastd.actor.text import Text
+from bastd.actor.image import Image
 
 if TYPE_CHECKING:
     from typing import Any, Dict, Optional, Union
@@ -42,7 +43,6 @@ class MultiTeamScoreScreenActivity(ScoreScreenActivity):
         self._show_up_next: bool = True
 
     def on_begin(self) -> None:
-        from bastd.actor.text import Text
         super().on_begin()
         session = self.session
         if self._show_up_next and isinstance(session, ba.MultiTeamSession):
@@ -77,8 +77,6 @@ class MultiTeamScoreScreenActivity(ScoreScreenActivity):
         """Show scores for individual players."""
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
-        from bastd.actor.text import Text
-        from bastd.actor.image import Image
 
         ts_v_offset = 150.0 + y_offset
         ts_h_offs = 80.0 + x_offset
@@ -90,6 +88,7 @@ class MultiTeamScoreScreenActivity(ScoreScreenActivity):
         def _get_prec_score(p_rec: ba.PlayerRecord) -> Optional[int]:
             if is_free_for_all and results is not None:
                 assert isinstance(results, ba.TeamGameResults)
+                assert p_rec.team.gameteam is not None
                 val = results.get_team_score(p_rec.team)
                 return val
             return p_rec.accumscore
@@ -97,7 +96,8 @@ class MultiTeamScoreScreenActivity(ScoreScreenActivity):
         def _get_prec_score_str(p_rec: ba.PlayerRecord) -> Union[str, ba.Lstr]:
             if is_free_for_all and results is not None:
                 assert isinstance(results, ba.TeamGameResults)
-                val = results.get_team_score_str(p_rec.team)
+                assert p_rec.team.gameteam is not None
+                val = results.get_team_score_str(p_rec.team.gameteam)
                 assert val is not None
                 return val
             return str(p_rec.accumscore)
@@ -113,7 +113,7 @@ class MultiTeamScoreScreenActivity(ScoreScreenActivity):
             valid_players = list(self.stats.get_records().items())
 
             def _get_player_score_set_entry(
-                    player: ba.Player) -> Optional[ba.PlayerRecord]:
+                    player: ba.SessionPlayer) -> Optional[ba.PlayerRecord]:
                 for p_rec in valid_players:
                     # PyCharm incorrectly thinks valid_players is a List[str]
                     # noinspection PyUnresolvedReferences

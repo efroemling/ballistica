@@ -998,7 +998,7 @@ class BotSet:
 
         # Don't do this if the activity is shutting down or dead.
         activity: Optional[ba.Activity] = ba.getactivity(doraise=False)
-        if activity is None or activity.is_expired():
+        if activity is None or activity.expired:
             return
 
         for i in range(len(self._bot_lists)):

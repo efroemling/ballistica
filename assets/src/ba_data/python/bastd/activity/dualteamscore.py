@@ -73,7 +73,7 @@ class TeamVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                  scale=0.25,
                  color=(0.5, 0.5, 0.5, 1.0),
                  jitter=3.0).autoretain()
-        for team in self.teams:
+        for team in self.session.teams:
             ba.timer(
                 i * 0.15 + 0.15,
                 ba.WeakCall(self._show_team_name, vval - i * height, team,
@@ -99,8 +99,8 @@ class TeamVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             i += 1
         self.show_player_scores()
 
-    def _show_team_name(self, pos_v: float, team: ba.Team, kill_delay: float,
-                        shiftdelay: float) -> None:
+    def _show_team_name(self, pos_v: float, team: ba.SessionTeam,
+                        kill_delay: float, shiftdelay: float) -> None:
         del kill_delay  # unused arg
         ZoomText(ba.Lstr(value='${A}:', subs=[('${A}', team.name)]),
                  position=(100, pos_v),
@@ -113,7 +113,7 @@ class TeamVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                  color=team.color,
                  jitter=1.0).autoretain()
 
-    def _show_team_old_score(self, pos_v: float, team: ba.Team,
+    def _show_team_old_score(self, pos_v: float, team: ba.SessionTeam,
                              shiftdelay: float) -> None:
         ZoomText(str(team.sessiondata['score'] - 1),
                  position=(150, pos_v),
@@ -127,8 +127,9 @@ class TeamVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                  h_align='left',
                  jitter=1.0).autoretain()
 
-    def _show_team_score(self, pos_v: float, team: ba.Team, scored: bool,
-                         kill_delay: float, shiftdelay: float) -> None:
+    def _show_team_score(self, pos_v: float, team: ba.SessionTeam,
+                         scored: bool, kill_delay: float,
+                         shiftdelay: float) -> None:
         del kill_delay  # unused arg
         ZoomText(str(team.sessiondata['score']),
                  position=(150, pos_v),

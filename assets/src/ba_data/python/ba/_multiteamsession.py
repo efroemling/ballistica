@@ -27,6 +27,7 @@ from typing import TYPE_CHECKING
 
 import _ba
 from ba._session import Session
+from ba._error import NotFoundError, print_error
 
 if TYPE_CHECKING:
     from typing import Optional, Any, Dict, List, Type, Sequence
@@ -155,7 +156,7 @@ class MultiTeamSession(Session):
         """Returns which game in the series is currently being played."""
         return self._game_number
 
-    def on_team_join(self, team: ba.Team) -> None:
+    def on_team_join(self, team: ba.SessionTeam) -> None:
         team.sessiondata['previous_score'] = team.sessiondata['score'] = 0
 
     def get_max_players(self) -> int:
@@ -171,7 +172,6 @@ class MultiTeamSession(Session):
 
     def on_activity_end(self, activity: ba.Activity, results: Any) -> None:
         # pylint: disable=cyclic-import
-        from ba import _error
         from bastd.tutorial import TutorialActivity
         from bastd.activity.multiteamvictory import (
             TeamSeriesVictoryScoreScreenActivity)
@@ -223,7 +223,7 @@ class MultiTeamSession(Session):
                 # (ie: no longer sitting in the lobby).
                 try:
                     has_team = (player.team is not None)
-                except _error.TeamNotFoundError:
+                except NotFoundError:
                     has_team = False
                 if has_team:
                     self.stats.register_player(player)
@@ -238,9 +238,8 @@ class MultiTeamSession(Session):
 
     def _switch_to_score_screen(self, results: Any) -> None:
         """Switch to a score screen after leaving a round."""
-        from ba import _error
         del results  # Unused arg.
-        _error.print_error('this should be overridden')
+        print_error('this should be overridden')
 
     def announce_game_results(self,
                               activity: ba.GameActivity,
@@ -269,7 +268,8 @@ class MultiTeamSession(Session):
             if winning_team is not None:
                 # Have all players celebrate.
                 celebrate_msg = CelebrateMessage(duration=10.0)
-                for player in winning_team.players:
+                assert winning_team.gameteam is not None
+                for player in winning_team.gameteam.players:
                     if player.actor:
                         player.actor.handlemessage(celebrate_msg)
                 cameraflash()

@@ -40,9 +40,10 @@ from typing import TYPE_CHECKING
 # noinspection PyUnresolvedReferences
 from efrotools.snippets import (
     PROJROOT, snippets_main, formatcode, formatscripts, formatmakefile,
-    cpplint, pylint, mypy, dmypy, tool_config_install, sync, sync_all,
-    scriptfiles, pycharm, clioncode, androidstudiocode, makefile_target_list,
-    spelling, spelling_all, compile_python_files, pytest)
+    cpplint, pylint, runpylint, mypy, runmypy, dmypy, tool_config_install,
+    sync, sync_all, scriptfiles, pycharm, clioncode, androidstudiocode,
+    makefile_target_list, spelling, spelling_all, compile_python_files, pytest,
+    echo)
 # pylint: enable=unused-import
 
 if TYPE_CHECKING:
@@ -259,7 +260,7 @@ def clean_orphaned_assets() -> None:
     # Operate from dist root..
     os.chdir(PROJROOT)
 
-    # Our manifest is split into 2 files (public and non-public)
+    # Our manifest is split into 2 files (public and private)
     with open('assets/.asset_manifest_public.json') as infile:
         manifest = set(json.loads(infile.read()))
     with open('assets/.asset_manifest_private.json') as infile:
@@ -303,7 +304,8 @@ def py_examine() -> None:
         sys.path.append(scriptsdir)
     if toolsdir not in sys.path:
         sys.path.append(toolsdir)
-    efrotools.py_examine(filename, line, column, selection, operation)
+    efrotools.py_examine(PROJROOT, filename, line, column, selection,
+                         operation)
 
 
 def push_ipa() -> None:
@@ -553,6 +555,9 @@ def lazy_increment_build() -> None:
     """Increment build number only if C++ sources have changed.
 
     This is convenient to place in automatic commit/push scripts.
+    It could make sense to auto update build number when scripts/assets
+    change too, but a build number change requires rebuilding all binaries
+    so I'll leave that as an explicit choice to save work.
     """
     import os
     import subprocess

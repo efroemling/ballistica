@@ -24,12 +24,12 @@
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
-import _ba
 from ba._activity import Activity
 from ba._score import ScoreInfo
 from ba._lang import Lstr
+import _ba
 
 if TYPE_CHECKING:
     from typing import (List, Optional, Dict, Type, Any, Callable, Sequence,
@@ -38,8 +38,11 @@ if TYPE_CHECKING:
     from bastd.actor.bomb import TNTSpawner
     import ba
 
+PlayerType = TypeVar('PlayerType', bound='ba.Player')
+TeamType = TypeVar('TeamType', bound='ba.Team')
 
-class GameActivity(Activity):
+
+class GameActivity(Activity[PlayerType, TeamType]):
     """Common base class for all game ba.Activities.
 
     category: Gameplay Classes
@@ -606,13 +609,13 @@ class GameActivity(Activity):
             self._setup_tournament_time_limit(
                 max(5, data_t[0]['timeRemaining']))
 
-    def on_player_join(self, player: ba.Player) -> None:
+    def on_player_join(self, player: PlayerType) -> None:
         super().on_player_join(player)
 
         # By default, just spawn a dude.
         self.spawn_player(player)
 
-    def on_player_leave(self, player: ba.Player) -> None:
+    def on_player_leave(self, player: PlayerType) -> None:
         from ba._general import Call
         from ba._messages import DieMessage, DeathType
 
@@ -632,7 +635,7 @@ class GameActivity(Activity):
         from bastd.actor.playerspaz import PlayerSpazDeathMessage
         if isinstance(msg, PlayerSpazDeathMessage):
 
-            player = msg.spaz.player
+            player = msg.getspaz(self).player
             killer = msg.killerplayer
 
             # Inform our score-set of the demise.
@@ -642,7 +645,7 @@ class GameActivity(Activity):
 
             # Award the killer points if he's on a different team.
             if killer and killer.team is not player.team:
-                pts, importance = msg.spaz.get_death_points(msg.how)
+                pts, importance = msg.getspaz(self).get_death_points(msg.how)
                 if not self.has_ended():
                     self.stats.player_scored(killer,
                                              pts,
@@ -928,7 +931,7 @@ class GameActivity(Activity):
         print('WARNING: default end_game() implementation called;'
               ' your game should override this.')
 
-    def spawn_player_if_exists(self, player: ba.Player) -> None:
+    def spawn_player_if_exists(self, player: PlayerType) -> None:
         """
         A utility method which calls self.spawn_player() *only* if the
         ba.Player provided still exists; handy for use in timers and whatnot.
@@ -938,7 +941,7 @@ class GameActivity(Activity):
         if player:
             self.spawn_player(player)
 
-    def spawn_player(self, player: ba.Player) -> ba.Actor:
+    def spawn_player(self, player: PlayerType) -> ba.Actor:
         """Spawn *something* for the provided ba.Player.
 
         The default implementation simply calls spawn_player_spaz().
@@ -949,7 +952,7 @@ class GameActivity(Activity):
         return self.spawn_player_spaz(player)
 
     def respawn_player(self,
-                       player: ba.Player,
+                       player: PlayerType,
                        respawn_time: Optional[float] = None) -> None:
         """
         Given a ba.Player, sets up a standard respawn timer,
@@ -989,7 +992,7 @@ class GameActivity(Activity):
             player.gamedata['respawn_icon'] = RespawnIcon(player, respawn_time)
 
     def spawn_player_spaz(self,
-                          player: ba.Player,
+                          player: PlayerType,
                           position: Sequence[float] = (0, 0, 0),
                           angle: float = None) -> PlayerSpaz:
         """Create and wire up a ba.PlayerSpaz for the provided ba.Player."""

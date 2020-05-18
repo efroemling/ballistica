@@ -31,16 +31,6 @@ if TYPE_CHECKING:
     import ba
 
 
-class _UnhandledType:
-    pass
-
-
-# A special value that should be returned from handlemessage()
-# functions for unhandled message types.  This may result
-# in fallback message types being attempted/etc.
-UNHANDLED = _UnhandledType()
-
-
 class DependencyError(Exception):
     """Exception raised when one or more ba.Dependency items are missing.
 
@@ -73,8 +63,22 @@ class PlayerNotFoundError(NotFoundError):
     """
 
 
+class SessionPlayerNotFoundError(NotFoundError):
+    """Exception raised when an expected ba.SessionPlayer does not exist.
+
+    category: Exception Classes
+    """
+
+
 class TeamNotFoundError(NotFoundError):
     """Exception raised when an expected ba.Team does not exist.
+
+    category: Exception Classes
+    """
+
+
+class SessionTeamNotFoundError(NotFoundError):
+    """Exception raised when an expected ba.SessionTeam does not exist.
 
     category: Exception Classes
     """

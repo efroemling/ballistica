@@ -36,6 +36,7 @@ if TYPE_CHECKING:
 
 MAX_QUICK_CHANGE_COUNT = 30
 QUICK_CHANGE_INTERVAL = 0.05
+QUICK_CHANGE_RESET_INTERVAL = 1.0
 
 
 # Hmm should we move this to actors?..
@@ -147,7 +148,7 @@ class Chooser:
         if self._text_node:
             self._text_node.delete()
 
-    def __init__(self, vpos: float, player: _ba.Player,
+    def __init__(self, vpos: float, player: _ba.SessionPlayer,
                  lobby: 'Lobby') -> None:
         # FIXME: Tidy up around here.
         # pylint: disable=too-many-branches
@@ -326,7 +327,7 @@ class Chooser:
         self._inited = True
 
     @property
-    def player(self) -> ba.Player:
+    def player(self) -> ba.SessionPlayer:
         """The ba.Player associated with this chooser."""
         return self._player
 
@@ -343,7 +344,7 @@ class Chooser:
         """(internal)"""
         self._dead = val
 
-    def get_team(self) -> ba.Team:
+    def get_team(self) -> ba.SessionTeam:
         """Return this chooser's selected ba.Team."""
         return self.lobby.teams[self._selected_team_index]
 
@@ -641,18 +642,17 @@ class Chooser:
                     # choosers that have been marked as ready.
                     team_player_counts = {}
                     for team in teams:
-                        team_player_counts[team.get_id()] = (len(team.players))
+                        team_player_counts[team.id] = (len(team.players))
                     for chooser in lobby.choosers:
                         if chooser.ready:
-                            team_player_counts[
-                                chooser.get_team().get_id()] += 1
+                            team_player_counts[chooser.get_team().id] += 1
                     largest_team_size = max(team_player_counts.values())
                     smallest_team_size = (min(team_player_counts.values()))
 
                     # Force switch if we're on the biggest team
                     # and there's a smaller one available.
                     if (largest_team_size != smallest_team_size
-                            and team_player_counts[self.get_team().get_id()] >=
+                            and team_player_counts[self.get_team().id] >=
                             largest_team_size):
                         force_team_switch = True
 
@@ -664,17 +664,24 @@ class Chooser:
             _ba.playsound(self._punchsound)
             self._set_ready(ready)
 
-    def handlemessage(self, msg: Any) -> Any:
-        """Standard generic message handler."""
-        if isinstance(msg, ChangeMessage):
-            now = _ba.time()
-            count = self.last_change[1] + 1
-            if (now - self.last_change[0] < QUICK_CHANGE_INTERVAL
-                    and count > MAX_QUICK_CHANGE_COUNT):
-                # Hmm maybe we should notify client?
+    # TODO: should handle this at the engine layer so this is unnecessary.
+    def _handle_repeat_message_attack(self) -> None:
+        now = _ba.time()
+        count = self.last_change[1]
+        if now - self.last_change[0] < QUICK_CHANGE_INTERVAL:
+            count += 1
+            if count > MAX_QUICK_CHANGE_COUNT:
                 _ba.disconnect_client(
                     self._player.get_input_device().client_id)
-            self.last_change = (now, count)
+        elif now - self.last_change[0] > QUICK_CHANGE_RESET_INTERVAL:
+            count = 0
+        self.last_change = (now, count)
+
+    def handlemessage(self, msg: Any) -> Any:
+        """Standard generic message handler."""
+
+        if isinstance(msg, ChangeMessage):
+            self._handle_repeat_message_attack()
 
             # If we've been removed from the lobby, ignore this stuff.
             if self._dead:
@@ -806,7 +813,7 @@ class Chooser:
                         highlight[(max_index + 2) % 3] += diff * 0.2
         return highlight
 
-    def getplayer(self) -> ba.Player:
+    def getplayer(self) -> ba.SessionPlayer:
         """Return the player associated with this chooser."""
         return self._player
 
@@ -890,7 +897,7 @@ class Lobby:
         if teams is not None:
             self._teams = [weakref.ref(team) for team in teams]
         else:
-            self._dummy_teams = bs_team.Team()
+            self._dummy_teams = bs_team.SessionTeam()
             self._teams = [weakref.ref(self._dummy_teams)]
         v_offset = (-150
                     if isinstance(session, _coopsession.CoopSession) else -50)
@@ -920,7 +927,7 @@ class Lobby:
         return self._use_team_colors
 
     @property
-    def teams(self) -> List[ba.Team]:
+    def teams(self) -> List[ba.SessionTeam]:
         """Teams available in this lobby."""
         allteams = []
         for tref in self._teams:
@@ -974,14 +981,14 @@ class Lobby:
         """Return whether all choosers are marked ready."""
         return all(chooser.ready for chooser in self.choosers)
 
-    def add_chooser(self, player: ba.Player) -> None:
+    def add_chooser(self, player: ba.SessionPlayer) -> None:
         """Add a chooser to the lobby for the provided player."""
         self.choosers.append(
             Chooser(vpos=self._vpos, player=player, lobby=self))
         self._next_add_team = (self._next_add_team + 1) % len(self._teams)
         self._vpos -= 48
 
-    def remove_chooser(self, player: ba.Player) -> None:
+    def remove_chooser(self, player: ba.SessionPlayer) -> None:
         """Remove a single player's chooser; does not kick him.
 
         This is used when a player enters the game and no longer

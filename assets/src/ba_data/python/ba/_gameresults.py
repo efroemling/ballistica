@@ -26,9 +26,11 @@ import weakref
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from ba._team import Team
+
 if TYPE_CHECKING:
     from weakref import ReferenceType
-    from typing import Sequence, Tuple, Any, Optional, Dict, List
+    from typing import Sequence, Tuple, Any, Optional, Dict, List, Union
     import ba
 
 
@@ -36,7 +38,7 @@ if TYPE_CHECKING:
 class WinnerGroup:
     """Entry for a winning team or teams calculated by game-results."""
     score: Optional[int]
-    teams: Sequence[ba.Team]
+    teams: Sequence[ba.SessionTeam]
 
 
 class TeamGameResults:
@@ -52,9 +54,9 @@ class TeamGameResults:
     def __init__(self) -> None:
         """Instantiate a results instance."""
         self._game_set = False
-        self._scores: Dict[int, Tuple[ReferenceType[ba.Team],
+        self._scores: Dict[int, Tuple[ReferenceType[ba.SessionTeam],
                                       Optional[int]]] = {}
-        self._teams: Optional[List[ReferenceType[ba.Team]]] = None
+        self._teams: Optional[List[ReferenceType[ba.SessionTeam]]] = None
         self._player_info: Optional[List[Dict[str, Any]]] = None
         self._lower_is_better: Optional[bool] = None
         self._score_label: Optional[str] = None
@@ -74,16 +76,22 @@ class TeamGameResults:
         self._none_is_winner = score_info.none_is_winner
         self._score_type = score_info.scoretype
 
-    def set_team_score(self, team: ba.Team, score: int) -> None:
+    def set_team_score(self, team: Union[ba.SessionTeam, ba.Team],
+                       score: int) -> None:
         """Set the score for a given ba.Team.
 
         This can be a number or None.
         (see the none_is_winner arg in the constructor)
         """
-        self._scores[team.get_id()] = (weakref.ref(team), score)
+        if isinstance(team, Team):
+            team = team.sessionteam
+        self._scores[team.id] = (weakref.ref(team), score)
 
-    def get_team_score(self, team: ba.Team) -> Optional[int]:
+    def get_team_score(self, team: Union[ba.SessionTeam,
+                                         ba.Team]) -> Optional[int]:
         """Return the score for a given team."""
+        if isinstance(team, Team):
+            team = team.sessionteam
         for score in list(self._scores.values()):
             if score[0]() is team:
                 return score[1]
@@ -91,8 +99,8 @@ class TeamGameResults:
         # If we have no score value, assume None.
         return None
 
-    def get_teams(self) -> List[ba.Team]:
-        """Return all ba.Teams in the results."""
+    def get_teams(self) -> List[ba.SessionTeam]:
+        """Return all ba.SessionTeams in the results."""
         if not self._game_set:
             raise RuntimeError("Can't get teams until game is set.")
         teams = []
@@ -103,12 +111,9 @@ class TeamGameResults:
                 teams.append(team)
         return teams
 
-    def has_score_for_team(self, team: ba.Team) -> bool:
+    def has_score_for_team(self, sessionteam: ba.SessionTeam) -> bool:
         """Return whether there is a score for a given team."""
-        for score in list(self._scores.values()):
-            if score[0]() is team:
-                return True
-        return False
+        return any(s[0]() is sessionteam for s in self._scores.values())
 
     def get_team_score_str(self, team: ba.Team) -> ba.Lstr:
         """Return the score for the given ba.Team as an Lstr.
@@ -122,7 +127,7 @@ class TeamGameResults:
         if not self._game_set:
             raise RuntimeError("Can't get team-score-str until game is set.")
         for score in list(self._scores.values()):
-            if score[0]() is team:
+            if score[0]() is team.sessionteam:
                 if score[1] is None:
                     return Lstr(value='-')
                 if self._score_type is ScoreType.SECONDS:
@@ -164,7 +169,7 @@ class TeamGameResults:
         assert self._lower_is_better is not None
         return self._lower_is_better
 
-    def get_winning_team(self) -> Optional[ba.Team]:
+    def get_winning_team(self) -> Optional[ba.SessionTeam]:
         """Get the winning ba.Team if there is exactly one; None otherwise."""
         if not self._game_set:
             raise RuntimeError("Can't get winners until game is set.")
@@ -179,7 +184,7 @@ class TeamGameResults:
             raise RuntimeError("Can't get winners until game is set.")
 
         # Group by best scoring teams.
-        winners: Dict[int, List[ba.Team]] = {}
+        winners: Dict[int, List[ba.SessionTeam]] = {}
         scores = [
             score for score in self._scores.values()
             if score[0]() is not None and score[1] is not None
@@ -191,11 +196,11 @@ class TeamGameResults:
             assert team is not None
             sval.append(team)
         results: List[Tuple[Optional[int],
-                            List[ba.Team]]] = list(winners.items())
+                            List[ba.SessionTeam]]] = list(winners.items())
         results.sort(reverse=not self._lower_is_better, key=lambda x: x[0])
 
         # Also group the 'None' scores.
-        none_teams: List[ba.Team] = []
+        none_teams: List[ba.SessionTeam] = []
         for score in self._scores.values():
             scoreteam = score[0]()
             if scoreteam is not None and score[1] is None:
@@ -205,7 +210,7 @@ class TeamGameResults:
         # depending on the rules).
         if none_teams:
             nones: List[Tuple[Optional[int],
-                              List[ba.Team]]] = [(None, none_teams)]
+                              List[ba.SessionTeam]]] = [(None, none_teams)]
             if self._none_is_winner:
                 results = nones + results
             else:

@@ -112,7 +112,7 @@ def _lazybuild_check_paths(inpaths: List[str], category: SourceCategory,
         # Now see this path is newer than our target..
         if mtime is None or os.path.getmtime(path) >= mtime:
             print(f'{Clr.SMAG}Build of {tnamepretty} triggered by'
-                  f' {path}{Clr.RST}')
+                  f" '{path}'{Clr.RST}")
             return True
         return False
 
@@ -483,7 +483,7 @@ def _vstr(nums: Sequence[int]) -> str:
 def checkenv() -> None:
     """Check for tools necessary to build and run the app."""
     from efrotools import PYTHON_BIN
-    print('Checking environment...', flush=True)
+    print(f'{Clr.BLD}Checking environment...{Clr.RST}', flush=True)
 
     # Make sure they've got curl.
     if subprocess.run(['which', 'curl'], check=False,
@@ -539,7 +539,7 @@ def checkenv() -> None:
                     'Alternately, "tools/snippets install_pip_reqs"'
                     ' will update all pip requirements.')
 
-    print('Environment ok.', flush=True)
+    print(f'{Clr.BLD}Environment ok.{Clr.RST}', flush=True)
 
 
 def get_pip_reqs() -> List[str]:

@@ -38,12 +38,12 @@ if TYPE_CHECKING:
     from bastd.ui.league.rankbutton import LeagueRankButton
 
 
-class CoopScoreScreen(ba.Activity):
+class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
     """Score screen showing the results of a cooperative game."""
 
     def __init__(self, settings: Dict[str, Any]):
         # pylint: disable=too-many-statements
-        super().__init__(settings=settings)
+        super().__init__(settings)
 
         # Keep prev activity alive while we fade in
         self.transition_time = 0.5
@@ -1008,7 +1008,7 @@ class CoopScoreScreen(ba.Activity):
         # We need to manually run this in the context of our activity
         # and only if we aren't shutting down.
         # (really should make the submit_score call handle that stuff itself)
-        if self.is_expired():
+        if self.expired:
             return
         with ba.Context(self):
             # Delay a bit if results come in too fast.

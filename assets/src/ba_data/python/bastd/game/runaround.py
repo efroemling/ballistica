@@ -38,7 +38,7 @@ if TYPE_CHECKING:
     from typing import Type, Any, List, Dict, Tuple, Sequence, Optional
 
 
-class RunaroundGame(ba.CoopGameActivity):
+class RunaroundGame(ba.CoopGameActivity[ba.Player, ba.Team]):
     """Game involving trying to bomb bots as they walk through the map."""
 
     tips = [
@@ -48,7 +48,7 @@ class RunaroundGame(ba.CoopGameActivity):
     ]
 
     # How fast our various bot types walk.
-    _bot_speed_map = {
+    _bot_speed_map: Dict[Type[spazbot.SpazBot], float] = {
         spazbot.BomberBot: 0.48,
         spazbot.BomberBotPro: 0.48,
         spazbot.BomberBotProShielded: 0.48,
@@ -1127,7 +1127,7 @@ class RunaroundGame(ba.CoopGameActivity):
         elif isinstance(msg, playerspaz.PlayerSpazDeathMessage):
             from bastd.actor import respawnicon
             self._a_player_has_been_killed = True
-            player = msg.spaz.getplayer()
+            player = msg.getspaz(self).getplayer()
             if player is None:
                 ba.print_error('FIXME: getplayer() should no'
                                ' longer ever be returning None')

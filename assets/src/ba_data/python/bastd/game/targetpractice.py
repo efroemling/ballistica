@@ -38,7 +38,7 @@ if TYPE_CHECKING:
 
 
 # ba_meta export game
-class TargetPracticeGame(ba.TeamGameActivity):
+class TargetPracticeGame(ba.TeamGameActivity[ba.Player, ba.Team]):
     """Game where players try to hit targets with bombs."""
 
     @classmethod
@@ -187,7 +187,7 @@ class TargetPracticeGame(ba.TeamGameActivity):
         # When players die, respawn them.
         if isinstance(msg, playerspaz.PlayerSpazDeathMessage):
             super().handlemessage(msg)  # Do standard stuff.
-            player = msg.spaz.getplayer()
+            player = msg.getspaz(self).getplayer()
             assert player is not None
             self.respawn_player(player)  # Kick off a respawn.
         elif isinstance(msg, Target.TargetHitMessage):

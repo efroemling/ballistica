@@ -22,21 +22,24 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
-import _ba
 from ba._freeforallsession import FreeForAllSession
 from ba._gameactivity import GameActivity
 from ba._gameresults import TeamGameResults
 from ba._dualteamsession import DualTeamSession
+import _ba
 
 if TYPE_CHECKING:
     from typing import Any, Dict, Type, Sequence
     from bastd.actor.playerspaz import PlayerSpaz
     import ba
 
+PlayerType = TypeVar('PlayerType', bound='ba.Player')
+TeamType = TypeVar('TeamType', bound='ba.Team')
 
-class TeamGameActivity(GameActivity):
+
+class TeamGameActivity(GameActivity[PlayerType, TeamType]):
     """Base class for teams and free-for-all mode games.
 
     Category: Gameplay Classes
@@ -56,6 +59,7 @@ class TeamGameActivity(GameActivity):
                 or issubclass(sessiontype, FreeForAllSession))
 
     def __init__(self, settings: Dict[str, Any]):
+
         super().__init__(settings)
 
         # By default we don't show kill-points in free-for-all.
@@ -104,7 +108,7 @@ class TeamGameActivity(GameActivity):
             _error.print_exception()
 
     def spawn_player_spaz(self,
-                          player: ba.Player,
+                          player: PlayerType,
                           position: Sequence[float] = None,
                           angle: float = None) -> PlayerSpaz:
         """
@@ -117,7 +121,7 @@ class TeamGameActivity(GameActivity):
         if position is None:
             # In teams-mode get our team-start-location.
             if isinstance(self.session, DualTeamSession):
-                position = (self.map.get_start_position(player.team.get_id()))
+                position = (self.map.get_start_position(player.team.id))
             else:
                 # Otherwise do free-for-all spawn locations.
                 position = self.map.get_ffa_start_position(self.players)

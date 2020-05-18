@@ -25,8 +25,8 @@ from __future__ import annotations
 import weakref
 from typing import TYPE_CHECKING, TypeVar
 
-from ba._messages import DieMessage, DeathType, OutOfBoundsMessage
-from ba import _error
+from ba._messages import DieMessage, DeathType, OutOfBoundsMessage, UNHANDLED
+from ba._error import print_error, print_exception, ActivityNotFoundError
 import _ba
 
 if TYPE_CHECKING:
@@ -97,10 +97,10 @@ class Actor:
             # Non-expired Actors send themselves a DieMessage when going down.
             # That way we can treat DieMessage handling as the single
             # point-of-action for death.
-            if not self.is_expired():
+            if not self.expired:
                 self.handlemessage(DieMessage())
         except Exception:
-            _error.print_exception('exception in ba.Actor.__del__() for', self)
+            print_exception('exception in ba.Actor.__del__() for', self)
 
     def handlemessage(self, msg: Any) -> Any:
         """General message handling; can be passed any message object."""
@@ -111,7 +111,7 @@ class Actor:
         if isinstance(msg, OutOfBoundsMessage):
             return self.handlemessage(DieMessage(how=DeathType.OUT_OF_BOUNDS))
 
-        return _error.UNHANDLED
+        return UNHANDLED
 
     def autoretain(self: T) -> T:
         """Keep this Actor alive without needing to hold a reference to it.
@@ -126,7 +126,7 @@ class Actor:
         """
         activity = self._activity()
         if activity is None:
-            raise _error.ActivityNotFoundError()
+            raise ActivityNotFoundError()
         activity.retain_actor(self)
         return self
 
@@ -144,13 +144,14 @@ class Actor:
         likely result in errors.
         """
 
-    def is_expired(self) -> bool:
-        """Returns whether the Actor is expired.
+    @property
+    def expired(self) -> bool:
+        """Whether the Actor is expired.
 
         (see ba.Actor.on_expire())
         """
         activity = self.getactivity(doraise=False)
-        return True if activity is None else activity.is_expired()
+        return True if activity is None else activity.expired
 
     def exists(self) -> bool:
         """Returns whether the Actor is still present in a meaningful way.
@@ -195,13 +196,12 @@ class Actor:
         avoided.
         """
         if not __debug__:
-            _error.print_error('This should only be called in __debug__ mode.',
-                               once=True)
+            print_error('This should only be called in __debug__ mode.',
+                        once=True)
         if not getattr(self, '_root_actor_init_called', False):
-            _error.print_error('Root Actor __init__() not called.')
-        if self.is_expired():
-            _error.print_error(
-                f'handlemessage() called on expired actor: {self}')
+            print_error('Root Actor __init__() not called.')
+        if self.expired:
+            print_error(f'handlemessage() called on expired actor: {self}')
 
     @property
     def activity(self) -> ba.Activity:
@@ -211,7 +211,7 @@ class Actor:
         """
         activity = self._activity()
         if activity is None:
-            raise _error.ActivityNotFoundError()
+            raise ActivityNotFoundError()
         return activity
 
     def getactivity(self, doraise: bool = True) -> Optional[ba.Activity]:
@@ -222,5 +222,5 @@ class Actor:
         """
         activity = self._activity()
         if activity is None and doraise:
-            raise _error.ActivityNotFoundError()
+            raise ActivityNotFoundError()
         return activity

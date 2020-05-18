@@ -39,7 +39,7 @@ if TYPE_CHECKING:
 
 
 # ba_meta export game
-class EasterEggHuntGame(ba.TeamGameActivity):
+class EasterEggHuntGame(ba.TeamGameActivity[ba.Player, ba.Team]):
     """A game where score is based on collecting eggs."""
 
     @classmethod
@@ -212,7 +212,7 @@ class EasterEggHuntGame(ba.TeamGameActivity):
 
             # Augment standard behavior.
             super().handlemessage(msg)
-            player = msg.spaz.getplayer()
+            player = msg.getspaz(self).getplayer()
             if not player:
                 return
             self.stats.player_was_killed(player)

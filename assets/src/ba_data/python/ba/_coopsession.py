@@ -173,9 +173,9 @@ class CoopSession(Session):
     def get_custom_menu_entries(self) -> List[Dict[str, Any]]:
         return self._custom_menu_ui
 
-    def on_player_leave(self, player: ba.Player) -> None:
+    def on_player_leave(self, sessionplayer: ba.SessionPlayer) -> None:
         from ba._general import WeakCall
-        super().on_player_leave(player)
+        super().on_player_leave(sessionplayer)
 
         # If all our players leave we wanna quit out of the session.
         _ba.timer(2.0, WeakCall(self._end_session_if_empty))
@@ -213,7 +213,7 @@ class CoopSession(Session):
         from bastd.ui.tournamententry import TournamentEntryWindow
         from ba._gameactivity import GameActivity
         activity = self.getactivity()
-        if activity is not None and not activity.is_expired():
+        if activity is not None and not activity.expired:
             assert self.tournament_id is not None
             assert isinstance(activity, GameActivity)
             TournamentEntryWindow(tournament_id=self.tournament_id,
@@ -235,7 +235,7 @@ class CoopSession(Session):
         # This method may get called from the UI context so make sure we
         # explicitly run in the activity's context.
         activity = self.getactivity()
-        if activity is not None and not activity.is_expired():
+        if activity is not None and not activity.expired:
             activity.can_show_ad_on_death = True
             with _ba.Context(activity):
                 activity.end(results={'outcome': 'restart'}, force=True)

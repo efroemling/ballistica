@@ -21,7 +21,7 @@
 """Functionality related to co-op games."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
 import _ba
 from ba._gameactivity import GameActivity
@@ -31,8 +31,11 @@ if TYPE_CHECKING:
     from bastd.actor.playerspaz import PlayerSpaz
     import ba
 
+PlayerType = TypeVar('PlayerType', bound='ba.Player')
+TeamType = TypeVar('TeamType', bound='ba.Team')
 
-class CoopGameActivity(GameActivity):
+
+class CoopGameActivity(GameActivity[PlayerType, TeamType]):
     """Base class for cooperative-mode games.
 
     Category: Gameplay Classes
@@ -187,7 +190,7 @@ class CoopGameActivity(GameActivity):
                 vval -= 55
 
     def spawn_player_spaz(self,
-                          player: ba.Player,
+                          player: PlayerType,
                           position: Sequence[float] = (0.0, 0.0, 0.0),
                           angle: float = None) -> PlayerSpaz:
         """Spawn and wire up a standard player spaz."""

@@ -25,7 +25,7 @@
 # Targets in this top level Makefile do not expect -jX to be passed to them
 # and generally handle spawning an appropriate number of child jobs themselves.
 
-# Prefix used for output of docs/changelogs/etc targets for use in webpages.
+# Prefix used for output of docs/changelogs/etc. targets for use in webpages.
 DOCPREFIX = "ballisticacore_"
 
 
@@ -475,12 +475,12 @@ update-check: prereqs
 # Run formatting on all files in the project considered 'dirty'.
 format:
 	@${MAKE} -j3 format-code format-scripts format-makefile
-	@echo Formatting complete!
+	@tools/snippets echo GRN Formatting complete!
 
 # Same but always formats; ignores dirty state.
 format-full:
 	@${MAKE} -j3 format-code-full format-scripts-full format-makefile
-	@echo Formatting complete!
+	@tools/snippets echo GRN Formatting complete!
 
 # Run formatting for compiled code sources (.cc, .h, etc.).
 format-code: prereqs
@@ -515,22 +515,22 @@ format-makefile: prereqs
 # Run all project checks. (static analysis)
 check: update-check
 	@${MAKE} -j3 cpplint pylint mypy
-	@echo ALL CHECKS PASSED!
+	@tools/snippets echo GRN ALL CHECKS PASSED!
 
 # Same as check but no caching (all files are checked).
 check-full: update-check
 	@${MAKE} -j3 cpplint-full pylint-full mypy-full
-	@echo ALL CHECKS PASSED!
+	@tools/snippets echo GRN ALL CHECKS PASSED!
 
 # Same as 'check' plus optional/slow extra checks.
 check2: update-check
 	@${MAKE} -j4 cpplint pylint mypy pycharm
-	@echo ALL CHECKS PASSED!
+	@tools/snippets echo GRN ALL CHECKS PASSED!
 
 # Same as check2 but no caching (all files are checked).
 check2-full: update-check
 	@${MAKE} -j4 cpplint-full pylint-full mypy-full pycharm-full
-	@echo ALL CHECKS PASSED!
+	@tools/snippets echo GRN ALL CHECKS PASSED!
 
 # Run Cpplint checks on all C/C++ code.
 cpplint: prereqs
@@ -586,6 +586,7 @@ pycharm-full: prereqs
 
 # Run all tests. (live execution verification)
 test: prereqs
+	@tools/snippets echo BLU Running all tests...
 	@tools/snippets pytest -v tests
 
 # Run tests with any caching disabled.
@@ -615,28 +616,28 @@ preflight:
 	@${MAKE} format
 	@${MAKE} update
 	@${MAKE} -j4 cpplint pylint mypy test
-	@echo PREFLIGHT SUCCESSFUL!
+	@tools/snippets echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
 # Same as 'preflight' without caching (all files are visited).
 preflight-full:
 	@${MAKE} format-full
 	@${MAKE} update
 	@${MAKE} -j4 cpplint-full pylint-full mypy-full test-full
-	@echo PREFLIGHT SUCCESSFUL!
+	@tools/snippets echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
 # Same as 'preflight' plus optional/slow extra checks.
 preflight2:
 	@${MAKE} format
 	@${MAKE} update
 	@${MAKE} -j5 cpplint pylint mypy pycharm test
-	@echo PREFLIGHT SUCCESSFUL!
+	@tools/snippets echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
 # Same as 'preflight2' but without caching (all files visited).
 preflight2-full:
 	@${MAKE} format-full
 	@${MAKE} update
 	@${MAKE} -j5 cpplint-full pylint-full mypy-full pycharm-full test-full
-	@echo PREFLIGHT SUCCESSFUL!
+	@tools/snippets echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
 # Tell make which of these targets don't represent files.
 .PHONY: preflight preflight-full preflight2 preflight2-full
@@ -675,28 +676,28 @@ TOOL_CFG_SRC = tools/efrotools/snippets.py config/config.json
 ENV_SRC = tools/snippets tools/batools/build.py
 
 .clang-format: config/toolconfigsrc/clang-format ${TOOL_CFG_SRC}
-	${TOOL_CFG_INST} $< $@
+	@${TOOL_CFG_INST} $< $@
 
 .style.yapf: config/toolconfigsrc/style.yapf ${TOOL_CFG_SRC}
-	${TOOL_CFG_INST} $< $@
+	@${TOOL_CFG_INST} $< $@
 
 .pylintrc: config/toolconfigsrc/pylintrc ${TOOL_CFG_SRC}
-	${TOOL_CFG_INST} $< $@
+	@${TOOL_CFG_INST} $< $@
 
 .projectile: config/toolconfigsrc/projectile ${TOOL_CFG_SRC}
-	${TOOL_CFG_INST} $< $@
+	@${TOOL_CFG_INST} $< $@
 
 .editorconfig: config/toolconfigsrc/editorconfig ${TOOL_CFG_SRC}
-	${TOOL_CFG_INST} $< $@
+	@${TOOL_CFG_INST} $< $@
 
 .dir-locals.el: config/toolconfigsrc/dir-locals.el ${TOOL_CFG_SRC}
-	${TOOL_CFG_INST} $< $@
+	@${TOOL_CFG_INST} $< $@
 
 .mypy.ini: config/toolconfigsrc/mypy.ini ${TOOL_CFG_SRC}
-	${TOOL_CFG_INST} $< $@
+	@${TOOL_CFG_INST} $< $@
 
 .pycheckers: config/toolconfigsrc/pycheckers ${TOOL_CFG_SRC}
-	${TOOL_CFG_INST} $< $@
+	@${TOOL_CFG_INST} $< $@
 
 # Include anything as sources here that should require
 .cache/checkenv: ${ENV_SRC}

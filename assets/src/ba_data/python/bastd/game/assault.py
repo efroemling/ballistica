@@ -29,14 +29,14 @@ import random
 from typing import TYPE_CHECKING
 
 import ba
-from bastd.actor import playerspaz
+from bastd.actor.playerspaz import PlayerSpaz, PlayerSpazDeathMessage
 
 if TYPE_CHECKING:
     from typing import Any, Type, List, Dict, Tuple, Sequence, Union
 
 
 # ba_meta export game
-class AssaultGame(ba.TeamGameActivity):
+class AssaultGame(ba.TeamGameActivity[ba.Player, ba.Team]):
     """Game where you score by touching the other team's flag."""
 
     @classmethod
@@ -109,7 +109,7 @@ class AssaultGame(ba.TeamGameActivity):
         self.setup_standard_time_limit(self.settings_raw['Time Limit'])
         self.setup_standard_powerup_drops()
         for team in self.teams:
-            mat = self._base_region_materials[team.get_id()] = ba.Material()
+            mat = self._base_region_materials[team.id] = ba.Material()
             mat.add_actions(conditions=('they_have_material',
                                         ba.sharedobj('player_material')),
                             actions=(('modify_part_collision', 'collide',
@@ -121,8 +121,7 @@ class AssaultGame(ba.TeamGameActivity):
 
         # Create a score region and flag for each team.
         for team in self.teams:
-            team.gamedata['base_pos'] = self.map.get_flag_position(
-                team.get_id())
+            team.gamedata['base_pos'] = self.map.get_flag_position(team.id)
 
             ba.newnode('light',
                        attrs={
@@ -139,20 +138,20 @@ class AssaultGame(ba.TeamGameActivity):
                                          position=team.gamedata['base_pos'],
                                          color=team.color)
             basepos = team.gamedata['base_pos']
-            ba.newnode(
-                'region',
-                owner=team.gamedata['flag'].node,
-                attrs={
-                    'position': (basepos[0], basepos[1] + 0.75, basepos[2]),
-                    'scale': (0.5, 0.5, 0.5),
-                    'type': 'sphere',
-                    'materials': [self._base_region_materials[team.get_id()]]
-                })
+            ba.newnode('region',
+                       owner=team.gamedata['flag'].node,
+                       attrs={
+                           'position':
+                               (basepos[0], basepos[1] + 0.75, basepos[2]),
+                           'scale': (0.5, 0.5, 0.5),
+                           'type': 'sphere',
+                           'materials': [self._base_region_materials[team.id]]
+                       })
 
     def handlemessage(self, msg: Any) -> Any:
-        if isinstance(msg, playerspaz.PlayerSpazDeathMessage):
+        if isinstance(msg, PlayerSpazDeathMessage):
             super().handlemessage(msg)  # Augment standard.
-            self.respawn_player(msg.spaz.player)
+            self.respawn_player(msg.getspaz(self).player)
         else:
             super().handlemessage(msg)
 
@@ -173,14 +172,15 @@ class AssaultGame(ba.TeamGameActivity):
         cnode = ba.get_collision_info('opposing_node')
         assert isinstance(cnode, ba.Node)
         actor = cnode.getdelegate()
-        if not isinstance(actor, playerspaz.PlayerSpaz):
+        if not isinstance(actor, PlayerSpaz):
             return
+
         player = actor.getplayer()
-        if not player or not player.is_alive():
+        if not player or not player.actor:
             return
 
         # If its another team's player, they scored.
-        player_team = player.team
+        player_team: ba.Team[ba.Player] = player.team
         if player_team is not team:
 
             # Prevent multiple simultaneous scores.
@@ -194,24 +194,22 @@ class AssaultGame(ba.TeamGameActivity):
                 # and add flashes of light so its noticeable.
                 for player in player_team.players:
                     if player.is_alive():
-                        if player.node:
-                            pos = player.node.position
-                            light = ba.newnode('light',
-                                               attrs={
-                                                   'position': pos,
-                                                   'color': player_team.color,
-                                                   'height_attenuated': False,
-                                                   'radius': 0.4
-                                               })
-                            ba.timer(0.5, light.delete)
-                            ba.animate(light, 'intensity', {
-                                0: 0,
-                                0.1: 1.0,
-                                0.5: 0
-                            })
+                        pos = player.node.position
+                        light = ba.newnode('light',
+                                           attrs={
+                                               'position': pos,
+                                               'color': player_team.color,
+                                               'height_attenuated': False,
+                                               'radius': 0.4
+                                           })
+                        ba.timer(0.5, light.delete)
+                        ba.animate(light, 'intensity', {
+                            0: 0,
+                            0.1: 1.0,
+                            0.5: 0
+                        })
 
-                        new_pos = (self.map.get_start_position(
-                            player_team.get_id()))
+                        new_pos = (self.map.get_start_position(player_team.id))
                         light = ba.newnode('light',
                                            attrs={
                                                'position': new_pos,

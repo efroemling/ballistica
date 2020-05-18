@@ -62,7 +62,7 @@ def run_cpu_benchmark() -> None:
             cfg['Graphics Quality'] = self._old_quality
             cfg.apply()
 
-        def on_player_request(self, player: ba.Player) -> bool:
+        def on_player_request(self, player: ba.SessionPlayer) -> bool:
             return False
 
     _ba.new_host_session(BenchmarkSession, benchmark_type='cpu')

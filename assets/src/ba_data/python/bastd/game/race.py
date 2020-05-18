@@ -67,7 +67,7 @@ class RaceRegion(ba.Actor):
 
 
 # ba_meta export game
-class RaceGame(ba.TeamGameActivity):
+class RaceGame(ba.TeamGameActivity[ba.Player, ba.Team]):
     """Game of racing around a track."""
 
     @classmethod
@@ -733,7 +733,7 @@ class RaceGame(ba.TeamGameActivity):
         if isinstance(msg, PlayerSpazDeathMessage):
             # Augment default behavior.
             super().handlemessage(msg)
-            player = msg.spaz.getplayer()
+            player = msg.getspaz(self).getplayer()
             if not player:
                 ba.print_error('got no player in PlayerSpazDeathMessage')
                 return

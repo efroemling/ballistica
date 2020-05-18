@@ -26,9 +26,9 @@ import copy
 import logging
 from typing import TYPE_CHECKING, Generic, TypeVar, overload
 
-from efro.entity._support import (BaseField, BoundCompoundValue,
-                                  BoundListField, BoundDictField,
-                                  BoundCompoundListField,
+from efro.entity._base import BaseField
+from efro.entity._support import (BoundCompoundValue, BoundListField,
+                                  BoundDictField, BoundCompoundListField,
                                   BoundCompoundDictField)
 from efro.entity.util import have_matching_fields
 

@@ -136,7 +136,7 @@ class RespawnIcon:
         """Return info on where we should be shown and stored."""
         activity = ba.getactivity()
         if isinstance(ba.getsession(), ba.DualTeamSession):
-            on_right = player.team.get_id() % 2 == 1
+            on_right = player.team.id % 2 == 1
 
             # Store a list of icons in the team.
             try:

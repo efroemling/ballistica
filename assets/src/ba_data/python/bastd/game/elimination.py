@@ -164,7 +164,7 @@ class Icon(ba.Actor):
 
 
 # ba_meta export game
-class EliminationGame(ba.TeamGameActivity):
+class EliminationGame(ba.TeamGameActivity[ba.Player, ba.Team]):
     """Game type where last player(s) left alive win."""
 
     @classmethod
@@ -330,7 +330,7 @@ class EliminationGame(ba.TeamGameActivity):
                 # Now for each team, cycle through our available players
                 # adding icons.
                 for team in self.teams:
-                    if team.get_id() == 0:
+                    if team.id == 0:
                         xval = -60
                         x_offs = -78
                     else:
@@ -362,7 +362,7 @@ class EliminationGame(ba.TeamGameActivity):
             # Non-solo mode.
             else:
                 for team in self.teams:
-                    if team.get_id() == 0:
+                    if team.id == 0:
                         xval = -50
                         x_offs = -85
                     else:
@@ -395,8 +395,7 @@ class EliminationGame(ba.TeamGameActivity):
                 player_pos = ba.Vec3(living_player_pos)
                 points: List[Tuple[float, ba.Vec3]] = []
                 for team in self.teams:
-                    start_pos = ba.Vec3(
-                        self.map.get_start_position(team.get_id()))
+                    start_pos = ba.Vec3(self.map.get_start_position(team.id))
                     points.append(
                         ((start_pos - player_pos).length(), start_pos))
                 # Hmm.. we need to sorting vectors too?
@@ -492,7 +491,7 @@ class EliminationGame(ba.TeamGameActivity):
 
             # Augment standard behavior.
             super().handlemessage(msg)
-            player = msg.spaz.player
+            player = msg.getspaz(self).player
 
             player.gamedata['lives'] -= 1
             if player.gamedata['lives'] < 0:

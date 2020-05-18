@@ -36,7 +36,7 @@ from typing import TYPE_CHECKING
 import _ba
 
 if TYPE_CHECKING:
-    from typing import List, Sequence, Optional
+    from typing import List, Sequence, Optional, Dict, Any
     import ba
 
 
@@ -346,3 +346,13 @@ def local_chat_message(msg: str) -> None:
 def handle_remote_achievement_list(completed_achievements: List[str]) -> None:
     from ba import _achievement
     _achievement.set_completed_achievements(completed_achievements)
+
+
+def get_player_icon(sessionplayer: ba.SessionPlayer) -> Dict[str, Any]:
+    info = sessionplayer.get_icon_info()
+    return {
+        'texture': _ba.gettexture(info['texture']),
+        'tint_texture': _ba.gettexture(info['tint_texture']),
+        'tint_color': info['tint_color'],
+        'tint2_color': info['tint2_color']
+    }

@@ -94,7 +94,7 @@ class ServerCallThread(threading.Thread):
         # this check manually?
         if self._activity is not None:
             activity = self._activity()
-            if activity is None or activity.is_expired():
+            if activity is None or activity.expired:
                 return
 
         # Technically we could do the same check for session contexts,

@@ -39,7 +39,7 @@ if TYPE_CHECKING:
 
 
 # ba_meta export game
-class KingOfTheHillGame(ba.TeamGameActivity):
+class KingOfTheHillGame(ba.TeamGameActivity[ba.Player, ba.Team]):
     """Game where a team wins by holding a 'hill' for a set amount of time."""
 
     FLAG_NEW = 0
@@ -281,7 +281,7 @@ class KingOfTheHillGame(ba.TeamGameActivity):
             super().handlemessage(msg)  # Augment default.
 
             # No longer can count as at_flag once dead.
-            player = msg.spaz.player
+            player = msg.getspaz(self).player
             player.gamedata['at_flag'] = 0
             self._update_flag_state()
             self.respawn_player(player)

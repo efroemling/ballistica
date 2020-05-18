@@ -38,7 +38,7 @@ if TYPE_CHECKING:
 
 
 # ba_meta export game
-class NinjaFightGame(ba.TeamGameActivity):
+class NinjaFightGame(ba.TeamGameActivity[ba.Player, ba.Team]):
     """
     A co-op game where you try to defeat a group
     of Ninjas as fast as possible
@@ -148,7 +148,7 @@ class NinjaFightGame(ba.TeamGameActivity):
         # A player has died.
         if isinstance(msg, playerspaz.PlayerSpazDeathMessage):
             super().handlemessage(msg)  # do standard stuff
-            self.respawn_player(msg.spaz.player)  # kick off a respawn
+            self.respawn_player(msg.getspaz(self).player)  # kick off a respawn
 
         # A spaz-bot has died.
         elif isinstance(msg, spazbot.SpazBotDeathMessage):

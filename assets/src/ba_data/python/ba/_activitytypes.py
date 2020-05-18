@@ -26,6 +26,9 @@ from typing import TYPE_CHECKING
 import _ba
 from ba._activity import Activity
 from ba._music import setmusic, MusicType
+# False positive due to our class_generics_filter custom pylint filter.
+from ba._player import Player  # pylint: disable=W0611
+from ba._team import Team  # pylint: disable=W0611
 
 if TYPE_CHECKING:
     from typing import Any, Dict, Optional
@@ -33,7 +36,7 @@ if TYPE_CHECKING:
     from ba._lobby import JoinInfo
 
 
-class EndSessionActivity(Activity):
+class EndSessionActivity(Activity[Player, Team]):
     """Special ba.Activity to fade out and end the current ba.Session."""
 
     def __init__(self, settings: Dict[str, Any]):
@@ -61,7 +64,7 @@ class EndSessionActivity(Activity):
         call_after_ad(Call(_ba.new_host_session, MainMenuSession))
 
 
-class JoinActivity(Activity):
+class JoinActivity(Activity[Player, Team]):
     """Standard activity for waiting for players to join.
 
     It shows tips and other info and waits for all players to check ready.
@@ -98,7 +101,7 @@ class JoinActivity(Activity):
         _ba.set_analytics_screen('Joining Screen')
 
 
-class TransitionActivity(Activity):
+class TransitionActivity(Activity[Player, Team]):
     """A simple overlay fade out/in.
 
     Useful as a bare minimum transition between two level based activities.
@@ -131,7 +134,7 @@ class TransitionActivity(Activity):
         _ba.timer(0.1, self.end)
 
 
-class ScoreScreenActivity(Activity):
+class ScoreScreenActivity(Activity[Player, Team]):
     """A standard score screen that fades in and shows stuff for a while.
 
     After a specified delay, player input is assigned to end the activity.

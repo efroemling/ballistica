@@ -28,7 +28,7 @@ import astroid
 
 if TYPE_CHECKING:
     from astroid import node_classes as nc
-    from typing import Set, Dict, Any
+    from typing import Set, Dict, Any, List
 
 VERBOSE = False
 
@@ -199,9 +199,49 @@ def var_annotations_filter(node: nc.NodeNG) -> nc.NodeNG:
     return node
 
 
+# Stripping subscripts on some generics seems to cause
+# more harm than good, so we leave some intact.
+ALLOWED_GENERICS = {'Sequence'}
+
+
+def _is_strippable_subscript(node: nc.NodeNG) -> bool:
+    if isinstance(node, astroid.Subscript):
+        # We can strip if its not in our allowed list.
+        if not (isinstance(node.value, astroid.Name)
+                and node.value.name in ALLOWED_GENERICS):
+            return True
+    return False
+
+
+def class_generics_filter(node: nc.NodeNG) -> nc.NodeNG:
+    """Filter generics subscripts out of class declarations."""
+
+    # First, quick-out if nothing here should be filtered.
+    found = False
+    for base in node.bases:
+        if _is_strippable_subscript(base):
+            found = True
+
+    if not found:
+        return node
+
+    # Now strip subscripts from base classes.
+    new_bases: List[nc.NodeNG] = []
+    for base in node.bases:
+        if _is_strippable_subscript(base):
+            new_bases.append(base.value)
+            base.value.parent = node
+        else:
+            new_bases.append(base)
+    node.bases = new_bases
+
+    return node
+
+
 def register_plugins(manager: astroid.Manager) -> None:
     """Apply our transforms to a given astroid manager object."""
 
+    # Hmm; is this still necessary?
     if VERBOSE:
         manager.register_failed_import_hook(failed_import_hook)
 
@@ -210,16 +250,30 @@ def register_plugins(manager: astroid.Manager) -> None:
     # check code as if it doesn't exist at all.
     manager.register_transform(astroid.If, ignore_type_check_filter)
 
+    # We use 'reveal_type()' quite often, which tells mypy to print
+    # the type of an expression. Let's ignore it in Pylint's eyes so
+    # we don't see an ugly error there.
     manager.register_transform(astroid.Call, ignore_reveal_type_call)
 
-    # Annotations on variables within a function are defer-eval'ed
-    # in some cases, so lets replace them with simple strings in those
-    # cases to avoid type complaints.
-    # (mypy will still properly alert us to type errors for them)
+    # We make use of 'from __future__ import annotations' which causes Python
+    # to receive annotations as strings, and also 'if TYPE_CHECKING:' blocks,
+    # which lets us do imports and whatnot that are limited to type-checking.
+    # Let's make Pylint understand these.
     manager.register_transform(astroid.AnnAssign, var_annotations_filter)
     manager.register_transform(astroid.FunctionDef, func_annotations_filter)
     manager.register_transform(astroid.AsyncFunctionDef,
                                func_annotations_filter)
+
+    # Pylint doesn't seem to support Generics much right now, and it seems
+    # to lead to some buggy behavior and slowdowns. So let's filter them
+    # out. So instead of this:
+    #   class MyClass(MyType[T]):
+    # Pylint will see this:
+    #   class MyClass(MyType):
+    # I've opened a github issue related to the problems I was hitting,
+    # so we can revisit the need for this if that gets resolved.
+    # https://github.com/PyCQA/pylint/issues/3605
+    manager.register_transform(astroid.ClassDef, class_generics_filter)
 
 
 register_plugins(astroid.MANAGER)

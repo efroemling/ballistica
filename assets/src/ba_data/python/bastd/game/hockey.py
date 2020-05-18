@@ -100,14 +100,13 @@ class Puck(ba.Actor):
                 if activity:
                     if msg.source_player in activity.players:
                         self.last_players_to_touch[
-                            msg.source_player.team.get_id(
-                            )] = msg.source_player
+                            msg.source_player.team.id] = msg.source_player
         else:
             super().handlemessage(msg)
 
 
 # ba_meta export game
-class HockeyGame(ba.TeamGameActivity):
+class HockeyGame(ba.TeamGameActivity[ba.Player, ba.Team]):
     """Ice hockey game."""
 
     @classmethod
@@ -255,8 +254,10 @@ class HockeyGame(ba.TeamGameActivity):
             player = playernode.getdelegate().getplayer()
         except Exception:
             player = puck = None
+        assert isinstance(player, ba.Player)
+        assert isinstance(puck, Puck)
         if player and puck:
-            puck.last_players_to_touch[player.team.get_id()] = player
+            puck.last_players_to_touch[player.team.id] = player
 
     def _kill_puck(self) -> None:
         self._puck = None
@@ -279,7 +280,7 @@ class HockeyGame(ba.TeamGameActivity):
                 break
 
         for team in self.teams:
-            if team.get_id() == index:
+            if team.id == index:
                 scoring_team = team
                 team.gamedata['score'] += 1
 
@@ -290,13 +291,12 @@ class HockeyGame(ba.TeamGameActivity):
 
                 # If we've got the player from the scoring team that last
                 # touched us, give them points.
-                if (scoring_team.get_id() in self._puck.last_players_to_touch
-                        and self._puck.last_players_to_touch[
-                            scoring_team.get_id()]):
-                    self.stats.player_scored(self._puck.last_players_to_touch[
-                        scoring_team.get_id()],
-                                             100,
-                                             big_message=True)
+                if (scoring_team.id in self._puck.last_players_to_touch
+                        and self._puck.last_players_to_touch[scoring_team.id]):
+                    self.stats.player_scored(
+                        self._puck.last_players_to_touch[scoring_team.id],
+                        100,
+                        big_message=True)
 
                 # End game if we won.
                 if team.gamedata['score'] >= self.settings_raw['Score to Win']:
@@ -341,7 +341,7 @@ class HockeyGame(ba.TeamGameActivity):
         if isinstance(msg, playerspaz.PlayerSpazDeathMessage):
             # Augment standard behavior...
             super().handlemessage(msg)
-            self.respawn_player(msg.spaz.player)
+            self.respawn_player(msg.getspaz(self).player)
 
         # Respawn dead pucks.
         elif isinstance(msg, PuckDeathMessage):

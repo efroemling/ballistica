@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 
 
 # ba_meta export game
-class ChosenOneGame(ba.TeamGameActivity):
+class ChosenOneGame(ba.TeamGameActivity[ba.Player, ba.Team]):
     """
     Game involving trying to remain the one 'chosen one'
     for a set length of time while everyone else tries to
@@ -327,7 +327,7 @@ class ChosenOneGame(ba.TeamGameActivity):
         if isinstance(msg, playerspaz.PlayerSpazDeathMessage):
             # Augment standard behavior.
             super().handlemessage(msg)
-            player = msg.spaz.player
+            player = msg.getspaz(self).player
             if player is self._get_chosen_one_player():
                 killerplayer = msg.killerplayer
                 self._set_chosen_one_player(None if (

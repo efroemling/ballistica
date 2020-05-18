@@ -187,7 +187,7 @@ def _py_symbol_at_column(line: str, col: int) -> str:
     return line[start:end]
 
 
-def py_examine(filename: Path, line: int, column: int,
+def py_examine(projroot: Path, filename: Path, line: int, column: int,
                selection: Optional[str], operation: str) -> None:
     """Given file position info, performs some code inspection."""
     # pylint: disable=too-many-locals
@@ -242,7 +242,7 @@ def py_examine(filename: Path, line: int, column: int,
         with tmppath.open('w') as outfile:
             outfile.write('\n'.join(flines))
         try:
-            code.runmypy([str(tmppath)], check=False)
+            code.runmypy(projroot, [str(tmppath)], check=False)
         except Exception as exc:
             print('error running mypy:', exc)
         tmppath.unlink()

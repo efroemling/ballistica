@@ -181,7 +181,7 @@ class ButtonRelease:
                      timeformat=ba.TimeFormat.MILLISECONDS)
 
 
-class TutorialActivity(ba.Activity):
+class TutorialActivity(ba.Activity[ba.Player, ba.Team]):
 
     def __init__(self, settings: Dict[str, Any] = None):
         from bastd.maps import Rampage
