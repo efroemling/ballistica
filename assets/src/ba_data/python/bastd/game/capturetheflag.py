@@ -38,7 +38,9 @@ if TYPE_CHECKING:
 
 
 class CTFFlag(stdflag.Flag):
-    """Special flag type for ctf games."""
+    """Special flag type for CTF games."""
+
+    activity: CaptureTheFlagGame
 
     def __init__(self, team: Team):
         assert team.flagmaterial is not None
@@ -63,8 +65,7 @@ class CTFFlag(stdflag.Flag):
         """Clear flag related times in the activity."""
         self.time_out_respawn_time = int(
             self.activity.settings_raw['Flag Idle Return Time'])
-        self.touch_return_time = float(
-            self.activity.settings_raw['Flag Touch Return Time'])
+        self.touch_return_time = float(self.activity.flag_touch_return_time)
 
     @property
     def team(self) -> Team:
@@ -163,8 +164,6 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
     def __init__(self, settings: Dict[str, Any]):
         super().__init__(settings)
         self._scoreboard = Scoreboard()
-        if self.settings_raw['Epic Mode']:
-            self.slow_motion = True
         self._alarmsound = ba.getsound('alarm')
         self._ticking_sound = ba.getsound('ticking')
         self._last_score_time = 0
@@ -172,25 +171,35 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
         self._swipsound = ba.getsound('swip')
         self._all_bases_material = ba.Material()
         self._last_home_flag_notice_print_time = 0.0
+        self._score_to_win = int(settings['Score to Win'])
+        self._flag_touch_return_time = float(
+            settings['Flag Touch Return Time'])
+        self._epic_mode = bool(settings['Epic Mode'])
+        self._time_limit = float(settings['Time Limit'])
+
+        # Base class overrides
+        self.slow_motion = self._epic_mode
+        self.default_music = (ba.MusicType.EPIC if self._epic_mode else
+                              ba.MusicType.FLAG_CATCHER)
+
+    @property
+    def flag_touch_return_time(self) -> float:
+        """How long a flag must be touched for to return it to base."""
+        return self._flag_touch_return_time
 
     def get_instance_description(self) -> Union[str, Sequence]:
-        if self.settings_raw['Score to Win'] == 1:
+        if self._score_to_win == 1:
             return 'Steal the enemy flag.'
-        return ('Steal the enemy flag ${ARG1} times.',
-                self.settings_raw['Score to Win'])
+        return 'Steal the enemy flag ${ARG1} times.', self._score_to_win
 
     def get_instance_scoreboard_description(self) -> Union[str, Sequence]:
-        if self.settings_raw['Score to Win'] == 1:
+        if self._score_to_win == 1:
             return 'return 1 flag'
-        return 'return ${ARG1} flags', self.settings_raw['Score to Win']
-
-    def on_transition_in(self) -> None:
-        self.default_music = (ba.MusicType.EPIC
-                              if self.settings_raw['Epic Mode'] else
-                              ba.MusicType.FLAG_CATCHER)
-        super().on_transition_in()
+        return 'return ${ARG1} flags', self._score_to_win
 
     def create_team(self, sessionteam: ba.SessionTeam) -> Team:
+
+        # Create our team instance and its initial values.
 
         base_pos = self.map.get_flag_position(sessionteam.id)
         self.project_flag_stand(base_pos)
@@ -264,7 +273,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
 
     def on_begin(self) -> None:
         super().on_begin()
-        self.setup_standard_time_limit(self.settings_raw['Time Limit'])
+        self.setup_standard_time_limit(self._time_limit)
         self.setup_standard_powerup_drops()
         ba.timer(1.0, call=self._tick, repeat=True)
 
@@ -377,7 +386,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
                 assert reset_team.flag is not None
                 reset_team.flag.handlemessage(ba.DieMessage())
             reset_team.enemy_flag_at_base = False
-        if team.score >= self.settings_raw['Score to Win']:
+        if team.score >= self._score_to_win:
             self.end_game()
 
     def end_game(self) -> None:
@@ -434,8 +443,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
     def _award_players_touching_own_flag(self, team: Team) -> None:
         for player in team.players:
             if player.touching_own_flag > 0:
-                return_score = 10 + 5 * int(
-                    self.settings_raw['Flag Touch Return Time'])
+                return_score = 10 + 5 * int(self._flag_touch_return_time)
                 self.stats.player_scored(player,
                                          return_score,
                                          screenmessage=False)
@@ -463,7 +471,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
 
         # If return-time is zero, just kill it immediately.. otherwise keep
         # track of touches and count down.
-        if float(self.settings_raw['Flag Touch Return Time']) <= 0.0:
+        if float(self._flag_touch_return_time) <= 0.0:
             assert team.flag is not None
             if not team.home_flag_at_base and team.flag.held_count == 0:
 
@@ -508,7 +516,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
     def spawn_player_spaz(self,
                           player: Player,
                           position: Sequence[float] = None,
-                          angle: float = None) -> PlayerSpaz:
+                          angle: float = None) -> PlayerSpaz[Player]:
         """Intercept new spazzes and add our team material for them."""
         spaz = super().spawn_player_spaz(player, position, angle)
         player = spaz.player
@@ -540,7 +548,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
     def _update_scoreboard(self) -> None:
         for team in self.teams:
             self._scoreboard.set_team_value(team, team.score,
-                                            self.settings_raw['Score to Win'])
+                                            self._score_to_win)
 
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, PlayerSpazDeathMessage):

@@ -2426,7 +2426,7 @@ and short description of the game.</p>
 
 </dd>
 <dt><h4><a name="method_ba_GameActivity__spawn_player_spaz">spawn_player_spaz()</a></dt></h4><dd>
-<p><span>spawn_player_spaz(self, player: PlayerType, position: Sequence[float] = (0, 0, 0), angle: float = None) -&gt; PlayerSpaz</span></p>
+<p><span>spawn_player_spaz(self, player: PlayerType, position: Sequence[float] = (0, 0, 0), angle: float = None) -&gt; PlayerSpaz[PlayerType]</span></p>
 
 <p>Create and wire up a ba.PlayerSpaz for the provided <a href="#class_ba_Player">ba.Player</a>.</p>
 
@@ -4840,7 +4840,7 @@ up until <a href="#method_ba_Activity__on_begin">ba.Activity.on_begin</a>() is c
 
 </dd>
 <dt><h4><a name="method_ba_TeamGameActivity__spawn_player_spaz">spawn_player_spaz()</a></dt></h4><dd>
-<p><span>spawn_player_spaz(self, player: PlayerType, position: Sequence[float] = None, angle: float = None) -&gt; PlayerSpaz</span></p>
+<p><span>spawn_player_spaz(self, player: PlayerType, position: Sequence[float] = None, angle: float = None) -&gt; PlayerSpaz[PlayerType]</span></p>
 
 <p>Method override; spawns and wires up a standard ba.PlayerSpaz for
 a <a href="#class_ba_Player">ba.Player</a>.</p>

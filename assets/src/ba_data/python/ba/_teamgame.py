@@ -110,7 +110,7 @@ class TeamGameActivity(GameActivity[PlayerType, TeamType]):
     def spawn_player_spaz(self,
                           player: PlayerType,
                           position: Sequence[float] = None,
-                          angle: float = None) -> PlayerSpaz:
+                          angle: float = None) -> PlayerSpaz[PlayerType]:
         """
         Method override; spawns and wires up a standard ba.PlayerSpaz for
         a ba.Player.
@@ -128,6 +128,7 @@ class TeamGameActivity(GameActivity[PlayerType, TeamType]):
 
         return super().spawn_player_spaz(player, position, angle)
 
+    # FIXME: need to unify these arguments with GameActivity.end()
     def end(  # type: ignore
             self,
             results: Any = None,
