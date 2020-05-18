@@ -145,7 +145,7 @@ class DeathMatchGame(ba.TeamGameActivity[ba.Player, ba.Team]):
             # Augment standard behavior.
             super().handlemessage(msg)
 
-            player = msg.getspaz(self).player
+            player = msg.playerspaz(self).player
             self.respawn_player(player)
 
             killer = msg.killerplayer

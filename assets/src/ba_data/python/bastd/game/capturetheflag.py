@@ -268,6 +268,8 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
         return team
 
     def on_team_join(self, team: Team) -> None:
+        # Can't do this in create_team because the team's color/etc. have
+        # not been wired up yet at that point.
         self._spawn_flag_for_team(team)
         self._update_scoreboard()
 
@@ -554,7 +556,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
         if isinstance(msg, PlayerSpazDeathMessage):
             # Augment standard behavior.
             super().handlemessage(msg)
-            self.respawn_player(msg.getspaz(self).player)
+            self.respawn_player(msg.playerspaz(self).player)
         elif isinstance(msg, stdflag.FlagDeathMessage):
             assert isinstance(msg.flag, CTFFlag)
             ba.timer(0.1, ba.Call(self._spawn_flag_for_team, msg.flag.team))

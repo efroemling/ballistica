@@ -341,7 +341,7 @@ class HockeyGame(ba.TeamGameActivity[ba.Player, ba.Team]):
         if isinstance(msg, playerspaz.PlayerSpazDeathMessage):
             # Augment standard behavior...
             super().handlemessage(msg)
-            self.respawn_player(msg.getspaz(self).player)
+            self.respawn_player(msg.playerspaz(self).player)
 
         # Respawn dead pucks.
         elif isinstance(msg, PuckDeathMessage):

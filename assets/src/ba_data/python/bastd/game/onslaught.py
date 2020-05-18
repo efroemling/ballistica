@@ -1163,7 +1163,7 @@ class OnslaughtGame(ba.CoopGameActivity[ba.Player, ba.Team]):
 
         elif isinstance(msg, playerspaz.PlayerSpazDeathMessage):
             super().handlemessage(msg)  # Augment standard behavior.
-            player = msg.getspaz(self).getplayer()
+            player = msg.playerspaz(self).getplayer()
             assert player is not None
             self._a_player_has_been_hurt = True
 

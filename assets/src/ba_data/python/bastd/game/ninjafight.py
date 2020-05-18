@@ -148,7 +148,8 @@ class NinjaFightGame(ba.TeamGameActivity[ba.Player, ba.Team]):
         # A player has died.
         if isinstance(msg, playerspaz.PlayerSpazDeathMessage):
             super().handlemessage(msg)  # do standard stuff
-            self.respawn_player(msg.getspaz(self).player)  # kick off a respawn
+            self.respawn_player(
+                msg.playerspaz(self).player)  # kick off a respawn
 
         # A spaz-bot has died.
         elif isinstance(msg, spazbot.SpazBotDeathMessage):

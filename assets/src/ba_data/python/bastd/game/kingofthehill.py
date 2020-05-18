@@ -281,7 +281,7 @@ class KingOfTheHillGame(ba.TeamGameActivity[ba.Player, ba.Team]):
             super().handlemessage(msg)  # Augment default.
 
             # No longer can count as at_flag once dead.
-            player = msg.getspaz(self).player
+            player = msg.playerspaz(self).player
             player.gamedata['at_flag'] = 0
             self._update_flag_state()
             self.respawn_player(player)

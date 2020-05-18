@@ -187,7 +187,7 @@ class TargetPracticeGame(ba.TeamGameActivity[ba.Player, ba.Team]):
         # When players die, respawn them.
         if isinstance(msg, playerspaz.PlayerSpazDeathMessage):
             super().handlemessage(msg)  # Do standard stuff.
-            player = msg.getspaz(self).getplayer()
+            player = msg.playerspaz(self).getplayer()
             assert player is not None
             self.respawn_player(player)  # Kick off a respawn.
         elif isinstance(msg, Target.TargetHitMessage):

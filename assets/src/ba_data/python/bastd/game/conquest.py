@@ -254,7 +254,7 @@ class ConquestGame(ba.TeamGameActivity[ba.Player, ba.Team]):
             super().handlemessage(msg)
 
             # Respawn only if this team has a flag.
-            player = msg.getspaz(self).player
+            player = msg.playerspaz(self).player
             if player.team.gamedata['flags_held'] > 0:
                 self.respawn_player(player)
             else:

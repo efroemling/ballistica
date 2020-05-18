@@ -60,7 +60,7 @@ class PlayerSpazDeathMessage:
         self.killerplayer = killerplayer
         self.how = how
 
-    def getspaz(
+    def playerspaz(
             self, activity: ba.Activity[PlayerType,
                                         TeamType]) -> PlayerSpaz[PlayerType]:
         """Return the spaz that died.
@@ -149,7 +149,7 @@ class PlayerSpaz(Spaz, Generic[PlayerType]):
 
         Note that this may return None if the player has left.
         """
-        # Convert invalid references to None.
+        # Return None in the case of a no-longer-valid reference.
         return self._player if self._player else None
 
     def connect_controls_to_player(self,
@@ -295,9 +295,9 @@ class PlayerSpaz(Spaz, Generic[PlayerType]):
                             else:
                                 killerplayer = None
 
-                # Convert dead-refs to None.
-                if not killerplayer:
-                    killerplayer = None
+                # We should never wind up with a dead-reference here;
+                # we want to use None in that case.
+                assert killerplayer is None or killerplayer
 
                 # Only report if both the player and the activity still exist.
                 if killed and activity is not None and self.getplayer():

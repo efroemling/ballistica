@@ -635,7 +635,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         from bastd.actor.playerspaz import PlayerSpazDeathMessage
         if isinstance(msg, PlayerSpazDeathMessage):
 
-            player = msg.getspaz(self).player
+            player = msg.playerspaz(self).player
             killer = msg.killerplayer
 
             # Inform our score-set of the demise.
@@ -645,7 +645,8 @@ class GameActivity(Activity[PlayerType, TeamType]):
 
             # Award the killer points if he's on a different team.
             if killer and killer.team is not player.team:
-                pts, importance = msg.getspaz(self).get_death_points(msg.how)
+                pts, importance = msg.playerspaz(self).get_death_points(
+                    msg.how)
                 if not self.has_ended():
                     self.stats.player_scored(killer,
                                              pts,

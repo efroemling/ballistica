@@ -257,7 +257,7 @@ class TheLastStandGame(ba.CoopGameActivity[ba.Player, ba.Team]):
 
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, playerspaz.PlayerSpazDeathMessage):
-            player = msg.getspaz(self).getplayer()
+            player = msg.playerspaz(self).getplayer()
             if player is None:
                 ba.print_error('FIXME: getplayer() should no longer '
                                'ever be returning None.')

@@ -212,7 +212,7 @@ class EasterEggHuntGame(ba.TeamGameActivity[ba.Player, ba.Team]):
 
             # Augment standard behavior.
             super().handlemessage(msg)
-            player = msg.getspaz(self).getplayer()
+            player = msg.playerspaz(self).getplayer()
             if not player:
                 return
             self.stats.player_was_killed(player)

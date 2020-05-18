@@ -491,7 +491,7 @@ class EliminationGame(ba.TeamGameActivity[ba.Player, ba.Team]):
 
             # Augment standard behavior.
             super().handlemessage(msg)
-            player = msg.getspaz(self).player
+            player = msg.playerspaz(self).player
 
             player.gamedata['lives'] -= 1
             if player.gamedata['lives'] < 0:

@@ -733,7 +733,7 @@ class RaceGame(ba.TeamGameActivity[ba.Player, ba.Team]):
         if isinstance(msg, PlayerSpazDeathMessage):
             # Augment default behavior.
             super().handlemessage(msg)
-            player = msg.getspaz(self).getplayer()
+            player = msg.playerspaz(self).getplayer()
             if not player:
                 ba.print_error('got no player in PlayerSpazDeathMessage')
                 return

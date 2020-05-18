@@ -1127,7 +1127,7 @@ class RunaroundGame(ba.CoopGameActivity[ba.Player, ba.Team]):
         elif isinstance(msg, playerspaz.PlayerSpazDeathMessage):
             from bastd.actor import respawnicon
             self._a_player_has_been_killed = True
-            player = msg.getspaz(self).getplayer()
+            player = msg.playerspaz(self).getplayer()
             if player is None:
                 ba.print_error('FIXME: getplayer() should no'
                                ' longer ever be returning None')

@@ -173,7 +173,7 @@ class MeteorShowerGame(ba.TeamGameActivity[Player, Team]):
 
             # Record the player's moment of death.
             # assert isinstance(msg.spaz.player
-            msg.getspaz(self).player.death_time = curtime
+            msg.playerspaz(self).player.death_time = curtime
 
             # In co-op mode, end the game the instant everyone dies
             # (more accurate looking).

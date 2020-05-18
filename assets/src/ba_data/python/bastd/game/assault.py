@@ -26,17 +26,32 @@
 from __future__ import annotations
 
 import random
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import ba
 from bastd.actor.playerspaz import PlayerSpaz, PlayerSpazDeathMessage
+from bastd.actor.flag import Flag
 
 if TYPE_CHECKING:
     from typing import Any, Type, List, Dict, Tuple, Sequence, Union
 
 
+@dataclass
+class Player(ba.Player['Team']):
+    """Our player type for this game."""
+
+
+@dataclass
+class Team(ba.Team[Player]):
+    """Our team type for this game."""
+    base_pos: Sequence[float]
+    flag: Flag
+    score: int = 0
+
+
 # ba_meta export game
-class AssaultGame(ba.TeamGameActivity[ba.Player, ba.Team]):
+class AssaultGame(ba.TeamGameActivity[Player, Team]):
     """Game where you score by touching the other team's flag."""
 
     @classmethod
@@ -59,106 +74,114 @@ class AssaultGame(ba.TeamGameActivity[ba.Player, ba.Team]):
     def get_settings(
             cls,
             sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
-        return [('Score to Win', {'min_value': 1, 'default': 3}),
-                ('Time Limit', {
-                    'choices': [('None', 0), ('1 Minute', 60),
-                                ('2 Minutes', 120), ('5 Minutes', 300),
-                                ('10 Minutes', 600), ('20 Minutes', 1200)],
-                    'default': 0}),
-                ('Respawn Times', {
-                    'choices': [('Shorter', 0.25), ('Short', 0.5),
-                                ('Normal', 1.0), ('Long', 2.0),
-                                ('Longer', 4.0)],
-                    'default': 1.0}),
-                ('Epic Mode', {'default': False})]  # yapf: disable
+        return [
+            ('Score to Win', {
+                'min_value': 1,
+                'default': 3
+            }),
+            ('Time Limit', {
+                'choices': [('None', 0), ('1 Minute', 60), ('2 Minutes', 120),
+                            ('5 Minutes', 300), ('10 Minutes', 600),
+                            ('20 Minutes', 1200)],
+                'default': 0
+            }),
+            ('Respawn Times', {
+                'choices': [('Shorter', 0.25), ('Short', 0.5), ('Normal', 1.0),
+                            ('Long', 2.0), ('Longer', 4.0)],
+                'default': 1.0
+            }),
+            ('Epic Mode', {
+                'default': False
+            }),
+        ]
 
     def __init__(self, settings: Dict[str, Any]):
         from bastd.actor.scoreboard import Scoreboard
         super().__init__(settings)
         self._scoreboard = Scoreboard()
-        if self.settings_raw['Epic Mode']:
-            self.slow_motion = True
         self._last_score_time = 0.0
         self._score_sound = ba.getsound('score')
         self._base_region_materials: Dict[int, ba.Material] = {}
+        self._epic_mode = bool(settings['Epic Mode'])
+        self._score_to_win = int(settings['Score to Win'])
+        self._time_limit = float(settings['Time Limit'])
+
+        # Base class overrides
+        self.slow_motion = self._epic_mode
+        self.default_music = (ba.MusicType.EPIC if self._epic_mode else
+                              ba.MusicType.FORWARD_MARCH)
 
     def get_instance_description(self) -> Union[str, Sequence]:
-        if self.settings_raw['Score to Win'] == 1:
+        if self._score_to_win == 1:
             return 'Touch the enemy flag.'
-        return ('Touch the enemy flag ${ARG1} times.',
-                self.settings_raw['Score to Win'])
+        return 'Touch the enemy flag ${ARG1} times.', self._score_to_win
 
     def get_instance_scoreboard_description(self) -> Union[str, Sequence]:
-        if self.settings_raw['Score to Win'] == 1:
+        if self._score_to_win == 1:
             return 'touch 1 flag'
-        return 'touch ${ARG1} flags', self.settings_raw['Score to Win']
+        return 'touch ${ARG1} flags', self._score_to_win
 
-    def on_transition_in(self) -> None:
-        self.default_music = (ba.MusicType.EPIC
-                              if self.settings_raw['Epic Mode'] else
-                              ba.MusicType.FORWARD_MARCH)
-        super().on_transition_in()
+    def create_team(self, sessionteam: ba.SessionTeam) -> Team:
+        base_pos = self.map.get_flag_position(sessionteam.id)
+        ba.newnode('light',
+                   attrs={
+                       'position': base_pos,
+                       'intensity': 0.6,
+                       'height_attenuated': False,
+                       'volume_intensity_scale': 0.1,
+                       'radius': 0.1,
+                       'color': sessionteam.color
+                   })
+        self.project_flag_stand(base_pos)
+        flag = Flag(touchable=False,
+                    position=base_pos,
+                    color=sessionteam.color)
+        team = Team(base_pos=base_pos, flag=flag)
 
-    def on_team_join(self, team: ba.Team) -> None:
-        team.gamedata['score'] = 0
+        mat = self._base_region_materials[sessionteam.id] = ba.Material()
+        mat.add_actions(
+            conditions=('they_have_material', ba.sharedobj('player_material')),
+            actions=(
+                ('modify_part_collision', 'collide', True),
+                ('modify_part_collision', 'physical', False),
+                ('call', 'at_connect', ba.Call(self._handle_base_collide,
+                                               team)),
+            ),
+        )
+
+        ba.newnode(
+            'region',
+            owner=flag.node,
+            attrs={
+                'position': (base_pos[0], base_pos[1] + 0.75, base_pos[2]),
+                'scale': (0.5, 0.5, 0.5),
+                'type': 'sphere',
+                'materials': [self._base_region_materials[sessionteam.id]]
+            })
+
+        return team
+
+    def on_team_join(self, team: Team) -> None:
+        # Can't do this in create_team because the team's color/etc. have
+        # not been wired up yet at that point.
         self._update_scoreboard()
 
     def on_begin(self) -> None:
-        from bastd.actor.flag import Flag
         super().on_begin()
-        self.setup_standard_time_limit(self.settings_raw['Time Limit'])
+        self.setup_standard_time_limit(self._time_limit)
         self.setup_standard_powerup_drops()
-        for team in self.teams:
-            mat = self._base_region_materials[team.id] = ba.Material()
-            mat.add_actions(conditions=('they_have_material',
-                                        ba.sharedobj('player_material')),
-                            actions=(('modify_part_collision', 'collide',
-                                      True), ('modify_part_collision',
-                                              'physical', False),
-                                     ('call', 'at_connect',
-                                      ba.Call(self._handle_base_collide,
-                                              team))))
-
-        # Create a score region and flag for each team.
-        for team in self.teams:
-            team.gamedata['base_pos'] = self.map.get_flag_position(team.id)
-
-            ba.newnode('light',
-                       attrs={
-                           'position': team.gamedata['base_pos'],
-                           'intensity': 0.6,
-                           'height_attenuated': False,
-                           'volume_intensity_scale': 0.1,
-                           'radius': 0.1,
-                           'color': team.color
-                       })
-
-            self.project_flag_stand(team.gamedata['base_pos'])
-            team.gamedata['flag'] = Flag(touchable=False,
-                                         position=team.gamedata['base_pos'],
-                                         color=team.color)
-            basepos = team.gamedata['base_pos']
-            ba.newnode('region',
-                       owner=team.gamedata['flag'].node,
-                       attrs={
-                           'position':
-                               (basepos[0], basepos[1] + 0.75, basepos[2]),
-                           'scale': (0.5, 0.5, 0.5),
-                           'type': 'sphere',
-                           'materials': [self._base_region_materials[team.id]]
-                       })
 
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, PlayerSpazDeathMessage):
             super().handlemessage(msg)  # Augment standard.
-            self.respawn_player(msg.getspaz(self).player)
+            self.respawn_player(msg.playerspaz(self).player)
         else:
             super().handlemessage(msg)
 
-    def _flash_base(self, team: ba.Team, length: float = 2.0) -> None:
+    def _flash_base(self, team: Team, length: float = 2.0) -> None:
         light = ba.newnode('light',
                            attrs={
-                               'position': team.gamedata['base_pos'],
+                               'position': team.base_pos,
                                'height_attenuated': False,
                                'radius': 0.3,
                                'color': team.color
@@ -166,7 +189,7 @@ class AssaultGame(ba.TeamGameActivity[ba.Player, ba.Team]):
         ba.animate(light, 'intensity', {0: 0, 0.25: 2.0, 0.5: 0}, loop=True)
         ba.timer(length, light.delete)
 
-    def _handle_base_collide(self, team: ba.Team) -> None:
+    def _handle_base_collide(self, team: Team) -> None:
 
         # Attempt to pull a living ba.Player from what we hit.
         cnode = ba.get_collision_info('opposing_node')
@@ -179,8 +202,10 @@ class AssaultGame(ba.TeamGameActivity[ba.Player, ba.Team]):
         if not player or not player.actor:
             return
 
+        assert isinstance(player, Player)
+
         # If its another team's player, they scored.
-        player_team: ba.Team[ba.Player] = player.team
+        player_team = player.team
         if player_team is not team:
 
             # Prevent multiple simultaneous scores.
@@ -233,19 +258,18 @@ class AssaultGame(ba.TeamGameActivity[ba.Player, ba.Team]):
                     if player.actor:
                         player.actor.handlemessage(ba.CelebrateMessage(2.0))
 
-                player_team.gamedata['score'] += 1
+                player_team.score += 1
                 self._update_scoreboard()
-                if (player_team.gamedata['score'] >=
-                        self.settings_raw['Score to Win']):
+                if player_team.score >= self._score_to_win:
                     self.end_game()
 
     def end_game(self) -> None:
         results = ba.TeamGameResults()
         for team in self.teams:
-            results.set_team_score(team, team.gamedata['score'])
+            results.set_team_score(team, team.score)
         self.end(results=results)
 
     def _update_scoreboard(self) -> None:
         for team in self.teams:
-            self._scoreboard.set_team_value(team, team.gamedata['score'],
-                                            self.settings_raw['Score to Win'])
+            self._scoreboard.set_team_value(team, team.score,
+                                            self._score_to_win)

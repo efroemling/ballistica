@@ -271,7 +271,7 @@ class KeepAwayGame(ba.TeamGameActivity[ba.Player, ba.Team]):
         if isinstance(msg, playerspaz.PlayerSpazDeathMessage):
             # Augment standard behavior.
             super().handlemessage(msg)
-            self.respawn_player(msg.getspaz(self).player)
+            self.respawn_player(msg.playerspaz(self).player)
         elif isinstance(msg, stdflag.FlagDeathMessage):
             self._spawn_flag()
         elif isinstance(

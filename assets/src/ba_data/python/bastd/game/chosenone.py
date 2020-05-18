@@ -327,7 +327,7 @@ class ChosenOneGame(ba.TeamGameActivity[ba.Player, ba.Team]):
         if isinstance(msg, playerspaz.PlayerSpazDeathMessage):
             # Augment standard behavior.
             super().handlemessage(msg)
-            player = msg.getspaz(self).player
+            player = msg.playerspaz(self).player
             if player is self._get_chosen_one_player():
                 killerplayer = msg.killerplayer
                 self._set_chosen_one_player(None if (
