@@ -272,7 +272,7 @@ class Egg(ba.Actor):
                                    'body': 'capsule',
                                    'reflection': 'soft',
                                    'model_scale': 0.5,
-                                   'bodyScale': 0.6,
+                                   'body_scale': 0.6,
                                    'density': 4.0,
                                    'reflection_scale': [0.15],
                                    'shadow_size': 0.6,
