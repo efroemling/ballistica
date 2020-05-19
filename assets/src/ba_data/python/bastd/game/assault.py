@@ -37,12 +37,12 @@ if TYPE_CHECKING:
     from typing import Any, Type, List, Dict, Tuple, Sequence, Union
 
 
-@dataclass
+@dataclass(eq=False)
 class Player(ba.Player['Team']):
     """Our player type for this game."""
 
 
-@dataclass
+@dataclass(eq=False)
 class Team(ba.Team[Player]):
     """Our team type for this game."""
     base_pos: Sequence[float]

@@ -126,6 +126,18 @@ class Team(Generic[PlayerType]):
 
         (internal)
         """
+
+        # Sanity check; if a dataclass is created that inherits from us,
+        # it will define an equality operator by default which will break
+        # internal game logic. So complain loudly if we find one.
+        if type(self).__eq__ is not object.__eq__:
+            raise RuntimeError(
+                f'Team class {type(self)} defines an equality'
+                f' operator (__eq__) which will break internal'
+                f' logic. Please remove it.\n'
+                f'For dataclasses you can do "dataclass(eq=False)"'
+                f' in the class decorator.')
+
         self.players = []
         self._sessionteam = weakref.ref(sessionteam)
         self.id = sessionteam.id
@@ -133,6 +145,15 @@ class Team(Generic[PlayerType]):
         self.color = sessionteam.color
         self.gamedata = sessionteam.gamedata
         self.sessiondata = sessionteam.sessiondata
+
+    def manual_init(self, team_id: int, name: Union[ba.Lstr, str],
+                    color: Tuple[float, ...]) -> None:
+        """Manually init a team for uses such as bots."""
+        self.id = team_id
+        self.name = name
+        self.color = color
+        self.gamedata = {}
+        self.sessiondata = {}
 
     @property
     def sessionteam(self) -> SessionTeam:

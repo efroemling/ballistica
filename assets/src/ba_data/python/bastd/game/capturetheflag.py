@@ -81,13 +81,13 @@ class CTFFlag(stdflag.Flag):
         return delegate if isinstance(delegate, CTFFlag) else None
 
 
-@dataclass
+@dataclass(eq=False)
 class Player(ba.Player['Team']):
     """Our player type for this game."""
     touching_own_flag: int = 0
 
 
-@dataclass
+@dataclass(eq=False)
 class Team(ba.Team[Player]):
     """Our team type for this game."""
     base_pos: Sequence[float]

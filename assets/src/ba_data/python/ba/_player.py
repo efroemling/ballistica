@@ -59,6 +59,18 @@ class Player(Generic[TeamType]):
         """
         from ba._nodeactor import NodeActor
         import _ba
+
+        # Sanity check; if a dataclass is created that inherits from us,
+        # it will define an equality operator by default which will break
+        # internal game logic. So complain loudly if we find one.
+        if type(self).__eq__ is not object.__eq__:
+            raise RuntimeError(
+                f'Player class {type(self)} defines an equality'
+                f' operator (__eq__) which will break internal'
+                f' logic. Please remove it.\n'
+                f'For dataclasses you can do "dataclass(eq=False)"'
+                f' in the class decorator.')
+
         self.actor = None
         self.character = ''
         self._nodeactor: Optional[ba.NodeActor] = None

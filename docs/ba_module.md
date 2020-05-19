@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-05-18 for Ballistica version 1.5.0 build 20021</em></h4>
+<h4><em>last updated on 2020-05-19 for Ballistica version 1.5.0 build 20021</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -4743,6 +4743,15 @@ of the session.</p>
 
 </dd>
 </dl>
+<h3>Methods:</h3>
+<dl>
+<dt><h4><a name="method_ba_Team__manual_init">manual_init()</a></dt></h4><dd>
+<p><span>manual_init(self, team_id: int, name: Union[<a href="#class_ba_Lstr">ba.Lstr</a>, str], color: Tuple[float, ...]) -&gt; None</span></p>
+
+<p>Manually init a team for uses such as bots.</p>
+
+</dd>
+</dl>
 <hr>
 <h2><strong><a name="class_ba_TeamGameActivity">ba.TeamGameActivity</a></strong></h3>
 <p>inherits from: <a href="#class_ba_GameActivity">ba.GameActivity</a>, <a href="#class_ba_Activity">ba.Activity</a>, <a href="#class_ba_DependencyComponent">ba.DependencyComponent</a>, <a href="#class_typing_Generic">typing.Generic</a></p>
@@ -4949,7 +4958,7 @@ Results for a completed <a href="#class_ba_TeamGameActivity">ba.TeamGameActivity
 
 </dd>
 <dt><h4><a name="method_ba_TeamGameResults__set_team_score">set_team_score()</a></dt></h4><dd>
-<p><span>set_team_score(self, team: Union[<a href="#class_ba_SessionTeam">ba.SessionTeam</a>, <a href="#class_ba_Team">ba.Team</a>], score: int) -&gt; None</span></p>
+<p><span>set_team_score(self, team: Union[<a href="#class_ba_SessionTeam">ba.SessionTeam</a>, <a href="#class_ba_Team">ba.Team</a>], score: Optional[int]) -&gt; None</span></p>
 
 <p>Set the score for a given <a href="#class_ba_Team">ba.Team</a>.</p>
 

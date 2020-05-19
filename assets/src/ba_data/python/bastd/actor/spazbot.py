@@ -28,7 +28,7 @@ import weakref
 from typing import TYPE_CHECKING
 
 import ba
-from bastd.actor import spaz as basespaz
+from bastd.actor.spaz import Spaz
 
 if TYPE_CHECKING:
     from typing import Any, Optional, List, Tuple, Sequence, Type, Callable
@@ -87,7 +87,7 @@ class SpazBotDeathMessage:
         self.how = how
 
 
-class SpazBot(basespaz.Spaz):
+class SpazBot(Spaz):
     """A really dumb AI version of ba.Spaz.
 
     category: Bot Classes
@@ -127,13 +127,12 @@ class SpazBot(basespaz.Spaz):
 
     def __init__(self) -> None:
         """Instantiate a spaz-bot."""
-        basespaz.Spaz.__init__(self,
-                               color=self.color,
-                               highlight=self.highlight,
-                               character=self.character,
-                               source_player=None,
-                               start_invincible=False,
-                               can_accept_powerups=False)
+        super().__init__(color=self.color,
+                         highlight=self.highlight,
+                         character=self.character,
+                         source_player=None,
+                         start_invincible=False,
+                         can_accept_powerups=False)
 
         # If you need to add custom behavior to a bot, set this to a callable
         # which takes one arg (the bot) and returns False if the bot's normal
@@ -503,7 +502,7 @@ class SpazBot(basespaz.Spaz):
         ba.getactivity().handlemessage(SpazBotPunchedMessage(self, damage))
 
     def on_expire(self) -> None:
-        basespaz.Spaz.on_expire(self)
+        super().on_expire()
 
         # We're being torn down; release our callback(s) so there's
         # no chance of them keeping activities or other things alive.
@@ -980,9 +979,10 @@ class BotSet:
         # Update our list of player points for the bots to use.
         player_pts = []
         for player in ba.getactivity().players:
+            assert isinstance(player, ba.Player)
             try:
                 if player.is_alive():
-                    assert isinstance(player.actor, basespaz.Spaz)
+                    assert isinstance(player.actor, Spaz)
                     assert player.actor.node
                     player_pts.append((ba.Vec3(player.actor.node.position),
                                        ba.Vec3(player.actor.node.velocity)))

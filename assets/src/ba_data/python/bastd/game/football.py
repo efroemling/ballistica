@@ -26,14 +26,15 @@
 from __future__ import annotations
 
 import random
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 import math
 
 import ba
-from bastd.actor import bomb as stdbomb
-from bastd.actor import flag as stdflag
-from bastd.actor import playerspaz
 from bastd.actor import spazbot
+from bastd.actor import flag as stdflag
+from bastd.actor.bomb import TNTSpawner
+from bastd.actor.playerspaz import PlayerSpaz, PlayerSpazDeathMessage
 from bastd.actor.scoreboard import Scoreboard
 
 if TYPE_CHECKING:
@@ -66,8 +67,18 @@ class FootballFlag(stdflag.Flag):
         self.node.connectattr('position', self.light, 'position')
 
 
+@dataclass(eq=False)
+class Player(ba.Player['Team']):
+    """Our player type for this game."""
+
+
+@dataclass(eq=False)
+class Team(ba.Team[Player]):
+    """Our team type for this game."""
+
+
 # ba_meta export game
-class FootballTeamGame(ba.TeamGameActivity[ba.Player, ba.Team]):
+class FootballTeamGame(ba.TeamGameActivity[Player, Team]):
     """Football game for teams mode."""
 
     @classmethod
@@ -183,7 +194,7 @@ class FootballTeamGame(ba.TeamGameActivity[ba.Player, ba.Team]):
         self._update_scoreboard()
         ba.playsound(self._chant_sound)
 
-    def on_team_join(self, team: ba.Team) -> None:
+    def on_team_join(self, team: Team) -> None:
         team.gamedata['score'] = 0
         self._update_scoreboard()
 
@@ -271,7 +282,7 @@ class FootballTeamGame(ba.TeamGameActivity[ba.Player, ba.Team]):
             msg.flag.held_count -= 1
 
         # Respawn dead players if they're still in the game.
-        elif isinstance(msg, playerspaz.PlayerSpazDeathMessage):
+        elif isinstance(msg, PlayerSpazDeathMessage):
             # Augment standard behavior.
             super().handlemessage(msg)
             self.respawn_player(msg.playerspaz(self).player)
@@ -320,7 +331,7 @@ class FootballTeamGame(ba.TeamGameActivity[ba.Player, ba.Team]):
         self._flag = FootballFlag(position=self._flag_spawn_pos)
 
 
-class FootballCoopGame(ba.CoopGameActivity[ba.Player, ba.Team]):
+class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
     """
     Co-op variant of football
     """
@@ -385,15 +396,15 @@ class FootballCoopGame(ba.CoopGameActivity[ba.Player, ba.Team]):
         self._bot_types_initial: Optional[List[Type[spazbot.SpazBot]]] = None
         self._bot_types_7: Optional[List[Type[spazbot.SpazBot]]] = None
         self._bot_types_14: Optional[List[Type[spazbot.SpazBot]]] = None
-        self._bot_team: Optional[ba.Team] = None
+        self._bot_team: Optional[Team] = None
         self._starttime_ms: Optional[int] = None
         self._time_text: Optional[ba.NodeActor] = None
         self._time_text_input: Optional[ba.NodeActor] = None
-        self._tntspawner: Optional[stdbomb.TNTSpawner] = None
+        self._tntspawner: Optional[TNTSpawner] = None
         self._bots = spazbot.BotSet()
         self._bot_spawn_timer: Optional[ba.Timer] = None
         self._powerup_drop_timer: Optional[ba.Timer] = None
-        self.scoring_team: Optional[ba.Team] = None
+        self.scoring_team: Optional[Team] = None
         self._final_time_ms: Optional[int] = None
         self._time_text_timer: Optional[ba.Timer] = None
         self._flag_respawn_light: Optional[ba.Actor] = None
@@ -508,11 +519,10 @@ class FootballCoopGame(ba.CoopGameActivity[ba.Player, ba.Team]):
 
         # Make a bogus team for our bots.
         bad_team_name = self.get_team_display_string('Bad Guys')
-        # self._bot_team = ba.Team(1, bad_team_name, (0.5, 0.4, 0.4))
-        self._bot_team = ba.Team()
-        self._bot_team.id = 1
-        self._bot_team.name = bad_team_name
-        self._bot_team.color = (0.5, 0.4, 0.4)
+        self._bot_team = Team()
+        self._bot_team.manual_init(team_id=1,
+                                   name=bad_team_name,
+                                   color=(0.5, 0.4, 0.4))
 
         for team in [self.teams[0], self._bot_team]:
             team.gamedata['score'] = 0
@@ -547,7 +557,7 @@ class FootballCoopGame(ba.CoopGameActivity[ba.Player, ba.Team]):
 
         # Our TNT spawner (if applicable).
         if self._have_tnt:
-            self._tntspawner = stdbomb.TNTSpawner(position=(0, 1, -1))
+            self._tntspawner = TNTSpawner(position=(0, 1, -1))
 
         self._bots = spazbot.BotSet()
         self._bot_spawn_timer = ba.Timer(1.0, self._update_bots, repeat=True)
@@ -588,7 +598,7 @@ class FootballCoopGame(ba.CoopGameActivity[ba.Player, ba.Team]):
         if self._flag.node:
             for player in self.players:
                 if player.actor:
-                    assert isinstance(player.actor, playerspaz.PlayerSpaz)
+                    assert isinstance(player.actor, PlayerSpaz)
                     if (player.actor.is_alive() and player.actor.node.hold_node
                             == self._flag.node):
                         return
@@ -808,7 +818,7 @@ class FootballCoopGame(ba.CoopGameActivity[ba.Player, ba.Team]):
 
     def handlemessage(self, msg: Any) -> Any:
         """ handle high-level game messages """
-        if isinstance(msg, playerspaz.PlayerSpazDeathMessage):
+        if isinstance(msg, PlayerSpazDeathMessage):
             from bastd.actor import respawnicon
 
             # Respawn dead players.
@@ -872,7 +882,7 @@ class FootballCoopGame(ba.CoopGameActivity[ba.Player, ba.Team]):
         del player  # Unused.
         self._player_has_punched = True
 
-    def spawn_player(self, player: ba.Player) -> ba.Actor:
+    def spawn_player(self, player: Player) -> ba.Actor:
         spaz = self.spawn_player_spaz(player,
                                       position=self.map.get_start_position(
                                           player.team.id))

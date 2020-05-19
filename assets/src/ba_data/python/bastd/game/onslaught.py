@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import math
 import random
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import ba
@@ -38,7 +39,17 @@ if TYPE_CHECKING:
     from bastd.actor.scoreboard import Scoreboard
 
 
-class OnslaughtGame(ba.CoopGameActivity[ba.Player, ba.Team]):
+@dataclass(eq=False)
+class Player(ba.Player['Team']):
+    """Our player type for this game."""
+
+
+@dataclass(eq=False)
+class Team(ba.Team[Player]):
+    """Our team type for this game."""
+
+
+class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
     """Co-op game where players try to survive attacking waves of enemies."""
 
     tips: List[Union[str, Dict[str, Any]]] = [
@@ -622,7 +633,7 @@ class OnslaughtGame(ba.CoopGameActivity[ba.Player, ba.Team]):
 
         return groups
 
-    def spawn_player(self, player: ba.Player) -> ba.Actor:
+    def spawn_player(self, player: Player) -> ba.Actor:
 
         # We keep track of who got hurt each wave for score purposes.
         player.gamedata['has_been_hurt'] = False
@@ -816,7 +827,7 @@ class OnslaughtGame(ba.CoopGameActivity[ba.Player, ba.Team]):
         self._score += self._time_bonus
         self._update_scores()
 
-    def _award_flawless_bonus(self, player: ba.Player) -> None:
+    def _award_flawless_bonus(self, player: Player) -> None:
         ba.playsound(self._cashregistersound)
         try:
             if player.is_alive():

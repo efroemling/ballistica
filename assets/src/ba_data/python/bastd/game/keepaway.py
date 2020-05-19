@@ -25,19 +25,31 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import ba
-from bastd.actor import flag as stdflag
-from bastd.actor import playerspaz
+from bastd.actor.flag import (Flag, FlagDroppedMessage, FlagDeathMessage,
+                              FlagPickedUpMessage)
+from bastd.actor.playerspaz import PlayerSpaz, PlayerSpazDeathMessage
 
 if TYPE_CHECKING:
     from typing import (Any, Type, List, Tuple, Dict, Optional, Sequence,
                         Union)
 
 
+@dataclass(eq=False)
+class Player(ba.Player['Team']):
+    """Our player type for this game."""
+
+
+@dataclass(eq=False)
+class Team(ba.Team[Player]):
+    """Our team type for this game."""
+
+
 # ba_meta export game
-class KeepAwayGame(ba.TeamGameActivity[ba.Player, ba.Team]):
+class KeepAwayGame(ba.TeamGameActivity[Player, Team]):
     """Game where you try to keep the flag away from your enemies."""
 
     FLAG_NEW = 0
@@ -109,11 +121,11 @@ class KeepAwayGame(ba.TeamGameActivity[ba.Player, ba.Team]):
         }
         self._flag_spawn_pos: Optional[Sequence[float]] = None
         self._update_timer: Optional[ba.Timer] = None
-        self._holding_players: List[ba.Player] = []
+        self._holding_players: List[Player] = []
         self._flag_state: Optional[int] = None
         self._flag_light: Optional[ba.Node] = None
-        self._scoring_team: Optional[ba.Team] = None
-        self._flag: Optional[stdflag.Flag] = None
+        self._scoring_team: Optional[Team] = None
+        self._flag: Optional[Flag] = None
 
     def get_instance_description(self) -> Union[str, Sequence]:
         return ('Carry the flag for ${ARG1} seconds.',
@@ -127,7 +139,7 @@ class KeepAwayGame(ba.TeamGameActivity[ba.Player, ba.Team]):
         self.default_music = ba.MusicType.KEEP_AWAY
         super().on_transition_in()
 
-    def on_team_join(self, team: ba.Team) -> None:
+    def on_team_join(self, team: Team) -> None:
         team.gamedata['time_remaining'] = self.settings_raw['Hold Time']
         self._update_scoreboard()
 
@@ -194,8 +206,8 @@ class KeepAwayGame(ba.TeamGameActivity[ba.Player, ba.Team]):
         for player in self.players:
             holding_flag = False
             try:
-                assert isinstance(player.actor, playerspaz.PlayerSpaz)
-                if (player.actor.is_alive() and player.actor.node
+                assert isinstance(player.actor, (PlayerSpaz, type(None)))
+                if (player.actor and player.actor.node
                         and player.actor.node.hold_node):
                     holding_flag = (
                         player.actor.node.hold_node.getnodetype() == 'flag')
@@ -235,8 +247,7 @@ class KeepAwayGame(ba.TeamGameActivity[ba.Player, ba.Team]):
         ba.playsound(self._swipsound)
         self._flash_flag_spawn()
         assert self._flag_spawn_pos is not None
-        self._flag = stdflag.Flag(dropped_timeout=20,
-                                  position=self._flag_spawn_pos)
+        self._flag = Flag(dropped_timeout=20, position=self._flag_spawn_pos)
         self._flag_state = self.FLAG_NEW
         self._flag_light = ba.newnode('light',
                                       owner=self._flag.node,
@@ -268,15 +279,13 @@ class KeepAwayGame(ba.TeamGameActivity[ba.Player, ba.Team]):
                                             countdown=True)
 
     def handlemessage(self, msg: Any) -> Any:
-        if isinstance(msg, playerspaz.PlayerSpazDeathMessage):
+        if isinstance(msg, PlayerSpazDeathMessage):
             # Augment standard behavior.
             super().handlemessage(msg)
             self.respawn_player(msg.playerspaz(self).player)
-        elif isinstance(msg, stdflag.FlagDeathMessage):
+        elif isinstance(msg, FlagDeathMessage):
             self._spawn_flag()
-        elif isinstance(
-                msg,
-            (stdflag.FlagDroppedMessage, stdflag.FlagPickedUpMessage)):
+        elif isinstance(msg, (FlagDroppedMessage, FlagPickedUpMessage)):
             self._update_flag_state()
         else:
             super().handlemessage(msg)

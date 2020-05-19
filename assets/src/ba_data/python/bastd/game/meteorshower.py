@@ -255,6 +255,10 @@ class MeteorShowerGame(ba.TeamGameActivity[Player, Team]):
         # (these per-player scores are only meaningful in team-games)
         for team in self.teams:
             for player in team.players:
+
+                if not player:
+                    print(f'GOT DEAD PLAYER {id(player)}')
+
                 survived = False
 
                 # Throw an extra fudge factor in so teams that

@@ -25,19 +25,31 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from dataclasses import dataclass
 
 import ba
-from bastd.actor import flag
-from bastd.actor import playerspaz
-from bastd.actor import spaz
+from bastd.actor.flag import Flag
+from bastd.actor.playerspaz import PlayerSpaz, PlayerSpazDeathMessage
 
 if TYPE_CHECKING:
     from typing import (Any, Type, List, Dict, Tuple, Optional, Sequence,
                         Union)
 
 
+@dataclass(eq=False)
+class Player(ba.Player['Team']):
+    """Our player type for this game."""
+    chosen_light: Optional[ba.NodeActor] = None
+
+
+@dataclass(eq=False)
+class Team(ba.Team[Player]):
+    """Our team type for this game."""
+    time_remaining: int
+
+
 # ba_meta export game
-class ChosenOneGame(ba.TeamGameActivity[ba.Player, ba.Team]):
+class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
     """
     Game involving trying to remain the one 'chosen one'
     for a set length of time while everyone else tries to
@@ -96,10 +108,8 @@ class ChosenOneGame(ba.TeamGameActivity[ba.Player, ba.Team]):
     def __init__(self, settings: Dict[str, Any]):
         from bastd.actor.scoreboard import Scoreboard
         super().__init__(settings)
-        if self.settings_raw['Epic Mode']:
-            self.slow_motion = True
         self._scoreboard = Scoreboard()
-        self._chosen_one_player: Optional[ba.Player] = None
+        self._chosen_one_player: Optional[Player] = None
         self._swipsound = ba.getsound('swip')
         self._countdownsounds: Dict[int, ba.Sound] = {
             10: ba.getsound('announceTen'),
@@ -115,30 +125,36 @@ class ChosenOneGame(ba.TeamGameActivity[ba.Player, ba.Team]):
         }
         self._flag_spawn_pos: Optional[Sequence[float]] = None
         self._reset_region_material: Optional[ba.Material] = None
-        self._flag: Optional[flag.Flag] = None
+        self._flag: Optional[Flag] = None
         self._reset_region: Optional[ba.Node] = None
+        self._epic_mode = bool(settings['Epic Mode'])
+        self._chosen_one_time = int(settings['Chosen One Time'])
+        self._time_limit = float(settings['Time Limit'])
+        self._chosen_one_gets_shield = bool(settings['Chosen One Gets Shield'])
+        self._chosen_one_gets_gloves = bool(settings['Chosen One Gets Gloves'])
+
+        # Base class overrides
+        self.slow_motion = self._epic_mode
+        self.default_music = (ba.MusicType.EPIC
+                              if self._epic_mode else ba.MusicType.CHOSEN_ONE)
 
     def get_instance_description(self) -> Union[str, Sequence]:
         return 'There can be only one.'
 
-    def on_transition_in(self) -> None:
-        self.default_music = (ba.MusicType.EPIC
-                              if self.settings_raw['Epic Mode'] else
-                              ba.MusicType.CHOSEN_ONE)
-        super().on_transition_in()
+    def create_team(self, sessionteam: ba.SessionTeam) -> Team:
+        return Team(time_remaining=self._chosen_one_time)
 
-    def on_team_join(self, team: ba.Team) -> None:
-        team.gamedata['time_remaining'] = self.settings_raw['Chosen One Time']
+    def on_team_join(self, team: Team) -> None:
         self._update_scoreboard()
 
-    def on_player_leave(self, player: ba.Player) -> None:
+    def on_player_leave(self, player: Player) -> None:
         super().on_player_leave(player)
         if self._get_chosen_one_player() is player:
             self._set_chosen_one_player(None)
 
     def on_begin(self) -> None:
         super().on_begin()
-        self.setup_standard_time_limit(self.settings_raw['Time Limit'])
+        self.setup_standard_time_limit(self._time_limit)
         self.setup_standard_powerup_drops()
         self._flag_spawn_pos = self.map.get_flag_position(None)
         self.project_flag_stand(self._flag_spawn_pos)
@@ -164,7 +180,7 @@ class ChosenOneGame(ba.TeamGameActivity[ba.Player, ba.Team]):
                                             'materials': [mat]
                                         })
 
-    def _get_chosen_one_player(self) -> Optional[ba.Player]:
+    def _get_chosen_one_player(self) -> Optional[Player]:
         if self._chosen_one_player:
             return self._chosen_one_player
         return None
@@ -173,13 +189,11 @@ class ChosenOneGame(ba.TeamGameActivity[ba.Player, ba.Team]):
         # If we have a chosen one, ignore these.
         if self._get_chosen_one_player() is not None:
             return
-        try:
-            player = (ba.get_collision_info(
-                'opposing_node').getdelegate().getplayer())
-        except Exception:
-            return
-        if player is not None and player.is_alive():
-            self._set_chosen_one_player(player)
+        delegate = ba.get_collision_info('opposing_node').getdelegate()
+        if isinstance(delegate, PlayerSpaz):
+            player = ba.playercast_o(Player, delegate.getplayer())
+            if player is not None and player.is_alive():
+                self._set_chosen_one_player(player)
 
     def _flash_flag_spawn(self) -> None:
         light = ba.newnode('light',
@@ -210,29 +224,24 @@ class ChosenOneGame(ba.TeamGameActivity[ba.Player, ba.Team]):
                                          screenmessage=False,
                                          display=False)
 
-                scoring_team.gamedata['time_remaining'] = max(
-                    0, scoring_team.gamedata['time_remaining'] - 1)
+                scoring_team.time_remaining = max(
+                    0, scoring_team.time_remaining - 1)
 
-                # show the count over their head
-                try:
-                    if scoring_team.gamedata['time_remaining'] > 0:
-                        if isinstance(player.actor, spaz.Spaz):
-                            player.actor.set_score_text(
-                                str(scoring_team.gamedata['time_remaining']))
-                except Exception:
-                    pass
+                # Show the count over their head
+                if scoring_team.time_remaining > 0:
+                    if isinstance(player.actor, PlayerSpaz) and player.actor:
+                        player.actor.set_score_text(
+                            str(scoring_team.time_remaining))
 
                 self._update_scoreboard()
 
                 # announce numbers we have sounds for
-                try:
-                    ba.playsound(self._countdownsounds[
-                        scoring_team.gamedata['time_remaining']])
-                except Exception:
-                    pass
+                if scoring_team.time_remaining in self._countdownsounds:
+                    ba.playsound(
+                        self._countdownsounds[scoring_team.time_remaining])
 
                 # Winner!
-                if scoring_team.gamedata['time_remaining'] <= 0:
+                if scoring_team.time_remaining <= 0:
                     self.end_game()
 
         else:
@@ -247,89 +256,81 @@ class ChosenOneGame(ba.TeamGameActivity[ba.Player, ba.Team]):
     def end_game(self) -> None:
         results = ba.TeamGameResults()
         for team in self.teams:
-            results.set_team_score(
-                team, self.settings_raw['Chosen One Time'] -
-                team.gamedata['time_remaining'])
+            results.set_team_score(team,
+                                   self._chosen_one_time - team.time_remaining)
         self.end(results=results, announce_delay=0)
 
-    def _set_chosen_one_player(self, player: Optional[ba.Player]) -> None:
-        try:
-            for p_other in self.players:
-                p_other.gamedata['chosen_light'] = None
-            ba.playsound(self._swipsound)
-            if not player:
-                assert self._flag_spawn_pos is not None
-                self._flag = flag.Flag(color=(1, 0.9, 0.2),
-                                       position=self._flag_spawn_pos,
-                                       touchable=False)
-                self._chosen_one_player = None
+    def _set_chosen_one_player(self, player: Optional[Player]) -> None:
+        for p_other in self.players:
+            p_other.chosen_light = None
+        ba.playsound(self._swipsound)
+        if not player:
+            assert self._flag_spawn_pos is not None
+            self._flag = Flag(color=(1, 0.9, 0.2),
+                              position=self._flag_spawn_pos,
+                              touchable=False)
+            self._chosen_one_player = None
 
-                # Create a light to highlight the flag;
-                # this will go away when the flag dies.
-                ba.newnode('light',
-                           owner=self._flag.node,
-                           attrs={
-                               'position': self._flag_spawn_pos,
-                               'intensity': 0.6,
-                               'height_attenuated': False,
-                               'volume_intensity_scale': 0.1,
-                               'radius': 0.1,
-                               'color': (1.2, 1.2, 0.4)
-                           })
+            # Create a light to highlight the flag;
+            # this will go away when the flag dies.
+            ba.newnode('light',
+                       owner=self._flag.node,
+                       attrs={
+                           'position': self._flag_spawn_pos,
+                           'intensity': 0.6,
+                           'height_attenuated': False,
+                           'volume_intensity_scale': 0.1,
+                           'radius': 0.1,
+                           'color': (1.2, 1.2, 0.4)
+                       })
 
-                # Also an extra momentary flash.
-                self._flash_flag_spawn()
-            else:
-                if player.actor is not None:
-                    self._flag = None
-                    self._chosen_one_player = player
+            # Also an extra momentary flash.
+            self._flash_flag_spawn()
+        else:
+            if player.actor:
+                self._flag = None
+                self._chosen_one_player = player
 
-                    if player.actor:
-                        if self.settings_raw['Chosen One Gets Shield']:
-                            player.actor.handlemessage(
-                                ba.PowerupMessage('shield'))
-                        if self.settings_raw['Chosen One Gets Gloves']:
-                            player.actor.handlemessage(
-                                ba.PowerupMessage('punch'))
+                if self._chosen_one_gets_shield:
+                    player.actor.handlemessage(ba.PowerupMessage('shield'))
+                if self._chosen_one_gets_gloves:
+                    player.actor.handlemessage(ba.PowerupMessage('punch'))
 
-                        # Use a color that's partway between their team color
-                        # and white.
-                        color = [
-                            0.3 + c * 0.7
-                            for c in ba.normalized_color(player.team.color)
-                        ]
-                        light = player.gamedata['chosen_light'] = ba.NodeActor(
-                            ba.newnode('light',
-                                       attrs={
-                                           'intensity': 0.6,
-                                           'height_attenuated': False,
-                                           'volume_intensity_scale': 0.1,
-                                           'radius': 0.13,
-                                           'color': color
-                                       }))
+                # Use a color that's partway between their team color
+                # and white.
+                color = [
+                    0.3 + c * 0.7
+                    for c in ba.normalized_color(player.team.color)
+                ]
+                light = player.chosen_light = ba.NodeActor(
+                    ba.newnode('light',
+                               attrs={
+                                   'intensity': 0.6,
+                                   'height_attenuated': False,
+                                   'volume_intensity_scale': 0.1,
+                                   'radius': 0.13,
+                                   'color': color
+                               }))
 
-                        assert light.node
-                        ba.animate(light.node,
-                                   'intensity', {
-                                       0: 1.0,
-                                       0.2: 0.4,
-                                       0.4: 1.0
-                                   },
-                                   loop=True)
-                        assert isinstance(player.actor, playerspaz.PlayerSpaz)
-                        player.actor.node.connectattr('position', light.node,
-                                                      'position')
-
-        except Exception:
-            ba.print_exception('EXC in _set_chosen_one_player')
+                assert light.node
+                ba.animate(light.node,
+                           'intensity', {
+                               0: 1.0,
+                               0.2: 0.4,
+                               0.4: 1.0
+                           },
+                           loop=True)
+                assert isinstance(player.actor, PlayerSpaz)
+                player.actor.node.connectattr('position', light.node,
+                                              'position')
 
     def handlemessage(self, msg: Any) -> Any:
-        if isinstance(msg, playerspaz.PlayerSpazDeathMessage):
+        if isinstance(msg, PlayerSpazDeathMessage):
             # Augment standard behavior.
             super().handlemessage(msg)
             player = msg.playerspaz(self).player
             if player is self._get_chosen_one_player():
-                killerplayer = msg.killerplayer
+                killerplayer = ba.playercast_o(Player, msg.killerplayer)
                 self._set_chosen_one_player(None if (
                     killerplayer is None or killerplayer is player
                     or not killerplayer.is_alive()) else killerplayer)
@@ -339,8 +340,7 @@ class ChosenOneGame(ba.TeamGameActivity[ba.Player, ba.Team]):
 
     def _update_scoreboard(self) -> None:
         for team in self.teams:
-            self._scoreboard.set_team_value(
-                team,
-                team.gamedata['time_remaining'],
-                self.settings_raw['Chosen One Time'],
-                countdown=True)
+            self._scoreboard.set_team_value(team,
+                                            team.time_remaining,
+                                            self._chosen_one_time,
+                                            countdown=True)

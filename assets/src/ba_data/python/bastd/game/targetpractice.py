@@ -26,6 +26,7 @@
 from __future__ import annotations
 
 import random
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import ba
@@ -37,8 +38,20 @@ if TYPE_CHECKING:
     from bastd.actor.bomb import Bomb, Blast
 
 
+@dataclass(eq=False)
+class Player(ba.Player['Team']):
+    """Our player type for this game."""
+    streak: int = 0
+
+
+@dataclass(eq=False)
+class Team(ba.Team[Player]):
+    """Our team type for this game."""
+    score: int = 0
+
+
 # ba_meta export game
-class TargetPracticeGame(ba.TeamGameActivity[ba.Player, ba.Team]):
+class TargetPracticeGame(ba.TeamGameActivity[Player, Team]):
     """Game where players try to hit targets with bombs."""
 
     @classmethod
@@ -63,14 +76,18 @@ class TargetPracticeGame(ba.TeamGameActivity[ba.Player, ba.Team]):
     def get_settings(
             cls,
             sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
-        return [('Target Count', {
-            'min_value': 1,
-            'default': 3
-        }), ('Enable Impact Bombs', {
-            'default': True
-        }), ('Enable Triple Bombs', {
-            'default': True
-        })]
+        return [
+            ('Target Count', {
+                'min_value': 1,
+                'default': 3
+            }),
+            ('Enable Impact Bombs', {
+                'default': True
+            }),
+            ('Enable Triple Bombs', {
+                'default': True
+            }),
+        ]
 
     def __init__(self, settings: Dict[str, Any]):
         from bastd.actor.scoreboard import Scoreboard
@@ -79,13 +96,14 @@ class TargetPracticeGame(ba.TeamGameActivity[ba.Player, ba.Team]):
         self._targets: List[Target] = []
         self._update_timer: Optional[ba.Timer] = None
         self._countdown: Optional[OnScreenCountdown] = None
+        self._target_count = int(settings['Target Count'])
+        self._enable_impact_bombs = bool(settings['Enable Impact Bombs'])
+        self._enable_triple_bombs = bool(settings['Enable Triple Bombs'])
 
-    def on_transition_in(self) -> None:
+        # Base class overrides
         self.default_music = ba.MusicType.FORWARD_MARCH
-        super().on_transition_in()
 
-    def on_team_join(self, team: ba.Team) -> None:
-        team.gamedata['score'] = 0
+    def on_team_join(self, team: Team) -> None:
         if self.has_begun():
             self.update_scoreboard()
 
@@ -95,28 +113,27 @@ class TargetPracticeGame(ba.TeamGameActivity[ba.Player, ba.Team]):
         self.update_scoreboard()
 
         # Number of targets is based on player count.
-        num_targets = self.settings_raw['Target Count']
-        for i in range(num_targets):
+        for i in range(self._target_count):
             ba.timer(5.0 + i * 1.0, self._spawn_target)
 
         self._update_timer = ba.Timer(1.0, self._update, repeat=True)
         self._countdown = OnScreenCountdown(60, endcall=self.end_game)
         ba.timer(4.0, self._countdown.start)
 
-    def spawn_player(self, player: ba.Player) -> ba.Actor:
+    def spawn_player(self, player: Player) -> ba.Actor:
         spawn_center = (0, 3, -5)
         pos = (spawn_center[0] + random.uniform(-1.5, 1.5), spawn_center[1],
                spawn_center[2] + random.uniform(-1.5, 1.5))
 
         # Reset their streak.
-        player.gamedata['streak'] = 0
+        player.streak = 0
         spaz = self.spawn_player_spaz(player, position=pos)
 
         # Give players permanent triple impact bombs and wire them up
         # to tell us when they drop a bomb.
-        if self.settings_raw['Enable Impact Bombs']:
+        if self._enable_impact_bombs:
             spaz.bomb_type = 'impact'
-        if self.settings_raw['Enable Triple Bombs']:
+        if self._enable_triple_bombs:
             spaz.set_bomb_count(3)
         spaz.add_dropped_bomb_callback(self._on_spaz_dropped_bomb)
         return spaz
@@ -166,7 +183,7 @@ class TargetPracticeGame(ba.TeamGameActivity[ba.Player, ba.Team]):
         # Feed the explosion point to all our targets and get points in return.
         # Note: we operate on a copy of self._targets since the list may change
         # under us if we hit stuff (don't wanna get points for new targets).
-        player = bomb.get_source_player()
+        player = ba.playercast_o(Player, bomb.get_source_player())
         if not player:
             return  # could happen if they leave after throwing a bomb..
 
@@ -174,9 +191,9 @@ class TargetPracticeGame(ba.TeamGameActivity[ba.Player, ba.Team]):
             target.do_hit_at_position(pos, player)
             for target in list(self._targets))
         if bullseye:
-            player.gamedata['streak'] += 1
+            player.streak += 1
         else:
-            player.gamedata['streak'] = 0
+            player.streak = 0
 
     def _update(self) -> None:
         """Misc. periodic updating."""
@@ -200,12 +217,12 @@ class TargetPracticeGame(ba.TeamGameActivity[ba.Player, ba.Team]):
     def update_scoreboard(self) -> None:
         """Update the game scoreboard with current team values."""
         for team in self.teams:
-            self._scoreboard.set_team_value(team, team.gamedata['score'])
+            self._scoreboard.set_team_value(team, team.score)
 
     def end_game(self) -> None:
         results = ba.TeamGameResults()
         for team in self.teams:
-            results.set_team_score(team, team.gamedata['score'])
+            results.set_team_score(team, team.score)
         self.end(results)
 
 
@@ -278,8 +295,7 @@ class Target(ba.Actor):
         """Given a point, returns distance squared from it."""
         return (ba.Vec3(pos) - self._position).length()
 
-    def do_hit_at_position(self, pos: Sequence[float],
-                           player: ba.Player) -> bool:
+    def do_hit_at_position(self, pos: Sequence[float], player: Player) -> bool:
         """Handle a bomb hit at the given position."""
         # pylint: disable=too-many-statements
         from bastd.actor import popuptext
@@ -316,7 +332,7 @@ class Target(ba.Actor):
                 ba.animate_array(self._nodes[0], 'color', 3, keys, loop=True)
                 popupscale = 1.8
                 popupcolor = (1, 1, 0, 1)
-                streak = player.gamedata['streak']
+                streak = player.streak
                 points = 10 + min(20, streak * 2)
                 ba.playsound(ba.getsound('bellHigh'))
                 if streak > 0:
@@ -357,7 +373,7 @@ class Target(ba.Actor):
                                 scale=popupscale).autoretain()
 
             # Give this player's team points and update the score-board.
-            player.team.gamedata['score'] += points
+            player.team.score += points
             assert isinstance(activity, TargetPracticeGame)
             activity.update_scoreboard()
 

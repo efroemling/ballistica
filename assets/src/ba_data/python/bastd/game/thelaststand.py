@@ -23,6 +23,7 @@
 from __future__ import annotations
 
 import random
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import ba
@@ -35,7 +36,17 @@ if TYPE_CHECKING:
     from bastd.actor.scoreboard import Scoreboard
 
 
-class TheLastStandGame(ba.CoopGameActivity[ba.Player, ba.Team]):
+@dataclass(eq=False)
+class Player(ba.Player['Team']):
+    """Our player type for this game."""
+
+
+@dataclass(eq=False)
+class Team(ba.Team[Player]):
+    """Our team type for this game."""
+
+
+class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
     """Slow motion how-long-can-you-last game."""
 
     tips = [
@@ -118,7 +129,7 @@ class TheLastStandGame(ba.CoopGameActivity[ba.Player, ba.Team]):
         self._tntspawner = TNTSpawner(position=self._tntspawnpos,
                                       respawn_time=10.0)
 
-    def spawn_player(self, player: ba.Player) -> ba.Actor:
+    def spawn_player(self, player: Player) -> ba.Actor:
         pos = (self._spawn_center[0] + random.uniform(-1.5, 1.5),
                self._spawn_center[1],
                self._spawn_center[2] + random.uniform(-1.5, 1.5))

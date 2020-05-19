@@ -331,106 +331,6 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
             raise RuntimeError(f'destroy() called when'
                                f' already expired for {self}')
 
-    @classmethod
-    def _check_activity_death(cls, activity_ref: ReferenceType[Activity],
-                              counter: List[int]) -> None:
-        """Sanity check to make sure an Activity was destroyed properly.
-
-        Receives a weakref to a ba.Activity which should have torn itself
-        down due to no longer being referenced anywhere. Will complain
-        and/or print debugging info if the Activity still exists.
-        """
-        try:
-            import gc
-            import types
-            activity = activity_ref()
-            print('ERROR: Activity is not dying when expected:', activity,
-                  '(warning ' + str(counter[0] + 1) + ')')
-            print('This means something is still strong-referencing it.')
-            counter[0] += 1
-
-            # FIXME: Running the code below shows us references but winds up
-            #  keeping the object alive; need to figure out why.
-            #  For now we just print refs if the count gets to 3, and then we
-            #  kill the app at 4 so it doesn't matter anyway.
-            if counter[0] == 3:
-                print('Activity references for', activity, ':')
-                refs = list(gc.get_referrers(activity))
-                i = 1
-                for ref in refs:
-                    if isinstance(ref, types.FrameType):
-                        continue
-                    print('  reference', i, ':', ref)
-                    i += 1
-            if counter[0] == 4:
-                print('Killing app due to stuck activity... :-(')
-                _ba.quit()
-
-        except Exception:
-            print_exception('exception on _check_activity_death:')
-
-    def _expire(self) -> None:
-        """Put the activity in a state where it can be garbage-collected.
-
-        This involves clearing anything that might be holding a reference
-        to it, etc.
-        """
-        assert not self._expired
-        self._expired = True
-
-        try:
-            self.on_expire()
-        except Exception:
-            print_exception(f'Error in Activity on_expire() for {self}')
-
-        # Send expire notices to all remaining actors.
-        for actor_ref in self._actor_weak_refs:
-            try:
-                actor = actor_ref()
-                if actor is not None:
-                    actor.on_expire()
-            except Exception:
-                print_exception(f'Error expiring Actor {actor_ref()}')
-
-        # Reset all Players.
-        # (releases any attached actors, clears game-data, etc)
-        for player in self.players:
-            if player:
-                try:
-                    sessionplayer = player.sessionplayer
-                    sessionplayer.set_node(None)
-                    sessionplayer.set_activity(None)
-                    sessionplayer.gameplayer = None
-                    sessionplayer.reset()
-                except Exception:
-                    print_exception(f'Error resetting Player {player}')
-
-        # Ditto with Teams.
-        for team in self.teams:
-            try:
-                sessionteam = team.sessionteam
-                sessionteam.gameteam = None
-                sessionteam.reset_gamedata()
-            except SessionTeamNotFoundError:
-                pass
-            except Exception:
-                print_exception(f'Error resetting Team {team}')
-
-        # Regardless of what happened here, we want to destroy our data, as
-        # our activity might not go down if we don't. This will kill all
-        # Timers, Nodes, etc, which should clear up any remaining refs to our
-        # Actors and Activity and allow us to die peacefully.
-        try:
-            self._activity_data.destroy()
-        except Exception:
-            print_exception(
-                'Exception during ba.Activity._expire() destroying data:')
-
-    def _prune_dead_actors(self) -> None:
-        self._actor_refs = [a for a in self._actor_refs if a]
-        self._actor_weak_refs = [a for a in self._actor_weak_refs if a()]
-        self._last_prune_dead_actors_time = _ba.time()
-
     def retain_actor(self, actor: ba.Actor) -> None:
         """Add a strong-reference to a ba.Actor to this Activity.
 
@@ -619,127 +519,6 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
             except Exception:
                 print_exception('Error in on_transition_out for', self)
 
-    def create_player(self, sessionplayer: ba.SessionPlayer) -> PlayerType:
-        """Create the Player instance for this Activity.
-
-        Subclasses can override this if the activity's player class
-        requires a custom constructor; otherwise it will be called with
-        no args. Note that the player object should not be used at this
-        point as it is not yet fully wired up; wait for on_player_join()
-        for that.
-        """
-        del sessionplayer  # Unused
-        player = self._playertype()
-        return player
-
-    def create_team(self, sessionteam: ba.SessionTeam) -> TeamType:
-        """Create the Team instance for this Activity.
-
-        Subclasses can override this if the activity's team class
-        requires a custom constructor; otherwise it will be called with
-        no args. Note that the team object should not be used at this
-        point as it is not yet fully wired up; wait for on_team_join()
-        for that.
-        """
-        del sessionteam  # Unused.
-        team = self._teamtype()
-        return team
-
-    def add_player(self, sessionplayer: ba.SessionPlayer) -> None:
-        """(internal)"""
-        assert sessionplayer.team is not None
-
-        sessionplayer.reset_input()
-        sessionteam = sessionplayer.team
-        assert sessionplayer in sessionteam.players
-        team = sessionteam.gameteam
-        assert team is not None
-        sessionplayer.set_activity(self)
-        with _ba.Context(self):
-            sessionplayer.gameplayer = player = self.create_player(
-                sessionplayer)
-            player.postinit(sessionplayer)
-            team.players.append(player)
-            self.players.append(player)
-            try:
-                self.on_player_join(player)
-            except Exception:
-                print_exception('Error in on_player_join for', self)
-
-    def remove_player(self, sessionplayer: ba.SessionPlayer) -> None:
-        """(internal)"""
-
-        # This should only be called on unexpired activities
-        # the player has been added to.
-        assert not self.expired
-        player = sessionplayer.gameplayer
-        assert isinstance(player, self._playertype)
-        assert player in self.players
-
-        self.players.remove(player)
-        with _ba.Context(self):
-            # Make a decent attempt to persevere if user code breaks.
-            try:
-                self.on_player_leave(player)
-            except Exception:
-                print_exception(f'Error in on_player_leave for {self}')
-            try:
-                sessionplayer.reset()
-                sessionplayer.set_node(None)
-                sessionplayer.set_activity(None)
-            except Exception:
-                print_exception(f'Error resetting player for {self}')
-
-    def add_team(self, sessionteam: ba.SessionTeam) -> None:
-        """(internal)"""
-        assert not self.expired
-
-        with _ba.Context(self):
-            sessionteam.gameteam = team = self.create_team(sessionteam)
-            team.postinit(sessionteam)
-            self.teams.append(team)
-            try:
-                self.on_team_join(team)
-            except Exception:
-                print_exception(f'Error in on_team_join for {self}')
-
-    def remove_team(self, sessionteam: ba.SessionTeam) -> None:
-        """(internal)"""
-
-        # This should only be called on unexpired activities the team has
-        # been added to.
-        assert not self.expired
-        assert sessionteam.gameteam is not None
-        assert sessionteam.gameteam in self.teams
-
-        team = sessionteam.gameteam
-        assert isinstance(team, self._teamtype)
-        self.teams.remove(team)
-        with _ba.Context(self):
-            # Make a decent attempt to persevere if user code breaks.
-            try:
-                self.on_team_leave(team)
-            except Exception:
-                print_exception(f'Error in on_team_leave for {self}')
-            try:
-                sessionteam.reset_gamedata()
-            except Exception:
-                print_exception(f'Error in reset_gamedata for {self}')
-            sessionteam.gameteam = None
-
-    def _sanity_check_begin_call(self) -> None:
-        # Make sure ba.Activity.on_transition_in() got called at some point.
-        if not self._called_activity_on_transition_in:
-            print_error(
-                'ba.Activity.on_transition_in() never got called for ' +
-                str(self) + '; did you forget to call it'
-                ' in your on_transition_in override?')
-        # Make sure that ba.Activity.on_begin() got called at some point.
-        if not self._called_activity_on_begin:
-            print_error(
-                'ba.Activity.on_begin() never got called for ' + str(self) +
-                '; did you forget to call it in your on_begin override?')
-
     def begin(self, session: ba.Session) -> None:
         """Begin the activity.
 
@@ -779,6 +558,146 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
                 self.end(self._should_end_immediately_results,
                          self._should_end_immediately_delay)
 
+    def create_player(self, sessionplayer: ba.SessionPlayer) -> PlayerType:
+        """Create the Player instance for this Activity.
+
+        Subclasses can override this if the activity's player class
+        requires a custom constructor; otherwise it will be called with
+        no args. Note that the player object should not be used at this
+        point as it is not yet fully wired up; wait for on_player_join()
+        for that.
+        """
+        del sessionplayer  # Unused
+        player = self._playertype()
+        return player
+
+    def create_team(self, sessionteam: ba.SessionTeam) -> TeamType:
+        """Create the Team instance for this Activity.
+
+        Subclasses can override this if the activity's team class
+        requires a custom constructor; otherwise it will be called with
+        no args. Note that the team object should not be used at this
+        point as it is not yet fully wired up; wait for on_team_join()
+        for that.
+        """
+        del sessionteam  # Unused.
+        team = self._teamtype()
+        return team
+
+    def add_player(self, sessionplayer: ba.SessionPlayer) -> None:
+        """(internal)"""
+        assert sessionplayer.team is not None
+        sessionplayer.reset_input()
+        sessionteam = sessionplayer.team
+        assert sessionplayer in sessionteam.players
+        team = sessionteam.gameteam
+        assert team is not None
+        sessionplayer.set_activity(self)
+        with _ba.Context(self):
+            sessionplayer.gameplayer = player = self.create_player(
+                sessionplayer)
+            player.postinit(sessionplayer)
+
+            assert player not in team.players
+            team.players.append(player)
+            assert player in team.players
+
+            assert player not in self.players
+            self.players.append(player)
+            assert player in self.players
+
+            try:
+                self.on_player_join(player)
+            except Exception:
+                print_exception('Error in on_player_join for', self)
+
+    def remove_player(self, sessionplayer: ba.SessionPlayer) -> None:
+        """(internal)"""
+
+        # This should only be called on unexpired activities
+        # the player has been added to.
+        assert not self.expired
+
+        player: Any = sessionplayer.gameplayer
+        assert isinstance(player, self._playertype)
+        team: Any = sessionplayer.team.gameteam
+        assert isinstance(team, self._teamtype)
+
+        assert player in team.players
+        team.players.remove(player)
+        assert player not in team.players
+
+        assert player in self.players
+        self.players.remove(player)
+        assert player not in self.players
+
+        with _ba.Context(self):
+            # Make a decent attempt to persevere if user code breaks.
+            try:
+                self.on_player_leave(player)
+            except Exception:
+                print_exception(f'Error in on_player_leave for {self}')
+            try:
+                sessionplayer.reset()
+                sessionplayer.set_node(None)
+                sessionplayer.set_activity(None)
+            except Exception:
+                print_exception(f'Error resetting player for {self}')
+
+    def add_team(self, sessionteam: ba.SessionTeam) -> None:
+        """(internal)"""
+        assert not self.expired
+
+        with _ba.Context(self):
+            sessionteam.gameteam = team = self.create_team(sessionteam)
+            team.postinit(sessionteam)
+            self.teams.append(team)
+            try:
+                self.on_team_join(team)
+            except Exception:
+                print_exception(f'Error in on_team_join for {self}')
+
+    def remove_team(self, sessionteam: ba.SessionTeam) -> None:
+        """(internal)"""
+
+        # This should only be called on unexpired activities the team has
+        # been added to.
+        assert not self.expired
+        assert sessionteam.gameteam is not None
+        assert sessionteam.gameteam in self.teams
+
+        team = sessionteam.gameteam
+        assert isinstance(team, self._teamtype)
+
+        assert team in self.teams
+        self.teams.remove(team)
+        assert team not in self.teams
+
+        with _ba.Context(self):
+            # Make a decent attempt to persevere if user code breaks.
+            try:
+                self.on_team_leave(team)
+            except Exception:
+                print_exception(f'Error in on_team_leave for {self}')
+            try:
+                sessionteam.reset_gamedata()
+            except Exception:
+                print_exception(f'Error in reset_gamedata for {self}')
+            sessionteam.gameteam = None
+
+    def _sanity_check_begin_call(self) -> None:
+        # Make sure ba.Activity.on_transition_in() got called at some point.
+        if not self._called_activity_on_transition_in:
+            print_error(
+                'ba.Activity.on_transition_in() never got called for ' +
+                str(self) + '; did you forget to call it'
+                ' in your on_transition_in override?')
+        # Make sure that ba.Activity.on_begin() got called at some point.
+        if not self._called_activity_on_begin:
+            print_error(
+                'ba.Activity.on_begin() never got called for ' + str(self) +
+                '; did you forget to call it in your on_begin override?')
+
     # noinspection PyUnresolvedReferences
     def _setup_player_and_team_types(self) -> None:
         """Pull player and team types from our typing.Generic params."""
@@ -805,3 +724,104 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
                       f' if you do not want to override it.')
         assert issubclass(self._playertype, Player)
         assert issubclass(self._teamtype, Team)
+
+    @classmethod
+    def _check_activity_death(cls, activity_ref: ReferenceType[Activity],
+                              counter: List[int]) -> None:
+        """Sanity check to make sure an Activity was destroyed properly.
+
+        Receives a weakref to a ba.Activity which should have torn itself
+        down due to no longer being referenced anywhere. Will complain
+        and/or print debugging info if the Activity still exists.
+        """
+        try:
+            import gc
+            import types
+            activity = activity_ref()
+            print('ERROR: Activity is not dying when expected:', activity,
+                  '(warning ' + str(counter[0] + 1) + ')')
+            print('This means something is still strong-referencing it.')
+            counter[0] += 1
+
+            # FIXME: Running the code below shows us references but winds up
+            #  keeping the object alive; need to figure out why.
+            #  For now we just print refs if the count gets to 3, and then we
+            #  kill the app at 4 so it doesn't matter anyway.
+            if counter[0] == 3:
+                print('Activity references for', activity, ':')
+                refs = list(gc.get_referrers(activity))
+                i = 1
+                for ref in refs:
+                    if isinstance(ref, types.FrameType):
+                        continue
+                    print('  reference', i, ':', ref)
+                    i += 1
+            if counter[0] == 4:
+                print('Killing app due to stuck activity... :-(')
+                _ba.quit()
+
+        except Exception:
+            print_exception('exception on _check_activity_death:')
+
+    def _expire(self) -> None:
+        """Put the activity in a state where it can be garbage-collected.
+
+        This involves clearing anything that might be holding a reference
+        to it, etc.
+        """
+        assert not self._expired
+        self._expired = True
+
+        try:
+            self.on_expire()
+        except Exception:
+            print_exception(f'Error in Activity on_expire() for {self}')
+
+        # Send expire notices to all remaining actors.
+        for actor_ref in self._actor_weak_refs:
+            try:
+                actor = actor_ref()
+                if actor is not None:
+                    actor.on_expire()
+            except Exception:
+                print_exception(f'Error expiring Actor {actor_ref()}')
+
+        # Reset all Players.
+        # (releases any attached actors, clears game-data, etc)
+        for player in self.players:
+            if player:
+                try:
+                    sessionplayer = player.sessionplayer
+                    sessionplayer.set_node(None)
+                    sessionplayer.set_activity(None)
+                    sessionplayer.gameplayer = None
+                    sessionplayer.reset()
+                except Exception:
+                    print_exception(f'Error resetting Player {player}')
+
+        # Ditto with Teams.
+        for team in self.teams:
+            try:
+                sessionteam = team.sessionteam
+                sessionteam.gameteam = None
+                sessionteam.reset_gamedata()
+            except SessionTeamNotFoundError:
+                pass
+                # print_exception(f'Error resetting Team {team}')
+            except Exception:
+                print_exception(f'Error resetting Team {team}')
+
+        # Regardless of what happened here, we want to destroy our data, as
+        # our activity might not go down if we don't. This will kill all
+        # Timers, Nodes, etc, which should clear up any remaining refs to our
+        # Actors and Activity and allow us to die peacefully.
+        try:
+            self._activity_data.destroy()
+        except Exception:
+            print_exception(
+                'Exception during ba.Activity._expire() destroying data:')
+
+    def _prune_dead_actors(self) -> None:
+        self._actor_refs = [a for a in self._actor_refs if a]
+        self._actor_weak_refs = [a for a in self._actor_weak_refs if a()]
+        self._last_prune_dead_actors_time = _ba.time()

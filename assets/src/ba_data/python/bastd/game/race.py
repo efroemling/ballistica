@@ -66,8 +66,19 @@ class RaceRegion(ba.Actor):
             })
 
 
+@dataclass(eq=False)
+class Player(ba.Player['Team']):
+    """Our player type for this game."""
+    distance_txt: Optional[ba.Node] = None
+
+
+@dataclass(eq=False)
+class Team(ba.Team[Player]):
+    """Our team type for this game."""
+
+
 # ba_meta export game
-class RaceGame(ba.TeamGameActivity[ba.Player, ba.Team]):
+class RaceGame(ba.TeamGameActivity[Player, Team]):
     """Game of racing around a track."""
 
     @classmethod
@@ -186,7 +197,7 @@ class RaceGame(ba.TeamGameActivity[ba.Player, ba.Team]):
         for rpt in pts:
             self._regions.append(RaceRegion(rpt, len(self._regions)))
 
-    def _flash_player(self, player: ba.Player, scale: float) -> None:
+    def _flash_player(self, player: Player, scale: float) -> None:
         assert isinstance(player.actor, PlayerSpaz)
         assert player.actor.node
         pos = player.actor.node.position
@@ -214,7 +225,7 @@ class RaceGame(ba.TeamGameActivity[ba.Player, ba.Team]):
         region = region_node.getdelegate()
         if not player or not region:
             return
-        assert isinstance(player, ba.Player)
+        assert isinstance(player, Player)
         assert isinstance(region, RaceRegion)
 
         last_region = player.gamedata['last_region']
@@ -342,13 +353,13 @@ class RaceGame(ba.TeamGameActivity[ba.Player, ba.Team]):
                         except Exception as exc:
                             print('Exception printing lap:', exc)
 
-    def on_team_join(self, team: ba.Team) -> None:
+    def on_team_join(self, team: Team) -> None:
         team.gamedata['time'] = None
         team.gamedata['lap'] = 0
         team.gamedata['finished'] = False
         self._update_scoreboard()
 
-    def on_player_join(self, player: ba.Player) -> None:
+    def on_player_join(self, player: Player) -> None:
         player.gamedata['last_region'] = 0
         player.gamedata['lap'] = 0
         player.gamedata['distance'] = 0.0
@@ -356,7 +367,7 @@ class RaceGame(ba.TeamGameActivity[ba.Player, ba.Team]):
         player.gamedata['rank'] = None
         super().on_player_join(player)
 
-    def on_player_leave(self, player: ba.Player) -> None:
+    def on_player_leave(self, player: Player) -> None:
         super().on_player_leave(player)
 
         # A player leaving disqualifies the team if 'Entire Team Must Finish'
@@ -550,16 +561,16 @@ class RaceGame(ba.TeamGameActivity[ba.Player, ba.Team]):
                 player.gamedata['distance'] = amt
 
         # Sort players by distance and update their ranks.
-        p_list = [[player.gamedata['distance'], player]
+        p_list = [(player.gamedata['distance'], player)
                   for player in self.players]
 
         p_list.sort(reverse=True, key=lambda x: x[0])
         for i, plr in enumerate(p_list):
             try:
                 plr[1].gamedata['rank'] = i
-                if plr[1].actor is not None:
+                if plr[1].actor:
                     # noinspection PyUnresolvedReferences
-                    node = plr[1].actor.distance_txt
+                    node = plr[1].distance_txt
                     if node:
                         node.text = str(i + 1) if plr[1].is_alive() else ''
             except Exception:
@@ -620,10 +631,11 @@ class RaceGame(ba.TeamGameActivity[ba.Player, ba.Team]):
             self._flash_mine(m_index)
             ba.timer(0.95, ba.Call(self._make_mine, m_index))
 
-    def spawn_player(self, player: ba.Player) -> ba.Actor:
+    def spawn_player(self, player: Player) -> ba.Actor:
         if player.team.gamedata['finished']:
-            # FIXME: This is not type-safe
-            #  (this call is expected to return an Actor).
+            # FIXME: This is not type-safe!
+            #   This call is expected to always return an Actor!
+            #   Perhaps we need something like can_spawn_player()...
             # noinspection PyTypeChecker
             return None  # type: ignore
         pos = self._regions[player.gamedata['last_region']].pos
@@ -661,9 +673,7 @@ class RaceGame(ba.TeamGameActivity[ba.Player, ba.Team]):
                                       'scale': 0.02,
                                       'h_align': 'center'
                                   })
-        # FIXME store this in a type-safe way
-        # noinspection PyTypeHints
-        spaz.distance_txt = distance_txt  # type: ignore
+        player.distance_txt = distance_txt
         mathnode.connectattr('output', distance_txt, 'position')
         return spaz
 

@@ -77,7 +77,7 @@ class TeamGameResults:
         self._score_type = score_info.scoretype
 
     def set_team_score(self, team: Union[ba.SessionTeam, ba.Team],
-                       score: int) -> None:
+                       score: Optional[int]) -> None:
         """Set the score for a given ba.Team.
 
         This can be a number or None.

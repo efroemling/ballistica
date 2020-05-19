@@ -26,11 +26,12 @@
 from __future__ import annotations
 
 import weakref
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import ba
-from bastd.actor import flag as stdflag
-from bastd.actor import playerspaz
+from bastd.actor.flag import Flag
+from bastd.actor.playerspaz import PlayerSpaz, PlayerSpazDeathMessage
 
 if TYPE_CHECKING:
     from weakref import ReferenceType
@@ -38,8 +39,20 @@ if TYPE_CHECKING:
                         Union)
 
 
+@dataclass(eq=False)
+class Player(ba.Player['Team']):
+    """Our player type for this game."""
+    time_at_flag: int = 0
+
+
+@dataclass(eq=False)
+class Team(ba.Team[Player]):
+    """Our team type for this game."""
+    time_remaining: int
+
+
 # ba_meta export game
-class KingOfTheHillGame(ba.TeamGameActivity[ba.Player, ba.Team]):
+class KingOfTheHillGame(ba.TeamGameActivity[Player, Team]):
     """Game where a team wins by holding a 'hill' for a set amount of time."""
 
     FLAG_NEW = 0
@@ -71,23 +84,24 @@ class KingOfTheHillGame(ba.TeamGameActivity[ba.Player, ba.Team]):
     def get_settings(
             cls,
             sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
-        return [('Hold Time', {
-            'min_value': 10,
-            'default': 30,
-            'increment': 10
-        }),
-                ('Time Limit', {
-                    'choices': [('None', 0), ('1 Minute', 60),
-                                ('2 Minutes', 120), ('5 Minutes', 300),
-                                ('10 Minutes', 600), ('20 Minutes', 1200)],
-                    'default': 0
-                }),
-                ('Respawn Times', {
-                    'choices': [('Shorter', 0.25), ('Short', 0.5),
-                                ('Normal', 1.0), ('Long', 2.0),
-                                ('Longer', 4.0)],
-                    'default': 1.0
-                })]
+        return [
+            ('Hold Time', {
+                'min_value': 10,
+                'default': 30,
+                'increment': 10
+            }),
+            ('Time Limit', {
+                'choices': [('None', 0), ('1 Minute', 60), ('2 Minutes', 120),
+                            ('5 Minutes', 300), ('10 Minutes', 600),
+                            ('20 Minutes', 1200)],
+                'default': 0
+            }),
+            ('Respawn Times', {
+                'choices': [('Shorter', 0.25), ('Short', 0.5), ('Normal', 1.0),
+                            ('Long', 2.0), ('Longer', 4.0)],
+                'default': 1.0
+            }),
+        ]
 
     def __init__(self, settings: Dict[str, Any]):
         from bastd.actor.scoreboard import Scoreboard
@@ -109,9 +123,11 @@ class KingOfTheHillGame(ba.TeamGameActivity[ba.Player, ba.Team]):
         }
         self._flag_pos: Optional[Sequence[float]] = None
         self._flag_state: Optional[int] = None
-        self._flag: Optional[stdflag.Flag] = None
+        self._flag: Optional[Flag] = None
         self._flag_light: Optional[ba.Node] = None
-        self._scoring_team: Optional[ReferenceType[ba.Team]] = None
+        self._scoring_team: Optional[ReferenceType[Team]] = None
+        self._hold_time = int(settings['Hold Time'])
+        self._time_limit = float(settings['Time Limit'])
 
         self._flag_region_material = ba.Material()
         self._flag_region_material.add_actions(
@@ -124,38 +140,30 @@ class KingOfTheHillGame(ba.TeamGameActivity[ba.Player, ba.Team]):
                       ba.Call(self._handle_player_flag_region_collide,
                               False))))
 
+        # Base class overrides.
+        self.default_music = ba.MusicType.SCARY
+
     def get_instance_description(self) -> Union[str, Sequence]:
-        return ('Secure the flag for ${ARG1} seconds.',
-                self.settings_raw['Hold Time'])
+        return 'Secure the flag for ${ARG1} seconds.', self._hold_time
 
     def get_instance_scoreboard_description(self) -> Union[str, Sequence]:
-        return ('secure the flag for ${ARG1} seconds',
-                self.settings_raw['Hold Time'])
+        return 'secure the flag for ${ARG1} seconds', self._hold_time
 
-    def on_transition_in(self) -> None:
-        self.default_music = ba.MusicType.SCARY
-        super().on_transition_in()
-
-    def on_team_join(self, team: ba.Team) -> None:
-        team.gamedata['time_remaining'] = self.settings_raw['Hold Time']
-        self._update_scoreboard()
-
-    def on_player_join(self, player: ba.Player) -> None:
-        super().on_player_join(player)
-        player.gamedata['at_flag'] = 0
+    def create_team(self, sessionteam: ba.SessionTeam) -> Team:
+        return Team(time_remaining=self._hold_time)
 
     def on_begin(self) -> None:
         super().on_begin()
-        self.setup_standard_time_limit(self.settings_raw['Time Limit'])
+        self.setup_standard_time_limit(self._time_limit)
         self.setup_standard_powerup_drops()
         self._flag_pos = self.map.get_flag_position(None)
         ba.timer(1.0, self._tick, repeat=True)
         self._flag_state = self.FLAG_NEW
         self.project_flag_stand(self._flag_pos)
 
-        self._flag = stdflag.Flag(position=self._flag_pos,
-                                  touchable=False,
-                                  color=(1, 1, 1))
+        self._flag = Flag(position=self._flag_pos,
+                          touchable=False,
+                          color=(1, 1, 1))
         self._flag_light = ba.newnode('light',
                                       attrs={
                                           'position': self._flag_pos,
@@ -184,51 +192,47 @@ class KingOfTheHillGame(ba.TeamGameActivity[ba.Player, ba.Team]):
 
         # Give holding players points.
         for player in self.players:
-            if player.gamedata['at_flag'] > 0:
+            if player.time_at_flag > 0:
                 self.stats.player_scored(player,
                                          3,
                                          screenmessage=False,
                                          display=False)
-
         if self._scoring_team is None:
             scoring_team = None
         else:
             scoring_team = self._scoring_team()
         if scoring_team:
 
-            if scoring_team.gamedata['time_remaining'] > 0:
+            if scoring_team.time_remaining > 0:
                 ba.playsound(self._tick_sound)
 
-            scoring_team.gamedata['time_remaining'] = max(
-                0, scoring_team.gamedata['time_remaining'] - 1)
+            scoring_team.time_remaining = max(0,
+                                              scoring_team.time_remaining - 1)
             self._update_scoreboard()
-            if scoring_team.gamedata['time_remaining'] > 0:
+            if scoring_team.time_remaining > 0:
                 assert self._flag is not None
-                self._flag.set_score_text(
-                    str(scoring_team.gamedata['time_remaining']))
+                self._flag.set_score_text(str(scoring_team.time_remaining))
 
             # Announce numbers we have sounds for.
             try:
-                ba.playsound(self._countdownsounds[
-                    scoring_team.gamedata['time_remaining']])
+                ba.playsound(
+                    self._countdownsounds[scoring_team.time_remaining])
             except Exception:
                 pass
 
             # winner
-            if scoring_team.gamedata['time_remaining'] <= 0:
+            if scoring_team.time_remaining <= 0:
                 self.end_game()
 
     def end_game(self) -> None:
         results = ba.TeamGameResults()
         for team in self.teams:
-            results.set_team_score(
-                team, self.settings_raw['Hold Time'] -
-                team.gamedata['time_remaining'])
+            results.set_team_score(team, self._hold_time - team.time_remaining)
         self.end(results=results, announce_delay=0)
 
     def _update_flag_state(self) -> None:
         holding_teams = set(player.team for player in self.players
-                            if player.gamedata['at_flag'])
+                            if player.time_at_flag)
         prev_state = self._flag_state
         assert self._flag_light
         assert self._flag is not None
@@ -253,35 +257,36 @@ class KingOfTheHillGame(ba.TeamGameActivity[ba.Player, ba.Team]):
             ba.playsound(self._swipsound)
 
     def _handle_player_flag_region_collide(self, colliding: bool) -> None:
-        playernode = ba.get_collision_info('opposing_node')
-        try:
-            player = playernode.getdelegate().getplayer()
-        except Exception:
+        delegate = ba.get_collision_info('opposing_node').getdelegate()
+        if not isinstance(delegate, PlayerSpaz):
+            return
+        player = ba.playercast_o(Player, delegate.getplayer())
+        if not player:
             return
 
         # Different parts of us can collide so a single value isn't enough
         # also don't count it if we're dead (flying heads shouldn't be able to
         # win the game :-)
         if colliding and player.is_alive():
-            player.gamedata['at_flag'] += 1
+            player.time_at_flag += 1
         else:
-            player.gamedata['at_flag'] = max(0, player.gamedata['at_flag'] - 1)
+            player.time_at_flag = max(0, player.time_at_flag - 1)
 
         self._update_flag_state()
 
     def _update_scoreboard(self) -> None:
         for team in self.teams:
             self._scoreboard.set_team_value(team,
-                                            team.gamedata['time_remaining'],
-                                            self.settings_raw['Hold Time'],
+                                            team.time_remaining,
+                                            self._hold_time,
                                             countdown=True)
 
     def handlemessage(self, msg: Any) -> Any:
-        if isinstance(msg, playerspaz.PlayerSpazDeathMessage):
+        if isinstance(msg, PlayerSpazDeathMessage):
             super().handlemessage(msg)  # Augment default.
 
-            # No longer can count as at_flag once dead.
+            # No longer can count as time_at_flag once dead.
             player = msg.playerspaz(self).player
-            player.gamedata['at_flag'] = 0
+            player.time_at_flag = 0
             self._update_flag_state()
             self.respawn_player(player)
