@@ -150,7 +150,7 @@ class MultiTeamSession(Session):
         from ba._gameactivity import GameActivity
         gametype: Type[GameActivity] = self._next_game_spec['resolved_type']
         assert issubclass(gametype, GameActivity)
-        return gametype.get_config_display_string(self._next_game_spec)
+        return gametype.get_settings_display_string(self._next_game_spec)
 
     def get_game_number(self) -> int:
         """Returns which game in the series is currently being played."""

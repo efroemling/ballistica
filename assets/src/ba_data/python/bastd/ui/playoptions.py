@@ -204,7 +204,7 @@ class PlayOptionsWindow(popup.PopupWindow):
                     try:
                         desc = getclass(entry['type'],
                                         subclassof=ba.GameActivity
-                                        ).get_config_display_string(entry)
+                                        ).get_settings_display_string(entry)
                         if not owned:
                             desc = ba.Lstr(
                                 value='${DESC}\n${UNLOCK}',

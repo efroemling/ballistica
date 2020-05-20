@@ -27,7 +27,6 @@ from __future__ import annotations
 
 import math
 import random
-from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import ba
@@ -39,12 +38,10 @@ if TYPE_CHECKING:
     from bastd.actor.scoreboard import Scoreboard
 
 
-@dataclass(eq=False)
 class Player(ba.Player['Team']):
     """Our player type for this game."""
 
 
-@dataclass(eq=False)
 class Team(ba.Team[Player]):
     """Our team type for this game."""
 

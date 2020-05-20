@@ -25,7 +25,6 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import ba
@@ -81,29 +80,35 @@ class CTFFlag(stdflag.Flag):
         return delegate if isinstance(delegate, CTFFlag) else None
 
 
-@dataclass(eq=False)
 class Player(ba.Player['Team']):
     """Our player type for this game."""
-    touching_own_flag: int = 0
+
+    def __init__(self) -> None:
+        self.touching_own_flag = 0
 
 
-@dataclass(eq=False)
 class Team(ba.Team[Player]):
     """Our team type for this game."""
-    base_pos: Sequence[float]
-    base_region_material: ba.Material
-    base_region: ba.Node
-    spaz_material_no_flag_physical: ba.Material
-    spaz_material_no_flag_collide: ba.Material
-    flagmaterial: ba.Material
-    score: int = 0
-    flag_return_touches: int = 0
-    home_flag_at_base: bool = True
-    touch_return_timer: Optional[ba.Timer] = None
-    enemy_flag_at_base: bool = False
-    flag: Optional[CTFFlag] = None
-    last_flag_leave_time: Optional[float] = None
-    touch_return_timer_ticking: Optional[ba.NodeActor] = None
+
+    def __init__(self, base_pos: Sequence[float],
+                 base_region_material: ba.Material, base_region: ba.Node,
+                 spaz_material_no_flag_physical: ba.Material,
+                 spaz_material_no_flag_collide: ba.Material,
+                 flagmaterial: ba.Material):
+        self.base_pos = base_pos
+        self.base_region_material = base_region_material
+        self.base_region = base_region
+        self.spaz_material_no_flag_physical = spaz_material_no_flag_physical
+        self.spaz_material_no_flag_collide = spaz_material_no_flag_collide
+        self.flagmaterial = flagmaterial
+        self.score = 0
+        self.flag_return_touches = 0
+        self.home_flag_at_base = True
+        self.touch_return_timer: Optional[ba.Timer] = None
+        self.enemy_flag_at_base = False
+        self.flag: Optional[CTFFlag] = None
+        self.last_flag_leave_time: Optional[float] = None
+        self.touch_return_timer_ticking: Optional[ba.NodeActor] = None
 
 
 # ba_meta export game

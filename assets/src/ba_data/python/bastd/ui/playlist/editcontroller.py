@@ -162,7 +162,7 @@ class PlaylistEditController:
         self._show_edit_ui(gametype=getclass(
             self._playlist[self._selected_index]['type'],
             subclassof=ba.GameActivity),
-                           config=self._playlist[self._selected_index])
+                           settings=self._playlist[self._selected_index])
 
     def add_game_cancelled(self) -> None:
         """(internal)"""
@@ -173,16 +173,16 @@ class PlaylistEditController:
             editcontroller=self, transition='in_left').get_root_widget())
 
     def _show_edit_ui(self, gametype: Type[ba.GameActivity],
-                      config: Optional[Dict[str, Any]]) -> None:
-        self._editing_game = (config is not None)
+                      settings: Optional[Dict[str, Any]]) -> None:
+        self._editing_game = (settings is not None)
         self._editing_game_type = gametype
         assert self._sessiontype is not None
-        gametype.create_config_ui(self._sessiontype, copy.deepcopy(config),
-                                  self._edit_game_done)
+        gametype.create_settings_ui(self._sessiontype, copy.deepcopy(settings),
+                                    self._edit_game_done)
 
     def add_game_type_selected(self, gametype: Type[ba.GameActivity]) -> None:
         """(internal)"""
-        self._show_edit_ui(gametype=gametype, config=None)
+        self._show_edit_ui(gametype=gametype, settings=None)
 
     def _edit_game_done(self, config: Optional[Dict[str, Any]]) -> None:
         from bastd.ui.playlist import edit as pedit

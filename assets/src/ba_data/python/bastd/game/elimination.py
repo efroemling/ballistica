@@ -25,7 +25,6 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 import ba
@@ -164,18 +163,20 @@ class Icon(ba.Actor):
                 ba.timer(0.6, self.update_for_lives)
 
 
-@dataclass(eq=False)
 class Player(ba.Player['Team']):
     """Our player type for this game."""
-    lives: int = 0
-    icons: List[Icon] = field(default_factory=list)
+
+    def __init__(self) -> None:
+        self.lives = 0
+        self.icons: List[Icon] = []
 
 
-@dataclass(eq=False)
 class Team(ba.Team[Player]):
     """Our team type for this game."""
-    survival_seconds: Optional[int] = None
-    spawn_order: List[Player] = field(default_factory=list)
+
+    def __init__(self) -> None:
+        self.survival_seconds: Optional[int] = None
+        self.spawn_order: List[Player] = []
 
 
 # ba_meta export game

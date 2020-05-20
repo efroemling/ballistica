@@ -66,13 +66,13 @@ class RaceRegion(ba.Actor):
             })
 
 
-@dataclass(eq=False)
 class Player(ba.Player['Team']):
     """Our player type for this game."""
-    distance_txt: Optional[ba.Node] = None
+
+    def __init__(self) -> None:
+        self.distance_txt: Optional[ba.Node] = None
 
 
-@dataclass(eq=False)
 class Team(ba.Team[Player]):
     """Our team type for this game."""
 

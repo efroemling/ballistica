@@ -64,10 +64,10 @@ class GameActivity(Activity[PlayerType, TeamType]):
     score_info: Optional[ba.ScoreInfo] = None
 
     @classmethod
-    def create_config_ui(
+    def create_settings_ui(
         cls,
         sessionclass: Type[ba.Session],
-        config: Optional[Dict[str, Any]],
+        settings: Optional[Dict[str, Any]],
         completion_call: Callable[[Optional[Dict[str, Any]]], None],
     ) -> None:
         """Launch an in-game UI to configure settings for a game type.
@@ -87,7 +87,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         """
         delegate = _ba.app.delegate
         assert delegate is not None
-        delegate.create_default_game_config_ui(cls, sessionclass, config,
+        delegate.create_default_game_config_ui(cls, sessionclass, settings,
                                                completion_call)
 
     @classmethod
@@ -155,7 +155,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
             cls,
             sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
         """
-        Called by the default ba.GameActivity.create_config_ui()
+        Called by the default ba.GameActivity.create_settings_ui()
         implementation; should return a dict of config options to be presented
         to the user for the given ba.Session type.
 
@@ -217,7 +217,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
     @classmethod
     def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
         """
-        Called by the default ba.GameActivity.create_config_ui()
+        Called by the default ba.GameActivity.create_settings_ui()
         implementation; should return a list of map names valid
         for this game-type for the given ba.Session type.
         """
@@ -226,7 +226,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         return _map.getmaps('melee')
 
     @classmethod
-    def get_config_display_string(cls, config: Dict[str, Any]) -> ba.Lstr:
+    def get_settings_display_string(cls, config: Dict[str, Any]) -> ba.Lstr:
         """Given a game config dict, return a short description for it.
 
         This is used when viewing game-lists or showing what game

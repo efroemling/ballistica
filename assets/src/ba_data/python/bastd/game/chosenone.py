@@ -25,7 +25,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from dataclasses import dataclass
 
 import ba
 from bastd.actor.flag import Flag
@@ -35,16 +34,18 @@ if TYPE_CHECKING:
     from typing import Any, Type, List, Dict, Optional, Sequence, Union
 
 
-@dataclass(eq=False)
 class Player(ba.Player['Team']):
     """Our player type for this game."""
-    chosen_light: Optional[ba.NodeActor] = None
+
+    def __init__(self) -> None:
+        self.chosen_light: Optional[ba.NodeActor] = None
 
 
-@dataclass(eq=False)
 class Team(ba.Team[Player]):
     """Our team type for this game."""
-    time_remaining: int
+
+    def __init__(self, time_remaining: int) -> None:
+        self.time_remaining = time_remaining
 
 
 # ba_meta export game

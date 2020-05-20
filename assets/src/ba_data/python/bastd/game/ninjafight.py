@@ -37,8 +37,16 @@ if TYPE_CHECKING:
     from typing import Any, Type, Dict, List, Optional
 
 
+class Player(ba.Player['Team']):
+    """Our player type for this game."""
+
+
+class Team(ba.Team[Player]):
+    """Our team type for this game."""
+
+
 # ba_meta export game
-class NinjaFightGame(ba.TeamGameActivity[ba.Player, ba.Team]):
+class NinjaFightGame(ba.TeamGameActivity[Player, Team]):
     """
     A co-op game where you try to defeat a group
     of Ninjas as fast as possible
@@ -116,7 +124,7 @@ class NinjaFightGame(ba.TeamGameActivity[ba.Player, ba.Team]):
                     spazbot.ChargerBot, pos=(0, 3, 1), spawn_time=3.0))
 
     # Called for each spawning player.
-    def spawn_player(self, player: ba.Player) -> ba.Actor:
+    def spawn_player(self, player: Player) -> ba.Actor:
 
         # Let's spawn close to the center.
         spawn_center = (0, 3, -2)
