@@ -717,8 +717,7 @@ class RaceGame(ba.TeamGameActivity):
         results = ba.TeamGameResults()
 
         for team in self.teams:
-            if team.gamedata['time'] is not None:
-                results.set_team_score(team, team.gamedata['time'])
+            results.set_team_score(team, team.gamedata['time'])
             # If game have ended before we
             # get any result, use 'fail' screen
 
