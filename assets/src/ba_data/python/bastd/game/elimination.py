@@ -162,6 +162,12 @@ class Icon(ba.Actor):
             if lives == 0:
                 ba.timer(0.6, self.update_for_lives)
 
+    def handlemessage(self, msg: Any) -> Any:
+        if isinstance(msg, ba.DieMessage):
+            self.node.delete()
+        else:
+            return super().handlemessage(msg)
+
 
 # ba_meta export game
 class EliminationGame(ba.TeamGameActivity):
