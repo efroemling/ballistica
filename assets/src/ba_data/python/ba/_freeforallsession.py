@@ -37,7 +37,8 @@ class FreeForAllSession(MultiTeamSession):
 
     Category: Gameplay Classes
     """
-    _use_teams = False
+    use_teams = False
+    use_team_colors = True
     _playlist_selection_var = 'Free-for-All Playlist Selection'
     _playlist_randomize_var = 'Free-for-All Playlist Randomize'
     _playlists_var = 'Free-for-All Playlists'

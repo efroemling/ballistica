@@ -30,8 +30,8 @@ if TYPE_CHECKING:
     from typing import Any, List, Dict, Optional, Callable, Sequence
     import ba
 
-TEAM_COLORS = ((0.2, 0.4, 1.6), )
-TEAM_NAMES = ('Good Guys', )
+TEAM_COLORS = [(0.2, 0.4, 1.6)]
+TEAM_NAMES = ['Good Guys']
 
 
 class CoopSession(Session):
@@ -43,6 +43,9 @@ class CoopSession(Session):
     the computer and include functionality such as
     high score lists.
     """
+    use_teams = True
+    use_team_colors = False
+    allow_mid_activity_joins = False
 
     def __init__(self) -> None:
         """Instantiate a co-op mode session."""
@@ -51,7 +54,6 @@ class CoopSession(Session):
         from bastd.activity.coopjoin import CoopJoinActivity
 
         _ba.increment_analytics_count('Co-op session start')
-
         app = _ba.app
 
         # If they passed in explicit min/max, honor that.
@@ -63,14 +65,7 @@ class CoopSession(Session):
         if 'max_players' in app.coop_session_args:
             max_players = app.coop_session_args['max_players']
         else:
-            try:
-                max_players = app.config['Coop Game Max Players']
-            except Exception:
-                # Old pref value.
-                try:
-                    max_players = app.config['Challenge Game Max Players']
-                except Exception:
-                    max_players = 4
+            max_players = app.config.get('Coop Game Max Players', 4)
 
         # print('FIXME: COOP SESSION WOULD CALC DEPS.')
         depsets: Sequence[ba.DependencySet] = []
@@ -78,10 +73,8 @@ class CoopSession(Session):
         super().__init__(depsets,
                          team_names=TEAM_NAMES,
                          team_colors=TEAM_COLORS,
-                         use_team_colors=False,
                          min_players=min_players,
-                         max_players=max_players,
-                         allow_mid_activity_joins=False)
+                         max_players=max_players)
 
         # Tournament-ID if we correspond to a co-op tournament (otherwise None)
         self.tournament_id = (app.coop_session_args['tournament_id']

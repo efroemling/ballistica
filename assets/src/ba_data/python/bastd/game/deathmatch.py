@@ -34,8 +34,19 @@ if TYPE_CHECKING:
     from typing import Any, Type, List, Dict, Tuple, Union, Sequence
 
 
+class Player(ba.Player['Team']):
+    """Our player type for this game."""
+
+
+class Team(ba.Team[Player]):
+    """Our team type for this game."""
+
+    def __init__(self) -> None:
+        pass
+
+
 # ba_meta export game
-class DeathMatchGame(ba.TeamGameActivity[ba.Player, ba.Team]):
+class DeathMatchGame(ba.TeamGameActivity[Player, Team]):
     """A game type based on acquiring kills."""
 
     name = 'Death Match'
@@ -92,12 +103,15 @@ class DeathMatchGame(ba.TeamGameActivity[ba.Player, ba.Team]):
     def __init__(self, settings: Dict[str, Any]):
         from bastd.actor.scoreboard import Scoreboard
         super().__init__(settings)
-        if self.settings_raw['Epic Mode']:
-            self.slow_motion = True
-
         self._scoreboard = Scoreboard()
         self._score_to_win = None
         self._dingsound = ba.getsound('dingSmall')
+        self._epic_mode = bool(settings['Epic Mode'])
+
+        # Base class overrides.
+        self.slow_motion = self._epic_mode
+        self.default_music = (ba.MusicType.EPIC if self._epic_mode else
+                              ba.MusicType.TO_THE_DEATH)
 
     def get_instance_description(self) -> Union[str, Sequence]:
         return 'Crush ${ARG1} of your enemies.', self._score_to_win
@@ -105,13 +119,7 @@ class DeathMatchGame(ba.TeamGameActivity[ba.Player, ba.Team]):
     def get_instance_description_short(self) -> Union[str, Sequence]:
         return 'kill ${ARG1} enemies', self._score_to_win
 
-    def on_transition_in(self) -> None:
-        self.default_music = (ba.MusicType.EPIC
-                              if self.settings_raw['Epic Mode'] else
-                              ba.MusicType.TO_THE_DEATH)
-        super().on_transition_in()
-
-    def on_team_join(self, team: ba.Team) -> None:
+    def on_team_join(self, team: Team) -> None:
         team.gamedata['score'] = 0
         if self.has_begun():
             self._update_scoreboard()

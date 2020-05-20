@@ -889,18 +889,16 @@ class Lobby:
             player.reset()
 
     def __init__(self) -> None:
-        from ba import _team as bs_team
-        from ba import _coopsession
+        from ba._team import SessionTeam
+        from ba._coopsession import CoopSession
         session = _ba.getsession()
-        teams = session.teams if session.use_teams else None
         self._use_team_colors = session.use_team_colors
-        if teams is not None:
-            self._teams = [weakref.ref(team) for team in teams]
+        if session.use_teams:
+            self._teams = [weakref.ref(team) for team in session.teams]
         else:
-            self._dummy_teams = bs_team.SessionTeam()
+            self._dummy_teams = SessionTeam()
             self._teams = [weakref.ref(self._dummy_teams)]
-        v_offset = (-150
-                    if isinstance(session, _coopsession.CoopSession) else -50)
+        v_offset = (-150 if isinstance(session, CoopSession) else -50)
         self.choosers: List[Chooser] = []
         self.base_v_offset = v_offset
         self.update_positions()

@@ -75,6 +75,9 @@ class Session:
             there is no associated Campaign.
 
     """
+    use_teams = False
+    use_team_colors = True
+    allow_mid_activity_joins = True
 
     # Note: even though these are instance vars, we annotate them at the
     # class level so that docs generation can access their types.
@@ -89,10 +92,8 @@ class Session:
                  depsets: Sequence[ba.DependencySet],
                  team_names: Sequence[str] = None,
                  team_colors: Sequence[Sequence[float]] = None,
-                 use_team_colors: bool = True,
                  min_players: int = 1,
-                 max_players: int = 8,
-                 allow_mid_activity_joins: bool = True):
+                 max_players: int = 8):
         """Instantiate a session.
 
         depsets should be a sequence of successfully resolved ba.DependencySet
@@ -154,16 +155,12 @@ class Session:
         self.campaign = None
         self.campaign_state: Dict[str, str] = {}
 
-        self._use_teams = (team_names is not None)
-        self._use_team_colors = use_team_colors
-        self._in_set_activity = False
-        self._allow_mid_activity_joins = allow_mid_activity_joins
-
         self.teams = []
         self.players = []
+        self._in_set_activity = False
         self._next_team_id = 0
         self._activity_retained: Optional[ba.Activity] = None
-        self.launch_end_session_activity_time: Optional[float] = None
+        self._launch_end_session_activity_time: Optional[float] = None
         self._activity_end_timer: Optional[ba.Timer] = None
         self._activity_weak = empty_weakref(Activity)
         if self._activity_weak() is not None:
@@ -175,8 +172,8 @@ class Session:
         self.min_players = min_players
         self.max_players = max_players
 
-        # Create Teams.
-        if self._use_teams:
+        # Create static teams if we're using them.
+        if self.use_teams:
             assert team_names is not None
             assert team_colors is not None
             for i, color in enumerate(team_colors):
@@ -198,16 +195,6 @@ class Session:
 
         # Instantiate our session globals node which will apply its settings.
         sharedobj('globals')
-
-    @property
-    def use_teams(self) -> bool:
-        """(internal)"""
-        return self._use_teams
-
-    @property
-    def use_team_colors(self) -> bool:
-        """(internal)"""
-        return self._use_team_colors
 
     def on_player_request(self, player: ba.SessionPlayer) -> bool:
         """Called when a new ba.Player wants to join the Session.
@@ -284,7 +271,7 @@ class Session:
                     print('Player not found in Activity in on_player_leave.')
 
             # If we're a non-team session, remove their team too.
-            if not self._use_teams:
+            if not self.use_teams:
 
                 # They should have been the only one on their team.
                 assert not sessionteam.players
@@ -335,14 +322,14 @@ class Session:
             curtime = _ba.time(TimeType.REAL)
             if self._ending:
                 # Ignore repeats unless its been a while.
-                assert self.launch_end_session_activity_time is not None
-                since_last = (curtime - self.launch_end_session_activity_time)
+                assert self._launch_end_session_activity_time is not None
+                since_last = (curtime - self._launch_end_session_activity_time)
                 if since_last < 30.0:
                     return
                 print_error(
                     'launch_end_session_activity called twice (since_last=' +
                     str(since_last) + ')')
-            self.launch_end_session_activity_time = curtime
+            self._launch_end_session_activity_time = curtime
             self.set_activity(_ba.new_activity(EndSessionActivity))
             self.wants_to_end = False
             self._ending = True  # Prevent further actions.
@@ -603,7 +590,7 @@ class Session:
         # If we're not allowing mid-game joins, don't pass; just announce
         # the arrival and say they'll partake next round.
         if pass_to_activity:
-            if not self._allow_mid_activity_joins:
+            if not self.allow_mid_activity_joins:
                 pass_to_activity = False
                 with _ba.Context(self):
                     _ba.screenmessage(
@@ -615,7 +602,7 @@ class Session:
 
         # If we're a non-team session, each player gets their own team.
         # (keeps mini-game coding simpler if we can always deal with teams).
-        if self._use_teams:
+        if self.use_teams:
             sessionteam = chooser.get_team()
         else:
             our_team_id = self._next_team_id

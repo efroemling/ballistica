@@ -59,7 +59,7 @@ class MultiTeamSession(Session):
         app = _ba.app
         cfg = app.config
 
-        if self._use_teams:
+        if self.use_teams:
             team_names = cfg.get('Custom Team Names', DEFAULT_TEAM_NAMES)
             team_colors = cfg.get('Custom Team Colors', DEFAULT_TEAM_COLORS)
         else:
@@ -72,7 +72,6 @@ class MultiTeamSession(Session):
         super().__init__(depsets,
                          team_names=team_names,
                          team_colors=team_colors,
-                         use_team_colors=self._use_teams,
                          min_players=1,
                          max_players=self.get_max_players())
 
@@ -107,7 +106,7 @@ class MultiTeamSession(Session):
             # got it and we don't want that to affect our config.
             playlist = copy.deepcopy(playlists[self._playlist_name])
         else:
-            if self._use_teams:
+            if self.use_teams:
                 playlist = _playlist.get_default_teams_playlist()
             else:
                 playlist = _playlist.get_default_free_for_all_playlist()
@@ -161,7 +160,7 @@ class MultiTeamSession(Session):
 
     def get_max_players(self) -> int:
         """Return max number of ba.Players allowed to join the game at once."""
-        if self._use_teams:
+        if self.use_teams:
             return _ba.app.config.get('Team Game Max Players', 8)
         return _ba.app.config.get('Free-for-All Max Players', 8)
 

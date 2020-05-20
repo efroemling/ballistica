@@ -242,7 +242,6 @@ class MeteorShowerGame(ba.TeamGameActivity[Player, Team]):
         # (these per-player scores are only meaningful in team-games)
         for team in self.teams:
             for player in team.players:
-
                 survived = False
 
                 # Throw an extra fudge factor in so teams that

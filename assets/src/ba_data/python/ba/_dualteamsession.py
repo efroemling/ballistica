@@ -24,18 +24,19 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import _ba
-from ba import _multiteamsession
+from ba._multiteamsession import MultiTeamSession
 
 if TYPE_CHECKING:
     import ba
 
 
-class DualTeamSession(_multiteamsession.MultiTeamSession):
+class DualTeamSession(MultiTeamSession):
     """ba.Session type for teams mode games.
 
     Category: Gameplay Classes
     """
-    _use_teams = True
+    use_teams = True
+    use_team_colors = True
     _playlist_selection_var = 'Team Tournament Playlist Selection'
     _playlist_randomize_var = 'Team Tournament Playlist Randomize'
     _playlists_var = 'Team Tournament Playlists'

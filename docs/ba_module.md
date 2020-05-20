@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-05-19 for Ballistica version 1.5.0 build 20023</em></h4>
+<h4><em>last updated on 2020-05-20 for Ballistica version 1.5.0 build 20023</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -4145,7 +4145,7 @@ list in <a href="#class_ba_Activity">ba.Activity</a>; not this.</p>
 <h5><a href="#method_ba_Session____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Session__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_Session__end">end()</a>, <a href="#method_ba_Session__end_activity">end_activity()</a>, <a href="#method_ba_Session__get_custom_menu_entries">get_custom_menu_entries()</a>, <a href="#method_ba_Session__getactivity">getactivity()</a>, <a href="#method_ba_Session__handlemessage">handlemessage()</a>, <a href="#method_ba_Session__on_activity_end">on_activity_end()</a>, <a href="#method_ba_Session__on_player_leave">on_player_leave()</a>, <a href="#method_ba_Session__on_player_request">on_player_request()</a>, <a href="#method_ba_Session__on_team_join">on_team_join()</a>, <a href="#method_ba_Session__on_team_leave">on_team_leave()</a>, <a href="#method_ba_Session__set_activity">set_activity()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_Session____init__">&lt;constructor&gt;</a></dt></h4><dd>
-<p><span>ba.Session(depsets: Sequence[<a href="#class_ba_DependencySet">ba.DependencySet</a>], team_names: Sequence[str] = None, team_colors: Sequence[Sequence[float]] = None, use_team_colors: bool = True, min_players: int = 1, max_players: int = 8, allow_mid_activity_joins: bool = True)</span></p>
+<p><span>ba.Session(depsets: Sequence[<a href="#class_ba_DependencySet">ba.DependencySet</a>], team_names: Sequence[str] = None, team_colors: Sequence[Sequence[float]] = None, min_players: int = 1, max_players: int = 8)</span></p>
 
 <p>Instantiate a session.</p>
 
