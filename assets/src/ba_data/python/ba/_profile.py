@@ -54,12 +54,12 @@ def get_player_profile_icon(profilename: str) -> str:
     icon: str
     try:
         is_global = bs_config['Player Profiles'][profilename]['global']
-    except Exception:
+    except KeyError:
         is_global = False
     if is_global:
         try:
             icon = bs_config['Player Profiles'][profilename]['icon']
-        except Exception:
+        except KeyError:
             icon = _ba.charstr(SpecialChar.LOGO)
     else:
         icon = ''
@@ -82,9 +82,9 @@ def get_player_profile_colors(
         highlight = (0.4, 0.4, 0.5)
     else:
         try:
-            assert profilename is not None
             color = profiles[profilename]['color']
-        except Exception:
+            assert profilename is not None
+        except KeyError:
             # key off name if possible
             if profilename is None:
                 # first 6 are bright-ish
@@ -94,9 +94,9 @@ def get_player_profile_colors(
                 color = PLAYER_COLORS[sum([ord(c) for c in profilename]) % 6]
 
         try:
-            assert profilename is not None
             highlight = profiles[profilename]['highlight']
-        except Exception:
+            assert profilename is not None
+        except KeyError:
             # key off name if possible
             if profilename is None:
                 # last 2 are grey and white; ignore those or we
