@@ -19,6 +19,7 @@
 # SOFTWARE.
 # -----------------------------------------------------------------------------
 """Player related functionality."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeVar, Generic
@@ -32,7 +33,13 @@ TeamType = TypeVar('TeamType', bound='ba.Team')
 
 
 class Player(Generic[TeamType]):
-    """Testing."""
+    """A player in a specific ba.Activity.
+
+    Category: Gameplay Classes
+
+    These correspond to ba.SessionPlayer objects, but are created per activity
+    so that the activity can use its own custom player subclass.
+    """
 
     # Defining these types at the class level instead of in __init__ so
     # that types are introspectable (these are still instance attrs).
@@ -112,7 +119,7 @@ class Player(Generic[TeamType]):
 
     @property
     def exists(self) -> bool:
-        """Whether the player still exists.
+        """Whether the underlying player still exists.
 
         Most functionality will fail on a nonexistent player.
         Note that you can also use the boolean operator for this same

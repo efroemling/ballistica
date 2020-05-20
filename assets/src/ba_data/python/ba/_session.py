@@ -46,7 +46,7 @@ class Session:
     ba.Activity instances such as mini-games and score-screens, and for
     maintaining state between them (players, teams, score tallies, etc).
 
-    Attributes:
+    Attrs:
 
         teams
             All the ba.Teams in the Session. Most things should use the team
@@ -74,10 +74,24 @@ class Session:
             The ba.Campaign instance this Session represents, or None if
             there is no associated Campaign.
 
+        use_teams
+            Whether this session groups players into an explicit set of
+            teams. If this is off, a unique team is generated for each
+            player that joins.
+
+        use_team_colors
+            Whether players on a team should all adopt the colors of that
+            team instead of their own profile colors. This only applies if
+            use_teams is enabled.
+
+        allow_mid_activity_joins
+            Whether players should be allowed to join in the middle of
+            activities.
+
     """
-    use_teams = False
-    use_team_colors = True
-    allow_mid_activity_joins = True
+    use_teams: bool = False
+    use_team_colors: bool = True
+    allow_mid_activity_joins: bool = True
 
     # Note: even though these are instance vars, we annotate them at the
     # class level so that docs generation can access their types.

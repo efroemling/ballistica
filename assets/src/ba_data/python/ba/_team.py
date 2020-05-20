@@ -18,7 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # -----------------------------------------------------------------------------
-"""Defines Team class."""
+"""Team related functionality."""
+
 from __future__ import annotations
 
 import weakref
@@ -35,9 +36,9 @@ class SessionTeam:
 
     Category: Gameplay Classes
 
-    Note that a player *always* has a team;
+    Note that a SessionPlayer *always* has a SessionTeam;
     in some cases, such as free-for-all ba.Sessions,
-    each team consists of just one ba.Player.
+    each SessionTeam consists of just one SessionPlayer.
 
     Attributes:
 
@@ -104,7 +105,13 @@ PlayerType = TypeVar('PlayerType', bound='ba.Player')
 
 
 class Team(Generic[PlayerType]):
-    """Testing."""
+    """A team in a specific ba.Activity.
+
+    Category: Gameplay Classes
+
+    These correspond to ba.SessionTeam objects, but are created per activity
+    so that the activity can use its own custom team subclass.
+    """
 
     # Defining these types at the class level instead of in __init__ so
     # that types are introspectable (these are still instance attrs).

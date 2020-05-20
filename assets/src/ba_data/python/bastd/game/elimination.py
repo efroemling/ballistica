@@ -263,9 +263,9 @@ class EliminationGame(ba.TeamGameActivity[Player, Team]):
         # No longer allowing mid-game joiners here; too easy to exploit.
         if self.has_begun():
 
-            # Make sure our team has survival seconds set if they're all dead
-            # (otherwise blocked new ffa players would be considered 'still
-            # alive' in score tallying).
+            # Make sure their team has survival seconds set if they're all dead
+            # (otherwise blocked new ffa players are considered 'still alive'
+            # in score tallying).
             if (self._get_total_team_lives(player.team) == 0
                     and player.team.survival_seconds is None):
                 player.team.survival_seconds = 0

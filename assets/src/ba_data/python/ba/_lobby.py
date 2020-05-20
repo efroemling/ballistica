@@ -987,7 +987,7 @@ class Lobby:
         self._vpos -= 48
 
     def remove_chooser(self, player: ba.SessionPlayer) -> None:
-        """Remove a single player's chooser; does not kick him.
+        """Remove a single player's chooser; does not kick them.
 
         This is used when a player enters the game and no longer
         needs a chooser."""
