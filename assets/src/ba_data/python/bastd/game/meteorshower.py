@@ -34,7 +34,7 @@ from bastd.actor.playerspaz import PlayerSpazDeathMessage
 from bastd.actor.onscreentimer import OnScreenTimer
 
 if TYPE_CHECKING:
-    from typing import Any, Tuple, Sequence, Optional, List, Dict, Type, Type
+    from typing import Any, Sequence, Optional, List, Dict, Type, Type
 
 
 class Player(ba.Player['Team']):
@@ -53,30 +53,20 @@ class Team(ba.Team[Player]):
 class MeteorShowerGame(ba.TeamGameActivity[Player, Team]):
     """Minigame involving dodging falling bombs."""
 
-    @classmethod
-    def get_name(cls) -> str:
-        return 'Meteor Shower'
+    name = 'Meteor Shower'
+    description = 'Dodge the falling bombs.'
+    game_settings = [('Epic Mode', {'default': False})]
+    score_info = ba.ScoreInfo(label='Survived',
+                              scoretype=ba.ScoreType.MILLISECONDS,
+                              version='B')
 
-    @classmethod
-    def get_score_info(cls) -> ba.ScoreInfo:
-        return ba.ScoreInfo(label='Survived',
-                            scoretype=ba.ScoreType.MILLISECONDS,
-                            version='B')
-
-    @classmethod
-    def get_description(cls, sessiontype: Type[ba.Session]) -> str:
-        return 'Dodge the falling bombs.'
+    # Print messages when players die (since its meaningful in this game).
+    announce_player_deaths = True
 
     # we're currently hard-coded for one map..
     @classmethod
     def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
         return ['Rampage']
-
-    @classmethod
-    def get_settings(
-            cls,
-            sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
-        return [('Epic Mode', {'default': False})]
 
     # We support teams, free-for-all, and co-op sessions.
     @classmethod
@@ -84,9 +74,6 @@ class MeteorShowerGame(ba.TeamGameActivity[Player, Team]):
         return (issubclass(sessiontype, ba.DualTeamSession)
                 or issubclass(sessiontype, ba.FreeForAllSession)
                 or issubclass(sessiontype, ba.CoopSession))
-
-    # Print messages when players die (since its meaningful in this game).
-    announce_player_deaths = True
 
     def __init__(self, settings: Dict[str, Any]):
         super().__init__(settings)
@@ -255,9 +242,6 @@ class MeteorShowerGame(ba.TeamGameActivity[Player, Team]):
         # (these per-player scores are only meaningful in team-games)
         for team in self.teams:
             for player in team.players:
-
-                if not player:
-                    print(f'GOT DEAD PLAYER {id(player)}')
 
                 survived = False
 

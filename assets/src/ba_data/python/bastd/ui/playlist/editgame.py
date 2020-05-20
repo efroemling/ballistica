@@ -72,7 +72,7 @@ class PlaylistEditGameWindow(ba.Window):
             ba.screenmessage(ba.Lstr(resource='noValidMapsErrorText'))
             raise Exception('No valid maps')
 
-        self._settings_defs = gameclass.get_settings(sessiontype)
+        self._settings_defs = gameclass.get_game_settings(sessiontype)
         self._completion_call = completion_call
 
         # To start with, pick a random map out of the ones we own.

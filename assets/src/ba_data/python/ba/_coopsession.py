@@ -124,7 +124,7 @@ class CoopSession(Session):
         settings = level.get_settings()
 
         # Make sure all settings the game expects are present.
-        neededsettings = gametype.get_settings(type(self))
+        neededsettings = gametype.get_game_settings(type(self))
         for settingname, setting in neededsettings:
             if settingname not in settings:
                 settings[settingname] = setting['default']
@@ -147,7 +147,7 @@ class CoopSession(Session):
             settings = nextlevel.get_settings()
 
             # Make sure all settings the game expects are present.
-            neededsettings = gametype.get_settings(type(self))
+            neededsettings = gametype.get_game_settings(type(self))
             for settingname, setting in neededsettings:
                 if settingname not in settings:
                     settings[settingname] = setting['default']

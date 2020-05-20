@@ -49,29 +49,22 @@ class Team(ba.Team[Player]):
 class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
     """Slow motion how-long-can-you-last game."""
 
+    name = 'The Last Stand'
+    description = 'Final glorious epic slow motion battle to the death.'
     tips = [
         'This level never ends, but a high score here\n'
         'will earn you eternal respect throughout the world.'
     ]
 
-    @classmethod
-    def get_name(cls) -> str:
-        return 'The Last Stand'
+    # Show messages when players die since it matters here.
+    announce_player_deaths = True
 
-    @classmethod
-    def get_description(cls, sessiontype: Type[ba.Session]) -> str:
-        return 'Final glorious epic slow motion battle to the death.'
+    # And of course the most important part.
+    slow_motion = True
 
     def __init__(self, settings: Dict[str, Any]):
         settings['map'] = 'Rampage'
         super().__init__(settings)
-
-        # Show messages when players die since it matters here.
-        self.announce_player_deaths = True
-
-        # And of course the most important part.
-        self.slow_motion = True
-
         self._new_wave_sound = ba.getsound('scoreHit01')
         self._winsound = ba.getsound('score')
         self._cashregistersound = ba.getsound('cashRegister')

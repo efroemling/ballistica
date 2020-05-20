@@ -151,7 +151,7 @@ def filter_playlist(playlist: PlaylistType,
                 entry['is_unowned_game'] = True
 
             # Make sure all settings the game defines are present.
-            neededsettings = gameclass.get_settings(sessiontype)
+            neededsettings = gameclass.get_game_settings(sessiontype)
             for setting_name, setting in neededsettings:
                 if (setting_name not in entry['settings']
                         and 'default' in setting):

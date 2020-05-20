@@ -33,8 +33,7 @@ from bastd.actor.flag import Flag
 from bastd.actor.playerspaz import PlayerSpazDeathMessage
 
 if TYPE_CHECKING:
-    from typing import (Any, Optional, Type, List, Tuple, Dict, Sequence,
-                        Union)
+    from typing import Any, Optional, Type, List, Dict, Sequence, Union
 
 
 class ConquestFlag(Flag):
@@ -60,13 +59,24 @@ class ConquestFlag(Flag):
 class ConquestGame(ba.TeamGameActivity[ba.Player, ba.Team]):
     """A game where teams try to claim all flags on the map."""
 
-    @classmethod
-    def get_name(cls) -> str:
-        return 'Conquest'
-
-    @classmethod
-    def get_description(cls, sessiontype: Type[ba.Session]) -> str:
-        return 'Secure all flags on the map to win.'
+    name = 'Conquest'
+    description = 'Secure all flags on the map to win.'
+    game_settings = [
+        ('Time Limit', {
+            'choices': [('None', 0), ('1 Minute', 60), ('2 Minutes', 120),
+                        ('5 Minutes', 300), ('10 Minutes', 600),
+                        ('20 Minutes', 1200)],
+            'default': 0
+        }),
+        ('Respawn Times', {
+            'choices': [('Shorter', 0.25), ('Short', 0.5), ('Normal', 1.0),
+                        ('Long', 2.0), ('Longer', 4.0)],
+            'default': 1.0
+        }),
+        ('Epic Mode', {
+            'default': False
+        }),
+    ]
 
     @classmethod
     def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
@@ -75,29 +85,6 @@ class ConquestGame(ba.TeamGameActivity[ba.Player, ba.Team]):
     @classmethod
     def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
         return ba.getmaps('conquest')
-
-    @classmethod
-    def get_settings(
-            cls,
-            sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
-        return [
-            ('Time Limit', {
-                'choices': [('None', 0), ('1 Minute', 60),
-                            ('2 Minutes', 120),
-                            ('5 Minutes', 300),
-                            ('10 Minutes', 600),
-                            ('20 Minutes', 1200)],
-                'default': 0
-            }),
-            ('Respawn Times', {
-                'choices': [('Shorter', 0.25),
-                            ('Short', 0.5),
-                            ('Normal', 1.0),
-                            ('Long', 2.0),
-                            ('Longer', 4.0)],
-                'default': 1.0
-            }),
-            ('Epic Mode', {'default': False})]  # yapf: disable
 
     def __init__(self, settings: Dict[str, Any]):
         from bastd.actor.scoreboard import Scoreboard
@@ -119,7 +106,7 @@ class ConquestGame(ba.TeamGameActivity[ba.Player, ba.Team]):
     def get_instance_description(self) -> Union[str, Sequence]:
         return 'Secure all ${ARG1} flags.', len(self.map.flag_points)
 
-    def get_instance_scoreboard_description(self) -> Union[str, Sequence]:
+    def get_instance_description_short(self) -> Union[str, Sequence]:
         return 'secure all ${ARG1} flags', len(self.map.flag_points)
 
     def on_transition_in(self) -> None:

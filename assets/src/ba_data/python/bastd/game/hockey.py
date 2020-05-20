@@ -31,8 +31,7 @@ import ba
 from bastd.actor import playerspaz
 
 if TYPE_CHECKING:
-    from typing import (Any, Sequence, Dict, Type, List, Tuple, Optional,
-                        Union)
+    from typing import Any, Sequence, Dict, Type, List, Optional, Union
 
 
 class PuckDeathMessage:
@@ -109,13 +108,26 @@ class Puck(ba.Actor):
 class HockeyGame(ba.TeamGameActivity[ba.Player, ba.Team]):
     """Ice hockey game."""
 
-    @classmethod
-    def get_name(cls) -> str:
-        return 'Hockey'
-
-    @classmethod
-    def get_description(cls, sessiontype: Type[ba.Session]) -> str:
-        return 'Score some goals.'
+    name = 'Hockey'
+    description = 'Score some goals.'
+    game_settings = [
+        ('Score to Win', {
+            'min_value': 1,
+            'default': 1,
+            'increment': 1
+        }),
+        ('Time Limit', {
+            'choices': [('None', 0), ('1 Minute', 60), ('2 Minutes', 120),
+                        ('5 Minutes', 300), ('10 Minutes', 600),
+                        ('20 Minutes', 1200)],
+            'default': 0
+        }),
+        ('Respawn Times', {
+            'choices': [('Shorter', 0.25), ('Short', 0.5), ('Normal', 1.0),
+                        ('Long', 2.0), ('Longer', 4.0)],
+            'default': 1.0
+        }),
+    ]
 
     @classmethod
     def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
@@ -124,26 +136,6 @@ class HockeyGame(ba.TeamGameActivity[ba.Player, ba.Team]):
     @classmethod
     def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
         return ba.getmaps('hockey')
-
-    @classmethod
-    def get_settings(
-            cls,
-            sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
-        return [
-            ('Score to Win', {
-                'min_value': 1, 'default': 1, 'increment': 1
-            }),
-            ('Time Limit', {
-                'choices': [('None', 0), ('1 Minute', 60),
-                            ('2 Minutes', 120), ('5 Minutes', 300),
-                            ('10 Minutes', 600), ('20 Minutes', 1200)],
-                'default': 0
-            }),
-            ('Respawn Times', {
-                'choices': [('Shorter', 0.25), ('Short', 0.5), ('Normal', 1.0),
-                            ('Long', 2.0), ('Longer', 4.0)],
-                'default': 1.0
-            })]  # yapf: disable
 
     def __init__(self, settings: Dict[str, Any]):
         from bastd.actor.scoreboard import Scoreboard
@@ -201,7 +193,7 @@ class HockeyGame(ba.TeamGameActivity[ba.Player, ba.Team]):
             return 'Score a goal.'
         return 'Score ${ARG1} goals.', self.settings_raw['Score to Win']
 
-    def get_instance_scoreboard_description(self) -> Union[str, Sequence]:
+    def get_instance_description_short(self) -> Union[str, Sequence]:
         if self.settings_raw['Score to Win'] == 1:
             return 'score a goal'
         return 'score ${ARG1} goals', self.settings_raw['Score to Win']

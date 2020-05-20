@@ -51,6 +51,18 @@ class GameActivity(Activity[PlayerType, TeamType]):
 
     tips: List[Union[str, Dict[str, Any]]] = []
 
+    # Default get_name() will return this if not None.
+    name: Optional[str] = None
+
+    # Default get_description() will return this if not None.
+    description: Optional[str] = None
+
+    # Default get_game_settings() will return this if not None.
+    game_settings: Optional[List[Tuple[str, Dict[str, Any]]]] = None
+
+    # Default get_score_info() will return this if not None.
+    score_info: Optional[ba.ScoreInfo] = None
+
     @classmethod
     def create_config_ui(
         cls,
@@ -69,9 +81,9 @@ class GameActivity(Activity[PlayerType, TeamType]):
           success or None on cancel.
 
         Generally subclasses don't need to override this; if they override
-        ba.GameActivity.get_settings() and ba.GameActivity.get_supported_maps()
-        they can just rely on the default implementation here which calls those
-        methods.
+        ba.GameActivity.get_game_settings() and
+        ba.GameActivity.get_supported_maps() they can just rely on
+        the default implementation here which calls those methods.
         """
         delegate = _ba.app.delegate
         assert delegate is not None
@@ -81,15 +93,15 @@ class GameActivity(Activity[PlayerType, TeamType]):
     @classmethod
     def get_score_info(cls) -> ba.ScoreInfo:
         """Return info about game scoring setup; can be overridden by games."""
-        return ScoreInfo()
+        return cls.score_info if cls.score_info is not None else ScoreInfo()
 
     @classmethod
     def get_name(cls) -> str:
-        """Return a str name for this game type."""
-        try:
-            return cls.__module__.replace('_', ' ')
-        except Exception:
-            return 'Untitled Game'
+        """Return a str name for this game type.
+
+        This default implementation simply returns the 'name' class attr.
+        """
+        return cls.name if cls.name is not None else 'Untitled Game'
 
     @classmethod
     def get_display_string(cls, settings: Optional[Dict] = None) -> ba.Lstr:
@@ -119,13 +131,14 @@ class GameActivity(Activity[PlayerType, TeamType]):
 
     @classmethod
     def get_description(cls, sessiontype: Type[ba.Session]) -> str:
-        """
-        Subclasses should override this to return a description for this
-        activity type (in English) within the context of the given
-        ba.Session type.
+        """Get a str description of this game type.
+
+        The default implementation simply returns the 'description' class var.
+        Classes which want to change their description depending on the session
+        can override this method.
         """
         del sessiontype  # unused arg
-        return ''
+        return cls.description if cls.description is not None else ''
 
     @classmethod
     def get_description_display_string(
@@ -138,7 +151,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         return Lstr(translate=('gameDescriptions', description))
 
     @classmethod
-    def get_settings(
+    def get_game_settings(
             cls,
             sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
         """
@@ -162,9 +175,9 @@ class GameActivity(Activity[PlayerType, TeamType]):
 
         'increment': Value increment for int/float settings.
 
-        # example get_settings() implementation for a capture-the-flag game:
+        # example get_game_settings() for a capture-the-flag game:
         @classmethod
-        def get_settings(cls,sessiontype):
+        def get_game_settings(cls, sessiontype):
             return [("Score to Win", {
                         'default': 3,
                         'min_value': 1
@@ -199,7 +212,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
                     })]
         """
         del sessiontype  # Unused arg.
-        return []
+        return [] if cls.game_settings is None else cls.game_settings
 
     @classmethod
     def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
@@ -353,7 +366,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         This is shown in the center of the screen below the game name at the
         start of a game. It should start with a capital letter and end with a
         period, and can be a bit more verbose than the version returned by
-        get_instance_scoreboard_description().
+        get_instance_description_short().
 
         Note that translation is applied by looking up the specific returned
         value as a key, so the number of returned variations should be limited;
@@ -361,7 +374,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         description, you can return a sequence of values in the following
         form instead of just a string:
 
-        # this will give us something like 'Score 3 goals.' in English
+        # This will give us something like 'Score 3 goals.' in English
         # and can properly translate to 'Anota 3 goles.' in Spanish.
         # If we just returned the string 'Score 3 Goals' here, there would
         # have to be a translation entry for each specific number. ew.
@@ -373,7 +386,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         """
         return self.get_description(type(self.session))
 
-    def get_instance_scoreboard_description(self) -> Union[str, Sequence]:
+    def get_instance_description_short(self) -> Union[str, Sequence]:
         """Return a short description for this game instance in English.
 
         This description is used above the game scoreboard in the
@@ -387,7 +400,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         description, you can return a sequence of values in the following form
         instead of just a string:
 
-        # this will give us something like 'score 3 goals' in English
+        # This will give us something like 'score 3 goals' in English
         # and can properly translate to 'anota 3 goles' in Spanish.
         # If we just returned the string 'score 3 goals' here, there would
         # have to be a translation entry for each specific number. ew.
@@ -669,7 +682,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
 
         # the description can be either a string or a sequence with args
         # to swap in post-translation
-        sb_desc_in = self.get_instance_scoreboard_description()
+        sb_desc_in = self.get_instance_description_short()
         sb_desc_l: Sequence
         if isinstance(sb_desc_in, str):
             sb_desc_l = [sb_desc_in]  # handle simple string case

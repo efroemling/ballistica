@@ -41,6 +41,8 @@ if TYPE_CHECKING:
 class RunaroundGame(ba.CoopGameActivity[ba.Player, ba.Team]):
     """Game involving trying to bomb bots as they walk through the map."""
 
+    name = 'Runaround'
+    description = 'Prevent enemies from reaching the exit.'
     tips = [
         'Jump just as you\'re throwing to get bombs up to the highest levels.',
         'No, you can\'t get up on the ledge. You have to throw bombs.',
@@ -63,14 +65,6 @@ class RunaroundGame(ba.CoopGameActivity[ba.Player, ba.Team]):
         spazbot.ExplodeyBot: 1.0,
         spazbot.StickyBot: 0.5
     }
-
-    @classmethod
-    def get_name(cls) -> str:
-        return 'Runaround'
-
-    @classmethod
-    def get_description(cls, sessiontype: Type[ba.Session]) -> str:
-        return 'Prevent enemies from reaching the exit.'
 
     def __init__(self, settings: Dict[str, Any]):
         settings['map'] = 'Tower D'

@@ -81,30 +81,14 @@ class Team(ba.Team[Player]):
 class RaceGame(ba.TeamGameActivity[Player, Team]):
     """Game of racing around a track."""
 
-    @classmethod
-    def get_name(cls) -> str:
-        return 'Race'
+    name = 'Race'
+    description = 'Run real fast!'
+    score_info = ba.ScoreInfo(label='Time',
+                              lower_is_better=True,
+                              scoretype=ba.ScoreType.MILLISECONDS)
 
     @classmethod
-    def get_description(cls, sessiontype: Type[ba.Session]) -> str:
-        return 'Run real fast!'
-
-    @classmethod
-    def get_score_info(cls) -> ba.ScoreInfo:
-        return ba.ScoreInfo(label='Time',
-                            lower_is_better=True,
-                            scoretype=ba.ScoreType.MILLISECONDS)
-
-    @classmethod
-    def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
-        return issubclass(sessiontype, ba.MultiTeamSession)
-
-    @classmethod
-    def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
-        return ba.getmaps('race')
-
-    @classmethod
-    def get_settings(
+    def get_game_settings(
             cls,
             sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
         settings: List[Tuple[str, Dict[str, Any]]] = [
@@ -114,9 +98,9 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
                 'increment': 1
             }),
             ('Time Limit', {
-                'choices': [('None', 0), ('1 Minute', 60),
-                            ('2 Minutes', 120), ('5 Minutes', 300),
-                            ('10 Minutes', 600), ('20 Minutes', 1200)],
+                'choices': [('None', 0), ('1 Minute', 60), ('2 Minutes', 120),
+                            ('5 Minutes', 300), ('10 Minutes', 600),
+                            ('20 Minutes', 1200)],
                 'default': 0
             }),
             ('Mine Spawning', {
@@ -128,15 +112,25 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
                 'choices': [('None', 0), ('8 Seconds', 8000),
                             ('4 Seconds', 4000), ('2 Seconds', 2000),
                             ('1 Second', 1000)],
-            'default': 2000
+                'default': 2000
             }),
             ('Epic Mode', {
                 'default': False
-            })]  # yapf: disable
+            }),
+        ]
 
+        # We have some specific settings in teams mode.
         if issubclass(sessiontype, ba.DualTeamSession):
             settings.append(('Entire Team Must Finish', {'default': False}))
         return settings
+
+    @classmethod
+    def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
+        return issubclass(sessiontype, ba.MultiTeamSession)
+
+    @classmethod
+    def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
+        return ba.getmaps('race')
 
     def __init__(self, settings: Dict[str, Any]):
         from bastd.actor.scoreboard import Scoreboard
@@ -175,7 +169,7 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
             return 'Run ${ARG1} laps.' + t_str, self.settings_raw['Laps']
         return 'Run 1 lap.' + t_str
 
-    def get_instance_scoreboard_description(self) -> Union[str, Sequence]:
+    def get_instance_description_short(self) -> Union[str, Sequence]:
         if self.settings_raw['Laps'] > 1:
             return 'run ${ARG1} laps', self.settings_raw['Laps']
         return 'run 1 lap'

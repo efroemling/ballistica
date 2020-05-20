@@ -38,25 +38,14 @@ if TYPE_CHECKING:
 class DeathMatchGame(ba.TeamGameActivity[ba.Player, ba.Team]):
     """A game type based on acquiring kills."""
 
-    @classmethod
-    def get_name(cls) -> str:
-        return 'Death Match'
+    name = 'Death Match'
+    description = 'Kill a set number of enemies to win.'
+
+    # Print messages when players die since it matters here.
+    announce_player_deaths = True
 
     @classmethod
-    def get_description(cls, sessiontype: Type[ba.Session]) -> str:
-        return 'Kill a set number of enemies to win.'
-
-    @classmethod
-    def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
-        return (issubclass(sessiontype, ba.DualTeamSession)
-                or issubclass(sessiontype, ba.FreeForAllSession))
-
-    @classmethod
-    def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
-        return ba.getmaps('melee')
-
-    @classmethod
-    def get_settings(
+    def get_game_settings(
             cls,
             sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
         settings: List[Tuple[str, Dict[str, Any]]] = [
@@ -66,24 +55,20 @@ class DeathMatchGame(ba.TeamGameActivity[ba.Player, ba.Team]):
                 'increment': 1
             }),
             ('Time Limit', {
-                 'choices':
-                 [('None', 0),
-                  ('1 Minute', 60), ('2 Minutes', 120),
-                  ('5 Minutes', 300), ('10 Minutes', 600),
-                  ('20 Minutes', 1200)],
-                 'default': 0
+                'choices': [('None', 0), ('1 Minute', 60), ('2 Minutes', 120),
+                            ('5 Minutes', 300), ('10 Minutes', 600),
+                            ('20 Minutes', 1200)],
+                'default': 0
             }),
             ('Respawn Times', {
-                 'choices':
-                 [('Shorter', 0.25), ('Short', 0.5),
-                  ('Normal', 1.0), ('Long', 2.0),
-                  ('Longer', 4.0)],
-                 'default': 1.0
+                'choices': [('Shorter', 0.25), ('Short', 0.5), ('Normal', 1.0),
+                            ('Long', 2.0), ('Longer', 4.0)],
+                'default': 1.0
             }),
             ('Epic Mode', {
                 'default': False
-            })
-        ]  # yapf: disable
+            }),
+        ]
 
         # In teams mode, a suicide gives a point to the other team, but in
         # free-for-all it subtracts from your own score. By default we clamp
@@ -95,14 +80,20 @@ class DeathMatchGame(ba.TeamGameActivity[ba.Player, ba.Team]):
 
         return settings
 
+    @classmethod
+    def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
+        return (issubclass(sessiontype, ba.DualTeamSession)
+                or issubclass(sessiontype, ba.FreeForAllSession))
+
+    @classmethod
+    def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
+        return ba.getmaps('melee')
+
     def __init__(self, settings: Dict[str, Any]):
         from bastd.actor.scoreboard import Scoreboard
         super().__init__(settings)
         if self.settings_raw['Epic Mode']:
             self.slow_motion = True
-
-        # Print messages when players die since it matters here.
-        self.announce_player_deaths = True
 
         self._scoreboard = Scoreboard()
         self._score_to_win = None
@@ -111,7 +102,7 @@ class DeathMatchGame(ba.TeamGameActivity[ba.Player, ba.Team]):
     def get_instance_description(self) -> Union[str, Sequence]:
         return 'Crush ${ARG1} of your enemies.', self._score_to_win
 
-    def get_instance_scoreboard_description(self) -> Union[str, Sequence]:
+    def get_instance_description_short(self) -> Union[str, Sequence]:
         return 'kill ${ARG1} enemies', self._score_to_win
 
     def on_transition_in(self) -> None:

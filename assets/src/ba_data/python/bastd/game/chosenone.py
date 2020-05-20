@@ -32,8 +32,7 @@ from bastd.actor.flag import Flag
 from bastd.actor.playerspaz import PlayerSpaz, PlayerSpazDeathMessage
 
 if TYPE_CHECKING:
-    from typing import (Any, Type, List, Dict, Tuple, Optional, Sequence,
-                        Union)
+    from typing import Any, Type, List, Dict, Optional, Sequence, Union
 
 
 @dataclass(eq=False)
@@ -56,54 +55,41 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
     kill you and become the chosen one themselves.
     """
 
-    @classmethod
-    def get_name(cls) -> str:
-        return 'Chosen One'
-
-    @classmethod
-    def get_score_info(cls) -> ba.ScoreInfo:
-        return ba.ScoreInfo(label='Time Held')
-
-    @classmethod
-    def get_description(cls, sessiontype: Type[ba.Session]) -> str:
-        return ('Be the chosen one for a length of time to win.\n'
-                'Kill the chosen one to become it.')
+    name = 'Chosen One'
+    description = ('Be the chosen one for a length of time to win.\n'
+                   'Kill the chosen one to become it.')
+    game_settings = [
+        ('Chosen One Time', {
+            'min_value': 10,
+            'default': 30,
+            'increment': 10
+        }),
+        ('Chosen One Gets Gloves', {
+            'default': True
+        }),
+        ('Chosen One Gets Shield', {
+            'default': False
+        }),
+        ('Time Limit', {
+            'choices': [('None', 0), ('1 Minute', 60), ('2 Minutes', 120),
+                        ('5 Minutes', 300), ('10 Minutes', 600),
+                        ('20 Minutes', 1200)],
+            'default': 0
+        }),
+        ('Respawn Times', {
+            'choices': [('Shorter', 0.25), ('Short', 0.5), ('Normal', 1.0),
+                        ('Long', 2.0), ('Longer', 4.0)],
+            'default': 1.0
+        }),
+        ('Epic Mode', {
+            'default': False
+        }),
+    ]
+    score_info = ba.ScoreInfo(label='Time Held')
 
     @classmethod
     def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
         return ba.getmaps('keep_away')
-
-    @classmethod
-    def get_settings(
-            cls,
-            sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
-        return [
-            ('Chosen One Time', {
-                'min_value': 10,
-                'default': 30,
-                'increment': 10
-            }),
-            ('Chosen One Gets Gloves', {
-                'default': True
-            }),
-            ('Chosen One Gets Shield', {
-                'default': False
-            }),
-            ('Time Limit', {
-                'choices': [('None', 0), ('1 Minute', 60), ('2 Minutes', 120),
-                            ('5 Minutes', 300), ('10 Minutes', 600),
-                            ('20 Minutes', 1200)],
-                'default': 0
-            }),
-            ('Respawn Times', {
-                'choices': [('Shorter', 0.25), ('Short', 0.5), ('Normal', 1.0),
-                            ('Long', 2.0), ('Longer', 4.0)],
-                'default': 1.0
-            }),
-            ('Epic Mode', {
-                'default': False
-            }),
-        ]
 
     def __init__(self, settings: Dict[str, Any]):
         from bastd.actor.scoreboard import Scoreboard

@@ -26,41 +26,49 @@
 from __future__ import annotations
 
 import random
-from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import ba
 from bastd.actor import playerspaz
 
 if TYPE_CHECKING:
-    from typing import Any, Type, List, Dict, Optional, Tuple, Sequence
+    from typing import Any, Type, List, Dict, Optional, Sequence
     from bastd.actor.onscreencountdown import OnScreenCountdown
     from bastd.actor.bomb import Bomb, Blast
 
 
-@dataclass(eq=False)
 class Player(ba.Player['Team']):
     """Our player type for this game."""
-    streak: int = 0
+
+    def __init__(self) -> None:
+        self.streak = 0
 
 
-@dataclass(eq=False)
 class Team(ba.Team[Player]):
     """Our team type for this game."""
-    score: int = 0
+
+    def __init__(self) -> None:
+        self.score = 0
 
 
 # ba_meta export game
 class TargetPracticeGame(ba.TeamGameActivity[Player, Team]):
     """Game where players try to hit targets with bombs."""
 
-    @classmethod
-    def get_name(cls) -> str:
-        return 'Target Practice'
-
-    @classmethod
-    def get_description(cls, sessiontype: Type[ba.Session]) -> str:
-        return 'Bomb as many targets as you can.'
+    name = 'Target Practice'
+    description = 'Bomb as many targets as you can.'
+    game_settings = [
+        ('Target Count', {
+            'min_value': 1,
+            'default': 3
+        }),
+        ('Enable Impact Bombs', {
+            'default': True
+        }),
+        ('Enable Triple Bombs', {
+            'default': True
+        }),
+    ]
 
     @classmethod
     def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
@@ -71,23 +79,6 @@ class TargetPracticeGame(ba.TeamGameActivity[Player, Team]):
         # We support any teams or versus sessions.
         return (issubclass(sessiontype, ba.CoopSession)
                 or issubclass(sessiontype, ba.MultiTeamSession))
-
-    @classmethod
-    def get_settings(
-            cls,
-            sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
-        return [
-            ('Target Count', {
-                'min_value': 1,
-                'default': 3
-            }),
-            ('Enable Impact Bombs', {
-                'default': True
-            }),
-            ('Enable Triple Bombs', {
-                'default': True
-            }),
-        ]
 
     def __init__(self, settings: Dict[str, Any]):
         from bastd.actor.scoreboard import Scoreboard

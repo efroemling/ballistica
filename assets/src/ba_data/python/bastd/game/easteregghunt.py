@@ -33,6 +33,7 @@ from bastd.actor import bomb
 from bastd.actor import playerspaz
 from bastd.actor import spazbot
 from bastd.actor.onscreencountdown import OnScreenCountdown
+from bastd.actor.scoreboard import Scoreboard
 
 if TYPE_CHECKING:
     from typing import Any, Type, Dict, List, Tuple, Optional
@@ -42,17 +43,10 @@ if TYPE_CHECKING:
 class EasterEggHuntGame(ba.TeamGameActivity[ba.Player, ba.Team]):
     """A game where score is based on collecting eggs."""
 
-    @classmethod
-    def get_name(cls) -> str:
-        return 'Easter Egg Hunt'
-
-    @classmethod
-    def get_score_info(cls) -> ba.ScoreInfo:
-        return ba.ScoreInfo(label='Score', scoretype=ba.ScoreType.POINTS)
-
-    @classmethod
-    def get_description(cls, sessiontype: Type[ba.Session]) -> str:
-        return 'Gather eggs!'
+    name = 'Easter Egg Hunt'
+    description = 'Gather eggs!'
+    game_settings = [('Pro Mode', {'default': False})]
+    score_info = ba.ScoreInfo(label='Score', scoretype=ba.ScoreType.POINTS)
 
     # We're currently hard-coded for one map.
     @classmethod
@@ -66,14 +60,7 @@ class EasterEggHuntGame(ba.TeamGameActivity[ba.Player, ba.Team]):
                 or issubclass(sessiontype, ba.DualTeamSession)
                 or issubclass(sessiontype, ba.FreeForAllSession))
 
-    @classmethod
-    def get_settings(
-            cls,
-            sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
-        return [('Pro Mode', {'default': False})]
-
     def __init__(self, settings: Dict[str, Any]):
-        from bastd.actor.scoreboard import Scoreboard
         super().__init__(settings)
         self._last_player_death_time = None
         self._scoreboard = Scoreboard()

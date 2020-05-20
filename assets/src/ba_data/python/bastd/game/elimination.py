@@ -182,31 +182,16 @@ class Team(ba.Team[Player]):
 class EliminationGame(ba.TeamGameActivity[Player, Team]):
     """Game type where last player(s) left alive win."""
 
-    @classmethod
-    def get_name(cls) -> str:
-        return 'Elimination'
+    name = 'Elimination'
+    description = 'Last remaining alive wins.'
+    score_info = ba.ScoreInfo(label='Survived',
+                              scoretype=ba.ScoreType.SECONDS,
+                              none_is_winner=True)
+    # Show messages when players die since it's meaningful here.
+    announce_player_deaths = True
 
     @classmethod
-    def get_score_info(cls) -> ba.ScoreInfo:
-        return ba.ScoreInfo(label='Survived',
-                            scoretype=ba.ScoreType.SECONDS,
-                            none_is_winner=True)
-
-    @classmethod
-    def get_description(cls, sessiontype: Type[ba.Session]) -> str:
-        return 'Last remaining alive wins.'
-
-    @classmethod
-    def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
-        return (issubclass(sessiontype, ba.DualTeamSession)
-                or issubclass(sessiontype, ba.FreeForAllSession))
-
-    @classmethod
-    def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
-        return ba.getmaps('melee')
-
-    @classmethod
-    def get_settings(
+    def get_game_settings(
             cls,
             sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
         settings: List[Tuple[str, Dict[str, Any]]] = [
@@ -231,12 +216,19 @@ class EliminationGame(ba.TeamGameActivity[Player, Team]):
                 'default': False
             }),
         ]
-
         if issubclass(sessiontype, ba.DualTeamSession):
             settings.append(('Solo Mode', {'default': False}))
             settings.append(('Balance Total Lives', {'default': False}))
-
         return settings
+
+    @classmethod
+    def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
+        return (issubclass(sessiontype, ba.DualTeamSession)
+                or issubclass(sessiontype, ba.FreeForAllSession))
+
+    @classmethod
+    def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
+        return ba.getmaps('melee')
 
     def __init__(self, settings: Dict[str, Any]):
         from bastd.actor.scoreboard import Scoreboard
@@ -253,8 +245,6 @@ class EliminationGame(ba.TeamGameActivity[Player, Team]):
         self._solo_mode = bool(settings.get('Solo Mode', False))
 
         # Base class overrides:
-        # Show messages when players die since it's meaningful here.
-        self.announce_player_deaths = True
         self.slow_motion = self._epic_mode
         self.default_music = (ba.MusicType.EPIC
                               if self._epic_mode else ba.MusicType.SURVIVAL)
@@ -263,7 +253,7 @@ class EliminationGame(ba.TeamGameActivity[Player, Team]):
         return 'Last team standing wins.' if isinstance(
             self.session, ba.DualTeamSession) else 'Last one standing wins.'
 
-    def get_instance_scoreboard_description(self) -> Union[str, Sequence]:
+    def get_instance_description_short(self) -> Union[str, Sequence]:
         return 'last team standing wins' if isinstance(
             self.session, ba.DualTeamSession) else 'last one standing wins'
 

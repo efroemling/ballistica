@@ -44,19 +44,11 @@ class NinjaFightGame(ba.TeamGameActivity[ba.Player, ba.Team]):
     of Ninjas as fast as possible
     """
 
-    @classmethod
-    def get_name(cls) -> str:
-        return 'Ninja Fight'
-
-    @classmethod
-    def get_score_info(cls) -> ba.ScoreInfo:
-        return ba.ScoreInfo(label='Time',
-                            scoretype=ba.ScoreType.MILLISECONDS,
-                            lower_is_better=True)
-
-    @classmethod
-    def get_description(cls, sessiontype: Type[ba.Session]) -> str:
-        return 'How fast can you defeat the ninjas?'
+    name = 'Ninja Fight'
+    description = 'How fast can you defeat the ninjas?'
+    score_info = ba.ScoreInfo(label='Time',
+                              scoretype=ba.ScoreType.MILLISECONDS,
+                              lower_is_better=True)
 
     @classmethod
     def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:

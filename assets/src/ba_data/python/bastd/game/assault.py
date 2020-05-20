@@ -26,7 +26,6 @@
 from __future__ import annotations
 
 import random
-from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import ba
@@ -34,33 +33,48 @@ from bastd.actor.playerspaz import PlayerSpaz, PlayerSpazDeathMessage
 from bastd.actor.flag import Flag
 
 if TYPE_CHECKING:
-    from typing import Any, Type, List, Dict, Tuple, Sequence, Union
+    from typing import Any, Type, List, Dict, Sequence, Union
 
 
-@dataclass(eq=False)
 class Player(ba.Player['Team']):
     """Our player type for this game."""
 
 
-@dataclass(eq=False)
 class Team(ba.Team[Player]):
     """Our team type for this game."""
-    base_pos: Sequence[float]
-    flag: Flag
-    score: int = 0
+
+    def __init__(self, base_pos: Sequence[float], flag: Flag) -> None:
+        self.base_pos = base_pos
+        self.flag = flag
+        self.score = 0
 
 
 # ba_meta export game
 class AssaultGame(ba.TeamGameActivity[Player, Team]):
     """Game where you score by touching the other team's flag."""
 
-    @classmethod
-    def get_name(cls) -> str:
-        return 'Assault'
-
-    @classmethod
-    def get_description(cls, sessiontype: Type[ba.Session]) -> str:
-        return 'Reach the enemy flag to score.'
+    name = 'Assault'
+    description = 'Reach the enemy flag to score.'
+    game_settings = [
+        ('Score to Win', {
+            'min_value': 1,
+            'default': 3
+        }),
+        ('Time Limit', {
+            'choices': [('None', 0), ('1 Minute', 60), ('2 Minutes', 120),
+                        ('5 Minutes', 300), ('10 Minutes', 600),
+                        ('20 Minutes', 1200)],
+            'default': 0
+        }),
+        ('Respawn Times', {
+            'choices': [('Shorter', 0.25), ('Short', 0.5), ('Normal', 1.0),
+                        ('Long', 2.0), ('Longer', 4.0)],
+            'default': 1.0
+        }),
+        ('Epic Mode', {
+            'default': False
+        }),
+    ]
 
     @classmethod
     def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
@@ -69,31 +83,6 @@ class AssaultGame(ba.TeamGameActivity[Player, Team]):
     @classmethod
     def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
         return ba.getmaps('team_flag')
-
-    @classmethod
-    def get_settings(
-            cls,
-            sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
-        return [
-            ('Score to Win', {
-                'min_value': 1,
-                'default': 3
-            }),
-            ('Time Limit', {
-                'choices': [('None', 0), ('1 Minute', 60), ('2 Minutes', 120),
-                            ('5 Minutes', 300), ('10 Minutes', 600),
-                            ('20 Minutes', 1200)],
-                'default': 0
-            }),
-            ('Respawn Times', {
-                'choices': [('Shorter', 0.25), ('Short', 0.5), ('Normal', 1.0),
-                            ('Long', 2.0), ('Longer', 4.0)],
-                'default': 1.0
-            }),
-            ('Epic Mode', {
-                'default': False
-            }),
-        ]
 
     def __init__(self, settings: Dict[str, Any]):
         from bastd.actor.scoreboard import Scoreboard
@@ -116,7 +105,7 @@ class AssaultGame(ba.TeamGameActivity[Player, Team]):
             return 'Touch the enemy flag.'
         return 'Touch the enemy flag ${ARG1} times.', self._score_to_win
 
-    def get_instance_scoreboard_description(self) -> Union[str, Sequence]:
+    def get_instance_description_short(self) -> Union[str, Sequence]:
         if self._score_to_win == 1:
             return 'touch 1 flag'
         return 'touch ${ARG1} flags', self._score_to_win

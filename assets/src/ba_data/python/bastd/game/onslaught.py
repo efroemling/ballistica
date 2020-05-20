@@ -52,6 +52,9 @@ class Team(ba.Team[Player]):
 class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
     """Co-op game where players try to survive attacking waves of enemies."""
 
+    name = 'Onslaught'
+    description = 'Defeat all enemies.'
+
     tips: List[Union[str, Dict[str, Any]]] = [
         'Hold any button to run.'
         '  (Trigger buttons work well if you have them)',
@@ -63,13 +66,8 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         'Your punches do much more damage if you are running or spinning.'
     ]
 
-    @classmethod
-    def get_name(cls) -> str:
-        return 'Onslaught'
-
-    @classmethod
-    def get_description(cls, sessiontype: Type[ba.Session]) -> str:
-        return 'Defeat all enemies.'
+    # Show messages when players die since it matters here.
+    announce_player_deaths = True
 
     def __init__(self, settings: Dict[str, Any]):
 
@@ -87,9 +85,6 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
             settings['map'] = 'Courtyard'
 
         super().__init__(settings)
-
-        # Show messages when players die since it matters here.
-        self.announce_player_deaths = True
 
         self._new_wave_sound = ba.getsound('scoreHit01')
         self._winsound = ba.getsound('score')

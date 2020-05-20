@@ -25,7 +25,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from enum import Enum
 from typing import TYPE_CHECKING
 
 import ba
@@ -34,16 +34,21 @@ from bastd.actor.flag import (Flag, FlagDroppedMessage, FlagDeathMessage,
 from bastd.actor.playerspaz import PlayerSpaz, PlayerSpazDeathMessage
 
 if TYPE_CHECKING:
-    from typing import (Any, Type, List, Tuple, Dict, Optional, Sequence,
-                        Union)
+    from typing import Any, Type, List, Dict, Optional, Sequence, Union
 
 
-@dataclass(eq=False)
+class FlagState(Enum):
+    """States our single flag can be in."""
+    NEW = 0
+    UNCONTESTED = 1
+    CONTESTED = 2
+    HELD = 3
+
+
 class Player(ba.Player['Team']):
     """Our player type for this game."""
 
 
-@dataclass(eq=False)
 class Team(ba.Team[Player]):
     """Our team type for this game."""
 
@@ -52,22 +57,27 @@ class Team(ba.Team[Player]):
 class KeepAwayGame(ba.TeamGameActivity[Player, Team]):
     """Game where you try to keep the flag away from your enemies."""
 
-    FLAG_NEW = 0
-    FLAG_UNCONTESTED = 1
-    FLAG_CONTESTED = 2
-    FLAG_HELD = 3
-
-    @classmethod
-    def get_name(cls) -> str:
-        return 'Keep Away'
-
-    @classmethod
-    def get_description(cls, sessiontype: Type[ba.Session]) -> str:
-        return 'Carry the flag for a set length of time.'
-
-    @classmethod
-    def get_score_info(cls) -> ba.ScoreInfo:
-        return ba.ScoreInfo(label='Time Held')
+    name = 'Keep Away'
+    description = 'Carry the flag for a set length of time.'
+    game_settings = [
+        ('Hold Time', {
+            'min_value': 10,
+            'default': 30,
+            'increment': 10
+        }),
+        ('Time Limit', {
+            'choices': [('None', 0), ('1 Minute', 60), ('2 Minutes', 120),
+                        ('5 Minutes', 300), ('10 Minutes', 600),
+                        ('20 Minutes', 1200)],
+            'default': 0
+        }),
+        ('Respawn Times', {
+            'choices': [('Shorter', 0.25), ('Short', 0.5), ('Normal', 1.0),
+                        ('Long', 2.0), ('Longer', 4.0)],
+            'default': 1.0
+        }),
+    ]
+    score_info = ba.ScoreInfo(label='Time Held')
 
     @classmethod
     def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
@@ -77,29 +87,6 @@ class KeepAwayGame(ba.TeamGameActivity[Player, Team]):
     @classmethod
     def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
         return ba.getmaps('keep_away')
-
-    @classmethod
-    def get_settings(
-            cls,
-            sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
-        return [
-            ('Hold Time', {
-                'min_value': 10,
-                'default': 30,
-                'increment': 10
-            }),
-            ('Time Limit', {
-                'choices': [('None', 0), ('1 Minute', 60), ('2 Minutes', 120),
-                            ('5 Minutes', 300), ('10 Minutes', 600),
-                            ('20 Minutes', 1200)],
-                'default': 0
-            }),
-            ('Respawn Times', {
-                'choices': [('Shorter', 0.25), ('Short', 0.5), ('Normal', 1.0),
-                            ('Long', 2.0), ('Longer', 4.0)],
-                'default': 1.0
-            })
-        ]  # yapf: disable
 
     def __init__(self, settings: Dict[str, Any]):
         from bastd.actor.scoreboard import Scoreboard
@@ -122,7 +109,7 @@ class KeepAwayGame(ba.TeamGameActivity[Player, Team]):
         self._flag_spawn_pos: Optional[Sequence[float]] = None
         self._update_timer: Optional[ba.Timer] = None
         self._holding_players: List[Player] = []
-        self._flag_state: Optional[int] = None
+        self._flag_state: Optional[FlagState] = None
         self._flag_light: Optional[ba.Node] = None
         self._scoring_team: Optional[Team] = None
         self._flag: Optional[Flag] = None
@@ -131,7 +118,7 @@ class KeepAwayGame(ba.TeamGameActivity[Player, Team]):
         return ('Carry the flag for ${ARG1} seconds.',
                 self.settings_raw['Hold Time'])
 
-    def get_instance_scoreboard_description(self) -> Union[str, Sequence]:
+    def get_instance_description_short(self) -> Union[str, Sequence]:
         return ('carry the flag for ${ARG1} seconds',
                 self.settings_raw['Hold Time'])
 
@@ -224,18 +211,18 @@ class KeepAwayGame(ba.TeamGameActivity[Player, Team]):
         assert self._flag_light
         assert self._flag.node
         if len(holding_teams) > 1:
-            self._flag_state = self.FLAG_CONTESTED
+            self._flag_state = FlagState.CONTESTED
             self._scoring_team = None
             self._flag_light.color = (0.6, 0.6, 0.1)
             self._flag.node.color = (1.0, 1.0, 0.4)
         elif len(holding_teams) == 1:
             holding_team = list(holding_teams)[0]
-            self._flag_state = self.FLAG_HELD
+            self._flag_state = FlagState.HELD
             self._scoring_team = holding_team
             self._flag_light.color = ba.normalized_color(holding_team.color)
             self._flag.node.color = holding_team.color
         else:
-            self._flag_state = self.FLAG_UNCONTESTED
+            self._flag_state = FlagState.UNCONTESTED
             self._scoring_team = None
             self._flag_light.color = (0.2, 0.2, 0.2)
             self._flag.node.color = (1, 1, 1)
@@ -248,7 +235,7 @@ class KeepAwayGame(ba.TeamGameActivity[Player, Team]):
         self._flash_flag_spawn()
         assert self._flag_spawn_pos is not None
         self._flag = Flag(dropped_timeout=20, position=self._flag_spawn_pos)
-        self._flag_state = self.FLAG_NEW
+        self._flag_state = FlagState.NEW
         self._flag_light = ba.newnode('light',
                                       owner=self._flag.node,
                                       attrs={

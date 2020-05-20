@@ -34,7 +34,7 @@ from bastd.actor.playerspaz import PlayerSpaz, PlayerSpazDeathMessage
 from bastd.actor.scoreboard import Scoreboard
 
 if TYPE_CHECKING:
-    from typing import Any, Type, List, Dict, Tuple, Sequence, Union, Optional
+    from typing import Any, Type, List, Dict, Sequence, Union, Optional
 
 
 class CTFFlag(stdflag.Flag):
@@ -110,13 +110,38 @@ class Team(ba.Team[Player]):
 class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
     """Game of stealing other team's flag and returning it to your base."""
 
-    @classmethod
-    def get_name(cls) -> str:
-        return 'Capture the Flag'
-
-    @classmethod
-    def get_description(cls, sessiontype: Type[ba.Session]) -> str:
-        return 'Return the enemy flag to score.'
+    name = 'Capture the Flag'
+    description = 'Return the enemy flag to score.'
+    game_settings = [
+        ('Score to Win', {
+            'min_value': 1,
+            'default': 3
+        }),
+        ('Flag Touch Return Time', {
+            'min_value': 0,
+            'default': 0,
+            'increment': 1
+        }),
+        ('Flag Idle Return Time', {
+            'min_value': 5,
+            'default': 30,
+            'increment': 5
+        }),
+        ('Time Limit', {
+            'choices': [('None', 0), ('1 Minute', 60), ('2 Minutes', 120),
+                        ('5 Minutes', 300), ('10 Minutes', 600),
+                        ('20 Minutes', 1200)],
+            'default': 0
+        }),
+        ('Respawn Times', {
+            'choices': [('Shorter', 0.25), ('Short', 0.5), ('Normal', 1.0),
+                        ('Long', 2.0), ('Longer', 4.0)],
+            'default': 1.0
+        }),
+        ('Epic Mode', {
+            'default': False
+        }),
+    ]
 
     @classmethod
     def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
@@ -125,41 +150,6 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
     @classmethod
     def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
         return ba.getmaps('team_flag')
-
-    @classmethod
-    def get_settings(
-            cls,
-            sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
-        return [
-            ('Score to Win', {
-                'min_value': 1,
-                'default': 3
-            }),
-            ('Flag Touch Return Time', {
-                'min_value': 0,
-                'default': 0,
-                'increment': 1
-            }),
-            ('Flag Idle Return Time', {
-                'min_value': 5,
-                'default': 30,
-                'increment': 5
-            }),
-            ('Time Limit', {
-                'choices': [('None', 0), ('1 Minute', 60), ('2 Minutes', 120),
-                            ('5 Minutes', 300), ('10 Minutes', 600),
-                            ('20 Minutes', 1200)],
-                'default': 0
-            }),
-            ('Respawn Times', {
-                'choices': [('Shorter', 0.25), ('Short', 0.5), ('Normal', 1.0),
-                            ('Long', 2.0), ('Longer', 4.0)],
-                'default': 1.0
-            }),
-            ('Epic Mode', {
-                'default': False
-            }),
-        ]
 
     def __init__(self, settings: Dict[str, Any]):
         super().__init__(settings)
@@ -192,7 +182,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
             return 'Steal the enemy flag.'
         return 'Steal the enemy flag ${ARG1} times.', self._score_to_win
 
-    def get_instance_scoreboard_description(self) -> Union[str, Sequence]:
+    def get_instance_description_short(self) -> Union[str, Sequence]:
         if self._score_to_win == 1:
             return 'return 1 flag'
         return 'return ${ARG1} flags', self._score_to_win

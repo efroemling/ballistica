@@ -38,8 +38,7 @@ from bastd.actor.playerspaz import PlayerSpaz, PlayerSpazDeathMessage
 from bastd.actor.scoreboard import Scoreboard
 
 if TYPE_CHECKING:
-    from typing import (Any, List, Tuple, Type, Dict, Sequence, Optional,
-                        Union)
+    from typing import Any, List, Type, Dict, Sequence, Optional, Union
     from bastd.actor.spaz import Spaz
 
 
@@ -81,9 +80,26 @@ class Team(ba.Team[Player]):
 class FootballTeamGame(ba.TeamGameActivity[Player, Team]):
     """Football game for teams mode."""
 
-    @classmethod
-    def get_name(cls) -> str:
-        return 'Football'
+    name = 'Football'
+    description = 'Get the flag to the enemy end zone.'
+    game_settings = [
+        ('Score to Win', {
+            'min_value': 7,
+            'default': 21,
+            'increment': 7
+        }),
+        ('Time Limit', {
+            'choices': [('None', 0), ('1 Minute', 60), ('2 Minutes', 120),
+                        ('5 Minutes', 300), ('10 Minutes', 600),
+                        ('20 Minutes', 1200)],
+            'default': 0
+        }),
+        ('Respawn Times', {
+            'choices': [('Shorter', 0.25), ('Short', 0.5), ('Normal', 1.0),
+                        ('Long', 2.0), ('Longer', 4.0)],
+            'default': 1.0
+        }),
+    ]
 
     @classmethod
     def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
@@ -91,35 +107,8 @@ class FootballTeamGame(ba.TeamGameActivity[Player, Team]):
         return issubclass(sessiontype, ba.DualTeamSession)
 
     @classmethod
-    def get_description(cls, sessiontype: Type[ba.Session]) -> str:
-        return 'Get the flag to the enemy end zone.'
-
-    @classmethod
     def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
         return ba.getmaps('football')
-
-    @classmethod
-    def get_settings(
-            cls,
-            sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
-        return [
-            ('Score to Win', {
-                'min_value': 7,
-                'default': 21,
-                'increment': 7
-            }),
-            ('Time Limit', {
-                'choices': [('None', 0), ('1 Minute', 60), ('2 Minutes', 120),
-                            ('5 Minutes', 300), ('10 Minutes', 600),
-                            ('20 Minutes', 1200)],
-                'default': 0
-            }),
-            ('Respawn Times', {
-                'choices': [('Shorter', 0.25), ('Short', 0.5), ('Normal', 1.0),
-                            ('Long', 2.0), ('Longer', 4.0)],
-                'default': 1.0
-            })
-        ]  # yapf: disable
 
     def __init__(self, settings: Dict[str, Any]):
         super().__init__(settings)
@@ -131,7 +120,6 @@ class FootballTeamGame(ba.TeamGameActivity[Player, Team]):
         self._score_sound = ba.getsound('score')
         self._swipsound = ba.getsound('swip')
         self._whistle_sound = ba.getsound('refWhistle')
-
         self.score_region_material = ba.Material()
         self.score_region_material.add_actions(
             conditions=('they_have_material',
@@ -147,6 +135,7 @@ class FootballTeamGame(ba.TeamGameActivity[Player, Team]):
 
     def get_instance_description(self) -> Union[str, Sequence]:
         touchdowns = self.settings_raw['Score to Win'] / 7
+
         # NOTE: if use just touchdowns = self.settings_raw['Score to Win'] // 7
         # and we will need to score, for example, 27 points,
         # we will be required to score 3 (not 4) goals ..
@@ -155,7 +144,7 @@ class FootballTeamGame(ba.TeamGameActivity[Player, Team]):
             return 'Score ${ARG1} touchdowns.', touchdowns
         return 'Score a touchdown.'
 
-    def get_instance_scoreboard_description(self) -> Union[str, Sequence]:
+    def get_instance_description_short(self) -> Union[str, Sequence]:
         touchdowns = self.settings_raw['Score to Win'] / 7
         touchdowns = math.ceil(touchdowns)
         if touchdowns > 1:
@@ -336,15 +325,9 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
     Co-op variant of football
     """
 
+    name = 'Football'
     tips = ['Use the pick-up button to grab the flag < ${PICKUP} >']
-
-    @classmethod
-    def get_name(cls) -> str:
-        return 'Football'
-
-    @classmethod
-    def get_score_info(cls) -> ba.ScoreInfo:
-        return ba.ScoreInfo(scoretype=ba.ScoreType.MILLISECONDS, version='B')
+    score_info = ba.ScoreInfo(scoretype=ba.ScoreType.MILLISECONDS, version='B')
 
     # FIXME: Need to update co-op games to use get_score_info.
     def get_score_type(self) -> str:
@@ -357,7 +340,7 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
             return 'Score ${ARG1} touchdowns.', touchdowns
         return 'Score a touchdown.'
 
-    def get_instance_scoreboard_description(self) -> Union[str, Sequence]:
+    def get_instance_description_short(self) -> Union[str, Sequence]:
         touchdowns = self._score_to_win / 7
         touchdowns = math.ceil(touchdowns)
         if touchdowns > 1:
