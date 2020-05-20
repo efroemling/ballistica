@@ -166,7 +166,7 @@ class Icon(ba.Actor):
         if isinstance(msg, ba.DieMessage):
             self.node.delete()
         else:
-            return super().handlemessage(msg)
+            super().handlemessage(msg)
 
 
 # ba_meta export game
