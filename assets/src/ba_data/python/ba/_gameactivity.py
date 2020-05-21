@@ -965,7 +965,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         The default implementation simply calls spawn_player_spaz().
         """
         if not player:
-            raise Exception('spawn_player() called for nonexistent player')
+            raise TypeError('spawn_player() called for nonexistent player')
 
         return self.spawn_player_spaz(player)
 

@@ -365,11 +365,12 @@ class Map(Actor):
         player_pts = []
         for player in players:
             try:
-                if player.node:
+                if player and player.node:
                     pnt = _ba.Vec3(player.node.position)
                     player_pts.append(pnt)
-            except Exception as exc:
-                print('EXC in get_ffa_start_position:', exc)
+            except Exception:
+                from ba import _error
+                _error.print_exception()
 
         def _getpt() -> Sequence[float]:
             point = self.ffa_spawn_points[self._next_ffa_start_index]
