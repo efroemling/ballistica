@@ -64,7 +64,7 @@ class Campaign:
     def add_level(self, level: ba.Level) -> None:
         """Adds a ba.Level to the Campaign."""
         if level.get_campaign() is not None:
-            raise Exception('level already belongs to a campaign')
+            raise RuntimeError('level already belongs to a campaign')
         level.set_campaign(self, len(self._levels))
         self._levels.append(level)
 
@@ -73,12 +73,14 @@ class Campaign:
         return self._levels
 
     def get_level(self, name: str) -> ba.Level:
+        from ba import _error
         """Return a contained ba.Level by name."""
         for level in self._levels:
             if level.name == name:
                 return level
-        raise Exception("Level '" + name + "' not found in campaign '" +
-                        self.name + "'")
+        raise _error.NotFoundError(
+            "Level '" + name + "' not found in campaign '" +
+            self.name + "'")
 
     def reset(self) -> None:
         """Reset state for the Campaign."""
@@ -98,7 +100,7 @@ class Campaign:
         """Return the live config dict for this campaign."""
         val: Dict[str, Any] = (_ba.app.config.setdefault('Campaigns',
                                                          {}).setdefault(
-                                                             self._name, {}))
+            self._name, {}))
         assert isinstance(val, dict)
         return val
 

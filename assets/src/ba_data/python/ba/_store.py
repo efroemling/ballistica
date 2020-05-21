@@ -56,7 +56,7 @@ def get_store_item_name_translated(item_name: str) -> ba.Lstr:
         return gametype.get_display_string()
     if item_name.startswith('icons.'):
         return _lang.Lstr(resource='editProfileWindow.iconText')
-    raise Exception('unrecognized item: ' + item_name)
+    raise ValueError('unrecognized item: ' + item_name)
 
 
 def get_store_item_display_size(item_name: str) -> Tuple[float, float]:

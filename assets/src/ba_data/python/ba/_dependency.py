@@ -283,7 +283,7 @@ class DependencySet(Generic[T]):
 
         # Watch for wacky infinite dep loops.
         if recursion > 10:
-            raise Exception('Max recursion reached')
+            raise RecursionError('Max recursion reached')
 
         hashval = dep.get_hash()
 

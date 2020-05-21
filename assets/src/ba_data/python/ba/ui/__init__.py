@@ -127,7 +127,7 @@ class UIEntry:
         if self._name == 'mainmenu':
             from bastd.ui import mainmenu
             return cast(Type[UILocation], mainmenu.MainMenuWindow)
-        raise Exception('unknown ui class ' + str(self._name))
+        raise ValueError('unknown ui class ' + str(self._name))
 
 
 class UIController:
@@ -192,7 +192,7 @@ def uicleanupcheck(obj: Any, widget: ba.Widget) -> None:
     if DEBUG_UI_CLEANUP_CHECKS:
         print(f'adding uicleanup to {obj}')
     if not isinstance(widget, _ba.Widget):
-        raise Exception('widget arg is not a ba.Widget')
+        raise TypeError('widget arg is not a ba.Widget')
 
     def foobar() -> None:
         """Just testing."""

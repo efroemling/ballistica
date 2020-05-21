@@ -144,7 +144,8 @@ def get_map_class(name: str) -> Type[ba.Map]:
     try:
         return _ba.app.maps[name]
     except Exception:
-        raise Exception("Map not found: '" + name + "'")
+        from ba import _error
+        raise _error.NotFoundError("Map not found: '" + name + "'")
 
 
 class Map(Actor):
@@ -218,9 +219,11 @@ class Map(Actor):
         try:
             self.preloaddata = _ba.getactivity().preloads[type(self)]
         except Exception:
-            raise Exception('Preload data not found for ' + str(type(self)) +
-                            '; make sure to call the type\'s preload()'
-                            ' staticmethod in the activity constructor')
+            from ba import _error
+            raise _error.NotFoundError(
+                'Preload data not found for ' + str(type(self)) +
+                '; make sure to call the type\'s preload()'
+                ' staticmethod in the activity constructor')
 
         # Set various globals.
         gnode = _gameutils.sharedobj('globals')
@@ -339,7 +342,7 @@ class Map(Actor):
                     point_list.append(pts)
                 else:
                     if len(pts) != 3:
-                        raise Exception('invalid point')
+                        raise ValueError('invalid point')
                     point_list.append(pts + (0, 0, 0))
                 i += 1
         return point_list
@@ -354,7 +357,7 @@ class Map(Actor):
         return pnt
 
     def get_ffa_start_position(
-            self, players: Sequence[ba.Player]) -> Sequence[float]:
+        self, players: Sequence[ba.Player]) -> Sequence[float]:
         """Return a random starting position in one of the FFA spawn areas.
 
         If a list of ba.Players is provided; the returned points will be
@@ -428,5 +431,5 @@ class Map(Actor):
 def register_map(maptype: Type[Map]) -> None:
     """Register a map class with the game."""
     if maptype.name in _ba.app.maps:
-        raise Exception('map "' + maptype.name + '" already registered')
+        raise RuntimeError('map "' + maptype.name + '" already registered')
     _ba.app.maps[maptype.name] = maptype

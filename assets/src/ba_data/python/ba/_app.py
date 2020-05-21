@@ -729,7 +729,7 @@ class App:
         if args is None:
             args = {}
         if game == '':
-            raise Exception('empty game name')
+            raise ValueError('empty game name')
         campaignname, levelname = game.split(':')
         campaign = get_campaign(campaignname)
         levels = campaign.get_levels()

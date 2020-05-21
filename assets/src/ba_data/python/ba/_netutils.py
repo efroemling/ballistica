@@ -56,7 +56,7 @@ def get_ip_address_type(addr: str) -> socket.AddressFamily:
         except OSError:
             pass
     if socket_type is None:
-        raise Exception('addr seems to be neither v4 or v6: ' + str(addr))
+        raise ValueError('addr seems to be neither v4 or v6: ' + str(addr))
     return socket_type
 
 
@@ -76,7 +76,7 @@ class ServerCallThread(threading.Thread):
         self._request = request
         self._request_type = request_type
         if not isinstance(response_type, ServerResponseType):
-            raise Exception(f'Invalid response type: {response_type}')
+            raise TypeError(f'Invalid response type: {response_type}')
         self._response_type = response_type
         self._data = {} if data is None else copy.deepcopy(data)
         self._callback: Optional[ServerCallbackType] = callback
@@ -128,7 +128,7 @@ class ServerCallThread(threading.Thread):
                         parse.urlencode(self._data).encode(),
                         {'User-Agent': _ba.app.user_agent_string}))
             else:
-                raise Exception('Invalid request_type: ' + self._request_type)
+                raise TypeError('Invalid request_type: ' + self._request_type)
 
             # If html request failed.
             if response.getcode() != 200:
@@ -144,7 +144,7 @@ class ServerCallThread(threading.Thread):
                     raw_data_s = raw_data.decode()
                     response_data = json.loads(raw_data_s)
             else:
-                raise Exception(f'invalid responsetype: {self._response_type}')
+                raise TypeError(f'invalid responsetype: {self._response_type}')
         except (urllib.error.URLError, ConnectionError):
             # Server rejected us, broken pipe, etc.  It happens. Ignoring.
             response_data = None

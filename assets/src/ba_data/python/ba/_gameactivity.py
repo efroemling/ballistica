@@ -693,7 +693,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         else:
             sb_desc_l = sb_desc_in
         if not isinstance(sb_desc_l[0], str):
-            raise Exception('Invalid format for instance description')
+            raise TypeError('Invalid format for instance description')
 
         is_empty = (sb_desc_l[0] == '')
         subs = []
@@ -781,7 +781,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         else:
             desc_l = desc_in
         if not isinstance(desc_l[0], str):
-            raise Exception('Invalid format for instance description')
+            raise TypeError('Invalid format for instance description')
         subs = []
         for i in range(len(desc_l) - 1):
             subs.append(('${ARG' + str(i + 1) + '}', str(desc_l[i + 1])))
