@@ -627,8 +627,8 @@ class AccountSettingsWindow(ba.Window):
             elif account_type == 'Game Circle':
                 account_type_name = ba.Lstr(resource='gameCircleText')
             else:
-                raise ValueError("unknown account type: '" + str(account_type) +
-                                 "'")
+                raise ValueError("unknown account type: '" +
+                                 str(account_type) + "'")
             self._game_service_button = btn = ba.buttonwidget(
                 parent=self._subcontainer,
                 position=((self._sub_width - button_width) * 0.5, v),

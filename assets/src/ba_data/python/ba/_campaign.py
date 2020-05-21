@@ -78,9 +78,9 @@ class Campaign:
         for level in self._levels:
             if level.name == name:
                 return level
-        raise _error.NotFoundError(
-            "Level '" + name + "' not found in campaign '" +
-            self.name + "'")
+        raise _error.NotFoundError("Level '" + name +
+                                   "' not found in campaign '" + self.name +
+                                   "'")
 
     def reset(self) -> None:
         """Reset state for the Campaign."""
@@ -100,7 +100,7 @@ class Campaign:
         """Return the live config dict for this campaign."""
         val: Dict[str, Any] = (_ba.app.config.setdefault('Campaigns',
                                                          {}).setdefault(
-            self._name, {}))
+                                                             self._name, {}))
         assert isinstance(val, dict)
         return val
 

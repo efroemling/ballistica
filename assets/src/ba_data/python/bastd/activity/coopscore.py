@@ -172,7 +172,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         self._game_name_str = self._campaign.name + ':' + self._level_name
         self._game_config_str = str(len(
             self._player_info)) + 'p' + self._campaign.get_level(
-            self._level_name).get_score_version_string().replace(' ', '_')
+                self._level_name).get_score_version_string().replace(' ', '_')
 
         # If game-center/etc scores are available we show our friends'
         # scores. Otherwise we show our local high scores.
@@ -265,7 +265,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         # If we didn't just complete this level but are choosing to play the
         # next one, set it as current (this won't happen otherwise).
         if (self._is_complete and self._is_more_levels
-            and not self._newly_complete):
+                and not self._newly_complete):
             assert self._next_level_name is not None
             self._campaign.set_selected_level(self._next_level_name)
         ba.containerwidget(edit=self._root_ui, transition='out_left')
@@ -387,8 +387,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                 label=ba.Lstr(resource='tournamentStandingsText')
                 if self.session.tournament_id is not None else ba.Lstr(
                     resource='worldsBestScoresText') if self._score_type
-                                                        == 'points' else ba.Lstr(
-                    resource='worldsBestTimesText'),
+                == 'points' else ba.Lstr(resource='worldsBestTimesText'),
                 autoselect=True,
                 on_activate_call=ba.WeakCall(self._ui_worlds_best),
                 transition_delay=delay + 1.9,
@@ -549,7 +548,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         ba.timer(1.0, ba.WeakCall(self.request_ui))
 
         if (self._is_complete and self._victory and self._is_more_levels
-            and not ba.app.kiosk_mode):
+                and not ba.app.kiosk_mode):
             Text(ba.Lstr(value='${A}:\n',
                          subs=[('${A}', ba.Lstr(resource='levelUnlockedText'))
                                ]) if self._newly_complete else
@@ -647,11 +646,11 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                 transition_delay=2.0)
         self._score_loading_status = Text(ba.Lstr(
             value='${A}...', subs=[('${A}', ba.Lstr(resource='loadingText'))]),
-            position=(280, 150 + 30),
-            color=(1, 1, 1, 0.4),
-            transition=Text.Transition.FADE_IN,
-            scale=0.7,
-            transition_delay=2.0)
+                                          position=(280, 150 + 30),
+                                          color=(1, 1, 1, 0.4),
+                                          transition=Text.Transition.FADE_IN,
+                                          scale=0.7,
+                                          transition_delay=2.0)
 
         if self._score is not None:
             ba.timer(0.4, ba.WeakCall(self._play_drumroll))
@@ -728,9 +727,8 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         v_offs = 40
         txt = Text(ba.Lstr(resource='tournamentStandingsText')
                    if self.session.tournament_id is not None else ba.Lstr(
-            resource='worldsBestScoresText') if self._score_type
-                                                == 'points' else ba.Lstr(
-            resource='worldsBestTimesText'),
+                       resource='worldsBestScoresText') if self._score_type
+                   == 'points' else ba.Lstr(resource='worldsBestTimesText'),
                    maxwidth=210,
                    position=(ts_h_offs - 10, ts_height / 2 + 25 + v_offs + 20),
                    transition=Text.Transition.IN_LEFT,
@@ -766,8 +764,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
             ts_h_offs = -480
             v_offs = 40
             Text(ba.Lstr(resource='yourBestScoresText') if self._score_type
-                                                           == 'points' else ba.Lstr(
-                resource='yourBestTimesText'),
+                 == 'points' else ba.Lstr(resource='yourBestTimesText'),
                  maxwidth=210,
                  position=(ts_h_offs - 10, ts_height / 2 + 25 + v_offs + 20),
                  transition=Text.Transition.IN_RIGHT,
@@ -1399,12 +1396,12 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                            str(int(self._show_info['results']['rank']))),
                           ('${ALL}', str(self._show_info['results']['total']))
                           ]),
-                    position=(0, -155 if self._newly_complete else -145),
-                    color=(1, 1, 1, 0.7),
-                    h_align=Text.HAlign.CENTER,
-                    transition=Text.Transition.FADE_IN,
-                    scale=0.55,
-                    transition_delay=1.0).autoretain()
+                     position=(0, -155 if self._newly_complete else -145),
+                     color=(1, 1, 1, 0.7),
+                     h_align=Text.HAlign.CENTER,
+                     transition=Text.Transition.FADE_IN,
+                     scale=0.55,
+                     transition_delay=1.0).autoretain()
 
             new_best = (best_rank > self._old_best_rank and best_rank > 0.0)
             was_string = ba.Lstr(value=' ${A}',

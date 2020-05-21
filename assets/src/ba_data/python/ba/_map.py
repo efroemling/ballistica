@@ -357,7 +357,7 @@ class Map(Actor):
         return pnt
 
     def get_ffa_start_position(
-        self, players: Sequence[ba.Player]) -> Sequence[float]:
+            self, players: Sequence[ba.Player]) -> Sequence[float]:
         """Return a random starting position in one of the FFA spawn areas.
 
         If a list of ba.Players is provided; the returned points will be

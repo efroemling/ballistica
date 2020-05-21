@@ -326,7 +326,8 @@ def get_scan_results() -> ScanResults:
         while app.metascan is None:
             time.sleep(0.05)
             if time.time() - starttime > 10.0:
-                raise TimeoutError('timeout waiting for meta scan to complete.')
+                raise TimeoutError(
+                    'timeout waiting for meta scan to complete.')
     return app.metascan
 
 

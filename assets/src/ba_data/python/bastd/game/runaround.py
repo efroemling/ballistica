@@ -526,7 +526,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
                 position=pos,
                 poweruptype=powerupbox.get_factory().get_random_powerup_type(
                     excludetypes=self._exclude_powerups +
-                                 extra_excludes)).autoretain()
+                    extra_excludes)).autoretain()
 
     def end_game(self) -> None:
 
@@ -574,7 +574,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
 
         # If we have no living bots, go to the next wave.
         if (self._can_end_wave and not self._bots.have_living_bots()
-            and not self._game_over and self._lives > 0):
+                and not self._game_over and self._lives > 0):
 
             self._can_end_wave = False
             self._time_bonus_timer = None
@@ -653,9 +653,9 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
             value='+${A} ${B}',
             subs=[('${A}', str(bonus)),
                   ('${B}', ba.Lstr(resource='completionBonusText'))]),
-            color=(0.7, 0.7, 1.0, 1),
-            scale=1.6,
-            position=(0, 1.5, -1)).autoretain()
+                            color=(0.7, 0.7, 1.0, 1),
+                            scale=1.6,
+                            position=(0, 1.5, -1)).autoretain()
         self._score += bonus
         self._update_scores()
 
@@ -839,7 +839,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
                     len(defender_types))]
                 defender1 = defender2 = None
                 if ((group == 0) or (group == 1 and level > 3)
-                    or (group == 2 and level > 5)):
+                        or (group == 2 and level > 5)):
                     if random.random() < min(0.75, (level - 1) * 0.11):
                         this_target_point_s, defender1 = _add_defender(
                             defender_type1, 'bottom_left')
@@ -1109,7 +1109,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
             return True
         if ((ba.is_point_in_box(pos, boxes['b8'])
              and not ba.is_point_in_box(pos, boxes['b9']))
-            or pos == (0.0, 0.0, 0.0)):
+                or pos == (0.0, 0.0, 0.0)):
             # Default to walking right if we're still in the walking area.
             bot.node.move_left_right = speed
             bot.node.move_up_down = 0
