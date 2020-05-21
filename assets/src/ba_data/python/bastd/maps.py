@@ -35,7 +35,6 @@ if TYPE_CHECKING:
 class HockeyStadium(ba.Map):
     """Stadium map used for ice hockey games."""
 
-    # noinspection PyUnresolvedReferences
     from bastd.mapdata import hockey_stadium as defs
     name = 'Hockey Stadium'
 
@@ -183,7 +182,6 @@ class FootballStadium(ba.Map):
 
 class Bridgit(ba.Map):
     """Map with a narrow bridge in the middle."""
-    # noinspection PyUnresolvedReferences
     from bastd.mapdata import bridgit as defs
 
     name = 'Bridgit'
@@ -278,7 +276,6 @@ class Bridgit(ba.Map):
 class BigG(ba.Map):
     """Large G shaped map for racing"""
 
-    # noinspection PyUnresolvedReferences
     from bastd.mapdata import big_g as defs
 
     name = 'Big G'
@@ -375,7 +372,6 @@ class BigG(ba.Map):
 class Roundabout(ba.Map):
     """CTF map featuring two platforms and a long way around between them"""
 
-    # noinspection PyUnresolvedReferences
     from bastd.mapdata import roundabout as defs
 
     name = 'Roundabout'
@@ -469,7 +465,6 @@ class Roundabout(ba.Map):
 class MonkeyFace(ba.Map):
     """Map sorta shaped like a monkey face; teehee!"""
 
-    # noinspection PyUnresolvedReferences
     from bastd.mapdata import monkey_face as defs
 
     name = 'Monkey Face'
@@ -563,7 +558,6 @@ class MonkeyFace(ba.Map):
 class ZigZag(ba.Map):
     """A very long zig-zaggy map"""
 
-    # noinspection PyUnresolvedReferences
     from bastd.mapdata import zig_zag as defs
 
     name = 'Zigzag'
@@ -657,7 +651,6 @@ class ZigZag(ba.Map):
 class ThePad(ba.Map):
     """A simple square shaped map with a raised edge."""
 
-    # noinspection PyUnresolvedReferences
     from bastd.mapdata import the_pad as defs
 
     name = 'The Pad'
@@ -738,7 +731,6 @@ class ThePad(ba.Map):
 class DoomShroom(ba.Map):
     """A giant mushroom.  Of doom."""
 
-    # noinspection PyUnresolvedReferences
     from bastd.mapdata import doom_shroom as defs
 
     name = 'Doom Shroom'
@@ -831,7 +823,6 @@ class DoomShroom(ba.Map):
 class LakeFrigid(ba.Map):
     """An icy lake fit for racing."""
 
-    # noinspection PyUnresolvedReferences
     from bastd.mapdata import lake_frigid as defs
 
     name = 'Lake Frigid'
@@ -912,7 +903,6 @@ class LakeFrigid(ba.Map):
 class TipTop(ba.Map):
     """A pointy map good for king-of-the-hill-ish games."""
 
-    # noinspection PyUnresolvedReferences
     from bastd.mapdata import tip_top as defs
 
     name = 'Tip Top'
@@ -984,7 +974,6 @@ class TipTop(ba.Map):
 class CragCastle(ba.Map):
     """A lovely castle map."""
 
-    # noinspection PyUnresolvedReferences
     from bastd.mapdata import crag_castle as defs
 
     name = 'Crag Castle'
@@ -1185,7 +1174,6 @@ class TowerD(ba.Map):
 class HappyThoughts(ba.Map):
     """Flying map."""
 
-    # noinspection PyUnresolvedReferences
     from bastd.mapdata import happy_thoughts as defs
 
     name = 'Happy Thoughts'
@@ -1291,7 +1279,6 @@ class HappyThoughts(ba.Map):
 class StepRightUp(ba.Map):
     """Wide stepped map good for CTF or Assault."""
 
-    # noinspection PyUnresolvedReferences
     from bastd.mapdata import step_right_up as defs
 
     name = 'Step Right Up'

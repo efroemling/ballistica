@@ -698,7 +698,6 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
                 'ba.Activity.on_begin() never got called for ' + str(self) +
                 '; did you forget to call it in your on_begin override?')
 
-    # noinspection PyUnresolvedReferences
     def _setup_player_and_team_types(self) -> None:
         """Pull player and team types from our typing.Generic params."""
 

@@ -197,7 +197,6 @@ def animate(node: ba.Node,
     if _ba.app.test_build and not suppress_format_warning:
         for item in items:
             # (PyCharm seems to think item is a float, not a tuple)
-            # noinspection PyUnresolvedReferences
             _ba.time_format_check(timeformat, item[0])
 
     curve = _ba.newnode('animcurve',
@@ -223,7 +222,6 @@ def animate(node: ba.Node,
     #  get disconnected.
     if not loop:
         # (PyCharm seems to think item is a float, not a tuple)
-        # noinspection PyUnresolvedReferences
         _ba.timer(int(mult * items[-1][0]) + 1000,
                   curve.delete,
                   timeformat=TimeFormat.MILLISECONDS)
@@ -264,7 +262,6 @@ def animate_array(node: ba.Node,
     if _ba.app.test_build and not suppress_format_warning:
         for item in items:
             # (PyCharm seems to think item is a float, not a tuple)
-            # noinspection PyUnresolvedReferences
             _ba.time_format_check(timeformat, item[0])
 
     if timeformat is TimeFormat.SECONDS:
@@ -291,7 +288,6 @@ def animate_array(node: ba.Node,
         # curve after its done its job.
         if not loop:
             # (PyCharm seems to think item is a float, not a tuple)
-            # noinspection PyUnresolvedReferences
             _ba.timer(int(mult * items[-1][0]) + 1000,
                       curve.delete,
                       timeformat=TimeFormat.MILLISECONDS)
@@ -303,7 +299,6 @@ def animate_array(node: ba.Node,
     #  once we get disconnected.
     if not loop:
         # (PyCharm seems to think item is a float, not a tuple)
-        # noinspection PyUnresolvedReferences
         _ba.timer(int(mult * items[-1][0]) + 1000,
                   combine.delete,
                   timeformat=TimeFormat.MILLISECONDS)

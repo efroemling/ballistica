@@ -114,7 +114,6 @@ class ServerCallThread(threading.Thread):
             _ba.set_thread_name('BA_ServerCallThread')
 
             # Seems pycharm doesn't know about urllib.parse.
-            # noinspection PyUnresolvedReferences
             parse = urllib.parse
             if self._request_type == 'get':
                 response = urllib.request.urlopen(

@@ -31,6 +31,7 @@ from typing import TYPE_CHECKING
 import ba
 from bastd.actor.playerspaz import PlayerSpaz
 from bastd.actor.flag import Flag
+from bastd.actor.scoreboard import Scoreboard
 
 if TYPE_CHECKING:
     from typing import Any, Type, List, Dict, Sequence, Union
@@ -85,7 +86,6 @@ class AssaultGame(ba.TeamGameActivity[Player, Team]):
         return ba.getmaps('team_flag')
 
     def __init__(self, settings: Dict[str, Any]):
-        from bastd.actor.scoreboard import Scoreboard
         super().__init__(settings)
         self._scoreboard = Scoreboard()
         self._last_score_time = 0.0

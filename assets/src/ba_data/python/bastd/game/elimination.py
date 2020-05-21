@@ -161,6 +161,12 @@ class Icon(ba.Actor):
             if lives == 0:
                 ba.timer(0.6, self.update_for_lives)
 
+    def handlemessage(self, msg: Any) -> Any:
+        if isinstance(msg, ba.DieMessage):
+            self.node.delete()
+            return None
+        return super().handlemessage(msg)
+
 
 class Player(ba.Player['Team']):
     """Our player type for this game."""

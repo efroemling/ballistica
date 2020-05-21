@@ -115,8 +115,6 @@ class MultiTeamScoreScreenActivity(ScoreScreenActivity):
             def _get_player_score_set_entry(
                     player: ba.SessionPlayer) -> Optional[ba.PlayerRecord]:
                 for p_rec in valid_players:
-                    # PyCharm incorrectly thinks valid_players is a List[str]
-                    # noinspection PyUnresolvedReferences
                     if p_rec[1].player is player:
                         return p_rec[1]
                 return None

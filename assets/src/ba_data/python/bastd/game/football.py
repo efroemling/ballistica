@@ -69,9 +69,16 @@ class FootballFlag(stdflag.Flag):
 class Player(ba.Player['Team']):
     """Our player type for this game."""
 
+    def __init__(self) -> None:
+        self.respawn_timer: Optional[ba.Timer] = None
+        self.respawn_icon: Optional[RespawnIcon] = None
+
 
 class Team(ba.Team[Player]):
     """Our team type for this game."""
+
+    def __init__(self) -> None:
+        self.score = 0
 
 
 # ba_meta export game
@@ -130,11 +137,13 @@ class FootballTeamGame(ba.TeamGameActivity[Player, Team]):
         self._flag: Optional[FootballFlag] = None
         self._flag_respawn_timer: Optional[ba.Timer] = None
         self._flag_respawn_light: Optional[ba.NodeActor] = None
+        self._score_to_win = int(settings['Score to Win'])
+        self._time_limit = float(settings['Time Limit'])
 
     def get_instance_description(self) -> Union[str, Sequence]:
-        touchdowns = self.settings_raw['Score to Win'] / 7
+        touchdowns = self._score_to_win / 7
 
-        # NOTE: if use just touchdowns = self.settings_raw['Score to Win'] // 7
+        # NOTE: if use just touchdowns = self._score_to_win // 7
         # and we will need to score, for example, 27 points,
         # we will be required to score 3 (not 4) goals ..
         touchdowns = math.ceil(touchdowns)
@@ -143,7 +152,7 @@ class FootballTeamGame(ba.TeamGameActivity[Player, Team]):
         return 'Score a touchdown.'
 
     def get_instance_description_short(self) -> Union[str, Sequence]:
-        touchdowns = self.settings_raw['Score to Win'] / 7
+        touchdowns = self._score_to_win / 7
         touchdowns = math.ceil(touchdowns)
         if touchdowns > 1:
             return 'score ${ARG1} touchdowns', touchdowns
@@ -155,7 +164,7 @@ class FootballTeamGame(ba.TeamGameActivity[Player, Team]):
 
     def on_begin(self) -> None:
         super().on_begin()
-        self.setup_standard_time_limit(self.settings_raw['Time Limit'])
+        self.setup_standard_time_limit(self._time_limit)
         self.setup_standard_powerup_drops()
         self._flag_spawn_pos = (self.map.get_flag_position(None))
         self._spawn_flag()
@@ -182,7 +191,6 @@ class FootballTeamGame(ba.TeamGameActivity[Player, Team]):
         ba.playsound(self._chant_sound)
 
     def on_team_join(self, team: Team) -> None:
-        team.gamedata['score'] = 0
         self._update_scoreboard()
 
     def _kill_flag(self) -> None:
@@ -203,7 +211,7 @@ class FootballTeamGame(ba.TeamGameActivity[Player, Team]):
                 break
         for team in self.teams:
             if team.id == i:
-                team.gamedata['score'] += 7
+                team.score += 7
 
                 # Tell all players to celebrate.
                 for player in team.players:
@@ -218,8 +226,8 @@ class FootballTeamGame(ba.TeamGameActivity[Player, Team]):
                     self.stats.player_scored(self._flag.last_holding_player,
                                              50,
                                              big_message=True)
-                # end game if we won
-                if team.gamedata['score'] >= self.settings_raw['Score to Win']:
+                # End the game if we won.
+                if team.score >= self._score_to_win:
                     self.end_game()
         ba.playsound(self._score_sound)
         ba.playsound(self._cheer_sound)
@@ -242,15 +250,14 @@ class FootballTeamGame(ba.TeamGameActivity[Player, Team]):
     def end_game(self) -> None:
         results = ba.TeamGameResults()
         for team in self.teams:
-            results.set_team_score(team, team.gamedata['score'])
+            results.set_team_score(team, team.score)
         self.end(results=results, announce_delay=0.8)
 
     def _update_scoreboard(self) -> None:
-        win_score = self.settings_raw['Score to Win']
         assert self._scoreboard is not None
         for team in self.teams:
-            self._scoreboard.set_team_value(team, team.gamedata['score'],
-                                            win_score)
+            self._scoreboard.set_team_value(team, team.score,
+                                            self._score_to_win)
 
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, stdflag.FlagPickedUpMessage):
@@ -348,7 +355,7 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
     def __init__(self, settings: Dict[str, Any]):
         settings['map'] = 'Football Stadium'
         super().__init__(settings)
-        self._preset = self.settings_raw.get('preset', 'rookie')
+        self._preset = settings.get('preset', 'rookie')
 
         # Load some media we need.
         self._cheer_sound = ba.getsound('cheer')
@@ -506,7 +513,7 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
                                    color=(0.5, 0.4, 0.4))
 
         for team in [self.teams[0], self._bot_team]:
-            team.gamedata['score'] = 0
+            team.score = 0
 
         self.update_scores()
 
@@ -664,7 +671,7 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
         for team in [self.teams[0], self._bot_team]:
             assert team is not None
             if team.id == i:
-                team.gamedata['score'] += 7
+                team.score += 7
 
                 # Tell all players (or bots) to celebrate.
                 if i == 0:
@@ -677,11 +684,11 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
 
         # If the good guys scored, add more enemies.
         if i == 0:
-            if self.teams[0].gamedata['score'] == 7:
+            if self.teams[0].score == 7:
                 assert self._bot_types_7 is not None
                 for bottype in self._bot_types_7:
                     self._spawn_bot(bottype)
-            elif self.teams[0].gamedata['score'] == 14:
+            elif self.teams[0].score == 14:
                 assert self._bot_types_14 is not None
                 for bottype in self._bot_types_14:
                     self._spawn_bot(bottype)
@@ -717,7 +724,7 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
     def on_continue(self) -> None:
         # Subtract one touchdown from the bots and get them moving again.
         assert self._bot_team is not None
-        self._bot_team.gamedata['score'] -= 7
+        self._bot_team.score -= 7
         self._bots.start_moving()
         self.update_scores()
 
@@ -730,9 +737,8 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
         for team in [self.teams[0], self._bot_team]:
             assert team is not None
             assert self._scoreboard is not None
-            self._scoreboard.set_team_value(team, team.gamedata['score'],
-                                            win_score)
-            if team.gamedata['score'] >= win_score:
+            self._scoreboard.set_team_value(team, team.score, win_score)
+            if team.score >= win_score:
                 if not have_scoring_team:
                     self.scoring_team = team
                     if team is self._bot_team:
@@ -745,19 +751,19 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
                         if self._preset in ['rookie', 'rookie_easy']:
                             self._award_achievement('Rookie Football Victory',
                                                     sound=False)
-                            if self._bot_team.gamedata['score'] == 0:
+                            if self._bot_team.score == 0:
                                 self._award_achievement(
                                     'Rookie Football Shutout', sound=False)
                         elif self._preset in ['pro', 'pro_easy']:
                             self._award_achievement('Pro Football Victory',
                                                     sound=False)
-                            if self._bot_team.gamedata['score'] == 0:
+                            if self._bot_team.score == 0:
                                 self._award_achievement('Pro Football Shutout',
                                                         sound=False)
                         elif self._preset in ['uber', 'uber_easy']:
                             self._award_achievement('Uber Football Victory',
                                                     sound=False)
-                            if self._bot_team.gamedata['score'] == 0:
+                            if self._bot_team.score == 0:
                                 self._award_achievement(
                                     'Uber Football Shutout', sound=False)
                             if (not self._player_has_dropped_bomb
@@ -808,9 +814,9 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
             respawn_time = 2.0 + len(self.initial_player_info) * 1.0
 
             # Respawn them shortly.
-            player.gamedata['respawn_timer'] = ba.Timer(
+            player.respawn_timer = ba.Timer(
                 respawn_time, ba.Call(self.spawn_player_if_exists, player))
-            player.gamedata['respawn_icon'] = RespawnIcon(player, respawn_time)
+            player.respawn_icon = RespawnIcon(player, respawn_time)
 
             # Augment standard behavior.
             super().handlemessage(msg)

@@ -71,10 +71,20 @@ class Player(ba.Player['Team']):
 
     def __init__(self) -> None:
         self.distance_txt: Optional[ba.Node] = None
+        self.last_region = 0
+        self.lap = 0
+        self.distance = 0.0
+        self.finished = False
+        self.rank: Optional[int] = None
 
 
 class Team(ba.Team[Player]):
     """Our team type for this game."""
+
+    def __init__(self) -> None:
+        self.time: Optional[float] = None
+        self.lap = 0
+        self.finished = False
 
 
 # ba_meta export game
@@ -137,8 +147,6 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
         self._race_started = False
         super().__init__(settings)
         self._scoreboard = Scoreboard()
-        if self.settings_raw['Epic Mode']:
-            self.slow_motion = True
         self._score_sound = ba.getsound('score')
         self._swipsound = ba.getsound('swip')
         self._last_team_time: Optional[float] = None
@@ -157,6 +165,18 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
         self._player_order_update_timer: Optional[ba.Timer] = None
         self._start_lights: Optional[List[ba.Node]] = None
         self._bomb_spawn_timer: Optional[ba.Timer] = None
+        self._laps = int(settings['Laps'])
+        self._entire_team_must_finish = bool(
+            settings.get('Entire Team Must Finish', False))
+        self._time_limit = float(settings['Time Limit'])
+        self._mine_spawning = int(settings['Mine Spawning'])
+        self._bomb_spawning = int(settings['Bomb Spawning'])
+        self._epic_mode = bool(settings['Epic Mode'])
+
+        # Base class overrides.
+        self.slow_motion = self._epic_mode
+        self.default_music = (ba.MusicType.EPIC_RACE
+                              if self._epic_mode else ba.MusicType.RACE)
 
     def get_instance_description(self) -> Union[str, Sequence]:
         if (isinstance(self.session, ba.DualTeamSession)
@@ -175,11 +195,7 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
         return 'run 1 lap'
 
     def on_transition_in(self) -> None:
-        self.default_music = (ba.MusicType.EPIC_RACE
-                              if self.settings_raw['Epic Mode'] else
-                              ba.MusicType.RACE)
         super().on_transition_in()
-
         pts = self.map.get_def_points('race_point')
         mat = self.race_region_material = ba.Material()
         mat.add_actions(conditions=('they_have_material',
@@ -222,7 +238,7 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
         assert isinstance(player, Player)
         assert isinstance(region, RaceRegion)
 
-        last_region = player.gamedata['last_region']
+        last_region = player.last_region
         this_region = region.index
 
         if last_region != this_region:
@@ -242,29 +258,25 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
             else:
                 # If this player is in first, note that this is the
                 # front-most race-point.
-                if player.gamedata['rank'] == 0:
+                if player.rank == 0:
                     self._front_race_region = this_region
 
-                player.gamedata['last_region'] = this_region
+                player.last_region = this_region
                 if last_region >= len(self._regions) - 2 and this_region == 0:
                     team = player.team
-                    player.gamedata['lap'] = min(self.settings_raw['Laps'],
-                                                 player.gamedata['lap'] + 1)
+                    player.lap = min(self._laps, player.lap + 1)
 
                     # In teams mode with all-must-finish on, the team lap
                     # value is the min of all team players.
                     # Otherwise its the max.
-                    if isinstance(
-                            self.session, ba.DualTeamSession
-                    ) and self.settings_raw.get('Entire Team Must Finish'):
-                        team.gamedata['lap'] = min(
-                            [p.gamedata['lap'] for p in team.players])
+                    if isinstance(self.session, ba.DualTeamSession
+                                  ) and self._entire_team_must_finish:
+                        team.lap = min([p.lap for p in team.players])
                     else:
-                        team.gamedata['lap'] = max(
-                            [p.gamedata['lap'] for p in team.players])
+                        team.lap = max([p.lap for p in team.players])
 
                     # A player is finishing.
-                    if player.gamedata['lap'] == self.settings_raw['Laps']:
+                    if player.lap == self._laps:
 
                         # In teams mode, hand out points based on the order
                         # players come in.
@@ -278,27 +290,22 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
 
                         # Flash where the player is.
                         self._flash_player(player, 1.0)
-                        player.gamedata['finished'] = True
+                        player.finished = True
                         assert player.actor
                         player.actor.handlemessage(
                             ba.DieMessage(immediate=True))
 
                         # Makes sure noone behind them passes them in rank
                         # while finishing.
-                        player.gamedata['distance'] = 9999.0
+                        player.distance = 9999.0
 
                         # If the whole team has finished the race.
-                        if team.gamedata['lap'] == self.settings_raw['Laps']:
+                        if team.lap == self._laps:
                             ba.playsound(self._score_sound)
-                            player.team.gamedata['finished'] = True
+                            player.team.finished = True
                             assert self._timer is not None
-                            cur_time = ba.time(
-                                timeformat=ba.TimeFormat.MILLISECONDS)
-                            start_time = self._timer.getstarttime(
-                                timeformat=ba.TimeFormat.MILLISECONDS)
-                            self._last_team_time = (
-                                player.team.gamedata['time']) = (cur_time -
-                                                                 start_time)
+                            elapsed = ba.time() - self._timer.getstarttime()
+                            self._last_team_time = player.team.time = elapsed
                             self._check_end_game()
 
                         # Team has yet to finish.
@@ -321,12 +328,11 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
                                                   })
                             player.actor.node.connectattr(
                                 'torso_position', mathnode, 'input2')
-                            tstr = ba.Lstr(
-                                resource='lapNumberText',
-                                subs=[('${CURRENT}',
-                                       str(player.gamedata['lap'] + 1)),
-                                      ('${TOTAL}',
-                                       str(self.settings_raw['Laps']))])
+                            tstr = ba.Lstr(resource='lapNumberText',
+                                           subs=[('${CURRENT}',
+                                                  str(player.lap + 1)),
+                                                 ('${TOTAL}', str(self._laps))
+                                                 ])
                             txtnode = ba.newnode('text',
                                                  owner=mathnode,
                                                  attrs={
@@ -348,18 +354,7 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
                             print('Exception printing lap:', exc)
 
     def on_team_join(self, team: Team) -> None:
-        team.gamedata['time'] = None
-        team.gamedata['lap'] = 0
-        team.gamedata['finished'] = False
         self._update_scoreboard()
-
-    def on_player_join(self, player: Player) -> None:
-        player.gamedata['last_region'] = 0
-        player.gamedata['lap'] = 0
-        player.gamedata['distance'] = 0.0
-        player.gamedata['finished'] = False
-        player.gamedata['rank'] = None
-        super().on_player_join(player)
 
     def on_player_leave(self, player: Player) -> None:
         super().on_player_leave(player)
@@ -368,20 +363,20 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
         # is on (otherwise in teams mode everyone could just leave except the
         # leading player to win).
         if (isinstance(self.session, ba.DualTeamSession)
-                and self.settings_raw.get('Entire Team Must Finish')):
+                and self._entire_team_must_finish):
             ba.screenmessage(ba.Lstr(
                 translate=('statements',
                            '${TEAM} is disqualified because ${PLAYER} left'),
                 subs=[('${TEAM}', player.team.name),
                       ('${PLAYER}', player.get_name(full=True))]),
                              color=(1, 1, 0))
-            player.team.gamedata['finished'] = True
-            player.team.gamedata['time'] = None
-            player.team.gamedata['lap'] = 0
+            player.team.finished = True
+            player.team.time = None
+            player.team.lap = 0
             ba.playsound(ba.getsound('boo'))
             for otherplayer in player.team.players:
-                otherplayer.gamedata['lap'] = 0
-                otherplayer.gamedata['finished'] = True
+                otherplayer.lap = 0
+                otherplayer.finished = True
                 try:
                     if otherplayer.actor is not None:
                         otherplayer.actor.handlemessage(ba.DieMessage())
@@ -393,28 +388,26 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
 
     def _update_scoreboard(self) -> None:
         for team in self.teams:
-            distances = [
-                player.gamedata['distance'] for player in team.players
-            ]
+            distances = [player.distance for player in team.players]
             if not distances:
-                teams_dist = 0
+                teams_dist = 0.0
             else:
                 if (isinstance(self.session, ba.DualTeamSession)
-                        and self.settings_raw.get('Entire Team Must Finish')):
+                        and self._entire_team_must_finish):
                     teams_dist = min(distances)
                 else:
                     teams_dist = max(distances)
             self._scoreboard.set_team_value(
                 team,
                 teams_dist,
-                self.settings_raw['Laps'],
-                flash=(teams_dist >= float(self.settings_raw['Laps'])),
+                self._laps,
+                flash=(teams_dist >= float(self._laps)),
                 show_value=False)
 
     def on_begin(self) -> None:
         from bastd.actor.onscreentimer import OnScreenTimer
         super().on_begin()
-        self.setup_standard_time_limit(self.settings_raw['Time Limit'])
+        self.setup_standard_time_limit(self._time_limit)
         self.setup_standard_powerup_drops()
         self._team_finish_pts = 100
 
@@ -434,16 +427,15 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
                        }))
         self._timer = OnScreenTimer()
 
-        if self.settings_raw['Mine Spawning'] != 0:
+        if self._mine_spawning != 0:
             self._race_mines = [
                 RaceMine(point=p, mine=None)
                 for p in self.map.get_def_points('race_mine')
             ]
             if self._race_mines:
-                self._race_mine_timer = ba.Timer(
-                    0.001 * self.settings_raw['Mine Spawning'],
-                    self._update_race_mine,
-                    repeat=True)
+                self._race_mine_timer = ba.Timer(0.001 * self._mine_spawning,
+                                                 self._update_race_mine,
+                                                 repeat=True)
 
         self._scoreboard_timer = ba.Timer(0.25,
                                           self._update_scoreboard,
@@ -516,16 +508,15 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
                 try:
                     assert isinstance(player.actor, PlayerSpaz)
                     player.actor.connect_controls_to_player()
-                except Exception as exc:
-                    print('Exception in race player connects:', exc)
+                except Exception:
+                    ba.print_exception('Error in race player connects')
         assert self._timer is not None
         self._timer.start()
 
-        if self.settings_raw['Bomb Spawning'] != 0:
-            self._bomb_spawn_timer = ba.Timer(
-                0.001 * self.settings_raw['Bomb Spawning'],
-                self._spawn_bomb,
-                repeat=True)
+        if self._bomb_spawning != 0:
+            self._bomb_spawn_timer = ba.Timer(0.001 * self._bomb_spawning,
+                                              self._spawn_bomb,
+                                              repeat=True)
 
         self._race_started = True
 
@@ -542,7 +533,7 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
             except Exception:
                 pos = None
             if pos is not None:
-                r_index = player.gamedata['last_region']
+                r_index = player.last_region
                 rg1 = self._regions[r_index]
                 r1pt = ba.Vec3(rg1.pos[:3])
                 rg2 = self._regions[0] if r_index == len(
@@ -550,20 +541,17 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
                 r2pt = ba.Vec3(rg2.pos[:3])
                 r2dist = (pos - r2pt).length()
                 amt = 1.0 - (r2dist / (r2pt - r1pt).length())
-                amt = player.gamedata['lap'] + (r_index + amt) * (
-                    1.0 / len(self._regions))
-                player.gamedata['distance'] = amt
+                amt = player.lap + (r_index + amt) * (1.0 / len(self._regions))
+                player.distance = amt
 
         # Sort players by distance and update their ranks.
-        p_list = [(player.gamedata['distance'], player)
-                  for player in self.players]
+        p_list = [(player.distance, player) for player in self.players]
 
         p_list.sort(reverse=True, key=lambda x: x[0])
         for i, plr in enumerate(p_list):
             try:
-                plr[1].gamedata['rank'] = i
+                plr[1].rank = i
                 if plr[1].actor:
-                    # noinspection PyUnresolvedReferences
                     node = plr[1].distance_txt
                     if node:
                         node.text = str(i + 1) if plr[1].is_alive() else ''
@@ -626,13 +614,13 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
             ba.timer(0.95, ba.Call(self._make_mine, m_index))
 
     def spawn_player(self, player: Player) -> ba.Actor:
-        if player.team.gamedata['finished']:
+        if player.team.finished:
             # FIXME: This is not type-safe!
             #   This call is expected to always return an Actor!
             #   Perhaps we need something like can_spawn_player()...
             # noinspection PyTypeChecker
             return None  # type: ignore
-        pos = self._regions[player.gamedata['last_region']].pos
+        pos = self._regions[player.last_region].pos
 
         # Don't use the full region so we're less likely to spawn off a cliff.
         region_scale = 0.8
@@ -674,17 +662,14 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
     def _check_end_game(self) -> None:
 
         # If there's no teams left racing, finish.
-        teams_still_in = len(
-            [t for t in self.teams if not t.gamedata['finished']])
+        teams_still_in = len([t for t in self.teams if not t.finished])
         if teams_still_in == 0:
             self.end_game()
             return
 
         # Count the number of teams that have completed the race.
-        teams_completed = len([
-            t for t in self.teams
-            if t.gamedata['finished'] and t.gamedata['time'] is not None
-        ])
+        teams_completed = len(
+            [t for t in self.teams if t.finished and t.time is not None])
 
         if teams_completed > 0:
             session = self.session
@@ -709,22 +694,21 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
 
         # Stop updating our time text, and set it to show the exact last
         # finish time if we have one. (so users don't get upset if their
-        # final time differs from what they see onscreen by a tiny bit)
+        # final time differs from what they see onscreen by a tiny amount)
         assert self._timer is not None
         if self._timer.has_started():
-            cur_time = self._timer.getstarttime(
-                timeformat=ba.TimeFormat.MILLISECONDS)
             self._timer.stop(
                 endtime=None if self._last_team_time is None else (
-                    cur_time + self._last_team_time))
+                    self._timer.getstarttime() + self._last_team_time))
 
         results = ba.TeamGameResults()
 
         for team in self.teams:
-            if team.gamedata['time'] is not None:
-                results.set_team_score(team, team.gamedata['time'])
-            # If game have ended before we
-            # get any result, use 'fail' screen
+            if team.time is not None:
+                # We store time in seconds, but pass a score in milliseconds.
+                results.set_team_score(team, int(team.time * 1000.0))
+            else:
+                results.set_team_score(team, None)
 
         # We don't announce a winner in ffa mode since its probably been a
         # while since the first place guy crossed the finish line so it seems
@@ -738,10 +722,7 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
             # Augment default behavior.
             super().handlemessage(msg)
             player = msg.getplayer(Player)
-            if not player:
-                ba.print_error('got no player in PlayerDiedMessage')
-                return
-            if not player.gamedata['finished']:
+            if not player.finished:
                 self.respawn_player(player, respawn_time=1)
         else:
             super().handlemessage(msg)

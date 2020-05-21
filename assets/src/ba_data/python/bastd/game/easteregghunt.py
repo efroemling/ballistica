@@ -34,6 +34,7 @@ from bastd.actor.playerspaz import PlayerSpaz
 from bastd.actor.spazbot import BotSet, BouncyBot, SpazBotDeathMessage
 from bastd.actor.onscreencountdown import OnScreenCountdown
 from bastd.actor.scoreboard import Scoreboard
+from bastd.actor.respawnicon import RespawnIcon
 
 if TYPE_CHECKING:
     from typing import Any, Type, Dict, List, Tuple, Optional
@@ -42,9 +43,16 @@ if TYPE_CHECKING:
 class Player(ba.Player['Team']):
     """Our player type for this game."""
 
+    def __init__(self) -> None:
+        self.respawn_timer: Optional[ba.Timer] = None
+        self.respawn_icon: Optional[RespawnIcon] = None
+
 
 class Team(ba.Team[Player]):
     """Our team type for this game."""
+
+    def __init__(self) -> None:
+        self.score = 0
 
 
 # ba_meta export game
@@ -88,15 +96,10 @@ class EasterEggHuntGame(ba.TeamGameActivity[Player, Team]):
         self._countdown: Optional[OnScreenCountdown] = None
         self._bots: Optional[BotSet] = None
 
-    # Called when our game is transitioning in but not ready to start.
-    # ..we can go ahead and set our music and whatnot.
-
-    def on_transition_in(self) -> None:
+        # Base class overrides
         self.default_music = ba.MusicType.FORWARD_MARCH
-        super().on_transition_in()
 
     def on_team_join(self, team: Team) -> None:
-        team.gamedata['score'] = 0
         if self.has_begun():
             self._update_scoreboard()
 
@@ -142,7 +145,7 @@ class EasterEggHuntGame(ba.TeamGameActivity[Player, Team]):
                 player = (spaz.getplayer()
                           if hasattr(spaz, 'getplayer') else None)
                 if player and egg:
-                    player.team.gamedata['score'] += 1
+                    player.team.score += 1
 
                     # Displays a +1 (and adds to individual player score in
                     # teams mode).
@@ -201,7 +204,6 @@ class EasterEggHuntGame(ba.TeamGameActivity[Player, Team]):
 
         # Respawn dead players.
         if isinstance(msg, ba.PlayerDiedMessage):
-            from bastd.actor import respawnicon
 
             # Augment standard behavior.
             super().handlemessage(msg)
@@ -213,10 +215,9 @@ class EasterEggHuntGame(ba.TeamGameActivity[Player, Team]):
             # Respawn them shortly.
             assert self.initial_player_info is not None
             respawn_time = 2.0 + len(self.initial_player_info) * 1.0
-            player.gamedata['respawn_timer'] = ba.Timer(
+            player.respawn_timer = ba.Timer(
                 respawn_time, ba.Call(self.spawn_player_if_exists, player))
-            player.gamedata['respawn_icon'] = respawnicon.RespawnIcon(
-                player, respawn_time)
+            player.respawn_icon = RespawnIcon(player, respawn_time)
 
         # Whenever our evil bunny dies, respawn him and spew some eggs.
         elif isinstance(msg, SpazBotDeathMessage):
@@ -235,12 +236,12 @@ class EasterEggHuntGame(ba.TeamGameActivity[Player, Team]):
 
     def _update_scoreboard(self) -> None:
         for team in self.teams:
-            self._scoreboard.set_team_value(team, team.gamedata['score'])
+            self._scoreboard.set_team_value(team, team.score)
 
     def end_game(self) -> None:
         results = ba.TeamGameResults()
         for team in self.teams:
-            results.set_team_score(team, team.gamedata['score'])
+            results.set_team_score(team, team.score)
         self.end(results)
 
 

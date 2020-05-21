@@ -53,7 +53,7 @@ class _Entry:
         self._flash_timer: Optional[ba.Timer] = None
         self._flash_counter: Optional[int] = None
         self._flash_colors: Optional[bool] = None
-        self._score: Optional[int] = None
+        self._score: Optional[float] = None
 
         safe_team_color = ba.safecolor(team.color, target_intensity=1.0)
 
@@ -258,8 +258,8 @@ class _Entry:
             self._set_flash_colors(not self._flash_colors)
 
     def set_value(self,
-                  score: int,
-                  max_score: int = None,
+                  score: float,
+                  max_score: float = None,
                   countdown: bool = False,
                   flash: bool = True,
                   show_value: bool = True) -> None:
@@ -360,8 +360,8 @@ class Scoreboard:
 
     def set_team_value(self,
                        team: ba.Team,
-                       score: int,
-                       max_score: int = None,
+                       score: float,
+                       max_score: float = None,
                        countdown: bool = False,
                        flash: bool = True,
                        show_value: bool = True) -> None:
@@ -373,7 +373,8 @@ class Scoreboard:
             if '_scoreboard_entry' in team.gamedata:
                 raise Exception('existing _EntryProxy found')
             team.gamedata['_scoreboard_entry'] = _EntryProxy(self, team)
-        # now set the entry..
+
+        # Now set the entry.
         self._entries[team.id].set_value(score=score,
                                          max_score=max_score,
                                          countdown=countdown,

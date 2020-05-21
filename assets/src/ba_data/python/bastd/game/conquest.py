@@ -33,6 +33,7 @@ from bastd.actor.flag import Flag
 
 if TYPE_CHECKING:
     from typing import Any, Optional, Type, List, Dict, Sequence, Union
+    from bastd.actor.respawnicon import RespawnIcon
 
 
 class ConquestFlag(Flag):
@@ -57,9 +58,30 @@ class ConquestFlag(Flag):
 class Player(ba.Player['Team']):
     """Our player type for this game."""
 
+    @property
+    def respawn_timer(self) -> Optional[ba.Timer]:
+        """Type safe access to standard respawn timer."""
+        return self.gamedata.get('respawn_timer', None)
+
+    @respawn_timer.setter
+    def respawn_timer(self, value: Optional[ba.Timer]) -> None:
+        self.gamedata['respawn_timer'] = value
+
+    @property
+    def respawn_icon(self) -> Optional[RespawnIcon]:
+        """Type safe access to standard respawn icon."""
+        return self.gamedata.get('respawn_icon', None)
+
+    @respawn_icon.setter
+    def respawn_icon(self, value: Optional[RespawnIcon]) -> None:
+        self.gamedata['respawn_icon'] = value
+
 
 class Team(ba.Team[Player]):
     """Our team type for this game."""
+
+    def __init__(self) -> None:
+        self.flags_held = 0
 
 
 # ba_meta export game
@@ -96,13 +118,18 @@ class ConquestGame(ba.TeamGameActivity[Player, Team]):
     def __init__(self, settings: Dict[str, Any]):
         from bastd.actor.scoreboard import Scoreboard
         super().__init__(settings)
-        if self.settings_raw['Epic Mode']:
-            self.slow_motion = True
         self._scoreboard = Scoreboard()
         self._score_sound = ba.getsound('score')
         self._swipsound = ba.getsound('swip')
         self._extraflagmat = ba.Material()
         self._flags: List[ConquestFlag] = []
+        self._epic_mode = bool(settings['Epic Mode'])
+        self._time_limit = float(settings['Time Limit'])
+
+        # Base class overrides.
+        self.slow_motion = self._epic_mode
+        self.default_music = (ba.MusicType.EPIC
+                              if self._epic_mode else ba.MusicType.GRAND_ROMP)
 
         # We want flags to tell us they've been hit but not react physically.
         self._extraflagmat.add_actions(
@@ -116,27 +143,20 @@ class ConquestGame(ba.TeamGameActivity[Player, Team]):
     def get_instance_description_short(self) -> Union[str, Sequence]:
         return 'secure all ${ARG1} flags', len(self.map.flag_points)
 
-    def on_transition_in(self) -> None:
-        self.default_music = (ba.MusicType.EPIC
-                              if self.settings_raw['Epic Mode'] else
-                              ba.MusicType.GRAND_ROMP)
-        super().on_transition_in()
-
     def on_team_join(self, team: Team) -> None:
         if self.has_begun():
             self._update_scores()
-        team.gamedata['flags_held'] = 0
 
     def on_player_join(self, player: Player) -> None:
-        player.gamedata['respawn_timer'] = None
+        player.respawn_timer = None
 
         # Only spawn if this player's team has a flag currently.
-        if player.team.gamedata['flags_held'] > 0:
+        if player.team.flags_held > 0:
             self.spawn_player(player)
 
     def on_begin(self) -> None:
         super().on_begin()
-        self.setup_standard_time_limit(self.settings_raw['Time Limit'])
+        self.setup_standard_time_limit(self._time_limit)
         self.setup_standard_powerup_drops()
 
         # Set up flags with marker lights.
@@ -177,27 +197,27 @@ class ConquestGame(ba.TeamGameActivity[Player, Team]):
 
     def _update_scores(self) -> None:
         for team in self.teams:
-            team.gamedata['flags_held'] = 0
+            team.flags_held = 0
         for flag in self._flags:
             if flag.team is not None:
-                flag.team.gamedata['flags_held'] += 1
+                flag.team.flags_held += 1
         for team in self.teams:
 
             # If a team finds themselves with no flags, cancel all
             # outstanding spawn-timers.
-            if team.gamedata['flags_held'] == 0:
+            if team.flags_held == 0:
                 for player in team.players:
-                    player.gamedata['respawn_timer'] = None
-                    player.gamedata['respawn_icon'] = None
-            if team.gamedata['flags_held'] == len(self._flags):
+                    player.respawn_timer = None
+                    player.respawn_icon = None
+            if team.flags_held == len(self._flags):
                 self.end_game()
-            self._scoreboard.set_team_value(team, team.gamedata['flags_held'],
+            self._scoreboard.set_team_value(team, team.flags_held,
                                             len(self._flags))
 
     def end_game(self) -> None:
         results = ba.TeamGameResults()
         for team in self.teams:
-            results.set_team_score(team, team.gamedata['flags_held'])
+            results.set_team_score(team, team.flags_held)
         self.end(results=results)
 
     def _flash_flag(self, flag: ConquestFlag, length: float = 1.0) -> None:
@@ -239,7 +259,7 @@ class ConquestGame(ba.TeamGameActivity[Player, Team]):
                 if (otherplayer.team is flag.team
                         and otherplayer.actor is not None
                         and not otherplayer.is_alive()
-                        and otherplayer.gamedata['respawn_timer'] is None):
+                        and otherplayer.respawn_timer is None):
                     self.spawn_player(otherplayer)
 
     def handlemessage(self, msg: Any) -> Any:
@@ -249,10 +269,10 @@ class ConquestGame(ba.TeamGameActivity[Player, Team]):
 
             # Respawn only if this team has a flag.
             player = msg.getplayer(Player)
-            if player.team.gamedata['flags_held'] > 0:
+            if player.team.flags_held > 0:
                 self.respawn_player(player)
             else:
-                player.gamedata['respawn_timer'] = None
+                player.respawn_timer = None
 
         else:
             super().handlemessage(msg)

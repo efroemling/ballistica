@@ -31,7 +31,6 @@ if TYPE_CHECKING:
 
 @dataclass
 class PowerupMessage:
-    # noinspection PyUnresolvedReferences
     """A message telling an object to accept a powerup.
 
     Category: Message Classes

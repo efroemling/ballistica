@@ -62,8 +62,7 @@ class CTFFlag(stdflag.Flag):
 
     def reset_return_times(self) -> None:
         """Clear flag related times in the activity."""
-        self.time_out_respawn_time = int(
-            self.activity.settings_raw['Flag Idle Return Time'])
+        self.time_out_respawn_time = int(self.activity.flag_idle_return_time)
         self.touch_return_time = float(self.activity.flag_touch_return_time)
 
     @property
@@ -167,20 +166,16 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
         self._all_bases_material = ba.Material()
         self._last_home_flag_notice_print_time = 0.0
         self._score_to_win = int(settings['Score to Win'])
-        self._flag_touch_return_time = float(
-            settings['Flag Touch Return Time'])
         self._epic_mode = bool(settings['Epic Mode'])
         self._time_limit = float(settings['Time Limit'])
+
+        self.flag_touch_return_time = float(settings['Flag Touch Return Time'])
+        self.flag_idle_return_time = float(settings['Flag Idle return Time'])
 
         # Base class overrides
         self.slow_motion = self._epic_mode
         self.default_music = (ba.MusicType.EPIC if self._epic_mode else
                               ba.MusicType.FLAG_CATCHER)
-
-    @property
-    def flag_touch_return_time(self) -> float:
-        """How long a flag must be touched for to return it to base."""
-        return self._flag_touch_return_time
 
     def get_instance_description(self) -> Union[str, Sequence]:
         if self._score_to_win == 1:
@@ -440,7 +435,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
     def _award_players_touching_own_flag(self, team: Team) -> None:
         for player in team.players:
             if player.touching_own_flag > 0:
-                return_score = 10 + 5 * int(self._flag_touch_return_time)
+                return_score = 10 + 5 * int(self.flag_touch_return_time)
                 self.stats.player_scored(player,
                                          return_score,
                                          screenmessage=False)
@@ -468,7 +463,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
 
         # If return-time is zero, just kill it immediately.. otherwise keep
         # track of touches and count down.
-        if float(self._flag_touch_return_time) <= 0.0:
+        if float(self.flag_touch_return_time) <= 0.0:
             assert team.flag is not None
             if not team.home_flag_at_base and team.flag.held_count == 0:
 

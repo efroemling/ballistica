@@ -37,7 +37,6 @@ from typing import TYPE_CHECKING
 
 # Pull in some standard snippets we want to expose.
 # pylint: disable=unused-import
-# noinspection PyUnresolvedReferences
 from efrotools.snippets import (
     PROJROOT, snippets_main, formatcode, formatscripts, formatmakefile,
     cpplint, pylint, runpylint, mypy, runmypy, dmypy, tool_config_install,
