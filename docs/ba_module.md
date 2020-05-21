@@ -2466,10 +2466,10 @@ and short description of the game.</p>
 <dt><h4><a name="method_ba_HitMessage__get_source_player">get_source_player()</a></dt></h4><dd>
 <p><span>get_source_player(self, playertype: Type[PlayerType]) -&gt; Optional[PlayerType]</span></p>
 
-<p>Return the spaz that died.</p>
+<p>Return the source-player if there is one and they still exist.</p>
 
-<p>The current activity is required as an argument so the exact type of
-PlayerSpaz can be determined by the type checker.</p>
+<p>The type of player for the current activity should be passed so that
+the type-checker properly identifies the returned value as one.</p>
 
 </dd>
 </dl>
@@ -3823,7 +3823,7 @@ is_alive() method return True. False is returned otherwise.</p>
 <h2><strong><a name="class_ba_PlayerDiedMessage">ba.PlayerDiedMessage</a></strong></h3>
 <p><em>&lt;top level class&gt;</em>
 </p>
-<p>A message saying a ba.PlayerSpaz has died.</p>
+<p>A message saying a <a href="#class_ba_Player">ba.Player</a> has died.</p>
 
 <p>Category: <a href="#class_category_Message_Classes">Message Classes</a></p>
 
@@ -3837,7 +3837,7 @@ is_alive() method return True. False is returned otherwise.</p>
 </dd>
 <dt><h4><a name="attr_ba_PlayerDiedMessage__killed">killed</a></h4></dt><dd>
 <p><span>bool</span></p>
-<p>If True, the spaz was killed;
+<p>If True, the player was killed;
 If False, they left the game or the round ended.</p>
 
 </dd>
@@ -3862,10 +3862,10 @@ If False, they left the game or the round ended.</p>
 <dt><h4><a name="method_ba_PlayerDiedMessage__getplayer">getplayer()</a></dt></h4><dd>
 <p><span>getplayer(self, playertype: Type[PlayerType]) -&gt; PlayerType</span></p>
 
-<p>Return the spaz that died.</p>
+<p>Return the <a href="#class_ba_Player">ba.Player</a> that died.</p>
 
-<p>The current activity is required as an argument so the exact type of
-PlayerSpaz can be determined by the type checker.</p>
+<p>The type of player for the current activity should be passed so that
+the type-checker properly identifies the returned value as one.</p>
 
 </dd>
 </dl>

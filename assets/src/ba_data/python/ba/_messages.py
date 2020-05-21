@@ -92,14 +92,14 @@ PlayerType = TypeVar('PlayerType', bound='ba.Player')
 
 
 class PlayerDiedMessage:
-    """A message saying a ba.PlayerSpaz has died.
+    """A message saying a ba.Player has died.
 
     category: Message Classes
 
     Attributes:
 
        killed
-          If True, the spaz was killed;
+          If True, the player was killed;
           If False, they left the game or the round ended.
 
        how
@@ -132,10 +132,10 @@ class PlayerDiedMessage:
         return self._killerplayer
 
     def getplayer(self, playertype: Type[PlayerType]) -> PlayerType:
-        """Return the spaz that died.
+        """Return the ba.Player that died.
 
-        The current activity is required as an argument so the exact type of
-        PlayerSpaz can be determined by the type checker.
+        The type of player for the current activity should be passed so that
+        the type-checker properly identifies the returned value as one.
         """
         player: Any = self._player
         assert isinstance(player, playertype)
@@ -313,10 +313,10 @@ class HitMessage:
 
     def get_source_player(
             self, playertype: Type[PlayerType]) -> Optional[PlayerType]:
-        """Return the spaz that died.
+        """Return the source-player if there is one and they still exist.
 
-        The current activity is required as an argument so the exact type of
-        PlayerSpaz can be determined by the type checker.
+        The type of player for the current activity should be passed so that
+        the type-checker properly identifies the returned value as one.
         """
         player: Any = self._source_player
         assert isinstance(player, (playertype, type(None)))
