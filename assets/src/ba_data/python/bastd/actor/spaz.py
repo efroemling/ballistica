@@ -1070,9 +1070,9 @@ class Spaz(ba.Actor):
             if self.hitpoints > 0:
 
                 # It's kinda crappy to die from impacts, so lets reduce
-                # impact damage by a reasonable amount if it'll keep us alive
+                # impact damage by a reasonable amount *if* it'll keep us alive
                 if msg.hit_type == 'impact' and damage > self.hitpoints:
-                    # drop damage to whatever puts us at 10 hit points,
+                    # Drop damage to whatever puts us at 10 hit points,
                     # or 200 less than it used to be whichever is greater
                     # (so it *can* still kill us if its high enough)
                     newdamage = max(damage - 200, self.hitpoints - 10)
@@ -1081,27 +1081,28 @@ class Spaz(ba.Actor):
 
                 # If we're holding something, drop it.
                 if damage > 0.0 and self.node.hold_node:
-                    # self.node.hold_node = ba.Node(None)
                     self.node.hold_node = None
                 self.hitpoints -= damage
                 self.node.hurt = 1.0 - float(
                     self.hitpoints) / self.hitpoints_max
+
                 # If we're cursed, *any* damage blows us up.
                 if self._cursed and damage > 0:
                     ba.timer(
                         0.05,
                         ba.WeakCall(self.curse_explode,
                                     msg.get_source_player(ba.Player)))
-                # if we're frozen, shatter.. otherwise die if we hit zero
+
+                # If we're frozen, shatter.. otherwise die if we hit zero
                 if self.frozen and (damage > 200 or self.hitpoints <= 0):
                     self.shatter()
                 elif self.hitpoints <= 0:
                     self.node.handlemessage(
                         ba.DieMessage(how=ba.DeathType.IMPACT))
 
-            # if we're dead, take a look at the smoothed damage val
+            # If we're dead, take a look at the smoothed damage value
             # (which gives us a smoothed average of recent damage) and shatter
-            # us if its grown high enough
+            # us if its grown high enough.
             if self.hitpoints <= 0:
                 damage_avg = self.node.damage_smoothed * damage_scale
                 if damage_avg > 1000:
@@ -1144,23 +1145,23 @@ class Spaz(ba.Actor):
                 return None
             node = ba.get_collision_info('opposing_node')
 
-            # only allow one hit per node per punch
+            # Only allow one hit per node per punch.
             if node and (node not in self._punched_nodes):
 
                 punch_momentum_angular = (self.node.punch_momentum_angular *
                                           self._punch_power_scale)
                 punch_power = self.node.punch_power * self._punch_power_scale
 
-                # ok here's the deal:  we pass along our base velocity for use
+                # Ok here's the deal:  we pass along our base velocity for use
                 # in the impulse damage calculations since that is a more
                 # predictable value than our fist velocity, which is rather
-                # erratic. ...however we want to actually apply force in the
-                # direction our fist is moving so it looks better.. so we still
-                # pass that along as a direction ..perhaps a time-averaged
-                # fist-velocity would work too?.. should try that.
+                # erratic. However, we want to actually apply force in the
+                # direction our fist is moving so it looks better. So we still
+                # pass that along as a direction. Perhaps a time-averaged
+                # fist-velocity would work too?.. perhaps should try that.
 
-                # if its something besides another spaz, just do a muffled
-                # punch sound
+                # If its something besides another spaz, just do a muffled
+                # punch sound.
                 if node.getnodetype() != 'spaz':
                     sounds = get_factory().impact_sounds_medium
                     sound = sounds[random.randrange(len(sounds))]
@@ -1226,7 +1227,7 @@ class Spaz(ba.Actor):
             if held and held.getnodetype() == 'flag':
                 return True
 
-            # hold_body needs to be set before hold_node.
+            # Note: hold_body needs to be set before hold_node.
             self.node.hold_body = opposing_body
             self.node.hold_node = opposing_node
         elif isinstance(msg, ba.CelebrateMessage):
@@ -1280,7 +1281,8 @@ class Spaz(ba.Actor):
 
     def _pick_up(self, node: ba.Node) -> None:
         if self.node:
-            self.node.hold_body = 0  # needs to be set before hold_node
+            # Note: hold_body needs to be set before hold_node.
+            self.node.hold_body = 0
             self.node.hold_node = node
 
     def set_land_mine_count(self, count: int) -> None:
@@ -1317,7 +1319,7 @@ class Spaz(ba.Actor):
         self.shattered = True
         assert self.node
         if self.frozen:
-            # momentary flash of light
+            # Momentary flash of light.
             light = ba.newnode('light',
                                attrs={
                                    'position': self.node.position,
@@ -1333,7 +1335,8 @@ class Spaz(ba.Actor):
                 0.3: 0
             })
             ba.timer(0.3, light.delete)
-            # emit ice chunks..
+
+            # Emit ice chunks.
             ba.emitfx(position=self.node.position,
                       velocity=self.node.velocity,
                       count=int(random.random() * 10.0 + 10.0),
@@ -1399,8 +1402,8 @@ class Spaz(ba.Actor):
 
     def set_bomb_count(self, count: int) -> None:
         """Sets the number of bombs this Spaz has."""
-        # we cant just set bomb_count cuz some bombs may be laid currently
-        # so we have to do a relative diff based on max
+        # We can't just set bomb_count because some bombs may be laid currently
+        # so we have to do a relative diff based on max.
         diff = count - self._max_bomb_count
         self._max_bomb_count += diff
         self.bomb_count += diff
@@ -1413,7 +1416,7 @@ class Spaz(ba.Actor):
             self.node.billboard_cross_out = True
 
     def _gloves_wear_off(self) -> None:
-        if self._demo_mode:  # preserve old behavior
+        if self._demo_mode:  # Preserve old behavior.
             self._punch_power_scale = 1.2
             self._punch_cooldown = BASE_PUNCH_COOLDOWN
         else:

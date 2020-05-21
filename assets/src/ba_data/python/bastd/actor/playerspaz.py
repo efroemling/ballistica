@@ -87,14 +87,7 @@ class PlayerSpaz(Spaz, Generic[PlayerType]):
         self.held_count = 0
         self.last_player_held_by: Optional[PlayerType] = None
         self._player = player
-        self.playertype = type(player)
-
-        # Grab the node for this player and wire it to follow our spaz
-        # (so players' controllers know where to draw their guides, etc).
-        if player:
-            assert self.node
-            assert player.node
-            self.node.connectattr('torso_position', player.node, 'position')
+        self._drive_player_position()
 
     @property
     def player(self) -> PlayerType:
@@ -200,7 +193,7 @@ class PlayerSpaz(Spaz, Generic[PlayerType]):
         if isinstance(msg, ba.PickedUpMessage):
             super().handlemessage(msg)  # Augment standard behavior.
             self.held_count += 1
-            picked_up_by = ba.playercast_o(self.playertype,
+            picked_up_by = ba.playercast_o(type(self._player),
                                            msg.node.source_player)
             if picked_up_by:
                 self.last_player_held_by = picked_up_by
@@ -212,7 +205,7 @@ class PlayerSpaz(Spaz, Generic[PlayerType]):
 
             # Let's count someone dropping us as an attack.
             try:
-                picked_up_by_2 = ba.playercast_o(self.playertype,
+                picked_up_by_2 = ba.playercast_o(type(self._player),
                                                  msg.node.source_player)
             except Exception:
                 picked_up_by_2 = None
@@ -220,6 +213,14 @@ class PlayerSpaz(Spaz, Generic[PlayerType]):
                 self.last_player_attacked_by = picked_up_by_2
                 self.last_attacked_time = ba.time()
                 self.last_attacked_type = ('picked_up', 'default')
+        elif isinstance(msg, ba.StandMessage):
+            super().handlemessage(msg)  # Augment standard behavior.
+
+            # Our Spaz was just moved somewhere. Explicitly update
+            # our associated player's position in case it is being used
+            # for logic (otherwise it will be out of date until next step)
+            self._drive_player_position()
+
         elif isinstance(msg, ba.DieMessage):
 
             # Report player deaths to the game.
@@ -271,7 +272,7 @@ class PlayerSpaz(Spaz, Generic[PlayerType]):
 
         # Keep track of the player who last hit us for point rewarding.
         elif isinstance(msg, ba.HitMessage):
-            source_player = msg.get_source_player(self.playertype)
+            source_player = msg.get_source_player(type(self._player))
             if source_player:
                 self.last_player_attacked_by = source_player
                 self.last_attacked_time = ba.time()
@@ -282,3 +283,16 @@ class PlayerSpaz(Spaz, Generic[PlayerType]):
                 activity.handlemessage(PlayerSpazHurtMessage(self))
         else:
             super().handlemessage(msg)
+
+    def _drive_player_position(self) -> None:
+        """Drive our ba.Player's official position
+
+        If our position is changed explicitly, this should be called again
+        to instantly update the player position (otherwise it would be out
+        of date until the next sim step)
+        """
+        player = self._player
+        if player:
+            assert self.node
+            assert player.node
+            self.node.connectattr('torso_position', player.node, 'position')

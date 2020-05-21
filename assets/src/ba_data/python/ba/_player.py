@@ -24,6 +24,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeVar, Generic
 
+import _ba
+
 if TYPE_CHECKING:
     from typing import (Type, Optional, Sequence, Dict, Any, Union, Tuple,
                         Callable)
@@ -66,7 +68,6 @@ class Player(Generic[TeamType]):
         (internal)
         """
         from ba._nodeactor import NodeActor
-        import _ba
 
         # Sanity check; if a dataclass is created that inherits from us,
         # it will define an equality operator by default which will break
@@ -92,6 +93,8 @@ class Player(Generic[TeamType]):
         self.gamedata = sessionplayer.gamedata
 
         # Create our player node in the current activity.
+        # Note: do we want to save a few cycles here by managing our player
+        # node manually instead of wrapping it in a NodeActor?
         node = _ba.newnode('player', attrs={'playerID': sessionplayer.id})
         self._nodeactor = NodeActor(node)
         sessionplayer.set_node(node)
@@ -117,6 +120,15 @@ class Player(Generic[TeamType]):
             from ba import _error
             raise _error.NodeNotFoundError
         return self._nodeactor.node
+
+    @property
+    def position(self) -> ba.Vec3:
+        """The position of the player, as defined by its current Actor.
+
+        This value should not be used when the player has no Actor, as
+        it is undefined in that case.
+        """
+        return _ba.Vec3(self.node.position)
 
     def exists(self) -> bool:
         """Whether the underlying player still exists.

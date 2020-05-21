@@ -3730,13 +3730,21 @@ even if myactor is set to None.</p>
 </p>
 
 <h3>Attributes:</h3>
-<h5><a href="#attr_ba_Player__node">node</a>, <a href="#attr_ba_Player__sessionplayer">sessionplayer</a></h5>
+<h5><a href="#attr_ba_Player__node">node</a>, <a href="#attr_ba_Player__position">position</a>, <a href="#attr_ba_Player__sessionplayer">sessionplayer</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_Player__node">node</a></h4></dt><dd>
 <p><span><a href="#class_ba_Node">ba.Node</a></span></p>
 <p>A <a href="#class_ba_Node">ba.Node</a> of type 'player' associated with this Player.</p>
 
 <p>        This node can be used to get a generic player position/etc.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_Player__position">position</a></h4></dt><dd>
+<p><span><a href="#class_ba_Vec3">ba.Vec3</a></span></p>
+<p>The position of the player, as defined by its current Actor.</p>
+
+<p>        This value should not be used when the player has no Actor, as
+        it is undefined in that case.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_Player__sessionplayer">sessionplayer</a></h4></dt><dd>
