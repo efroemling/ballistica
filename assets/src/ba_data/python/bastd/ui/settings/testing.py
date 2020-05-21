@@ -167,7 +167,7 @@ class TestingWindow(ba.Window):
         for entry in self._entries:
             if entry['name'] == name:
                 return entry
-        raise Exception(f'Entry not found: {name}')
+        raise ba.NotFoundError(f'Entry not found: {name}')
 
     def _on_reset_press(self) -> None:
         for entry in self._entries:

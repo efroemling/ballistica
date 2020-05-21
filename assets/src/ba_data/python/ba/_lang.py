@@ -111,7 +111,7 @@ class Lstr:
         """
         # pylint: disable=too-many-branches
         if args:
-            raise Exception('Lstr accepts only keyword arguments')
+            raise TypeError('Lstr accepts only keyword arguments')
 
         # Basically just store the exact args they passed.
         # However if they passed any Lstr values for subs,
@@ -120,7 +120,7 @@ class Lstr:
         our_type = type(self)
 
         if isinstance(self.args.get('value'), our_type):
-            raise Exception("'value' must be a regular string; not an Lstr")
+            raise TypeError("'value' must be a regular string; not an Lstr")
 
         if 'subs' in self.args:
             subs_new = []
@@ -301,7 +301,7 @@ def _add_to_attr_dict(dst: AttrDict, src: Dict) -> None:
             _add_to_attr_dict(dst_dict, value)
         else:
             if not isinstance(value, (float, int, bool, str, str, type(None))):
-                raise Exception("invalid value type for res '" + key + "': " +
+                raise TypeError("invalid value type for res '" + key + "': " +
                                 str(type(value)))
             dst[key] = value
 
@@ -401,9 +401,10 @@ def get_resource(resource: str,
         # Ok, looks like we couldn't find our main or fallback resource
         # anywhere. Now if we've been given a fallback value, return it;
         # otherwise fail.
+        from ba import _error
         if fallback_value is not None:
             return fallback_value
-        raise Exception("resource not found: '" + resource + "'")
+        raise _error.NotFoundError("resource not found: '" + resource + "'")
 
 
 def translate(category: str,
@@ -466,5 +467,5 @@ def is_custom_unicode_char(char: str) -> bool:
     """Return whether a char is in the custom unicode range we use."""
     assert isinstance(char, str)
     if len(char) != 1:
-        raise Exception('Invalid Input; must be length 1')
+        raise ValueError('Invalid Input; must be length 1')
     return 0xE000 <= ord(char) <= 0xF8FF

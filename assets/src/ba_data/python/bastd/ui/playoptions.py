@@ -93,7 +93,7 @@ class PlayOptionsWindow(popup.PopupWindow):
                 elif self._sessiontype is ba.DualTeamSession:
                     plst = get_default_teams_playlist()
                 else:
-                    raise Exception('unrecognized session-type: ' +
+                    raise TypeError('unrecognized session-type: ' +
                                     str(self._sessiontype))
             else:
                 try:

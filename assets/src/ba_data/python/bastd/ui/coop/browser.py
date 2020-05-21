@@ -1555,7 +1555,7 @@ class CoopBrowserWindow(ba.Window):
             elif sel == self._scrollwidget:
                 sel_name = 'Scroll'
             else:
-                raise Exception('unrecognized selection')
+                raise ValueError('unrecognized selection')
             ba.app.window_states[self.__class__.__name__] = {
                 'sel_name': sel_name
             }

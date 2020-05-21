@@ -149,8 +149,8 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         self._score_order: str
         if 'score_order' in settings:
             if not settings['score_order'] in ['increasing', 'decreasing']:
-                raise Exception('Invalid score order: ' +
-                                settings['score_order'])
+                raise ValueError('Invalid score order: ' +
+                                 settings['score_order'])
             self._score_order = settings['score_order']
         else:
             self._score_order = 'increasing'
@@ -159,8 +159,8 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         self._score_type: str
         if 'score_type' in settings:
             if not settings['score_type'] in ['points', 'time']:
-                raise Exception('Invalid score type: ' +
-                                settings['score_type'])
+                raise ValueError('Invalid score type: ' +
+                                 settings['score_type'])
             self._score_type = settings['score_type']
         else:
             self._score_type = 'points'

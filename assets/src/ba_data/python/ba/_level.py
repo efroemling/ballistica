@@ -169,7 +169,7 @@ class Level:
         can be modified in place."""
         campaign = self.get_campaign()
         if campaign is None:
-            raise Exception('level is not in a campaign')
+            raise TypeError('level is not in a campaign')
         campaign_config = campaign.get_config_dict()
         val: Dict[str,
                   Any] = campaign_config.setdefault(self._name, {

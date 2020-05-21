@@ -62,7 +62,7 @@ class PlaylistBrowserWindow(ba.Window):
             ba.app.main_window = 'Free-for-All Game Select'
             ba.set_analytics_screen('FreeForAll Window')
         else:
-            raise Exception(f'invalid sessiontype: {sessiontype}')
+            raise TypeError(f'invalid sessiontype: {sessiontype}')
         self._pvars = playlist.PlaylistTypeVars(sessiontype)
 
         self._sessiontype = sessiontype

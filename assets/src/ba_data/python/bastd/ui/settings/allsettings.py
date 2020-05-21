@@ -252,7 +252,7 @@ class AllSettingsWindow(ba.Window):
             elif sel == self._back_button:
                 sel_name = 'Back'
             else:
-                raise Exception('unrecognized selection')
+                raise ValueError(f'unrecognized selection \'{sel}\'')
             ba.app.window_states[self.__class__.__name__] = {
                 'sel_name': sel_name
             }

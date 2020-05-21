@@ -292,7 +292,7 @@ class CoopSession(Session):
                     and self.campaign_state['level'] == 'Onslaught Training'
                     and not app.kiosk_mode):
                 if self._tutorial_activity is None:
-                    raise Exception('tutorial not preloaded properly')
+                    raise RuntimeError('tutorial not preloaded properly')
                 self.set_activity(self._tutorial_activity)
                 self._tutorial_activity = None
                 self._ran_tutorial_activity = True

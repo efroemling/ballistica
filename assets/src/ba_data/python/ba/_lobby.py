@@ -353,7 +353,8 @@ class Chooser:
         """The chooser's ba.Lobby."""
         lobby = self._lobby()
         if lobby is None:
-            raise Exception('Lobby does not exist.')
+            from ba import _error
+            raise _error.NotFoundError('Lobby does not exist.')
         return lobby
 
     def get_lobby(self) -> Optional[ba.Lobby]:

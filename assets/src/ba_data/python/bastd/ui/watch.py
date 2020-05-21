@@ -482,7 +482,7 @@ class WatchWindow(ba.Window):
             elif sel == self._tab_container:
                 sel_name = 'TabContainer'
             else:
-                raise Exception('unrecognized selection')
+                raise ValueError(f'unrecognized selection {sel}')
             ba.app.window_states[self.__class__.__name__] = {
                 'sel_name': sel_name,
                 'tab': self._current_tab

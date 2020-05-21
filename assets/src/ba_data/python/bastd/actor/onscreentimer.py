@@ -95,7 +95,7 @@ class OnScreenTimer(ba.Actor):
                 assert isinstance(endtime, int)
                 endtime_ms = endtime
             else:
-                raise Exception(f'invalid timeformat: {timeformat}')
+                raise ValueError(f'invalid timeformat: {timeformat}')
 
             self.inputnode.timemax = endtime_ms - self._starttime
 
@@ -119,7 +119,7 @@ class OnScreenTimer(ba.Actor):
             return 0.001 * val_ms
         if timeformat is ba.TimeFormat.MILLISECONDS:
             return val_ms
-        raise Exception(f'invalid timeformat: {timeformat}')
+        raise ValueError(f'invalid timeformat: {timeformat}')
 
     def handlemessage(self, msg: Any) -> Any:
         # if we're asked to die, just kill our node/timer

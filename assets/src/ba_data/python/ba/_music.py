@@ -191,7 +191,7 @@ class MusicController:
         """Returns the system music player, instantiating if necessary."""
         if self._music_player is None:
             if self._music_player_type is None:
-                raise Exception('no music player type set')
+                raise TypeError('no music player type set')
             self._music_player = self._music_player_type()
         return self._music_player
 
@@ -248,20 +248,21 @@ class MusicController:
                   and isinstance(entry['name'], str)):
                 entry_type = entry['type']
             else:
-                raise Exception('invalid soundtrack entry: ' + str(entry) +
+                raise TypeError('invalid soundtrack entry: ' + str(entry) +
                                 ' (type ' + str(type(entry)) + ')')
             if self.supports_soundtrack_entry_type(entry_type):
                 return entry_type
-            raise Exception('invalid soundtrack entry:' + str(entry))
-        except Exception as exc:
-            print('EXC on get_soundtrack_entry_type', exc)
+            raise ValueError('invalid soundtrack entry:' + str(entry))
+        except Exception:
+            from ba import _error
+            _error.print_exception()
             return 'default'
 
     def get_soundtrack_entry_name(self, entry: Any) -> str:
         """Given a soundtrack entry, returns its name."""
         try:
             if entry is None:
-                raise Exception('entry is None')
+                raise TypeError('entry is None')
 
             # Simple string denotes an iTunesPlaylist name (legacy entry).
             if isinstance(entry, str):
@@ -272,7 +273,7 @@ class MusicController:
                     and isinstance(entry['type'], str) and 'name' in entry
                     and isinstance(entry['name'], str)):
                 return entry['name']
-            raise Exception('invalid soundtrack entry:' + str(entry))
+            raise ValueError('invalid soundtrack entry:' + str(entry))
         except Exception:
             from ba import _error
             _error.print_exception()

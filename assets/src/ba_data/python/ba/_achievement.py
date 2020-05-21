@@ -140,7 +140,7 @@ def get_achievement(name: str) -> Achievement:
     achs = [a for a in _ba.app.achievements if a.name == name]
     assert len(achs) < 2
     if not achs:
-        raise Exception("Invalid achievement name: '" + name + "'")
+        raise ValueError("Invalid achievement name: '" + name + "'")
     return achs[0]
 
 
@@ -396,7 +396,7 @@ class Achievement:
             v_attach = Text.VAttach.TOP
             attach = Image.Attach.TOP_CENTER
         else:
-            raise Exception('invalid style "' + style + '"')
+            raise ValueError('invalid style "' + style + '"')
 
         # Attempt to determine what campaign we're in
         # (so we know whether to show "hard mode only").

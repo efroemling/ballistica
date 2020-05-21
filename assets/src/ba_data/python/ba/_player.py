@@ -181,7 +181,7 @@ class Player(Generic[TeamType]):
         self._sessionplayer.reset_input()
 
     def __bool__(self) -> bool:
-        return self._sessionplayer.exists()
+        return self.exists()
 
 
 def playercast(totype: Type[PlayerType], player: ba.Player) -> PlayerType:

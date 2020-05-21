@@ -266,7 +266,7 @@ class AudioSettingsWindow(ba.Window):
             elif sel == self._vr_head_relative_audio_button:
                 sel_name = 'VRHeadRelative'
             else:
-                raise Exception('unrecognized selected widget')
+                raise ValueError(f'unrecognized selection \'{sel}\'')
             ba.app.window_states[self.__class__.__name__] = sel_name
         except Exception:
             ba.print_exception('error saving state for', self.__class__)

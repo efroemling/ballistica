@@ -166,14 +166,14 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
 
         session = _ba.getsession()
         if session is None:
-            raise Exception('No current session')
+            raise RuntimeError('No current session')
         self._session = weakref.ref(session)
 
         # Preloaded data for actors, maps, etc; indexed by type.
         self.preloads: Dict[Type, Any] = {}
 
         if not isinstance(settings, dict):
-            raise Exception('expected dict for settings')
+            raise TypeError('expected dict for settings')
         if _ba.getactivity(doraise=False) is not self:
             raise Exception('invalid context state')
 
@@ -292,8 +292,8 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         (internal)
         """
         if self.has_begun():
-            raise Exception('This should only be called for Activities'
-                            'that have not yet begun.')
+            raise RuntimeError('This should only be called for Activities'
+                               'that have not yet begun.')
         if not self._should_end_immediately or force:
             self._should_end_immediately = True
             self._should_end_immediately_results = results
@@ -340,7 +340,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         """
         from ba import _actor as bsactor
         if not isinstance(actor, bsactor.Actor):
-            raise Exception('non-actor passed to _retain_actor')
+            raise TypeError('non-actor passed to retain_actor')
         if (self.has_transitioned_in()
                 and _ba.time() - self._last_prune_dead_actors_time > 10.0):
             print_error('it looks like nodes/actors are not'
@@ -356,7 +356,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         """
         from ba import _actor as bsactor
         if not isinstance(actor, bsactor.Actor):
-            raise Exception('non-actor passed to _add_actor_weak_ref')
+            raise TypeError('non-actor passed to add_actor_weak_ref')
         if (self.has_transitioned_in()
                 and _ba.time() - self._last_prune_dead_actors_time > 10.0):
             print_error('it looks like nodes/actors are '

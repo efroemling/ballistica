@@ -137,7 +137,7 @@ def sharedobj(name: str) -> Any:
                                       True), ('modify_part_collision',
                                               'friction', 0.0)))
         else:
-            raise Exception(
+            raise ValueError(
                 "unrecognized shared object (activity context): '" + name +
                 "'")
     else:
@@ -156,10 +156,10 @@ def sharedobj(name: str) -> Any:
             if name == 'globals':
                 obj = _ba.newnode('sessionglobals')
             else:
-                raise Exception('unrecognized shared object '
-                                "(session context): '" + name + "'")
+                raise ValueError('unrecognized shared object '
+                                 "(session context): '" + name + "'")
         else:
-            raise Exception('no current activity or session context')
+            raise RuntimeError('no current activity or session context')
 
     # Ok, got a shiny new shared obj; store it for quick access next time.
     sharedobjs[name] = obj
@@ -208,7 +208,7 @@ def animate(node: ba.Node,
     elif timeformat is TimeFormat.MILLISECONDS:
         mult = 1
     else:
-        raise Exception(f'invalid timeformat value: {timeformat}')
+        raise ValueError(f'invalid timeformat value: {timeformat}')
 
     curve.times = [int(mult * time) for time, val in items]
     curve.offset = _ba.time(timeformat=TimeFormat.MILLISECONDS) + int(
@@ -269,7 +269,7 @@ def animate_array(node: ba.Node,
     elif timeformat is TimeFormat.MILLISECONDS:
         mult = 1
     else:
-        raise Exception('invalid timeformat value: "' + str(timeformat) + '"')
+        raise ValueError('invalid timeformat value: "' + str(timeformat) + '"')
 
     for i in range(size):
         curve = _ba.newnode('animcurve',
@@ -390,7 +390,7 @@ def timestring(timeval: float,
     elif timeformat is TimeFormat.MILLISECONDS:
         pass
     else:
-        raise Exception(f'invalid timeformat: {timeformat}')
+        raise ValueError(f'invalid timeformat: {timeformat}')
     if not isinstance(timeval, int):
         timeval = int(timeval)
     bits = []

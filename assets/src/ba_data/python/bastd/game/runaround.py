@@ -224,7 +224,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
                 ]},
                 {'entries': [
                     {'type': spazbot.ChargerBotProShielded if hard
-                     else spazbot.ChargerBot, 'path': 1},
+                    else spazbot.ChargerBot, 'path': 1},
                     {'type': spazbot.BrawlerBot, 'path': 2} if hard else None,
                     {'type': spazbot.BrawlerBot, 'path': 2},
                     {'type': spazbot.BrawlerBot, 'path': 2},
@@ -273,7 +273,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
                     {'type': spazbot.TriggerBot, 'path': 2},
                     {'type': spazbot.TriggerBot, 'path': 3},
                     {'type': spazbot.BrawlerBotPro if hard
-                     else spazbot.BrawlerBot, 'point': 'bottom_left'},
+                    else spazbot.BrawlerBot, 'point': 'bottom_left'},
                     {'type': spazbot.BrawlerBotPro, 'point': 'bottom_right'}
                     if player_count > 2 else None,
                 ]},
@@ -312,7 +312,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
                 ]},
                 {'entries': [
                     {'type': spazbot.TriggerBotProShielded if hard
-                     else spazbot.TriggerBotPro, 'point': 'bottom_left'},
+                    else spazbot.TriggerBotPro, 'point': 'bottom_left'},
                     {'type': spazbot.TriggerBotProShielded,
                      'point': 'bottom_right'}
                     if hard else None,
@@ -1110,7 +1110,6 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
         if ((ba.is_point_in_box(pos, boxes['b8'])
              and not ba.is_point_in_box(pos, boxes['b9']))
                 or pos == (0.0, 0.0, 0.0)):
-
             # Default to walking right if we're still in the walking area.
             bot.node.move_left_right = speed
             bot.node.move_up_down = 0
@@ -1177,7 +1176,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
     def _get_bot_speed(self, bot_type: Type[spazbot.SpazBot]) -> float:
         speed = self._bot_speed_map.get(bot_type)
         if speed is None:
-            raise Exception('Invalid bot type to _get_bot_speed(): ' +
+            raise TypeError('Invalid bot type to _get_bot_speed(): ' +
                             str(bot_type))
         return speed
 
