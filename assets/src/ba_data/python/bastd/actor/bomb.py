@@ -665,7 +665,7 @@ class Bomb(ba.Actor):
 
         if bomb_type not in ('ice', 'impact', 'land_mine', 'normal', 'sticky',
                              'tnt'):
-            raise Exception('invalid bomb type: ' + bomb_type)
+            raise ValueError('invalid bomb type: ' + bomb_type)
         self.bomb_type = bomb_type
 
         self._exploded = False

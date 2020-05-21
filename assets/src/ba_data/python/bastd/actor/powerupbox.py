@@ -187,7 +187,7 @@ def get_factory() -> PowerupBoxFactory:
     """Return a shared ba.PowerupBoxFactory object, creating if necessary."""
     activity = ba.getactivity()
     if activity is None:
-        raise Exception('no current activity')
+        raise RuntimeError('no current activity')
     try:
         # FIXME: et better way to store stuff with activity
         # pylint: disable=protected-access
@@ -252,10 +252,10 @@ class PowerupBox(ba.Actor):
         elif poweruptype == 'curse':
             tex = factory.tex_curse
         else:
-            raise Exception('invalid poweruptype: ' + str(poweruptype))
+            raise ValueError('invalid poweruptype: ' + str(poweruptype))
 
         if len(position) != 3:
-            raise Exception('expected 3 floats for position')
+            raise ValueError('expected 3 floats for position')
 
         self.node = ba.newnode(
             'prop',

@@ -224,7 +224,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
                 ]},
                 {'entries': [
                     {'type': spazbot.ChargerBotProShielded if hard
-                     else spazbot.ChargerBot, 'path': 1},
+                    else spazbot.ChargerBot, 'path': 1},
                     {'type': spazbot.BrawlerBot, 'path': 2} if hard else None,
                     {'type': spazbot.BrawlerBot, 'path': 2},
                     {'type': spazbot.BrawlerBot, 'path': 2},
@@ -273,7 +273,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
                     {'type': spazbot.TriggerBot, 'path': 2},
                     {'type': spazbot.TriggerBot, 'path': 3},
                     {'type': spazbot.BrawlerBotPro if hard
-                     else spazbot.BrawlerBot, 'point': 'bottom_left'},
+                    else spazbot.BrawlerBot, 'point': 'bottom_left'},
                     {'type': spazbot.BrawlerBotPro, 'point': 'bottom_right'}
                     if player_count > 2 else None,
                 ]},
@@ -312,7 +312,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
                 ]},
                 {'entries': [
                     {'type': spazbot.TriggerBotProShielded if hard
-                     else spazbot.TriggerBotPro, 'point': 'bottom_left'},
+                    else spazbot.TriggerBotPro, 'point': 'bottom_left'},
                     {'type': spazbot.TriggerBotProShielded,
                      'point': 'bottom_right'}
                     if hard else None,
@@ -526,7 +526,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
                 position=pos,
                 poweruptype=powerupbox.get_factory().get_random_powerup_type(
                     excludetypes=self._exclude_powerups +
-                    extra_excludes)).autoretain()
+                                 extra_excludes)).autoretain()
 
     def end_game(self) -> None:
 
@@ -574,7 +574,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
 
         # If we have no living bots, go to the next wave.
         if (self._can_end_wave and not self._bots.have_living_bots()
-                and not self._game_over and self._lives > 0):
+            and not self._game_over and self._lives > 0):
 
             self._can_end_wave = False
             self._time_bonus_timer = None
@@ -653,9 +653,9 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
             value='+${A} ${B}',
             subs=[('${A}', str(bonus)),
                   ('${B}', ba.Lstr(resource='completionBonusText'))]),
-                            color=(0.7, 0.7, 1.0, 1),
-                            scale=1.6,
-                            position=(0, 1.5, -1)).autoretain()
+            color=(0.7, 0.7, 1.0, 1),
+            scale=1.6,
+            position=(0, 1.5, -1)).autoretain()
         self._score += bonus
         self._update_scores()
 
@@ -839,7 +839,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
                     len(defender_types))]
                 defender1 = defender2 = None
                 if ((group == 0) or (group == 1 and level > 3)
-                        or (group == 2 and level > 5)):
+                    or (group == 2 and level > 5)):
                     if random.random() < min(0.75, (level - 1) * 0.11):
                         this_target_point_s, defender1 = _add_defender(
                             defender_type1, 'bottom_left')
@@ -1109,8 +1109,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
             return True
         if ((ba.is_point_in_box(pos, boxes['b8'])
              and not ba.is_point_in_box(pos, boxes['b9']))
-                or pos == (0.0, 0.0, 0.0)):
-
+            or pos == (0.0, 0.0, 0.0)):
             # Default to walking right if we're still in the walking area.
             bot.node.move_left_right = speed
             bot.node.move_up_down = 0
@@ -1177,7 +1176,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
     def _get_bot_speed(self, bot_type: Type[spazbot.SpazBot]) -> float:
         speed = self._bot_speed_map.get(bot_type)
         if speed is None:
-            raise Exception('Invalid bot type to _get_bot_speed(): ' +
+            raise TypeError('Invalid bot type to _get_bot_speed(): ' +
                             str(bot_type))
         return speed
 

@@ -1384,7 +1384,7 @@ class Spaz(ba.Actor):
             return bomb_factory.tex_ice_bombs
         if self.bomb_type == 'impact':
             return bomb_factory.tex_impact_bombs
-        raise Exception()
+        raise ValueError('invalid bomb type')
 
     def _flash_billboard(self, tex: ba.Texture) -> None:
         assert self.node
