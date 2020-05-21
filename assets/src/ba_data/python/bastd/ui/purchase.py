@@ -44,7 +44,7 @@ class PurchaseWindow(ba.Window):
             header_text = ba.Lstr(resource='unlockThisText',
                                   fallback_resource='unlockThisInTheStoreText')
         if len(items) != 1:
-            raise Exception('expected exactly 1 item')
+            raise ValueError('expected exactly 1 item')
         self._items = list(items)
         self._width = 580
         self._height = 520

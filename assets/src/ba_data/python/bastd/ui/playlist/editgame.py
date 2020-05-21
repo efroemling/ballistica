@@ -264,19 +264,19 @@ class PlaylistEditGameWindow(ba.Window):
             if 'choices' in setting:
                 for choice in setting['choices']:
                     if len(choice) != 2:
-                        raise Exception(
+                        raise ValueError(
                             "Expected 2-member tuples for 'choices'; got: " +
                             repr(choice))
                     if not isinstance(choice[0], str):
-                        raise Exception(
+                        raise TypeError(
                             'First value for choice tuple must be a str; got: '
                             + repr(choice))
                     if not isinstance(choice[1], value_type):
-                        raise Exception(
+                        raise TypeError(
                             'Choice type does not match default value; choice:'
                             + repr(choice) + '; setting:' + repr(setting))
                 if value_type not in (int, float):
-                    raise Exception(
+                    raise TypeError(
                         'Choice type setting must have int or float default; '
                         'got: ' + repr(setting))
 
@@ -509,5 +509,5 @@ class PlaylistEditGameWindow(ba.Window):
         elif setting_type == int:
             ba.textwidget(edit=ctrl, text=str(int(val)))
         else:
-            raise Exception('invalid vartype: ' + str(setting_type))
+            raise TypeError('invalid vartype: ' + str(setting_type))
         self._settings[setting_name] = val

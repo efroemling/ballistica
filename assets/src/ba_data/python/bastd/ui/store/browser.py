@@ -1002,7 +1002,7 @@ class StoreBrowserWindow(ba.Window):
                 sel_name = 'Tab:' + list(self._tab_buttons.keys())[list(
                     self._tab_buttons.values()).index(sel)]
             else:
-                raise Exception('unrecognized selection')
+                raise ValueError(f'unrecognized selection \'{sel}\'')
             ba.app.window_states[self.__class__.__name__] = {
                 'sel_name': sel_name,
                 'tab': self._current_tab

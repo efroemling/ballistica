@@ -49,7 +49,7 @@ class MainMenuWindow(ba.Window):
         super().__init__(root_widget=ba.containerwidget(
             transition=transition,
             toolbar_visibility='menu_minimal_no_back' if self.
-            _in_game else 'menu_minimal_no_back'))
+                _in_game else 'menu_minimal_no_back'))
 
         self._is_kiosk = ba.app.kiosk_mode
         self._tdelay = 0.0
@@ -95,7 +95,7 @@ class MainMenuWindow(ba.Window):
                 _ba.get_local_active_input_devices_count()
                 if (((app.on_tv or app.platform == 'mac')
                      and ba.app.config.get('launchCount', 0) <= 1)
-                        or force_test):
+                    or force_test):
 
                     def _check_show_bs_remote_window() -> None:
                         try:
@@ -131,7 +131,7 @@ class MainMenuWindow(ba.Window):
         store_char_tex = self._get_store_char_tex()
         account_state_num = _ba.get_account_state_num()
         if (account_state_num != self._account_state_num
-                or store_char_tex != self._store_char_tex):
+            or store_char_tex != self._store_char_tex):
             self._store_char_tex = store_char_tex
             self._account_state_num = account_state_num
             account_state = self._account_state = (_ba.get_account_state())
@@ -294,8 +294,8 @@ class MainMenuWindow(ba.Window):
                 size=(self._button_width, self._button_height),
                 scale=scale,
                 label=ba.Lstr(resource=self._r +
-                              ('.quitText' if 'Mac' in
-                               ba.app.user_agent_string else '.exitGameText')),
+                                       ('.quitText' if 'Mac' in
+                                                       ba.app.user_agent_string else '.exitGameText')),
                 on_activate_call=self._quit,
                 transition_delay=self._tdelay)
 
@@ -320,8 +320,7 @@ class MainMenuWindow(ba.Window):
             # If we're not in-game, have no quit button, and this is android,
             # we want back presses to quit our activity.
             if (not self._in_game and not self._have_quit_button
-                    and ba.app.platform == 'android'):
-
+                and ba.app.platform == 'android'):
                 def _do_quit() -> None:
                     confirm.QuitWindow(swish=True, back=True)
 
@@ -671,10 +670,10 @@ class MainMenuWindow(ba.Window):
                 custom_menu_entries = session.get_custom_menu_entries()
                 for cme in custom_menu_entries:
                     if (not isinstance(cme, dict) or 'label' not in cme
-                            or not isinstance(cme['label'], (str, ba.Lstr))
-                            or 'call' not in cme or not callable(cme['call'])):
-                        raise Exception('invalid custom menu entry: ' +
-                                        str(cme))
+                        or not isinstance(cme['label'], (str, ba.Lstr))
+                        or 'call' not in cme or not callable(cme['call'])):
+                        raise ValueError('invalid custom menu entry: ' +
+                                         str(cme))
             except Exception:
                 custom_menu_entries = []
                 ba.print_exception('exception getting custom menu entries for',
@@ -757,7 +756,7 @@ class MainMenuWindow(ba.Window):
                             autoselect=self._use_autoselect)
         # Add a 'leave' button if the menu-owner has a player.
         if ((self._input_player or self._connected_to_remote_player)
-                and not self._is_kiosk):
+            and not self._is_kiosk):
             h, v, scale = positions[self._p_index]
             self._p_index += 1
             btn = ba.buttonwidget(parent=self._root_widget,
@@ -770,7 +769,7 @@ class MainMenuWindow(ba.Window):
                                   autoselect=self._use_autoselect)
 
             if (player_name != '' and player_name[0] != '<'
-                    and player_name[-1] != '>'):
+                and player_name[-1] != '>'):
                 txt = ba.Lstr(resource=self._r + '.justPlayerText',
                               subs=[('${NAME}', player_name)])
             else:
@@ -866,7 +865,7 @@ class MainMenuWindow(ba.Window):
         # Select cancel by default; this occasionally gets called by accident
         # in a fit of button mashing and this will help reduce damage.
         confirm.ConfirmWindow(ba.Lstr(resource=self._r +
-                                      '.leavePartyConfirmText'),
+                                               '.leavePartyConfirmText'),
                               self._leave_party,
                               cancel_is_selected=True)
 

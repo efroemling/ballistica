@@ -69,7 +69,7 @@ class TournamentEntryWindow(popup.PopupWindow):
             self._purchase_price_name = 'price.tournament_entry_1'
         else:
             if self._fee != 0:
-                raise Exception('invalid fee: ' + str(self._fee))
+                raise ValueError('invalid fee: ' + str(self._fee))
             self._purchase_name = 'tournament_entry_0'
             self._purchase_price_name = 'price.tournament_entry_0'
 

@@ -807,11 +807,8 @@ class GatherWindow(ba.Window):
                         color=(1, 0, 0))
                     ba.playsound(ba.getsound('error'))
                     return
-                try:
-                    port = int(cast(str, ba.textwidget(query=port_textwidget)))
-                    if port > 65535 or port < 0:
-                        raise Exception()
-                except Exception:
+                port = int(cast(str, ba.textwidget(query=port_textwidget)))
+                if port > 65535 or port < 0:
                     ba.screenmessage(
                         ba.Lstr(resource='internal.invalidPortErrorText'),
                         color=(1, 0, 0))
@@ -1958,7 +1955,7 @@ class GatherWindow(ba.Window):
             elif sel == self._tab_container:
                 sel_name = 'TabContainer'
             else:
-                raise Exception('unrecognized selection: ' + str(sel))
+                raise ValueError(f'unrecognized selection: \'{sel}\'')
             ba.app.window_states[self.__class__.__name__] = {
                 'sel_name': sel_name,
                 'tab': self._current_tab,

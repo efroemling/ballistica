@@ -596,11 +596,11 @@ class AdvancedSettingsWindow(ba.Window):
                 elif sel == self._language_inform_checkbox:
                     sel_name = 'LangInform'
                 else:
-                    raise Exception('unrecognized selection')
+                    raise ValueError(f'unrecognized selection \'{sel}\'')
             elif sel == self._back_button:
                 sel_name = 'Back'
             else:
-                raise Exception('unrecognized selection')
+                raise ValueError(f'unrecognized selection \'{sel}\'')
             ba.app.window_states[self.__class__.__name__] = {
                 'sel_name': sel_name
             }

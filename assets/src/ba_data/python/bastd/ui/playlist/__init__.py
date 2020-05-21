@@ -58,7 +58,7 @@ class PlaylistTypeVars:
                 fallback_resource='freeForAllText')
             self.sessiontype = ba.FreeForAllSession
         else:
-            raise Exception('playlist type vars undefined for session type: ' +
+            raise TypeError('playlist type vars undefined for session type: ' +
                             str(sessiontype))
         self.default_list_name = ba.Lstr(resource='defaultGameListNameText',
                                          subs=[('${PLAYMODE}', play_mode_name)

@@ -546,7 +546,7 @@ class EditProfileWindow(ba.Window):
         elif picker_type == 'highlight':
             initial_color = self._highlight
         else:
-            raise Exception('invalid picker_type: ' + picker_type)
+            raise ValueError('invalid picker_type: ' + picker_type)
         colorpicker.ColorPicker(
             parent=self._root_widget,
             position=origin,

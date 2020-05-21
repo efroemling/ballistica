@@ -627,8 +627,8 @@ class AccountSettingsWindow(ba.Window):
             elif account_type == 'Game Circle':
                 account_type_name = ba.Lstr(resource='gameCircleText')
             else:
-                raise Exception("unknown account type: '" + str(account_type) +
-                                "'")
+                raise ValueError("unknown account type: '" + str(account_type) +
+                                 "'")
             self._game_service_button = btn = ba.buttonwidget(
                 parent=self._subcontainer,
                 position=((self._sub_width - button_width) * 0.5, v),
@@ -1105,7 +1105,7 @@ class AccountSettingsWindow(ba.Window):
             elif sel == self._scrollwidget:
                 sel_name = 'Scroll'
             else:
-                raise Exception('unrecognized selection')
+                raise ValueError('unrecognized selection')
             ba.app.window_states[self.__class__.__name__] = sel_name
         except Exception:
             ba.print_exception('exception saving state for', self.__class__)
