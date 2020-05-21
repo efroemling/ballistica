@@ -5956,7 +5956,7 @@ instantiated; You must go through this function.</p>
 
 <hr>
 <h2><strong><a name="function_ba_newnode">ba.newnode()</a></strong></h3>
-<p><span>newnode(type: str, owner: Union[Node, <a href="#class_ba_Actor">ba.Actor</a>] = None,
+<p><span>newnode(type: str, owner: <a href="#class_ba_Node">ba.Node</a> = None,
 attrs: dict = None, name: str = None, delegate: Any = None)
  -&gt; Node</span></p>
 
