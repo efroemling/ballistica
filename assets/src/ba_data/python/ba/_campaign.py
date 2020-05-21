@@ -73,8 +73,8 @@ class Campaign:
         return self._levels
 
     def get_level(self, name: str) -> ba.Level:
-        from ba import _error
         """Return a contained ba.Level by name."""
+        from ba import _error
         for level in self._levels:
             if level.name == name:
                 return level
