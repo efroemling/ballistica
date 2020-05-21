@@ -29,7 +29,6 @@ import random
 from typing import TYPE_CHECKING
 
 import ba
-from bastd.actor.playerspaz import PlayerSpazDeathMessage
 
 if TYPE_CHECKING:
     from typing import Any, Type, List, Dict, Optional, Sequence
@@ -193,9 +192,9 @@ class TargetPracticeGame(ba.TeamGameActivity[Player, Team]):
 
     def handlemessage(self, msg: Any) -> Any:
         # When players die, respawn them.
-        if isinstance(msg, PlayerSpazDeathMessage):
+        if isinstance(msg, ba.PlayerDiedMessage):
             super().handlemessage(msg)  # Do standard stuff.
-            player = msg.playerspaz(self).getplayer()
+            player = msg.getplayer(Player)
             assert player is not None
             self.respawn_player(player)  # Kick off a respawn.
         elif isinstance(msg, Target.TargetHitMessage):

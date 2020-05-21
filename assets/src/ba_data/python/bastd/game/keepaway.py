@@ -29,9 +29,9 @@ from enum import Enum
 from typing import TYPE_CHECKING
 
 import ba
+from bastd.actor.playerspaz import PlayerSpaz
 from bastd.actor.flag import (Flag, FlagDroppedMessage, FlagDeathMessage,
                               FlagPickedUpMessage)
-from bastd.actor.playerspaz import PlayerSpaz, PlayerSpazDeathMessage
 
 if TYPE_CHECKING:
     from typing import Any, Type, List, Dict, Optional, Sequence, Union
@@ -266,10 +266,10 @@ class KeepAwayGame(ba.TeamGameActivity[Player, Team]):
                                             countdown=True)
 
     def handlemessage(self, msg: Any) -> Any:
-        if isinstance(msg, PlayerSpazDeathMessage):
+        if isinstance(msg, ba.PlayerDiedMessage):
             # Augment standard behavior.
             super().handlemessage(msg)
-            self.respawn_player(msg.playerspaz(self).player)
+            self.respawn_player(msg.getplayer(Player))
         elif isinstance(msg, FlagDeathMessage):
             self._spawn_flag()
         elif isinstance(msg, (FlagDroppedMessage, FlagPickedUpMessage)):

@@ -29,7 +29,7 @@ from typing import TYPE_CHECKING
 
 import ba
 from bastd.actor import flag as stdflag
-from bastd.actor.playerspaz import PlayerSpaz, PlayerSpazDeathMessage
+from bastd.actor.playerspaz import PlayerSpaz
 from bastd.actor.scoreboard import Scoreboard
 
 if TYPE_CHECKING:
@@ -548,10 +548,10 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
                                             self._score_to_win)
 
     def handlemessage(self, msg: Any) -> Any:
-        if isinstance(msg, PlayerSpazDeathMessage):
+        if isinstance(msg, ba.PlayerDiedMessage):
             # Augment standard behavior.
             super().handlemessage(msg)
-            self.respawn_player(msg.playerspaz(self).player)
+            self.respawn_player(msg.getplayer(Player))
         elif isinstance(msg, stdflag.FlagDeathMessage):
             assert isinstance(msg.flag, CTFFlag)
             ba.timer(0.1, ba.Call(self._spawn_flag_for_team, msg.flag.team))

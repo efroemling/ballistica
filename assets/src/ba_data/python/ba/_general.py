@@ -28,10 +28,38 @@ from typing import TYPE_CHECKING, TypeVar
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Any, Type
+    from typing import Any, Type, Optional
+    from typing_extensions import Protocol
     from efro.call import Call as Call  # 'as Call' so we re-export.
 
+    class Existable(Protocol):
+        """Protocol for objects supporting an exists() method."""
+
+        def exists(self) -> bool:
+            """Whether this object exists."""
+            ...
+
+    ExistableType = TypeVar('ExistableType', bound=Existable)
+
 T = TypeVar('T')
+
+
+def existing(obj: Optional[ExistableType]) -> Optional[ExistableType]:
+    """Convert invalid references to None.
+
+    Category: Gameplay Functions
+
+    To best support type checking, it is important that invalid references
+    not be passed around and instead get converted to values of None.
+    That way the type checker can properly flag attempts to pass dead
+    objects into functions expecting only live ones, etc.
+    This call can be used on any 'existable' object (one with an exists()
+    method) and will convert it to a None value if it does not exist.
+    For more info, see notes on 'existables' here:
+    https://github.com/efroemling/ballistica/wiki/Coding-Style-Guide
+    """
+    assert obj is None or hasattr(obj, 'exists'), f'No "exists" on {obj}'
+    return obj if obj is not None and obj.exists() else None
 
 
 def getclass(name: str, subclassof: Type[T]) -> Type[T]:

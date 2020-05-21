@@ -31,7 +31,7 @@ from typing import TYPE_CHECKING
 
 import ba
 from bastd.actor.flag import Flag
-from bastd.actor.playerspaz import PlayerSpaz, PlayerSpazDeathMessage
+from bastd.actor.playerspaz import PlayerSpaz
 from bastd.actor.scoreboard import Scoreboard
 
 if TYPE_CHECKING:
@@ -272,11 +272,11 @@ class KingOfTheHillGame(ba.TeamGameActivity[Player, Team]):
                                             countdown=True)
 
     def handlemessage(self, msg: Any) -> Any:
-        if isinstance(msg, PlayerSpazDeathMessage):
+        if isinstance(msg, ba.PlayerDiedMessage):
             super().handlemessage(msg)  # Augment default.
 
             # No longer can count as time_at_flag once dead.
-            player = msg.playerspaz(self).player
+            player = msg.getplayer(Player)
             player.time_at_flag = 0
             self._update_flag_state()
             self.respawn_player(player)

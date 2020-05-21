@@ -29,9 +29,8 @@ import random
 from typing import TYPE_CHECKING
 
 import ba
-from bastd.actor import onscreentimer
-from bastd.actor import playerspaz
 from bastd.actor import spazbot
+from bastd.actor.onscreentimer import OnScreenTimer
 
 if TYPE_CHECKING:
     from typing import Any, Type, Dict, List, Optional
@@ -76,7 +75,7 @@ class NinjaFightGame(ba.TeamGameActivity[Player, Team]):
         super().__init__(settings)
         self._winsound = ba.getsound('score')
         self._won = False
-        self._timer: Optional[onscreentimer.OnScreenTimer] = None
+        self._timer: Optional[OnScreenTimer] = None
         self._bots = spazbot.BotSet()
 
     # Called when our game is transitioning in but not ready to begin;
@@ -95,7 +94,7 @@ class NinjaFightGame(ba.TeamGameActivity[Player, Team]):
             self.setup_standard_powerup_drops()
 
         # Make our on-screen timer and start it roughly when our bots appear.
-        self._timer = onscreentimer.OnScreenTimer()
+        self._timer = OnScreenTimer()
         ba.timer(4.0, self._timer.start)
 
         # Spawn some baddies.
@@ -146,10 +145,9 @@ class NinjaFightGame(ba.TeamGameActivity[Player, Team]):
     def handlemessage(self, msg: Any) -> Any:
 
         # A player has died.
-        if isinstance(msg, playerspaz.PlayerSpazDeathMessage):
-            super().handlemessage(msg)  # do standard stuff
-            self.respawn_player(
-                msg.playerspaz(self).player)  # kick off a respawn
+        if isinstance(msg, ba.PlayerDiedMessage):
+            super().handlemessage(msg)  # Augment standard behavior.
+            self.respawn_player(msg.getplayer(Player))
 
         # A spaz-bot has died.
         elif isinstance(msg, spazbot.SpazBotDeathMessage):

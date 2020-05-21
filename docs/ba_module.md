@@ -50,6 +50,7 @@
    <li><a href="#function_ba_cameraflash">ba.cameraflash()</a></li>
    <li><a href="#function_ba_camerashake">ba.camerashake()</a></li>
    <li><a href="#function_ba_emitfx">ba.emitfx()</a></li>
+   <li><a href="#function_ba_existing">ba.existing()</a></li>
    <li><a href="#function_ba_get_collision_info">ba.get_collision_info()</a></li>
    <li><a href="#function_ba_getactivity">ba.getactivity()</a></li>
    <li><a href="#function_ba_getnodes">ba.getnodes()</a></li>
@@ -127,6 +128,7 @@
    <li><a href="#class_ba_OutOfBoundsMessage">ba.OutOfBoundsMessage</a></li>
    <li><a href="#class_ba_PickedUpMessage">ba.PickedUpMessage</a></li>
    <li><a href="#class_ba_PickUpMessage">ba.PickUpMessage</a></li>
+   <li><a href="#class_ba_PlayerDiedMessage">ba.PlayerDiedMessage</a></li>
    <li><a href="#class_ba_PlayerScoredMessage">ba.PlayerScoredMessage</a></li>
    <li><a href="#class_ba_PowerupAcceptMessage">ba.PowerupAcceptMessage</a></li>
    <li><a href="#class_ba_PowerupMessage">ba.PowerupMessage</a></li>
@@ -2453,11 +2455,21 @@ and short description of the game.</p>
 </p>
 
 <h3>Methods:</h3>
+<h5><a href="#method_ba_HitMessage____init__">&lt;constructor&gt;</a>, <a href="#method_ba_HitMessage__get_source_player">get_source_player()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_HitMessage____init__">&lt;constructor&gt;</a></dt></h4><dd>
 <p><span>ba.HitMessage(srcnode: '<a href="#class_ba_Node">ba.Node</a>' = None, pos: 'Sequence[float]' = None, velocity: 'Sequence[float]' = None, magnitude: 'float' = 1.0, velocity_magnitude: 'float' = 0.0, radius: 'float' = 1.0, source_player: '<a href="#class_ba_Player">ba.Player</a>' = None, kick_back: 'float' = 1.0, flat_damage: 'float' = None, hit_type: 'str' = 'generic', force_direction: 'Sequence[float]' = None, hit_subtype: 'str' = 'default')</span></p>
 
 <p>Instantiate a message with given values.</p>
+
+</dd>
+<dt><h4><a name="method_ba_HitMessage__get_source_player">get_source_player()</a></dt></h4><dd>
+<p><span>get_source_player(self, playertype: Type[PlayerType]) -&gt; Optional[PlayerType]</span></p>
+
+<p>Return the spaz that died.</p>
+
+<p>The current activity is required as an argument so the exact type of
+PlayerSpaz can be determined by the type checker.</p>
 
 </dd>
 </dl>
@@ -2493,7 +2505,7 @@ and short description of the game.</p>
 <p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a></p>
 
 <h3>Attributes:</h3>
-<h5><a href="#attr_ba_InputDevice__allows_configuring">allows_configuring</a>, <a href="#attr_ba_InputDevice__client_id">client_id</a>, <a href="#attr_ba_InputDevice__exists">exists</a>, <a href="#attr_ba_InputDevice__id">id</a>, <a href="#attr_ba_InputDevice__instance_number">instance_number</a>, <a href="#attr_ba_InputDevice__is_controller_app">is_controller_app</a>, <a href="#attr_ba_InputDevice__is_remote_client">is_remote_client</a>, <a href="#attr_ba_InputDevice__name">name</a>, <a href="#attr_ba_InputDevice__player">player</a>, <a href="#attr_ba_InputDevice__unique_identifier">unique_identifier</a></h5>
+<h5><a href="#attr_ba_InputDevice__allows_configuring">allows_configuring</a>, <a href="#attr_ba_InputDevice__client_id">client_id</a>, <a href="#attr_ba_InputDevice__id">id</a>, <a href="#attr_ba_InputDevice__instance_number">instance_number</a>, <a href="#attr_ba_InputDevice__is_controller_app">is_controller_app</a>, <a href="#attr_ba_InputDevice__is_remote_client">is_remote_client</a>, <a href="#attr_ba_InputDevice__name">name</a>, <a href="#attr_ba_InputDevice__player">player</a>, <a href="#attr_ba_InputDevice__unique_identifier">unique_identifier</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_InputDevice__allows_configuring">allows_configuring</a></h4></dt><dd>
 <p><span> bool</span></p>
@@ -2505,11 +2517,6 @@ and short description of the game.</p>
 <p>The numeric client-id this device is associated with.
 This is only meaningful for remote client inputs; for
 all local devices this will be -1.</p>
-
-</dd>
-<dt><h4><a name="attr_ba_InputDevice__exists">exists</a></h4></dt><dd>
-<p><span> bool</span></p>
-<p>Whether the underlying device for this object is still present.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_InputDevice__id">id</a></h4></dt><dd>
@@ -2553,8 +2560,14 @@ prefs, etc.</p>
 </dd>
 </dl>
 <h3>Methods:</h3>
-<h5><a href="#method_ba_InputDevice__get_account_name">get_account_name()</a>, <a href="#method_ba_InputDevice__get_axis_name">get_axis_name()</a>, <a href="#method_ba_InputDevice__get_button_name">get_button_name()</a></h5>
+<h5><a href="#method_ba_InputDevice__exists">exists()</a>, <a href="#method_ba_InputDevice__get_account_name">get_account_name()</a>, <a href="#method_ba_InputDevice__get_axis_name">get_axis_name()</a>, <a href="#method_ba_InputDevice__get_button_name">get_button_name()</a></h5>
 <dl>
+<dt><h4><a name="method_ba_InputDevice__exists">exists()</a></dt></h4><dd>
+<p><span>exists() -&gt; bool</span></p>
+
+<p>Return whether the underlying device for this object is still present.</p>
+
+</dd>
 <dt><h4><a name="method_ba_InputDevice__get_account_name">get_account_name()</a></dt></h4><dd>
 <p><span>get_account_name(full: bool) -&gt; str</span></p>
 
@@ -3717,18 +3730,8 @@ even if myactor is set to None.</p>
 </p>
 
 <h3>Attributes:</h3>
-<h5><a href="#attr_ba_Player__exists">exists</a>, <a href="#attr_ba_Player__node">node</a>, <a href="#attr_ba_Player__sessionplayer">sessionplayer</a></h5>
+<h5><a href="#attr_ba_Player__node">node</a>, <a href="#attr_ba_Player__sessionplayer">sessionplayer</a></h5>
 <dl>
-<dt><h4><a name="attr_ba_Player__exists">exists</a></h4></dt><dd>
-<p><span>bool</span></p>
-<p>Whether the underlying player still exists.</p>
-
-<p>        Most functionality will fail on a nonexistent player.
-        Note that you can also use the boolean operator for this same
-        functionality, so a statement such as "if player" will do
-        the right thing both for Player objects and values of None.</p>
-
-</dd>
 <dt><h4><a name="attr_ba_Player__node">node</a></h4></dt><dd>
 <p><span><a href="#class_ba_Node">ba.Node</a></span></p>
 <p>A <a href="#class_ba_Node">ba.Node</a> of type 'player' associated with this Player.</p>
@@ -3745,7 +3748,7 @@ even if myactor is set to None.</p>
 </dd>
 </dl>
 <h3>Methods:</h3>
-<h5><a href="#method_ba_Player__assign_input_call">assign_input_call()</a>, <a href="#method_ba_Player__get_icon">get_icon()</a>, <a href="#method_ba_Player__get_name">get_name()</a>, <a href="#method_ba_Player__is_alive">is_alive()</a>, <a href="#method_ba_Player__reset_input">reset_input()</a>, <a href="#method_ba_Player__set_actor">set_actor()</a></h5>
+<h5><a href="#method_ba_Player__assign_input_call">assign_input_call()</a>, <a href="#method_ba_Player__exists">exists()</a>, <a href="#method_ba_Player__get_icon">get_icon()</a>, <a href="#method_ba_Player__get_name">get_name()</a>, <a href="#method_ba_Player__is_alive">is_alive()</a>, <a href="#method_ba_Player__reset_input">reset_input()</a>, <a href="#method_ba_Player__set_actor">set_actor()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_Player__assign_input_call">assign_input_call()</a></dt></h4><dd>
 <p><span>assign_input_call(self, inputtype: Union[str, Tuple[str, ...]], call: Callable) -&gt; None</span></p>
@@ -3760,6 +3763,17 @@ Valid type values are: 'jumpPress', 'jumpRelease', 'punchPress',
   'downPress', 'downRelease', 'leftPress','leftRelease','rightPress',
   'rightRelease', 'run', 'flyPress', 'flyRelease', 'startPress',
   'startRelease'</p>
+
+</dd>
+<dt><h4><a name="method_ba_Player__exists">exists()</a></dt></h4><dd>
+<p><span>exists(self) -&gt; bool</span></p>
+
+<p>Whether the underlying player still exists.</p>
+
+<p>Most functionality will fail on a nonexistent player.
+Note that you can also use the boolean operator for this same
+functionality, so a statement such as "if player" will do
+the right thing both for Player objects and values of None.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Player__get_icon">get_icon()</a></dt></h4><dd>
@@ -3802,6 +3816,56 @@ is_alive() method return True. False is returned otherwise.</p>
 <p>set_actor(actor: Optional[<a href="#class_ba_Actor">ba.Actor</a>]) -&gt; None</p>
 
 <p>Set the player's associated <a href="#class_ba_Actor">ba.Actor</a>.</p>
+
+</dd>
+</dl>
+<hr>
+<h2><strong><a name="class_ba_PlayerDiedMessage">ba.PlayerDiedMessage</a></strong></h3>
+<p><em>&lt;top level class&gt;</em>
+</p>
+<p>A message saying a ba.PlayerSpaz has died.</p>
+
+<p>Category: <a href="#class_category_Message_Classes">Message Classes</a></p>
+
+<h3>Attributes:</h3>
+<h5><a href="#attr_ba_PlayerDiedMessage__how">how</a>, <a href="#attr_ba_PlayerDiedMessage__killed">killed</a></h5>
+<dl>
+<dt><h4><a name="attr_ba_PlayerDiedMessage__how">how</a></h4></dt><dd>
+<p><span><a href="#class_ba_DeathType">ba.DeathType</a></span></p>
+<p>The particular type of death.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_PlayerDiedMessage__killed">killed</a></h4></dt><dd>
+<p><span>bool</span></p>
+<p>If True, the spaz was killed;
+If False, they left the game or the round ended.</p>
+
+</dd>
+</dl>
+<h3>Methods:</h3>
+<h5><a href="#method_ba_PlayerDiedMessage____init__">&lt;constructor&gt;</a>, <a href="#method_ba_PlayerDiedMessage__getkillerplayer">getkillerplayer()</a>, <a href="#method_ba_PlayerDiedMessage__getplayer">getplayer()</a></h5>
+<dl>
+<dt><h4><a name="method_ba_PlayerDiedMessage____init__">&lt;constructor&gt;</a></dt></h4><dd>
+<p><span>ba.PlayerDiedMessage(player: <a href="#class_ba_Player">ba.Player</a>, was_killed: bool, killerplayer: Optional[<a href="#class_ba_Player">ba.Player</a>], how: <a href="#class_ba_DeathType">ba.DeathType</a>)</span></p>
+
+<p>Instantiate a message with the given values.</p>
+
+</dd>
+<dt><h4><a name="method_ba_PlayerDiedMessage__getkillerplayer">getkillerplayer()</a></dt></h4><dd>
+<p><span>getkillerplayer(self, playertype: Type[PlayerType]) -&gt; Optional[PlayerType]</span></p>
+
+<p>Return the <a href="#class_ba_Player">ba.Player</a> responsible for the killing, if any.</p>
+
+<p>Pass the Player type being used by the current game.</p>
+
+</dd>
+<dt><h4><a name="method_ba_PlayerDiedMessage__getplayer">getplayer()</a></dt></h4><dd>
+<p><span>getplayer(self, playertype: Type[PlayerType]) -&gt; PlayerType</span></p>
+
+<p>Return the spaz that died.</p>
+
+<p>The current activity is required as an argument so the exact type of
+PlayerSpaz can be determined by the type checker.</p>
 
 </dd>
 </dl>
@@ -4297,12 +4361,12 @@ provided to your Session/Activity instances.
 Be aware that, like <a href="#class_ba_Node">ba.Nodes</a>, <a href="#class_ba_SessionPlayer">ba.SessionPlayer</a> objects are 'weak'
 references under-the-hood; a player can leave the game at
  any point. For this reason, you should make judicious use of the
-<a href="#attr_ba_SessionPlayer__exists">ba.SessionPlayer.exists</a> attribute (or boolean operator) to ensure
+<a href="#method_ba_SessionPlayer__exists">ba.SessionPlayer.exists</a>() method (or boolean operator) to ensure
 that a SessionPlayer is still present if retaining references to one
 for any length of time.</p>
 
 <h3>Attributes:</h3>
-<h5><a href="#attr_ba_SessionPlayer__character">character</a>, <a href="#attr_ba_SessionPlayer__color">color</a>, <a href="#attr_ba_SessionPlayer__exists">exists</a>, <a href="#attr_ba_SessionPlayer__gamedata">gamedata</a>, <a href="#attr_ba_SessionPlayer__gameplayer">gameplayer</a>, <a href="#attr_ba_SessionPlayer__highlight">highlight</a>, <a href="#attr_ba_SessionPlayer__id">id</a>, <a href="#attr_ba_SessionPlayer__in_game">in_game</a>, <a href="#attr_ba_SessionPlayer__sessiondata">sessiondata</a>, <a href="#attr_ba_SessionPlayer__team">team</a></h5>
+<h5><a href="#attr_ba_SessionPlayer__character">character</a>, <a href="#attr_ba_SessionPlayer__color">color</a>, <a href="#attr_ba_SessionPlayer__gamedata">gamedata</a>, <a href="#attr_ba_SessionPlayer__gameplayer">gameplayer</a>, <a href="#attr_ba_SessionPlayer__highlight">highlight</a>, <a href="#attr_ba_SessionPlayer__id">id</a>, <a href="#attr_ba_SessionPlayer__in_game">in_game</a>, <a href="#attr_ba_SessionPlayer__sessiondata">sessiondata</a>, <a href="#attr_ba_SessionPlayer__team">team</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_SessionPlayer__character">character</a></h4></dt><dd>
 <p><span> str</span></p>
@@ -4313,16 +4377,6 @@ for any length of time.</p>
 <p><span> Sequence[float]</span></p>
 <p>The base color for this Player.
 In team games this will match the <a href="#class_ba_SessionTeam">ba.SessionTeam</a>'s color.</p>
-
-</dd>
-<dt><h4><a name="attr_ba_SessionPlayer__exists">exists</a></h4></dt><dd>
-<p><span> bool</span></p>
-<p>Whether the player still exists.
-Most functionality will fail on a nonexistent player.</p>
-
-<p>Note that you can also use the boolean operator for this same
-functionality, so a statement such as "if player" will do
-the right thing both for Player objects and values of None.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_SessionPlayer__gamedata">gamedata</a></h4></dt><dd>
@@ -4349,6 +4403,10 @@ who may all share the same team (primary) color.</p>
 <p><span> int</span></p>
 <p>The unique numeric ID of the Player.</p>
 
+<p>Note that you can also use the boolean operator for this same
+functionality, so a statement such as "if player" will do
+the right thing both for Player objects and values of None.</p>
+
 </dd>
 <dt><h4><a name="attr_ba_SessionPlayer__in_game">in_game</a></h4></dt><dd>
 <p><span> bool</span></p>
@@ -4372,7 +4430,7 @@ is still in its lobby selecting a team/etc. then a
 </dd>
 </dl>
 <h3>Methods:</h3>
-<h5><a href="#method_ba_SessionPlayer__assign_input_call">assign_input_call()</a>, <a href="#method_ba_SessionPlayer__get_account_id">get_account_id()</a>, <a href="#method_ba_SessionPlayer__get_icon">get_icon()</a>, <a href="#method_ba_SessionPlayer__get_input_device">get_input_device()</a>, <a href="#method_ba_SessionPlayer__get_name">get_name()</a>, <a href="#method_ba_SessionPlayer__remove_from_game">remove_from_game()</a>, <a href="#method_ba_SessionPlayer__reset_input">reset_input()</a>, <a href="#method_ba_SessionPlayer__set_name">set_name()</a></h5>
+<h5><a href="#method_ba_SessionPlayer__assign_input_call">assign_input_call()</a>, <a href="#method_ba_SessionPlayer__exists">exists()</a>, <a href="#method_ba_SessionPlayer__get_account_id">get_account_id()</a>, <a href="#method_ba_SessionPlayer__get_icon">get_icon()</a>, <a href="#method_ba_SessionPlayer__get_input_device">get_input_device()</a>, <a href="#method_ba_SessionPlayer__get_name">get_name()</a>, <a href="#method_ba_SessionPlayer__remove_from_game">remove_from_game()</a>, <a href="#method_ba_SessionPlayer__reset_input">reset_input()</a>, <a href="#method_ba_SessionPlayer__set_name">set_name()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_SessionPlayer__assign_input_call">assign_input_call()</a></dt></h4><dd>
 <p><span>assign_input_call(type: Union[str, Tuple[str, ...]],
@@ -4385,6 +4443,12 @@ Valid type values are: 'jumpPress', 'jumpRelease', 'punchPress',
   'downPress', 'downRelease', 'leftPress','leftRelease','rightPress',
   'rightRelease', 'run', 'flyPress', 'flyRelease', 'startPress',
   'startRelease'</p>
+
+</dd>
+<dt><h4><a name="method_ba_SessionPlayer__exists">exists()</a></dt></h4><dd>
+<p><span>exists() -&gt; bool</span></p>
+
+<p>Return whether the underlying player is still in the game.</p>
 
 </dd>
 <dt><h4><a name="method_ba_SessionPlayer__get_account_id">get_account_id()</a></dt></h4><dd>
@@ -5621,6 +5685,23 @@ for i in range(10):
 the background and just looks pretty; it does not affect gameplay.
 Note that the actual amount emitted may vary depending on graphics
 settings, exiting element counts, or other factors.</p>
+
+<hr>
+<h2><strong><a name="function_ba_existing">ba.existing()</a></strong></h3>
+<p><span>existing(obj: Optional[ExistableType]) -&gt; Optional[ExistableType]</span></p>
+
+<p>Convert invalid references to None.</p>
+
+<p>Category: <a href="#function_category_Gameplay_Functions">Gameplay Functions</a></p>
+
+<p>To best support type checking, it is important that invalid references
+not be passed around and instead get converted to values of None.
+That way the type checker can properly flag attempts to pass dead
+objects into functions expecting only live ones, etc.
+This call can be used on any 'existable' object (one with an exists()
+method) and will convert it to a None value if it does not exist.
+For more info, see notes on 'existables' here:
+https://github.com/efroemling/ballistica/wiki/Coding-Style-Guide</p>
 
 <hr>
 <h2><strong><a name="function_ba_get_collision_info">ba.get_collision_info()</a></strong></h3>

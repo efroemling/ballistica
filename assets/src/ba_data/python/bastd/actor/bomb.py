@@ -623,7 +623,8 @@ class Blast(ba.Actor):
                                   hit_type=self.hit_type,
                                   hit_subtype=self.hit_subtype,
                                   radius=self.radius,
-                                  source_player=self.source_player))
+                                  source_player=ba.existing(
+                                      self.source_player)))
                 if self.blast_type == 'ice':
                     ba.playsound(get_factory().freeze_sound,
                                  10,
@@ -987,8 +988,9 @@ class Bomb(ba.Actor):
             # Also lets change the owner of the bomb to whoever is setting
             # us off. (this way points for big chain reactions go to the
             # person causing them).
-            if msg.source_player not in [None]:
-                self.source_player = msg.source_player
+            source_player = msg.get_source_player(ba.Player)
+            if source_player is not None:
+                self.source_player = source_player
 
                 # Also inherit the hit type (if a landmine sets off by a bomb,
                 # the credit should go to the mine)

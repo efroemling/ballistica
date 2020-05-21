@@ -30,7 +30,6 @@ from typing import TYPE_CHECKING
 
 import ba
 from bastd.actor.bomb import Bomb
-from bastd.actor.playerspaz import PlayerSpazDeathMessage
 from bastd.actor.onscreentimer import OnScreenTimer
 
 if TYPE_CHECKING:
@@ -151,7 +150,7 @@ class MeteorShowerGame(ba.TeamGameActivity[Player, Team]):
 
     # Various high-level game events come through this method.
     def handlemessage(self, msg: Any) -> Any:
-        if isinstance(msg, PlayerSpazDeathMessage):
+        if isinstance(msg, ba.PlayerDiedMessage):
 
             # Augment standard behavior.
             super().handlemessage(msg)
@@ -160,7 +159,7 @@ class MeteorShowerGame(ba.TeamGameActivity[Player, Team]):
 
             # Record the player's moment of death.
             # assert isinstance(msg.spaz.player
-            msg.playerspaz(self).player.death_time = curtime
+            msg.getplayer(Player).death_time = curtime
 
             # In co-op mode, end the game the instant everyone dies
             # (more accurate looking).

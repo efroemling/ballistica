@@ -28,7 +28,7 @@ from typing import TYPE_CHECKING
 
 import ba
 from bastd.actor.flag import Flag
-from bastd.actor.playerspaz import PlayerSpaz, PlayerSpazDeathMessage
+from bastd.actor.playerspaz import PlayerSpaz
 
 if TYPE_CHECKING:
     from typing import Any, Type, List, Dict, Optional, Sequence, Union
@@ -312,12 +312,13 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
                                               'position')
 
     def handlemessage(self, msg: Any) -> Any:
-        if isinstance(msg, PlayerSpazDeathMessage):
+        if isinstance(msg, ba.PlayerDiedMessage):
             # Augment standard behavior.
             super().handlemessage(msg)
-            player = msg.playerspaz(self).player
+            player = msg.getplayer(Player)
             if player is self._get_chosen_one_player():
-                killerplayer = ba.playercast_o(Player, msg.killerplayer)
+                killerplayer = ba.playercast_o(Player,
+                                               msg.getkillerplayer(Player))
                 self._set_chosen_one_player(None if (
                     killerplayer is None or killerplayer is player
                     or not killerplayer.is_alive()) else killerplayer)

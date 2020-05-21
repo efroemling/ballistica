@@ -578,6 +578,8 @@
       <w>execlocals</w>
       <w>executils</w>
       <w>exhash</w>
+      <w>existable</w>
+      <w>existables</w>
       <w>expatbuilder</w>
       <w>expatreader</w>
       <w>explodable</w>
@@ -752,6 +754,7 @@
       <w>getcurrency</w>
       <w>getcwd</w>
       <w>getdata</w>
+      <w>getkillerplayer</w>
       <w>getlevelname</w>
       <w>getmaps</w>
       <w>getmodel</w>
@@ -1688,6 +1691,7 @@
       <w>spinoff</w>
       <w>spinoffdata</w>
       <w>spinoffs</w>
+      <w>splayer</w>
       <w>splitlen</w>
       <w>splitnumstr</w>
       <w>squadcore</w>

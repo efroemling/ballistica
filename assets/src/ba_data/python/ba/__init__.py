@@ -74,13 +74,13 @@ from ba._apputils import is_browser_likely_available
 from ba._campaign import Campaign
 from ba._gameutils import (animate, animate_array, show_damage_count,
                            sharedobj, timestring, cameraflash)
-from ba._general import WeakCall, Call
+from ba._general import WeakCall, Call, existing
 from ba._level import Level
 from ba._lobby import Lobby, Chooser
 from ba._math import normalized_color, is_point_in_box, vec3validate
 from ba._messages import (UNHANDLED, OutOfBoundsMessage, DeathType, DieMessage,
-                          StandMessage, PickUpMessage, DropMessage,
-                          PickedUpMessage, DroppedMessage,
+                          PlayerDiedMessage, StandMessage, PickUpMessage,
+                          DropMessage, PickedUpMessage, DroppedMessage,
                           ShouldShatterMessage, ImpactDamageMessage,
                           FreezeMessage, ThawMessage, HitMessage,
                           CelebrateMessage)

@@ -29,6 +29,7 @@ from typing import TYPE_CHECKING, TypeVar
 from ba._activity import Activity
 from ba._score import ScoreInfo
 from ba._lang import Lstr
+from ba._messages import PlayerDiedMessage
 import _ba
 
 if TYPE_CHECKING:
@@ -645,21 +646,24 @@ class GameActivity(Activity[PlayerType, TeamType]):
             player.set_actor(None)
 
     def handlemessage(self, msg: Any) -> Any:
-        from bastd.actor.playerspaz import PlayerSpazDeathMessage
-        if isinstance(msg, PlayerSpazDeathMessage):
+        if isinstance(msg, PlayerDiedMessage):
+            # pylint: disable=cyclic-import
+            from bastd.actor.spaz import Spaz
 
-            player = msg.playerspaz(self).player
-            killer = msg.killerplayer
+            player = msg.getplayer(self.playertype)
+            killer = msg.getkillerplayer(self.playertype)
 
-            # Inform our score-set of the demise.
+            # Inform our stats of the demise.
             self.stats.player_was_killed(player,
                                          killed=msg.killed,
                                          killer=killer)
 
             # Award the killer points if he's on a different team.
+            # FIXME: This should not be linked to Spaz actors.
+            # (should move get_death_points to Actor or make it a message)
             if killer and killer.team is not player.team:
-                pts, importance = msg.playerspaz(self).get_death_points(
-                    msg.how)
+                assert isinstance(killer.actor, Spaz)
+                pts, importance = killer.actor.get_death_points(msg.how)
                 if not self.has_ended():
                     self.stats.player_scored(killer,
                                              pts,

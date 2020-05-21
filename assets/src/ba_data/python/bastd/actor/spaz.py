@@ -1089,8 +1089,9 @@ class Spaz(ba.Actor):
                 # If we're cursed, *any* damage blows us up.
                 if self._cursed and damage > 0:
                     ba.timer(
-                        0.05, ba.WeakCall(self.curse_explode,
-                                          msg.source_player))
+                        0.05,
+                        ba.WeakCall(self.curse_explode,
+                                    msg.get_source_player(ba.Player)))
                 # if we're frozen, shatter.. otherwise die if we hit zero
                 if self.frozen and (damage > 200 or self.hitpoints <= 0):
                     self.shatter()

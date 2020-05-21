@@ -257,14 +257,8 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
         self._scoreboard.set_team_value(self.teams[0], score, max_score=None)
 
     def handlemessage(self, msg: Any) -> Any:
-        if isinstance(msg, playerspaz.PlayerSpazDeathMessage):
-            player = msg.playerspaz(self).getplayer()
-            if player is None:
-                ba.print_error('FIXME: getplayer() should no longer '
-                               'ever be returning None.')
-                return
-            if not player:
-                return
+        if isinstance(msg, ba.PlayerDiedMessage):
+            player = msg.getplayer(Player)
             self.stats.player_was_killed(player)
             ba.timer(0.1, self._checkroundover)
 

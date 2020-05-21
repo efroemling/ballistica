@@ -29,16 +29,24 @@ import random
 from typing import TYPE_CHECKING
 
 import ba
-from bastd.actor import playerspaz
 from bastd.actor import spazbot
 from bastd.actor.bomb import TNTSpawner
 from bastd.actor.scoreboard import Scoreboard
+from bastd.actor.respawnicon import RespawnIcon
 
 if TYPE_CHECKING:
     from typing import Type, Any, List, Dict, Tuple, Sequence, Optional
 
 
-class RunaroundGame(ba.CoopGameActivity[ba.Player, ba.Team]):
+class Player(ba.Player['Team']):
+    """Our player type for this game."""
+
+
+class Team(ba.Team[Player]):
+    """Our team type for this game."""
+
+
+class RunaroundGame(ba.CoopGameActivity[Player, Team]):
     """Game involving trying to bomb bots as they walk through the map."""
 
     name = 'Runaround'
@@ -457,7 +465,7 @@ class RunaroundGame(ba.CoopGameActivity[ba.Player, ba.Team]):
         self._lives_text.node.text = str(self._lives)
         self._bots.start_moving()
 
-    def spawn_player(self, player: ba.Player) -> ba.Actor:
+    def spawn_player(self, player: Player) -> ba.Actor:
         pos = (self._spawn_center[0] + random.uniform(-1.5, 1.5),
                self._spawn_center[1],
                self._spawn_center[2] + random.uniform(-1.5, 1.5))
@@ -1118,16 +1126,9 @@ class RunaroundGame(ba.CoopGameActivity[ba.Player, ba.Team]):
             self._update_scores()
 
         # Respawn dead players.
-        elif isinstance(msg, playerspaz.PlayerSpazDeathMessage):
-            from bastd.actor import respawnicon
+        elif isinstance(msg, ba.PlayerDiedMessage):
             self._a_player_has_been_killed = True
-            player = msg.playerspaz(self).getplayer()
-            if player is None:
-                ba.print_error('FIXME: getplayer() should no'
-                               ' longer ever be returning None')
-                return
-            if not player:
-                return
+            player = msg.getplayer(Player)
             self.stats.player_was_killed(player)
 
             # Respawn them shortly.
@@ -1135,8 +1136,7 @@ class RunaroundGame(ba.CoopGameActivity[ba.Player, ba.Team]):
             respawn_time = 2.0 + len(self.initial_player_info) * 1.0
             player.gamedata['respawn_timer'] = ba.Timer(
                 respawn_time, ba.Call(self.spawn_player_if_exists, player))
-            player.gamedata['respawn_icon'] = respawnicon.RespawnIcon(
-                player, respawn_time)
+            player.gamedata['respawn_icon'] = RespawnIcon(player, respawn_time)
 
         elif isinstance(msg, spazbot.SpazBotDeathMessage):
             if msg.how is ba.DeathType.REACHED_GOAL:

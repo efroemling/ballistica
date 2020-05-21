@@ -29,7 +29,7 @@ import random
 from typing import TYPE_CHECKING
 
 import ba
-from bastd.actor.playerspaz import PlayerSpaz, PlayerSpazDeathMessage
+from bastd.actor.playerspaz import PlayerSpaz
 from bastd.actor.flag import Flag
 
 if TYPE_CHECKING:
@@ -161,9 +161,9 @@ class AssaultGame(ba.TeamGameActivity[Player, Team]):
         self.setup_standard_powerup_drops()
 
     def handlemessage(self, msg: Any) -> Any:
-        if isinstance(msg, PlayerSpazDeathMessage):
+        if isinstance(msg, ba.PlayerDiedMessage):
             super().handlemessage(msg)  # Augment standard.
-            self.respawn_player(msg.playerspaz(self).player)
+            self.respawn_player(msg.getplayer(Player))
         else:
             super().handlemessage(msg)
 

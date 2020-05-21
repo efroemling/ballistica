@@ -28,7 +28,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import ba
-from bastd.actor import playerspaz
 
 if TYPE_CHECKING:
     from typing import Any, Sequence, Dict, Type, List, Optional, Union
@@ -50,7 +49,7 @@ class Puck(ba.Actor):
 
         # Spawn just above the provided point.
         self._spawn_pos = (position[0], position[1] + 1.0, position[2])
-        self.last_players_to_touch: Dict[int, ba.Player] = {}
+        self.last_players_to_touch: Dict[int, Player] = {}
         self.scored = False
         assert activity is not None
         assert isinstance(activity, HockeyGame)
@@ -94,18 +93,26 @@ class Puck(ba.Actor):
                 msg.force_direction[2])
 
             # If this hit came from a player, log them as the last to touch us.
-            if msg.source_player is not None:
+            splayer = msg.get_source_player(Player)
+            if splayer is not None:
                 activity = self._activity()
                 if activity:
-                    if msg.source_player in activity.players:
-                        self.last_players_to_touch[
-                            msg.source_player.team.id] = msg.source_player
+                    if splayer in activity.players:
+                        self.last_players_to_touch[splayer.team.id] = splayer
         else:
             super().handlemessage(msg)
 
 
+class Player(ba.Player['Team']):
+    """Our player type for this game."""
+
+
+class Team(ba.Team[Player]):
+    """Our team type for this game."""
+
+
 # ba_meta export game
-class HockeyGame(ba.TeamGameActivity[ba.Player, ba.Team]):
+class HockeyGame(ba.TeamGameActivity[Player, Team]):
     """Ice hockey game."""
 
     name = 'Hockey'
@@ -234,7 +241,7 @@ class HockeyGame(ba.TeamGameActivity[ba.Player, ba.Team]):
         self._update_scoreboard()
         ba.playsound(self._chant_sound)
 
-    def on_team_join(self, team: ba.Team) -> None:
+    def on_team_join(self, team: Team) -> None:
         team.gamedata['score'] = 0
         self._update_scoreboard()
 
@@ -246,7 +253,7 @@ class HockeyGame(ba.TeamGameActivity[ba.Player, ba.Team]):
             player = playernode.getdelegate().getplayer()
         except Exception:
             player = puck = None
-        assert isinstance(player, ba.Player)
+        assert isinstance(player, Player)
         assert isinstance(puck, Puck)
         if player and puck:
             puck.last_players_to_touch[player.team.id] = player
@@ -330,10 +337,10 @@ class HockeyGame(ba.TeamGameActivity[ba.Player, ba.Team]):
     def handlemessage(self, msg: Any) -> Any:
 
         # Respawn dead players if they're still in the game.
-        if isinstance(msg, playerspaz.PlayerSpazDeathMessage):
+        if isinstance(msg, ba.PlayerDiedMessage):
             # Augment standard behavior...
             super().handlemessage(msg)
-            self.respawn_player(msg.playerspaz(self).player)
+            self.respawn_player(msg.getplayer(Player))
 
         # Respawn dead pucks.
         elif isinstance(msg, PuckDeathMessage):

@@ -34,44 +34,6 @@ PlayerType = TypeVar('PlayerType', bound=ba.Player)
 TeamType = TypeVar('TeamType', bound=ba.Team)
 
 
-class PlayerSpazDeathMessage:
-    """A message saying a ba.PlayerSpaz has died.
-
-    category: Message Classes
-
-    Attributes:
-
-       killed
-          If True, the spaz was killed;
-          If False, they left the game or the round ended.
-
-       killerplayer
-          The ba.Player that did the killing, or None.
-
-       how
-          The particular type of death.
-    """
-
-    def __init__(self, spaz: PlayerSpaz, was_killed: bool,
-                 killerplayer: Optional[ba.Player], how: ba.DeathType):
-        """Instantiate a message with the given values."""
-        self._spaz = spaz
-        self.killed = was_killed
-        self.killerplayer = killerplayer
-        self.how = how
-
-    def playerspaz(
-            self, activity: ba.Activity[PlayerType,
-                                        TeamType]) -> PlayerSpaz[PlayerType]:
-        """Return the spaz that died.
-
-        The current activity is required as an argument so the exact type of
-        PlayerSpaz can be determined by the type checker.
-        """
-        del activity  # Unused
-        return self._spaz
-
-
 class PlayerSpazHurtMessage:
     """A message saying a ba.PlayerSpaz was hurt.
 
@@ -93,7 +55,7 @@ class PlayerSpaz(Spaz, Generic[PlayerType]):
 
     category: Gameplay Classes
 
-    When a PlayerSpaz dies, it delivers a ba.PlayerSpazDeathMessage
+    When a PlayerSpaz dies, it delivers a ba.PlayerDiedMessage
     to the current ba.Activity. (unless the death was the result of the
     player leaving the game, in which case no message is sent)
 
@@ -302,16 +264,16 @@ class PlayerSpaz(Spaz, Generic[PlayerType]):
                 # Only report if both the player and the activity still exist.
                 if killed and activity is not None and self.getplayer():
                     activity.handlemessage(
-                        PlayerSpazDeathMessage(self, killed, killerplayer,
-                                               msg.how))
+                        ba.PlayerDiedMessage(self.player, killed, killerplayer,
+                                             msg.how))
 
             super().handlemessage(msg)  # Augment standard behavior.
 
         # Keep track of the player who last hit us for point rewarding.
         elif isinstance(msg, ba.HitMessage):
-            if msg.source_player:
-                srcplayer = ba.playercast_o(self.playertype, msg.source_player)
-                self.last_player_attacked_by = srcplayer
+            source_player = msg.get_source_player(self.playertype)
+            if source_player:
+                self.last_player_attacked_by = source_player
                 self.last_attacked_time = ba.time()
                 self.last_attacked_type = (msg.hit_type, msg.hit_subtype)
             super().handlemessage(msg)  # Augment standard behavior.

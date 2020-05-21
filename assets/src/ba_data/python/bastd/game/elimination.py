@@ -28,8 +28,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import ba
-from bastd.actor import playerspaz
-from bastd.actor import spaz
+from bastd.actor.spaz import get_factory
 
 if TYPE_CHECKING:
     from typing import (Any, Tuple, Dict, Type, List, Sequence, Optional,
@@ -489,11 +488,11 @@ class EliminationGame(ba.TeamGameActivity[Player, Team]):
         return sum(player.lives for player in team.players)
 
     def handlemessage(self, msg: Any) -> Any:
-        if isinstance(msg, playerspaz.PlayerSpazDeathMessage):
+        if isinstance(msg, ba.PlayerDiedMessage):
 
             # Augment standard behavior.
             super().handlemessage(msg)
-            player: Player = msg.playerspaz(self).player
+            player: Player = msg.getplayer(Player)
 
             player.lives -= 1
             if player.lives < 0:
@@ -509,7 +508,7 @@ class EliminationGame(ba.TeamGameActivity[Player, Team]):
             # Play big death sound on our last death
             # or for every one in solo mode.
             if self._solo_mode or player.lives == 0:
-                ba.playsound(spaz.get_factory().single_player_death_sound)
+                ba.playsound(get_factory().single_player_death_sound)
 
             # If we hit zero lives, we're dead (and our team might be too).
             if player.lives == 0:

@@ -31,7 +31,7 @@ from dataclasses import dataclass
 
 import ba
 from bastd.actor.bomb import Bomb
-from bastd.actor.playerspaz import PlayerSpaz, PlayerSpazDeathMessage
+from bastd.actor.playerspaz import PlayerSpaz
 
 if TYPE_CHECKING:
     from typing import (Any, Type, Tuple, List, Sequence, Optional, Dict,
@@ -734,12 +734,12 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
                                                   ba.DualTeamSession))
 
     def handlemessage(self, msg: Any) -> Any:
-        if isinstance(msg, PlayerSpazDeathMessage):
+        if isinstance(msg, ba.PlayerDiedMessage):
             # Augment default behavior.
             super().handlemessage(msg)
-            player = msg.playerspaz(self).getplayer()
+            player = msg.getplayer(Player)
             if not player:
-                ba.print_error('got no player in PlayerSpazDeathMessage')
+                ba.print_error('got no player in PlayerDiedMessage')
                 return
             if not player.gamedata['finished']:
                 self.respawn_player(player, respawn_time=1)

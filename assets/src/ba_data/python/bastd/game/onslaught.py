@@ -1164,10 +1164,9 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
             self._score += msg.score
             self._update_scores()
 
-        elif isinstance(msg, playerspaz.PlayerSpazDeathMessage):
+        elif isinstance(msg, ba.PlayerDiedMessage):
             super().handlemessage(msg)  # Augment standard behavior.
-            player = msg.playerspaz(self).getplayer()
-            assert player is not None
+            player = msg.getplayer(Player)
             self._a_player_has_been_hurt = True
 
             # Make note with the player when they can respawn:

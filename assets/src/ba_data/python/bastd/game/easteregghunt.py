@@ -29,9 +29,9 @@ import random
 from typing import TYPE_CHECKING
 
 import ba
-from bastd.actor import bomb
-from bastd.actor import playerspaz
-from bastd.actor import spazbot
+from bastd.actor.bomb import Bomb
+from bastd.actor.playerspaz import PlayerSpaz
+from bastd.actor.spazbot import BotSet, BouncyBot, SpazBotDeathMessage
 from bastd.actor.onscreencountdown import OnScreenCountdown
 from bastd.actor.scoreboard import Scoreboard
 
@@ -39,8 +39,16 @@ if TYPE_CHECKING:
     from typing import Any, Type, Dict, List, Tuple, Optional
 
 
+class Player(ba.Player['Team']):
+    """Our player type for this game."""
+
+
+class Team(ba.Team[Player]):
+    """Our team type for this game."""
+
+
 # ba_meta export game
-class EasterEggHuntGame(ba.TeamGameActivity[ba.Player, ba.Team]):
+class EasterEggHuntGame(ba.TeamGameActivity[Player, Team]):
     """A game where score is based on collecting eggs."""
 
     name = 'Easter Egg Hunt'
@@ -78,7 +86,7 @@ class EasterEggHuntGame(ba.TeamGameActivity[ba.Player, ba.Team]):
         self._eggs: List[Egg] = []
         self._update_timer: Optional[ba.Timer] = None
         self._countdown: Optional[OnScreenCountdown] = None
-        self._bots: Optional[spazbot.BotSet] = None
+        self._bots: Optional[BotSet] = None
 
     # Called when our game is transitioning in but not ready to start.
     # ..we can go ahead and set our music and whatnot.
@@ -87,7 +95,7 @@ class EasterEggHuntGame(ba.TeamGameActivity[ba.Player, ba.Team]):
         self.default_music = ba.MusicType.FORWARD_MARCH
         super().on_transition_in()
 
-    def on_team_join(self, team: ba.Team) -> None:
+    def on_team_join(self, team: Team) -> None:
         team.gamedata['score'] = 0
         if self.has_begun():
             self._update_scoreboard()
@@ -106,23 +114,21 @@ class EasterEggHuntGame(ba.TeamGameActivity[ba.Player, ba.Team]):
         self._update_timer = ba.Timer(0.25, self._update, repeat=True)
         self._countdown = OnScreenCountdown(60, endcall=self.end_game)
         ba.timer(4.0, self._countdown.start)
-        self._bots = spazbot.BotSet()
+        self._bots = BotSet()
 
         # Spawn evil bunny in co-op only.
         if isinstance(self.session, ba.CoopSession) and self._pro_mode:
             self._spawn_evil_bunny()
 
     # Overriding the default character spawning.
-    def spawn_player(self, player: ba.Player) -> ba.Actor:
+    def spawn_player(self, player: Player) -> ba.Actor:
         spaz = self.spawn_player_spaz(player)
         spaz.connect_controls_to_player()
         return spaz
 
     def _spawn_evil_bunny(self) -> None:
         assert self._bots is not None
-        self._bots.spawn_bot(spazbot.BouncyBot,
-                             pos=(6, 4, -7.8),
-                             spawn_time=10.0)
+        self._bots.spawn_bot(BouncyBot, pos=(6, 4, -7.8), spawn_time=10.0)
 
     def _on_egg_player_collide(self) -> None:
         if not self.has_ended():
@@ -132,7 +138,7 @@ class EasterEggHuntGame(ba.TeamGameActivity[ba.Player, ba.Team]):
                 egg = egg_node.getdelegate()
                 assert isinstance(egg, Egg)
                 spaz = playernode.getdelegate()
-                assert isinstance(spaz, playerspaz.PlayerSpaz)
+                assert isinstance(spaz, PlayerSpaz)
                 player = (spaz.getplayer()
                           if hasattr(spaz, 'getplayer') else None)
                 if player and egg:
@@ -184,8 +190,8 @@ class EasterEggHuntGame(ba.TeamGameActivity[ba.Player, ba.Team]):
 
             # Occasionally spawn a land-mine in addition.
             if self._pro_mode and random.random() < 0.25:
-                mine = bomb.Bomb(position=(xpos, ypos, zpos),
-                                 bomb_type='land_mine').autoretain()
+                mine = Bomb(position=(xpos, ypos, zpos),
+                            bomb_type='land_mine').autoretain()
                 mine.arm()
             else:
                 self._eggs.append(Egg(position=(xpos, ypos, zpos)))
@@ -194,12 +200,12 @@ class EasterEggHuntGame(ba.TeamGameActivity[ba.Player, ba.Team]):
     def handlemessage(self, msg: Any) -> Any:
 
         # Respawn dead players.
-        if isinstance(msg, playerspaz.PlayerSpazDeathMessage):
+        if isinstance(msg, ba.PlayerDiedMessage):
             from bastd.actor import respawnicon
 
             # Augment standard behavior.
             super().handlemessage(msg)
-            player = msg.playerspaz(self).getplayer()
+            player = msg.getplayer(Player)
             if not player:
                 return
             self.stats.player_was_killed(player)
@@ -213,7 +219,7 @@ class EasterEggHuntGame(ba.TeamGameActivity[ba.Player, ba.Team]):
                 player, respawn_time)
 
         # Whenever our evil bunny dies, respawn him and spew some eggs.
-        elif isinstance(msg, spazbot.SpazBotDeathMessage):
+        elif isinstance(msg, SpazBotDeathMessage):
             self._spawn_evil_bunny()
             assert msg.badguy.node
             pos = msg.badguy.node.position

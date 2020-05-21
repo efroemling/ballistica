@@ -30,7 +30,6 @@ from typing import TYPE_CHECKING
 
 import ba
 from bastd.actor.flag import Flag
-from bastd.actor.playerspaz import PlayerSpazDeathMessage
 
 if TYPE_CHECKING:
     from typing import Any, Optional, Type, List, Dict, Sequence, Union
@@ -41,22 +40,30 @@ class ConquestFlag(Flag):
 
     def __init__(self, *args: Any, **keywds: Any):
         super().__init__(*args, **keywds)
-        self._team: Optional[ba.Team] = None
+        self._team: Optional[Team] = None
         self.light: Optional[ba.Node] = None
 
     @property
-    def team(self) -> Optional[ba.Team]:
+    def team(self) -> Optional[Team]:
         """The team that owns this flag."""
         return self._team
 
     @team.setter
-    def team(self, team: ba.Team) -> None:
+    def team(self, team: Team) -> None:
         """Set the team that owns this flag."""
         self._team = team
 
 
+class Player(ba.Player['Team']):
+    """Our player type for this game."""
+
+
+class Team(ba.Team[Player]):
+    """Our team type for this game."""
+
+
 # ba_meta export game
-class ConquestGame(ba.TeamGameActivity[ba.Player, ba.Team]):
+class ConquestGame(ba.TeamGameActivity[Player, Team]):
     """A game where teams try to claim all flags on the map."""
 
     name = 'Conquest'
@@ -115,12 +122,12 @@ class ConquestGame(ba.TeamGameActivity[ba.Player, ba.Team]):
                               ba.MusicType.GRAND_ROMP)
         super().on_transition_in()
 
-    def on_team_join(self, team: ba.Team) -> None:
+    def on_team_join(self, team: Team) -> None:
         if self.has_begun():
             self._update_scores()
         team.gamedata['flags_held'] = 0
 
-    def on_player_join(self, player: ba.Player) -> None:
+    def on_player_join(self, player: Player) -> None:
         player.gamedata['respawn_timer'] = None
 
         # Only spawn if this player's team has a flag currently.
@@ -213,7 +220,7 @@ class ConquestGame(ba.TeamGameActivity[ba.Player, ba.Team]):
             flag = flagnode.getdelegate()
         except Exception:
             return  # Player may have left and his body hit the flag.
-        assert isinstance(player, ba.Player)
+        assert isinstance(player, Player)
         assert isinstance(flag, ConquestFlag)
         assert flag.light
 
@@ -236,12 +243,12 @@ class ConquestGame(ba.TeamGameActivity[ba.Player, ba.Team]):
                     self.spawn_player(otherplayer)
 
     def handlemessage(self, msg: Any) -> Any:
-        if isinstance(msg, PlayerSpazDeathMessage):
+        if isinstance(msg, ba.PlayerDiedMessage):
             # Augment standard behavior.
             super().handlemessage(msg)
 
             # Respawn only if this team has a flag.
-            player = msg.playerspaz(self).player
+            player = msg.getplayer(Player)
             if player.team.gamedata['flags_held'] > 0:
                 self.respawn_player(player)
             else:
@@ -250,12 +257,12 @@ class ConquestGame(ba.TeamGameActivity[ba.Player, ba.Team]):
         else:
             super().handlemessage(msg)
 
-    def spawn_player(self, player: ba.Player) -> ba.Actor:
+    def spawn_player(self, player: Player) -> ba.Actor:
         # We spawn players at different places based on what flags are held.
         return self.spawn_player_spaz(player,
                                       self._get_player_spawn_position(player))
 
-    def _get_player_spawn_position(self, player: ba.Player) -> Sequence[float]:
+    def _get_player_spawn_position(self, player: Player) -> Sequence[float]:
 
         # Iterate until we find a spawn owned by this team.
         spawn_count = len(self.map.spawn_by_flag_points)

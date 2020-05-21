@@ -574,8 +574,9 @@ class SpazBot(Spaz):
 
         # Keep track of the player who last hit us for point rewarding.
         elif isinstance(msg, ba.HitMessage):
-            if msg.source_player:
-                self.last_player_attacked_by = msg.source_player
+            source_player = msg.get_source_player(ba.Player)
+            if source_player:
+                self.last_player_attacked_by = source_player
                 self.last_attacked_time = ba.time()
                 self.last_attacked_type = (msg.hit_type, msg.hit_subtype)
             super().handlemessage(msg)

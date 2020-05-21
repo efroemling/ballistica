@@ -33,8 +33,9 @@ import ba
 from bastd.actor import spazbot
 from bastd.actor import flag as stdflag
 from bastd.actor.bomb import TNTSpawner
-from bastd.actor.playerspaz import PlayerSpaz, PlayerSpazDeathMessage
+from bastd.actor.playerspaz import PlayerSpaz
 from bastd.actor.scoreboard import Scoreboard
+from bastd.actor.respawnicon import RespawnIcon
 
 if TYPE_CHECKING:
     from typing import Any, List, Type, Dict, Sequence, Optional, Union
@@ -268,10 +269,10 @@ class FootballTeamGame(ba.TeamGameActivity[Player, Team]):
             msg.flag.held_count -= 1
 
         # Respawn dead players if they're still in the game.
-        elif isinstance(msg, PlayerSpazDeathMessage):
+        elif isinstance(msg, ba.PlayerDiedMessage):
             # Augment standard behavior.
             super().handlemessage(msg)
-            self.respawn_player(msg.playerspaz(self).player)
+            self.respawn_player(msg.getplayer(Player))
 
         # Respawn dead flags.
         elif isinstance(msg, stdflag.FlagDeathMessage):
@@ -798,11 +799,10 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
 
     def handlemessage(self, msg: Any) -> Any:
         """ handle high-level game messages """
-        if isinstance(msg, PlayerSpazDeathMessage):
-            from bastd.actor import respawnicon
+        if isinstance(msg, ba.PlayerDiedMessage):
 
             # Respawn dead players.
-            player = msg.playerspaz(self).player
+            player = msg.getplayer(Player)
             self.stats.player_was_killed(player)
             assert self.initial_player_info is not None
             respawn_time = 2.0 + len(self.initial_player_info) * 1.0
@@ -810,8 +810,7 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
             # Respawn them shortly.
             player.gamedata['respawn_timer'] = ba.Timer(
                 respawn_time, ba.Call(self.spawn_player_if_exists, player))
-            player.gamedata['respawn_icon'] = respawnicon.RespawnIcon(
-                player, respawn_time)
+            player.gamedata['respawn_icon'] = RespawnIcon(player, respawn_time)
 
             # Augment standard behavior.
             super().handlemessage(msg)

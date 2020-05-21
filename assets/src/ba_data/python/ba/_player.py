@@ -29,6 +29,7 @@ if TYPE_CHECKING:
                         Callable)
     import ba
 
+PlayerType = TypeVar('PlayerType', bound='ba.Player')
 TeamType = TypeVar('TeamType', bound='ba.Team')
 
 
@@ -117,7 +118,6 @@ class Player(Generic[TeamType]):
             raise _error.NodeNotFoundError
         return self._nodeactor.node
 
-    @property
     def exists(self) -> bool:
         """Whether the underlying player still exists.
 
@@ -126,7 +126,7 @@ class Player(Generic[TeamType]):
         functionality, so a statement such as "if player" will do
         the right thing both for Player objects and values of None.
         """
-        return bool(self._sessionplayer)
+        return self._sessionplayer.exists()
 
     def get_name(self, full: bool = False, icon: bool = True) -> str:
         """get_name(full: bool = False, icon: bool = True) -> str
@@ -181,10 +181,7 @@ class Player(Generic[TeamType]):
         self._sessionplayer.reset_input()
 
     def __bool__(self) -> bool:
-        return bool(self._sessionplayer)
-
-
-PlayerType = TypeVar('PlayerType', bound='ba.Player')
+        return self._sessionplayer.exists()
 
 
 def playercast(totype: Type[PlayerType], player: ba.Player) -> PlayerType:
