@@ -11,7 +11,8 @@
     "pytest",
     "pytz",
     "yaml",
-    "requests"
+    "requests",
+    "typing_extensions"
   ],
   "python_paths": [
     "assets/src/ba_data/python",

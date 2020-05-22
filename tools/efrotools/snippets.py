@@ -248,33 +248,22 @@ def scriptfiles() -> None:
 
 def pylint() -> None:
     """Run pylint checks on our scripts."""
-    from efro.error import CleanError
     import efrotools.code
     full = ('-full' in sys.argv)
     fast = ('-fast' in sys.argv)
-    try:
-        efrotools.code.pylint(PROJROOT, full, fast)
-    except Exception:
-        raise CleanError('Pylint failed.')
+    efrotools.code.pylint(PROJROOT, full, fast)
 
 
 def runpylint() -> None:
     """Run pylint checks on provided filenames."""
-    import os
     from efro.terminal import Clr
     from efro.error import CleanError
     import efrotools.code
     if len(sys.argv) < 3:
         raise CleanError('Expected at least 1 filename arg.')
     filenames = sys.argv[2:]
-    try:
-        efrotools.code.runpylint(PROJROOT, filenames)
-        print(f'{Clr.GRN}Pylint Passed.{Clr.RST}')
-    except Exception:
-        if os.environ.get('VERBOSE') == '1':
-            import traceback
-            traceback.print_exc()
-        raise CleanError('Pylint Failed.')
+    efrotools.code.runpylint(PROJROOT, filenames)
+    print(f'{Clr.GRN}Pylint Passed.{Clr.RST}')
 
 
 def mypy() -> None:

@@ -24,7 +24,6 @@ This top level module is a collection of most commonly used functionality.
 For many modding purposes, the bits exposed here are all you'll need.
 In some specific cases you may need to pull in individual submodules instead.
 """
-
 # pylint: disable=unused-import
 # pylint: disable=redefined-builtin
 
@@ -74,7 +73,7 @@ from ba._apputils import is_browser_likely_available
 from ba._campaign import Campaign
 from ba._gameutils import (animate, animate_array, show_damage_count,
                            sharedobj, timestring, cameraflash)
-from ba._general import WeakCall, Call, existing
+from ba._general import WeakCall, Call, existing, Existable
 from ba._level import Level
 from ba._lobby import Lobby, Chooser
 from ba._math import normalized_color, is_point_in_box, vec3validate

@@ -374,7 +374,7 @@ def _run_pylint(projroot: Path, pylintrc: Union[Path, str],
         result = _apply_pylint_run_to_cache(projroot, run, dirtyfiles,
                                             allfiles, cache)
         if result != 0:
-            raise CleanError(f'Linting failed for {result} file(s).')
+            raise CleanError(f'Pylint failed for {result} file(s).')
 
         # Sanity check: when the linter fails we should always be failing too.
         # If not, it means we're probably missing something and incorrectly
@@ -400,6 +400,7 @@ def _apply_pylint_run_to_cache(projroot: Path, run: Any, dirtyfiles: List[str],
     # pylint: disable=too-many-statements
     from astroid import modutils
     from efrotools import get_config
+    from efro.error import CleanError
 
     # First off, build a map of dirtyfiles to module names
     # (and the corresponding reverse map).
@@ -456,8 +457,8 @@ def _apply_pylint_run_to_cache(projroot: Path, run: Any, dirtyfiles: List[str],
     untracked_deps = set(dep for dep in untracked_deps
                          if dep not in ignored_untracked_deps)
     if untracked_deps:
-        raise Exception(
-            f'Found untracked dependencies: {untracked_deps}.'
+        raise CleanError(
+            f'Pylint found untracked dependencies: {untracked_deps}.'
             ' If these are external to your project, add them to'
             ' "pylint_ignored_untracked_deps" in the project config.')
 
@@ -552,7 +553,7 @@ def mypy(projroot: Path, full: bool) -> None:
     try:
         runmypy(projroot, filenames, full)
     except Exception:
-        raise CleanError('Mypy: fail.')
+        raise CleanError('Mypy failed.')
     duration = time.time() - starttime
     print(f'{Clr.GRN}Mypy passed in {duration:.1f} seconds.{Clr.RST}',
           flush=True)

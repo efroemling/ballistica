@@ -24,28 +24,32 @@ from __future__ import annotations
 import types
 import weakref
 from typing import TYPE_CHECKING, TypeVar
+from typing_extensions import Protocol
 
 import _ba
 
 if TYPE_CHECKING:
     from typing import Any, Type, Optional
-    from typing_extensions import Protocol
     from efro.call import Call as Call  # 'as Call' so we re-export.
 
-    class Existable(Protocol):
-        """Protocol for objects supporting an exists() method."""
 
-        def exists(self) -> bool:
-            """Whether this object exists."""
-            ...
+class Existable(Protocol):
+    """A Protocol for objects supporting an exists() method.
 
-    ExistableType = TypeVar('ExistableType', bound=Existable)
+    Category: Protocols
+    """
 
+    def exists(self) -> bool:
+        """Whether this object exists."""
+        ...
+
+
+ExistableType = TypeVar('ExistableType', bound=Existable)
 T = TypeVar('T')
 
 
 def existing(obj: Optional[ExistableType]) -> Optional[ExistableType]:
-    """Convert invalid references to None.
+    """Convert invalid references to None for any ba.Existable type.
 
     Category: Gameplay Functions
 

@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-05-21 for Ballistica version 1.5.0 build 20026</em></h4>
+<h4><em>last updated on 2020-05-22 for Ballistica version 1.5.0 build 20026</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -200,6 +200,10 @@
       <li><a href="#class_ba_WidgetNotFoundError">ba.WidgetNotFoundError</a></li>
    </ul>
 </ul>
+<h4><a name="class_category_Protocols">Protocols</a></h4>
+<ul>
+   <li><a href="#class_ba_Existable">ba.Existable</a></li>
+</ul>
 <hr>
 <h2><strong><a name="class_ba_Achievement">ba.Achievement</a></strong></h3>
 <p><em>&lt;top level class&gt;</em>
@@ -320,7 +324,7 @@ actually award achievements.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_Activity">ba.Activity</a></strong></h3>
-<p>inherits from: <a href="#class_ba_DependencyComponent">ba.DependencyComponent</a>, <a href="#class_typing_Generic">typing.Generic</a></p>
+<p>Inherits from: <a href="#class_ba_DependencyComponent">ba.DependencyComponent</a>, <a href="#class_typing_Generic">typing.Generic</a></p>
 <p>Units of execution wrangled by a <a href="#class_ba_Session">ba.Session</a>.</p>
 
 <p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a></p>
@@ -570,7 +574,7 @@ is a convenient way to access this same functionality.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_ActivityNotFoundError">ba.ActivityNotFoundError</a></strong></h3>
-<p>inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, Exception, BaseException</p>
+<p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, Exception, BaseException</p>
 <p>Exception raised when an expected <a href="#class_ba_Activity">ba.Activity</a> does not exist.</p>
 
 <p>Category: <a href="#class_category_Exception_Classes">Exception Classes</a>
@@ -733,7 +737,7 @@ likely result in errors.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_ActorNotFoundError">ba.ActorNotFoundError</a></strong></h3>
-<p>inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, Exception, BaseException</p>
+<p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, Exception, BaseException</p>
 <p>Exception raised when an expected <a href="#class_ba_Actor">ba.Actor</a> does not exist.</p>
 
 <p>Category: <a href="#class_category_Exception_Classes">Exception Classes</a>
@@ -949,7 +953,7 @@ to resume.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_AppConfig">ba.AppConfig</a></strong></h3>
-<p>inherits from: dict</p>
+<p>Inherits from: dict</p>
 <p>A special dict that holds the game's persistent configuration values.</p>
 
 <p>Category: <a href="#class_category_App_Classes">App Classes</a></p>
@@ -1063,7 +1067,7 @@ when done.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_AssetPackage">ba.AssetPackage</a></strong></h3>
-<p>inherits from: <a href="#class_ba_DependencyComponent">ba.DependencyComponent</a></p>
+<p>Inherits from: <a href="#class_ba_DependencyComponent">ba.DependencyComponent</a></p>
 <p><a href="#class_ba_DependencyComponent">ba.DependencyComponent</a> representing a bundled package of game assets.</p>
 
 <p>Category: <a href="#class_category_Asset_Classes">Asset Classes</a>
@@ -1465,7 +1469,7 @@ start_long_action(callback_when_done=<a href="#class_ba_ContextCall">ba.ContextC
 
 <hr>
 <h2><strong><a name="class_ba_CoopGameActivity">ba.CoopGameActivity</a></strong></h3>
-<p>inherits from: <a href="#class_ba_GameActivity">ba.GameActivity</a>, <a href="#class_ba_Activity">ba.Activity</a>, <a href="#class_ba_DependencyComponent">ba.DependencyComponent</a>, <a href="#class_typing_Generic">typing.Generic</a></p>
+<p>Inherits from: <a href="#class_ba_GameActivity">ba.GameActivity</a>, <a href="#class_ba_Activity">ba.Activity</a>, <a href="#class_ba_DependencyComponent">ba.DependencyComponent</a>, <a href="#class_typing_Generic">typing.Generic</a></p>
 <p>Base class for cooperative-mode games.</p>
 
 <p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a>
@@ -1581,7 +1585,7 @@ and it should begin its actual game logic.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_CoopSession">ba.CoopSession</a></strong></h3>
-<p>inherits from: <a href="#class_ba_Session">ba.Session</a></p>
+<p>Inherits from: <a href="#class_ba_Session">ba.Session</a></p>
 <p>A <a href="#class_ba_Session">ba.Session</a> which runs cooperative-mode games.</p>
 
 <p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a></p>
@@ -1669,7 +1673,7 @@ the data object is requested and when it's value is accessed.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_DeathType">ba.DeathType</a></strong></h3>
-<p>inherits from: enum.Enum</p>
+<p>Inherits from: enum.Enum</p>
 <p>A reason for a death.</p>
 
 <p>Category: <a href="#class_category_Enums">Enums</a>
@@ -1686,7 +1690,7 @@ the data object is requested and when it's value is accessed.</p>
 </ul>
 <hr>
 <h2><strong><a name="class_ba_Dependency">ba.Dependency</a></strong></h3>
-<p>inherits from: <a href="#class_typing_Generic">typing.Generic</a></p>
+<p>Inherits from: <a href="#class_typing_Generic">typing.Generic</a></p>
 <p>A dependency on a DependencyComponent (with an optional config).</p>
 
 <p>Category: <a href="#class_category_Dependency_Classes">Dependency Classes</a></p>
@@ -1759,7 +1763,7 @@ on the dep config value. (for instance a map required by a game type)</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_DependencyError">ba.DependencyError</a></strong></h3>
-<p>inherits from: Exception, BaseException</p>
+<p>Inherits from: Exception, BaseException</p>
 <p>Exception raised when one or more <a href="#class_ba_Dependency">ba.Dependency</a> items are missing.</p>
 
 <p>Category: <a href="#class_category_Exception_Classes">Exception Classes</a></p>
@@ -1786,7 +1790,7 @@ on the dep config value. (for instance a map required by a game type)</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_DependencySet">ba.DependencySet</a></strong></h3>
-<p>inherits from: <a href="#class_typing_Generic">typing.Generic</a></p>
+<p>Inherits from: <a href="#class_typing_Generic">typing.Generic</a></p>
 <p>Set of resolved dependencies and their associated data.</p>
 
 <p>Category: <a href="#class_category_Dependency_Classes">Dependency Classes</a></p>
@@ -1918,7 +1922,7 @@ its time with lingering corpses, sound effects, etc.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_DualTeamSession">ba.DualTeamSession</a></strong></h3>
-<p>inherits from: <a href="#class_ba_MultiTeamSession">ba.MultiTeamSession</a>, <a href="#class_ba_Session">ba.Session</a></p>
+<p>Inherits from: <a href="#class_ba_MultiTeamSession">ba.MultiTeamSession</a>, <a href="#class_ba_Session">ba.Session</a></p>
 <p><a href="#class_ba_Session">ba.Session</a> type for teams mode games.</p>
 
 <p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a>
@@ -1938,8 +1942,25 @@ its time with lingering corpses, sound effects, etc.</p>
 </dd>
 </dl>
 <hr>
+<h2><strong><a name="class_ba_Existable">ba.Existable</a></strong></h3>
+<p>Inherits from: <a href="#class_typing_extensions_Protocol">typing_extensions.Protocol</a></p>
+<p>A Protocol for objects supporting an exists() method.</p>
+
+<p>Category: <a href="#class_category_Protocols">Protocols</a>
+</p>
+
+<h3>Methods:</h3>
+<dl>
+<dt><h4><a name="method_ba_Existable__exists">exists()</a></dt></h4><dd>
+<p><span>exists(self) -&gt; bool</span></p>
+
+<p>Whether this object exists.</p>
+
+</dd>
+</dl>
+<hr>
 <h2><strong><a name="class_ba_FreeForAllSession">ba.FreeForAllSession</a></strong></h3>
-<p>inherits from: <a href="#class_ba_MultiTeamSession">ba.MultiTeamSession</a>, <a href="#class_ba_Session">ba.Session</a></p>
+<p>Inherits from: <a href="#class_ba_MultiTeamSession">ba.MultiTeamSession</a>, <a href="#class_ba_Session">ba.Session</a></p>
 <p><a href="#class_ba_Session">ba.Session</a> type for free-for-all mode games.</p>
 
 <p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a>
@@ -1987,7 +2008,7 @@ its time with lingering corpses, sound effects, etc.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_GameActivity">ba.GameActivity</a></strong></h3>
-<p>inherits from: <a href="#class_ba_Activity">ba.Activity</a>, <a href="#class_ba_DependencyComponent">ba.DependencyComponent</a>, <a href="#class_typing_Generic">typing.Generic</a></p>
+<p>Inherits from: <a href="#class_ba_Activity">ba.Activity</a>, <a href="#class_ba_DependencyComponent">ba.DependencyComponent</a>, <a href="#class_typing_Generic">typing.Generic</a></p>
 <p>Common base class for all game ba.Activities.</p>
 
 <p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a>
@@ -2591,7 +2612,7 @@ prefs, etc.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_InputDeviceNotFoundError">ba.InputDeviceNotFoundError</a></strong></h3>
-<p>inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, Exception, BaseException</p>
+<p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, Exception, BaseException</p>
 <p>Exception raised when an expected <a href="#class_ba_InputDevice">ba.InputDevice</a> does not exist.</p>
 
 <p>Category: <a href="#class_category_Exception_Classes">Exception Classes</a>
@@ -2884,7 +2905,7 @@ etc.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_Map">ba.Map</a></strong></h3>
-<p>inherits from: <a href="#class_ba_Actor">ba.Actor</a></p>
+<p>Inherits from: <a href="#class_ba_Actor">ba.Actor</a></p>
 <p>A game map.</p>
 
 <p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a></p>
@@ -3240,7 +3261,7 @@ Use <a href="#function_ba_getmodel">ba.getmodel</a>() to instantiate one.</p>
 
 <hr>
 <h2><strong><a name="class_ba_MultiTeamSession">ba.MultiTeamSession</a></strong></h3>
-<p>inherits from: <a href="#class_ba_Session">ba.Session</a></p>
+<p>Inherits from: <a href="#class_ba_Session">ba.Session</a></p>
 <p>Common base class for <a href="#class_ba_DualTeamSession">ba.DualTeamSession</a> and <a href="#class_ba_FreeForAllSession">ba.FreeForAllSession</a>.</p>
 
 <p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a></p>
@@ -3404,7 +3425,7 @@ signify that the default soundtrack should be used..</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_MusicPlayMode">ba.MusicPlayMode</a></strong></h3>
-<p>inherits from: enum.Enum</p>
+<p>Inherits from: enum.Enum</p>
 <p>Influences behavior when playing music.</p>
 
 <p>Category: <a href="#class_category_Enums">Enums</a>
@@ -3417,7 +3438,7 @@ signify that the default soundtrack should be used..</p>
 </ul>
 <hr>
 <h2><strong><a name="class_ba_MusicType">ba.MusicType</a></strong></h3>
-<p>inherits from: enum.Enum</p>
+<p>Inherits from: enum.Enum</p>
 <p>Types of music available to play in-game.</p>
 
 <p>Category: <a href="#class_category_Enums">Enums</a></p>
@@ -3559,7 +3580,7 @@ acting as an alternative to setting node attributes.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_NodeActor">ba.NodeActor</a></strong></h3>
-<p>inherits from: <a href="#class_ba_Actor">ba.Actor</a></p>
+<p>Inherits from: <a href="#class_ba_Actor">ba.Actor</a></p>
 <p>A simple <a href="#class_ba_Actor">ba.Actor</a> type that wraps a single <a href="#class_ba_Node">ba.Node</a>.</p>
 
 <p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a></p>
@@ -3626,7 +3647,7 @@ even if myactor is set to None.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_NodeNotFoundError">ba.NodeNotFoundError</a></strong></h3>
-<p>inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, Exception, BaseException</p>
+<p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, Exception, BaseException</p>
 <p>Exception raised when an expected <a href="#class_ba_Node">ba.Node</a> does not exist.</p>
 
 <p>Category: <a href="#class_category_Exception_Classes">Exception Classes</a>
@@ -3636,7 +3657,7 @@ even if myactor is set to None.</p>
 <p>&lt;all methods inherited from <a href="#class_ba_NotFoundError">ba.NotFoundError</a>&gt;</p>
 <hr>
 <h2><strong><a name="class_ba_NotFoundError">ba.NotFoundError</a></strong></h3>
-<p>inherits from: Exception, BaseException</p>
+<p>Inherits from: Exception, BaseException</p>
 <p>Exception raised when a referenced object does not exist.</p>
 
 <p>Category: <a href="#class_category_Exception_Classes">Exception Classes</a>
@@ -3662,7 +3683,7 @@ even if myactor is set to None.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_Permission">ba.Permission</a></strong></h3>
-<p>inherits from: enum.Enum</p>
+<p>Inherits from: enum.Enum</p>
 <p>Permissions that can be requested from the OS.</p>
 
 <p>Category: <a href="#class_category_Enums">Enums</a>
@@ -3720,7 +3741,7 @@ even if myactor is set to None.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_Player">ba.Player</a></strong></h3>
-<p>inherits from: <a href="#class_typing_Generic">typing.Generic</a></p>
+<p>Inherits from: <a href="#class_typing_Generic">typing.Generic</a></p>
 <p>A player in a specific <a href="#class_ba_Activity">ba.Activity</a>.</p>
 
 <p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a></p>
@@ -3879,7 +3900,7 @@ the type-checker properly identifies the returned value as one.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_PlayerNotFoundError">ba.PlayerNotFoundError</a></strong></h3>
-<p>inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, Exception, BaseException</p>
+<p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, Exception, BaseException</p>
 <p>Exception raised when an expected <a href="#class_ba_Player">ba.Player</a> does not exist.</p>
 
 <p>Category: <a href="#class_category_Exception_Classes">Exception Classes</a>
@@ -4097,7 +4118,7 @@ change this. Defaults to an empty string.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_ScoreType">ba.ScoreType</a></strong></h3>
-<p>inherits from: enum.Enum</p>
+<p>Inherits from: enum.Enum</p>
 <p>Type of scores.</p>
 
 <p>Category: <a href="#class_category_Enums">Enums</a>
@@ -4348,7 +4369,7 @@ session.set_activity(foo) and then <a href="#function_ba_newnode">ba.newnode</a>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_SessionNotFoundError">ba.SessionNotFoundError</a></strong></h3>
-<p>inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, Exception, BaseException</p>
+<p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, Exception, BaseException</p>
 <p>Exception raised when an expected <a href="#class_ba_Session">ba.Session</a> does not exist.</p>
 
 <p>Category: <a href="#class_category_Exception_Classes">Exception Classes</a>
@@ -4513,7 +4534,7 @@ other players.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_SessionPlayerNotFoundError">ba.SessionPlayerNotFoundError</a></strong></h3>
-<p>inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, Exception, BaseException</p>
+<p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, Exception, BaseException</p>
 <p>Exception raised when an expected <a href="#class_ba_SessionPlayer">ba.SessionPlayer</a> does not exist.</p>
 
 <p>Category: <a href="#class_category_Exception_Classes">Exception Classes</a>
@@ -4586,7 +4607,7 @@ of the session.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_SessionTeamNotFoundError">ba.SessionTeamNotFoundError</a></strong></h3>
-<p>inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, Exception, BaseException</p>
+<p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, Exception, BaseException</p>
 <p>Exception raised when an expected <a href="#class_ba_SessionTeam">ba.SessionTeam</a> does not exist.</p>
 
 <p>Category: <a href="#class_category_Exception_Classes">Exception Classes</a>
@@ -4622,7 +4643,7 @@ of the session.</p>
 
 <hr>
 <h2><strong><a name="class_ba_SpecialChar">ba.SpecialChar</a></strong></h3>
-<p>inherits from: enum.Enum</p>
+<p>Inherits from: enum.Enum</p>
 <p>Special characters the game can print.</p>
 
 <p>Category: <a href="#class_category_Enums">Enums</a>
@@ -4829,7 +4850,7 @@ of the session.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_Team">ba.Team</a></strong></h3>
-<p>inherits from: <a href="#class_typing_Generic">typing.Generic</a></p>
+<p>Inherits from: <a href="#class_typing_Generic">typing.Generic</a></p>
 <p>A team in a specific <a href="#class_ba_Activity">ba.Activity</a>.</p>
 
 <p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a></p>
@@ -4859,7 +4880,7 @@ of the session.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_TeamGameActivity">ba.TeamGameActivity</a></strong></h3>
-<p>inherits from: <a href="#class_ba_GameActivity">ba.GameActivity</a>, <a href="#class_ba_Activity">ba.Activity</a>, <a href="#class_ba_DependencyComponent">ba.DependencyComponent</a>, <a href="#class_typing_Generic">typing.Generic</a></p>
+<p>Inherits from: <a href="#class_ba_GameActivity">ba.GameActivity</a>, <a href="#class_ba_Activity">ba.Activity</a>, <a href="#class_ba_DependencyComponent">ba.DependencyComponent</a>, <a href="#class_typing_Generic">typing.Generic</a></p>
 <p>Base class for teams and free-for-all mode games.</p>
 
 <p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a></p>
@@ -5074,7 +5095,7 @@ Results for a completed <a href="#class_ba_TeamGameActivity">ba.TeamGameActivity
 </dl>
 <hr>
 <h2><strong><a name="class_ba_TeamNotFoundError">ba.TeamNotFoundError</a></strong></h3>
-<p>inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, Exception, BaseException</p>
+<p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, Exception, BaseException</p>
 <p>Exception raised when an expected <a href="#class_ba_Team">ba.Team</a> does not exist.</p>
 
 <p>Category: <a href="#class_category_Exception_Classes">Exception Classes</a>
@@ -5110,7 +5131,7 @@ Results for a completed <a href="#class_ba_TeamGameActivity">ba.TeamGameActivity
 </dl>
 <hr>
 <h2><strong><a name="class_ba_TimeFormat">ba.TimeFormat</a></strong></h3>
-<p>inherits from: enum.Enum</p>
+<p>Inherits from: enum.Enum</p>
 <p>Specifies the format time values are provided in.</p>
 
 <p>Category: <a href="#class_category_Enums">Enums</a>
@@ -5188,7 +5209,7 @@ self.t = <a href="#class_ba_Timer">ba.Timer</a>(0.3, say_it, repeat=True)
 
 <hr>
 <h2><strong><a name="class_ba_TimeType">ba.TimeType</a></strong></h3>
-<p>inherits from: enum.Enum</p>
+<p>Inherits from: enum.Enum</p>
 <p>Specifies the type of time for various operations to target/use.</p>
 
 <p>Category: <a href="#class_category_Enums">Enums</a></p>
@@ -5427,7 +5448,7 @@ widgets.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_WidgetNotFoundError">ba.WidgetNotFoundError</a></strong></h3>
-<p>inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, Exception, BaseException</p>
+<p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, Exception, BaseException</p>
 <p>Exception raised when an expected <a href="#class_ba_Widget">ba.Widget</a> does not exist.</p>
 
 <p>Category: <a href="#class_category_Exception_Classes">Exception Classes</a>
@@ -5698,7 +5719,7 @@ settings, exiting element counts, or other factors.</p>
 <h2><strong><a name="function_ba_existing">ba.existing()</a></strong></h3>
 <p><span>existing(obj: Optional[ExistableType]) -&gt; Optional[ExistableType]</span></p>
 
-<p>Convert invalid references to None.</p>
+<p>Convert invalid references to None for any <a href="#class_ba_Existable">ba.Existable</a> type.</p>
 
 <p>Category: <a href="#function_category_Gameplay_Functions">Gameplay Functions</a></p>
 
