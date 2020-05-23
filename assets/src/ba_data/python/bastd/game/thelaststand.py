@@ -26,13 +26,13 @@ import random
 from typing import TYPE_CHECKING
 
 import ba
-from bastd.actor import playerspaz
 from bastd.actor import spazbot
+from bastd.actor.playerspaz import PlayerSpaz
 from bastd.actor.bomb import TNTSpawner
+from bastd.actor.scoreboard import Scoreboard
 
 if TYPE_CHECKING:
     from typing import Any, Dict, Type, List, Optional, Sequence
-    from bastd.actor.scoreboard import Scoreboard
 
 
 class Player(ba.Player['Team']):
@@ -58,6 +58,8 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
 
     # And of course the most important part.
     slow_motion = True
+
+    default_music = ba.MusicType.EPIC
 
     def __init__(self, settings: Dict[str, Any]):
         settings['map'] = 'Rampage'
@@ -98,8 +100,6 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
         }  # yapf: disable
 
     def on_transition_in(self) -> None:
-        from bastd.actor.scoreboard import Scoreboard
-        self.default_music = ba.MusicType.EPIC
         super().on_transition_in()
         ba.timer(1.3, ba.Call(ba.playsound, self._new_wave_sound))
         self._scoreboard = Scoreboard(label=ba.Lstr(resource='scoreText'),
@@ -198,11 +198,11 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
         for player in self.players:
             try:
                 if player.is_alive():
-                    assert isinstance(player.actor, playerspaz.PlayerSpaz)
+                    assert isinstance(player.actor, PlayerSpaz)
                     assert player.actor.node
                     playerpts.append(player.actor.node.position)
-            except Exception as exc:
-                print('ERROR in _update_bots', exc)
+            except Exception:
+                ba.print_exception('Error updating bots')
         for i in range(3):
             for playerpt in playerpts:
                 dists[i] += abs(playerpt[0] - botspawnpts[i][0])
@@ -244,7 +244,7 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
             spawntype[1][1] += spawntype[1][2]  # incr spawn rate incr rate
 
     def _update_scores(self) -> None:
-        # Achievements in default preset only.
+        # Do achievements in default preset only.
         score = self._score
         if self._preset == 'default':
             if score >= 250:
@@ -298,7 +298,6 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
             super().handlemessage(msg)
 
     def _on_got_scores_to_beat(self, scores: List[Dict[str, Any]]) -> None:
-        # FIXME: Unify args.
         self._show_standard_scores_to_beat_ui(scores)
 
     def end_game(self) -> None:

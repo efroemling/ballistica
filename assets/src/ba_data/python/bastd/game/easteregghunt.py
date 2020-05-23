@@ -142,8 +142,7 @@ class EasterEggHuntGame(ba.TeamGameActivity[Player, Team]):
                 assert isinstance(egg, Egg)
                 spaz = playernode.getdelegate()
                 assert isinstance(spaz, PlayerSpaz)
-                player = (spaz.getplayer()
-                          if hasattr(spaz, 'getplayer') else None)
+                player = spaz.getplayer(Player)
                 if player and egg:
                     player.team.score += 1
 

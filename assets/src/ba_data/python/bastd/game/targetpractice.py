@@ -29,11 +29,14 @@ import random
 from typing import TYPE_CHECKING
 
 import ba
+from bastd.actor.scoreboard import Scoreboard
+from bastd.actor.onscreencountdown import OnScreenCountdown
+from bastd.actor.bomb import Bomb
+from bastd.actor.popuptext import PopupText
 
 if TYPE_CHECKING:
     from typing import Any, Type, List, Dict, Optional, Sequence
-    from bastd.actor.onscreencountdown import OnScreenCountdown
-    from bastd.actor.bomb import Bomb, Blast
+    from bastd.actor.bomb import Blast
 
 
 class Player(ba.Player['Team']):
@@ -80,7 +83,6 @@ class TargetPracticeGame(ba.TeamGameActivity[Player, Team]):
                 or issubclass(sessiontype, ba.MultiTeamSession))
 
     def __init__(self, settings: Dict[str, Any]):
-        from bastd.actor.scoreboard import Scoreboard
         super().__init__(settings)
         self._scoreboard = Scoreboard()
         self._targets: List[Target] = []
@@ -98,7 +100,6 @@ class TargetPracticeGame(ba.TeamGameActivity[Player, Team]):
             self.update_scoreboard()
 
     def on_begin(self) -> None:
-        from bastd.actor.onscreencountdown import OnScreenCountdown
         super().on_begin()
         self.update_scoreboard()
 
@@ -141,9 +142,9 @@ class TargetPracticeGame(ba.TeamGameActivity[Player, Team]):
                 ypos = random.uniform(-1.0, 1.0)
                 if xpos * xpos + ypos * ypos < 1.0:
                     break
-            points.append((8.0 * xpos, 2.2, -3.5 + 5.0 * ypos))
+            points.append(ba.Vec3(8.0 * xpos, 2.2, -3.5 + 5.0 * ypos))
 
-        def get_min_dist_from_target(pnt: Sequence[float]) -> float:
+        def get_min_dist_from_target(pnt: ba.Vec3) -> float:
             return min((t.get_dist_from_point(pnt) for t in self._targets))
 
         # If we have existing targets, use the point with the highest
@@ -157,7 +158,6 @@ class TargetPracticeGame(ba.TeamGameActivity[Player, Team]):
 
     def _on_spaz_dropped_bomb(self, spaz: ba.Actor, bomb: ba.Actor) -> None:
         del spaz  # Unused.
-        from bastd.actor.bomb import Bomb
 
         # Wire up this bomb to inform us when it blows up.
         assert isinstance(bomb, Bomb)
@@ -281,14 +281,13 @@ class Target(ba.Actor):
         else:
             super().handlemessage(msg)
 
-    def get_dist_from_point(self, pos: Sequence[float]) -> float:
+    def get_dist_from_point(self, pos: ba.Vec3) -> float:
         """Given a point, returns distance squared from it."""
-        return (ba.Vec3(pos) - self._position).length()
+        return (pos - self._position).length()
 
     def do_hit_at_position(self, pos: Sequence[float], player: Player) -> bool:
         """Handle a bomb hit at the given position."""
         # pylint: disable=too-many-statements
-        from bastd.actor import popuptext
         activity = self.activity
 
         # Ignore hits if the game is over or if we've already been hit
@@ -357,10 +356,10 @@ class Target(ba.Actor):
             if len(activity.players) > 1:
                 popupcolor = ba.safecolor(player.color, target_intensity=0.75)
                 popupstr += ' ' + player.get_name()
-            popuptext.PopupText(popupstr,
-                                position=self._position,
-                                color=popupcolor,
-                                scale=popupscale).autoretain()
+            PopupText(popupstr,
+                      position=self._position,
+                      color=popupcolor,
+                      scale=popupscale).autoretain()
 
             # Give this player's team points and update the score-board.
             player.team.score += points

@@ -30,6 +30,7 @@ from typing import TYPE_CHECKING
 
 import ba
 from bastd.actor.flag import Flag
+from bastd.actor.scoreboard import Scoreboard
 
 if TYPE_CHECKING:
     from typing import Any, Optional, Type, List, Dict, Sequence, Union
@@ -116,7 +117,6 @@ class ConquestGame(ba.TeamGameActivity[Player, Team]):
         return ba.getmaps('conquest')
 
     def __init__(self, settings: Dict[str, Any]):
-        from bastd.actor.scoreboard import Scoreboard
         super().__init__(settings)
         self._scoreboard = Scoreboard()
         self._score_sound = ba.getsound('score')

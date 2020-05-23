@@ -28,13 +28,15 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import ba
+from bastd.actor.scoreboard import Scoreboard
+from bastd.actor import powerupbox
 
 if TYPE_CHECKING:
     from typing import Any, Sequence, Dict, Type, List, Optional, Union
 
 
 class PuckDeathMessage:
-    """Inform an object that a puck has died."""
+    """Inform something that a puck has died."""
 
     def __init__(self, puck: Puck):
         self.puck = puck
@@ -145,8 +147,6 @@ class HockeyGame(ba.TeamGameActivity[Player, Team]):
         return ba.getmaps('hockey')
 
     def __init__(self, settings: Dict[str, Any]):
-        from bastd.actor.scoreboard import Scoreboard
-        from bastd.actor import powerupbox
         super().__init__(settings)
         self._scoreboard = Scoreboard()
         self._cheer_sound = ba.getsound('cheer')

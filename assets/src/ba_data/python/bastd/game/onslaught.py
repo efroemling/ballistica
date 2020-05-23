@@ -30,16 +30,27 @@ import random
 from typing import TYPE_CHECKING
 
 import ba
-from bastd.actor import bomb as stdbomb
-from bastd.actor import playerspaz, spazbot
+from bastd.actor.bomb import TNTSpawner
+from bastd.actor.playerspaz import PlayerSpazHurtMessage
+from bastd.actor.scoreboard import Scoreboard
+from bastd.actor.spazbot import (
+    SpazBotDeathMessage, BotSet, ChargerBot, StickyBot, BomberBot,
+    BomberBotLite, BrawlerBot, BrawlerBotLite, TriggerBot, BomberBotStaticLite,
+    TriggerBotStatic, BomberBotProStatic, TriggerBotPro, ExplodeyBot,
+    BrawlerBotProShielded, ChargerBotProShielded, BomberBotPro,
+    TriggerBotProShielded, BrawlerBotPro, BomberBotProShielded)
 
 if TYPE_CHECKING:
     from typing import Any, Type, Dict, Optional, List, Tuple, Union, Sequence
-    from bastd.actor.scoreboard import Scoreboard
+    from bastd.actor.spazbot import SpazBot
 
 
 class Player(ba.Player['Team']):
     """Our player type for this game."""
+
+    def __init__(self) -> None:
+        self.has_been_hurt = False
+        self.respawn_wave = 0
 
 
 class Team(ba.Team[Player]):
@@ -114,8 +125,8 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         self._have_tnt = False
         self._excludepowerups: Optional[List[str]] = None
         self._waves: Optional[List[Dict[str, Any]]] = None
-        self._tntspawner: Optional[stdbomb.TNTSpawner] = None
-        self._bots: Optional[spazbot.BotSet] = None
+        self._tntspawner: Optional[TNTSpawner] = None
+        self._bots: Optional[BotSet] = None
         self._powerup_drop_timer: Optional[ba.Timer] = None
         self._time_bonus_timer: Optional[ba.Timer] = None
         self._time_bonus_text: Optional[ba.NodeActor] = None
@@ -127,17 +138,13 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         self._tnt_kills = 0
 
     def on_transition_in(self) -> None:
-        from bastd.actor.scoreboard import Scoreboard
         super().on_transition_in()
-
+        session = ba.getsession()
         # Show special landmine tip on rookie preset.
         if self._preset in ['rookie', 'rookie_easy']:
             # Show once per session only (then we revert to regular tips).
-            if not hasattr(ba.getsession(),
-                           '_g_showed_onslaught_land_mine_tip'):
-                # pylint: disable=protected-access
-                ba.getsession(  # type: ignore
-                )._g_showed_onslaught_land_mine_tip = True
+            if not getattr(session, '_g_showed_onslaught_landmine_tip', False):
+                setattr(session, '_g_showed_onslaught_landmine_tip', True)
                 self.tips = [{
                     'tip': 'Land-mines are a good way'
                            ' to stop speedy enemies.',
@@ -148,10 +155,8 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         # Show special tnt tip on pro preset.
         if self._preset in ['pro', 'pro_easy']:
             # Show once per session only (then we revert to regular tips).
-            if not hasattr(ba.getsession(), '_g_showed_onslaught_tnt_tip'):
-                # pylint: disable=protected-access
-                ba.getsession(  # type: ignore
-                )._g_showed_onslaught_tnt_tip = True
+            if not getattr(session, '_g_showed_onslaught_tnt_tip', False):
+                setattr(session, '_g_showed_onslaught_tnt_tip', True)
                 self.tips = [{
                     'tip': 'Take out a group of enemies by\n'
                            'setting off a bomb near a TNT box.',
@@ -162,10 +167,8 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         # Show special curse tip on uber preset.
         if self._preset in ['uber', 'uber_easy']:
             # Show once per session only (then we revert to regular tips).
-            if not hasattr(ba.getsession(), '_g_showed_onslaught_curse_tip'):
-                # pylint: disable=protected-access
-                ba.getsession(  # type: ignore
-                )._g_showed_onslaught_curse_tip = True
+            if not getattr(session, '_g_showed_onslaught_curse_tip', False):
+                setattr(session, '_g_showed_onslaught_curse_tip', True)
                 self.tips = [{
                     'tip': 'Curse boxes turn you into a ticking time bomb.\n'
                            'The only cure is to quickly grab a health-pack.',
@@ -203,38 +206,38 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
             self._waves = [
                 {'base_angle': 195,
                  'entries': [
-                     {'type': spazbot.BomberBotLite, 'spacing': 5},
+                     {'type': BomberBotLite, 'spacing': 5},
                  ] * player_count},
                 {'base_angle': 130,
                  'entries': [
-                     {'type': spazbot.BrawlerBotLite, 'spacing': 5},
+                     {'type': BrawlerBotLite, 'spacing': 5},
                  ] * player_count},
                 {'base_angle': 195,
                  'entries': [
-                     {'type': spazbot.BomberBotLite, 'spacing': 10},
+                     {'type': BomberBotLite, 'spacing': 10},
                  ] * (player_count + 1)},
                 {'base_angle': 130,
                  'entries': [
-                     {'type': spazbot.BrawlerBotLite, 'spacing': 10},
+                     {'type': BrawlerBotLite, 'spacing': 10},
                  ] * (player_count + 1)},
                 {'base_angle': 130,
                  'entries': [
-                     {'type': spazbot.BrawlerBotLite, 'spacing': 5}
+                     {'type': BrawlerBotLite, 'spacing': 5}
                          if player_count > 1 else None,
-                     {'type': spazbot.BrawlerBotLite, 'spacing': 5},
+                     {'type': BrawlerBotLite, 'spacing': 5},
                      {'type': None, 'spacing': 30},
-                     {'type': spazbot.BomberBotLite, 'spacing': 5}
+                     {'type': BomberBotLite, 'spacing': 5}
                          if player_count > 3 else None,
-                     {'type': spazbot.BomberBotLite, 'spacing': 5},
+                     {'type': BomberBotLite, 'spacing': 5},
                      {'type': None, 'spacing': 30},
-                     {'type': spazbot.BrawlerBotLite, 'spacing': 5},
-                     {'type': spazbot.BrawlerBotLite, 'spacing': 5}
+                     {'type': BrawlerBotLite, 'spacing': 5},
+                     {'type': BrawlerBotLite, 'spacing': 5}
                          if player_count > 2 else None,
                  ]},
                 {'base_angle': 195,
                  'entries': [
-                     {'type': spazbot.TriggerBot, 'spacing': 90},
-                     {'type': spazbot.TriggerBot, 'spacing': 90}
+                     {'type': TriggerBot, 'spacing': 90},
+                     {'type': TriggerBot, 'spacing': 90}
                          if player_count > 1 else None,
                  ]},
             ]  # yapf: disable
@@ -244,60 +247,60 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
             self._excludepowerups = ['curse']
             self._waves = [
                 {'entries': [
-                    {'type': spazbot.ChargerBot, 'point': 'left_upper_more'}
+                    {'type': ChargerBot, 'point': 'left_upper_more'}
                         if player_count > 2 else None,
-                    {'type': spazbot.ChargerBot, 'point': 'left_upper'},
+                    {'type': ChargerBot, 'point': 'left_upper'},
                 ]},
                 {'entries': [
-                    {'type': spazbot.BomberBotStaticLite,
+                    {'type': BomberBotStaticLite,
                      'point': 'turret_top_right'},
-                    {'type': spazbot.BrawlerBotLite, 'point': 'right_upper'},
-                    {'type': spazbot.BrawlerBotLite, 'point': 'right_lower'}
+                    {'type': BrawlerBotLite, 'point': 'right_upper'},
+                    {'type': BrawlerBotLite, 'point': 'right_lower'}
                         if player_count > 1 else None,
-                    {'type': spazbot.BomberBotStaticLite,
+                    {'type': BomberBotStaticLite,
                      'point': 'turret_bottom_right'}
                          if player_count > 2 else None,
                 ]},
                 {'entries': [
-                    {'type': spazbot.BomberBotStaticLite,
+                    {'type': BomberBotStaticLite,
                      'point': 'turret_bottom_left'},
-                    {'type': spazbot.TriggerBot, 'point': 'left'},
-                    {'type': spazbot.TriggerBot, 'point': 'left_lower'}
+                    {'type': TriggerBot, 'point': 'left'},
+                    {'type': TriggerBot, 'point': 'left_lower'}
                         if player_count > 1 else None,
-                    {'type': spazbot.TriggerBot, 'point': 'left_upper'}
+                    {'type': TriggerBot, 'point': 'left_upper'}
                         if player_count > 2 else None,
                 ]},
                 {'entries': [
-                    {'type': spazbot.BrawlerBotLite, 'point': 'top_right'},
-                    {'type': spazbot.BrawlerBot, 'point': 'top_half_right'}
+                    {'type': BrawlerBotLite, 'point': 'top_right'},
+                    {'type': BrawlerBot, 'point': 'top_half_right'}
                         if player_count > 1 else None,
-                    {'type': spazbot.BrawlerBotLite, 'point': 'top_left'},
-                    {'type': spazbot.BrawlerBotLite, 'point': 'top_half_left'}
+                    {'type': BrawlerBotLite, 'point': 'top_left'},
+                    {'type': BrawlerBotLite, 'point': 'top_half_left'}
                         if player_count > 2 else None,
-                    {'type': spazbot.BrawlerBot, 'point': 'top'},
-                    {'type': spazbot.BomberBotStaticLite,
+                    {'type': BrawlerBot, 'point': 'top'},
+                    {'type': BomberBotStaticLite,
                      'point': 'turret_top_middle'},
                 ]},
                 {'entries': [
-                    {'type': spazbot.TriggerBotStatic,
+                    {'type': TriggerBotStatic,
                      'point': 'turret_bottom_left'},
-                    {'type': spazbot.TriggerBotStatic,
+                    {'type': TriggerBotStatic,
                      'point': 'turret_bottom_right'},
-                    {'type': spazbot.TriggerBot, 'point': 'bottom'},
-                    {'type': spazbot.TriggerBot, 'point': 'bottom_half_right'}
+                    {'type': TriggerBot, 'point': 'bottom'},
+                    {'type': TriggerBot, 'point': 'bottom_half_right'}
                         if player_count > 1 else None,
-                    {'type': spazbot.TriggerBot, 'point': 'bottom_half_left'}
+                    {'type': TriggerBot, 'point': 'bottom_half_left'}
                         if player_count > 2 else None,
                 ]},
                 {'entries': [
-                    {'type': spazbot.BomberBotStaticLite,
+                    {'type': BomberBotStaticLite,
                      'point': 'turret_top_left'},
-                    {'type': spazbot.BomberBotStaticLite,
+                    {'type': BomberBotStaticLite,
                      'point': 'turret_top_right'},
-                    {'type': spazbot.ChargerBot, 'point': 'bottom'},
-                    {'type': spazbot.ChargerBot, 'point': 'bottom_half_left'}
+                    {'type': ChargerBot, 'point': 'bottom'},
+                    {'type': ChargerBot, 'point': 'bottom_half_left'}
                         if player_count > 1 else None,
-                    {'type': spazbot.ChargerBot, 'point': 'bottom_half_right'}
+                    {'type': ChargerBot, 'point': 'bottom_half_right'}
                         if player_count > 2 else None,
                 ]},
             ]  # yapf: disable
@@ -308,78 +311,78 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
             self._waves = [
                 {'base_angle': -50,
                  'entries': [
-                     {'type': spazbot.BrawlerBot, 'spacing': 12}
+                     {'type': BrawlerBot, 'spacing': 12}
                          if player_count > 3 else None,
-                     {'type': spazbot.BrawlerBot, 'spacing': 12},
-                     {'type': spazbot.BomberBot, 'spacing': 6},
-                     {'type': spazbot.BomberBot, 'spacing': 6}
+                     {'type': BrawlerBot, 'spacing': 12},
+                     {'type': BomberBot, 'spacing': 6},
+                     {'type': BomberBot, 'spacing': 6}
                          if self._preset == 'pro' else None,
-                     {'type': spazbot.BomberBot, 'spacing': 6}
+                     {'type': BomberBot, 'spacing': 6}
                          if player_count > 1 else None,
-                     {'type': spazbot.BrawlerBot, 'spacing': 12},
-                     {'type': spazbot.BrawlerBot, 'spacing': 12}
+                     {'type': BrawlerBot, 'spacing': 12},
+                     {'type': BrawlerBot, 'spacing': 12}
                          if player_count > 2 else None,
                  ]},
                 {'base_angle': 180,
                  'entries': [
-                     {'type': spazbot.BrawlerBot, 'spacing': 6}
+                     {'type': BrawlerBot, 'spacing': 6}
                          if player_count > 3 else None,
-                     {'type': spazbot.BrawlerBot, 'spacing': 6}
+                     {'type': BrawlerBot, 'spacing': 6}
                          if self._preset == 'pro' else None,
-                     {'type': spazbot.BrawlerBot, 'spacing': 6},
-                     {'type': spazbot.ChargerBot, 'spacing': 45},
-                     {'type': spazbot.ChargerBot, 'spacing': 45}
+                     {'type': BrawlerBot, 'spacing': 6},
+                     {'type': ChargerBot, 'spacing': 45},
+                     {'type': ChargerBot, 'spacing': 45}
                          if player_count > 1 else None,
-                     {'type': spazbot.BrawlerBot, 'spacing': 6},
-                     {'type': spazbot.BrawlerBot, 'spacing': 6}
+                     {'type': BrawlerBot, 'spacing': 6},
+                     {'type': BrawlerBot, 'spacing': 6}
                          if self._preset == 'pro' else None,
-                     {'type': spazbot.BrawlerBot, 'spacing': 6}
+                     {'type': BrawlerBot, 'spacing': 6}
                          if player_count > 2 else None,
                  ]},
                 {'base_angle': 0,
                  'entries': [
-                     {'type': spazbot.ChargerBot, 'spacing': 30},
-                     {'type': spazbot.TriggerBot, 'spacing': 30},
-                     {'type': spazbot.TriggerBot, 'spacing': 30},
-                     {'type': spazbot.TriggerBot, 'spacing': 30}
+                     {'type': ChargerBot, 'spacing': 30},
+                     {'type': TriggerBot, 'spacing': 30},
+                     {'type': TriggerBot, 'spacing': 30},
+                     {'type': TriggerBot, 'spacing': 30}
                          if self._preset == 'pro' else None,
-                     {'type': spazbot.TriggerBot, 'spacing': 30}
+                     {'type': TriggerBot, 'spacing': 30}
                          if player_count > 1 else None,
-                     {'type': spazbot.TriggerBot, 'spacing': 30}
+                     {'type': TriggerBot, 'spacing': 30}
                          if player_count > 3 else None,
-                     {'type': spazbot.ChargerBot, 'spacing': 30},
+                     {'type': ChargerBot, 'spacing': 30},
                  ]},
                 {'base_angle': 90,
                 'entries': [
-                    {'type': spazbot.StickyBot, 'spacing': 50},
-                    {'type': spazbot.StickyBot, 'spacing': 50}
+                    {'type': StickyBot, 'spacing': 50},
+                    {'type': StickyBot, 'spacing': 50}
                         if self._preset == 'pro' else None,
-                    {'type': spazbot.StickyBot, 'spacing': 50},
-                    {'type': spazbot.StickyBot, 'spacing': 50}
+                    {'type': StickyBot, 'spacing': 50},
+                    {'type': StickyBot, 'spacing': 50}
                         if player_count > 1 else None,
-                    {'type': spazbot.StickyBot, 'spacing': 50}
+                    {'type': StickyBot, 'spacing': 50}
                         if player_count > 3 else None,
                 ]},
                 {'base_angle': 0,
                 'entries': [
-                    {'type': spazbot.TriggerBot, 'spacing': 72},
-                    {'type': spazbot.TriggerBot, 'spacing': 72},
-                    {'type': spazbot.TriggerBot, 'spacing': 72}
+                    {'type': TriggerBot, 'spacing': 72},
+                    {'type': TriggerBot, 'spacing': 72},
+                    {'type': TriggerBot, 'spacing': 72}
                         if self._preset == 'pro' else None,
-                    {'type': spazbot.TriggerBot, 'spacing': 72},
-                    {'type': spazbot.TriggerBot, 'spacing': 72},
-                    {'type': spazbot.TriggerBot, 'spacing': 36}
+                    {'type': TriggerBot, 'spacing': 72},
+                    {'type': TriggerBot, 'spacing': 72},
+                    {'type': TriggerBot, 'spacing': 36}
                         if player_count > 2 else None,
                 ]},
                 {'base_angle': 30,
                  'entries': [
-                     {'type': spazbot.ChargerBotProShielded, 'spacing': 50},
-                     {'type': spazbot.ChargerBotProShielded, 'spacing': 50},
-                     {'type': spazbot.ChargerBotProShielded, 'spacing': 50}
+                     {'type': ChargerBotProShielded, 'spacing': 50},
+                     {'type': ChargerBotProShielded, 'spacing': 50},
+                     {'type': ChargerBotProShielded, 'spacing': 50}
                          if self._preset == 'pro' else None,
-                     {'type': spazbot.ChargerBotProShielded, 'spacing': 50}
+                     {'type': ChargerBotProShielded, 'spacing': 50}
                          if player_count > 1 else None,
-                     {'type': spazbot.ChargerBotProShielded, 'spacing': 50}
+                     {'type': ChargerBotProShielded, 'spacing': 50}
                          if player_count > 2 else None,
                 ]}
             ]  # yapf: disable
@@ -395,84 +398,84 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
             self._excludepowerups = []
             self._waves = [
                 {'entries': [
-                    {'type': spazbot.BomberBotProStatic,
+                    {'type': BomberBotProStatic,
                      'point': 'turret_top_middle_left'}
                         if hard else None,
-                    {'type': spazbot.BomberBotProStatic,
+                    {'type': BomberBotProStatic,
                      'point': 'turret_top_middle_right'},
-                    {'type': spazbot.BomberBotProStatic,
+                    {'type': BomberBotProStatic,
                      'point': 'turret_top_left'}
                         if player_count > 2 else None,
-                    {'type': spazbot.ExplodeyBot, 'point': 'top_right'},
+                    {'type': ExplodeyBot, 'point': 'top_right'},
                     {'type': 'delay', 'duration': 4.0},
-                    {'type': spazbot.ExplodeyBot, 'point': 'top_left'},
+                    {'type': ExplodeyBot, 'point': 'top_left'},
                 ]},
                 {'entries': [
-                    {'type': spazbot.ChargerBot, 'point': 'left'},
-                    {'type': spazbot.ChargerBot, 'point': 'right'},
-                    {'type': spazbot.ChargerBot, 'point': 'right_upper_more'}
+                    {'type': ChargerBot, 'point': 'left'},
+                    {'type': ChargerBot, 'point': 'right'},
+                    {'type': ChargerBot, 'point': 'right_upper_more'}
                         if player_count > 2 else None,
-                    {'type': spazbot.BomberBotProStatic,
+                    {'type': BomberBotProStatic,
                      'point': 'turret_top_left'},
-                    {'type': spazbot.BomberBotProStatic,
+                    {'type': BomberBotProStatic,
                      'point': 'turret_top_right'},
                 ]},
                 {'entries': [
-                    {'type': spazbot.TriggerBotPro, 'point': 'top_right'},
-                    {'type': spazbot.TriggerBotPro,
+                    {'type': TriggerBotPro, 'point': 'top_right'},
+                    {'type': TriggerBotPro,
                      'point': 'right_upper_more'}
                         if player_count > 1 else None,
-                    {'type': spazbot.TriggerBotPro, 'point': 'right_upper'},
-                    {'type': spazbot.TriggerBotPro, 'point': 'right_lower'}
+                    {'type': TriggerBotPro, 'point': 'right_upper'},
+                    {'type': TriggerBotPro, 'point': 'right_lower'}
                         if hard else None,
-                    {'type': spazbot.TriggerBotPro,
+                    {'type': TriggerBotPro,
                      'point': 'right_lower_more'}
                         if player_count > 2 else None,
-                    {'type': spazbot.TriggerBotPro, 'point': 'bottom_right'},
+                    {'type': TriggerBotPro, 'point': 'bottom_right'},
                 ]},
                 {'entries': [
-                    {'type': spazbot.ChargerBotProShielded,
+                    {'type': ChargerBotProShielded,
                      'point': 'bottom_right'},
-                    {'type': spazbot.ChargerBotProShielded, 'point': 'bottom'}
+                    {'type': ChargerBotProShielded, 'point': 'bottom'}
                         if player_count > 2 else None,
-                    {'type': spazbot.ChargerBotProShielded,
+                    {'type': ChargerBotProShielded,
                      'point': 'bottom_left'},
-                    {'type': spazbot.ChargerBotProShielded, 'point': 'top'}
+                    {'type': ChargerBotProShielded, 'point': 'top'}
                         if hard else None,
-                    {'type': spazbot.BomberBotProStatic,
+                    {'type': BomberBotProStatic,
                      'point': 'turret_top_middle'},
                 ]},
                 {'entries': [
-                    {'type': spazbot.ExplodeyBot, 'point': 'left_upper'},
+                    {'type': ExplodeyBot, 'point': 'left_upper'},
                     {'type': 'delay', 'duration': 1.0},
-                    {'type': spazbot.BrawlerBotProShielded,
+                    {'type': BrawlerBotProShielded,
                      'point': 'left_lower'},
-                    {'type': spazbot.BrawlerBotProShielded,
+                    {'type': BrawlerBotProShielded,
                      'point': 'left_lower_more'},
                     {'type': 'delay', 'duration': 4.0},
-                    {'type': spazbot.ExplodeyBot, 'point': 'right_upper'},
+                    {'type': ExplodeyBot, 'point': 'right_upper'},
                     {'type': 'delay', 'duration': 1.0},
-                    {'type': spazbot.BrawlerBotProShielded,
+                    {'type': BrawlerBotProShielded,
                      'point': 'right_lower'},
-                    {'type': spazbot.BrawlerBotProShielded,
+                    {'type': BrawlerBotProShielded,
                      'point': 'right_upper_more'},
                     {'type': 'delay', 'duration': 4.0},
-                    {'type': spazbot.ExplodeyBot, 'point': 'left'},
+                    {'type': ExplodeyBot, 'point': 'left'},
                     {'type': 'delay', 'duration': 5.0},
-                    {'type': spazbot.ExplodeyBot, 'point': 'right'},
+                    {'type': ExplodeyBot, 'point': 'right'},
                 ]},
                 {'entries': [
-                    {'type': spazbot.BomberBotProStatic,
+                    {'type': BomberBotProStatic,
                      'point': 'turret_top_left'},
-                    {'type': spazbot.BomberBotProStatic,
+                    {'type': BomberBotProStatic,
                      'point': 'turret_top_right'},
-                    {'type': spazbot.BomberBotProStatic,
+                    {'type': BomberBotProStatic,
                      'point': 'turret_bottom_left'},
-                    {'type': spazbot.BomberBotProStatic,
+                    {'type': BomberBotProStatic,
                      'point': 'turret_bottom_right'},
-                    {'type': spazbot.BomberBotProStatic,
+                    {'type': BomberBotProStatic,
                      'point': 'turret_top_middle_left'} if hard else None,
-                    {'type': spazbot.BomberBotProStatic,
+                    {'type': BomberBotProStatic,
                      'point': 'turret_top_middle_right'} if hard else None,
                 ]
             }]  # yapf: disable
@@ -498,11 +501,11 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
 
         # Our TNT spawner (if applicable).
         if self._have_tnt:
-            self._tntspawner = stdbomb.TNTSpawner(position=self._tntspawnpos)
+            self._tntspawner = TNTSpawner(position=self._tntspawnpos)
 
         self.setup_low_life_warning_sound()
         self._update_scores()
-        self._bots = spazbot.BotSet()
+        self._bots = BotSet()
         ba.timer(4.0, self._start_updating_waves)
 
     def _on_got_scores_to_beat(self, scores: List[Dict[str, Any]]) -> None:
@@ -852,11 +855,10 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
                 assert self._waves is not None
                 if (not player.is_alive() and
                     (self._preset in ['endless', 'endless_tournament'] or
-                     (player.gamedata['respawn_wave'] <= len(self._waves)))):
+                     (player.respawn_wave <= len(self._waves)))):
                     rtxt = ba.Lstr(resource='onslaughtRespawnText',
                                    subs=[('${PLAYER}', player.get_name()),
-                                         ('${WAVE}',
-                                          str(player.gamedata['respawn_wave']))
+                                         ('${WAVE}', str(player.respawn_wave))
                                          ])
                     text = ba.Lstr(value='${A}${B}\n',
                                    subs=[
@@ -881,7 +883,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         if self._wave > 1 and not self.is_waiting_for_continue():
             for player in self.players:
                 if (not player.is_alive()
-                        and player.gamedata['respawn_wave'] == self._wave):
+                        and player.respawn_wave == self._wave):
                     self.spawn_player(player)
         self._update_player_spawn_info()
         self.show_zoom_message(ba.Lstr(value='${A} ${B}',
@@ -907,40 +909,34 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         if self._preset in ['endless', 'endless_tournament']:
             level = self._wave
             bot_types2 = [
-                spazbot.BomberBot, spazbot.BrawlerBot, spazbot.TriggerBot,
-                spazbot.ChargerBot, spazbot.BomberBotPro,
-                spazbot.BrawlerBotPro, spazbot.TriggerBotPro,
-                spazbot.BomberBotProShielded, spazbot.ExplodeyBot,
-                spazbot.ChargerBotProShielded, spazbot.StickyBot,
-                spazbot.BrawlerBotProShielded, spazbot.TriggerBotProShielded
+                BomberBot, BrawlerBot, TriggerBot, ChargerBot, BomberBotPro,
+                BrawlerBotPro, TriggerBotPro, BomberBotProShielded,
+                ExplodeyBot, ChargerBotProShielded, StickyBot,
+                BrawlerBotProShielded, TriggerBotProShielded
             ]
             if level > 5:
                 bot_types2 += [
-                    spazbot.ExplodeyBot,
-                    spazbot.TriggerBotProShielded,
-                    spazbot.BrawlerBotProShielded,
-                    spazbot.ChargerBotProShielded,
+                    ExplodeyBot,
+                    TriggerBotProShielded,
+                    BrawlerBotProShielded,
+                    ChargerBotProShielded,
                 ]
             if level > 7:
                 bot_types2 += [
-                    spazbot.ExplodeyBot,
-                    spazbot.TriggerBotProShielded,
-                    spazbot.BrawlerBotProShielded,
-                    spazbot.ChargerBotProShielded,
+                    ExplodeyBot,
+                    TriggerBotProShielded,
+                    BrawlerBotProShielded,
+                    ChargerBotProShielded,
                 ]
             if level > 10:
                 bot_types2 += [
-                    spazbot.TriggerBotProShielded,
-                    spazbot.TriggerBotProShielded,
-                    spazbot.TriggerBotProShielded,
-                    spazbot.TriggerBotProShielded
+                    TriggerBotProShielded, TriggerBotProShielded,
+                    TriggerBotProShielded, TriggerBotProShielded
                 ]
             if level > 13:
                 bot_types2 += [
-                    spazbot.TriggerBotProShielded,
-                    spazbot.TriggerBotProShielded,
-                    spazbot.TriggerBotProShielded,
-                    spazbot.TriggerBotProShielded
+                    TriggerBotProShielded, TriggerBotProShielded,
+                    TriggerBotProShielded, TriggerBotProShielded
                 ]
 
             bot_levels = [[b for b in bot_types2 if b.points_mult == 1],
@@ -1096,7 +1092,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
 
     def add_bot_at_point(self,
                          point: str,
-                         spaz_type: Type[spazbot.SpazBot],
+                         spaz_type: Type[SpazBot],
                          spawn_time: float = 1.0) -> None:
         """Add a new bot at a specified named point."""
         if self._game_over:
@@ -1107,7 +1103,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
 
     def add_bot_at_angle(self,
                          angle: float,
-                         spaz_type: Type[spazbot.SpazBot],
+                         spaz_type: Type[SpazBot],
                          spawn_time: float = 1.0) -> None:
         """Add a new bot at a specified angle (for circular maps)."""
         if self._game_over:
@@ -1153,11 +1149,9 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
 
-        if isinstance(msg, playerspaz.PlayerSpazHurtMessage):
-            player = msg.spaz.getplayer()
-            if not player:
-                return
-            player.gamedata['has_been_hurt'] = True
+        if isinstance(msg, PlayerSpazHurtMessage):
+            player = msg.spaz.getplayer(Player, doraise=True)
+            player.has_been_hurt = True
             self._a_player_has_been_hurt = True
 
         elif isinstance(msg, ba.PlayerScoredMessage):
@@ -1171,15 +1165,15 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
 
             # Make note with the player when they can respawn:
             if self._wave < 10:
-                player.gamedata['respawn_wave'] = max(2, self._wave + 1)
+                player.respawn_wave = max(2, self._wave + 1)
             elif self._wave < 15:
-                player.gamedata['respawn_wave'] = max(2, self._wave + 2)
+                player.respawn_wave = max(2, self._wave + 2)
             else:
-                player.gamedata['respawn_wave'] = max(2, self._wave + 3)
+                player.respawn_wave = max(2, self._wave + 3)
             ba.timer(0.1, self._update_player_spawn_info)
             ba.timer(0.1, self._checkroundover)
 
-        elif isinstance(msg, spazbot.SpazBotDeathMessage):
+        elif isinstance(msg, SpazBotDeathMessage):
             pts, importance = msg.badguy.get_death_points(msg.how)
             if msg.killerplayer is not None:
 

@@ -29,6 +29,7 @@ from typing import TYPE_CHECKING
 
 import ba
 from bastd.actor.playerspaz import PlayerSpaz
+from bastd.actor.scoreboard import Scoreboard
 
 if TYPE_CHECKING:
     from typing import Any, Type, List, Dict, Tuple, Union, Sequence, Optional
@@ -101,7 +102,6 @@ class DeathMatchGame(ba.TeamGameActivity[Player, Team]):
         return ba.getmaps('melee')
 
     def __init__(self, settings: Dict[str, Any]):
-        from bastd.actor.scoreboard import Scoreboard
         super().__init__(settings)
         self._scoreboard = Scoreboard()
         self._score_to_win: Optional[int] = None

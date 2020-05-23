@@ -30,6 +30,7 @@ from typing import TYPE_CHECKING
 
 import ba
 from bastd.actor.playerspaz import PlayerSpaz
+from bastd.actor.scoreboard import Scoreboard
 from bastd.actor.flag import (Flag, FlagDroppedMessage, FlagDeathMessage,
                               FlagPickedUpMessage)
 
@@ -89,7 +90,6 @@ class KeepAwayGame(ba.TeamGameActivity[Player, Team]):
         return ba.getmaps('keep_away')
 
     def __init__(self, settings: Dict[str, Any]):
-        from bastd.actor.scoreboard import Scoreboard
         super().__init__(settings)
         self._scoreboard = Scoreboard()
         self._swipsound = ba.getsound('swip')

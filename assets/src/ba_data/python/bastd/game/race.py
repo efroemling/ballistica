@@ -32,6 +32,7 @@ from dataclasses import dataclass
 import ba
 from bastd.actor.bomb import Bomb
 from bastd.actor.playerspaz import PlayerSpaz
+from bastd.actor.scoreboard import Scoreboard
 
 if TYPE_CHECKING:
     from typing import (Any, Type, Tuple, List, Sequence, Optional, Dict,
@@ -143,7 +144,6 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
         return ba.getmaps('race')
 
     def __init__(self, settings: Dict[str, Any]):
-        from bastd.actor.scoreboard import Scoreboard
         self._race_started = False
         super().__init__(settings)
         self._scoreboard = Scoreboard()

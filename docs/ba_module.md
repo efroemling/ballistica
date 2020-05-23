@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-05-22 for Ballistica version 1.5.0 build 20026</em></h4>
+<h4><em>last updated on 2020-05-23 for Ballistica version 1.5.0 build 20026</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -2450,7 +2450,7 @@ and short description of the game.</p>
 
 </dd>
 <dt><h4><a name="method_ba_GameActivity__spawn_player_spaz">spawn_player_spaz()</a></dt></h4><dd>
-<p><span>spawn_player_spaz(self, player: PlayerType, position: Sequence[float] = (0, 0, 0), angle: float = None) -&gt; PlayerSpaz[PlayerType]</span></p>
+<p><span>spawn_player_spaz(self, player: PlayerType, position: Sequence[float] = (0, 0, 0), angle: float = None) -&gt; PlayerSpaz</span></p>
 
 <p>Create and wire up a ba.PlayerSpaz for the provided <a href="#class_ba_Player">ba.Player</a>.</p>
 
@@ -4975,7 +4975,7 @@ up until <a href="#method_ba_Activity__on_begin">ba.Activity.on_begin</a>() is c
 
 </dd>
 <dt><h4><a name="method_ba_TeamGameActivity__spawn_player_spaz">spawn_player_spaz()</a></dt></h4><dd>
-<p><span>spawn_player_spaz(self, player: PlayerType, position: Sequence[float] = None, angle: float = None) -&gt; PlayerSpaz[PlayerType]</span></p>
+<p><span>spawn_player_spaz(self, player: PlayerType, position: Sequence[float] = None, angle: float = None) -&gt; PlayerSpaz</span></p>
 
 <p>Method override; spawns and wires up a standard ba.PlayerSpaz for
 a <a href="#class_ba_Player">ba.Player</a>.</p>

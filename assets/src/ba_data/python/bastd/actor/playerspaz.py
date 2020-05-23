@@ -22,13 +22,14 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import TYPE_CHECKING, TypeVar, overload
 
 import ba
 from bastd.actor.spaz import Spaz
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence, Tuple, Optional
+    from typing import Any, Sequence, Tuple, Optional, Type
+    from typing_extensions import Literal
 
 PlayerType = TypeVar('PlayerType', bound=ba.Player)
 TeamType = TypeVar('TeamType', bound=ba.Team)
@@ -50,7 +51,7 @@ class PlayerSpazHurtMessage:
         self.spaz = spaz
 
 
-class PlayerSpaz(Spaz, Generic[PlayerType]):
+class PlayerSpaz(Spaz):
     """A ba.Spaz subclass meant to be controlled by a ba.Player.
 
     category: Gameplay Classes
@@ -64,7 +65,7 @@ class PlayerSpaz(Spaz, Generic[PlayerType]):
     """
 
     def __init__(self,
-                 player: PlayerType,
+                 player: ba.Player,
                  color: Sequence[float] = (1.0, 1.0, 1.0),
                  highlight: Sequence[float] = (0.5, 0.5, 0.5),
                  character: str = 'Spaz',
@@ -81,31 +82,51 @@ class PlayerSpaz(Spaz, Generic[PlayerType]):
                          source_player=player,
                          start_invincible=True,
                          powerups_expire=powerups_expire)
-        self.last_player_attacked_by: Optional[PlayerType] = None
+        self.last_player_attacked_by: Optional[ba.Player] = None
         self.last_attacked_time = 0.0
         self.last_attacked_type: Optional[Tuple[str, str]] = None
         self.held_count = 0
-        self.last_player_held_by: Optional[PlayerType] = None
+        self.last_player_held_by: Optional[ba.Player] = None
         self._player = player
         self._drive_player_position()
 
-    @property
-    def player(self) -> PlayerType:
-        """The ba.Player associated with this Spaz.
+    # @property
+    # def player(self, playertype: Type[PlayerType]) -> PlayerType:
+    #     """The ba.Player associated with this Spaz.
 
-        If the player no longer exists, raises an ba.PlayerNotFoundError.
-        """
-        if not self._player:
-            raise ba.PlayerNotFoundError()
-        return self._player
+    #     If the player no longer exists, raises an ba.PlayerNotFoundError.
+    #     """
+    #     player = self._player
+    #     assert isinstance(player, playertype)
+    #     if not player:
+    #         raise ba.PlayerNotFoundError()
+    #     return player
 
-    def getplayer(self) -> Optional[PlayerType]:
+    @overload
+    def getplayer(self,
+                  playertype: Type[PlayerType],
+                  doraise: Literal[False] = False) -> Optional[PlayerType]:
+        ...
+
+    @overload
+    def getplayer(self, playertype: Type[PlayerType],
+                  doraise: Literal[True]) -> PlayerType:
+        ...
+
+    def getplayer(self,
+                  playertype: Type[PlayerType],
+                  doraise: bool = False) -> Optional[PlayerType]:
         """Get the ba.Player associated with this Spaz.
 
-        Note that this may return None if the player has left.
+        By default this will return None if the Player no longer exists.
+        If you are logically certain that the Player still exists, pass
+        doraise=False to get a non-optional return type.
         """
-        # Return None in the case of a no-longer-valid reference.
-        return self._player if self._player else None
+        player: Any = self._player
+        assert isinstance(player, playertype)
+        if not player.exists() and doraise:
+            raise ba.PlayerNotFoundError()
+        return player if player.exists() else None
 
     def connect_controls_to_player(self,
                                    enable_jump: bool = True,
@@ -120,7 +141,7 @@ class PlayerSpaz(Spaz, Generic[PlayerType]):
         but can be selectively limited by passing False
         to specific arguments.
         """
-        player = self.getplayer()
+        player = self.getplayer(ba.Player)
         assert player
 
         # Reset any currently connected player and/or the player we're
@@ -232,6 +253,7 @@ class PlayerSpaz(Spaz, Generic[PlayerType]):
 
                 activity = self._activity()
 
+                player = self.getplayer(ba.Player, doraise=False)
                 if not killed:
                     killerplayer = None
                 else:
@@ -254,7 +276,7 @@ class PlayerSpaz(Spaz, Generic[PlayerType]):
                             # ok, call it a suicide unless we're in co-op
                             if (activity is not None and not isinstance(
                                     activity.session, ba.CoopSession)):
-                                killerplayer = self.getplayer()
+                                killerplayer = player
                             else:
                                 killerplayer = None
 
@@ -263,9 +285,9 @@ class PlayerSpaz(Spaz, Generic[PlayerType]):
                 assert killerplayer is None or killerplayer
 
                 # Only report if both the player and the activity still exist.
-                if killed and activity is not None and self.getplayer():
+                if killed and activity is not None and player:
                     activity.handlemessage(
-                        ba.PlayerDiedMessage(self.player, killed, killerplayer,
+                        ba.PlayerDiedMessage(player, killed, killerplayer,
                                              msg.how))
 
             super().handlemessage(msg)  # Augment standard behavior.
@@ -279,7 +301,7 @@ class PlayerSpaz(Spaz, Generic[PlayerType]):
                 self.last_attacked_type = (msg.hit_type, msg.hit_subtype)
             super().handlemessage(msg)  # Augment standard behavior.
             activity = self._activity()
-            if activity is not None:
+            if activity is not None and self._player.exists():
                 activity.handlemessage(PlayerSpazHurtMessage(self))
         else:
             super().handlemessage(msg)

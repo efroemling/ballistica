@@ -29,7 +29,7 @@ import random
 from typing import TYPE_CHECKING
 
 import ba
-from bastd.actor import spazbot
+from bastd.actor.spazbot import BotSet, ChargerBot, SpazBotDeathMessage
 from bastd.actor.onscreentimer import OnScreenTimer
 
 if TYPE_CHECKING:
@@ -76,7 +76,7 @@ class NinjaFightGame(ba.TeamGameActivity[Player, Team]):
         self._winsound = ba.getsound('score')
         self._won = False
         self._timer: Optional[OnScreenTimer] = None
-        self._bots = spazbot.BotSet()
+        self._bots = BotSet()
 
     # Called when our game is transitioning in but not ready to begin;
     # we can go ahead and start creating stuff, playing music, etc.
@@ -100,27 +100,27 @@ class NinjaFightGame(ba.TeamGameActivity[Player, Team]):
         # Spawn some baddies.
         ba.timer(
             1.0, lambda: self._bots.spawn_bot(
-                spazbot.ChargerBot, pos=(3, 3, -2), spawn_time=3.0))
+                ChargerBot, pos=(3, 3, -2), spawn_time=3.0))
         ba.timer(
             2.0, lambda: self._bots.spawn_bot(
-                spazbot.ChargerBot, pos=(-3, 3, -2), spawn_time=3.0))
+                ChargerBot, pos=(-3, 3, -2), spawn_time=3.0))
         ba.timer(
             3.0, lambda: self._bots.spawn_bot(
-                spazbot.ChargerBot, pos=(5, 3, -2), spawn_time=3.0))
+                ChargerBot, pos=(5, 3, -2), spawn_time=3.0))
         ba.timer(
             4.0, lambda: self._bots.spawn_bot(
-                spazbot.ChargerBot, pos=(-5, 3, -2), spawn_time=3.0))
+                ChargerBot, pos=(-5, 3, -2), spawn_time=3.0))
 
         # Add some extras for multiplayer or pro mode.
         assert self.initial_player_info is not None
         if len(self.initial_player_info) > 2 or is_pro:
             ba.timer(
                 5.0, lambda: self._bots.spawn_bot(
-                    spazbot.ChargerBot, pos=(0, 3, -5), spawn_time=3.0))
+                    ChargerBot, pos=(0, 3, -5), spawn_time=3.0))
         if len(self.initial_player_info) > 3 or is_pro:
             ba.timer(
                 6.0, lambda: self._bots.spawn_bot(
-                    spazbot.ChargerBot, pos=(0, 3, 1), spawn_time=3.0))
+                    ChargerBot, pos=(0, 3, 1), spawn_time=3.0))
 
     # Called for each spawning player.
     def spawn_player(self, player: Player) -> ba.Actor:
@@ -150,7 +150,7 @@ class NinjaFightGame(ba.TeamGameActivity[Player, Team]):
             self.respawn_player(msg.getplayer(Player))
 
         # A spaz-bot has died.
-        elif isinstance(msg, spazbot.SpazBotDeathMessage):
+        elif isinstance(msg, SpazBotDeathMessage):
             # Unfortunately the bot-set will always tell us there are living
             # bots if we ask here (the currently-dying bot isn't officially
             # marked dead yet) ..so lets push a call into the event loop to

@@ -187,11 +187,9 @@ class AssaultGame(ba.TeamGameActivity[Player, Team]):
         if not isinstance(actor, PlayerSpaz):
             return
 
-        player = actor.getplayer()
+        player = actor.getplayer(Player)
         if not player or not player.actor:
             return
-
-        assert isinstance(player, Player)
 
         # If its another team's player, they scored.
         player_team = player.team

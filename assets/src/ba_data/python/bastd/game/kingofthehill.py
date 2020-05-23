@@ -250,7 +250,7 @@ class KingOfTheHillGame(ba.TeamGameActivity[Player, Team]):
         delegate = ba.get_collision_info('opposing_node').getdelegate()
         if not isinstance(delegate, PlayerSpaz):
             return
-        player = ba.playercast_o(Player, delegate.getplayer())
+        player = delegate.getplayer(Player)
         if not player:
             return
 

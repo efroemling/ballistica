@@ -30,6 +30,7 @@ from typing import TYPE_CHECKING
 import ba
 from bastd.actor.flag import Flag
 from bastd.actor.playerspaz import PlayerSpaz
+from bastd.actor.scoreboard import Scoreboard
 
 if TYPE_CHECKING:
     from typing import Any, Type, List, Dict, Optional, Sequence, Union
@@ -94,7 +95,6 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
         return ba.getmaps('keep_away')
 
     def __init__(self, settings: Dict[str, Any]):
-        from bastd.actor.scoreboard import Scoreboard
         super().__init__(settings)
         self._scoreboard = Scoreboard()
         self._chosen_one_player: Optional[Player] = None
@@ -179,7 +179,7 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
             return
         delegate = ba.get_collision_info('opposing_node').getdelegate()
         if isinstance(delegate, PlayerSpaz):
-            player = ba.playercast_o(Player, delegate.getplayer())
+            player = delegate.getplayer(Player)
             if player is not None and player.is_alive():
                 self._set_chosen_one_player(player)
 

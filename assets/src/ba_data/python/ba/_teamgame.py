@@ -110,7 +110,7 @@ class TeamGameActivity(GameActivity[PlayerType, TeamType]):
     def spawn_player_spaz(self,
                           player: PlayerType,
                           position: Sequence[float] = None,
-                          angle: float = None) -> PlayerSpaz[PlayerType]:
+                          angle: float = None) -> PlayerSpaz:
         """
         Method override; spawns and wires up a standard ba.PlayerSpaz for
         a ba.Player.

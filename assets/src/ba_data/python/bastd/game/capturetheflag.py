@@ -170,7 +170,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
         self._time_limit = float(settings['Time Limit'])
 
         self.flag_touch_return_time = float(settings['Flag Touch Return Time'])
-        self.flag_idle_return_time = float(settings['Flag Idle return Time'])
+        self.flag_idle_return_time = float(settings['Flag Idle Return Time'])
 
         # Base class overrides
         self.slow_motion = self._epic_mode
@@ -448,7 +448,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
         delegate = node.getdelegate()
         if not isinstance(delegate, PlayerSpaz):
             return None
-        return delegate.getplayer()
+        return delegate.getplayer(Player)
 
     def _handle_hit_own_flag(self, team: Team, val: int) -> None:
         """
@@ -508,10 +508,10 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
     def spawn_player_spaz(self,
                           player: Player,
                           position: Sequence[float] = None,
-                          angle: float = None) -> PlayerSpaz[Player]:
+                          angle: float = None) -> PlayerSpaz:
         """Intercept new spazzes and add our team material for them."""
         spaz = super().spawn_player_spaz(player, position, angle)
-        player = spaz.player
+        player = spaz.getplayer(Player, doraise=True)
         team: Team = player.team
         player.touching_own_flag = 0
         no_physical_mats: List[ba.Material] = [

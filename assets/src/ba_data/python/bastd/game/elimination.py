@@ -29,6 +29,7 @@ from typing import TYPE_CHECKING
 
 import ba
 from bastd.actor.spaz import get_factory
+from bastd.actor.scoreboard import Scoreboard
 
 if TYPE_CHECKING:
     from typing import (Any, Tuple, Dict, Type, List, Sequence, Optional,
@@ -237,7 +238,6 @@ class EliminationGame(ba.TeamGameActivity[Player, Team]):
         return ba.getmaps('melee')
 
     def __init__(self, settings: Dict[str, Any]):
-        from bastd.actor.scoreboard import Scoreboard
         super().__init__(settings)
         self._scoreboard = Scoreboard()
         self._start_time: Optional[float] = None
