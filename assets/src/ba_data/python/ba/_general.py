@@ -60,7 +60,7 @@ def existing(obj: Optional[ExistableType]) -> Optional[ExistableType]:
     This call can be used on any 'existable' object (one with an exists()
     method) and will convert it to a None value if it does not exist.
     For more info, see notes on 'existables' here:
-    https://github.com/efroemling/ballistica/wiki/Coding-Style-Guide
+    https://ballistica.net/wiki/Coding-Style-Guide
     """
     assert obj is None or hasattr(obj, 'exists'), f'No "exists" on {obj}'
     return obj if obj is not None and obj.exists() else None

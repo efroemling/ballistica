@@ -223,7 +223,7 @@ class App:
                     print(f'{Clr.RED}NOTE: You can disable copyright'
                           f' checks by adding "copyright_checks": false\n'
                           f'to the root dict in config/localconfig.json.\n'
-                          f'see https://github.com/efroemling/ballistica/wiki'
+                          f'see https://ballistica.net/wiki'
                           f'/Knowledge-Nuggets#'
                           f'hello-world-creating-a-new-game-type{Clr.RST}')
             sys.exit(-1)

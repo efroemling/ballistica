@@ -5730,7 +5730,7 @@ objects into functions expecting only live ones, etc.
 This call can be used on any 'existable' object (one with an exists()
 method) and will convert it to a None value if it does not exist.
 For more info, see notes on 'existables' here:
-https://github.com/efroemling/ballistica/wiki/Coding-Style-Guide</p>
+https://ballistica.net/wiki/Coding-Style-Guide</p>
 
 <hr>
 <h2><strong><a name="function_ba_get_collision_info">ba.get_collision_info()</a></strong></h3>
