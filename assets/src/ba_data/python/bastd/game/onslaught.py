@@ -27,12 +27,17 @@ from __future__ import annotations
 
 import math
 import random
+from enum import Enum, unique
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import ba
+from bastd.actor.popuptext import PopupText
 from bastd.actor.bomb import TNTSpawner
 from bastd.actor.playerspaz import PlayerSpazHurtMessage
 from bastd.actor.scoreboard import Scoreboard
+from bastd.actor.controlsguide import ControlsGuide
+from bastd.actor.powerupbox import PowerupBox, PowerupBoxFactory
 from bastd.actor.spazbot import (
     SpazBotDeathMessage, BotSet, ChargerBot, StickyBot, BomberBot,
     BomberBotLite, BrawlerBot, BrawlerBotLite, TriggerBot, BomberBotStaticLite,
@@ -43,6 +48,79 @@ from bastd.actor.spazbot import (
 if TYPE_CHECKING:
     from typing import Any, Type, Dict, Optional, List, Tuple, Union, Sequence
     from bastd.actor.spazbot import SpazBot
+
+
+@dataclass
+class Wave:
+    """A wave of enemies."""
+    entries: List[Union[Bot, Spacing, Delay, None]]
+    base_angle: float = 0.0
+
+
+@dataclass
+class Bot:
+    """A bot in a wave."""
+    bottype: Union[Type[SpazBot], str]
+    point: Optional[Point] = None
+    spacing: float = 5.0
+
+
+@dataclass
+class Spacing:
+    """Empty space in a wave."""
+    spacing: float = 5.0
+
+
+@dataclass
+class Delay:
+    """A delay in a wave."""
+    duration: float
+
+
+class Preset(Enum):
+    """Game presets we support."""
+    TRAINING = 'training'
+    TRAINING_EASY = 'training_easy'
+    ROOKIE = 'rookie'
+    ROOKIE_EASY = 'rookie_easy'
+    PRO = 'pro'
+    PRO_EASY = 'pro_easy'
+    UBER = 'uber'
+    UBER_EASY = 'uber_easy'
+    ENDLESS = 'endless'
+    ENDLESS_TOURNAMENT = 'endless_tournament'
+
+
+@unique
+class Point(Enum):
+    """Points on the map to spawn at."""
+    LEFT_UPPER_MORE = 'left_upper_more'
+    LEFT_UPPER = 'left_upper'
+    TURRET_TOP_RIGHT = 'turret_top_right'
+    RIGHT_UPPER = 'right_upper'
+    TURRET_TOP_MIDDLE_LEFT = 'turret_top_middle_left'
+    TURRET_TOP_MIDDLE_RIGHT = 'turret_top_middle_right'
+    TURRET_TOP_LEFT = 'turret_top_left'
+    TOP_RIGHT = 'top_right'
+    TOP_LEFT = 'top_left'
+    TOP = 'top'
+    BOTTOM = 'bottom'
+    LEFT = 'left'
+    RIGHT = 'right'
+    RIGHT_UPPER_MORE = 'right_upper_more'
+    RIGHT_LOWER = 'right_lower'
+    RIGHT_LOWER_MORE = 'right_lower_more'
+    BOTTOM_RIGHT = 'bottom_right'
+    BOTTOM_LEFT = 'bottom_left'
+    TURRET_BOTTOM_RIGHT = 'turret_bottom_right'
+    TURRET_BOTTOM_LEFT = 'turret_bottom_left'
+    LEFT_LOWER = 'left_lower'
+    LEFT_LOWER_MORE = 'left_lower_more'
+    TURRET_TOP_MIDDLE = 'turret_top_middle'
+    BOTTOM_HALF_RIGHT = 'bottom_half_right'
+    BOTTOM_HALF_LEFT = 'bottom_half_left'
+    TOP_HALF_RIGHT = 'top_half_right'
+    TOP_HALF_LEFT = 'top_half_left'
 
 
 class Player(ba.Player['Team']):
@@ -79,15 +157,11 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
 
     def __init__(self, settings: Dict[str, Any]):
 
-        self._preset = settings.get('preset', 'training')
-        if self._preset in [
-                'training',
-                'training_easy',
-                'pro',
-                'pro_easy',
-                'endless',
-                'endless_tournament',
-        ]:
+        self._preset = Preset(settings.get('preset', 'training'))
+        if self._preset in {
+                Preset.TRAINING, Preset.TRAINING_EASY, Preset.PRO,
+                Preset.PRO_EASY, Preset.ENDLESS, Preset.ENDLESS_TOURNAMENT
+        }:
             settings['map'] = 'Doom Shroom'
         else:
             settings['map'] = 'Courtyard'
@@ -123,8 +197,8 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         self._dingsound = ba.getsound('dingSmall')
         self._dingsoundhigh = ba.getsound('dingSmallHigh')
         self._have_tnt = False
-        self._excludepowerups: Optional[List[str]] = None
-        self._waves: Optional[List[Dict[str, Any]]] = None
+        self._excluded_powerups: Optional[List[str]] = None
+        self._waves: List[Wave] = []
         self._tntspawner: Optional[TNTSpawner] = None
         self._bots: Optional[BotSet] = None
         self._powerup_drop_timer: Optional[ba.Timer] = None
@@ -141,7 +215,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         super().on_transition_in()
         session = ba.getsession()
         # Show special landmine tip on rookie preset.
-        if self._preset in ['rookie', 'rookie_easy']:
+        if self._preset in {Preset.ROOKIE, Preset.ROOKIE_EASY}:
             # Show once per session only (then we revert to regular tips).
             if not getattr(session, '_g_showed_onslaught_landmine_tip', False):
                 setattr(session, '_g_showed_onslaught_landmine_tip', True)
@@ -153,7 +227,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
                 }]
 
         # Show special tnt tip on pro preset.
-        if self._preset in ['pro', 'pro_easy']:
+        if self._preset in {Preset.PRO, Preset.PRO_EASY}:
             # Show once per session only (then we revert to regular tips).
             if not getattr(session, '_g_showed_onslaught_tnt_tip', False):
                 setattr(session, '_g_showed_onslaught_tnt_tip', True)
@@ -165,7 +239,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
                 }]
 
         # Show special curse tip on uber preset.
-        if self._preset in ['uber', 'uber_easy']:
+        if self._preset in {Preset.UBER, Preset.UBER_EASY}:
             # Show once per session only (then we revert to regular tips).
             if not getattr(session, '_g_showed_onslaught_curse_tip', False):
                 setattr(session, '_g_showed_onslaught_curse_tip', True)
@@ -192,202 +266,193 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
                                       score_split=0.5)
 
     def on_begin(self) -> None:
-        from bastd.actor.controlsguide import ControlsGuide
         super().on_begin()
         player_count = len(self.players)
-        hard = self._preset not in [
-            'training_easy', 'rookie_easy', 'pro_easy', 'uber_easy'
-        ]
-        if self._preset in ['training', 'training_easy']:
+        hard = self._preset not in {
+            Preset.TRAINING_EASY, Preset.ROOKIE_EASY, Preset.PRO_EASY,
+            Preset.UBER_EASY
+        }
+        if self._preset in {Preset.TRAINING, Preset.TRAINING_EASY}:
             ControlsGuide(delay=3.0, lifespan=10.0, bright=True).autoretain()
 
             self._have_tnt = False
-            self._excludepowerups = ['curse', 'land_mines']
+            self._excluded_powerups = ['curse', 'land_mines']
             self._waves = [
-                {'base_angle': 195,
-                 'entries': [
-                     {'type': BomberBotLite, 'spacing': 5},
-                 ] * player_count},
-                {'base_angle': 130,
-                 'entries': [
-                     {'type': BrawlerBotLite, 'spacing': 5},
-                 ] * player_count},
-                {'base_angle': 195,
-                 'entries': [
-                     {'type': BomberBotLite, 'spacing': 10},
-                 ] * (player_count + 1)},
-                {'base_angle': 130,
-                 'entries': [
-                     {'type': BrawlerBotLite, 'spacing': 10},
-                 ] * (player_count + 1)},
-                {'base_angle': 130,
-                 'entries': [
-                     {'type': BrawlerBotLite, 'spacing': 5}
+                Wave(base_angle=195,
+                     entries=[
+                         Bot(BomberBotLite, spacing=5),
+                     ] * player_count),
+                Wave(base_angle=130,
+                     entries=[
+                         Bot(BrawlerBotLite, spacing=5),
+                     ] * player_count),
+                Wave(base_angle=195,
+                     entries=[Bot(BomberBotLite, spacing=10)] *
+                     (player_count + 1)),
+                Wave(base_angle=130,
+                     entries=[
+                         Bot(BrawlerBotLite, spacing=10),
+                     ] * (player_count + 1)),
+                Wave(base_angle=130,
+                     entries=[
+                         Bot(BrawlerBotLite, spacing=5)
                          if player_count > 1 else None,
-                     {'type': BrawlerBotLite, 'spacing': 5},
-                     {'type': None, 'spacing': 30},
-                     {'type': BomberBotLite, 'spacing': 5}
+                         Bot(BrawlerBotLite, spacing=5),
+                         Spacing(30),
+                         Bot(BomberBotLite, spacing=5)
                          if player_count > 3 else None,
-                     {'type': BomberBotLite, 'spacing': 5},
-                     {'type': None, 'spacing': 30},
-                     {'type': BrawlerBotLite, 'spacing': 5},
-                     {'type': BrawlerBotLite, 'spacing': 5}
+                         Bot(BomberBotLite, spacing=5),
+                         Spacing(30),
+                         Bot(BrawlerBotLite, spacing=5),
+                         Bot(BrawlerBotLite, spacing=5)
                          if player_count > 2 else None,
-                 ]},
-                {'base_angle': 195,
-                 'entries': [
-                     {'type': TriggerBot, 'spacing': 90},
-                     {'type': TriggerBot, 'spacing': 90}
+                     ]),
+                Wave(base_angle=195,
+                     entries=[
+                         Bot(TriggerBot, spacing=90),
+                         Bot(TriggerBot, spacing=90)
                          if player_count > 1 else None,
-                 ]},
-            ]  # yapf: disable
+                     ]),
+            ]
 
-        elif self._preset in ['rookie', 'rookie_easy']:
+        elif self._preset in {Preset.ROOKIE, Preset.ROOKIE_EASY}:
             self._have_tnt = False
-            self._excludepowerups = ['curse']
+            self._excluded_powerups = ['curse']
             self._waves = [
-                {'entries': [
-                    {'type': ChargerBot, 'point': 'left_upper_more'}
-                        if player_count > 2 else None,
-                    {'type': ChargerBot, 'point': 'left_upper'},
-                ]},
-                {'entries': [
-                    {'type': BomberBotStaticLite,
-                     'point': 'turret_top_right'},
-                    {'type': BrawlerBotLite, 'point': 'right_upper'},
-                    {'type': BrawlerBotLite, 'point': 'right_lower'}
-                        if player_count > 1 else None,
-                    {'type': BomberBotStaticLite,
-                     'point': 'turret_bottom_right'}
-                         if player_count > 2 else None,
-                ]},
-                {'entries': [
-                    {'type': BomberBotStaticLite,
-                     'point': 'turret_bottom_left'},
-                    {'type': TriggerBot, 'point': 'left'},
-                    {'type': TriggerBot, 'point': 'left_lower'}
-                        if player_count > 1 else None,
-                    {'type': TriggerBot, 'point': 'left_upper'}
-                        if player_count > 2 else None,
-                ]},
-                {'entries': [
-                    {'type': BrawlerBotLite, 'point': 'top_right'},
-                    {'type': BrawlerBot, 'point': 'top_half_right'}
-                        if player_count > 1 else None,
-                    {'type': BrawlerBotLite, 'point': 'top_left'},
-                    {'type': BrawlerBotLite, 'point': 'top_half_left'}
-                        if player_count > 2 else None,
-                    {'type': BrawlerBot, 'point': 'top'},
-                    {'type': BomberBotStaticLite,
-                     'point': 'turret_top_middle'},
-                ]},
-                {'entries': [
-                    {'type': TriggerBotStatic,
-                     'point': 'turret_bottom_left'},
-                    {'type': TriggerBotStatic,
-                     'point': 'turret_bottom_right'},
-                    {'type': TriggerBot, 'point': 'bottom'},
-                    {'type': TriggerBot, 'point': 'bottom_half_right'}
-                        if player_count > 1 else None,
-                    {'type': TriggerBot, 'point': 'bottom_half_left'}
-                        if player_count > 2 else None,
-                ]},
-                {'entries': [
-                    {'type': BomberBotStaticLite,
-                     'point': 'turret_top_left'},
-                    {'type': BomberBotStaticLite,
-                     'point': 'turret_top_right'},
-                    {'type': ChargerBot, 'point': 'bottom'},
-                    {'type': ChargerBot, 'point': 'bottom_half_left'}
-                        if player_count > 1 else None,
-                    {'type': ChargerBot, 'point': 'bottom_half_right'}
-                        if player_count > 2 else None,
-                ]},
-            ]  # yapf: disable
+                Wave(entries=[
+                    Bot(ChargerBot, Point.LEFT_UPPER_MORE
+                        ) if player_count > 2 else None,
+                    Bot(ChargerBot, Point.LEFT_UPPER),
+                ]),
+                Wave(entries=[
+                    Bot(BomberBotStaticLite, Point.TURRET_TOP_RIGHT),
+                    Bot(BrawlerBotLite, Point.RIGHT_UPPER),
+                    Bot(BrawlerBotLite, Point.RIGHT_LOWER
+                        ) if player_count > 1 else None,
+                    Bot(BomberBotStaticLite, Point.TURRET_BOTTOM_RIGHT
+                        ) if player_count > 2 else None,
+                ]),
+                Wave(entries=[
+                    Bot(BomberBotStaticLite, Point.TURRET_BOTTOM_LEFT),
+                    Bot(TriggerBot, Point.LEFT),
+                    Bot(TriggerBot, Point.LEFT_LOWER
+                        ) if player_count > 1 else None,
+                    Bot(TriggerBot, Point.LEFT_UPPER
+                        ) if player_count > 2 else None,
+                ]),
+                Wave(entries=[
+                    Bot(BrawlerBotLite, Point.TOP_RIGHT),
+                    Bot(BrawlerBot, Point.TOP_HALF_RIGHT
+                        ) if player_count > 1 else None,
+                    Bot(BrawlerBotLite, Point.TOP_LEFT),
+                    Bot(BrawlerBotLite, Point.TOP_HALF_LEFT
+                        ) if player_count > 2 else None,
+                    Bot(BrawlerBot, Point.TOP),
+                    Bot(BomberBotStaticLite, Point.TURRET_TOP_MIDDLE),
+                ]),
+                Wave(entries=[
+                    Bot(TriggerBotStatic, Point.TURRET_BOTTOM_LEFT),
+                    Bot(TriggerBotStatic, Point.TURRET_BOTTOM_RIGHT),
+                    Bot(TriggerBot, Point.BOTTOM),
+                    Bot(TriggerBot, Point.BOTTOM_HALF_RIGHT
+                        ) if player_count > 1 else None,
+                    Bot(TriggerBot, Point.BOTTOM_HALF_LEFT
+                        ) if player_count > 2 else None,
+                ]),
+                Wave(entries=[
+                    Bot(BomberBotStaticLite, Point.TURRET_TOP_LEFT),
+                    Bot(BomberBotStaticLite, Point.TURRET_TOP_RIGHT),
+                    Bot(ChargerBot, Point.BOTTOM),
+                    Bot(ChargerBot, Point.BOTTOM_HALF_LEFT
+                        ) if player_count > 1 else None,
+                    Bot(ChargerBot, Point.BOTTOM_HALF_RIGHT
+                        ) if player_count > 2 else None,
+                ]),
+            ]
 
-        elif self._preset in ['pro', 'pro_easy']:
-            self._excludepowerups = ['curse']
+        elif self._preset in {Preset.PRO, Preset.PRO_EASY}:
+            self._excluded_powerups = ['curse']
             self._have_tnt = True
             self._waves = [
-                {'base_angle': -50,
-                 'entries': [
-                     {'type': BrawlerBot, 'spacing': 12}
+                Wave(base_angle=-50,
+                     entries=[
+                         Bot(BrawlerBot, spacing=12)
                          if player_count > 3 else None,
-                     {'type': BrawlerBot, 'spacing': 12},
-                     {'type': BomberBot, 'spacing': 6},
-                     {'type': BomberBot, 'spacing': 6}
-                         if self._preset == 'pro' else None,
-                     {'type': BomberBot, 'spacing': 6}
+                         Bot(BrawlerBot, spacing=12),
+                         Bot(BomberBot, spacing=6),
+                         Bot(BomberBot, spacing=6)
+                         if self._preset is Preset.PRO else None,
+                         Bot(BomberBot, spacing=6)
                          if player_count > 1 else None,
-                     {'type': BrawlerBot, 'spacing': 12},
-                     {'type': BrawlerBot, 'spacing': 12}
+                         Bot(BrawlerBot, spacing=12),
+                         Bot(BrawlerBot, spacing=12)
                          if player_count > 2 else None,
-                 ]},
-                {'base_angle': 180,
-                 'entries': [
-                     {'type': BrawlerBot, 'spacing': 6}
+                     ]),
+                Wave(base_angle=180,
+                     entries=[
+                         Bot(BrawlerBot, spacing=6)
                          if player_count > 3 else None,
-                     {'type': BrawlerBot, 'spacing': 6}
-                         if self._preset == 'pro' else None,
-                     {'type': BrawlerBot, 'spacing': 6},
-                     {'type': ChargerBot, 'spacing': 45},
-                     {'type': ChargerBot, 'spacing': 45}
+                         Bot(BrawlerBot, spacing=6)
+                         if self._preset is Preset.PRO else None,
+                         Bot(BrawlerBot, spacing=6),
+                         Bot(ChargerBot, spacing=45),
+                         Bot(ChargerBot, spacing=45)
                          if player_count > 1 else None,
-                     {'type': BrawlerBot, 'spacing': 6},
-                     {'type': BrawlerBot, 'spacing': 6}
-                         if self._preset == 'pro' else None,
-                     {'type': BrawlerBot, 'spacing': 6}
+                         Bot(BrawlerBot, spacing=6),
+                         Bot(BrawlerBot, spacing=6)
+                         if self._preset is Preset.PRO else None,
+                         Bot(BrawlerBot, spacing=6)
                          if player_count > 2 else None,
-                 ]},
-                {'base_angle': 0,
-                 'entries': [
-                     {'type': ChargerBot, 'spacing': 30},
-                     {'type': TriggerBot, 'spacing': 30},
-                     {'type': TriggerBot, 'spacing': 30},
-                     {'type': TriggerBot, 'spacing': 30}
-                         if self._preset == 'pro' else None,
-                     {'type': TriggerBot, 'spacing': 30}
+                     ]),
+                Wave(base_angle=0,
+                     entries=[
+                         Bot(ChargerBot, spacing=30),
+                         Bot(TriggerBot, spacing=30),
+                         Bot(TriggerBot, spacing=30),
+                         Bot(TriggerBot, spacing=30)
+                         if self._preset is Preset.PRO else None,
+                         Bot(TriggerBot, spacing=30)
                          if player_count > 1 else None,
-                     {'type': TriggerBot, 'spacing': 30}
+                         Bot(TriggerBot, spacing=30)
                          if player_count > 3 else None,
-                     {'type': ChargerBot, 'spacing': 30},
-                 ]},
-                {'base_angle': 90,
-                'entries': [
-                    {'type': StickyBot, 'spacing': 50},
-                    {'type': StickyBot, 'spacing': 50}
-                        if self._preset == 'pro' else None,
-                    {'type': StickyBot, 'spacing': 50},
-                    {'type': StickyBot, 'spacing': 50}
-                        if player_count > 1 else None,
-                    {'type': StickyBot, 'spacing': 50}
-                        if player_count > 3 else None,
-                ]},
-                {'base_angle': 0,
-                'entries': [
-                    {'type': TriggerBot, 'spacing': 72},
-                    {'type': TriggerBot, 'spacing': 72},
-                    {'type': TriggerBot, 'spacing': 72}
-                        if self._preset == 'pro' else None,
-                    {'type': TriggerBot, 'spacing': 72},
-                    {'type': TriggerBot, 'spacing': 72},
-                    {'type': TriggerBot, 'spacing': 36}
-                        if player_count > 2 else None,
-                ]},
-                {'base_angle': 30,
-                 'entries': [
-                     {'type': ChargerBotProShielded, 'spacing': 50},
-                     {'type': ChargerBotProShielded, 'spacing': 50},
-                     {'type': ChargerBotProShielded, 'spacing': 50}
-                         if self._preset == 'pro' else None,
-                     {'type': ChargerBotProShielded, 'spacing': 50}
+                         Bot(ChargerBot, spacing=30),
+                     ]),
+                Wave(base_angle=90,
+                     entries=[
+                         Bot(StickyBot, spacing=50),
+                         Bot(StickyBot, spacing=50)
+                         if self._preset is Preset.PRO else None,
+                         Bot(StickyBot, spacing=50),
+                         Bot(StickyBot, spacing=50)
                          if player_count > 1 else None,
-                     {'type': ChargerBotProShielded, 'spacing': 50}
+                         Bot(StickyBot, spacing=50)
+                         if player_count > 3 else None,
+                     ]),
+                Wave(base_angle=0,
+                     entries=[
+                         Bot(TriggerBot, spacing=72),
+                         Bot(TriggerBot, spacing=72),
+                         Bot(TriggerBot, spacing=72)
+                         if self._preset is Preset.PRO else None,
+                         Bot(TriggerBot, spacing=72),
+                         Bot(TriggerBot, spacing=72),
+                         Bot(TriggerBot, spacing=36)
                          if player_count > 2 else None,
-                ]}
-            ]  # yapf: disable
+                     ]),
+                Wave(base_angle=30,
+                     entries=[
+                         Bot(ChargerBotProShielded, spacing=50),
+                         Bot(ChargerBotProShielded, spacing=50),
+                         Bot(ChargerBotProShielded, spacing=50)
+                         if self._preset is Preset.PRO else None,
+                         Bot(ChargerBotProShielded, spacing=50)
+                         if player_count > 1 else None,
+                         Bot(ChargerBotProShielded, spacing=50)
+                         if player_count > 2 else None,
+                     ])
+            ]
 
-        elif self._preset in ['uber', 'uber_easy']:
+        elif self._preset in {Preset.UBER, Preset.UBER_EASY}:
 
             # Show controls help in kiosk mode.
             if ba.app.kiosk_mode:
@@ -395,95 +460,75 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
                               bright=True).autoretain()
 
             self._have_tnt = True
-            self._excludepowerups = []
+            self._excluded_powerups = []
             self._waves = [
-                {'entries': [
-                    {'type': BomberBotProStatic,
-                     'point': 'turret_top_middle_left'}
-                        if hard else None,
-                    {'type': BomberBotProStatic,
-                     'point': 'turret_top_middle_right'},
-                    {'type': BomberBotProStatic,
-                     'point': 'turret_top_left'}
-                        if player_count > 2 else None,
-                    {'type': ExplodeyBot, 'point': 'top_right'},
-                    {'type': 'delay', 'duration': 4.0},
-                    {'type': ExplodeyBot, 'point': 'top_left'},
-                ]},
-                {'entries': [
-                    {'type': ChargerBot, 'point': 'left'},
-                    {'type': ChargerBot, 'point': 'right'},
-                    {'type': ChargerBot, 'point': 'right_upper_more'}
-                        if player_count > 2 else None,
-                    {'type': BomberBotProStatic,
-                     'point': 'turret_top_left'},
-                    {'type': BomberBotProStatic,
-                     'point': 'turret_top_right'},
-                ]},
-                {'entries': [
-                    {'type': TriggerBotPro, 'point': 'top_right'},
-                    {'type': TriggerBotPro,
-                     'point': 'right_upper_more'}
-                        if player_count > 1 else None,
-                    {'type': TriggerBotPro, 'point': 'right_upper'},
-                    {'type': TriggerBotPro, 'point': 'right_lower'}
-                        if hard else None,
-                    {'type': TriggerBotPro,
-                     'point': 'right_lower_more'}
-                        if player_count > 2 else None,
-                    {'type': TriggerBotPro, 'point': 'bottom_right'},
-                ]},
-                {'entries': [
-                    {'type': ChargerBotProShielded,
-                     'point': 'bottom_right'},
-                    {'type': ChargerBotProShielded, 'point': 'bottom'}
-                        if player_count > 2 else None,
-                    {'type': ChargerBotProShielded,
-                     'point': 'bottom_left'},
-                    {'type': ChargerBotProShielded, 'point': 'top'}
-                        if hard else None,
-                    {'type': BomberBotProStatic,
-                     'point': 'turret_top_middle'},
-                ]},
-                {'entries': [
-                    {'type': ExplodeyBot, 'point': 'left_upper'},
-                    {'type': 'delay', 'duration': 1.0},
-                    {'type': BrawlerBotProShielded,
-                     'point': 'left_lower'},
-                    {'type': BrawlerBotProShielded,
-                     'point': 'left_lower_more'},
-                    {'type': 'delay', 'duration': 4.0},
-                    {'type': ExplodeyBot, 'point': 'right_upper'},
-                    {'type': 'delay', 'duration': 1.0},
-                    {'type': BrawlerBotProShielded,
-                     'point': 'right_lower'},
-                    {'type': BrawlerBotProShielded,
-                     'point': 'right_upper_more'},
-                    {'type': 'delay', 'duration': 4.0},
-                    {'type': ExplodeyBot, 'point': 'left'},
-                    {'type': 'delay', 'duration': 5.0},
-                    {'type': ExplodeyBot, 'point': 'right'},
-                ]},
-                {'entries': [
-                    {'type': BomberBotProStatic,
-                     'point': 'turret_top_left'},
-                    {'type': BomberBotProStatic,
-                     'point': 'turret_top_right'},
-                    {'type': BomberBotProStatic,
-                     'point': 'turret_bottom_left'},
-                    {'type': BomberBotProStatic,
-                     'point': 'turret_bottom_right'},
-                    {'type': BomberBotProStatic,
-                     'point': 'turret_top_middle_left'} if hard else None,
-                    {'type': BomberBotProStatic,
-                     'point': 'turret_top_middle_right'} if hard else None,
-                ]
-            }]  # yapf: disable
+                Wave(entries=[
+                    Bot(BomberBotProStatic, Point.TURRET_TOP_MIDDLE_LEFT
+                        ) if hard else None,
+                    Bot(BomberBotProStatic, Point.TURRET_TOP_MIDDLE_RIGHT),
+                    Bot(BomberBotProStatic, Point.TURRET_TOP_LEFT
+                        ) if player_count > 2 else None,
+                    Bot(ExplodeyBot, Point.TOP_RIGHT),
+                    Delay(4.0),
+                    Bot(ExplodeyBot, Point.TOP_LEFT),
+                ]),
+                Wave(entries=[
+                    Bot(ChargerBot, Point.LEFT),
+                    Bot(ChargerBot, Point.RIGHT),
+                    Bot(ChargerBot, Point.RIGHT_UPPER_MORE
+                        ) if player_count > 2 else None,
+                    Bot(BomberBotProStatic, Point.TURRET_TOP_LEFT),
+                    Bot(BomberBotProStatic, Point.TURRET_TOP_RIGHT),
+                ]),
+                Wave(entries=[
+                    Bot(TriggerBotPro, Point.TOP_RIGHT),
+                    Bot(TriggerBotPro, Point.RIGHT_UPPER_MORE
+                        ) if player_count > 1 else None,
+                    Bot(TriggerBotPro, Point.RIGHT_UPPER),
+                    Bot(TriggerBotPro, Point.RIGHT_LOWER) if hard else None,
+                    Bot(TriggerBotPro, Point.RIGHT_LOWER_MORE
+                        ) if player_count > 2 else None,
+                    Bot(TriggerBotPro, Point.BOTTOM_RIGHT),
+                ]),
+                Wave(entries=[
+                    Bot(ChargerBotProShielded, Point.BOTTOM_RIGHT),
+                    Bot(ChargerBotProShielded, Point.BOTTOM
+                        ) if player_count > 2 else None,
+                    Bot(ChargerBotProShielded, Point.BOTTOM_LEFT),
+                    Bot(ChargerBotProShielded, Point.TOP) if hard else None,
+                    Bot(BomberBotProStatic, Point.TURRET_TOP_MIDDLE),
+                ]),
+                Wave(entries=[
+                    Bot(ExplodeyBot, Point.LEFT_UPPER),
+                    Delay(1.0),
+                    Bot(BrawlerBotProShielded, Point.LEFT_LOWER),
+                    Bot(BrawlerBotProShielded, Point.LEFT_LOWER_MORE),
+                    Delay(4.0),
+                    Bot(ExplodeyBot, Point.RIGHT_UPPER),
+                    Delay(1.0),
+                    Bot(BrawlerBotProShielded, Point.RIGHT_LOWER),
+                    Bot(BrawlerBotProShielded, Point.RIGHT_UPPER_MORE),
+                    Delay(4.0),
+                    Bot(ExplodeyBot, Point.LEFT),
+                    Delay(5.0),
+                    Bot(ExplodeyBot, Point.RIGHT),
+                ]),
+                Wave(entries=[
+                    Bot(BomberBotProStatic, Point.TURRET_TOP_LEFT),
+                    Bot(BomberBotProStatic, Point.TURRET_TOP_RIGHT),
+                    Bot(BomberBotProStatic, Point.TURRET_BOTTOM_LEFT),
+                    Bot(BomberBotProStatic, Point.TURRET_BOTTOM_RIGHT),
+                    Bot(BomberBotProStatic, Point.TURRET_TOP_MIDDLE_LEFT
+                        ) if hard else None,
+                    Bot(BomberBotProStatic, Point.TURRET_TOP_MIDDLE_RIGHT
+                        ) if hard else None,
+                ])
+            ]
 
         # We generate these on the fly in endless.
-        elif self._preset in ['endless', 'endless_tournament']:
+        elif self._preset in {Preset.ENDLESS, Preset.ENDLESS_TOURNAMENT}:
             self._have_tnt = True
-            self._excludepowerups = []
+            self._excluded_powerups = []
             self._waves = []
 
         else:
@@ -492,11 +537,11 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         # FIXME: Should migrate to use setup_standard_powerup_drops().
 
         # Spit out a few powerups and start dropping more shortly.
-        self._drop_powerups(
-            standard_points=True,
-            poweruptype='curse' if self._preset in ['uber', 'uber_easy'] else
-            ('land_mines'
-             if self._preset in ['rookie', 'rookie_easy'] else None))
+        self._drop_powerups(standard_points=True,
+                            poweruptype='curse' if self._preset
+                            in [Preset.UBER, Preset.UBER_EASY] else
+                            ('land_mines' if self._preset
+                             in [Preset.ROOKIE, Preset.ROOKIE_EASY] else None))
         ba.timer(4.0, self._start_powerup_drops)
 
         # Our TNT spawner (if applicable).
@@ -631,14 +676,15 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
     def spawn_player(self, player: Player) -> ba.Actor:
 
         # We keep track of who got hurt each wave for score purposes.
-        player.gamedata['has_been_hurt'] = False
+        player.has_been_hurt = False
         pos = (self._spawn_center[0] + random.uniform(-1.5, 1.5),
                self._spawn_center[1],
                self._spawn_center[2] + random.uniform(-1.5, 1.5))
         spaz = self.spawn_player_spaz(player, position=pos)
-        if self._preset in [
-                'training_easy', 'rookie_easy', 'pro_easy', 'uber_easy'
-        ]:
+        if self._preset in {
+                Preset.TRAINING_EASY, Preset.ROOKIE_EASY, Preset.PRO_EASY,
+                Preset.UBER_EASY
+        }:
             spaz.impact_scale = 0.25
         spaz.add_dropped_bomb_callback(self._handle_player_dropped_bomb)
         return spaz
@@ -649,11 +695,10 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         self._player_has_dropped_bomb = True
 
     def _drop_powerup(self, index: int, poweruptype: str = None) -> None:
-        from bastd.actor import powerupbox
-        poweruptype = (powerupbox.get_factory().get_random_powerup_type(
-            forcetype=poweruptype, excludetypes=self._excludepowerups))
-        powerupbox.PowerupBox(position=self.map.powerup_spawn_points[index],
-                              poweruptype=poweruptype).autoretain()
+        poweruptype = (PowerupBoxFactory.get().get_random_powerup_type(
+            forcetype=poweruptype, excludetypes=self._excluded_powerups))
+        PowerupBox(position=self.map.powerup_spawn_points[index],
+                   poweruptype=poweruptype).autoretain()
 
     def _start_powerup_drops(self) -> None:
         self._powerup_drop_timer = ba.Timer(3.0,
@@ -664,7 +709,6 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
                        standard_points: bool = False,
                        poweruptype: str = None) -> None:
         """Generic powerup drop."""
-        from bastd.actor import powerupbox
         if standard_points:
             points = self.map.powerup_spawn_points
             for i in range(len(points)):
@@ -680,10 +724,10 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
                          -self._powerup_spread[1], self._powerup_spread[1]))
 
             # Drop one random one somewhere.
-            powerupbox.PowerupBox(
+            PowerupBox(
                 position=point,
-                poweruptype=powerupbox.get_factory().get_random_powerup_type(
-                    excludetypes=self._excludepowerups)).autoretain()
+                poweruptype=PowerupBoxFactory.get().get_random_powerup_type(
+                    excludetypes=self._excluded_powerups)).autoretain()
 
     def do_end(self, outcome: str, delay: float = 0.0) -> None:
         """End the game with the specified outcome."""
@@ -705,9 +749,23 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
             },
             delay=delay)
 
+    def _award_completion_achievements(self) -> None:
+        if self._preset in {Preset.TRAINING, Preset.TRAINING_EASY}:
+            self._award_achievement('Onslaught Training Victory', sound=False)
+            if not self._player_has_dropped_bomb:
+                self._award_achievement('Boxer', sound=False)
+        elif self._preset in {Preset.ROOKIE, Preset.ROOKIE_EASY}:
+            self._award_achievement('Rookie Onslaught Victory', sound=False)
+            if not self._a_player_has_been_hurt:
+                self._award_achievement('Flawless Victory', sound=False)
+        elif self._preset in {Preset.PRO, Preset.PRO_EASY}:
+            self._award_achievement('Pro Onslaught Victory', sound=False)
+            if not self._player_has_dropped_bomb:
+                self._award_achievement('Pro Boxer', sound=False)
+        elif self._preset in {Preset.UBER, Preset.UBER_EASY}:
+            self._award_achievement('Uber Onslaught Victory', sound=False)
+
     def _update_waves(self) -> None:
-        # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
 
         # If we have no living bots, go to the next wave.
         assert self._bots is not None
@@ -716,15 +774,14 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
             self._can_end_wave = False
             self._time_bonus_timer = None
             self._time_bonus_text = None
-            if self._preset in ['endless', 'endless_tournament']:
+            if self._preset in {Preset.ENDLESS, Preset.ENDLESS_TOURNAMENT}:
                 won = False
             else:
-                assert self._waves is not None
                 won = (self._wave == len(self._waves))
 
-            # Reward time bonus.
             base_delay = 4.0 if won else 0.0
 
+            # Reward time bonus.
             if self._time_bonus > 0:
                 ba.timer(0, lambda: ba.playsound(self._cashregistersound))
                 ba.timer(base_delay,
@@ -735,13 +792,12 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
             if self._wave > 0:
                 have_flawless = False
                 for player in self.players:
-                    if (player.is_alive()
-                            and not player.gamedata['has_been_hurt']):
+                    if player.is_alive() and not player.has_been_hurt:
                         have_flawless = True
                         ba.timer(
                             base_delay,
                             ba.WeakCall(self._award_flawless_bonus, player))
-                    player.gamedata['has_been_hurt'] = False  # reset
+                    player.has_been_hurt = False  # reset
                 if have_flawless:
                     base_delay += 1.0
 
@@ -751,26 +807,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
                                        duration=4.0)
                 self.celebrate(20.0)
 
-                # Rookie onslaught completion.
-                if self._preset in ['training', 'training_easy']:
-                    self._award_achievement('Onslaught Training Victory',
-                                            sound=False)
-                    if not self._player_has_dropped_bomb:
-                        self._award_achievement('Boxer', sound=False)
-                elif self._preset in ['rookie', 'rookie_easy']:
-                    self._award_achievement('Rookie Onslaught Victory',
-                                            sound=False)
-                    if not self._a_player_has_been_hurt:
-                        self._award_achievement('Flawless Victory',
-                                                sound=False)
-                elif self._preset in ['pro', 'pro_easy']:
-                    self._award_achievement('Pro Onslaught Victory',
-                                            sound=False)
-                    if not self._player_has_dropped_bomb:
-                        self._award_achievement('Pro Boxer', sound=False)
-                elif self._preset in ['uber', 'uber_easy']:
-                    self._award_achievement('Uber Onslaught Victory',
-                                            sound=False)
+                self._award_completion_achievements()
 
                 ba.timer(base_delay, ba.WeakCall(self._award_completion_bonus))
                 base_delay += 0.85
@@ -809,16 +846,13 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
                 ba.print_exception()
 
     def _award_time_bonus(self, bonus: int) -> None:
-        from bastd.actor import popuptext
         ba.playsound(self._cashregistersound)
-        popuptext.PopupText(ba.Lstr(value='+${A} ${B}',
-                                    subs=[('${A}', str(bonus)),
-                                          ('${B}',
-                                           ba.Lstr(resource='timeBonusText'))
-                                          ]),
-                            color=(1, 1, 0.5, 1),
-                            scale=1.0,
-                            position=(0, 3, -1)).autoretain()
+        PopupText(ba.Lstr(value='+${A} ${B}',
+                          subs=[('${A}', str(bonus)),
+                                ('${B}', ba.Lstr(resource='timeBonusText'))]),
+                  color=(1, 1, 0.5, 1),
+                  scale=1.0,
+                  position=(0, 3, -1)).autoretain()
         self._score += self._time_bonus
         self._update_scores()
 
@@ -852,10 +886,10 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         else:
             text: Union[str, ba.Lstr] = ''
             for player in self.players:
-                assert self._waves is not None
-                if (not player.is_alive() and
-                    (self._preset in ['endless', 'endless_tournament'] or
-                     (player.respawn_wave <= len(self._waves)))):
+                if (not player.is_alive()
+                        and (self._preset
+                             in [Preset.ENDLESS, Preset.ENDLESS_TOURNAMENT] or
+                             (player.respawn_wave <= len(self._waves)))):
                     rtxt = ba.Lstr(resource='onslaughtRespawnText',
                                    subs=[('${PLAYER}', player.get_name()),
                                          ('${WAVE}', str(player.respawn_wave))
@@ -867,18 +901,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
                                    ])
             self._spawn_info_text.node.text = text
 
-    def _start_next_wave(self) -> None:
-
-        # FIXME; tidy up
-        # pylint: disable=too-many-locals
-        # pylint: disable=too-many-statements
-        # pylint: disable=too-many-branches
-
-        # This could happen if we beat a wave as we die.
-        # We don't wanna respawn players and whatnot if this happens.
-        if self._game_over:
-            return
-
+    def _respawn_players_for_wave(self) -> None:
         # Respawn applicable players.
         if self._wave > 1 and not self.is_waiting_for_continue():
             for player in self.players:
@@ -886,14 +909,8 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
                         and player.respawn_wave == self._wave):
                     self.spawn_player(player)
         self._update_player_spawn_info()
-        self.show_zoom_message(ba.Lstr(value='${A} ${B}',
-                                       subs=[('${A}',
-                                              ba.Lstr(resource='waveText')),
-                                             ('${B}', str(self._wave))]),
-                               scale=1.0,
-                               duration=1.0,
-                               trail=True)
-        ba.timer(0.4, ba.Call(ba.playsound, self._new_wave_sound))
+
+    def _setup_wave_spawns(self, wave: Wave) -> None:
         tval = 0.0
         dtime = 0.2
         if self._wave == 1:
@@ -902,132 +919,34 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         else:
             spawn_time = 2.648
 
-        # Populate waves:
-
-        # Generate random waves in endless mode.
-        wave: Dict[str, Any]
-        if self._preset in ['endless', 'endless_tournament']:
-            level = self._wave
-            bot_types2 = [
-                BomberBot, BrawlerBot, TriggerBot, ChargerBot, BomberBotPro,
-                BrawlerBotPro, TriggerBotPro, BomberBotProShielded,
-                ExplodeyBot, ChargerBotProShielded, StickyBot,
-                BrawlerBotProShielded, TriggerBotProShielded
-            ]
-            if level > 5:
-                bot_types2 += [
-                    ExplodeyBot,
-                    TriggerBotProShielded,
-                    BrawlerBotProShielded,
-                    ChargerBotProShielded,
-                ]
-            if level > 7:
-                bot_types2 += [
-                    ExplodeyBot,
-                    TriggerBotProShielded,
-                    BrawlerBotProShielded,
-                    ChargerBotProShielded,
-                ]
-            if level > 10:
-                bot_types2 += [
-                    TriggerBotProShielded, TriggerBotProShielded,
-                    TriggerBotProShielded, TriggerBotProShielded
-                ]
-            if level > 13:
-                bot_types2 += [
-                    TriggerBotProShielded, TriggerBotProShielded,
-                    TriggerBotProShielded, TriggerBotProShielded
-                ]
-
-            bot_levels = [[b for b in bot_types2 if b.points_mult == 1],
-                          [b for b in bot_types2 if b.points_mult == 2],
-                          [b for b in bot_types2 if b.points_mult == 3],
-                          [b for b in bot_types2 if b.points_mult == 4]]
-
-            # Make sure all lists have something in them
-            if not all(bot_levels):
-                raise Exception()
-
-            target_points = level * 3 - 2
-            min_dudes = min(1 + level // 3, 10)
-            max_dudes = min(10, level + 1)
-            max_level = 4 if level > 6 else (3 if level > 3 else
-                                             (2 if level > 2 else 1))
-            group_count = 3
-            distribution = self._get_distribution(target_points, min_dudes,
-                                                  max_dudes, group_count,
-                                                  max_level)
-
-            all_entries: List[Optional[Dict[str, Any]]] = []
-            for group in distribution:
-                entries: List[Optional[Dict[str, Any]]] = []
-                for entry in group:
-                    bot_level = bot_levels[entry[0] - 1]
-                    bot_type = bot_level[random.randrange(len(bot_level))]
-                    rval = random.random()
-                    if rval < 0.5:
-                        spacing = 10
-                    elif rval < 0.9:
-                        spacing = 20
-                    else:
-                        spacing = 40
-                    split = random.random() > 0.3
-                    for i in range(entry[1]):
-                        if split and i % 2 == 0:
-                            entries.insert(0, {
-                                'type': bot_type,
-                                'spacing': spacing
-                            })
-                        else:
-                            entries.append({
-                                'type': bot_type,
-                                'spacing': spacing
-                            })
-                if entries:
-                    all_entries += entries
-                    all_entries.append({
-                        'type': None,
-                        'spacing': 40 if random.random() < 0.5 else 80
-                    })
-
-            angle_rand = random.random()
-            if angle_rand > 0.75:
-                base_angle = 130.0
-            elif angle_rand > 0.5:
-                base_angle = 210.0
-            elif angle_rand > 0.25:
-                base_angle = 20.0
-            else:
-                base_angle = -30.0
-            base_angle += (0.5 - random.random()) * 20.0
-            wave = {'base_angle': base_angle, 'entries': all_entries}
-        else:
-            assert self._waves is not None
-            wave = self._waves[self._wave - 1]
-        entries = []
-        bot_angle = wave.get('base_angle', 0.0)
-        entries += wave['entries']
-        this_time_bonus = 0
-        this_flawless_bonus = 0
-        for info in entries:
+        bot_angle = wave.base_angle
+        self._time_bonus = 0
+        self._flawless_bonus = 0
+        for info in wave.entries:
             if info is None:
                 continue
-            bot_type_2 = info['type']
-            if bot_type_2 == 'delay':
-                spawn_time += info['duration']
+            if isinstance(info, Delay):
+                spawn_time += info.duration
                 continue
+            if isinstance(info, Spacing):
+                bot_angle += info.spacing
+                continue
+            bot_type_2 = info.bottype
             if bot_type_2 is not None:
-                this_time_bonus += bot_type_2.points_mult * 20
-                this_flawless_bonus += bot_type_2.points_mult * 5
-            # if its got a position, use that
-            point = info.get('point', None)
+                assert not isinstance(bot_type_2, str)
+                self._time_bonus += bot_type_2.points_mult * 20
+                self._flawless_bonus += bot_type_2.points_mult * 5
+
+            # If its got a position, use that.
+            point = info.point
             if point is not None:
+                assert bot_type_2 is not None
                 spcall = ba.WeakCall(self.add_bot_at_point, point, bot_type_2,
                                      spawn_time)
                 ba.timer(tval, spcall)
                 tval += dtime
             else:
-                spacing = info.get('spacing', 5.0)
+                spacing = info.spacing
                 bot_angle += spacing * 0.5
                 if bot_type_2 is not None:
                     tcall = ba.WeakCall(self.add_bot_at_angle, bot_angle,
@@ -1040,9 +959,33 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         ba.timer(tval + spawn_time - dtime + 0.01,
                  ba.WeakCall(self._set_can_end_wave))
 
+    def _start_next_wave(self) -> None:
+
+        # This can happen if we beat a wave as we die.
+        # We don't wanna respawn players and whatnot if this happens.
+        if self._game_over:
+            return
+
+        self._respawn_players_for_wave()
+        if self._preset in {Preset.ENDLESS, Preset.ENDLESS_TOURNAMENT}:
+            wave = self._generate_random_wave()
+        else:
+            wave = self._waves[self._wave - 1]
+        self._setup_wave_spawns(wave)
+        self._update_wave_ui_and_bonuses()
+        ba.timer(0.4, ba.Call(ba.playsound, self._new_wave_sound))
+
+    def _update_wave_ui_and_bonuses(self) -> None:
+
+        self.show_zoom_message(ba.Lstr(value='${A} ${B}',
+                                       subs=[('${A}',
+                                              ba.Lstr(resource='waveText')),
+                                             ('${B}', str(self._wave))]),
+                               scale=1.0,
+                               duration=1.0,
+                               trail=True)
+
         # Reset our time bonus.
-        self._time_bonus = this_time_bonus
-        self._flawless_bonus = this_flawless_bonus
         tbtcolor = (1, 1, 0, 1)
         tbttxt = ba.Lstr(value='${A}: ${B}',
                          subs=[
@@ -1066,15 +1009,13 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
 
         ba.timer(5.0, ba.WeakCall(self._start_time_bonus_timer))
         wtcolor = (1, 1, 1, 1)
-        assert self._waves is not None
         wttxt = ba.Lstr(
             value='${A} ${B}',
-            subs=[
-                ('${A}', ba.Lstr(resource='waveText')),
-                ('${B}', str(self._wave) +
-                 ('' if self._preset in ['endless', 'endless_tournament'] else
-                  ('/' + str(len(self._waves)))))
-            ])
+            subs=[('${A}', ba.Lstr(resource='waveText')),
+                  ('${B}', str(self._wave) +
+                   ('' if self._preset
+                    in [Preset.ENDLESS, Preset.ENDLESS_TOURNAMENT] else
+                    ('/' + str(len(self._waves)))))])
         self._wave_text = ba.NodeActor(
             ba.newnode('text',
                        attrs={
@@ -1090,14 +1031,112 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
                            'text': wttxt
                        }))
 
+    def _bot_levels_for_wave(self) -> List[List[Type[SpazBot]]]:
+        level = self._wave
+        bot_types = [
+            BomberBot, BrawlerBot, TriggerBot, ChargerBot, BomberBotPro,
+            BrawlerBotPro, TriggerBotPro, BomberBotProShielded, ExplodeyBot,
+            ChargerBotProShielded, StickyBot, BrawlerBotProShielded,
+            TriggerBotProShielded
+        ]
+        if level > 5:
+            bot_types += [
+                ExplodeyBot,
+                TriggerBotProShielded,
+                BrawlerBotProShielded,
+                ChargerBotProShielded,
+            ]
+        if level > 7:
+            bot_types += [
+                ExplodeyBot,
+                TriggerBotProShielded,
+                BrawlerBotProShielded,
+                ChargerBotProShielded,
+            ]
+        if level > 10:
+            bot_types += [
+                TriggerBotProShielded, TriggerBotProShielded,
+                TriggerBotProShielded, TriggerBotProShielded
+            ]
+        if level > 13:
+            bot_types += [
+                TriggerBotProShielded, TriggerBotProShielded,
+                TriggerBotProShielded, TriggerBotProShielded
+            ]
+        bot_levels = [[b for b in bot_types if b.points_mult == 1],
+                      [b for b in bot_types if b.points_mult == 2],
+                      [b for b in bot_types if b.points_mult == 3],
+                      [b for b in bot_types if b.points_mult == 4]]
+        # Make sure all lists have something in them
+        if not all(bot_levels):
+            raise RuntimeError('Got empty bot level')
+        return bot_levels
+
+    def _add_entries_for_distribution_group(
+            self, group: List[Tuple[int, int]],
+            bot_levels: List[List[Type[SpazBot]]],
+            all_entries: List[Union[Bot, Spacing, Delay, None]]) -> None:
+        entries: List[Union[Bot, Spacing, Delay, None]] = []
+        for entry in group:
+            bot_level = bot_levels[entry[0] - 1]
+            bot_type = bot_level[random.randrange(len(bot_level))]
+            rval = random.random()
+            if rval < 0.5:
+                spacing = 10.0
+            elif rval < 0.9:
+                spacing = 20.0
+            else:
+                spacing = 40.0
+            split = random.random() > 0.3
+            for i in range(entry[1]):
+                if split and i % 2 == 0:
+                    entries.insert(0, Bot(bot_type, spacing=spacing))
+                else:
+                    entries.append(Bot(bot_type, spacing=spacing))
+        if entries:
+            all_entries += entries
+            all_entries.append(
+                Spacing(40.0 if random.random() < 0.5 else 80.0))
+
+    def _generate_random_wave(self) -> Wave:
+        level = self._wave
+        bot_levels = self._bot_levels_for_wave()
+
+        target_points = level * 3 - 2
+        min_dudes = min(1 + level // 3, 10)
+        max_dudes = min(10, level + 1)
+        max_level = 4 if level > 6 else (3 if level > 3 else
+                                         (2 if level > 2 else 1))
+        group_count = 3
+        distribution = self._get_distribution(target_points, min_dudes,
+                                              max_dudes, group_count,
+                                              max_level)
+        all_entries: List[Union[Bot, Spacing, Delay, None]] = []
+        for group in distribution:
+            self._add_entries_for_distribution_group(group, bot_levels,
+                                                     all_entries)
+        angle_rand = random.random()
+        if angle_rand > 0.75:
+            base_angle = 130.0
+        elif angle_rand > 0.5:
+            base_angle = 210.0
+        elif angle_rand > 0.25:
+            base_angle = 20.0
+        else:
+            base_angle = -30.0
+        base_angle += (0.5 - random.random()) * 20.0
+        wave = Wave(base_angle=base_angle, entries=all_entries)
+        return wave
+
     def add_bot_at_point(self,
-                         point: str,
+                         point: Point,
                          spaz_type: Type[SpazBot],
                          spawn_time: float = 1.0) -> None:
         """Add a new bot at a specified named point."""
         if self._game_over:
             return
-        pointpos = self.map.defs.points['bot_spawn_' + point]
+        assert isinstance(point.value, str)
+        pointpos = self.map.defs.points['bot_spawn_' + point.value]
         assert self._bots is not None
         self._bots.spawn_bot(spaz_type, pos=pointpos, spawn_time=spawn_time)
 
@@ -1133,7 +1172,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
 
     def _update_scores(self) -> None:
         score = self._score
-        if self._preset == 'endless':
+        if self._preset is Preset.ENDLESS:
             if score >= 500:
                 self._award_achievement('Onslaught Master')
             if score >= 1000:
@@ -1144,10 +1183,6 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         self._scoreboard.set_team_value(self.teams[0], score, max_score=None)
 
     def handlemessage(self, msg: Any) -> Any:
-
-        # FIXME; tidy this up
-        # pylint: disable=too-many-statements
-        # pylint: disable=too-many-branches
 
         if isinstance(msg, PlayerSpazHurtMessage):
             player = msg.spaz.getplayer(Player, doraise=True)
@@ -1176,52 +1211,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         elif isinstance(msg, SpazBotDeathMessage):
             pts, importance = msg.badguy.get_death_points(msg.how)
             if msg.killerplayer is not None:
-
-                # Toss-off-map achievement:
-                if self._preset in ['training', 'training_easy']:
-                    if msg.badguy.last_attacked_type == ('picked_up',
-                                                         'default'):
-                        self._throw_off_kills += 1
-                        if self._throw_off_kills >= 3:
-                            self._award_achievement('Off You Go Then')
-
-                # Land-mine achievement:
-                elif self._preset in ['rookie', 'rookie_easy']:
-                    if msg.badguy.last_attacked_type == ('explosion',
-                                                         'land_mine'):
-                        self._land_mine_kills += 1
-                        if self._land_mine_kills >= 3:
-                            self._award_achievement('Mine Games')
-
-                # TNT achievement:
-                elif self._preset in ['pro', 'pro_easy']:
-                    if msg.badguy.last_attacked_type == ('explosion', 'tnt'):
-                        self._tnt_kills += 1
-                        if self._tnt_kills >= 3:
-                            ba.timer(
-                                0.5,
-                                ba.WeakCall(self._award_achievement,
-                                            'Boom Goes the Dynamite'))
-
-                elif self._preset in ['uber', 'uber_easy']:
-
-                    # Uber mine achievement:
-                    if msg.badguy.last_attacked_type == ('explosion',
-                                                         'land_mine'):
-                        if not hasattr(self, '_land_mine_kills'):
-                            self._land_mine_kills = 0
-                        self._land_mine_kills += 1
-                        if self._land_mine_kills >= 6:
-                            self._award_achievement('Gold Miner')
-
-                    # Uber tnt achievement:
-                    if msg.badguy.last_attacked_type == ('explosion', 'tnt'):
-                        self._tnt_kills += 1
-                        if self._tnt_kills >= 6:
-                            ba.timer(
-                                0.5,
-                                ba.WeakCall(self._award_achievement,
-                                            'TNT Terror'))
+                self._handle_kill_achievements(msg)
 
                 target: Optional[Sequence[float]]
                 try:
@@ -1251,6 +1241,48 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
             self._update_scores()
         else:
             super().handlemessage(msg)
+
+    def _handle_kill_achievements(self, msg: SpazBotDeathMessage) -> None:
+        # pylint: disable=too-many-branches
+        # Toss-off-map achievement:
+        if self._preset in {Preset.TRAINING, Preset.TRAINING_EASY}:
+            if msg.badguy.last_attacked_type == ('picked_up', 'default'):
+                self._throw_off_kills += 1
+                if self._throw_off_kills >= 3:
+                    self._award_achievement('Off You Go Then')
+
+        # Land-mine achievement:
+        elif self._preset in {Preset.ROOKIE, Preset.ROOKIE_EASY}:
+            if msg.badguy.last_attacked_type == ('explosion', 'land_mine'):
+                self._land_mine_kills += 1
+                if self._land_mine_kills >= 3:
+                    self._award_achievement('Mine Games')
+
+        # TNT achievement:
+        elif self._preset in {Preset.PRO, Preset.PRO_EASY}:
+            if msg.badguy.last_attacked_type == ('explosion', 'tnt'):
+                self._tnt_kills += 1
+                if self._tnt_kills >= 3:
+                    ba.timer(
+                        0.5,
+                        ba.WeakCall(self._award_achievement,
+                                    'Boom Goes the Dynamite'))
+
+        elif self._preset in {Preset.UBER, Preset.UBER_EASY}:
+
+            # Uber mine achievement:
+            if msg.badguy.last_attacked_type == ('explosion', 'land_mine'):
+                self._land_mine_kills += 1
+                if self._land_mine_kills >= 6:
+                    self._award_achievement('Gold Miner')
+
+            # Uber tnt achievement:
+            if msg.badguy.last_attacked_type == ('explosion', 'tnt'):
+                self._tnt_kills += 1
+                if self._tnt_kills >= 6:
+                    ba.timer(
+                        0.5, ba.WeakCall(self._award_achievement,
+                                         'TNT Terror'))
 
     def _set_can_end_wave(self) -> None:
         self._can_end_wave = True

@@ -33,6 +33,7 @@ from bastd.actor import spazbot
 from bastd.actor.bomb import TNTSpawner
 from bastd.actor.scoreboard import Scoreboard
 from bastd.actor.respawnicon import RespawnIcon
+from bastd.actor.powerupbox import PowerupBox, PowerupBoxFactory
 
 if TYPE_CHECKING:
     from typing import Type, Any, List, Dict, Tuple, Sequence, Optional
@@ -482,12 +483,11 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
         self._player_has_picked_up_powerup = True
 
     def _drop_powerup(self, index: int, poweruptype: str = None) -> None:
-        from bastd.actor import powerupbox
         if poweruptype is None:
-            poweruptype = (powerupbox.get_factory().get_random_powerup_type(
+            poweruptype = (PowerupBoxFactory.get().get_random_powerup_type(
                 excludetypes=self._exclude_powerups))
-        powerupbox.PowerupBox(position=self.map.powerup_spawn_points[index],
-                              poweruptype=poweruptype).autoretain()
+        PowerupBox(position=self.map.powerup_spawn_points[index],
+                   poweruptype=poweruptype).autoretain()
 
     def _start_powerup_drops(self) -> None:
         ba.timer(3.0, self._drop_powerups, repeat=True)
@@ -496,7 +496,6 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
                        standard_points: bool = False,
                        force_first: str = None) -> None:
         """ Generic powerup drop """
-        from bastd.actor import powerupbox
 
         # If its been a minute since our last wave finished emerging, stop
         # giving out land-mine powerups. (prevents players from waiting
@@ -522,9 +521,9 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
 
             # drop one random one somewhere..
             assert self._exclude_powerups is not None
-            powerupbox.PowerupBox(
+            PowerupBox(
                 position=pos,
-                poweruptype=powerupbox.get_factory().get_random_powerup_type(
+                poweruptype=PowerupBoxFactory.get().get_random_powerup_type(
                     excludetypes=self._exclude_powerups +
                     extra_excludes)).autoretain()
 

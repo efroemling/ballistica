@@ -858,8 +858,8 @@ def _preload1() -> None:
     ]:
         ba.gettexture(tex)
     ba.gettexture('bg')
-    from bastd.actor import powerupbox
-    powerupbox.get_factory()
+    from bastd.actor.powerupbox import PowerupBoxFactory
+    PowerupBoxFactory.get()
     ba.timer(0.1, _preload2)
 
 

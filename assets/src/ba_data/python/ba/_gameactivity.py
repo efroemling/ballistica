@@ -1094,10 +1094,10 @@ class GameActivity(Activity[PlayerType, TeamType]):
 
     def _standard_drop_powerup(self, index: int, expire: bool = True) -> None:
         # pylint: disable=cyclic-import
-        from bastd.actor import powerupbox
-        powerupbox.PowerupBox(
+        from bastd.actor.powerupbox import PowerupBox, PowerupBoxFactory
+        PowerupBox(
             position=self.map.powerup_spawn_points[index],
-            poweruptype=powerupbox.get_factory().get_random_powerup_type(),
+            poweruptype=PowerupBoxFactory.get().get_random_powerup_type(),
             expire=expire).autoretain()
 
     def _standard_drop_powerups(self) -> None:

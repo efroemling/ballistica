@@ -139,7 +139,7 @@ class FlagPickedUpMessage:
 
 
 @dataclass
-class FlagDeathMessage:
+class FlagDiedMessage:
     """A message saying a ba.Flag has died.
 
     category: Message Classes
@@ -335,7 +335,7 @@ class Flag(ba.Actor):
             if self.node:
                 self.node.delete()
                 if not msg.immediate:
-                    self.activity.handlemessage(FlagDeathMessage(self))
+                    self.activity.handlemessage(FlagDiedMessage(self))
         elif isinstance(msg, ba.HitMessage):
             assert self.node
             assert msg.force_direction is not None

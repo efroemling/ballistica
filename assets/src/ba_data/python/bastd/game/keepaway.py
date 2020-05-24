@@ -31,7 +31,7 @@ from typing import TYPE_CHECKING
 import ba
 from bastd.actor.playerspaz import PlayerSpaz
 from bastd.actor.scoreboard import Scoreboard
-from bastd.actor.flag import (Flag, FlagDroppedMessage, FlagDeathMessage,
+from bastd.actor.flag import (Flag, FlagDroppedMessage, FlagDiedMessage,
                               FlagPickedUpMessage)
 
 if TYPE_CHECKING:
@@ -270,7 +270,7 @@ class KeepAwayGame(ba.TeamGameActivity[Player, Team]):
             # Augment standard behavior.
             super().handlemessage(msg)
             self.respawn_player(msg.getplayer(Player))
-        elif isinstance(msg, FlagDeathMessage):
+        elif isinstance(msg, FlagDiedMessage):
             self._spawn_flag()
         elif isinstance(msg, (FlagDroppedMessage, FlagPickedUpMessage)):
             self._update_flag_state()

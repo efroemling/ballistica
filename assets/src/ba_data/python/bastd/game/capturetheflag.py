@@ -547,7 +547,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
             # Augment standard behavior.
             super().handlemessage(msg)
             self.respawn_player(msg.getplayer(Player))
-        elif isinstance(msg, stdflag.FlagDeathMessage):
+        elif isinstance(msg, stdflag.FlagDiedMessage):
             assert isinstance(msg.flag, CTFFlag)
             ba.timer(0.1, ba.Call(self._spawn_flag_for_team, msg.flag.team))
         elif isinstance(msg, stdflag.FlagPickedUpMessage):

@@ -90,18 +90,6 @@ class PlayerSpaz(Spaz):
         self._player = player
         self._drive_player_position()
 
-    # @property
-    # def player(self, playertype: Type[PlayerType]) -> PlayerType:
-    #     """The ba.Player associated with this Spaz.
-
-    #     If the player no longer exists, raises an ba.PlayerNotFoundError.
-    #     """
-    #     player = self._player
-    #     assert isinstance(player, playertype)
-    #     if not player:
-    #         raise ba.PlayerNotFoundError()
-    #     return player
-
     @overload
     def getplayer(self,
                   playertype: Type[PlayerType],

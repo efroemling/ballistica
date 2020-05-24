@@ -182,21 +182,21 @@ class PowerupBoxFactory:
         self._lastpoweruptype = ptype
         return ptype
 
-
-def get_factory() -> PowerupBoxFactory:
-    """Return a shared ba.PowerupBoxFactory object, creating if necessary."""
-    activity = ba.getactivity()
-    if activity is None:
-        raise RuntimeError('no current activity')
-    try:
-        # FIXME: et better way to store stuff with activity
-        # pylint: disable=protected-access
-        # noinspection PyProtectedMember
-        return activity._shared_powerup_factory  # type: ignore
-    except Exception:
-        factory = activity._shared_powerup_factory = (  # type: ignore
-            PowerupBoxFactory())
-        return factory
+    @staticmethod
+    def get() -> PowerupBoxFactory:
+        """Return a shared ba.PowerupBoxFactory object, creating if needed."""
+        activity = ba.getactivity()
+        if activity is None:
+            raise RuntimeError('no current activity')
+        try:
+            # FIXME: et better way to store stuff with activity
+            # pylint: disable=protected-access
+            # noinspection PyProtectedMember
+            return activity._shared_powerup_factory  # type: ignore
+        except Exception:
+            factory = activity._shared_powerup_factory = (  # type: ignore
+                PowerupBoxFactory())
+            return factory
 
 
 class PowerupBox(ba.Actor):
@@ -229,7 +229,7 @@ class PowerupBox(ba.Actor):
 
         super().__init__()
 
-        factory = get_factory()
+        factory = PowerupBoxFactory.get()
         self.poweruptype = poweruptype
         self._powersgiven = False
 
@@ -293,7 +293,7 @@ class PowerupBox(ba.Actor):
             self._handlemessage_sanity_check()
 
         if isinstance(msg, ba.PowerupAcceptMessage):
-            factory = get_factory()
+            factory = PowerupBoxFactory.get()
             assert self.node
             if self.poweruptype == 'health':
                 ba.playsound(factory.health_powerup_sound,

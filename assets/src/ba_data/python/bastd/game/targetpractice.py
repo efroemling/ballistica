@@ -71,6 +71,7 @@ class TargetPracticeGame(ba.TeamGameActivity[Player, Team]):
             'default': True
         }),
     ]
+    default_music = ba.MusicType.FORWARD_MARCH
 
     @classmethod
     def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
@@ -91,9 +92,6 @@ class TargetPracticeGame(ba.TeamGameActivity[Player, Team]):
         self._target_count = int(settings['Target Count'])
         self._enable_impact_bombs = bool(settings['Enable Impact Bombs'])
         self._enable_triple_bombs = bool(settings['Enable Triple Bombs'])
-
-        # Base class overrides
-        self.default_music = ba.MusicType.FORWARD_MARCH
 
     def on_team_join(self, team: Team) -> None:
         if self.has_begun():

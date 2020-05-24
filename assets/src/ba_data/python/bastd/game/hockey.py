@@ -29,7 +29,7 @@ from typing import TYPE_CHECKING
 
 import ba
 from bastd.actor.scoreboard import Scoreboard
-from bastd.actor import powerupbox
+from bastd.actor.powerupbox import PowerupBoxFactory
 
 if TYPE_CHECKING:
     from typing import Any, Sequence, Dict, Type, List, Optional, Union
@@ -137,6 +137,7 @@ class HockeyGame(ba.TeamGameActivity[Player, Team]):
             'default': 1.0
         }),
     ]
+    default_music = ba.MusicType.HOCKEY
 
     @classmethod
     def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
@@ -182,7 +183,7 @@ class HockeyGame(ba.TeamGameActivity[Player, Team]):
         # We want the puck to kill powerups; not get stopped by them
         self.puck_material.add_actions(
             conditions=('they_have_material',
-                        powerupbox.get_factory().powerup_material),
+                        PowerupBoxFactory.get().powerup_material),
             actions=(('modify_part_collision', 'physical', False),
                      ('message', 'their_node', 'at_connect', ba.DieMessage())))
         self._score_region_material = ba.Material()
@@ -204,10 +205,6 @@ class HockeyGame(ba.TeamGameActivity[Player, Team]):
         if self.settings_raw['Score to Win'] == 1:
             return 'score a goal'
         return 'score ${ARG1} goals', self.settings_raw['Score to Win']
-
-    def on_transition_in(self) -> None:
-        self.default_music = ba.MusicType.HOCKEY
-        super().on_transition_in()
 
     def on_begin(self) -> None:
         super().on_begin()
@@ -328,7 +325,6 @@ class HockeyGame(ba.TeamGameActivity[Player, Team]):
         self.end(results=results)
 
     def _update_scoreboard(self) -> None:
-        """ update scoreboard and check for winners """
         winscore = self.settings_raw['Score to Win']
         for team in self.teams:
             self._scoreboard.set_team_value(team, team.gamedata['score'],

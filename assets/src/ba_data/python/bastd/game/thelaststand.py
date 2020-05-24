@@ -30,6 +30,7 @@ from bastd.actor import spazbot
 from bastd.actor.playerspaz import PlayerSpaz
 from bastd.actor.bomb import TNTSpawner
 from bastd.actor.scoreboard import Scoreboard
+from bastd.actor.powerupbox import PowerupBoxFactory, PowerupBox
 
 if TYPE_CHECKING:
     from typing import Any, Dict, Type, List, Optional, Sequence
@@ -137,12 +138,11 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
                                           ba.WeakCall(self._update_bots))
 
     def _drop_powerup(self, index: int, poweruptype: str = None) -> None:
-        from bastd.actor import powerupbox
         if poweruptype is None:
-            poweruptype = (powerupbox.get_factory().get_random_powerup_type(
+            poweruptype = (PowerupBoxFactory.get().get_random_powerup_type(
                 excludetypes=self._excludepowerups))
-        powerupbox.PowerupBox(position=self.map.powerup_spawn_points[index],
-                              poweruptype=poweruptype).autoretain()
+        PowerupBox(position=self.map.powerup_spawn_points[index],
+                   poweruptype=poweruptype).autoretain()
 
     def _start_powerup_drops(self) -> None:
         self._powerup_drop_timer = ba.Timer(3.0,
@@ -171,7 +171,7 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
             # Drop one random one somewhere.
             powerupbox.PowerupBox(
                 position=drop_pt,
-                poweruptype=powerupbox.get_factory().get_random_powerup_type(
+                poweruptype=PowerupBoxFactory.get().get_random_powerup_type(
                     excludetypes=self._excludepowerups)).autoretain()
 
     def do_end(self, outcome: str) -> None:

@@ -28,7 +28,7 @@ from typing import TYPE_CHECKING
 
 import ba
 from bastd.actor import bomb as stdbomb
-from bastd.actor import powerupbox
+from bastd.actor.powerupbox import PowerupBoxFactory
 
 if TYPE_CHECKING:
     from typing import (Any, Sequence, Optional, Dict, List, Union, Callable,
@@ -147,7 +147,7 @@ class Spaz(ba.Actor):
         extras_material = []
 
         if can_accept_powerups:
-            pam = powerupbox.get_factory().powerup_accept_material
+            pam = PowerupBoxFactory.get().powerup_accept_material
             materials.append(pam)
             roller_materials.append(pam)
             extras_material.append(pam)
@@ -252,7 +252,7 @@ class Spaz(ba.Actor):
         self._score_text_hide_timer: Optional[ba.Timer] = None
         self._last_stand_pos: Optional[Sequence[float]] = None
 
-        # deprecated stuff.. need to make these into lists
+        # Deprecated stuff.. should make these into lists.
         self.punch_callback: Optional[Callable[[Spaz], Any]] = None
         self.pick_up_powerup_callback: Optional[Callable[[Spaz], Any]] = None
 
@@ -273,6 +273,7 @@ class Spaz(ba.Actor):
         Add a call to be run whenever this Spaz drops a bomb.
         The spaz and the newly-dropped bomb are passed as arguments.
         """
+        assert not self.expired
         self._dropped_bomb_callbacks.append(call)
 
     def is_alive(self) -> bool:
@@ -725,7 +726,7 @@ class Spaz(ba.Actor):
             if self.pick_up_powerup_callback is not None:
                 self.pick_up_powerup_callback(self)
             if msg.poweruptype == 'triple_bombs':
-                tex = powerupbox.get_factory().tex_bomb
+                tex = PowerupBoxFactory.get().tex_bomb
                 self._flash_billboard(tex)
                 self.set_bomb_count(3)
                 if self.powerups_expire:
@@ -785,7 +786,7 @@ class Spaz(ba.Actor):
                         timeformat=ba.TimeFormat.MILLISECONDS))
             elif msg.poweruptype == 'punch':
                 self._has_boxing_gloves = True
-                tex = powerupbox.get_factory().tex_punch
+                tex = PowerupBoxFactory.get().tex_punch
                 self._flash_billboard(tex)
                 self.equip_boxing_gloves()
                 if self.powerups_expire:
@@ -845,7 +846,7 @@ class Spaz(ba.Actor):
                                       if m != factory.curse_material))
                     self.node.curse_death_time = 0
                 self.hitpoints = self.hitpoints_max
-                self._flash_billboard(powerupbox.get_factory().tex_health)
+                self._flash_billboard(PowerupBoxFactory.get().tex_health)
                 self.node.hurt = 0
                 self._last_hit_time = None
                 self._num_times_hit = 0
@@ -1292,7 +1293,7 @@ class Spaz(ba.Actor):
             if self.land_mine_count != 0:
                 self.node.counter_text = 'x' + str(self.land_mine_count)
                 self.node.counter_texture = (
-                    powerupbox.get_factory().tex_land_mines)
+                    PowerupBoxFactory.get().tex_land_mines)
             else:
                 self.node.counter_text = ''
 
@@ -1380,13 +1381,13 @@ class Spaz(ba.Actor):
         ba.playsound(sound, position=pos, volume=5.0)
 
     def _get_bomb_type_tex(self) -> ba.Texture:
-        bomb_factory = powerupbox.get_factory()
+        factory = PowerupBoxFactory.get()
         if self.bomb_type == 'sticky':
-            return bomb_factory.tex_sticky_bombs
+            return factory.tex_sticky_bombs
         if self.bomb_type == 'ice':
-            return bomb_factory.tex_ice_bombs
+            return factory.tex_ice_bombs
         if self.bomb_type == 'impact':
-            return bomb_factory.tex_impact_bombs
+            return factory.tex_impact_bombs
         raise ValueError('invalid bomb type')
 
     def _flash_billboard(self, tex: ba.Texture) -> None:
@@ -1411,7 +1412,7 @@ class Spaz(ba.Actor):
     def _gloves_wear_off_flash(self) -> None:
         if self.node:
             self.node.boxing_gloves_flashing = True
-            self.node.billboard_texture = powerupbox.get_factory().tex_punch
+            self.node.billboard_texture = PowerupBoxFactory.get().tex_punch
             self.node.billboard_opacity = 1.0
             self.node.billboard_cross_out = True
 
@@ -1425,21 +1426,21 @@ class Spaz(ba.Actor):
             self._punch_cooldown = factory.punch_cooldown
         self._has_boxing_gloves = False
         if self.node:
-            ba.playsound(powerupbox.get_factory().powerdown_sound,
+            ba.playsound(PowerupBoxFactory.get().powerdown_sound,
                          position=self.node.position)
             self.node.boxing_gloves = False
             self.node.billboard_opacity = 0.0
 
     def _multi_bomb_wear_off_flash(self) -> None:
         if self.node:
-            self.node.billboard_texture = powerupbox.get_factory().tex_bomb
+            self.node.billboard_texture = PowerupBoxFactory.get().tex_bomb
             self.node.billboard_opacity = 1.0
             self.node.billboard_cross_out = True
 
     def _multi_bomb_wear_off(self) -> None:
         self.set_bomb_count(self.default_bomb_count)
         if self.node:
-            ba.playsound(powerupbox.get_factory().powerdown_sound,
+            ba.playsound(PowerupBoxFactory.get().powerdown_sound,
                          position=self.node.position)
             self.node.billboard_opacity = 0.0
 
@@ -1452,6 +1453,6 @@ class Spaz(ba.Actor):
     def _bomb_wear_off(self) -> None:
         self.bomb_type = self.bomb_type_default
         if self.node:
-            ba.playsound(powerupbox.get_factory().powerdown_sound,
+            ba.playsound(PowerupBoxFactory.get().powerdown_sound,
                          position=self.node.position)
             self.node.billboard_opacity = 0.0

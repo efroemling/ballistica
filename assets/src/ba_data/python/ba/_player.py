@@ -99,6 +99,12 @@ class Player(Generic[TeamType]):
         self._nodeactor = NodeActor(node)
         sessionplayer.set_node(node)
 
+    def reset(self) -> None:
+        """(internal)"""
+        self._nodeactor = None
+        self.actor = None
+        self.team = None  # type: ignore
+
     @property
     def sessionplayer(self) -> ba.SessionPlayer:
         """Return the ba.SessionPlayer corresponding to this Player.

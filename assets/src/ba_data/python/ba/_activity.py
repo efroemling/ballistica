@@ -525,10 +525,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         (internal)
         """
 
-        # Is this ever still happening?...
-        if self._has_begun:
-            print_error("_begin called twice; this shouldn't happen")
-            return
+        assert not self._has_begun
 
         # Inherit stats from the session.
         self._stats = session.stats
@@ -791,6 +788,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
             if player:
                 try:
                     sessionplayer = player.sessionplayer
+                    player.reset()
                     sessionplayer.set_node(None)
                     sessionplayer.set_activity(None)
                     sessionplayer.gameplayer = None
@@ -818,7 +816,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
             self._activity_data.destroy()
         except Exception:
             print_exception(
-                'Exception during ba.Activity._expire() destroying data:')
+                'Error during ba.Activity._expire() destroying data:')
 
     def _prune_dead_actors(self) -> None:
         self._actor_refs = [a for a in self._actor_refs if a]
