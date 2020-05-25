@@ -62,7 +62,7 @@ class SpazBotPunchedMessage:
         self.damage = damage
 
 
-class SpazBotDeathMessage:
+class SpazBotDiedMessage:
     """A message saying a ba.SpazBot has died.
 
     category: Message Classes
@@ -98,7 +98,7 @@ class SpazBot(Spaz):
     navigate obstacles and so should only be used
     on wide-open maps.
 
-    When a SpazBot is killed, it delivers a ba.SpazBotDeathMessage
+    When a SpazBot is killed, it delivers a ba.SpazBotDiedMessage
     to the current activity.
 
     When a SpazBot is punched, it delivers a ba.SpazBotPunchedMessage
@@ -569,7 +569,7 @@ class SpazBot(Spaz):
                     killerplayer = None
                 if activity is not None:
                     activity.handlemessage(
-                        SpazBotDeathMessage(self, killerplayer, msg.how))
+                        SpazBotDiedMessage(self, killerplayer, msg.how))
             super().handlemessage(msg)  # Augment standard behavior.
 
         # Keep track of the player who last hit us for point rewarding.
@@ -894,7 +894,7 @@ class ExplodeyBotShielded(ExplodeyBot):
     points_mult = 5
 
 
-class BotSet:
+class SpazBotSet:
     """A container/controller for one or more ba.SpazBots.
 
     category: Bot Classes
@@ -963,9 +963,7 @@ class BotSet:
     def _update(self) -> None:
 
         # Update one of our bot lists each time through.
-        # First off, remove dead bots from the list. Note that we check
-        # exists() here via the bool operator instead of dead; we want to
-        # keep them around even if they're just a corpse.
+        # First off, remove no-longer-existing bots from the list.
         try:
             bot_list = self._bot_lists[self._bot_update_list] = ([
                 b for b in self._bot_lists[self._bot_update_list] if b
@@ -982,6 +980,9 @@ class BotSet:
         for player in ba.getactivity().players:
             assert isinstance(player, ba.Player)
             try:
+                # TODO: could use abstracted player.position here so we
+                # don't have to assume their actor type, but we have no
+                # abstracted velocity as of yet.
                 if player.is_alive():
                     assert isinstance(player.actor, Spaz)
                     assert player.actor.node

@@ -179,16 +179,9 @@ class AssaultGame(ba.TeamGameActivity[Player, Team]):
         ba.timer(length, light.delete)
 
     def _handle_base_collide(self, team: Team) -> None:
-
-        # Attempt to pull a living ba.Player from what we hit.
-        cnode = ba.get_collision_info('opposing_node')
-        assert isinstance(cnode, ba.Node)
-        actor = cnode.getdelegate()
-        if not isinstance(actor, PlayerSpaz):
-            return
-
-        player = actor.getplayer(Player)
-        if not player or not player.actor:
+        player = ba.getcollision().opposing_node.getdelegate(
+            PlayerSpaz, True).getplayer(Player)
+        if not player or not player.is_alive():
             return
 
         # If its another team's player, they scored.

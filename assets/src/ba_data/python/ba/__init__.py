@@ -30,13 +30,13 @@ In some specific cases you may need to pull in individual submodules instead.
 from _ba import (CollideModel, Context, ContextCall, Data, InputDevice,
                  Material, Model, Node, SessionPlayer, Sound, Texture, Timer,
                  Vec3, Widget, buttonwidget, camerashake, checkboxwidget,
-                 columnwidget, containerwidget, do_once, emitfx,
-                 get_collision_info, getactivity, getcollidemodel, getmodel,
-                 getnodes, getsession, getsound, gettexture, hscrollwidget,
-                 imagewidget, log, new_activity, newnode, playsound,
-                 printnodes, printobjects, pushcall, quit, rowwidget,
-                 safecolor, screenmessage, scrollwidget, set_analytics_screen,
-                 charstr, textwidget, time, timer, open_url, widget)
+                 columnwidget, containerwidget, do_once, emitfx, getactivity,
+                 getcollidemodel, getmodel, getnodes, getsession, getsound,
+                 gettexture, hscrollwidget, imagewidget, log, new_activity,
+                 newnode, playsound, printnodes, printobjects, pushcall, quit,
+                 rowwidget, safecolor, screenmessage, scrollwidget,
+                 set_analytics_screen, charstr, textwidget, time, timer,
+                 open_url, widget)
 from ba._activity import Activity
 from ba._actor import Actor
 from ba._player import Player, playercast, playercast_o
@@ -87,6 +87,7 @@ from ba._music import setmusic, MusicPlayer, MusicType, MusicPlayMode
 from ba._powerup import PowerupMessage, PowerupAcceptMessage
 from ba._multiteamsession import MultiTeamSession
 from ba.ui import Window, UIController, uicleanupcheck
+from ba._collision import Collision, getcollision
 
 app: App
 

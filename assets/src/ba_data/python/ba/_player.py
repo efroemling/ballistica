@@ -226,6 +226,5 @@ def playercast_o(totype: Type[PlayerType],
 
     Category: Gameplay Functions
     """
-    # noinspection PyTypeHints
     assert isinstance(player, (totype, type(None)))
     return player

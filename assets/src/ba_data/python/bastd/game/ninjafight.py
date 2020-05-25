@@ -29,7 +29,7 @@ import random
 from typing import TYPE_CHECKING
 
 import ba
-from bastd.actor.spazbot import BotSet, ChargerBot, SpazBotDeathMessage
+from bastd.actor.spazbot import SpazBotSet, ChargerBot, SpazBotDiedMessage
 from bastd.actor.onscreentimer import OnScreenTimer
 
 if TYPE_CHECKING:
@@ -76,7 +76,7 @@ class NinjaFightGame(ba.TeamGameActivity[Player, Team]):
         self._winsound = ba.getsound('score')
         self._won = False
         self._timer: Optional[OnScreenTimer] = None
-        self._bots = BotSet()
+        self._bots = SpazBotSet()
 
     # Called when our game is transitioning in but not ready to begin;
     # we can go ahead and start creating stuff, playing music, etc.
@@ -150,7 +150,7 @@ class NinjaFightGame(ba.TeamGameActivity[Player, Team]):
             self.respawn_player(msg.getplayer(Player))
 
         # A spaz-bot has died.
-        elif isinstance(msg, SpazBotDeathMessage):
+        elif isinstance(msg, SpazBotDiedMessage):
             # Unfortunately the bot-set will always tell us there are living
             # bots if we ask here (the currently-dying bot isn't officially
             # marked dead yet) ..so lets push a call into the event loop to

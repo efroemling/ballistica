@@ -906,8 +906,8 @@ def _preload4() -> None:
         ba.getmodel(mname)
     for sname in ['metalHit', 'metalSkid', 'refWhistle', 'achievement']:
         ba.getsound(sname)
-    from bastd.actor.flag import get_factory
-    get_factory()
+    from bastd.actor.flag import FlagFactory
+    FlagFactory.get()
 
 
 class MainMenuSession(ba.Session):

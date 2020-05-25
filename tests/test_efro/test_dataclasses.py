@@ -149,7 +149,6 @@ def test_validate() -> None:
     dataclass_validate(tclass)
 
     # No longer valid.
-    # noinspection PyTypeHints
     tclass.ival = None  # type: ignore
     with pytest.raises(TypeError):
         dataclass_validate(tclass)

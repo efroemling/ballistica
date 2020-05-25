@@ -31,6 +31,7 @@ from typing import TYPE_CHECKING
 import ba
 from bastd.actor.flag import Flag
 from bastd.actor.scoreboard import Scoreboard
+from bastd.actor.playerspaz import PlayerSpaz
 
 if TYPE_CHECKING:
     from typing import Any, Optional, Type, List, Dict, Sequence, Union
@@ -233,15 +234,12 @@ class ConquestGame(ba.TeamGameActivity[Player, Team]):
         ba.timer(length, light.delete)
 
     def _handle_flag_player_collide(self) -> None:
-        flagnode, playernode = ba.get_collision_info('source_node',
-                                                     'opposing_node')
-        try:
-            player = playernode.getdelegate().getplayer()
-            flag = flagnode.getdelegate()
-        except Exception:
-            return  # Player may have left and his body hit the flag.
-        assert isinstance(player, Player)
-        assert isinstance(flag, ConquestFlag)
+        collision = ba.getcollision()
+        flag = collision.source_node.getdelegate(ConquestFlag)
+        player = collision.opposing_node.getdelegate(PlayerSpaz,
+                                                     True).getplayer(Player)
+        if not flag or not player:
+            return
         assert flag.light
 
         if flag.team is not player.team:

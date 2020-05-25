@@ -447,7 +447,6 @@ def cameraflash(duration: float = 999.0) -> None:
     # Store this on the current activity so we only have one at a time.
     # FIXME: Need a type safe way to do this.
     activity = _ba.getactivity()
-    # noinspection PyTypeHints
     activity.camera_flash_data = []  # type: ignore
     for i in range(6):
         light = NodeActor(

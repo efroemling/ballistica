@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-05-24 for Ballistica version 1.5.0 build 20026</em></h4>
+<h4><em>last updated on 2020-05-25 for Ballistica version 1.5.0 build 20027</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -51,7 +51,6 @@
    <li><a href="#function_ba_camerashake">ba.camerashake()</a></li>
    <li><a href="#function_ba_emitfx">ba.emitfx()</a></li>
    <li><a href="#function_ba_existing">ba.existing()</a></li>
-   <li><a href="#function_ba_get_collision_info">ba.get_collision_info()</a></li>
    <li><a href="#function_ba_getactivity">ba.getactivity()</a></li>
    <li><a href="#function_ba_getnodes">ba.getnodes()</a></li>
    <li><a href="#function_ba_getsession">ba.getsession()</a></li>
@@ -199,6 +198,14 @@
       <li><a href="#class_ba_TeamNotFoundError">ba.TeamNotFoundError</a></li>
       <li><a href="#class_ba_WidgetNotFoundError">ba.WidgetNotFoundError</a></li>
    </ul>
+</ul>
+<h4><a name="class_category_Misc_Classes">Misc Classes</a></h4>
+<ul>
+   <li><a href="#class_ba_Collision">ba.Collision</a></li>
+</ul>
+<h4><a name="function_category_Misc_Functions">Misc Functions</a></h4>
+<ul>
+   <li><a href="#function_ba_getcollision">ba.getcollision()</a></li>
 </ul>
 <h4><a name="class_category_Protocols">Protocols</a></h4>
 <ul>
@@ -1368,6 +1375,44 @@ mycall()</pre>
 
 <p>Use <a href="#function_ba_getcollidemodel">ba.getcollidemodel</a>() to instantiate one.</p>
 
+<hr>
+<h2><strong><a name="class_ba_Collision">ba.Collision</a></strong></h3>
+<p><em>&lt;top level class&gt;</em>
+</p>
+<p>A class providing info about occurring collisions.</p>
+
+<h3>Attributes:</h3>
+<h5><a href="#attr_ba_Collision__opposing_body">opposing_body</a>, <a href="#attr_ba_Collision__opposing_node">opposing_node</a>, <a href="#attr_ba_Collision__position">position</a>, <a href="#attr_ba_Collision__source_node">source_node</a></h5>
+<dl>
+<dt><h4><a name="attr_ba_Collision__opposing_body">opposing_body</a></h4></dt><dd>
+<p><span>int</span></p>
+<p>The body index on the opposing node in the current collision.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_Collision__opposing_node">opposing_node</a></h4></dt><dd>
+<p><span><a href="#class_ba_Node">ba.Node</a></span></p>
+<p>The node the current callback material node is hitting.</p>
+
+<p>        Throws a <a href="#class_ba_NodeNotFoundError">ba.NodeNotFoundError</a> if the node does not exist.
+        This can be expected in some cases such as in 'disconnect'
+        callbacks triggered by deleting a currently-colliding node.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_Collision__position">position</a></h4></dt><dd>
+<p><span><a href="#class_ba_Vec3">ba.Vec3</a></span></p>
+<p>The position of the current collision.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_Collision__source_node">source_node</a></h4></dt><dd>
+<p><span><a href="#class_ba_Node">ba.Node</a></span></p>
+<p>The node containing the material triggering the current callback.</p>
+
+<p>        Throws a <a href="#class_ba_NodeNotFoundError">ba.NodeNotFoundError</a> if the node does not exist, though
+        the node should always exist (at least at the start of the collision
+        callback).</p>
+
+</dd>
+</dl>
 <hr>
 <h2><strong><a name="class_ba_Context">ba.Context</a></strong></h3>
 <p><em>&lt;top level class&gt;</em>
@@ -3547,10 +3592,13 @@ the right thing both for Node objects and values of None.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Node__getdelegate">getdelegate()</a></dt></h4><dd>
-<p><span>getdelegate() -&gt; Any</span></p>
+<p><span>getdelegate(type: Type, doraise: bool = False) -&gt; &lt;varies&gt;</span></p>
 
-<p>Returns the node's current delegate, which is the Python object
-designated to handle the Node's messages.</p>
+<p>Return the node's current delegate object if it matches a certain type.</p>
+
+<p>If the node has no delegate or it is not an instance of the passed
+type, then None will be returned. If 'doraise' is True, then an
+Exception will be raised instead in such cases.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Node__getnodetype">getnodetype()</a></dt></h4><dd>
@@ -5733,18 +5781,6 @@ For more info, see notes on 'existables' here:
 https://ballistica.net/wiki/Coding-Style-Guide</p>
 
 <hr>
-<h2><strong><a name="function_ba_get_collision_info">ba.get_collision_info()</a></strong></h3>
-<p><span>get_collision_info(*args: Any) -&gt; Any</span></p>
-
-<p>Return collision related values</p>
-
-<p>Category: <a href="#function_category_Gameplay_Functions">Gameplay Functions</a></p>
-
-<p>Returns a single collision value or tuple of values such as location,
-depth, nodes involved, etc. Only call this in the handler of a
-collision-triggered callback or message</p>
-
-<hr>
 <h2><strong><a name="function_ba_get_valid_languages">ba.get_valid_languages()</a></strong></h3>
 <p><span>get_valid_languages() -&gt; List[str]</span></p>
 
@@ -5784,6 +5820,12 @@ terrain.</p>
 to be loaded. To avoid hitches, instantiate your media objects in
 advance of when you will be using them, allowing time for them to load
 in the background if necessary.</p>
+
+<hr>
+<h2><strong><a name="function_ba_getcollision">ba.getcollision()</a></strong></h3>
+<p><span>getcollision() -&gt; Collision</span></p>
+
+<p>Return the in-progress collision.</p>
 
 <hr>
 <h2><strong><a name="function_ba_getmaps">ba.getmaps()</a></strong></h3>

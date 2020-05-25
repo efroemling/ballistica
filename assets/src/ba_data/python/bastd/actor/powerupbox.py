@@ -305,11 +305,9 @@ class PowerupBox(ba.Actor):
 
         elif isinstance(msg, _TouchedMessage):
             if not self._powersgiven:
-                node = ba.get_collision_info('opposing_node')
-                if node:
-                    node.handlemessage(
-                        ba.PowerupMessage(self.poweruptype,
-                                          source_node=self.node))
+                node = ba.getcollision().opposing_node
+                node.handlemessage(
+                    ba.PowerupMessage(self.poweruptype, source_node=self.node))
 
         elif isinstance(msg, ba.DieMessage):
             if self.node:

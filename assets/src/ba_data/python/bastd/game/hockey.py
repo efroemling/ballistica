@@ -28,6 +28,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import ba
+from bastd.actor.playerspaz import PlayerSpaz
 from bastd.actor.scoreboard import Scoreboard
 from bastd.actor.powerupbox import PowerupBoxFactory
 
@@ -243,15 +244,10 @@ class HockeyGame(ba.TeamGameActivity[Player, Team]):
         self._update_scoreboard()
 
     def _handle_puck_player_collide(self) -> None:
-        try:
-            pucknode, playernode = ba.get_collision_info(
-                'source_node', 'opposing_node')
-            puck = pucknode.getdelegate()
-            player = playernode.getdelegate().getplayer()
-        except Exception:
-            player = puck = None
-        assert isinstance(player, Player)
-        assert isinstance(puck, Puck)
+        collision = ba.getcollision()
+        puck = collision.source_node.getdelegate(Puck)
+        player = collision.opposing_node.getdelegate(PlayerSpaz,
+                                                     True).getplayer(Player)
         if player and puck:
             puck.last_players_to_touch[player.team.id] = player
 
@@ -269,7 +265,7 @@ class HockeyGame(ba.TeamGameActivity[Player, Team]):
         if self._puck.scored:
             return
 
-        region = ba.get_collision_info('source_node')
+        region = ba.getcollision().source_node
         index = 0
         for index in range(len(self._score_regions)):
             if region == self._score_regions[index].node:
@@ -308,7 +304,7 @@ class HockeyGame(ba.TeamGameActivity[Player, Team]):
 
         light = ba.newnode('light',
                            attrs={
-                               'position': ba.get_collision_info('position'),
+                               'position': ba.getcollision().position,
                                'height_attenuated': False,
                                'color': (1, 0, 0)
                            })

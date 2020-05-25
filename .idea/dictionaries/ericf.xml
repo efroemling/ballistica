@@ -416,6 +416,7 @@
       <w>deathmatch</w>
       <w>deek</w>
       <w>defs</w>
+      <w>defsline</w>
       <w>deivit</w>
       <w>depcls</w>
       <w>depdata</w>
@@ -749,6 +750,7 @@
       <w>getclass</w>
       <w>getcollide</w>
       <w>getcollidemodel</w>
+      <w>getcollision</w>
       <w>getconf</w>
       <w>getconfig</w>
       <w>getcurrency</w>
@@ -1285,6 +1287,7 @@
       <w>outname</w>
       <w>outpath</w>
       <w>ouya</w>
+      <w>overloadsigs</w>
       <w>packagedir</w>
       <w>packagedirs</w>
       <w>packagename</w>
@@ -1888,6 +1891,7 @@
       <w>toplevel</w>
       <w>totaldudes</w>
       <w>totalpts</w>
+      <w>totalwaves</w>
       <w>totype</w>
       <w>touchpad</w>
       <w>tournamententry</w>
@@ -2022,6 +2026,7 @@
       <w>waaah</w>
       <w>wanttype</w>
       <w>wasdead</w>
+      <w>wavenum</w>
       <w>weakref</w>
       <w>weakrefs</w>
       <w>weakrefset</w>

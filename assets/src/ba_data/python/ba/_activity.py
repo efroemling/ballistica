@@ -343,7 +343,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
             raise TypeError('non-actor passed to retain_actor')
         if (self.has_transitioned_in()
                 and _ba.time() - self._last_prune_dead_actors_time > 10.0):
-            print_error('it looks like nodes/actors are not'
+            print_error('It looks like nodes/actors are not'
                         ' being pruned in your activity;'
                         ' did you call Activity.on_transition_in()'
                         ' from your subclass?; ' + str(self) + ' (loc. a)')
@@ -775,12 +775,12 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
 
         # Send expire notices to all remaining actors.
         for actor_ref in self._actor_weak_refs:
-            try:
-                actor = actor_ref()
-                if actor is not None:
+            actor = actor_ref()
+            if actor is not None:
+                try:
                     actor.on_expire()
-            except Exception:
-                print_exception(f'Error expiring Actor {actor_ref()}')
+                except Exception:
+                    print_exception(f'Error expiring Actor {actor_ref()}')
 
         # Reset all Players.
         # (releases any attached actors, clears game-data, etc)
@@ -804,7 +804,6 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
                 sessionteam.reset_gamedata()
             except SessionTeamNotFoundError:
                 pass
-                # print_exception(f'Error resetting Team {team}')
             except Exception:
                 print_exception(f'Error resetting Team {team}')
 
@@ -819,6 +818,12 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
                 'Error during ba.Activity._expire() destroying data:')
 
     def _prune_dead_actors(self) -> None:
-        self._actor_refs = [a for a in self._actor_refs if a]
-        self._actor_weak_refs = [a for a in self._actor_weak_refs if a()]
         self._last_prune_dead_actors_time = _ba.time()
+
+        # Prune our strong refs when the Actor's exists() call gives False
+        self._actor_refs = [a for a in self._actor_refs if a.exists()]
+
+        # Prune our weak refs once the Actor object has been freed.
+        self._actor_weak_refs = [
+            a for a in self._actor_weak_refs if a() is not None
+        ]

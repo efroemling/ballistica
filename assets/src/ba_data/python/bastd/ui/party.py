@@ -464,7 +464,6 @@ def handle_party_invite(name: str, invite_id: str) -> None:
         # FIXME: Ugly.
         # Let's store the invite-id away on the confirm window so we know if
         # we need to kill it later.
-        # noinspection PyTypeHints
         conf.party_invite_id = invite_id  # type: ignore
 
         # store a weak-ref so we can get at this later

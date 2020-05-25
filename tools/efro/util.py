@@ -99,7 +99,7 @@ class DispatchMethodWrapper(Generic[TARG, TRET]):
     registry: Dict[Any, Callable]
 
 
-# noinspection PyTypeHints, PyProtectedMember
+# noinspection PyProtectedMember
 def dispatchmethod(
         func: Callable[[Any, TARG],
                        TRET]) -> DispatchMethodWrapper[TARG, TRET]:

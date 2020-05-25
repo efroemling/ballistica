@@ -62,7 +62,6 @@ def get_factory() -> SpazFactory:
     activity = ba.getactivity()
     factory = getattr(activity, 'shared_spaz_factory', None)
     if factory is None:
-        # noinspection PyTypeHints
         factory = activity.shared_spaz_factory = SpazFactory()  # type: ignore
     assert isinstance(factory, SpazFactory)
     return factory
@@ -1144,7 +1143,7 @@ class Spaz(ba.Actor):
         elif isinstance(msg, PunchHitMessage):
             if not self.node:
                 return None
-            node = ba.get_collision_info('opposing_node')
+            node = ba.getcollision().opposing_node
 
             # Only allow one hit per node per punch.
             if node and (node not in self._punched_nodes):
@@ -1203,10 +1202,11 @@ class Spaz(ba.Actor):
             if not self.node:
                 return None
 
-            opposing_node, opposing_body = ba.get_collision_info(
-                'opposing_node', 'opposing_body')
-
-            if opposing_node is None or not opposing_node:
+            try:
+                collision = ba.getcollision()
+                opposing_node = collision.opposing_node
+                opposing_body = collision.opposing_body
+            except ba.NotFoundError:
                 return True
 
             # Don't allow picking up of invincible dudes.

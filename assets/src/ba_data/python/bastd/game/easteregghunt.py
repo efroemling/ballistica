@@ -31,7 +31,7 @@ from typing import TYPE_CHECKING
 import ba
 from bastd.actor.bomb import Bomb
 from bastd.actor.playerspaz import PlayerSpaz
-from bastd.actor.spazbot import BotSet, BouncyBot, SpazBotDeathMessage
+from bastd.actor.spazbot import SpazBotSet, BouncyBot, SpazBotDiedMessage
 from bastd.actor.onscreencountdown import OnScreenCountdown
 from bastd.actor.scoreboard import Scoreboard
 from bastd.actor.respawnicon import RespawnIcon
@@ -94,7 +94,7 @@ class EasterEggHuntGame(ba.TeamGameActivity[Player, Team]):
         self._eggs: List[Egg] = []
         self._update_timer: Optional[ba.Timer] = None
         self._countdown: Optional[OnScreenCountdown] = None
-        self._bots: Optional[BotSet] = None
+        self._bots: Optional[SpazBotSet] = None
 
         # Base class overrides
         self.default_music = ba.MusicType.FORWARD_MARCH
@@ -117,7 +117,7 @@ class EasterEggHuntGame(ba.TeamGameActivity[Player, Team]):
         self._update_timer = ba.Timer(0.25, self._update, repeat=True)
         self._countdown = OnScreenCountdown(60, endcall=self.end_game)
         ba.timer(4.0, self._countdown.start)
-        self._bots = BotSet()
+        self._bots = SpazBotSet()
 
         # Spawn evil bunny in co-op only.
         if isinstance(self.session, ba.CoopSession) and self._pro_mode:
@@ -134,49 +134,44 @@ class EasterEggHuntGame(ba.TeamGameActivity[Player, Team]):
         self._bots.spawn_bot(BouncyBot, pos=(6, 4, -7.8), spawn_time=10.0)
 
     def _on_egg_player_collide(self) -> None:
-        if not self.has_ended():
-            egg_node, playernode = ba.get_collision_info(
-                'source_node', 'opposing_node')
-            if egg_node is not None and playernode is not None:
-                egg = egg_node.getdelegate()
-                assert isinstance(egg, Egg)
-                spaz = playernode.getdelegate()
-                assert isinstance(spaz, PlayerSpaz)
-                player = spaz.getplayer(Player)
-                if player and egg:
-                    player.team.score += 1
+        if self.has_ended():
+            return
+        collision = ba.getcollision()
+        egg = collision.source_node.getdelegate(Egg)
+        player = collision.opposing_node.getdelegate(PlayerSpaz,
+                                                     True).getplayer(Player)
+        if player and egg:
+            player.team.score += 1
 
-                    # Displays a +1 (and adds to individual player score in
-                    # teams mode).
-                    self.stats.player_scored(player, 1, screenmessage=False)
-                    if self._max_eggs < 5:
-                        self._max_eggs += 1.0
-                    elif self._max_eggs < 10:
-                        self._max_eggs += 0.5
-                    elif self._max_eggs < 30:
-                        self._max_eggs += 0.3
-                    self._update_scoreboard()
-                    ba.playsound(self._collect_sound,
-                                 0.5,
-                                 position=egg.node.position)
+            # Displays a +1 (and adds to individual player score in
+            # teams mode).
+            self.stats.player_scored(player, 1, screenmessage=False)
+            if self._max_eggs < 5:
+                self._max_eggs += 1.0
+            elif self._max_eggs < 10:
+                self._max_eggs += 0.5
+            elif self._max_eggs < 30:
+                self._max_eggs += 0.3
+            self._update_scoreboard()
+            ba.playsound(self._collect_sound, 0.5, position=egg.node.position)
 
-                    # Create a flash.
-                    light = ba.newnode('light',
-                                       attrs={
-                                           'position': egg_node.position,
-                                           'height_attenuated': False,
-                                           'radius': 0.1,
-                                           'color': (1, 1, 0)
-                                       })
-                    ba.animate(light,
-                               'intensity', {
-                                   0: 0,
-                                   0.1: 1.0,
-                                   0.2: 0
-                               },
-                               loop=False)
-                    ba.timer(0.200, light.delete)
-                    egg.handlemessage(ba.DieMessage())
+            # Create a flash.
+            light = ba.newnode('light',
+                               attrs={
+                                   'position': egg.node.position,
+                                   'height_attenuated': False,
+                                   'radius': 0.1,
+                                   'color': (1, 1, 0)
+                               })
+            ba.animate(light,
+                       'intensity', {
+                           0: 0,
+                           0.1: 1.0,
+                           0.2: 0
+                       },
+                       loop=False)
+            ba.timer(0.200, light.delete)
+            egg.handlemessage(ba.DieMessage())
 
     def _update(self) -> None:
         # Misc. periodic updating.
@@ -219,7 +214,7 @@ class EasterEggHuntGame(ba.TeamGameActivity[Player, Team]):
             player.respawn_icon = RespawnIcon(player, respawn_time)
 
         # Whenever our evil bunny dies, respawn him and spew some eggs.
-        elif isinstance(msg, SpazBotDeathMessage):
+        elif isinstance(msg, SpazBotDiedMessage):
             self._spawn_evil_bunny()
             assert msg.badguy.node
             pos = msg.badguy.node.position

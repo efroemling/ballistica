@@ -105,19 +105,16 @@ class FlagFactory:
 
         self.flag_texture = ba.gettexture('flagColor')
 
-
-# noinspection PyTypeHints
-def get_factory() -> FlagFactory:
-    """Get/create a shared bastd.actor.flag.FlagFactory object."""
-    activity = ba.getactivity()
-    factory: FlagFactory
-    try:
-        # FIXME: Find elegant way to handle shared data like this.
-        factory = activity.shared_flag_factory  # type: ignore
-    except Exception:
-        factory = activity.shared_flag_factory = FlagFactory()  # type: ignore
-    assert isinstance(factory, FlagFactory)
-    return factory
+    @staticmethod
+    def get() -> FlagFactory:
+        """Get/create a shared FlagFactory instance."""
+        activity = ba.getactivity()
+        factory = getattr(activity, 'shared_flag_factory', None)
+        if factory is None:
+            factory = FlagFactory()
+            setattr(activity, 'shared_flag_factory', factory)
+        assert isinstance(factory, FlagFactory)
+        return factory
 
 
 @dataclass
@@ -201,7 +198,7 @@ class Flag(ba.Actor):
 
         self._initial_position: Optional[Sequence[float]] = None
         self._has_moved = False
-        factory = get_factory()
+        factory = FlagFactory.get()
 
         if materials is None:
             materials = []

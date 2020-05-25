@@ -177,11 +177,10 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
         # If we have a chosen one, ignore these.
         if self._get_chosen_one_player() is not None:
             return
-        delegate = ba.get_collision_info('opposing_node').getdelegate()
-        if isinstance(delegate, PlayerSpaz):
-            player = delegate.getplayer(Player)
-            if player is not None and player.is_alive():
-                self._set_chosen_one_player(player)
+        player = ba.getcollision().opposing_node.getdelegate(
+            PlayerSpaz, True).getplayer(Player)
+        if player is not None and player.is_alive():
+            self._set_chosen_one_player(player)
 
     def _flash_flag_spawn(self) -> None:
         light = ba.newnode('light',

@@ -26,14 +26,20 @@ import random
 from typing import TYPE_CHECKING
 
 import ba
-from bastd.actor import spazbot
 from bastd.actor.playerspaz import PlayerSpaz
 from bastd.actor.bomb import TNTSpawner
 from bastd.actor.scoreboard import Scoreboard
 from bastd.actor.powerupbox import PowerupBoxFactory, PowerupBox
+from bastd.actor.spazbot import (SpazBotSet, SpazBotDiedMessage, BomberBot,
+                                 BomberBotPro, BomberBotProShielded,
+                                 BrawlerBot, BrawlerBotPro,
+                                 BrawlerBotProShielded, TriggerBot,
+                                 TriggerBotPro, TriggerBotProShielded,
+                                 ChargerBot, StickyBot, ExplodeyBot)
 
 if TYPE_CHECKING:
     from typing import Any, Dict, Type, List, Optional, Sequence
+    from bastd.actor.spazbot import SpazBot
 
 
 class Player(ba.Player['Team']):
@@ -76,7 +82,7 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
         self._excludepowerups: List[str] = []
         self._scoreboard: Optional[Scoreboard] = None
         self._score = 0
-        self._bots = spazbot.BotSet()
+        self._bots = SpazBotSet()
         self._dingsound = ba.getsound('dingSmall')
         self._dingsoundhigh = ba.getsound('dingSmallHigh')
         self._tntspawner: Optional[TNTSpawner] = None
@@ -86,18 +92,18 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
 
         # For each bot type: [spawn-rate, increase, d_increase]
         self._bot_spawn_types = {
-            spazbot.BomberBot:              [1.00, 0.00, 0.000],
-            spazbot.BomberBotPro:           [0.00, 0.05, 0.001],
-            spazbot.BomberBotProShielded:   [0.00, 0.02, 0.002],
-            spazbot.BrawlerBot:             [1.00, 0.00, 0.000],
-            spazbot.BrawlerBotPro:          [0.00, 0.05, 0.001],
-            spazbot.BrawlerBotProShielded:  [0.00, 0.02, 0.002],
-            spazbot.TriggerBot:             [0.30, 0.00, 0.000],
-            spazbot.TriggerBotPro:          [0.00, 0.05, 0.001],
-            spazbot.TriggerBotProShielded:  [0.00, 0.02, 0.002],
-            spazbot.ChargerBot:             [0.30, 0.05, 0.000],
-            spazbot.StickyBot:              [0.10, 0.03, 0.001],
-            spazbot.ExplodeyBot:            [0.05, 0.02, 0.002]
+            BomberBot:              [1.00, 0.00, 0.000],
+            BomberBotPro:           [0.00, 0.05, 0.001],
+            BomberBotProShielded:   [0.00, 0.02, 0.002],
+            BrawlerBot:             [1.00, 0.00, 0.000],
+            BrawlerBotPro:          [0.00, 0.05, 0.001],
+            BrawlerBotProShielded:  [0.00, 0.02, 0.002],
+            TriggerBot:             [0.30, 0.00, 0.000],
+            TriggerBotPro:          [0.00, 0.05, 0.001],
+            TriggerBotProShielded:  [0.00, 0.02, 0.002],
+            ChargerBot:             [0.30, 0.05, 0.000],
+            StickyBot:              [0.10, 0.03, 0.001],
+            ExplodeyBot:            [0.05, 0.02, 0.002]
         }  # yapf: disable
 
     def on_transition_in(self) -> None:
@@ -206,9 +212,7 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
         for i in range(3):
             for playerpt in playerpts:
                 dists[i] += abs(playerpt[0] - botspawnpts[i][0])
-
-            # Little random variation.
-            dists[i] += random.random() * 5.0
+            dists[i] += random.random() * 5.0  # Minor random variation.
         if dists[0] > dists[1] and dists[0] > dists[2]:
             spawnpt = botspawnpts[0]
         elif dists[1] > dists[2]:
@@ -227,7 +231,7 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
 
         # Now go back through and see where this value falls.
         total = 0
-        bottype: Optional[Type[spazbot.SpazBot]] = None
+        bottype: Optional[Type[SpazBot]] = None
         for spawntype in self._bot_spawn_types.items():
             total += spawntype[1][0]
             if randval <= total:
@@ -244,8 +248,9 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
             spawntype[1][1] += spawntype[1][2]  # incr spawn rate incr rate
 
     def _update_scores(self) -> None:
-        # Do achievements in default preset only.
         score = self._score
+
+        # Achievements apply to the default preset only.
         if self._preset == 'default':
             if score >= 250:
                 self._award_achievement('Last Stand Master')
@@ -266,28 +271,21 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
             self._score += msg.score
             self._update_scores()
 
-        elif isinstance(msg, spazbot.SpazBotDeathMessage):
+        elif isinstance(msg, SpazBotDiedMessage):
             pts, importance = msg.badguy.get_death_points(msg.how)
             target: Optional[Sequence[float]]
             if msg.killerplayer:
-                try:
-                    assert msg.badguy.node
-                    target = msg.badguy.node.position
-                except Exception:
-                    ba.print_exception()
-                    target = None
-                try:
-                    self.stats.player_scored(msg.killerplayer,
-                                             pts,
-                                             target=target,
-                                             kill=True,
-                                             screenmessage=False,
-                                             importance=importance)
-                    ba.playsound(self._dingsound
-                                 if importance == 1 else self._dingsoundhigh,
-                                 volume=0.6)
-                except Exception as exc:
-                    print('EXC on last-stand SpazBotDeathMessage', exc)
+                assert msg.badguy.node
+                target = msg.badguy.node.position
+                self.stats.player_scored(msg.killerplayer,
+                                         pts,
+                                         target=target,
+                                         kill=True,
+                                         screenmessage=False,
+                                         importance=importance)
+                ba.playsound(self._dingsound
+                             if importance == 1 else self._dingsoundhigh,
+                             volume=0.6)
 
             # Normally we pull scores from the score-set, but if there's no
             # player lets be explicit.

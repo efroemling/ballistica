@@ -265,7 +265,6 @@ class BombFactory:
             actions=('message', 'our_node', 'at_connect', SplatMessage()))
 
 
-# noinspection PyTypeHints
 def get_factory() -> BombFactory:
     """Get/create a shared bastd.actor.bomb.BombFactory object."""
     activity = ba.getactivity()
@@ -602,34 +601,28 @@ class Blast(ba.Actor):
                 self.node.delete()
 
         elif isinstance(msg, ExplodeHitMessage):
-            node = ba.get_collision_info('opposing_node')
-            if node:
-                assert self.node
-                nodepos = self.node.position
+            node = ba.getcollision().opposing_node
+            assert self.node
+            nodepos = self.node.position
+            mag = 2000.0
+            if self.blast_type == 'ice':
+                mag *= 0.5
+            elif self.blast_type == 'land_mine':
+                mag *= 2.5
+            elif self.blast_type == 'tnt':
+                mag *= 2.0
 
-                # new
-                mag = 2000.0
-                if self.blast_type == 'ice':
-                    mag *= 0.5
-                elif self.blast_type == 'land_mine':
-                    mag *= 2.5
-                elif self.blast_type == 'tnt':
-                    mag *= 2.0
-
-                node.handlemessage(
-                    ba.HitMessage(pos=nodepos,
-                                  velocity=(0, 0, 0),
-                                  magnitude=mag,
-                                  hit_type=self.hit_type,
-                                  hit_subtype=self.hit_subtype,
-                                  radius=self.radius,
-                                  source_player=ba.existing(
-                                      self.source_player)))
-                if self.blast_type == 'ice':
-                    ba.playsound(get_factory().freeze_sound,
-                                 10,
-                                 position=nodepos)
-                    node.handlemessage(ba.FreezeMessage())
+            node.handlemessage(
+                ba.HitMessage(pos=nodepos,
+                              velocity=(0, 0, 0),
+                              magnitude=mag,
+                              hit_type=self.hit_type,
+                              hit_subtype=self.hit_subtype,
+                              radius=self.radius,
+                              source_player=ba.existing(self.source_player)))
+            if self.blast_type == 'ice':
+                ba.playsound(get_factory().freeze_sound, 10, position=nodepos)
+                node.handlemessage(ba.FreezeMessage())
 
         else:
             super().handlemessage(msg)
@@ -850,14 +843,13 @@ class Bomb(ba.Actor):
         self.handlemessage(ba.DieMessage())
 
     def _handle_impact(self) -> None:
-        node = ba.get_collision_info('opposing_node')
-        # if we're an impact bomb and we came from this node, don't explode...
+        node = ba.getcollision().opposing_node
+
+        # If we're an impact bomb and we came from this node, don't explode...
         # alternately if we're hitting another impact-bomb from the same
         # source, don't explode...
-        try:
-            node_delegate = node.getdelegate()
-        except Exception:
-            node_delegate = None
+        # try:
+        node_delegate = node.getdelegate(object)
         if node:
             if (self.bomb_type == 'impact' and
                 (node is self.owner or
@@ -883,7 +875,7 @@ class Bomb(ba.Actor):
                      lambda: _safesetattr(self.node, 'stick_to_owner', True))
 
     def _handle_splat(self) -> None:
-        node = ba.get_collision_info('opposing_node')
+        node = ba.getcollision().opposing_node
         if (node is not self.owner
                 and ba.time() - self._last_sticky_sound_time > 1.0):
             self._last_sticky_sound_time = ba.time()

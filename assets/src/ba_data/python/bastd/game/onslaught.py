@@ -39,7 +39,7 @@ from bastd.actor.scoreboard import Scoreboard
 from bastd.actor.controlsguide import ControlsGuide
 from bastd.actor.powerupbox import PowerupBox, PowerupBoxFactory
 from bastd.actor.spazbot import (
-    SpazBotDeathMessage, BotSet, ChargerBot, StickyBot, BomberBot,
+    SpazBotDiedMessage, SpazBotSet, ChargerBot, StickyBot, BomberBot,
     BomberBotLite, BrawlerBot, BrawlerBotLite, TriggerBot, BomberBotStaticLite,
     TriggerBotStatic, BomberBotProStatic, TriggerBotPro, ExplodeyBot,
     BrawlerBotProShielded, ChargerBotProShielded, BomberBotPro,
@@ -189,7 +189,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
             raise Exception('Unsupported map: ' + str(settings['map']))
         self._scoreboard: Optional[Scoreboard] = None
         self._game_over = False
-        self._wave = 0
+        self._wavenum = 0
         self._can_end_wave = True
         self._score = 0
         self._time_bonus = 0
@@ -200,7 +200,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         self._excluded_powerups: Optional[List[str]] = None
         self._waves: List[Wave] = []
         self._tntspawner: Optional[TNTSpawner] = None
-        self._bots: Optional[BotSet] = None
+        self._bots: Optional[SpazBotSet] = None
         self._powerup_drop_timer: Optional[ba.Timer] = None
         self._time_bonus_timer: Optional[ba.Timer] = None
         self._time_bonus_text: Optional[ba.NodeActor] = None
@@ -214,6 +214,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
     def on_transition_in(self) -> None:
         super().on_transition_in()
         session = ba.getsession()
+
         # Show special landmine tip on rookie preset.
         if self._preset in {Preset.ROOKIE, Preset.ROOKIE_EASY}:
             # Show once per session only (then we revert to regular tips).
@@ -550,32 +551,27 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
 
         self.setup_low_life_warning_sound()
         self._update_scores()
-        self._bots = BotSet()
+        self._bots = SpazBotSet()
         ba.timer(4.0, self._start_updating_waves)
 
     def _on_got_scores_to_beat(self, scores: List[Dict[str, Any]]) -> None:
         self._show_standard_scores_to_beat_ui(scores)
 
+    def _get_dist_grp_totals(self, grps: List[Any]) -> Tuple[int, int]:
+        totalpts = 0
+        totaldudes = 0
+        for grp in grps:
+            for grpentry in grp:
+                dudes = grpentry[1]
+                totalpts += grpentry[0] * dudes
+                totaldudes += dudes
+        return totalpts, totaldudes
+
     def _get_distribution(self, target_points: int, min_dudes: int,
                           max_dudes: int, group_count: int,
                           max_level: int) -> List[List[Tuple[int, int]]]:
-        """ calculate a distribution of bad guys given some params """
-        # FIXME; This method wears the cone of shame
-        # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
-        # pylint: disable=too-many-locals
-        # pylint: disable=too-many-nested-blocks
+        """Calculate a distribution of bad guys given some params."""
         max_iterations = 10 + max_dudes * 2
-
-        def _get_totals(grps: List[Any]) -> Tuple[int, int]:
-            totalpts = 0
-            totaldudes = 0
-            for grp in grps:
-                for grpentry in grp:
-                    dudes = grpentry[1]
-                    totalpts += grpentry[0] * dudes
-                    totaldudes += dudes
-            return totalpts, totaldudes
 
         groups: List[List[Tuple[int, int]]] = []
         for _g in range(group_count):
@@ -588,83 +584,29 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         if max_level > 3:
             types.append(4)
         for iteration in range(max_iterations):
+            diff = self._add_dist_entry_if_possible(groups, max_dudes,
+                                                    target_points, types)
 
-            # See how much we're off our target by.
-            total_points, total_dudes = _get_totals(groups)
-            diff = target_points - total_points
-            dudes_diff = max_dudes - total_dudes
-
-            # Add an entry if one will fit.
-            value = types[random.randrange(len(types))]
-            group = groups[random.randrange(len(groups))]
-            if not group:
-                max_count = random.randint(1, 6)
-            else:
-                max_count = 2 * random.randint(1, 3)
-            max_count = min(max_count, dudes_diff)
-            count = min(max_count, diff // value)
-            if count > 0:
-                group.append((value, count))
-                total_points += value * count
-                total_dudes += count
-                diff = target_points - total_points
-
-            total_points, total_dudes = _get_totals(groups)
+            total_points, total_dudes = self._get_dist_grp_totals(groups)
             full = (total_points >= target_points)
 
             if full:
                 # Every so often, delete a random entry just to
                 # shake up our distribution.
                 if random.random() < 0.2 and iteration != max_iterations - 1:
-                    entry_count = 0
-                    for group in groups:
-                        for _ in group:
-                            entry_count += 1
-                    if entry_count > 1:
-                        del_entry = random.randrange(entry_count)
-                        entry_count = 0
-                        for group in groups:
-                            for entry in group:
-                                if entry_count == del_entry:
-                                    group.remove(entry)
-                                    break
-                                entry_count += 1
+                    self._delete_random_dist_entry(groups)
 
                 # If we don't have enough dudes, kill the group with
                 # the biggest point value.
                 elif (total_dudes < min_dudes
                       and iteration != max_iterations - 1):
-                    biggest_value = 9999
-                    biggest_entry = None
-                    biggest_entry_group = None
-                    for group in groups:
-                        for entry in group:
-                            if (entry[0] > biggest_value
-                                    or biggest_entry is None):
-                                biggest_value = entry[0]
-                                biggest_entry = entry
-                                biggest_entry_group = group
-                    if biggest_entry is not None:
-                        assert biggest_entry_group is not None
-                        biggest_entry_group.remove(biggest_entry)
+                    self._delete_biggest_dist_entry(groups)
 
                 # If we've got too many dudes, kill the group with the
                 # smallest point value.
                 elif (total_dudes > max_dudes
                       and iteration != max_iterations - 1):
-                    smallest_value = 9999
-                    smallest_entry = None
-                    smallest_entry_group = None
-                    for group in groups:
-                        for entry in group:
-                            if (entry[0] < smallest_value
-                                    or smallest_entry is None):
-                                smallest_value = entry[0]
-                                smallest_entry = entry
-                                smallest_entry_group = group
-                    assert smallest_entry is not None
-                    assert smallest_entry_group is not None
-                    smallest_entry_group.remove(smallest_entry)
+                    self._delete_smallest_dist_entry(groups)
 
                 # Close enough.. we're done.
                 else:
@@ -672,6 +614,76 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
                         break
 
         return groups
+
+    def _add_dist_entry_if_possible(self, groups: List[List[Tuple[int, int]]],
+                                    max_dudes: int, target_points: int,
+                                    types: List[int]) -> int:
+        # See how much we're off our target by.
+        total_points, total_dudes = self._get_dist_grp_totals(groups)
+        diff = target_points - total_points
+        dudes_diff = max_dudes - total_dudes
+
+        # Add an entry if one will fit.
+        value = types[random.randrange(len(types))]
+        group = groups[random.randrange(len(groups))]
+        if not group:
+            max_count = random.randint(1, 6)
+        else:
+            max_count = 2 * random.randint(1, 3)
+        max_count = min(max_count, dudes_diff)
+        count = min(max_count, diff // value)
+        if count > 0:
+            group.append((value, count))
+            total_points += value * count
+            total_dudes += count
+            diff = target_points - total_points
+        return diff
+
+    def _delete_smallest_dist_entry(
+            self, groups: List[List[Tuple[int, int]]]) -> None:
+        smallest_value = 9999
+        smallest_entry = None
+        smallest_entry_group = None
+        for group in groups:
+            for entry in group:
+                if entry[0] < smallest_value or smallest_entry is None:
+                    smallest_value = entry[0]
+                    smallest_entry = entry
+                    smallest_entry_group = group
+        assert smallest_entry is not None
+        assert smallest_entry_group is not None
+        smallest_entry_group.remove(smallest_entry)
+
+    def _delete_biggest_dist_entry(
+            self, groups: List[List[Tuple[int, int]]]) -> None:
+        biggest_value = 9999
+        biggest_entry = None
+        biggest_entry_group = None
+        for group in groups:
+            for entry in group:
+                if entry[0] > biggest_value or biggest_entry is None:
+                    biggest_value = entry[0]
+                    biggest_entry = entry
+                    biggest_entry_group = group
+        if biggest_entry is not None:
+            assert biggest_entry_group is not None
+            biggest_entry_group.remove(biggest_entry)
+
+    def _delete_random_dist_entry(self,
+                                  groups: List[List[Tuple[int, int]]]) -> None:
+        entry_count = 0
+        for group in groups:
+            for _ in group:
+                entry_count += 1
+        if entry_count > 1:
+            del_entry = random.randrange(entry_count)
+            entry_count = 0
+            for group in groups:
+                for entry in group:
+                    if entry_count == del_entry:
+                        group.remove(entry)
+                        break
+                    entry_count += 1
 
     def spawn_player(self, player: Player) -> ba.Actor:
 
@@ -734,7 +746,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         if outcome == 'defeat':
             self.fade_to_red()
         score: Optional[int]
-        if self._wave >= 2:
+        if self._wavenum >= 2:
             score = self._score
             fail_message = None
         else:
@@ -777,7 +789,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
             if self._preset in {Preset.ENDLESS, Preset.ENDLESS_TOURNAMENT}:
                 won = False
             else:
-                won = (self._wave == len(self._waves))
+                won = (self._wavenum == len(self._waves))
 
             base_delay = 4.0 if won else 0.0
 
@@ -789,7 +801,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
                 base_delay += 1.0
 
             # Reward flawless bonus.
-            if self._wave > 0:
+            if self._wavenum > 0:
                 have_flawless = False
                 for player in self.players:
                     if player.is_alive() and not player.has_been_hurt:
@@ -806,9 +818,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
                                        scale=1.0,
                                        duration=4.0)
                 self.celebrate(20.0)
-
                 self._award_completion_achievements()
-
                 ba.timer(base_delay, ba.WeakCall(self._award_completion_bonus))
                 base_delay += 0.85
                 ba.playsound(self._winsound)
@@ -822,10 +832,10 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
                 ba.timer(base_delay, ba.WeakCall(self.do_end, 'victory'))
                 return
 
-            self._wave += 1
+            self._wavenum += 1
 
             # Short celebration after waves.
-            if self._wave > 1:
+            if self._wavenum > 1:
                 self.celebrate(0.5)
             ba.timer(base_delay, ba.WeakCall(self._start_next_wave))
 
@@ -903,17 +913,17 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
 
     def _respawn_players_for_wave(self) -> None:
         # Respawn applicable players.
-        if self._wave > 1 and not self.is_waiting_for_continue():
+        if self._wavenum > 1 and not self.is_waiting_for_continue():
             for player in self.players:
                 if (not player.is_alive()
-                        and player.respawn_wave == self._wave):
+                        and player.respawn_wave == self._wavenum):
                     self.spawn_player(player)
         self._update_player_spawn_info()
 
     def _setup_wave_spawns(self, wave: Wave) -> None:
         tval = 0.0
         dtime = 0.2
-        if self._wave == 1:
+        if self._wavenum == 1:
             spawn_time = 3.973
             tval += 0.5
         else:
@@ -970,7 +980,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         if self._preset in {Preset.ENDLESS, Preset.ENDLESS_TOURNAMENT}:
             wave = self._generate_random_wave()
         else:
-            wave = self._waves[self._wave - 1]
+            wave = self._waves[self._wavenum - 1]
         self._setup_wave_spawns(wave)
         self._update_wave_ui_and_bonuses()
         ba.timer(0.4, ba.Call(ba.playsound, self._new_wave_sound))
@@ -980,7 +990,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         self.show_zoom_message(ba.Lstr(value='${A} ${B}',
                                        subs=[('${A}',
                                               ba.Lstr(resource='waveText')),
-                                             ('${B}', str(self._wave))]),
+                                             ('${B}', str(self._wavenum))]),
                                scale=1.0,
                                duration=1.0,
                                trail=True)
@@ -1012,7 +1022,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         wttxt = ba.Lstr(
             value='${A} ${B}',
             subs=[('${A}', ba.Lstr(resource='waveText')),
-                  ('${B}', str(self._wave) +
+                  ('${B}', str(self._wavenum) +
                    ('' if self._preset
                     in [Preset.ENDLESS, Preset.ENDLESS_TOURNAMENT] else
                     ('/' + str(len(self._waves)))))])
@@ -1032,7 +1042,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
                        }))
 
     def _bot_levels_for_wave(self) -> List[List[Type[SpazBot]]]:
-        level = self._wave
+        level = self._wavenum
         bot_types = [
             BomberBot, BrawlerBot, TriggerBot, ChargerBot, BomberBotPro,
             BrawlerBotPro, TriggerBotPro, BomberBotProShielded, ExplodeyBot,
@@ -1067,6 +1077,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
                       [b for b in bot_types if b.points_mult == 2],
                       [b for b in bot_types if b.points_mult == 3],
                       [b for b in bot_types if b.points_mult == 4]]
+
         # Make sure all lists have something in them
         if not all(bot_levels):
             raise RuntimeError('Got empty bot level')
@@ -1099,7 +1110,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
                 Spacing(40.0 if random.random() < 0.5 else 80.0))
 
     def _generate_random_wave(self) -> Wave:
-        level = self._wave
+        level = self._wavenum
         bot_levels = self._bot_levels_for_wave()
 
         target_points = level * 3 - 2
@@ -1199,20 +1210,19 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
             self._a_player_has_been_hurt = True
 
             # Make note with the player when they can respawn:
-            if self._wave < 10:
-                player.respawn_wave = max(2, self._wave + 1)
-            elif self._wave < 15:
-                player.respawn_wave = max(2, self._wave + 2)
+            if self._wavenum < 10:
+                player.respawn_wave = max(2, self._wavenum + 1)
+            elif self._wavenum < 15:
+                player.respawn_wave = max(2, self._wavenum + 2)
             else:
-                player.respawn_wave = max(2, self._wave + 3)
+                player.respawn_wave = max(2, self._wavenum + 3)
             ba.timer(0.1, self._update_player_spawn_info)
             ba.timer(0.1, self._checkroundover)
 
-        elif isinstance(msg, SpazBotDeathMessage):
+        elif isinstance(msg, SpazBotDiedMessage):
             pts, importance = msg.badguy.get_death_points(msg.how)
             if msg.killerplayer is not None:
                 self._handle_kill_achievements(msg)
-
                 target: Optional[Sequence[float]]
                 try:
                     assert msg.badguy.node
@@ -1242,47 +1252,57 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         else:
             super().handlemessage(msg)
 
-    def _handle_kill_achievements(self, msg: SpazBotDeathMessage) -> None:
-        # pylint: disable=too-many-branches
-        # Toss-off-map achievement:
+    def _handle_kill_achievements(self, msg: SpazBotDiedMessage) -> None:
         if self._preset in {Preset.TRAINING, Preset.TRAINING_EASY}:
-            if msg.badguy.last_attacked_type == ('picked_up', 'default'):
-                self._throw_off_kills += 1
-                if self._throw_off_kills >= 3:
-                    self._award_achievement('Off You Go Then')
-
-        # Land-mine achievement:
+            self._handle_training_kill_achievements(msg)
         elif self._preset in {Preset.ROOKIE, Preset.ROOKIE_EASY}:
-            if msg.badguy.last_attacked_type == ('explosion', 'land_mine'):
-                self._land_mine_kills += 1
-                if self._land_mine_kills >= 3:
-                    self._award_achievement('Mine Games')
+            self._handle_rookie_kill_achievements(msg)
+        elif self._preset in {Preset.PRO, Preset.PRO_EASY}:
+            self._handle_pro_kill_achievements(msg)
+        elif self._preset in {Preset.UBER, Preset.UBER_EASY}:
+            self._handle_uber_kill_achievements(msg)
+
+    def _handle_uber_kill_achievements(self, msg: SpazBotDiedMessage) -> None:
+
+        # Uber mine achievement:
+        if msg.badguy.last_attacked_type == ('explosion', 'land_mine'):
+            self._land_mine_kills += 1
+            if self._land_mine_kills >= 6:
+                self._award_achievement('Gold Miner')
+
+        # Uber tnt achievement:
+        if msg.badguy.last_attacked_type == ('explosion', 'tnt'):
+            self._tnt_kills += 1
+            if self._tnt_kills >= 6:
+                ba.timer(0.5, ba.WeakCall(self._award_achievement,
+                                          'TNT Terror'))
+
+    def _handle_pro_kill_achievements(self, msg: SpazBotDiedMessage) -> None:
 
         # TNT achievement:
-        elif self._preset in {Preset.PRO, Preset.PRO_EASY}:
-            if msg.badguy.last_attacked_type == ('explosion', 'tnt'):
-                self._tnt_kills += 1
-                if self._tnt_kills >= 3:
-                    ba.timer(
-                        0.5,
-                        ba.WeakCall(self._award_achievement,
-                                    'Boom Goes the Dynamite'))
+        if msg.badguy.last_attacked_type == ('explosion', 'tnt'):
+            self._tnt_kills += 1
+            if self._tnt_kills >= 3:
+                ba.timer(
+                    0.5,
+                    ba.WeakCall(self._award_achievement,
+                                'Boom Goes the Dynamite'))
 
-        elif self._preset in {Preset.UBER, Preset.UBER_EASY}:
+    def _handle_rookie_kill_achievements(self,
+                                         msg: SpazBotDiedMessage) -> None:
+        # Land-mine achievement:
+        if msg.badguy.last_attacked_type == ('explosion', 'land_mine'):
+            self._land_mine_kills += 1
+            if self._land_mine_kills >= 3:
+                self._award_achievement('Mine Games')
 
-            # Uber mine achievement:
-            if msg.badguy.last_attacked_type == ('explosion', 'land_mine'):
-                self._land_mine_kills += 1
-                if self._land_mine_kills >= 6:
-                    self._award_achievement('Gold Miner')
-
-            # Uber tnt achievement:
-            if msg.badguy.last_attacked_type == ('explosion', 'tnt'):
-                self._tnt_kills += 1
-                if self._tnt_kills >= 6:
-                    ba.timer(
-                        0.5, ba.WeakCall(self._award_achievement,
-                                         'TNT Terror'))
+    def _handle_training_kill_achievements(self,
+                                           msg: SpazBotDiedMessage) -> None:
+        # Toss-off-map achievement:
+        if msg.badguy.last_attacked_type == ('picked_up', 'default'):
+            self._throw_off_kills += 1
+            if self._throw_off_kills >= 3:
+                self._award_achievement('Off You Go Then')
 
     def _set_can_end_wave(self) -> None:
         self._can_end_wave = True
@@ -1308,7 +1328,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
             return
         if not any(player.is_alive() for player in self.teams[0].players):
             # Allow continuing after wave 1.
-            if self._wave > 1:
+            if self._wavenum > 1:
                 self.continue_or_end_game()
             else:
                 self.end_game()

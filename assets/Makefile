@@ -153,6 +153,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/ba/_coopgame.py \
   build/ba_data/python/ba/_meta.py \
   build/ba_data/python/ba/_math.py \
+  build/ba_data/python/ba/_collision.py \
   build/ba_data/python/ba/_servermode.py \
   build/ba_data/python/ba/_appconfig.py \
   build/ba_data/python/ba/_gameresults.py \
@@ -380,6 +381,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/ba/__pycache__/_coopgame.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_meta.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_math.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_collision.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_servermode.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_appconfig.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_gameresults.cpython-37.opt-1.pyc \
@@ -660,6 +662,11 @@ build/ba_data/python/ba/__pycache__/_meta.cpython-37.opt-1.pyc: \
 
 build/ba_data/python/ba/__pycache__/_math.cpython-37.opt-1.pyc: \
       build/ba_data/python/ba/_math.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python/ba/__pycache__/_collision.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_collision.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
