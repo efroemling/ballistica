@@ -264,16 +264,14 @@ class ControlsGuide(ba.Actor):
 
         # If we have a touchscreen, we only fade in if we have a player with
         # an input device that is *not* the touchscreen.
-        touchscreen: Optional[ba.InputDevice] = _ba.get_input_device(
+        touchscreen: Optional[ba.InputDevice] = _ba.getinputdevice(
             'TouchScreen', '#1', doraise=False)
 
         if touchscreen is not None:
             # We look at the session's players; not the activity's.
             # We want to get ones who are still in the process of
             # selecting a character, etc.
-            input_devices = [
-                p.get_input_device() for p in ba.getsession().players
-            ]
+            input_devices = [p.inputdevice for p in ba.getsession().players]
             input_devices = [
                 i for i in input_devices if i and i is not touchscreen
             ]
@@ -325,13 +323,13 @@ class ControlsGuide(ba.Actor):
 
         # We look at the session's players; not the activity's - we want to
         # get ones who are still in the process of selecting a character, etc.
-        input_devices = [p.get_input_device() for p in ba.getsession().players]
+        input_devices = [p.inputdevice for p in ba.getsession().players]
         input_devices = [i for i in input_devices if i]
 
         # If there's no players with input devices yet, try to default to
         # showing keyboard controls.
         if not input_devices:
-            kbd = _ba.get_input_device('Keyboard', '#1', doraise=False)
+            kbd = _ba.getinputdevice('Keyboard', '#1', doraise=False)
             if kbd is not None:
                 input_devices.append(kbd)
 

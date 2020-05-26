@@ -177,7 +177,7 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
         # If we have a chosen one, ignore these.
         if self._get_chosen_one_player() is not None:
             return
-        player = ba.getcollision().opposing_node.getdelegate(
+        player = ba.getcollision().opposingnode.getdelegate(
             PlayerSpaz, True).getplayer(Player)
         if player is not None and player.is_alive():
             self._set_chosen_one_player(player)

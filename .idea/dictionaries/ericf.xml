@@ -480,6 +480,7 @@
       <w>downmix</w>
       <w>dpad</w>
       <w>dpath</w>
+      <w>dprofilename</w>
       <w>drawscore</w>
       <w>drawscreen</w>
       <w>dripity</w>
@@ -756,8 +757,10 @@
       <w>getcurrency</w>
       <w>getcwd</w>
       <w>getdata</w>
+      <w>getinputdevice</w>
       <w>getkillerplayer</w>
       <w>getlevelname</w>
+      <w>getlog</w>
       <w>getmaps</w>
       <w>getmodel</w>
       <w>getnodes</w>
@@ -937,6 +940,7 @@
       <w>joedeshon</w>
       <w>johab</w>
       <w>joinable</w>
+      <w>joinmsg</w>
       <w>jovica</w>
       <w>jsonstr</w>
       <w>jsonstrbase</w>
@@ -1267,6 +1271,8 @@
       <w>openssh</w>
       <w>operasinger</w>
       <w>oppnode</w>
+      <w>opposingbody</w>
+      <w>opposingnode</w>
       <w>opstr</w>
       <w>optparse</w>
       <w>orchestrahitsound</w>
@@ -1504,6 +1510,7 @@
       <w>qrencode</w>
       <w>qual</w>
       <w>quoprimime</w>
+      <w>rando</w>
       <w>randommodule</w>
       <w>randval</w>
       <w>rankbutton</w>
@@ -1672,6 +1679,7 @@
       <w>soundtrackname</w>
       <w>sourceimages</w>
       <w>sourcelines</w>
+      <w>sourcenode</w>
       <w>spacelen</w>
       <w>spacingstr</w>
       <w>spammers</w>

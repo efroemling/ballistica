@@ -43,7 +43,7 @@ def is_browser_likely_available() -> bool:
     """
     app = _ba.app
     platform = app.platform
-    touchscreen = _ba.get_input_device('TouchScreen', '#1', doraise=False)
+    touchscreen = _ba.getinputdevice('TouchScreen', '#1', doraise=False)
 
     # If we're on a vr device or an android device with no touchscreen,
     # assume no browser.
@@ -100,7 +100,7 @@ def handle_log() -> None:
                 except Exception:
                     activityname = 'unavailable'
                 info = {
-                    'log': _ba.get_log(),
+                    'log': _ba.getlog(),
                     'version': app.version,
                     'build': app.build_number,
                     'userAgentString': app.user_agent_string,

@@ -406,7 +406,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
         ba.timer(2.0, self._start_updating_waves)
 
     def _handle_reached_end(self) -> None:
-        spaz = ba.getcollision().opposing_node.getdelegate(SpazBot, True)
+        spaz = ba.getcollision().opposingnode.getdelegate(SpazBot, True)
         if not spaz.is_alive():
             return  # Ignore bodies flying in.
 

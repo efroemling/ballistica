@@ -209,7 +209,7 @@ class FootballTeamGame(ba.TeamGameActivity[Player, Team]):
         assert self._flag is not None
         if self._flag.scored:
             return
-        region = ba.getcollision().source_node
+        region = ba.getcollision().sourcenode
         i = None
         for i in range(len(self._score_regions)):
             if region == self._score_regions[i].node:
@@ -654,7 +654,7 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
             return
 
         # See which score region it was.
-        region = ba.getcollision().source_node
+        region = ba.getcollision().sourcenode
         i = None
         for i in range(len(self._score_regions)):
             if region == self._score_regions[i].node:

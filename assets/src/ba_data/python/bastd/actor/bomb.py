@@ -601,7 +601,7 @@ class Blast(ba.Actor):
                 self.node.delete()
 
         elif isinstance(msg, ExplodeHitMessage):
-            node = ba.getcollision().opposing_node
+            node = ba.getcollision().opposingnode
             assert self.node
             nodepos = self.node.position
             mag = 2000.0
@@ -843,7 +843,7 @@ class Bomb(ba.Actor):
         self.handlemessage(ba.DieMessage())
 
     def _handle_impact(self) -> None:
-        node = ba.getcollision().opposing_node
+        node = ba.getcollision().opposingnode
 
         # If we're an impact bomb and we came from this node, don't explode...
         # alternately if we're hitting another impact-bomb from the same
@@ -875,7 +875,7 @@ class Bomb(ba.Actor):
                      lambda: _safesetattr(self.node, 'stick_to_owner', True))
 
     def _handle_splat(self) -> None:
-        node = ba.getcollision().opposing_node
+        node = ba.getcollision().opposingnode
         if (node is not self.owner
                 and ba.time() - self._last_sticky_sound_time > 1.0):
             self._last_sticky_sound_time = ba.time()

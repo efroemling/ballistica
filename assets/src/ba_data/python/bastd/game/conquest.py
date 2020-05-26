@@ -235,9 +235,9 @@ class ConquestGame(ba.TeamGameActivity[Player, Team]):
 
     def _handle_flag_player_collide(self) -> None:
         collision = ba.getcollision()
-        flag = collision.source_node.getdelegate(ConquestFlag)
-        player = collision.opposing_node.getdelegate(PlayerSpaz,
-                                                     True).getplayer(Player)
+        flag = collision.sourcenode.getdelegate(ConquestFlag)
+        player = collision.opposingnode.getdelegate(PlayerSpaz,
+                                                    True).getplayer(Player)
         if not flag or not player:
             return
         assert flag.light

@@ -194,10 +194,10 @@ def animate(node: ba.Node,
 
     # Temp sanity check while we transition from milliseconds to seconds
     # based time values.
-    if _ba.app.test_build and not suppress_format_warning:
-        for item in items:
-            # (PyCharm seems to think item is a float, not a tuple)
-            _ba.time_format_check(timeformat, item[0])
+    if __debug__:
+        if not suppress_format_warning:
+            for item in items:
+                _ba.time_format_check(timeformat, item[0])
 
     curve = _ba.newnode('animcurve',
                         owner=node,
@@ -221,7 +221,6 @@ def animate(node: ba.Node,
     # FIXME: Even if we are looping we should have a way to die once we
     #  get disconnected.
     if not loop:
-        # (PyCharm seems to think item is a float, not a tuple)
         _ba.timer(int(mult * items[-1][0]) + 1000,
                   curve.delete,
                   timeformat=TimeFormat.MILLISECONDS)
@@ -259,10 +258,11 @@ def animate_array(node: ba.Node,
 
     # Temp sanity check while we transition from milliseconds to seconds
     # based time values.
-    if _ba.app.test_build and not suppress_format_warning:
-        for item in items:
-            # (PyCharm seems to think item is a float, not a tuple)
-            _ba.time_format_check(timeformat, item[0])
+    if __debug__:
+        if not suppress_format_warning:
+            for item in items:
+                # (PyCharm seems to think item is a float, not a tuple)
+                _ba.time_format_check(timeformat, item[0])
 
     if timeformat is TimeFormat.SECONDS:
         mult = 1000
@@ -381,8 +381,9 @@ def timestring(timeval: float,
 
     # Temp sanity check while we transition from milliseconds to seconds
     # based time values.
-    if _ba.app.test_build and not suppress_format_warning:
-        _ba.time_format_check(timeformat, timeval)
+    if __debug__:
+        if not suppress_format_warning:
+            _ba.time_format_check(timeformat, timeval)
 
     # We operate on milliseconds internally.
     if timeformat is TimeFormat.SECONDS:

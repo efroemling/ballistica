@@ -40,37 +40,37 @@ class Collision:
         return _ba.Vec3(_ba.get_collision_info('position'))
 
     @property
-    def source_node(self) -> ba.Node:
+    def sourcenode(self) -> ba.Node:
         """The node containing the material triggering the current callback.
 
         Throws a ba.NodeNotFoundError if the node does not exist, though
         the node should always exist (at least at the start of the collision
         callback).
         """
-        node = _ba.get_collision_info('source_node')
+        node = _ba.get_collision_info('sourcenode')
         assert isinstance(node, (_ba.Node, type(None)))
         if not node:
             raise NodeNotFoundError()
         return node
 
     @property
-    def opposing_node(self) -> ba.Node:
+    def opposingnode(self) -> ba.Node:
         """The node the current callback material node is hitting.
 
         Throws a ba.NodeNotFoundError if the node does not exist.
         This can be expected in some cases such as in 'disconnect'
         callbacks triggered by deleting a currently-colliding node.
         """
-        node = _ba.get_collision_info('opposing_node')
+        node = _ba.get_collision_info('opposingnode')
         assert isinstance(node, (_ba.Node, type(None)))
         if not node:
             raise NodeNotFoundError()
         return node
 
     @property
-    def opposing_body(self) -> int:
+    def opposingbody(self) -> int:
         """The body index on the opposing node in the current collision."""
-        body = _ba.get_collision_info('opposing_body')
+        body = _ba.get_collision_info('opposingbody')
         assert isinstance(body, int)
         return body
 

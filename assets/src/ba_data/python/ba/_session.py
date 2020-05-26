@@ -224,12 +224,12 @@ class Session:
                 # Print a rejection message *only* to the client trying to
                 # join (prevents spamming everyone else in the game).
                 _ba.playsound(_ba.getsound('error'))
-                _ba.screenmessage(
-                    Lstr(resource='playerLimitReachedText',
-                         subs=[('${COUNT}', str(self.max_players))]),
-                    color=(0.8, 0.0, 0.0),
-                    clients=[player.get_input_device().client_id],
-                    transient=True)
+                _ba.screenmessage(Lstr(resource='playerLimitReachedText',
+                                       subs=[('${COUNT}',
+                                              str(self.max_players))]),
+                                  color=(0.8, 0.0, 0.0),
+                                  clients=[player.inputdevice.client_id],
+                                  transient=True)
                 return False
 
         _ba.playsound(_ba.getsound('dripity'))

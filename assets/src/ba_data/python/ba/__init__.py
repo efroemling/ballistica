@@ -53,7 +53,7 @@ from ba._error import (print_exception, print_error, NotFoundError,
                        InputDeviceNotFoundError, WidgetNotFoundError,
                        ActivityNotFoundError, TeamNotFoundError,
                        SessionTeamNotFoundError, SessionNotFoundError,
-                       DependencyError)
+                       DelegateNotFoundError, DependencyError)
 from ba._freeforallsession import FreeForAllSession
 from ba._gameactivity import GameActivity
 from ba._gameresults import TeamGameResults

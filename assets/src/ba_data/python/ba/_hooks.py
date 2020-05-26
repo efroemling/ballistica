@@ -293,7 +293,7 @@ def do_quit() -> None:
 
 
 def shutdown() -> None:
-    _ba.app.shutdown()
+    _ba.app.on_app_shutdown()
 
 
 def gc_disable() -> None:

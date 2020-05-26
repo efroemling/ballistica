@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-05-25 for Ballistica version 1.5.0 build 20027</em></h4>
+<h4><em>last updated on 2020-05-25 for Ballistica version 1.5.0 build 20028</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -189,6 +189,7 @@
    <ul>
       <li><a href="#class_ba_ActivityNotFoundError">ba.ActivityNotFoundError</a></li>
       <li><a href="#class_ba_ActorNotFoundError">ba.ActorNotFoundError</a></li>
+      <li><a href="#class_ba_DelegateNotFoundError">ba.DelegateNotFoundError</a></li>
       <li><a href="#class_ba_InputDeviceNotFoundError">ba.InputDeviceNotFoundError</a></li>
       <li><a href="#class_ba_NodeNotFoundError">ba.NodeNotFoundError</a></li>
       <li><a href="#class_ba_PlayerNotFoundError">ba.PlayerNotFoundError</a></li>
@@ -918,7 +919,7 @@ likely result in errors.</p>
 <dt><h4><a name="method_ba_App__launch_coop_game">launch_coop_game()</a></dt></h4><dd>
 <p><span>launch_coop_game(self, game: str, force: bool = False, args: Dict = None) -&gt; bool</span></p>
 
-<p>High level way to launch a co-op session locally.</p>
+<p>High level way to launch a local co-op session.</p>
 
 </dd>
 <dt><h4><a name="method_ba_App__on_app_pause">on_app_pause()</a></dt></h4><dd>
@@ -1298,7 +1299,7 @@ mycall()</pre>
 </dd>
 </dl>
 <h3>Methods:</h3>
-<h5><a href="#method_ba_Chooser____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Chooser__get_character_name">get_character_name()</a>, <a href="#method_ba_Chooser__get_color">get_color()</a>, <a href="#method_ba_Chooser__get_highlight">get_highlight()</a>, <a href="#method_ba_Chooser__get_lobby">get_lobby()</a>, <a href="#method_ba_Chooser__get_team">get_team()</a>, <a href="#method_ba_Chooser__getplayer">getplayer()</a>, <a href="#method_ba_Chooser__handlemessage">handlemessage()</a>, <a href="#method_ba_Chooser__reload_profiles">reload_profiles()</a>, <a href="#method_ba_Chooser__update_from_player_profiles">update_from_player_profiles()</a>, <a href="#method_ba_Chooser__update_position">update_position()</a></h5>
+<h5><a href="#method_ba_Chooser____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Chooser__get_character_name">get_character_name()</a>, <a href="#method_ba_Chooser__get_color">get_color()</a>, <a href="#method_ba_Chooser__get_highlight">get_highlight()</a>, <a href="#method_ba_Chooser__get_lobby">get_lobby()</a>, <a href="#method_ba_Chooser__get_team">get_team()</a>, <a href="#method_ba_Chooser__getplayer">getplayer()</a>, <a href="#method_ba_Chooser__handlemessage">handlemessage()</a>, <a href="#method_ba_Chooser__reload_profiles">reload_profiles()</a>, <a href="#method_ba_Chooser__update_from_profile">update_from_profile()</a>, <a href="#method_ba_Chooser__update_position">update_position()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_Chooser____init__">&lt;constructor&gt;</a></dt></h4><dd>
 <p><span>ba.Chooser(vpos: float, player: _<a href="#class_ba_SessionPlayer">ba.SessionPlayer</a>, lobby: "Lobby")</span></p>
@@ -1352,10 +1353,10 @@ mycall()</pre>
 <p>Reload all player profiles.</p>
 
 </dd>
-<dt><h4><a name="method_ba_Chooser__update_from_player_profiles">update_from_player_profiles()</a></dt></h4><dd>
-<p><span>update_from_player_profiles(self) -&gt; None</span></p>
+<dt><h4><a name="method_ba_Chooser__update_from_profile">update_from_profile()</a></dt></h4><dd>
+<p><span>update_from_profile(self) -&gt; None</span></p>
 
-<p>Set character based on profile; otherwise use pre-picked random.</p>
+<p>Set character/colors based on the current profile.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Chooser__update_position">update_position()</a></dt></h4><dd>
@@ -1382,14 +1383,14 @@ mycall()</pre>
 <p>A class providing info about occurring collisions.</p>
 
 <h3>Attributes:</h3>
-<h5><a href="#attr_ba_Collision__opposing_body">opposing_body</a>, <a href="#attr_ba_Collision__opposing_node">opposing_node</a>, <a href="#attr_ba_Collision__position">position</a>, <a href="#attr_ba_Collision__source_node">source_node</a></h5>
+<h5><a href="#attr_ba_Collision__opposingbody">opposingbody</a>, <a href="#attr_ba_Collision__opposingnode">opposingnode</a>, <a href="#attr_ba_Collision__position">position</a>, <a href="#attr_ba_Collision__sourcenode">sourcenode</a></h5>
 <dl>
-<dt><h4><a name="attr_ba_Collision__opposing_body">opposing_body</a></h4></dt><dd>
+<dt><h4><a name="attr_ba_Collision__opposingbody">opposingbody</a></h4></dt><dd>
 <p><span>int</span></p>
 <p>The body index on the opposing node in the current collision.</p>
 
 </dd>
-<dt><h4><a name="attr_ba_Collision__opposing_node">opposing_node</a></h4></dt><dd>
+<dt><h4><a name="attr_ba_Collision__opposingnode">opposingnode</a></h4></dt><dd>
 <p><span><a href="#class_ba_Node">ba.Node</a></span></p>
 <p>The node the current callback material node is hitting.</p>
 
@@ -1403,7 +1404,7 @@ mycall()</pre>
 <p>The position of the current collision.</p>
 
 </dd>
-<dt><h4><a name="attr_ba_Collision__source_node">source_node</a></h4></dt><dd>
+<dt><h4><a name="attr_ba_Collision__sourcenode">sourcenode</a></h4></dt><dd>
 <p><span><a href="#class_ba_Node">ba.Node</a></span></p>
 <p>The node containing the material triggering the current callback.</p>
 
@@ -1733,6 +1734,16 @@ the data object is requested and when it's value is accessed.</p>
 <li>REACHED_GOAL</li>
 <li>LEFT_GAME</li>
 </ul>
+<hr>
+<h2><strong><a name="class_ba_DelegateNotFoundError">ba.DelegateNotFoundError</a></strong></h3>
+<p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, Exception, BaseException</p>
+<p>Exception raised when an expected delegate object does not exist.</p>
+
+<p>Category: <a href="#class_category_Exception_Classes">Exception Classes</a>
+</p>
+
+<h3>Methods:</h3>
+<p>&lt;all methods inherited from <a href="#class_ba_NotFoundError">ba.NotFoundError</a>&gt;</p>
 <hr>
 <h2><strong><a name="class_ba_Dependency">ba.Dependency</a></strong></h3>
 <p>Inherits from: <a href="#class_typing_Generic">typing.Generic</a></p>
@@ -3569,8 +3580,8 @@ loc.connectattr('position', light, 'position')</pre>
 <dt><h4><a name="method_ba_Node__delete">delete()</a></dt></h4><dd>
 <p><span>delete(ignore_missing: bool = True) -&gt; None</span></p>
 
-<p>Delete the node.  Ignores already-deleted nodes unless ignore_missing
-is False, in which case an Exception is thrown.</p>
+<p>Delete the node.  Ignores already-deleted nodes if ignore_missing
+is True; otherwise a <a href="#class_ba_NodeNotFoundError">ba.NodeNotFoundError</a> is thrown.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Node__exists">exists()</a></dt></h4><dd>
@@ -3598,7 +3609,7 @@ the right thing both for Node objects and values of None.</p>
 
 <p>If the node has no delegate or it is not an instance of the passed
 type, then None will be returned. If 'doraise' is True, then an
-Exception will be raised instead in such cases.</p>
+<a href="#class_ba_DelegateNotFoundError">ba.DelegateNotFoundError</a> will be raised instead.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Node__getnodetype">getnodetype()</a></dt></h4><dd>
@@ -4094,7 +4105,7 @@ the type-checker properly identifies the returned value as one.</p>
 <p>    This message is normally received by touching a ba.PowerupBox.</p>
 
 <h3>Attributes:</h3>
-<h5><a href="#attr_ba_PowerupMessage__poweruptype">poweruptype</a>, <a href="#attr_ba_PowerupMessage__source_node">source_node</a></h5>
+<h5><a href="#attr_ba_PowerupMessage__poweruptype">poweruptype</a>, <a href="#attr_ba_PowerupMessage__sourcenode">sourcenode</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_PowerupMessage__poweruptype">poweruptype</a></h4></dt><dd>
 <p><span>str</span></p>
@@ -4102,11 +4113,11 @@ the type-checker properly identifies the returned value as one.</p>
 See ba.Powerup.poweruptype for available type values.</p>
 
 </dd>
-<dt><h4><a name="attr_ba_PowerupMessage__source_node">source_node</a></h4></dt><dd>
+<dt><h4><a name="attr_ba_PowerupMessage__sourcenode">sourcenode</a></h4></dt><dd>
 <p><span>Optional[<a href="#class_ba_Node">ba.Node</a>]</span></p>
 <p>The node the powerup game from, or None otherwise.
 If a powerup is accepted, a <a href="#class_ba_PowerupAcceptMessage">ba.PowerupAcceptMessage</a> should be sent
-back to the source_node to inform it of the fact. This will generally
+back to the sourcenode to inform it of the fact. This will generally
 cause the powerup box to make a sound and disappear or whatnot.</p>
 
 </dd>
@@ -4114,7 +4125,7 @@ cause the powerup box to make a sound and disappear or whatnot.</p>
 <h3>Methods:</h3>
 <dl>
 <dt><h4><a name="method_ba_PowerupMessage____init__">&lt;constructor&gt;</a></dt></h4><dd>
-<p><span>ba.PowerupMessage(poweruptype: str, source_node: Optional[<a href="#class_ba_Node">ba.Node</a>] = None)</span></p>
+<p><span>ba.PowerupMessage(poweruptype: str, sourcenode: Optional[<a href="#class_ba_Node">ba.Node</a>] = None)</span></p>
 
 </dd>
 </dl>
@@ -4443,7 +4454,7 @@ that a SessionPlayer is still present if retaining references to one
 for any length of time.</p>
 
 <h3>Attributes:</h3>
-<h5><a href="#attr_ba_SessionPlayer__character">character</a>, <a href="#attr_ba_SessionPlayer__color">color</a>, <a href="#attr_ba_SessionPlayer__gamedata">gamedata</a>, <a href="#attr_ba_SessionPlayer__gameplayer">gameplayer</a>, <a href="#attr_ba_SessionPlayer__highlight">highlight</a>, <a href="#attr_ba_SessionPlayer__id">id</a>, <a href="#attr_ba_SessionPlayer__in_game">in_game</a>, <a href="#attr_ba_SessionPlayer__sessiondata">sessiondata</a>, <a href="#attr_ba_SessionPlayer__team">team</a></h5>
+<h5><a href="#attr_ba_SessionPlayer__character">character</a>, <a href="#attr_ba_SessionPlayer__color">color</a>, <a href="#attr_ba_SessionPlayer__gamedata">gamedata</a>, <a href="#attr_ba_SessionPlayer__gameplayer">gameplayer</a>, <a href="#attr_ba_SessionPlayer__highlight">highlight</a>, <a href="#attr_ba_SessionPlayer__id">id</a>, <a href="#attr_ba_SessionPlayer__in_game">in_game</a>, <a href="#attr_ba_SessionPlayer__inputdevice">inputdevice</a>, <a href="#attr_ba_SessionPlayer__sessiondata">sessiondata</a>, <a href="#attr_ba_SessionPlayer__team">team</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_SessionPlayer__character">character</a></h4></dt><dd>
 <p><span> str</span></p>
@@ -4491,6 +4502,11 @@ the right thing both for Player objects and values of None.</p>
 any lobby character/team selection.</p>
 
 </dd>
+<dt><h4><a name="attr_ba_SessionPlayer__inputdevice">inputdevice</a></h4></dt><dd>
+<p><span> <a href="#class_ba_InputDevice">ba.InputDevice</a></span></p>
+<p>The input device associated with the player.</p>
+
+</dd>
 <dt><h4><a name="attr_ba_SessionPlayer__sessiondata">sessiondata</a></h4></dt><dd>
 <p><span> Dict</span></p>
 <p>A dict for use by the current <a href="#class_ba_Session">ba.Session</a> for
@@ -4507,7 +4523,7 @@ is still in its lobby selecting a team/etc. then a
 </dd>
 </dl>
 <h3>Methods:</h3>
-<h5><a href="#method_ba_SessionPlayer__assign_input_call">assign_input_call()</a>, <a href="#method_ba_SessionPlayer__exists">exists()</a>, <a href="#method_ba_SessionPlayer__get_account_id">get_account_id()</a>, <a href="#method_ba_SessionPlayer__get_icon">get_icon()</a>, <a href="#method_ba_SessionPlayer__get_input_device">get_input_device()</a>, <a href="#method_ba_SessionPlayer__get_name">get_name()</a>, <a href="#method_ba_SessionPlayer__remove_from_game">remove_from_game()</a>, <a href="#method_ba_SessionPlayer__reset_input">reset_input()</a>, <a href="#method_ba_SessionPlayer__set_name">set_name()</a></h5>
+<h5><a href="#method_ba_SessionPlayer__assign_input_call">assign_input_call()</a>, <a href="#method_ba_SessionPlayer__exists">exists()</a>, <a href="#method_ba_SessionPlayer__get_account_id">get_account_id()</a>, <a href="#method_ba_SessionPlayer__get_icon">get_icon()</a>, <a href="#method_ba_SessionPlayer__get_name">get_name()</a>, <a href="#method_ba_SessionPlayer__remove_from_game">remove_from_game()</a>, <a href="#method_ba_SessionPlayer__reset_input">reset_input()</a>, <a href="#method_ba_SessionPlayer__set_name">set_name()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_SessionPlayer__assign_input_call">assign_input_call()</a></dt></h4><dd>
 <p><span>assign_input_call(type: Union[str, Tuple[str, ...]],
@@ -4543,12 +4559,6 @@ joins (while verification occurs).</p>
 <p><span>get_icon() -&gt; Dict[str, Any]</span></p>
 
 <p>Returns the character's icon (images, colors, etc contained in a dict)</p>
-
-</dd>
-<dt><h4><a name="method_ba_SessionPlayer__get_input_device">get_input_device()</a></dt></h4><dd>
-<p><span>get_input_device() -&gt; <a href="#class_ba_InputDevice">ba.InputDevice</a></span></p>
-
-<p>Returns the player's input device.</p>
 
 </dd>
 <dt><h4><a name="method_ba_SessionPlayer__get_name">get_name()</a></dt></h4><dd>

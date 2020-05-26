@@ -137,9 +137,9 @@ class EasterEggHuntGame(ba.TeamGameActivity[Player, Team]):
         if self.has_ended():
             return
         collision = ba.getcollision()
-        egg = collision.source_node.getdelegate(Egg)
-        player = collision.opposing_node.getdelegate(PlayerSpaz,
-                                                     True).getplayer(Player)
+        egg = collision.sourcenode.getdelegate(Egg)
+        player = collision.opposingnode.getdelegate(PlayerSpaz,
+                                                    True).getplayer(Player)
         if player and egg:
             player.team.score += 1
 

@@ -158,9 +158,9 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
         self._scoreboard = Scoreboard()
         self._alarmsound = ba.getsound('alarm')
         self._ticking_sound = ba.getsound('ticking')
-        self._last_score_time = 0
         self._score_sound = ba.getsound('score')
         self._swipsound = ba.getsound('swip')
+        self._last_score_time = 0
         self._all_bases_material = ba.Material()
         self._last_home_flag_notice_print_time = 0.0
         self._score_to_win = int(settings['Score to Win'])
@@ -237,20 +237,22 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
             ))
 
         # Other parts of our spazzes don't collide with our flags at all.
-        spaz_mat_no_flag_collide.add_actions(conditions=('they_have_material',
-                                                         flagmat),
-                                             actions=('modify_part_collision',
-                                                      'collide', False))
+        spaz_mat_no_flag_collide.add_actions(
+            conditions=('they_have_material', flagmat),
+            actions=('modify_part_collision', 'collide', False),
+        )
 
         # We wanna know when *any* flag enters/leaves our base.
         base_region_mat.add_actions(
             conditions=('they_have_material', FlagFactory.get().flagmaterial),
-            actions=(('modify_part_collision', 'collide',
-                      True), ('modify_part_collision', 'physical', False),
-                     ('call', 'at_connect',
-                      lambda: self._handle_flag_entered_base(team)),
-                     ('call', 'at_disconnect',
-                      lambda: self._handle_flag_left_base(team))))
+            actions=(
+                ('modify_part_collision', 'collide', True),
+                ('modify_part_collision', 'physical', False),
+                ('call', 'at_connect',
+                 lambda: self._handle_flag_entered_base(team)),
+                ('call', 'at_disconnect',
+                 lambda: self._handle_flag_left_base(team)),
+            ))
 
         return team
 
@@ -274,7 +276,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
         ba.playsound(self._swipsound, position=team.flag.node.position)
 
     def _handle_flag_entered_base(self, team: Team) -> None:
-        flag = CTFFlag.from_node(ba.getcollision().opposing_node)
+        flag = CTFFlag.from_node(ba.getcollision().opposingnode)
         if not flag:
             print('Unable to get flag in _handle_flag_entered_base')
             return
@@ -362,7 +364,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
         self._flash_base(team)
         self._update_scoreboard()
 
-        # Have teammates celebrate
+        # Have teammates celebrate.
         for player in team.players:
             if player.actor:
                 player.actor.handlemessage(ba.CelebrateMessage(2.0))
@@ -385,7 +387,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
     def _handle_flag_left_base(self, team: Team) -> None:
         cur_time = ba.time()
         try:
-            flag = CTFFlag.from_node(ba.getcollision().opposing_node)
+            flag = CTFFlag.from_node(ba.getcollision().opposingnode)
         except ba.NodeNotFoundError:
             # We still get this call even if the flag stopped touching us
             # because it was deleted; that's ok.
@@ -447,11 +449,12 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
         return None if delegate is None else delegate.getplayer(Player)
 
     def _handle_hit_own_flag(self, team: Team, val: int) -> None:
+        """Called when a player touches their own team flag.
+
+        We keep track of when each player is touching their
+        own flag so we can award points when returned.
         """
-        keep track of when each player is touching their
-        own flag so we can award points when returned
-        """
-        player = self._player_from_node(ba.getcollision().source_node)
+        player = self._player_from_node(ba.getcollision().sourcenode)
         if player:
             player.touching_own_flag += (1 if val else -1)
 
@@ -464,7 +467,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
                 # Use a node message to kill the flag instead of just killing
                 # our team's. (avoids redundantly killing new flags if
                 # multiple body parts generate callbacks in one step).
-                node = ba.getcollision().opposing_node
+                node = ba.getcollision().opposingnode
                 self._award_players_touching_own_flag(team)
                 node.handlemessage(ba.DieMessage())
 
@@ -484,8 +487,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
                     team.touch_return_timer = None
                     team.touch_return_timer_ticking = None
             if team.flag_return_touches < 0:
-                ba.print_error(
-                    "CTF: flag_return_touches < 0; this shouldn't happen.")
+                ba.print_error('CTF flag_return_touches < 0')
 
     def _flash_base(self, team: Team, length: float = 2.0) -> None:
         light = ba.newnode('light',
@@ -536,13 +538,15 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
                                             self._score_to_win)
 
     def handlemessage(self, msg: Any) -> Any:
+
         if isinstance(msg, ba.PlayerDiedMessage):
-            # Augment standard behavior.
-            super().handlemessage(msg)
+            super().handlemessage(msg)  # Augment standard behavior.
             self.respawn_player(msg.getplayer(Player))
+
         elif isinstance(msg, FlagDiedMessage):
             assert isinstance(msg.flag, CTFFlag)
             ba.timer(0.1, ba.Call(self._spawn_flag_for_team, msg.flag.team))
+
         elif isinstance(msg, FlagPickedUpMessage):
             # Store the last player to hold the flag for scoring purposes.
             assert isinstance(msg.flag, CTFFlag)
@@ -550,9 +554,11 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
                 PlayerSpaz, True).getplayer(Player)
             msg.flag.held_count += 1
             msg.flag.reset_return_times()
+
         elif isinstance(msg, FlagDroppedMessage):
             # Store the last player to hold the flag for scoring purposes.
             assert isinstance(msg.flag, CTFFlag)
             msg.flag.held_count -= 1
+
         else:
             super().handlemessage(msg)

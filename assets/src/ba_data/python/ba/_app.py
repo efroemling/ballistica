@@ -22,6 +22,7 @@
 from __future__ import annotations
 
 import time
+import random
 from typing import TYPE_CHECKING
 
 import _ba
@@ -376,7 +377,7 @@ class App:
 
         # Lobby.
         self.lobby_random_profile_index: int = 1
-        self.lobby_random_char_index_offset: Optional[int] = None
+        self.lobby_random_char_index_offset = random.randrange(1000)
         self.lobby_account_profile_device_id: Optional[int] = None
 
         # Main Menu.
@@ -722,7 +723,7 @@ class App:
                          game: str,
                          force: bool = False,
                          args: Dict = None) -> bool:
-        """High level way to launch a co-op session locally."""
+        """High level way to launch a local co-op session."""
         # pylint: disable=cyclic-import
         from ba._campaign import get_campaign
         from bastd.ui.coop.level import CoopLevelLockedWindow
@@ -788,7 +789,7 @@ class App:
                                               color=(1, 1, 0)),
                     timetype=TimeType.REAL)
 
-    def shutdown(self) -> None:
+    def on_app_shutdown(self) -> None:
         """(internal)"""
         self.music.on_app_shutdown()
 

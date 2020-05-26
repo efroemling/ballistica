@@ -245,9 +245,9 @@ class HockeyGame(ba.TeamGameActivity[Player, Team]):
 
     def _handle_puck_player_collide(self) -> None:
         collision = ba.getcollision()
-        puck = collision.source_node.getdelegate(Puck)
-        player = collision.opposing_node.getdelegate(PlayerSpaz,
-                                                     True).getplayer(Player)
+        puck = collision.sourcenode.getdelegate(Puck)
+        player = collision.opposingnode.getdelegate(PlayerSpaz,
+                                                    True).getplayer(Player)
         if player and puck:
             puck.last_players_to_touch[player.team.id] = player
 
@@ -265,7 +265,7 @@ class HockeyGame(ba.TeamGameActivity[Player, Team]):
         if self._puck.scored:
             return
 
-        region = ba.getcollision().source_node
+        region = ba.getcollision().sourcenode
         index = 0
         for index in range(len(self._score_regions)):
             if region == self._score_regions[index].node:

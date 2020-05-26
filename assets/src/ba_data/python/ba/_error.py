@@ -77,6 +77,13 @@ class TeamNotFoundError(NotFoundError):
     """
 
 
+class DelegateNotFoundError(NotFoundError):
+    """Exception raised when an expected delegate object does not exist.
+
+    category: Exception Classes
+    """
+
+
 class SessionTeamNotFoundError(NotFoundError):
     """Exception raised when an expected ba.SessionTeam does not exist.
 

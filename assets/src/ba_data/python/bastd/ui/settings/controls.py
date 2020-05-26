@@ -91,7 +91,7 @@ class ControlsSettingsWindow(ba.Window):
             height += space_height
 
         show_keyboard = False
-        if _ba.get_input_device('Keyboard', '#1', doraise=False) is not None:
+        if _ba.getinputdevice('Keyboard', '#1', doraise=False) is not None:
             show_keyboard = True
             height += spacing * 2
         show_keyboard_p2 = False if app.vr_mode else show_keyboard
@@ -393,7 +393,7 @@ class ControlsSettingsWindow(ba.Window):
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         ba.app.main_menu_window = (keyboard.ConfigKeyboardWindow(
-            _ba.get_input_device('Keyboard', '#1')).get_root_widget())
+            _ba.getinputdevice('Keyboard', '#1')).get_root_widget())
 
     def _config_keyboard2(self) -> None:
         # pylint: disable=cyclic-import
@@ -401,7 +401,7 @@ class ControlsSettingsWindow(ba.Window):
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         ba.app.main_menu_window = (keyboard.ConfigKeyboardWindow(
-            _ba.get_input_device('Keyboard', '#2')).get_root_widget())
+            _ba.getinputdevice('Keyboard', '#2')).get_root_widget())
 
     def _do_mobile_devices(self) -> None:
         # pylint: disable=cyclic-import

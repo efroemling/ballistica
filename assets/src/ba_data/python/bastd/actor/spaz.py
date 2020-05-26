@@ -851,8 +851,8 @@ class Spaz(ba.Actor):
                 self._num_times_hit = 0
 
             self.node.handlemessage('flash')
-            if msg.source_node:
-                msg.source_node.handlemessage(ba.PowerupAcceptMessage())
+            if msg.sourcenode:
+                msg.sourcenode.handlemessage(ba.PowerupAcceptMessage())
             return True
 
         elif isinstance(msg, ba.FreezeMessage):
@@ -1143,7 +1143,7 @@ class Spaz(ba.Actor):
         elif isinstance(msg, PunchHitMessage):
             if not self.node:
                 return None
-            node = ba.getcollision().opposing_node
+            node = ba.getcollision().opposingnode
 
             # Only allow one hit per node per punch.
             if node and (node not in self._punched_nodes):
@@ -1204,23 +1204,23 @@ class Spaz(ba.Actor):
 
             try:
                 collision = ba.getcollision()
-                opposing_node = collision.opposing_node
-                opposing_body = collision.opposing_body
+                opposingnode = collision.opposingnode
+                opposingbody = collision.opposingbody
             except ba.NotFoundError:
                 return True
 
             # Don't allow picking up of invincible dudes.
             try:
-                if opposing_node.invincible:
+                if opposingnode.invincible:
                     return True
             except Exception:
                 pass
 
             # If we're grabbing the pelvis of a non-shattered spaz, we wanna
             # grab the torso instead.
-            if (opposing_node.getnodetype() == 'spaz'
-                    and not opposing_node.shattered and opposing_body == 4):
-                opposing_body = 1
+            if (opposingnode.getnodetype() == 'spaz'
+                    and not opposingnode.shattered and opposingbody == 4):
+                opposingbody = 1
 
             # Special case - if we're holding a flag, don't replace it
             # (hmm - should make this customizable or more low level).
@@ -1229,8 +1229,8 @@ class Spaz(ba.Actor):
                 return True
 
             # Note: hold_body needs to be set before hold_node.
-            self.node.hold_body = opposing_body
-            self.node.hold_node = opposing_node
+            self.node.hold_body = opposingbody
+            self.node.hold_node = opposingnode
         elif isinstance(msg, ba.CelebrateMessage):
             if self.node:
                 self.node.handlemessage('celebrate', int(msg.duration * 1000))

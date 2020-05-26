@@ -227,9 +227,9 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-nested-blocks
         collision = ba.getcollision()
-        region = collision.source_node.getdelegate(RaceRegion)
-        playerspaz = collision.opposing_node.getdelegate(PlayerSpaz,
-                                                         doraise=False)
+        region = collision.sourcenode.getdelegate(RaceRegion)
+        playerspaz = collision.opposingnode.getdelegate(PlayerSpaz,
+                                                        doraise=False)
         player = playerspaz.getplayer(Player) if playerspaz else None
         if not player or not region:
             return
