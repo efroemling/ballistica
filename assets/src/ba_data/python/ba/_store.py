@@ -494,7 +494,7 @@ def get_available_sale_time(tab: str) -> Optional[int]:
             assert app.pro_sale_start_val is not None
             val: Optional[int] = max(
                 0, app.pro_sale_start_val -
-                (int(_ba.time(TimeType.REAL, TimeFormat.MILLISECONDS)) -
+                (_ba.time(TimeType.REAL, TimeFormat.MILLISECONDS) -
                  app.pro_sale_start_time))
 
             # Keep the value in the config up to date. I suppose we should

@@ -77,6 +77,7 @@ class NinjaFightGame(ba.TeamGameActivity[Player, Team]):
         self._won = False
         self._timer: Optional[OnScreenTimer] = None
         self._bots = SpazBotSet()
+        self._preset = str(settings['preset'])
 
     # Called when our game is transitioning in but not ready to begin;
     # we can go ahead and start creating stuff, playing music, etc.
@@ -87,7 +88,7 @@ class NinjaFightGame(ba.TeamGameActivity[Player, Team]):
     # Called when our game actually begins.
     def on_begin(self) -> None:
         super().on_begin()
-        is_pro = self.settings_raw.get('preset') == 'pro'
+        is_pro = self._preset == 'pro'
 
         # In pro mode there's no powerups.
         if not is_pro:
@@ -156,9 +157,11 @@ class NinjaFightGame(ba.TeamGameActivity[Player, Team]):
             # marked dead yet) ..so lets push a call into the event loop to
             # check once this guy has finished dying.
             ba.pushcall(self._check_if_won)
+
+        # Let the base class handle anything we don't.
         else:
-            # Let the base class handle anything we don't.
-            super().handlemessage(msg)
+            return super().handlemessage(msg)
+        return None
 
     # When this is called, we should fill out results and end the game
     # *regardless* of whether is has been won. (this may be called due
@@ -171,17 +174,12 @@ class NinjaFightGame(ba.TeamGameActivity[Player, Team]):
 
         results = ba.TeamGameResults()
 
-        # If we won, set our score to the elapsed time
+        # If we won, set our score to the elapsed time in milliseconds.
         # (there should just be 1 team here since this is co-op).
         # ..if we didn't win, leave scores as default (None) which means
         # we lost.
         if self._won:
-            curtime = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)
-            assert isinstance(curtime, int)
-            starttime = self._timer.getstarttime(
-                timeformat=ba.TimeFormat.MILLISECONDS)
-            assert isinstance(starttime, int)
-            elapsed_time_ms = curtime - starttime
+            elapsed_time_ms = int((ba.time() - self._timer.starttime) * 1000.0)
             ba.cameraflash()
             ba.playsound(self._winsound)
             for team in self.teams:

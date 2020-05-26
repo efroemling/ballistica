@@ -21,12 +21,13 @@
 """Defines Actor(s)."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, overload
 
 import ba
 
 if TYPE_CHECKING:
     from typing import Optional, Union, Any
+    from typing_extensions import Literal
 
 
 class OnScreenTimer(ba.Actor):
@@ -39,7 +40,7 @@ class OnScreenTimer(ba.Actor):
 
     def __init__(self) -> None:
         super().__init__()
-        self._starttime: Optional[int] = None
+        self._starttime_ms: Optional[int] = None
         self.node = ba.newnode('text',
                                attrs={
                                    'v_attach': 'top',
@@ -63,13 +64,13 @@ class OnScreenTimer(ba.Actor):
         """Start the timer."""
         tval = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)
         assert isinstance(tval, int)
-        self._starttime = tval
-        self.inputnode.time1 = self._starttime
+        self._starttime_ms = tval
+        self.inputnode.time1 = self._starttime_ms
         ba.sharedobj('globals').connectattr('time', self.inputnode, 'time2')
 
     def has_started(self) -> bool:
         """Return whether this timer has started yet."""
-        return self._starttime is not None
+        return self._starttime_ms is not None
 
     def stop(self,
              endtime: Union[int, float] = None,
@@ -85,7 +86,7 @@ class OnScreenTimer(ba.Actor):
             endtime = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)
             timeformat = ba.TimeFormat.MILLISECONDS
 
-        if self._starttime is None:
+        if self._starttime_ms is None:
             print('Warning: OnScreenTimer.stop() called without start() first')
         else:
             endtime_ms: int
@@ -97,7 +98,20 @@ class OnScreenTimer(ba.Actor):
             else:
                 raise ValueError(f'invalid timeformat: {timeformat}')
 
-            self.inputnode.timemax = endtime_ms - self._starttime
+            self.inputnode.timemax = endtime_ms - self._starttime_ms
+
+    # Overloads so type checker knows our exact return type based in args.
+    @overload
+    def getstarttime(
+        self,
+        timeformat: Literal[ba.TimeFormat.SECONDS] = ba.TimeFormat.SECONDS
+    ) -> float:
+        ...
+
+    @overload
+    def getstarttime(self,
+                     timeformat: Literal[ba.TimeFormat.MILLISECONDS]) -> int:
+        ...
 
     def getstarttime(
         self,
@@ -109,17 +123,22 @@ class OnScreenTimer(ba.Actor):
         milliseconds if it is MILLISECONDS.
         """
         val_ms: Any
-        if self._starttime is None:
+        if self._starttime_ms is None:
             print('WARNING: getstarttime() called on un-started timer')
             val_ms = ba.time(timeformat=ba.TimeFormat.MILLISECONDS)
         else:
-            val_ms = self._starttime
+            val_ms = self._starttime_ms
         assert isinstance(val_ms, int)
         if timeformat is ba.TimeFormat.SECONDS:
             return 0.001 * val_ms
         if timeformat is ba.TimeFormat.MILLISECONDS:
             return val_ms
         raise ValueError(f'invalid timeformat: {timeformat}')
+
+    @property
+    def starttime(self) -> float:
+        """Shortcut for start time in seconds."""
+        return self.getstarttime()
 
     def handlemessage(self, msg: Any) -> Any:
         # if we're asked to die, just kill our node/timer
