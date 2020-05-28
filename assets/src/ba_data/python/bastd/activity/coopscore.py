@@ -137,7 +137,10 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         self._tournament_time_remaining_text: Optional[Text] = None
         self._tournament_time_remaining_text_timer: Optional[ba.Timer] = None
 
-        self._player_info = settings['player_info']
+        self._player_info: List[ba.PlayerInfo] = settings['player_info']
+        assert isinstance(self._player_info, list)
+        assert (isinstance(i, ba.PlayerInfo) for i in self._player_info)
+
         self._score: Optional[int] = settings['score']
         assert isinstance(self._score, (int, type(None)))
 
@@ -633,7 +636,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
             ba.pushcall(ba.WeakCall(self._show_fail))
 
         self._name_str = name_str = ', '.join(
-            [p['name'] for p in self._player_info])
+            [p.name for p in self._player_info])
 
         if self._show_friend_scores:
             self._friends_loading_status = Text(
@@ -668,7 +671,10 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         if self._score is not None:
             our_score: Optional[list] = [
                 self._score, {
-                    'players': self._player_info
+                    'players': [{
+                        'name': p.name,
+                        'character': p.character
+                    } for p in self._player_info]
                 }
             ]
             our_high_scores.append(our_score)

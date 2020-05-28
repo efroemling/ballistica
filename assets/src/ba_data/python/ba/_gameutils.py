@@ -97,7 +97,7 @@ def sharedobj(name: str) -> Any:
 
     # We store these on the current context; whether its an activity or
     # session.
-    activity: Optional[ba.Activity] = _ba.getactivity(doraise=False)
+    activity = _ba.getactivity(doraise=False)
     if activity is not None:
 
         # Grab shared-objs dict.
@@ -105,8 +105,8 @@ def sharedobj(name: str) -> Any:
 
         # Grab item out of it.
         try:
-            return sharedobjs[name]
-        except Exception:
+            return sharedobjs[name]  # (pylint bug?) pylint: disable=E1136
+        except KeyError:
             pass
 
         obj: Any
@@ -141,7 +141,7 @@ def sharedobj(name: str) -> Any:
                 "unrecognized shared object (activity context): '" + name +
                 "'")
     else:
-        session: Optional[ba.Session] = _ba.getsession(doraise=False)
+        session = _ba.getsession(doraise=False)
         if session is not None:
 
             # Grab shared-objs dict (creating if necessary).

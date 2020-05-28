@@ -73,7 +73,6 @@ def suppress_debug_reports() -> None:
     This should be called in devel/debug situations to avoid spamming
     the master server with spurious logs.
     """
-    # _ba.screenmessage("Suppressing debug reports.", color=(1, 0, 0))
     _ba.app.suppress_debug_reports = True
 
 
@@ -189,21 +188,23 @@ def print_live_object_warnings(when: Any,
     """Print warnings for remaining objects in the current context."""
     # pylint: disable=cyclic-import
     import gc
-    from ba import _session as bs_session
-    from ba import _actor as bs_actor
-    from ba import _activity as bs_activity
+    from ba._session import Session
+    from ba._actor import Actor
+    from ba._activity import Activity
     sessions: List[ba.Session] = []
     activities: List[ba.Activity] = []
-    actors = []
+    actors: List[ba.Actor] = []
+
+    # Once we come across leaked stuff, printing again is probably
+    # redundant.
     if _ba.app.printed_live_object_warning:
-        # print 'skipping live obj check due to previous found live object(s)'
         return
     for obj in gc.get_objects():
-        if isinstance(obj, bs_actor.Actor):
+        if isinstance(obj, Actor):
             actors.append(obj)
-        elif isinstance(obj, bs_session.Session):
+        elif isinstance(obj, Session):
             sessions.append(obj)
-        elif isinstance(obj, bs_activity.Activity):
+        elif isinstance(obj, Activity):
             activities.append(obj)
 
     # Complain about any remaining sessions.
@@ -211,66 +212,19 @@ def print_live_object_warnings(when: Any,
         if session is ignore_session:
             continue
         _ba.app.printed_live_object_warning = True
-        print('ERROR: Session found', when, ':', session)
-        # refs = list(gc.get_referrers(session))
-        # i = 1
-        # for ref in refs:
-        #     if type(ref) is types.FrameType: continue
-        #     print '     ref', i, ':', ref
-        #     i += 1
-        # if type(ref) is list or type(ref) is tuple or type(ref) is dict:
-        #     refs2 = list(gc.get_referrers(ref))
-        #     j = 1
-        #     for ref2 in refs2:
-        #         if type(ref2) is types.FrameType: continue
-        #         print '        ref\'s ref', j, ':', ref2
-        #         j += 1
+        print(f'ERROR: Session found {when}: {session}')
 
     # Complain about any remaining activities.
     for activity in activities:
         if activity is ignore_activity:
             continue
         _ba.app.printed_live_object_warning = True
-        print('ERROR: Activity found', when, ':', activity)
-        # refs = list(gc.get_referrers(activity))
-        # i = 1
-        # for ref in refs:
-        #     if type(ref) is types.FrameType: continue
-        #     print '     ref', i, ':', ref
-        #     i += 1
-        # if type(ref) is list or type(ref) is tuple or type(ref) is dict:
-        #     refs2 = list(gc.get_referrers(ref))
-        #     j = 1
-        #     for ref2 in refs2:
-        #         if type(ref2) is types.FrameType: continue
-        #         print '        ref\'s ref', j, ':', ref2
-        #         j += 1
+        print(f'ERROR: Activity found {when}: {activity}')
 
     # Complain about any remaining actors.
     for actor in actors:
         _ba.app.printed_live_object_warning = True
-        print('ERROR: Actor found', when, ':', actor)
-        # if isinstance(actor, bs_actor.Actor):
-        #     try:
-        #         if actor.node:
-        #             print('   - contains node:',
-        # actor.node.getnodetype(), ';',
-        #                   actor.node.get_name())
-        #     except Exception as exc:
-        #         print('   - exception checking actor node:', exc)
-        # refs = list(gc.get_referrers(actor))
-        # i = 1
-        # for ref in refs:
-        #     if type(ref) is types.FrameType: continue
-        #     print '     ref', i, ':', ref
-        #     i += 1
-        # if type(ref) is list or type(ref) is tuple or type(ref) is dict:
-        #     refs2 = list(gc.get_referrers(ref))
-        #     j = 1
-        #     for ref2 in refs2:
-        #         if type(ref2) is types.FrameType: continue
-        #         print '        ref\'s ref', j, ':', ref2
-        #         j += 1
+        print(f'ERROR: Actor found {when}: {actor}')
 
 
 def print_corrupt_file_error() -> None:

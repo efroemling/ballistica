@@ -49,6 +49,16 @@ class DependencyError(Exception):
         return self._deps
 
 
+class ContextError(Exception):
+    """Exception raised when a call is made in an invalid context.
+
+    category: Exception Classes
+
+    Examples of this include calling UI functions within an Activity context
+    or calling scene manipulation functions outside of a game context.
+    """
+
+
 class NotFoundError(Exception):
     """Exception raised when a referenced object does not exist.
 

@@ -25,6 +25,7 @@ from typing import TYPE_CHECKING, TypeVar
 
 import _ba
 from ba._gameactivity import GameActivity
+from ba._general import WeakCall
 
 if TYPE_CHECKING:
     from typing import Type, Dict, Any, Set, List, Sequence, Optional
@@ -41,10 +42,13 @@ class CoopGameActivity(GameActivity[PlayerType, TeamType]):
     Category: Gameplay Classes
     """
 
+    # We can assume our session is a CoopSession.
+    session: ba.CoopSession
+
     @classmethod
     def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
-        from ba import _coopsession
-        return issubclass(sessiontype, _coopsession.CoopSession)
+        from ba._coopsession import CoopSession
+        return issubclass(sessiontype, CoopSession)
 
     def __init__(self, settings: Dict[str, Any]):
         super().__init__(settings)
@@ -57,16 +61,14 @@ class CoopGameActivity(GameActivity[PlayerType, TeamType]):
         self._warn_beeps_sound = _ba.getsound('warnBeeps')
 
     def on_begin(self) -> None:
-        from ba import _general
         super().on_begin()
 
         # Show achievements remaining.
         if not _ba.app.kiosk_mode:
-            _ba.timer(3.8,
-                      _general.WeakCall(self._show_remaining_achievements))
+            _ba.timer(3.8, WeakCall(self._show_remaining_achievements))
 
         # Preload achievement images in case we get some.
-        _ba.timer(2.0, _general.WeakCall(self._preload_achievements))
+        _ba.timer(2.0, WeakCall(self._preload_achievements))
 
         # Let's ask the server for a 'time-to-beat' value.
         levelname = self._get_coop_level_name()
@@ -76,7 +78,7 @@ class CoopGameActivity(GameActivity[PlayerType, TeamType]):
             self.settings_raw['name']).get_score_version_string().replace(
                 ' ', '_'))
         _ba.get_scores_to_beat(levelname, config_str,
-                               _general.WeakCall(self._on_got_scores_to_beat))
+                               WeakCall(self._on_got_scores_to_beat))
 
     def _on_got_scores_to_beat(self, scores: List[Dict[str, Any]]) -> None:
         pass
@@ -153,18 +155,18 @@ class CoopGameActivity(GameActivity[PlayerType, TeamType]):
 
     def _show_remaining_achievements(self) -> None:
         # pylint: disable=cyclic-import
-        from ba import _achievement
-        from ba import _lang
+        from ba._achievement import get_achievements_for_coop_level
+        from ba._lang import Lstr
         from bastd.actor.text import Text
         ts_h_offs = 30
         v_offs = -200
         achievements = [
-            a for a in _achievement.get_achievements_for_coop_level(
+            a for a in get_achievements_for_coop_level(
                 self._get_coop_level_name()) if not a.complete
         ]
         vrmode = _ba.app.vr_mode
         if achievements:
-            Text(_lang.Lstr(resource='achievementsRemainingText'),
+            Text(Lstr(resource='achievementsRemainingText'),
                  host_only=True,
                  position=(ts_h_offs - 10 + 40, v_offs - 10),
                  transition=Text.Transition.FADE_IN,
@@ -208,12 +210,12 @@ class CoopGameActivity(GameActivity[PlayerType, TeamType]):
         Returns True if a banner will be shown;
         False otherwise
         """
-        from ba import _achievement
+        from ba._achievement import get_achievement
 
         if achievement_name in self._achievements_awarded:
             return
 
-        ach = _achievement.get_achievement(achievement_name)
+        ach = get_achievement(achievement_name)
 
         # If we're in the easy campaign and this achievement is hard-mode-only,
         # ignore it.
@@ -223,8 +225,8 @@ class CoopGameActivity(GameActivity[PlayerType, TeamType]):
             if ach.hard_mode_only and campaign.name == 'Easy':
                 return
         except Exception:
-            from ba import _error
-            _error.print_exception()
+            from ba._error import print_exception
+            print_exception()
 
         # If we haven't awarded this one, check to see if we've got it.
         # If not, set it through the game service *and* add a transaction
@@ -261,10 +263,9 @@ class CoopGameActivity(GameActivity[PlayerType, TeamType]):
 
     def setup_low_life_warning_sound(self) -> None:
         """Set up a beeping noise to play when any players are near death."""
-        from ba import _general
         self._life_warning_beep = None
         self._life_warning_beep_timer = _ba.Timer(
-            1.0, _general.WeakCall(self._update_life_warning), repeat=True)
+            1.0, WeakCall(self._update_life_warning), repeat=True)
 
     def _update_life_warning(self) -> None:
         # Beep continuously if anyone is close to death.

@@ -22,6 +22,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, TypeVar, Generic
 
 import _ba
@@ -33,6 +34,16 @@ if TYPE_CHECKING:
 
 PlayerType = TypeVar('PlayerType', bound='ba.Player')
 TeamType = TypeVar('TeamType', bound='ba.Team')
+
+
+@dataclass
+class PlayerInfo:
+    """Holds basic info about a player.
+
+    Category: Gameplay Classes
+    """
+    name: str
+    character: str
 
 
 class Player(Generic[TeamType]):

@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-05-27 for Ballistica version 1.5.0 build 20030</em></h4>
+<h4><em>last updated on 2020-05-28 for Ballistica version 1.5.0 build 20031</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -26,6 +26,7 @@
    <li><a href="#class_ba_Material">ba.Material</a></li>
    <li><a href="#class_ba_Node">ba.Node</a></li>
    <li><a href="#class_ba_Player">ba.Player</a></li>
+   <li><a href="#class_ba_PlayerInfo">ba.PlayerInfo</a></li>
    <li><a href="#class_ba_PlayerRecord">ba.PlayerRecord</a></li>
    <li><a href="#class_ba_ScoreInfo">ba.ScoreInfo</a></li>
    <li><a href="#class_ba_Session">ba.Session</a></li>
@@ -185,6 +186,7 @@
 </ul>
 <h4><a name="class_category_Exception_Classes">Exception Classes</a></h4>
 <ul>
+   <li><a href="#class_ba_ContextError">ba.ContextError</a></li>
    <li><a href="#class_ba_DependencyError">ba.DependencyError</a></li>
    <li><a href="#class_ba_NotFoundError">ba.NotFoundError</a></li>
    <ul>
@@ -1515,6 +1517,19 @@ start_some_long_action(callback_when_done=self.dosomething)</pre>
 start_long_action(callback_when_done=<a href="#class_ba_ContextCall">ba.ContextCall</a>(self.mycallback))</pre>
 
 <hr>
+<h2><strong><a name="class_ba_ContextError">ba.ContextError</a></strong></h3>
+<p>Inherits from: Exception, BaseException</p>
+<p>Exception raised when a call is made in an invalid context.</p>
+
+<p>Category: <a href="#class_category_Exception_Classes">Exception Classes</a></p>
+
+<p>    Examples of this include calling UI functions within an Activity context
+    or calling scene manipulation functions outside of a game context.
+</p>
+
+<h3>Methods:</h3>
+<p>&lt;all methods inherited from <a href="#class_builtins_Exception">builtins.Exception</a>&gt;</p>
+<hr>
 <h2><strong><a name="class_ba_CoopGameActivity">ba.CoopGameActivity</a></strong></h3>
 <p>Inherits from: <a href="#class_ba_GameActivity">ba.GameActivity</a>, <a href="#class_ba_Activity">ba.Activity</a>, <a href="#class_ba_DependencyComponent">ba.DependencyComponent</a>, <a href="#class_typing_Generic">typing.Generic</a></p>
 <p>Base class for cooperative-mode games.</p>
@@ -1639,11 +1654,19 @@ and it should begin its actual game logic.</p>
 
 <p>    These generally consist of 1-4 players against
     the computer and include functionality such as
-    high score lists.
-</p>
+    high score lists.</p>
 
 <h3>Attributes Inherited:</h3>
-<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__campaign">campaign</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__teams">teams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
+<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__teams">teams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
+<h3>Attributes Defined Here:</h3>
+<dl>
+<dt><h4><a name="attr_ba_CoopSession__campaign">campaign</a></h4></dt><dd>
+<p><span>Optional[<a href="#class_ba_Campaign">ba.Campaign</a>]</span></p>
+<p>The <a href="#class_ba_Campaign">ba.Campaign</a> instance this Session represents, or None if
+there is no associated Campaign.</p>
+
+</dd>
+</dl>
 <h3>Methods Inherited:</h3>
 <h5><a href="#method_ba_Session__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_Session__end">end()</a>, <a href="#method_ba_Session__end_activity">end_activity()</a>, <a href="#method_ba_Session__getactivity">getactivity()</a>, <a href="#method_ba_Session__handlemessage">handlemessage()</a>, <a href="#method_ba_Session__launch_end_session_activity">launch_end_session_activity()</a>, <a href="#method_ba_Session__on_player_request">on_player_request()</a>, <a href="#method_ba_Session__on_team_join">on_team_join()</a>, <a href="#method_ba_Session__on_team_leave">on_team_leave()</a>, <a href="#method_ba_Session__set_activity">set_activity()</a>, <a href="#method_ba_Session__transitioning_out_activity_was_freed">transitioning_out_activity_was_freed()</a></h5>
 <h3>Methods Defined or Overridden:</h3>
@@ -1986,7 +2009,7 @@ its time with lingering corpses, sound effects, etc.</p>
 </p>
 
 <h3>Attributes Inherited:</h3>
-<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__campaign">campaign</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__teams">teams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
+<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__teams">teams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
 <h3>Methods Inherited:</h3>
 <h5><a href="#method_ba_MultiTeamSession__announce_game_results">announce_game_results()</a>, <a href="#method_ba_MultiTeamSession__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_MultiTeamSession__end">end()</a>, <a href="#method_ba_MultiTeamSession__end_activity">end_activity()</a>, <a href="#method_ba_MultiTeamSession__get_custom_menu_entries">get_custom_menu_entries()</a>, <a href="#method_ba_MultiTeamSession__get_ffa_series_length">get_ffa_series_length()</a>, <a href="#method_ba_MultiTeamSession__get_game_number">get_game_number()</a>, <a href="#method_ba_MultiTeamSession__get_max_players">get_max_players()</a>, <a href="#method_ba_MultiTeamSession__get_next_game_description">get_next_game_description()</a>, <a href="#method_ba_MultiTeamSession__get_series_length">get_series_length()</a>, <a href="#method_ba_MultiTeamSession__getactivity">getactivity()</a>, <a href="#method_ba_MultiTeamSession__handlemessage">handlemessage()</a>, <a href="#method_ba_MultiTeamSession__launch_end_session_activity">launch_end_session_activity()</a>, <a href="#method_ba_MultiTeamSession__on_activity_end">on_activity_end()</a>, <a href="#method_ba_MultiTeamSession__on_player_leave">on_player_leave()</a>, <a href="#method_ba_MultiTeamSession__on_player_request">on_player_request()</a>, <a href="#method_ba_MultiTeamSession__on_team_join">on_team_join()</a>, <a href="#method_ba_MultiTeamSession__on_team_leave">on_team_leave()</a>, <a href="#method_ba_MultiTeamSession__set_activity">set_activity()</a>, <a href="#method_ba_MultiTeamSession__transitioning_out_activity_was_freed">transitioning_out_activity_was_freed()</a></h5>
 <h3>Methods Defined or Overridden:</h3>
@@ -2024,7 +2047,7 @@ its time with lingering corpses, sound effects, etc.</p>
 </p>
 
 <h3>Attributes Inherited:</h3>
-<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__campaign">campaign</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__teams">teams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
+<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__teams">teams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
 <h3>Methods Inherited:</h3>
 <h5><a href="#method_ba_MultiTeamSession__announce_game_results">announce_game_results()</a>, <a href="#method_ba_MultiTeamSession__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_MultiTeamSession__end">end()</a>, <a href="#method_ba_MultiTeamSession__end_activity">end_activity()</a>, <a href="#method_ba_MultiTeamSession__get_custom_menu_entries">get_custom_menu_entries()</a>, <a href="#method_ba_MultiTeamSession__get_ffa_series_length">get_ffa_series_length()</a>, <a href="#method_ba_MultiTeamSession__get_game_number">get_game_number()</a>, <a href="#method_ba_MultiTeamSession__get_max_players">get_max_players()</a>, <a href="#method_ba_MultiTeamSession__get_next_game_description">get_next_game_description()</a>, <a href="#method_ba_MultiTeamSession__get_series_length">get_series_length()</a>, <a href="#method_ba_MultiTeamSession__getactivity">getactivity()</a>, <a href="#method_ba_MultiTeamSession__handlemessage">handlemessage()</a>, <a href="#method_ba_MultiTeamSession__launch_end_session_activity">launch_end_session_activity()</a>, <a href="#method_ba_MultiTeamSession__on_activity_end">on_activity_end()</a>, <a href="#method_ba_MultiTeamSession__on_player_leave">on_player_leave()</a>, <a href="#method_ba_MultiTeamSession__on_player_request">on_player_request()</a>, <a href="#method_ba_MultiTeamSession__on_team_join">on_team_join()</a>, <a href="#method_ba_MultiTeamSession__on_team_leave">on_team_leave()</a>, <a href="#method_ba_MultiTeamSession__set_activity">set_activity()</a>, <a href="#method_ba_MultiTeamSession__transitioning_out_activity_was_freed">transitioning_out_activity_was_freed()</a></h5>
 <h3>Methods Defined or Overridden:</h3>
@@ -3328,7 +3351,7 @@ Use <a href="#function_ba_getmodel">ba.getmodel</a>() to instantiate one.</p>
 </p>
 
 <h3>Attributes Inherited:</h3>
-<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__campaign">campaign</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__teams">teams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
+<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__teams">teams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
 <h3>Methods Inherited:</h3>
 <h5><a href="#method_ba_Session__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_Session__end">end()</a>, <a href="#method_ba_Session__end_activity">end_activity()</a>, <a href="#method_ba_Session__get_custom_menu_entries">get_custom_menu_entries()</a>, <a href="#method_ba_Session__getactivity">getactivity()</a>, <a href="#method_ba_Session__handlemessage">handlemessage()</a>, <a href="#method_ba_Session__launch_end_session_activity">launch_end_session_activity()</a>, <a href="#method_ba_Session__on_player_leave">on_player_leave()</a>, <a href="#method_ba_Session__on_player_request">on_player_request()</a>, <a href="#method_ba_Session__on_team_leave">on_team_leave()</a>, <a href="#method_ba_Session__set_activity">set_activity()</a>, <a href="#method_ba_Session__transitioning_out_activity_was_freed">transitioning_out_activity_was_freed()</a></h5>
 <h3>Methods Defined or Overridden:</h3>
@@ -3959,6 +3982,22 @@ the type-checker properly identifies the returned value as one.</p>
 </dd>
 </dl>
 <hr>
+<h2><strong><a name="class_ba_PlayerInfo">ba.PlayerInfo</a></strong></h3>
+<p><em>&lt;top level class&gt;</em>
+</p>
+<p>Holds basic info about a player.</p>
+
+<p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a>
+</p>
+
+<h3>Methods:</h3>
+<dl>
+<dt><h4><a name="method_ba_PlayerInfo____init__">&lt;constructor&gt;</a></dt></h4><dd>
+<p><span>ba.PlayerInfo(name: str, character: str)</span></p>
+
+</dd>
+</dl>
+<hr>
 <h2><strong><a name="class_ba_PlayerNotFoundError">ba.PlayerNotFoundError</a></strong></h3>
 <p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, Exception, BaseException</p>
 <p>Exception raised when an expected <a href="#class_ba_Player">ba.Player</a> does not exist.</p>
@@ -4256,18 +4295,12 @@ Pass 0 or a negative number for no ban time.</p>
     maintaining state between them (players, teams, score tallies, etc).</p>
 
 <h3>Attributes:</h3>
-<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__campaign">campaign</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__teams">teams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
+<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__teams">teams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a></h4></dt><dd>
 <p><span>bool</span></p>
 <p>Whether players should be allowed to join in the middle of
 activities.</p>
-
-</dd>
-<dt><h4><a name="attr_ba_Session__campaign">campaign</a></h4></dt><dd>
-<p><span>Optional[<a href="#class_ba_Campaign">ba.Campaign</a>]</span></p>
-<p>The <a href="#class_ba_Campaign">ba.Campaign</a> instance this Session represents, or None if
-there is no associated Campaign.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_Session__lobby">lobby</a></h4></dt><dd>
@@ -5081,7 +5114,7 @@ Results for a completed <a href="#class_ba_TeamGameActivity">ba.TeamGameActivity
 
 </dd>
 <dt><h4><a name="method_ba_TeamGameResults__get_player_info">get_player_info()</a></dt></h4><dd>
-<p><span>get_player_info(self) -&gt; List[Dict[str, Any]]</span></p>
+<p><span>get_player_info(self) -&gt; List[<a href="#class_ba_PlayerInfo">ba.PlayerInfo</a>]</span></p>
 
 <p>Get info about the players represented by the results.</p>
 
@@ -5804,17 +5837,17 @@ version of the game are ignored.</p>
 
 <hr>
 <h2><strong><a name="function_ba_getactivity">ba.getactivity()</a></strong></h3>
-<p><span>getactivity(doraise: bool = True) -&gt; <a href="#class_ba_Activity">ba.Activity</a></span></p>
+<p><span>getactivity(doraise: bool = True) -&gt; &lt;varies&gt;</span></p>
 
-<p>Returns the current <a href="#class_ba_Activity">ba.Activity</a> instance.</p>
+<p>Return the current <a href="#class_ba_Activity">ba.Activity</a> instance.</p>
 
 <p>Category: <a href="#function_category_Gameplay_Functions">Gameplay Functions</a></p>
 
 <p>Note that this is based on context; thus code run in a timer generated
 in Activity 'foo' will properly return 'foo' here, even if another
 Activity has since been created or is transitioning in.
-If there is no current Activity an Exception is raised, or if doraise is
-False then None is returned instead.</p>
+If there is no current Activity, raises a <a href="#class_ba_ActivityNotFoundError">ba.ActivityNotFoundError</a>.
+If doraise is False, None will be returned instead in that case.</p>
 
 <hr>
 <h2><strong><a name="function_ba_getcollidemodel">ba.getcollidemodel()</a></strong></h3>
@@ -5908,7 +5941,7 @@ Category: <a href="#function_category_Gameplay_Functions">Gameplay Functions</a>
 
 <hr>
 <h2><strong><a name="function_ba_getsession">ba.getsession()</a></strong></h3>
-<p><span>getsession(doraise: bool = True) -&gt; <a href="#class_ba_Session">ba.Session</a></span></p>
+<p><span>getsession(doraise: bool = True) -&gt; &lt;varies&gt;</span></p>
 
 <p>Category: <a href="#function_category_Gameplay_Functions">Gameplay Functions</a></p>
 

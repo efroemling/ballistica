@@ -30,6 +30,7 @@ from ba._activity import Activity
 from ba._score import ScoreInfo
 from ba._lang import Lstr
 from ba._messages import PlayerDiedMessage
+from ba._error import NotFoundError, print_error, print_exception
 import _ba
 
 if TYPE_CHECKING:
@@ -273,14 +274,17 @@ class GameActivity(Activity[PlayerType, TeamType]):
         # Set some defaults.
         self.allow_pausing = True
         self.allow_kick_idle_players = True
-        self._spawn_sound = _ba.getsound('spawn')
 
         # Whether to show points for kills.
-        self._show_kill_points = True
+        self.show_kill_points = True
 
         # If not None, the music type that should play in on_transition_in()
         # (unless overridden by the map).
         self.default_music: Optional[ba.MusicType] = None
+
+        # Holds some flattened info about the player set at the point
+        # when on_begin() is called.
+        self.initial_player_info: Optional[List[ba.PlayerInfo]] = None
 
         # Go ahead and get our map loading.
         map_name: str
@@ -298,13 +302,13 @@ class GameActivity(Activity[PlayerType, TeamType]):
                 _ba.screenmessage(Lstr(resource='noValidMapsErrorText'))
                 raise Exception('No valid maps')
             map_name = valid_maps[random.randrange(len(valid_maps))]
+        self._spawn_sound = _ba.getsound('spawn')
         self._map_type = _map.get_map_class(map_name)
         self._map_type.preload()
         self._map: Optional[ba.Map] = None
         self._powerup_drop_timer: Optional[ba.Timer] = None
         self._tnt_spawners: Optional[Dict[int, TNTSpawner]] = None
         self._tnt_drop_timer: Optional[ba.Timer] = None
-        self.initial_player_info: Optional[List[Dict[str, Any]]] = None
         self._game_scoreboard_name_text: Optional[ba.Actor] = None
         self._game_scoreboard_description_text: Optional[ba.Actor] = None
         self._standard_time_limit_time: Optional[int] = None
@@ -333,7 +337,6 @@ class GameActivity(Activity[PlayerType, TeamType]):
         Raises a ba.NotFoundError if the map does not currently exist.
         """
         if self._map is None:
-            from ba._error import NotFoundError
             raise NotFoundError
         return self._map
 
@@ -355,10 +358,9 @@ class GameActivity(Activity[PlayerType, TeamType]):
                 campaign = self.session.campaign
                 assert campaign is not None
                 return campaign.get_level(
-                    self.session.campaign_state['level']).displayname
+                    self.session.campaign_level_name).displayname
         except Exception:
-            from ba import _error
-            _error.print_error('error getting campaign level name')
+            print_error('error getting campaign level name')
         return self.get_instance_display_string()
 
     def get_instance_description(self) -> Union[str, Sequence]:
@@ -415,19 +417,15 @@ class GameActivity(Activity[PlayerType, TeamType]):
         return ''
 
     def on_transition_in(self) -> None:
-
         super().on_transition_in()
 
         # Make our map.
         self._map = self._map_type()
 
-        music = self.default_music
-
-        # give our map a chance to override the music
-        # (for happy-thoughts and other such themed maps)
-        override_music = self._map_type.get_music_type()
-        if override_music is not None:
-            music = override_music
+        # Give our map a chance to override the music
+        # (for happy-thoughts and other such themed maps).
+        map_music = self._map_type.get_music_type()
+        music = map_music if map_music is not None else self.default_music
 
         if music is not None:
             from ba import _music
@@ -470,9 +468,9 @@ class GameActivity(Activity[PlayerType, TeamType]):
         and calls either end_game or continue_game depending on the result"""
         # pylint: disable=too-many-nested-blocks
         # pylint: disable=cyclic-import
-        from bastd.ui import continues
-        from ba import _gameutils
-        from ba import _general
+        from bastd.ui.continues import ContinuesWindow
+        from ba._gameutils import sharedobj
+        from ba._general import WeakCall
         from ba._coopsession import CoopSession
         from ba._enums import TimeType
 
@@ -490,7 +488,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
                     if isinstance(session, CoopSession):
                         assert session.campaign is not None
                         if session.campaign.sequential:
-                            gnode = _gameutils.sharedobj('globals')
+                            gnode = sharedobj('globals')
 
                             # Only attempt this if we're not currently paused
                             # and there appears to be no UI.
@@ -501,19 +499,18 @@ class GameActivity(Activity[PlayerType, TeamType]):
                                 with _ba.Context('ui'):
                                     _ba.timer(
                                         0.5,
-                                        lambda: continues.ContinuesWindow(
+                                        lambda: ContinuesWindow(
                                             self,
                                             self._continue_cost,
-                                            continue_call=_general.WeakCall(
+                                            continue_call=WeakCall(
                                                 self._continue_choice, True),
-                                            cancel_call=_general.WeakCall(
+                                            cancel_call=WeakCall(
                                                 self._continue_choice, False)),
                                         timetype=TimeType.REAL)
                                 return
 
         except Exception:
-            from ba import _error
-            _error.print_exception('error continuing game')
+            print_exception('error continuing game')
 
         self.end_game()
 
@@ -525,8 +522,8 @@ class GameActivity(Activity[PlayerType, TeamType]):
         from ba._freeforallsession import FreeForAllSession
         from ba._coopsession import CoopSession
         session = self.session
-        campaign = session.campaign
         if isinstance(session, CoopSession):
+            campaign = session.campaign
             assert campaign is not None
             _ba.set_analytics_screen(
                 'Coop Game: ' + campaign.name + ' ' +
@@ -576,13 +573,13 @@ class GameActivity(Activity[PlayerType, TeamType]):
 
     def on_begin(self) -> None:
         from ba._general import WeakCall
+        from ba._player import PlayerInfo
         super().on_begin()
 
         try:
             self._game_begin_analytics()
         except Exception:
-            from ba import _error
-            _error.print_exception('error in game-begin-analytics')
+            print_exception('error in game-begin-analytics')
 
         # We don't do this in on_transition_in because it may depend on
         # players/teams which aren't available until now.
@@ -591,26 +588,27 @@ class GameActivity(Activity[PlayerType, TeamType]):
         _ba.timer(2.5, WeakCall(self._show_tip))
 
         # Store some basic info about players present at start time.
-        self.initial_player_info = [{
-            'name': p.get_name(full=True),
-            'character': p.character
-        } for p in self.players]
+        self.initial_player_info = [
+            PlayerInfo(name=p.get_name(full=True), character=p.character)
+            for p in self.players
+        ]
 
         # Sort this by name so high score lists/etc will be consistent
         # regardless of player join order.
-        self.initial_player_info.sort(key=lambda x: x['name'])
+        self.initial_player_info.sort(key=lambda x: x.name)
 
         # If this is a tournament, query info about it such as how much
         # time is left.
         tournament_id = self.session.tournament_id
 
         if tournament_id is not None:
-            _ba.tournament_query(args={
-                'tournamentIDs': [tournament_id],
-                'source': 'in-game time remaining query'
-            },
-                                 callback=WeakCall(
-                                     self._on_tournament_query_response))
+            _ba.tournament_query(
+                args={
+                    'tournamentIDs': [tournament_id],
+                    'source': 'in-game time remaining query'
+                },
+                callback=WeakCall(self._on_tournament_query_response),
+            )
 
     def _on_tournament_query_response(self, data: Optional[Dict[str,
                                                                 Any]]) -> None:
@@ -670,7 +668,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
                                              kill=True,
                                              victim_player=player,
                                              importance=importance,
-                                             showpoints=self._show_kill_points)
+                                             showpoints=self.show_kill_points)
 
     def show_scoreboard_info(self) -> None:
         """Create the game info display.
@@ -916,19 +914,19 @@ class GameActivity(Activity[PlayerType, TeamType]):
             force: bool = False) -> None:
         from ba._gameresults import TeamGameResults
 
-        # if results is a standard team-game-results, associate it with us
-        # so it can grab our score prefs
+        # If results is a standard team-game-results, associate it with us
+        # so it can grab our score prefs.
         if isinstance(results, TeamGameResults):
             results.set_game(self)
 
-        # if we had a standard time-limit that had not expired, stop it so
-        # it doesnt tick annoyingly
+        # If we had a standard time-limit that had not expired, stop it so
+        # it doesnt tick annoyingly.
         if (self._standard_time_limit_time is not None
                 and self._standard_time_limit_time > 0):
             self._standard_time_limit_timer = None
             self._standard_time_limit_text = None
 
-        # ditto with tournament time limits
+        # Ditto with tournament time limits.
         if (self._tournament_time_limit is not None
                 and self._tournament_time_limit > 0):
             self._tournament_time_limit_timer = None

@@ -35,17 +35,21 @@ if TYPE_CHECKING:
 class CoopJoinActivity(JoinActivity):
     """Join-screen for co-op mode."""
 
+    # We can assume our session is a CoopSession.
+    session: ba.CoopSession
+
     def __init__(self, settings: Dict[str, Any]):
         super().__init__(settings)
-        session = ba.getsession()
+        session = self.session
+        assert isinstance(session, ba.CoopSession)
 
         # Let's show a list of scores-to-beat for 1 player at least.
         assert session.campaign is not None
         level_name_full = (session.campaign.name + ':' +
-                           session.campaign_state['level'])
-        config_str = (
-            '1p' + session.campaign.get_level(session.campaign_state['level']).
-            get_score_version_string().replace(' ', '_'))
+                           session.campaign_level_name)
+        config_str = ('1p' + session.campaign.get_level(
+            session.campaign_level_name).get_score_version_string().replace(
+                ' ', '_'))
         _ba.get_scores_to_beat(level_name_full, config_str,
                                ba.WeakCall(self._on_got_scores_to_beat))
 
@@ -53,9 +57,10 @@ class CoopJoinActivity(JoinActivity):
         from bastd.actor.controlsguide import ControlsGuide
         from bastd.actor.text import Text
         super().on_transition_in()
+        assert isinstance(self.session, ba.CoopSession)
         assert self.session.campaign
         Text(self.session.campaign.get_level(
-            self.session.campaign_state['level']).displayname,
+            self.session.campaign_level_name).displayname,
              scale=1.3,
              h_attach=Text.HAttach.CENTER,
              h_align=Text.HAlign.CENTER,
@@ -163,8 +168,9 @@ class CoopJoinActivity(JoinActivity):
 
             # Now list our remaining achievements for this level.
             assert self.session.campaign is not None
+            assert isinstance(self.session, ba.CoopSession)
             levelname = (self.session.campaign.name + ':' +
-                         self.session.campaign_state['level'])
+                         self.session.campaign_level_name)
             ts_h_offs = 60
 
             if not ba.app.kiosk_mode:

@@ -57,7 +57,7 @@ class TeamGameResults:
         self._scores: Dict[int, Tuple[ReferenceType[ba.SessionTeam],
                                       Optional[int]]] = {}
         self._teams: Optional[List[ReferenceType[ba.SessionTeam]]] = None
-        self._player_info: Optional[List[Dict[str, Any]]] = None
+        self._player_info: Optional[List[ba.PlayerInfo]] = None
         self._lower_is_better: Optional[bool] = None
         self._score_label: Optional[str] = None
         self._none_is_winner: Optional[bool] = None
@@ -141,7 +141,7 @@ class TeamGameResults:
                 return Lstr(value=str(score[1]))
         return Lstr(value='-')
 
-    def get_player_info(self) -> List[Dict[str, Any]]:
+    def get_player_info(self) -> List[ba.PlayerInfo]:
         """Get info about the players represented by the results."""
         if not self._game_set:
             raise RuntimeError("Can't get player-info until game is set.")

@@ -999,7 +999,7 @@ class SpazBotSet:
         """Immediately clear out any bots in the set."""
 
         # Don't do this if the activity is shutting down or dead.
-        activity: Optional[ba.Activity] = ba.getactivity(doraise=False)
+        activity = ba.getactivity(doraise=False)
         if activity is None or activity.expired:
             return
 

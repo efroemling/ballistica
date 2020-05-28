@@ -83,7 +83,7 @@ class ServerCallThread(threading.Thread):
         self._context = _ba.Context('current')
 
         # Save and restore the context we were created from.
-        activity: Optional[ba.Activity] = _ba.getactivity(doraise=False)
+        activity = _ba.getactivity(doraise=False)
         self._activity = weakref.ref(
             activity) if activity is not None else None
 

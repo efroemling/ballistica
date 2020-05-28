@@ -70,10 +70,6 @@ class Session:
             Be aware this value may be None if a Session does not allow
             any such selection.
 
-        campaign
-            The ba.Campaign instance this Session represents, or None if
-            there is no associated Campaign.
-
         use_teams
             Whether this session groups players into an explicit set of
             teams. If this is off, a unique team is generated for each
@@ -95,7 +91,6 @@ class Session:
 
     # Note: even though these are instance vars, we annotate them at the
     # class level so that docs generation can access their types.
-    campaign: Optional[ba.Campaign]
     lobby: ba.Lobby
     max_players: int
     min_players: int
@@ -161,30 +156,28 @@ class Session:
         # print('Would set host-session asset-reqs to:',
         # required_asset_packages)
 
-        # Stuff in this section should be removed from this class if possible.
+        # Init our C++ layer data.
         self._sessiondata = _ba.register_session(self)
+
+        # Stuff in this section should be removed from this class if possible.
         self.tournament_id: Optional[str] = None
         self.sharedobjs: Dict[str, Any] = {}
         self.have_shown_controls_help_overlay = False
-        self.campaign = None
-        self.campaign_state: Dict[str, str] = {}
 
         self.teams = []
         self.players = []
+        self.min_players = min_players
+        self.max_players = max_players
+
         self._in_set_activity = False
         self._next_team_id = 0
         self._activity_retained: Optional[ba.Activity] = None
         self._launch_end_session_activity_time: Optional[float] = None
         self._activity_end_timer: Optional[ba.Timer] = None
         self._activity_weak = empty_weakref(Activity)
-        if self._activity_weak() is not None:
-            raise Exception('Error creating empty activity weak ref.')
-
         self._next_activity: Optional[ba.Activity] = None
         self.wants_to_end = False
         self._ending = False
-        self.min_players = min_players
-        self.max_players = max_players
 
         # Create static teams if we're using them.
         if self.use_teams:

@@ -39,7 +39,7 @@ from _ba import (CollideModel, Context, ContextCall, Data, InputDevice,
                  open_url, widget)
 from ba._activity import Activity
 from ba._actor import Actor
-from ba._player import Player, playercast, playercast_o
+from ba._player import PlayerInfo, Player, playercast, playercast_o
 from ba._nodeactor import NodeActor
 from ba._app import App
 from ba._coopgame import CoopGameActivity
@@ -47,13 +47,12 @@ from ba._coopsession import CoopSession
 from ba._dependency import (Dependency, DependencyComponent, DependencySet,
                             AssetPackage)
 from ba._enums import TimeType, Permission, TimeFormat, SpecialChar
-from ba._error import (print_exception, print_error, NotFoundError,
-                       PlayerNotFoundError, SessionPlayerNotFoundError,
-                       NodeNotFoundError, ActorNotFoundError,
-                       InputDeviceNotFoundError, WidgetNotFoundError,
-                       ActivityNotFoundError, TeamNotFoundError,
-                       SessionTeamNotFoundError, SessionNotFoundError,
-                       DelegateNotFoundError, DependencyError)
+from ba._error import (
+    print_exception, print_error, ContextError, NotFoundError,
+    PlayerNotFoundError, SessionPlayerNotFoundError, NodeNotFoundError,
+    ActorNotFoundError, InputDeviceNotFoundError, WidgetNotFoundError,
+    ActivityNotFoundError, TeamNotFoundError, SessionTeamNotFoundError,
+    SessionNotFoundError, DelegateNotFoundError, DependencyError)
 from ba._freeforallsession import FreeForAllSession
 from ba._gameactivity import GameActivity
 from ba._gameresults import TeamGameResults

@@ -373,6 +373,7 @@ class Achievement:
         # pylint: disable=cyclic-import
         from ba._lang import Lstr
         from ba._enums import SpecialChar
+        from ba._coopsession import CoopSession
         from bastd.actor.image import Image
         from bastd.actor.text import Text
 
@@ -404,12 +405,16 @@ class Achievement:
             hmo = False
         else:
             try:
-                campaign = _ba.getsession().campaign
-                assert campaign is not None
-                hmo = (self._hard_mode_only and campaign.name == 'Easy')
+                session = _ba.getsession()
+                if isinstance(session, CoopSession):
+                    campaign = session.campaign
+                    assert campaign is not None
+                    hmo = (self._hard_mode_only and campaign.name == 'Easy')
+                else:
+                    hmo = False
             except Exception:
                 from ba import _error
-                _error.print_exception('unable to determine campaign')
+                _error.print_exception('Error determining campaign')
                 hmo = False
 
         objs: List[ba.Actor]
@@ -678,7 +683,7 @@ class Achievement:
 
         # Just piggy-back onto any current activity
         # (should we use the session instead?..)
-        activity: Optional[ba.Activity] = _ba.getactivity(doraise=False)
+        activity = _ba.getactivity(doraise=False)
 
         # If this gets called while this achievement is occupying a slot
         # already, ignore it. (probably should never happen in real

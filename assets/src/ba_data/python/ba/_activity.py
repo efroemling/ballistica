@@ -351,7 +351,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
             raise TypeError('non-actor passed to add_actor_weak_ref')
         if (self.has_transitioned_in()
                 and _ba.time() - self._last_prune_dead_actors_time > 10.0):
-            print_error('it looks like nodes/actors are '
+            print_error('It looks like nodes/actors are '
                         'not being pruned in your activity;'
                         ' did you call Activity.on_transition_in()'
                         ' from your subclass?; ' + str(self) + ' (loc. b)')
