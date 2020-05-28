@@ -1220,13 +1220,13 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
             ba.timer(0.1, self._checkroundover)
 
         elif isinstance(msg, SpazBotDiedMessage):
-            pts, importance = msg.badguy.get_death_points(msg.how)
+            pts, importance = msg.spazbot.get_death_points(msg.how)
             if msg.killerplayer is not None:
                 self._handle_kill_achievements(msg)
                 target: Optional[Sequence[float]]
                 try:
-                    assert msg.badguy.node
-                    target = msg.badguy.node.position
+                    assert msg.spazbot.node
+                    target = msg.spazbot.node.position
                 except Exception:
                     ba.print_exception()
                     target = None
@@ -1265,13 +1265,13 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
     def _handle_uber_kill_achievements(self, msg: SpazBotDiedMessage) -> None:
 
         # Uber mine achievement:
-        if msg.badguy.last_attacked_type == ('explosion', 'land_mine'):
+        if msg.spazbot.last_attacked_type == ('explosion', 'land_mine'):
             self._land_mine_kills += 1
             if self._land_mine_kills >= 6:
                 self._award_achievement('Gold Miner')
 
         # Uber tnt achievement:
-        if msg.badguy.last_attacked_type == ('explosion', 'tnt'):
+        if msg.spazbot.last_attacked_type == ('explosion', 'tnt'):
             self._tnt_kills += 1
             if self._tnt_kills >= 6:
                 ba.timer(0.5, ba.WeakCall(self._award_achievement,
@@ -1280,7 +1280,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
     def _handle_pro_kill_achievements(self, msg: SpazBotDiedMessage) -> None:
 
         # TNT achievement:
-        if msg.badguy.last_attacked_type == ('explosion', 'tnt'):
+        if msg.spazbot.last_attacked_type == ('explosion', 'tnt'):
             self._tnt_kills += 1
             if self._tnt_kills >= 3:
                 ba.timer(
@@ -1291,7 +1291,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
     def _handle_rookie_kill_achievements(self,
                                          msg: SpazBotDiedMessage) -> None:
         # Land-mine achievement:
-        if msg.badguy.last_attacked_type == ('explosion', 'land_mine'):
+        if msg.spazbot.last_attacked_type == ('explosion', 'land_mine'):
             self._land_mine_kills += 1
             if self._land_mine_kills >= 3:
                 self._award_achievement('Mine Games')
@@ -1299,7 +1299,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
     def _handle_training_kill_achievements(self,
                                            msg: SpazBotDiedMessage) -> None:
         # Toss-off-map achievement:
-        if msg.badguy.last_attacked_type == ('picked_up', 'default'):
+        if msg.spazbot.last_attacked_type == ('picked_up', 'default'):
             self._throw_off_kills += 1
             if self._throw_off_kills >= 3:
                 self._award_achievement('Off You Go Then')

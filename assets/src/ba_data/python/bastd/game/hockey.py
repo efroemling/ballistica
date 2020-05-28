@@ -36,7 +36,7 @@ if TYPE_CHECKING:
     from typing import Any, Sequence, Dict, Type, List, Optional, Union
 
 
-class PuckDeathMessage:
+class PuckDiedMessage:
     """Inform something that a puck has died."""
 
     def __init__(self, puck: Puck):
@@ -78,7 +78,7 @@ class Puck(ba.Actor):
             self.node.delete()
             activity = self._activity()
             if activity and not msg.immediate:
-                activity.handlemessage(PuckDeathMessage(self))
+                activity.handlemessage(PuckDiedMessage(self))
 
         # If we go out of bounds, move back to where we started.
         elif isinstance(msg, ba.OutOfBoundsMessage):
@@ -112,6 +112,9 @@ class Player(ba.Player['Team']):
 
 class Team(ba.Team[Player]):
     """Our team type for this game."""
+
+    def __init__(self) -> None:
+        self.score = 0
 
 
 # ba_meta export game
@@ -196,26 +199,28 @@ class HockeyGame(ba.TeamGameActivity[Player, Team]):
         self._puck_spawn_pos: Optional[Sequence[float]] = None
         self._score_regions: Optional[List[ba.NodeActor]] = None
         self._puck: Optional[Puck] = None
+        self._score_to_win = int(settings['Score to Win'])
+        self._time_limit = float(settings['Time Limit'])
 
     def get_instance_description(self) -> Union[str, Sequence]:
-        if self.settings_raw['Score to Win'] == 1:
+        if self._score_to_win == 1:
             return 'Score a goal.'
-        return 'Score ${ARG1} goals.', self.settings_raw['Score to Win']
+        return 'Score ${ARG1} goals.', self._score_to_win
 
     def get_instance_description_short(self) -> Union[str, Sequence]:
-        if self.settings_raw['Score to Win'] == 1:
+        if self._score_to_win == 1:
             return 'score a goal'
-        return 'score ${ARG1} goals', self.settings_raw['Score to Win']
+        return 'score ${ARG1} goals', self._score_to_win
 
     def on_begin(self) -> None:
         super().on_begin()
 
-        self.setup_standard_time_limit(self.settings_raw['Time Limit'])
+        self.setup_standard_time_limit(self._time_limit)
         self.setup_standard_powerup_drops()
         self._puck_spawn_pos = self.map.get_flag_position(None)
         self._spawn_puck()
 
-        # set up the two score regions
+        # Set up the two score regions.
         defs = self.map.defs
         self._score_regions = []
         self._score_regions.append(
@@ -240,7 +245,6 @@ class HockeyGame(ba.TeamGameActivity[Player, Team]):
         ba.playsound(self._chant_sound)
 
     def on_team_join(self, team: Team) -> None:
-        team.gamedata['score'] = 0
         self._update_scoreboard()
 
     def _handle_puck_player_collide(self) -> None:
@@ -274,7 +278,7 @@ class HockeyGame(ba.TeamGameActivity[Player, Team]):
         for team in self.teams:
             if team.id == index:
                 scoring_team = team
-                team.gamedata['score'] += 1
+                team.score += 1
 
                 # Tell all players to celebrate.
                 for player in team.players:
@@ -291,7 +295,7 @@ class HockeyGame(ba.TeamGameActivity[Player, Team]):
                         big_message=True)
 
                 # End game if we won.
-                if team.gamedata['score'] >= self.settings_raw['Score to Win']:
+                if team.score >= self._score_to_win:
                     self.end_game()
 
         ba.playsound(self._foghorn_sound)
@@ -317,14 +321,13 @@ class HockeyGame(ba.TeamGameActivity[Player, Team]):
     def end_game(self) -> None:
         results = ba.TeamGameResults()
         for team in self.teams:
-            results.set_team_score(team, team.gamedata['score'])
+            results.set_team_score(team, team.score)
         self.end(results=results)
 
     def _update_scoreboard(self) -> None:
-        winscore = self.settings_raw['Score to Win']
+        winscore = self._score_to_win
         for team in self.teams:
-            self._scoreboard.set_team_value(team, team.gamedata['score'],
-                                            winscore)
+            self._scoreboard.set_team_value(team, team.score, winscore)
 
     def handlemessage(self, msg: Any) -> Any:
 
@@ -335,7 +338,7 @@ class HockeyGame(ba.TeamGameActivity[Player, Team]):
             self.respawn_player(msg.getplayer(Player))
 
         # Respawn dead pucks.
-        elif isinstance(msg, PuckDeathMessage):
+        elif isinstance(msg, PuckDiedMessage):
             if not self.has_ended():
                 ba.timer(3.0, self._spawn_puck)
         else:

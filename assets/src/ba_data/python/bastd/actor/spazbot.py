@@ -49,16 +49,16 @@ class SpazBotPunchedMessage:
 
     Attributes:
 
-       badguy
+       spazbot
           The ba.SpazBot that got punched.
 
        damage
           How much damage was done to the ba.SpazBot.
     """
 
-    def __init__(self, badguy: SpazBot, damage: int):
+    def __init__(self, spazbot: SpazBot, damage: int):
         """Instantiate a message with the given values."""
-        self.badguy = badguy
+        self.spazbot = spazbot
         self.damage = damage
 
 
@@ -69,7 +69,7 @@ class SpazBotDiedMessage:
 
     Attributes:
 
-       badguy
+       spazbot
           The ba.SpazBot that was killed.
 
        killerplayer
@@ -79,10 +79,10 @@ class SpazBotDiedMessage:
           The particular type of death.
     """
 
-    def __init__(self, badguy: SpazBot, killerplayer: Optional[ba.Player],
+    def __init__(self, spazbot: SpazBot, killerplayer: Optional[ba.Player],
                  how: ba.DeathType):
         """Instantiate with given values."""
-        self.badguy = badguy
+        self.spazbot = spazbot
         self.killerplayer = killerplayer
         self.how = how
 

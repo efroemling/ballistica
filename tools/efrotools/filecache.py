@@ -26,6 +26,7 @@ import json
 import os
 from typing import TYPE_CHECKING
 
+from efro.terminal import Clr
 from efrotools import get_files_hash
 
 if TYPE_CHECKING:
@@ -104,8 +105,8 @@ class FileCache:
         # if anything has been modified, don't write.
         for fname, mtime in self.mtimes.items():
             if os.path.getmtime(fname) != mtime:
-                print('File changed during run: "' + fname + '";' +
-                      ' cache not updated.')
+                print(f'{Clr.YLW}File changed during run:'
+                      f' "{fname}"; cache not updated.{Clr.RST}')
                 return
         out = json.dumps(self.entries)
         with open(self._path, 'w') as outfile:

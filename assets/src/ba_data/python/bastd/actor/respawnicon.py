@@ -40,18 +40,17 @@ class RespawnIcon:
     """
 
     def __init__(self, player: ba.Player, respawn_time: float):
-        """
-        Instantiate with a given ba.Player and respawn_time (in seconds)
-        """
+        """Instantiate with a ba.Player and respawn_time (in seconds)."""
         self._visible = True
 
         on_right, offs_extra, respawn_icons = self._get_context(player)
 
-        try:
-            mask_tex = (player.team.gamedata['_spaz_respawn_icons_mask_tex'])
-        except Exception:
-            mask_tex = player.team.gamedata['_spaz_respawn_icons_mask_tex'] = (
-                ba.gettexture('characterIconMask'))
+        # Cache our mask tex on the team for easy access.
+        mask_tex = getattr(player.team, '_spaz_respawn_icons_mask_tex', None)
+        if mask_tex is None:
+            mask_tex = ba.gettexture('characterIconMask')
+            setattr(player.team, '_spaz_respawn_icons_mask_tex', mask_tex)
+        assert isinstance(mask_tex, ba.Texture)
 
         # Now find the first unused slot and use that.
         index = 0
@@ -139,12 +138,14 @@ class RespawnIcon:
             on_right = player.team.id % 2 == 1
 
             # Store a list of icons in the team.
-            try:
-                respawn_icons = (
-                    player.team.gamedata['_spaz_respawn_icons_right'])
-            except Exception:
-                respawn_icons = (
-                    player.team.gamedata['_spaz_respawn_icons_right']) = {}
+            respawn_icons = getattr(player.team, '_spaz_respawn_icons_right',
+                                    None)
+            if respawn_icons is None:
+                respawn_icons = {}
+                setattr(player.team, '_spaz_respawn_icons_right',
+                        respawn_icons)
+            assert isinstance(respawn_icons, dict)
+
             offs_extra = -20
         else:
             on_right = False

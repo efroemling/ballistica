@@ -816,7 +816,7 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
         elif isinstance(msg, SpazBotDiedMessage):
 
             # Every time a bad guy dies, spawn a new one.
-            ba.timer(3.0, ba.Call(self._spawn_bot, (type(msg.badguy))))
+            ba.timer(3.0, ba.Call(self._spawn_bot, (type(msg.spazbot))))
 
         elif isinstance(msg, SpazBotPunchedMessage):
             if self._preset in ['rookie', 'rookie_easy']:

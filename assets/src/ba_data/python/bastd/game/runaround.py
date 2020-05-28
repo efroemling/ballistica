@@ -47,6 +47,10 @@ if TYPE_CHECKING:
 class Player(ba.Player['Team']):
     """Our player type for this game."""
 
+    def __init__(self) -> None:
+        self.respawn_timer: Optional[ba.Timer] = None
+        self.respawn_icon: Optional[RespawnIcon] = None
+
 
 class Team(ba.Team[Player]):
     """Our team type for this game."""
@@ -1113,20 +1117,20 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
             # Respawn them shortly.
             assert self.initial_player_info is not None
             respawn_time = 2.0 + len(self.initial_player_info) * 1.0
-            player.gamedata['respawn_timer'] = ba.Timer(
+            player.respawn_timer = ba.Timer(
                 respawn_time, ba.Call(self.spawn_player_if_exists, player))
-            player.gamedata['respawn_icon'] = RespawnIcon(player, respawn_time)
+            player.respawn_icon = RespawnIcon(player, respawn_time)
 
         elif isinstance(msg, SpazBotDiedMessage):
             if msg.how is ba.DeathType.REACHED_GOAL:
-                return
-            pts, importance = msg.badguy.get_death_points(msg.how)
+                return None
+            pts, importance = msg.spazbot.get_death_points(msg.how)
             if msg.killerplayer is not None:
                 target: Optional[Sequence[float]]
                 try:
-                    assert msg.badguy is not None
-                    assert msg.badguy.node
-                    target = msg.badguy.node.position
+                    assert msg.spazbot is not None
+                    assert msg.spazbot.node
+                    target = msg.spazbot.node.position
                 except Exception:
                     ba.print_exception()
                     target = None
@@ -1151,7 +1155,8 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
             self._update_scores()
 
         else:
-            super().handlemessage(msg)
+            return super().handlemessage(msg)
+        return None
 
     def _get_bot_speed(self, bot_type: Type[SpazBot]) -> float:
         speed = self._bot_speed_map.get(bot_type)

@@ -200,7 +200,8 @@ class _Entry:
 
     def set_position(self, position: Sequence[float]) -> None:
         """Set the entry's position."""
-        # abort if we've been killed
+
+        # Abort if we've been killed
         if not self._backing.node:
             return
         self._pos = tuple(position)
@@ -315,13 +316,15 @@ class _EntryProxy:
 
     def __init__(self, scoreboard: Scoreboard, team: ba.Team):
         self._scoreboard = weakref.ref(scoreboard)
-        # have to store ID here instead of a weak-ref since the team will be
-        # dead when we die and need to remove it
+
+        # Have to store ID here instead of a weak-ref since the team will be
+        # dead when we die and need to remove it.
         self._team_id = team.id
 
     def __del__(self) -> None:
         scoreboard = self._scoreboard()
-        # remove our team from the scoreboard if its still around
+
+        # Remove our team from the scoreboard if its still around.
         if scoreboard is not None:
             scoreboard.remove_team(self._team_id)
 
@@ -343,7 +346,7 @@ class Scoreboard:
         self._label = label
         self.score_split = score_split
 
-        # for free-for-all we go simpler since we have one per player
+        # For free-for-all we go simpler since we have one per player.
         self._pos: Sequence[float]
         if isinstance(ba.getsession(), ba.FreeForAllSession):
             self._do_cover = False
@@ -368,11 +371,11 @@ class Scoreboard:
         """Update the score-board display for the given ba.Team."""
         if not team.id in self._entries:
             self._add_team(team)
-            # create a proxy in the team which will kill
+
+            # Create a proxy in the team which will kill
             # our entry when it dies (for convenience)
-            if '_scoreboard_entry' in team.gamedata:
-                raise Exception('existing _EntryProxy found')
-            team.gamedata['_scoreboard_entry'] = _EntryProxy(self, team)
+            assert not hasattr(team, '_scoreboard_entry')
+            setattr(team, '_scoreboard_entry', _EntryProxy(self, team))
 
         # Now set the entry.
         self._entries[team.id].set_value(score=score,
@@ -383,7 +386,7 @@ class Scoreboard:
 
     def _add_team(self, team: ba.Team) -> None:
         if team.id in self._entries:
-            raise Exception('Duplicate team add')
+            raise RuntimeError('Duplicate team add')
         self._entries[team.id] = _Entry(self,
                                         team,
                                         do_cover=self._do_cover,

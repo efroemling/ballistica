@@ -582,6 +582,21 @@ class Session:
             self._add_chosen_player(chooser)
             lobby.remove_chooser(chooser.getplayer())
 
+    def transitioning_out_activity_was_freed(
+            self, can_show_ad_on_death: bool) -> None:
+        """(internal)"""
+        from ba._apputils import garbage_collect, call_after_ad
+
+        # Since we're mostly between activities at this point, lets run a cycle
+        # of garbage collection; hopefully it won't cause hitches here.
+        garbage_collect(session_end=False)
+
+        with _ba.Context(self):
+            if can_show_ad_on_death:
+                call_after_ad(self.begin_next_activity)
+            else:
+                _ba.pushcall(self.begin_next_activity)
+
     def _add_chosen_player(self, chooser: ba.Chooser) -> ba.SessionPlayer:
         from ba._team import SessionTeam
         sessionplayer = chooser.getplayer()

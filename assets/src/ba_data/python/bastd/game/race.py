@@ -180,18 +180,18 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
 
     def get_instance_description(self) -> Union[str, Sequence]:
         if (isinstance(self.session, ba.DualTeamSession)
-                and self.settings_raw.get('Entire Team Must Finish', False)):
+                and self._entire_team_must_finish):
             t_str = ' Your entire team has to finish.'
         else:
             t_str = ''
 
-        if self.settings_raw['Laps'] > 1:
-            return 'Run ${ARG1} laps.' + t_str, self.settings_raw['Laps']
+        if self._laps > 1:
+            return 'Run ${ARG1} laps.' + t_str, self._laps
         return 'Run 1 lap.' + t_str
 
     def get_instance_description_short(self) -> Union[str, Sequence]:
-        if self.settings_raw['Laps'] > 1:
-            return 'run ${ARG1} laps', self.settings_raw['Laps']
+        if self._laps > 1:
+            return 'run ${ARG1} laps', self._laps
         return 'run 1 lap'
 
     def on_transition_in(self) -> None:
@@ -715,8 +715,7 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
 
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, ba.PlayerDiedMessage):
-            # Augment default behavior.
-            super().handlemessage(msg)
+            super().handlemessage(msg)  # Augment default behavior.
             player = msg.getplayer(Player)
             if not player.finished:
                 self.respawn_player(player, respawn_time=1)

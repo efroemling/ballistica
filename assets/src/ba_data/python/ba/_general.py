@@ -21,16 +21,22 @@
 """Utility snippets applying to generic Python code."""
 from __future__ import annotations
 
+import gc
 import types
 import weakref
+import random
 from typing import TYPE_CHECKING, TypeVar
 from typing_extensions import Protocol
 
+from efro.terminal import Clr
+from ba._error import print_error, print_exception
+from ba._enums import TimeType
 import _ba
 
 if TYPE_CHECKING:
     from typing import Any, Type, Optional
     from efro.call import Call as Call  # 'as Call' so we re-export.
+    from weakref import ReferenceType
 
 
 class Existable(Protocol):
@@ -100,22 +106,18 @@ def json_prep(data: Any) -> Any:
     if isinstance(data, list):
         return [json_prep(element) for element in data]
     if isinstance(data, tuple):
-        from ba import _error
-        _error.print_error('json_prep encountered tuple', once=True)
+        print_error('json_prep encountered tuple', once=True)
         return [json_prep(element) for element in data]
     if isinstance(data, bytes):
         try:
             return data.decode(errors='ignore')
         except Exception:
             from ba import _error
-            _error.print_error('json_prep encountered utf-8 decode error',
-                               once=True)
+            print_error('json_prep encountered utf-8 decode error', once=True)
             return data.decode(errors='ignore')
     if not isinstance(data, (str, float, bool, type(None), int)):
-        from ba import _error
-        _error.print_error('got unsupported type in json_prep:' +
-                           str(type(data)),
-                           once=True)
+        print_error('got unsupported type in json_prep:' + str(type(data)),
+                    once=True)
     return data
 
 
@@ -135,7 +137,6 @@ def utf8_all(data: Any) -> Any:
 
 def print_refs(obj: Any) -> None:
     """Print a list of known live references to an object."""
-    import gc
 
     # Hmmm; I just noticed that calling this on an object
     # seems to keep it alive. Should figure out why.
@@ -291,3 +292,47 @@ class WeakMethod:
 
     def __str__(self) -> str:
         return '<ba.WeakMethod object; call=' + str(self._func) + '>'
+
+
+def verify_object_death(obj: object) -> None:
+    """Warn if an object does not get freed within a short period.
+
+    Category: General Utility Functions
+
+    This can be handy to detect and prevent memory/resource leaks.
+    """
+    try:
+        ref = weakref.ref(obj)
+    except Exception:
+        print_exception('Unable to create weak-ref in verify_object_death')
+
+    # Use a slight range for our checks so they don't all land at once
+    # if we queue a lot of them.
+    delay = random.uniform(2.0, 5.5)
+    with _ba.Context('ui'):
+        _ba.timer(delay,
+                  lambda: _verify_object_death(ref),
+                  timetype=TimeType.REAL)
+
+
+def _verify_object_death(wref: ReferenceType) -> None:
+    obj = wref()
+    if obj is None:
+        return
+
+    try:
+        name = type(obj).__name__
+    except Exception:
+        print(f'Note: unable to get type name for {obj}')
+        name = 'object'
+
+    print(f'{Clr.RED}Error: {name} not dying'
+          f' when expected to: {Clr.BLD}{obj}{Clr.RST}')
+    refs = list(gc.get_referrers(obj))
+    print(f'{Clr.YLW}Active References:{Clr.RST}')
+    i = 1
+    for ref in refs:
+        # if isinstance(ref, types.FrameType):
+        #     continue
+        print(f'{Clr.YLW}  reference {i}:{Clr.BLU} {ref}{Clr.RST}')
+        i += 1

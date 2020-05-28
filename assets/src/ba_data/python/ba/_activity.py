@@ -28,6 +28,7 @@ from ba._team import Team
 from ba._player import Player
 from ba._error import print_exception, print_error, SessionTeamNotFoundError
 from ba._dependency import DependencyComponent
+from ba._general import Call, verify_object_death
 import _ba
 
 if TYPE_CHECKING:
@@ -217,7 +218,6 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         self._stats: Optional[ba.Stats] = None
 
     def __del__(self) -> None:
-        from ba._apputils import garbage_collect, call_after_ad
 
         # If the activity has been run then we should have already cleaned
         # it up, but we still need to run expire calls for un-run activities.
@@ -225,20 +225,13 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
             with _ba.Context('empty'):
                 self._expire()
 
-        # Since we're mostly between activities at this point, lets run a cycle
-        # of garbage collection; hopefully it won't cause hitches here.
-        garbage_collect(session_end=False)
-
-        # Now that our object is officially gonna be dead, tell the session it
-        # can fire up the next activity.
+        # Inform our owner that we're officially kicking the bucket.
         if self._transitioning_out:
             session = self._session()
             if session is not None:
-                with _ba.Context(session):
-                    if self.can_show_ad_on_death:
-                        call_after_ad(session.begin_next_activity)
-                    else:
-                        _ba.pushcall(session.begin_next_activity)
+                _ba.pushcall(
+                    Call(session.transitioning_out_activity_was_freed,
+                         self.can_show_ad_on_death))
 
     @property
     def stats(self) -> ba.Stats:
@@ -304,7 +297,6 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
 
         (internal)
         """
-        from ba._general import Call
         from ba._enums import TimeType
 
         # Create a real-timer that watches a weak-ref of this activity
@@ -628,6 +620,10 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         self.players.remove(player)
         assert player not in self.players
 
+        # This should allow our ba.Player instance to die.
+        # Complain if that doesn't happen.
+        # verify_object_death(player)
+
         with _ba.Context(self):
             # Make a decent attempt to persevere if user code breaks.
             try:
@@ -670,6 +666,10 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         self.teams.remove(team)
         assert team not in self.teams
 
+        # This should allow our ba.Team instance to die. Complain
+        # if that doesn't happen.
+        # verify_object_death(team)
+
         with _ba.Context(self):
             # Make a decent attempt to persevere if user code breaks.
             try:
@@ -680,6 +680,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
                 sessionteam.reset_gamedata()
             except Exception:
                 print_exception(f'Error in reset_gamedata for {self}')
+
             sessionteam.gameteam = None
 
     def _sanity_check_begin_call(self) -> None:
@@ -777,32 +778,45 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         for actor_ref in self._actor_weak_refs:
             actor = actor_ref()
             if actor is not None:
+                verify_object_death(actor)
                 try:
                     actor.on_expire()
                 except Exception:
-                    print_exception(f'Error expiring Actor {actor_ref()}')
+                    print_exception(f'Error in Actor.on_expire()'
+                                    f' for {actor_ref()}')
 
         # Reset all Players.
         # (releases any attached actors, clears game-data, etc)
         for player in self.players:
-            if player:
-                try:
-                    sessionplayer = player.sessionplayer
-                    player.reset()
-                    sessionplayer.set_node(None)
-                    sessionplayer.set_activity(None)
-                    sessionplayer.gameplayer = None
-                    sessionplayer.reset()
-                except Exception:
-                    print_exception(f'Error resetting Player {player}')
+            try:
+                # This should allow our ba.Player instance to die.
+                # Complain if that doesn't happen.
+                # verify_object_death(player)
+                sessionplayer = player.sessionplayer
+                player.reset()
+                sessionplayer.set_node(None)
+                sessionplayer.set_activity(None)
+
+                sessionplayer.gameplayer = None
+                sessionplayer.reset()
+            except Exception:
+                print_exception(f'Error resetting Player {player}')
 
         # Ditto with Teams.
         for team in self.teams:
             try:
                 sessionteam = team.sessionteam
+
+                # This should allow our ba.Team instance to die.
+                # Complain if that doesn't happen.
+                # verify_object_death(sessionteam.gameteam)
                 sessionteam.gameteam = None
                 sessionteam.reset_gamedata()
             except SessionTeamNotFoundError:
+                # It is expected that Team objects may last longer than
+                # the SessionTeam they came from (game objects may hold
+                # team references past the point at which the underlying
+                # player/team leaves)
                 pass
             except Exception:
                 print_exception(f'Error resetting Team {team}')

@@ -216,8 +216,8 @@ class EasterEggHuntGame(ba.TeamGameActivity[Player, Team]):
         # Whenever our evil bunny dies, respawn him and spew some eggs.
         elif isinstance(msg, SpazBotDiedMessage):
             self._spawn_evil_bunny()
-            assert msg.badguy.node
-            pos = msg.badguy.node.position
+            assert msg.spazbot.node
+            pos = msg.spazbot.node.position
             for _i in range(6):
                 spread = 0.4
                 self._eggs.append(

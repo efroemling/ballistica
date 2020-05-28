@@ -272,11 +272,11 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
             self._update_scores()
 
         elif isinstance(msg, SpazBotDiedMessage):
-            pts, importance = msg.badguy.get_death_points(msg.how)
+            pts, importance = msg.spazbot.get_death_points(msg.how)
             target: Optional[Sequence[float]]
             if msg.killerplayer:
-                assert msg.badguy.node
-                target = msg.badguy.node.position
+                assert msg.spazbot.node
+                target = msg.spazbot.node.position
                 self.stats.player_scored(msg.killerplayer,
                                          pts,
                                          target=target,

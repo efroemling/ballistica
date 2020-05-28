@@ -35,7 +35,7 @@ PLAYER_COLORS = [(1, 0.15, 0.15), (0.2, 1, 0.2), (0.1, 0.1, 1), (0.2, 1, 1),
                  (0.5, 0.25, 1.0), (1, 1, 0), (1, 0.5, 0), (1, 0.3, 0.5),
                  (0.1, 0.1, 0.5), (0.4, 0.2, 0.1), (0.1, 0.35, 0.1),
                  (1, 0.8, 0.5), (0.4, 0.05, 0.05), (0.13, 0.13, 0.13),
-                 (0.5, 0.5, 0.5), (1, 1, 1)]  # yapf: disable
+                 (0.5, 0.5, 0.5), (1, 1, 1)]
 
 
 def get_player_colors() -> List[Tuple[float, float, float]]:
@@ -75,8 +75,8 @@ def get_player_profile_colors(
     if profiles is None:
         profiles = bs_config['Player Profiles']
 
-    # special case - when being asked for a random color in kiosk mode,
-    # always return default purple
+    # Special case: when being asked for a random color in kiosk mode,
+    # always return default purple.
     if _ba.app.kiosk_mode and profilename is None:
         color = (0.5, 0.4, 1.0)
         highlight = (0.4, 0.4, 0.5)
@@ -85,22 +85,22 @@ def get_player_profile_colors(
             assert profilename is not None
             color = profiles[profilename]['color']
         except (KeyError, AssertionError):
-            # key off name if possible
+            # Key off name if possible.
             if profilename is None:
-                # first 6 are bright-ish
+                # First 6 are bright-ish.
                 color = PLAYER_COLORS[random.randrange(6)]
             else:
-                # first 6 are bright-ish
+                # First 6 are bright-ish.
                 color = PLAYER_COLORS[sum([ord(c) for c in profilename]) % 6]
 
         try:
             assert profilename is not None
             highlight = profiles[profilename]['highlight']
         except (KeyError, AssertionError):
-            # key off name if possible
+            # Key off name if possible.
             if profilename is None:
-                # last 2 are grey and white; ignore those or we
-                # get lots of old-looking players
+                # Last 2 are grey and white; ignore those or we
+                # get lots of old-looking players.
                 highlight = PLAYER_COLORS[random.randrange(
                     len(PLAYER_COLORS) - 2)]
             else:

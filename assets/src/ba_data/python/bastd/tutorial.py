@@ -28,8 +28,8 @@
 # pylint: disable=missing-function-docstring, missing-class-docstring
 # pylint: disable=invalid-name
 # pylint: disable=too-many-locals
-# pylint: disable=unused-variable
 # pylint: disable=unused-argument
+# pylint: disable=unused-variable
 
 from __future__ import annotations
 
@@ -181,7 +181,21 @@ class ButtonRelease:
                      timeformat=ba.TimeFormat.MILLISECONDS)
 
 
-class TutorialActivity(ba.Activity[ba.Player, ba.Team]):
+class Player(ba.Player['Team']):
+    """Our player type for this game."""
+
+    def __init__(self) -> None:
+        self.pressed = False
+
+
+class Team(ba.Team[Player]):
+    """Our team type for this game."""
+
+    def __init__(self) -> None:
+        pass
+
+
+class TutorialActivity(ba.Activity[Player, Team]):
 
     def __init__(self, settings: Dict[str, Any] = None):
         from bastd.maps import Rampage
@@ -462,6 +476,7 @@ class TutorialActivity(ba.Activity[ba.Player, ba.Team]):
                         n.opacity = 0.0
                     a.set_stick_image_position(0, 0)
 
+            # Can be used for debugging.
             class SetSpeed:
 
                 def __init__(self, speed: int):
@@ -2330,7 +2345,7 @@ class TutorialActivity(ba.Activity[ba.Player, ba.Team]):
                                             ba.WeakCall(self._read_entries))
 
     def _update_skip_votes(self) -> None:
-        count = sum(1 for player in self.players if player.gamedata['pressed'])
+        count = sum(1 for player in self.players if player.pressed)
         assert self._skip_count_text
         self._skip_count_text.text = ba.Lstr(
             resource=self._r + '.skipVoteCountText',
@@ -2349,7 +2364,7 @@ class TutorialActivity(ba.Activity[ba.Player, ba.Team]):
             self._skip_text.text = ''
             self.end()
 
-    def _player_pressed_button(self, player: ba.Player) -> None:
+    def _player_pressed_button(self, player: Player) -> None:
 
         # Special case: if there's only one player, we give them a
         # warning on their first press (some players were thinking the
@@ -2363,7 +2378,7 @@ class TutorialActivity(ba.Activity[ba.Player, ba.Team]):
             self._skip_text.scale = 1.3
             incr = 50
             t = incr
-            for i in range(6):
+            for _i in range(6):
                 ba.timer(t,
                          ba.Call(setattr, self._skip_text, 'color',
                                  (1, 0.5, 0.1)),
@@ -2376,7 +2391,7 @@ class TutorialActivity(ba.Activity[ba.Player, ba.Team]):
             ba.timer(6.0, ba.WeakCall(self._revert_confirm))
             return
 
-        player.gamedata['pressed'] = True
+        player.pressed = True
 
         # test...
         if not all(self.players):
@@ -2393,15 +2408,15 @@ class TutorialActivity(ba.Activity[ba.Player, ba.Team]):
         self._skip_text.color = (1, 1, 1)
         self._issued_warning = False
 
-    def on_player_join(self, player: ba.Player) -> None:
+    def on_player_join(self, player: Player) -> None:
         super().on_player_join(player)
-        player.gamedata['pressed'] = False
-        # we just wanna know if this player presses anything..
+
+        # We just wanna know if this player presses anything.
         player.assign_input_call(
             ('jumpPress', 'punchPress', 'bombPress', 'pickUpPress'),
             ba.Call(self._player_pressed_button, player))
 
-    def on_player_leave(self, player: ba.Player) -> None:
+    def on_player_leave(self, player: Player) -> None:
         if not all(self.players):
             ba.print_error('Nonexistent player in on_player_leave: ' +
                            str([str(p) for p in self.players]) + ': we are ' +
