@@ -325,7 +325,6 @@ class Flag(ba.Actor):
             1.0, ba.WeakCall(self._hide_score_text))
 
     def handlemessage(self, msg: Any) -> Any:
-        # pylint: disable=too-many-branches
         if __debug__:
             self._handlemessage_sanity_check()
         if isinstance(msg, ba.DieMessage):
@@ -341,24 +340,16 @@ class Flag(ba.Actor):
                 msg.velocity[1], msg.velocity[2], msg.magnitude,
                 msg.velocity_magnitude, msg.radius, 0, msg.force_direction[0],
                 msg.force_direction[1], msg.force_direction[2])
-        elif isinstance(msg, ba.OutOfBoundsMessage):
-            # We just kill ourselves when out-of-bounds.. would we ever not
-            # want this?..
-            self.handlemessage(ba.DieMessage(how=ba.DeathType.FALL))
         elif isinstance(msg, ba.PickedUpMessage):
             self._held_count += 1
             if self._held_count == 1 and self._counter is not None:
                 self._counter.text = ''
-            activity = self.getactivity()
-            if activity is not None:
-                activity.handlemessage(FlagPickedUpMessage(self, msg.node))
+            self.activity.handlemessage(FlagPickedUpMessage(self, msg.node))
         elif isinstance(msg, ba.DroppedMessage):
             self._held_count -= 1
             if self._held_count < 0:
-                print('Flag held count < 0')
+                print('Flag held count < 0.')
                 self._held_count = 0
-            activity = self.getactivity()
-            if activity is not None:
-                activity.handlemessage(FlagDroppedMessage(self, msg.node))
+            self.activity.handlemessage(FlagDroppedMessage(self, msg.node))
         else:
             super().handlemessage(msg)

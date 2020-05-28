@@ -1642,6 +1642,7 @@
       <w>setbuild</w>
       <w>setlanguage</w>
       <w>setmusic</w>
+      <w>setsticky</w>
       <w>settingname</w>
       <w>setversion</w>
       <w>sgrn</w>

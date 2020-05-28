@@ -152,12 +152,18 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
         ba.timer(1.0, call=self._tick, repeat=True)
 
         mat = self._reset_region_material = ba.Material()
-        mat.add_actions(conditions=('they_have_material',
-                                    ba.sharedobj('player_material')),
-                        actions=(('modify_part_collision', 'collide', True),
-                                 ('modify_part_collision', 'physical', False),
-                                 ('call', 'at_connect',
-                                  ba.WeakCall(self._handle_reset_collide))))
+        mat.add_actions(
+            conditions=(
+                'they_have_material',
+                ba.sharedobj('player_material'),
+            ),
+            actions=(
+                ('modify_part_collision', 'collide', True),
+                ('modify_part_collision', 'physical', False),
+                ('call', 'at_connect',
+                 ba.WeakCall(self._handle_reset_collide)),
+            ),
+        )
 
         self._reset_region = ba.newnode('region',
                                         attrs={
@@ -177,9 +183,15 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
         # If we have a chosen one, ignore these.
         if self._get_chosen_one_player() is not None:
             return
-        player = ba.getcollision().opposingnode.getdelegate(
-            PlayerSpaz, True).getplayer(Player)
-        if player is not None and player.is_alive():
+
+        # Attempt to get a Player controlling a Spaz that we hit.
+        try:
+            player = ba.getcollision().opposingnode.getdelegate(
+                PlayerSpaz, True).getplayer(Player, True)
+        except ba.NotFoundError:
+            return
+
+        if player.is_alive():
             self._set_chosen_one_player(player)
 
     def _flash_flag_spawn(self) -> None:

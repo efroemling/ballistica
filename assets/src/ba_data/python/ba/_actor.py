@@ -23,7 +23,7 @@
 from __future__ import annotations
 
 import weakref
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, TypeVar, overload
 
 from ba._messages import DieMessage, DeathType, OutOfBoundsMessage, UNHANDLED
 from ba._error import print_error, print_exception, ActivityNotFoundError
@@ -31,6 +31,7 @@ import _ba
 
 if TYPE_CHECKING:
     from typing import Any, Optional
+    from typing_extensions import Literal
 
     import ba
 
@@ -94,7 +95,7 @@ class Actor:
 
     def __del__(self) -> None:
         try:
-            # Non-expired Actors send themselves a DieMessage when going down.
+            # Unexpired Actors send themselves a DieMessage when going down.
             # That way we can treat DieMessage handling as the single
             # point-of-action for death.
             if not self.expired:
@@ -213,6 +214,16 @@ class Actor:
         if activity is None:
             raise ActivityNotFoundError()
         return activity
+
+    # Overloads to convey our exact return type depending on 'doraise' value.
+
+    @overload
+    def getactivity(self, doraise: Literal[True] = True) -> ba.Activity:
+        ...
+
+    @overload
+    def getactivity(self, doraise: Literal[False]) -> Optional[ba.Activity]:
+        ...
 
     def getactivity(self, doraise: bool = True) -> Optional[ba.Activity]:
         """Return the ba.Activity this Actor is associated with.

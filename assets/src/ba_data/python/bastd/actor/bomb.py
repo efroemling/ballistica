@@ -863,16 +863,14 @@ class Bomb(ba.Actor):
             self.arm_timer = ba.Timer(
                 1.25, ba.WeakCall(self.handlemessage, ArmMessage()))
 
-        # once we've thrown a sticky bomb we can stick to it..
+        # Once we've thrown a sticky bomb we can stick to it.
         elif self.bomb_type == 'sticky':
 
-            def _safesetattr(node: Optional[ba.Node], attr: str,
-                             value: Any) -> None:
+            def _setsticky(node: ba.Node) -> None:
                 if node:
-                    setattr(node, attr, value)
+                    node.stick_to_owner = True
 
-            ba.timer(0.25,
-                     lambda: _safesetattr(self.node, 'stick_to_owner', True))
+            ba.timer(0.25, lambda: _setsticky(self.node))
 
     def _handle_splat(self) -> None:
         node = ba.getcollision().opposingnode
@@ -896,8 +894,7 @@ class Bomb(ba.Actor):
         if self._exploded:
             return
         self._exploded = True
-        activity = self.getactivity()
-        if activity is not None and self.node:
+        if self.node:
             blast = Blast(position=self.node.position,
                           velocity=self.node.velocity,
                           blast_radius=self.blast_radius,
