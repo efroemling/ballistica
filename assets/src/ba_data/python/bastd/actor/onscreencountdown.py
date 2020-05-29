@@ -79,7 +79,7 @@ class OnScreenCountdown(ba.Actor):
 
     def start(self) -> None:
         """Start the timer."""
-        globalsnode = ba.sharedobj('globals')
+        globalsnode = ba.getactivity().globalsnode
         globalsnode.connectattr('time', self.inputnode, 'time1')
         self.inputnode.time2 = (globalsnode.time +
                                 (self._timeremaining + 1) * 1000)
@@ -87,7 +87,8 @@ class OnScreenCountdown(ba.Actor):
 
     def on_expire(self) -> None:
         super().on_expire()
-        # release callbacks/refs
+
+        # Release callbacks/refs.
         self._endcall = None
 
     def _update(self, forcevalue: int = None) -> None:

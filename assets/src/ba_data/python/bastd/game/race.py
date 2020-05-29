@@ -33,6 +33,7 @@ import ba
 from bastd.actor.bomb import Bomb
 from bastd.actor.playerspaz import PlayerSpaz
 from bastd.actor.scoreboard import Scoreboard
+from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
     from typing import (Any, Type, Tuple, List, Sequence, Optional, Dict,
@@ -196,14 +197,17 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
 
     def on_transition_in(self) -> None:
         super().on_transition_in()
+        shared = SharedObjects.get()
         pts = self.map.get_def_points('race_point')
         mat = self.race_region_material = ba.Material()
         mat.add_actions(conditions=('they_have_material',
-                                    ba.sharedobj('player_material')),
-                        actions=(('modify_part_collision', 'collide', True),
-                                 ('modify_part_collision', 'physical',
-                                  False), ('call', 'at_connect',
-                                           self._handle_race_point_collide)))
+                                    shared.player_material),
+                        actions=(
+                            ('modify_part_collision', 'collide', True),
+                            ('modify_part_collision', 'physical', False),
+                            ('call', 'at_connect',
+                             self._handle_race_point_collide),
+                        ))
         for rpt in pts:
             self._regions.append(RaceRegion(rpt, len(self._regions)))
 

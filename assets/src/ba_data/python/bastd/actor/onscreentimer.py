@@ -66,7 +66,8 @@ class OnScreenTimer(ba.Actor):
         assert isinstance(tval, int)
         self._starttime_ms = tval
         self.inputnode.time1 = self._starttime_ms
-        ba.sharedobj('globals').connectattr('time', self.inputnode, 'time2')
+        ba.getactivity().globalsnode.connectattr('time', self.inputnode,
+                                                 'time2')
 
     def has_started(self) -> bool:
         """Return whether this timer has started yet."""

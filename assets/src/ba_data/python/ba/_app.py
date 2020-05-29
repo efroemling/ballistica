@@ -623,7 +623,7 @@ class App:
             # FIXME: Shouldn't be touching scene stuff here;
             #  should just pass the request on to the host-session.
             with _ba.Context(activity):
-                globs = _gameutils.sharedobj('globals')
+                globs = activity.globalsnode
                 if not globs.paused:
                     _ba.playsound(_ba.getsound('refWhistle'))
                     globs.paused = True
@@ -645,14 +645,13 @@ class App:
         If there's a foreground host-activity that's currently paused, tell it
         to resume.
         """
-        from ba._gameutils import sharedobj
 
         # FIXME: Shouldn't be touching scene stuff here;
         #  should just pass the request on to the host-session.
         activity = _ba.get_foreground_host_activity()
         if activity is not None:
             with _ba.Context(activity):
-                globs = sharedobj('globals')
+                globs = activity.globalsnode
                 if globs.paused:
                     _ba.playsound(_ba.getsound('refWhistle'))
                     globs.paused = False

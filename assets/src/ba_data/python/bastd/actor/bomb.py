@@ -26,12 +26,19 @@
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
 import ba
+from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence, Optional, Callable, List, Tuple
+    from typing import Any, Sequence, Optional, Callable, List, Tuple, Type
+
+# Attr we store these objects as on the current activity.
+# (based on our module so hopefully avoids conflicts)
+STORAGE_ATTR_NAME = '_' + __name__.replace('.', '_') + '_bombfactory'
+
+PlayerType = TypeVar('PlayerType', bound='ba.Player')
 
 
 class BombFactory:
@@ -153,6 +160,7 @@ class BombFactory:
         You shouldn't need to do this; call bastd.actor.bomb.get_factory()
         to get a shared instance.
         """
+        shared = SharedObjects.get()
 
         self.bomb_model = ba.getmodel('bomb')
         self.sticky_bomb_model = ba.getmodel('bombSticky')
@@ -191,17 +199,24 @@ class BombFactory:
         self.sticky_material = ba.Material()
 
         self.bomb_material.add_actions(
-            conditions=((('we_are_younger_than', 100), 'or',
-                         ('they_are_younger_than', 100)),
-                        'and', ('they_have_material',
-                                ba.sharedobj('object_material'))),
-            actions=('modify_node_collision', 'collide', False))
+            conditions=(
+                (
+                    ('we_are_younger_than', 100),
+                    'or',
+                    ('they_are_younger_than', 100),
+                ),
+                'and',
+                ('they_have_material', shared.object_material),
+            ),
+            actions=('modify_node_collision', 'collide', False),
+        )
 
         # we want pickup materials to always hit us even if we're currently not
         # colliding with their node (generally due to the above rule)
-        self.bomb_material.add_actions(
-            conditions=('they_have_material', ba.sharedobj('pickup_material')),
-            actions=('modify_part_collision', 'use_node_collide', False))
+        self.bomb_material.add_actions(conditions=('they_have_material',
+                                                   shared.pickup_material),
+                                       actions=('modify_part_collision',
+                                                'use_node_collide', False))
 
         self.bomb_material.add_actions(actions=('modify_part_collision',
                                                 'friction', 0.3))
@@ -209,36 +224,54 @@ class BombFactory:
         self.land_mine_no_explode_material = ba.Material()
         self.land_mine_blast_material = ba.Material()
         self.land_mine_blast_material.add_actions(
-            conditions=(('we_are_older_than',
-                         200), 'and', ('they_are_older_than',
-                                       200), 'and', ('eval_colliding', ),
-                        'and', (('they_dont_have_material',
-                                 self.land_mine_no_explode_material), 'and',
-                                (('they_have_material',
-                                  ba.sharedobj('object_material')), 'or',
-                                 ('they_have_material',
-                                  ba.sharedobj('player_material'))))),
-            actions=('message', 'our_node', 'at_connect', ImpactMessage()))
+            conditions=(
+                ('we_are_older_than', 200),
+                'and',
+                ('they_are_older_than', 200),
+                'and',
+                ('eval_colliding', ),
+                'and',
+                (
+                    ('they_dont_have_material',
+                     self.land_mine_no_explode_material),
+                    'and',
+                    (
+                        ('they_have_material', shared.object_material),
+                        'or',
+                        ('they_have_material', shared.player_material),
+                    ),
+                ),
+            ),
+            actions=('message', 'our_node', 'at_connect', ImpactMessage()),
+        )
 
         self.impact_blast_material = ba.Material()
         self.impact_blast_material.add_actions(
-            conditions=(('we_are_older_than',
-                         200), 'and', ('they_are_older_than',
-                                       200), 'and', ('eval_colliding', ),
-                        'and', (('they_have_material',
-                                 ba.sharedobj('footing_material')), 'or',
-                                ('they_have_material',
-                                 ba.sharedobj('object_material')))),
-            actions=('message', 'our_node', 'at_connect', ImpactMessage()))
+            conditions=(
+                ('we_are_older_than', 200),
+                'and',
+                ('they_are_older_than', 200),
+                'and',
+                ('eval_colliding', ),
+                'and',
+                (
+                    ('they_have_material', shared.footing_material),
+                    'or',
+                    ('they_have_material', shared.object_material),
+                ),
+            ),
+            actions=('message', 'our_node', 'at_connect', ImpactMessage()),
+        )
 
         self.blast_material = ba.Material()
         self.blast_material.add_actions(
-            conditions=(('they_have_material',
-                         ba.sharedobj('object_material'))),
-            actions=(('modify_part_collision', 'collide', True),
-                     ('modify_part_collision', 'physical',
-                      False), ('message', 'our_node', 'at_connect',
-                               ExplodeHitMessage())))
+            conditions=(('they_have_material', shared.object_material), ),
+            actions=(
+                ('modify_part_collision', 'collide', True),
+                ('modify_part_collision', 'physical', False),
+                ('message', 'our_node', 'at_connect', ExplodeHitMessage()),
+            ),
+        )
 
         self.dink_sounds = (ba.getsound('bombDrop01'),
                             ba.getsound('bombDrop02'))
@@ -247,10 +280,11 @@ class BombFactory:
 
         # collision sounds
         self.normal_sound_material.add_actions(
-            conditions=('they_have_material',
-                        ba.sharedobj('footing_material')),
-            actions=(('impact_sound', self.dink_sounds, 2, 0.8),
-                     ('roll_sound', self.roll_sound, 3, 6)))
+            conditions=('they_have_material', shared.footing_material),
+            actions=(
+                ('impact_sound', self.dink_sounds, 2, 0.8),
+                ('roll_sound', self.roll_sound, 3, 6),
+            ))
 
         self.sticky_material.add_actions(actions=(('modify_part_collision',
                                                    'stiffness', 0.1),
@@ -258,24 +292,22 @@ class BombFactory:
                                                    'damping', 1.0)))
 
         self.sticky_material.add_actions(
-            conditions=(('they_have_material',
-                         ba.sharedobj('player_material')),
-                        'or', ('they_have_material',
-                               ba.sharedobj('footing_material'))),
-            actions=('message', 'our_node', 'at_connect', SplatMessage()))
+            conditions=(
+                ('they_have_material', shared.player_material),
+                'or',
+                ('they_have_material', shared.footing_material),
+            ),
+            actions=('message', 'our_node', 'at_connect', SplatMessage()),
+        )
 
 
 def get_factory() -> BombFactory:
     """Get/create a shared bastd.actor.bomb.BombFactory object."""
     activity = ba.getactivity()
-
-    # FIXME: Need to figure out an elegant way to store
-    #  shared actor data with an activity.
-    factory: BombFactory
-    try:
-        factory = activity.shared_bomb_factory  # type: ignore
-    except Exception:
-        factory = activity.shared_bomb_factory = BombFactory()  # type: ignore
+    factory = getattr(activity, STORAGE_ATTR_NAME, None)
+    if factory is None:
+        factory = BombFactory()
+        setattr(activity, STORAGE_ATTR_NAME, factory)
     assert isinstance(factory, BombFactory)
     return factory
 
@@ -329,26 +361,27 @@ class Blast(ba.Actor):
 
         super().__init__()
 
+        shared = SharedObjects.get()
         factory = get_factory()
 
         self.blast_type = blast_type
-        self.source_player = source_player
+        self._source_player = source_player
         self.hit_type = hit_type
         self.hit_subtype = hit_subtype
         self.radius = blast_radius
 
         # set our position a bit lower so we throw more things upward
-        rmats = (factory.blast_material, ba.sharedobj('attack_material'))
-        self.node = ba.newnode('region',
-                               delegate=self,
-                               attrs={
-                                   'position': (position[0], position[1] - 0.1,
-                                                position[2]),
-                                   'scale':
-                                       (self.radius, self.radius, self.radius),
-                                   'type': 'sphere',
-                                   'materials': rmats
-                               })
+        rmats = (factory.blast_material, shared.attack_material)
+        self.node = ba.newnode(
+            'region',
+            delegate=self,
+            attrs={
+                'position': (position[0], position[1] - 0.1, position[2]),
+                'scale': (self.radius, self.radius, self.radius),
+                'type': 'sphere',
+                'materials': rmats
+            },
+        )
 
         ba.timer(0.05, self.node.delete)
 
@@ -619,7 +652,7 @@ class Blast(ba.Actor):
                               hit_type=self.hit_type,
                               hit_subtype=self.hit_subtype,
                               radius=self.radius,
-                              source_player=ba.existing(self.source_player)))
+                              source_player=ba.existing(self._source_player)))
             if self.blast_type == 'ice':
                 ba.playsound(get_factory().freeze_sound, 10, position=nodepos)
                 node.handlemessage(ba.FreezeMessage())
@@ -654,6 +687,7 @@ class Bomb(ba.Actor):
         """
         super().__init__()
 
+        shared = SharedObjects.get()
         factory = get_factory()
 
         if bomb_type not in ('ice', 'impact', 'land_mine', 'normal', 'sticky',
@@ -681,7 +715,7 @@ class Bomb(ba.Actor):
         self._explode_callbacks: List[Callable[[Bomb, Blast], Any]] = []
 
         # the player this came from
-        self.source_player = source_player
+        self._source_player = source_player
 
         # by default our hit type/subtype is our own, but we pick up types of
         # whoever sets us off so we know what caused a chain reaction
@@ -702,12 +736,10 @@ class Bomb(ba.Actor):
         # ground.. perhaps we don't wanna add this even in the tnt case?..
         materials: Tuple[ba.Material, ...]
         if self.bomb_type == 'tnt':
-            materials = (factory.bomb_material,
-                         ba.sharedobj('footing_material'),
-                         ba.sharedobj('object_material'))
+            materials = (factory.bomb_material, shared.footing_material,
+                         shared.object_material)
         else:
-            materials = (factory.bomb_material,
-                         ba.sharedobj('object_material'))
+            materials = (factory.bomb_material, shared.object_material)
 
         if self.bomb_type == 'impact':
             materials = materials + (factory.impact_blast_material, )
@@ -824,11 +856,20 @@ class Bomb(ba.Actor):
 
         ba.animate(self.node, 'model_scale', {0: 0, 0.2: 1.3, 0.26: 1})
 
-    def get_source_player(self) -> Optional[ba.Player]:
-        """Returns a ba.Player representing the source of this bomb.
+    def get_source_player(
+            self, playertype: Type[PlayerType]) -> Optional[PlayerType]:
+        """Return the source-player if there is one and they still exist.
 
-        Be prepared for values of None or invalid Player refs."""
-        return self.source_player
+        The type of player for the current activity should be passed so that
+        the type-checker properly identifies the returned value as one.
+        """
+        player: Any = self._source_player
+        assert isinstance(player, (playertype, type(None)))
+
+        # We should not be delivering invalid refs.
+        # (technically if someone holds on to this message this can happen)
+        assert player is None or player.exists()
+        return player
 
     def on_expire(self) -> None:
         super().on_expire()
@@ -899,7 +940,7 @@ class Bomb(ba.Actor):
                           velocity=self.node.velocity,
                           blast_radius=self.blast_radius,
                           blast_type=self.bomb_type,
-                          source_player=self.source_player,
+                          source_player=ba.existing(self._source_player),
                           hit_type=self.hit_type,
                           hit_subtype=self.hit_subtype).autoretain()
             for callback in self._explode_callbacks:
@@ -979,7 +1020,7 @@ class Bomb(ba.Actor):
             # person causing them).
             source_player = msg.get_source_player(ba.Player)
             if source_player is not None:
-                self.source_player = source_player
+                self._source_player = source_player
 
                 # Also inherit the hit type (if a landmine sets off by a bomb,
                 # the credit should go to the mine)
@@ -1007,12 +1048,14 @@ class Bomb(ba.Actor):
             self.explode()
         elif isinstance(msg, ImpactMessage):
             self._handle_impact()
-        elif isinstance(msg, ba.PickedUpMessage):
-            # change our source to whoever just picked us up *only* if its None
-            # this way we can get points for killing bots with their own bombs
-            # hmm would there be a downside to this?...
-            if self.source_player is not None:
-                self.source_player = msg.node.source_player
+        # Ok the logic below looks like it was backwards to me. Disabling
+        # until further notice.
+        # elif isinstance(msg, ba.PickedUpMessage):
+        #     # Change our source to whoever just picked us up *only* if it
+        #     # is None. This way we can get points for killing bots with their
+        #     # own bombs. Hmm would there be a downside to this?
+        #     if self._source_player is not None:
+        #         self._source_player = msg.node.source_player
         elif isinstance(msg, SplatMessage):
             self._handle_splat()
         elif isinstance(msg, ba.DroppedMessage):

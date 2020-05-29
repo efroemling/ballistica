@@ -32,6 +32,7 @@ import ba
 from bastd.actor.flag import Flag
 from bastd.actor.scoreboard import Scoreboard
 from bastd.actor.playerspaz import PlayerSpaz
+from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
     from typing import Any, Optional, Type, List, Dict, Sequence, Union
@@ -119,6 +120,7 @@ class ConquestGame(ba.TeamGameActivity[Player, Team]):
 
     def __init__(self, settings: Dict[str, Any]):
         super().__init__(settings)
+        shared = SharedObjects.get()
         self._scoreboard = Scoreboard()
         self._score_sound = ba.getsound('score')
         self._swipsound = ba.getsound('swip')
@@ -134,7 +136,7 @@ class ConquestGame(ba.TeamGameActivity[Player, Team]):
 
         # We want flags to tell us they've been hit but not react physically.
         self._extraflagmat.add_actions(
-            conditions=('they_have_material', ba.sharedobj('player_material')),
+            conditions=('they_have_material', shared.player_material),
             actions=(('modify_part_collision', 'collide', True),
                      ('call', 'at_connect', self._handle_flag_player_collide)))
 

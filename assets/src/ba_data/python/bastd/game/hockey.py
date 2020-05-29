@@ -31,6 +31,7 @@ import ba
 from bastd.actor.playerspaz import PlayerSpaz
 from bastd.actor.scoreboard import Scoreboard
 from bastd.actor.powerupbox import PowerupBoxFactory
+from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
     from typing import Any, Sequence, Dict, Type, List, Optional, Union
@@ -48,6 +49,7 @@ class Puck(ba.Actor):
 
     def __init__(self, position: Sequence[float] = (0.0, 1.0, 0.0)):
         super().__init__()
+        shared = SharedObjects.get()
         activity = self.getactivity()
 
         # Spawn just above the provided point.
@@ -56,7 +58,7 @@ class Puck(ba.Actor):
         self.scored = False
         assert activity is not None
         assert isinstance(activity, HockeyGame)
-        pmats = [ba.sharedobj('object_material'), activity.puck_material]
+        pmats = [shared.object_material, activity.puck_material]
         self.node = ba.newnode('prop',
                                delegate=self,
                                attrs={
@@ -153,6 +155,7 @@ class HockeyGame(ba.TeamGameActivity[Player, Team]):
 
     def __init__(self, settings: Dict[str, Any]):
         super().__init__(settings)
+        shared = SharedObjects.get()
         self._scoreboard = Scoreboard()
         self._cheer_sound = ba.getsound('cheer')
         self._chant_sound = ba.getsound('crowdChant')
@@ -165,22 +168,26 @@ class HockeyGame(ba.TeamGameActivity[Player, Team]):
         self.puck_material = ba.Material()
         self.puck_material.add_actions(actions=(('modify_part_collision',
                                                  'friction', 0.5)))
+        self.puck_material.add_actions(conditions=('they_have_material',
+                                                   shared.pickup_material),
+                                       actions=('modify_part_collision',
+                                                'collide', False))
         self.puck_material.add_actions(
-            conditions=('they_have_material', ba.sharedobj('pickup_material')),
-            actions=('modify_part_collision', 'collide', False))
-        self.puck_material.add_actions(
-            conditions=(('we_are_younger_than', 100),
-                        'and', ('they_have_material',
-                                ba.sharedobj('object_material'))),
-            actions=('modify_node_collision', 'collide', False))
-        self.puck_material.add_actions(
-            conditions=('they_have_material',
-                        ba.sharedobj('footing_material')),
-            actions=('impact_sound', self._puck_sound, 0.2, 5))
+            conditions=(
+                ('we_are_younger_than', 100),
+                'and',
+                ('they_have_material', shared.object_material),
+            ),
+            actions=('modify_node_collision', 'collide', False),
+        )
+        self.puck_material.add_actions(conditions=('they_have_material',
+                                                   shared.footing_material),
+                                       actions=('impact_sound',
+                                                self._puck_sound, 0.2, 5))
 
         # Keep track of which player last touched the puck
         self.puck_material.add_actions(
-            conditions=('they_have_material', ba.sharedobj('player_material')),
+            conditions=('they_have_material', shared.player_material),
             actions=(('call', 'at_connect',
                       self._handle_puck_player_collide), ))
 

@@ -35,6 +35,7 @@ from bastd.actor.spazbot import SpazBotSet, BouncyBot, SpazBotDiedMessage
 from bastd.actor.onscreencountdown import OnScreenCountdown
 from bastd.actor.scoreboard import Scoreboard
 from bastd.actor.respawnicon import RespawnIcon
+from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
     from typing import Any, Type, Dict, List, Tuple, Optional
@@ -78,6 +79,7 @@ class EasterEggHuntGame(ba.TeamGameActivity[Player, Team]):
 
     def __init__(self, settings: Dict[str, Any]):
         super().__init__(settings)
+        shared = SharedObjects.get()
         self._last_player_death_time = None
         self._scoreboard = Scoreboard()
         self.egg_model = ba.getmodel('egg')
@@ -89,7 +91,7 @@ class EasterEggHuntGame(ba.TeamGameActivity[Player, Team]):
         self._max_eggs = 1.0
         self.egg_material = ba.Material()
         self.egg_material.add_actions(
-            conditions=('they_have_material', ba.sharedobj('player_material')),
+            conditions=('they_have_material', shared.player_material),
             actions=(('call', 'at_connect', self._on_egg_player_collide), ))
         self._eggs: List[Egg] = []
         self._update_timer: Optional[ba.Timer] = None
@@ -243,12 +245,13 @@ class Egg(ba.Actor):
         super().__init__()
         activity = self.activity
         assert isinstance(activity, EasterEggHuntGame)
+        shared = SharedObjects.get()
 
         # Spawn just above the provided point.
         self._spawn_pos = (position[0], position[1] + 1.0, position[2])
         ctex = (activity.egg_tex_1, activity.egg_tex_2,
                 activity.egg_tex_3)[random.randrange(3)]
-        mats = [ba.sharedobj('object_material'), activity.egg_material]
+        mats = [shared.object_material, activity.egg_material]
         self.node = ba.newnode('prop',
                                delegate=self,
                                attrs={

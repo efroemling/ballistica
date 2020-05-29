@@ -33,6 +33,7 @@ import ba
 from bastd.actor.flag import Flag
 from bastd.actor.playerspaz import PlayerSpaz
 from bastd.actor.scoreboard import Scoreboard
+from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
     from weakref import ReferenceType
@@ -97,6 +98,7 @@ class KingOfTheHillGame(ba.TeamGameActivity[Player, Team]):
 
     def __init__(self, settings: Dict[str, Any]):
         super().__init__(settings)
+        shared = SharedObjects.get()
         self._scoreboard = Scoreboard()
         self._swipsound = ba.getsound('swip')
         self._tick_sound = ba.getsound('tick')
@@ -121,7 +123,7 @@ class KingOfTheHillGame(ba.TeamGameActivity[Player, Team]):
         self._time_limit = float(settings['Time Limit'])
         self._flag_region_material = ba.Material()
         self._flag_region_material.add_actions(
-            conditions=('they_have_material', ba.sharedobj('player_material')),
+            conditions=('they_have_material', shared.player_material),
             actions=(
                 ('modify_part_collision', 'collide', True),
                 ('modify_part_collision', 'physical', False),
@@ -145,6 +147,7 @@ class KingOfTheHillGame(ba.TeamGameActivity[Player, Team]):
 
     def on_begin(self) -> None:
         super().on_begin()
+        shared = SharedObjects.get()
         self.setup_standard_time_limit(self._time_limit)
         self.setup_standard_powerup_drops()
         self._flag_pos = self.map.get_flag_position(None)
@@ -164,10 +167,7 @@ class KingOfTheHillGame(ba.TeamGameActivity[Player, Team]):
                                           'color': (0.2, 0.2, 0.2)
                                       })
         # Flag region.
-        flagmats = [
-            self._flag_region_material,
-            ba.sharedobj('region_material')
-        ]
+        flagmats = [self._flag_region_material, shared.region_material]
         ba.newnode('region',
                    attrs={
                        'position': self._flag_pos,

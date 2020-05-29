@@ -26,6 +26,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import ba
+from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
     from typing import Any, Sequence, Optional
@@ -64,13 +65,13 @@ class FlagFactory:
         You shouldn't need to do this; call bastd.actor.flag.get_factory() to
         get a shared instance.
         """
-
+        shared = SharedObjects.get()
         self.flagmaterial = ba.Material()
         self.flagmaterial.add_actions(
             conditions=(
                 ('we_are_younger_than', 100),
                 'and',
-                ('they_have_material', ba.sharedobj('object_material')),
+                ('they_have_material', shared.object_material),
             ),
             actions=('modify_node_collision', 'collide', False),
         )
@@ -78,7 +79,7 @@ class FlagFactory:
         self.flagmaterial.add_actions(
             conditions=(
                 'they_have_material',
-                ba.sharedobj('footing_material'),
+                shared.footing_material,
             ),
             actions=(
                 ('message', 'our_node', 'at_connect', 'footing', 1),
@@ -91,7 +92,7 @@ class FlagFactory:
         self.flagmaterial.add_actions(
             conditions=(
                 'they_have_material',
-                ba.sharedobj('footing_material'),
+                shared.footing_material,
             ),
             actions=(
                 ('impact_sound', self.impact_sound, 2, 5),
@@ -102,9 +103,9 @@ class FlagFactory:
         self.no_hit_material = ba.Material()
         self.no_hit_material.add_actions(
             conditions=(
-                ('they_have_material', ba.sharedobj('pickup_material')),
+                ('they_have_material', shared.pickup_material),
                 'or',
-                ('they_have_material', ba.sharedobj('attack_material')),
+                ('they_have_material', shared.attack_material),
             ),
             actions=('modify_part_collision', 'collide', False),
         )
@@ -112,9 +113,9 @@ class FlagFactory:
         # We also don't want anything moving it.
         self.no_hit_material.add_actions(
             conditions=(
-                ('they_have_material', ba.sharedobj('object_material')),
+                ('they_have_material', shared.object_material),
                 'or',
-                ('they_dont_have_material', ba.sharedobj('footing_material')),
+                ('they_dont_have_material', shared.footing_material),
             ),
             actions=(('modify_part_collision', 'collide', False),
                      ('modify_part_collision', 'physical', False)),
@@ -215,6 +216,7 @@ class Flag(ba.Actor):
 
         self._initial_position: Optional[Sequence[float]] = None
         self._has_moved = False
+        shared = SharedObjects.get()
         factory = FlagFactory.get()
 
         if materials is None:
@@ -225,9 +227,8 @@ class Flag(ba.Actor):
         if not touchable:
             materials = [factory.no_hit_material] + materials
 
-        finalmaterials = (
-            [ba.sharedobj('object_material'), factory.flagmaterial] +
-            materials)
+        finalmaterials = ([shared.object_material, factory.flagmaterial] +
+                          materials)
         self.node = ba.newnode('flag',
                                attrs={
                                    'position':

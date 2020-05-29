@@ -34,6 +34,7 @@ from bastd.actor.bomb import TNTSpawner
 from bastd.actor.scoreboard import Scoreboard
 from bastd.actor.respawnicon import RespawnIcon
 from bastd.actor.powerupbox import PowerupBox, PowerupBoxFactory
+from bastd.gameutils import SharedObjects
 from bastd.actor.spazbot import (
     SpazBotSet, SpazBot, SpazBotDiedMessage, BomberBot, BrawlerBot, TriggerBot,
     TriggerBotPro, BomberBotProShielded, TriggerBotProShielded, ChargerBot,
@@ -88,6 +89,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
     def __init__(self, settings: Dict[str, Any]):
         settings['map'] = 'Tower D'
         super().__init__(settings)
+        shared = SharedObjects.get()
         self._preset = self.settings_raw.get('preset', 'pro')
 
         self._player_death_sound = ba.getsound('playerDeath')
@@ -109,7 +111,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
 
         self._score_region_material = ba.Material()
         self._score_region_material.add_actions(
-            conditions=('they_have_material', ba.sharedobj('player_material')),
+            conditions=('they_have_material', shared.player_material),
             actions=(('modify_part_collision', 'collide',
                       True), ('modify_part_collision', 'physical', False),
                      ('call', 'at_connect', self._handle_reached_end)))

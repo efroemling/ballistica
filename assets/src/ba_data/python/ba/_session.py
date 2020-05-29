@@ -25,7 +25,7 @@ import weakref
 from typing import TYPE_CHECKING
 
 import _ba
-from ba._error import print_error, print_exception
+from ba._error import print_error, print_exception, NodeNotFoundError
 from ba._lang import Lstr
 from ba._player import Player
 
@@ -113,7 +113,6 @@ class Session:
         # pylint: disable=cyclic-import
         from ba._lobby import Lobby
         from ba._stats import Stats
-        from ba._gameutils import sharedobj
         from ba._gameactivity import GameActivity
         from ba._activity import Activity
         from ba._team import SessionTeam
@@ -201,7 +200,15 @@ class Session:
         self.stats = Stats()
 
         # Instantiate our session globals node which will apply its settings.
-        sharedobj('globals')
+        self._sessionglobalsnode = _ba.newnode('sessionglobals')
+
+    @property
+    def sessionglobalsnode(self) -> ba.Node:
+        """The sessionglobals ba.Node for the session."""
+        node = self._sessionglobalsnode
+        if not node:
+            raise NodeNotFoundError()
+        return node
 
     def on_player_request(self, player: ba.SessionPlayer) -> bool:
         """Called when a new ba.Player wants to join the Session.
@@ -347,16 +354,6 @@ class Session:
     def on_team_leave(self, team: ba.SessionTeam) -> None:
         """Called when a ba.Team is leaving the session."""
 
-    def _complete_end_activity(self, activity: ba.Activity,
-                               results: Any) -> None:
-        # Run the subclass callback in the session context.
-        try:
-            with _ba.Context(self):
-                self.on_activity_end(activity, results)
-        except Exception:
-            print_exception('exception in on_activity_end() for session', self,
-                            'activity', activity, 'with results', results)
-
     def end_activity(self, activity: ba.Activity, results: Any, delay: float,
                      force: bool) -> None:
         """Commence shutdown of a ba.Activity (if not already occurring).
@@ -414,7 +411,6 @@ class Session:
         (on_transition_in, etc) to get it. (so you can't do
         session.set_activity(foo) and then ba.newnode() to add a node to foo)
         """
-        from ba._gameutils import sharedobj
         from ba._enums import TimeType
 
         # Sanity test: make sure this doesn't get called recursively.
@@ -439,11 +435,8 @@ class Session:
                                str(self._next_activity) + ')')
 
         prev_activity = self._activity_retained
-        if prev_activity is not None:
-            with _ba.Context(prev_activity):
-                prev_globals = sharedobj('globals')
-        else:
-            prev_globals = None
+        prev_globals = (prev_activity.globalsnode
+                        if prev_activity is not None else None)
 
         # Let the activity do its thing.
         activity.transition_in(prev_globals)
@@ -490,6 +483,16 @@ class Session:
         is pressed.
         """
         return []
+
+    def _complete_end_activity(self, activity: ba.Activity,
+                               results: Any) -> None:
+        # Run the subclass callback in the session context.
+        try:
+            with _ba.Context(self):
+                self.on_activity_end(activity, results)
+        except Exception:
+            print_exception('exception in on_activity_end() for session', self,
+                            'activity', activity, 'with results', results)
 
     def _request_player(self, sessionplayer: ba.SessionPlayer) -> bool:
         """Called by the C++ layer when players want to join."""

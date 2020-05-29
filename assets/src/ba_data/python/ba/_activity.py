@@ -26,7 +26,8 @@ from typing import TYPE_CHECKING, Generic, TypeVar
 
 from ba._team import Team
 from ba._player import Player
-from ba._error import print_exception, print_error, SessionTeamNotFoundError
+from ba._error import (print_exception, SessionTeamNotFoundError,
+                       NodeNotFoundError)
 from ba._dependency import DependencyComponent
 from ba._general import Call, verify_object_death
 from ba._messages import UNHANDLED
@@ -155,6 +156,11 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         # Create our internal engine data.
         self._activity_data = _ba.register_activity(self)
 
+        assert isinstance(settings, dict)
+        assert _ba.getactivity() is self
+
+        self._globalsnode: Optional[ba.Node] = None
+
         # Player/Team types should have been specified as type args;
         # grab those.
         self._playertype: Type[PlayerType]
@@ -174,11 +180,6 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         # Preloaded data for actors, maps, etc; indexed by type.
         self.preloads: Dict[Type, Any] = {}
 
-        if not isinstance(settings, dict):
-            raise TypeError('expected dict for settings')
-        if _ba.getactivity(doraise=False) is not self:
-            raise Exception('invalid context state')
-
         # Hopefully can eventually kill this; activities should
         # validate/store whatever settings they need at init time
         # (in a more type-safe way).
@@ -191,9 +192,6 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         self._should_end_immediately_results: (
             Optional[ba.TeamGameResults]) = None
         self._should_end_immediately_delay = 0.0
-        self._called_activity_on_transition_in = False
-        self._called_activity_on_begin = False
-
         self._activity_death_check_timer: Optional[ba.Timer] = None
         self._expired = False
 
@@ -233,6 +231,16 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
                 _ba.pushcall(
                     Call(session.transitioning_out_activity_was_freed,
                          self.can_show_ad_on_death))
+
+    @property
+    def globalsnode(self) -> ba.Node:
+        """The 'globals' ba.Node for the activity. This contains various
+        global controls and values.
+        """
+        node = self._globalsnode
+        if not node:
+            raise NodeNotFoundError()
+        return node
 
     @property
     def stats(self) -> ba.Stats:
@@ -334,12 +342,11 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         from ba import _actor as bsactor
         if not isinstance(actor, bsactor.Actor):
             raise TypeError('non-actor passed to retain_actor')
-        if (self.has_transitioned_in()
-                and _ba.time() - self._last_prune_dead_actors_time > 10.0):
-            print_error('It looks like nodes/actors are not'
-                        ' being pruned in your activity;'
-                        ' did you call Activity.on_transition_in()'
-                        ' from your subclass?; ' + str(self) + ' (loc. a)')
+
+        # Make sure our pruning is happening...
+        assert (not self.has_transitioned_in()
+                or _ba.time() - self._last_prune_dead_actors_time < 10.0)
+
         self._actor_refs.append(actor)
 
     def add_actor_weak_ref(self, actor: ba.Actor) -> None:
@@ -350,12 +357,11 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         from ba import _actor as bsactor
         if not isinstance(actor, bsactor.Actor):
             raise TypeError('non-actor passed to add_actor_weak_ref')
-        if (self.has_transitioned_in()
-                and _ba.time() - self._last_prune_dead_actors_time > 10.0):
-            print_error('It looks like nodes/actors are '
-                        'not being pruned in your activity;'
-                        ' did you call Activity.on_transition_in()'
-                        ' from your subclass?; ' + str(self) + ' (loc. b)')
+
+        # Make sure our pruning is happening...
+        assert (not self.has_transitioned_in()
+                or _ba.time() - self._last_prune_dead_actors_time < 10.0)
+
         self._actor_weak_refs.append(weakref.ref(actor))
 
     @property
@@ -396,7 +402,6 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         or teams, however. They remain owned by the previous Activity
         up until ba.Activity.on_begin() is called.
         """
-        self._called_activity_on_transition_in = True
 
     def on_transition_out(self) -> None:
         """Called when your activity begins transitioning out.
@@ -411,27 +416,11 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         At this point the activity's initial players and teams are filled in
         and it should begin its actual game logic.
         """
-        self._called_activity_on_begin = True
 
     def handlemessage(self, msg: Any) -> Any:
         """General message handling; can be passed any message object."""
         del msg  # Unused arg.
         return UNHANDLED
-
-    def end(self,
-            results: Any = None,
-            delay: float = 0.0,
-            force: bool = False) -> None:
-        """Commences Activity shutdown and delivers results to the ba.Session.
-
-        'delay' is the time delay before the Activity actually ends
-        (in seconds). Further calls to end() will be ignored up until
-        this time, unless 'force' is True, in which case the new results
-        will replace the old.
-        """
-
-        # Ask the session to end us.
-        self.session.end_activity(self, results, delay, force)
 
     def has_transitioned_in(self) -> bool:
         """Return whether on_transition_in() has been called."""
@@ -455,15 +444,15 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         (internal)
         """
         from ba._general import WeakCall
-        from ba._gameutils import sharedobj
         assert not self._has_transitioned_in
         self._has_transitioned_in = True
 
         # Set up the globals node based on our settings.
         with _ba.Context(self):
+            glb = self._globalsnode = _ba.newnode('globals')
+
             # Now that it's going to be front and center,
             # set some global values based on what the activity wants.
-            glb = sharedobj('globals')
             glb.use_fixed_vr_overlay = self.use_fixed_vr_overlay
             glb.allow_kick_idle_players = self.allow_kick_idle_players
             if self.inherits_slow_motion and prev_globals is not None:
@@ -498,7 +487,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
             try:
                 self.on_transition_in()
             except Exception:
-                print_exception('Error in on_transition_in for', self)
+                print_exception(f'Error in on_transition_in for {self}')
 
         # Tell the C++ layer that this activity is the main one, so it uses
         # settings from our globals, directs various events to us, etc.
@@ -538,8 +527,6 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
             self._has_begun = True
             self.on_begin()
 
-        self._sanity_check_begin_call()
-
         # If the whole session wants to die and was waiting on us,
         # can kick off that process now.
         if session.wants_to_end:
@@ -550,6 +537,21 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
                 self.end(self._should_end_immediately_results,
                          self._should_end_immediately_delay)
 
+    def end(self,
+            results: Any = None,
+            delay: float = 0.0,
+            force: bool = False) -> None:
+        """Commences Activity shutdown and delivers results to the ba.Session.
+
+        'delay' is the time delay before the Activity actually ends
+        (in seconds). Further calls to end() will be ignored up until
+        this time, unless 'force' is True, in which case the new results
+        will replace the old.
+        """
+
+        # Ask the session to end us.
+        self.session.end_activity(self, results, delay, force)
+
     def create_player(self, sessionplayer: ba.SessionPlayer) -> PlayerType:
         """Create the Player instance for this Activity.
 
@@ -559,7 +561,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         point as it is not yet fully wired up; wait for on_player_join()
         for that.
         """
-        del sessionplayer  # Unused
+        del sessionplayer  # Unused.
         player = self._playertype()
         return player
 
@@ -686,19 +688,6 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
 
             sessionteam.gameteam = None
 
-    def _sanity_check_begin_call(self) -> None:
-        # Make sure ba.Activity.on_transition_in() got called at some point.
-        if not self._called_activity_on_transition_in:
-            print_error(
-                'ba.Activity.on_transition_in() never got called for ' +
-                str(self) + '; did you forget to call it'
-                ' in your on_transition_in override?')
-        # Make sure that ba.Activity.on_begin() got called at some point.
-        if not self._called_activity_on_begin:
-            print_error(
-                'ba.Activity.on_begin() never got called for ' + str(self) +
-                '; did you forget to call it in your on_begin override?')
-
     def _setup_player_and_team_types(self) -> None:
         """Pull player and team types from our typing.Generic params."""
 
@@ -819,7 +808,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
                 # It is expected that Team objects may last longer than
                 # the SessionTeam they came from (game objects may hold
                 # team references past the point at which the underlying
-                # player/team leaves)
+                # player/team has left the game)
                 pass
             except Exception:
                 print_exception(f'Error resetting Team {team}')

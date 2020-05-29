@@ -506,7 +506,7 @@ def setmusic(musictype: Optional[MusicType], continuous: bool = False) -> None:
     # the do_play_music call in our music controller. This way we can
     # seamlessly support custom soundtracks in replays/etc since we're being
     # driven purely by node data.
-    gnode = _gameutils.sharedobj('globals')
+    gnode = _ba.getactivity().globalsnode
     gnode.music_continuous = continuous
     gnode.music = '' if musictype is None else musictype.value
     gnode.music_count += 1

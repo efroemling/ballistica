@@ -530,8 +530,8 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
                        }))
         self._time_text_input = ba.NodeActor(
             ba.newnode('timedisplay', attrs={'showsubseconds': True}))
-        ba.sharedobj('globals').connectattr('time', self._time_text_input.node,
-                                            'time2')
+        self.globalsnode.connectattr('time', self._time_text_input.node,
+                                     'time2')
         assert self._time_text_input.node
         assert self._time_text.node
         self._time_text_input.node.connectattr('output', self._time_text.node,

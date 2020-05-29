@@ -29,6 +29,7 @@ from typing import TYPE_CHECKING
 import ba
 from bastd.actor import bomb as stdbomb
 from bastd.actor.powerupbox import PowerupBoxFactory
+from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
     from typing import (Any, Sequence, Optional, Dict, List, Union, Callable,
@@ -108,6 +109,7 @@ class Spaz(ba.Actor):
         # pylint: disable=too-many-statements
 
         super().__init__()
+        shared = SharedObjects.get()
         activity = self.activity
 
         factory = get_factory()
@@ -126,7 +128,7 @@ class Spaz(ba.Actor):
             self._punch_power_scale = 1.2
         else:
             self._punch_power_scale = factory.punch_power_scale
-        self.fly = ba.sharedobj('globals').happy_thoughts_mode
+        self.fly = ba.getactivity().globalsnode.happy_thoughts_mode
         if isinstance(activity, ba.GameActivity):
             self._hockey = activity.map.is_hockey
         else:
@@ -135,14 +137,10 @@ class Spaz(ba.Actor):
         self._cursed = False
         self._connected_to_player: Optional[ba.Player] = None
         materials = [
-            factory.spaz_material,
-            ba.sharedobj('object_material'),
-            ba.sharedobj('player_material')
+            factory.spaz_material, shared.object_material,
+            shared.player_material
         ]
-        roller_materials = [
-            factory.roller_material,
-            ba.sharedobj('player_material')
-        ]
+        roller_materials = [factory.roller_material, shared.player_material]
         extras_material = []
 
         if can_accept_powerups:
@@ -152,8 +150,8 @@ class Spaz(ba.Actor):
             extras_material.append(pam)
 
         media = factory.get_media(character)
-        punchmats = (factory.punch_material, ba.sharedobj('attack_material'))
-        pickupmats = (factory.pickup_material, ba.sharedobj('pickup_material'))
+        punchmats = (factory.punch_material, shared.attack_material)
+        pickupmats = (factory.pickup_material, shared.pickup_material)
         self.node: ba.Node = ba.newnode(
             type='spaz',
             delegate=self,

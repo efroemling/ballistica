@@ -171,9 +171,9 @@ class TargetPracticeGame(ba.TeamGameActivity[Player, Team]):
         # Feed the explosion point to all our targets and get points in return.
         # Note: we operate on a copy of self._targets since the list may change
         # under us if we hit stuff (don't wanna get points for new targets).
-        player = ba.playercast_o(Player, bomb.get_source_player())
+        player = bomb.get_source_player(Player)
         if not player:
-            return  # could happen if they leave after throwing a bomb..
+            return  # Could happen if they leave after throwing a bomb.
 
         bullseye = any(
             target.do_hit_at_position(pos, player)

@@ -186,6 +186,7 @@
       <w>bname</w>
       <w>bndl</w>
       <w>boffs</w>
+      <w>bombfactory</w>
       <w>bombsquad</w>
       <w>bombsquadcb</w>
       <w>bombsquadgame</w>
@@ -1637,6 +1638,7 @@
       <w>sessionclass</w>
       <w>sessiondata</w>
       <w>sessionglobals</w>
+      <w>sessionglobalsnode</w>
       <w>sessionname</w>
       <w>sessionplayer</w>
       <w>sessionteam</w>
@@ -1655,6 +1657,7 @@
       <w>sharedobjs</w>
       <w>shiftdelay</w>
       <w>shiftposition</w>
+      <w>shobs</w>
       <w>shortname</w>
       <w>shouldn</w>
       <w>showpoints</w>

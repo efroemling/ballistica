@@ -46,6 +46,16 @@ class PlayerInfo:
     character: str
 
 
+@dataclass
+class StandLocation:
+    """Describes a point in space and an angle to face.
+
+    Category: Gameplay Classes
+    """
+    position: _ba.Vec3
+    angle: Optional[float] = None
+
+
 class Player(Generic[TeamType]):
     """A player in a specific ba.Activity.
 

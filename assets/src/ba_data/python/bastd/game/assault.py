@@ -32,6 +32,7 @@ import ba
 from bastd.actor.playerspaz import PlayerSpaz
 from bastd.actor.flag import Flag
 from bastd.actor.scoreboard import Scoreboard
+from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
     from typing import Any, Type, List, Dict, Sequence, Union
@@ -111,6 +112,7 @@ class AssaultGame(ba.TeamGameActivity[Player, Team]):
         return 'touch ${ARG1} flags', self._score_to_win
 
     def create_team(self, sessionteam: ba.SessionTeam) -> Team:
+        shared = SharedObjects.get()
         base_pos = self.map.get_flag_position(sessionteam.id)
         ba.newnode('light',
                    attrs={
@@ -129,7 +131,7 @@ class AssaultGame(ba.TeamGameActivity[Player, Team]):
 
         mat = self._base_region_materials[sessionteam.id] = ba.Material()
         mat.add_actions(
-            conditions=('they_have_material', ba.sharedobj('player_material')),
+            conditions=('they_have_material', shared.player_material),
             actions=(
                 ('modify_part_collision', 'collide', True),
                 ('modify_part_collision', 'physical', False),

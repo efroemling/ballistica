@@ -26,6 +26,7 @@ import random
 from typing import TYPE_CHECKING
 
 import ba
+from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
     from typing import List, Any, Optional, Sequence
@@ -104,6 +105,7 @@ class PowerupBoxFactory:
         to get a shared instance.
         """
         from ba.internal import get_default_powerup_distribution
+        shared = SharedObjects.get()
         self._lastpoweruptype: Optional[str] = None
         self.model = ba.getmodel('powerup')
         self.model_simple = ba.getmodel('powerupSimple')
@@ -130,19 +132,22 @@ class PowerupBoxFactory:
         # Pass a powerup-touched message to applicable stuff.
         self.powerup_material.add_actions(
             conditions=('they_have_material', self.powerup_accept_material),
-            actions=(('modify_part_collision', 'collide',
-                      True), ('modify_part_collision', 'physical', False),
-                     ('message', 'our_node', 'at_connect', _TouchedMessage())))
+            actions=(
+                ('modify_part_collision', 'collide', True),
+                ('modify_part_collision', 'physical', False),
+                ('message', 'our_node', 'at_connect', _TouchedMessage()),
+            ))
 
         # We don't wanna be picked up.
         self.powerup_material.add_actions(
-            conditions=('they_have_material', ba.sharedobj('pickup_material')),
-            actions=('modify_part_collision', 'collide', False))
+            conditions=('they_have_material', shared.pickup_material),
+            actions=('modify_part_collision', 'collide', False),
+        )
 
         self.powerup_material.add_actions(
-            conditions=('they_have_material',
-                        ba.sharedobj('footing_material')),
-            actions=('impact_sound', self.drop_sound, 0.5, 0.1))
+            conditions=('they_have_material', shared.footing_material),
+            actions=('impact_sound', self.drop_sound, 0.5, 0.1),
+        )
 
         self._powerupdist: List[str] = []
         for powerup, freq in get_default_powerup_distribution():
@@ -228,7 +233,7 @@ class PowerupBox(ba.Actor):
         """
 
         super().__init__()
-
+        shared = SharedObjects.get()
         factory = PowerupBoxFactory.get()
         self.poweruptype = poweruptype
         self._powersgiven = False
@@ -270,7 +275,7 @@ class PowerupBox(ba.Actor):
                 'reflection': 'powerup',
                 'reflection_scale': [1.0],
                 'materials': (factory.powerup_material,
-                              ba.sharedobj('object_material'))
+                              shared.object_material)
             })  # yapf: disable
 
         # Animate in.

@@ -31,6 +31,7 @@ import ba
 from bastd.actor.flag import Flag
 from bastd.actor.playerspaz import PlayerSpaz
 from bastd.actor.scoreboard import Scoreboard
+from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
     from typing import Any, Type, List, Dict, Optional, Sequence, Union
@@ -142,6 +143,7 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
 
     def on_begin(self) -> None:
         super().on_begin()
+        shared = SharedObjects.get()
         self.setup_standard_time_limit(self._time_limit)
         self.setup_standard_powerup_drops()
         self._flag_spawn_pos = self.map.get_flag_position(None)
@@ -155,7 +157,7 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
         mat.add_actions(
             conditions=(
                 'they_have_material',
-                ba.sharedobj('player_material'),
+                shared.player_material,
             ),
             actions=(
                 ('modify_part_collision', 'collide', True),
@@ -329,8 +331,7 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
             super().handlemessage(msg)
             player = msg.getplayer(Player)
             if player is self._get_chosen_one_player():
-                killerplayer = ba.playercast_o(Player,
-                                               msg.getkillerplayer(Player))
+                killerplayer = msg.getkillerplayer(Player)
                 self._set_chosen_one_player(None if (
                     killerplayer is None or killerplayer is player
                     or not killerplayer.is_alive()) else killerplayer)

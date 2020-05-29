@@ -226,7 +226,7 @@ class Map(Actor):
                 ' staticmethod in the activity constructor')
 
         # Set various globals.
-        gnode = _gameutils.sharedobj('globals')
+        gnode = _ba.getactivity().globalsnode
 
         # Set area-of-interest bounds.
         aoi_bounds = self.get_def_bound_box('area_of_interest_bounds')

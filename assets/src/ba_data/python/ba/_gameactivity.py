@@ -403,6 +403,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         return ''
 
     def on_transition_in(self) -> None:
+
         super().on_transition_in()
 
         # Make our map.
@@ -455,7 +456,6 @@ class GameActivity(Activity[PlayerType, TeamType]):
         # pylint: disable=too-many-nested-blocks
         # pylint: disable=cyclic-import
         from bastd.ui.continues import ContinuesWindow
-        from ba._gameutils import sharedobj
         from ba._coopsession import CoopSession
         from ba._enums import TimeType
 
@@ -472,7 +472,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
                     if isinstance(session, CoopSession):
                         assert session.campaign is not None
                         if session.campaign.sequential:
-                            gnode = sharedobj('globals')
+                            gnode = self.globalsnode
 
                             # Only attempt this if we're not currently paused
                             # and there appears to be no UI.
@@ -1024,7 +1024,6 @@ class GameActivity(Activity[PlayerType, TeamType]):
         This will be displayed at the top of the screen.
         If the time-limit expires, end_game() will be called.
         """
-        from ba._gameutils import sharedobj
         from ba._nodeactor import NodeActor
         if duration <= 0.0:
             return
@@ -1048,8 +1047,9 @@ class GameActivity(Activity[PlayerType, TeamType]):
                             'time2': duration * 1000,
                             'timemin': 0
                         }))
-        sharedobj('globals').connectattr(
-            'time', self._standard_time_limit_text_input.node, 'time1')
+        self.globalsnode.connectattr('time',
+                                     self._standard_time_limit_text_input.node,
+                                     'time1')
         assert self._standard_time_limit_text_input.node
         assert self._standard_time_limit_text.node
         self._standard_time_limit_text_input.node.connectattr(

@@ -23,10 +23,10 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-# from typing_extensions import Protocol
 
 import _ba
 from ba._enums import TimeType, TimeFormat, SpecialChar
+from ba._error import ActivityNotFoundError
 
 if TYPE_CHECKING:
     from typing import Any, Dict, Sequence, Optional
@@ -41,140 +41,12 @@ TROPHY_CHARS = {
     '4': SpecialChar.TROPHY4
 }
 
-# class Respawnable(Protocol):
-#     """A Protocol for objects able to be respawned.
-
-#     Category: Protocols
-#     """
-
-#     respawn_timer: Optional[ba.Timer]
-#     respawn_icon: Optional[RespawnIcon]
-
 
 def get_trophy_string(trophy_id: str) -> str:
     """Given a trophy id, returns a string to visualize it."""
     if trophy_id in TROPHY_CHARS:
         return _ba.charstr(TROPHY_CHARS[trophy_id])
     return '?'
-
-
-def sharedobj(name: str) -> Any:
-    """Return a predefined object for the current Activity, creating if needed.
-
-    Category: Gameplay Functions
-
-    Available values for 'name':
-
-    'globals': returns the 'globals' ba.Node, containing various global
-      controls & values.
-
-    'object_material': a ba.Material that should be applied to any small,
-      normal, physical objects such as bombs, boxes, players, etc. Other
-      materials often check for the  presence of this material as a
-      prerequisite for performing certain actions (such as disabling collisions
-      between initially-overlapping objects)
-
-    'player_material': a ba.Material to be applied to player parts.  Generally,
-      materials related to the process of scoring when reaching a goal, etc
-      will look for the presence of this material on things that hit them.
-
-    'pickup_material': a ba.Material; collision shapes used for picking things
-      up will have this material applied. To prevent an object from being
-      picked up, you can add a material that disables collisions against things
-      containing this material.
-
-    'footing_material': anything that can be 'walked on' should have this
-      ba.Material applied; generally just terrain and whatnot. A character will
-      snap upright whenever touching something with this material so it should
-      not be applied to props, etc.
-
-    'attack_material': a ba.Material applied to explosion shapes, punch
-      shapes, etc.  An object not wanting to receive impulse/etc messages can
-      disable collisions against this material.
-
-    'death_material': a ba.Material that sends a ba.DieMessage() to anything
-      that touches it; handy for terrain below a cliff, etc.
-
-    'region_material':  a ba.Material used for non-physical collision shapes
-      (regions); collisions can generally be allowed with this material even
-      when initially overlapping since it is not physical.
-
-    'railing_material': a ba.Material with a very low friction/stiffness/etc
-      that can be applied to invisible 'railings' useful for gently keeping
-      characters from falling off of cliffs.
-    """
-    # pylint: disable=too-many-branches
-    from ba._messages import DieMessage
-
-    # We store these on the current context; whether its an activity or
-    # session.
-    activity = _ba.getactivity(doraise=False)
-    if activity is not None:
-
-        # Grab shared-objs dict.
-        sharedobjs = getattr(activity, 'sharedobjs', None)
-
-        # Grab item out of it.
-        try:
-            return sharedobjs[name]  # (pylint bug?) pylint: disable=E1136
-        except KeyError:
-            pass
-
-        obj: Any
-
-        # Hmm looks like it doesn't yet exist; create it if its a valid value.
-        if name == 'globals':
-            node_obj = _ba.newnode('globals')
-            obj = node_obj
-        elif name in [
-                'object_material', 'player_material', 'pickup_material',
-                'footing_material', 'attack_material'
-        ]:
-            obj = _ba.Material()
-        elif name == 'death_material':
-            mat = obj = _ba.Material()
-            mat.add_actions(
-                ('message', 'their_node', 'at_connect', DieMessage()))
-        elif name == 'region_material':
-            obj = _ba.Material()
-        elif name == 'railing_material':
-            mat = obj = _ba.Material()
-            mat.add_actions(('modify_part_collision', 'collide', False))
-            mat.add_actions(('modify_part_collision', 'stiffness', 0.003))
-            mat.add_actions(('modify_part_collision', 'damping', 0.00001))
-            mat.add_actions(conditions=('they_have_material',
-                                        sharedobj('player_material')),
-                            actions=(('modify_part_collision', 'collide',
-                                      True), ('modify_part_collision',
-                                              'friction', 0.0)))
-        else:
-            raise ValueError(
-                "unrecognized shared object (activity context): '" + name +
-                "'")
-    else:
-        session = _ba.getsession(doraise=False)
-        if session is not None:
-
-            # Grab shared-objs dict (creating if necessary).
-            sharedobjs = session.sharedobjs
-
-            # Grab item out of it.
-            obj = sharedobjs.get(name)
-            if obj is not None:
-                return obj
-
-            # Hmm looks like it doesn't yet exist; create if its a valid value.
-            if name == 'globals':
-                obj = _ba.newnode('sessionglobals')
-            else:
-                raise ValueError('unrecognized shared object '
-                                 "(session context): '" + name + "'")
-        else:
-            raise RuntimeError('no current activity or session context')
-
-    # Ok, got a shiny new shared obj; store it for quick access next time.
-    sharedobjs[name] = obj
-    return obj
 
 
 def animate(node: ba.Node,
@@ -238,7 +110,14 @@ def animate(node: ba.Node,
 
     # Do the connects last so all our attrs are in place when we push initial
     # values through.
-    sharedobj('globals').connectattr(driver, curve, 'in')
+
+    # We operate in either activities or sessions..
+    try:
+        globalsnode = _ba.getactivity().globalsnode
+    except ActivityNotFoundError:
+        globalsnode = _ba.getsession().sessionglobalsnode
+
+    globalsnode.connectattr(driver, curve, 'in')
     curve.connectattr('out', node, attr)
     return curve
 
@@ -282,12 +161,18 @@ def animate_array(node: ba.Node,
     else:
         raise ValueError('invalid timeformat value: "' + str(timeformat) + '"')
 
+    # We operate in either activities or sessions..
+    try:
+        globalsnode = _ba.getactivity().globalsnode
+    except ActivityNotFoundError:
+        globalsnode = _ba.getsession().sessionglobalsnode
+
     for i in range(size):
         curve = _ba.newnode('animcurve',
                             owner=node,
                             name=('Driving ' + str(node) + ' \'' + attr +
                                   '\' member ' + str(i)))
-        sharedobj('globals').connectattr(driver, curve, 'in')
+        globalsnode.connectattr(driver, curve, 'in')
         curve.times = [int(mult * time) for time, val in items]
         curve.values = [val[i] for time, val in items]
         curve.offset = _ba.time(timeformat=TimeFormat.MILLISECONDS) + int(

@@ -182,7 +182,7 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
         vr_bottom_fill_model = ba.getmodel('thePadVRFillBottom')
         vr_top_fill_model = ba.getmodel('thePadVRFillTop')
 
-        gnode = ba.sharedobj('globals')
+        gnode = self.globalsnode
         gnode.camera_mode = 'rotate'
 
         tint = (1.14, 1.1, 1.0)

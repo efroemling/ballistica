@@ -249,7 +249,7 @@ class CoopGameActivity(GameActivity[PlayerType, TeamType]):
     def fade_to_red(self) -> None:
         """Fade the screen to red; (such as when the good guys have lost)."""
         from ba import _gameutils
-        c_existing = _gameutils.sharedobj('globals').tint
+        c_existing = self.globalsnode.tint
         cnode = _ba.newnode('combine',
                             attrs={
                                 'input0': c_existing[0],
@@ -259,7 +259,7 @@ class CoopGameActivity(GameActivity[PlayerType, TeamType]):
                             })
         _gameutils.animate(cnode, 'input1', {0: c_existing[1], 2.0: 0})
         _gameutils.animate(cnode, 'input2', {0: c_existing[2], 2.0: 0})
-        cnode.connectattr('output', _gameutils.sharedobj('globals'), 'tint')
+        cnode.connectattr('output', self.globalsnode, 'tint')
 
     def setup_low_life_warning_sound(self) -> None:
         """Set up a beeping noise to play when any players are near death."""

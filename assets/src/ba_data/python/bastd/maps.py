@@ -26,7 +26,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import ba
-# from bastd import stdmap
+from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
     from typing import Any, List, Dict
@@ -65,6 +65,7 @@ class HockeyStadium(ba.Map):
 
     def __init__(self) -> None:
         super().__init__()
+        shared = SharedObjects.get()
         self.node = ba.newnode('terrain',
                                delegate=self,
                                attrs={
@@ -75,7 +76,7 @@ class HockeyStadium(ba.Map):
                                    'color_texture':
                                        self.preloaddata['tex'],
                                    'materials': [
-                                       ba.sharedobj('footing_material'),
+                                       shared.footing_material,
                                        self.preloaddata['ice_material']
                                    ]
                                })
@@ -87,9 +88,7 @@ class HockeyStadium(ba.Map):
                        'background': True,
                        'color_texture': self.preloaddata['stands_tex']
                    })
-        mats = [
-            ba.sharedobj('footing_material'), self.preloaddata['ice_material']
-        ]
+        mats = [shared.footing_material, self.preloaddata['ice_material']]
         self.floor = ba.newnode('terrain',
                                 attrs={
                                     'model': self.preloaddata['models'][1],
@@ -105,7 +104,7 @@ class HockeyStadium(ba.Map):
                 'visible_in_reflections': False,
                 'color_texture': self.preloaddata['stands_tex']
             })
-        gnode = ba.sharedobj('globals')
+        gnode = ba.getactivity().globalsnode
         gnode.floor_reflection = True
         gnode.debris_friction = 0.3
         gnode.debris_kill_height = -0.3
@@ -145,6 +144,7 @@ class FootballStadium(ba.Map):
 
     def __init__(self) -> None:
         super().__init__()
+        shared = SharedObjects.get()
         self.node = ba.newnode(
             'terrain',
             delegate=self,
@@ -152,7 +152,7 @@ class FootballStadium(ba.Map):
                 'model': self.preloaddata['model'],
                 'collide_model': self.preloaddata['collide_model'],
                 'color_texture': self.preloaddata['tex'],
-                'materials': [ba.sharedobj('footing_material')]
+                'materials': [shared.footing_material]
             })
         ba.newnode('terrain',
                    attrs={
@@ -162,7 +162,7 @@ class FootballStadium(ba.Map):
                        'background': True,
                        'color_texture': self.preloaddata['tex']
                    })
-        gnode = ba.sharedobj('globals')
+        gnode = ba.getactivity().globalsnode
         gnode.tint = (1.3, 1.2, 1.0)
         gnode.ambient_color = (1.3, 1.2, 1.0)
         gnode.vignette_outer = (0.57, 0.57, 0.57)
@@ -218,6 +218,7 @@ class Bridgit(ba.Map):
 
     def __init__(self) -> None:
         super().__init__()
+        shared = SharedObjects.get()
         self.node = ba.newnode(
             'terrain',
             delegate=self,
@@ -225,7 +226,7 @@ class Bridgit(ba.Map):
                 'collide_model': self.preloaddata['collide_model'],
                 'model': self.preloaddata['model_top'],
                 'color_texture': self.preloaddata['tex'],
-                'materials': [ba.sharedobj('footing_material')]
+                'materials': [shared.footing_material]
             })
         self.bottom = ba.newnode('terrain',
                                  attrs={
@@ -253,7 +254,7 @@ class Bridgit(ba.Map):
             'terrain',
             attrs={
                 'collide_model': self.preloaddata['railing_collide_model'],
-                'materials': [ba.sharedobj('railing_material')],
+                'materials': [shared.railing_material],
                 'bumper': True
             })
         self.bg_collide = ba.newnode('terrain',
@@ -261,12 +262,12 @@ class Bridgit(ba.Map):
                                          'collide_model':
                                              self.preloaddata['collide_bg'],
                                          'materials': [
-                                             ba.sharedobj('footing_material'),
+                                             shared.footing_material,
                                              self.preloaddata['bg_material'],
-                                             ba.sharedobj('death_material')
+                                             shared.death_material
                                          ]
                                      })
-        gnode = ba.sharedobj('globals')
+        gnode = ba.getactivity().globalsnode
         gnode.tint = (1.1, 1.2, 1.3)
         gnode.ambient_color = (1.1, 1.2, 1.3)
         gnode.vignette_outer = (0.65, 0.6, 0.55)
@@ -312,6 +313,7 @@ class BigG(ba.Map):
 
     def __init__(self) -> None:
         super().__init__()
+        shared = SharedObjects.get()
         self.node = ba.newnode(
             'terrain',
             delegate=self,
@@ -320,7 +322,7 @@ class BigG(ba.Map):
                 'color': (0.7, 0.7, 0.7),
                 'model': self.preloaddata['model_top'],
                 'color_texture': self.preloaddata['tex'],
-                'materials': [ba.sharedobj('footing_material')]
+                'materials': [shared.footing_material]
             })
         self.bottom = ba.newnode('terrain',
                                  attrs={
@@ -349,7 +351,7 @@ class BigG(ba.Map):
             'terrain',
             attrs={
                 'collide_model': self.preloaddata['bumper_collide_model'],
-                'materials': [ba.sharedobj('railing_material')],
+                'materials': [shared.railing_material],
                 'bumper': True
             })
         self.bg_collide = ba.newnode('terrain',
@@ -357,12 +359,12 @@ class BigG(ba.Map):
                                          'collide_model':
                                              self.preloaddata['collide_bg'],
                                          'materials': [
-                                             ba.sharedobj('footing_material'),
+                                             shared.footing_material,
                                              self.preloaddata['bg_material'],
-                                             ba.sharedobj('death_material')
+                                             shared.death_material
                                          ]
                                      })
-        gnode = ba.sharedobj('globals')
+        gnode = ba.getactivity().globalsnode
         gnode.tint = (1.1, 1.2, 1.3)
         gnode.ambient_color = (1.1, 1.2, 1.3)
         gnode.vignette_outer = (0.65, 0.6, 0.55)
@@ -406,6 +408,7 @@ class Roundabout(ba.Map):
 
     def __init__(self) -> None:
         super().__init__(vr_overlay_offset=(0, -1, 1))
+        shared = SharedObjects.get()
         self.node = ba.newnode(
             'terrain',
             delegate=self,
@@ -413,7 +416,7 @@ class Roundabout(ba.Map):
                 'collide_model': self.preloaddata['collide_model'],
                 'model': self.preloaddata['model'],
                 'color_texture': self.preloaddata['tex'],
-                'materials': [ba.sharedobj('footing_material')]
+                'materials': [shared.footing_material]
             })
         self.bottom = ba.newnode('terrain',
                                  attrs={
@@ -442,19 +445,19 @@ class Roundabout(ba.Map):
                                          'collide_model':
                                              self.preloaddata['collide_bg'],
                                          'materials': [
-                                             ba.sharedobj('footing_material'),
+                                             shared.footing_material,
                                              self.preloaddata['bg_material'],
-                                             ba.sharedobj('death_material')
+                                             shared.death_material
                                          ]
                                      })
         self.railing = ba.newnode(
             'terrain',
             attrs={
                 'collide_model': self.preloaddata['railing_collide_model'],
-                'materials': [ba.sharedobj('railing_material')],
+                'materials': [shared.railing_material],
                 'bumper': True
             })
-        gnode = ba.sharedobj('globals')
+        gnode = ba.getactivity().globalsnode
         gnode.tint = (1.0, 1.05, 1.1)
         gnode.ambient_color = (1.0, 1.05, 1.1)
         gnode.shadow_ortho = True
@@ -499,6 +502,7 @@ class MonkeyFace(ba.Map):
 
     def __init__(self) -> None:
         super().__init__()
+        shared = SharedObjects.get()
         self.node = ba.newnode(
             'terrain',
             delegate=self,
@@ -506,7 +510,7 @@ class MonkeyFace(ba.Map):
                 'collide_model': self.preloaddata['collide_model'],
                 'model': self.preloaddata['model'],
                 'color_texture': self.preloaddata['tex'],
-                'materials': [ba.sharedobj('footing_material')]
+                'materials': [shared.footing_material]
             })
         self.bottom = ba.newnode('terrain',
                                  attrs={
@@ -535,19 +539,19 @@ class MonkeyFace(ba.Map):
                                          'collide_model':
                                              self.preloaddata['collide_bg'],
                                          'materials': [
-                                             ba.sharedobj('footing_material'),
+                                             shared.footing_material,
                                              self.preloaddata['bg_material'],
-                                             ba.sharedobj('death_material')
+                                             shared.death_material
                                          ]
                                      })
         self.railing = ba.newnode(
             'terrain',
             attrs={
                 'collide_model': self.preloaddata['railing_collide_model'],
-                'materials': [ba.sharedobj('railing_material')],
+                'materials': [shared.railing_material],
                 'bumper': True
             })
-        gnode = ba.sharedobj('globals')
+        gnode = ba.getactivity().globalsnode
         gnode.tint = (1.1, 1.2, 1.2)
         gnode.ambient_color = (1.2, 1.3, 1.3)
         gnode.vignette_outer = (0.60, 0.62, 0.66)
@@ -593,6 +597,7 @@ class ZigZag(ba.Map):
 
     def __init__(self) -> None:
         super().__init__()
+        shared = SharedObjects.get()
         self.node = ba.newnode(
             'terrain',
             delegate=self,
@@ -600,7 +605,7 @@ class ZigZag(ba.Map):
                 'collide_model': self.preloaddata['collide_model'],
                 'model': self.preloaddata['model'],
                 'color_texture': self.preloaddata['tex'],
-                'materials': [ba.sharedobj('footing_material')]
+                'materials': [shared.footing_material]
             })
         self.background = ba.newnode(
             'terrain',
@@ -628,19 +633,19 @@ class ZigZag(ba.Map):
                                          'collide_model':
                                              self.preloaddata['collide_bg'],
                                          'materials': [
-                                             ba.sharedobj('footing_material'),
+                                             shared.footing_material,
                                              self.preloaddata['bg_material'],
-                                             ba.sharedobj('death_material')
+                                             shared.death_material
                                          ]
                                      })
         self.railing = ba.newnode(
             'terrain',
             attrs={
                 'collide_model': self.preloaddata['railing_collide_model'],
-                'materials': [ba.sharedobj('railing_material')],
+                'materials': [shared.railing_material],
                 'bumper': True
             })
-        gnode = ba.sharedobj('globals')
+        gnode = ba.getactivity().globalsnode
         gnode.tint = (1.0, 1.15, 1.15)
         gnode.ambient_color = (1.0, 1.15, 1.15)
         gnode.vignette_outer = (0.57, 0.59, 0.63)
@@ -682,6 +687,7 @@ class ThePad(ba.Map):
 
     def __init__(self) -> None:
         super().__init__()
+        shared = SharedObjects.get()
         self.node = ba.newnode(
             'terrain',
             delegate=self,
@@ -689,7 +695,7 @@ class ThePad(ba.Map):
                 'collide_model': self.preloaddata['collide_model'],
                 'model': self.preloaddata['model'],
                 'color_texture': self.preloaddata['tex'],
-                'materials': [ba.sharedobj('footing_material')]
+                'materials': [shared.footing_material]
             })
         self.bottom = ba.newnode('terrain',
                                  attrs={
@@ -709,7 +715,7 @@ class ThePad(ba.Map):
             'terrain',
             attrs={
                 'collide_model': self.preloaddata['railing_collide_model'],
-                'materials': [ba.sharedobj('railing_material')],
+                'materials': [shared.railing_material],
                 'bumper': True
             })
         ba.newnode('terrain',
@@ -721,7 +727,7 @@ class ThePad(ba.Map):
                        'background': True,
                        'color_texture': self.preloaddata['vr_fill_mound_tex']
                    })
-        gnode = ba.sharedobj('globals')
+        gnode = ba.getactivity().globalsnode
         gnode.tint = (1.1, 1.1, 1.0)
         gnode.ambient_color = (1.1, 1.1, 1.0)
         gnode.vignette_outer = (0.7, 0.65, 0.75)
@@ -760,6 +766,7 @@ class DoomShroom(ba.Map):
 
     def __init__(self) -> None:
         super().__init__()
+        shared = SharedObjects.get()
         self.node = ba.newnode(
             'terrain',
             delegate=self,
@@ -767,7 +774,7 @@ class DoomShroom(ba.Map):
                 'collide_model': self.preloaddata['collide_model'],
                 'model': self.preloaddata['model'],
                 'color_texture': self.preloaddata['tex'],
-                'materials': [ba.sharedobj('footing_material')]
+                'materials': [shared.footing_material]
             })
         self.background = ba.newnode(
             'terrain',
@@ -791,16 +798,13 @@ class DoomShroom(ba.Map):
                                    'lighting': False,
                                    'color_texture': self.preloaddata['tex']
                                })
-        self.bg_collide = ba.newnode('terrain',
-                                     attrs={
-                                         'collide_model':
-                                             self.preloaddata['collide_bg'],
-                                         'materials': [
-                                             ba.sharedobj('footing_material'),
-                                             ba.sharedobj('death_material')
-                                         ]
-                                     })
-        gnode = ba.sharedobj('globals')
+        self.bg_collide = ba.newnode(
+            'terrain',
+            attrs={
+                'collide_model': self.preloaddata['collide_bg'],
+                'materials': [shared.footing_material, shared.death_material]
+            })
+        gnode = ba.getactivity().globalsnode
         gnode.tint = (0.82, 1.10, 1.15)
         gnode.ambient_color = (0.9, 1.3, 1.1)
         gnode.shadow_ortho = False
@@ -854,6 +858,7 @@ class LakeFrigid(ba.Map):
 
     def __init__(self) -> None:
         super().__init__()
+        shared = SharedObjects.get()
         self.node = ba.newnode('terrain',
                                delegate=self,
                                attrs={
@@ -864,7 +869,7 @@ class LakeFrigid(ba.Map):
                                    'color_texture':
                                        self.preloaddata['tex'],
                                    'materials': [
-                                       ba.sharedobj('footing_material'),
+                                       shared.footing_material,
                                        self.preloaddata['ice_material']
                                    ]
                                })
@@ -890,7 +895,7 @@ class LakeFrigid(ba.Map):
                        'background': True,
                        'color_texture': self.preloaddata['tex']
                    })
-        gnode = ba.sharedobj('globals')
+        gnode = ba.getactivity().globalsnode
         gnode.tint = (1, 1, 1)
         gnode.ambient_color = (1, 1, 1)
         gnode.shadow_ortho = True
@@ -931,6 +936,7 @@ class TipTop(ba.Map):
 
     def __init__(self) -> None:
         super().__init__(vr_overlay_offset=(0, -0.2, 2.5))
+        shared = SharedObjects.get()
         self.node = ba.newnode(
             'terrain',
             delegate=self,
@@ -939,7 +945,7 @@ class TipTop(ba.Map):
                 'model': self.preloaddata['model'],
                 'color_texture': self.preloaddata['tex'],
                 'color': (0.7, 0.7, 0.7),
-                'materials': [ba.sharedobj('footing_material')]
+                'materials': [shared.footing_material]
             })
         self.bottom = ba.newnode('terrain',
                                  attrs={
@@ -961,10 +967,10 @@ class TipTop(ba.Map):
             'terrain',
             attrs={
                 'collide_model': self.preloaddata['railing_collide_model'],
-                'materials': [ba.sharedobj('railing_material')],
+                'materials': [shared.railing_material],
                 'bumper': True
             })
-        gnode = ba.sharedobj('globals')
+        gnode = ba.getactivity().globalsnode
         gnode.tint = (0.8, 0.9, 1.3)
         gnode.ambient_color = (0.8, 0.9, 1.3)
         gnode.vignette_outer = (0.79, 0.79, 0.69)
@@ -1006,6 +1012,7 @@ class CragCastle(ba.Map):
 
     def __init__(self) -> None:
         super().__init__()
+        shared = SharedObjects.get()
         self.node = ba.newnode(
             'terrain',
             delegate=self,
@@ -1013,7 +1020,7 @@ class CragCastle(ba.Map):
                 'collide_model': self.preloaddata['collide_model'],
                 'model': self.preloaddata['model'],
                 'color_texture': self.preloaddata['tex'],
-                'materials': [ba.sharedobj('footing_material')]
+                'materials': [shared.footing_material]
             })
         self.bottom = ba.newnode('terrain',
                                  attrs={
@@ -1033,7 +1040,7 @@ class CragCastle(ba.Map):
             'terrain',
             attrs={
                 'collide_model': self.preloaddata['railing_collide_model'],
-                'materials': [ba.sharedobj('railing_material')],
+                'materials': [shared.railing_material],
                 'bumper': True
             })
         ba.newnode('terrain',
@@ -1045,7 +1052,7 @@ class CragCastle(ba.Map):
                        'background': True,
                        'color_texture': self.preloaddata['vr_fill_mound_tex']
                    })
-        gnode = ba.sharedobj('globals')
+        gnode = ba.getactivity().globalsnode
         gnode.shadow_ortho = True
         gnode.shadow_offset = (0, 0, -5.0)
         gnode.tint = (1.15, 1.05, 0.75)
@@ -1106,6 +1113,7 @@ class TowerD(ba.Map):
 
     def __init__(self) -> None:
         super().__init__(vr_overlay_offset=(0, 1, 1))
+        shared = SharedObjects.get()
         self.node = ba.newnode(
             'terrain',
             delegate=self,
@@ -1113,7 +1121,7 @@ class TowerD(ba.Map):
                 'collide_model': self.preloaddata['collide_model'],
                 'model': self.preloaddata['model'],
                 'color_texture': self.preloaddata['tex'],
-                'materials': [ba.sharedobj('footing_material')]
+                'materials': [shared.footing_material]
             })
         self.node_bottom = ba.newnode(
             'terrain',
@@ -1147,7 +1155,7 @@ class TowerD(ba.Map):
                 'affect_bg_dynamics': False,
                 'materials': [self.preloaddata['player_wall_material']]
             })
-        gnode = ba.sharedobj('globals')
+        gnode = ba.getactivity().globalsnode
         gnode.tint = (1.15, 1.11, 1.03)
         gnode.ambient_color = (1.2, 1.1, 1.0)
         gnode.vignette_outer = (0.7, 0.73, 0.7)
@@ -1209,6 +1217,7 @@ class HappyThoughts(ba.Map):
 
     def __init__(self) -> None:
         super().__init__(vr_overlay_offset=(0, -3.7, 2.5))
+        shared = SharedObjects.get()
         self.node = ba.newnode(
             'terrain',
             delegate=self,
@@ -1216,7 +1225,7 @@ class HappyThoughts(ba.Map):
                 'collide_model': self.preloaddata['collide_model'],
                 'model': self.preloaddata['model'],
                 'color_texture': self.preloaddata['tex'],
-                'materials': [ba.sharedobj('footing_material')]
+                'materials': [shared.footing_material]
             })
         self.bottom = ba.newnode('terrain',
                                  attrs={
@@ -1241,7 +1250,7 @@ class HappyThoughts(ba.Map):
                        'background': True,
                        'color_texture': self.preloaddata['vr_fill_mound_tex']
                    })
-        gnode = ba.sharedobj('globals')
+        gnode = ba.getactivity().globalsnode
         gnode.happy_thoughts_mode = True
         gnode.shadow_offset = (0.0, 8.0, 5.0)
         gnode.tint = (1.3, 1.23, 1.0)
@@ -1309,6 +1318,7 @@ class StepRightUp(ba.Map):
 
     def __init__(self) -> None:
         super().__init__(vr_overlay_offset=(0, -1, 2))
+        shared = SharedObjects.get()
         self.node = ba.newnode(
             'terrain',
             delegate=self,
@@ -1316,7 +1326,7 @@ class StepRightUp(ba.Map):
                 'collide_model': self.preloaddata['collide_model'],
                 'model': self.preloaddata['model'],
                 'color_texture': self.preloaddata['tex'],
-                'materials': [ba.sharedobj('footing_material')]
+                'materials': [shared.footing_material]
             })
         self.node_bottom = ba.newnode(
             'terrain',
@@ -1343,7 +1353,7 @@ class StepRightUp(ba.Map):
                 'background': True,
                 'color_texture': self.preloaddata['bgtex']
             })
-        gnode = ba.sharedobj('globals')
+        gnode = ba.getactivity().globalsnode
         gnode.tint = (1.2, 1.1, 1.0)
         gnode.ambient_color = (1.2, 1.1, 1.0)
         gnode.vignette_outer = (0.7, 0.65, 0.75)
@@ -1394,6 +1404,7 @@ class Courtyard(ba.Map):
 
     def __init__(self) -> None:
         super().__init__()
+        shared = SharedObjects.get()
         self.node = ba.newnode(
             'terrain',
             delegate=self,
@@ -1401,7 +1412,7 @@ class Courtyard(ba.Map):
                 'collide_model': self.preloaddata['collide_model'],
                 'model': self.preloaddata['model'],
                 'color_texture': self.preloaddata['tex'],
-                'materials': [ba.sharedobj('footing_material')]
+                'materials': [shared.footing_material]
             })
         self.background = ba.newnode(
             'terrain',
@@ -1437,7 +1448,7 @@ class Courtyard(ba.Map):
                     'affect_bg_dynamics': False,
                     'materials': [self.preloaddata['player_wall_material']]
                 })
-        gnode = ba.sharedobj('globals')
+        gnode = ba.getactivity().globalsnode
         gnode.tint = (1.2, 1.17, 1.1)
         gnode.ambient_color = (1.2, 1.17, 1.1)
         gnode.vignette_outer = (0.6, 0.6, 0.64)
@@ -1489,6 +1500,7 @@ class Rampage(ba.Map):
 
     def __init__(self) -> None:
         super().__init__(vr_overlay_offset=(0, 0, 2))
+        shared = SharedObjects.get()
         self.node = ba.newnode(
             'terrain',
             delegate=self,
@@ -1496,7 +1508,7 @@ class Rampage(ba.Map):
                 'collide_model': self.preloaddata['collide_model'],
                 'model': self.preloaddata['model'],
                 'color_texture': self.preloaddata['tex'],
-                'materials': [ba.sharedobj('footing_material')]
+                'materials': [shared.footing_material]
             })
         self.background = ba.newnode(
             'terrain',
@@ -1531,10 +1543,10 @@ class Rampage(ba.Map):
             'terrain',
             attrs={
                 'collide_model': self.preloaddata['railing_collide_model'],
-                'materials': [ba.sharedobj('railing_material')],
+                'materials': [shared.railing_material],
                 'bumper': True
             })
-        gnode = ba.sharedobj('globals')
+        gnode = ba.getactivity().globalsnode
         gnode.tint = (1.2, 1.1, 0.97)
         gnode.ambient_color = (1.3, 1.2, 1.03)
         gnode.vignette_outer = (0.62, 0.64, 0.69)

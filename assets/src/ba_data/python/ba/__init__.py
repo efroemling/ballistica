@@ -39,7 +39,8 @@ from _ba import (CollideModel, Context, ContextCall, Data, InputDevice,
                  open_url, widget)
 from ba._activity import Activity
 from ba._actor import Actor
-from ba._player import PlayerInfo, Player, playercast, playercast_o
+from ba._player import (PlayerInfo, Player, playercast, playercast_o,
+                        StandLocation)
 from ba._nodeactor import NodeActor
 from ba._app import App
 from ba._coopgame import CoopGameActivity
@@ -71,7 +72,7 @@ from ba._appdelegate import AppDelegate
 from ba._apputils import is_browser_likely_available
 from ba._campaign import Campaign
 from ba._gameutils import (animate, animate_array, show_damage_count,
-                           sharedobj, timestring, cameraflash)
+                           timestring, cameraflash)
 from ba._general import (WeakCall, Call, existing, Existable,
                          verify_object_death)
 from ba._level import Level

@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-05-28 for Ballistica version 1.5.0 build 20033</em></h4>
+<h4><em>last updated on 2020-05-29 for Ballistica version 1.5.0 build 20033</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -40,6 +40,7 @@
    </ul>
    <li><a href="#class_ba_SessionPlayer">ba.SessionPlayer</a></li>
    <li><a href="#class_ba_SessionTeam">ba.SessionTeam</a></li>
+   <li><a href="#class_ba_StandLocation">ba.StandLocation</a></li>
    <li><a href="#class_ba_Stats">ba.Stats</a></li>
    <li><a href="#class_ba_Team">ba.Team</a></li>
    <li><a href="#class_ba_TeamGameResults">ba.TeamGameResults</a></li>
@@ -61,7 +62,6 @@
    <li><a href="#function_ba_playsound">ba.playsound()</a></li>
    <li><a href="#function_ba_printnodes">ba.printnodes()</a></li>
    <li><a href="#function_ba_setmusic">ba.setmusic()</a></li>
-   <li><a href="#function_ba_sharedobj">ba.sharedobj()</a></li>
    <li><a href="#function_ba_show_damage_count">ba.show_damage_count()</a></li>
 </ul>
 <h4><a name="class_category_General_Utility_Classes">General Utility Classes</a></h4>
@@ -345,7 +345,7 @@ actually award achievements.</p>
     can overlap during transitions.</p>
 
 <h3>Attributes:</h3>
-<h5><a href="#attr_ba_Activity__expired">expired</a>, <a href="#attr_ba_Activity__players">players</a>, <a href="#attr_ba_Activity__playertype">playertype</a>, <a href="#attr_ba_Activity__session">session</a>, <a href="#attr_ba_Activity__settings_raw">settings_raw</a>, <a href="#attr_ba_Activity__stats">stats</a>, <a href="#attr_ba_Activity__teams">teams</a>, <a href="#attr_ba_Activity__teamtype">teamtype</a></h5>
+<h5><a href="#attr_ba_Activity__expired">expired</a>, <a href="#attr_ba_Activity__globalsnode">globalsnode</a>, <a href="#attr_ba_Activity__players">players</a>, <a href="#attr_ba_Activity__playertype">playertype</a>, <a href="#attr_ba_Activity__session">session</a>, <a href="#attr_ba_Activity__settings_raw">settings_raw</a>, <a href="#attr_ba_Activity__stats">stats</a>, <a href="#attr_ba_Activity__teams">teams</a>, <a href="#attr_ba_Activity__teamtype">teamtype</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_Activity__expired">expired</a></h4></dt><dd>
 <p><span>bool</span></p>
@@ -354,6 +354,12 @@ actually award achievements.</p>
 <p>        An activity is set as expired when shutting down.
         At this point no new nodes, timers, etc should be made,
         run, etc, and the activity should be considered a 'zombie'.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_Activity__globalsnode">globalsnode</a></h4></dt><dd>
+<p><span><a href="#class_ba_Node">ba.Node</a></span></p>
+<p>The 'globals' <a href="#class_ba_Node">ba.Node</a> for the activity. This contains various
+        global controls and values.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_Activity__players">players</a></h4></dt><dd>
@@ -1541,7 +1547,7 @@ start_long_action(callback_when_done=<a href="#class_ba_ContextCall">ba.ContextC
 <h3>Attributes Inherited:</h3>
 <h5><a href="#attr_ba_Activity__players">players</a>, <a href="#attr_ba_Activity__settings_raw">settings_raw</a>, <a href="#attr_ba_Activity__teams">teams</a></h5>
 <h3>Attributes Defined Here:</h3>
-<h5><a href="#attr_ba_CoopGameActivity__expired">expired</a>, <a href="#attr_ba_CoopGameActivity__map">map</a>, <a href="#attr_ba_CoopGameActivity__playertype">playertype</a>, <a href="#attr_ba_CoopGameActivity__session">session</a>, <a href="#attr_ba_CoopGameActivity__stats">stats</a>, <a href="#attr_ba_CoopGameActivity__teamtype">teamtype</a></h5>
+<h5><a href="#attr_ba_CoopGameActivity__expired">expired</a>, <a href="#attr_ba_CoopGameActivity__globalsnode">globalsnode</a>, <a href="#attr_ba_CoopGameActivity__map">map</a>, <a href="#attr_ba_CoopGameActivity__playertype">playertype</a>, <a href="#attr_ba_CoopGameActivity__session">session</a>, <a href="#attr_ba_CoopGameActivity__stats">stats</a>, <a href="#attr_ba_CoopGameActivity__teamtype">teamtype</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_CoopGameActivity__expired">expired</a></h4></dt><dd>
 <p><span>bool</span></p>
@@ -1550,6 +1556,12 @@ start_long_action(callback_when_done=<a href="#class_ba_ContextCall">ba.ContextC
 <p>        An activity is set as expired when shutting down.
         At this point no new nodes, timers, etc should be made,
         run, etc, and the activity should be considered a 'zombie'.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_CoopGameActivity__globalsnode">globalsnode</a></h4></dt><dd>
+<p><span><a href="#class_ba_Node">ba.Node</a></span></p>
+<p>The 'globals' <a href="#class_ba_Node">ba.Node</a> for the activity. This contains various
+        global controls and values.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_CoopGameActivity__map">map</a></h4></dt><dd>
@@ -1660,11 +1672,17 @@ and it should begin its actual game logic.</p>
 <h3>Attributes Inherited:</h3>
 <h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__teams">teams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
 <h3>Attributes Defined Here:</h3>
+<h5><a href="#attr_ba_CoopSession__campaign">campaign</a>, <a href="#attr_ba_CoopSession__sessionglobalsnode">sessionglobalsnode</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_CoopSession__campaign">campaign</a></h4></dt><dd>
 <p><span>Optional[<a href="#class_ba_Campaign">ba.Campaign</a>]</span></p>
 <p>The <a href="#class_ba_Campaign">ba.Campaign</a> instance this Session represents, or None if
 there is no associated Campaign.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_CoopSession__sessionglobalsnode">sessionglobalsnode</a></h4></dt><dd>
+<p><span><a href="#class_ba_Node">ba.Node</a></span></p>
+<p>The sessionglobals <a href="#class_ba_Node">ba.Node</a> for the session.</p>
 
 </dd>
 </dl>
@@ -2011,6 +2029,14 @@ its time with lingering corpses, sound effects, etc.</p>
 
 <h3>Attributes Inherited:</h3>
 <h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__teams">teams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
+<h3>Attributes Defined Here:</h3>
+<dl>
+<dt><h4><a name="attr_ba_DualTeamSession__sessionglobalsnode">sessionglobalsnode</a></h4></dt><dd>
+<p><span><a href="#class_ba_Node">ba.Node</a></span></p>
+<p>The sessionglobals <a href="#class_ba_Node">ba.Node</a> for the session.</p>
+
+</dd>
+</dl>
 <h3>Methods Inherited:</h3>
 <h5><a href="#method_ba_MultiTeamSession__announce_game_results">announce_game_results()</a>, <a href="#method_ba_MultiTeamSession__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_MultiTeamSession__end">end()</a>, <a href="#method_ba_MultiTeamSession__end_activity">end_activity()</a>, <a href="#method_ba_MultiTeamSession__get_custom_menu_entries">get_custom_menu_entries()</a>, <a href="#method_ba_MultiTeamSession__get_ffa_series_length">get_ffa_series_length()</a>, <a href="#method_ba_MultiTeamSession__get_game_number">get_game_number()</a>, <a href="#method_ba_MultiTeamSession__get_max_players">get_max_players()</a>, <a href="#method_ba_MultiTeamSession__get_next_game_description">get_next_game_description()</a>, <a href="#method_ba_MultiTeamSession__get_series_length">get_series_length()</a>, <a href="#method_ba_MultiTeamSession__getactivity">getactivity()</a>, <a href="#method_ba_MultiTeamSession__handlemessage">handlemessage()</a>, <a href="#method_ba_MultiTeamSession__launch_end_session_activity">launch_end_session_activity()</a>, <a href="#method_ba_MultiTeamSession__on_activity_end">on_activity_end()</a>, <a href="#method_ba_MultiTeamSession__on_player_leave">on_player_leave()</a>, <a href="#method_ba_MultiTeamSession__on_player_request">on_player_request()</a>, <a href="#method_ba_MultiTeamSession__on_team_join">on_team_join()</a>, <a href="#method_ba_MultiTeamSession__on_team_leave">on_team_leave()</a>, <a href="#method_ba_MultiTeamSession__set_activity">set_activity()</a>, <a href="#method_ba_MultiTeamSession__transitioning_out_activity_was_freed">transitioning_out_activity_was_freed()</a></h5>
 <h3>Methods Defined or Overridden:</h3>
@@ -2049,6 +2075,14 @@ its time with lingering corpses, sound effects, etc.</p>
 
 <h3>Attributes Inherited:</h3>
 <h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__teams">teams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
+<h3>Attributes Defined Here:</h3>
+<dl>
+<dt><h4><a name="attr_ba_FreeForAllSession__sessionglobalsnode">sessionglobalsnode</a></h4></dt><dd>
+<p><span><a href="#class_ba_Node">ba.Node</a></span></p>
+<p>The sessionglobals <a href="#class_ba_Node">ba.Node</a> for the session.</p>
+
+</dd>
+</dl>
 <h3>Methods Inherited:</h3>
 <h5><a href="#method_ba_MultiTeamSession__announce_game_results">announce_game_results()</a>, <a href="#method_ba_MultiTeamSession__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_MultiTeamSession__end">end()</a>, <a href="#method_ba_MultiTeamSession__end_activity">end_activity()</a>, <a href="#method_ba_MultiTeamSession__get_custom_menu_entries">get_custom_menu_entries()</a>, <a href="#method_ba_MultiTeamSession__get_ffa_series_length">get_ffa_series_length()</a>, <a href="#method_ba_MultiTeamSession__get_game_number">get_game_number()</a>, <a href="#method_ba_MultiTeamSession__get_max_players">get_max_players()</a>, <a href="#method_ba_MultiTeamSession__get_next_game_description">get_next_game_description()</a>, <a href="#method_ba_MultiTeamSession__get_series_length">get_series_length()</a>, <a href="#method_ba_MultiTeamSession__getactivity">getactivity()</a>, <a href="#method_ba_MultiTeamSession__handlemessage">handlemessage()</a>, <a href="#method_ba_MultiTeamSession__launch_end_session_activity">launch_end_session_activity()</a>, <a href="#method_ba_MultiTeamSession__on_activity_end">on_activity_end()</a>, <a href="#method_ba_MultiTeamSession__on_player_leave">on_player_leave()</a>, <a href="#method_ba_MultiTeamSession__on_player_request">on_player_request()</a>, <a href="#method_ba_MultiTeamSession__on_team_join">on_team_join()</a>, <a href="#method_ba_MultiTeamSession__on_team_leave">on_team_leave()</a>, <a href="#method_ba_MultiTeamSession__set_activity">set_activity()</a>, <a href="#method_ba_MultiTeamSession__transitioning_out_activity_was_freed">transitioning_out_activity_was_freed()</a></h5>
 <h3>Methods Defined or Overridden:</h3>
@@ -2098,7 +2132,7 @@ its time with lingering corpses, sound effects, etc.</p>
 <h3>Attributes Inherited:</h3>
 <h5><a href="#attr_ba_Activity__players">players</a>, <a href="#attr_ba_Activity__settings_raw">settings_raw</a>, <a href="#attr_ba_Activity__teams">teams</a></h5>
 <h3>Attributes Defined Here:</h3>
-<h5><a href="#attr_ba_GameActivity__expired">expired</a>, <a href="#attr_ba_GameActivity__map">map</a>, <a href="#attr_ba_GameActivity__playertype">playertype</a>, <a href="#attr_ba_GameActivity__session">session</a>, <a href="#attr_ba_GameActivity__stats">stats</a>, <a href="#attr_ba_GameActivity__teamtype">teamtype</a></h5>
+<h5><a href="#attr_ba_GameActivity__expired">expired</a>, <a href="#attr_ba_GameActivity__globalsnode">globalsnode</a>, <a href="#attr_ba_GameActivity__map">map</a>, <a href="#attr_ba_GameActivity__playertype">playertype</a>, <a href="#attr_ba_GameActivity__session">session</a>, <a href="#attr_ba_GameActivity__stats">stats</a>, <a href="#attr_ba_GameActivity__teamtype">teamtype</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_GameActivity__expired">expired</a></h4></dt><dd>
 <p><span>bool</span></p>
@@ -2107,6 +2141,12 @@ its time with lingering corpses, sound effects, etc.</p>
 <p>        An activity is set as expired when shutting down.
         At this point no new nodes, timers, etc should be made,
         run, etc, and the activity should be considered a 'zombie'.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_GameActivity__globalsnode">globalsnode</a></h4></dt><dd>
+<p><span><a href="#class_ba_Node">ba.Node</a></span></p>
+<p>The 'globals' <a href="#class_ba_Node">ba.Node</a> for the activity. This contains various
+        global controls and values.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_GameActivity__map">map</a></h4></dt><dd>
@@ -3299,7 +3339,7 @@ m.add_actions(actions=(('modify_part_collision', 'physical', False),
 <pre><span><em><small># example 3: play some sounds when we're contacting the ground:</small></em></span>
 m = <a href="#class_ba_Material">ba.Material</a>()
 m.add_actions(conditions=('they_have_material',
-                          <a href="#function_ba_sharedobj">ba.sharedobj</a>('footing_material')),
+                          shared.footing_material),
               actions=(('impact_sound', <a href="#function_ba_getsound">ba.getsound</a>('metalHit'), 2, 5),
                        ('skid_sound', <a href="#function_ba_getsound">ba.getsound</a>('metalSkid'), 2, 5)))</pre>
 
@@ -3329,6 +3369,14 @@ Use <a href="#function_ba_getmodel">ba.getmodel</a>() to instantiate one.</p>
 
 <h3>Attributes Inherited:</h3>
 <h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__teams">teams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
+<h3>Attributes Defined Here:</h3>
+<dl>
+<dt><h4><a name="attr_ba_MultiTeamSession__sessionglobalsnode">sessionglobalsnode</a></h4></dt><dd>
+<p><span><a href="#class_ba_Node">ba.Node</a></span></p>
+<p>The sessionglobals <a href="#class_ba_Node">ba.Node</a> for the session.</p>
+
+</dd>
+</dl>
 <h3>Methods Inherited:</h3>
 <h5><a href="#method_ba_Session__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_Session__end">end()</a>, <a href="#method_ba_Session__end_activity">end_activity()</a>, <a href="#method_ba_Session__get_custom_menu_entries">get_custom_menu_entries()</a>, <a href="#method_ba_Session__getactivity">getactivity()</a>, <a href="#method_ba_Session__handlemessage">handlemessage()</a>, <a href="#method_ba_Session__launch_end_session_activity">launch_end_session_activity()</a>, <a href="#method_ba_Session__on_player_leave">on_player_leave()</a>, <a href="#method_ba_Session__on_player_request">on_player_request()</a>, <a href="#method_ba_Session__on_team_leave">on_team_leave()</a>, <a href="#method_ba_Session__set_activity">set_activity()</a>, <a href="#method_ba_Session__transitioning_out_activity_was_freed">transitioning_out_activity_was_freed()</a></h5>
 <h3>Methods Defined or Overridden:</h3>
@@ -4272,7 +4320,7 @@ Pass 0 or a negative number for no ban time.</p>
     maintaining state between them (players, teams, score tallies, etc).</p>
 
 <h3>Attributes:</h3>
-<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__teams">teams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
+<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__sessionglobalsnode">sessionglobalsnode</a>, <a href="#attr_ba_Session__teams">teams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a></h4></dt><dd>
 <p><span>bool</span></p>
@@ -4304,6 +4352,11 @@ to proceed past the initial joining screen.</p>
 <p>All <a href="#class_ba_Player">ba.Players</a> in the Session. Most things should use the player
 list in <a href="#class_ba_Activity">ba.Activity</a>; not this. Some players, such as those who have
 not yet selected a character, will only appear on this list.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_Session__sessionglobalsnode">sessionglobalsnode</a></h4></dt><dd>
+<p><span><a href="#class_ba_Node">ba.Node</a></span></p>
+<p>The sessionglobals <a href="#class_ba_Node">ba.Node</a> for the session.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_Session__teams">teams</a></h4></dt><dd>
@@ -4812,6 +4865,22 @@ of the session.</p>
 <li>MIKIROG</li>
 </ul>
 <hr>
+<h2><strong><a name="class_ba_StandLocation">ba.StandLocation</a></strong></h3>
+<p><em>&lt;top level class&gt;</em>
+</p>
+<p>Describes a point in space and an angle to face.</p>
+
+<p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a>
+</p>
+
+<h3>Methods:</h3>
+<dl>
+<dt><h4><a name="method_ba_StandLocation____init__">&lt;constructor&gt;</a></dt></h4><dd>
+<p><span>ba.StandLocation(position: _<a href="#class_ba_Vec3">ba.Vec3</a>, angle: Optional[float] = None)</span></p>
+
+</dd>
+</dl>
+<hr>
 <h2><strong><a name="class_ba_StandMessage">ba.StandMessage</a></strong></h3>
 <p><em>&lt;top level class&gt;</em>
 </p>
@@ -4961,7 +5030,7 @@ of the session.</p>
 <h3>Attributes Inherited:</h3>
 <h5><a href="#attr_ba_Activity__players">players</a>, <a href="#attr_ba_Activity__settings_raw">settings_raw</a>, <a href="#attr_ba_Activity__teams">teams</a></h5>
 <h3>Attributes Defined Here:</h3>
-<h5><a href="#attr_ba_TeamGameActivity__expired">expired</a>, <a href="#attr_ba_TeamGameActivity__map">map</a>, <a href="#attr_ba_TeamGameActivity__playertype">playertype</a>, <a href="#attr_ba_TeamGameActivity__session">session</a>, <a href="#attr_ba_TeamGameActivity__stats">stats</a>, <a href="#attr_ba_TeamGameActivity__teamtype">teamtype</a></h5>
+<h5><a href="#attr_ba_TeamGameActivity__expired">expired</a>, <a href="#attr_ba_TeamGameActivity__globalsnode">globalsnode</a>, <a href="#attr_ba_TeamGameActivity__map">map</a>, <a href="#attr_ba_TeamGameActivity__playertype">playertype</a>, <a href="#attr_ba_TeamGameActivity__session">session</a>, <a href="#attr_ba_TeamGameActivity__stats">stats</a>, <a href="#attr_ba_TeamGameActivity__teamtype">teamtype</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_TeamGameActivity__expired">expired</a></h4></dt><dd>
 <p><span>bool</span></p>
@@ -4970,6 +5039,12 @@ of the session.</p>
 <p>        An activity is set as expired when shutting down.
         At this point no new nodes, timers, etc should be made,
         run, etc, and the activity should be considered a 'zombie'.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_TeamGameActivity__globalsnode">globalsnode</a></h4></dt><dd>
+<p><span><a href="#class_ba_Node">ba.Node</a></span></p>
+<p>The 'globals' <a href="#class_ba_Node">ba.Node</a> for the activity. This contains various
+        global controls and values.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_TeamGameActivity__map">map</a></h4></dt><dd>
@@ -6302,54 +6377,6 @@ user can override particular game music with their own.</p>
 
 <p>if 'continuous' is True and musictype is the same as what is already
 playing, the playing track will not be restarted.</p>
-
-<hr>
-<h2><strong><a name="function_ba_sharedobj">ba.sharedobj()</a></strong></h3>
-<p><span>sharedobj(name: str) -&gt; Any</span></p>
-
-<p>Return a predefined object for the current Activity, creating if needed.</p>
-
-<p>Category: <a href="#function_category_Gameplay_Functions">Gameplay Functions</a></p>
-
-<p>Available values for 'name':</p>
-
-<p>'globals': returns the 'globals' <a href="#class_ba_Node">ba.Node</a>, containing various global
-  controls & values.</p>
-
-<p>'object_material': a <a href="#class_ba_Material">ba.Material</a> that should be applied to any small,
-  normal, physical objects such as bombs, boxes, players, etc. Other
-  materials often check for the  presence of this material as a
-  prerequisite for performing certain actions (such as disabling collisions
-  between initially-overlapping objects)</p>
-
-<p>'player_material': a <a href="#class_ba_Material">ba.Material</a> to be applied to player parts.  Generally,
-  materials related to the process of scoring when reaching a goal, etc
-  will look for the presence of this material on things that hit them.</p>
-
-<p>'pickup_material': a <a href="#class_ba_Material">ba.Material</a>; collision shapes used for picking things
-  up will have this material applied. To prevent an object from being
-  picked up, you can add a material that disables collisions against things
-  containing this material.</p>
-
-<p>'footing_material': anything that can be 'walked on' should have this
-  <a href="#class_ba_Material">ba.Material</a> applied; generally just terrain and whatnot. A character will
-  snap upright whenever touching something with this material so it should
-  not be applied to props, etc.</p>
-
-<p>'attack_material': a <a href="#class_ba_Material">ba.Material</a> applied to explosion shapes, punch
-  shapes, etc.  An object not wanting to receive impulse/etc messages can
-  disable collisions against this material.</p>
-
-<p>'death_material': a <a href="#class_ba_Material">ba.Material</a> that sends a <a href="#class_ba_DieMessage">ba.DieMessage</a>() to anything
-  that touches it; handy for terrain below a cliff, etc.</p>
-
-<p>'region_material':  a <a href="#class_ba_Material">ba.Material</a> used for non-physical collision shapes
-  (regions); collisions can generally be allowed with this material even
-  when initially overlapping since it is not physical.</p>
-
-<p>'railing_material': a <a href="#class_ba_Material">ba.Material</a> with a very low friction/stiffness/etc
-  that can be applied to invisible 'railings' useful for gently keeping
-  characters from falling off of cliffs.</p>
 
 <hr>
 <h2><strong><a name="function_ba_show_damage_count">ba.show_damage_count()</a></strong></h3>
