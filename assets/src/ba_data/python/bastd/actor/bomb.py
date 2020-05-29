@@ -626,8 +626,7 @@ class Blast(ba.Actor):
             ba.timer(0.4, _extra_debris_sound)
 
     def handlemessage(self, msg: Any) -> Any:
-        if __debug__:
-            self._handlemessage_sanity_check()
+        assert not self.expired
 
         if isinstance(msg, ba.DieMessage):
             if self.node:

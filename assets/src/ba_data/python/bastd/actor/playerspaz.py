@@ -90,6 +90,8 @@ class PlayerSpaz(Spaz):
         self._player = player
         self._drive_player_position()
 
+    # Overloads to tell the type system our return type based on doraise val.
+
     @overload
     def getplayer(self,
                   playertype: Type[PlayerType],
@@ -144,9 +146,9 @@ class PlayerSpaz(Spaz):
         player.assign_input_call('upDown', self.on_move_up_down)
         player.assign_input_call('leftRight', self.on_move_left_right)
         player.assign_input_call('holdPositionPress',
-                                 self._on_hold_position_press)
+                                 self.on_hold_position_press)
         player.assign_input_call('holdPositionRelease',
-                                 self._on_hold_position_release)
+                                 self.on_hold_position_release)
         if enable_jump:
             player.assign_input_call('jumpPress', self.on_jump_press)
             player.assign_input_call('jumpRelease', self.on_jump_release)
@@ -179,7 +181,7 @@ class PlayerSpaz(Spaz):
             # Send releases for anything in case its held.
             self.on_move_up_down(0)
             self.on_move_left_right(0)
-            self._on_hold_position_release()
+            self.on_hold_position_release()
             self.on_jump_release()
             self.on_pickup_release()
             self.on_punch_release()
@@ -195,8 +197,7 @@ class PlayerSpaz(Spaz):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-nested-blocks
-        if __debug__:
-            self._handlemessage_sanity_check()
+        assert not self.expired
 
         # Keep track of if we're being held and by who most recently.
         if isinstance(msg, ba.PickedUpMessage):
@@ -292,7 +293,8 @@ class PlayerSpaz(Spaz):
             if activity is not None and self._player.exists():
                 activity.handlemessage(PlayerSpazHurtMessage(self))
         else:
-            super().handlemessage(msg)
+            return super().handlemessage(msg)
+        return None
 
     def _drive_player_position(self) -> None:
         """Drive our ba.Player's official position

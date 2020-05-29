@@ -229,8 +229,7 @@ class Text(ba.Actor):
                      ba.WeakCall(self.handlemessage, ba.DieMessage()))
 
     def handlemessage(self, msg: Any) -> Any:
-        if __debug__:
-            self._handlemessage_sanity_check()
+        assert not self.expired
         if isinstance(msg, ba.DieMessage):
             if self.node:
                 self.node.delete()

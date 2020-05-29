@@ -105,7 +105,7 @@ class FileCache:
         # if anything has been modified, don't write.
         for fname, mtime in self.mtimes.items():
             if os.path.getmtime(fname) != mtime:
-                print(f'{Clr.YLW}File changed during run:'
+                print(f'{Clr.MAG}File changed during run:'
                       f' "{fname}"; cache not updated.{Clr.RST}')
                 return
         out = json.dumps(self.entries)

@@ -428,7 +428,7 @@ class Spaz(ba.Actor):
             return
         self.node.pickup_pressed = False
 
-    def _on_hold_position_press(self) -> None:
+    def on_hold_position_press(self) -> None:
         """
         Called to 'press hold-position' on this spaz;
         used for player or AI connections.
@@ -438,7 +438,7 @@ class Spaz(ba.Actor):
         self.node.hold_position_pressed = True
         self._turbo_filter_add_press('holdposition')
 
-    def _on_hold_position_release(self) -> None:
+    def on_hold_position_release(self) -> None:
         """
         Called to 'release hold-position' on this spaz;
         used for player or AI connections.
@@ -695,8 +695,7 @@ class Spaz(ba.Actor):
         # pylint: disable=too-many-return-statements
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
-        if __debug__:
-            self._handlemessage_sanity_check()
+        assert not self.expired
 
         if isinstance(msg, ba.PickedUpMessage):
             if self.node:

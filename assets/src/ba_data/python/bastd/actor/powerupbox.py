@@ -293,9 +293,7 @@ class PowerupBox(ba.Actor):
             self.node.flashing = True
 
     def handlemessage(self, msg: Any) -> Any:
-        # pylint: disable=too-many-branches
-        if __debug__:
-            self._handlemessage_sanity_check()
+        assert not self.expired
 
         if isinstance(msg, ba.PowerupAcceptMessage):
             factory = PowerupBoxFactory.get()
@@ -330,4 +328,5 @@ class PowerupBox(ba.Actor):
             if msg.hit_type != 'punch':
                 self.handlemessage(ba.DieMessage())
         else:
-            super().handlemessage(msg)
+            return super().handlemessage(msg)
+        return None

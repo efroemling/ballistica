@@ -26,7 +26,7 @@ import weakref
 from typing import TYPE_CHECKING, TypeVar, overload
 
 from ba._messages import DieMessage, DeathType, OutOfBoundsMessage, UNHANDLED
-from ba._error import print_error, print_exception, ActivityNotFoundError
+from ba._error import print_exception, ActivityNotFoundError
 import _ba
 
 if TYPE_CHECKING:
@@ -106,8 +106,7 @@ class Actor:
 
     def handlemessage(self, msg: Any) -> Any:
         """General message handling; can be passed any message object."""
-        if __debug__:
-            self._handlemessage_sanity_check()
+        assert not self.expired
 
         # By default, actors going out-of-bounds simply kill themselves.
         if isinstance(msg, OutOfBoundsMessage):
@@ -135,9 +134,9 @@ class Actor:
     def on_expire(self) -> None:
         """Called for remaining ba.Actors when their ba.Activity shuts down.
 
-        Actors can use this opportunity to clear callbacks
-        or other references which have the potential of keeping the
-        ba.Activity alive inadvertently (Activities can not exit cleanly while
+        Actors can use this opportunity to clear callbacks or other
+        references which have the potential of keeping the ba.Activity
+        alive inadvertently (Activities can not exit cleanly while
         any Python references to them remain.)
 
         Once an actor is expired (see ba.Actor.is_expired()) it should no
@@ -188,22 +187,6 @@ class Actor:
         they are Alive or not.
         """
         return True
-
-    def _handlemessage_sanity_check(self) -> None:
-        """Make sure things are kosher in handlemessage().
-
-        Place this in an 'if __debug__:' clause at the top of handlemessage()
-        overrides. This will will complain if anything is sending the Actor
-        messages after the activity has ended, which should be explicitly
-        avoided.
-        """
-        if not __debug__:
-            print_error('This should only be called in __debug__ mode.',
-                        once=True)
-        if not getattr(self, '_root_actor_init_called', False):
-            print_error('Root Actor __init__() not called.')
-        if self.expired:
-            print_error(f'handlemessage() called on expired actor: {self}')
 
     @property
     def activity(self) -> ba.Activity:

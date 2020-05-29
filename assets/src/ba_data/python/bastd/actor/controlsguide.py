@@ -468,8 +468,7 @@ class ControlsGuide(ba.Actor):
         return not self._dead
 
     def handlemessage(self, msg: Any) -> Any:
-        if __debug__:
-            self._handlemessage_sanity_check()
+        assert not self.expired
         if isinstance(msg, ba.DieMessage):
             if msg.immediate:
                 self._die()

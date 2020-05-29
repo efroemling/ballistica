@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-05-29 for Ballistica version 1.5.0 build 20033</em></h4>
+<h4><em>last updated on 2020-05-29 for Ballistica version 1.5.0 build 20034</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -741,9 +741,9 @@ they are Alive or not.</p>
 
 <p>Called for remaining <a href="#class_ba_Actor">ba.Actors</a> when their <a href="#class_ba_Activity">ba.Activity</a> shuts down.</p>
 
-<p>Actors can use this opportunity to clear callbacks
-or other references which have the potential of keeping the
-<a href="#class_ba_Activity">ba.Activity</a> alive inadvertently (Activities can not exit cleanly while
+<p>Actors can use this opportunity to clear callbacks or other
+references which have the potential of keeping the <a href="#class_ba_Activity">ba.Activity</a>
+alive inadvertently (Activities can not exit cleanly while
 any Python references to them remain.)</p>
 
 <p>Once an actor is expired (see <a href="#class_ba_Actor">ba.Actor</a>.is_expired()) it should no
