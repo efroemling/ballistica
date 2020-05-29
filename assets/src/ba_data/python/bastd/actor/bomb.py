@@ -852,18 +852,10 @@ class Bomb(ba.Actor):
 
     def get_source_player(
             self, playertype: Type[PlayerType]) -> Optional[PlayerType]:
-        """Return the source-player if there is one and they still exist.
-
-        The type of player for the current activity should be passed so that
-        the type-checker properly identifies the returned value as one.
-        """
+        """Return the source-player if one exists and is the provided type."""
         player: Any = self._source_player
-        assert isinstance(player, (playertype, type(None)))
-
-        # We should not be delivering invalid refs.
-        # (technically if someone holds on to this message this can happen)
-        assert player is None or player.exists()
-        return player
+        return (player if isinstance(player, playertype) and player.exists()
+                else None)
 
     def on_expire(self) -> None:
         super().on_expire()

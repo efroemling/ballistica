@@ -301,7 +301,7 @@ class HitMessage:
         self.velocity_magnitude = velocity_magnitude
         self.radius = radius
 
-        # Invalid refs should never be passed to things.
+        # We should not be getting passed an invalid ref.
         assert source_player is None or source_player.exists()
         self._source_player = source_player
         self.kick_back = kick_back
@@ -313,18 +313,16 @@ class HitMessage:
 
     def get_source_player(
             self, playertype: Type[PlayerType]) -> Optional[PlayerType]:
-        """Return the source-player if there is one and they still exist.
-
-        The type of player for the current activity should be passed so that
-        the type-checker properly identifies the returned value as one.
-        """
+        """Return the source-player if one exists and is the provided type."""
         player: Any = self._source_player
-        assert isinstance(player, (playertype, type(None)))
 
         # We should not be delivering invalid refs.
-        # (technically if someone holds on to this message this can happen)
+        # (we could translate to None here but technically we are changing
+        # the message delivered which seems wrong)
         assert player is None or player.exists()
-        return player
+
+        # Return the player *only* if they're the type given.
+        return player if isinstance(player, playertype) else None
 
 
 @dataclass

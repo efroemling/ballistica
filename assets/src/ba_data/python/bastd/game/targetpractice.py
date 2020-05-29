@@ -173,7 +173,8 @@ class TargetPracticeGame(ba.TeamGameActivity[Player, Team]):
         # under us if we hit stuff (don't wanna get points for new targets).
         player = bomb.get_source_player(Player)
         if not player:
-            return  # Could happen if they leave after throwing a bomb.
+            # It's possible the player left after throwing the bomb.
+            return
 
         bullseye = any(
             target.do_hit_at_position(pos, player)

@@ -2584,10 +2584,7 @@ If the time-limit expires, end_game() will be called.</p>
 <dt><h4><a name="method_ba_HitMessage__get_source_player">get_source_player()</a></dt></h4><dd>
 <p><span>get_source_player(self, playertype: Type[PlayerType]) -&gt; Optional[PlayerType]</span></p>
 
-<p>Return the source-player if there is one and they still exist.</p>
-
-<p>The type of player for the current activity should be passed so that
-the type-checker properly identifies the returned value as one.</p>
+<p>Return the source-player if one exists and is the provided type.</p>
 
 </dd>
 </dl>

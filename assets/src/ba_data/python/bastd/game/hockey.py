@@ -98,12 +98,12 @@ class Puck(ba.Actor):
                 msg.force_direction[2])
 
             # If this hit came from a player, log them as the last to touch us.
-            splayer = msg.get_source_player(Player)
-            if splayer is not None:
+            s_player = msg.get_source_player(Player)
+            if s_player is not None:
                 activity = self._activity()
                 if activity:
-                    if splayer in activity.players:
-                        self.last_players_to_touch[splayer.team.id] = splayer
+                    if s_player in activity.players:
+                        self.last_players_to_touch[s_player.team.id] = s_player
         else:
             super().handlemessage(msg)
 
