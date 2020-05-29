@@ -198,15 +198,11 @@ class EasterEggHuntGame(ba.TeamGameActivity[Player, Team]):
 
         # Respawn dead players.
         if isinstance(msg, ba.PlayerDiedMessage):
-
             # Augment standard behavior.
             super().handlemessage(msg)
-            player = msg.getplayer(Player)
-            if not player:
-                return
-            self.stats.player_was_killed(player)
 
             # Respawn them shortly.
+            player = msg.getplayer(Player)
             assert self.initial_player_info is not None
             respawn_time = 2.0 + len(self.initial_player_info) * 1.0
             player.respawn_timer = ba.Timer(
@@ -226,7 +222,8 @@ class EasterEggHuntGame(ba.TeamGameActivity[Player, Team]):
                                   pos[2] + random.uniform(-spread, spread))))
         else:
             # Default handler.
-            super().handlemessage(msg)
+            return super().handlemessage(msg)
+        return None
 
     def _update_scoreboard(self) -> None:
         for team in self.teams:

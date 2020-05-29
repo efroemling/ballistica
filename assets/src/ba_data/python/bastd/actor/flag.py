@@ -67,41 +67,58 @@ class FlagFactory:
 
         self.flagmaterial = ba.Material()
         self.flagmaterial.add_actions(
-            conditions=(('we_are_younger_than', 100),
-                        'and', ('they_have_material',
-                                ba.sharedobj('object_material'))),
-            actions=('modify_node_collision', 'collide', False))
+            conditions=(
+                ('we_are_younger_than', 100),
+                'and',
+                ('they_have_material', ba.sharedobj('object_material')),
+            ),
+            actions=('modify_node_collision', 'collide', False),
+        )
 
         self.flagmaterial.add_actions(
-            conditions=('they_have_material',
-                        ba.sharedobj('footing_material')),
-            actions=(('message', 'our_node', 'at_connect', 'footing', 1),
-                     ('message', 'our_node', 'at_disconnect', 'footing', -1)))
+            conditions=(
+                'they_have_material',
+                ba.sharedobj('footing_material'),
+            ),
+            actions=(
+                ('message', 'our_node', 'at_connect', 'footing', 1),
+                ('message', 'our_node', 'at_disconnect', 'footing', -1),
+            ),
+        )
 
         self.impact_sound = ba.getsound('metalHit')
         self.skid_sound = ba.getsound('metalSkid')
         self.flagmaterial.add_actions(
-            conditions=('they_have_material',
-                        ba.sharedobj('footing_material')),
-            actions=(('impact_sound', self.impact_sound, 2, 5),
-                     ('skid_sound', self.skid_sound, 2, 5)))
+            conditions=(
+                'they_have_material',
+                ba.sharedobj('footing_material'),
+            ),
+            actions=(
+                ('impact_sound', self.impact_sound, 2, 5),
+                ('skid_sound', self.skid_sound, 2, 5),
+            ),
+        )
 
         self.no_hit_material = ba.Material()
         self.no_hit_material.add_actions(
-            conditions=(('they_have_material',
-                         ba.sharedobj('pickup_material')),
-                        'or', ('they_have_material',
-                               ba.sharedobj('attack_material'))),
-            actions=('modify_part_collision', 'collide', False))
+            conditions=(
+                ('they_have_material', ba.sharedobj('pickup_material')),
+                'or',
+                ('they_have_material', ba.sharedobj('attack_material')),
+            ),
+            actions=('modify_part_collision', 'collide', False),
+        )
 
         # We also don't want anything moving it.
         self.no_hit_material.add_actions(
-            conditions=(('they_have_material',
-                         ba.sharedobj('object_material')), 'or',
-                        ('they_dont_have_material',
-                         ba.sharedobj('footing_material'))),
+            conditions=(
+                ('they_have_material', ba.sharedobj('object_material')),
+                'or',
+                ('they_dont_have_material', ba.sharedobj('footing_material')),
+            ),
             actions=(('modify_part_collision', 'collide', False),
-                     ('modify_part_collision', 'physical', False)))
+                     ('modify_part_collision', 'physical', False)),
+        )
 
         self.flag_texture = ba.gettexture('flagColor')
 
@@ -353,3 +370,13 @@ class Flag(ba.Actor):
             self.activity.handlemessage(FlagDroppedMessage(self, msg.node))
         else:
             super().handlemessage(msg)
+
+    @staticmethod
+    def project_stand(pos: Sequence[float]) -> None:
+        """Project a flag-stand onto the ground at the given position.
+
+        Useful for games such as capture-the-flag to show where a
+        movable flag originated from.
+        """
+        assert len(pos) == 3
+        ba.emitfx(position=pos, emit_type='flag_stand')

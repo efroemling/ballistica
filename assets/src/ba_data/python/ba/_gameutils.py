@@ -19,9 +19,11 @@
 # SOFTWARE.
 # -----------------------------------------------------------------------------
 """Utility functionality pertaining to gameplay."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+# from typing_extensions import Protocol
 
 import _ba
 from ba._enums import TimeType, TimeFormat, SpecialChar
@@ -38,6 +40,15 @@ TROPHY_CHARS = {
     '0b': SpecialChar.TROPHY0B,
     '4': SpecialChar.TROPHY4
 }
+
+# class Respawnable(Protocol):
+#     """A Protocol for objects able to be respawned.
+
+#     Category: Protocols
+#     """
+
+#     respawn_timer: Optional[ba.Timer]
+#     respawn_icon: Optional[RespawnIcon]
 
 
 def get_trophy_string(trophy_id: str) -> str:

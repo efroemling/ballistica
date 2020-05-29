@@ -121,7 +121,7 @@ class AssaultGame(ba.TeamGameActivity[Player, Team]):
                        'radius': 0.1,
                        'color': sessionteam.color
                    })
-        self.project_flag_stand(base_pos)
+        Flag.project_stand(base_pos)
         flag = Flag(touchable=False,
                     position=base_pos,
                     color=sessionteam.color)

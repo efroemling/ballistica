@@ -59,14 +59,13 @@ class TeamGameActivity(GameActivity[PlayerType, TeamType]):
                 or issubclass(sessiontype, FreeForAllSession))
 
     def __init__(self, settings: Dict[str, Any]):
-
         super().__init__(settings)
 
-        # By default we don't show kill-points in free-for-all.
+        # By default we don't show kill-points in free-for-all sessions.
         # (there's usually some activity-specific score and we don't
         # wanna confuse things)
-        if isinstance(_ba.getsession(), FreeForAllSession):
-            self._show_kill_points = False
+        if isinstance(self.session, FreeForAllSession):
+            self.show_kill_points = False
 
     def on_transition_in(self) -> None:
         # pylint: disable=cyclic-import
@@ -78,7 +77,6 @@ class TeamGameActivity(GameActivity[PlayerType, TeamType]):
         # (unless we're being run in co-op mode, in which case we leave
         # it up to them)
         if not isinstance(self.session, CoopSession):
-            # FIXME: Need an elegant way to store on session.
             if not self.session.have_shown_controls_help_overlay:
                 delay = 4.0
                 lifespan = 10.0
@@ -151,6 +149,7 @@ class TeamGameActivity(GameActivity[PlayerType, TeamType]):
         if not isinstance(session, CoopSession):
             do_announce = not self.has_ended()
             super().end(results, delay=2.0 + announce_delay, force=force)
+
             # Need to do this *after* end end call so that results is valid.
             assert isinstance(results, TeamGameResults)
             if do_announce and isinstance(session, MultiTeamSession):

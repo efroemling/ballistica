@@ -438,6 +438,7 @@
       <w>diemessages</w>
       <w>difflib</w>
       <w>dilateerode</w>
+      <w>dincrease</w>
       <w>dingsound</w>
       <w>dingsoundhigh</w>
       <w>dirmanifest</w>
@@ -1539,6 +1540,8 @@
       <w>resample</w>
       <w>resourcetypeinfo</w>
       <w>respawn</w>
+      <w>respawnable</w>
+      <w>respawned</w>
       <w>respawnicon</w>
       <w>responsetype</w>
       <w>returncode</w>
@@ -1689,8 +1692,10 @@
       <w>sparx</w>
       <w>spawner</w>
       <w>spawners</w>
+      <w>spawninfo</w>
       <w>spawnpoints</w>
       <w>spawnpt</w>
+      <w>spawnrate</w>
       <w>spawntype</w>
       <w>spaz</w>
       <w>spazappearance</w>

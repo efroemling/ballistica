@@ -138,7 +138,7 @@ class KeepAwayGame(ba.TeamGameActivity[Player, Team]):
         self._spawn_flag()
         self._update_timer = ba.Timer(1.0, call=self._tick, repeat=True)
         self._update_flag_state()
-        self.project_flag_stand(self._flag_spawn_pos)
+        Flag.project_stand(self._flag_spawn_pos)
 
     def _tick(self) -> None:
         self._update_flag_state()

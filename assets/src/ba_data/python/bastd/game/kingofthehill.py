@@ -150,7 +150,7 @@ class KingOfTheHillGame(ba.TeamGameActivity[Player, Team]):
         self._flag_pos = self.map.get_flag_position(None)
         ba.timer(1.0, self._tick, repeat=True)
         self._flag_state = FlagState.NEW
-        self.project_flag_stand(self._flag_pos)
+        Flag.project_stand(self._flag_pos)
 
         self._flag = Flag(position=self._flag_pos,
                           touchable=False,

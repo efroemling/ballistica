@@ -46,7 +46,8 @@ class Actor:
     Actors act as controllers, combining some number of ba.Nodes,
     ba.Textures, ba.Sounds, etc. into a high-level cohesive unit.
 
-    Some example actors include Bomb, Flag, and Spaz classes in bastd.
+    Some example actors include the Bomb, Flag, and Spaz classes that
+    live in the bastd.actor.* modules.
 
     One key feature of Actors is that they generally 'die'
     (killing off or transitioning out their nodes) when the last Python

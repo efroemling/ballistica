@@ -29,8 +29,11 @@ from typing import TYPE_CHECKING, TypeVar
 from ba._activity import Activity
 from ba._score import ScoreInfo
 from ba._lang import Lstr
-from ba._messages import PlayerDiedMessage
+from ba._messages import PlayerDiedMessage, StandMessage, DieMessage, DeathType
 from ba._error import NotFoundError, print_error, print_exception
+from ba._general import Call, WeakCall
+from ba._player import PlayerInfo
+from ba import _map
 import _ba
 
 if TYPE_CHECKING:
@@ -64,6 +67,17 @@ class GameActivity(Activity[PlayerType, TeamType]):
 
     # Default get_score_info() will return this if not None.
     score_info: Optional[ba.ScoreInfo] = None
+
+    # Override some defaults.
+    allow_pausing = True
+    allow_kick_idle_players = True
+
+    # Whether to show points for kills.
+    show_kill_points = True
+
+    # If not None, the music type that should play in on_transition_in()
+    # (unless overridden by the map).
+    default_music: Optional[ba.MusicType] = None
 
     @classmethod
     def create_settings_ui(
@@ -139,7 +153,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         Classes which want to change their description depending on the session
         can override this method.
         """
-        del sessiontype  # unused arg
+        del sessiontype  # Unused arg.
         return cls.description if cls.description is not None else ''
 
     @classmethod
@@ -223,8 +237,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         implementation; should return a list of map names valid
         for this game-type for the given ba.Session type.
         """
-        from ba import _map
-        del sessiontype  # unused arg
+        del sessiontype  # Unused arg.
         return _map.getmaps('melee')
 
     @classmethod
@@ -234,7 +247,6 @@ class GameActivity(Activity[PlayerType, TeamType]):
         This is used when viewing game-lists or showing what game
         is up next in a series.
         """
-        from ba import _map
         name = cls.get_display_string(config['settings'])
 
         # In newer configs, map is in settings; it used to be in the
@@ -268,42 +280,16 @@ class GameActivity(Activity[PlayerType, TeamType]):
 
     def __init__(self, settings: Dict[str, Any]):
         """Instantiate the Activity."""
-        from ba import _map
         super().__init__(settings)
-
-        # Set some defaults.
-        self.allow_pausing = True
-        self.allow_kick_idle_players = True
-
-        # Whether to show points for kills.
-        self.show_kill_points = True
-
-        # If not None, the music type that should play in on_transition_in()
-        # (unless overridden by the map).
-        self.default_music: Optional[ba.MusicType] = None
 
         # Holds some flattened info about the player set at the point
         # when on_begin() is called.
         self.initial_player_info: Optional[List[ba.PlayerInfo]] = None
 
         # Go ahead and get our map loading.
-        map_name: str
-        if 'map' in settings:
-            map_name = settings['map']
-        else:
-            # If settings doesn't specify a map, pick a random one from the
-            # list of supported ones.
-            unowned_maps = _map.get_unowned_maps()
-            valid_maps: List[str] = [
-                m for m in self.get_supported_maps(type(self.session))
-                if m not in unowned_maps
-            ]
-            if not valid_maps:
-                _ba.screenmessage(Lstr(resource='noValidMapsErrorText'))
-                raise Exception('No valid maps')
-            map_name = valid_maps[random.randrange(len(valid_maps))]
+        self._map_type = _map.get_map_class(self._calc_map_name(settings))
+
         self._spawn_sound = _ba.getsound('spawn')
-        self._map_type = _map.get_map_class(map_name)
         self._map_type.preload()
         self._map: Optional[ba.Map] = None
         self._powerup_drop_timer: Optional[ba.Timer] = None
@@ -422,8 +408,8 @@ class GameActivity(Activity[PlayerType, TeamType]):
         # Make our map.
         self._map = self._map_type()
 
-        # Give our map a chance to override the music
-        # (for happy-thoughts and other such themed maps).
+        # Give our map a chance to override the music.
+        # (for happy-thoughts and other such themed maps)
         map_music = self._map_type.get_music_type()
         music = map_music if map_music is not None else self.default_music
 
@@ -470,13 +456,11 @@ class GameActivity(Activity[PlayerType, TeamType]):
         # pylint: disable=cyclic-import
         from bastd.ui.continues import ContinuesWindow
         from ba._gameutils import sharedobj
-        from ba._general import WeakCall
         from ba._coopsession import CoopSession
         from ba._enums import TimeType
 
         try:
             if _ba.get_account_misc_read_val('enableContinues', False):
-
                 session = self.session
 
                 # We only support continuing in non-tournament games.
@@ -510,82 +494,21 @@ class GameActivity(Activity[PlayerType, TeamType]):
                                 return
 
         except Exception:
-            print_exception('error continuing game')
+            print_exception('Error handling continues.')
 
         self.end_game()
 
-    # FIXME: this logic should live in the session classes.
-    def _game_begin_analytics(self) -> None:
-        """Update analytics events for the start of the game."""
-        # pylint: disable=too-many-branches
-        from ba._dualteamsession import DualTeamSession
-        from ba._freeforallsession import FreeForAllSession
-        from ba._coopsession import CoopSession
-        session = self.session
-        if isinstance(session, CoopSession):
-            campaign = session.campaign
-            assert campaign is not None
-            _ba.set_analytics_screen(
-                'Coop Game: ' + campaign.name + ' ' +
-                campaign.get_level(_ba.app.coop_session_args['level']).name)
-            _ba.increment_analytics_count('Co-op round start')
-            if len(self.players) == 1:
-                _ba.increment_analytics_count(
-                    'Co-op round start 1 human player')
-            elif len(self.players) == 2:
-                _ba.increment_analytics_count(
-                    'Co-op round start 2 human players')
-            elif len(self.players) == 3:
-                _ba.increment_analytics_count(
-                    'Co-op round start 3 human players')
-            elif len(self.players) >= 4:
-                _ba.increment_analytics_count(
-                    'Co-op round start 4+ human players')
-        elif isinstance(session, DualTeamSession):
-            _ba.set_analytics_screen('Teams Game: ' + self.get_name())
-            _ba.increment_analytics_count('Teams round start')
-            if len(self.players) == 1:
-                _ba.increment_analytics_count(
-                    'Teams round start 1 human player')
-            elif 1 < len(self.players) < 8:
-                _ba.increment_analytics_count('Teams round start ' +
-                                              str(len(self.players)) +
-                                              ' human players')
-            elif len(self.players) >= 8:
-                _ba.increment_analytics_count(
-                    'Teams round start 8+ human players')
-        elif isinstance(session, FreeForAllSession):
-            _ba.set_analytics_screen('FreeForAll Game: ' + self.get_name())
-            _ba.increment_analytics_count('Free-for-all round start')
-            if len(self.players) == 1:
-                _ba.increment_analytics_count(
-                    'Free-for-all round start 1 human player')
-            elif 1 < len(self.players) < 8:
-                _ba.increment_analytics_count('Free-for-all round start ' +
-                                              str(len(self.players)) +
-                                              ' human players')
-            elif len(self.players) >= 8:
-                _ba.increment_analytics_count(
-                    'Free-for-all round start 8+ human players')
-
-        # For some analytics tracking on the c layer.
-        _ba.reset_game_activity_tracking()
-
     def on_begin(self) -> None:
-        from ba._general import WeakCall
-        from ba._player import PlayerInfo
+        from ba._analytics import game_begin_analytics
         super().on_begin()
 
-        try:
-            self._game_begin_analytics()
-        except Exception:
-            print_exception('error in game-begin-analytics')
+        game_begin_analytics()
 
         # We don't do this in on_transition_in because it may depend on
         # players/teams which aren't available until now.
-        _ba.timer(0.001, WeakCall(self.show_scoreboard_info))
-        _ba.timer(1.0, WeakCall(self.show_info))
-        _ba.timer(2.5, WeakCall(self._show_tip))
+        _ba.timer(0.001, self._show_scoreboard_info)
+        _ba.timer(1.0, self._show_info)
+        _ba.timer(2.5, self._show_tip)
 
         # Store some basic info about players present at start time.
         self.initial_player_info = [
@@ -600,7 +523,6 @@ class GameActivity(Activity[PlayerType, TeamType]):
         # If this is a tournament, query info about it such as how much
         # time is left.
         tournament_id = self.session.tournament_id
-
         if tournament_id is not None:
             _ba.tournament_query(
                 args={
@@ -628,9 +550,6 @@ class GameActivity(Activity[PlayerType, TeamType]):
         self.spawn_player(player)
 
     def on_player_leave(self, player: PlayerType) -> None:
-        from ba._general import Call
-        from ba._messages import DieMessage, DeathType
-
         super().on_player_leave(player)
 
         # If the player has an actor, send it a deferred die message.
@@ -669,8 +588,10 @@ class GameActivity(Activity[PlayerType, TeamType]):
                                              victim_player=player,
                                              importance=importance,
                                              showpoints=self.show_kill_points)
+            return None
+        return super().handlemessage(msg)
 
-    def show_scoreboard_info(self) -> None:
+    def _show_scoreboard_info(self) -> None:
         """Create the game info display.
 
         This is the thing in the top left corner showing the name
@@ -682,8 +603,8 @@ class GameActivity(Activity[PlayerType, TeamType]):
         from ba._nodeactor import NodeActor
         sb_name = self.get_instance_scoreboard_display_string()
 
-        # the description can be either a string or a sequence with args
-        # to swap in post-translation
+        # The description can be either a string or a sequence with args
+        # to swap in post-translation.
         sb_desc_in = self.get_instance_description_short()
         sb_desc_l: Sequence
         if isinstance(sb_desc_in, str):
@@ -754,10 +675,9 @@ class GameActivity(Activity[PlayerType, TeamType]):
             1.0: 1.0
         })
 
-    def show_info(self) -> None:
+    def _show_info(self) -> None:
         """Show the game description."""
         from ba._gameutils import animate
-        from ba._general import Call
         from bastd.actor.zoomtext import ZoomText
         name = self.get_instance_display_string()
         ZoomText(name,
@@ -786,7 +706,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         translation = Lstr(translate=('gameDescriptions', desc_l[0]),
                            subs=subs)
 
-        # do some standard filters (epic mode, etc)
+        # Do some standard filters (epic mode, etc).
         if self.settings_raw.get('Epic Mode', False):
             translation = Lstr(resource='epicDescriptionFilterText',
                                subs=[('${DESCRIPTION}', translation)])
@@ -822,7 +742,8 @@ class GameActivity(Activity[PlayerType, TeamType]):
         # pylint: disable=too-many-locals
         from ba._gameutils import animate
         from ba._enums import SpecialChar
-        # if there's any tips left on the list, display one..
+
+        # If there's any tips left on the list, display one.
         if self.tips:
             tip = self.tips.pop(random.randrange(len(self.tips)))
             tip_title = Lstr(value='${A}:',
@@ -837,7 +758,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
                 tip = tip['tip']
                 assert isinstance(tip, str)
 
-            # a few subs..
+            # A few substitutions...
             tip_lstr = Lstr(translate=('tips', tip),
                             subs=[('${PICKUP}',
                                    _ba.charstr(SpecialChar.TOP_BUTTON))])
@@ -947,26 +868,6 @@ class GameActivity(Activity[PlayerType, TeamType]):
         print('WARNING: default end_game() implementation called;'
               ' your game should override this.')
 
-    def spawn_player_if_exists(self, player: PlayerType) -> None:
-        """
-        A utility method which calls self.spawn_player() *only* if the
-        ba.Player provided still exists; handy for use in timers and whatnot.
-
-        There is no need to override this; just override spawn_player().
-        """
-        if player:
-            self.spawn_player(player)
-
-    def spawn_player(self, player: PlayerType) -> ba.Actor:
-        """Spawn *something* for the provided ba.Player.
-
-        The default implementation simply calls spawn_player_spaz().
-        """
-        if not player:
-            raise TypeError('spawn_player() called for nonexistent player')
-
-        return self.spawn_player_spaz(player)
-
     def respawn_player(self,
                        player: PlayerType,
                        respawn_time: Optional[float] = None) -> None:
@@ -992,20 +893,38 @@ class GameActivity(Activity[PlayerType, TeamType]):
             else:
                 respawn_time = 7.0
 
-        # If this standard setting is present, factor it in
+        # If this standard setting is present, factor it in.
         if 'Respawn Times' in self.settings_raw:
             respawn_time *= self.settings_raw['Respawn Times']
 
-        # we want whole seconds
+        # We want whole seconds.
         assert respawn_time is not None
         respawn_time = round(max(1.0, respawn_time), 0)
 
         if player.actor and not self.has_ended():
-            from ba._general import WeakCall
             from bastd.actor.respawnicon import RespawnIcon
             player.gamedata['respawn_timer'] = _ba.Timer(
                 respawn_time, WeakCall(self.spawn_player_if_exists, player))
             player.gamedata['respawn_icon'] = RespawnIcon(player, respawn_time)
+
+    def spawn_player_if_exists(self, player: PlayerType) -> None:
+        """
+        A utility method which calls self.spawn_player() *only* if the
+        ba.Player provided still exists; handy for use in timers and whatnot.
+
+        There is no need to override this; just override spawn_player().
+        """
+        if player:
+            self.spawn_player(player)
+
+    def spawn_player(self, player: PlayerType) -> ba.Actor:
+        """Spawn *something* for the provided ba.Player.
+
+        The default implementation simply calls spawn_player_spaz().
+        """
+        assert player  # Dead references should never be passed as args.
+
+        return self.spawn_player_spaz(player)
 
     def spawn_player_spaz(self,
                           player: PlayerType,
@@ -1015,7 +934,6 @@ class GameActivity(Activity[PlayerType, TeamType]):
         # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
         from ba import _math
-        from ba import _messages
         from ba._gameutils import animate
         from ba._coopsession import CoopSession
         from bastd.actor.playerspaz import PlayerSpaz
@@ -1051,7 +969,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
 
         # Move to the stand position and add a flash of light.
         spaz.handlemessage(
-            _messages.StandMessage(
+            StandMessage(
                 position,
                 angle if angle is not None else random.uniform(0, 360)))
         _ba.playsound(self._spawn_sound, 1, position=spaz.node.position)
@@ -1061,30 +979,14 @@ class GameActivity(Activity[PlayerType, TeamType]):
         _ba.timer(0.5, light.delete)
         return spaz
 
-    def project_flag_stand(self, pos: Sequence[float]) -> None:
-        """Project a flag-stand onto the ground at the given position.
-
-        Useful for games such as capture-the-flag to show where a
-        movable flag originated from.
-        """
-        from ba._general import WeakCall
-
-        # Need to do this in a timer for it to work.. need to look into that.
-        # (might not still be the case?...)
-        _ba.pushcall(WeakCall(self._project_flag_stand, pos[:3]))
-
-    def _project_flag_stand(self, pos: Sequence[float]) -> None:
-        _ba.emitfx(position=pos, emit_type='flag_stand')
-
     def setup_standard_powerup_drops(self, enable_tnt: bool = True) -> None:
         """Create standard powerup drops for the current map."""
         # pylint: disable=cyclic-import
-        from bastd.actor import powerupbox
-        from ba import _general
-        self._powerup_drop_timer = _ba.Timer(
-            powerupbox.DEFAULT_POWERUP_INTERVAL,
-            _general.WeakCall(self._standard_drop_powerups),
-            repeat=True)
+        from bastd.actor.powerupbox import DEFAULT_POWERUP_INTERVAL
+        self._powerup_drop_timer = _ba.Timer(DEFAULT_POWERUP_INTERVAL,
+                                             WeakCall(
+                                                 self._standard_drop_powerups),
+                                             repeat=True)
         self._standard_drop_powerups()
         if enable_tnt:
             self._tnt_spawners = {}
@@ -1100,19 +1002,16 @@ class GameActivity(Activity[PlayerType, TeamType]):
 
     def _standard_drop_powerups(self) -> None:
         """Standard powerup drop."""
-        from ba import _general
 
         # Drop one powerup per point.
         points = self.map.powerup_spawn_points
         for i in range(len(points)):
-            _ba.timer(i * 0.4, _general.WeakCall(self._standard_drop_powerup,
-                                                 i))
+            _ba.timer(i * 0.4, WeakCall(self._standard_drop_powerup, i))
 
     def _setup_standard_tnt_drops(self) -> None:
         """Standard tnt drop."""
         # pylint: disable=cyclic-import
         from bastd.actor.bomb import TNTSpawner
-
         for i, point in enumerate(self.map.tnt_points):
             assert self._tnt_spawners is not None
             if self._tnt_spawners.get(i) is None:
@@ -1126,7 +1025,6 @@ class GameActivity(Activity[PlayerType, TeamType]):
         If the time-limit expires, end_game() will be called.
         """
         from ba._gameutils import sharedobj
-        from ba._general import WeakCall
         from ba._nodeactor import NodeActor
         if duration <= 0.0:
             return
@@ -1200,7 +1098,6 @@ class GameActivity(Activity[PlayerType, TeamType]):
         This will be displayed at the top of the screen.
         If the time-limit expires, end_game() will be called.
         """
-        from ba._general import WeakCall
         from ba._nodeactor import NodeActor
         from ba._enums import TimeType
         if duration <= 0.0:
@@ -1337,3 +1234,21 @@ class GameActivity(Activity[PlayerType, TeamType]):
                  maxwidth=800,
                  trail=trail,
                  color=color).autoretain()
+
+    def _calc_map_name(self, settings: Dict[str, Any]) -> str:
+        map_name: str
+        if 'map' in settings:
+            map_name = settings['map']
+        else:
+            # If settings doesn't specify a map, pick a random one from the
+            # list of supported ones.
+            unowned_maps = _map.get_unowned_maps()
+            valid_maps: List[str] = [
+                m for m in self.get_supported_maps(type(self.session))
+                if m not in unowned_maps
+            ]
+            if not valid_maps:
+                _ba.screenmessage(Lstr(resource='noValidMapsErrorText'))
+                raise Exception('No valid maps')
+            map_name = valid_maps[random.randrange(len(valid_maps))]
+        return map_name

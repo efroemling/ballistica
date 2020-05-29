@@ -271,7 +271,7 @@ class DirectoryScan:
                 cbits = lbits[1].split('(')
                 if len(cbits) > 1 and cbits[0].isidentifier():
                     classname = cbits[0]
-                    break  # success!
+                    break  # Success!
         if classname is None:
             self.results.warnings += (
                 'Warning: ' + str(subpath) + ': class definition not found'
@@ -291,7 +291,7 @@ class DirectoryScan:
             and l[1] == 'require' and l[2] == 'api' and l[3].isdigit()
         ]
 
-        # we're successful if we find exactly one properly formatted line
+        # We're successful if we find exactly one properly formatted line.
         if len(lines) == 1:
             return int(lines[0][3])
 

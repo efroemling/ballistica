@@ -179,6 +179,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/ba/_benchmark.py \
   build/ba_data/python/ba/_tournament.py \
   build/ba_data/python/ba/_messages.py \
+  build/ba_data/python/ba/_analytics.py \
   build/ba_data/python/ba/_freeforallsession.py \
   build/ba_data/python/ba/_score.py \
   build/ba_data/python/ba/_playlist.py \
@@ -200,6 +201,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/ba/_nodeactor.py \
   build/ba_data/python/ba/_teamgame.py \
   build/ba_data/python/ba/ui/__init__.py \
+  build/ba_data/python/bastd/gameutils.py \
   build/ba_data/python/bastd/mainmenu.py \
   build/ba_data/python/bastd/maps.py \
   build/ba_data/python/bastd/appdelegate.py \
@@ -407,6 +409,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/ba/__pycache__/_benchmark.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_tournament.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_messages.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_analytics.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_freeforallsession.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_score.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_playlist.cpython-37.opt-1.pyc \
@@ -428,6 +431,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/ba/__pycache__/_nodeactor.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_teamgame.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/ui/__pycache__/__init__.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/__pycache__/gameutils.cpython-37.opt-1.pyc \
   build/ba_data/python/bastd/__pycache__/mainmenu.cpython-37.opt-1.pyc \
   build/ba_data/python/bastd/__pycache__/maps.cpython-37.opt-1.pyc \
   build/ba_data/python/bastd/__pycache__/appdelegate.cpython-37.opt-1.pyc \
@@ -795,6 +799,11 @@ build/ba_data/python/ba/__pycache__/_messages.cpython-37.opt-1.pyc: \
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
+build/ba_data/python/ba/__pycache__/_analytics.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_analytics.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
 build/ba_data/python/ba/__pycache__/_freeforallsession.cpython-37.opt-1.pyc: \
       build/ba_data/python/ba/_freeforallsession.py
 	@echo Compiling script: $^
@@ -897,6 +906,11 @@ build/ba_data/python/ba/__pycache__/_teamgame.cpython-37.opt-1.pyc: \
 
 build/ba_data/python/ba/ui/__pycache__/__init__.cpython-37.opt-1.pyc: \
       build/ba_data/python/ba/ui/__init__.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python/bastd/__pycache__/gameutils.cpython-37.opt-1.pyc: \
+      build/ba_data/python/bastd/gameutils.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 

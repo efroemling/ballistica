@@ -798,20 +798,16 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
     def handlemessage(self, msg: Any) -> Any:
         """ handle high-level game messages """
         if isinstance(msg, ba.PlayerDiedMessage):
-
-            # Respawn dead players.
-            player = msg.getplayer(Player)
-            self.stats.player_was_killed(player)
-            assert self.initial_player_info is not None
-            respawn_time = 2.0 + len(self.initial_player_info) * 1.0
+            # Augment standard behavior.
+            super().handlemessage(msg)
 
             # Respawn them shortly.
+            player = msg.getplayer(Player)
+            assert self.initial_player_info is not None
+            respawn_time = 2.0 + len(self.initial_player_info) * 1.0
             player.respawn_timer = ba.Timer(
                 respawn_time, ba.Call(self.spawn_player_if_exists, player))
             player.respawn_icon = RespawnIcon(player, respawn_time)
-
-            # Augment standard behavior.
-            super().handlemessage(msg)
 
         elif isinstance(msg, SpazBotDiedMessage):
 
@@ -848,7 +844,8 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
                        loop=True)
             ba.timer(3.0, self._flag_respawn_light.node.delete)
         else:
-            super().handlemessage(msg)
+            return super().handlemessage(msg)
+        return None
 
     def _handle_player_dropped_bomb(self, player: Spaz,
                                     bomb: ba.Actor) -> None:

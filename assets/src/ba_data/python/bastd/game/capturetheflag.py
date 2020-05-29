@@ -190,7 +190,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
         # Create our team instance and its initial values.
 
         base_pos = self.map.get_flag_position(sessionteam.id)
-        self.project_flag_stand(base_pos)
+        Flag.project_stand(base_pos)
 
         ba.newnode('light',
                    attrs={

@@ -145,7 +145,7 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
         self.setup_standard_time_limit(self._time_limit)
         self.setup_standard_powerup_drops()
         self._flag_spawn_pos = self.map.get_flag_position(None)
-        self.project_flag_stand(self._flag_spawn_pos)
+        Flag.project_stand(self._flag_spawn_pos)
         self._set_chosen_one_player(None)
 
         pos = self._flag_spawn_pos

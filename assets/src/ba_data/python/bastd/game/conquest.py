@@ -167,8 +167,7 @@ class ConquestGame(ba.TeamGameActivity[Player, Team]):
                                 touchable=False,
                                 materials=[self._extraflagmat])
             self._flags.append(flag)
-            # FIXME: Move next few lines to the flag class.
-            self.project_flag_stand(point)
+            Flag.project_stand(point)
             flag.light = ba.newnode('light',
                                     owner=flag.node,
                                     attrs={

@@ -23,6 +23,7 @@
 from __future__ import annotations
 
 import random
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import ba
@@ -40,6 +41,14 @@ from bastd.actor.spazbot import (SpazBotSet, SpazBotDiedMessage, BomberBot,
 if TYPE_CHECKING:
     from typing import Any, Dict, Type, List, Optional, Sequence
     from bastd.actor.spazbot import SpazBot
+
+
+@dataclass
+class SpawnInfo:
+    """Spawning info for a particular bot type."""
+    spawnrate: float
+    increase: float
+    dincrease: float
 
 
 class Player(ba.Player['Team']):
@@ -78,7 +87,7 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
         self._tntspawnpos = (0, 5.5, -6)
         self._powerup_center = (0, 7, -4.14)
         self._powerup_spread = (7, 2)
-        self._preset = self.settings_raw.get('preset', 'default')
+        self._preset = str(settings.get('preset', 'default'))
         self._excludepowerups: List[str] = []
         self._scoreboard: Optional[Scoreboard] = None
         self._score = 0
@@ -90,21 +99,22 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
         self._bot_update_timer: Optional[ba.Timer] = None
         self._powerup_drop_timer = None
 
-        # For each bot type: [spawn-rate, increase, d_increase]
+        # For each bot type: [spawnrate, increase, d_increase]
         self._bot_spawn_types = {
-            BomberBot:              [1.00, 0.00, 0.000],
-            BomberBotPro:           [0.00, 0.05, 0.001],
-            BomberBotProShielded:   [0.00, 0.02, 0.002],
-            BrawlerBot:             [1.00, 0.00, 0.000],
-            BrawlerBotPro:          [0.00, 0.05, 0.001],
-            BrawlerBotProShielded:  [0.00, 0.02, 0.002],
-            TriggerBot:             [0.30, 0.00, 0.000],
-            TriggerBotPro:          [0.00, 0.05, 0.001],
-            TriggerBotProShielded:  [0.00, 0.02, 0.002],
-            ChargerBot:             [0.30, 0.05, 0.000],
-            StickyBot:              [0.10, 0.03, 0.001],
-            ExplodeyBot:            [0.05, 0.02, 0.002]
-        }  # yapf: disable
+            BomberBot:              SpawnInfo(1.00, 0.00, 0.000),
+            BomberBotPro:           SpawnInfo(0.00, 0.05, 0.001),
+            BomberBotProShielded:   SpawnInfo(0.00, 0.02, 0.002),
+            BrawlerBot:             SpawnInfo(1.00, 0.00, 0.000),
+            BrawlerBotPro:          SpawnInfo(0.00, 0.05, 0.001),
+            BrawlerBotProShielded:  SpawnInfo(0.00, 0.02, 0.002),
+            TriggerBot:             SpawnInfo(0.30, 0.00, 0.000),
+            TriggerBotPro:          SpawnInfo(0.00, 0.05, 0.001),
+            TriggerBotProShielded:  SpawnInfo(0.00, 0.02, 0.002),
+            ChargerBot:             SpawnInfo(0.30, 0.05, 0.000),
+            StickyBot:              SpawnInfo(0.10, 0.03, 0.001),
+            ExplodeyBot:            SpawnInfo(0.05, 0.02, 0.002)
+        } # yapf: disable
+
 
     def on_transition_in(self) -> None:
         super().on_transition_in()
@@ -121,8 +131,6 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
         ba.timer(0.001, ba.WeakCall(self._start_bot_updates))
         self.setup_low_life_warning_sound()
         self._update_scores()
-
-        # Our TNT spawner (if applicable).
         self._tntspawner = TNTSpawner(position=self._tntspawnpos,
                                       respawn_time=10.0)
 
@@ -225,17 +233,17 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
 
         # Normalize our bot type total and find a random number within that.
         total = 0.0
-        for spawntype in self._bot_spawn_types.items():
-            total += spawntype[1][0]
+        for spawninfo in self._bot_spawn_types.values():
+            total += spawninfo.spawnrate
         randval = random.random() * total
 
         # Now go back through and see where this value falls.
         total = 0
         bottype: Optional[Type[SpazBot]] = None
-        for spawntype in self._bot_spawn_types.items():
-            total += spawntype[1][0]
+        for spawntype, spawninfo in self._bot_spawn_types.items():
+            total += spawninfo.spawnrate
             if randval <= total:
-                bottype = spawntype[0]
+                bottype = spawntype
                 break
         spawn_time = 1.0
         assert bottype is not None
@@ -243,9 +251,9 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
 
         # After every spawn we adjust our ratios slightly to get more
         # difficult.
-        for spawntype in self._bot_spawn_types.items():
-            spawntype[1][0] += spawntype[1][1]  # incr spawn rate
-            spawntype[1][1] += spawntype[1][2]  # incr spawn rate incr rate
+        for spawninfo in self._bot_spawn_types.values():
+            spawninfo.spawnrate += spawninfo.increase
+            spawninfo.increase += spawninfo.dincrease
 
     def _update_scores(self) -> None:
         score = self._score

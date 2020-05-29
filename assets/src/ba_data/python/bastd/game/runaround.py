@@ -1108,13 +1108,14 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
             self._score += msg.score
             self._update_scores()
 
-        # Respawn dead players.
         elif isinstance(msg, ba.PlayerDiedMessage):
+            # Augment standard behavior.
+            super().handlemessage(msg)
+
             self._a_player_has_been_killed = True
-            player = msg.getplayer(Player)
-            self.stats.player_was_killed(player)
 
             # Respawn them shortly.
+            player = msg.getplayer(Player)
             assert self.initial_player_info is not None
             respawn_time = 2.0 + len(self.initial_player_info) * 1.0
             player.respawn_timer = ba.Timer(

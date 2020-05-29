@@ -29,6 +29,7 @@ from ba._player import Player
 from ba._error import print_exception, print_error, SessionTeamNotFoundError
 from ba._dependency import DependencyComponent
 from ba._general import Call, verify_object_death
+from ba._messages import UNHANDLED
 import _ba
 
 if TYPE_CHECKING:
@@ -414,6 +415,8 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
 
     def handlemessage(self, msg: Any) -> Any:
         """General message handling; can be passed any message object."""
+        del msg  # Unused arg.
+        return UNHANDLED
 
     def end(self,
             results: Any = None,
