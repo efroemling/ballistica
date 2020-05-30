@@ -201,26 +201,23 @@ class PlayerSpaz(Spaz):
 
         # Keep track of if we're being held and by who most recently.
         if isinstance(msg, ba.PickedUpMessage):
-            super().handlemessage(msg)  # Augment standard behavior.
+            # Augment standard behavior.
+            super().handlemessage(msg)
             self.held_count += 1
-            picked_up_by = ba.playercast_o(type(self._player),
-                                           msg.node.source_player)
+            picked_up_by = msg.node.source_player
             if picked_up_by:
                 self.last_player_held_by = picked_up_by
         elif isinstance(msg, ba.DroppedMessage):
-            super().handlemessage(msg)  # Augment standard behavior.
+            # Augment standard behavior.
+            super().handlemessage(msg)
             self.held_count -= 1
             if self.held_count < 0:
                 print('ERROR: spaz held_count < 0')
 
             # Let's count someone dropping us as an attack.
-            try:
-                picked_up_by_2 = ba.playercast_o(type(self._player),
-                                                 msg.node.source_player)
-            except Exception:
-                picked_up_by_2 = None
-            if picked_up_by_2:
-                self.last_player_attacked_by = picked_up_by_2
+            picked_up_by = msg.node.source_player
+            if picked_up_by:
+                self.last_player_attacked_by = picked_up_by
                 self.last_attacked_time = ba.time()
                 self.last_attacked_type = ('picked_up', 'default')
         elif isinstance(msg, ba.StandMessage):

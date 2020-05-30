@@ -325,8 +325,10 @@ class _EntryProxy:
         scoreboard = self._scoreboard()
 
         # Remove our team from the scoreboard if its still around.
+        # (but deferred, in case we die in a sim step or something where
+        # its illegal to modify nodes)
         if scoreboard is not None:
-            scoreboard.remove_team(self._team_id)
+            ba.pushcall(ba.Call(scoreboard.remove_team, self._team_id))
 
 
 class Scoreboard:

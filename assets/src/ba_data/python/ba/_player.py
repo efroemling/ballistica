@@ -175,13 +175,6 @@ class Player(Generic[TeamType]):
         """
         return self._sessionplayer.get_name(full=full, icon=icon)
 
-    def set_actor(self, actor: Optional[ba.Actor]) -> None:
-        """set_actor(actor: Optional[ba.Actor]) -> None
-
-        Set the player's associated ba.Actor.
-        """
-        self.actor = actor
-
     def is_alive(self) -> bool:
         """is_alive() -> bool
 
@@ -221,6 +214,12 @@ class Player(Generic[TeamType]):
 
     def __bool__(self) -> bool:
         return self.exists()
+
+
+# NOTE: It seems we might not need these playercast() calls; have gone
+# the direction where things returning players generally take a type arg
+# and do this themselves; that way the user is 'forced' to deal with types
+# instead of requiring extra work by them.
 
 
 def playercast(totype: Type[PlayerType], player: ba.Player) -> PlayerType:

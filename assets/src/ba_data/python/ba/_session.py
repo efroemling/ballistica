@@ -175,8 +175,12 @@ class Session:
         self._activity_end_timer: Optional[ba.Timer] = None
         self._activity_weak = empty_weakref(Activity)
         self._next_activity: Optional[ba.Activity] = None
-        self.wants_to_end = False
+        self._wants_to_end = False
         self._ending = False
+        self._activity_should_end_immediately = False
+        self._activity_should_end_immediately_results: (
+            Optional[ba.TeamGameResults]) = None
+        self._activity_should_end_immediately_delay = 0.0
 
         # Create static teams if we're using them.
         if self.use_teams:
@@ -324,11 +328,11 @@ class Session:
         Note that this happens asynchronously, allowing the
         session and its activities to shut down gracefully.
         """
-        self.wants_to_end = True
+        self._wants_to_end = True
         if self._next_activity is None:
-            self.launch_end_session_activity()
+            self._launch_end_session_activity()
 
-    def launch_end_session_activity(self) -> None:
+    def _launch_end_session_activity(self) -> None:
         """(internal)"""
         from ba._activitytypes import EndSessionActivity
         from ba._enums import TimeType
@@ -341,11 +345,11 @@ class Session:
                 if since_last < 30.0:
                     return
                 print_error(
-                    'launch_end_session_activity called twice (since_last=' +
+                    '_launch_end_session_activity called twice (since_last=' +
                     str(since_last) + ')')
             self._launch_end_session_activity_time = curtime
             self.set_activity(_ba.new_activity(EndSessionActivity))
-            self.wants_to_end = False
+            self._wants_to_end = False
             self._ending = True  # Prevent further actions.
 
     def on_team_join(self, team: ba.SessionTeam) -> None:
@@ -373,7 +377,11 @@ class Session:
         # If this activity hasn't begun yet, just set it up to end immediately
         # once it does.
         if not activity.has_begun():
-            activity.set_immediate_end(results, delay, force)
+            # activity.set_immediate_end(results, delay, force)
+            if not self._activity_should_end_immediately or force:
+                self._activity_should_end_immediately = True
+                self._activity_should_end_immediately_results = results
+                self._activity_should_end_immediately_delay = delay
 
         # The activity has already begun; get ready to end it.
         else:
@@ -506,7 +514,7 @@ class Session:
             with _ba.Context(self):
                 result = self.on_player_request(sessionplayer)
         except Exception:
-            print_exception('error in on_player_request call for', self)
+            print_exception(f'Error in on_player_request for {self}')
             result = False
 
         # If the user said yes, add the player to the session list.
@@ -540,10 +548,24 @@ class Session:
             self._activity_retained = self._next_activity
             self._activity_weak = weakref.ref(self._next_activity)
             self._next_activity = None
+            self._activity_should_end_immediately = False
 
             # Kick out anyone loitering in the lobby.
             self.lobby.remove_all_choosers_and_kick_players()
+
+            # Kick off the activity.
             self._activity_retained.begin(self)
+
+            # If we want to go down, we're now free to kick off that process.
+            if self._wants_to_end:
+                self._launch_end_session_activity()
+            else:
+                # Otherwise, if the activity has already been told to end,
+                # do so now.
+                if self._activity_should_end_immediately:
+                    self._activity_retained.end(
+                        self._activity_should_end_immediately_results,
+                        self._activity_should_end_immediately_delay)
 
     def _on_player_ready(self, chooser: ba.Chooser) -> None:
         """Called when a ba.Player has checked themself ready."""
@@ -607,13 +629,13 @@ class Session:
         # referencing the chooser which could inadvertently keep it alive.
         sessionplayer.reset_input()
 
-        # Pass it to the current activity if it has already begun
+        # We can pass it to the current activity if it has already begun
         # (otherwise it'll get passed once begin is called).
         pass_to_activity = (activity.has_begun()
                             and not activity.is_joining_activity)
 
-        # If we're not allowing mid-game joins, don't pass; just announce
-        # the arrival and say they'll partake next round.
+        # However, if we're not allowing mid-game joins, don't actually pass;
+        # just announce the arrival and say they'll partake next round.
         if pass_to_activity:
             if not self.allow_mid_activity_joins:
                 pass_to_activity = False

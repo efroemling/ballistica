@@ -30,7 +30,7 @@ from ba._error import (print_exception, SessionTeamNotFoundError,
                        NodeNotFoundError)
 from ba._dependency import DependencyComponent
 from ba._general import Call, verify_object_death
-from ba._messages import UNHANDLED
+from ba._messages import UNHANDLED, DieMessage, DeathType
 import _ba
 
 if TYPE_CHECKING:
@@ -224,7 +224,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
             with _ba.Context('empty'):
                 self._expire()
 
-        # Inform our owner that we're officially kicking the bucket.
+        # Inform our owner that we officially kicked the bucket.
         if self._transitioning_out:
             session = self._session()
             if session is not None:
@@ -287,19 +287,19 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         """(internal)"""
         self._has_ended = val
 
-    def set_immediate_end(self, results: ba.TeamGameResults, delay: float,
-                          force: bool) -> None:
-        """Set the activity to die immediately after beginning.
+    # def set_immediate_end(self, results: ba.TeamGameResults, delay: float,
+    #                       force: bool) -> None:
+    #     """Set the activity to die immediately after beginning.
 
-        (internal)
-        """
-        if self.has_begun():
-            raise RuntimeError('This should only be called for Activities'
-                               'that have not yet begun.')
-        if not self._should_end_immediately or force:
-            self._should_end_immediately = True
-            self._should_end_immediately_results = results
-            self._should_end_immediately_delay = delay
+    #     (internal)
+    #     """
+    #     if self.has_begun():
+    #         raise RuntimeError('This should only be called for Activities'
+    #                            'that have not yet begun.')
+    #     if not self._should_end_immediately or force:
+    #         self._should_end_immediately = True
+    #         self._should_end_immediately_results = results
+    #         self._should_end_immediately_delay = delay
 
     def destroy(self) -> None:
         """Begin the process of tearing down the activity.
@@ -522,20 +522,14 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         for player in session.players:
             self.add_player(player)
 
-        # And finally tell the game to start.
-        with _ba.Context(self):
-            self._has_begun = True
-            self.on_begin()
+        self._has_begun = True
 
-        # If the whole session wants to die and was waiting on us,
-        # can kick off that process now.
-        if session.wants_to_end:
-            session.launch_end_session_activity()
-        else:
-            # Otherwise, if we've already been told to die, do so now.
-            if self._should_end_immediately:
-                self.end(self._should_end_immediately_results,
-                         self._should_end_immediately_delay)
+        # Let the activity do its thing.
+        with _ba.Context(self):
+            # Note: do we want to catch errors here?
+            # Currently I believe we wind up canceling the
+            # activity launch; just wanna be sure that is intentional.
+            self.on_begin()
 
     def end(self,
             results: Any = None,
@@ -636,6 +630,16 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
             except Exception:
                 print_exception(f'Error in on_player_leave for {self}')
             try:
+                # If they have an actor, kill it.
+                if player.actor:
+                    player.actor.handlemessage(
+                        DieMessage(how=DeathType.LEFT_GAME))
+                player.actor = None
+            except Exception:
+                print_exception(
+                    f'Error killing player actor on leave for {self}')
+            try:
+                player.reset()
                 sessionplayer.reset()
                 sessionplayer.set_node(None)
                 sessionplayer.set_activity(None)

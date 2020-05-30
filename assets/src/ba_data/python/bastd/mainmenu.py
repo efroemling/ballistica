@@ -880,8 +880,8 @@ def _preload2() -> None:
             'dripity', 'spawn', 'gong'
     ]:
         ba.getsound(sname)
-    from bastd.actor import bomb
-    bomb.get_factory()
+    from bastd.actor.bomb import BombFactory
+    BombFactory.get()
     ba.timer(0.1, _preload3)
 
 

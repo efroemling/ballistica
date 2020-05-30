@@ -150,6 +150,17 @@ class BombFactory:
           ba.Sound for a rolling bomb.
     """
 
+    @staticmethod
+    def get() -> BombFactory:
+        """Get/create a shared bastd.actor.bomb.BombFactory object."""
+        activity = ba.getactivity()
+        factory = getattr(activity, STORAGE_ATTR_NAME, None)
+        if factory is None:
+            factory = BombFactory()
+            setattr(activity, STORAGE_ATTR_NAME, factory)
+        assert isinstance(factory, BombFactory)
+        return factory
+
     def random_explode_sound(self) -> ba.Sound:
         """Return a random explosion ba.Sound from the factory."""
         return self.explode_sounds[random.randrange(len(self.explode_sounds))]
@@ -301,17 +312,6 @@ class BombFactory:
         )
 
 
-def get_factory() -> BombFactory:
-    """Get/create a shared bastd.actor.bomb.BombFactory object."""
-    activity = ba.getactivity()
-    factory = getattr(activity, STORAGE_ATTR_NAME, None)
-    if factory is None:
-        factory = BombFactory()
-        setattr(activity, STORAGE_ATTR_NAME, factory)
-    assert isinstance(factory, BombFactory)
-    return factory
-
-
 class SplatMessage:
     """Tells an object to make a splat noise."""
 
@@ -334,9 +334,6 @@ class WarnMessage:
 
 class ExplodeHitMessage:
     """Tell an object it was hit by an explosion."""
-
-    def __init__(self) -> None:
-        pass
 
 
 class Blast(ba.Actor):
@@ -362,7 +359,7 @@ class Blast(ba.Actor):
         super().__init__()
 
         shared = SharedObjects.get()
-        factory = get_factory()
+        factory = BombFactory.get()
 
         self.blast_type = blast_type
         self._source_player = source_player
@@ -653,11 +650,14 @@ class Blast(ba.Actor):
                               radius=self.radius,
                               source_player=ba.existing(self._source_player)))
             if self.blast_type == 'ice':
-                ba.playsound(get_factory().freeze_sound, 10, position=nodepos)
+                ba.playsound(BombFactory.get().freeze_sound,
+                             10,
+                             position=nodepos)
                 node.handlemessage(ba.FreezeMessage())
 
         else:
-            super().handlemessage(msg)
+            return super().handlemessage(msg)
+        return None
 
 
 class Bomb(ba.Actor):
@@ -687,7 +687,7 @@ class Bomb(ba.Actor):
         super().__init__()
 
         shared = SharedObjects.get()
-        factory = get_factory()
+        factory = BombFactory.get()
 
         if bomb_type not in ('ice', 'impact', 'land_mine', 'normal', 'sticky',
                              'tnt'):
@@ -906,7 +906,7 @@ class Bomb(ba.Actor):
                 and ba.time() - self._last_sticky_sound_time > 1.0):
             self._last_sticky_sound_time = ba.time()
             assert self.node
-            ba.playsound(get_factory().sticky_impact_sound,
+            ba.playsound(BombFactory.get().sticky_impact_sound,
                          2.0,
                          position=self.node.position)
 
@@ -940,7 +940,7 @@ class Bomb(ba.Actor):
     def _handle_warn(self) -> None:
         if self.texture_sequence and self.node:
             self.texture_sequence.rate = 30
-            ba.playsound(get_factory().warn_sound,
+            ba.playsound(BombFactory.get().warn_sound,
                          0.5,
                          position=self.node.position)
 
@@ -959,7 +959,7 @@ class Bomb(ba.Actor):
         """
         if not self.node:
             return
-        factory = get_factory()
+        factory = BombFactory.get()
         intex: Sequence[ba.Texture]
         if self.bomb_type == 'land_mine':
             intex = (factory.land_mine_lit_tex, factory.land_mine_tex)

@@ -29,7 +29,7 @@ from typing import TYPE_CHECKING, TypeVar
 from ba._activity import Activity
 from ba._score import ScoreInfo
 from ba._lang import Lstr
-from ba._messages import PlayerDiedMessage, StandMessage, DieMessage, DeathType
+from ba._messages import PlayerDiedMessage, StandMessage
 from ba._error import NotFoundError, print_error, print_exception
 from ba._general import Call, WeakCall
 from ba._player import PlayerInfo
@@ -549,18 +549,19 @@ class GameActivity(Activity[PlayerType, TeamType]):
         # By default, just spawn a dude.
         self.spawn_player(player)
 
-    def on_player_leave(self, player: PlayerType) -> None:
-        super().on_player_leave(player)
+    # def on_player_leave(self, player: PlayerType) -> None:
+    #     super().on_player_leave(player)
 
-        # If the player has an actor, send it a deferred die message.
-        # This way the player will be completely gone from the game
-        # when the message goes through, making it less likely games
-        # will incorrectly try to respawn them, etc.
-        actor = player.actor
-        if actor is not None:
-            _ba.pushcall(
-                Call(actor.handlemessage, DieMessage(how=DeathType.LEFT_GAME)))
-            player.set_actor(None)
+    #     # If the player has an actor, send it a deferred die message.
+    #     # This way the player will be completely gone from the game
+    #     # when the message goes through, making it less likely games
+    #     # will incorrectly try to respawn them, etc.
+    #     actor = player.actor
+    #     if actor is not None:
+    #         _ba.pushcall(
+    #             Call(actor.handlemessage,
+    # DieMessage(how=DeathType.LEFT_GAME)))
+    #         player.actor = None
 
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, PlayerDiedMessage):
@@ -948,7 +949,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
                           character=player.character,
                           player=player)
 
-        player.set_actor(spaz)
+        player.actor = spaz
         assert spaz.node
 
         # If this is co-op and we're on Courtyard or Runaround, add the

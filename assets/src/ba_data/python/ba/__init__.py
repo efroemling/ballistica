@@ -39,8 +39,7 @@ from _ba import (CollideModel, Context, ContextCall, Data, InputDevice,
                  open_url, widget)
 from ba._activity import Activity
 from ba._actor import Actor
-from ba._player import (PlayerInfo, Player, playercast, playercast_o,
-                        StandLocation)
+from ba._player import PlayerInfo, Player, StandLocation
 from ba._nodeactor import NodeActor
 from ba._app import App
 from ba._coopgame import CoopGameActivity
