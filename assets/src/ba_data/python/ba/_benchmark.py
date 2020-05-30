@@ -78,7 +78,7 @@ def run_stress_test(playlist_type: str = 'Random',
     from ba._enums import TimeType
     _ba.screenmessage(
         'Beginning stress test.. use '
-        '\'End Game\' to stop testing.',
+        "'End Game' to stop testing.",
         color=(1, 1, 0))
     with _ba.Context('ui'):
         start_stress_test({
@@ -112,7 +112,7 @@ def start_stress_test(args: Dict[str, Any]) -> None:
     from ba._dualteamsession import DualTeamSession
     from ba._freeforallsession import FreeForAllSession
     from ba._enums import TimeType, TimeFormat
-    bs_config = _ba.app.config
+    appconfig = _ba.app.config
     playlist_type = args['playlist_type']
     if playlist_type == 'Random':
         if random.random() < 0.5:
@@ -122,15 +122,15 @@ def start_stress_test(args: Dict[str, Any]) -> None:
     _ba.screenmessage('Running Stress Test (listType="' + playlist_type +
                       '", listName="' + args['playlist_name'] + '")...')
     if playlist_type == 'Teams':
-        bs_config['Team Tournament Playlist Selection'] = args['playlist_name']
-        bs_config['Team Tournament Playlist Randomize'] = 1
+        appconfig['Team Tournament Playlist Selection'] = args['playlist_name']
+        appconfig['Team Tournament Playlist Randomize'] = 1
         _ba.timer(1.0,
                   Call(_ba.pushcall, Call(_ba.new_host_session,
                                           DualTeamSession)),
                   timetype=TimeType.REAL)
     else:
-        bs_config['Free-for-All Playlist Selection'] = args['playlist_name']
-        bs_config['Free-for-All Playlist Randomize'] = 1
+        appconfig['Free-for-All Playlist Selection'] = args['playlist_name']
+        appconfig['Free-for-All Playlist Randomize'] = 1
         _ba.timer(1.0,
                   Call(_ba.pushcall,
                        Call(_ba.new_host_session, FreeForAllSession)),

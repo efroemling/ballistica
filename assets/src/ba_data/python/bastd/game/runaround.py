@@ -90,7 +90,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
         settings['map'] = 'Tower D'
         super().__init__(settings)
         shared = SharedObjects.get()
-        self._preset = self.settings_raw.get('preset', 'pro')
+        self._preset = str(settings.get('preset', 'pro'))
 
         self._player_death_sound = ba.getsound('playerDeath')
         self._new_wave_sound = ba.getsound('scoreHit01')

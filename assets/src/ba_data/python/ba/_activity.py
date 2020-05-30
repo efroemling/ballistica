@@ -118,7 +118,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
     # Set this to true to inherit VR camera offsets from the previous
     # activity (useful for preventing sporadic camera movement
     # during transitions).
-    inherits_camera_vr_offset = False
+    inherits_vr_camera_offset = False
 
     # Set this to true to inherit (non-fixed) VR overlay positioning from
     # the previous activity (useful for prevent sporadic overlay jostling
@@ -168,7 +168,6 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         self._setup_player_and_team_types()
 
         # FIXME: Relocate or remove the need for this stuff.
-        self.sharedobjs: Dict[str, Any] = {}
         self.paused_text: Optional[ba.Actor] = None
         self.spaz_respawn_icons_right: Dict[int, RespawnIcon]
 
@@ -188,10 +187,6 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         self._has_transitioned_in = False
         self._has_begun = False
         self._has_ended = False
-        self._should_end_immediately = False
-        self._should_end_immediately_results: (
-            Optional[ba.TeamGameResults]) = None
-        self._should_end_immediately_delay = 0.0
         self._activity_death_check_timer: Optional[ba.Timer] = None
         self._expired = False
 
@@ -463,7 +458,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
                 glb.music_continuous = True  # Prevent restarting same music.
                 glb.music = prev_globals.music
                 glb.music_count += 1
-            if self.inherits_camera_vr_offset and prev_globals is not None:
+            if self.inherits_vr_camera_offset and prev_globals is not None:
                 glb.vr_camera_offset = prev_globals.vr_camera_offset
             if self.inherits_vr_overlay_center and prev_globals is not None:
                 glb.vr_overlay_center = prev_globals.vr_overlay_center

@@ -158,10 +158,8 @@ class Session:
         # Init our C++ layer data.
         self._sessiondata = _ba.register_session(self)
 
-        # Stuff in this section should be removed from this class if possible.
+        # Should remove this if possible.
         self.tournament_id: Optional[str] = None
-        self.sharedobjs: Dict[str, Any] = {}
-        self.have_shown_controls_help_overlay = False
 
         self.teams = []
         self.players = []
@@ -193,7 +191,6 @@ class Session:
                                    color=color)
                 self.teams.append(team)
                 self._next_team_id += 1
-
                 try:
                     with _ba.Context(self):
                         self.on_team_join(team)

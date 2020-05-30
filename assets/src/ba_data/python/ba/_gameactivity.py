@@ -549,20 +549,6 @@ class GameActivity(Activity[PlayerType, TeamType]):
         # By default, just spawn a dude.
         self.spawn_player(player)
 
-    # def on_player_leave(self, player: PlayerType) -> None:
-    #     super().on_player_leave(player)
-
-    #     # If the player has an actor, send it a deferred die message.
-    #     # This way the player will be completely gone from the game
-    #     # when the message goes through, making it less likely games
-    #     # will incorrectly try to respawn them, etc.
-    #     actor = player.actor
-    #     if actor is not None:
-    #         _ba.pushcall(
-    #             Call(actor.handlemessage,
-    # DieMessage(how=DeathType.LEFT_GAME)))
-    #         player.actor = None
-
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, PlayerDiedMessage):
             # pylint: disable=cyclic-import
@@ -759,7 +745,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
                 tip = tip['tip']
                 assert isinstance(tip, str)
 
-            # A few substitutions...
+            # Do a few substitutions.
             tip_lstr = Lstr(translate=('tips', tip),
                             subs=[('${PICKUP}',
                                    _ba.charstr(SpecialChar.TOP_BUTTON))])
@@ -1104,10 +1090,11 @@ class GameActivity(Activity[PlayerType, TeamType]):
         if duration <= 0.0:
             return
         self._tournament_time_limit = int(duration)
-        # we want this timer to match the server's time as close as possible,
-        # so lets go with base-time.. theoretically we should do real-time but
+
+        # We want this timer to match the server's time as close as possible,
+        # so lets go with base-time. Theoretically we should do real-time but
         # then we have to mess with contexts and whatnot since its currently
-        # not available in activity contexts... :-/
+        # not available in activity contexts. :-/
         self._tournament_time_limit_timer = _ba.Timer(
             1.0,
             WeakCall(self._tournament_time_limit_tick),

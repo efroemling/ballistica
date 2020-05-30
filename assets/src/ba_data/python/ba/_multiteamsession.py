@@ -254,14 +254,14 @@ class MultiTeamSession(Session):
         """
         # pylint: disable=cyclic-import
         # pylint: disable=too-many-locals
-        from ba import _math
-        from ba import _general
+        from ba._math import normalized_color
+        from ba._general import Call
         from ba._gameutils import cameraflash
-        from ba import _lang
+        from ba._lang import Lstr
         from ba._freeforallsession import FreeForAllSession
         from ba._messages import CelebrateMessage
-        _ba.timer(delay,
-                  _general.Call(_ba.playsound, _ba.getsound('boxingBell')))
+        _ba.timer(delay, Call(_ba.playsound, _ba.getsound('boxingBell')))
+
         if announce_winning_team:
             winning_team = results.get_winning_team()
             if winning_team is not None:
@@ -278,12 +278,13 @@ class MultiTeamSession(Session):
                     wins_resource = 'winsPlayerText'
                 else:
                     wins_resource = 'winsTeamText'
-                wins_text = _lang.Lstr(resource=wins_resource,
-                                       subs=[('${NAME}', winning_team.name)])
-                activity.show_zoom_message(wins_text,
-                                           scale=0.85,
-                                           color=_math.normalized_color(
-                                               winning_team.color))
+                wins_text = Lstr(resource=wins_resource,
+                                 subs=[('${NAME}', winning_team.name)])
+                activity.show_zoom_message(
+                    wins_text,
+                    scale=0.85,
+                    color=normalized_color(winning_team.color),
+                )
 
 
 class ShuffleList:

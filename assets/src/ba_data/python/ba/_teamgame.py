@@ -77,7 +77,8 @@ class TeamGameActivity(GameActivity[PlayerType, TeamType]):
         # (unless we're being run in co-op mode, in which case we leave
         # it up to them)
         if not isinstance(self.session, CoopSession):
-            if not self.session.have_shown_controls_help_overlay:
+            attrname = '_have_shown_ctrl_help_overlay'
+            if not getattr(self.session, attrname, False):
                 delay = 4.0
                 lifespan = 10.0
                 if self.slow_motion:
@@ -87,7 +88,7 @@ class TeamGameActivity(GameActivity[PlayerType, TeamType]):
                               scale=0.8,
                               position=(380, 200),
                               bright=True).autoretain()
-                self.session.have_shown_controls_help_overlay = True
+                setattr(self.session, attrname, True)
 
     def on_begin(self) -> None:
         super().on_begin()

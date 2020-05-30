@@ -48,7 +48,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         # Keep prev activity alive while we fade in
         self.transition_time = 0.5
         self.inherits_tint = True
-        self.inherits_camera_vr_offset = True
+        self.inherits_vr_camera_offset = True
         self.inherits_music = True
         self.use_fixed_vr_overlay = True
 

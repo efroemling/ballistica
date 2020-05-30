@@ -26,6 +26,7 @@ from typing import TYPE_CHECKING
 
 import ba
 from bastd.activity.multiteamscore import MultiTeamScoreScreenActivity
+from bastd.actor.zoomtext import ZoomText
 
 if TYPE_CHECKING:
     from typing import Any, Dict
@@ -34,15 +35,9 @@ if TYPE_CHECKING:
 class DrawScoreScreenActivity(MultiTeamScoreScreenActivity):
     """Score screen shown after a draw."""
 
-    def __init__(self, settings: Dict[str, Any]):
-        super().__init__(settings=settings)
-
-    def on_transition_in(self) -> None:
-        self.default_music = None  # Awkward silence...
-        super().on_transition_in()
+    default_music = None  # Awkward silence...
 
     def on_begin(self) -> None:
-        from bastd.actor.zoomtext import ZoomText
         ba.set_analytics_screen('Draw Score Screen')
         super().on_begin()
         ZoomText(ba.Lstr(resource='drawText'),

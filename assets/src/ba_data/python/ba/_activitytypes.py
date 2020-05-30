@@ -46,7 +46,7 @@ class EndSessionActivity(Activity[Player, Team]):
         self.transition_time = 0.25
         self.inherits_tint = True
         self.inherits_slow_motion = True
-        self.inherits_camera_vr_offset = True
+        self.inherits_vr_camera_offset = True
         self.inherits_vr_overlay_center = True
 
     def on_transition_in(self) -> None:
@@ -114,7 +114,7 @@ class TransitionActivity(Activity[Player, Team]):
         self.transition_time = 0.5
         self.inherits_slow_motion = True  # Don't change.
         self.inherits_tint = True  # Don't change.
-        self.inherits_camera_vr_offset = True  # Don't change.
+        self.inherits_vr_camera_offset = True  # Don't change.
         self.inherits_vr_overlay_center = True
         self.use_fixed_vr_overlay = True
         self._background: Optional[ba.Actor] = None
@@ -144,7 +144,7 @@ class ScoreScreenActivity(Activity[Player, Team]):
         super().__init__(settings)
         self.transition_time = 0.5
         self.inherits_tint = True
-        self.inherits_camera_vr_offset = True
+        self.inherits_vr_camera_offset = True
         self.use_fixed_vr_overlay = True
         self.default_music: Optional[MusicType] = MusicType.SCORES
         self._birth_time = _ba.time()

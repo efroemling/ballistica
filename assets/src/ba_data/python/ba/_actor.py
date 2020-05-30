@@ -171,7 +171,6 @@ class Actor:
         so a simple "if myactor" test will conveniently do the right thing
         even if myactor is set to None.
         """
-
         return True
 
     def __bool__(self) -> bool:
