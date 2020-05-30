@@ -935,7 +935,7 @@ class CoopBrowserWindow(ba.Window):
 
         # add all custom user levels here..
         # items += [
-        #     'User:' + l.get_name()
+        #     'User:' + l.getname()
         #     for l in get_campaign('User').get_levels()
         # ]
 

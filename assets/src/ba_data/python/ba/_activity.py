@@ -282,20 +282,6 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         """(internal)"""
         self._has_ended = val
 
-    # def set_immediate_end(self, results: ba.TeamGameResults, delay: float,
-    #                       force: bool) -> None:
-    #     """Set the activity to die immediately after beginning.
-
-    #     (internal)
-    #     """
-    #     if self.has_begun():
-    #         raise RuntimeError('This should only be called for Activities'
-    #                            'that have not yet begun.')
-    #     if not self._should_end_immediately or force:
-    #         self._should_end_immediately = True
-    #         self._should_end_immediately_results = results
-    #         self._should_end_immediately_delay = delay
-
     def destroy(self) -> None:
         """Begin the process of tearing down the activity.
 

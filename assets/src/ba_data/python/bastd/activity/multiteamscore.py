@@ -212,7 +212,7 @@ class MultiTeamScoreScreenActivity(ScoreScreenActivity):
                   scale=(30.0 * scale, 30.0 * scale),
                   transition=Image.Transition.IN_LEFT,
                   transition_delay=tdelay).autoretain()
-            Text(ba.Lstr(value=playerrec.get_name(full=True)),
+            Text(ba.Lstr(value=playerrec.getname(full=True)),
                  maxwidth=160,
                  scale=0.75 * scale,
                  position=(ts_h_offs + 10.0 * scale,

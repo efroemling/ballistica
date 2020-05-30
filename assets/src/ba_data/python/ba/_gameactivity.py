@@ -56,7 +56,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
 
     tips: List[Union[str, Dict[str, Any]]] = []
 
-    # Default get_name() will return this if not None.
+    # Default getname() will return this if not None.
     name: Optional[str] = None
 
     # Default get_description() will return this if not None.
@@ -112,7 +112,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         return cls.score_info if cls.score_info is not None else ScoreInfo()
 
     @classmethod
-    def get_name(cls) -> str:
+    def getname(cls) -> str:
         """Return a str name for this game type.
 
         This default implementation simply returns the 'name' class attr.
@@ -123,9 +123,9 @@ class GameActivity(Activity[PlayerType, TeamType]):
     def get_display_string(cls, settings: Optional[Dict] = None) -> ba.Lstr:
         """Return a descriptive name for this game/settings combo.
 
-        Subclasses should override get_name(); not this.
+        Subclasses should override getname(); not this.
         """
-        name = Lstr(translate=('gameNames', cls.get_name()))
+        name = Lstr(translate=('gameNames', cls.getname()))
 
         # A few substitutions for 'Epic', 'Solo' etc. modes.
         # FIXME: Should provide a way for game types to define filters of
@@ -512,7 +512,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
 
         # Store some basic info about players present at start time.
         self.initial_player_info = [
-            PlayerInfo(name=p.get_name(full=True), character=p.character)
+            PlayerInfo(name=p.getname(full=True), character=p.character)
             for p in self.players
         ]
 
@@ -924,7 +924,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         from ba._gameutils import animate
         from ba._coopsession import CoopSession
         from bastd.actor.playerspaz import PlayerSpaz
-        name = player.get_name()
+        name = player.getname()
         color = player.color
         highlight = player.highlight
 
@@ -941,7 +941,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         # If this is co-op and we're on Courtyard or Runaround, add the
         # material that allows us to collide with the player-walls.
         # FIXME: Need to generalize this.
-        if isinstance(self.session, CoopSession) and self.map.get_name() in [
+        if isinstance(self.session, CoopSession) and self.map.getname() in [
                 'Courtyard', 'Tower D'
         ]:
             mat = self.map.preloaddata['collide_with_wall_material']

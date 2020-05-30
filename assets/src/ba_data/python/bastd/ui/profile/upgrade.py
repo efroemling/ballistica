@@ -48,7 +48,7 @@ class ProfileUpgradeWindow(ba.Window):
         self._base_scale = (2.05 if ba.app.small_ui else
                             1.5 if ba.app.med_ui else 1.2)
         self._upgrade_start_time: Optional[float] = None
-        self._name = edit_profile_window.get_name()
+        self._name = edit_profile_window.getname()
         self._edit_profile_window = weakref.ref(edit_profile_window)
 
         top_extra = 15 if ba.app.small_ui else 15

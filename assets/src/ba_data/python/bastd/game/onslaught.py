@@ -901,7 +901,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
                              in [Preset.ENDLESS, Preset.ENDLESS_TOURNAMENT] or
                              (player.respawn_wave <= len(self._waves)))):
                     rtxt = ba.Lstr(resource='onslaughtRespawnText',
-                                   subs=[('${PLAYER}', player.get_name()),
+                                   subs=[('${PLAYER}', player.getname()),
                                          ('${WAVE}', str(player.respawn_wave))
                                          ])
                     text = ba.Lstr(value='${A}${B}\n',

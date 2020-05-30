@@ -44,7 +44,7 @@ class PlaylistEditController:
         from bastd.ui import playlist as playlistui
         from bastd.ui.playlist import edit as peditui
 
-        bs_config = ba.app.config
+        appconfig = ba.app.config
 
         # Since we may be showing our map list momentarily,
         # lets go ahead and preload all map preview textures.
@@ -58,8 +58,8 @@ class PlaylistEditController:
         self._config_name_full = self._pvars.config_name + ' Playlists'
 
         # Make sure config exists.
-        if self._config_name_full not in bs_config:
-            bs_config[self._config_name_full] = {}
+        if self._config_name_full not in appconfig:
+            appconfig[self._config_name_full] = {}
 
         self._selected_index = 0
         if existing_playlist_name:
@@ -67,7 +67,7 @@ class PlaylistEditController:
 
             # Filter out invalid games.
             self._playlist = filter_playlist(
-                bs_config[self._pvars.config_name +
+                appconfig[self._pvars.config_name +
                           ' Playlists'][existing_playlist_name],
                 sessiontype=sessiontype,
                 remove_unowned=False)
@@ -87,7 +87,7 @@ class PlaylistEditController:
                     self._name = (
                         self._pvars.default_new_list_name.evaluate() +
                         ((' ' + str(i)) if i > 1 else ''))
-                    if self._name not in bs_config[self._pvars.config_name +
+                    if self._name not in appconfig[self._pvars.config_name +
                                                    ' Playlists']:
                         break
                     i += 1
@@ -115,7 +115,7 @@ class PlaylistEditController:
         """(internal)"""
         self._edit_ui_selection = selection
 
-    def get_name(self) -> str:
+    def getname(self) -> str:
         """(internal)"""
         return self._name
 

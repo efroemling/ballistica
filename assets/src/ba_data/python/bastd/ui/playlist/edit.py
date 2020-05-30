@@ -110,7 +110,7 @@ class PlaylistEditWindow(ba.Window):
             parent=self._root_widget,
             position=(210 + x_inset, v + 7),
             size=(self._scroll_width - 53, 43),
-            text=self._editcontroller.get_name(),
+            text=self._editcontroller.getname(),
             h_align='left',
             v_align='center',
             max_chars=40,

@@ -39,7 +39,7 @@ class SoundtrackEditWindow(ba.Window):
                  existing_soundtrack: Optional[Union[str, Dict[str, Any]]],
                  transition: str = 'in_right'):
         # pylint: disable=too-many-statements
-        bs_config = ba.app.config
+        appconfig = ba.app.config
         self._r = 'editSoundtrackWindow'
         self._folder_tex = ba.gettexture('folder')
         self._file_tex = ba.gettexture('file')
@@ -81,8 +81,8 @@ class SoundtrackEditWindow(ba.Window):
             v_align='center',
             maxwidth=280)
         v = self._height - 110
-        if 'Soundtracks' not in bs_config:
-            bs_config['Soundtracks'] = {}
+        if 'Soundtracks' not in appconfig:
+            appconfig['Soundtracks'] = {}
 
         self._soundtrack_name: Optional[str]
         self._existing_soundtrack_name: Optional[str]
@@ -90,7 +90,7 @@ class SoundtrackEditWindow(ba.Window):
             # if they passed just a name, pull info from that soundtrack
             if isinstance(existing_soundtrack, str):
                 self._soundtrack = copy.deepcopy(
-                    bs_config['Soundtracks'][existing_soundtrack])
+                    appconfig['Soundtracks'][existing_soundtrack])
                 self._soundtrack_name = existing_soundtrack
                 self._existing_soundtrack_name = existing_soundtrack
                 self._last_edited_song_type = None
@@ -129,7 +129,7 @@ class SoundtrackEditWindow(ba.Window):
             while True:
                 self._soundtrack_name = st_name_text.replace(
                     '${COUNT}', str(i))
-                if self._soundtrack_name not in bs_config['Soundtracks']:
+                if self._soundtrack_name not in appconfig['Soundtracks']:
                     break
                 i += 1
 

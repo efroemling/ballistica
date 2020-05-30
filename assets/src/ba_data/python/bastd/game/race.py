@@ -253,7 +253,7 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
                     ba.screenmessage(ba.Lstr(
                         translate=('statements', 'Killing ${NAME} for'
                                    ' skipping part of the track!'),
-                        subs=[('${NAME}', player.get_name(full=True))]),
+                        subs=[('${NAME}', player.getname(full=True))]),
                                      color=(1, 0, 0))
             else:
                 # If this player is in first, note that this is the
@@ -368,7 +368,7 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
                 translate=('statements',
                            '${TEAM} is disqualified because ${PLAYER} left'),
                 subs=[('${TEAM}', player.team.name),
-                      ('${PLAYER}', player.get_name(full=True))]),
+                      ('${PLAYER}', player.getname(full=True))]),
                              color=(1, 1, 0))
             player.team.finished = True
             player.team.time = None

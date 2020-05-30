@@ -62,7 +62,7 @@ def game_begin_analytics() -> None:
             _ba.increment_analytics_count('Co-op round start 4+ human players')
 
     elif isinstance(session, DualTeamSession):
-        _ba.set_analytics_screen('Teams Game: ' + activity.get_name())
+        _ba.set_analytics_screen('Teams Game: ' + activity.getname())
         _ba.increment_analytics_count('Teams round start')
         if len(activity.players) == 1:
             _ba.increment_analytics_count('Teams round start 1 human player')
@@ -74,7 +74,7 @@ def game_begin_analytics() -> None:
             _ba.increment_analytics_count('Teams round start 8+ human players')
 
     elif isinstance(session, FreeForAllSession):
-        _ba.set_analytics_screen('FreeForAll Game: ' + activity.get_name())
+        _ba.set_analytics_screen('FreeForAll Game: ' + activity.getname())
         _ba.increment_analytics_count('Free-for-all round start')
         if len(activity.players) == 1:
             _ba.increment_analytics_count(

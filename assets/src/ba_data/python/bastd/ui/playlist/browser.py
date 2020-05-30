@@ -338,7 +338,7 @@ class PlaylistBrowserWindow(ba.Window):
                       v_align='center')
 
         index = 0
-        bs_config = ba.app.config
+        appconfig = ba.app.config
 
         model_opaque = ba.getmodel('level_select_button_opaque')
         model_transparent = ba.getmodel('level_select_button_transparent')
@@ -418,13 +418,13 @@ class PlaylistBrowserWindow(ba.Window):
                             raise Exception('unrecognized session-type: ' +
                                             str(self._sessiontype))
                     else:
-                        if name not in bs_config[self._pvars.config_name +
+                        if name not in appconfig[self._pvars.config_name +
                                                  ' Playlists']:
                             print(
                                 'NOT FOUND ERR',
-                                bs_config[self._pvars.config_name +
+                                appconfig[self._pvars.config_name +
                                           ' Playlists'])
-                        playlist = bs_config[self._pvars.config_name +
+                        playlist = appconfig[self._pvars.config_name +
                                              ' Playlists'][name]
                     playlist = filter_playlist(playlist,
                                                self._sessiontype,

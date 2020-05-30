@@ -708,7 +708,7 @@ class MainMenuWindow(ba.Window):
 
         # Player name if applicable.
         if self._input_player:
-            player_name = self._input_player.get_name()
+            player_name = self._input_player.getname()
             h, v, scale = positions[self._p_index]
             v += 35
             ba.textwidget(parent=self._root_widget,

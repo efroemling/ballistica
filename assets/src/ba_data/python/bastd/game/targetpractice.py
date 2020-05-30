@@ -354,7 +354,7 @@ class Target(ba.Actor):
             # names and colors so they know who got the hit.
             if len(activity.players) > 1:
                 popupcolor = ba.safecolor(player.color, target_intensity=0.75)
-                popupstr += ' ' + player.get_name()
+                popupstr += ' ' + player.getname()
             PopupText(popupstr,
                       position=self._position,
                       color=popupcolor,

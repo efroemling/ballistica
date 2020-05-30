@@ -192,7 +192,7 @@ class Map(Actor):
         return None
 
     @classmethod
-    def get_name(cls) -> str:
+    def getname(cls) -> str:
         """Return the unique name of this map, in English."""
         return cls.name
 
@@ -231,14 +231,14 @@ class Map(Actor):
         # Set area-of-interest bounds.
         aoi_bounds = self.get_def_bound_box('area_of_interest_bounds')
         if aoi_bounds is None:
-            print('WARNING: no "aoi_bounds" found for map:', self.get_name())
+            print('WARNING: no "aoi_bounds" found for map:', self.getname())
             aoi_bounds = (-1, -1, -1, 1, 1, 1)
         gnode.area_of_interest_bounds = aoi_bounds
 
         # Set map bounds.
         map_bounds = self.get_def_bound_box('map_bounds')
         if map_bounds is None:
-            print('WARNING: no "map_bounds" found for map:', self.get_name())
+            print('WARNING: no "map_bounds" found for map:', self.getname())
             map_bounds = (-30, -10, -30, 30, 100, 30)
         _ba.set_map_bounds(map_bounds)
 

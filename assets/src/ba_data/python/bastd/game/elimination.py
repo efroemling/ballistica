@@ -75,7 +75,7 @@ class Icon(ba.Actor):
             'text',
             owner=self.node,
             attrs={
-                'text': ba.Lstr(value=player.get_name()),
+                'text': ba.Lstr(value=player.getname()),
                 'color': ba.safecolor(player.team.color),
                 'h_align': 'center',
                 'v_align': 'center',
@@ -276,7 +276,7 @@ class EliminationGame(ba.TeamGameActivity[Player, Team]):
                 player.team.survival_seconds = 0
             ba.screenmessage(
                 ba.Lstr(resource='playerDelayedJoinText',
-                        subs=[('${PLAYER}', player.get_name(full=True))]),
+                        subs=[('${PLAYER}', player.getname(full=True))]),
                 color=(0, 1, 0),
             )
             return

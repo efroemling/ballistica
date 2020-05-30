@@ -117,7 +117,7 @@ class MeteorShowerGame(ba.TeamGameActivity[Player, Team]):
         if self.has_begun():
             ba.screenmessage(
                 ba.Lstr(resource='playerDelayedJoinText',
-                        subs=[('${PLAYER}', player.get_name(full=True))]),
+                        subs=[('${PLAYER}', player.getname(full=True))]),
                 color=(0, 1, 0),
             )
             # For score purposes, mark them as having died right as the

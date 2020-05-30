@@ -238,7 +238,6 @@ class Session:
 
     def on_player_leave(self, sessionplayer: ba.SessionPlayer) -> None:
         """Called when a previously-accepted ba.SessionPlayer leaves."""
-        # pylint: disable=too-many-branches
 
         if sessionplayer not in self.players:
             print('ERROR: Session.on_player_leave called'
@@ -250,7 +249,8 @@ class Session:
         activity = self._activity_weak()
 
         if not sessionplayer.in_game:
-            # Ok, the player's still in the lobby. Simply remove them from it.
+
+            # Ok, the player is still in the lobby; simply remove them.
             with _ba.Context(self):
                 try:
                     self.lobby.remove_chooser(sessionplayer)
@@ -261,11 +261,10 @@ class Session:
             # teams/activities/etc.
             sessionteam = sessionplayer.team
             assert sessionteam is not None
-            assert sessionplayer in sessionteam.players
 
             _ba.screenmessage(
                 Lstr(resource='playerLeftText',
-                     subs=[('${PLAYER}', sessionplayer.get_name(full=True))]))
+                     subs=[('${PLAYER}', sessionplayer.getname(full=True))]))
 
             # Remove them from their SessionTeam.
             if sessionplayer in sessionteam.players:
@@ -287,37 +286,41 @@ class Session:
 
             # If we're a non-team session, remove their team too.
             if not self.use_teams:
-
-                # They should have been the only one on their team.
-                assert not sessionteam.players
-
-                # Remove their Team from the Activity.
-                if activity is not None:
-                    if sessionteam.gameteam in activity.teams:
-                        activity.remove_team(sessionteam)
-                    else:
-                        print('Team not found in Activity in on_player_leave.')
-
-                # And then from the Session.
-                with _ba.Context(self):
-                    if sessionteam in self.teams:
-                        try:
-                            self.teams.remove(sessionteam)
-                            self.on_team_leave(sessionteam)
-                        except Exception:
-                            print_exception(
-                                f'Error in on_team_leave for Session {self}.')
-                    else:
-                        print('Team no in Session teams in on_player_leave.')
-                    try:
-                        sessionteam.reset_sessiondata()
-                    except Exception:
-                        print_exception(
-                            f'Error clearing sessiondata'
-                            f' for team {sessionteam} in session {self}.')
+                self._remove_player_team(sessionteam, activity)
 
         # Now remove them from the session list.
         self.players.remove(sessionplayer)
+
+    def _remove_player_team(self, sessionteam: ba.SessionTeam,
+                            activity: Optional[ba.Activity]) -> None:
+        """Remove the player-specific team in non-teams mode."""
+
+        # They should have been the only one on their team.
+        assert not sessionteam.players
+
+        # Remove their Team from the Activity.
+        if activity is not None:
+            if sessionteam.gameteam in activity.teams:
+                activity.remove_team(sessionteam)
+            else:
+                print('Team not found in Activity in on_player_leave.')
+
+        # And then from the Session.
+        with _ba.Context(self):
+            if sessionteam in self.teams:
+                try:
+                    self.teams.remove(sessionteam)
+                    self.on_team_leave(sessionteam)
+                except Exception:
+                    print_exception(
+                        f'Error in on_team_leave for Session {self}.')
+            else:
+                print('Team no in Session teams in on_player_leave.')
+            try:
+                sessionteam.reset_sessiondata()
+            except Exception:
+                print_exception(f'Error clearing sessiondata'
+                                f' for team {sessionteam} in session {self}.')
 
     def end(self) -> None:
         """Initiates an end to the session and a return to the main menu.
@@ -408,6 +411,15 @@ class Session:
 
         return UNHANDLED
 
+    class _SetActivityLock:
+
+        def __init__(self, session: ba.Session) -> None:
+            self._session = session
+            self._session._in_set_activity = True
+
+        def __del__(self) -> None:
+            self._session._in_set_activity = False
+
     def set_activity(self, activity: ba.Activity) -> None:
         """Assign a new current ba.Activity for the session.
 
@@ -420,8 +432,7 @@ class Session:
 
         # Sanity test: make sure this doesn't get called recursively.
         if self._in_set_activity:
-            raise RuntimeError(
-                'Session.set_activity() cannot be called recursively.')
+            raise RuntimeError('Session.set_activity() called recursively.')
         self._in_set_activity = True
 
         if activity.session is not _ba.getsession():
@@ -432,7 +443,7 @@ class Session:
             return
 
         if activity is self._activity_retained:
-            print_error('activity set to already-current activity')
+            print_error('Activity set to already-current activity.')
             return
 
         if self._next_activity is not None:
@@ -640,7 +651,7 @@ class Session:
                     _ba.screenmessage(
                         Lstr(resource='playerDelayedJoinText',
                              subs=[('${PLAYER}',
-                                    sessionplayer.get_name(full=True))]),
+                                    sessionplayer.getname(full=True))]),
                         color=(0, 1, 0),
                     )
 
@@ -654,7 +665,7 @@ class Session:
             sessionteam = SessionTeam(
                 team_id=our_team_id,
                 color=chooser.get_color(),
-                name=chooser.getplayer().get_name(full=True, icon=False),
+                name=chooser.getplayer().getname(full=True, icon=False),
             )
 
             # Add player's team to the Session.

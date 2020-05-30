@@ -80,7 +80,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 if prec.player.in_game:
                     player_entries.append(
                         (prec.player.team.sessiondata['score'],
-                         prec.get_name(full=True), prec))
+                         prec.getname(full=True), prec))
             player_entries.sort(reverse=True, key=lambda x: x[0])
         else:
             for _pkey, prec in self.stats.get_records().items():
@@ -364,7 +364,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 assert i.node
                 ba.animate(i.node, 'opacity', {0.0: 0.0, 0.25: 1.0})
                 ZoomText(ba.Lstr(
-                    value=team.players[0].get_name(full=True, icon=False)),
+                    value=team.players[0].getname(full=True, icon=False)),
                          position=(0, 97 + offs_v),
                          color=team.color,
                          scale=1.15,

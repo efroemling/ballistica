@@ -88,7 +88,7 @@ class RespawnIcon:
                        attrs={
                            'v_attach': 'top',
                            'h_attach': 'right' if on_right else 'left',
-                           'text': ba.Lstr(value=player.get_name()),
+                           'text': ba.Lstr(value=player.getname()),
                            'maxwidth': 100,
                            'h_align': 'center',
                            'v_align': 'center',

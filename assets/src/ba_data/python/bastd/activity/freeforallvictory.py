@@ -61,12 +61,12 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         player_order_prev.sort(
             reverse=True,
             key=lambda p:
-            (p.team.sessiondata['previous_score'], p.get_name(full=True)))
+            (p.team.sessiondata['previous_score'], p.getname(full=True)))
         player_order = list(self.players)
         player_order.sort(reverse=True,
                           key=lambda p:
                           (p.team.sessiondata['score'], p.team.sessiondata[
-                              'score'], p.get_name(full=True)))
+                              'score'], p.getname(full=True)))
 
         v_offs = -74.0 + spacing * len(player_order_prev) * 0.5
         delay1 = 1.3 + 0.1
@@ -161,7 +161,7 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                         0: ts_h_offs - 72.0 * scale,
                         transtime2: ts_h_offs - (72.0 + slide_amt) * scale
                     }))
-            txt = Text(ba.Lstr(value=player.get_name(full=True)),
+            txt = Text(ba.Lstr(value=player.getname(full=True)),
                        maxwidth=130.0,
                        scale=0.75 * scale,
                        position=(ts_h_offs - 50.0 * scale,

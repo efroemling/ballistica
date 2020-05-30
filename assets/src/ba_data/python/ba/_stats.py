@@ -104,7 +104,7 @@ class PlayerRecord:
             raise SessionPlayerNotFoundError()
         return self._player
 
-    def get_name(self, full: bool = False) -> str:
+    def getname(self, full: bool = False) -> str:
         """Return the player entry's name."""
         return self.name_full if full else self.name
 
@@ -307,8 +307,8 @@ class Stats:
 
     def register_player(self, player: ba.SessionPlayer) -> None:
         """Register a player with this score-set."""
-        name = player.get_name()
-        name_full = player.get_name(full=True)
+        name = player.getname()
+        name_full = player.getname(full=True)
         try:
             # If the player already exists, update his character and such as
             # it may have changed.
@@ -327,13 +327,13 @@ class Stats:
         # corresponds to a player with that name.
         for record_id, record in self._player_records.items():
             lastplayer = record.get_last_player()
-            if lastplayer and lastplayer.get_name() == record_id:
+            if lastplayer and lastplayer.getname() == record_id:
                 records[record_id] = record
         return records
 
     def player_got_hit(self, player: ba.SessionPlayer) -> None:
         """Call this when a player got hit."""
-        s_player = self._player_records[player.get_name()]
+        s_player = self._player_records[player.getname()]
         s_player.streak = 0
 
     def player_scored(self,
@@ -364,7 +364,7 @@ class Stats:
         from ba._gameactivity import GameActivity
         from ba._lang import Lstr
         del victim_player  # Currently unused.
-        name = player.get_name()
+        name = player.getname()
         s_player = self._player_records[name]
 
         if kill:
@@ -384,7 +384,7 @@ class Stats:
                 assert self._activity is not None
                 activity = self._activity()
                 if isinstance(activity, GameActivity):
-                    name_full = player.get_name(full=True, icon=False)
+                    name_full = player.getname(full=True, icon=False)
                     activity.show_zoom_message(
                         Lstr(resource='nameScoresText',
                              subs=[('${NAME}', name_full)]),
@@ -450,7 +450,7 @@ class Stats:
                           killer: ba.Player = None) -> None:
         """Should be called when a player is killed."""
         from ba._lang import Lstr
-        name = player.get_name()
+        name = player.getname()
         prec = self._player_records[name]
         prec.streak = 0
         if killed:
@@ -468,7 +468,7 @@ class Stats:
                     if killer.team is player.team:
                         _ba.screenmessage(Lstr(resource='nameBetrayedText',
                                                subs=[('${NAME}',
-                                                      killer.get_name()),
+                                                      killer.getname()),
                                                      ('${VICTIM}', name)]),
                                           top=True,
                                           color=killer.color,
@@ -476,7 +476,7 @@ class Stats:
                     else:
                         _ba.screenmessage(Lstr(resource='nameKilledText',
                                                subs=[('${NAME}',
-                                                      killer.get_name()),
+                                                      killer.getname()),
                                                      ('${VICTIM}', name)]),
                                           top=True,
                                           color=killer.color,

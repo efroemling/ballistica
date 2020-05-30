@@ -41,7 +41,7 @@ class EditProfileWindow(ba.Window):
         """Transitions out and recreates ourself."""
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         ba.app.main_menu_window = EditProfileWindow(
-            self.get_name(), self._in_main_menu).get_root_widget()
+            self.getname(), self._in_main_menu).get_root_widget()
 
     def __init__(self,
                  existing_profile: Optional[str],
@@ -605,7 +605,7 @@ class EditProfileWindow(ba.Window):
     def _update_clipped_name(self) -> None:
         if not self._clipped_name_text:
             return
-        name = self.get_name()
+        name = self.getname()
         if name == '__account__':
             name = (_ba.get_account_name()
                     if _ba.get_account_state() == 'signed_in' else '???')
@@ -630,7 +630,7 @@ class EditProfileWindow(ba.Window):
         if self._icon_button_label:
             ba.textwidget(edit=self._icon_button_label, text=self._icon)
 
-    def get_name(self) -> str:
+    def getname(self) -> str:
         """Return the current profile name value."""
         if self._is_account_profile:
             new_name = '__account__'
@@ -643,7 +643,7 @@ class EditProfileWindow(ba.Window):
     def save(self, transition_out: bool = True) -> bool:
         """Save has been selected."""
         from bastd.ui.profile import browser as pbrowser
-        new_name = self.get_name().strip()
+        new_name = self.getname().strip()
 
         if not new_name:
             ba.screenmessage(ba.Lstr(resource='nameNotEmptyText'))

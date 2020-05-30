@@ -167,13 +167,13 @@ class Player(Generic[TeamType]):
         """
         return self._sessionplayer.exists()
 
-    def get_name(self, full: bool = False, icon: bool = True) -> str:
-        """get_name(full: bool = False, icon: bool = True) -> str
+    def getname(self, full: bool = False, icon: bool = True) -> str:
+        """getname(full: bool = False, icon: bool = True) -> str
 
         Returns the player's name. If icon is True, the long version of the
         name may include an icon.
         """
-        return self._sessionplayer.get_name(full=full, icon=icon)
+        return self._sessionplayer.getname(full=full, icon=icon)
 
     def is_alive(self) -> bool:
         """is_alive() -> bool

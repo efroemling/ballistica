@@ -389,20 +389,20 @@ class KioskWindow(ba.Window):
             pass
         else:
             # Also make sure there's no player profiles.
-            bs_config = ba.app.config
-            bs_config['Player Profiles'] = {}
+            appconfig = ba.app.config
+            appconfig['Player Profiles'] = {}
 
     def _do_game(self, mode: str) -> None:
         self._save_state()
         if mode in ['epic', 'ctf', 'hockey']:
-            bs_config = ba.app.config
-            if 'Team Tournament Playlists' not in bs_config:
-                bs_config['Team Tournament Playlists'] = {}
-            if 'Free-for-All Playlists' not in bs_config:
-                bs_config['Free-for-All Playlists'] = {}
-            bs_config['Show Tutorial'] = False
+            appconfig = ba.app.config
+            if 'Team Tournament Playlists' not in appconfig:
+                appconfig['Team Tournament Playlists'] = {}
+            if 'Free-for-All Playlists' not in appconfig:
+                appconfig['Free-for-All Playlists'] = {}
+            appconfig['Show Tutorial'] = False
             if mode == 'epic':
-                bs_config['Free-for-All Playlists']['Just Epic Elim'] = [{
+                appconfig['Free-for-All Playlists']['Just Epic Elim'] = [{
                     'settings': {
                         'Epic Mode': 1,
                         'Lives Per Player': 1,
@@ -412,7 +412,7 @@ class KioskWindow(ba.Window):
                     },
                     'type': 'bs_elimination.EliminationGame'
                 }]
-                bs_config['Free-for-All Playlist Selection'] = 'Just Epic Elim'
+                appconfig['Free-for-All Playlist Selection'] = 'Just Epic Elim'
                 _ba.fade_screen(False,
                                 endcall=ba.Call(
                                     ba.pushcall,
@@ -420,7 +420,7 @@ class KioskWindow(ba.Window):
                                             ba.FreeForAllSession)))
             else:
                 if mode == 'ctf':
-                    bs_config['Team Tournament Playlists']['Just CTF'] = [{
+                    appconfig['Team Tournament Playlists']['Just CTF'] = [{
                         'settings': {
                             'Epic Mode': False,
                             'Flag Idle Return Time': 30,
@@ -432,10 +432,10 @@ class KioskWindow(ba.Window):
                         },
                         'type': 'bs_capture_the_flag.CTFGame'
                     }]
-                    bs_config[
+                    appconfig[
                         'Team Tournament Playlist Selection'] = 'Just CTF'
                 else:
-                    bs_config['Team Tournament Playlists']['Just Hockey'] = [{
+                    appconfig['Team Tournament Playlists']['Just Hockey'] = [{
                         'settings': {
                             'Respawn Times': 1.0,
                             'Score to Win': 1,
@@ -444,8 +444,8 @@ class KioskWindow(ba.Window):
                         },
                         'type': 'bs_hockey.HockeyGame'
                     }]
-                    bs_config['Team Tournament Playlist Selection'] = \
-                        'Just Hockey'
+                    appconfig['Team Tournament Playlist Selection'] = (
+                        'Just Hockey')
                 _ba.fade_screen(False,
                                 endcall=ba.Call(
                                     ba.pushcall,

@@ -455,7 +455,7 @@ class Chooser:
     def _do_nothing(self) -> None:
         """Does nothing! (hacky way to disable callbacks)"""
 
-    def _get_name(self, full: bool = False) -> str:
+    def _getname(self, full: bool = False) -> str:
         name_raw = name = self._profilenames[self._profileindex]
         clamp = False
         if name == '_random':
@@ -569,8 +569,8 @@ class Chooser:
             _ba.app.config.commit()
 
             # Set this player's short and full name.
-            self._player.set_name(self._get_name(),
-                                  self._get_name(full=True),
+            self._player.set_name(self._getname(),
+                                  self._getname(full=True),
                                   real=True)
             self._ready = True
             self._update_text()
@@ -685,12 +685,12 @@ class Chooser:
 
             # Once we're ready, we've saved the name, so lets ask the system
             # for it so we get appended numbers and stuff.
-            text = Lstr(value=self._player.get_name(full=True))
+            text = Lstr(value=self._player.getname(full=True))
             text = Lstr(value='${A} (${B})',
                         subs=[('${A}', text),
                               ('${B}', Lstr(resource='readyText'))])
         else:
-            text = Lstr(value=self._get_name(full=True))
+            text = Lstr(value=self._getname(full=True))
 
         can_switch_teams = len(self.lobby.teams) > 1
 

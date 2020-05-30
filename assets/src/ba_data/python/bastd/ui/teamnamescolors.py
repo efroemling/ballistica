@@ -48,16 +48,16 @@ class TeamNamesColorsWindow(popup.PopupWindow):
                          size=(self._width, self._height),
                          scale=scale)
 
-        bs_config = ba.app.config
+        appconfig = ba.app.config
         self._names = list(
-            bs_config.get('Custom Team Names', DEFAULT_TEAM_NAMES))
+            appconfig.get('Custom Team Names', DEFAULT_TEAM_NAMES))
         # We need to flatten the translation since it will be an
         # editable string.
         self._names = [
             ba.Lstr(translate=('teamNames', n)).evaluate() for n in self._names
         ]
         self._colors = list(
-            bs_config.get('Custom Team Colors', DEFAULT_TEAM_COLORS))
+            appconfig.get('Custom Team Colors', DEFAULT_TEAM_COLORS))
 
         self._color_buttons: List[ba.Widget] = []
         self._color_text_fields: List[ba.Widget] = []

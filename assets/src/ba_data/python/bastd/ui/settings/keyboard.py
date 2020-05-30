@@ -55,7 +55,6 @@ class ConfigKeyboardWindow(ba.Window):
             stack_offset=(0, -10) if ba.app.small_ui else (0, 0),
             transition=transition))
 
-        # don't ask to config joysticks while we're in here..
         self._rebuild_ui()
 
     def _rebuild_ui(self) -> None:
@@ -63,7 +62,7 @@ class ConfigKeyboardWindow(ba.Window):
         for widget in self._root_widget.get_children():
             widget.delete()
 
-        # fill our temp config with present values
+        # Fill our temp config with present values.
         self._settings: Dict[str, int] = {}
         for button in [
                 'buttonJump', 'buttonPunch', 'buttonBomb', 'buttonPickUp',
@@ -197,8 +196,10 @@ class ConfigKeyboardWindow(ba.Window):
                               label='',
                               color=color)
 
-        # do this deferred so it shows up on top of other buttons
+        # Do this deferred so it shows up on top of other buttons. (ew.)
         def doit() -> None:
+            if not self._root_widget:
+                return
             uiscale = 0.66 * scale * 2.0
             maxwidth = 76.0 * scale
             txt = ba.textwidget(parent=self._root_widget,
@@ -288,17 +289,14 @@ class AwaitKeyboardInputWindow(ba.Window):
                                               color=(1, 1, 1, 0.3),
                                               text=str(self._counter))
         self._decrement_timer: Optional[ba.Timer] = ba.Timer(
-            1.0,
-            ba.Call(self._decrement),
-            repeat=True,
-            timetype=ba.TimeType.REAL)
+            1.0, self._decrement, repeat=True, timetype=ba.TimeType.REAL)
         _ba.capture_keyboard_input(ba.WeakCall(self._button_callback))
 
     def __del__(self) -> None:
         _ba.release_keyboard_input()
 
     def _die(self) -> None:
-        # this strong-refs us; killing it allow us to die now
+        # This strong-refs us; killing it allows us to die now.
         self._decrement_timer = None
         if self._root_widget:
             ba.containerwidget(edit=self._root_widget, transition='out_left')

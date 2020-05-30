@@ -50,15 +50,15 @@ def get_player_profile_icon(profilename: str) -> str:
     """
     from ba._enums import SpecialChar
 
-    bs_config = _ba.app.config
+    appconfig = _ba.app.config
     icon: str
     try:
-        is_global = bs_config['Player Profiles'][profilename]['global']
+        is_global = appconfig['Player Profiles'][profilename]['global']
     except KeyError:
         is_global = False
     if is_global:
         try:
-            icon = bs_config['Player Profiles'][profilename]['icon']
+            icon = appconfig['Player Profiles'][profilename]['icon']
         except KeyError:
             icon = _ba.charstr(SpecialChar.LOGO)
     else:
@@ -71,9 +71,9 @@ def get_player_profile_colors(
     profiles: Dict[str, Dict[str, Any]] = None
 ) -> Tuple[Tuple[float, float, float], Tuple[float, float, float]]:
     """Given a profile, return colors for them."""
-    bs_config = _ba.app.config
+    appconfig = _ba.app.config
     if profiles is None:
-        profiles = bs_config['Player Profiles']
+        profiles = appconfig['Player Profiles']
 
     # Special case: when being asked for a random color in kiosk mode,
     # always return default purple.
