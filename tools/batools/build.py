@@ -49,6 +49,7 @@ PIP_REQUIREMENTS = [
     PipRequirement(modulename='pylint', minversion=[2, 5, 2]),
     PipRequirement(modulename='mypy', minversion=[0, 770]),
     PipRequirement(modulename='yapf', minversion=[0, 30, 0]),
+    PipRequirement(modulename='cpplint', minversion=[1, 5, 0]),
     PipRequirement(modulename='typing_extensions'),
     PipRequirement(modulename='pytz'),
     PipRequirement(modulename='yaml', pipname='PyYAML'),
@@ -526,7 +527,10 @@ def checkenv() -> None:
                 f'To install it, try: "{PYTHON_BIN}'
                 f' -m pip install {packagename}"')
         if minver is not None:
-            ver_line = results.stdout.decode().splitlines()[0]
+            verlines = results.stdout.decode().splitlines()
+            if verlines[0].startswith('Cpplint fork'):
+                verlines = verlines[1:]
+            ver_line = verlines[0]
             assert modname in ver_line
             vnums = [int(x) for x in ver_line.split()[-1].split('.')]
             assert len(vnums) == len(minver)
