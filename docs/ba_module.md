@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-05-30 for Ballistica version 1.5.0 build 20036</em></h4>
+<h4><em>last updated on 2020-05-31 for Ballistica version 1.5.0 build 20036</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -343,7 +343,7 @@ actually award achievements.</p>
     can overlap during transitions.</p>
 
 <h3>Attributes:</h3>
-<h5><a href="#attr_ba_Activity__expired">expired</a>, <a href="#attr_ba_Activity__globalsnode">globalsnode</a>, <a href="#attr_ba_Activity__players">players</a>, <a href="#attr_ba_Activity__playertype">playertype</a>, <a href="#attr_ba_Activity__session">session</a>, <a href="#attr_ba_Activity__settings_raw">settings_raw</a>, <a href="#attr_ba_Activity__stats">stats</a>, <a href="#attr_ba_Activity__teams">teams</a>, <a href="#attr_ba_Activity__teamtype">teamtype</a></h5>
+<h5><a href="#attr_ba_Activity__expired">expired</a>, <a href="#attr_ba_Activity__gamedata">gamedata</a>, <a href="#attr_ba_Activity__globalsnode">globalsnode</a>, <a href="#attr_ba_Activity__players">players</a>, <a href="#attr_ba_Activity__playertype">playertype</a>, <a href="#attr_ba_Activity__session">session</a>, <a href="#attr_ba_Activity__settings_raw">settings_raw</a>, <a href="#attr_ba_Activity__stats">stats</a>, <a href="#attr_ba_Activity__teams">teams</a>, <a href="#attr_ba_Activity__teamtype">teamtype</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_Activity__expired">expired</a></h4></dt><dd>
 <p><span>bool</span></p>
@@ -352,6 +352,14 @@ actually award achievements.</p>
 <p>        An activity is set as expired when shutting down.
         At this point no new nodes, timers, etc should be made,
         run, etc, and the activity should be considered a 'zombie'.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_Activity__gamedata">gamedata</a></h4></dt><dd>
+<p><span>dict</span></p>
+<p>Entities needing to store simple data with an activity can put it
+        here. This dict will be deleted when the activity expires, so contained
+        objects generally do not need to worry about handling expired
+        activities.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_Activity__globalsnode">globalsnode</a></h4></dt><dd>
@@ -419,7 +427,7 @@ regardless of the player count).</p>
 
 <p>Creates an Activity in the current <a href="#class_ba_Session">ba.Session</a>.</p>
 
-<p>The activity will not be actually run until <a href="#method_ba_Session__set_activity">ba.Session.set_activity</a>()
+<p>The activity will not be actually run until <a href="#method_ba_Session__setactivity">ba.Session.setactivity</a>()
 is called. 'settings' should be a dict of key/value pairs specific
 to the activity.</p>
 
@@ -1288,16 +1296,11 @@ mycall()</pre>
 </p>
 
 <h3>Attributes:</h3>
-<h5><a href="#attr_ba_Chooser__lobby">lobby</a>, <a href="#attr_ba_Chooser__player">player</a>, <a href="#attr_ba_Chooser__ready">ready</a></h5>
+<h5><a href="#attr_ba_Chooser__lobby">lobby</a>, <a href="#attr_ba_Chooser__ready">ready</a>, <a href="#attr_ba_Chooser__sessionplayer">sessionplayer</a>, <a href="#attr_ba_Chooser__sessionteam">sessionteam</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_Chooser__lobby">lobby</a></h4></dt><dd>
 <p><span><a href="#class_ba_Lobby">ba.Lobby</a></span></p>
 <p>The chooser's <a href="#class_ba_Lobby">ba.Lobby</a>.</p>
-
-</dd>
-<dt><h4><a name="attr_ba_Chooser__player">player</a></h4></dt><dd>
-<p><span><a href="#class_ba_SessionPlayer">ba.SessionPlayer</a></span></p>
-<p>The <a href="#class_ba_Player">ba.Player</a> associated with this chooser.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_Chooser__ready">ready</a></h4></dt><dd>
@@ -1305,12 +1308,22 @@ mycall()</pre>
 <p>Whether this chooser is checked in as ready.</p>
 
 </dd>
+<dt><h4><a name="attr_ba_Chooser__sessionplayer">sessionplayer</a></h4></dt><dd>
+<p><span><a href="#class_ba_SessionPlayer">ba.SessionPlayer</a></span></p>
+<p>The <a href="#class_ba_SessionPlayer">ba.SessionPlayer</a> associated with this chooser.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_Chooser__sessionteam">sessionteam</a></h4></dt><dd>
+<p><span><a href="#class_ba_SessionTeam">ba.SessionTeam</a></span></p>
+<p>Return this chooser's currently selected <a href="#class_ba_SessionTeam">ba.SessionTeam</a>.</p>
+
+</dd>
 </dl>
 <h3>Methods:</h3>
-<h5><a href="#method_ba_Chooser____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Chooser__get_character_name">get_character_name()</a>, <a href="#method_ba_Chooser__get_color">get_color()</a>, <a href="#method_ba_Chooser__get_highlight">get_highlight()</a>, <a href="#method_ba_Chooser__get_lobby">get_lobby()</a>, <a href="#method_ba_Chooser__get_team">get_team()</a>, <a href="#method_ba_Chooser__getplayer">getplayer()</a>, <a href="#method_ba_Chooser__handlemessage">handlemessage()</a>, <a href="#method_ba_Chooser__reload_profiles">reload_profiles()</a>, <a href="#method_ba_Chooser__update_from_profile">update_from_profile()</a>, <a href="#method_ba_Chooser__update_position">update_position()</a></h5>
+<h5><a href="#method_ba_Chooser____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Chooser__get_character_name">get_character_name()</a>, <a href="#method_ba_Chooser__get_color">get_color()</a>, <a href="#method_ba_Chooser__get_highlight">get_highlight()</a>, <a href="#method_ba_Chooser__get_lobby">get_lobby()</a>, <a href="#method_ba_Chooser__getplayer">getplayer()</a>, <a href="#method_ba_Chooser__handlemessage">handlemessage()</a>, <a href="#method_ba_Chooser__reload_profiles">reload_profiles()</a>, <a href="#method_ba_Chooser__update_from_profile">update_from_profile()</a>, <a href="#method_ba_Chooser__update_position">update_position()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_Chooser____init__">&lt;constructor&gt;</a></dt></h4><dd>
-<p><span>ba.Chooser(vpos: float, player: _<a href="#class_ba_SessionPlayer">ba.SessionPlayer</a>, lobby: "Lobby")</span></p>
+<p><span>ba.Chooser(vpos: float, sessionplayer: _<a href="#class_ba_SessionPlayer">ba.SessionPlayer</a>, lobby: "Lobby")</span></p>
 
 </dd>
 <dt><h4><a name="method_ba_Chooser__get_character_name">get_character_name()</a></dt></h4><dd>
@@ -1335,12 +1348,6 @@ mycall()</pre>
 <p><span>get_lobby(self) -&gt; Optional[<a href="#class_ba_Lobby">ba.Lobby</a>]</span></p>
 
 <p>Return this chooser's lobby if it still exists; otherwise None.</p>
-
-</dd>
-<dt><h4><a name="method_ba_Chooser__get_team">get_team()</a></dt></h4><dd>
-<p><span>get_team(self) -&gt; <a href="#class_ba_SessionTeam">ba.SessionTeam</a></span></p>
-
-<p>Return this chooser's selected <a href="#class_ba_Team">ba.Team</a>.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Chooser__getplayer">getplayer()</a></dt></h4><dd>
@@ -1545,7 +1552,7 @@ start_long_action(callback_when_done=<a href="#class_ba_ContextCall">ba.ContextC
 <h3>Attributes Inherited:</h3>
 <h5><a href="#attr_ba_Activity__players">players</a>, <a href="#attr_ba_Activity__settings_raw">settings_raw</a>, <a href="#attr_ba_Activity__teams">teams</a></h5>
 <h3>Attributes Defined Here:</h3>
-<h5><a href="#attr_ba_CoopGameActivity__expired">expired</a>, <a href="#attr_ba_CoopGameActivity__globalsnode">globalsnode</a>, <a href="#attr_ba_CoopGameActivity__map">map</a>, <a href="#attr_ba_CoopGameActivity__playertype">playertype</a>, <a href="#attr_ba_CoopGameActivity__session">session</a>, <a href="#attr_ba_CoopGameActivity__stats">stats</a>, <a href="#attr_ba_CoopGameActivity__teamtype">teamtype</a></h5>
+<h5><a href="#attr_ba_CoopGameActivity__expired">expired</a>, <a href="#attr_ba_CoopGameActivity__gamedata">gamedata</a>, <a href="#attr_ba_CoopGameActivity__globalsnode">globalsnode</a>, <a href="#attr_ba_CoopGameActivity__map">map</a>, <a href="#attr_ba_CoopGameActivity__playertype">playertype</a>, <a href="#attr_ba_CoopGameActivity__session">session</a>, <a href="#attr_ba_CoopGameActivity__stats">stats</a>, <a href="#attr_ba_CoopGameActivity__teamtype">teamtype</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_CoopGameActivity__expired">expired</a></h4></dt><dd>
 <p><span>bool</span></p>
@@ -1554,6 +1561,14 @@ start_long_action(callback_when_done=<a href="#class_ba_ContextCall">ba.ContextC
 <p>        An activity is set as expired when shutting down.
         At this point no new nodes, timers, etc should be made,
         run, etc, and the activity should be considered a 'zombie'.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_CoopGameActivity__gamedata">gamedata</a></h4></dt><dd>
+<p><span>dict</span></p>
+<p>Entities needing to store simple data with an activity can put it
+        here. This dict will be deleted when the activity expires, so contained
+        objects generally do not need to worry about handling expired
+        activities.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_CoopGameActivity__globalsnode">globalsnode</a></h4></dt><dd>
@@ -1595,7 +1610,7 @@ start_long_action(callback_when_done=<a href="#class_ba_ContextCall">ba.ContextC
 </dd>
 </dl>
 <h3>Methods Inherited:</h3>
-<h5><a href="#method_ba_GameActivity__add_actor_weak_ref">add_actor_weak_ref()</a>, <a href="#method_ba_GameActivity__add_player">add_player()</a>, <a href="#method_ba_GameActivity__add_team">add_team()</a>, <a href="#method_ba_GameActivity__begin">begin()</a>, <a href="#method_ba_GameActivity__continue_or_end_game">continue_or_end_game()</a>, <a href="#method_ba_GameActivity__create_player">create_player()</a>, <a href="#method_ba_GameActivity__create_settings_ui">create_settings_ui()</a>, <a href="#method_ba_GameActivity__create_team">create_team()</a>, <a href="#method_ba_GameActivity__dep_is_present">dep_is_present()</a>, <a href="#method_ba_GameActivity__destroy">destroy()</a>, <a href="#method_ba_GameActivity__end">end()</a>, <a href="#method_ba_GameActivity__end_game">end_game()</a>, <a href="#method_ba_GameActivity__get_description">get_description()</a>, <a href="#method_ba_GameActivity__get_description_display_string">get_description_display_string()</a>, <a href="#method_ba_GameActivity__get_display_string">get_display_string()</a>, <a href="#method_ba_GameActivity__get_dynamic_deps">get_dynamic_deps()</a>, <a href="#method_ba_GameActivity__get_game_settings">get_game_settings()</a>, <a href="#method_ba_GameActivity__get_instance_description">get_instance_description()</a>, <a href="#method_ba_GameActivity__get_instance_description_short">get_instance_description_short()</a>, <a href="#method_ba_GameActivity__get_instance_display_string">get_instance_display_string()</a>, <a href="#method_ba_GameActivity__get_instance_scoreboard_display_string">get_instance_scoreboard_display_string()</a>, <a href="#method_ba_GameActivity__get_score_info">get_score_info()</a>, <a href="#method_ba_GameActivity__get_settings_display_string">get_settings_display_string()</a>, <a href="#method_ba_GameActivity__get_supported_maps">get_supported_maps()</a>, <a href="#method_ba_GameActivity__get_team_display_string">get_team_display_string()</a>, <a href="#method_ba_GameActivity__getname">getname()</a>, <a href="#method_ba_GameActivity__handlemessage">handlemessage()</a>, <a href="#method_ba_GameActivity__has_begun">has_begun()</a>, <a href="#method_ba_GameActivity__has_ended">has_ended()</a>, <a href="#method_ba_GameActivity__has_transitioned_in">has_transitioned_in()</a>, <a href="#method_ba_GameActivity__is_transitioning_out">is_transitioning_out()</a>, <a href="#method_ba_GameActivity__is_waiting_for_continue">is_waiting_for_continue()</a>, <a href="#method_ba_GameActivity__on_continue">on_continue()</a>, <a href="#method_ba_GameActivity__on_expire">on_expire()</a>, <a href="#method_ba_GameActivity__on_player_join">on_player_join()</a>, <a href="#method_ba_GameActivity__on_player_leave">on_player_leave()</a>, <a href="#method_ba_GameActivity__on_team_join">on_team_join()</a>, <a href="#method_ba_GameActivity__on_team_leave">on_team_leave()</a>, <a href="#method_ba_GameActivity__on_transition_in">on_transition_in()</a>, <a href="#method_ba_GameActivity__on_transition_out">on_transition_out()</a>, <a href="#method_ba_GameActivity__remove_player">remove_player()</a>, <a href="#method_ba_GameActivity__remove_team">remove_team()</a>, <a href="#method_ba_GameActivity__respawn_player">respawn_player()</a>, <a href="#method_ba_GameActivity__retain_actor">retain_actor()</a>, <a href="#method_ba_GameActivity__set_has_ended">set_has_ended()</a>, <a href="#method_ba_GameActivity__setup_standard_powerup_drops">setup_standard_powerup_drops()</a>, <a href="#method_ba_GameActivity__setup_standard_time_limit">setup_standard_time_limit()</a>, <a href="#method_ba_GameActivity__show_zoom_message">show_zoom_message()</a>, <a href="#method_ba_GameActivity__spawn_player">spawn_player()</a>, <a href="#method_ba_GameActivity__spawn_player_if_exists">spawn_player_if_exists()</a>, <a href="#method_ba_GameActivity__transition_in">transition_in()</a>, <a href="#method_ba_GameActivity__transition_out">transition_out()</a></h5>
+<h5><a href="#method_ba_GameActivity__add_actor_weak_ref">add_actor_weak_ref()</a>, <a href="#method_ba_GameActivity__add_player">add_player()</a>, <a href="#method_ba_GameActivity__add_team">add_team()</a>, <a href="#method_ba_GameActivity__begin">begin()</a>, <a href="#method_ba_GameActivity__continue_or_end_game">continue_or_end_game()</a>, <a href="#method_ba_GameActivity__create_player">create_player()</a>, <a href="#method_ba_GameActivity__create_settings_ui">create_settings_ui()</a>, <a href="#method_ba_GameActivity__create_team">create_team()</a>, <a href="#method_ba_GameActivity__dep_is_present">dep_is_present()</a>, <a href="#method_ba_GameActivity__end">end()</a>, <a href="#method_ba_GameActivity__end_game">end_game()</a>, <a href="#method_ba_GameActivity__expire">expire()</a>, <a href="#method_ba_GameActivity__get_description">get_description()</a>, <a href="#method_ba_GameActivity__get_description_display_string">get_description_display_string()</a>, <a href="#method_ba_GameActivity__get_display_string">get_display_string()</a>, <a href="#method_ba_GameActivity__get_dynamic_deps">get_dynamic_deps()</a>, <a href="#method_ba_GameActivity__get_game_settings">get_game_settings()</a>, <a href="#method_ba_GameActivity__get_instance_description">get_instance_description()</a>, <a href="#method_ba_GameActivity__get_instance_description_short">get_instance_description_short()</a>, <a href="#method_ba_GameActivity__get_instance_display_string">get_instance_display_string()</a>, <a href="#method_ba_GameActivity__get_instance_scoreboard_display_string">get_instance_scoreboard_display_string()</a>, <a href="#method_ba_GameActivity__get_score_info">get_score_info()</a>, <a href="#method_ba_GameActivity__get_settings_display_string">get_settings_display_string()</a>, <a href="#method_ba_GameActivity__get_supported_maps">get_supported_maps()</a>, <a href="#method_ba_GameActivity__get_team_display_string">get_team_display_string()</a>, <a href="#method_ba_GameActivity__getname">getname()</a>, <a href="#method_ba_GameActivity__handlemessage">handlemessage()</a>, <a href="#method_ba_GameActivity__has_begun">has_begun()</a>, <a href="#method_ba_GameActivity__has_ended">has_ended()</a>, <a href="#method_ba_GameActivity__has_transitioned_in">has_transitioned_in()</a>, <a href="#method_ba_GameActivity__is_transitioning_out">is_transitioning_out()</a>, <a href="#method_ba_GameActivity__is_waiting_for_continue">is_waiting_for_continue()</a>, <a href="#method_ba_GameActivity__on_continue">on_continue()</a>, <a href="#method_ba_GameActivity__on_expire">on_expire()</a>, <a href="#method_ba_GameActivity__on_player_join">on_player_join()</a>, <a href="#method_ba_GameActivity__on_player_leave">on_player_leave()</a>, <a href="#method_ba_GameActivity__on_team_join">on_team_join()</a>, <a href="#method_ba_GameActivity__on_team_leave">on_team_leave()</a>, <a href="#method_ba_GameActivity__on_transition_in">on_transition_in()</a>, <a href="#method_ba_GameActivity__on_transition_out">on_transition_out()</a>, <a href="#method_ba_GameActivity__remove_player">remove_player()</a>, <a href="#method_ba_GameActivity__remove_team">remove_team()</a>, <a href="#method_ba_GameActivity__respawn_player">respawn_player()</a>, <a href="#method_ba_GameActivity__retain_actor">retain_actor()</a>, <a href="#method_ba_GameActivity__set_has_ended">set_has_ended()</a>, <a href="#method_ba_GameActivity__setup_standard_powerup_drops">setup_standard_powerup_drops()</a>, <a href="#method_ba_GameActivity__setup_standard_time_limit">setup_standard_time_limit()</a>, <a href="#method_ba_GameActivity__show_zoom_message">show_zoom_message()</a>, <a href="#method_ba_GameActivity__spawn_player">spawn_player()</a>, <a href="#method_ba_GameActivity__spawn_player_if_exists">spawn_player_if_exists()</a>, <a href="#method_ba_GameActivity__transition_in">transition_in()</a>, <a href="#method_ba_GameActivity__transition_out">transition_out()</a></h5>
 <h3>Methods Defined or Overridden:</h3>
 <h5><a href="#method_ba_CoopGameActivity____init__">&lt;constructor&gt;</a>, <a href="#method_ba_CoopGameActivity__celebrate">celebrate()</a>, <a href="#method_ba_CoopGameActivity__fade_to_red">fade_to_red()</a>, <a href="#method_ba_CoopGameActivity__get_score_type">get_score_type()</a>, <a href="#method_ba_CoopGameActivity__on_begin">on_begin()</a>, <a href="#method_ba_CoopGameActivity__setup_low_life_warning_sound">setup_low_life_warning_sound()</a>, <a href="#method_ba_CoopGameActivity__spawn_player_spaz">spawn_player_spaz()</a>, <a href="#method_ba_CoopGameActivity__supports_session_type">supports_session_type()</a></h5>
 <dl>
@@ -1685,7 +1700,7 @@ there is no associated Campaign.</p>
 </dd>
 </dl>
 <h3>Methods Inherited:</h3>
-<h5><a href="#method_ba_Session__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_Session__end">end()</a>, <a href="#method_ba_Session__end_activity">end_activity()</a>, <a href="#method_ba_Session__getactivity">getactivity()</a>, <a href="#method_ba_Session__handlemessage">handlemessage()</a>, <a href="#method_ba_Session__on_player_request">on_player_request()</a>, <a href="#method_ba_Session__on_team_join">on_team_join()</a>, <a href="#method_ba_Session__on_team_leave">on_team_leave()</a>, <a href="#method_ba_Session__set_activity">set_activity()</a>, <a href="#method_ba_Session__transitioning_out_activity_was_freed">transitioning_out_activity_was_freed()</a></h5>
+<h5><a href="#method_ba_Session__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_Session__end">end()</a>, <a href="#method_ba_Session__end_activity">end_activity()</a>, <a href="#method_ba_Session__getactivity">getactivity()</a>, <a href="#method_ba_Session__handlemessage">handlemessage()</a>, <a href="#method_ba_Session__on_player_request">on_player_request()</a>, <a href="#method_ba_Session__on_team_join">on_team_join()</a>, <a href="#method_ba_Session__on_team_leave">on_team_leave()</a>, <a href="#method_ba_Session__setactivity">setactivity()</a>, <a href="#method_ba_Session__transitioning_out_activity_was_freed">transitioning_out_activity_was_freed()</a></h5>
 <h3>Methods Defined or Overridden:</h3>
 <h5><a href="#method_ba_CoopSession____init__">&lt;constructor&gt;</a>, <a href="#method_ba_CoopSession__get_current_game_instance">get_current_game_instance()</a>, <a href="#method_ba_CoopSession__get_custom_menu_entries">get_custom_menu_entries()</a>, <a href="#method_ba_CoopSession__on_activity_end">on_activity_end()</a>, <a href="#method_ba_CoopSession__on_player_leave">on_player_leave()</a>, <a href="#method_ba_CoopSession__restart">restart()</a></h5>
 <dl>
@@ -2036,7 +2051,7 @@ its time with lingering corpses, sound effects, etc.</p>
 </dd>
 </dl>
 <h3>Methods Inherited:</h3>
-<h5><a href="#method_ba_MultiTeamSession__announce_game_results">announce_game_results()</a>, <a href="#method_ba_MultiTeamSession__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_MultiTeamSession__end">end()</a>, <a href="#method_ba_MultiTeamSession__end_activity">end_activity()</a>, <a href="#method_ba_MultiTeamSession__get_custom_menu_entries">get_custom_menu_entries()</a>, <a href="#method_ba_MultiTeamSession__get_ffa_series_length">get_ffa_series_length()</a>, <a href="#method_ba_MultiTeamSession__get_game_number">get_game_number()</a>, <a href="#method_ba_MultiTeamSession__get_max_players">get_max_players()</a>, <a href="#method_ba_MultiTeamSession__get_next_game_description">get_next_game_description()</a>, <a href="#method_ba_MultiTeamSession__get_series_length">get_series_length()</a>, <a href="#method_ba_MultiTeamSession__getactivity">getactivity()</a>, <a href="#method_ba_MultiTeamSession__handlemessage">handlemessage()</a>, <a href="#method_ba_MultiTeamSession__on_activity_end">on_activity_end()</a>, <a href="#method_ba_MultiTeamSession__on_player_leave">on_player_leave()</a>, <a href="#method_ba_MultiTeamSession__on_player_request">on_player_request()</a>, <a href="#method_ba_MultiTeamSession__on_team_join">on_team_join()</a>, <a href="#method_ba_MultiTeamSession__on_team_leave">on_team_leave()</a>, <a href="#method_ba_MultiTeamSession__set_activity">set_activity()</a>, <a href="#method_ba_MultiTeamSession__transitioning_out_activity_was_freed">transitioning_out_activity_was_freed()</a></h5>
+<h5><a href="#method_ba_MultiTeamSession__announce_game_results">announce_game_results()</a>, <a href="#method_ba_MultiTeamSession__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_MultiTeamSession__end">end()</a>, <a href="#method_ba_MultiTeamSession__end_activity">end_activity()</a>, <a href="#method_ba_MultiTeamSession__get_custom_menu_entries">get_custom_menu_entries()</a>, <a href="#method_ba_MultiTeamSession__get_ffa_series_length">get_ffa_series_length()</a>, <a href="#method_ba_MultiTeamSession__get_game_number">get_game_number()</a>, <a href="#method_ba_MultiTeamSession__get_max_players">get_max_players()</a>, <a href="#method_ba_MultiTeamSession__get_next_game_description">get_next_game_description()</a>, <a href="#method_ba_MultiTeamSession__get_series_length">get_series_length()</a>, <a href="#method_ba_MultiTeamSession__getactivity">getactivity()</a>, <a href="#method_ba_MultiTeamSession__handlemessage">handlemessage()</a>, <a href="#method_ba_MultiTeamSession__on_activity_end">on_activity_end()</a>, <a href="#method_ba_MultiTeamSession__on_player_leave">on_player_leave()</a>, <a href="#method_ba_MultiTeamSession__on_player_request">on_player_request()</a>, <a href="#method_ba_MultiTeamSession__on_team_join">on_team_join()</a>, <a href="#method_ba_MultiTeamSession__on_team_leave">on_team_leave()</a>, <a href="#method_ba_MultiTeamSession__setactivity">setactivity()</a>, <a href="#method_ba_MultiTeamSession__transitioning_out_activity_was_freed">transitioning_out_activity_was_freed()</a></h5>
 <h3>Methods Defined or Overridden:</h3>
 <dl>
 <dt><h4><a name="method_ba_DualTeamSession____init__">&lt;constructor&gt;</a></dt></h4><dd>
@@ -2082,7 +2097,7 @@ its time with lingering corpses, sound effects, etc.</p>
 </dd>
 </dl>
 <h3>Methods Inherited:</h3>
-<h5><a href="#method_ba_MultiTeamSession__announce_game_results">announce_game_results()</a>, <a href="#method_ba_MultiTeamSession__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_MultiTeamSession__end">end()</a>, <a href="#method_ba_MultiTeamSession__end_activity">end_activity()</a>, <a href="#method_ba_MultiTeamSession__get_custom_menu_entries">get_custom_menu_entries()</a>, <a href="#method_ba_MultiTeamSession__get_ffa_series_length">get_ffa_series_length()</a>, <a href="#method_ba_MultiTeamSession__get_game_number">get_game_number()</a>, <a href="#method_ba_MultiTeamSession__get_max_players">get_max_players()</a>, <a href="#method_ba_MultiTeamSession__get_next_game_description">get_next_game_description()</a>, <a href="#method_ba_MultiTeamSession__get_series_length">get_series_length()</a>, <a href="#method_ba_MultiTeamSession__getactivity">getactivity()</a>, <a href="#method_ba_MultiTeamSession__handlemessage">handlemessage()</a>, <a href="#method_ba_MultiTeamSession__on_activity_end">on_activity_end()</a>, <a href="#method_ba_MultiTeamSession__on_player_leave">on_player_leave()</a>, <a href="#method_ba_MultiTeamSession__on_player_request">on_player_request()</a>, <a href="#method_ba_MultiTeamSession__on_team_join">on_team_join()</a>, <a href="#method_ba_MultiTeamSession__on_team_leave">on_team_leave()</a>, <a href="#method_ba_MultiTeamSession__set_activity">set_activity()</a>, <a href="#method_ba_MultiTeamSession__transitioning_out_activity_was_freed">transitioning_out_activity_was_freed()</a></h5>
+<h5><a href="#method_ba_MultiTeamSession__announce_game_results">announce_game_results()</a>, <a href="#method_ba_MultiTeamSession__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_MultiTeamSession__end">end()</a>, <a href="#method_ba_MultiTeamSession__end_activity">end_activity()</a>, <a href="#method_ba_MultiTeamSession__get_custom_menu_entries">get_custom_menu_entries()</a>, <a href="#method_ba_MultiTeamSession__get_ffa_series_length">get_ffa_series_length()</a>, <a href="#method_ba_MultiTeamSession__get_game_number">get_game_number()</a>, <a href="#method_ba_MultiTeamSession__get_max_players">get_max_players()</a>, <a href="#method_ba_MultiTeamSession__get_next_game_description">get_next_game_description()</a>, <a href="#method_ba_MultiTeamSession__get_series_length">get_series_length()</a>, <a href="#method_ba_MultiTeamSession__getactivity">getactivity()</a>, <a href="#method_ba_MultiTeamSession__handlemessage">handlemessage()</a>, <a href="#method_ba_MultiTeamSession__on_activity_end">on_activity_end()</a>, <a href="#method_ba_MultiTeamSession__on_player_leave">on_player_leave()</a>, <a href="#method_ba_MultiTeamSession__on_player_request">on_player_request()</a>, <a href="#method_ba_MultiTeamSession__on_team_join">on_team_join()</a>, <a href="#method_ba_MultiTeamSession__on_team_leave">on_team_leave()</a>, <a href="#method_ba_MultiTeamSession__setactivity">setactivity()</a>, <a href="#method_ba_MultiTeamSession__transitioning_out_activity_was_freed">transitioning_out_activity_was_freed()</a></h5>
 <h3>Methods Defined or Overridden:</h3>
 <h5><a href="#method_ba_FreeForAllSession____init__">&lt;constructor&gt;</a>, <a href="#method_ba_FreeForAllSession__get_ffa_point_awards">get_ffa_point_awards()</a></h5>
 <dl>
@@ -2130,7 +2145,7 @@ its time with lingering corpses, sound effects, etc.</p>
 <h3>Attributes Inherited:</h3>
 <h5><a href="#attr_ba_Activity__players">players</a>, <a href="#attr_ba_Activity__settings_raw">settings_raw</a>, <a href="#attr_ba_Activity__teams">teams</a></h5>
 <h3>Attributes Defined Here:</h3>
-<h5><a href="#attr_ba_GameActivity__expired">expired</a>, <a href="#attr_ba_GameActivity__globalsnode">globalsnode</a>, <a href="#attr_ba_GameActivity__map">map</a>, <a href="#attr_ba_GameActivity__playertype">playertype</a>, <a href="#attr_ba_GameActivity__session">session</a>, <a href="#attr_ba_GameActivity__stats">stats</a>, <a href="#attr_ba_GameActivity__teamtype">teamtype</a></h5>
+<h5><a href="#attr_ba_GameActivity__expired">expired</a>, <a href="#attr_ba_GameActivity__gamedata">gamedata</a>, <a href="#attr_ba_GameActivity__globalsnode">globalsnode</a>, <a href="#attr_ba_GameActivity__map">map</a>, <a href="#attr_ba_GameActivity__playertype">playertype</a>, <a href="#attr_ba_GameActivity__session">session</a>, <a href="#attr_ba_GameActivity__stats">stats</a>, <a href="#attr_ba_GameActivity__teamtype">teamtype</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_GameActivity__expired">expired</a></h4></dt><dd>
 <p><span>bool</span></p>
@@ -2139,6 +2154,14 @@ its time with lingering corpses, sound effects, etc.</p>
 <p>        An activity is set as expired when shutting down.
         At this point no new nodes, timers, etc should be made,
         run, etc, and the activity should be considered a 'zombie'.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_GameActivity__gamedata">gamedata</a></h4></dt><dd>
+<p><span>dict</span></p>
+<p>Entities needing to store simple data with an activity can put it
+        here. This dict will be deleted when the activity expires, so contained
+        objects generally do not need to worry about handling expired
+        activities.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_GameActivity__globalsnode">globalsnode</a></h4></dt><dd>
@@ -2180,7 +2203,7 @@ its time with lingering corpses, sound effects, etc.</p>
 </dd>
 </dl>
 <h3>Methods Inherited:</h3>
-<h5><a href="#method_ba_Activity__add_actor_weak_ref">add_actor_weak_ref()</a>, <a href="#method_ba_Activity__add_player">add_player()</a>, <a href="#method_ba_Activity__add_team">add_team()</a>, <a href="#method_ba_Activity__begin">begin()</a>, <a href="#method_ba_Activity__create_player">create_player()</a>, <a href="#method_ba_Activity__create_team">create_team()</a>, <a href="#method_ba_Activity__dep_is_present">dep_is_present()</a>, <a href="#method_ba_Activity__destroy">destroy()</a>, <a href="#method_ba_Activity__get_dynamic_deps">get_dynamic_deps()</a>, <a href="#method_ba_Activity__has_begun">has_begun()</a>, <a href="#method_ba_Activity__has_ended">has_ended()</a>, <a href="#method_ba_Activity__has_transitioned_in">has_transitioned_in()</a>, <a href="#method_ba_Activity__is_transitioning_out">is_transitioning_out()</a>, <a href="#method_ba_Activity__on_expire">on_expire()</a>, <a href="#method_ba_Activity__on_player_leave">on_player_leave()</a>, <a href="#method_ba_Activity__on_team_join">on_team_join()</a>, <a href="#method_ba_Activity__on_team_leave">on_team_leave()</a>, <a href="#method_ba_Activity__on_transition_out">on_transition_out()</a>, <a href="#method_ba_Activity__remove_player">remove_player()</a>, <a href="#method_ba_Activity__remove_team">remove_team()</a>, <a href="#method_ba_Activity__retain_actor">retain_actor()</a>, <a href="#method_ba_Activity__set_has_ended">set_has_ended()</a>, <a href="#method_ba_Activity__transition_in">transition_in()</a>, <a href="#method_ba_Activity__transition_out">transition_out()</a></h5>
+<h5><a href="#method_ba_Activity__add_actor_weak_ref">add_actor_weak_ref()</a>, <a href="#method_ba_Activity__add_player">add_player()</a>, <a href="#method_ba_Activity__add_team">add_team()</a>, <a href="#method_ba_Activity__begin">begin()</a>, <a href="#method_ba_Activity__create_player">create_player()</a>, <a href="#method_ba_Activity__create_team">create_team()</a>, <a href="#method_ba_Activity__dep_is_present">dep_is_present()</a>, <a href="#method_ba_Activity__expire">expire()</a>, <a href="#method_ba_Activity__get_dynamic_deps">get_dynamic_deps()</a>, <a href="#method_ba_Activity__has_begun">has_begun()</a>, <a href="#method_ba_Activity__has_ended">has_ended()</a>, <a href="#method_ba_Activity__has_transitioned_in">has_transitioned_in()</a>, <a href="#method_ba_Activity__is_transitioning_out">is_transitioning_out()</a>, <a href="#method_ba_Activity__on_expire">on_expire()</a>, <a href="#method_ba_Activity__on_player_leave">on_player_leave()</a>, <a href="#method_ba_Activity__on_team_join">on_team_join()</a>, <a href="#method_ba_Activity__on_team_leave">on_team_leave()</a>, <a href="#method_ba_Activity__on_transition_out">on_transition_out()</a>, <a href="#method_ba_Activity__remove_player">remove_player()</a>, <a href="#method_ba_Activity__remove_team">remove_team()</a>, <a href="#method_ba_Activity__retain_actor">retain_actor()</a>, <a href="#method_ba_Activity__set_has_ended">set_has_ended()</a>, <a href="#method_ba_Activity__transition_in">transition_in()</a>, <a href="#method_ba_Activity__transition_out">transition_out()</a></h5>
 <h3>Methods Defined or Overridden:</h3>
 <h5><a href="#method_ba_GameActivity____init__">&lt;constructor&gt;</a>, <a href="#method_ba_GameActivity__continue_or_end_game">continue_or_end_game()</a>, <a href="#method_ba_GameActivity__create_settings_ui">create_settings_ui()</a>, <a href="#method_ba_GameActivity__end">end()</a>, <a href="#method_ba_GameActivity__end_game">end_game()</a>, <a href="#method_ba_GameActivity__get_description">get_description()</a>, <a href="#method_ba_GameActivity__get_description_display_string">get_description_display_string()</a>, <a href="#method_ba_GameActivity__get_display_string">get_display_string()</a>, <a href="#method_ba_GameActivity__get_game_settings">get_game_settings()</a>, <a href="#method_ba_GameActivity__get_instance_description">get_instance_description()</a>, <a href="#method_ba_GameActivity__get_instance_description_short">get_instance_description_short()</a>, <a href="#method_ba_GameActivity__get_instance_display_string">get_instance_display_string()</a>, <a href="#method_ba_GameActivity__get_instance_scoreboard_display_string">get_instance_scoreboard_display_string()</a>, <a href="#method_ba_GameActivity__get_score_info">get_score_info()</a>, <a href="#method_ba_GameActivity__get_settings_display_string">get_settings_display_string()</a>, <a href="#method_ba_GameActivity__get_supported_maps">get_supported_maps()</a>, <a href="#method_ba_GameActivity__get_team_display_string">get_team_display_string()</a>, <a href="#method_ba_GameActivity__getname">getname()</a>, <a href="#method_ba_GameActivity__handlemessage">handlemessage()</a>, <a href="#method_ba_GameActivity__is_waiting_for_continue">is_waiting_for_continue()</a>, <a href="#method_ba_GameActivity__on_begin">on_begin()</a>, <a href="#method_ba_GameActivity__on_continue">on_continue()</a>, <a href="#method_ba_GameActivity__on_player_join">on_player_join()</a>, <a href="#method_ba_GameActivity__on_transition_in">on_transition_in()</a>, <a href="#method_ba_GameActivity__respawn_player">respawn_player()</a>, <a href="#method_ba_GameActivity__setup_standard_powerup_drops">setup_standard_powerup_drops()</a>, <a href="#method_ba_GameActivity__setup_standard_time_limit">setup_standard_time_limit()</a>, <a href="#method_ba_GameActivity__show_zoom_message">show_zoom_message()</a>, <a href="#method_ba_GameActivity__spawn_player">spawn_player()</a>, <a href="#method_ba_GameActivity__spawn_player_if_exists">spawn_player_if_exists()</a>, <a href="#method_ba_GameActivity__spawn_player_spaz">spawn_player_spaz()</a>, <a href="#method_ba_GameActivity__supports_session_type">supports_session_type()</a></h5>
 <dl>
@@ -2828,11 +2851,11 @@ can be changed to separate its new high score lists/etc. from the old.</p>
 </p>
 
 <h3>Attributes:</h3>
-<h5><a href="#attr_ba_Lobby__teams">teams</a>, <a href="#attr_ba_Lobby__use_team_colors">use_team_colors</a></h5>
+<h5><a href="#attr_ba_Lobby__sessionteams">sessionteams</a>, <a href="#attr_ba_Lobby__use_team_colors">use_team_colors</a></h5>
 <dl>
-<dt><h4><a name="attr_ba_Lobby__teams">teams</a></h4></dt><dd>
+<dt><h4><a name="attr_ba_Lobby__sessionteams">sessionteams</a></h4></dt><dd>
 <p><span>List[<a href="#class_ba_SessionTeam">ba.SessionTeam</a>]</span></p>
-<p>Teams available in this lobby.</p>
+<p><a href="#class_ba_SessionTeam">ba.SessionTeams</a> available in this lobby.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_Lobby__use_team_colors">use_team_colors</a></h4></dt><dd>
@@ -2851,7 +2874,7 @@ can be changed to separate its new high score lists/etc. from the old.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Lobby__add_chooser">add_chooser()</a></dt></h4><dd>
-<p><span>add_chooser(self, player: <a href="#class_ba_SessionPlayer">ba.SessionPlayer</a>) -&gt; None</span></p>
+<p><span>add_chooser(self, sessionplayer: <a href="#class_ba_SessionPlayer">ba.SessionPlayer</a>) -&gt; None</span></p>
 
 <p>Add a chooser to the lobby for the provided player.</p>
 
@@ -3367,7 +3390,7 @@ Use <a href="#function_ba_getmodel">ba.getmodel</a>() to instantiate one.</p>
 </dd>
 </dl>
 <h3>Methods Inherited:</h3>
-<h5><a href="#method_ba_Session__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_Session__end">end()</a>, <a href="#method_ba_Session__end_activity">end_activity()</a>, <a href="#method_ba_Session__get_custom_menu_entries">get_custom_menu_entries()</a>, <a href="#method_ba_Session__getactivity">getactivity()</a>, <a href="#method_ba_Session__handlemessage">handlemessage()</a>, <a href="#method_ba_Session__on_player_leave">on_player_leave()</a>, <a href="#method_ba_Session__on_player_request">on_player_request()</a>, <a href="#method_ba_Session__on_team_leave">on_team_leave()</a>, <a href="#method_ba_Session__set_activity">set_activity()</a>, <a href="#method_ba_Session__transitioning_out_activity_was_freed">transitioning_out_activity_was_freed()</a></h5>
+<h5><a href="#method_ba_Session__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_Session__end">end()</a>, <a href="#method_ba_Session__end_activity">end_activity()</a>, <a href="#method_ba_Session__get_custom_menu_entries">get_custom_menu_entries()</a>, <a href="#method_ba_Session__getactivity">getactivity()</a>, <a href="#method_ba_Session__handlemessage">handlemessage()</a>, <a href="#method_ba_Session__on_player_leave">on_player_leave()</a>, <a href="#method_ba_Session__on_player_request">on_player_request()</a>, <a href="#method_ba_Session__on_team_leave">on_team_leave()</a>, <a href="#method_ba_Session__setactivity">setactivity()</a>, <a href="#method_ba_Session__transitioning_out_activity_was_freed">transitioning_out_activity_was_freed()</a></h5>
 <h3>Methods Defined or Overridden:</h3>
 <h5><a href="#method_ba_MultiTeamSession____init__">&lt;constructor&gt;</a>, <a href="#method_ba_MultiTeamSession__announce_game_results">announce_game_results()</a>, <a href="#method_ba_MultiTeamSession__get_ffa_series_length">get_ffa_series_length()</a>, <a href="#method_ba_MultiTeamSession__get_game_number">get_game_number()</a>, <a href="#method_ba_MultiTeamSession__get_max_players">get_max_players()</a>, <a href="#method_ba_MultiTeamSession__get_next_game_description">get_next_game_description()</a>, <a href="#method_ba_MultiTeamSession__get_series_length">get_series_length()</a>, <a href="#method_ba_MultiTeamSession__on_activity_end">on_activity_end()</a>, <a href="#method_ba_MultiTeamSession__on_team_join">on_team_join()</a></h5>
 <dl>
@@ -3843,13 +3866,29 @@ even if myactor is set to None.</p>
 
 <p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a></p>
 
-<p>    These correspond to <a href="#class_ba_SessionPlayer">ba.SessionPlayer</a> objects, but are created per activity
-    so that the activity can use its own custom player subclass.
-</p>
+<p>    These correspond to <a href="#class_ba_SessionPlayer">ba.SessionPlayer</a> objects, but are associated with a
+    single <a href="#class_ba_Activity">ba.Activity</a> instance. This allows activities to specify their
+    own custom <a href="#class_ba_Player">ba.Player</a> types.</p>
 
 <h3>Attributes:</h3>
-<h5><a href="#attr_ba_Player__node">node</a>, <a href="#attr_ba_Player__position">position</a>, <a href="#attr_ba_Player__sessionplayer">sessionplayer</a></h5>
+<h5><a href="#attr_ba_Player__actor">actor</a>, <a href="#attr_ba_Player__gamedata">gamedata</a>, <a href="#attr_ba_Player__node">node</a>, <a href="#attr_ba_Player__position">position</a>, <a href="#attr_ba_Player__sessionplayer">sessionplayer</a>, <a href="#attr_ba_Player__team">team</a></h5>
 <dl>
+<dt><h4><a name="attr_ba_Player__actor">actor</a></h4></dt><dd>
+<p><span>Optional[<a href="#class_ba_Actor">ba.Actor</a>]</span></p>
+<p>The <a href="#class_ba_Actor">ba.Actor</a> associated with the player.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_Player__gamedata">gamedata</a></h4></dt><dd>
+<p><span>dict</span></p>
+<p>Arbitrary values associated with the player.
+        Though it is encouraged that most player values be properly defined
+        on the <a href="#class_ba_Player">ba.Player</a> subclass, it may be useful for player-agnostic
+        objects to store values here. This dict is cleared when the player
+        leaves or expires so objects stored here will be disposed of at
+        the expected time, unlike the Player instance itself which may
+        continue to be referenced after it is no longer part of the game.</p>
+
+</dd>
 <dt><h4><a name="attr_ba_Player__node">node</a></h4></dt><dd>
 <p><span><a href="#class_ba_Node">ba.Node</a></span></p>
 <p>A <a href="#class_ba_Node">ba.Node</a> of type 'player' associated with this Player.</p>
@@ -3859,10 +3898,9 @@ even if myactor is set to None.</p>
 </dd>
 <dt><h4><a name="attr_ba_Player__position">position</a></h4></dt><dd>
 <p><span><a href="#class_ba_Vec3">ba.Vec3</a></span></p>
-<p>The position of the player, as defined by its current Actor.</p>
+<p>The position of the player, as defined by its current <a href="#class_ba_Actor">ba.Actor</a>.</p>
 
-<p>        This value should not be used when the player has no Actor, as
-        it is undefined in that case.</p>
+<p>        This value is undefined when the player has no Actor.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_Player__sessionplayer">sessionplayer</a></h4></dt><dd>
@@ -3872,14 +3910,19 @@ even if myactor is set to None.</p>
 <p>        Throws a <a href="#class_ba_SessionPlayerNotFoundError">ba.SessionPlayerNotFoundError</a> if it does not exist.</p>
 
 </dd>
+<dt><h4><a name="attr_ba_Player__team">team</a></h4></dt><dd>
+<p><span>TeamType</span></p>
+<p>The <a href="#class_ba_Team">ba.Team</a> for this player.</p>
+
+</dd>
 </dl>
 <h3>Methods:</h3>
-<h5><a href="#method_ba_Player__assign_input_call">assign_input_call()</a>, <a href="#method_ba_Player__exists">exists()</a>, <a href="#method_ba_Player__get_icon">get_icon()</a>, <a href="#method_ba_Player__getname">getname()</a>, <a href="#method_ba_Player__is_alive">is_alive()</a>, <a href="#method_ba_Player__reset_input">reset_input()</a></h5>
+<h5><a href="#method_ba_Player__assigninput">assigninput()</a>, <a href="#method_ba_Player__exists">exists()</a>, <a href="#method_ba_Player__get_icon">get_icon()</a>, <a href="#method_ba_Player__getname">getname()</a>, <a href="#method_ba_Player__is_alive">is_alive()</a>, <a href="#method_ba_Player__on_expire">on_expire()</a>, <a href="#method_ba_Player__resetinput">resetinput()</a></h5>
 <dl>
-<dt><h4><a name="method_ba_Player__assign_input_call">assign_input_call()</a></dt></h4><dd>
-<p><span>assign_input_call(self, inputtype: Union[str, Tuple[str, ...]], call: Callable) -&gt; None</span></p>
+<dt><h4><a name="method_ba_Player__assigninput">assigninput()</a></dt></h4><dd>
+<p><span>assigninput(self, inputtype: Union[str, Tuple[str, ...]], call: Callable) -&gt; None</span></p>
 
-<p>assign_input_call(type: Union[str, Tuple[str, ...]],
+<p>assigninput(type: Union[str, Tuple[str, ...]],
   call: Callable) -&gt; None</p>
 
 <p>Set the python callable to be run for one or more types of input.
@@ -3896,7 +3939,10 @@ Valid type values are: 'jumpPress', 'jumpRelease', 'punchPress',
 
 <p>Whether the underlying player still exists.</p>
 
-<p>Most functionality will fail on a nonexistent player.
+<p>This will return False if the underlying <a href="#class_ba_SessionPlayer">ba.SessionPlayer</a> has
+left the game or if the <a href="#class_ba_Activity">ba.Activity</a> this player was associated
+with has ended.
+Most functionality will fail on a nonexistent player.
 Note that you can also use the boolean operator for this same
 functionality, so a statement such as "if player" will do
 the right thing both for Player objects and values of None.</p>
@@ -3928,10 +3974,21 @@ name may include an icon.</p>
 is_alive() method return True. False is returned otherwise.</p>
 
 </dd>
-<dt><h4><a name="method_ba_Player__reset_input">reset_input()</a></dt></h4><dd>
-<p><span>reset_input(self) -&gt; None</span></p>
+<dt><h4><a name="method_ba_Player__on_expire">on_expire()</a></dt></h4><dd>
+<p><span>on_expire(self) -&gt; None</span></p>
 
-<p>reset_input() -&gt; None</p>
+<p>Can be overridden to handle player expiration.</p>
+
+<p>The player expires when the Activity it is a part of expires.
+Expired players should no longer run any game logic (which will
+likely error). They should, however, remove any references to
+players/teams/games/etc. which could prevent them from being freed.</p>
+
+</dd>
+<dt><h4><a name="method_ba_Player__resetinput">resetinput()</a></dt></h4><dd>
+<p><span>resetinput(self) -&gt; None</span></p>
+
+<p>resetinput() -&gt; None</p>
 
 <p>Clears out the player's assigned input actions.</p>
 
@@ -4362,7 +4419,7 @@ player that joins.</p>
 </dd>
 </dl>
 <h3>Methods:</h3>
-<h5><a href="#method_ba_Session____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Session__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_Session__end">end()</a>, <a href="#method_ba_Session__end_activity">end_activity()</a>, <a href="#method_ba_Session__get_custom_menu_entries">get_custom_menu_entries()</a>, <a href="#method_ba_Session__getactivity">getactivity()</a>, <a href="#method_ba_Session__handlemessage">handlemessage()</a>, <a href="#method_ba_Session__on_activity_end">on_activity_end()</a>, <a href="#method_ba_Session__on_player_leave">on_player_leave()</a>, <a href="#method_ba_Session__on_player_request">on_player_request()</a>, <a href="#method_ba_Session__on_team_join">on_team_join()</a>, <a href="#method_ba_Session__on_team_leave">on_team_leave()</a>, <a href="#method_ba_Session__set_activity">set_activity()</a></h5>
+<h5><a href="#method_ba_Session____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Session__begin_next_activity">begin_next_activity()</a>, <a href="#method_ba_Session__end">end()</a>, <a href="#method_ba_Session__end_activity">end_activity()</a>, <a href="#method_ba_Session__get_custom_menu_entries">get_custom_menu_entries()</a>, <a href="#method_ba_Session__getactivity">getactivity()</a>, <a href="#method_ba_Session__handlemessage">handlemessage()</a>, <a href="#method_ba_Session__on_activity_end">on_activity_end()</a>, <a href="#method_ba_Session__on_player_leave">on_player_leave()</a>, <a href="#method_ba_Session__on_player_request">on_player_request()</a>, <a href="#method_ba_Session__on_team_join">on_team_join()</a>, <a href="#method_ba_Session__on_team_leave">on_team_leave()</a>, <a href="#method_ba_Session__setactivity">setactivity()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_Session____init__">&lt;constructor&gt;</a></dt></h4><dd>
 <p><span>ba.Session(depsets: Sequence[<a href="#class_ba_DependencySet">ba.DependencySet</a>], team_names: Sequence[str] = None, team_colors: Sequence[Sequence[float]] = None, min_players: int = 1, max_players: int = 8)</span></p>
@@ -4459,15 +4516,15 @@ another <a href="#class_ba_Activity">ba.Activity</a>.</p>
 <p>Called when a <a href="#class_ba_Team">ba.Team</a> is leaving the session.</p>
 
 </dd>
-<dt><h4><a name="method_ba_Session__set_activity">set_activity()</a></dt></h4><dd>
-<p><span>set_activity(self, activity: <a href="#class_ba_Activity">ba.Activity</a>) -&gt; None</span></p>
+<dt><h4><a name="method_ba_Session__setactivity">setactivity()</a></dt></h4><dd>
+<p><span>setactivity(self, activity: <a href="#class_ba_Activity">ba.Activity</a>) -&gt; None</span></p>
 
 <p>Assign a new current <a href="#class_ba_Activity">ba.Activity</a> for the session.</p>
 
 <p>Note that this will not change the current context to the new
 Activity's. Code must be run in the new activity's methods
 (on_transition_in, etc) to get it. (so you can't do
-session.set_activity(foo) and then <a href="#function_ba_newnode">ba.newnode</a>() to add a node to foo)</p>
+session.setactivity(foo) and then <a href="#function_ba_newnode">ba.newnode</a>() to add a node to foo)</p>
 
 </dd>
 </dl>
@@ -4499,7 +4556,7 @@ that a SessionPlayer is still present if retaining references to one
 for any length of time.</p>
 
 <h3>Attributes:</h3>
-<h5><a href="#attr_ba_SessionPlayer__character">character</a>, <a href="#attr_ba_SessionPlayer__color">color</a>, <a href="#attr_ba_SessionPlayer__gamedata">gamedata</a>, <a href="#attr_ba_SessionPlayer__gameplayer">gameplayer</a>, <a href="#attr_ba_SessionPlayer__highlight">highlight</a>, <a href="#attr_ba_SessionPlayer__id">id</a>, <a href="#attr_ba_SessionPlayer__in_game">in_game</a>, <a href="#attr_ba_SessionPlayer__inputdevice">inputdevice</a>, <a href="#attr_ba_SessionPlayer__sessiondata">sessiondata</a>, <a href="#attr_ba_SessionPlayer__team">team</a></h5>
+<h5><a href="#attr_ba_SessionPlayer__character">character</a>, <a href="#attr_ba_SessionPlayer__color">color</a>, <a href="#attr_ba_SessionPlayer__gameplayer">gameplayer</a>, <a href="#attr_ba_SessionPlayer__highlight">highlight</a>, <a href="#attr_ba_SessionPlayer__id">id</a>, <a href="#attr_ba_SessionPlayer__in_game">in_game</a>, <a href="#attr_ba_SessionPlayer__inputdevice">inputdevice</a>, <a href="#attr_ba_SessionPlayer__sessiondata">sessiondata</a>, <a href="#attr_ba_SessionPlayer__team">team</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_SessionPlayer__character">character</a></h4></dt><dd>
 <p><span> str</span></p>
@@ -4510,13 +4567,6 @@ for any length of time.</p>
 <p><span> Sequence[float]</span></p>
 <p>The base color for this Player.
 In team games this will match the <a href="#class_ba_SessionTeam">ba.SessionTeam</a>'s color.</p>
-
-</dd>
-<dt><h4><a name="attr_ba_SessionPlayer__gamedata">gamedata</a></h4></dt><dd>
-<p><span> Dict</span></p>
-<p>A dict for use by the current <a href="#class_ba_Activity">ba.Activity</a> for
-storing data associated with this Player.
-This gets cleared for each new <a href="#class_ba_Activity">ba.Activity</a>.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_SessionPlayer__gameplayer">gameplayer</a></h4></dt><dd>
@@ -4568,10 +4618,10 @@ is still in its lobby selecting a team/etc. then a
 </dd>
 </dl>
 <h3>Methods:</h3>
-<h5><a href="#method_ba_SessionPlayer__assign_input_call">assign_input_call()</a>, <a href="#method_ba_SessionPlayer__exists">exists()</a>, <a href="#method_ba_SessionPlayer__get_account_id">get_account_id()</a>, <a href="#method_ba_SessionPlayer__get_icon">get_icon()</a>, <a href="#method_ba_SessionPlayer__getname">getname()</a>, <a href="#method_ba_SessionPlayer__remove_from_game">remove_from_game()</a>, <a href="#method_ba_SessionPlayer__reset_input">reset_input()</a>, <a href="#method_ba_SessionPlayer__set_name">set_name()</a></h5>
+<h5><a href="#method_ba_SessionPlayer__assigninput">assigninput()</a>, <a href="#method_ba_SessionPlayer__exists">exists()</a>, <a href="#method_ba_SessionPlayer__get_account_id">get_account_id()</a>, <a href="#method_ba_SessionPlayer__get_icon">get_icon()</a>, <a href="#method_ba_SessionPlayer__getname">getname()</a>, <a href="#method_ba_SessionPlayer__remove_from_game">remove_from_game()</a>, <a href="#method_ba_SessionPlayer__resetinput">resetinput()</a>, <a href="#method_ba_SessionPlayer__setname">setname()</a></h5>
 <dl>
-<dt><h4><a name="method_ba_SessionPlayer__assign_input_call">assign_input_call()</a></dt></h4><dd>
-<p><span>assign_input_call(type: Union[str, Tuple[str, ...]],
+<dt><h4><a name="method_ba_SessionPlayer__assigninput">assigninput()</a></dt></h4><dd>
+<p><span>assigninput(type: Union[str, Tuple[str, ...]],
   call: Callable) -&gt; None</span></p>
 
 <p>Set the python callable to be run for one or more types of input.
@@ -4619,14 +4669,14 @@ name may include an icon.</p>
 <p>Removes the player from the game.</p>
 
 </dd>
-<dt><h4><a name="method_ba_SessionPlayer__reset_input">reset_input()</a></dt></h4><dd>
-<p><span>reset_input() -&gt; None</span></p>
+<dt><h4><a name="method_ba_SessionPlayer__resetinput">resetinput()</a></dt></h4><dd>
+<p><span>resetinput() -&gt; None</span></p>
 
 <p>Clears out the player's assigned input actions.</p>
 
 </dd>
-<dt><h4><a name="method_ba_SessionPlayer__set_name">set_name()</a></dt></h4><dd>
-<p><span>set_name(name: str, full_name: str = None, real: bool = True)
+<dt><h4><a name="method_ba_SessionPlayer__setname">setname()</a></dt></h4><dd>
+<p><span>setname(name: str, full_name: str = None, real: bool = True)
   -&gt; None</span></p>
 
 <p>Set the player's name to the provided string.
@@ -4857,7 +4907,7 @@ of the session.</p>
 <h3>Methods:</h3>
 <dl>
 <dt><h4><a name="method_ba_StandLocation____init__">&lt;constructor&gt;</a></dt></h4><dd>
-<p><span>ba.StandLocation(position: _<a href="#class_ba_Vec3">ba.Vec3</a>, angle: Optional[float] = None)</span></p>
+<p><span>ba.StandLocation(position: <a href="#class_ba_Vec3">ba.Vec3</a>, angle: Optional[float] = None)</span></p>
 
 </dd>
 </dl>
@@ -4902,7 +4952,7 @@ of the session.</p>
 </p>
 
 <h3>Methods:</h3>
-<h5><a href="#method_ba_Stats____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Stats__get_records">get_records()</a>, <a href="#method_ba_Stats__getactivity">getactivity()</a>, <a href="#method_ba_Stats__player_got_hit">player_got_hit()</a>, <a href="#method_ba_Stats__player_scored">player_scored()</a>, <a href="#method_ba_Stats__player_was_killed">player_was_killed()</a>, <a href="#method_ba_Stats__register_player">register_player()</a>, <a href="#method_ba_Stats__reset">reset()</a>, <a href="#method_ba_Stats__reset_accum">reset_accum()</a>, <a href="#method_ba_Stats__set_activity">set_activity()</a></h5>
+<h5><a href="#method_ba_Stats____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Stats__get_records">get_records()</a>, <a href="#method_ba_Stats__getactivity">getactivity()</a>, <a href="#method_ba_Stats__player_got_hit">player_got_hit()</a>, <a href="#method_ba_Stats__player_scored">player_scored()</a>, <a href="#method_ba_Stats__player_was_killed">player_was_killed()</a>, <a href="#method_ba_Stats__register_player">register_player()</a>, <a href="#method_ba_Stats__reset">reset()</a>, <a href="#method_ba_Stats__reset_accum">reset_accum()</a>, <a href="#method_ba_Stats__setactivity">setactivity()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_Stats____init__">&lt;constructor&gt;</a></dt></h4><dd>
 <p><span>ba.Stats()</span></p>
@@ -4960,8 +5010,8 @@ of the session.</p>
 <p>Reset per-sound sub-scores.</p>
 
 </dd>
-<dt><h4><a name="method_ba_Stats__set_activity">set_activity()</a></dt></h4><dd>
-<p><span>set_activity(self, activity: Optional[<a href="#class_ba_Activity">ba.Activity</a>]) -&gt; None</span></p>
+<dt><h4><a name="method_ba_Stats__setactivity">setactivity()</a></dt></h4><dd>
+<p><span>setactivity(self, activity: Optional[<a href="#class_ba_Activity">ba.Activity</a>]) -&gt; None</span></p>
 
 <p>Set the current activity for this instance.</p>
 
@@ -4979,7 +5029,19 @@ of the session.</p>
 </p>
 
 <h3>Attributes:</h3>
+<h5><a href="#attr_ba_Team__gamedata">gamedata</a>, <a href="#attr_ba_Team__sessionteam">sessionteam</a></h5>
 <dl>
+<dt><h4><a name="attr_ba_Team__gamedata">gamedata</a></h4></dt><dd>
+<p><span>dict</span></p>
+<p>Arbitrary values associated with the team.
+        Though it is encouraged that most player values be properly defined
+        on the <a href="#class_ba_Team">ba.Team</a> subclass, it may be useful for player-agnostic
+        objects to store values here. This dict is cleared when the team
+        leaves or expires so objects stored here will be disposed of at
+        the expected time, unlike the Team instance itself which may
+        continue to be referenced after it is no longer part of the game.</p>
+
+</dd>
 <dt><h4><a name="attr_ba_Team__sessionteam">sessionteam</a></h4></dt><dd>
 <p><span>SessionTeam</span></p>
 <p>Return the <a href="#class_ba_SessionTeam">ba.SessionTeam</a> corresponding to this Team.</p>
@@ -4989,11 +5051,18 @@ of the session.</p>
 </dd>
 </dl>
 <h3>Methods:</h3>
+<h5><a href="#method_ba_Team__manual_init">manual_init()</a>, <a href="#method_ba_Team__on_expire">on_expire()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_Team__manual_init">manual_init()</a></dt></h4><dd>
 <p><span>manual_init(self, team_id: int, name: Union[<a href="#class_ba_Lstr">ba.Lstr</a>, str], color: Tuple[float, ...]) -&gt; None</span></p>
 
 <p>Manually init a team for uses such as bots.</p>
+
+</dd>
+<dt><h4><a name="method_ba_Team__on_expire">on_expire()</a></dt></h4><dd>
+<p><span>on_expire(self) -&gt; None</span></p>
+
+<p>Can be overridden to handle team expiration.</p>
 
 </dd>
 </dl>
@@ -5011,7 +5080,7 @@ of the session.</p>
 <h3>Attributes Inherited:</h3>
 <h5><a href="#attr_ba_Activity__players">players</a>, <a href="#attr_ba_Activity__settings_raw">settings_raw</a>, <a href="#attr_ba_Activity__teams">teams</a></h5>
 <h3>Attributes Defined Here:</h3>
-<h5><a href="#attr_ba_TeamGameActivity__expired">expired</a>, <a href="#attr_ba_TeamGameActivity__globalsnode">globalsnode</a>, <a href="#attr_ba_TeamGameActivity__map">map</a>, <a href="#attr_ba_TeamGameActivity__playertype">playertype</a>, <a href="#attr_ba_TeamGameActivity__session">session</a>, <a href="#attr_ba_TeamGameActivity__stats">stats</a>, <a href="#attr_ba_TeamGameActivity__teamtype">teamtype</a></h5>
+<h5><a href="#attr_ba_TeamGameActivity__expired">expired</a>, <a href="#attr_ba_TeamGameActivity__gamedata">gamedata</a>, <a href="#attr_ba_TeamGameActivity__globalsnode">globalsnode</a>, <a href="#attr_ba_TeamGameActivity__map">map</a>, <a href="#attr_ba_TeamGameActivity__playertype">playertype</a>, <a href="#attr_ba_TeamGameActivity__session">session</a>, <a href="#attr_ba_TeamGameActivity__stats">stats</a>, <a href="#attr_ba_TeamGameActivity__teamtype">teamtype</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_TeamGameActivity__expired">expired</a></h4></dt><dd>
 <p><span>bool</span></p>
@@ -5020,6 +5089,14 @@ of the session.</p>
 <p>        An activity is set as expired when shutting down.
         At this point no new nodes, timers, etc should be made,
         run, etc, and the activity should be considered a 'zombie'.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_TeamGameActivity__gamedata">gamedata</a></h4></dt><dd>
+<p><span>dict</span></p>
+<p>Entities needing to store simple data with an activity can put it
+        here. This dict will be deleted when the activity expires, so contained
+        objects generally do not need to worry about handling expired
+        activities.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_TeamGameActivity__globalsnode">globalsnode</a></h4></dt><dd>
@@ -5061,7 +5138,7 @@ of the session.</p>
 </dd>
 </dl>
 <h3>Methods Inherited:</h3>
-<h5><a href="#method_ba_GameActivity__add_actor_weak_ref">add_actor_weak_ref()</a>, <a href="#method_ba_GameActivity__add_player">add_player()</a>, <a href="#method_ba_GameActivity__add_team">add_team()</a>, <a href="#method_ba_GameActivity__begin">begin()</a>, <a href="#method_ba_GameActivity__continue_or_end_game">continue_or_end_game()</a>, <a href="#method_ba_GameActivity__create_player">create_player()</a>, <a href="#method_ba_GameActivity__create_settings_ui">create_settings_ui()</a>, <a href="#method_ba_GameActivity__create_team">create_team()</a>, <a href="#method_ba_GameActivity__dep_is_present">dep_is_present()</a>, <a href="#method_ba_GameActivity__destroy">destroy()</a>, <a href="#method_ba_GameActivity__end_game">end_game()</a>, <a href="#method_ba_GameActivity__get_description">get_description()</a>, <a href="#method_ba_GameActivity__get_description_display_string">get_description_display_string()</a>, <a href="#method_ba_GameActivity__get_display_string">get_display_string()</a>, <a href="#method_ba_GameActivity__get_dynamic_deps">get_dynamic_deps()</a>, <a href="#method_ba_GameActivity__get_game_settings">get_game_settings()</a>, <a href="#method_ba_GameActivity__get_instance_description">get_instance_description()</a>, <a href="#method_ba_GameActivity__get_instance_description_short">get_instance_description_short()</a>, <a href="#method_ba_GameActivity__get_instance_display_string">get_instance_display_string()</a>, <a href="#method_ba_GameActivity__get_instance_scoreboard_display_string">get_instance_scoreboard_display_string()</a>, <a href="#method_ba_GameActivity__get_score_info">get_score_info()</a>, <a href="#method_ba_GameActivity__get_settings_display_string">get_settings_display_string()</a>, <a href="#method_ba_GameActivity__get_supported_maps">get_supported_maps()</a>, <a href="#method_ba_GameActivity__get_team_display_string">get_team_display_string()</a>, <a href="#method_ba_GameActivity__getname">getname()</a>, <a href="#method_ba_GameActivity__handlemessage">handlemessage()</a>, <a href="#method_ba_GameActivity__has_begun">has_begun()</a>, <a href="#method_ba_GameActivity__has_ended">has_ended()</a>, <a href="#method_ba_GameActivity__has_transitioned_in">has_transitioned_in()</a>, <a href="#method_ba_GameActivity__is_transitioning_out">is_transitioning_out()</a>, <a href="#method_ba_GameActivity__is_waiting_for_continue">is_waiting_for_continue()</a>, <a href="#method_ba_GameActivity__on_continue">on_continue()</a>, <a href="#method_ba_GameActivity__on_expire">on_expire()</a>, <a href="#method_ba_GameActivity__on_player_join">on_player_join()</a>, <a href="#method_ba_GameActivity__on_player_leave">on_player_leave()</a>, <a href="#method_ba_GameActivity__on_team_join">on_team_join()</a>, <a href="#method_ba_GameActivity__on_team_leave">on_team_leave()</a>, <a href="#method_ba_GameActivity__on_transition_out">on_transition_out()</a>, <a href="#method_ba_GameActivity__remove_player">remove_player()</a>, <a href="#method_ba_GameActivity__remove_team">remove_team()</a>, <a href="#method_ba_GameActivity__respawn_player">respawn_player()</a>, <a href="#method_ba_GameActivity__retain_actor">retain_actor()</a>, <a href="#method_ba_GameActivity__set_has_ended">set_has_ended()</a>, <a href="#method_ba_GameActivity__setup_standard_powerup_drops">setup_standard_powerup_drops()</a>, <a href="#method_ba_GameActivity__setup_standard_time_limit">setup_standard_time_limit()</a>, <a href="#method_ba_GameActivity__show_zoom_message">show_zoom_message()</a>, <a href="#method_ba_GameActivity__spawn_player">spawn_player()</a>, <a href="#method_ba_GameActivity__spawn_player_if_exists">spawn_player_if_exists()</a>, <a href="#method_ba_GameActivity__transition_in">transition_in()</a>, <a href="#method_ba_GameActivity__transition_out">transition_out()</a></h5>
+<h5><a href="#method_ba_GameActivity__add_actor_weak_ref">add_actor_weak_ref()</a>, <a href="#method_ba_GameActivity__add_player">add_player()</a>, <a href="#method_ba_GameActivity__add_team">add_team()</a>, <a href="#method_ba_GameActivity__begin">begin()</a>, <a href="#method_ba_GameActivity__continue_or_end_game">continue_or_end_game()</a>, <a href="#method_ba_GameActivity__create_player">create_player()</a>, <a href="#method_ba_GameActivity__create_settings_ui">create_settings_ui()</a>, <a href="#method_ba_GameActivity__create_team">create_team()</a>, <a href="#method_ba_GameActivity__dep_is_present">dep_is_present()</a>, <a href="#method_ba_GameActivity__end_game">end_game()</a>, <a href="#method_ba_GameActivity__expire">expire()</a>, <a href="#method_ba_GameActivity__get_description">get_description()</a>, <a href="#method_ba_GameActivity__get_description_display_string">get_description_display_string()</a>, <a href="#method_ba_GameActivity__get_display_string">get_display_string()</a>, <a href="#method_ba_GameActivity__get_dynamic_deps">get_dynamic_deps()</a>, <a href="#method_ba_GameActivity__get_game_settings">get_game_settings()</a>, <a href="#method_ba_GameActivity__get_instance_description">get_instance_description()</a>, <a href="#method_ba_GameActivity__get_instance_description_short">get_instance_description_short()</a>, <a href="#method_ba_GameActivity__get_instance_display_string">get_instance_display_string()</a>, <a href="#method_ba_GameActivity__get_instance_scoreboard_display_string">get_instance_scoreboard_display_string()</a>, <a href="#method_ba_GameActivity__get_score_info">get_score_info()</a>, <a href="#method_ba_GameActivity__get_settings_display_string">get_settings_display_string()</a>, <a href="#method_ba_GameActivity__get_supported_maps">get_supported_maps()</a>, <a href="#method_ba_GameActivity__get_team_display_string">get_team_display_string()</a>, <a href="#method_ba_GameActivity__getname">getname()</a>, <a href="#method_ba_GameActivity__handlemessage">handlemessage()</a>, <a href="#method_ba_GameActivity__has_begun">has_begun()</a>, <a href="#method_ba_GameActivity__has_ended">has_ended()</a>, <a href="#method_ba_GameActivity__has_transitioned_in">has_transitioned_in()</a>, <a href="#method_ba_GameActivity__is_transitioning_out">is_transitioning_out()</a>, <a href="#method_ba_GameActivity__is_waiting_for_continue">is_waiting_for_continue()</a>, <a href="#method_ba_GameActivity__on_continue">on_continue()</a>, <a href="#method_ba_GameActivity__on_expire">on_expire()</a>, <a href="#method_ba_GameActivity__on_player_join">on_player_join()</a>, <a href="#method_ba_GameActivity__on_player_leave">on_player_leave()</a>, <a href="#method_ba_GameActivity__on_team_join">on_team_join()</a>, <a href="#method_ba_GameActivity__on_team_leave">on_team_leave()</a>, <a href="#method_ba_GameActivity__on_transition_out">on_transition_out()</a>, <a href="#method_ba_GameActivity__remove_player">remove_player()</a>, <a href="#method_ba_GameActivity__remove_team">remove_team()</a>, <a href="#method_ba_GameActivity__respawn_player">respawn_player()</a>, <a href="#method_ba_GameActivity__retain_actor">retain_actor()</a>, <a href="#method_ba_GameActivity__set_has_ended">set_has_ended()</a>, <a href="#method_ba_GameActivity__setup_standard_powerup_drops">setup_standard_powerup_drops()</a>, <a href="#method_ba_GameActivity__setup_standard_time_limit">setup_standard_time_limit()</a>, <a href="#method_ba_GameActivity__show_zoom_message">show_zoom_message()</a>, <a href="#method_ba_GameActivity__spawn_player">spawn_player()</a>, <a href="#method_ba_GameActivity__spawn_player_if_exists">spawn_player_if_exists()</a>, <a href="#method_ba_GameActivity__transition_in">transition_in()</a>, <a href="#method_ba_GameActivity__transition_out">transition_out()</a></h5>
 <h3>Methods Defined or Overridden:</h3>
 <h5><a href="#method_ba_TeamGameActivity____init__">&lt;constructor&gt;</a>, <a href="#method_ba_TeamGameActivity__end">end()</a>, <a href="#method_ba_TeamGameActivity__on_begin">on_begin()</a>, <a href="#method_ba_TeamGameActivity__on_transition_in">on_transition_in()</a>, <a href="#method_ba_TeamGameActivity__spawn_player_spaz">spawn_player_spaz()</a>, <a href="#method_ba_TeamGameActivity__supports_session_type">supports_session_type()</a></h5>
 <dl>

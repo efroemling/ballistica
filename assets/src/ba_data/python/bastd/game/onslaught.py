@@ -1196,8 +1196,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
     def handlemessage(self, msg: Any) -> Any:
 
         if isinstance(msg, PlayerSpazHurtMessage):
-            player = msg.spaz.getplayer(Player, doraise=True)
-            player.has_been_hurt = True
+            msg.spaz.getplayer(Player, True).has_been_hurt = True
             self._a_player_has_been_hurt = True
 
         elif isinstance(msg, ba.PlayerScoredMessage):

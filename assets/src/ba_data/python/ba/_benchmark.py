@@ -53,7 +53,7 @@ def run_cpu_benchmark() -> None:
             cfg['Graphics Quality'] = 'Low'
             cfg.apply()
             self.benchmark_type = 'cpu'
-            self.set_activity(_ba.new_activity(tutorial.TutorialActivity))
+            self.setactivity(_ba.new_activity(tutorial.TutorialActivity))
 
         def __del__(self) -> None:
 
@@ -91,7 +91,7 @@ def run_stress_test(playlist_type: str = 'Random',
                   Call(_ba.screenmessage,
                        ('stats will be written to ' +
                         _modutils.get_human_readable_user_scripts_path() +
-                        '/stressTestStats.csv')),
+                        '/stress_test_stats.csv')),
                   timetype=TimeType.REAL)
 
 

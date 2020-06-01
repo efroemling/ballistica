@@ -138,34 +138,33 @@ class PlayerSpaz(Spaz):
         # wiring up.
         if self._connected_to_player:
             if player != self._connected_to_player:
-                player.reset_input()
+                player.resetinput()
             self.disconnect_controls_from_player()
         else:
-            player.reset_input()
+            player.resetinput()
 
-        player.assign_input_call('upDown', self.on_move_up_down)
-        player.assign_input_call('leftRight', self.on_move_left_right)
-        player.assign_input_call('holdPositionPress',
-                                 self.on_hold_position_press)
-        player.assign_input_call('holdPositionRelease',
-                                 self.on_hold_position_release)
+        player.assigninput('upDown', self.on_move_up_down)
+        player.assigninput('leftRight', self.on_move_left_right)
+        player.assigninput('holdPositionPress', self.on_hold_position_press)
+        player.assigninput('holdPositionRelease',
+                           self.on_hold_position_release)
         if enable_jump:
-            player.assign_input_call('jumpPress', self.on_jump_press)
-            player.assign_input_call('jumpRelease', self.on_jump_release)
+            player.assigninput('jumpPress', self.on_jump_press)
+            player.assigninput('jumpRelease', self.on_jump_release)
         if enable_pickup:
-            player.assign_input_call('pickUpPress', self.on_pickup_press)
-            player.assign_input_call('pickUpRelease', self.on_pickup_release)
+            player.assigninput('pickUpPress', self.on_pickup_press)
+            player.assigninput('pickUpRelease', self.on_pickup_release)
         if enable_punch:
-            player.assign_input_call('punchPress', self.on_punch_press)
-            player.assign_input_call('punchRelease', self.on_punch_release)
+            player.assigninput('punchPress', self.on_punch_press)
+            player.assigninput('punchRelease', self.on_punch_release)
         if enable_bomb:
-            player.assign_input_call('bombPress', self.on_bomb_press)
-            player.assign_input_call('bombRelease', self.on_bomb_release)
+            player.assigninput('bombPress', self.on_bomb_press)
+            player.assigninput('bombRelease', self.on_bomb_release)
         if enable_run:
-            player.assign_input_call('run', self.on_run)
+            player.assigninput('run', self.on_run)
         if enable_fly:
-            player.assign_input_call('flyPress', self.on_fly_press)
-            player.assign_input_call('flyRelease', self.on_fly_release)
+            player.assigninput('flyPress', self.on_fly_press)
+            player.assigninput('flyRelease', self.on_fly_release)
 
         self._connected_to_player = player
 
@@ -175,7 +174,7 @@ class PlayerSpaz(Spaz):
         ba.Player from control of this spaz.
         """
         if self._connected_to_player:
-            self._connected_to_player.reset_input()
+            self._connected_to_player.resetinput()
             self._connected_to_player = None
 
             # Send releases for anything in case its held.
@@ -239,7 +238,7 @@ class PlayerSpaz(Spaz):
 
                 activity = self._activity()
 
-                player = self.getplayer(ba.Player, doraise=False)
+                player = self.getplayer(ba.Player, False)
                 if not killed:
                     killerplayer = None
                 else:

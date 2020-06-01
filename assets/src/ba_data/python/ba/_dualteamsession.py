@@ -56,7 +56,7 @@ class DualTeamSession(MultiTeamSession):
 
         # If everyone has the same score, call it a draw.
         if len(winners) < 2:
-            self.set_activity(_ba.new_activity(DrawScoreScreenActivity))
+            self.setactivity(_ba.new_activity(DrawScoreScreenActivity))
         else:
             winner = winners[0].teams[0]
             winner.sessiondata['score'] += 1
@@ -64,10 +64,10 @@ class DualTeamSession(MultiTeamSession):
             # If a team has won, show final victory screen.
             if winner.sessiondata['score'] >= (self._series_length -
                                                1) / 2 + 1:
-                self.set_activity(
+                self.setactivity(
                     _ba.new_activity(TeamSeriesVictoryScoreScreenActivity,
                                      {'winner': winner}))
             else:
-                self.set_activity(
+                self.setactivity(
                     _ba.new_activity(TeamVictoryScoreScreenActivity,
                                      {'winner': winner}))

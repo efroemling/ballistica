@@ -81,7 +81,7 @@ class FreeForAllSession(MultiTeamSession):
         # If there's multiple players and everyone has the same score,
         # call it a draw.
         if len(self.players) > 1 and len(winners) < 2:
-            self.set_activity(
+            self.setactivity(
                 _ba.new_activity(DrawScoreScreenActivity,
                                  {'results': results}))
         else:
@@ -105,10 +105,10 @@ class FreeForAllSession(MultiTeamSession):
                     or (len(series_winners) > 1
                         and series_winners[0].sessiondata['score'] !=
                         series_winners[1].sessiondata['score'])):
-                self.set_activity(
+                self.setactivity(
                     _ba.new_activity(TeamSeriesVictoryScoreScreenActivity,
                                      {'winner': series_winners[0]}))
             else:
-                self.set_activity(
+                self.setactivity(
                     _ba.new_activity(FreeForAllVictoryScoreScreenActivity,
                                      {'results': results}))

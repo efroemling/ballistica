@@ -247,9 +247,10 @@ class KingOfTheHillGame(ba.TeamGameActivity[Player, Team]):
             ba.playsound(self._swipsound)
 
     def _handle_player_flag_region_collide(self, colliding: bool) -> None:
-        player = ba.getcollision().opposingnode.getdelegate(
-            PlayerSpaz, True).getplayer(Player)
-        if not player:
+        try:
+            player = ba.getcollision().opposingnode.getdelegate(
+                PlayerSpaz, True).getplayer(Player, True)
+        except ba.NotFoundError:
             return
 
         # Different parts of us can collide so a single value isn't enough

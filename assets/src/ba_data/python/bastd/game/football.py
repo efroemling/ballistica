@@ -267,9 +267,11 @@ class FootballTeamGame(ba.TeamGameActivity[Player, Team]):
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, FlagPickedUpMessage):
             assert isinstance(msg.flag, FootballFlag)
-            player = msg.node.getdelegate(PlayerSpaz, True).getplayer(Player)
-            if player:
-                msg.flag.last_holding_player = player
+            try:
+                msg.flag.last_holding_player = msg.node.getdelegate(
+                    PlayerSpaz, True).getplayer(Player, True)
+            except ba.NotFoundError:
+                pass
             msg.flag.held_count += 1
 
         elif isinstance(msg, FlagDroppedMessage):

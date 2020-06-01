@@ -256,11 +256,15 @@ class HockeyGame(ba.TeamGameActivity[Player, Team]):
 
     def _handle_puck_player_collide(self) -> None:
         collision = ba.getcollision()
-        puck = collision.sourcenode.getdelegate(Puck)
-        player = collision.opposingnode.getdelegate(PlayerSpaz,
-                                                    True).getplayer(Player)
-        if player and puck:
-            puck.last_players_to_touch[player.team.id] = player
+        try:
+            puck = collision.sourcenode.getdelegate(Puck, True)
+            player = collision.opposingnode.getdelegate(PlayerSpaz,
+                                                        True).getplayer(
+                                                            Player, True)
+        except ba.NotFoundError:
+            return
+
+        puck.last_players_to_touch[player.team.id] = player
 
     def _kill_puck(self) -> None:
         self._puck = None

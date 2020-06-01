@@ -348,7 +348,7 @@ class Session:
                     '_launch_end_session_activity called twice (since_last=' +
                     str(since_last) + ')')
             self._launch_end_session_activity_time = curtime
-            self.set_activity(_ba.new_activity(EndSessionActivity))
+            self.setactivity(_ba.new_activity(EndSessionActivity))
             self._wants_to_end = False
             self._ending = True  # Prevent further actions.
 
@@ -398,42 +398,44 @@ class Session:
         """General message handling; can be passed any message object."""
         from ba._lobby import PlayerReadyMessage
         from ba._messages import PlayerProfilesChangedMessage, UNHANDLED
+
         if isinstance(msg, PlayerReadyMessage):
             self._on_player_ready(msg.chooser)
-            return None
 
-        if isinstance(msg, PlayerProfilesChangedMessage):
+        elif isinstance(msg, PlayerProfilesChangedMessage):
             # If we have a current activity with a lobby, ask it to reload
             # profiles.
             with _ba.Context(self):
                 self.lobby.reload_profiles()
             return None
 
-        return UNHANDLED
+        else:
+            return UNHANDLED
+        return None
 
-    class _SetActivityLock:
+    class _SetActivityScopedLock:
 
         def __init__(self, session: ba.Session) -> None:
             self._session = session
+            if session._in_set_activity:
+                raise RuntimeError('Session.setactivity() called recursively.')
             self._session._in_set_activity = True
 
         def __del__(self) -> None:
             self._session._in_set_activity = False
 
-    def set_activity(self, activity: ba.Activity) -> None:
+    def setactivity(self, activity: ba.Activity) -> None:
         """Assign a new current ba.Activity for the session.
 
         Note that this will not change the current context to the new
         Activity's. Code must be run in the new activity's methods
         (on_transition_in, etc) to get it. (so you can't do
-        session.set_activity(foo) and then ba.newnode() to add a node to foo)
+        session.setactivity(foo) and then ba.newnode() to add a node to foo)
         """
         from ba._enums import TimeType
 
-        # Sanity test: make sure this doesn't get called recursively.
-        if self._in_set_activity:
-            raise RuntimeError('Session.set_activity() called recursively.')
-        self._in_set_activity = True
+        # Make sure we don't get called recursively.
+        _rlock = self._SetActivityScopedLock(self)
 
         if activity.session is not _ba.getsession():
             raise RuntimeError("Provided Activity's Session is not current.")
@@ -482,7 +484,7 @@ class Session:
         if prev_activity is not None:
             with _ba.Context('ui'):
                 _ba.timer(max(0.0, activity.transition_time),
-                          prev_activity.destroy,
+                          prev_activity.expire,
                           timetype=TimeType.REAL)
         self._in_set_activity = False
 
@@ -507,17 +509,17 @@ class Session:
             with _ba.Context(self):
                 self.on_activity_end(activity, results)
         except Exception:
-            print_exception('exception in on_activity_end() for session', self,
-                            'activity', activity, 'with results', results)
+            print_exception(f'Error in on_activity_end() for session {self}'
+                            f' activity {activity} with results {results}')
 
     def _request_player(self, sessionplayer: ba.SessionPlayer) -> bool:
-        """Called by the C++ layer when players want to join."""
+        """Called by the native layer when a player wants to join."""
 
         # If we're ending, allow no new players.
         if self._ending:
             return False
 
-        # Ask the session subclass to approve/deny this request.
+        # Ask the ba.Session subclass to approve/deny this request.
         try:
             with _ba.Context(self):
                 result = self.on_player_request(sessionplayer)
@@ -525,14 +527,14 @@ class Session:
             print_exception(f'Error in on_player_request for {self}')
             result = False
 
-        # If the user said yes, add the player to the session list.
+        # If they said yes, add the player to the lobby.
         if result:
             self.players.append(sessionplayer)
             with _ba.Context(self):
                 try:
                     self.lobby.add_chooser(sessionplayer)
                 except Exception:
-                    print_exception('exception in lobby.add_chooser()')
+                    print_exception('Error in lobby.add_chooser().')
 
         return result
 
@@ -548,39 +550,42 @@ class Session:
 
         This means we're ready to begin the next one
         """
-        if self._next_activity is not None:
+        if self._next_activity is None:
+            # Should this ever happen?
+            print_error('begin_next_activity() called with no _next_activity')
+            return
 
-            # We store both a weak and a strong ref to the new activity;
-            # the strong is to keep it alive and the weak is so we can access
-            # it even after we've released the strong-ref to allow it to die.
-            self._activity_retained = self._next_activity
-            self._activity_weak = weakref.ref(self._next_activity)
-            self._next_activity = None
-            self._activity_should_end_immediately = False
+        # We store both a weak and a strong ref to the new activity;
+        # the strong is to keep it alive and the weak is so we can access
+        # it even after we've released the strong-ref to allow it to die.
+        self._activity_retained = self._next_activity
+        self._activity_weak = weakref.ref(self._next_activity)
+        self._next_activity = None
+        self._activity_should_end_immediately = False
 
-            # Kick out anyone loitering in the lobby.
-            self.lobby.remove_all_choosers_and_kick_players()
+        # Kick out anyone loitering in the lobby.
+        self.lobby.remove_all_choosers_and_kick_players()
 
-            # Kick off the activity.
-            self._activity_retained.begin(self)
+        # Kick off the activity.
+        self._activity_retained.begin(self)
 
-            # If we want to go down, we're now free to kick off that process.
-            if self._wants_to_end:
-                self._launch_end_session_activity()
-            else:
-                # Otherwise, if the activity has already been told to end,
-                # do so now.
-                if self._activity_should_end_immediately:
-                    self._activity_retained.end(
-                        self._activity_should_end_immediately_results,
-                        self._activity_should_end_immediately_delay)
+        # If we want to completely end the session, we can now kick that off.
+        if self._wants_to_end:
+            self._launch_end_session_activity()
+        else:
+            # Otherwise, if the activity has already been told to end,
+            # do so now.
+            if self._activity_should_end_immediately:
+                self._activity_retained.end(
+                    self._activity_should_end_immediately_results,
+                    self._activity_should_end_immediately_delay)
 
     def _on_player_ready(self, chooser: ba.Chooser) -> None:
         """Called when a ba.Player has checked themself ready."""
         lobby = chooser.lobby
         activity = self._activity_weak()
 
-        # In joining activities, we wait till all choosers are ready
+        # In joining-activities, we wait till all choosers are ready
         # and then create all players at once.
         if activity is not None and activity.is_joining_activity:
             if lobby.check_all_ready():
@@ -613,8 +618,10 @@ class Session:
         """(internal)"""
         from ba._apputils import garbage_collect, call_after_ad
 
-        # Since we're mostly between activities at this point, lets run a cycle
-        # of garbage collection; hopefully it won't cause hitches here.
+        # Since things should be generally still right now, it's a good time
+        # to run garbage collection to clear out any circular dependency
+        # loops. We keep this disabled normally to avoid non-deterministic
+        # hitches.
         garbage_collect(session_end=False)
 
         with _ba.Context(self):
@@ -635,7 +642,7 @@ class Session:
 
         # Reset the player's input here, as it is probably
         # referencing the chooser which could inadvertently keep it alive.
-        sessionplayer.reset_input()
+        sessionplayer.resetinput()
 
         # We can pass it to the current activity if it has already begun
         # (otherwise it'll get passed once begin is called).
@@ -658,7 +665,7 @@ class Session:
         # If we're a non-team session, each player gets their own team.
         # (keeps mini-game coding simpler if we can always deal with teams).
         if self.use_teams:
-            sessionteam = chooser.get_team()
+            sessionteam = chooser.sessionteam
         else:
             our_team_id = self._next_team_id
             self._next_team_id += 1
@@ -670,11 +677,12 @@ class Session:
 
             # Add player's team to the Session.
             self.teams.append(sessionteam)
-            try:
-                with _ba.Context(self):
+
+            with _ba.Context(self):
+                try:
                     self.on_team_join(sessionteam)
-            except Exception:
-                print_exception(f'exception in on_team_join for {self}')
+                except Exception:
+                    print_exception(f'Error in on_team_join for {self}.')
 
             # Add player's team to the Activity.
             if pass_to_activity:
@@ -682,10 +690,10 @@ class Session:
 
         assert sessionplayer not in sessionteam.players
         sessionteam.players.append(sessionplayer)
-        sessionplayer.set_data(team=sessionteam,
-                               character=chooser.get_character_name(),
-                               color=chooser.get_color(),
-                               highlight=chooser.get_highlight())
+        sessionplayer.setdata(team=sessionteam,
+                              character=chooser.get_character_name(),
+                              color=chooser.get_color(),
+                              highlight=chooser.get_highlight())
 
         self.stats.register_player(sessionplayer)
         if pass_to_activity:

@@ -105,6 +105,7 @@
       <w>assetpath</w>
       <w>assettype</w>
       <w>assettypestr</w>
+      <w>assigninput</w>
       <w>astc</w>
       <w>astcenc</w>
       <w>astroid</w>
@@ -765,6 +766,7 @@
       <w>getlog</w>
       <w>getmaps</w>
       <w>getmodel</w>
+      <w>getname</w>
       <w>getnodes</w>
       <w>getnodetype</w>
       <w>getopt</w>
@@ -1382,6 +1384,7 @@
       <w>posixpath</w>
       <w>posixsubprocess</w>
       <w>postinit</w>
+      <w>postinited</w>
       <w>poststr</w>
       <w>powerdown</w>
       <w>powersgiven</w>
@@ -1539,6 +1542,7 @@
       <w>reqtype</w>
       <w>reqtypes</w>
       <w>resample</w>
+      <w>resetinput</w>
       <w>resourcetypeinfo</w>
       <w>respawn</w>
       <w>respawnable</w>
@@ -1557,6 +1561,7 @@
       <w>rfudge</w>
       <w>rgba</w>
       <w>rlcompleter</w>
+      <w>rlock</w>
       <w>rmats</w>
       <w>rmine</w>
       <w>robotparser</w>
@@ -1580,6 +1585,7 @@
       <w>rval</w>
       <w>safecolor</w>
       <w>safesetattr</w>
+      <w>safesetcolor</w>
       <w>saitek</w>
       <w>samsung</w>
       <w>sandboxing</w>
@@ -1641,12 +1647,18 @@
       <w>sessionglobalsnode</w>
       <w>sessionname</w>
       <w>sessionplayer</w>
+      <w>sessionplayers</w>
       <w>sessionteam</w>
+      <w>sessionteams</w>
       <w>sessiontype</w>
+      <w>setactivity</w>
       <w>setalpha</w>
       <w>setbuild</w>
+      <w>setdata</w>
       <w>setlanguage</w>
       <w>setmusic</w>
+      <w>setname</w>
+      <w>setnode</w>
       <w>setsticky</w>
       <w>settingname</w>
       <w>setversion</w>
@@ -2053,6 +2065,7 @@
       <w>webpages</w>
       <w>whatevs</w>
       <w>wheee</w>
+      <w>whos</w>
       <w>widgetdeathtime</w>
       <w>wiimote</w>
       <w>wiimotes</w>

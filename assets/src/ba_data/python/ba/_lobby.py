@@ -55,7 +55,7 @@ class JoinInfo:
         self._press_to_bomb: Union[str, ba.Lstr] = _ba.charstr(
             SpecialChar.RIGHT_BUTTON)
         self._joinmsg = Lstr(resource='pressAnyButtonToJoinText')
-        can_switch_teams = (len(lobby.teams) > 1)
+        can_switch_teams = (len(lobby.sessionteams) > 1)
 
         # If we have a keyboard, grab keys for punch and pickup.
         # FIXME: This of course is only correct on the local device;
@@ -151,7 +151,7 @@ class Chooser:
         if self._text_node:
             self._text_node.delete()
 
-    def __init__(self, vpos: float, player: _ba.SessionPlayer,
+    def __init__(self, vpos: float, sessionplayer: _ba.SessionPlayer,
                  lobby: 'Lobby') -> None:
         self._deek_sound = _ba.getsound('deek')
         self._click_sound = _ba.getsound('click01')
@@ -161,7 +161,7 @@ class Chooser:
         self._mask_texture = _ba.gettexture('characterIconMask')
         self._vpos = vpos
         self._lobby = weakref.ref(lobby)
-        self._player = player
+        self._sessionplayer = sessionplayer
         self._inited = False
         self._dead = False
         self._text_node: Optional[ba.Node] = None
@@ -174,13 +174,8 @@ class Chooser:
 
         app = _ba.app
 
-        # try:
-        #     print(player.inputdevice)
-        # except Exception as exc:
-        #     print('GOT EXC', type(exc))
-
-        # Load available profiles either from the local config or from the
-        # remote device.
+        # Load available player profiles either from the local config or
+        # from the remote device.
         self.reload_profiles()
 
         # Note: this is just our local index out of available teams; *not*
@@ -199,7 +194,7 @@ class Chooser:
         # list.
         char_index_offset = app.lobby_random_char_index_offset
         self._random_character_index = (
-            (player.inputdevice.id + char_index_offset) %
+            (sessionplayer.inputdevice.id + char_index_offset) %
             len(self._character_names))
 
         # Attempt to set an initial profile based on what was used previously
@@ -231,8 +226,8 @@ class Chooser:
         animate_array(self.icon, 'scale', 2, {0: (0, 0), 0.1: (45, 45)})
 
         # Set our initial name to '<choosing player>' in case anyone asks.
-        self._player.set_name(Lstr(resource='choosingPlayerText').evaluate(),
-                              real=False)
+        self._sessionplayer.setname(
+            Lstr(resource='choosingPlayerText').evaluate(), real=False)
 
         # Init these to our rando but they should get switched to the
         # selected profile (if any) right after.
@@ -249,7 +244,7 @@ class Chooser:
     def _select_initial_profile(self) -> int:
         app = _ba.app
         profilenames = self._profilenames
-        inputdevice = self._player.inputdevice
+        inputdevice = self._sessionplayer.inputdevice
 
         # If we've got a set profile name for this device, work backwards
         # from that to get our index.
@@ -307,9 +302,9 @@ class Chooser:
         return profilenames.index('_random')
 
     @property
-    def player(self) -> ba.SessionPlayer:
-        """The ba.Player associated with this chooser."""
-        return self._player
+    def sessionplayer(self) -> ba.SessionPlayer:
+        """The ba.SessionPlayer associated with this chooser."""
+        return self._sessionplayer
 
     @property
     def ready(self) -> bool:
@@ -324,9 +319,10 @@ class Chooser:
         """(internal)"""
         self._dead = val
 
-    def get_team(self) -> ba.SessionTeam:
-        """Return this chooser's selected ba.Team."""
-        return self.lobby.teams[self._selected_team_index]
+    @property
+    def sessionteam(self) -> ba.SessionTeam:
+        """Return this chooser's currently selected ba.SessionTeam."""
+        return self.lobby.sessionteams[self._selected_team_index]
 
     @property
     def lobby(self) -> ba.Lobby:
@@ -376,7 +372,7 @@ class Chooser:
 
         # Re-construct our profile index and other stuff since the profile
         # list might have changed.
-        input_device = self._player.inputdevice
+        input_device = self._sessionplayer.inputdevice
         is_remote = input_device.is_remote_client
         is_test_input = input_device.name.startswith('TestInput')
 
@@ -434,10 +430,10 @@ class Chooser:
 
         assert self._text_node
         spacing = 350
-        teams = self.lobby.teams
-        offs = (spacing * -0.5 * len(teams) +
+        sessionteams = self.lobby.sessionteams
+        offs = (spacing * -0.5 * len(sessionteams) +
                 spacing * self._selected_team_index + 250)
-        if len(teams) > 1:
+        if len(sessionteams) > 1:
             offs -= 35
         animate_array(self._text_node, 'position', 2, {
             0: self._text_node.position,
@@ -460,14 +456,15 @@ class Chooser:
         clamp = False
         if name == '_random':
             try:
-                name = (self._player.inputdevice.get_default_player_name())
+                name = (
+                    self._sessionplayer.inputdevice.get_default_player_name())
             except Exception:
                 print_exception('Error getting _random chooser name.')
                 name = 'Invalid'
             clamp = not full
         elif name == '__account__':
             try:
-                name = self._player.inputdevice.get_account_name(full)
+                name = self._sessionplayer.inputdevice.get_account_name(full)
             except Exception:
                 print_exception('Error getting account name for chooser.')
                 name = 'Invalid'
@@ -513,41 +510,41 @@ class Chooser:
 
                 # Give their input-device UI ownership too
                 # (prevent someone else from snatching it in crowded games)
-                _ba.set_ui_input_device(self._player.inputdevice)
+                _ba.set_ui_input_device(self._sessionplayer.inputdevice)
             return
 
         if not ready:
-            self._player.assign_input_call(
+            self._sessionplayer.assigninput(
                 'leftPress', Call(self.handlemessage,
                                   ChangeMessage('team', -1)))
-            self._player.assign_input_call(
+            self._sessionplayer.assigninput(
                 'rightPress', Call(self.handlemessage,
                                    ChangeMessage('team', 1)))
-            self._player.assign_input_call(
+            self._sessionplayer.assigninput(
                 'bombPress',
                 Call(self.handlemessage, ChangeMessage('character', 1)))
-            self._player.assign_input_call(
+            self._sessionplayer.assigninput(
                 'upPress',
                 Call(self.handlemessage, ChangeMessage('profileindex', -1)))
-            self._player.assign_input_call(
+            self._sessionplayer.assigninput(
                 'downPress',
                 Call(self.handlemessage, ChangeMessage('profileindex', 1)))
-            self._player.assign_input_call(
+            self._sessionplayer.assigninput(
                 ('jumpPress', 'pickUpPress', 'punchPress'),
                 Call(self.handlemessage, ChangeMessage('ready', 1)))
             self._ready = False
             self._update_text()
-            self._player.set_name('untitled', real=False)
+            self._sessionplayer.setname('untitled', real=False)
         else:
-            self._player.assign_input_call(
+            self._sessionplayer.assigninput(
                 ('leftPress', 'rightPress', 'upPress', 'downPress',
                  'jumpPress', 'bombPress', 'pickUpPress'), self._do_nothing)
-            self._player.assign_input_call(
+            self._sessionplayer.assigninput(
                 ('jumpPress', 'bombPress', 'pickUpPress', 'punchPress'),
                 Call(self.handlemessage, ChangeMessage('ready', 0)))
 
             # Store the last profile picked by this input for reuse.
-            input_device = self._player.inputdevice
+            input_device = self._sessionplayer.inputdevice
             name = input_device.name
             unique_id = input_device.unique_identifier
             device_profiles = _ba.app.config.setdefault(
@@ -569,9 +566,9 @@ class Chooser:
             _ba.app.config.commit()
 
             # Set this player's short and full name.
-            self._player.set_name(self._getname(),
-                                  self._getname(full=True),
-                                  real=True)
+            self._sessionplayer.setname(self._getname(),
+                                        self._getname(full=True),
+                                        real=True)
             self._ready = True
             self._update_text()
 
@@ -586,25 +583,26 @@ class Chooser:
         if not self._ready:
             if _ba.app.config.get('Auto Balance Teams', False):
                 lobby = self.lobby
-                teams = lobby.teams
-                if len(teams) > 1:
+                sessionteams = lobby.sessionteams
+                if len(sessionteams) > 1:
 
                     # First, calc how many players are on each team
                     # ..we need to count both active players and
                     # choosers that have been marked as ready.
                     team_player_counts = {}
-                    for team in teams:
-                        team_player_counts[team.id] = len(team.players)
+                    for sessionteam in sessionteams:
+                        team_player_counts[sessionteam.id] = len(
+                            sessionteam.players)
                     for chooser in lobby.choosers:
                         if chooser.ready:
-                            team_player_counts[chooser.get_team().id] += 1
+                            team_player_counts[chooser.sessionteam.id] += 1
                     largest_team_size = max(team_player_counts.values())
                     smallest_team_size = (min(team_player_counts.values()))
 
-                    # Force switch if we're on the biggest team
+                    # Force switch if we're on the biggest sessionteam
                     # and there's a smaller one available.
                     if (largest_team_size != smallest_team_size
-                            and team_player_counts[self.get_team().id] >=
+                            and team_player_counts[self.sessionteam.id] >=
                             largest_team_size):
                         force_team_switch = True
 
@@ -623,7 +621,8 @@ class Chooser:
         if now - self._last_change[0] < QUICK_CHANGE_INTERVAL:
             count += 1
             if count > MAX_QUICK_CHANGE_COUNT:
-                _ba.disconnect_client(self._player.inputdevice.client_id)
+                _ba.disconnect_client(
+                    self._sessionplayer.inputdevice.client_id)
         elif now - self._last_change[0] > QUICK_CHANGE_RESET_INTERVAL:
             count = 0
         self._last_change = (now, count)
@@ -644,11 +643,12 @@ class Chooser:
                 return
 
             if msg.what == 'team':
-                teams = self.lobby.teams
-                if len(teams) > 1:
+                sessionteams = self.lobby.sessionteams
+                if len(sessionteams) > 1:
                     _ba.playsound(self._swish_sound)
                 self._selected_team_index = (
-                    (self._selected_team_index + msg.value) % len(teams))
+                    (self._selected_team_index + msg.value) %
+                    len(sessionteams))
                 self._update_text()
                 self.update_position()
                 self._update_icon()
@@ -685,14 +685,14 @@ class Chooser:
 
             # Once we're ready, we've saved the name, so lets ask the system
             # for it so we get appended numbers and stuff.
-            text = Lstr(value=self._player.getname(full=True))
+            text = Lstr(value=self._sessionplayer.getname(full=True))
             text = Lstr(value='${A} (${B})',
                         subs=[('${A}', text),
                               ('${B}', Lstr(resource='readyText'))])
         else:
             text = Lstr(value=self._getname(full=True))
 
-        can_switch_teams = len(self.lobby.teams) > 1
+        can_switch_teams = len(self.lobby.sessionteams) > 1
 
         # Flash as we're coming in.
         fin_color = _ba.safecolor(self.get_color()) + (1, )
@@ -719,7 +719,7 @@ class Chooser:
         """Return the currently selected color."""
         val: Sequence[float]
         if self.lobby.use_team_colors:
-            val = self.lobby.teams[self._selected_team_index].color
+            val = self.lobby.sessionteams[self._selected_team_index].color
         else:
             val = self._color
         if len(val) != 3:
@@ -736,17 +736,17 @@ class Chooser:
         # isn't too close to any other team's color.
         highlight = list(self._highlight)
         if self.lobby.use_team_colors:
-            for i, team in enumerate(self.lobby.teams):
+            for i, sessionteam in enumerate(self.lobby.sessionteams):
                 if i != self._selected_team_index:
 
-                    # Find the dominant component of this team's color
+                    # Find the dominant component of this sessionteam's color
                     # and adjust ours so that the component is
                     # not super-dominant.
                     max_val = 0.0
                     max_index = 0
                     for j in range(3):
-                        if team.color[j] > max_val:
-                            max_val = team.color[j]
+                        if sessionteam.color[j] > max_val:
+                            max_val = sessionteam.color[j]
                             max_index = j
                     that_color_for_us = highlight[max_index]
                     our_second_biggest = max(highlight[(max_index + 1) % 3],
@@ -760,7 +760,7 @@ class Chooser:
 
     def getplayer(self) -> ba.SessionPlayer:
         """Return the player associated with this chooser."""
-        return self._player
+        return self._sessionplayer
 
     def _update_icon(self) -> None:
         if self._profilenames[self._profileindex] == '_edit':
@@ -791,7 +791,7 @@ class Chooser:
         clr = self.get_color()
         clr2 = self.get_highlight()
 
-        can_switch_teams = len(self.lobby.teams) > 1
+        can_switch_teams = len(self.lobby.sessionteams) > 1
 
         # If we're initing, flash.
         if not self._inited:
@@ -812,7 +812,7 @@ class Chooser:
         self.icon.tint2_color = clr2
 
         # Store the icon info the the player.
-        self._player.set_icon_info(tex_name, tint_tex_name, clr, clr2)
+        self._sessionplayer.set_icon_info(tex_name, tint_tex_name, clr, clr2)
 
 
 class Lobby:
@@ -823,13 +823,13 @@ class Lobby:
 
     def __del__(self) -> None:
 
-        # Reset any players that still have a chooser in us
+        # Reset any players that still have a chooser in us.
         # (should allow the choosers to die).
-        players = [
-            chooser.player for chooser in self.choosers if chooser.player
+        sessionplayers = [
+            c.sessionplayer for c in self.choosers if c.sessionplayer
         ]
-        for player in players:
-            player.reset()
+        for sessionplayer in sessionplayers:
+            sessionplayer.resetinput()
 
     def __init__(self) -> None:
         from ba._team import SessionTeam
@@ -837,10 +837,10 @@ class Lobby:
         session = _ba.getsession()
         self._use_team_colors = session.use_team_colors
         if session.use_teams:
-            self._teams = [weakref.ref(team) for team in session.teams]
+            self._sessionteams = [weakref.ref(team) for team in session.teams]
         else:
             self._dummy_teams = SessionTeam()
-            self._teams = [weakref.ref(self._dummy_teams)]
+            self._sessionteams = [weakref.ref(self._dummy_teams)]
         v_offset = (-150 if isinstance(session, CoopSession) else -50)
         self.choosers: List[Chooser] = []
         self.base_v_offset = v_offset
@@ -868,10 +868,10 @@ class Lobby:
         return self._use_team_colors
 
     @property
-    def teams(self) -> List[ba.SessionTeam]:
-        """Teams available in this lobby."""
+    def sessionteams(self) -> List[ba.SessionTeam]:
+        """ba.SessionTeams available in this lobby."""
         allteams = []
-        for tref in self._teams:
+        for tref in self._sessionteams:
             team = tref()
             assert team is not None
             allteams.append(team)
@@ -921,11 +921,12 @@ class Lobby:
         """Return whether all choosers are marked ready."""
         return all(chooser.ready for chooser in self.choosers)
 
-    def add_chooser(self, player: ba.SessionPlayer) -> None:
+    def add_chooser(self, sessionplayer: ba.SessionPlayer) -> None:
         """Add a chooser to the lobby for the provided player."""
         self.choosers.append(
-            Chooser(vpos=self._vpos, player=player, lobby=self))
-        self._next_add_team = (self._next_add_team + 1) % len(self._teams)
+            Chooser(vpos=self._vpos, sessionplayer=sessionplayer, lobby=self))
+        self._next_add_team = (self._next_add_team + 1) % len(
+            self._sessionteams)
         self._vpos -= 48
 
     def remove_chooser(self, player: ba.SessionPlayer) -> None:
@@ -964,6 +965,6 @@ class Lobby:
 
         # Copy the list; it can change under us otherwise.
         for chooser in list(self.choosers):
-            if chooser.player:
-                chooser.player.remove_from_game()
+            if chooser.sessionplayer:
+                chooser.sessionplayer.remove_from_game()
         self.remove_all_choosers()

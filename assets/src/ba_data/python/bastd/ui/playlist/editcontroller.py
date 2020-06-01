@@ -119,7 +119,7 @@ class PlaylistEditController:
         """(internal)"""
         return self._name
 
-    def set_name(self, name: str) -> None:
+    def setname(self, name: str) -> None:
         """(internal)"""
         self._name = name
 

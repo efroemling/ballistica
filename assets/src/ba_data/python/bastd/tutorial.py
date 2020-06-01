@@ -2412,7 +2412,7 @@ class TutorialActivity(ba.Activity[Player, Team]):
         super().on_player_join(player)
 
         # We just wanna know if this player presses anything.
-        player.assign_input_call(
+        player.assigninput(
             ('jumpPress', 'punchPress', 'bombPress', 'pickUpPress'),
             ba.Call(self._player_pressed_button, player))
 

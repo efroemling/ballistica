@@ -139,41 +139,39 @@ class EasterEggHuntGame(ba.TeamGameActivity[Player, Team]):
         if self.has_ended():
             return
         collision = ba.getcollision()
-        egg = collision.sourcenode.getdelegate(Egg)
-        player = collision.opposingnode.getdelegate(PlayerSpaz,
-                                                    True).getplayer(Player)
-        if player and egg:
-            player.team.score += 1
+        try:
+            egg = collision.sourcenode.getdelegate(Egg, True)
+            player = collision.opposingnode.getdelegate(PlayerSpaz,
+                                                        True).getplayer(
+                                                            Player, True)
+        except Exception:
+            return
 
-            # Displays a +1 (and adds to individual player score in
-            # teams mode).
-            self.stats.player_scored(player, 1, screenmessage=False)
-            if self._max_eggs < 5:
-                self._max_eggs += 1.0
-            elif self._max_eggs < 10:
-                self._max_eggs += 0.5
-            elif self._max_eggs < 30:
-                self._max_eggs += 0.3
-            self._update_scoreboard()
-            ba.playsound(self._collect_sound, 0.5, position=egg.node.position)
+        player.team.score += 1
 
-            # Create a flash.
-            light = ba.newnode('light',
-                               attrs={
-                                   'position': egg.node.position,
-                                   'height_attenuated': False,
-                                   'radius': 0.1,
-                                   'color': (1, 1, 0)
-                               })
-            ba.animate(light,
-                       'intensity', {
-                           0: 0,
-                           0.1: 1.0,
-                           0.2: 0
-                       },
-                       loop=False)
-            ba.timer(0.200, light.delete)
-            egg.handlemessage(ba.DieMessage())
+        # Displays a +1 (and adds to individual player score in
+        # teams mode).
+        self.stats.player_scored(player, 1, screenmessage=False)
+        if self._max_eggs < 5:
+            self._max_eggs += 1.0
+        elif self._max_eggs < 10:
+            self._max_eggs += 0.5
+        elif self._max_eggs < 30:
+            self._max_eggs += 0.3
+        self._update_scoreboard()
+        ba.playsound(self._collect_sound, 0.5, position=egg.node.position)
+
+        # Create a flash.
+        light = ba.newnode('light',
+                           attrs={
+                               'position': egg.node.position,
+                               'height_attenuated': False,
+                               'radius': 0.1,
+                               'color': (1, 1, 0)
+                           })
+        ba.animate(light, 'intensity', {0: 0, 0.1: 1.0, 0.2: 0}, loop=False)
+        ba.timer(0.200, light.delete)
+        egg.handlemessage(ba.DieMessage())
 
     def _update(self) -> None:
         # Misc. periodic updating.

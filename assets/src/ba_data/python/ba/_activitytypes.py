@@ -229,6 +229,6 @@ class ScoreScreenActivity(Activity[Player, Team]):
         # Just to be extra careful, don't assign if we're transitioning out.
         # (though theoretically that would be ok).
         if not self.is_transitioning_out() and player:
-            player.assign_input_call(
+            player.assigninput(
                 ('jumpPress', 'punchPress', 'bombPress', 'pickUpPress'),
                 self._player_press)

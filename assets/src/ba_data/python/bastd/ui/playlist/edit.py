@@ -254,13 +254,13 @@ class PlaylistEditWindow(ba.Window):
 
     def _add(self) -> None:
         # Store list name then tell the session to perform an add.
-        self._editcontroller.set_name(
+        self._editcontroller.setname(
             cast(str, ba.textwidget(query=self._text_field)))
         self._editcontroller.add_game_pressed()
 
     def _edit(self) -> None:
         # Store list name then tell the session to perform an add.
-        self._editcontroller.set_name(
+        self._editcontroller.setname(
             cast(str, ba.textwidget(query=self._text_field)))
         self._editcontroller.edit_game_pressed()
 

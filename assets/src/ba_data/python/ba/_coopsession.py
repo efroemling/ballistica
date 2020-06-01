@@ -98,7 +98,7 @@ class CoopSession(Session):
         self._custom_menu_ui: List[Dict[str, Any]] = []
 
         # Start our joining screen.
-        self.set_activity(_ba.new_activity(CoopJoinActivity))
+        self.setactivity(_ba.new_activity(CoopJoinActivity))
 
         self._next_game_instance: Optional[ba.GameActivity] = None
         self._next_game_level_name: Optional[str] = None
@@ -298,7 +298,7 @@ class CoopSession(Session):
                     and not app.kiosk_mode):
                 if self._tutorial_activity is None:
                     raise RuntimeError('Tutorial not preloaded properly.')
-                self.set_activity(self._tutorial_activity)
+                self.setactivity(self._tutorial_activity)
                 self._tutorial_activity = None
                 self._ran_tutorial_activity = True
                 self._custom_menu_ui = []
@@ -313,10 +313,10 @@ class CoopSession(Session):
                     # Skip players that are still choosing a team.
                     if player.in_game:
                         self.stats.register_player(player)
-                self.stats.set_activity(next_game)
+                self.stats.setactivity(next_game)
 
                 # Now flip the current activity.
-                self.set_activity(next_game)
+                self.setactivity(next_game)
 
                 if not app.kiosk_mode:
                     if self.tournament_id is not None:
@@ -338,7 +338,7 @@ class CoopSession(Session):
         # If we were in a tutorial, just pop a transition to get to the
         # actual round.
         elif isinstance(activity, TutorialActivity):
-            self.set_activity(_ba.new_activity(TransitionActivity))
+            self.setactivity(_ba.new_activity(TransitionActivity))
         else:
 
             player_info: List[ba.PlayerInfo]
@@ -392,9 +392,9 @@ class CoopSession(Session):
             if outcome == 'restart':
 
                 # This will pop up back in the same round.
-                self.set_activity(_ba.new_activity(TransitionActivity))
+                self.setactivity(_ba.new_activity(TransitionActivity))
             else:
-                self.set_activity(
+                self.setactivity(
                     _ba.new_activity(
                         CoopScoreScreen, {
                             'player_info': player_info,

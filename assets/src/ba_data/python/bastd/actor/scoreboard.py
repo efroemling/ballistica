@@ -30,14 +30,12 @@ import ba
 if TYPE_CHECKING:
     from typing import Any, Optional, Sequence, Dict, Union
 
-# This could use some tidying up when I get a chance..
-# pylint: disable=too-many-statements
-
 
 class _Entry:
 
     def __init__(self, scoreboard: Scoreboard, team: ba.Team, do_cover: bool,
                  scale: float, label: Optional[ba.Lstr], flash_length: float):
+        # pylint: disable=too-many-statements
         self._scoreboard = weakref.ref(scoreboard)
         self._do_cover = do_cover
         self._scale = scale
@@ -58,7 +56,7 @@ class _Entry:
         safe_team_color = ba.safecolor(team.color, target_intensity=1.0)
 
         # FIXME: Should not do things conditionally for vr-mode, as there may
-        #  be non-vr clients connected.
+        #  be non-vr clients connected which will also get these value.
         vrmode = ba.app.vr_mode
 
         if self._do_cover:
@@ -152,11 +150,11 @@ class _Entry:
         else:
             team_name_label = team.name
 
-            # we do our own clipping here; should probably try to tap into some
-            # existing functionality
+            # We do our own clipping here; should probably try to tap into some
+            # existing functionality.
             if isinstance(team_name_label, ba.Lstr):
 
-                # hmmm; if the team-name is a non-translatable value lets go
+                # Hmmm; if the team-name is a non-translatable value lets go
                 # ahead and clip it otherwise we leave it as-is so
                 # translation can occur..
                 if team_name_label.is_flat_value():
@@ -204,6 +202,7 @@ class _Entry:
         # Abort if we've been killed
         if not self._backing.node:
             return
+
         self._pos = tuple(position)
         self._backing.node.position = (position[0] + self._width / 2,
                                        position[1] - self._height / 2)
@@ -226,29 +225,29 @@ class _Entry:
     def _set_flash_colors(self, flash: bool) -> None:
         self._flash_colors = flash
 
-        def _safesetattr(node: Optional[ba.Node], attr: str, val: Any) -> None:
+        def _safesetcolor(node: Optional[ba.Node], val: Any) -> None:
             if node:
-                setattr(node, attr, val)
+                node.color = val
 
         if flash:
             scale = 2.0
-            _safesetattr(
-                self._backing.node, 'color',
+            _safesetcolor(
+                self._backing.node,
                 (self._backing_color[0] * scale, self._backing_color[1] *
                  scale, self._backing_color[2] * scale))
-            _safesetattr(self._bar.node, 'color',
-                         (self._barcolor[0] * scale, self._barcolor[1] * scale,
-                          self._barcolor[2] * scale))
+            _safesetcolor(self._bar.node,
+                          (self._barcolor[0] * scale, self._barcolor[1] *
+                           scale, self._barcolor[2] * scale))
             if self._do_cover:
-                _safesetattr(
-                    self._cover.node, 'color',
+                _safesetcolor(
+                    self._cover.node,
                     (self._cover_color[0] * scale, self._cover_color[1] *
                      scale, self._cover_color[2] * scale))
         else:
-            _safesetattr(self._backing.node, 'color', self._backing_color)
-            _safesetattr(self._bar.node, 'color', self._barcolor)
+            _safesetcolor(self._backing.node, self._backing_color)
+            _safesetcolor(self._bar.node, self._barcolor)
             if self._do_cover:
-                _safesetattr(self._cover.node, 'color', self._cover_color)
+                _safesetcolor(self._cover.node, self._cover_color)
 
     def _do_flash(self) -> None:
         assert self._flash_counter is not None
@@ -266,8 +265,8 @@ class _Entry:
                   show_value: bool = True) -> None:
         """Set the value for the scoreboard entry."""
 
-        # if we have no score yet, just set it.. otherwise compare
-        # and see if we should flash
+        # If we have no score yet, just set it.. otherwise compare
+        # and see if we should flash.
         if self._score is None:
             self._score = score
         else:
@@ -327,8 +326,15 @@ class _EntryProxy:
         # Remove our team from the scoreboard if its still around.
         # (but deferred, in case we die in a sim step or something where
         # its illegal to modify nodes)
-        if scoreboard is not None:
+        if scoreboard is None:
+            return
+
+        try:
             ba.pushcall(ba.Call(scoreboard.remove_team, self._team_id))
+        except ba.ContextError:
+            # This happens if we fire after the activity expires.
+            # In that case we don't need to do anything.
+            pass
 
 
 class Scoreboard:
@@ -338,7 +344,7 @@ class Scoreboard:
     """
 
     def __init__(self, label: ba.Lstr = None, score_split: float = 0.7):
-        """Instantiate a score-board.
+        """Instantiate a scoreboard.
 
         Label can be something like 'points' and will
         show up on boards if provided.
@@ -376,8 +382,8 @@ class Scoreboard:
 
             # Create a proxy in the team which will kill
             # our entry when it dies (for convenience)
-            assert not hasattr(team, '_scoreboard_entry')
-            setattr(team, '_scoreboard_entry', _EntryProxy(self, team))
+            assert '_scoreboard_entry' not in team.gamedata
+            team.gamedata['_scoreboard_entry'] = _EntryProxy(self, team)
 
         # Now set the entry.
         self._entries[team.id].set_value(score=score,

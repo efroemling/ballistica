@@ -133,7 +133,7 @@ class MultiTeamSession(Session):
         self._instantiate_next_game()
 
         # Start in our custom join screen.
-        self.set_activity(_ba.new_activity(MultiTeamJoinActivity))
+        self.setactivity(_ba.new_activity(MultiTeamJoinActivity))
 
     def get_ffa_series_length(self) -> int:
         """Return free-for-all series length."""
@@ -179,14 +179,14 @@ class MultiTeamSession(Session):
         # If we have a tutorial to show, that's the first thing we do no
         # matter what.
         if self._tutorial_activity_instance is not None:
-            self.set_activity(self._tutorial_activity_instance)
+            self.setactivity(self._tutorial_activity_instance)
             self._tutorial_activity_instance = None
 
         # If we're leaving the tutorial activity, pop a transition activity
         # to transition us into a round gracefully (otherwise we'd snap from
         # one terrain to another instantly).
         elif isinstance(activity, TutorialActivity):
-            self.set_activity(
+            self.setactivity(
                 _ba.new_activity(_activitytypes.TransitionActivity))
 
         # If we're in a between-round activity or a restart-activity, hop
@@ -226,10 +226,10 @@ class MultiTeamSession(Session):
                     has_team = False
                 if has_team:
                     self.stats.register_player(player)
-            self.stats.set_activity(next_game)
+            self.stats.setactivity(next_game)
 
             # Now flip the current activity.
-            self.set_activity(next_game)
+            self.setactivity(next_game)
 
         # If we're leaving a round, go to the score screen.
         else:

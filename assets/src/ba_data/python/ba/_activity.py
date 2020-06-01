@@ -27,10 +27,10 @@ from typing import TYPE_CHECKING, Generic, TypeVar
 from ba._team import Team
 from ba._player import Player
 from ba._error import (print_exception, SessionTeamNotFoundError,
-                       NodeNotFoundError)
+                       SessionPlayerNotFoundError, NodeNotFoundError)
 from ba._dependency import DependencyComponent
 from ba._general import Call, verify_object_death
-from ba._messages import UNHANDLED, DieMessage, DeathType
+from ba._messages import UNHANDLED
 import _ba
 
 if TYPE_CHECKING:
@@ -143,7 +143,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
     def __init__(self, settings: Dict[str, Any]):
         """Creates an Activity in the current ba.Session.
 
-        The activity will not be actually run until ba.Session.set_activity()
+        The activity will not be actually run until ba.Session.setactivity()
         is called. 'settings' should be a dict of key/value pairs specific
         to the activity.
 
@@ -189,6 +189,10 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         self._has_ended = False
         self._activity_death_check_timer: Optional[ba.Timer] = None
         self._expired = False
+        self._delay_delete_players: List[PlayerType] = []
+        self._delay_delete_teams: List[TeamType] = []
+        self._players_that_left: List[ReferenceType[PlayerType]] = []
+        self._teams_that_left: List[ReferenceType[TeamType]] = []
 
         # This gets set once another activity has begun transitioning in but
         # before this one is killed. The on_transition_out() method is also
@@ -208,8 +212,10 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         # This stuff gets filled in just before on_begin() is called.
         self.teams = []
         self.players = []
+
         self.lobby = None
         self._stats: Optional[ba.Stats] = None
+        self._gamedata: Optional[dict] = {}
 
     def __del__(self) -> None:
 
@@ -259,6 +265,17 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         """
 
     @property
+    def gamedata(self) -> dict:
+        """Entities needing to store simple data with an activity can put it
+        here. This dict will be deleted when the activity expires, so contained
+        objects generally do not need to worry about handling expired
+        activities.
+        """
+        assert not self._expired
+        assert isinstance(self._gamedata, dict)
+        return self._gamedata
+
+    @property
     def expired(self) -> bool:
         """Whether the activity is expired.
 
@@ -282,7 +299,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         """(internal)"""
         self._has_ended = val
 
-    def destroy(self) -> None:
+    def expire(self) -> None:
         """Begin the process of tearing down the activity.
 
         (internal)
@@ -424,7 +441,6 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
 
         (internal)
         """
-        from ba._general import WeakCall
         assert not self._has_transitioned_in
         self._has_transitioned_in = True
 
@@ -457,10 +473,13 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
                 glb.vignette_outer = prev_globals.vignette_outer
                 glb.vignette_inner = prev_globals.vignette_inner
 
-            # Start pruning our transient actors periodically.
-            self._prune_dead_actors_timer = _ba.Timer(
-                5.17, WeakCall(self._prune_dead_actors), repeat=True)
+            # Start pruning our various things periodically.
             self._prune_dead_actors()
+            self._prune_dead_actors_timer = _ba.Timer(5.17,
+                                                      self._prune_dead_actors,
+                                                      repeat=True)
+
+            _ba.timer(13.3, self._prune_delay_deletes, repeat=True)
 
             # Also start our low-level scene running.
             self._activity_data.start()
@@ -556,12 +575,12 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
     def add_player(self, sessionplayer: ba.SessionPlayer) -> None:
         """(internal)"""
         assert sessionplayer.team is not None
-        sessionplayer.reset_input()
+        sessionplayer.resetinput()
         sessionteam = sessionplayer.team
         assert sessionplayer in sessionteam.players
         team = sessionteam.gameteam
         assert team is not None
-        sessionplayer.set_activity(self)
+        sessionplayer.setactivity(self)
         with _ba.Context(self):
             sessionplayer.gameplayer = player = self.create_player(
                 sessionplayer)
@@ -581,10 +600,10 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
                 print_exception('Error in on_player_join for', self)
 
     def remove_player(self, sessionplayer: ba.SessionPlayer) -> None:
-        """(internal)"""
+        """Remove a player from the Activity while it is running.
 
-        # This should only be called on unexpired activities
-        # the player has been added to.
+        (internal)
+        """
         assert not self.expired
 
         player: Any = sessionplayer.gameplayer
@@ -605,30 +624,29 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         # verify_object_death(player)
 
         with _ba.Context(self):
-            # Make a decent attempt to persevere if user code breaks.
             try:
                 self.on_player_leave(player)
             except Exception:
                 print_exception(f'Error in on_player_leave for {self}')
             try:
-                # If they have an actor, kill it.
-                if player.actor:
-                    player.actor.handlemessage(
-                        DieMessage(how=DeathType.LEFT_GAME))
-                player.actor = None
+                player.leave()
             except Exception:
-                print_exception(
-                    f'Error killing player actor on leave for {self}')
-            try:
-                player.reset()
-                sessionplayer.reset()
-                sessionplayer.set_node(None)
-                sessionplayer.set_activity(None)
-            except Exception:
-                print_exception(f'Error resetting player for {self}')
+                print_exception(f'Error on leave for {player} in {self}')
+
+            self._reset_session_player_for_no_activity(sessionplayer)
+
+        # Add the player to a list to keep it around for a while. This is
+        # to discourage logic from firing on player object death, which
+        # may not happen until activity end if something is holding refs
+        # to it.
+        self._delay_delete_players.append(player)
+        self._players_that_left.append(weakref.ref(player))
 
     def add_team(self, sessionteam: ba.SessionTeam) -> None:
-        """(internal)"""
+        """Add a team to the Activity
+
+        (internal)
+        """
         assert not self.expired
 
         with _ba.Context(self):
@@ -641,24 +659,19 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
                 print_exception(f'Error in on_team_join for {self}')
 
     def remove_team(self, sessionteam: ba.SessionTeam) -> None:
-        """(internal)"""
+        """Remove a team from a Running Activity
 
-        # This should only be called on unexpired activities the team has
-        # been added to.
+        (internal)
+        """
         assert not self.expired
         assert sessionteam.gameteam is not None
-        assert sessionteam.gameteam in self.teams
 
-        team = sessionteam.gameteam
+        team: Any = sessionteam.gameteam
         assert isinstance(team, self._teamtype)
 
         assert team in self.teams
         self.teams.remove(team)
         assert team not in self.teams
-
-        # This should allow our ba.Team instance to die. Complain
-        # if that doesn't happen.
-        # verify_object_death(team)
 
         with _ba.Context(self):
             # Make a decent attempt to persevere if user code breaks.
@@ -667,11 +680,41 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
             except Exception:
                 print_exception(f'Error in on_team_leave for {self}')
             try:
-                sessionteam.reset_gamedata()
+                team.leave()
             except Exception:
-                print_exception(f'Error in reset_gamedata for {self}')
+                print_exception(f'Error on leave for {team} in {self}')
 
             sessionteam.gameteam = None
+
+        # Add the team to a list to keep it around for a while. This is
+        # to discourage logic from firing on team object death, which
+        # may not happen until activity end if something is holding refs
+        # to it.
+        self._delay_delete_teams.append(team)
+        self._teams_that_left.append(weakref.ref(team))
+
+    def _reset_session_player_for_no_activity(
+            self, sessionplayer: ba.SessionPlayer) -> None:
+
+        # Let's be extra-defensive here: killing a node/input-call/etc
+        # could trigger user-code resulting in errors, but we would still
+        # like to complete the reset if possible.
+        try:
+            sessionplayer.setnode(None)
+        except Exception:
+            print_exception(
+                f'Error resetting SessionPlayer node on {sessionplayer}'
+                f' for {self}')
+        try:
+            sessionplayer.resetinput()
+        except Exception:
+            print_exception(
+                f'Error resetting SessionPlayer input on {sessionplayer}'
+                f' for {self}')
+
+        # These should never fail I think...
+        sessionplayer.setactivity(None)
+        sessionplayer.gameplayer = None
 
     def _setup_player_and_team_types(self) -> None:
         """Pull player and team types from our typing.Generic params."""
@@ -682,7 +725,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         # to no generic params being passed) we automatically use the
         # base class types, but also warn the user since this will mean
         # less type safety for that class. (its better to pass the base
-        # types explicitly vs. having them be Any)
+        # player/team types explicitly vs. having them be Any)
         if not TYPE_CHECKING:
             self._playertype = type(self).__orig_bases__[-1].__args__[0]
             if not isinstance(self._playertype, type):
@@ -749,9 +792,31 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         try:
             self.on_expire()
         except Exception:
-            print_exception(f'Error in Activity on_expire() for {self}')
+            print_exception(f'Error in Activity on_expire() for {self}.')
 
-        # Send expire notices to all remaining actors.
+        try:
+            self._gamedata = None
+        except Exception:
+            print_exception(f'Error clearing gamedata for {self}.')
+
+        # Don't want to be holding any delay-delete refs at this point.
+        self._prune_delay_deletes()
+
+        self._expire_actors()
+        self._expire_players()
+        self._expire_teams()
+
+        # This will kill all low level stuff: Timers, Nodes, etc., which
+        # should clear up any remaining refs to our Activity and allow us
+        # to die peacefully.
+        try:
+            self._activity_data.expire()
+        except Exception:
+            print_exception(
+                'Error during ba.Activity._expire() destroying data:')
+
+    def _expire_actors(self) -> None:
+        # Expire all Actors.
         for actor_ref in self._actor_weak_refs:
             actor = actor_ref()
             if actor is not None:
@@ -760,35 +825,58 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
                     actor.on_expire()
                 except Exception:
                     print_exception(f'Error in Actor.on_expire()'
-                                    f' for {actor_ref()}')
+                                    f' for {actor_ref()}.')
 
-        # Reset all Players.
-        # (releases any attached actors, clears game-data, etc)
+    def _expire_players(self) -> None:
+
+        # Issue warnings for any players that left the game but don't
+        # get freed soon.
+        for ex_player in (p() for p in self._players_that_left):
+            if ex_player is not None:
+                verify_object_death(ex_player)
+
         for player in self.players:
+            # This should allow our ba.Player instance to be freed.
+            # Complain if that doesn't happen.
+            verify_object_death(player)
+
             try:
-                # This should allow our ba.Player instance to die.
-                # Complain if that doesn't happen.
-                # verify_object_death(player)
-                sessionplayer = player.sessionplayer
-                player.reset()
-                sessionplayer.set_node(None)
-                sessionplayer.set_activity(None)
-
-                sessionplayer.gameplayer = None
-                sessionplayer.reset()
+                player.expire()
             except Exception:
-                print_exception(f'Error resetting Player {player}')
+                print_exception(f'Error expiring {player}')
 
-        # Ditto with Teams.
+            # Reset the SessionPlayer to a not-in-an-activity state.
+            try:
+                sessionplayer = player.sessionplayer
+                self._reset_session_player_for_no_activity(sessionplayer)
+            except SessionPlayerNotFoundError:
+                # Conceivably, someone could have held on to a Player object
+                # until now whos underlying SessionPlayer left long ago...
+                pass
+            except Exception:
+                print_exception(f'Error expiring {player}')
+
+    def _expire_teams(self) -> None:
+
+        # Issue warnings for any teams that left the game but don't
+        # get freed soon.
+        for ex_team in (p() for p in self._teams_that_left):
+            if ex_team is not None:
+                verify_object_death(ex_team)
+
         for team in self.teams:
+            # This should allow our ba.Team instance to die.
+            # Complain if that doesn't happen.
+            verify_object_death(team)
+
+            try:
+                team.expire()
+            except Exception:
+                print_exception(f'Error expiring {team}')
+
             try:
                 sessionteam = team.sessionteam
-
-                # This should allow our ba.Team instance to die.
-                # Complain if that doesn't happen.
-                # verify_object_death(sessionteam.gameteam)
                 sessionteam.gameteam = None
-                sessionteam.reset_gamedata()
             except SessionTeamNotFoundError:
                 # It is expected that Team objects may last longer than
                 # the SessionTeam they came from (game objects may hold
@@ -796,17 +884,19 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
                 # player/team has left the game)
                 pass
             except Exception:
-                print_exception(f'Error resetting Team {team}')
+                print_exception(f'Error expiring Team {team}')
 
-        # Regardless of what happened here, we want to destroy our data, as
-        # our activity might not go down if we don't. This will kill all
-        # Timers, Nodes, etc, which should clear up any remaining refs to our
-        # Actors and Activity and allow us to die peacefully.
-        try:
-            self._activity_data.destroy()
-        except Exception:
-            print_exception(
-                'Error during ba.Activity._expire() destroying data:')
+    def _prune_delay_deletes(self) -> None:
+        self._delay_delete_players.clear()
+        self._delay_delete_teams.clear()
+
+        # Clear out any dead weak-refs.
+        self._teams_that_left = [
+            t for t in self._teams_that_left if t() is not None
+        ]
+        self._players_that_left = [
+            p for p in self._players_that_left if p() is not None
+        ]
 
     def _prune_dead_actors(self) -> None:
         self._last_prune_dead_actors_time = _ba.time()

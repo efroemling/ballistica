@@ -46,10 +46,10 @@ class RespawnIcon:
         on_right, offs_extra, respawn_icons = self._get_context(player)
 
         # Cache our mask tex on the team for easy access.
-        mask_tex = getattr(player.team, '_spaz_respawn_icons_mask_tex', None)
+        mask_tex = player.team.gamedata.get('_spaz_respawn_icons_mask_tex')
         if mask_tex is None:
             mask_tex = ba.gettexture('characterIconMask')
-            setattr(player.team, '_spaz_respawn_icons_mask_tex', mask_tex)
+            player.team.gamedata['_spaz_respawn_icons_mask_tex'] = mask_tex
         assert isinstance(mask_tex, ba.Texture)
 
         # Now find the first unused slot and use that.
@@ -134,34 +134,31 @@ class RespawnIcon:
     def _get_context(self, player: ba.Player) -> Tuple[bool, float, Dict]:
         """Return info on where we should be shown and stored."""
         activity = ba.getactivity()
+
         if isinstance(ba.getsession(), ba.DualTeamSession):
             on_right = player.team.id % 2 == 1
 
             # Store a list of icons in the team.
-            respawn_icons = getattr(player.team, '_spaz_respawn_icons_right',
-                                    None)
-            if respawn_icons is None:
-                respawn_icons = {}
-                setattr(player.team, '_spaz_respawn_icons_right',
-                        respawn_icons)
-            assert isinstance(respawn_icons, dict)
+            icons = player.team.gamedata.get('_spaz_respawn_icons')
+            if icons is None:
+                player.team.gamedata['_spaz_respawn_icons'] = icons = {}
+            assert isinstance(icons, dict)
 
             offs_extra = -20
         else:
             on_right = False
 
             # Store a list of icons in the activity.
-            # FIXME: Need an elegant way to store our shared stuff with
-            # the activity.
-            try:
-                respawn_icons = activity.spaz_respawn_icons_right
-            except Exception:
-                respawn_icons = activity.spaz_respawn_icons_right = {}
+            icons = activity.gamedata.get('_spaz_respawn_icons')
+            if icons is None:
+                activity.gamedata['_spaz_respawn_icons'] = icons = {}
+            assert isinstance(icons, dict)
+
             if isinstance(activity.session, ba.FreeForAllSession):
                 offs_extra = -150
             else:
                 offs_extra = -20
-        return on_right, offs_extra, respawn_icons
+        return on_right, offs_extra, icons
 
     def _update(self) -> None:
         remaining = int(round(self._respawn_time - ba.time()))

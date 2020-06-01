@@ -25,6 +25,8 @@ from __future__ import annotations
 import weakref
 from typing import TYPE_CHECKING, TypeVar, Generic
 
+from ba._error import print_exception
+
 if TYPE_CHECKING:
     from weakref import ReferenceType
     from typing import Dict, List, Sequence, Tuple, Union, Optional
@@ -88,13 +90,8 @@ class SessionTeam:
         self.name = name
         self.color = tuple(color)
         self.players = []
-        self.gamedata = {}
         self.sessiondata = {}
         self.gameteam: Optional[Team] = None
-
-    def reset_gamedata(self) -> None:
-        """(internal)"""
-        self.gamedata = {}
 
     def reset_sessiondata(self) -> None:
         """(internal)"""
@@ -118,12 +115,14 @@ class Team(Generic[PlayerType]):
     players: List[PlayerType]
     id: int
     name: Union[ba.Lstr, str]
-    color: Tuple[float, ...]  # FIXME: can't we make this fixed len?
+    color: Tuple[float, ...]  # FIXME: can't we make this fixed length?
     _sessionteam: ReferenceType[SessionTeam]
+    _expired: bool
+    _postinited: bool
+    _gamedata: dict
 
     # TODO: kill these.
-    gamedata: Dict
-    sessiondata: Dict
+    sessiondata: dict
 
     # NOTE: avoiding having any __init__() here since it seems to not
     # get called by default if a dataclass inherits from us.
@@ -150,8 +149,10 @@ class Team(Generic[PlayerType]):
         self.id = sessionteam.id
         self.name = sessionteam.name
         self.color = sessionteam.color
-        self.gamedata = sessionteam.gamedata
         self.sessiondata = sessionteam.sessiondata
+        self._gamedata = {}
+        self._expired = False
+        self._postinited = True
 
     def manual_init(self, team_id: int, name: Union[ba.Lstr, str],
                     color: Tuple[float, ...]) -> None:
@@ -159,8 +160,54 @@ class Team(Generic[PlayerType]):
         self.id = team_id
         self.name = name
         self.color = color
-        self.gamedata = {}
+        self._gamedata = {}
         self.sessiondata = {}
+        self._expired = False
+        self._postinited = True
+
+    @property
+    def gamedata(self) -> dict:
+        """Arbitrary values associated with the team.
+        Though it is encouraged that most player values be properly defined
+        on the ba.Team subclass, it may be useful for player-agnostic
+        objects to store values here. This dict is cleared when the team
+        leaves or expires so objects stored here will be disposed of at
+        the expected time, unlike the Team instance itself which may
+        continue to be referenced after it is no longer part of the game.
+        """
+        assert self._postinited
+        assert not self._expired
+        return self._gamedata
+
+    def leave(self) -> None:
+        """Called when the Team leaves a running game.
+
+        (internal)
+        """
+        assert self._postinited
+        assert not self._expired
+        del self._gamedata
+        del self.players
+
+    def expire(self) -> None:
+        """Called when the Team is expiring (due to the Activity expiring).
+
+        (internal)
+        """
+        assert self._postinited
+        assert not self._expired
+        self._expired = True
+
+        try:
+            self.on_expire()
+        except Exception:
+            print_exception(f'Error in on_expire for {self}.')
+
+        del self._gamedata
+        del self.players
+
+    def on_expire(self) -> None:
+        """Can be overridden to handle team expiration."""
 
     @property
     def sessionteam(self) -> SessionTeam:
@@ -168,6 +215,7 @@ class Team(Generic[PlayerType]):
 
         Throws a ba.SessionTeamNotFoundError if there is none.
         """
+        assert self._postinited
         if self._sessionteam is not None:
             sessionteam = self._sessionteam()
             if sessionteam is not None:

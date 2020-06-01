@@ -231,9 +231,9 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
             actions=(
                 ('modify_part_collision', 'physical', False),
                 ('call', 'at_connect',
-                 lambda: self._handle_hit_own_flag(team, 1)),
+                 lambda: self._handle_touching_own_flag(team, True)),
                 ('call', 'at_disconnect',
-                 lambda: self._handle_hit_own_flag(team, 0)),
+                 lambda: self._handle_touching_own_flag(team, False)),
             ))
 
         # Other parts of our spazzes don't collide with our flags at all.
@@ -448,32 +448,28 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
         delegate = node.getdelegate(PlayerSpaz)
         return None if delegate is None else delegate.getplayer(Player)
 
-    def _handle_hit_own_flag(self, team: Team, val: int) -> None:
-        """Called when a player touches their own team flag.
+    def _handle_touching_own_flag(self, team: Team, connecting: bool) -> None:
+        """Called when a player touches or stops touching their own team flag.
 
-        We keep track of when each player is touching their
-        own flag so we can award points when returned.
+        We keep track of when each player is touching their own flag so we
+        can award points when returned.
         """
         player = self._player_from_node(ba.getcollision().sourcenode)
         if player:
-            player.touching_own_flag += (1 if val else -1)
+            player.touching_own_flag += (1 if connecting else -1)
 
         # If return-time is zero, just kill it immediately.. otherwise keep
         # track of touches and count down.
         if float(self.flag_touch_return_time) <= 0.0:
             assert team.flag is not None
-            if not team.home_flag_at_base and team.flag.held_count == 0:
-
-                # Use a node message to kill the flag instead of just killing
-                # our team's. (avoids redundantly killing new flags if
-                # multiple body parts generate callbacks in one step).
-                node = ba.getcollision().opposingnode
+            if (connecting and not team.home_flag_at_base
+                    and team.flag.held_count == 0):
                 self._award_players_touching_own_flag(team)
-                node.handlemessage(ba.DieMessage())
+                ba.getcollision().opposingnode.handlemessage(ba.DieMessage())
 
         # Takes a non-zero amount of time to return.
         else:
-            if val:
+            if connecting:
                 team.flag_return_touches += 1
                 if team.flag_return_touches == 1:
                     team.touch_return_timer = ba.Timer(
@@ -506,7 +502,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
                           angle: float = None) -> PlayerSpaz:
         """Intercept new spazzes and add our team material for them."""
         spaz = super().spawn_player_spaz(player, position, angle)
-        player = spaz.getplayer(Player, doraise=True)
+        player = spaz.getplayer(Player, True)
         team: Team = player.team
         player.touching_own_flag = 0
         no_physical_mats: List[ba.Material] = [
@@ -548,10 +544,15 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
             ba.timer(0.1, ba.Call(self._spawn_flag_for_team, msg.flag.team))
 
         elif isinstance(msg, FlagPickedUpMessage):
+
             # Store the last player to hold the flag for scoring purposes.
             assert isinstance(msg.flag, CTFFlag)
-            msg.flag.last_player_to_hold = msg.node.getdelegate(
-                PlayerSpaz, True).getplayer(Player)
+            try:
+                msg.flag.last_player_to_hold = msg.node.getdelegate(
+                    PlayerSpaz, True).getplayer(Player, True)
+            except ba.NotFoundError:
+                pass
+
             msg.flag.held_count += 1
             msg.flag.reset_return_times()
 

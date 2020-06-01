@@ -26,6 +26,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, TypeVar, Generic
 
 import _ba
+from ba._error import SessionPlayerNotFoundError, print_exception
+from ba._messages import DeathType, DieMessage
 
 if TYPE_CHECKING:
     from typing import (Type, Optional, Sequence, Dict, Any, Union, Tuple,
@@ -52,7 +54,7 @@ class StandLocation:
 
     Category: Gameplay Classes
     """
-    position: _ba.Vec3
+    position: ba.Vec3
     angle: Optional[float] = None
 
 
@@ -61,27 +63,35 @@ class Player(Generic[TeamType]):
 
     Category: Gameplay Classes
 
-    These correspond to ba.SessionPlayer objects, but are created per activity
-    so that the activity can use its own custom player subclass.
+    These correspond to ba.SessionPlayer objects, but are associated with a
+    single ba.Activity instance. This allows activities to specify their
+    own custom ba.Player types.
+
+    Attributes:
+
+      actor
+        The ba.Actor associated with the player.
+
     """
 
-    # Defining these types at the class level instead of in __init__ so
-    # that types are introspectable (these are still instance attrs).
-    team: TeamType
+    # These are instance attrs but we define them at the type level so
+    # their type annotations are introspectable (for docs generation).
     character: str
     actor: Optional[ba.Actor]
     color: Sequence[float]
     highlight: Sequence[float]
+    _team: TeamType
     _sessionplayer: ba.SessionPlayer
     _nodeactor: Optional[ba.NodeActor]
-
-    # Should aim to kill this eventually (at least gamedata).
-    # Game-specific data can be tacked on to the per-game player class.
-    sessiondata: Dict
-    gamedata: Dict
+    _expired: bool
+    _postinited: bool
+    sessiondata: dict
+    _gamedata: dict
 
     # NOTE: avoiding having any __init__() here since it seems to not
     # get called by default if a dataclass inherits from us.
+    # This also lets us keep trivial player classes cleaner by skipping
+    # the super().__init__() line.
 
     def postinit(self, sessionplayer: ba.SessionPlayer) -> None:
         """Wire up a newly created player.
@@ -108,23 +118,82 @@ class Player(Generic[TeamType]):
         self.character = sessionplayer.character
         self.color = sessionplayer.color
         self.highlight = sessionplayer.highlight
-        self.team = sessionplayer.team.gameteam  # type: ignore
-        assert self.team is not None
+        self._team = sessionplayer.team.gameteam  # type: ignore
+        assert self._team is not None
         self.sessiondata = sessionplayer.sessiondata
-        self.gamedata = sessionplayer.gamedata
-
-        # Create our player node in the current activity.
-        # Note: do we want to save a few cycles here by managing our player
-        # node manually instead of wrapping it in a NodeActor?
+        self._gamedata = {}
+        self._expired = False
+        self._postinited = True
         node = _ba.newnode('player', attrs={'playerID': sessionplayer.id})
         self._nodeactor = NodeActor(node)
-        sessionplayer.set_node(node)
+        sessionplayer.setnode(node)
 
-    def reset(self) -> None:
-        """(internal)"""
+    def leave(self) -> None:
+        """Called when the Player leaves a running game.
+
+        (internal)
+        """
+        assert self._postinited
+        assert not self._expired
+        try:
+            # If they still have an actor, kill it.
+            if self.actor:
+                self.actor.handlemessage(DieMessage(how=DeathType.LEFT_GAME))
+            self.actor = None
+        except Exception:
+            print_exception(f'Error killing actor on leave for {self}')
+        self._nodeactor = None
+        del self._team
+        del self._gamedata
+
+    def expire(self) -> None:
+        """Called when the Player is expiring (when its Activity does so).
+
+        (internal)
+        """
+        assert self._postinited
+        assert not self._expired
+        self._expired = True
+
+        try:
+            self.on_expire()
+        except Exception:
+            print_exception(f'Error in on_expire for {self}.')
+
         self._nodeactor = None
         self.actor = None
-        self.team = None  # type: ignore
+        del self._team
+        del self._gamedata
+
+    def on_expire(self) -> None:
+        """Can be overridden to handle player expiration.
+
+        The player expires when the Activity it is a part of expires.
+        Expired players should no longer run any game logic (which will
+        likely error). They should, however, remove any references to
+        players/teams/games/etc. which could prevent them from being freed.
+        """
+
+    @property
+    def team(self) -> TeamType:
+        """The ba.Team for this player."""
+        assert self._postinited
+        assert not self._expired
+        return self._team
+
+    @property
+    def gamedata(self) -> dict:
+        """Arbitrary values associated with the player.
+        Though it is encouraged that most player values be properly defined
+        on the ba.Player subclass, it may be useful for player-agnostic
+        objects to store values here. This dict is cleared when the player
+        leaves or expires so objects stored here will be disposed of at
+        the expected time, unlike the Player instance itself which may
+        continue to be referenced after it is no longer part of the game.
+        """
+        assert self._postinited
+        assert not self._expired
+        return self._gamedata
 
     @property
     def sessionplayer(self) -> ba.SessionPlayer:
@@ -132,10 +201,10 @@ class Player(Generic[TeamType]):
 
         Throws a ba.SessionPlayerNotFoundError if it does not exist.
         """
+        assert self._postinited
         if bool(self._sessionplayer):
             return self._sessionplayer
-        from ba import _error
-        raise _error.SessionPlayerNotFoundError()
+        raise SessionPlayerNotFoundError()
 
     @property
     def node(self) -> ba.Node:
@@ -143,29 +212,35 @@ class Player(Generic[TeamType]):
 
         This node can be used to get a generic player position/etc.
         """
-        if not self._nodeactor:
-            from ba import _error
-            raise _error.NodeNotFoundError
+        assert self._postinited
+        assert not self._expired
+        assert self._nodeactor
         return self._nodeactor.node
 
     @property
     def position(self) -> ba.Vec3:
-        """The position of the player, as defined by its current Actor.
+        """The position of the player, as defined by its current ba.Actor.
 
-        This value should not be used when the player has no Actor, as
-        it is undefined in that case.
+        This value is undefined when the player has no Actor.
         """
+        assert self._postinited
+        assert not self._expired
+        assert self.actor is not None
         return _ba.Vec3(self.node.position)
 
     def exists(self) -> bool:
         """Whether the underlying player still exists.
 
+        This will return False if the underlying ba.SessionPlayer has
+        left the game or if the ba.Activity this player was associated
+        with has ended.
         Most functionality will fail on a nonexistent player.
         Note that you can also use the boolean operator for this same
         functionality, so a statement such as "if player" will do
         the right thing both for Player objects and values of None.
         """
-        return self._sessionplayer.exists()
+        assert self._postinited
+        return self._sessionplayer.exists() and not self._expired
 
     def getname(self, full: bool = False, icon: bool = True) -> str:
         """getname(full: bool = False, icon: bool = True) -> str
@@ -173,6 +248,8 @@ class Player(Generic[TeamType]):
         Returns the player's name. If icon is True, the long version of the
         name may include an icon.
         """
+        assert self._postinited
+        assert not self._expired
         return self._sessionplayer.getname(full=full, icon=icon)
 
     def is_alive(self) -> bool:
@@ -181,6 +258,8 @@ class Player(Generic[TeamType]):
         Returns True if the player has a ba.Actor assigned and its
         is_alive() method return True. False is returned otherwise.
         """
+        assert self._postinited
+        assert not self._expired
         return self.actor is not None and self.actor.is_alive()
 
     def get_icon(self) -> Dict[str, Any]:
@@ -188,11 +267,13 @@ class Player(Generic[TeamType]):
 
         Returns the character's icon (images, colors, etc contained in a dict)
         """
+        assert self._postinited
+        assert not self._expired
         return self._sessionplayer.get_icon()
 
-    def assign_input_call(self, inputtype: Union[str, Tuple[str, ...]],
-                          call: Callable) -> None:
-        """assign_input_call(type: Union[str, Tuple[str, ...]],
+    def assigninput(self, inputtype: Union[str, Tuple[str, ...]],
+                    call: Callable) -> None:
+        """assigninput(type: Union[str, Tuple[str, ...]],
           call: Callable) -> None
 
         Set the python callable to be run for one or more types of input.
@@ -203,14 +284,18 @@ class Player(Generic[TeamType]):
           'rightRelease', 'run', 'flyPress', 'flyRelease', 'startPress',
           'startRelease'
         """
-        return self._sessionplayer.assign_input_call(type=inputtype, call=call)
+        assert self._postinited
+        assert not self._expired
+        return self._sessionplayer.assigninput(type=inputtype, call=call)
 
-    def reset_input(self) -> None:
-        """reset_input() -> None
+    def resetinput(self) -> None:
+        """resetinput() -> None
 
         Clears out the player's assigned input actions.
         """
-        self._sessionplayer.reset_input()
+        assert self._postinited
+        assert not self._expired
+        self._sessionplayer.resetinput()
 
     def __bool__(self) -> bool:
         return self.exists()
