@@ -82,15 +82,19 @@ def formatcode(projroot: Path, full: bool) -> None:
 
 def cpplint(projroot: Path, full: bool) -> None:
     """Run lint-checking on all code deemed lint-able."""
+    # pylint: disable=too-many-locals
+    import tempfile
     from concurrent.futures import ThreadPoolExecutor
     from multiprocessing import cpu_count
     from efrotools import get_config
     from efro.terminal import Clr
+    from efro.error import CleanError
 
     os.chdir(projroot)
     filenames = get_code_filenames(projroot)
-    if any(' ' in name for name in filenames):
-        raise Exception('found space in path; unexpected')
+    for fpath in filenames:
+        if ' ' in fpath:
+            raise Exception(f'Found space in path {fpath}; unexpected.')
 
     # Check the config for a list of ones to ignore.
     code_blacklist: List[str] = get_config(projroot).get(
@@ -114,14 +118,47 @@ def cpplint(projroot: Path, full: bool) -> None:
         print(f'{Clr.BLU}CppLint checking'
               f' {len(dirtyfiles)} file(s)...{Clr.RST}')
 
-    def lint_file(filename: str) -> None:
-        result = subprocess.call(['cpplint', '--root=src', filename])
-        if result != 0:
-            raise Exception(f'Linting failed for {filename}')
+    # We want to do a few custom modifications to the cpplint module...
+    try:
+        import cpplint as cpplintmodule
+    except Exception:
+        raise CleanError('Unable to import cpplint')
+    with open(cpplintmodule.__file__) as infile:
+        codelines = infile.read().splitlines()
+    cheadersline = codelines.index('_C_HEADERS = frozenset([')
 
-    with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
-        # Converting this to a list will propagate any errors.
-        list(executor.map(lint_file, dirtyfiles))
+    # Extra headers we consider as valid C system headers.
+    c_headers = [
+        'malloc.h', 'tchar.h', 'jni.h', 'android/log.h', 'EGL/egl.h',
+        'libgen.h', 'linux/netlink.h', 'linux/rtnetlink.h', 'android/bitmap.h',
+        'android/log.h', 'uuid/uuid.h', 'cxxabi.h', 'direct.h', 'shellapi.h',
+        'rpc.h', 'io.h'
+    ]
+    codelines.insert(cheadersline + 1, ''.join(f"'{h}'," for h in c_headers))
+
+    # Skip unapproved C++ headers check (it flags <mutex>, <thread>, etc.)
+    headercheckline = codelines.index(
+        "  if include and include.group(1) in ('cfenv',")
+    codelines[headercheckline] = (
+        "  if False and include and include.group(1) in ('cfenv',")
+
+    def lint_file(filename: str) -> None:
+        result = subprocess.call(['cpplint', '--root=src', filename], env=env)
+        if result != 0:
+            raise CleanError(
+                f'{Clr.RED}Cpplint failed for {filename}.{Clr.RST}')
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+
+        # Write our replacement module, make it discoverable, then run.
+        with open(tmpdir + '/cpplint.py', 'w') as outfile:
+            outfile.write('\n'.join(codelines))
+        env = os.environ.copy()
+        env['PYTHONPATH'] = tmpdir
+
+        with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
+            # Converting this to a list will propagate any errors.
+            list(executor.map(lint_file, dirtyfiles))
 
     if dirtyfiles:
         cache.mark_clean(filenames)

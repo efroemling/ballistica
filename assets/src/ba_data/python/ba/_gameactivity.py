@@ -103,8 +103,8 @@ class GameActivity(Activity[PlayerType, TeamType]):
         """
         delegate = _ba.app.delegate
         assert delegate is not None
-        delegate.create_default_game_config_ui(cls, sessionclass, settings,
-                                               completion_call)
+        delegate.create_default_game_settings_ui(cls, sessionclass, settings,
+                                                 completion_call)
 
     @classmethod
     def get_score_info(cls) -> ba.ScoreInfo:

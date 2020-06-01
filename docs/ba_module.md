@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-05-31 for Ballistica version 1.5.0 build 20036</em></h4>
+<h4><em>last updated on 2020-06-01 for Ballistica version 1.5.0 build 20037</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -1079,8 +1079,8 @@ manually.</p>
 
 <h3>Methods:</h3>
 <dl>
-<dt><h4><a name="method_ba_AppDelegate__create_default_game_config_ui">create_default_game_config_ui()</a></dt></h4><dd>
-<p><span>create_default_game_config_ui(self, gameclass: Type[<a href="#class_ba_GameActivity">ba.GameActivity</a>], sessionclass: Type[<a href="#class_ba_Session">ba.Session</a>], config: Optional[Dict[str, Any]], completion_call: Callable[[Optional[Dict[str, Any]]], None]) -&gt; None</span></p>
+<dt><h4><a name="method_ba_AppDelegate__create_default_game_settings_ui">create_default_game_settings_ui()</a></dt></h4><dd>
+<p><span>create_default_game_settings_ui(self, gameclass: Type[<a href="#class_ba_GameActivity">ba.GameActivity</a>], sessionclass: Type[<a href="#class_ba_Session">ba.Session</a>], config: Optional[Dict[str, Any]], completion_call: Callable[[Optional[Dict[str, Any]]], None]) -&gt; None</span></p>
 
 <p>Launch a UI to configure the given game config.</p>
 

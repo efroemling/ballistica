@@ -33,7 +33,7 @@ from typing import TYPE_CHECKING
 from efro.terminal import Clr
 
 if TYPE_CHECKING:
-    from typing import List, Sequence, Optional
+    from typing import List, Sequence, Optional, Any
 
 
 # Python pip packages we require for this project.
@@ -612,7 +612,11 @@ def _get_server_config_template_yaml(projroot: str) -> str:
             assert vname.endswith(':')
             vname = vname[:-1]
             assert veq == '='
-            vval = eval(vval_raw)  # pylint: disable=eval-used
+            vval: Any
+            if vval_raw == 'field(default_factory=list)':
+                vval = []
+            else:
+                vval = eval(vval_raw)  # pylint: disable=eval-used
 
             # Filter/override a few things.
             if vname == 'playlist_code':
@@ -621,7 +625,13 @@ def _get_server_config_template_yaml(projroot: str) -> str:
             elif vname == 'stats_url':
                 vval = ('https://mystatssite.com/'
                         'showstats?player=${ACCOUNT}')
-            lines_out.append('#' + yaml.dump({vname: vval}).strip())
+            elif vname == 'admins':
+                vval = ['pb-yOuRAccOuNtIdHErE', 'pb-aNdMayBeAnotherHeRE']
+            lines_out += [
+                '#' + l for l in yaml.dump({
+                    vname: vval
+                }).strip().splitlines()
+            ]
         else:
             # Convert comments referring to python bools to yaml bools.
             line = line.replace('True', 'true').replace('False', 'false')

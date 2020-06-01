@@ -34,7 +34,7 @@ class AppDelegate:
     Category: App Classes
     """
 
-    def create_default_game_config_ui(
+    def create_default_game_settings_ui(
             self, gameclass: Type[ba.GameActivity],
             sessionclass: Type[ba.Session], config: Optional[Dict[str, Any]],
             completion_call: Callable[[Optional[Dict[str, Any]]],
@@ -47,4 +47,4 @@ class AppDelegate:
         del gameclass, sessionclass, config, completion_call  # unused
         from ba import _error
         _error.print_error(
-            "create_default_game_config_ui needs to be overridden")
+            "create_default_game_settings_ui needs to be overridden")

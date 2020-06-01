@@ -12,7 +12,8 @@
     "pytz",
     "yaml",
     "requests",
-    "typing_extensions"
+    "typing_extensions",
+    "cpplint"
   ],
   "python_paths": [
     "assets/src/ba_data/python",

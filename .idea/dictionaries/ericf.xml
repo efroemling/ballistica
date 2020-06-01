@@ -262,6 +262,7 @@
       <w>centeuro</w>
       <w>centiseconds</w>
       <w>cfconfig</w>
+      <w>cfenv</w>
       <w>cfgdir</w>
       <w>cfgkey</w>
       <w>cfgkeys</w>
@@ -280,6 +281,7 @@
       <w>charname</w>
       <w>charstr</w>
       <w>chatmessage</w>
+      <w>cheadersline</w>
       <w>checkarg</w>
       <w>checkboxwidget</w>
       <w>checkenv</w>
@@ -323,6 +325,7 @@
       <w>codefilenames</w>
       <w>codefiles</w>
       <w>codehash</w>
+      <w>codelines</w>
       <w>codeop</w>
       <w>collapsable</w>
       <w>collidemodel</w>
@@ -374,6 +377,7 @@
       <w>cpplintcode</w>
       <w>cpplintcodefull</w>
       <w>cpplintfull</w>
+      <w>cpplintmodule</w>
       <w>cpuinfo</w>
       <w>cpus</w>
       <w>cpython</w>
@@ -398,6 +402,7 @@
       <w>cutscenes</w>
       <w>cval</w>
       <w>cwdg</w>
+      <w>cxxabi</w>
       <w>cyaml</w>
       <w>cygwinccompiler</w>
       <w>darwiin</w>
@@ -750,6 +755,7 @@
       <w>genmapjson</w>
       <w>genstartercache</w>
       <w>genutils</w>
+      <w>getaccountid</w>
       <w>getactivity</w>
       <w>getclass</w>
       <w>getcollide</w>
@@ -833,6 +839,7 @@
       <w>hatmotion</w>
       <w>hattach</w>
       <w>hdpi</w>
+      <w>headercheckline</w>
       <w>headerregistry</w>
       <w>heapqmodule</w>
       <w>hehe</w>
@@ -960,6 +967,7 @@
       <w>keywd</w>
       <w>keywds</w>
       <w>khronos</w>
+      <w>kickable</w>
       <w>kickin</w>
       <w>kickstart</w>
       <w>killcount</w>
@@ -987,6 +995,7 @@
       <w>lazybuilddir</w>
       <w>lbits</w>
       <w>lbld</w>
+      <w>lbval</w>
       <w>lcfg</w>
       <w>lcolor</w>
       <w>lcrypto</w>
@@ -999,8 +1008,10 @@
       <w>levelmodule</w>
       <w>levelname</w>
       <w>lfull</w>
+      <w>lfval</w>
       <w>libcrypto</w>
       <w>libegl</w>
+      <w>libgen</w>
       <w>libinst</w>
       <w>liblzma</w>
       <w>libmain</w>
@@ -1034,6 +1045,7 @@
       <w>lintscriptsfast</w>
       <w>listobj</w>
       <w>listvalidconfigs</w>
+      <w>lival</w>
       <w>llzma</w>
       <w>lmerged</w>
       <w>lmod</w>
@@ -1070,6 +1082,7 @@
       <w>lstart</w>
       <w>lstr</w>
       <w>lstrs</w>
+      <w>lsval</w>
       <w>ltex</w>
       <w>lzma</w>
       <w>lzmamodule</w>
@@ -1208,6 +1221,7 @@
       <w>ndkpath</w>
       <w>neededsettings</w>
       <w>ness</w>
+      <w>netlink</w>
       <w>nettesting</w>
       <w>netutils</w>
       <w>nevermind</w>
@@ -1576,6 +1590,7 @@
       <w>rsdr</w>
       <w>rsms</w>
       <w>rstr</w>
+      <w>rtnetlink</w>
       <w>rtxt</w>
       <w>runmypy</w>
       <w>runonly</w>
@@ -1667,6 +1682,7 @@
       <w>sharedctypes</w>
       <w>sharedobj</w>
       <w>sharedobjs</w>
+      <w>shellapi</w>
       <w>shiftdelay</w>
       <w>shiftposition</w>
       <w>shobs</w>
@@ -1792,6 +1808,8 @@
       <w>subrepos</w>
       <w>subsel</w>
       <w>subval</w>
+      <w>subvalue</w>
+      <w>subvaluetype</w>
       <w>successfull</w>
       <w>suiciding</w>
       <w>sunau</w>

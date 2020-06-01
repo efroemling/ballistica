@@ -22,7 +22,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -44,6 +44,14 @@ class ServerConfig:
     # server to screen for fake account info. Generally this should always
     # be enabled unless you are hosting on a LAN with no internet connection.
     authenticate_clients: bool = True
+
+    # IDs of server admins. Server admins are not kickable through the default
+    # kick vote system and they are able to kick players without a vote. To get
+    # your account id, enter 'getaccountid' in settings->advanced->enter-code.
+    admins: List[str] = field(default_factory=list)
+
+    # Whether the default kick-voting system is enabled.
+    enable_default_kick_voting: bool = True
 
     # UDP port to host on. Change this to work around firewalls or run multiple
     # servers on one machine.
