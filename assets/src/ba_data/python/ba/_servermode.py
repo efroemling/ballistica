@@ -65,6 +65,7 @@ def _cmd(command_data: bytes) -> None:
 
     if isinstance(command, ScreenMessageCommand):
         assert _ba.app.server is not None
+
         # Note: we have to do transient messages if
         # clients is specified, so they won't show up
         # in replays.
@@ -241,6 +242,7 @@ class ServerController:
                       f' joinable from the internet.{poststr}{Clr.RST}')
 
     def _prepare_to_serve(self) -> None:
+        """Run in a timer to do prep before beginning to serve."""
         signed_in = _ba.get_account_state() == 'signed_in'
         if not signed_in:
 
@@ -338,6 +340,10 @@ class ServerController:
         app.ffa_series_length = self._config.ffa_series_length
 
         _ba.set_authenticate_clients(self._config.authenticate_clients)
+
+        _ba.set_enable_default_kick_voting(
+            self._config.enable_default_kick_voting)
+        _ba.set_admins(self._config.admins)
 
         # Call set-enabled last (will push state to the cloud).
         _ba.set_public_party_max_size(self._config.max_party_size)

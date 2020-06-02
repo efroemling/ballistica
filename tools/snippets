@@ -113,9 +113,9 @@ def resize_image() -> None:
     src = sys.argv[4]
     dst = sys.argv[5]
     if not dst.endswith('.png'):
-        raise Exception('dst must be a png')
+        raise RuntimeError(f'dst must be a png; got "{dst}"')
     if not src.endswith('.png'):
-        raise Exception('src must be a png')
+        raise RuntimeError(f'src must be a png; got "{src}"')
     print('Creating: ' + os.path.basename(dst), file=sys.stderr)
     efrotools.run(f'convert "{src}" -resize {width}x{height} "{dst}"')
 
