@@ -330,7 +330,12 @@ def main() -> None:
         print(f'{fname} is up to date.')
     else:
         if check:
-            print(f'{Clr.SRED}ERROR: file is out of date: {fname}{Clr.RST}')
+            print(f"{Clr.SRED}ERROR: file is out of date: '{fname}'.{Clr.RST}")
+            print(f'EXPECTED ===========================================\n'
+                  f'{out}\n'
+                  f'FOUND ==============================================\n'
+                  f'{original}\n'
+                  f'END COMPARE ========================================')
             sys.exit(255)
         print(f'{Clr.SBLU}Updating: {fname}{Clr.RST}')
         with open(fname, 'w') as outfile:
@@ -361,7 +366,7 @@ def _write_manifest(manifest_path: str, all_targets: Set[str],
     else:
         if check:
             print(f'{Clr.SRED}ERROR: file is out of date:'
-                  f' {manifest_path}{Clr.RST}')
+                  f" '{manifest_path}'.{Clr.RST}")
             sys.exit(255)
         print(f'{Clr.SBLU}Updating: {manifest_path}{Clr.RST}')
         with open(manifest_path, 'w') as outfile:
