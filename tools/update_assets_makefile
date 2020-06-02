@@ -63,7 +63,7 @@ def _get_targets(varname: str,
                 all_targets.add(os.path.join(dstfin, outname))
                 targets.append(os.path.join(dstrootvar, outname))
 
-    return '\n' + varname + ' = \\\n  ' + ' \\\n  '.join(targets)
+    return '\n' + varname + ' = \\\n  ' + ' \\\n  '.join(sorted(targets))
 
 
 def _get_py_targets(src: str, dst: str, py_targets: List[str],
@@ -149,6 +149,9 @@ def _get_py_targets_subset(all_targets: Set[str], subset: str,
                     all_targets,
                     subset=subset)
 
+    py_targets.sort()
+    pyc_targets.sort()
+
     out = (f'\nSCRIPT_TARGETS_PY{suffix} = \\\n  ' +
            ' \\\n  '.join(py_targets) + '\n')
 
@@ -220,6 +223,7 @@ def _get_extras_targets_win(all_targets: Set[str], platform: str) -> str:
             # including it.
             raise RuntimeError(f'Unexpected extras file: {fname}')
 
+    targets.sort()
     p_up = platform.upper()
     out = (f'\nEXTRAS_TARGETS_WIN_{p_up} = \\\n  ' + ' \\\n  '.join(targets) +
            '\n')
@@ -331,11 +335,14 @@ def main() -> None:
     else:
         if check:
             print(f"{Clr.SRED}ERROR: file is out of date: '{fname}'.{Clr.RST}")
-            print(f'EXPECTED ===========================================\n'
-                  f'{out}\n'
-                  f'FOUND ==============================================\n'
-                  f'{original}\n'
-                  f'END COMPARE ========================================')
+
+            # Print exact contents if we need to debug:
+            if bool(False):
+                print(f'EXPECTED ===========================================\n'
+                      f'{out}\n'
+                      f'FOUND ==============================================\n'
+                      f'{original}\n'
+                      f'END COMPARE ========================================')
             sys.exit(255)
         print(f'{Clr.SBLU}Updating: {fname}{Clr.RST}')
         with open(fname, 'w') as outfile:
