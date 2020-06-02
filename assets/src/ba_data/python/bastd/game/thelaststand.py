@@ -77,7 +77,7 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
 
     default_music = ba.MusicType.EPIC
 
-    def __init__(self, settings: Dict[str, Any]):
+    def __init__(self, settings: dict):
         settings['map'] = 'Rampage'
         super().__init__(settings)
         self._new_wave_sound = ba.getsound('scoreHit01')

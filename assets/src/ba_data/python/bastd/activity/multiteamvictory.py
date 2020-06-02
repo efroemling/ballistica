@@ -34,7 +34,7 @@ if TYPE_CHECKING:
 class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
     """Final score screen for a team series."""
 
-    def __init__(self, settings: Dict[str, Any]):
+    def __init__(self, settings: dict):
         super().__init__(settings=settings)
         self._min_view_time = 15.0
         self._is_ffa = isinstance(self.session, ba.FreeForAllSession)

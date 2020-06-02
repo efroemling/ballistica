@@ -155,7 +155,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
     # Show messages when players die since it matters here.
     announce_player_deaths = True
 
-    def __init__(self, settings: Dict[str, Any]):
+    def __init__(self, settings: dict):
 
         self._preset = Preset(settings.get('preset', 'training'))
         if self._preset in {

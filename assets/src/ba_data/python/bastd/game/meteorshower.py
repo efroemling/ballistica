@@ -74,7 +74,7 @@ class MeteorShowerGame(ba.TeamGameActivity[Player, Team]):
                 or issubclass(sessiontype, ba.FreeForAllSession)
                 or issubclass(sessiontype, ba.CoopSession))
 
-    def __init__(self, settings: Dict[str, Any]):
+    def __init__(self, settings: dict):
         super().__init__(settings)
 
         self._epic_mode = settings.get('Epic Mode', False)

@@ -83,7 +83,7 @@ class TargetPracticeGame(ba.TeamGameActivity[Player, Team]):
         return (issubclass(sessiontype, ba.CoopSession)
                 or issubclass(sessiontype, ba.MultiTeamSession))
 
-    def __init__(self, settings: Dict[str, Any]):
+    def __init__(self, settings: dict):
         super().__init__(settings)
         self._scoreboard = Scoreboard()
         self._targets: List[Target] = []

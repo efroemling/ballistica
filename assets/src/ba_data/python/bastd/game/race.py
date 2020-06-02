@@ -144,7 +144,7 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
     def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
         return ba.getmaps('race')
 
-    def __init__(self, settings: Dict[str, Any]):
+    def __init__(self, settings: dict):
         self._race_started = False
         super().__init__(settings)
         self._scoreboard = Scoreboard()

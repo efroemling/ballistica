@@ -123,7 +123,7 @@ class FootballTeamGame(ba.TeamGameActivity[Player, Team]):
     def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
         return ba.getmaps('football')
 
-    def __init__(self, settings: Dict[str, Any]):
+    def __init__(self, settings: dict):
         super().__init__(settings)
         self._scoreboard: Optional[Scoreboard] = Scoreboard()
 
@@ -329,9 +329,7 @@ class FootballTeamGame(ba.TeamGameActivity[Player, Team]):
 
 
 class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
-    """
-    Co-op variant of football
-    """
+    """Co-op variant of football."""
 
     name = 'Football'
     tips = ['Use the pick-up button to grab the flag < ${PICKUP} >']
@@ -356,7 +354,7 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
             return 'score ${ARG1} touchdowns', touchdowns
         return 'score a touchdown'
 
-    def __init__(self, settings: Dict[str, Any]):
+    def __init__(self, settings: dict):
         settings['map'] = 'Football Stadium'
         super().__init__(settings)
         self._preset = settings.get('preset', 'rookie')

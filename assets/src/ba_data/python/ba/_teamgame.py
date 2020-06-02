@@ -58,7 +58,7 @@ class TeamGameActivity(GameActivity[PlayerType, TeamType]):
         return (issubclass(sessiontype, DualTeamSession)
                 or issubclass(sessiontype, FreeForAllSession))
 
-    def __init__(self, settings: Dict[str, Any]):
+    def __init__(self, settings: dict):
         super().__init__(settings)
 
         # By default we don't show kill-points in free-for-all sessions.

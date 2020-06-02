@@ -237,7 +237,7 @@ class EliminationGame(ba.TeamGameActivity[Player, Team]):
     def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
         return ba.getmaps('melee')
 
-    def __init__(self, settings: Dict[str, Any]):
+    def __init__(self, settings: dict):
         super().__init__(settings)
         self._scoreboard = Scoreboard()
         self._start_time: Optional[float] = None

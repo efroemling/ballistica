@@ -50,7 +50,7 @@ class CoopGameActivity(GameActivity[PlayerType, TeamType]):
         from ba._coopsession import CoopSession
         return issubclass(sessiontype, CoopSession)
 
-    def __init__(self, settings: Dict[str, Any]):
+    def __init__(self, settings: dict):
         super().__init__(settings)
 
         # Cache these for efficiency.

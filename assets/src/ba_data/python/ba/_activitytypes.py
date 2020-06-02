@@ -26,9 +26,9 @@ from typing import TYPE_CHECKING
 import _ba
 from ba._activity import Activity
 from ba._music import setmusic, MusicType
-# False positive due to our class_generics_filter custom pylint filter.
-from ba import _player
-from ba import _team
+# False-positive from pylint due to our class-generics-filter.
+from ba._player import EmptyPlayer  # pylint: disable=W0611
+from ba._team import EmptyTeam  # pylint: disable=W0611
 
 if TYPE_CHECKING:
     from typing import Any, Dict, Optional
@@ -36,21 +36,10 @@ if TYPE_CHECKING:
     from ba._lobby import JoinInfo
 
 
-# Even though we don't need custom Player/Team types, define empty ones
-# so we don't have ba.Player[Any] and ba.Team[Any] as our types which
-# reduces type safety.
-class Player(_player.Player['Team']):
-    """Our player type for this game."""
-
-
-class Team(_team.Team[Player]):
-    """Our team type for this game."""
-
-
-class EndSessionActivity(Activity[Player, Team]):
+class EndSessionActivity(Activity[EmptyPlayer, EmptyTeam]):
     """Special ba.Activity to fade out and end the current ba.Session."""
 
-    def __init__(self, settings: Dict[str, Any]):
+    def __init__(self, settings: dict):
         super().__init__(settings)
 
         # Keeps prev activity alive while we fade out.
@@ -75,13 +64,13 @@ class EndSessionActivity(Activity[Player, Team]):
         call_after_ad(Call(_ba.new_host_session, MainMenuSession))
 
 
-class JoinActivity(Activity[Player, Team]):
+class JoinActivity(Activity[EmptyPlayer, EmptyTeam]):
     """Standard activity for waiting for players to join.
 
     It shows tips and other info and waits for all players to check ready.
     """
 
-    def __init__(self, settings: Dict[str, Any]):
+    def __init__(self, settings: dict):
         super().__init__(settings)
 
         # This activity is a special 'joiner' activity.
@@ -112,13 +101,13 @@ class JoinActivity(Activity[Player, Team]):
         _ba.set_analytics_screen('Joining Screen')
 
 
-class TransitionActivity(Activity[Player, Team]):
+class TransitionActivity(Activity[EmptyPlayer, EmptyTeam]):
     """A simple overlay fade out/in.
 
     Useful as a bare minimum transition between two level based activities.
     """
 
-    def __init__(self, settings: Dict[str, Any]):
+    def __init__(self, settings: dict):
         super().__init__(settings)
 
         # Keep prev activity alive while we fade in.
@@ -145,13 +134,13 @@ class TransitionActivity(Activity[Player, Team]):
         _ba.timer(0.1, self.end)
 
 
-class ScoreScreenActivity(Activity[Player, Team]):
+class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
     """A standard score screen that fades in and shows stuff for a while.
 
     After a specified delay, player input is assigned to end the activity.
     """
 
-    def __init__(self, settings: Dict[str, Any]):
+    def __init__(self, settings: dict):
         super().__init__(settings)
         self.transition_time = 0.5
         self.inherits_tint = True
@@ -169,7 +158,7 @@ class ScoreScreenActivity(Activity[Player, Team]):
         self._custom_continue_message: Optional[ba.Lstr] = None
         self._server_transitioning: Optional[bool] = None
 
-    def on_player_join(self, player: Player) -> None:
+    def on_player_join(self, player: EmptyPlayer) -> None:
         from ba import _general
         super().on_player_join(player)
         time_till_assign = max(
@@ -235,7 +224,7 @@ class ScoreScreenActivity(Activity[Player, Team]):
         # Otherwise end the activity normally.
         self.end()
 
-    def _safe_assign(self, player: Player) -> None:
+    def _safe_assign(self, player: EmptyPlayer) -> None:
 
         # Just to be extra careful, don't assign if we're transitioning out.
         # (though theoretically that would be ok).

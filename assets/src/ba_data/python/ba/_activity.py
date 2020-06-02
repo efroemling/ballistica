@@ -140,7 +140,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
     # the next activity?
     can_show_ad_on_death = False
 
-    def __init__(self, settings: Dict[str, Any]):
+    def __init__(self, settings: dict):
         """Creates an Activity in the current ba.Session.
 
         The activity will not be actually run until ba.Session.setactivity()
@@ -582,7 +582,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         assert team is not None
         sessionplayer.setactivity(self)
         with _ba.Context(self):
-            sessionplayer.gameplayer = player = self.create_player(
+            sessionplayer.activityplayer = player = self.create_player(
                 sessionplayer)
             player.postinit(sessionplayer)
 
@@ -606,7 +606,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         """
         assert not self.expired
 
-        player: Any = sessionplayer.gameplayer
+        player: Any = sessionplayer.activityplayer
         assert isinstance(player, self._playertype)
         team: Any = sessionplayer.sessionteam.gameteam
         assert isinstance(team, self._teamtype)
@@ -714,7 +714,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
 
         # These should never fail I think...
         sessionplayer.setactivity(None)
-        sessionplayer.gameplayer = None
+        sessionplayer.activityplayer = None
 
     def _setup_player_and_team_types(self) -> None:
         """Pull player and team types from our typing.Generic params."""

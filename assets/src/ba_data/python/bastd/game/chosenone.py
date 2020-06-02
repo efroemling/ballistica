@@ -95,7 +95,7 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
     def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
         return ba.getmaps('keep_away')
 
-    def __init__(self, settings: Dict[str, Any]):
+    def __init__(self, settings: dict):
         super().__init__(settings)
         self._scoreboard = Scoreboard()
         self._chosen_one_player: Optional[Player] = None

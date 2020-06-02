@@ -206,9 +206,9 @@ class PlayerRecord:
             # a current position for them.
             our_pos: Optional[Sequence[float]] = None
             if self._player is not None:
-                if self._player.gameplayer is not None:
-                    if self._player.gameplayer.node:
-                        our_pos = self._player.gameplayer.node.position
+                if self._player.activityplayer is not None:
+                    if self._player.activityplayer.node:
+                        our_pos = self._player.activityplayer.node.position
             if our_pos is None:
                 return
 

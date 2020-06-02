@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 class MultiTeamJoinActivity(JoinActivity):
     """Join screen for teams sessions."""
 
-    def __init__(self, settings: Dict[str, Any]):
+    def __init__(self, settings: dict):
         super().__init__(settings)
         self._next_up_text: Optional[Text] = None
 

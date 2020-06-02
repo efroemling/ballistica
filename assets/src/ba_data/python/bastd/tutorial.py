@@ -197,7 +197,7 @@ class Team(ba.Team[Player]):
 
 class TutorialActivity(ba.Activity[Player, Team]):
 
-    def __init__(self, settings: Dict[str, Any] = None):
+    def __init__(self, settings: dict = None):
         from bastd.maps import Rampage
         if settings is None:
             settings = {}

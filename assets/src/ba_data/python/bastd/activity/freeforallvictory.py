@@ -34,7 +34,7 @@ if TYPE_CHECKING:
 class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
     """Score screen shown at after free-for-all rounds."""
 
-    def __init__(self, settings: Dict[str, Any]):
+    def __init__(self, settings: dict):
         super().__init__(settings=settings)
 
         # Keep prev activity alive while we fade in.

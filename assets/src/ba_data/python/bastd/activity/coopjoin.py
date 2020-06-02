@@ -38,7 +38,7 @@ class CoopJoinActivity(JoinActivity):
     # We can assume our session is a CoopSession.
     session: ba.CoopSession
 
-    def __init__(self, settings: Dict[str, Any]):
+    def __init__(self, settings: dict):
         super().__init__(settings)
         session = self.session
         assert isinstance(session, ba.CoopSession)

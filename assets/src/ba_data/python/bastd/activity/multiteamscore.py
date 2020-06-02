@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 class MultiTeamScoreScreenActivity(ScoreScreenActivity):
     """Base class for score screens."""
 
-    def __init__(self, settings: Dict[str, Any]):
+    def __init__(self, settings: dict):
         super().__init__(settings=settings)
         self._score_display_sound = ba.getsound('scoreHit01')
         self._score_display_sound_small = ba.getsound('scoreHit02')

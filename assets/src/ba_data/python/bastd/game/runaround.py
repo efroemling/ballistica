@@ -86,7 +86,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
         StickyBot: 0.5
     }
 
-    def __init__(self, settings: Dict[str, Any]):
+    def __init__(self, settings: dict):
         settings['map'] = 'Tower D'
         super().__init__(settings)
         shared = SharedObjects.get()

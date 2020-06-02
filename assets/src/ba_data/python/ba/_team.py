@@ -211,3 +211,20 @@ class Team(Generic[PlayerType]):
                 return sessionteam
         from ba import _error
         raise _error.SessionTeamNotFoundError()
+
+
+class EmptyTeam(Team['ba.EmptyPlayer']):
+    """An empty player for use by Activities that don't need to define one.
+
+    Category: Gameplay Classes
+
+    ba.Player and ba.Team are 'Generic' types, and so passing them as
+    type arguments when defining a ba.Activity reduces type safety.
+    For example, activity.teams[0].player will have type 'Any' in that case.
+    For that reason, it is better to pass EmptyPlayer and EmptyTeam when
+    defining a ba.Activity that does not need custom types of its own.
+
+    Note that EmptyPlayer defines its team type as EmptyTeam and vice versa,
+    so if you want to define your own class for one of them you must do so
+    for both.
+    """

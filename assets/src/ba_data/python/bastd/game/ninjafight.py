@@ -71,7 +71,7 @@ class NinjaFightGame(ba.TeamGameActivity[Player, Team]):
 
     # In the constructor we should load any media we need/etc.
     # ...but not actually create anything yet.
-    def __init__(self, settings: Dict[str, Any]):
+    def __init__(self, settings: dict):
         super().__init__(settings)
         self._winsound = ba.getsound('score')
         self._won = False

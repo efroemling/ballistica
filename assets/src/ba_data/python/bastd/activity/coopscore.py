@@ -41,7 +41,7 @@ if TYPE_CHECKING:
 class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
     """Score screen showing the results of a cooperative game."""
 
-    def __init__(self, settings: Dict[str, Any]):
+    def __init__(self, settings: dict):
         # pylint: disable=too-many-statements
         super().__init__(settings)
 

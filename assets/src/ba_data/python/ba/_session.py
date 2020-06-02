@@ -274,7 +274,7 @@ class Session:
                       ' in on_player_leave.')
 
             # Grab their activity-specific player instance.
-            player = sessionplayer.gameplayer
+            player = sessionplayer.activityplayer
             assert isinstance(player, (Player, type(None)))
 
             # Remove them from any current Activity.

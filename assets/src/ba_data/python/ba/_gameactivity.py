@@ -278,7 +278,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         # By default, games support any versus mode
         return issubclass(sessiontype, MultiTeamSession)
 
-    def __init__(self, settings: Dict[str, Any]):
+    def __init__(self, settings: dict):
         """Instantiate the Activity."""
         super().__init__(settings)
 
@@ -1224,7 +1224,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
                  trail=trail,
                  color=color).autoretain()
 
-    def _calc_map_name(self, settings: Dict[str, Any]) -> str:
+    def _calc_map_name(self, settings: dict) -> str:
         map_name: str
         if 'map' in settings:
             map_name = settings['map']

@@ -39,7 +39,7 @@ class GamepadSettingsWindow(ba.Window):
                  is_main_menu: bool = True,
                  transition: str = 'in_right',
                  transition_out: str = 'out_right',
-                 settings: Dict[str, Any] = None):
+                 settings: dict = None):
         self._input = gamepad
 
         # If this fails, our input device went away or something;

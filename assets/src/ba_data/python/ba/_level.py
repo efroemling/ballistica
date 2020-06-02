@@ -42,7 +42,7 @@ class Level:
     def __init__(self,
                  name: str,
                  gametype: Type[ba.GameActivity],
-                 settings: Dict[str, Any],
+                 settings: dict,
                  preview_texture_name: str,
                  displayname: str = None):
         """Initializes a Level object with the provided values."""

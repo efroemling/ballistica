@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 class TeamVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
     """Scorescreen between rounds of a dual-team session."""
 
-    def __init__(self, settings: Dict[str, Any]):
+    def __init__(self, settings: dict):
         super().__init__(settings=settings)
         self._winner: ba.SessionTeam = settings['winner']
         assert isinstance(self._winner, ba.SessionTeam)

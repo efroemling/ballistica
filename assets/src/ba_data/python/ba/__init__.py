@@ -39,7 +39,7 @@ from _ba import (CollideModel, Context, ContextCall, Data, InputDevice,
                  open_url, widget)
 from ba._activity import Activity
 from ba._actor import Actor
-from ba._player import PlayerInfo, Player, StandLocation
+from ba._player import PlayerInfo, Player, EmptyPlayer, StandLocation
 from ba._nodeactor import NodeActor
 from ba._app import App
 from ba._coopgame import CoopGameActivity
@@ -62,7 +62,7 @@ from ba._session import Session
 from ba._servermode import ServerController
 from ba._score import ScoreType, ScoreInfo
 from ba._stats import PlayerScoredMessage, PlayerRecord, Stats
-from ba._team import SessionTeam, Team
+from ba._team import SessionTeam, Team, EmptyTeam
 from ba._teamgame import TeamGameActivity
 from ba._dualteamsession import DualTeamSession
 from ba._achievement import Achievement

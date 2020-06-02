@@ -77,7 +77,7 @@ class EasterEggHuntGame(ba.TeamGameActivity[Player, Team]):
                 or issubclass(sessiontype, ba.DualTeamSession)
                 or issubclass(sessiontype, ba.FreeForAllSession))
 
-    def __init__(self, settings: Dict[str, Any]):
+    def __init__(self, settings: dict):
         super().__init__(settings)
         shared = SharedObjects.get()
         self._last_player_death_time = None
