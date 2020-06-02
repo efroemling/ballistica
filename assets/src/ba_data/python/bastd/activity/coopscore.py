@@ -137,9 +137,9 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         self._tournament_time_remaining_text: Optional[Text] = None
         self._tournament_time_remaining_text_timer: Optional[ba.Timer] = None
 
-        self._player_info: List[ba.PlayerInfo] = settings['player_info']
-        assert isinstance(self._player_info, list)
-        assert (isinstance(i, ba.PlayerInfo) for i in self._player_info)
+        self._playerinfos: List[ba.PlayerInfo] = settings['playerinfos']
+        assert isinstance(self._playerinfos, list)
+        assert (isinstance(i, ba.PlayerInfo) for i in self._playerinfos)
 
         self._score: Optional[int] = settings['score']
         assert isinstance(self._score, (int, type(None)))
@@ -174,7 +174,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
 
         self._game_name_str = self._campaign.name + ':' + self._level_name
         self._game_config_str = str(len(
-            self._player_info)) + 'p' + self._campaign.get_level(
+            self._playerinfos)) + 'p' + self._campaign.get_level(
                 self._level_name).get_score_version_string().replace(' ', '_')
 
         # If game-center/etc scores are available we show our friends'
@@ -580,12 +580,12 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                 ba.timer(5.2, ba.Call(ba.playsound, self._dingsound))
 
         offs_x = -195
-        if len(self._player_info) > 1:
+        if len(self._playerinfos) > 1:
             pstr = ba.Lstr(value='- ${A} -',
                            subs=[('${A}',
                                   ba.Lstr(resource='multiPlayerCountText',
                                           subs=[('${COUNT}',
-                                                 str(len(self._player_info)))
+                                                 str(len(self._playerinfos)))
                                                 ]))])
         else:
             pstr = ba.Lstr(value='- ${A} -',
@@ -636,7 +636,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
             ba.pushcall(ba.WeakCall(self._show_fail))
 
         self._name_str = name_str = ', '.join(
-            [p.name for p in self._player_info])
+            [p.name for p in self._playerinfos])
 
         if self._show_friend_scores:
             self._friends_loading_status = Text(
@@ -662,10 +662,10 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         our_high_scores_all = self._campaign.get_level(
             self._level_name).get_high_scores()
         try:
-            our_high_scores = our_high_scores_all[str(len(self._player_info)) +
+            our_high_scores = our_high_scores_all[str(len(self._playerinfos)) +
                                                   ' Player']
         except Exception:
-            our_high_scores = our_high_scores_all[str(len(self._player_info)) +
+            our_high_scores = our_high_scores_all[str(len(self._playerinfos)) +
                                                   ' Player'] = []
 
         if self._score is not None:
@@ -674,7 +674,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                     'players': [{
                         'name': p.name,
                         'character': p.character
-                    } for p in self._player_info]
+                    } for p in self._playerinfos]
                 }
             ]
             our_high_scores.append(our_score)
@@ -789,7 +789,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
             v_offs_extra = 20
             v_offs_names = 0
             scale = 1.0
-            p_count = len(self._player_info)
+            p_count = len(self._playerinfos)
             h_offs_extra -= 75
             if p_count > 1:
                 h_offs_extra -= 20
@@ -841,7 +841,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                      position=(ts_h_offs + 35 + h_offs_extra,
                                v_offs_extra + ts_height / 2 + -ts_height *
                                (i + 1) / 10 + v_offs_names + v_offs + 11.0),
-                     maxwidth=80.0 + 100.0 * len(self._player_info),
+                     maxwidth=80.0 + 100.0 * len(self._playerinfos),
                      v_align=Text.VAlign.CENTER,
                      color=color1,
                      flash=flash,
@@ -1086,7 +1086,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                 h_offs_extra = 0
                 v_offs_names = 0
                 scale = 1.0
-                p_count = len(self._player_info)
+                p_count = len(self._playerinfos)
                 if p_count > 1:
                     h_offs_extra -= 40
                 if self._score_type != 'points':
@@ -1146,7 +1146,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                          position=(ts_h_offs + 35 + h_offs_extra,
                                    ts_height / 2 + -ts_height * (i + 1) / 10 +
                                    v_offs_names + v_offs + 11.0),
-                         maxwidth=80.0 + 100.0 * len(self._player_info),
+                         maxwidth=80.0 + 100.0 * len(self._playerinfos),
                          v_align=Text.VAlign.CENTER,
                          color=color1,
                          flash=flash,

@@ -563,7 +563,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
                      'outcome': outcome,
                      'score': score,
                      'fail_message': fail_message,
-                     'player_info': self.initial_player_info
+                     'playerinfos': self.initialplayerinfos
                  })
 
     def _on_got_scores_to_beat(self, scores: List[Dict[str, Any]]) -> None:
@@ -1118,8 +1118,8 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
 
             # Respawn them shortly.
             player = msg.getplayer(Player)
-            assert self.initial_player_info is not None
-            respawn_time = 2.0 + len(self.initial_player_info) * 1.0
+            assert self.initialplayerinfos is not None
+            respawn_time = 2.0 + len(self.initialplayerinfos) * 1.0
             player.respawn_timer = ba.Timer(
                 respawn_time, ba.Call(self.spawn_player_if_exists, player))
             player.respawn_icon = RespawnIcon(player, respawn_time)

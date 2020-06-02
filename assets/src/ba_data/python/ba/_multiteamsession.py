@@ -156,7 +156,7 @@ class MultiTeamSession(Session):
         return self._game_number
 
     def on_team_join(self, team: ba.SessionTeam) -> None:
-        team.sessiondata['previous_score'] = team.sessiondata['score'] = 0
+        team.customdata['previous_score'] = team.customdata['score'] = 0
 
     def get_max_players(self) -> int:
         """Return max number of ba.Players allowed to join the game at once."""
@@ -174,7 +174,8 @@ class MultiTeamSession(Session):
         from bastd.tutorial import TutorialActivity
         from bastd.activity.multiteamvictory import (
             TeamSeriesVictoryScoreScreenActivity)
-        from ba import _activitytypes
+        from ba._activitytypes import (TransitionActivity, JoinActivity,
+                                       ScoreScreenActivity)
 
         # If we have a tutorial to show, that's the first thing we do no
         # matter what.
@@ -186,22 +187,20 @@ class MultiTeamSession(Session):
         # to transition us into a round gracefully (otherwise we'd snap from
         # one terrain to another instantly).
         elif isinstance(activity, TutorialActivity):
-            self.setactivity(
-                _ba.new_activity(_activitytypes.TransitionActivity))
+            self.setactivity(_ba.new_activity(TransitionActivity))
 
         # If we're in a between-round activity or a restart-activity, hop
         # into a round.
         elif isinstance(
                 activity,
-            (_activitytypes.JoinActivity, _activitytypes.TransitionActivity,
-             _activitytypes.ScoreScreenActivity)):
+            (JoinActivity, TransitionActivity, ScoreScreenActivity)):
 
             # If we're coming from a series-end activity, reset scores.
             if isinstance(activity, TeamSeriesVictoryScoreScreenActivity):
                 self.stats.reset()
                 self._game_number = 0
                 for team in self.teams:
-                    team.sessiondata['score'] = 0
+                    team.customdata['score'] = 0
 
             # Otherwise just set accum (per-game) scores.
             else:
@@ -221,7 +220,7 @@ class MultiTeamSession(Session):
                 # ..but only ones who have been placed on a team
                 # (ie: no longer sitting in the lobby).
                 try:
-                    has_team = (player.team is not None)
+                    has_team = (player.sessionteam is not None)
                 except NotFoundError:
                     has_team = False
                 if has_team:
@@ -263,7 +262,7 @@ class MultiTeamSession(Session):
         _ba.timer(delay, Call(_ba.playsound, _ba.getsound('boxingBell')))
 
         if announce_winning_team:
-            winning_team = results.get_winning_team()
+            winning_team = results.winning_team
             if winning_team is not None:
                 # Have all players celebrate.
                 celebrate_msg = CelebrateMessage(duration=10.0)

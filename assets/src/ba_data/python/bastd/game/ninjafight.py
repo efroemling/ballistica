@@ -113,12 +113,12 @@ class NinjaFightGame(ba.TeamGameActivity[Player, Team]):
                 ChargerBot, pos=(-5, 3, -2), spawn_time=3.0))
 
         # Add some extras for multiplayer or pro mode.
-        assert self.initial_player_info is not None
-        if len(self.initial_player_info) > 2 or is_pro:
+        assert self.initialplayerinfos is not None
+        if len(self.initialplayerinfos) > 2 or is_pro:
             ba.timer(
                 5.0, lambda: self._bots.spawn_bot(
                     ChargerBot, pos=(0, 3, -5), spawn_time=3.0))
-        if len(self.initial_player_info) > 3 or is_pro:
+        if len(self.initialplayerinfos) > 3 or is_pro:
             ba.timer(
                 6.0, lambda: self._bots.spawn_bot(
                     ChargerBot, pos=(0, 3, 1), spawn_time=3.0))

@@ -196,7 +196,7 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
                  results={
                      'outcome': outcome,
                      'score': self._score,
-                     'player_info': self.initial_player_info
+                     'playerinfos': self.initialplayerinfos
                  })
 
     def _update_bots(self) -> None:

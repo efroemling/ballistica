@@ -441,7 +441,7 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
         if ba.app.kiosk_mode:
             controlsguide.ControlsGuide(delay=3.0, lifespan=10.0,
                                         bright=True).autoretain()
-        assert self.initial_player_info is not None
+        assert self.initialplayerinfos is not None
         abot: Type[SpazBot]
         bbot: Type[SpazBot]
         cbot: Type[SpazBot]
@@ -450,36 +450,36 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
             self._have_tnt = False
             abot = (BrawlerBotLite
                     if self._preset == 'rookie_easy' else BrawlerBot)
-            self._bot_types_initial = [abot] * len(self.initial_player_info)
+            self._bot_types_initial = [abot] * len(self.initialplayerinfos)
             bbot = (BomberBotLite
                     if self._preset == 'rookie_easy' else BomberBot)
             self._bot_types_7 = (
-                [bbot] * (1 if len(self.initial_player_info) < 3 else 2))
+                [bbot] * (1 if len(self.initialplayerinfos) < 3 else 2))
             cbot = (BomberBot if self._preset == 'rookie_easy' else TriggerBot)
             self._bot_types_14 = (
-                [cbot] * (1 if len(self.initial_player_info) < 3 else 2))
+                [cbot] * (1 if len(self.initialplayerinfos) < 3 else 2))
         elif self._preset == 'tournament':
             self._exclude_powerups = []
             self._have_tnt = True
             self._bot_types_initial = (
-                [BrawlerBot] * (1 if len(self.initial_player_info) < 2 else 2))
+                [BrawlerBot] * (1 if len(self.initialplayerinfos) < 2 else 2))
             self._bot_types_7 = (
-                [TriggerBot] * (1 if len(self.initial_player_info) < 3 else 2))
+                [TriggerBot] * (1 if len(self.initialplayerinfos) < 3 else 2))
             self._bot_types_14 = (
-                [ChargerBot] * (1 if len(self.initial_player_info) < 4 else 2))
+                [ChargerBot] * (1 if len(self.initialplayerinfos) < 4 else 2))
         elif self._preset in ['pro', 'pro_easy', 'tournament_pro']:
             self._exclude_powerups = ['curse']
             self._have_tnt = True
             self._bot_types_initial = [ChargerBot] * len(
-                self.initial_player_info)
+                self.initialplayerinfos)
             abot = (BrawlerBot if self._preset == 'pro' else BrawlerBotLite)
             typed_bot_list: List[Type[SpazBot]] = []
             self._bot_types_7 = (
                 typed_bot_list + [abot] + [BomberBot] *
-                (1 if len(self.initial_player_info) < 3 else 2))
+                (1 if len(self.initialplayerinfos) < 3 else 2))
             bbot = (TriggerBotPro if self._preset == 'pro' else TriggerBot)
             self._bot_types_14 = (
-                [bbot] * (1 if len(self.initial_player_info) < 3 else 2))
+                [bbot] * (1 if len(self.initialplayerinfos) < 3 else 2))
         elif self._preset in ['uber', 'uber_easy']:
             self._exclude_powerups = []
             self._have_tnt = True
@@ -487,12 +487,11 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
             bbot = (TriggerBotPro if self._preset == 'uber' else TriggerBot)
             typed_bot_list_2: List[Type[SpazBot]] = []
             self._bot_types_initial = (typed_bot_list_2 + [StickyBot] +
-                                       [abot] * len(self.initial_player_info))
+                                       [abot] * len(self.initialplayerinfos))
             self._bot_types_7 = (
-                [bbot] * (1 if len(self.initial_player_info) < 3 else 2))
+                [bbot] * (1 if len(self.initialplayerinfos) < 3 else 2))
             self._bot_types_14 = (
-                [ExplodeyBot] *
-                (1 if len(self.initial_player_info) < 3 else 2))
+                [ExplodeyBot] * (1 if len(self.initialplayerinfos) < 3 else 2))
         else:
             raise Exception()
 
@@ -794,7 +793,7 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
                      'outcome': outcome,
                      'score': scoreval,
                      'score_order': 'decreasing',
-                     'player_info': self.initial_player_info
+                     'playerinfos': self.initialplayerinfos
                  })
 
     def handlemessage(self, msg: Any) -> Any:
@@ -805,8 +804,8 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
 
             # Respawn them shortly.
             player = msg.getplayer(Player)
-            assert self.initial_player_info is not None
-            respawn_time = 2.0 + len(self.initial_player_info) * 1.0
+            assert self.initialplayerinfos is not None
+            respawn_time = 2.0 + len(self.initialplayerinfos) * 1.0
             player.respawn_timer = ba.Timer(
                 respawn_time, ba.Call(self.spawn_player_if_exists, player))
             player.respawn_icon = RespawnIcon(player, respawn_time)

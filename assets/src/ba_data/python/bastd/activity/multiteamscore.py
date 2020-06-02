@@ -121,8 +121,8 @@ class MultiTeamScoreScreenActivity(ScoreScreenActivity):
 
             # Results is already sorted; just convert it into a list of
             # score-set-entries.
-            for winner in results.get_winners():
-                for team in winner.teams:
+            for winnergroup in results.winnergroups:
+                for team in winnergroup.teams:
                     if len(team.players) == 1:
                         player_entry = _get_player_score_set_entry(
                             team.players[0])
@@ -172,8 +172,8 @@ class MultiTeamScoreScreenActivity(ScoreScreenActivity):
         _txt(180, 4, ba.Lstr(resource='killsText'))
         _txt(280, 4, ba.Lstr(resource='deathsText'), maxwidth=100)
 
-        score_name = 'Score' if results is None else results.get_score_name()
-        translated = ba.Lstr(translate=('scoreNames', score_name))
+        score_label = 'Score' if results is None else results.score_label
+        translated = ba.Lstr(translate=('scoreNames', score_label))
 
         _txt(390, 0, translated)
 

@@ -74,7 +74,7 @@ class PlayerRecord:
         self._multi_kill_timer: Optional[ba.Timer] = None
         self._multi_kill_count = 0
         self._stats = weakref.ref(stats)
-        self._last_player: Optional[ba.SessionPlayer] = None
+        self._last_sessionplayer: Optional[ba.SessionPlayer] = None
         self._player: Optional[ba.SessionPlayer] = None
         self._team: Optional[ReferenceType[ba.SessionTeam]] = None
         self.streak = 0
@@ -110,7 +110,7 @@ class PlayerRecord:
 
     def get_icon(self) -> Dict[str, Any]:
         """Get the icon for this instance's player."""
-        player = self._last_player
+        player = self._last_sessionplayer
         assert player is not None
         return player.get_icon()
 
@@ -127,12 +127,12 @@ class PlayerRecord:
             return stats.getactivity()
         return None
 
-    def associate_with_player(self, player: ba.SessionPlayer) -> None:
-        """Associate this entry with a ba.Player."""
-        self._team = weakref.ref(player.team)
-        self.character = player.character
-        self._last_player = player
-        self._player = player
+    def associate_with_player(self, sessionplayer: ba.SessionPlayer) -> None:
+        """Associate this entry with a ba.SessionPlayer."""
+        self._team = weakref.ref(sessionplayer.sessionteam)
+        self.character = sessionplayer.character
+        self._last_sessionplayer = sessionplayer
+        self._player = sessionplayer
         self.streak = 0
 
     def _end_multi_kill(self) -> None:
@@ -141,8 +141,8 @@ class PlayerRecord:
 
     def get_last_player(self) -> ba.SessionPlayer:
         """Return the last ba.Player we were associated with."""
-        assert self._last_player is not None
-        return self._last_player
+        assert self._last_sessionplayer is not None
+        return self._last_sessionplayer
 
     def submit_kill(self, showpoints: bool = True) -> None:
         """Submit a kill for this player entry."""
@@ -307,15 +307,14 @@ class Stats:
 
     def register_player(self, player: ba.SessionPlayer) -> None:
         """Register a player with this score-set."""
+        assert player.exists()  # Invalid refs should never be passed to funcs.
         name = player.getname()
-        name_full = player.getname(full=True)
-        try:
+        if name in self._player_records:
             # If the player already exists, update his character and such as
             # it may have changed.
             self._player_records[name].associate_with_player(player)
-        except Exception:
-            # FIXME: Shouldn't use top level Exception catch for logic.
-            #  Should only have this as a fallback and always log it.
+        else:
+            name_full = player.getname(full=True)
             self._player_records[name] = PlayerRecord(name, name_full, player,
                                                       self)
 
@@ -330,11 +329,6 @@ class Stats:
             if lastplayer and lastplayer.getname() == record_id:
                 records[record_id] = record
         return records
-
-    def player_got_hit(self, player: ba.SessionPlayer) -> None:
-        """Call this when a player got hit."""
-        s_player = self._player_records[player.getname()]
-        s_player.streak = 0
 
     def player_scored(self,
                       player: ba.Player,

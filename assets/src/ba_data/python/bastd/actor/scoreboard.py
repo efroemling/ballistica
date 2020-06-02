@@ -343,6 +343,8 @@ class Scoreboard:
     category: Gameplay Classes
     """
 
+    _STORENAME = ba.storagename('entry')
+
     def __init__(self, label: ba.Lstr = None, score_split: float = 0.7):
         """Instantiate a scoreboard.
 
@@ -382,8 +384,8 @@ class Scoreboard:
 
             # Create a proxy in the team which will kill
             # our entry when it dies (for convenience)
-            assert '_scoreboard_entry' not in team.gamedata
-            team.gamedata['_scoreboard_entry'] = _EntryProxy(self, team)
+            assert self._STORENAME not in team.customdata
+            team.customdata[self._STORENAME] = _EntryProxy(self, team)
 
         # Now set the entry.
         self._entries[team.id].set_value(score=score,

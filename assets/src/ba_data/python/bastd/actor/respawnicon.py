@@ -39,6 +39,9 @@ class RespawnIcon:
     This is used to indicate that a ba.Player is waiting to respawn.
     """
 
+    _MASKTEXSTORENAME = ba.storagename('masktex')
+    _ICONSSTORENAME = ba.storagename('icons')
+
     def __init__(self, player: ba.Player, respawn_time: float):
         """Instantiate with a ba.Player and respawn_time (in seconds)."""
         self._visible = True
@@ -46,10 +49,10 @@ class RespawnIcon:
         on_right, offs_extra, respawn_icons = self._get_context(player)
 
         # Cache our mask tex on the team for easy access.
-        mask_tex = player.team.gamedata.get('_spaz_respawn_icons_mask_tex')
+        mask_tex = player.team.customdata.get(self._MASKTEXSTORENAME)
         if mask_tex is None:
             mask_tex = ba.gettexture('characterIconMask')
-            player.team.gamedata['_spaz_respawn_icons_mask_tex'] = mask_tex
+            player.team.customdata[self._MASKTEXSTORENAME] = mask_tex
         assert isinstance(mask_tex, ba.Texture)
 
         # Now find the first unused slot and use that.
@@ -139,9 +142,9 @@ class RespawnIcon:
             on_right = player.team.id % 2 == 1
 
             # Store a list of icons in the team.
-            icons = player.team.gamedata.get('_spaz_respawn_icons')
+            icons = player.team.customdata.get(self._ICONSSTORENAME)
             if icons is None:
-                player.team.gamedata['_spaz_respawn_icons'] = icons = {}
+                player.team.customdata[self._ICONSSTORENAME] = icons = {}
             assert isinstance(icons, dict)
 
             offs_extra = -20
@@ -149,9 +152,9 @@ class RespawnIcon:
             on_right = False
 
             # Store a list of icons in the activity.
-            icons = activity.gamedata.get('_spaz_respawn_icons')
+            icons = activity.customdata.get(self._ICONSSTORENAME)
             if icons is None:
-                activity.gamedata['_spaz_respawn_icons'] = icons = {}
+                activity.customdata[self._ICONSSTORENAME] = icons = {}
             assert isinstance(icons, dict)
 
             if isinstance(activity.session, ba.FreeForAllSession):

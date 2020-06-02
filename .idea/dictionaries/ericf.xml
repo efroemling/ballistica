@@ -398,6 +398,7 @@
       <w>curstate</w>
       <w>curtime</w>
       <w>curtimestr</w>
+      <w>customdata</w>
       <w>customizebrowser</w>
       <w>cutscenes</w>
       <w>cval</w>
@@ -604,6 +605,7 @@
       <w>factoryclass</w>
       <w>fallbacks</w>
       <w>farthestpt</w>
+      <w>fback</w>
       <w>fbase</w>
       <w>fclose</w>
       <w>fcmd</w>
@@ -874,6 +876,7 @@
       <w>icns</w>
       <w>iconpicker</w>
       <w>iconscale</w>
+      <w>iconsstorename</w>
       <w>ident</w>
       <w>idevices</w>
       <w>ifeq</w>
@@ -910,6 +913,7 @@
       <w>infotextcolor</w>
       <w>inidividual</w>
       <w>initializers</w>
+      <w>initialplayerinfos</w>
       <w>initing</w>
       <w>inits</w>
       <w>inmobi</w>
@@ -1110,6 +1114,8 @@
       <w>mapselect</w>
       <w>maptype</w>
       <w>markupbase</w>
+      <w>masktex</w>
+      <w>masktexstorename</w>
       <w>mathmodule</w>
       <w>mathnode</w>
       <w>mathutils</w>
@@ -1163,6 +1169,7 @@
       <w>moduledir</w>
       <w>modulefinder</w>
       <w>modulename</w>
+      <w>modulepath</w>
       <w>modutils</w>
       <w>moola</w>
       <w>mopaque</w>
@@ -1204,6 +1211,7 @@
       <w>myhome</w>
       <w>myinput</w>
       <w>mylist</w>
+      <w>mymodule</w>
       <w>mynode</w>
       <w>myobj</w>
       <w>myprojname</w>
@@ -1214,6 +1222,7 @@
       <w>mypytype</w>
       <w>mysound</w>
       <w>mytextnode</w>
+      <w>mythingie</w>
       <w>myweakcall</w>
       <w>mywidget</w>
       <w>namedarg</w>
@@ -1360,6 +1369,7 @@
       <w>pkgutil</w>
       <w>playercast</w>
       <w>playerdata</w>
+      <w>playerinfos</w>
       <w>playerlostspaz</w>
       <w>playernode</w>
       <w>playerpt</w>
@@ -1533,6 +1543,7 @@
       <w>qrcode</w>
       <w>qrencode</w>
       <w>qual</w>
+      <w>qualname</w>
       <w>quoprimime</w>
       <w>rando</w>
       <w>randommodule</w>
@@ -1786,8 +1797,10 @@
       <w>steelseries</w>
       <w>stickman</w>
       <w>storable</w>
+      <w>storagename</w>
       <w>storedhash</w>
       <w>storeitemui</w>
+      <w>storename</w>
       <w>strftime</w>
       <w>stringprep</w>
       <w>stringptr</w>
@@ -1913,6 +1926,7 @@
       <w>thanvannispen</w>
       <w>thelaststand</w>
       <w>themself</w>
+      <w>thingie</w>
       <w>threadtype</w>
       <w>throwiness</w>
       <w>timedisplay</w>
@@ -2095,6 +2109,8 @@
       <w>willeval</w>
       <w>wincfg</w>
       <w>wincount</w>
+      <w>winnergroup</w>
+      <w>winnergroups</w>
       <w>winplt</w>
       <w>winprj</w>
       <w>winref</w>

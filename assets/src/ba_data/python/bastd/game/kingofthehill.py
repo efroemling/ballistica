@@ -154,7 +154,6 @@ class KingOfTheHillGame(ba.TeamGameActivity[Player, Team]):
         ba.timer(1.0, self._tick, repeat=True)
         self._flag_state = FlagState.NEW
         Flag.project_stand(self._flag_pos)
-
         self._flag = Flag(position=self._flag_pos,
                           touchable=False,
                           color=(1, 1, 1))

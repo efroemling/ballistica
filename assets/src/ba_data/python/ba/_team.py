@@ -56,15 +56,10 @@ class SessionTeam:
         players
             The list of ba.SessionPlayers on the team.
 
-        gamedata
-            A dict for use by the current ba.Activity
-            for storing data associated with this team.
-            This gets cleared for each new ba.Activity.
-
-        sessiondata
+        customdata
             A dict for use by the current ba.Session for
             storing data associated with this team.
-            Unlike gamedata, this persists for the duration
+            Unlike customdata, this persists for the duration
             of the session.
     """
 
@@ -72,8 +67,7 @@ class SessionTeam:
     name: Union[ba.Lstr, str]
     color: Tuple[float, ...]  # FIXME: can't we make this fixed len?
     players: List[ba.SessionPlayer]
-    gamedata: Dict
-    sessiondata: Dict
+    customdata: dict
     id: int
 
     def __init__(self,
@@ -90,12 +84,12 @@ class SessionTeam:
         self.name = name
         self.color = tuple(color)
         self.players = []
-        self.sessiondata = {}
+        self.customdata = {}
         self.gameteam: Optional[Team] = None
 
-    def reset_sessiondata(self) -> None:
+    def leave(self) -> None:
         """(internal)"""
-        self.sessiondata = {}
+        self.customdata = {}
 
 
 PlayerType = TypeVar('PlayerType', bound='ba.Player')
@@ -119,10 +113,7 @@ class Team(Generic[PlayerType]):
     _sessionteam: ReferenceType[SessionTeam]
     _expired: bool
     _postinited: bool
-    _gamedata: dict
-
-    # TODO: kill these.
-    sessiondata: dict
+    _customdata: dict
 
     # NOTE: avoiding having any __init__() here since it seems to not
     # get called by default if a dataclass inherits from us.
@@ -149,8 +140,7 @@ class Team(Generic[PlayerType]):
         self.id = sessionteam.id
         self.name = sessionteam.name
         self.color = sessionteam.color
-        self.sessiondata = sessionteam.sessiondata
-        self._gamedata = {}
+        self._customdata = {}
         self._expired = False
         self._postinited = True
 
@@ -160,13 +150,12 @@ class Team(Generic[PlayerType]):
         self.id = team_id
         self.name = name
         self.color = color
-        self._gamedata = {}
-        self.sessiondata = {}
+        self._customdata = {}
         self._expired = False
         self._postinited = True
 
     @property
-    def gamedata(self) -> dict:
+    def customdata(self) -> dict:
         """Arbitrary values associated with the team.
         Though it is encouraged that most player values be properly defined
         on the ba.Team subclass, it may be useful for player-agnostic
@@ -177,7 +166,7 @@ class Team(Generic[PlayerType]):
         """
         assert self._postinited
         assert not self._expired
-        return self._gamedata
+        return self._customdata
 
     def leave(self) -> None:
         """Called when the Team leaves a running game.
@@ -186,7 +175,7 @@ class Team(Generic[PlayerType]):
         """
         assert self._postinited
         assert not self._expired
-        del self._gamedata
+        del self._customdata
         del self.players
 
     def expire(self) -> None:
@@ -203,7 +192,7 @@ class Team(Generic[PlayerType]):
         except Exception:
             print_exception(f'Error in on_expire for {self}.')
 
-        del self._gamedata
+        del self._customdata
         del self.players
 
     def on_expire(self) -> None:

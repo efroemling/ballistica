@@ -103,7 +103,7 @@ class TeamVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
 
     def _show_team_name(self, pos_v: float, team: ba.SessionTeam,
                         kill_delay: float, shiftdelay: float) -> None:
-        del kill_delay  # unused arg
+        del kill_delay  # Unused arg.
         ZoomText(ba.Lstr(value='${A}:', subs=[('${A}', team.name)]),
                  position=(100, pos_v),
                  shiftposition=(-150, pos_v),
@@ -115,9 +115,9 @@ class TeamVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                  color=team.color,
                  jitter=1.0).autoretain()
 
-    def _show_team_old_score(self, pos_v: float, team: ba.SessionTeam,
+    def _show_team_old_score(self, pos_v: float, sessionteam: ba.SessionTeam,
                              shiftdelay: float) -> None:
-        ZoomText(str(team.sessiondata['score'] - 1),
+        ZoomText(str(sessionteam.customdata['score'] - 1),
                  position=(150, pos_v),
                  maxwidth=100,
                  color=(0.6, 0.6, 0.7),
@@ -129,11 +129,11 @@ class TeamVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                  h_align='left',
                  jitter=1.0).autoretain()
 
-    def _show_team_score(self, pos_v: float, team: ba.SessionTeam,
+    def _show_team_score(self, pos_v: float, sessionteam: ba.SessionTeam,
                          scored: bool, kill_delay: float,
                          shiftdelay: float) -> None:
-        del kill_delay  # unused arg
-        ZoomText(str(team.sessiondata['score']),
+        del kill_delay  # Unused arg.
+        ZoomText(str(sessionteam.customdata['score']),
                  position=(150, pos_v),
                  maxwidth=100,
                  color=(1.0, 0.9, 0.5) if scored else (0.6, 0.6, 0.7),

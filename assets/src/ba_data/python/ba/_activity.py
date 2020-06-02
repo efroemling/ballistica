@@ -215,7 +215,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
 
         self.lobby = None
         self._stats: Optional[ba.Stats] = None
-        self._gamedata: Optional[dict] = {}
+        self._customdata: Optional[dict] = {}
 
     def __del__(self) -> None:
 
@@ -265,15 +265,15 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         """
 
     @property
-    def gamedata(self) -> dict:
+    def customdata(self) -> dict:
         """Entities needing to store simple data with an activity can put it
         here. This dict will be deleted when the activity expires, so contained
         objects generally do not need to worry about handling expired
         activities.
         """
         assert not self._expired
-        assert isinstance(self._gamedata, dict)
-        return self._gamedata
+        assert isinstance(self._customdata, dict)
+        return self._customdata
 
     @property
     def expired(self) -> bool:
@@ -574,9 +574,9 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
 
     def add_player(self, sessionplayer: ba.SessionPlayer) -> None:
         """(internal)"""
-        assert sessionplayer.team is not None
+        assert sessionplayer.sessionteam is not None
         sessionplayer.resetinput()
-        sessionteam = sessionplayer.team
+        sessionteam = sessionplayer.sessionteam
         assert sessionplayer in sessionteam.players
         team = sessionteam.gameteam
         assert team is not None
@@ -608,7 +608,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
 
         player: Any = sessionplayer.gameplayer
         assert isinstance(player, self._playertype)
-        team: Any = sessionplayer.team.gameteam
+        team: Any = sessionplayer.sessionteam.gameteam
         assert isinstance(team, self._teamtype)
 
         assert player in team.players
@@ -795,9 +795,9 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
             print_exception(f'Error in Activity on_expire() for {self}.')
 
         try:
-            self._gamedata = None
+            self._customdata = None
         except Exception:
-            print_exception(f'Error clearing gamedata for {self}.')
+            print_exception(f'Error clearing customdata for {self}.')
 
         # Don't want to be holding any delay-delete refs at this point.
         self._prune_delay_deletes()

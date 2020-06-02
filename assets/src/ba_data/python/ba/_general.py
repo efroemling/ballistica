@@ -25,6 +25,7 @@ import gc
 import types
 import weakref
 import random
+import inspect
 from typing import TYPE_CHECKING, TypeVar
 from typing_extensions import Protocol
 
@@ -332,7 +333,45 @@ def _verify_object_death(wref: ReferenceType) -> None:
     print(f'{Clr.YLW}Active References:{Clr.RST}')
     i = 1
     for ref in refs:
-        # if isinstance(ref, types.FrameType):
-        #     continue
         print(f'{Clr.YLW}  reference {i}:{Clr.BLU} {ref}{Clr.RST}')
         i += 1
+
+
+def storagename(basename: str) -> str:
+    """Generate a (hopefully) unique name for storing things in public places.
+
+    Category: General Utility Functions
+
+    This consists of a leading underscore, the module path at the
+    call site with dots replaced by underscores, the class name, and
+    the provided suffix. When storing data in public places such as
+    'customdata' dicts, this minimizes the chance of collisions if a
+    module or class is duplicated or renamed.
+
+    # Example: generate a unique name for storage purposes:
+    class MyThingie:
+
+        # This will give something like '_mymodule_submodule_mythingie_data'.
+        _STORENAME = ba.storagename('data')
+
+        def __init__(self, activity):
+            # Store some data in the Activity we were passed
+            activity.customdata[self._STORENAME] = {}
+    """
+    frame = inspect.currentframe()
+    if frame is None:
+        raise RuntimeError('Cannot get current stack frame.')
+    fback = frame.f_back
+    if fback is None:
+        raise RuntimeError('Cannot get parent stack frame.')
+    modulepath = fback.f_globals.get('__name__')
+    if modulepath is None:
+        raise RuntimeError('Cannot get parent stack module path.')
+    assert isinstance(modulepath, str)
+    qualname = fback.f_locals.get('__qualname__')
+    if qualname is not None:
+        assert isinstance(qualname, str)
+        fullpath = f'_{modulepath}_{qualname.lower()}_{basename}'
+    else:
+        fullpath = f'_{modulepath}_{basename}'
+    return fullpath.replace('.', '_')

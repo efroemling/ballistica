@@ -76,7 +76,7 @@ class FreeForAllSession(MultiTeamSession):
             TeamSeriesVictoryScoreScreenActivity)
         from bastd.activity.freeforallvictory import (
             FreeForAllVictoryScoreScreenActivity)
-        winners = results.get_winners()
+        winners = results.winnergroups
 
         # If there's multiple players and everyone has the same score,
         # call it a draw.
@@ -91,20 +91,20 @@ class FreeForAllSession(MultiTeamSession):
             for i, winner in enumerate(winners):
                 for team in winner.teams:
                     points = (point_awards[i] if i in point_awards else 0)
-                    team.sessiondata['previous_score'] = (
-                        team.sessiondata['score'])
-                    team.sessiondata['score'] += points
+                    team.customdata['previous_score'] = (
+                        team.customdata['score'])
+                    team.customdata['score'] += points
 
             series_winners = [
                 team for team in self.teams
-                if team.sessiondata['score'] >= self._ffa_series_length
+                if team.customdata['score'] >= self._ffa_series_length
             ]
             series_winners.sort(reverse=True,
-                                key=lambda tm: (tm.sessiondata['score']))
+                                key=lambda tm: (tm.customdata['score']))
             if (len(series_winners) == 1
                     or (len(series_winners) > 1
-                        and series_winners[0].sessiondata['score'] !=
-                        series_winners[1].sessiondata['score'])):
+                        and series_winners[0].customdata['score'] !=
+                        series_winners[1].customdata['score'])):
                 self.setactivity(
                     _ba.new_activity(TeamSeriesVictoryScoreScreenActivity,
                                      {'winner': series_winners[0]}))

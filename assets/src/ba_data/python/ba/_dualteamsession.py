@@ -52,18 +52,17 @@ class DualTeamSession(MultiTeamSession):
             TeamVictoryScoreScreenActivity)
         from bastd.activity.multiteamvictory import (
             TeamSeriesVictoryScoreScreenActivity)
-        winners = results.get_winners()
+        winners = results.winnergroups
 
         # If everyone has the same score, call it a draw.
         if len(winners) < 2:
             self.setactivity(_ba.new_activity(DrawScoreScreenActivity))
         else:
             winner = winners[0].teams[0]
-            winner.sessiondata['score'] += 1
+            winner.customdata['score'] += 1
 
             # If a team has won, show final victory screen.
-            if winner.sessiondata['score'] >= (self._series_length -
-                                               1) / 2 + 1:
+            if winner.customdata['score'] >= (self._series_length - 1) / 2 + 1:
                 self.setactivity(
                     _ba.new_activity(TeamSeriesVictoryScoreScreenActivity,
                                      {'winner': winner}))

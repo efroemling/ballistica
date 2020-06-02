@@ -23,7 +23,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, TypeVar, Generic
+from typing import TYPE_CHECKING, TypeVar, Generic, cast
 
 import _ba
 from ba._error import SessionPlayerNotFoundError, print_exception
@@ -85,8 +85,7 @@ class Player(Generic[TeamType]):
     _nodeactor: Optional[ba.NodeActor]
     _expired: bool
     _postinited: bool
-    sessiondata: dict
-    _gamedata: dict
+    _customdata: dict
 
     # NOTE: avoiding having any __init__() here since it seems to not
     # get called by default if a dataclass inherits from us.
@@ -118,10 +117,9 @@ class Player(Generic[TeamType]):
         self.character = sessionplayer.character
         self.color = sessionplayer.color
         self.highlight = sessionplayer.highlight
-        self._team = sessionplayer.team.gameteam  # type: ignore
+        self._team = cast(TeamType, sessionplayer.sessionteam.gameteam)
         assert self._team is not None
-        self.sessiondata = sessionplayer.sessiondata
-        self._gamedata = {}
+        self._customdata = {}
         self._expired = False
         self._postinited = True
         node = _ba.newnode('player', attrs={'playerID': sessionplayer.id})
@@ -144,7 +142,7 @@ class Player(Generic[TeamType]):
             print_exception(f'Error killing actor on leave for {self}')
         self._nodeactor = None
         del self._team
-        del self._gamedata
+        del self._customdata
 
     def expire(self) -> None:
         """Called when the Player is expiring (when its Activity does so).
@@ -163,7 +161,7 @@ class Player(Generic[TeamType]):
         self._nodeactor = None
         self.actor = None
         del self._team
-        del self._gamedata
+        del self._customdata
 
     def on_expire(self) -> None:
         """Can be overridden to handle player expiration.
@@ -182,7 +180,7 @@ class Player(Generic[TeamType]):
         return self._team
 
     @property
-    def gamedata(self) -> dict:
+    def customdata(self) -> dict:
         """Arbitrary values associated with the player.
         Though it is encouraged that most player values be properly defined
         on the ba.Player subclass, it may be useful for player-agnostic
@@ -193,7 +191,7 @@ class Player(Generic[TeamType]):
         """
         assert self._postinited
         assert not self._expired
-        return self._gamedata
+        return self._customdata
 
     @property
     def sessionplayer(self) -> ba.SessionPlayer:

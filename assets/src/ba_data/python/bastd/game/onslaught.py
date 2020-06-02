@@ -757,7 +757,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
                 'outcome': outcome,
                 'score': score,
                 'fail_message': fail_message,
-                'player_info': self.initial_player_info
+                'playerinfos': self.initialplayerinfos
             },
             delay=delay)
 
@@ -844,10 +844,10 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         for player in self.players:
             try:
                 if player.is_alive():
-                    assert self.initial_player_info is not None
+                    assert self.initialplayerinfos is not None
                     self.stats.player_scored(
                         player,
-                        int(100 / len(self.initial_player_info)),
+                        int(100 / len(self.initialplayerinfos)),
                         scale=1.4,
                         color=(0.6, 0.6, 1.0, 1.0),
                         title=ba.Lstr(resource='completionBonusText'),

@@ -61,23 +61,25 @@ class ConquestFlag(Flag):
 class Player(ba.Player['Team']):
     """Our player type for this game."""
 
+    # FIXME: We shouldn't be using customdata here
+    # (but need to update respawn funcs accordingly first).
     @property
     def respawn_timer(self) -> Optional[ba.Timer]:
         """Type safe access to standard respawn timer."""
-        return self.gamedata.get('respawn_timer', None)
+        return self.customdata.get('respawn_timer', None)
 
     @respawn_timer.setter
     def respawn_timer(self, value: Optional[ba.Timer]) -> None:
-        self.gamedata['respawn_timer'] = value
+        self.customdata['respawn_timer'] = value
 
     @property
     def respawn_icon(self) -> Optional[RespawnIcon]:
         """Type safe access to standard respawn icon."""
-        return self.gamedata.get('respawn_icon', None)
+        return self.customdata.get('respawn_icon', None)
 
     @respawn_icon.setter
     def respawn_icon(self, value: Optional[RespawnIcon]) -> None:
-        self.gamedata['respawn_icon'] = value
+        self.customdata['respawn_icon'] = value
 
 
 class Team(ba.Team[Player]):

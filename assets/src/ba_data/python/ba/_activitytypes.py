@@ -27,13 +27,24 @@ import _ba
 from ba._activity import Activity
 from ba._music import setmusic, MusicType
 # False positive due to our class_generics_filter custom pylint filter.
-from ba._player import Player  # pylint: disable=W0611
-from ba._team import Team  # pylint: disable=W0611
+from ba import _player
+from ba import _team
 
 if TYPE_CHECKING:
     from typing import Any, Dict, Optional
     import ba
     from ba._lobby import JoinInfo
+
+
+# Even though we don't need custom Player/Team types, define empty ones
+# so we don't have ba.Player[Any] and ba.Team[Any] as our types which
+# reduces type safety.
+class Player(_player.Player['Team']):
+    """Our player type for this game."""
+
+
+class Team(_team.Team[Player]):
+    """Our team type for this game."""
 
 
 class EndSessionActivity(Activity[Player, Team]):
@@ -158,7 +169,7 @@ class ScoreScreenActivity(Activity[Player, Team]):
         self._custom_continue_message: Optional[ba.Lstr] = None
         self._server_transitioning: Optional[bool] = None
 
-    def on_player_join(self, player: ba.Player) -> None:
+    def on_player_join(self, player: Player) -> None:
         from ba import _general
         super().on_player_join(player)
         time_till_assign = max(
@@ -224,7 +235,7 @@ class ScoreScreenActivity(Activity[Player, Team]):
         # Otherwise end the activity normally.
         self.end()
 
-    def _safe_assign(self, player: ba.Player) -> None:
+    def _safe_assign(self, player: Player) -> None:
 
         # Just to be extra careful, don't assign if we're transitioning out.
         # (though theoretically that would be ok).

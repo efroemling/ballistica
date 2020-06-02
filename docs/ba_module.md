@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-06-01 for Ballistica version 1.5.0 build 20039</em></h4>
+<h4><em>last updated on 2020-06-02 for Ballistica version 1.5.0 build 20041</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -92,6 +92,7 @@
    <li><a href="#function_ba_screenmessage">ba.screenmessage()</a></li>
    <li><a href="#function_ba_set_analytics_screen">ba.set_analytics_screen()</a></li>
    <li><a href="#function_ba_setlanguage">ba.setlanguage()</a></li>
+   <li><a href="#function_ba_storagename">ba.storagename()</a></li>
    <li><a href="#function_ba_time">ba.time()</a></li>
    <li><a href="#function_ba_timer">ba.timer()</a></li>
    <li><a href="#function_ba_timestring">ba.timestring()</a></li>
@@ -343,8 +344,16 @@ actually award achievements.</p>
     can overlap during transitions.</p>
 
 <h3>Attributes:</h3>
-<h5><a href="#attr_ba_Activity__expired">expired</a>, <a href="#attr_ba_Activity__gamedata">gamedata</a>, <a href="#attr_ba_Activity__globalsnode">globalsnode</a>, <a href="#attr_ba_Activity__players">players</a>, <a href="#attr_ba_Activity__playertype">playertype</a>, <a href="#attr_ba_Activity__session">session</a>, <a href="#attr_ba_Activity__settings_raw">settings_raw</a>, <a href="#attr_ba_Activity__stats">stats</a>, <a href="#attr_ba_Activity__teams">teams</a>, <a href="#attr_ba_Activity__teamtype">teamtype</a></h5>
+<h5><a href="#attr_ba_Activity__customdata">customdata</a>, <a href="#attr_ba_Activity__expired">expired</a>, <a href="#attr_ba_Activity__globalsnode">globalsnode</a>, <a href="#attr_ba_Activity__players">players</a>, <a href="#attr_ba_Activity__playertype">playertype</a>, <a href="#attr_ba_Activity__session">session</a>, <a href="#attr_ba_Activity__settings_raw">settings_raw</a>, <a href="#attr_ba_Activity__stats">stats</a>, <a href="#attr_ba_Activity__teams">teams</a>, <a href="#attr_ba_Activity__teamtype">teamtype</a></h5>
 <dl>
+<dt><h4><a name="attr_ba_Activity__customdata">customdata</a></h4></dt><dd>
+<p><span>dict</span></p>
+<p>Entities needing to store simple data with an activity can put it
+        here. This dict will be deleted when the activity expires, so contained
+        objects generally do not need to worry about handling expired
+        activities.</p>
+
+</dd>
 <dt><h4><a name="attr_ba_Activity__expired">expired</a></h4></dt><dd>
 <p><span>bool</span></p>
 <p>Whether the activity is expired.</p>
@@ -352,14 +361,6 @@ actually award achievements.</p>
 <p>        An activity is set as expired when shutting down.
         At this point no new nodes, timers, etc should be made,
         run, etc, and the activity should be considered a 'zombie'.</p>
-
-</dd>
-<dt><h4><a name="attr_ba_Activity__gamedata">gamedata</a></h4></dt><dd>
-<p><span>dict</span></p>
-<p>Entities needing to store simple data with an activity can put it
-        here. This dict will be deleted when the activity expires, so contained
-        objects generally do not need to worry about handling expired
-        activities.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_Activity__globalsnode">globalsnode</a></h4></dt><dd>
@@ -1552,8 +1553,16 @@ start_long_action(callback_when_done=<a href="#class_ba_ContextCall">ba.ContextC
 <h3>Attributes Inherited:</h3>
 <h5><a href="#attr_ba_Activity__players">players</a>, <a href="#attr_ba_Activity__settings_raw">settings_raw</a>, <a href="#attr_ba_Activity__teams">teams</a></h5>
 <h3>Attributes Defined Here:</h3>
-<h5><a href="#attr_ba_CoopGameActivity__expired">expired</a>, <a href="#attr_ba_CoopGameActivity__gamedata">gamedata</a>, <a href="#attr_ba_CoopGameActivity__globalsnode">globalsnode</a>, <a href="#attr_ba_CoopGameActivity__map">map</a>, <a href="#attr_ba_CoopGameActivity__playertype">playertype</a>, <a href="#attr_ba_CoopGameActivity__session">session</a>, <a href="#attr_ba_CoopGameActivity__stats">stats</a>, <a href="#attr_ba_CoopGameActivity__teamtype">teamtype</a></h5>
+<h5><a href="#attr_ba_CoopGameActivity__customdata">customdata</a>, <a href="#attr_ba_CoopGameActivity__expired">expired</a>, <a href="#attr_ba_CoopGameActivity__globalsnode">globalsnode</a>, <a href="#attr_ba_CoopGameActivity__map">map</a>, <a href="#attr_ba_CoopGameActivity__playertype">playertype</a>, <a href="#attr_ba_CoopGameActivity__session">session</a>, <a href="#attr_ba_CoopGameActivity__stats">stats</a>, <a href="#attr_ba_CoopGameActivity__teamtype">teamtype</a></h5>
 <dl>
+<dt><h4><a name="attr_ba_CoopGameActivity__customdata">customdata</a></h4></dt><dd>
+<p><span>dict</span></p>
+<p>Entities needing to store simple data with an activity can put it
+        here. This dict will be deleted when the activity expires, so contained
+        objects generally do not need to worry about handling expired
+        activities.</p>
+
+</dd>
 <dt><h4><a name="attr_ba_CoopGameActivity__expired">expired</a></h4></dt><dd>
 <p><span>bool</span></p>
 <p>Whether the activity is expired.</p>
@@ -1561,14 +1570,6 @@ start_long_action(callback_when_done=<a href="#class_ba_ContextCall">ba.ContextC
 <p>        An activity is set as expired when shutting down.
         At this point no new nodes, timers, etc should be made,
         run, etc, and the activity should be considered a 'zombie'.</p>
-
-</dd>
-<dt><h4><a name="attr_ba_CoopGameActivity__gamedata">gamedata</a></h4></dt><dd>
-<p><span>dict</span></p>
-<p>Entities needing to store simple data with an activity can put it
-        here. This dict will be deleted when the activity expires, so contained
-        objects generally do not need to worry about handling expired
-        activities.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_CoopGameActivity__globalsnode">globalsnode</a></h4></dt><dd>
@@ -2145,8 +2146,16 @@ its time with lingering corpses, sound effects, etc.</p>
 <h3>Attributes Inherited:</h3>
 <h5><a href="#attr_ba_Activity__players">players</a>, <a href="#attr_ba_Activity__settings_raw">settings_raw</a>, <a href="#attr_ba_Activity__teams">teams</a></h5>
 <h3>Attributes Defined Here:</h3>
-<h5><a href="#attr_ba_GameActivity__expired">expired</a>, <a href="#attr_ba_GameActivity__gamedata">gamedata</a>, <a href="#attr_ba_GameActivity__globalsnode">globalsnode</a>, <a href="#attr_ba_GameActivity__map">map</a>, <a href="#attr_ba_GameActivity__playertype">playertype</a>, <a href="#attr_ba_GameActivity__session">session</a>, <a href="#attr_ba_GameActivity__stats">stats</a>, <a href="#attr_ba_GameActivity__teamtype">teamtype</a></h5>
+<h5><a href="#attr_ba_GameActivity__customdata">customdata</a>, <a href="#attr_ba_GameActivity__expired">expired</a>, <a href="#attr_ba_GameActivity__globalsnode">globalsnode</a>, <a href="#attr_ba_GameActivity__map">map</a>, <a href="#attr_ba_GameActivity__playertype">playertype</a>, <a href="#attr_ba_GameActivity__session">session</a>, <a href="#attr_ba_GameActivity__stats">stats</a>, <a href="#attr_ba_GameActivity__teamtype">teamtype</a></h5>
 <dl>
+<dt><h4><a name="attr_ba_GameActivity__customdata">customdata</a></h4></dt><dd>
+<p><span>dict</span></p>
+<p>Entities needing to store simple data with an activity can put it
+        here. This dict will be deleted when the activity expires, so contained
+        objects generally do not need to worry about handling expired
+        activities.</p>
+
+</dd>
 <dt><h4><a name="attr_ba_GameActivity__expired">expired</a></h4></dt><dd>
 <p><span>bool</span></p>
 <p>Whether the activity is expired.</p>
@@ -2154,14 +2163,6 @@ its time with lingering corpses, sound effects, etc.</p>
 <p>        An activity is set as expired when shutting down.
         At this point no new nodes, timers, etc should be made,
         run, etc, and the activity should be considered a 'zombie'.</p>
-
-</dd>
-<dt><h4><a name="attr_ba_GameActivity__gamedata">gamedata</a></h4></dt><dd>
-<p><span>dict</span></p>
-<p>Entities needing to store simple data with an activity can put it
-        here. This dict will be deleted when the activity expires, so contained
-        objects generally do not need to worry about handling expired
-        activities.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_GameActivity__globalsnode">globalsnode</a></h4></dt><dd>
@@ -3871,14 +3872,14 @@ even if myactor is set to None.</p>
     own custom <a href="#class_ba_Player">ba.Player</a> types.</p>
 
 <h3>Attributes:</h3>
-<h5><a href="#attr_ba_Player__actor">actor</a>, <a href="#attr_ba_Player__gamedata">gamedata</a>, <a href="#attr_ba_Player__node">node</a>, <a href="#attr_ba_Player__position">position</a>, <a href="#attr_ba_Player__sessionplayer">sessionplayer</a>, <a href="#attr_ba_Player__team">team</a></h5>
+<h5><a href="#attr_ba_Player__actor">actor</a>, <a href="#attr_ba_Player__customdata">customdata</a>, <a href="#attr_ba_Player__node">node</a>, <a href="#attr_ba_Player__position">position</a>, <a href="#attr_ba_Player__sessionplayer">sessionplayer</a>, <a href="#attr_ba_Player__team">team</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_Player__actor">actor</a></h4></dt><dd>
 <p><span>Optional[<a href="#class_ba_Actor">ba.Actor</a>]</span></p>
 <p>The <a href="#class_ba_Actor">ba.Actor</a> associated with the player.</p>
 
 </dd>
-<dt><h4><a name="attr_ba_Player__gamedata">gamedata</a></h4></dt><dd>
+<dt><h4><a name="attr_ba_Player__customdata">customdata</a></h4></dt><dd>
 <p><span>dict</span></p>
 <p>Arbitrary values associated with the player.
         Though it is encouraged that most player values be properly defined
@@ -4111,9 +4112,9 @@ the type-checker properly identifies the returned value as one.</p>
 
 </dd>
 <dt><h4><a name="method_ba_PlayerRecord__associate_with_player">associate_with_player()</a></dt></h4><dd>
-<p><span>associate_with_player(self, player: <a href="#class_ba_SessionPlayer">ba.SessionPlayer</a>) -&gt; None</span></p>
+<p><span>associate_with_player(self, sessionplayer: <a href="#class_ba_SessionPlayer">ba.SessionPlayer</a>) -&gt; None</span></p>
 
-<p>Associate this entry with a <a href="#class_ba_Player">ba.Player</a>.</p>
+<p>Associate this entry with a <a href="#class_ba_SessionPlayer">ba.SessionPlayer</a>.</p>
 
 </dd>
 <dt><h4><a name="method_ba_PlayerRecord__cancel_multi_kill_timer">cancel_multi_kill_timer()</a></dt></h4><dd>
@@ -4556,7 +4557,7 @@ that a SessionPlayer is still present if retaining references to one
 for any length of time.</p>
 
 <h3>Attributes:</h3>
-<h5><a href="#attr_ba_SessionPlayer__character">character</a>, <a href="#attr_ba_SessionPlayer__color">color</a>, <a href="#attr_ba_SessionPlayer__gameplayer">gameplayer</a>, <a href="#attr_ba_SessionPlayer__highlight">highlight</a>, <a href="#attr_ba_SessionPlayer__id">id</a>, <a href="#attr_ba_SessionPlayer__in_game">in_game</a>, <a href="#attr_ba_SessionPlayer__inputdevice">inputdevice</a>, <a href="#attr_ba_SessionPlayer__sessiondata">sessiondata</a>, <a href="#attr_ba_SessionPlayer__team">team</a></h5>
+<h5><a href="#attr_ba_SessionPlayer__character">character</a>, <a href="#attr_ba_SessionPlayer__color">color</a>, <a href="#attr_ba_SessionPlayer__gameplayer">gameplayer</a>, <a href="#attr_ba_SessionPlayer__highlight">highlight</a>, <a href="#attr_ba_SessionPlayer__id">id</a>, <a href="#attr_ba_SessionPlayer__in_game">in_game</a>, <a href="#attr_ba_SessionPlayer__inputdevice">inputdevice</a>, <a href="#attr_ba_SessionPlayer__sessionteam">sessionteam</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_SessionPlayer__character">character</a></h4></dt><dd>
 <p><span> str</span></p>
@@ -4602,14 +4603,7 @@ any lobby character/team selection.</p>
 <p>The input device associated with the player.</p>
 
 </dd>
-<dt><h4><a name="attr_ba_SessionPlayer__sessiondata">sessiondata</a></h4></dt><dd>
-<p><span> Dict</span></p>
-<p>A dict for use by the current <a href="#class_ba_Session">ba.Session</a> for
-storing data associated with this player.
-This persists for the duration of the session.</p>
-
-</dd>
-<dt><h4><a name="attr_ba_SessionPlayer__team">team</a></h4></dt><dd>
+<dt><h4><a name="attr_ba_SessionPlayer__sessionteam">sessionteam</a></h4></dt><dd>
 <p><span> <a href="#class_ba_SessionTeam">ba.SessionTeam</a></span></p>
 <p>The <a href="#class_ba_SessionTeam">ba.SessionTeam</a> this Player is on. If the SessionPlayer
 is still in its lobby selecting a team/etc. then a
@@ -4708,18 +4702,19 @@ other players.</p>
     each SessionTeam consists of just one SessionPlayer.</p>
 
 <h3>Attributes:</h3>
-<h5><a href="#attr_ba_SessionTeam__color">color</a>, <a href="#attr_ba_SessionTeam__gamedata">gamedata</a>, <a href="#attr_ba_SessionTeam__id">id</a>, <a href="#attr_ba_SessionTeam__name">name</a>, <a href="#attr_ba_SessionTeam__players">players</a>, <a href="#attr_ba_SessionTeam__sessiondata">sessiondata</a></h5>
+<h5><a href="#attr_ba_SessionTeam__color">color</a>, <a href="#attr_ba_SessionTeam__customdata">customdata</a>, <a href="#attr_ba_SessionTeam__id">id</a>, <a href="#attr_ba_SessionTeam__name">name</a>, <a href="#attr_ba_SessionTeam__players">players</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_SessionTeam__color">color</a></h4></dt><dd>
 <p><span>Tuple[float, ...]</span></p>
 <p>The team's color.</p>
 
 </dd>
-<dt><h4><a name="attr_ba_SessionTeam__gamedata">gamedata</a></h4></dt><dd>
-<p><span>Dict</span></p>
-<p>A dict for use by the current <a href="#class_ba_Activity">ba.Activity</a>
-for storing data associated with this team.
-This gets cleared for each new <a href="#class_ba_Activity">ba.Activity</a>.</p>
+<dt><h4><a name="attr_ba_SessionTeam__customdata">customdata</a></h4></dt><dd>
+<p><span>dict</span></p>
+<p>A dict for use by the current <a href="#class_ba_Session">ba.Session</a> for
+storing data associated with this team.
+Unlike customdata, this persists for the duration
+of the session.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_SessionTeam__id">id</a></h4></dt><dd>
@@ -4735,14 +4730,6 @@ This gets cleared for each new <a href="#class_ba_Activity">ba.Activity</a>.</p>
 <dt><h4><a name="attr_ba_SessionTeam__players">players</a></h4></dt><dd>
 <p><span>List[<a href="#class_ba_SessionPlayer">ba.SessionPlayer</a>]</span></p>
 <p>The list of <a href="#class_ba_SessionPlayer">ba.SessionPlayers</a> on the team.</p>
-
-</dd>
-<dt><h4><a name="attr_ba_SessionTeam__sessiondata">sessiondata</a></h4></dt><dd>
-<p><span>Dict</span></p>
-<p>A dict for use by the current <a href="#class_ba_Session">ba.Session</a> for
-storing data associated with this team.
-Unlike gamedata, this persists for the duration
-of the session.</p>
 
 </dd>
 </dl>
@@ -4952,7 +4939,7 @@ of the session.</p>
 </p>
 
 <h3>Methods:</h3>
-<h5><a href="#method_ba_Stats____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Stats__get_records">get_records()</a>, <a href="#method_ba_Stats__getactivity">getactivity()</a>, <a href="#method_ba_Stats__player_got_hit">player_got_hit()</a>, <a href="#method_ba_Stats__player_scored">player_scored()</a>, <a href="#method_ba_Stats__player_was_killed">player_was_killed()</a>, <a href="#method_ba_Stats__register_player">register_player()</a>, <a href="#method_ba_Stats__reset">reset()</a>, <a href="#method_ba_Stats__reset_accum">reset_accum()</a>, <a href="#method_ba_Stats__setactivity">setactivity()</a></h5>
+<h5><a href="#method_ba_Stats____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Stats__get_records">get_records()</a>, <a href="#method_ba_Stats__getactivity">getactivity()</a>, <a href="#method_ba_Stats__player_scored">player_scored()</a>, <a href="#method_ba_Stats__player_was_killed">player_was_killed()</a>, <a href="#method_ba_Stats__register_player">register_player()</a>, <a href="#method_ba_Stats__reset">reset()</a>, <a href="#method_ba_Stats__reset_accum">reset_accum()</a>, <a href="#method_ba_Stats__setactivity">setactivity()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_Stats____init__">&lt;constructor&gt;</a></dt></h4><dd>
 <p><span>ba.Stats()</span></p>
@@ -4970,12 +4957,6 @@ of the session.</p>
 <p>Get the activity associated with this instance.</p>
 
 <p>May return None.</p>
-
-</dd>
-<dt><h4><a name="method_ba_Stats__player_got_hit">player_got_hit()</a></dt></h4><dd>
-<p><span>player_got_hit(self, player: <a href="#class_ba_SessionPlayer">ba.SessionPlayer</a>) -&gt; None</span></p>
-
-<p>Call this when a player got hit.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Stats__player_scored">player_scored()</a></dt></h4><dd>
@@ -5029,9 +5010,9 @@ of the session.</p>
 </p>
 
 <h3>Attributes:</h3>
-<h5><a href="#attr_ba_Team__gamedata">gamedata</a>, <a href="#attr_ba_Team__sessionteam">sessionteam</a></h5>
+<h5><a href="#attr_ba_Team__customdata">customdata</a>, <a href="#attr_ba_Team__sessionteam">sessionteam</a></h5>
 <dl>
-<dt><h4><a name="attr_ba_Team__gamedata">gamedata</a></h4></dt><dd>
+<dt><h4><a name="attr_ba_Team__customdata">customdata</a></h4></dt><dd>
 <p><span>dict</span></p>
 <p>Arbitrary values associated with the team.
         Though it is encouraged that most player values be properly defined
@@ -5080,8 +5061,16 @@ of the session.</p>
 <h3>Attributes Inherited:</h3>
 <h5><a href="#attr_ba_Activity__players">players</a>, <a href="#attr_ba_Activity__settings_raw">settings_raw</a>, <a href="#attr_ba_Activity__teams">teams</a></h5>
 <h3>Attributes Defined Here:</h3>
-<h5><a href="#attr_ba_TeamGameActivity__expired">expired</a>, <a href="#attr_ba_TeamGameActivity__gamedata">gamedata</a>, <a href="#attr_ba_TeamGameActivity__globalsnode">globalsnode</a>, <a href="#attr_ba_TeamGameActivity__map">map</a>, <a href="#attr_ba_TeamGameActivity__playertype">playertype</a>, <a href="#attr_ba_TeamGameActivity__session">session</a>, <a href="#attr_ba_TeamGameActivity__stats">stats</a>, <a href="#attr_ba_TeamGameActivity__teamtype">teamtype</a></h5>
+<h5><a href="#attr_ba_TeamGameActivity__customdata">customdata</a>, <a href="#attr_ba_TeamGameActivity__expired">expired</a>, <a href="#attr_ba_TeamGameActivity__globalsnode">globalsnode</a>, <a href="#attr_ba_TeamGameActivity__map">map</a>, <a href="#attr_ba_TeamGameActivity__playertype">playertype</a>, <a href="#attr_ba_TeamGameActivity__session">session</a>, <a href="#attr_ba_TeamGameActivity__stats">stats</a>, <a href="#attr_ba_TeamGameActivity__teamtype">teamtype</a></h5>
 <dl>
+<dt><h4><a name="attr_ba_TeamGameActivity__customdata">customdata</a></h4></dt><dd>
+<p><span>dict</span></p>
+<p>Entities needing to store simple data with an activity can put it
+        here. This dict will be deleted when the activity expires, so contained
+        objects generally do not need to worry about handling expired
+        activities.</p>
+
+</dd>
 <dt><h4><a name="attr_ba_TeamGameActivity__expired">expired</a></h4></dt><dd>
 <p><span>bool</span></p>
 <p>Whether the activity is expired.</p>
@@ -5089,14 +5078,6 @@ of the session.</p>
 <p>        An activity is set as expired when shutting down.
         At this point no new nodes, timers, etc should be made,
         run, etc, and the activity should be considered a 'zombie'.</p>
-
-</dd>
-<dt><h4><a name="attr_ba_TeamGameActivity__gamedata">gamedata</a></h4></dt><dd>
-<p><span>dict</span></p>
-<p>Entities needing to store simple data with an activity can put it
-        here. This dict will be deleted when the activity expires, so contained
-        objects generally do not need to worry about handling expired
-        activities.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_TeamGameActivity__globalsnode">globalsnode</a></h4></dt><dd>
@@ -5208,8 +5189,47 @@ Results for a completed <a href="#class_ba_TeamGameActivity">ba.TeamGameActivity
 <p>Upon completion, a game should fill one of these out and pass it to its
 <a href="#method_ba_Activity__end">ba.Activity.end</a>() call.</p>
 
+<h3>Attributes:</h3>
+<h5><a href="#attr_ba_TeamGameResults__lower_is_better">lower_is_better</a>, <a href="#attr_ba_TeamGameResults__playerinfos">playerinfos</a>, <a href="#attr_ba_TeamGameResults__score_label">score_label</a>, <a href="#attr_ba_TeamGameResults__scoretype">scoretype</a>, <a href="#attr_ba_TeamGameResults__sessionteams">sessionteams</a>, <a href="#attr_ba_TeamGameResults__winnergroups">winnergroups</a>, <a href="#attr_ba_TeamGameResults__winning_team">winning_team</a></h5>
+<dl>
+<dt><h4><a name="attr_ba_TeamGameResults__lower_is_better">lower_is_better</a></h4></dt><dd>
+<p><span>bool</span></p>
+<p>Whether lower scores are better.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_TeamGameResults__playerinfos">playerinfos</a></h4></dt><dd>
+<p><span>List[<a href="#class_ba_PlayerInfo">ba.PlayerInfo</a>]</span></p>
+<p>Get info about the players represented by the results.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_TeamGameResults__score_label">score_label</a></h4></dt><dd>
+<p><span>str</span></p>
+<p>The label associated with scores ('points', etc).</p>
+
+</dd>
+<dt><h4><a name="attr_ba_TeamGameResults__scoretype">scoretype</a></h4></dt><dd>
+<p><span><a href="#class_ba_ScoreType">ba.ScoreType</a></span></p>
+<p>The type of score.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_TeamGameResults__sessionteams">sessionteams</a></h4></dt><dd>
+<p><span>List[<a href="#class_ba_SessionTeam">ba.SessionTeam</a>]</span></p>
+<p>Return all <a href="#class_ba_SessionTeam">ba.SessionTeams</a> in the results.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_TeamGameResults__winnergroups">winnergroups</a></h4></dt><dd>
+<p><span>List[WinnerGroup]</span></p>
+<p>Get an ordered list of winner groups.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_TeamGameResults__winning_team">winning_team</a></h4></dt><dd>
+<p><span>Optional[<a href="#class_ba_SessionTeam">ba.SessionTeam</a>]</span></p>
+<p>The winning <a href="#class_ba_SessionTeam">ba.SessionTeam</a> if there is exactly one, or else None.</p>
+
+</dd>
+</dl>
 <h3>Methods:</h3>
-<h5><a href="#method_ba_TeamGameResults____init__">&lt;constructor&gt;</a>, <a href="#method_ba_TeamGameResults__get_lower_is_better">get_lower_is_better()</a>, <a href="#method_ba_TeamGameResults__get_player_info">get_player_info()</a>, <a href="#method_ba_TeamGameResults__get_score_name">get_score_name()</a>, <a href="#method_ba_TeamGameResults__get_score_type">get_score_type()</a>, <a href="#method_ba_TeamGameResults__get_team_score">get_team_score()</a>, <a href="#method_ba_TeamGameResults__get_team_score_str">get_team_score_str()</a>, <a href="#method_ba_TeamGameResults__get_teams">get_teams()</a>, <a href="#method_ba_TeamGameResults__get_winners">get_winners()</a>, <a href="#method_ba_TeamGameResults__get_winning_team">get_winning_team()</a>, <a href="#method_ba_TeamGameResults__has_score_for_team">has_score_for_team()</a>, <a href="#method_ba_TeamGameResults__set_game">set_game()</a>, <a href="#method_ba_TeamGameResults__set_team_score">set_team_score()</a></h5>
+<h5><a href="#method_ba_TeamGameResults____init__">&lt;constructor&gt;</a>, <a href="#method_ba_TeamGameResults__get_team_score">get_team_score()</a>, <a href="#method_ba_TeamGameResults__get_team_score_str">get_team_score_str()</a>, <a href="#method_ba_TeamGameResults__has_score_for_team">has_score_for_team()</a>, <a href="#method_ba_TeamGameResults__set_game">set_game()</a>, <a href="#method_ba_TeamGameResults__set_team_score">set_team_score()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_TeamGameResults____init__">&lt;constructor&gt;</a></dt></h4><dd>
 <p><span>ba.TeamGameResults()</span></p>
@@ -5217,34 +5237,10 @@ Results for a completed <a href="#class_ba_TeamGameActivity">ba.TeamGameActivity
 <p>Instantiate a results instance.</p>
 
 </dd>
-<dt><h4><a name="method_ba_TeamGameResults__get_lower_is_better">get_lower_is_better()</a></dt></h4><dd>
-<p><span>get_lower_is_better(self) -&gt; bool</span></p>
-
-<p>Return whether lower scores are better.</p>
-
-</dd>
-<dt><h4><a name="method_ba_TeamGameResults__get_player_info">get_player_info()</a></dt></h4><dd>
-<p><span>get_player_info(self) -&gt; List[<a href="#class_ba_PlayerInfo">ba.PlayerInfo</a>]</span></p>
-
-<p>Get info about the players represented by the results.</p>
-
-</dd>
-<dt><h4><a name="method_ba_TeamGameResults__get_score_name">get_score_name()</a></dt></h4><dd>
-<p><span>get_score_name(self) -&gt; str</span></p>
-
-<p>Get the name associated with scores ('points', etc).</p>
-
-</dd>
-<dt><h4><a name="method_ba_TeamGameResults__get_score_type">get_score_type()</a></dt></h4><dd>
-<p><span>get_score_type(self) -&gt; <a href="#class_ba_ScoreType">ba.ScoreType</a></span></p>
-
-<p>Get the type of score.</p>
-
-</dd>
 <dt><h4><a name="method_ba_TeamGameResults__get_team_score">get_team_score()</a></dt></h4><dd>
-<p><span>get_team_score(self, team: Union[<a href="#class_ba_SessionTeam">ba.SessionTeam</a>, <a href="#class_ba_Team">ba.Team</a>]) -&gt; Optional[int]</span></p>
+<p><span>get_team_score(self, sessionteam: Union[<a href="#class_ba_SessionTeam">ba.SessionTeam</a>]) -&gt; Optional[int]</span></p>
 
-<p>Return the score for a given team.</p>
+<p>Return the score for a given <a href="#class_ba_SessionTeam">ba.SessionTeam</a>.</p>
 
 </dd>
 <dt><h4><a name="method_ba_TeamGameResults__get_team_score_str">get_team_score_str()</a></dt></h4><dd>
@@ -5253,24 +5249,6 @@ Results for a completed <a href="#class_ba_TeamGameActivity">ba.TeamGameActivity
 <p>Return the score for the given <a href="#class_ba_Team">ba.Team</a> as an Lstr.</p>
 
 <p>(properly formatted for the score type.)</p>
-
-</dd>
-<dt><h4><a name="method_ba_TeamGameResults__get_teams">get_teams()</a></dt></h4><dd>
-<p><span>get_teams(self) -&gt; List[<a href="#class_ba_SessionTeam">ba.SessionTeam</a>]</span></p>
-
-<p>Return all <a href="#class_ba_SessionTeam">ba.SessionTeams</a> in the results.</p>
-
-</dd>
-<dt><h4><a name="method_ba_TeamGameResults__get_winners">get_winners()</a></dt></h4><dd>
-<p><span>get_winners(self) -&gt; List[WinnerGroup]</span></p>
-
-<p>Get an ordered list of winner groups.</p>
-
-</dd>
-<dt><h4><a name="method_ba_TeamGameResults__get_winning_team">get_winning_team()</a></dt></h4><dd>
-<p><span>get_winning_team(self) -&gt; Optional[<a href="#class_ba_SessionTeam">ba.SessionTeam</a>]</span></p>
-
-<p>Get the winning <a href="#class_ba_Team">ba.Team</a> if there is exactly one; None otherwise.</p>
 
 </dd>
 <dt><h4><a name="method_ba_TeamGameResults__has_score_for_team">has_score_for_team()</a></dt></h4><dd>
@@ -5286,7 +5264,7 @@ Results for a completed <a href="#class_ba_TeamGameActivity">ba.TeamGameActivity
 
 </dd>
 <dt><h4><a name="method_ba_TeamGameResults__set_team_score">set_team_score()</a></dt></h4><dd>
-<p><span>set_team_score(self, team: Union[<a href="#class_ba_SessionTeam">ba.SessionTeam</a>, <a href="#class_ba_Team">ba.Team</a>], score: Optional[int]) -&gt; None</span></p>
+<p><span>set_team_score(self, team: <a href="#class_ba_Team">ba.Team</a>, score: Optional[int]) -&gt; None</span></p>
 
 <p>Set the score for a given <a href="#class_ba_Team">ba.Team</a>.</p>
 
@@ -6421,6 +6399,30 @@ playing, the playing track will not be restarted.</p>
 <p>Pop up a damage count at a position in space.</p>
 
 <p>Category: <a href="#function_category_Gameplay_Functions">Gameplay Functions</a></p>
+
+<hr>
+<h2><strong><a name="function_ba_storagename">ba.storagename()</a></strong></h3>
+<p><span>storagename(basename: str) -&gt; str</span></p>
+
+<p>Generate a (hopefully) unique name for storing things in public places.</p>
+
+<p>Category: <a href="#function_category_General_Utility_Functions">General Utility Functions</a></p>
+
+<p>This consists of a leading underscore, the module path at the
+call site with dots replaced by underscores, the class name, and
+the provided suffix. When storing data in public places such as
+'customdata' dicts, this minimizes the chance of collisions if a
+module or class is duplicated or renamed.</p>
+
+<pre><span><em><small># Example: generate a unique name for storage purposes:</small></em></span>
+class MyThingie:</pre>
+
+<pre><span><em><small>    # This will give something like '_mymodule_submodule_mythingie_data'.</small></em></span>
+    _STORENAME = <a href="#function_ba_storagename">ba.storagename</a>('data')</pre>
+
+<p>    def __init__(self, activity):
+        # Store some data in the Activity we were passed
+        activity.customdata[self._STORENAME] = {}</p>
 
 <hr>
 <h2><strong><a name="function_ba_textwidget">ba.textwidget()</a></strong></h3>

@@ -284,7 +284,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
 
         # Holds some flattened info about the player set at the point
         # when on_begin() is called.
-        self.initial_player_info: Optional[List[ba.PlayerInfo]] = None
+        self.initialplayerinfos: Optional[List[ba.PlayerInfo]] = None
 
         # Go ahead and get our map loading.
         self._map_type = _map.get_map_class(self._calc_map_name(settings))
@@ -511,14 +511,14 @@ class GameActivity(Activity[PlayerType, TeamType]):
         _ba.timer(2.5, self._show_tip)
 
         # Store some basic info about players present at start time.
-        self.initial_player_info = [
+        self.initialplayerinfos = [
             PlayerInfo(name=p.getname(full=True), character=p.character)
             for p in self.players
         ]
 
         # Sort this by name so high score lists/etc will be consistent
         # regardless of player join order.
-        self.initial_player_info.sort(key=lambda x: x.name)
+        self.initialplayerinfos.sort(key=lambda x: x.name)
 
         # If this is a tournament, query info about it such as how much
         # time is left.
@@ -890,9 +890,10 @@ class GameActivity(Activity[PlayerType, TeamType]):
 
         if player.actor and not self.has_ended():
             from bastd.actor.respawnicon import RespawnIcon
-            player.gamedata['respawn_timer'] = _ba.Timer(
+            player.customdata['respawn_timer'] = _ba.Timer(
                 respawn_time, WeakCall(self.spawn_player_if_exists, player))
-            player.gamedata['respawn_icon'] = RespawnIcon(player, respawn_time)
+            player.customdata['respawn_icon'] = RespawnIcon(
+                player, respawn_time)
 
     def spawn_player_if_exists(self, player: PlayerType) -> None:
         """

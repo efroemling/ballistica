@@ -79,7 +79,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             for _pkey, prec in self.stats.get_records().items():
                 if prec.player.in_game:
                     player_entries.append(
-                        (prec.player.team.sessiondata['score'],
+                        (prec.player.sessionteam.customdata['score'],
                          prec.getname(full=True), prec))
             player_entries.sort(reverse=True, key=lambda x: x[0])
         else:
@@ -145,8 +145,8 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         win_score = (session.get_series_length() - 1) // 2 + 1
         lose_score = 0
         for team in self.teams:
-            if team.sessiondata['score'] != win_score:
-                lose_score = team.sessiondata['score']
+            if team.sessionteam.customdata['score'] != win_score:
+                lose_score = team.sessionteam.customdata['score']
 
         if not self._is_ffa:
             Text(ba.Lstr(resource='gamesToText',
@@ -309,7 +309,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         for _score, name, prec in player_entries:
             tdelay -= 4 * t_incr
             v_offs -= 40
-            Text(str(prec.team.sessiondata['score'])
+            Text(str(prec.team.customdata['score'])
                  if self._is_ffa else str(prec.score),
                  color=(0.5, 0.5, 0.5, 1.0),
                  position=(ts_h_offs + 230, ts_height / 2 + v_offs),

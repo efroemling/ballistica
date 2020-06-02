@@ -341,37 +341,35 @@ class CoopSession(Session):
             self.setactivity(_ba.new_activity(TransitionActivity))
         else:
 
-            player_info: List[ba.PlayerInfo]
+            playerinfos: List[ba.PlayerInfo]
 
             # Generic team games.
             if isinstance(results, TeamGameResults):
-                player_info = results.get_player_info()
-                score = results.get_team_score(results.get_teams()[0])
+                playerinfos = results.playerinfos
+                score = results.get_team_score(results.sessionteams[0])
                 fail_message = None
-                score_order = ('decreasing' if results.get_lower_is_better()
-                               else 'increasing')
-                if results.get_score_type() in (ScoreType.SECONDS,
-                                                ScoreType.MILLISECONDS):
-                    score_type = 'time'
+                score_order = ('decreasing'
+                               if results.lower_is_better else 'increasing')
+                if results.scoretype in (ScoreType.SECONDS,
+                                         ScoreType.MILLISECONDS):
+                    scoretype = 'time'
 
                     # ScoreScreen wants hundredths of a second.
                     if score is not None:
-                        if results.get_score_type() is ScoreType.SECONDS:
+                        if results.scoretype is ScoreType.SECONDS:
                             score *= 100
-                        elif (results.get_score_type() is
-                              ScoreType.MILLISECONDS):
+                        elif results.scoretype is ScoreType.MILLISECONDS:
                             score //= 10
                         else:
                             raise RuntimeError('FIXME')
                 else:
-                    if results.get_score_type() is not ScoreType.POINTS:
-                        print(f'Unknown ScoreType:'
-                              f' "{results.get_score_type()}"')
-                    score_type = 'points'
+                    if results.scoretype is not ScoreType.POINTS:
+                        print(f'Unknown ScoreType:' f' "{results.scoretype}"')
+                    scoretype = 'points'
 
             # Old coop-game-specific results; should migrate away from these.
             else:
-                player_info = results.get('player_info')
+                playerinfos = results.get('playerinfos')
                 score = results['score'] if 'score' in results else None
                 fail_message = (results['fail_message']
                                 if 'fail_message' in results else None)
@@ -380,12 +378,12 @@ class CoopSession(Session):
                 activity_score_type = (activity.get_score_type() if isinstance(
                     activity, CoopGameActivity) else None)
                 assert activity_score_type is not None
-                score_type = activity_score_type
+                scoretype = activity_score_type
 
             # Validate types.
-            if player_info is not None:
-                assert isinstance(player_info, list)
-                assert (isinstance(i, PlayerInfo) for i in player_info)
+            if playerinfos is not None:
+                assert isinstance(playerinfos, list)
+                assert (isinstance(i, PlayerInfo) for i in playerinfos)
 
             # Looks like we were in a round - check the outcome and
             # go from there.
@@ -397,11 +395,11 @@ class CoopSession(Session):
                 self.setactivity(
                     _ba.new_activity(
                         CoopScoreScreen, {
-                            'player_info': player_info,
+                            'playerinfos': playerinfos,
                             'score': score,
                             'fail_message': fail_message,
                             'score_order': score_order,
-                            'score_type': score_type,
+                            'score_type': scoretype,
                             'outcome': outcome,
                             'campaign': self.campaign,
                             'level': self.campaign_level_name

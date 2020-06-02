@@ -203,8 +203,8 @@ class EasterEggHuntGame(ba.TeamGameActivity[Player, Team]):
 
             # Respawn them shortly.
             player = msg.getplayer(Player)
-            assert self.initial_player_info is not None
-            respawn_time = 2.0 + len(self.initial_player_info) * 1.0
+            assert self.initialplayerinfos is not None
+            respawn_time = 2.0 + len(self.initialplayerinfos) * 1.0
             player.respawn_timer = ba.Timer(
                 respawn_time, ba.Call(self.spawn_player_if_exists, player))
             player.respawn_icon = RespawnIcon(player, respawn_time)

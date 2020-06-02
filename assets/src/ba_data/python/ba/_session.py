@@ -259,7 +259,7 @@ class Session:
         else:
             # Ok, they've already entered the game. Remove them from
             # teams/activities/etc.
-            sessionteam = sessionplayer.team
+            sessionteam = sessionplayer.sessionteam
             assert sessionteam is not None
 
             _ba.screenmessage(
@@ -317,7 +317,7 @@ class Session:
             else:
                 print('Team no in Session teams in on_player_leave.')
             try:
-                sessionteam.reset_sessiondata()
+                sessionteam.leave()
             except Exception:
                 print_exception(f'Error clearing sessiondata'
                                 f' for team {sessionteam} in session {self}.')
