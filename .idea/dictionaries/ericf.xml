@@ -856,6 +856,9 @@
       <w>hmmm</w>
       <w>hmmmm</w>
       <w>hoffs</w>
+      <w>holdingflag</w>
+      <w>holdingteam</w>
+      <w>holdingteams</w>
       <w>holdposition</w>
       <w>homebook</w>
       <w>homebrew</w>
@@ -1427,6 +1430,7 @@
       <w>premultiply</w>
       <w>preprocessing</w>
       <w>prereqs</w>
+      <w>prevstate</w>
       <w>priceraw</w>
       <w>printcolors</w>
       <w>printnodes</w>

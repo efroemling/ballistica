@@ -170,7 +170,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
         self.flag_touch_return_time = float(settings['Flag Touch Return Time'])
         self.flag_idle_return_time = float(settings['Flag Idle Return Time'])
 
-        # Base class overrides
+        # Base class overrides.
         self.slow_motion = self._epic_mode
         self.default_music = (ba.MusicType.EPIC if self._epic_mode else
                               ba.MusicType.FLAG_CATCHER)

@@ -53,6 +53,10 @@ class Player(ba.Player['Team']):
 class Team(ba.Team[Player]):
     """Our team type for this game."""
 
+    def __init__(self, timeremaining: int) -> None:
+        self.timeremaining = timeremaining
+        self.holdingflag = False
+
 
 # ba_meta export game
 class KeepAwayGame(ba.TeamGameActivity[Player, Team]):
@@ -79,6 +83,7 @@ class KeepAwayGame(ba.TeamGameActivity[Player, Team]):
         }),
     ]
     score_info = ba.ScoreInfo(label='Time Held')
+    default_music = ba.MusicType.KEEP_AWAY
 
     @classmethod
     def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
@@ -113,26 +118,24 @@ class KeepAwayGame(ba.TeamGameActivity[Player, Team]):
         self._flag_light: Optional[ba.Node] = None
         self._scoring_team: Optional[Team] = None
         self._flag: Optional[Flag] = None
+        self._hold_time = int(settings['Hold Time'])
+        self._time_limit = float(settings['Time Limit'])
 
     def get_instance_description(self) -> Union[str, Sequence]:
-        return ('Carry the flag for ${ARG1} seconds.',
-                self.settings_raw['Hold Time'])
+        return 'Carry the flag for ${ARG1} seconds.', self._hold_time
 
     def get_instance_description_short(self) -> Union[str, Sequence]:
-        return ('carry the flag for ${ARG1} seconds',
-                self.settings_raw['Hold Time'])
+        return 'carry the flag for ${ARG1} seconds', self._hold_time
 
-    def on_transition_in(self) -> None:
-        self.default_music = ba.MusicType.KEEP_AWAY
-        super().on_transition_in()
+    def create_team(self, sessionteam: ba.SessionTeam) -> Team:
+        return Team(timeremaining=self._hold_time)
 
     def on_team_join(self, team: Team) -> None:
-        team.gamedata['time_remaining'] = self.settings_raw['Hold Time']
         self._update_scoreboard()
 
     def on_begin(self) -> None:
         super().on_begin()
-        self.setup_standard_time_limit(self.settings_raw['Time Limit'])
+        self.setup_standard_time_limit(self._time_limit)
         self.setup_standard_powerup_drops()
         self._flag_spawn_pos = self.map.get_flag_position(None)
         self._spawn_flag()
@@ -152,82 +155,74 @@ class KeepAwayGame(ba.TeamGameActivity[Player, Team]):
                                          screenmessage=False,
                                          display=False)
 
-        scoring_team = self._scoring_team
+        scoreteam = self._scoring_team
 
-        if scoring_team is not None:
+        if scoreteam is not None:
 
-            if scoring_team.gamedata['time_remaining'] > 0:
+            if scoreteam.timeremaining > 0:
                 ba.playsound(self._tick_sound)
 
-            scoring_team.gamedata['time_remaining'] = max(
-                0, scoring_team.gamedata['time_remaining'] - 1)
+            scoreteam.timeremaining = max(0, scoreteam.timeremaining - 1)
             self._update_scoreboard()
-            if scoring_team.gamedata['time_remaining'] > 0:
+            if scoreteam.timeremaining > 0:
                 assert self._flag is not None
-                self._flag.set_score_text(
-                    str(scoring_team.gamedata['time_remaining']))
+                self._flag.set_score_text(str(scoreteam.timeremaining))
 
             # Announce numbers we have sounds for.
-            try:
-                ba.playsound(self._countdownsounds[
-                    scoring_team.gamedata['time_remaining']])
-            except Exception:
-                pass
+            if scoreteam.timeremaining in self._countdownsounds:
+                ba.playsound(self._countdownsounds[scoreteam.timeremaining])
 
             # Winner.
-            if scoring_team.gamedata['time_remaining'] <= 0:
+            if scoreteam.timeremaining <= 0:
                 self.end_game()
 
     def end_game(self) -> None:
         results = ba.TeamGameResults()
         for team in self.teams:
-            results.set_team_score(
-                team, self.settings_raw['Hold Time'] -
-                team.gamedata['time_remaining'])
+            results.set_team_score(team, self._hold_time - team.timeremaining)
         self.end(results=results, announce_delay=0)
 
     def _update_flag_state(self) -> None:
         for team in self.teams:
-            team.gamedata['holding_flag'] = False
+            team.holdingflag = False
         self._holding_players = []
         for player in self.players:
-            holding_flag = False
+            holdingflag = False
             try:
                 assert isinstance(player.actor, (PlayerSpaz, type(None)))
                 if (player.actor and player.actor.node
                         and player.actor.node.hold_node):
-                    holding_flag = (
+                    holdingflag = (
                         player.actor.node.hold_node.getnodetype() == 'flag')
             except Exception:
                 ba.print_exception('exception checking hold flag')
-            if holding_flag:
+            if holdingflag:
                 self._holding_players.append(player)
-                player.team.gamedata['holding_flag'] = True
+                player.team.holdingflag = True
 
-        holding_teams = set(t for t in self.teams
-                            if t.gamedata['holding_flag'])
-        prev_state = self._flag_state
+        holdingteams = set(t for t in self.teams if t.holdingflag)
+        prevstate = self._flag_state
         assert self._flag is not None
         assert self._flag_light
         assert self._flag.node
-        if len(holding_teams) > 1:
+        if len(holdingteams) > 1:
             self._flag_state = FlagState.CONTESTED
             self._scoring_team = None
             self._flag_light.color = (0.6, 0.6, 0.1)
             self._flag.node.color = (1.0, 1.0, 0.4)
-        elif len(holding_teams) == 1:
-            holding_team = list(holding_teams)[0]
+        elif len(holdingteams) == 1:
+            holdingteam = list(holdingteams)[0]
             self._flag_state = FlagState.HELD
-            self._scoring_team = holding_team
-            self._flag_light.color = ba.normalized_color(holding_team.color)
-            self._flag.node.color = holding_team.color
+            self._scoring_team = holdingteam
+            self._flag_light.color = ba.normalized_color(holdingteam.color)
+            self._flag.node.color = holdingteam.color
         else:
             self._flag_state = FlagState.UNCONTESTED
             self._scoring_team = None
             self._flag_light.color = (0.2, 0.2, 0.2)
             self._flag.node.color = (1, 1, 1)
 
-        if self._flag_state != prev_state:
+        if self._flag_state != prevstate:
             ba.playsound(self._swipsound)
 
     def _spawn_flag(self) -> None:
@@ -261,8 +256,8 @@ class KeepAwayGame(ba.TeamGameActivity[Player, Team]):
     def _update_scoreboard(self) -> None:
         for team in self.teams:
             self._scoreboard.set_team_value(team,
-                                            team.gamedata['time_remaining'],
-                                            self.settings_raw['Hold Time'],
+                                            team.timeremaining,
+                                            self._hold_time,
                                             countdown=True)
 
     def handlemessage(self, msg: Any) -> Any:
