@@ -21,11 +21,11 @@
 """Snippets of code for use by the internal C++ layer.
 
 History: originally I would dynamically compile/eval bits of Python text
-from within C++ code, but the major downside there was that I would
-never catch code breakage until the code was next run.  By defining all
-snippets I use here and then capturing references to them all at launch
-I can verify everything I'm looking for exists and pylint can do
-its magic on this file.
+from within C++ code, but the major downside there was that none of that was
+type-checked so if names or arguments changed I would never catch code breakage
+until the code was next run.  By defining all snippets I use here and then
+capturing references to them all at launch I can immediately verify everything
+I'm looking for exists and pylint/mypy can do their magic on this file.
 """
 # (most of these are self-explanatory)
 # pylint: disable=missing-function-docstring

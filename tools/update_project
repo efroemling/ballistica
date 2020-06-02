@@ -634,11 +634,11 @@ class App:
             sys.exit(255)
 
     def _update_assets_makefile(self) -> None:
-        if os.path.exists('tools/update_assets_makefile'):
-            if os.system('tools/update_assets_makefile' + self._checkarg) != 0:
-                print(Clr.RED + 'Error checking/updating assets Makefile' +
-                      Clr.RST)
-                sys.exit(255)
+        assert os.path.exists('tools/update_assets_makefile')
+        if os.system('tools/update_assets_makefile' + self._checkarg) != 0:
+            print(Clr.RED + 'Error checking/updating assets Makefile' +
+                  Clr.RST)
+            sys.exit(255)
 
     def _update_generated_code_makefile(self) -> None:
         if os.path.exists('tools/update_generated_code_makefile'):
