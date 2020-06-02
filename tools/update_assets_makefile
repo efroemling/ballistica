@@ -149,8 +149,12 @@ def _get_py_targets_subset(all_targets: Set[str], subset: str,
                     all_targets,
                     subset=subset)
 
-    py_targets.sort()
-    pyc_targets.sort()
+    # Need to sort these combined to keep pairs together.
+    combined_targets = [(py_targets[i], pyc_targets[i])
+                        for i in range(len(py_targets))]
+    combined_targets.sort()
+    py_targets = [t[0] for t in combined_targets]
+    pyc_targets = [t[1] for t in combined_targets]
 
     out = (f'\nSCRIPT_TARGETS_PY{suffix} = \\\n  ' +
            ' \\\n  '.join(py_targets) + '\n')
