@@ -291,9 +291,9 @@ class Achievement:
         name: Union[ba.Lstr, str]
         try:
             if self._level_name != '':
-                from ba._campaign import get_campaign
+                from ba._campaign import getcampaign
                 campaignname, campaign_level = self._level_name.split(':')
-                name = get_campaign(campaignname).get_level(
+                name = getcampaign(campaignname).getlevel(
                     campaign_level).displayname
             else:
                 name = ''

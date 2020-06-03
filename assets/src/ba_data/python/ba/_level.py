@@ -45,7 +45,6 @@ class Level:
                  settings: dict,
                  preview_texture_name: str,
                  displayname: str = None):
-        """Initializes a Level object with the provided values."""
         self._name = name
         self._gametype = gametype
         self._settings = settings
@@ -93,8 +92,9 @@ class Level:
         """The type of game used for this Level."""
         return self._gametype
 
-    def get_campaign(self) -> Optional[ba.Campaign]:
-        """Return the ba.Campaign this Level is associated with, or None."""
+    @property
+    def campaign(self) -> Optional[ba.Campaign]:
+        """The ba.Campaign this Level is associated with, or None."""
         return None if self._campaign is None else self._campaign()
 
     @property
@@ -123,7 +123,7 @@ class Level:
             config = self._get_config_dict()
             config['Complete'] = val
 
-    def get_high_scores(self) -> Dict:
+    def get_high_scores(self) -> dict:
         """Return the current high scores for this Level."""
         config = self._get_config_dict()
         high_scores_key = 'High Scores' + self.get_score_version_string()
@@ -167,15 +167,14 @@ class Level:
 
         The referenced dict exists under the game's config dict and
         can be modified in place."""
-        campaign = self.get_campaign()
+        campaign = self.campaign
         if campaign is None:
-            raise TypeError('level is not in a campaign')
-        campaign_config = campaign.get_config_dict()
-        val: Dict[str,
-                  Any] = campaign_config.setdefault(self._name, {
-                      'Rating': 0.0,
-                      'Complete': False
-                  })
+            raise RuntimeError('Level is not in a campaign.')
+        configdict = campaign.configdict
+        val: Dict[str, Any] = configdict.setdefault(self._name, {
+            'Rating': 0.0,
+            'Complete': False
+        })
         assert isinstance(val, dict)
         return val
 

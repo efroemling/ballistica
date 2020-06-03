@@ -34,18 +34,16 @@ if TYPE_CHECKING:
 class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
     """Final score screen for a team series."""
 
+    # Dont' play music by default; (we do manually after a delay).
+    default_music = None
+
     def __init__(self, settings: dict):
         super().__init__(settings=settings)
         self._min_view_time = 15.0
         self._is_ffa = isinstance(self.session, ba.FreeForAllSession)
         self._allow_server_transition = True
         self._tips_text = None
-
-    def on_transition_in(self) -> None:
-        # We don't yet want music and whatnot...
-        self.default_music = None
         self._default_show_tips = False
-        super().on_transition_in()
 
     def on_begin(self) -> None:
         # pylint: disable=too-many-branches

@@ -103,21 +103,21 @@ class JoinActivity(Activity[EmptyPlayer, EmptyTeam]):
 
 
 class TransitionActivity(Activity[EmptyPlayer, EmptyTeam]):
-    """A simple overlay fade out/in.
+    """A simple overlay to fade out/in.
 
     Useful as a bare minimum transition between two level based activities.
     """
 
+    # Keep prev activity alive while we fade in.
+    transition_time = 0.5
+    inherits_slow_motion = True  # Don't change.
+    inherits_tint = True  # Don't change.
+    inherits_vr_camera_offset = True  # Don't change.
+    inherits_vr_overlay_center = True
+    use_fixed_vr_overlay = True
+
     def __init__(self, settings: dict):
         super().__init__(settings)
-
-        # Keep prev activity alive while we fade in.
-        self.transition_time = 0.5
-        self.inherits_slow_motion = True  # Don't change.
-        self.inherits_tint = True  # Don't change.
-        self.inherits_vr_camera_offset = True  # Don't change.
-        self.inherits_vr_overlay_center = True
-        self.use_fixed_vr_overlay = True
         self._background: Optional[ba.Actor] = None
 
     def on_transition_in(self) -> None:
@@ -141,13 +141,15 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
     After a specified delay, player input is assigned to end the activity.
     """
 
+    transition_time = 0.5
+    inherits_tint = True
+    inherits_vr_camera_offset = True
+    use_fixed_vr_overlay = True
+
+    default_music: Optional[MusicType] = MusicType.SCORES
+
     def __init__(self, settings: dict):
         super().__init__(settings)
-        self.transition_time = 0.5
-        self.inherits_tint = True
-        self.inherits_vr_camera_offset = True
-        self.use_fixed_vr_overlay = True
-        self.default_music: Optional[MusicType] = MusicType.SCORES
         self._birth_time = _ba.time()
         self._min_view_time = 5.0
         self._allow_server_transition = False
@@ -160,15 +162,14 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
         self._server_transitioning: Optional[bool] = None
 
     def on_player_join(self, player: EmptyPlayer) -> None:
-        from ba import _general
+        from ba._general import WeakCall
         super().on_player_join(player)
         time_till_assign = max(
             0, self._birth_time + self._min_view_time - _ba.time())
 
         # If we're still kicking at the end of our assign-delay, assign this
         # guy's input to trigger us.
-        _ba.timer(time_till_assign, _general.WeakCall(self._safe_assign,
-                                                      player))
+        _ba.timer(time_till_assign, WeakCall(self._safe_assign, player))
 
     def on_transition_in(self) -> None:
         from bastd.actor.tipstext import TipsText
@@ -228,7 +229,7 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
     def _safe_assign(self, player: EmptyPlayer) -> None:
 
         # Just to be extra careful, don't assign if we're transitioning out.
-        # (though theoretically that would be ok).
+        # (though theoretically that should be ok).
         if not self.is_transitioning_out() and player:
             player.assigninput((InputType.JUMP_PRESS, InputType.PUNCH_PRESS,
                                 InputType.BOMB_PRESS, InputType.PICK_UP_PRESS),

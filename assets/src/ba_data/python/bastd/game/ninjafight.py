@@ -56,6 +56,7 @@ class NinjaFightGame(ba.TeamGameActivity[Player, Team]):
     scoreconfig = ba.ScoreConfig(label='Time',
                                  scoretype=ba.ScoreType.MILLISECONDS,
                                  lower_is_better=True)
+    default_music = ba.MusicType.TO_THE_DEATH
 
     @classmethod
     def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
@@ -78,12 +79,6 @@ class NinjaFightGame(ba.TeamGameActivity[Player, Team]):
         self._timer: Optional[OnScreenTimer] = None
         self._bots = SpazBotSet()
         self._preset = str(settings['preset'])
-
-    # Called when our game is transitioning in but not ready to begin;
-    # we can go ahead and start creating stuff, playing music, etc.
-    def on_transition_in(self) -> None:
-        self.default_music = ba.MusicType.TO_THE_DEATH
-        super().on_transition_in()
 
     # Called when our game actually begins.
     def on_begin(self) -> None:

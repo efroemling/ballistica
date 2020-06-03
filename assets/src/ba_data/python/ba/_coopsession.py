@@ -60,7 +60,7 @@ class CoopSession(Session):
     def __init__(self) -> None:
         """Instantiate a co-op mode session."""
         # pylint: disable=cyclic-import
-        from ba._campaign import get_campaign
+        from ba._campaign import getcampaign
         from bastd.activity.coopjoin import CoopJoinActivity
 
         _ba.increment_analytics_count('Co-op session start')
@@ -90,7 +90,7 @@ class CoopSession(Session):
         self.tournament_id: Optional[str] = (
             app.coop_session_args.get('tournament_id'))
 
-        self.campaign = get_campaign(app.coop_session_args['campaign'])
+        self.campaign = getcampaign(app.coop_session_args['campaign'])
         self.campaign_level_name: str = app.coop_session_args['level']
 
         self._ran_tutorial_activity = False
@@ -116,7 +116,7 @@ class CoopSession(Session):
 
         # Build an instance for the current level.
         assert self.campaign is not None
-        level = self.campaign.get_level(self.campaign_level_name)
+        level = self.campaign.getlevel(self.campaign_level_name)
         gametype = level.gametype
         settings = level.get_settings()
 
@@ -131,8 +131,8 @@ class CoopSession(Session):
         self._current_game_instance: GameActivity = newactivity
 
         # Find the next level and build an instance for it too.
-        levels = self.campaign.get_levels()
-        level = self.campaign.get_level(self.campaign_level_name)
+        levels = self.campaign.levels
+        level = self.campaign.getlevel(self.campaign_level_name)
 
         nextlevel: Optional[ba.Level]
         if level.index < len(levels) - 1:

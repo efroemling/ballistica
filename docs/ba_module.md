@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-06-03 for Ballistica version 1.5.0 build 20044</em></h4>
+<h4><em>last updated on 2020-06-03 for Ballistica version 1.5.0 build 20045</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -1236,8 +1236,18 @@ mycall()</pre>
 </p>
 
 <h3>Attributes:</h3>
-<h5><a href="#attr_ba_Campaign__name">name</a>, <a href="#attr_ba_Campaign__sequential">sequential</a></h5>
+<h5><a href="#attr_ba_Campaign__configdict">configdict</a>, <a href="#attr_ba_Campaign__levels">levels</a>, <a href="#attr_ba_Campaign__name">name</a>, <a href="#attr_ba_Campaign__sequential">sequential</a></h5>
 <dl>
+<dt><h4><a name="attr_ba_Campaign__configdict">configdict</a></h4></dt><dd>
+<p><span>Dict[str, Any]</span></p>
+<p>Return the live config dict for this campaign.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_Campaign__levels">levels</a></h4></dt><dd>
+<p><span>List[<a href="#class_ba_Level">ba.Level</a>]</span></p>
+<p>The list of <a href="#class_ba_Level">ba.Levels</a> in the Campaign.</p>
+
+</dd>
 <dt><h4><a name="attr_ba_Campaign__name">name</a></h4></dt><dd>
 <p><span>str</span></p>
 <p>The name of the Campaign.</p>
@@ -1250,40 +1260,28 @@ mycall()</pre>
 </dd>
 </dl>
 <h3>Methods:</h3>
-<h5><a href="#method_ba_Campaign____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Campaign__add_level">add_level()</a>, <a href="#method_ba_Campaign__get_config_dict">get_config_dict()</a>, <a href="#method_ba_Campaign__get_level">get_level()</a>, <a href="#method_ba_Campaign__get_levels">get_levels()</a>, <a href="#method_ba_Campaign__get_selected_level">get_selected_level()</a>, <a href="#method_ba_Campaign__reset">reset()</a>, <a href="#method_ba_Campaign__set_selected_level">set_selected_level()</a></h5>
+<h5><a href="#method_ba_Campaign____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Campaign__addlevel">addlevel()</a>, <a href="#method_ba_Campaign__get_selected_level">get_selected_level()</a>, <a href="#method_ba_Campaign__getlevel">getlevel()</a>, <a href="#method_ba_Campaign__reset">reset()</a>, <a href="#method_ba_Campaign__set_selected_level">set_selected_level()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_Campaign____init__">&lt;constructor&gt;</a></dt></h4><dd>
 <p><span>ba.Campaign(name: str, sequential: bool = True)</span></p>
 
 </dd>
-<dt><h4><a name="method_ba_Campaign__add_level">add_level()</a></dt></h4><dd>
-<p><span>add_level(self, level: <a href="#class_ba_Level">ba.Level</a>) -&gt; None</span></p>
+<dt><h4><a name="method_ba_Campaign__addlevel">addlevel()</a></dt></h4><dd>
+<p><span>addlevel(self, level: <a href="#class_ba_Level">ba.Level</a>) -&gt; None</span></p>
 
 <p>Adds a <a href="#class_ba_Level">ba.Level</a> to the Campaign.</p>
-
-</dd>
-<dt><h4><a name="method_ba_Campaign__get_config_dict">get_config_dict()</a></dt></h4><dd>
-<p><span>get_config_dict(self) -&gt; Dict[str, Any]</span></p>
-
-<p>Return the live config dict for this campaign.</p>
-
-</dd>
-<dt><h4><a name="method_ba_Campaign__get_level">get_level()</a></dt></h4><dd>
-<p><span>get_level(self, name: str) -&gt; <a href="#class_ba_Level">ba.Level</a></span></p>
-
-<p>Return a contained <a href="#class_ba_Level">ba.Level</a> by name.</p>
-
-</dd>
-<dt><h4><a name="method_ba_Campaign__get_levels">get_levels()</a></dt></h4><dd>
-<p><span>get_levels(self) -&gt; List[<a href="#class_ba_Level">ba.Level</a>]</span></p>
-
-<p>Return the set of <a href="#class_ba_Level">ba.Levels</a> in the Campaign.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Campaign__get_selected_level">get_selected_level()</a></dt></h4><dd>
 <p><span>get_selected_level(self) -&gt; str</span></p>
 
 <p>Return the name of the Level currently selected in the UI.</p>
+
+</dd>
+<dt><h4><a name="method_ba_Campaign__getlevel">getlevel()</a></dt></h4><dd>
+<p><span>getlevel(self, name: str) -&gt; <a href="#class_ba_Level">ba.Level</a></span></p>
+
+<p>Return a contained <a href="#class_ba_Level">ba.Level</a> by name.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Campaign__reset">reset()</a></dt></h4><dd>
@@ -3051,8 +3049,13 @@ prefs, etc.</p>
 </p>
 
 <h3>Attributes:</h3>
-<h5><a href="#attr_ba_Level__complete">complete</a>, <a href="#attr_ba_Level__displayname">displayname</a>, <a href="#attr_ba_Level__gametype">gametype</a>, <a href="#attr_ba_Level__index">index</a>, <a href="#attr_ba_Level__name">name</a>, <a href="#attr_ba_Level__preview_texture_name">preview_texture_name</a>, <a href="#attr_ba_Level__rating">rating</a></h5>
+<h5><a href="#attr_ba_Level__campaign">campaign</a>, <a href="#attr_ba_Level__complete">complete</a>, <a href="#attr_ba_Level__displayname">displayname</a>, <a href="#attr_ba_Level__gametype">gametype</a>, <a href="#attr_ba_Level__index">index</a>, <a href="#attr_ba_Level__name">name</a>, <a href="#attr_ba_Level__preview_texture_name">preview_texture_name</a>, <a href="#attr_ba_Level__rating">rating</a></h5>
 <dl>
+<dt><h4><a name="attr_ba_Level__campaign">campaign</a></h4></dt><dd>
+<p><span>Optional[<a href="#class_ba_Campaign">ba.Campaign</a>]</span></p>
+<p>The <a href="#class_ba_Campaign">ba.Campaign</a> this Level is associated with, or None.</p>
+
+</dd>
 <dt><h4><a name="attr_ba_Level__complete">complete</a></h4></dt><dd>
 <p><span>bool</span></p>
 <p>Whether this Level has been completed.</p>
@@ -3093,22 +3096,14 @@ prefs, etc.</p>
 </dd>
 </dl>
 <h3>Methods:</h3>
-<h5><a href="#method_ba_Level____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Level__get_campaign">get_campaign()</a>, <a href="#method_ba_Level__get_high_scores">get_high_scores()</a>, <a href="#method_ba_Level__get_preview_texture">get_preview_texture()</a>, <a href="#method_ba_Level__get_score_version_string">get_score_version_string()</a>, <a href="#method_ba_Level__get_settings">get_settings()</a>, <a href="#method_ba_Level__set_complete">set_complete()</a>, <a href="#method_ba_Level__set_high_scores">set_high_scores()</a>, <a href="#method_ba_Level__set_rating">set_rating()</a></h5>
+<h5><a href="#method_ba_Level____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Level__get_high_scores">get_high_scores()</a>, <a href="#method_ba_Level__get_preview_texture">get_preview_texture()</a>, <a href="#method_ba_Level__get_score_version_string">get_score_version_string()</a>, <a href="#method_ba_Level__get_settings">get_settings()</a>, <a href="#method_ba_Level__set_complete">set_complete()</a>, <a href="#method_ba_Level__set_high_scores">set_high_scores()</a>, <a href="#method_ba_Level__set_rating">set_rating()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_Level____init__">&lt;constructor&gt;</a></dt></h4><dd>
 <p><span>ba.Level(name: str, gametype: Type[<a href="#class_ba_GameActivity">ba.GameActivity</a>], settings: dict, preview_texture_name: str, displayname: str = None)</span></p>
 
-<p>Initializes a Level object with the provided values.</p>
-
-</dd>
-<dt><h4><a name="method_ba_Level__get_campaign">get_campaign()</a></dt></h4><dd>
-<p><span>get_campaign(self) -&gt; Optional[<a href="#class_ba_Campaign">ba.Campaign</a>]</span></p>
-
-<p>Return the <a href="#class_ba_Campaign">ba.Campaign</a> this Level is associated with, or None.</p>
-
 </dd>
 <dt><h4><a name="method_ba_Level__get_high_scores">get_high_scores()</a></dt></h4><dd>
-<p><span>get_high_scores(self) -&gt; Dict</span></p>
+<p><span>get_high_scores(self) -&gt; dict</span></p>
 
 <p>Return the current high scores for this Level.</p>
 

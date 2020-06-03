@@ -174,7 +174,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
 
         self._game_name_str = self._campaign.name + ':' + self._level_name
         self._game_config_str = str(len(
-            self._playerinfos)) + 'p' + self._campaign.get_level(
+            self._playerinfos)) + 'p' + self._campaign.getlevel(
                 self._level_name).get_score_version_string().replace(' ', '_')
 
         # If game-center/etc scores are available we show our friends'
@@ -183,7 +183,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
             self._game_name_str, self._game_config_str)
 
         try:
-            self._old_best_rank = self._campaign.get_level(
+            self._old_best_rank = self._campaign.getlevel(
                 self._level_name).rating
         except Exception:
             self._old_best_rank = 0.0
@@ -522,8 +522,8 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         self._begin_time = ba.time()
 
         # Calc whether the level is complete and other stuff.
-        levels = self._campaign.get_levels()
-        level = self._campaign.get_level(self._level_name)
+        levels = self._campaign.levels
+        level = self._campaign.getlevel(self._level_name)
         self._was_complete = level.complete
         self._is_complete = (self._was_complete or self._victory)
         self._newly_complete = (self._is_complete and not self._was_complete)
@@ -591,7 +591,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
             pstr = ba.Lstr(value='- ${A} -',
                            subs=[('${A}',
                                   ba.Lstr(resource='singlePlayerCountText'))])
-        ZoomText(self._campaign.get_level(self._level_name).displayname,
+        ZoomText(self._campaign.getlevel(self._level_name).displayname,
                  maxwidth=800,
                  flash=False,
                  trail=False,
@@ -659,7 +659,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
             ba.timer(0.4, ba.WeakCall(self._play_drumroll))
 
         # Add us to high scores, filter, and store.
-        our_high_scores_all = self._campaign.get_level(
+        our_high_scores_all = self._campaign.getlevel(
             self._level_name).get_high_scores()
         try:
             our_high_scores = our_high_scores_all[str(len(self._playerinfos)) +
@@ -691,7 +691,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         del our_high_scores[10:]
 
         if self._score is not None:
-            sver = (self._campaign.get_level(
+            sver = (self._campaign.getlevel(
                 self._level_name).get_score_version_string())
             _ba.add_transaction({
                 'type': 'SET_LEVEL_LOCAL_HIGH_SCORES',
@@ -1391,7 +1391,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                 dostar(2, 10 - 30, -112, '7.5')
                 dostar(3, 77 - 30, -112, '9.5')
             try:
-                best_rank = self._campaign.get_level(self._level_name).rating
+                best_rank = self._campaign.getlevel(self._level_name).rating
             except Exception:
                 best_rank = 0.0
 

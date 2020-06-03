@@ -343,7 +343,7 @@ class CoopBrowserWindow(ba.Window):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
-        from ba.internal import get_campaign, get_tournament_prize_strings
+        from ba.internal import getcampaign, get_tournament_prize_strings
 
         # If the number of tournaments or challenges in the data differs from
         # our current arrangement, refresh with the new number.
@@ -466,20 +466,20 @@ class CoopBrowserWindow(ba.Window):
                                opacity=0.2)
             else:
                 campaignname, levelname = game.split(':')
-                campaign = get_campaign(campaignname)
+                campaign = getcampaign(campaignname)
                 max_players = ba.app.tournament_info[
                     tbtn['tournament_id']]['maxPlayers']
                 txt = ba.Lstr(
                     value='${A} ${B}',
-                    subs=[('${A}', campaign.get_level(levelname).displayname),
+                    subs=[('${A}', campaign.getlevel(levelname).displayname),
                           ('${B}',
                            ba.Lstr(resource='playerCountAbbreviatedText',
                                    subs=[('${COUNT}', str(max_players))]))])
                 ba.textwidget(edit=tbtn['button_text'], text=txt)
-                ba.imagewidget(edit=tbtn['image'],
-                               texture=campaign.get_level(
-                                   levelname).get_preview_texture(),
-                               opacity=1.0 if enabled else 0.5)
+                ba.imagewidget(
+                    edit=tbtn['image'],
+                    texture=campaign.getlevel(levelname).get_preview_texture(),
+                    opacity=1.0 if enabled else 0.5)
 
             fee = entry['fee']
 
@@ -615,7 +615,7 @@ class CoopBrowserWindow(ba.Window):
     def _refresh_campaign_row(self) -> None:
         # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
-        from ba.internal import get_campaign
+        from ba.internal import getcampaign
         from bastd.ui.coop.gamebutton import GameButton
         parent_widget = self._campaign_sub_container
 
@@ -716,8 +716,8 @@ class CoopBrowserWindow(ba.Window):
                           down_widget=next_widget_down)
 
         # Update our existing percent-complete text.
-        campaign = get_campaign(campaignname)
-        levels = campaign.get_levels()
+        campaign = getcampaign(campaignname)
+        levels = campaign.levels
         levels_complete = sum((1 if l.complete else 0) for l in levels)
 
         # Last level cant be completed; hence the -1.
@@ -936,7 +936,7 @@ class CoopBrowserWindow(ba.Window):
         # add all custom user levels here..
         # items += [
         #     'User:' + l.getname()
-        #     for l in get_campaign('User').get_levels()
+        #     for l in getcampaign('User').getlevels()
         # ]
 
         self._custom_h_scroll = custom_h_scroll = h_scroll = ba.hscrollwidget(

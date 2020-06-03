@@ -74,7 +74,7 @@ class CoopGameActivity(GameActivity[PlayerType, TeamType]):
         levelname = self._get_coop_level_name()
         campaign = self.session.campaign
         assert campaign is not None
-        config_str = (str(len(self.players)) + 'p' + campaign.get_level(
+        config_str = (str(len(self.players)) + 'p' + campaign.getlevel(
             self.settings_raw['name']).get_score_version_string().replace(
                 ' ', '_'))
         _ba.get_scores_to_beat(levelname, config_str,

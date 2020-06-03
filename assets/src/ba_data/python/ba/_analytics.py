@@ -50,7 +50,7 @@ def game_begin_analytics() -> None:
         assert campaign is not None
         _ba.set_analytics_screen(
             'Coop Game: ' + campaign.name + ' ' +
-            campaign.get_level(_ba.app.coop_session_args['level']).name)
+            campaign.getlevel(_ba.app.coop_session_args['level']).name)
         _ba.increment_analytics_count('Co-op round start')
         if len(activity.players) == 1:
             _ba.increment_analytics_count('Co-op round start 1 human player')

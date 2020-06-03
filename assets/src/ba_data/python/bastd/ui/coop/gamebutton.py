@@ -40,7 +40,7 @@ class GameButton:
                  x: float, y: float, select: bool, row: str):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
-        from ba.internal import (get_achievements_for_coop_level, get_campaign)
+        from ba.internal import (get_achievements_for_coop_level, getcampaign)
         self._game = game
         sclx = 195.0
         scly = 195.0
@@ -54,8 +54,8 @@ class GameButton:
             campaignname = 'Default'
 
         rating: Optional[float]
-        campaign = get_campaign(campaignname)
-        rating = campaign.get_level(levelname).rating
+        campaign = getcampaign(campaignname)
+        rating = campaign.getlevel(levelname).rating
 
         if game == 'Easy:The Last Stand':
             rating = None
@@ -95,10 +95,10 @@ class GameButton:
             size=(image_width, image_width * 0.5),
             model_transparent=window.lsbt,
             model_opaque=window.lsbo,
-            texture=campaign.get_level(levelname).get_preview_texture(),
+            texture=campaign.getlevel(levelname).get_preview_texture(),
             mask_texture=ba.gettexture('mapPreviewMask'))
 
-        translated = campaign.get_level(levelname).displayname
+        translated = campaign.getlevel(levelname).displayname
         self._achievements = (get_achievements_for_coop_level(game))
 
         self._name_widget = ba.textwidget(parent=parent,
@@ -182,7 +182,7 @@ class GameButton:
 
     def _update(self) -> None:
         # pylint: disable=too-many-boolean-expressions
-        from ba.internal import have_pro, get_campaign
+        from ba.internal import have_pro, getcampaign
         game = self._game
         campaignname, levelname = game.split(':')
 
@@ -192,15 +192,13 @@ class GameButton:
         if game == 'Easy:The Last Stand':
             campaignname = 'Default'
 
-        campaign = get_campaign(campaignname)
-
-        levels = campaign.get_levels()
+        campaign = getcampaign(campaignname)
 
         # If this campaign is sequential, make sure we've unlocked
         # everything up to here.
         unlocked = True
         if campaign.sequential:
-            for level in levels:
+            for level in campaign.levels:
                 if level.name == levelname:
                     break
                 if not level.complete:

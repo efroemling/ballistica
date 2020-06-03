@@ -290,7 +290,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
             if isinstance(self.session, CoopSession):
                 campaign = self.session.campaign
                 assert campaign is not None
-                return campaign.get_level(
+                return campaign.getlevel(
                     self.session.campaign_level_name).displayname
         except Exception:
             print_error('error getting campaign level name')

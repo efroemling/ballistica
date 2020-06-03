@@ -724,26 +724,25 @@ class App:
                          args: Dict = None) -> bool:
         """High level way to launch a local co-op session."""
         # pylint: disable=cyclic-import
-        from ba._campaign import get_campaign
+        from ba._campaign import getcampaign
         from bastd.ui.coop.level import CoopLevelLockedWindow
         if args is None:
             args = {}
         if game == '':
             raise ValueError('empty game name')
         campaignname, levelname = game.split(':')
-        campaign = get_campaign(campaignname)
-        levels = campaign.get_levels()
+        campaign = getcampaign(campaignname)
 
         # If this campaign is sequential, make sure we've completed the
         # one before this.
         if campaign.sequential and not force:
-            for level in levels:
+            for level in campaign.levels:
                 if level.name == levelname:
                     break
                 if not level.complete:
                     CoopLevelLockedWindow(
-                        campaign.get_level(levelname).displayname,
-                        campaign.get_level(level.name).displayname)
+                        campaign.getlevel(levelname).displayname,
+                        campaign.getlevel(level.name).displayname)
                     return False
 
         # Ok, we're good to go.

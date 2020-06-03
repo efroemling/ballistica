@@ -47,7 +47,7 @@ class CoopJoinActivity(JoinActivity):
         assert session.campaign is not None
         level_name_full = (session.campaign.name + ':' +
                            session.campaign_level_name)
-        config_str = ('1p' + session.campaign.get_level(
+        config_str = ('1p' + session.campaign.getlevel(
             session.campaign_level_name).get_score_version_string().replace(
                 ' ', '_'))
         _ba.get_scores_to_beat(level_name_full, config_str,
@@ -59,7 +59,7 @@ class CoopJoinActivity(JoinActivity):
         super().on_transition_in()
         assert isinstance(self.session, ba.CoopSession)
         assert self.session.campaign
-        Text(self.session.campaign.get_level(
+        Text(self.session.campaign.getlevel(
             self.session.campaign_level_name).displayname,
              scale=1.3,
              h_attach=Text.HAttach.CENTER,

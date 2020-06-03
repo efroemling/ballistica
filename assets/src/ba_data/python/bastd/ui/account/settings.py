@@ -968,13 +968,13 @@ class AccountSettingsWindow(ba.Window):
                                          ('${A}', accounts_str)]))
 
     def _refresh_campaign_progress_text(self) -> None:
-        from ba.internal import get_campaign
+        from ba.internal import getcampaign
         if self._campaign_progress_text is None:
             return
         p_str: Union[str, ba.Lstr]
         try:
-            campaign = get_campaign('Default')
-            levels = campaign.get_levels()
+            campaign = getcampaign('Default')
+            levels = campaign.levels
             levels_complete = sum((1 if l.complete else 0) for l in levels)
 
             # Last level cant be completed; hence the -1;
@@ -1071,14 +1071,14 @@ class AccountSettingsWindow(ba.Window):
 
     def _reset_progress(self) -> None:
         try:
-            from ba.internal import get_campaign
+            from ba.internal import getcampaign
             # FIXME: This would need to happen server-side these days.
             if self._can_reset_achievements:
                 ba.app.config['Achievements'] = {}
                 _ba.reset_achievements()
-            campaign = get_campaign('Default')
+            campaign = getcampaign('Default')
             campaign.reset()  # also writes the config..
-            campaign = get_campaign('Challenges')
+            campaign = getcampaign('Challenges')
             campaign.reset()  # also writes the config..
         except Exception:
             ba.print_exception('exception resetting co-op campaign progress')

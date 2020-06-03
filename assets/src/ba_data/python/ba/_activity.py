@@ -326,14 +326,9 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         returns False for the Actor. The ba.Actor.autoretain() method
         is a convenient way to access this same functionality.
         """
-        from ba import _actor as bsactor
-        if not isinstance(actor, bsactor.Actor):
-            raise TypeError('non-actor passed to retain_actor')
-
-        # Make sure our pruning is happening...
-        assert (not self.has_transitioned_in()
-                or _ba.time() - self._last_prune_dead_actors_time < 10.0)
-
+        if __debug__:
+            from ba._actor import Actor
+            assert isinstance(actor, Actor)
         self._actor_refs.append(actor)
 
     def add_actor_weak_ref(self, actor: ba.Actor) -> None:
@@ -341,14 +336,9 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
 
         (called by the ba.Actor base class)
         """
-        from ba import _actor as bsactor
-        if not isinstance(actor, bsactor.Actor):
-            raise TypeError('non-actor passed to add_actor_weak_ref')
-
-        # Make sure our pruning is happening...
-        assert (not self.has_transitioned_in()
-                or _ba.time() - self._last_prune_dead_actors_time < 10.0)
-
+        if __debug__:
+            from ba._actor import Actor
+            assert isinstance(actor, Actor)
         self._actor_weak_refs.append(weakref.ref(actor))
 
     @property
@@ -476,7 +466,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
             try:
                 self.on_transition_in()
             except Exception:
-                print_exception(f'Error in on_transition_in for {self}')
+                print_exception(f'Error in on_transition_in for {self}.')
 
         # Tell the C++ layer that this activity is the main one, so it uses
         # settings from our globals, directs various events to us, etc.
@@ -490,7 +480,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
             try:
                 self.on_transition_out()
             except Exception:
-                print_exception('Error in on_transition_out for', self)
+                print_exception(f'Error in on_transition_out for {self}.')
 
     def begin(self, session: ba.Session) -> None:
         """Begin the activity.
@@ -586,7 +576,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
             try:
                 self.on_player_join(player)
             except Exception:
-                print_exception('Error in on_player_join for', self)
+                print_exception(f'Error in on_player_join for {self}.')
 
     def remove_player(self, sessionplayer: ba.SessionPlayer) -> None:
         """Remove a player from the Activity while it is running.
@@ -616,11 +606,11 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
             try:
                 self.on_player_leave(player)
             except Exception:
-                print_exception(f'Error in on_player_leave for {self}')
+                print_exception(f'Error in on_player_leave for {self}.')
             try:
                 player.leave()
             except Exception:
-                print_exception(f'Error on leave for {player} in {self}')
+                print_exception(f'Error on leave for {player} in {self}.')
 
             self._reset_session_player_for_no_activity(sessionplayer)
 
@@ -645,7 +635,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
             try:
                 self.on_team_join(team)
             except Exception:
-                print_exception(f'Error in on_team_join for {self}')
+                print_exception(f'Error in on_team_join for {self}.')
 
     def remove_team(self, sessionteam: ba.SessionTeam) -> None:
         """Remove a team from a Running Activity
@@ -667,11 +657,11 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
             try:
                 self.on_team_leave(team)
             except Exception:
-                print_exception(f'Error in on_team_leave for {self}')
+                print_exception(f'Error in on_team_leave for {self}.')
             try:
                 team.leave()
             except Exception:
-                print_exception(f'Error on leave for {team} in {self}')
+                print_exception(f'Error on leave for {team} in {self}.')
 
             sessionteam.gameteam = None
 
@@ -693,13 +683,13 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         except Exception:
             print_exception(
                 f'Error resetting SessionPlayer node on {sessionplayer}'
-                f' for {self}')
+                f' for {self}.')
         try:
             sessionplayer.resetinput()
         except Exception:
             print_exception(
                 f'Error resetting SessionPlayer input on {sessionplayer}'
-                f' for {self}')
+                f' for {self}.')
 
         # These should never fail I think...
         sessionplayer.setactivity(None)
@@ -767,7 +757,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
                 _ba.quit()
 
         except Exception:
-            print_exception('exception on _check_activity_death:')
+            print_exception('Error on _check_activity_death/')
 
     def _expire(self) -> None:
         """Put the activity in a state where it can be garbage-collected.
@@ -801,8 +791,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         try:
             self._activity_data.expire()
         except Exception:
-            print_exception(
-                'Error during ba.Activity._expire() destroying data:')
+            print_exception(f'Error expiring _activity_data for {self}.')
 
     def _expire_actors(self) -> None:
         # Expire all Actors.
@@ -843,7 +832,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
                 # until now whos underlying SessionPlayer left long ago...
                 pass
             except Exception:
-                print_exception(f'Error expiring {player}')
+                print_exception(f'Error expiring {player}.')
 
     def _expire_teams(self) -> None:
 
@@ -873,7 +862,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
                 # player/team has left the game)
                 pass
             except Exception:
-                print_exception(f'Error expiring Team {team}')
+                print_exception(f'Error expiring Team {team}.')
 
     def _prune_delay_deletes(self) -> None:
         self._delay_delete_players.clear()
