@@ -47,8 +47,11 @@ def build_apple(arch: str, debug: bool = False) -> None:
     os.chdir(builddir)
 
     # TEMP: Check out a particular commit while the branch head is broken.
-    # efrotools.run('git checkout 1a9c71dca298c03517e8236b81cf1d9c8c521cbf')
-    efrotools.run(f'git checkout {PYTHON_VERSION_MAJOR}')
+    # We can actually fix this to use the current one, but something
+    # broke in the underlying build even on old commits so keeping it
+    # locked for now...
+    efrotools.run('git checkout bf1ed73d0d5ff46862ba69dd5eb2ffaeff6f19b6')
+    # efrotools.run(f'git checkout {PYTHON_VERSION_MAJOR}')
 
     # On mac we currently have to add the _scproxy module or urllib will
     # fail.
@@ -152,7 +155,7 @@ def build_apple(arch: str, debug: bool = False) -> None:
     # Turn doc strings on; looks like it only adds a few hundred k.
     txt = txt.replace('--without-doc-strings', '--with-doc-strings')
 
-    # We're currently aiming at 10.13+ on mac
+    # Set mac/ios version reqs
     # (see issue with utimensat and futimens).
     txt = efrotools.replace_one(txt, 'MACOSX_DEPLOYMENT_TARGET=10.8',
                                 'MACOSX_DEPLOYMENT_TARGET=10.13')
@@ -178,7 +181,7 @@ def build_apple(arch: str, debug: bool = False) -> None:
         dline = 'python$(PYTHON_VER)m'
         splitlen = len(txt.split(dline))
         if splitlen != 14:
-            raise Exception('unexpected configure lines')
+            raise RuntimeError(f'Unexpected configure line count {splitlen}.')
         txt = txt.replace(dline, 'python$(PYTHON_VER)dm')
 
     efrotools.writefile('Makefile', txt)
@@ -282,7 +285,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     efrotools.writefile('pybuild/packages/python.py', ftxt)
 
     # Set this to a particular cpython commit to target exact releases from git
-    commit = '43364a7ae01fbe4288ef42622259a0038ce1edcc'  # 3.7.6 release
+    commit = 'd7c567b08f9d7d6aef21b881340a2b72731129db'  # 3.7.7 release
 
     if commit is not None:
         ftxt = efrotools.readfile('pybuild/source.py')

@@ -41,6 +41,7 @@
       <w>adbcfaca</w>
       <w>adbpath</w>
       <w>addgame</w>
+      <w>addlevel</w>
       <w>addr</w>
       <w>addrstr</w>
       <w>adisp</w>
@@ -344,6 +345,7 @@
       <w>compounddict</w>
       <w>compoundlist</w>
       <w>conditionalize</w>
+      <w>configdict</w>
       <w>configerror</w>
       <w>confighash</w>
       <w>configkey</w>
@@ -619,6 +621,7 @@
       <w>fdict</w>
       <w>fecfc</w>
       <w>feedparser</w>
+      <w>ffaeff</w>
       <w>ffap</w>
       <w>fhash</w>
       <w>fhashes</w>
@@ -761,6 +764,7 @@
       <w>genutils</w>
       <w>getaccountid</w>
       <w>getactivity</w>
+      <w>getcampaign</w>
       <w>getclass</w>
       <w>getcollide</w>
       <w>getcollidemodel</w>
@@ -772,7 +776,9 @@
       <w>getdata</w>
       <w>getinputdevice</w>
       <w>getkillerplayer</w>
+      <w>getlevel</w>
       <w>getlevelname</w>
+      <w>getlevels</w>
       <w>getlog</w>
       <w>getmaps</w>
       <w>getmodel</w>

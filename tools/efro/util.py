@@ -53,6 +53,7 @@ def utc_now() -> datetime.datetime:
     return datetime.datetime.now(datetime.timezone.utc)
 
 
+# noinspection PyUnresolvedReferences
 def empty_weakref(objtype: Type[T]) -> ReferenceType[T]:
     """Return an invalidated weak-reference for the specified type."""
     # At runtime, all weakrefs are the same; our type arg is just
@@ -99,7 +100,7 @@ class DispatchMethodWrapper(Generic[TARG, TRET]):
     registry: Dict[Any, Callable]
 
 
-# noinspection PyProtectedMember
+# noinspection PyProtectedMember,PyTypeHints
 def dispatchmethod(
         func: Callable[[Any, TARG],
                        TRET]) -> DispatchMethodWrapper[TARG, TRET]:
