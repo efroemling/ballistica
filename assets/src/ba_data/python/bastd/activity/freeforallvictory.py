@@ -83,7 +83,7 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
 
         ba.timer(0.3, ba.Call(ba.playsound, self._score_display_sound))
         results = self.settings_raw['results']
-        assert isinstance(results, ba.TeamGameResults)
+        assert isinstance(results, ba.GameResults)
         self.show_player_scores(delay=0.001,
                                 results=results,
                                 scale=1.2,

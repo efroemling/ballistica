@@ -53,7 +53,7 @@ def run_cpu_benchmark() -> None:
             cfg['Graphics Quality'] = 'Low'
             cfg.apply()
             self.benchmark_type = 'cpu'
-            self.setactivity(_ba.new_activity(tutorial.TutorialActivity))
+            self.setactivity(_ba.newactivity(tutorial.TutorialActivity))
 
         def __del__(self) -> None:
 

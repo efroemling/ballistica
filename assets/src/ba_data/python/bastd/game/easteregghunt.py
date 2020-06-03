@@ -230,7 +230,7 @@ class EasterEggHuntGame(ba.TeamGameActivity[Player, Team]):
             self._scoreboard.set_team_value(team, team.score)
 
     def end_game(self) -> None:
-        results = ba.TeamGameResults()
+        results = ba.GameResults()
         for team in self.teams:
             results.set_team_score(team, team.score)
         self.end(results)

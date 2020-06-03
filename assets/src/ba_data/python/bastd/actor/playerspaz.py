@@ -143,28 +143,30 @@ class PlayerSpaz(Spaz):
         else:
             player.resetinput()
 
-        player.assigninput('upDown', self.on_move_up_down)
-        player.assigninput('leftRight', self.on_move_left_right)
-        player.assigninput('holdPositionPress', self.on_hold_position_press)
-        player.assigninput('holdPositionRelease',
+        player.assigninput(ba.InputType.UP_DOWN, self.on_move_up_down)
+        player.assigninput(ba.InputType.LEFT_RIGHT, self.on_move_left_right)
+        player.assigninput(ba.InputType.HOLD_POSITION_PRESS,
+                           self.on_hold_position_press)
+        player.assigninput(ba.InputType.HOLD_POSITION_RELEASE,
                            self.on_hold_position_release)
+        intp = ba.InputType
         if enable_jump:
-            player.assigninput('jumpPress', self.on_jump_press)
-            player.assigninput('jumpRelease', self.on_jump_release)
+            player.assigninput(intp.JUMP_PRESS, self.on_jump_press)
+            player.assigninput(intp.JUMP_RELEASE, self.on_jump_release)
         if enable_pickup:
-            player.assigninput('pickUpPress', self.on_pickup_press)
-            player.assigninput('pickUpRelease', self.on_pickup_release)
+            player.assigninput(intp.PICK_UP_PRESS, self.on_pickup_press)
+            player.assigninput(intp.PICK_UP_RELEASE, self.on_pickup_release)
         if enable_punch:
-            player.assigninput('punchPress', self.on_punch_press)
-            player.assigninput('punchRelease', self.on_punch_release)
+            player.assigninput(intp.PUNCH_PRESS, self.on_punch_press)
+            player.assigninput(intp.PUNCH_RELEASE, self.on_punch_release)
         if enable_bomb:
-            player.assigninput('bombPress', self.on_bomb_press)
-            player.assigninput('bombRelease', self.on_bomb_release)
+            player.assigninput(intp.BOMB_PRESS, self.on_bomb_press)
+            player.assigninput(intp.BOMB_RELEASE, self.on_bomb_release)
         if enable_run:
-            player.assigninput('run', self.on_run)
+            player.assigninput(intp.RUN, self.on_run)
         if enable_fly:
-            player.assigninput('flyPress', self.on_fly_press)
-            player.assigninput('flyRelease', self.on_fly_release)
+            player.assigninput(intp.FLY_PRESS, self.on_fly_press)
+            player.assigninput(intp.FLY_RELEASE, self.on_fly_release)
 
         self._connected_to_player = player
 

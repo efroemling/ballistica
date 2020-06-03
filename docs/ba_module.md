@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-06-02 for Ballistica version 1.5.0 build 20042</em></h4>
+<h4><em>last updated on 2020-06-02 for Ballistica version 1.5.0 build 20043</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -20,6 +20,7 @@
       <li><a href="#class_ba_NodeActor">ba.NodeActor</a></li>
    </ul>
    <li><a href="#class_ba_Chooser">ba.Chooser</a></li>
+   <li><a href="#class_ba_GameResults">ba.GameResults</a></li>
    <li><a href="#class_ba_InputDevice">ba.InputDevice</a></li>
    <li><a href="#class_ba_Level">ba.Level</a></li>
    <li><a href="#class_ba_Lobby">ba.Lobby</a></li>
@@ -50,7 +51,6 @@
    <ul>
       <li><a href="#class_ba_EmptyTeam">ba.EmptyTeam</a></li>
    </ul>
-   <li><a href="#class_ba_TeamGameResults">ba.TeamGameResults</a></li>
 </ul>
 <h4><a name="function_category_Gameplay_Functions">Gameplay Functions</a></h4>
 <ul>
@@ -87,7 +87,7 @@
    <li><a href="#function_ba_is_browser_likely_available">ba.is_browser_likely_available()</a></li>
    <li><a href="#function_ba_is_point_in_box">ba.is_point_in_box()</a></li>
    <li><a href="#function_ba_log">ba.log()</a></li>
-   <li><a href="#function_ba_new_activity">ba.new_activity()</a></li>
+   <li><a href="#function_ba_newactivity">ba.newactivity()</a></li>
    <li><a href="#function_ba_normalized_color">ba.normalized_color()</a></li>
    <li><a href="#function_ba_open_url">ba.open_url()</a></li>
    <li><a href="#function_ba_print_error">ba.print_error()</a></li>
@@ -182,6 +182,7 @@
 <h4><a name="class_category_Enums">Enums</a></h4>
 <ul>
    <li><a href="#class_ba_DeathType">ba.DeathType</a></li>
+   <li><a href="#class_ba_InputType">ba.InputType</a></li>
    <li><a href="#class_ba_MusicPlayMode">ba.MusicPlayMode</a></li>
    <li><a href="#class_ba_MusicType">ba.MusicType</a></li>
    <li><a href="#class_ba_Permission">ba.Permission</a></li>
@@ -2760,6 +2761,102 @@ If the time-limit expires, end_game() will be called.</p>
 </dd>
 </dl>
 <hr>
+<h2><strong><a name="class_ba_GameResults">ba.GameResults</a></strong></h3>
+<p><em>&lt;top level class&gt;</em>
+</p>
+<p>
+Results for a completed game.</p>
+
+<p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a></p>
+
+<p>Upon completion, a game should fill one of these out and pass it to its
+<a href="#method_ba_Activity__end">ba.Activity.end</a>() call.</p>
+
+<h3>Attributes:</h3>
+<h5><a href="#attr_ba_GameResults__lower_is_better">lower_is_better</a>, <a href="#attr_ba_GameResults__playerinfos">playerinfos</a>, <a href="#attr_ba_GameResults__score_label">score_label</a>, <a href="#attr_ba_GameResults__scoretype">scoretype</a>, <a href="#attr_ba_GameResults__sessionteams">sessionteams</a>, <a href="#attr_ba_GameResults__winnergroups">winnergroups</a>, <a href="#attr_ba_GameResults__winning_team">winning_team</a></h5>
+<dl>
+<dt><h4><a name="attr_ba_GameResults__lower_is_better">lower_is_better</a></h4></dt><dd>
+<p><span>bool</span></p>
+<p>Whether lower scores are better.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_GameResults__playerinfos">playerinfos</a></h4></dt><dd>
+<p><span>List[<a href="#class_ba_PlayerInfo">ba.PlayerInfo</a>]</span></p>
+<p>Get info about the players represented by the results.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_GameResults__score_label">score_label</a></h4></dt><dd>
+<p><span>str</span></p>
+<p>The label associated with scores ('points', etc).</p>
+
+</dd>
+<dt><h4><a name="attr_ba_GameResults__scoretype">scoretype</a></h4></dt><dd>
+<p><span><a href="#class_ba_ScoreType">ba.ScoreType</a></span></p>
+<p>The type of score.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_GameResults__sessionteams">sessionteams</a></h4></dt><dd>
+<p><span>List[<a href="#class_ba_SessionTeam">ba.SessionTeam</a>]</span></p>
+<p>Return all <a href="#class_ba_SessionTeam">ba.SessionTeams</a> in the results.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_GameResults__winnergroups">winnergroups</a></h4></dt><dd>
+<p><span>List[WinnerGroup]</span></p>
+<p>Get an ordered list of winner groups.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_GameResults__winning_team">winning_team</a></h4></dt><dd>
+<p><span>Optional[<a href="#class_ba_SessionTeam">ba.SessionTeam</a>]</span></p>
+<p>The winning <a href="#class_ba_SessionTeam">ba.SessionTeam</a> if there is exactly one, or else None.</p>
+
+</dd>
+</dl>
+<h3>Methods:</h3>
+<h5><a href="#method_ba_GameResults____init__">&lt;constructor&gt;</a>, <a href="#method_ba_GameResults__get_team_score">get_team_score()</a>, <a href="#method_ba_GameResults__get_team_score_str">get_team_score_str()</a>, <a href="#method_ba_GameResults__has_score_for_team">has_score_for_team()</a>, <a href="#method_ba_GameResults__set_game">set_game()</a>, <a href="#method_ba_GameResults__set_team_score">set_team_score()</a></h5>
+<dl>
+<dt><h4><a name="method_ba_GameResults____init__">&lt;constructor&gt;</a></dt></h4><dd>
+<p><span>ba.GameResults()</span></p>
+
+<p>Instantiate a results instance.</p>
+
+</dd>
+<dt><h4><a name="method_ba_GameResults__get_team_score">get_team_score()</a></dt></h4><dd>
+<p><span>get_team_score(self, sessionteam: Union[<a href="#class_ba_SessionTeam">ba.SessionTeam</a>]) -&gt; Optional[int]</span></p>
+
+<p>Return the score for a given <a href="#class_ba_SessionTeam">ba.SessionTeam</a>.</p>
+
+</dd>
+<dt><h4><a name="method_ba_GameResults__get_team_score_str">get_team_score_str()</a></dt></h4><dd>
+<p><span>get_team_score_str(self, team: <a href="#class_ba_Team">ba.Team</a>) -&gt; <a href="#class_ba_Lstr">ba.Lstr</a></span></p>
+
+<p>Return the score for the given <a href="#class_ba_Team">ba.Team</a> as an Lstr.</p>
+
+<p>(properly formatted for the score type.)</p>
+
+</dd>
+<dt><h4><a name="method_ba_GameResults__has_score_for_team">has_score_for_team()</a></dt></h4><dd>
+<p><span>has_score_for_team(self, sessionteam: <a href="#class_ba_SessionTeam">ba.SessionTeam</a>) -&gt; bool</span></p>
+
+<p>Return whether there is a score for a given team.</p>
+
+</dd>
+<dt><h4><a name="method_ba_GameResults__set_game">set_game()</a></dt></h4><dd>
+<p><span>set_game(self, game: <a href="#class_ba_GameActivity">ba.GameActivity</a>) -&gt; None</span></p>
+
+<p>Set the game instance these results are applying to.</p>
+
+</dd>
+<dt><h4><a name="method_ba_GameResults__set_team_score">set_team_score()</a></dt></h4><dd>
+<p><span>set_team_score(self, team: <a href="#class_ba_Team">ba.Team</a>, score: Optional[int]) -&gt; None</span></p>
+
+<p>Set the score for a given <a href="#class_ba_Team">ba.Team</a>.</p>
+
+<p>This can be a number or None.
+(see the none_is_winner arg in the constructor)</p>
+
+</dd>
+</dl>
+<hr>
 <h2><strong><a name="class_ba_HitMessage">ba.HitMessage</a></strong></h3>
 <p><em>&lt;top level class&gt;</em>
 </p>
@@ -2913,6 +3010,43 @@ prefs, etc.</p>
 
 <h3>Methods:</h3>
 <p>&lt;all methods inherited from <a href="#class_ba_NotFoundError">ba.NotFoundError</a>&gt;</p>
+<hr>
+<h2><strong><a name="class_ba_InputType">ba.InputType</a></strong></h3>
+<p>Inherits from: enum.Enum</p>
+<p>Types of input a controller can send to the game.</p>
+
+<p>Category: <a href="#class_category_Enums">Enums</a></p>
+
+<p></p>
+
+<h3>Values:</h3>
+<ul>
+<li>UP_DOWN</li>
+<li>LEFT_RIGHT</li>
+<li>JUMP_PRESS</li>
+<li>JUMP_RELEASE</li>
+<li>PUNCH_PRESS</li>
+<li>PUNCH_RELEASE</li>
+<li>BOMB_PRESS</li>
+<li>BOMB_RELEASE</li>
+<li>PICK_UP_PRESS</li>
+<li>PICK_UP_RELEASE</li>
+<li>RUN</li>
+<li>FLY_PRESS</li>
+<li>FLY_RELEASE</li>
+<li>START_PRESS</li>
+<li>START_RELEASE</li>
+<li>HOLD_POSITION_PRESS</li>
+<li>HOLD_POSITION_RELEASE</li>
+<li>LEFT_PRESS</li>
+<li>LEFT_RELEASE</li>
+<li>RIGHT_PRESS</li>
+<li>RIGHT_RELEASE</li>
+<li>UP_PRESS</li>
+<li>UP_RELEASE</li>
+<li>DOWN_PRESS</li>
+<li>DOWN_RELEASE</li>
+</ul>
 <hr>
 <h2><strong><a name="class_ba_IntChoiceSetting">ba.IntChoiceSetting</a></strong></h3>
 <p>Inherits from: <a href="#class_ba_ChoiceSetting">ba.ChoiceSetting</a>, <a href="#class_ba_Setting">ba.Setting</a></p>
@@ -3615,7 +3749,7 @@ Use <a href="#function_ba_getmodel">ba.getmodel</a>() to instantiate one.</p>
 
 </dd>
 <dt><h4><a name="method_ba_MultiTeamSession__announce_game_results">announce_game_results()</a></dt></h4><dd>
-<p><span>announce_game_results(self, activity: <a href="#class_ba_GameActivity">ba.GameActivity</a>, results: <a href="#class_ba_TeamGameResults">ba.TeamGameResults</a>, delay: float, announce_winning_team: bool = True) -&gt; None</span></p>
+<p><span>announce_game_results(self, activity: <a href="#class_ba_GameActivity">ba.GameActivity</a>, results: <a href="#class_ba_GameResults">ba.GameResults</a>, delay: float, announce_winning_team: bool = True) -&gt; None</span></p>
 
 <p>Show basic game result at the end of a game.</p>
 
@@ -4134,18 +4268,12 @@ even if myactor is set to None.</p>
 <h5><a href="#method_ba_Player__assigninput">assigninput()</a>, <a href="#method_ba_Player__exists">exists()</a>, <a href="#method_ba_Player__get_icon">get_icon()</a>, <a href="#method_ba_Player__getname">getname()</a>, <a href="#method_ba_Player__is_alive">is_alive()</a>, <a href="#method_ba_Player__on_expire">on_expire()</a>, <a href="#method_ba_Player__resetinput">resetinput()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_Player__assigninput">assigninput()</a></dt></h4><dd>
-<p><span>assigninput(self, inputtype: Union[str, Tuple[str, ...]], call: Callable) -&gt; None</span></p>
+<p><span>assigninput(self, inputtype: Union[<a href="#class_ba_InputType">ba.InputType</a>, Tuple[<a href="#class_ba_InputType">ba.InputType</a>, ...]], call: Callable) -&gt; None</span></p>
 
-<p>assigninput(type: Union[str, Tuple[str, ...]],
+<p>assigninput(type: Union[<a href="#class_ba_InputType">ba.InputType</a>, Tuple[<a href="#class_ba_InputType">ba.InputType</a>, ...]],
   call: Callable) -&gt; None</p>
 
-<p>Set the python callable to be run for one or more types of input.
-Valid type values are: 'jumpPress', 'jumpRelease', 'punchPress',
-  'punchRelease','bombPress', 'bombRelease', 'pickUpPress',
-  'pickUpRelease', 'upDown','leftRight','upPress', 'upRelease',
-  'downPress', 'downRelease', 'leftPress','leftRelease','rightPress',
-  'rightRelease', 'run', 'flyPress', 'flyRelease', 'startPress',
-  'startRelease'</p>
+<p>Set the python callable to be run for one or more types of input.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Player__exists">exists()</a></dt></h4><dd>
@@ -4828,16 +4956,10 @@ is still in its lobby selecting a team/etc. then a
 <h5><a href="#method_ba_SessionPlayer__assigninput">assigninput()</a>, <a href="#method_ba_SessionPlayer__exists">exists()</a>, <a href="#method_ba_SessionPlayer__get_account_id">get_account_id()</a>, <a href="#method_ba_SessionPlayer__get_icon">get_icon()</a>, <a href="#method_ba_SessionPlayer__getname">getname()</a>, <a href="#method_ba_SessionPlayer__remove_from_game">remove_from_game()</a>, <a href="#method_ba_SessionPlayer__resetinput">resetinput()</a>, <a href="#method_ba_SessionPlayer__setname">setname()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_SessionPlayer__assigninput">assigninput()</a></dt></h4><dd>
-<p><span>assigninput(type: Union[str, Tuple[str, ...]],
+<p><span>assigninput(type: Union[<a href="#class_ba_InputType">ba.InputType</a>, Tuple[<a href="#class_ba_InputType">ba.InputType</a>, ...]],
   call: Callable) -&gt; None</span></p>
 
-<p>Set the python callable to be run for one or more types of input.
-Valid type values are: 'jumpPress', 'jumpRelease', 'punchPress',
-  'punchRelease','bombPress', 'bombRelease', 'pickUpPress',
-  'pickUpRelease', 'upDown','leftRight','upPress', 'upRelease',
-  'downPress', 'downRelease', 'leftPress','leftRelease','rightPress',
-  'rightRelease', 'run', 'flyPress', 'flyRelease', 'startPress',
-  'startRelease'</p>
+<p>Set the python callable to be run for one or more types of input.</p>
 
 </dd>
 <dt><h4><a name="method_ba_SessionPlayer__exists">exists()</a></dt></h4><dd>
@@ -5403,102 +5525,6 @@ on the <a href="#class_ba_Player">ba.Player</a> and their <a href="#class_ba_Tea
 <p>Class method override;
 returns True for <a href="#class_ba_DualTeamSession">ba.DualTeamSessions</a> and <a href="#class_ba_FreeForAllSession">ba.FreeForAllSessions</a>;
 False otherwise.</p>
-
-</dd>
-</dl>
-<hr>
-<h2><strong><a name="class_ba_TeamGameResults">ba.TeamGameResults</a></strong></h3>
-<p><em>&lt;top level class&gt;</em>
-</p>
-<p>
-Results for a completed <a href="#class_ba_TeamGameActivity">ba.TeamGameActivity</a>.</p>
-
-<p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a></p>
-
-<p>Upon completion, a game should fill one of these out and pass it to its
-<a href="#method_ba_Activity__end">ba.Activity.end</a>() call.</p>
-
-<h3>Attributes:</h3>
-<h5><a href="#attr_ba_TeamGameResults__lower_is_better">lower_is_better</a>, <a href="#attr_ba_TeamGameResults__playerinfos">playerinfos</a>, <a href="#attr_ba_TeamGameResults__score_label">score_label</a>, <a href="#attr_ba_TeamGameResults__scoretype">scoretype</a>, <a href="#attr_ba_TeamGameResults__sessionteams">sessionteams</a>, <a href="#attr_ba_TeamGameResults__winnergroups">winnergroups</a>, <a href="#attr_ba_TeamGameResults__winning_team">winning_team</a></h5>
-<dl>
-<dt><h4><a name="attr_ba_TeamGameResults__lower_is_better">lower_is_better</a></h4></dt><dd>
-<p><span>bool</span></p>
-<p>Whether lower scores are better.</p>
-
-</dd>
-<dt><h4><a name="attr_ba_TeamGameResults__playerinfos">playerinfos</a></h4></dt><dd>
-<p><span>List[<a href="#class_ba_PlayerInfo">ba.PlayerInfo</a>]</span></p>
-<p>Get info about the players represented by the results.</p>
-
-</dd>
-<dt><h4><a name="attr_ba_TeamGameResults__score_label">score_label</a></h4></dt><dd>
-<p><span>str</span></p>
-<p>The label associated with scores ('points', etc).</p>
-
-</dd>
-<dt><h4><a name="attr_ba_TeamGameResults__scoretype">scoretype</a></h4></dt><dd>
-<p><span><a href="#class_ba_ScoreType">ba.ScoreType</a></span></p>
-<p>The type of score.</p>
-
-</dd>
-<dt><h4><a name="attr_ba_TeamGameResults__sessionteams">sessionteams</a></h4></dt><dd>
-<p><span>List[<a href="#class_ba_SessionTeam">ba.SessionTeam</a>]</span></p>
-<p>Return all <a href="#class_ba_SessionTeam">ba.SessionTeams</a> in the results.</p>
-
-</dd>
-<dt><h4><a name="attr_ba_TeamGameResults__winnergroups">winnergroups</a></h4></dt><dd>
-<p><span>List[WinnerGroup]</span></p>
-<p>Get an ordered list of winner groups.</p>
-
-</dd>
-<dt><h4><a name="attr_ba_TeamGameResults__winning_team">winning_team</a></h4></dt><dd>
-<p><span>Optional[<a href="#class_ba_SessionTeam">ba.SessionTeam</a>]</span></p>
-<p>The winning <a href="#class_ba_SessionTeam">ba.SessionTeam</a> if there is exactly one, or else None.</p>
-
-</dd>
-</dl>
-<h3>Methods:</h3>
-<h5><a href="#method_ba_TeamGameResults____init__">&lt;constructor&gt;</a>, <a href="#method_ba_TeamGameResults__get_team_score">get_team_score()</a>, <a href="#method_ba_TeamGameResults__get_team_score_str">get_team_score_str()</a>, <a href="#method_ba_TeamGameResults__has_score_for_team">has_score_for_team()</a>, <a href="#method_ba_TeamGameResults__set_game">set_game()</a>, <a href="#method_ba_TeamGameResults__set_team_score">set_team_score()</a></h5>
-<dl>
-<dt><h4><a name="method_ba_TeamGameResults____init__">&lt;constructor&gt;</a></dt></h4><dd>
-<p><span>ba.TeamGameResults()</span></p>
-
-<p>Instantiate a results instance.</p>
-
-</dd>
-<dt><h4><a name="method_ba_TeamGameResults__get_team_score">get_team_score()</a></dt></h4><dd>
-<p><span>get_team_score(self, sessionteam: Union[<a href="#class_ba_SessionTeam">ba.SessionTeam</a>]) -&gt; Optional[int]</span></p>
-
-<p>Return the score for a given <a href="#class_ba_SessionTeam">ba.SessionTeam</a>.</p>
-
-</dd>
-<dt><h4><a name="method_ba_TeamGameResults__get_team_score_str">get_team_score_str()</a></dt></h4><dd>
-<p><span>get_team_score_str(self, team: <a href="#class_ba_Team">ba.Team</a>) -&gt; <a href="#class_ba_Lstr">ba.Lstr</a></span></p>
-
-<p>Return the score for the given <a href="#class_ba_Team">ba.Team</a> as an Lstr.</p>
-
-<p>(properly formatted for the score type.)</p>
-
-</dd>
-<dt><h4><a name="method_ba_TeamGameResults__has_score_for_team">has_score_for_team()</a></dt></h4><dd>
-<p><span>has_score_for_team(self, sessionteam: <a href="#class_ba_SessionTeam">ba.SessionTeam</a>) -&gt; bool</span></p>
-
-<p>Return whether there is a score for a given team.</p>
-
-</dd>
-<dt><h4><a name="method_ba_TeamGameResults__set_game">set_game()</a></dt></h4><dd>
-<p><span>set_game(self, game: <a href="#class_ba_GameActivity">ba.GameActivity</a>) -&gt; None</span></p>
-
-<p>Set the game instance these results are applying to.</p>
-
-</dd>
-<dt><h4><a name="method_ba_TeamGameResults__set_team_score">set_team_score()</a></dt></h4><dd>
-<p><span>set_team_score(self, team: <a href="#class_ba_Team">ba.Team</a>, score: Optional[int]) -&gt; None</span></p>
-
-<p>Set the score for a given <a href="#class_ba_Team">ba.Team</a>.</p>
-
-<p>This can be a number or None.
-(see the none_is_winner arg in the constructor)</p>
 
 </dd>
 </dl>
@@ -6375,8 +6401,8 @@ issues unless to_server is False.</p>
 so in most cases you can just use that.</p>
 
 <hr>
-<h2><strong><a name="function_ba_new_activity">ba.new_activity()</a></strong></h3>
-<p><span>new_activity(activity_type: Type[<a href="#class_ba_Activity">ba.Activity</a>],
+<h2><strong><a name="function_ba_newactivity">ba.newactivity()</a></strong></h3>
+<p><span>newactivity(activity_type: Type[<a href="#class_ba_Activity">ba.Activity</a>],
   settings: dict = None) -&gt; <a href="#class_ba_Activity">ba.Activity</a></span></p>
 
 <p>Instantiates a <a href="#class_ba_Activity">ba.Activity</a> given a type object.</p>

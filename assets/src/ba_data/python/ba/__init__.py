@@ -32,7 +32,7 @@ from _ba import (CollideModel, Context, ContextCall, Data, InputDevice,
                  Vec3, Widget, buttonwidget, camerashake, checkboxwidget,
                  columnwidget, containerwidget, do_once, emitfx, getactivity,
                  getcollidemodel, getmodel, getnodes, getsession, getsound,
-                 gettexture, hscrollwidget, imagewidget, log, new_activity,
+                 gettexture, hscrollwidget, imagewidget, log, newactivity,
                  newnode, playsound, printnodes, printobjects, pushcall, quit,
                  rowwidget, safecolor, screenmessage, scrollwidget,
                  set_analytics_screen, charstr, textwidget, time, timer,
@@ -46,7 +46,7 @@ from ba._coopgame import CoopGameActivity
 from ba._coopsession import CoopSession
 from ba._dependency import (Dependency, DependencyComponent, DependencySet,
                             AssetPackage)
-from ba._enums import TimeType, Permission, TimeFormat, SpecialChar
+from ba._enums import TimeType, Permission, TimeFormat, SpecialChar, InputType
 from ba._error import (
     print_exception, print_error, ContextError, NotFoundError,
     PlayerNotFoundError, SessionPlayerNotFoundError, NodeNotFoundError,
@@ -55,7 +55,7 @@ from ba._error import (
     SessionNotFoundError, DelegateNotFoundError, DependencyError)
 from ba._freeforallsession import FreeForAllSession
 from ba._gameactivity import GameActivity
-from ba._gameresults import TeamGameResults
+from ba._gameresults import GameResults
 from ba._gamesettings import (Setting, IntSetting, FloatSetting, ChoiceSetting,
                               BoolSetting, IntChoiceSetting,
                               FloatChoiceSetting)

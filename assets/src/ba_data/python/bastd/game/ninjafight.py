@@ -172,7 +172,7 @@ class NinjaFightGame(ba.TeamGameActivity[Player, Team]):
         assert self._timer is not None
         self._timer.stop()
 
-        results = ba.TeamGameResults()
+        results = ba.GameResults()
 
         # If we won, set our score to the elapsed time in milliseconds.
         # (there should just be 1 team here since this is co-op).

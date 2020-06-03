@@ -575,7 +575,7 @@ class EliminationGame(ba.TeamGameActivity[Player, Team]):
     def end_game(self) -> None:
         if self.has_ended():
             return
-        results = ba.TeamGameResults()
+        results = ba.GameResults()
         self._vs_text = None  # Kill our 'vs' if its there.
         for team in self.teams:
             results.set_team_score(team, team.survival_seconds)

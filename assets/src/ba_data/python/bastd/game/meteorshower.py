@@ -263,7 +263,7 @@ class MeteorShowerGame(ba.TeamGameActivity[Player, Team]):
 
         # Ok now calc game results: set a score for each team and then tell
         # the game to end.
-        results = ba.TeamGameResults()
+        results = ba.GameResults()
 
         # Remember that 'free-for-all' mode is simply a special form
         # of 'teams' mode where each player gets their own team, so we can

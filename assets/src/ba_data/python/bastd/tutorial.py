@@ -2413,7 +2413,8 @@ class TutorialActivity(ba.Activity[Player, Team]):
 
         # We just wanna know if this player presses anything.
         player.assigninput(
-            ('jumpPress', 'punchPress', 'bombPress', 'pickUpPress'),
+            (ba.InputType.JUMP_PRESS, ba.InputType.PUNCH_PRESS,
+             ba.InputType.BOMB_PRESS, ba.InputType.PICK_UP_PRESS),
             ba.Call(self._player_pressed_button, player))
 
     def on_player_leave(self, player: Player) -> None:

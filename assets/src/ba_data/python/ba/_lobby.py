@@ -30,7 +30,7 @@ import _ba
 from ba._error import print_exception, print_error, NotFoundError
 from ba._gameutils import animate, animate_array
 from ba._lang import Lstr
-from ba._enums import SpecialChar
+from ba._enums import SpecialChar, InputType
 from ba._profile import get_player_profile_colors
 
 if TYPE_CHECKING:
@@ -515,32 +515,36 @@ class Chooser:
 
         if not ready:
             self._sessionplayer.assigninput(
-                'leftPress', Call(self.handlemessage,
-                                  ChangeMessage('team', -1)))
+                InputType.LEFT_PRESS,
+                Call(self.handlemessage, ChangeMessage('team', -1)))
             self._sessionplayer.assigninput(
-                'rightPress', Call(self.handlemessage,
-                                   ChangeMessage('team', 1)))
+                InputType.RIGHT_PRESS,
+                Call(self.handlemessage, ChangeMessage('team', 1)))
             self._sessionplayer.assigninput(
-                'bombPress',
+                InputType.BOMB_PRESS,
                 Call(self.handlemessage, ChangeMessage('character', 1)))
             self._sessionplayer.assigninput(
-                'upPress',
+                InputType.UP_PRESS,
                 Call(self.handlemessage, ChangeMessage('profileindex', -1)))
             self._sessionplayer.assigninput(
-                'downPress',
+                InputType.DOWN_PRESS,
                 Call(self.handlemessage, ChangeMessage('profileindex', 1)))
             self._sessionplayer.assigninput(
-                ('jumpPress', 'pickUpPress', 'punchPress'),
+                (InputType.JUMP_PRESS, InputType.PICK_UP_PRESS,
+                 InputType.PUNCH_PRESS),
                 Call(self.handlemessage, ChangeMessage('ready', 1)))
             self._ready = False
             self._update_text()
             self._sessionplayer.setname('untitled', real=False)
         else:
             self._sessionplayer.assigninput(
-                ('leftPress', 'rightPress', 'upPress', 'downPress',
-                 'jumpPress', 'bombPress', 'pickUpPress'), self._do_nothing)
+                (InputType.LEFT_PRESS, InputType.RIGHT_PRESS,
+                 InputType.UP_PRESS, InputType.DOWN_PRESS,
+                 InputType.JUMP_PRESS, InputType.BOMB_PRESS,
+                 InputType.PICK_UP_PRESS), self._do_nothing)
             self._sessionplayer.assigninput(
-                ('jumpPress', 'bombPress', 'pickUpPress', 'punchPress'),
+                (InputType.JUMP_PRESS, InputType.BOMB_PRESS,
+                 InputType.PICK_UP_PRESS, InputType.PUNCH_PRESS),
                 Call(self.handlemessage, ChangeMessage('ready', 0)))
 
             # Store the last profile picked by this input for reuse.

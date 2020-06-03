@@ -269,18 +269,13 @@ class Player(Generic[TeamType]):
         assert not self._expired
         return self._sessionplayer.get_icon()
 
-    def assigninput(self, inputtype: Union[str, Tuple[str, ...]],
+    def assigninput(self, inputtype: Union[ba.InputType, Tuple[ba.InputType,
+                                                               ...]],
                     call: Callable) -> None:
-        """assigninput(type: Union[str, Tuple[str, ...]],
+        """assigninput(type: Union[ba.InputType, Tuple[ba.InputType, ...]],
           call: Callable) -> None
 
         Set the python callable to be run for one or more types of input.
-        Valid type values are: 'jumpPress', 'jumpRelease', 'punchPress',
-          'punchRelease','bombPress', 'bombRelease', 'pickUpPress',
-          'pickUpRelease', 'upDown','leftRight','upPress', 'upRelease',
-          'downPress', 'downRelease', 'leftPress','leftRelease','rightPress',
-          'rightRelease', 'run', 'flyPress', 'flyRelease', 'startPress',
-          'startRelease'
         """
         assert self._postinited
         assert not self._expired

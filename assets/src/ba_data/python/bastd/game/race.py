@@ -712,7 +712,7 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
                 endtime=None if self._last_team_time is None else (
                     self._timer.getstarttime() + self._last_team_time))
 
-        results = ba.TeamGameResults()
+        results = ba.GameResults()
 
         for team in self.teams:
             if team.time is not None:

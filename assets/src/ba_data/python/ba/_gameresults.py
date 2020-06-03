@@ -39,9 +39,9 @@ class WinnerGroup:
     teams: Sequence[ba.SessionTeam]
 
 
-class TeamGameResults:
+class GameResults:
     """
-    Results for a completed ba.TeamGameActivity.
+    Results for a completed game.
 
     Category: Gameplay Classes
 
@@ -65,7 +65,7 @@ class TeamGameResults:
     def set_game(self, game: ba.GameActivity) -> None:
         """Set the game instance these results are applying to."""
         if self._game_set:
-            raise RuntimeError('Game set twice for TeamGameResults.')
+            raise RuntimeError('Game set twice for GameResults.')
         self._game_set = True
         self._sessionteams = [weakref.ref(team) for team in game.teams]
         scoreconfig = game.getscoreconfig()

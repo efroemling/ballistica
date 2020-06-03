@@ -68,7 +68,7 @@ class Point(Enum):
 
 @dataclass
 class Spawn:
-    """Defines a bot spawn."""
+    """Defines a bot spawn event."""
     type: Type[SpazBot]
     path: int = 0
     point: Optional[Point] = None

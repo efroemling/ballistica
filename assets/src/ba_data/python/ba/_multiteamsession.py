@@ -85,7 +85,7 @@ class MultiTeamSession(Session):
             from bastd.tutorial import TutorialActivity
 
             # Get this loading.
-            self._tutorial_activity_instance = _ba.new_activity(
+            self._tutorial_activity_instance = _ba.newactivity(
                 TutorialActivity)
         else:
             self._tutorial_activity_instance = None
@@ -133,7 +133,7 @@ class MultiTeamSession(Session):
         self._instantiate_next_game()
 
         # Start in our custom join screen.
-        self.setactivity(_ba.new_activity(MultiTeamJoinActivity))
+        self.setactivity(_ba.newactivity(MultiTeamJoinActivity))
 
     def get_ffa_series_length(self) -> int:
         """Return free-for-all series length."""
@@ -165,7 +165,7 @@ class MultiTeamSession(Session):
         return _ba.app.config.get('Free-for-All Max Players', 8)
 
     def _instantiate_next_game(self) -> None:
-        self._next_game_instance = _ba.new_activity(
+        self._next_game_instance = _ba.newactivity(
             self._next_game_spec['resolved_type'],
             self._next_game_spec['settings'])
 
@@ -187,7 +187,7 @@ class MultiTeamSession(Session):
         # to transition us into a round gracefully (otherwise we'd snap from
         # one terrain to another instantly).
         elif isinstance(activity, TutorialActivity):
-            self.setactivity(_ba.new_activity(TransitionActivity))
+            self.setactivity(_ba.newactivity(TransitionActivity))
 
         # If we're in a between-round activity or a restart-activity, hop
         # into a round.
@@ -241,7 +241,7 @@ class MultiTeamSession(Session):
 
     def announce_game_results(self,
                               activity: ba.GameActivity,
-                              results: ba.TeamGameResults,
+                              results: ba.GameResults,
                               delay: float,
                               announce_winning_team: bool = True) -> None:
         """Show basic game result at the end of a game.

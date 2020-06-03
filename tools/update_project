@@ -145,7 +145,7 @@ class App:
         if os.path.exists('tools/gendummymodule.py'):
             if os.system('tools/gendummymodule.py' + self._checkarg) != 0:
                 print(
-                    f'{Clr.RED}Error checking/updating dummy module{Clr.RST}')
+                    f'{Clr.RED}Error checking/updating dummy module.{Clr.RST}')
                 sys.exit(255)
 
     def _update_docs_md(self) -> None:
@@ -636,33 +636,32 @@ class App:
     def _update_assets_makefile(self) -> None:
         assert os.path.exists('tools/update_assets_makefile')
         if os.system('tools/update_assets_makefile' + self._checkarg) != 0:
-            print(Clr.RED + 'Error checking/updating assets Makefile' +
-                  Clr.RST)
+            print(
+                f'{Clr.RED}Error checking/updating assets Makefile.f{Clr.RST}')
             sys.exit(255)
 
     def _update_generated_code_makefile(self) -> None:
         if os.path.exists('tools/update_generated_code_makefile'):
             if os.system('tools/update_generated_code_makefile' +
                          self._checkarg) != 0:
-                print(Clr.RED +
-                      'Error checking/updating generated-code Makefile' +
-                      Clr.RST)
+                print(f'{Clr.RED}Error checking/updating'
+                      f' generated-code Makefile{Clr.RED}')
                 sys.exit(255)
 
     def _update_resources_makefile(self) -> None:
         if os.path.exists('tools/update_resources_makefile'):
             if os.system('tools/update_resources_makefile' +
                          self._checkarg) != 0:
-                print(Clr.RED + 'Error checking/updating resources Makefile' +
-                      Clr.RST)
+                print(f'{Clr.RED}Error checking/updating'
+                      f' resources Makefile.{Clr.RST}')
                 sys.exit(255)
 
     def _update_python_enums_module(self) -> None:
         if os.path.exists('tools/update_python_enums_module'):
             if os.system('tools/update_python_enums_module' +
                          self._checkarg) != 0:
-                print(Clr.RED + 'Error checking/updating python enums module' +
-                      Clr.RST)
+                print(f'{Clr.RED}Error checking/updating'
+                      f' python enums module.{Clr.RST}')
                 sys.exit(255)
 
 

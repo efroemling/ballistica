@@ -69,7 +69,7 @@ class FreeForAllSession(MultiTeamSession):
         _ba.increment_analytics_count('Free-for-all session start')
         super().__init__()
 
-    def _switch_to_score_screen(self, results: ba.TeamGameResults) -> None:
+    def _switch_to_score_screen(self, results: ba.GameResults) -> None:
         # pylint: disable=cyclic-import
         from bastd.activity.drawscore import DrawScoreScreenActivity
         from bastd.activity.multiteamvictory import (
@@ -82,8 +82,7 @@ class FreeForAllSession(MultiTeamSession):
         # call it a draw.
         if len(self.players) > 1 and len(winners) < 2:
             self.setactivity(
-                _ba.new_activity(DrawScoreScreenActivity,
-                                 {'results': results}))
+                _ba.newactivity(DrawScoreScreenActivity, {'results': results}))
         else:
             # Award different point amounts based on number of players.
             point_awards = self.get_ffa_point_awards()
@@ -106,9 +105,9 @@ class FreeForAllSession(MultiTeamSession):
                         and series_winners[0].customdata['score'] !=
                         series_winners[1].customdata['score'])):
                 self.setactivity(
-                    _ba.new_activity(TeamSeriesVictoryScoreScreenActivity,
-                                     {'winner': series_winners[0]}))
+                    _ba.newactivity(TeamSeriesVictoryScoreScreenActivity,
+                                    {'winner': series_winners[0]}))
             else:
                 self.setactivity(
-                    _ba.new_activity(FreeForAllVictoryScoreScreenActivity,
-                                     {'results': results}))
+                    _ba.newactivity(FreeForAllVictoryScoreScreenActivity,
+                                    {'results': results}))

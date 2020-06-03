@@ -26,7 +26,7 @@ from typing import TYPE_CHECKING, TypeVar
 
 from ba._freeforallsession import FreeForAllSession
 from ba._gameactivity import GameActivity
-from ba._gameresults import TeamGameResults
+from ba._gameresults import GameResults
 from ba._dualteamsession import DualTeamSession
 import _ba
 
@@ -152,7 +152,7 @@ class TeamGameActivity(GameActivity[PlayerType, TeamType]):
             super().end(results, delay=2.0 + announce_delay, force=force)
 
             # Need to do this *after* end end call so that results is valid.
-            assert isinstance(results, TeamGameResults)
+            assert isinstance(results, GameResults)
             if do_announce and isinstance(session, MultiTeamSession):
                 session.announce_game_results(
                     self,

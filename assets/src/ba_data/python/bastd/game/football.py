@@ -266,7 +266,7 @@ class FootballTeamGame(ba.TeamGameActivity[Player, Team]):
         self._update_scoreboard()
 
     def end_game(self) -> None:
-        results = ba.TeamGameResults()
+        results = ba.GameResults()
         for team in self.teams:
             results.set_team_score(team, team.score)
         self.end(results=results, announce_delay=0.8)

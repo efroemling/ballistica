@@ -35,8 +35,11 @@ class DualTeamSession(MultiTeamSession):
 
     Category: Gameplay Classes
     """
+
+    # Base class overrides:
     use_teams = True
     use_team_colors = True
+
     _playlist_selection_var = 'Team Tournament Playlist Selection'
     _playlist_randomize_var = 'Team Tournament Playlist Randomize'
     _playlists_var = 'Team Tournament Playlists'
@@ -45,28 +48,28 @@ class DualTeamSession(MultiTeamSession):
         _ba.increment_analytics_count('Teams session start')
         super().__init__()
 
-    def _switch_to_score_screen(self, results: ba.TeamGameResults) -> None:
+    def _switch_to_score_screen(self, results: ba.GameResults) -> None:
         # pylint: disable=cyclic-import
         from bastd.activity.drawscore import DrawScoreScreenActivity
         from bastd.activity.dualteamscore import (
             TeamVictoryScoreScreenActivity)
         from bastd.activity.multiteamvictory import (
             TeamSeriesVictoryScoreScreenActivity)
-        winners = results.winnergroups
+        winnergroups = results.winnergroups
 
         # If everyone has the same score, call it a draw.
-        if len(winners) < 2:
-            self.setactivity(_ba.new_activity(DrawScoreScreenActivity))
+        if len(winnergroups) < 2:
+            self.setactivity(_ba.newactivity(DrawScoreScreenActivity))
         else:
-            winner = winners[0].teams[0]
+            winner = winnergroups[0].teams[0]
             winner.customdata['score'] += 1
 
             # If a team has won, show final victory screen.
             if winner.customdata['score'] >= (self._series_length - 1) / 2 + 1:
                 self.setactivity(
-                    _ba.new_activity(TeamSeriesVictoryScoreScreenActivity,
-                                     {'winner': winner}))
+                    _ba.newactivity(TeamSeriesVictoryScoreScreenActivity,
+                                    {'winner': winner}))
             else:
                 self.setactivity(
-                    _ba.new_activity(TeamVictoryScoreScreenActivity,
-                                     {'winner': winner}))
+                    _ba.newactivity(TeamVictoryScoreScreenActivity,
+                                    {'winner': winner}))

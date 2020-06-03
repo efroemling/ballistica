@@ -920,14 +920,14 @@ class MainMenuSession(ba.Session):
 
         super().__init__([self._activity_deps])
         self._locked = False
-        self.setactivity(ba.new_activity(MainMenuActivity))
+        self.setactivity(ba.newactivity(MainMenuActivity))
 
     def on_activity_end(self, activity: ba.Activity, results: Any) -> None:
         if self._locked:
             _ba.unlock_all_input()
 
         # Any ending activity leads us into the main menu one.
-        self.setactivity(ba.new_activity(MainMenuActivity))
+        self.setactivity(ba.newactivity(MainMenuActivity))
 
     def on_player_request(self, player: ba.SessionPlayer) -> bool:
         # Reject all player requests.

@@ -262,7 +262,7 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
                 self._set_chosen_one_player(None)
 
     def end_game(self) -> None:
-        results = ba.TeamGameResults()
+        results = ba.GameResults()
         for team in self.teams:
             results.set_team_score(team,
                                    self._chosen_one_time - team.time_remaining)

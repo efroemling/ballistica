@@ -26,6 +26,7 @@ from typing import TYPE_CHECKING
 import _ba
 from ba._activity import Activity
 from ba._music import setmusic, MusicType
+from ba._enums import InputType
 # False-positive from pylint due to our class-generics-filter.
 from ba._player import EmptyPlayer  # pylint: disable=W0611
 from ba._team import EmptyTeam  # pylint: disable=W0611
@@ -229,6 +230,6 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
         # Just to be extra careful, don't assign if we're transitioning out.
         # (though theoretically that would be ok).
         if not self.is_transitioning_out() and player:
-            player.assigninput(
-                ('jumpPress', 'punchPress', 'bombPress', 'pickUpPress'),
-                self._player_press)
+            player.assigninput((InputType.JUMP_PRESS, InputType.PUNCH_PRESS,
+                                InputType.BOMB_PRESS, InputType.PICK_UP_PRESS),
+                               self._player_press)

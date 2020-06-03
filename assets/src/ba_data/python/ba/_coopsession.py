@@ -98,7 +98,7 @@ class CoopSession(Session):
         self._custom_menu_ui: List[Dict[str, Any]] = []
 
         # Start our joining screen.
-        self.setactivity(_ba.new_activity(CoopJoinActivity))
+        self.setactivity(_ba.newactivity(CoopJoinActivity))
 
         self._next_game_instance: Optional[ba.GameActivity] = None
         self._next_game_level_name: Optional[str] = None
@@ -126,7 +126,7 @@ class CoopSession(Session):
             if setting.name not in settings:
                 settings[setting.name] = setting.default
 
-        newactivity = _ba.new_activity(gametype, settings)
+        newactivity = _ba.newactivity(gametype, settings)
         assert isinstance(newactivity, GameActivity)
         self._current_game_instance: GameActivity = newactivity
 
@@ -150,7 +150,7 @@ class CoopSession(Session):
                     settings[setting.name] = setting.default
 
             # We wanna be in the activity's context while taking it down.
-            newactivity = _ba.new_activity(gametype, settings)
+            newactivity = _ba.newactivity(gametype, settings)
             assert isinstance(newactivity, GameActivity)
             self._next_game_instance = newactivity
             self._next_game_level_name = nextlevel.name
@@ -165,7 +165,7 @@ class CoopSession(Session):
                 and self._tutorial_activity is None
                 and not self._ran_tutorial_activity):
             from bastd.tutorial import TutorialActivity
-            self._tutorial_activity = _ba.new_activity(TutorialActivity)
+            self._tutorial_activity = _ba.newactivity(TutorialActivity)
 
     def get_custom_menu_entries(self) -> List[Dict[str, Any]]:
         return self._custom_menu_ui
@@ -250,7 +250,7 @@ class CoopSession(Session):
         from ba._lang import Lstr
         from ba._general import WeakCall
         from ba._coopgame import CoopGameActivity
-        from ba._gameresults import TeamGameResults
+        from ba._gameresults import GameResults
         from ba._score import ScoreType
         from ba._player import PlayerInfo
         from bastd.tutorial import TutorialActivity
@@ -258,10 +258,10 @@ class CoopSession(Session):
 
         app = _ba.app
 
-        # If we're running a TeamGameActivity we'll have a TeamGameResults
+        # If we're running a TeamGameActivity we'll have a GameResults
         # as results. Otherwise its an old CoopGameActivity so its giving
         # us a dict of random stuff.
-        if isinstance(results, TeamGameResults):
+        if isinstance(results, GameResults):
             outcome = 'defeat'  # This can't be 'beaten'.
         else:
             try:
@@ -338,13 +338,13 @@ class CoopSession(Session):
         # If we were in a tutorial, just pop a transition to get to the
         # actual round.
         elif isinstance(activity, TutorialActivity):
-            self.setactivity(_ba.new_activity(TransitionActivity))
+            self.setactivity(_ba.newactivity(TransitionActivity))
         else:
 
             playerinfos: List[ba.PlayerInfo]
 
             # Generic team games.
-            if isinstance(results, TeamGameResults):
+            if isinstance(results, GameResults):
                 playerinfos = results.playerinfos
                 score = results.get_team_score(results.sessionteams[0])
                 fail_message = None
@@ -390,10 +390,10 @@ class CoopSession(Session):
             if outcome == 'restart':
 
                 # This will pop up back in the same round.
-                self.setactivity(_ba.new_activity(TransitionActivity))
+                self.setactivity(_ba.newactivity(TransitionActivity))
             else:
                 self.setactivity(
-                    _ba.new_activity(
+                    _ba.newactivity(
                         CoopScoreScreen, {
                             'playerinfos': playerinfos,
                             'score': score,

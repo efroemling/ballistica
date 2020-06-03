@@ -149,8 +149,10 @@ class ConquestGame(ba.TeamGameActivity[Player, Team]):
         # We want flags to tell us they've been hit but not react physically.
         self._extraflagmat.add_actions(
             conditions=('they_have_material', shared.player_material),
-            actions=(('modify_part_collision', 'collide', True),
-                     ('call', 'at_connect', self._handle_flag_player_collide)))
+            actions=(
+                ('modify_part_collision', 'collide', True),
+                ('call', 'at_connect', self._handle_flag_player_collide),
+            ))
 
     def get_instance_description(self) -> Union[str, Sequence]:
         return 'Secure all ${ARG1} flags.', len(self.map.flag_points)
@@ -229,7 +231,7 @@ class ConquestGame(ba.TeamGameActivity[Player, Team]):
                                             len(self._flags))
 
     def end_game(self) -> None:
-        results = ba.TeamGameResults()
+        results = ba.GameResults()
         for team in self.teams:
             results.set_team_score(team, team.flags_held)
         self.end(results=results)

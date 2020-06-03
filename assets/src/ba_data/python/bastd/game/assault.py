@@ -261,7 +261,7 @@ class AssaultGame(ba.TeamGameActivity[Player, Team]):
                     self.end_game()
 
     def end_game(self) -> None:
-        results = ba.TeamGameResults()
+        results = ba.GameResults()
         for team in self.teams:
             results.set_team_score(team, team.score)
         self.end(results=results)

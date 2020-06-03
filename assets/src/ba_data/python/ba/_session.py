@@ -177,7 +177,7 @@ class Session:
         self._ending = False
         self._activity_should_end_immediately = False
         self._activity_should_end_immediately_results: (
-            Optional[ba.TeamGameResults]) = None
+            Optional[ba.GameResults]) = None
         self._activity_should_end_immediately_delay = 0.0
 
         # Create static teams if we're using them.
@@ -348,7 +348,7 @@ class Session:
                     '_launch_end_session_activity called twice (since_last=' +
                     str(since_last) + ')')
             self._launch_end_session_activity_time = curtime
-            self.setactivity(_ba.new_activity(EndSessionActivity))
+            self.setactivity(_ba.newactivity(EndSessionActivity))
             self._wants_to_end = False
             self._ending = True  # Prevent further actions.
 

@@ -211,7 +211,7 @@ class DeathMatchGame(ba.TeamGameActivity[Player, Team]):
                                             self._score_to_win)
 
     def end_game(self) -> None:
-        results = ba.TeamGameResults()
+        results = ba.GameResults()
         for team in self.teams:
             results.set_team_score(team, team.score)
         self.end(results=results)

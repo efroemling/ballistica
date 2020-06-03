@@ -820,11 +820,11 @@ class GameActivity(Activity[PlayerType, TeamType]):
             results: Any = None,
             delay: float = 0.0,
             force: bool = False) -> None:
-        from ba._gameresults import TeamGameResults
+        from ba._gameresults import GameResults
 
         # If results is a standard team-game-results, associate it with us
         # so it can grab our score prefs.
-        if isinstance(results, TeamGameResults):
+        if isinstance(results, GameResults):
             results.set_game(self)
 
         # If we had a standard time-limit that had not expired, stop it so

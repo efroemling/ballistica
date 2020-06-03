@@ -70,7 +70,7 @@ class MultiTeamScoreScreenActivity(ScoreScreenActivity):
 
     def show_player_scores(self,
                            delay: float = 2.5,
-                           results: Optional[ba.TeamGameResults] = None,
+                           results: Optional[ba.GameResults] = None,
                            scale: float = 1.0,
                            x_offset: float = 0.0,
                            y_offset: float = 0.0) -> None:
@@ -87,7 +87,7 @@ class MultiTeamScoreScreenActivity(ScoreScreenActivity):
 
         def _get_prec_score(p_rec: ba.PlayerRecord) -> Optional[int]:
             if is_free_for_all and results is not None:
-                assert isinstance(results, ba.TeamGameResults)
+                assert isinstance(results, ba.GameResults)
                 assert p_rec.team.gameteam is not None
                 val = results.get_team_score(p_rec.team)
                 return val
@@ -95,7 +95,7 @@ class MultiTeamScoreScreenActivity(ScoreScreenActivity):
 
         def _get_prec_score_str(p_rec: ba.PlayerRecord) -> Union[str, ba.Lstr]:
             if is_free_for_all and results is not None:
-                assert isinstance(results, ba.TeamGameResults)
+                assert isinstance(results, ba.GameResults)
                 assert p_rec.team.gameteam is not None
                 val = results.get_team_score_str(p_rec.team.gameteam)
                 assert val is not None
@@ -107,7 +107,7 @@ class MultiTeamScoreScreenActivity(ScoreScreenActivity):
         # (since they're not in results and that's where we pull their
         # scores from)
         if results is not None:
-            assert isinstance(results, ba.TeamGameResults)
+            assert isinstance(results, ba.GameResults)
             player_records = []
             assert self.stats
             valid_players = list(self.stats.get_records().items())
