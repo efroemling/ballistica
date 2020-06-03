@@ -42,8 +42,8 @@ class ScoreType(Enum):
 
 
 @dataclass
-class ScoreInfo:
-    """Info about a game's scoring setup.
+class ScoreConfig:
+    """Settings for how a game handles scores.
 
     Category: Gameplay Classes
 

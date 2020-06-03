@@ -151,11 +151,10 @@ def filter_playlist(playlist: PlaylistType,
                 entry['is_unowned_game'] = True
 
             # Make sure all settings the game defines are present.
-            neededsettings = gameclass.get_game_settings(sessiontype)
-            for setting_name, setting in neededsettings:
-                if (setting_name not in entry['settings']
-                        and 'default' in setting):
-                    entry['settings'][setting_name] = setting['default']
+            neededsettings = gameclass.get_available_settings(sessiontype)
+            for setting in neededsettings:
+                if setting.name not in entry['settings']:
+                    entry['settings'][setting.name] = setting.default
             goodlist.append(entry)
         except ImportError as exc:
             print(f'Import failed while scanning playlist: {exc}')

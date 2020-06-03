@@ -121,10 +121,10 @@ class CoopSession(Session):
         settings = level.get_settings()
 
         # Make sure all settings the game expects are present.
-        neededsettings = gametype.get_game_settings(type(self))
-        for settingname, setting in neededsettings:
-            if settingname not in settings:
-                settings[settingname] = setting['default']
+        neededsettings = gametype.get_available_settings(type(self))
+        for setting in neededsettings:
+            if setting.name not in settings:
+                settings[setting.name] = setting.default
 
         newactivity = _ba.new_activity(gametype, settings)
         assert isinstance(newactivity, GameActivity)
@@ -144,10 +144,10 @@ class CoopSession(Session):
             settings = nextlevel.get_settings()
 
             # Make sure all settings the game expects are present.
-            neededsettings = gametype.get_game_settings(type(self))
-            for settingname, setting in neededsettings:
-                if settingname not in settings:
-                    settings[settingname] = setting['default']
+            neededsettings = gametype.get_available_settings(type(self))
+            for setting in neededsettings:
+                if setting.name not in settings:
+                    settings[setting.name] = setting.default
 
             # We wanna be in the activity's context while taking it down.
             newactivity = _ba.new_activity(gametype, settings)

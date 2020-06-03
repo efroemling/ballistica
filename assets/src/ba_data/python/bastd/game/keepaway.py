@@ -64,25 +64,38 @@ class KeepAwayGame(ba.TeamGameActivity[Player, Team]):
 
     name = 'Keep Away'
     description = 'Carry the flag for a set length of time.'
-    game_settings = [
-        ('Hold Time', {
-            'min_value': 10,
-            'default': 30,
-            'increment': 10
-        }),
-        ('Time Limit', {
-            'choices': [('None', 0), ('1 Minute', 60), ('2 Minutes', 120),
-                        ('5 Minutes', 300), ('10 Minutes', 600),
-                        ('20 Minutes', 1200)],
-            'default': 0
-        }),
-        ('Respawn Times', {
-            'choices': [('Shorter', 0.25), ('Short', 0.5), ('Normal', 1.0),
-                        ('Long', 2.0), ('Longer', 4.0)],
-            'default': 1.0
-        }),
+    available_settings = [
+        ba.IntSetting(
+            'Hold Time',
+            min_value=10,
+            default=30,
+            increment=10,
+        ),
+        ba.IntChoiceSetting(
+            'Time Limit',
+            choices=[
+                ('None', 0),
+                ('1 Minute', 60),
+                ('2 Minutes', 120),
+                ('5 Minutes', 300),
+                ('10 Minutes', 600),
+                ('20 Minutes', 1200),
+            ],
+            default=0,
+        ),
+        ba.FloatChoiceSetting(
+            'Respawn Times',
+            choices=[
+                ('Shorter', 0.25),
+                ('Short', 0.5),
+                ('Normal', 1.0),
+                ('Long', 2.0),
+                ('Longer', 4.0),
+            ],
+            default=1.0,
+        ),
     ]
-    score_info = ba.ScoreInfo(label='Time Held')
+    scoreconfig = ba.ScoreConfig(label='Time Held')
     default_music = ba.MusicType.KEEP_AWAY
 
     @classmethod

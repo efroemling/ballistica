@@ -72,7 +72,7 @@ class PlaylistEditGameWindow(ba.Window):
             ba.screenmessage(ba.Lstr(resource='noValidMapsErrorText'))
             raise Exception('No valid maps')
 
-        self._settings_defs = gameclass.get_game_settings(sessiontype)
+        self._settings_defs = gameclass.get_available_settings(sessiontype)
         self._completion_call = completion_call
 
         # To start with, pick a random map out of the ones we own.
@@ -239,30 +239,31 @@ class PlaylistEditGameWindow(ba.Window):
                       v_align='center')
         v -= map_height
 
-        for setting_name, setting in self._settings_defs:
-            value = setting['default']
+        for setting in self._settings_defs:
+            value = setting.default
             value_type = type(value)
 
             # Now, if there's an existing value for it in the config,
             # override with that.
             try:
                 if (config is not None and 'settings' in config
-                        and setting_name in config['settings']):
-                    value = value_type(config['settings'][setting_name])
+                        and setting.name in config['settings']):
+                    value = value_type(config['settings'][setting.name])
             except Exception:
                 ba.print_exception()
 
             # Shove the starting value in there to start.
-            self._settings[setting_name] = value
+            self._settings[setting.name] = value
 
-            name_translated = self._get_localized_setting_name(setting_name)
+            name_translated = self._get_localized_setting_name(setting.name)
 
             mw1 = 280
             mw2 = 70
 
             # Handle types with choices specially:
-            if 'choices' in setting:
-                for choice in setting['choices']:
+            if isinstance(setting, ba.ChoiceSetting):
+                # if 'choices' in setting:
+                for choice in setting.choices:
                     if len(choice) != 2:
                         raise ValueError(
                             "Expected 2-member tuples for 'choices'; got: " +
@@ -281,10 +282,10 @@ class PlaylistEditGameWindow(ba.Window):
                         'got: ' + repr(setting))
 
                 # Start at the choice corresponding to the default if possible.
-                self._choice_selections[setting_name] = 0
-                for index, choice in enumerate(setting['choices']):
+                self._choice_selections[setting.name] = 0
+                for index, choice in enumerate(setting.choices):
                     if choice[1] == value:
-                        self._choice_selections[setting_name] = index
+                        self._choice_selections[setting.name] = index
                         break
 
                 v -= spacing
@@ -300,8 +301,8 @@ class PlaylistEditGameWindow(ba.Window):
                     parent=self._subcontainer,
                     position=(h + 509 - 95, v),
                     size=(0, 28),
-                    text=self._get_localized_setting_name(setting['choices'][
-                        self._choice_selections[setting_name]][0]),
+                    text=self._get_localized_setting_name(setting.choices[
+                        self._choice_selections[setting.name]][0]),
                     editable=False,
                     color=(0.6, 1.0, 0.6, 1.0),
                     maxwidth=mw2,
@@ -314,7 +315,7 @@ class PlaylistEditGameWindow(ba.Window):
                                        label='<',
                                        autoselect=True,
                                        on_activate_call=ba.Call(
-                                           self._choice_inc, setting_name, txt,
+                                           self._choice_inc, setting.name, txt,
                                            setting, -1),
                                        repeat=True)
                 btn2 = ba.buttonwidget(parent=self._subcontainer,
@@ -323,25 +324,16 @@ class PlaylistEditGameWindow(ba.Window):
                                        label='>',
                                        autoselect=True,
                                        on_activate_call=ba.Call(
-                                           self._choice_inc, setting_name, txt,
+                                           self._choice_inc, setting.name, txt,
                                            setting, 1),
                                        repeat=True)
                 widget_column.append([btn1, btn2])
 
-            elif value_type in [int, float]:
+            elif isinstance(setting, (ba.IntSetting, ba.FloatSetting)):
                 v -= spacing
-                try:
-                    min_value = setting['min_value']
-                except Exception:
-                    min_value = 0
-                try:
-                    max_value = setting['max_value']
-                except Exception:
-                    max_value = 9999
-                try:
-                    increment = setting['increment']
-                except Exception:
-                    increment = 1
+                min_value = setting.min_value
+                max_value = setting.max_value
+                increment = setting.increment
                 ba.textwidget(parent=self._subcontainer,
                               position=(h + 50, v),
                               size=(100, 30),
@@ -368,7 +360,7 @@ class PlaylistEditGameWindow(ba.Window):
                                        on_activate_call=ba.Call(
                                            self._inc, txt, min_value,
                                            max_value, -increment, value_type,
-                                           setting_name),
+                                           setting.name),
                                        repeat=True)
                 btn2 = ba.buttonwidget(parent=self._subcontainer,
                                        position=(h + 509 + 5, v),
@@ -378,7 +370,7 @@ class PlaylistEditGameWindow(ba.Window):
                                        on_activate_call=ba.Call(
                                            self._inc, txt, min_value,
                                            max_value, increment, value_type,
-                                           setting_name),
+                                           setting.name),
                                        repeat=True)
                 widget_column.append([btn1, btn2])
 
@@ -413,7 +405,7 @@ class PlaylistEditGameWindow(ba.Window):
                                         value=value,
                                         on_value_change_call=ba.Call(
                                             self._check_value_change,
-                                            setting_name, txt))
+                                            setting.name, txt))
                 widget_column.append([cbw])
 
             else:
@@ -463,8 +455,8 @@ class PlaylistEditGameWindow(ba.Window):
             self._completion_call).get_root_widget()
 
     def _choice_inc(self, setting_name: str, widget: ba.Widget,
-                    setting: Dict[str, Any], increment: int) -> None:
-        choices = setting['choices']
+                    setting: ba.ChoiceSetting, increment: int) -> None:
+        choices = setting.choices
         if increment > 0:
             self._choice_selections[setting_name] = min(
                 len(choices) - 1, self._choice_selections[setting_name] + 1)

@@ -62,8 +62,8 @@ class EasterEggHuntGame(ba.TeamGameActivity[Player, Team]):
 
     name = 'Easter Egg Hunt'
     description = 'Gather eggs!'
-    game_settings = [('Pro Mode', {'default': False})]
-    score_info = ba.ScoreInfo(label='Score', scoretype=ba.ScoreType.POINTS)
+    available_settings = [ba.BoolSetting('Pro Mode', default=False)]
+    scoreconfig = ba.ScoreConfig(label='Score', scoretype=ba.ScoreType.POINTS)
 
     # We're currently hard-coded for one map.
     @classmethod

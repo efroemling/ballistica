@@ -191,41 +191,52 @@ class EliminationGame(ba.TeamGameActivity[Player, Team]):
 
     name = 'Elimination'
     description = 'Last remaining alive wins.'
-    score_info = ba.ScoreInfo(label='Survived',
-                              scoretype=ba.ScoreType.SECONDS,
-                              none_is_winner=True)
+    scoreconfig = ba.ScoreConfig(label='Survived',
+                                 scoretype=ba.ScoreType.SECONDS,
+                                 none_is_winner=True)
     # Show messages when players die since it's meaningful here.
     announce_player_deaths = True
 
     @classmethod
-    def get_game_settings(
-            cls,
-            sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
-        settings: List[Tuple[str, Dict[str, Any]]] = [
-            ('Lives Per Player', {
-                'default': 1,
-                'min_value': 1,
-                'max_value': 10,
-                'increment': 1
-            }),
-            ('Time Limit', {
-                'choices': [('None', 0), ('1 Minute', 60), ('2 Minutes', 120),
-                            ('5 Minutes', 300), ('10 Minutes', 600),
-                            ('20 Minutes', 1200)],
-                'default': 0
-            }),
-            ('Respawn Times', {
-                'choices': [('Shorter', 0.25), ('Short', 0.5), ('Normal', 1.0),
-                            ('Long', 2.0), ('Longer', 4.0)],
-                'default': 1.0
-            }),
-            ('Epic Mode', {
-                'default': False
-            }),
+    def get_available_settings(
+            cls, sessiontype: Type[ba.Session]) -> List[ba.Setting]:
+        settings = [
+            ba.IntSetting(
+                'Lives Per Player',
+                default=1,
+                min_value=1,
+                max_value=10,
+                increment=1,
+            ),
+            ba.IntChoiceSetting(
+                'Time Limit',
+                choices=[
+                    ('None', 0),
+                    ('1 Minute', 60),
+                    ('2 Minutes', 120),
+                    ('5 Minutes', 300),
+                    ('10 Minutes', 600),
+                    ('20 Minutes', 1200),
+                ],
+                default=0,
+            ),
+            ba.FloatChoiceSetting(
+                'Respawn Times',
+                choices=[
+                    ('Shorter', 0.25),
+                    ('Short', 0.5),
+                    ('Normal', 1.0),
+                    ('Long', 2.0),
+                    ('Longer', 4.0),
+                ],
+                default=1.0,
+            ),
+            ba.BoolSetting('Epic Mode', default=False),
         ]
         if issubclass(sessiontype, ba.DualTeamSession):
-            settings.append(('Solo Mode', {'default': False}))
-            settings.append(('Balance Total Lives', {'default': False}))
+            settings.append(ba.BoolSetting('Solo Mode', default=False))
+            settings.append(
+                ba.BoolSetting('Balance Total Lives', default=False))
         return settings
 
     @classmethod

@@ -746,6 +746,7 @@
       <w>gameplayer</w>
       <w>gameport</w>
       <w>gameresults</w>
+      <w>gamesettings</w>
       <w>gameteam</w>
       <w>gametype</w>
       <w>gametypes</w>
@@ -783,6 +784,7 @@
       <w>getpt</w>
       <w>getremote</w>
       <w>getscanresults</w>
+      <w>getscoreconfig</w>
       <w>getsession</w>
       <w>getsockname</w>
       <w>getsound</w>
@@ -1444,6 +1446,7 @@
       <w>prevstate</w>
       <w>priceraw</w>
       <w>printcolors</w>
+      <w>printf</w>
       <w>printnodes</w>
       <w>printobjects</w>
       <w>printpaths</w>
@@ -1640,6 +1643,7 @@
       <w>sched</w>
       <w>sclx</w>
       <w>scly</w>
+      <w>scoreconfig</w>
       <w>scorescreen</w>
       <w>scoreteam</w>
       <w>scoretxt</w>

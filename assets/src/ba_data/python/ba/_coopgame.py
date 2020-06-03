@@ -121,7 +121,7 @@ class CoopGameActivity(GameActivity[PlayerType, TeamType]):
                     animate(txt.node, 'scale', {1.0: 0.0, 1.1: 0.7, 1.2: 0.6})
                     break
 
-    # FIXME: this is now redundant with activityutils.get_score_info();
+    # FIXME: this is now redundant with activityutils.getscoreconfig();
     #  need to kill this.
     def get_score_type(self) -> str:
         """

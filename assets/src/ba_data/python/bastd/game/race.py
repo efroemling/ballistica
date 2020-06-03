@@ -95,45 +95,55 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
 
     name = 'Race'
     description = 'Run real fast!'
-    score_info = ba.ScoreInfo(label='Time',
-                              lower_is_better=True,
-                              scoretype=ba.ScoreType.MILLISECONDS)
+    scoreconfig = ba.ScoreConfig(label='Time',
+                                 lower_is_better=True,
+                                 scoretype=ba.ScoreType.MILLISECONDS)
 
     @classmethod
-    def get_game_settings(
-            cls,
-            sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
-        settings: List[Tuple[str, Dict[str, Any]]] = [
-            ('Laps', {
-                'min_value': 1,
-                'default': 3,
-                'increment': 1
-            }),
-            ('Time Limit', {
-                'choices': [('None', 0), ('1 Minute', 60), ('2 Minutes', 120),
-                            ('5 Minutes', 300), ('10 Minutes', 600),
-                            ('20 Minutes', 1200)],
-                'default': 0
-            }),
-            ('Mine Spawning', {
-                'choices': [('No Mines', 0), ('8 Seconds', 8000),
-                            ('4 Seconds', 4000), ('2 Seconds', 2000)],
-                'default': 4000
-            }),
-            ('Bomb Spawning', {
-                'choices': [('None', 0), ('8 Seconds', 8000),
-                            ('4 Seconds', 4000), ('2 Seconds', 2000),
-                            ('1 Second', 1000)],
-                'default': 2000
-            }),
-            ('Epic Mode', {
-                'default': False
-            }),
+    def get_available_settings(
+            cls, sessiontype: Type[ba.Session]) -> List[ba.Setting]:
+        settings = [
+            ba.IntSetting('Laps', min_value=1, default=3, increment=1),
+            ba.IntChoiceSetting(
+                'Time Limit',
+                default=0,
+                choices=[
+                    ('None', 0),
+                    ('1 Minute', 60),
+                    ('2 Minutes', 120),
+                    ('5 Minutes', 300),
+                    ('10 Minutes', 600),
+                    ('20 Minutes', 1200),
+                ],
+            ),
+            ba.IntChoiceSetting(
+                'Mine Spawning',
+                default=4000,
+                choices=[
+                    ('No Mines', 0),
+                    ('8 Seconds', 8000),
+                    ('4 Seconds', 4000),
+                    ('2 Seconds', 2000),
+                ],
+            ),
+            ba.IntChoiceSetting(
+                'Bomb Spawning',
+                choices=[
+                    ('None', 0),
+                    ('8 Seconds', 8000),
+                    ('4 Seconds', 4000),
+                    ('2 Seconds', 2000),
+                    ('1 Second', 1000),
+                ],
+                default=2000,
+            ),
+            ba.BoolSetting('Epic Mode', default=False),
         ]
 
         # We have some specific settings in teams mode.
         if issubclass(sessiontype, ba.DualTeamSession):
-            settings.append(('Entire Team Must Finish', {'default': False}))
+            settings.append(
+                ba.BoolSetting('Entire Team Must Finish', default=False))
         return settings
 
     @classmethod

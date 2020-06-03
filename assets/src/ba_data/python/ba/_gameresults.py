@@ -68,12 +68,12 @@ class TeamGameResults:
             raise RuntimeError('Game set twice for TeamGameResults.')
         self._game_set = True
         self._sessionteams = [weakref.ref(team) for team in game.teams]
-        score_info = game.get_score_info()
+        scoreconfig = game.getscoreconfig()
         self._playerinfos = copy.deepcopy(game.initialplayerinfos)
-        self._lower_is_better = score_info.lower_is_better
-        self._score_label = score_info.label
-        self._none_is_winner = score_info.none_is_winner
-        self._scoretype = score_info.scoretype
+        self._lower_is_better = scoreconfig.lower_is_better
+        self._score_label = scoreconfig.label
+        self._none_is_winner = scoreconfig.none_is_winner
+        self._scoretype = scoreconfig.scoretype
 
     def set_team_score(self, team: ba.Team, score: Optional[int]) -> None:
         """Set the score for a given ba.Team.

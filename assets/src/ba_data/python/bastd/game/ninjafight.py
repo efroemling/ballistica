@@ -53,9 +53,9 @@ class NinjaFightGame(ba.TeamGameActivity[Player, Team]):
 
     name = 'Ninja Fight'
     description = 'How fast can you defeat the ninjas?'
-    score_info = ba.ScoreInfo(label='Time',
-                              scoretype=ba.ScoreType.MILLISECONDS,
-                              lower_is_better=True)
+    scoreconfig = ba.ScoreConfig(label='Time',
+                                 scoretype=ba.ScoreType.MILLISECONDS,
+                                 lower_is_better=True)
 
     @classmethod
     def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:

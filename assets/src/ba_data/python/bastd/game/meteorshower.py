@@ -54,10 +54,10 @@ class MeteorShowerGame(ba.TeamGameActivity[Player, Team]):
 
     name = 'Meteor Shower'
     description = 'Dodge the falling bombs.'
-    game_settings = [('Epic Mode', {'default': False})]
-    score_info = ba.ScoreInfo(label='Survived',
-                              scoretype=ba.ScoreType.MILLISECONDS,
-                              version='B')
+    available_settings = [ba.BoolSetting('Epic Mode', default=False)]
+    scoreconfig = ba.ScoreConfig(label='Survived',
+                                 scoretype=ba.ScoreType.MILLISECONDS,
+                                 version='B')
 
     # Print messages when players die (since its meaningful in this game).
     announce_player_deaths = True

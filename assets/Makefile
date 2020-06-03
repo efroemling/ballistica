@@ -166,6 +166,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/ba/_freeforallsession.py \
   build/ba_data/python/ba/_gameactivity.py \
   build/ba_data/python/ba/_gameresults.py \
+  build/ba_data/python/ba/_gamesettings.py \
   build/ba_data/python/ba/_gameutils.py \
   build/ba_data/python/ba/_general.py \
   build/ba_data/python/ba/_hooks.py \
@@ -396,6 +397,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/ba/__pycache__/_freeforallsession.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_gameactivity.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_gameresults.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_gamesettings.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_gameutils.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_general.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_hooks.cpython-37.opt-1.pyc \
@@ -731,6 +733,11 @@ build/ba_data/python/ba/__pycache__/_gameactivity.cpython-37.opt-1.pyc: \
 
 build/ba_data/python/ba/__pycache__/_gameresults.cpython-37.opt-1.pyc: \
       build/ba_data/python/ba/_gameresults.py
+	@echo Compiling script: $^
+	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python/ba/__pycache__/_gamesettings.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_gamesettings.py
 	@echo Compiling script: $^
 	@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 

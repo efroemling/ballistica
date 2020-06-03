@@ -56,11 +56,14 @@ from ba._error import (
 from ba._freeforallsession import FreeForAllSession
 from ba._gameactivity import GameActivity
 from ba._gameresults import TeamGameResults
+from ba._gamesettings import (Setting, IntSetting, FloatSetting, ChoiceSetting,
+                              BoolSetting, IntChoiceSetting,
+                              FloatChoiceSetting)
 from ba._lang import Lstr, setlanguage, get_valid_languages
 from ba._map import Map, getmaps
 from ba._session import Session
 from ba._servermode import ServerController
-from ba._score import ScoreType, ScoreInfo
+from ba._score import ScoreType, ScoreConfig
 from ba._stats import PlayerScoredMessage, PlayerRecord, Stats
 from ba._team import SessionTeam, Team, EmptyTeam
 from ba._teamgame import TeamGameActivity

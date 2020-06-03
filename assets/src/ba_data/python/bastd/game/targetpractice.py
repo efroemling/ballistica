@@ -59,17 +59,10 @@ class TargetPracticeGame(ba.TeamGameActivity[Player, Team]):
 
     name = 'Target Practice'
     description = 'Bomb as many targets as you can.'
-    game_settings = [
-        ('Target Count', {
-            'min_value': 1,
-            'default': 3
-        }),
-        ('Enable Impact Bombs', {
-            'default': True
-        }),
-        ('Enable Triple Bombs', {
-            'default': True
-        }),
+    available_settings = [
+        ba.IntSetting('Target Count', min_value=1, default=3),
+        ba.BoolSetting('Enable Impact Bombs', default=True),
+        ba.BoolSetting('Enable Triple Bombs', default=True)
     ]
     default_music = ba.MusicType.FORWARD_MARCH
 

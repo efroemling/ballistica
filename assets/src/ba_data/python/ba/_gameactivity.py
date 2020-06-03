@@ -27,7 +27,7 @@ import random
 from typing import TYPE_CHECKING, TypeVar
 
 from ba._activity import Activity
-from ba._score import ScoreInfo
+from ba._score import ScoreConfig
 from ba._lang import Lstr
 from ba._messages import PlayerDiedMessage, StandMessage
 from ba._error import NotFoundError, print_error, print_exception
@@ -62,11 +62,11 @@ class GameActivity(Activity[PlayerType, TeamType]):
     # Default get_description() will return this if not None.
     description: Optional[str] = None
 
-    # Default get_game_settings() will return this if not None.
-    game_settings: Optional[List[Tuple[str, Dict[str, Any]]]] = None
+    # Default get_available_settings() will return this if not None.
+    available_settings: Optional[List[ba.Setting]] = None
 
-    # Default get_score_info() will return this if not None.
-    score_info: Optional[ba.ScoreInfo] = None
+    # Default getscoreconfig() will return this if not None.
+    scoreconfig: Optional[ba.ScoreConfig] = None
 
     # Override some defaults.
     allow_pausing = True
@@ -83,8 +83,8 @@ class GameActivity(Activity[PlayerType, TeamType]):
     def create_settings_ui(
         cls,
         sessionclass: Type[ba.Session],
-        settings: Optional[Dict[str, Any]],
-        completion_call: Callable[[Optional[Dict[str, Any]]], None],
+        settings: Optional[dict],
+        completion_call: Callable[[Optional[dict]], None],
     ) -> None:
         """Launch an in-game UI to configure settings for a game type.
 
@@ -93,11 +93,11 @@ class GameActivity(Activity[PlayerType, TeamType]):
         'config' should be an existing config dict (specifies 'edit' ui mode)
           or None (specifies 'add' ui mode).
 
-        'completion_call' will be called with a filled-out config dict on
+        'completion_call' will be called with a filled-out settings dict on
           success or None on cancel.
 
         Generally subclasses don't need to override this; if they override
-        ba.GameActivity.get_game_settings() and
+        ba.GameActivity.get_available_settings() and
         ba.GameActivity.get_supported_maps() they can just rely on
         the default implementation here which calls those methods.
         """
@@ -107,9 +107,10 @@ class GameActivity(Activity[PlayerType, TeamType]):
                                                  completion_call)
 
     @classmethod
-    def get_score_info(cls) -> ba.ScoreInfo:
+    def getscoreconfig(cls) -> ba.ScoreConfig:
         """Return info about game scoring setup; can be overridden by games."""
-        return cls.score_info if cls.score_info is not None else ScoreInfo()
+        return cls.scoreconfig if cls.scoreconfig is not None else ScoreConfig(
+        )
 
     @classmethod
     def getname(cls) -> str:
@@ -129,7 +130,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
 
         # A few substitutions for 'Epic', 'Solo' etc. modes.
         # FIXME: Should provide a way for game types to define filters of
-        #  their own.
+        #  their own and should not rely on hard-coded settings names.
         if settings is not None:
             if 'Solo Mode' in settings and settings['Solo Mode']:
                 name = Lstr(resource='soloNameFilterText',
@@ -167,9 +168,8 @@ class GameActivity(Activity[PlayerType, TeamType]):
         return Lstr(translate=('gameDescriptions', description))
 
     @classmethod
-    def get_game_settings(
-            cls,
-            sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
+    def get_available_settings(
+            cls, sessiontype: Type[ba.Session]) -> List[ba.Setting]:
         """
         Called by the default ba.GameActivity.create_settings_ui()
         implementation; should return a dict of config options to be presented
@@ -191,9 +191,9 @@ class GameActivity(Activity[PlayerType, TeamType]):
 
         'increment': Value increment for int/float settings.
 
-        # example get_game_settings() for a capture-the-flag game:
+        # example get_available_settings() for a capture-the-flag game:
         @classmethod
-        def get_game_settings(cls, sessiontype):
+        def get_available_settings(cls, sessiontype):
             return [("Score to Win", {
                         'default': 3,
                         'min_value': 1
@@ -228,7 +228,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
                     })]
         """
         del sessiontype  # Unused arg.
-        return [] if cls.game_settings is None else cls.game_settings
+        return [] if cls.available_settings is None else cls.available_settings
 
     @classmethod
     def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:

@@ -34,9 +34,8 @@ class AppDelegate(ba.AppDelegate):
 
     def create_default_game_settings_ui(
             self, gameclass: Type[ba.GameActivity],
-            sessionclass: Type[ba.Session], config: Optional[Dict[str, Any]],
-            completion_call: Callable[[Optional[Dict[str, Any]]],
-                                      Any]) -> None:
+            sessionclass: Type[ba.Session], config: Optional[dict],
+            completion_call: Callable[[Optional[dict]], Any]) -> None:
         """(internal)"""
 
         # Replace the main window once we come up successfully.

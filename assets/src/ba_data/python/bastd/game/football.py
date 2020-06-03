@@ -94,23 +94,36 @@ class FootballTeamGame(ba.TeamGameActivity[Player, Team]):
 
     name = 'Football'
     description = 'Get the flag to the enemy end zone.'
-    game_settings = [
-        ('Score to Win', {
-            'min_value': 7,
-            'default': 21,
-            'increment': 7
-        }),
-        ('Time Limit', {
-            'choices': [('None', 0), ('1 Minute', 60), ('2 Minutes', 120),
-                        ('5 Minutes', 300), ('10 Minutes', 600),
-                        ('20 Minutes', 1200)],
-            'default': 0
-        }),
-        ('Respawn Times', {
-            'choices': [('Shorter', 0.25), ('Short', 0.5), ('Normal', 1.0),
-                        ('Long', 2.0), ('Longer', 4.0)],
-            'default': 1.0
-        }),
+    available_settings = [
+        ba.IntSetting(
+            'Score to Win',
+            min_value=7,
+            default=21,
+            increment=7,
+        ),
+        ba.IntChoiceSetting(
+            'Time Limit',
+            choices=[
+                ('None', 0),
+                ('1 Minute', 60),
+                ('2 Minutes', 120),
+                ('5 Minutes', 300),
+                ('10 Minutes', 600),
+                ('20 Minutes', 1200),
+            ],
+            default=0,
+        ),
+        ba.FloatChoiceSetting(
+            'Respawn Times',
+            choices=[
+                ('Shorter', 0.25),
+                ('Short', 0.5),
+                ('Normal', 1.0),
+                ('Long', 2.0),
+                ('Longer', 4.0),
+            ],
+            default=1.0,
+        ),
     ]
     default_music = ba.MusicType.FOOTBALL
 
@@ -333,10 +346,11 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
 
     name = 'Football'
     tips = ['Use the pick-up button to grab the flag < ${PICKUP} >']
-    score_info = ba.ScoreInfo(scoretype=ba.ScoreType.MILLISECONDS, version='B')
+    scoreconfig = ba.ScoreConfig(scoretype=ba.ScoreType.MILLISECONDS,
+                                 version='B')
     default_music = ba.MusicType.FOOTBALL
 
-    # FIXME: Need to update co-op games to use get_score_info.
+    # FIXME: Need to update co-op games to use getscoreconfig.
     def get_score_type(self) -> str:
         return 'time'
 

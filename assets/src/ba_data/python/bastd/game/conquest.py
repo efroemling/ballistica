@@ -95,21 +95,31 @@ class ConquestGame(ba.TeamGameActivity[Player, Team]):
 
     name = 'Conquest'
     description = 'Secure all flags on the map to win.'
-    game_settings = [
-        ('Time Limit', {
-            'choices': [('None', 0), ('1 Minute', 60), ('2 Minutes', 120),
-                        ('5 Minutes', 300), ('10 Minutes', 600),
-                        ('20 Minutes', 1200)],
-            'default': 0
-        }),
-        ('Respawn Times', {
-            'choices': [('Shorter', 0.25), ('Short', 0.5), ('Normal', 1.0),
-                        ('Long', 2.0), ('Longer', 4.0)],
-            'default': 1.0
-        }),
-        ('Epic Mode', {
-            'default': False
-        }),
+    available_settings = [
+        ba.IntChoiceSetting(
+            'Time Limit',
+            choices=[
+                ('None', 0),
+                ('1 Minute', 60),
+                ('2 Minutes', 120),
+                ('5 Minutes', 300),
+                ('10 Minutes', 600),
+                ('20 Minutes', 1200),
+            ],
+            default=0,
+        ),
+        ba.FloatChoiceSetting(
+            'Respawn Times',
+            choices=[
+                ('Shorter', 0.25),
+                ('Short', 0.5),
+                ('Normal', 1.0),
+                ('Long', 2.0),
+                ('Longer', 4.0),
+            ],
+            default=1.0,
+        ),
+        ba.BoolSetting('Epic Mode', default=False),
     ]
 
     @classmethod
