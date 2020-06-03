@@ -26,6 +26,8 @@
 from __future__ import annotations
 
 import random
+from dataclasses import dataclass
+from enum import Enum
 from typing import TYPE_CHECKING
 
 import ba
@@ -42,7 +44,46 @@ from bastd.actor.spazbot import (
     BomberBotPro, BrawlerBotPro)
 
 if TYPE_CHECKING:
-    from typing import Type, Any, List, Dict, Tuple, Sequence, Optional
+    from typing import Type, Any, List, Dict, Tuple, Sequence, Optional, Union
+
+
+class Preset(Enum):
+    """Play presets."""
+    ENDLESS = 'endless'
+    ENDLESS_TOURNAMENT = 'endless_tournament'
+    PRO = 'pro'
+    PRO_EASY = 'pro_easy'
+    UBER = 'uber'
+    UBER_EASY = 'uber_easy'
+    TOURNAMENT = 'tournament'
+    TOURNAMENT_UBER = 'tournament_uber'
+
+
+class Point(Enum):
+    """Where we can spawn stuff and the corresponding map attr name."""
+    BOTTOM_LEFT = 'bot_spawn_bottom_left'
+    BOTTOM_RIGHT = 'bot_spawn_bottom_right'
+    START = 'bot_spawn_start'
+
+
+@dataclass
+class Spawn:
+    """Defines a bot spawn."""
+    type: Type[SpazBot]
+    path: int = 0
+    point: Optional[Point] = None
+
+
+@dataclass
+class Spacing:
+    """Defines spacing between spawns."""
+    duration: float
+
+
+@dataclass
+class Wave:
+    """Defines a wave of enemies."""
+    entries: List[Union[Spawn, Spacing, None]]
 
 
 class Player(ba.Player['Team']):
@@ -90,7 +131,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
         settings['map'] = 'Tower D'
         super().__init__(settings)
         shared = SharedObjects.get()
-        self._preset = str(settings.get('preset', 'pro'))
+        self._preset = Preset(settings.get('preset', 'pro'))
 
         self._player_death_sound = ba.getsound('playerDeath')
         self._new_wave_sound = ba.getsound('scoreHit01')
@@ -112,9 +153,11 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
         self._score_region_material = ba.Material()
         self._score_region_material.add_actions(
             conditions=('they_have_material', shared.player_material),
-            actions=(('modify_part_collision', 'collide',
-                      True), ('modify_part_collision', 'physical', False),
-                     ('call', 'at_connect', self._handle_reached_end)))
+            actions=(
+                ('modify_part_collision', 'collide', True),
+                ('modify_part_collision', 'physical', False),
+                ('call', 'at_connect', self._handle_reached_end),
+            ))
 
         self._last_wave_end_time = ba.time()
         self._player_has_picked_up_powerup = False
@@ -129,7 +172,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
         self._dingsoundhigh = ba.getsound('dingSmallHigh')
         self._exclude_powerups: Optional[List[str]] = None
         self._have_tnt: Optional[bool] = None
-        self._waves: Optional[List[Dict[str, Any]]] = None
+        self._waves: Optional[List[Wave]] = None
         self._bots = SpazBotSet()
         self._tntspawner: Optional[TNTSpawner] = None
         self._lives_bg: Optional[ba.NodeActor] = None
@@ -161,206 +204,186 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
     def on_begin(self) -> None:
         super().on_begin()
         player_count = len(self.players)
-        hard = self._preset not in ['pro_easy', 'uber_easy']
+        hard = self._preset not in {Preset.PRO_EASY, Preset.UBER_EASY}
 
-        if self._preset in ['pro', 'pro_easy', 'tournament']:
+        if self._preset in {Preset.PRO, Preset.PRO_EASY, Preset.TOURNAMENT}:
             self._exclude_powerups = ['curse']
             self._have_tnt = True
             self._waves = [
-                {'entries': [
-                    {'type': BomberBot, 'path': 3 if hard else 2},
-                    {'type': BomberBot, 'path': 2},
-                    {'type': BomberBot, 'path': 2} if hard else None,
-                    {'type': BomberBot, 'path': 2} if player_count > 1
-                    else None,
-                    {'type': BomberBot, 'path': 1} if hard else None,
-                    {'type': BomberBot, 'path': 1} if player_count > 2
-                    else None,
-                    {'type': BomberBot, 'path': 1} if player_count > 3
-                    else None,
-                ]},
-                {'entries': [
-                    {'type': BomberBot, 'path': 1} if hard else None,
-                    {'type': BomberBot, 'path': 2} if hard else None,
-                    {'type': BomberBot, 'path': 2},
-                    {'type': BomberBot, 'path': 2},
-                    {'type': BomberBot, 'path': 2} if player_count > 3
-                    else None,
-                    {'type': BrawlerBot, 'path': 3},
-                    {'type': BrawlerBot, 'path': 3},
-                    {'type': BrawlerBot, 'path': 3} if hard else None,
-                    {'type': BrawlerBot, 'path': 3} if player_count > 1
-                    else None,
-                    {'type': BrawlerBot, 'path': 3} if player_count > 2
-                    else None,
-                ]},
-                {'entries': [
-                    {'type': ChargerBot, 'path': 2} if hard else None,
-                    {'type': ChargerBot, 'path': 2} if player_count > 2
-                    else None,
-                    {'type': TriggerBot, 'path': 2},
-                    {'type': TriggerBot, 'path': 2} if player_count > 1
-                    else None,
-                    {'type': 'spacing', 'duration': 3.0},
-                    {'type': BomberBot, 'path': 2} if hard else None,
-                    {'type': BomberBot, 'path': 2} if hard else None,
-                    {'type': BomberBot, 'path': 2},
-                    {'type': BomberBot, 'path': 3} if hard else None,
-                    {'type': BomberBot, 'path': 3},
-                    {'type': BomberBot, 'path': 3},
-                    {'type': BomberBot, 'path': 3} if player_count > 3
-                    else None,
-                ]},
-                {'entries': [
-                    {'type': TriggerBot, 'path': 1} if hard else None,
-                    {'type': 'spacing', 'duration': 1.0} if hard else None,
-                    {'type': TriggerBot, 'path': 2},
-                    {'type': 'spacing', 'duration': 1.0},
-                    {'type': TriggerBot, 'path': 3},
-                    {'type': 'spacing', 'duration': 1.0},
-                    {'type': TriggerBot, 'path': 1} if hard else None,
-                    {'type': 'spacing', 'duration': 1.0} if hard else None,
-                    {'type': TriggerBot, 'path': 2},
-                    {'type': 'spacing', 'duration': 1.0},
-                    {'type': TriggerBot, 'path': 3},
-                    {'type': 'spacing', 'duration': 1.0},
-                    {'type': TriggerBot, 'path': 1}
-                    if (player_count > 1 and hard) else None,
-                    {'type': 'spacing', 'duration': 1.0},
-                    {'type': TriggerBot, 'path': 2} if player_count > 2
-                    else None,
-                    {'type': 'spacing', 'duration': 1.0},
-                    {'type': TriggerBot, 'path': 3} if player_count > 3
-                    else None,
-                    {'type': 'spacing', 'duration': 1.0},
-                ]},
-                {'entries': [
-                    {'type': ChargerBotProShielded if hard
-                    else ChargerBot, 'path': 1},
-                    {'type': BrawlerBot, 'path': 2} if hard else None,
-                    {'type': BrawlerBot, 'path': 2},
-                    {'type': BrawlerBot, 'path': 2},
-                    {'type': BrawlerBot, 'path': 3} if hard else None,
-                    {'type': BrawlerBot, 'path': 3},
-                    {'type': BrawlerBot, 'path': 3},
-                    {'type': BrawlerBot, 'path': 3} if player_count > 1
-                    else None,
-                    {'type': BrawlerBot, 'path': 3} if player_count > 2
-                    else None,
-                    {'type': BrawlerBot, 'path': 3} if player_count > 3
-                    else None,
-                ]},
-                {'entries': [
-                    {'type': BomberBotProShielded, 'path': 3},
-                    {'type': 'spacing', 'duration': 1.5},
-                    {'type': BomberBotProShielded, 'path': 2},
-                    {'type': 'spacing', 'duration': 1.5},
-                    {'type': BomberBotProShielded, 'path': 1} if hard
-                    else None,
-                    {'type': 'spacing', 'duration': 1.0} if hard else None,
-                    {'type': BomberBotProShielded, 'path': 3},
-                    {'type': 'spacing', 'duration': 1.5},
-                    {'type': BomberBotProShielded, 'path': 2},
-                    {'type': 'spacing', 'duration': 1.5},
-                    {'type': BomberBotProShielded, 'path': 1} if hard
-                    else None,
-                    {'type': 'spacing', 'duration': 1.5} if hard else None,
-                    {'type': BomberBotProShielded, 'path': 3}
-                    if player_count > 1 else None,
-                    {'type': 'spacing', 'duration': 1.5},
-                    {'type': BomberBotProShielded, 'path': 2}
-                    if player_count > 2 else None,
-                    {'type': 'spacing', 'duration': 1.5},
-                    {'type': BomberBotProShielded, 'path': 1}
-                    if player_count > 3 else None,
-                ]},
-            ]  # yapf: disable
-        elif self._preset in ['uber_easy', 'uber', 'tournament_uber']:
+                Wave(entries=[
+                    Spawn(BomberBot, path=3 if hard else 2),
+                    Spawn(BomberBot, path=2),
+                    Spawn(BomberBot, path=2) if hard else None,
+                    Spawn(BomberBot, path=2) if player_count > 1 else None,
+                    Spawn(BomberBot, path=1) if hard else None,
+                    Spawn(BomberBot, path=1) if player_count > 2 else None,
+                    Spawn(BomberBot, path=1) if player_count > 3 else None,
+                ]),
+                Wave(entries=[
+                    Spawn(BomberBot, path=1) if hard else None,
+                    Spawn(BomberBot, path=2) if hard else None,
+                    Spawn(BomberBot, path=2),
+                    Spawn(BomberBot, path=2),
+                    Spawn(BomberBot, path=2) if player_count > 3 else None,
+                    Spawn(BrawlerBot, path=3),
+                    Spawn(BrawlerBot, path=3),
+                    Spawn(BrawlerBot, path=3) if hard else None,
+                    Spawn(BrawlerBot, path=3) if player_count > 1 else None,
+                    Spawn(BrawlerBot, path=3) if player_count > 2 else None,
+                ]),
+                Wave(entries=[
+                    Spawn(ChargerBot, path=2) if hard else None,
+                    Spawn(ChargerBot, path=2) if player_count > 2 else None,
+                    Spawn(TriggerBot, path=2),
+                    Spawn(TriggerBot, path=2) if player_count > 1 else None,
+                    Spacing(duration=3.0),
+                    Spawn(BomberBot, path=2) if hard else None,
+                    Spawn(BomberBot, path=2) if hard else None,
+                    Spawn(BomberBot, path=2),
+                    Spawn(BomberBot, path=3) if hard else None,
+                    Spawn(BomberBot, path=3),
+                    Spawn(BomberBot, path=3),
+                    Spawn(BomberBot, path=3) if player_count > 3 else None,
+                ]),
+                Wave(entries=[
+                    Spawn(TriggerBot, path=1) if hard else None,
+                    Spacing(duration=1.0) if hard else None,
+                    Spawn(TriggerBot, path=2),
+                    Spacing(duration=1.0),
+                    Spawn(TriggerBot, path=3),
+                    Spacing(duration=1.0),
+                    Spawn(TriggerBot, path=1) if hard else None,
+                    Spacing(duration=1.0) if hard else None,
+                    Spawn(TriggerBot, path=2),
+                    Spacing(duration=1.0),
+                    Spawn(TriggerBot, path=3),
+                    Spacing(duration=1.0),
+                    Spawn(TriggerBot, path=1) if (
+                        player_count > 1 and hard) else None,
+                    Spacing(duration=1.0),
+                    Spawn(TriggerBot, path=2) if player_count > 2 else None,
+                    Spacing(duration=1.0),
+                    Spawn(TriggerBot, path=3) if player_count > 3 else None,
+                    Spacing(duration=1.0),
+                ]),
+                Wave(entries=[
+                    Spawn(ChargerBotProShielded if hard else ChargerBot,
+                          path=1),
+                    Spawn(BrawlerBot, path=2) if hard else None,
+                    Spawn(BrawlerBot, path=2),
+                    Spawn(BrawlerBot, path=2),
+                    Spawn(BrawlerBot, path=3) if hard else None,
+                    Spawn(BrawlerBot, path=3),
+                    Spawn(BrawlerBot, path=3),
+                    Spawn(BrawlerBot, path=3) if player_count > 1 else None,
+                    Spawn(BrawlerBot, path=3) if player_count > 2 else None,
+                    Spawn(BrawlerBot, path=3) if player_count > 3 else None,
+                ]),
+                Wave(entries=[
+                    Spawn(BomberBotProShielded, path=3),
+                    Spacing(duration=1.5),
+                    Spawn(BomberBotProShielded, path=2),
+                    Spacing(duration=1.5),
+                    Spawn(BomberBotProShielded, path=1) if hard else None,
+                    Spacing(duration=1.0) if hard else None,
+                    Spawn(BomberBotProShielded, path=3),
+                    Spacing(duration=1.5),
+                    Spawn(BomberBotProShielded, path=2),
+                    Spacing(duration=1.5),
+                    Spawn(BomberBotProShielded, path=1) if hard else None,
+                    Spacing(duration=1.5) if hard else None,
+                    Spawn(BomberBotProShielded, path=3
+                          ) if player_count > 1 else None,
+                    Spacing(duration=1.5),
+                    Spawn(BomberBotProShielded, path=2
+                          ) if player_count > 2 else None,
+                    Spacing(duration=1.5),
+                    Spawn(BomberBotProShielded, path=1
+                          ) if player_count > 3 else None,
+                ]),
+            ]
+        elif self._preset in {
+                Preset.UBER_EASY, Preset.UBER, Preset.TOURNAMENT_UBER
+        }:
             self._exclude_powerups = []
             self._have_tnt = True
             self._waves = [
-                {'entries': [
-                    {'type': TriggerBot, 'path': 1} if hard else None,
-                    {'type': TriggerBot, 'path': 2},
-                    {'type': TriggerBot, 'path': 2},
-                    {'type': TriggerBot, 'path': 3},
-                    {'type': BrawlerBotPro if hard
-                    else BrawlerBot, 'point': 'bottom_left'},
-                    {'type': BrawlerBotPro, 'point': 'bottom_right'}
-                    if player_count > 2 else None,
-                ]},
-                {'entries': [
-                    {'type': ChargerBot, 'path': 2},
-                    {'type': ChargerBot, 'path': 3},
-                    {'type': ChargerBot, 'path': 1} if hard else None,
-                    {'type': ChargerBot, 'path': 2},
-                    {'type': ChargerBot, 'path': 3},
-                    {'type': ChargerBot, 'path': 1} if player_count > 2
-                    else None,
-                ]},
-                {'entries': [
-                    {'type': BomberBotProShielded, 'path': 1} if hard
-                    else None,
-                    {'type': BomberBotProShielded, 'path': 2},
-                    {'type': BomberBotProShielded, 'path': 2},
-                    {'type': BomberBotProShielded, 'path': 3},
-                    {'type': BomberBotProShielded, 'path': 3},
-                    {'type': ChargerBot, 'point': 'bottom_right'},
-                    {'type': ChargerBot, 'point': 'bottom_left'}
-                    if player_count > 2 else None,
-                ]},
-                {'entries': [
-                    {'type': TriggerBotPro, 'path': 1}
-                    if hard else None,
-                    {'type': TriggerBotPro, 'path': 1 if hard else 2},
-                    {'type': TriggerBotPro, 'path': 1 if hard else 2},
-                    {'type': TriggerBotPro, 'path': 1 if hard else 2},
-                    {'type': TriggerBotPro, 'path': 1 if hard else 2},
-                    {'type': TriggerBotPro, 'path': 1 if hard else 2},
-                    {'type': TriggerBotPro, 'path': 1 if hard else 2}
-                    if player_count > 1 else None,
-                    {'type': TriggerBotPro, 'path': 1 if hard else 2}
-                    if player_count > 3 else None,
-                ]},
-                {'entries': [
-                    {'type': TriggerBotProShielded if hard
-                    else TriggerBotPro, 'point': 'bottom_left'},
-                    {'type': TriggerBotProShielded,
-                     'point': 'bottom_right'}
-                    if hard else None,
-                    {'type': TriggerBotProShielded,
-                     'point': 'bottom_right'}
-                    if player_count > 2 else None,
-                    {'type': BomberBot, 'path': 3},
-                    {'type': BomberBot, 'path': 3},
-                    {'type': 'spacing', 'duration': 5.0},
-                    {'type': BrawlerBot, 'path': 2},
-                    {'type': BrawlerBot, 'path': 2},
-                    {'type': 'spacing', 'duration': 5.0},
-                    {'type': TriggerBot, 'path': 1} if hard else None,
-                    {'type': TriggerBot, 'path': 1} if hard else None,
-                ]},
-                {'entries': [
-                    {'type': BomberBotProShielded, 'path': 2},
-                    {'type': BomberBotProShielded, 'path': 2} if hard
-                    else None,
-                    {'type': StickyBot, 'point': 'bottom_right'},
-                    {'type': BomberBotProShielded, 'path': 2},
-                    {'type': BomberBotProShielded, 'path': 2},
-                    {'type': StickyBot, 'point': 'bottom_right'}
-                    if player_count > 2 else None,
-                    {'type': BomberBotProShielded, 'path': 2},
-                    {'type': ExplodeyBot, 'point': 'bottom_left'},
-                    {'type': BomberBotProShielded, 'path': 2},
-                    {'type': BomberBotProShielded, 'path': 2}
-                    if player_count > 1 else None,
-                    {'type': 'spacing', 'duration': 5.0},
-                    {'type': StickyBot, 'point': 'bottom_left'},
-                    {'type': 'spacing', 'duration': 2.0},
-                    {'type': ExplodeyBot, 'point': 'bottom_right'},
-                ]},
-            ]  # yapf: disable
-        elif self._preset in ['endless', 'endless_tournament']:
+                Wave(entries=[
+                    Spawn(TriggerBot, path=1) if hard else None,
+                    Spawn(TriggerBot, path=2),
+                    Spawn(TriggerBot, path=2),
+                    Spawn(TriggerBot, path=3),
+                    Spawn(BrawlerBotPro if hard else BrawlerBot,
+                          point=Point.BOTTOM_LEFT),
+                    Spawn(BrawlerBotPro, point=Point.BOTTOM_RIGHT
+                          ) if player_count > 2 else None,
+                ]),
+                Wave(entries=[
+                    Spawn(ChargerBot, path=2),
+                    Spawn(ChargerBot, path=3),
+                    Spawn(ChargerBot, path=1) if hard else None,
+                    Spawn(ChargerBot, path=2),
+                    Spawn(ChargerBot, path=3),
+                    Spawn(ChargerBot, path=1) if player_count > 2 else None,
+                ]),
+                Wave(entries=[
+                    Spawn(BomberBotProShielded, path=1) if hard else None,
+                    Spawn(BomberBotProShielded, path=2),
+                    Spawn(BomberBotProShielded, path=2),
+                    Spawn(BomberBotProShielded, path=3),
+                    Spawn(BomberBotProShielded, path=3),
+                    Spawn(ChargerBot, point=Point.BOTTOM_RIGHT),
+                    Spawn(ChargerBot, point=Point.BOTTOM_LEFT
+                          ) if player_count > 2 else None,
+                ]),
+                Wave(entries=[
+                    Spawn(TriggerBotPro, path=1) if hard else None,
+                    Spawn(TriggerBotPro, path=1 if hard else 2),
+                    Spawn(TriggerBotPro, path=1 if hard else 2),
+                    Spawn(TriggerBotPro, path=1 if hard else 2),
+                    Spawn(TriggerBotPro, path=1 if hard else 2),
+                    Spawn(TriggerBotPro, path=1 if hard else 2),
+                    Spawn(TriggerBotPro, path=1 if hard else 2
+                          ) if player_count > 1 else None,
+                    Spawn(TriggerBotPro, path=1 if hard else 2
+                          ) if player_count > 3 else None,
+                ]),
+                Wave(entries=[
+                    Spawn(TriggerBotProShielded if hard else TriggerBotPro,
+                          point=Point.BOTTOM_LEFT),
+                    Spawn(TriggerBotProShielded, point=Point.BOTTOM_RIGHT
+                          ) if hard else None,
+                    Spawn(TriggerBotProShielded, point=Point.BOTTOM_RIGHT
+                          ) if player_count > 2 else None,
+                    Spawn(BomberBot, path=3),
+                    Spawn(BomberBot, path=3),
+                    Spacing(duration=5.0),
+                    Spawn(BrawlerBot, path=2),
+                    Spawn(BrawlerBot, path=2),
+                    Spacing(duration=5.0),
+                    Spawn(TriggerBot, path=1) if hard else None,
+                    Spawn(TriggerBot, path=1) if hard else None,
+                ]),
+                Wave(entries=[
+                    Spawn(BomberBotProShielded, path=2),
+                    Spawn(BomberBotProShielded, path=2) if hard else None,
+                    Spawn(StickyBot, point=Point.BOTTOM_RIGHT),
+                    Spawn(BomberBotProShielded, path=2),
+                    Spawn(BomberBotProShielded, path=2),
+                    Spawn(StickyBot, point=Point.BOTTOM_RIGHT
+                          ) if player_count > 2 else None,
+                    Spawn(BomberBotProShielded, path=2),
+                    Spawn(ExplodeyBot, point=Point.BOTTOM_LEFT),
+                    Spawn(BomberBotProShielded, path=2),
+                    Spawn(BomberBotProShielded, path=2
+                          ) if player_count > 1 else None,
+                    Spacing(duration=5.0),
+                    Spawn(StickyBot, point=Point.BOTTOM_LEFT),
+                    Spacing(duration=2.0),
+                    Spawn(ExplodeyBot, point=Point.BOTTOM_RIGHT),
+                ]),
+            ]
+        elif self._preset in {Preset.ENDLESS, Preset.ENDLESS_TOURNAMENT}:
             self._exclude_powerups = []
             self._have_tnt = True
 
@@ -480,7 +503,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
                self._spawn_center[1],
                self._spawn_center[2] + random.uniform(-1.5, 1.5))
         spaz = self.spawn_player_spaz(player, position=pos)
-        if self._preset in ['pro_easy', 'uber_easy']:
+        if self._preset in {Preset.PRO_EASY, Preset.UBER_EASY}:
             spaz.impact_scale = 0.25
 
         # Add the material that causes us to hit the player-wall.
@@ -580,7 +603,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
             self._time_bonus_timer = None
             self._time_bonus_text = None
 
-            if self._preset in ['endless', 'endless_tournament']:
+            if self._preset in {Preset.ENDLESS, Preset.ENDLESS_TOURNAMENT}:
                 won = False
             else:
                 assert self._waves is not None
@@ -604,7 +627,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
             if won:
 
                 # Completion achievements:
-                if self._preset in ['pro', 'pro_easy']:
+                if self._preset in {Preset.PRO, Preset.PRO_EASY}:
                     self._award_achievement('Pro Runaround Victory',
                                             sound=False)
                     if self._lives == self._start_lives:
@@ -612,7 +635,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
                     if not self._player_has_picked_up_powerup:
                         self._award_achievement('Precision Bombing',
                                                 sound=False)
-                elif self._preset in ['uber', 'uber_easy']:
+                elif self._preset in {Preset.UBER, Preset.UBER_EASY}:
                     self._award_achievement('Uber Runaround Victory',
                                             sound=False)
                     if self._lives == self._start_lives:
@@ -717,13 +740,13 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
         t_sec = 0.0
         base_delay = 0.5
         delay = 0.0
-        bot_types: List[Optional[Dict[str, Any]]] = []
+        bot_types: List[Union[Spawn, Spacing, None]] = []
 
-        if self._preset in ['endless', 'endless_tournament']:
+        if self._preset in {Preset.ENDLESS, Preset.ENDLESS_TOURNAMENT}:
             level = self._wavenum
             target_points = (level + 1) * 8.0
             group_count = random.randint(1, 3)
-            entries = []
+            entries: List[Union[Spawn, Spacing, None]] = []
             spaz_types: List[Tuple[Type[SpazBot], float]] = []
             if level < 6:
                 spaz_types += [(BomberBot, 5.0)]
@@ -811,13 +834,11 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
                     this_target_point_s *= 0.7
 
                 def _add_defender(defender_type: Tuple[Type[SpazBot], float],
-                                  pnt: str) -> Tuple[float, Dict[str, Any]]:
-                    # FIXME: should look into this warning
+                                  pnt: Point) -> Tuple[float, Spawn]:
+                    # This is ok because we call it immediately.
                     # pylint: disable=cell-var-from-loop
-                    return this_target_point_s * defender_type[1], {
-                        'type': defender_type[0],
-                        'point': pnt
-                    }
+                    return this_target_point_s * defender_type[1], Spawn(
+                        defender_type[0], point=pnt)
 
                 # Add defenders.
                 defender_type1 = defender_types[random.randrange(
@@ -829,10 +850,10 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
                         or (group == 2 and level > 5)):
                     if random.random() < min(0.75, (level - 1) * 0.11):
                         this_target_point_s, defender1 = _add_defender(
-                            defender_type1, 'bottom_left')
+                            defender_type1, Point.BOTTOM_LEFT)
                     if random.random() < min(0.75, (level - 1) * 0.04):
                         this_target_point_s, defender2 = _add_defender(
-                            defender_type2, 'bottom_right')
+                            defender_type2, Point.BOTTOM_RIGHT)
 
                 spaz_type = spaz_types[random.randrange(len(spaz_types))]
                 member_count = max(
@@ -846,12 +867,9 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
                         this_path = random.randint(1, 3)  # Random.
                     else:
                         this_path = path
-                    entries.append({'type': spaz_type[0], 'path': this_path})
+                    entries.append(Spawn(spaz_type[0], path=this_path))
                     if spacing != 0.0:
-                        entries.append({
-                            'type': 'spacing',
-                            'duration': spacing
-                        })
+                        entries.append(Spacing(duration=spacing))
 
                 if defender1 is not None:
                     entries.append(defender1)
@@ -866,15 +884,15 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
                     spacing = 1.0
                 else:
                     spacing = 1.0
-                entries.append({'type': 'spacing', 'duration': spacing})
+                entries.append(Spacing(duration=spacing))
 
-            wave = {'entries': entries}
+            wave = Wave(entries=entries)
 
         else:
             assert self._waves is not None
             wave = self._waves[self._wavenum - 1]
 
-        bot_types += wave['entries']
+        bot_types += wave.entries
         self._time_bonus_mult = 1.0
         this_flawless_bonus = 0
         non_runner_spawn_time = 1.0
@@ -882,36 +900,27 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
         for info in bot_types:
             if info is None:
                 continue
-            bot_type = info['type']
-            path = -1
-            if bot_type is not None:
-                if bot_type == 'non_runner_delay':
-                    non_runner_spawn_time += info['duration']
-                    continue
-                if bot_type == 'spacing':
-                    t_sec += info['duration']
-                    continue
-                try:
-                    path = info['path']
-                except Exception:
-                    path = random.randint(1, 3)
-                self._time_bonus_mult += bot_type.points_mult * 0.02
-                this_flawless_bonus += bot_type.points_mult * 5
+            if isinstance(info, Spacing):
+                t_sec += info.duration
+                continue
+            bot_type = info.type
+            path = info.path
+            self._time_bonus_mult += bot_type.points_mult * 0.02
+            this_flawless_bonus += bot_type.points_mult * 5
 
             # If its got a position, use that.
-            try:
-                point = info['point']
-            except Exception:
-                point = 'start'
+            if info.point is not None:
+                point = info.point
+            else:
+                point = Point.START
 
             # Space our our slower bots.
             delay = base_delay
             delay /= self._get_bot_speed(bot_type)
             t_sec += delay * 0.5
-            tcall = ba.Call(self.add_bot_at_point, point, {
-                'type': bot_type,
-                'path': path
-            }, 0.1 if point == 'start' else non_runner_spawn_time)
+            tcall = ba.Call(
+                self.add_bot_at_point, point, bot_type, path,
+                0.1 if point is Point.START else non_runner_spawn_time)
             ba.timer(t_sec, tcall)
             t_sec += delay * 0.5
 
@@ -954,12 +963,12 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
         # player could fill the whole map with them)
         self._last_wave_end_time = ba.time() + t_sec
         totalwaves = str(len(self._waves)) if self._waves is not None else '??'
-        txtval = ba.Lstr(
-            value='${A} ${B}',
-            subs=[('${A}', ba.Lstr(resource='waveText')),
-                  ('${B}', str(self._wavenum) +
-                   ('' if self._preset in ['endless', 'endless_tournament']
-                    else f'/{totalwaves}'))])
+        txtval = ba.Lstr(value='${A} ${B}',
+                         subs=[('${A}', ba.Lstr(resource='waveText')),
+                               ('${B}',
+                                str(self._wavenum) + ('' if self._preset in {
+                                    Preset.ENDLESS, Preset.ENDLESS_TOURNAMENT
+                                } else f'/{totalwaves}'))])
         self._wave_text = ba.NodeActor(
             ba.newnode('text',
                        attrs={
@@ -987,20 +996,20 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
         setattr(spaz, 'r_walk_speed', self._get_bot_speed(spaz_type))
 
     def add_bot_at_point(self,
-                         point: str,
-                         spaz_info: Dict[str, Any],
+                         point: Point,
+                         spaztype: Type[SpazBot],
+                         path: int,
                          spawn_time: float = 0.1) -> None:
         """Add the given type bot with the given delay (in seconds)."""
 
         # Don't add if the game has ended.
         if self._game_over:
             return
-        pos = self.map.defs.points['bot_spawn_' + point][:3]
-        self._bots.spawn_bot(spaz_info['type'],
+        pos = self.map.defs.points[point.value][:3]
+        self._bots.spawn_bot(spaztype,
                              pos=pos,
                              spawn_time=spawn_time,
-                             on_spawn_call=ba.Call(self._on_bot_spawn,
-                                                   spaz_info['path']))
+                             on_spawn_call=ba.Call(self._on_bot_spawn, path))
 
     def _update_time_bonus(self) -> None:
         self._time_bonus = int(self._time_bonus * 0.91)
@@ -1022,7 +1031,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
 
     def _update_scores(self) -> None:
         score = self._score
-        if self._preset == 'endless':
+        if self._preset is Preset.ENDLESS:
             if score >= 500:
                 self._award_achievement('Runaround Master')
             if score >= 1000:
@@ -1148,8 +1157,8 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
                         ba.playsound(self._dingsound if importance == 1 else
                                      self._dingsoundhigh,
                                      volume=0.6)
-                except Exception as exc:
-                    print('EXC in Runaround on SpazBotDiedMessage:', exc)
+                except Exception:
+                    ba.print_exception('Error on SpazBotDiedMessage')
 
             # Normally we pull scores from the score-set, but if there's no
             # player lets be explicit.
