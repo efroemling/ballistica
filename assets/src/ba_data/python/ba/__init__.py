@@ -73,7 +73,7 @@ from ba._appconfig import AppConfig
 from ba._appdelegate import AppDelegate
 from ba._apputils import is_browser_likely_available
 from ba._campaign import Campaign
-from ba._gameutils import (animate, animate_array, show_damage_count,
+from ba._gameutils import (GameTip, animate, animate_array, show_damage_count,
                            timestring, cameraflash)
 from ba._general import (WeakCall, Call, existing, Existable,
                          verify_object_death, storagename)

@@ -84,6 +84,10 @@ class Session:
             Whether players should be allowed to join in the middle of
             activities.
 
+        customdata
+            A shared dictionary for objects to use as storage on this session.
+            Ensure that keys here are unique to avoid collisions.
+
     """
     use_teams: bool = False
     use_team_colors: bool = True
@@ -95,6 +99,7 @@ class Session:
     max_players: int
     min_players: int
     players: List[ba.SessionPlayer]
+    customdata: dict
     teams: List[ba.SessionTeam]
 
     def __init__(self,
@@ -166,6 +171,7 @@ class Session:
         self.min_players = min_players
         self.max_players = max_players
 
+        self.customdata = {}
         self._in_set_activity = False
         self._next_team_id = 0
         self._activity_retained: Optional[ba.Activity] = None
@@ -695,7 +701,7 @@ class Session:
                               color=chooser.get_color(),
                               highlight=chooser.get_highlight())
 
-        self.stats.register_player(sessionplayer)
+        self.stats.register_sessionplayer(sessionplayer)
         if pass_to_activity:
             activity.add_player(sessionplayer)
         return sessionplayer

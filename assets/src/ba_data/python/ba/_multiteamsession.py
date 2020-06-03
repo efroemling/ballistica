@@ -224,7 +224,7 @@ class MultiTeamSession(Session):
                 except NotFoundError:
                     has_team = False
                 if has_team:
-                    self.stats.register_player(player)
+                    self.stats.register_sessionplayer(player)
             self.stats.setactivity(next_game)
 
             # Now flip the current activity.

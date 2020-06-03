@@ -123,7 +123,7 @@ def json_prep(data: Any) -> Any:
 
 
 def utf8_all(data: Any) -> Any:
-    """Convert any unicode data in provided sequence(s)to utf8 bytes."""
+    """Convert any unicode data in provided sequence(s) to utf8 bytes."""
     if isinstance(data, dict):
         return dict((utf8_all(key), utf8_all(value))
                     for key, value in list(data.items()))

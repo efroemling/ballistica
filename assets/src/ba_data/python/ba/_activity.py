@@ -169,12 +169,8 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
 
         # FIXME: Relocate or remove the need for this stuff.
         self.paused_text: Optional[ba.Actor] = None
-        self.spaz_respawn_icons_right: Dict[int, RespawnIcon]
 
-        session = _ba.getsession()
-        if session is None:
-            raise RuntimeError('No current session')
-        self._session = weakref.ref(session)
+        self._session = weakref.ref(_ba.getsession())
 
         # Preloaded data for actors, maps, etc; indexed by type.
         self.preloads: Dict[Type, Any] = {}
@@ -193,12 +189,6 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         self._delay_delete_teams: List[TeamType] = []
         self._players_that_left: List[ReferenceType[PlayerType]] = []
         self._teams_that_left: List[ReferenceType[TeamType]] = []
-
-        # This gets set once another activity has begun transitioning in but
-        # before this one is killed. The on_transition_out() method is also
-        # called at this time.  Make sure to not assign player inputs,
-        # change music, or anything else with global implications once this
-        # happens.
         self._transitioning_out = False
 
         # A handy place to put most actors; this list is pruned of dead
@@ -209,7 +199,6 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         self._last_prune_dead_actors_time = _ba.time()
         self._prune_dead_actors_timer: Optional[ba.Timer] = None
 
-        # This stuff gets filled in just before on_begin() is called.
         self.teams = []
         self.players = []
 

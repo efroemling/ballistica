@@ -54,7 +54,8 @@ class GameActivity(Activity[PlayerType, TeamType]):
     """
     # pylint: disable=too-many-public-methods
 
-    tips: List[Union[str, Dict[str, Any]]] = []
+    # Tips to be presented to the user at the start of the game.
+    tips: List[Union[str, ba.GameTip]] = []
 
     # Default getname() will return this if not None.
     name: Optional[str] = None
@@ -82,16 +83,16 @@ class GameActivity(Activity[PlayerType, TeamType]):
     @classmethod
     def create_settings_ui(
         cls,
-        sessionclass: Type[ba.Session],
+        sessiontype: Type[ba.Session],
         settings: Optional[dict],
         completion_call: Callable[[Optional[dict]], None],
     ) -> None:
         """Launch an in-game UI to configure settings for a game type.
 
-        'sessionclass' should be the ba.Session class the game will be used in.
+        'sessiontype' should be the ba.Session class the game will be used in.
 
-        'config' should be an existing config dict (specifies 'edit' ui mode)
-          or None (specifies 'add' ui mode).
+        'settings' should be an existing settings dict (implies 'edit'
+          ui mode) or None (implies 'add' ui mode).
 
         'completion_call' will be called with a filled-out settings dict on
           success or None on cancel.
@@ -103,14 +104,14 @@ class GameActivity(Activity[PlayerType, TeamType]):
         """
         delegate = _ba.app.delegate
         assert delegate is not None
-        delegate.create_default_game_settings_ui(cls, sessionclass, settings,
+        delegate.create_default_game_settings_ui(cls, sessiontype, settings,
                                                  completion_call)
 
     @classmethod
     def getscoreconfig(cls) -> ba.ScoreConfig:
         """Return info about game scoring setup; can be overridden by games."""
-        return cls.scoreconfig if cls.scoreconfig is not None else ScoreConfig(
-        )
+        return (cls.scoreconfig
+                if cls.scoreconfig is not None else ScoreConfig())
 
     @classmethod
     def getname(cls) -> str:
@@ -170,62 +171,8 @@ class GameActivity(Activity[PlayerType, TeamType]):
     @classmethod
     def get_available_settings(
             cls, sessiontype: Type[ba.Session]) -> List[ba.Setting]:
-        """
-        Called by the default ba.GameActivity.create_settings_ui()
-        implementation; should return a dict of config options to be presented
-        to the user for the given ba.Session type.
-
-        The format for settings is a list of 2-member tuples consisting
-        of a name and a dict of options.
-
-        Available Setting Options:
-
-        'default': This determines the default value as well as the
-            type (int, float, or bool)
-
-        'min_value': Minimum value for int/float settings.
-
-        'max_value': Maximum value for int/float settings.
-
-        'choices': A list of name/value pairs the user can choose from by name.
-
-        'increment': Value increment for int/float settings.
-
-        # example get_available_settings() for a capture-the-flag game:
-        @classmethod
-        def get_available_settings(cls, sessiontype):
-            return [("Score to Win", {
-                        'default': 3,
-                        'min_value': 1
-                    }),
-                    ("Flag Touch Return Time", {
-                        'default': 0,
-                        'min_value': 0,
-                        'increment': 1
-                    }),
-                    ("Flag Idle Return Time", {
-                        'default': 30,
-                        'min_value': 5,
-                        'increment': 5
-                    }),
-                    ("Time Limit", {
-                        'default': 0,
-                        'choices': [
-                            ('None', 0), ('1 Minute', 60), ('2 Minutes', 120),
-                            ('5 Minutes', 300), ('10 Minutes', 600),
-                            ('20 Minutes', 1200)
-                        ]
-                    }),
-                    ("Respawn Times", {
-                        'default': 1.0,
-                        'choices': [
-                            ('Shorter', 0.25), ('Short', 0.5), ('Normal', 1.0),
-                            ('Long', 2.0), ('Longer', 4.0)
-                        ]
-                    }),
-                    ("Epic Mode", {
-                        'default': False
-                    })]
+        """Return a list of settings relevant to this game type when
+        running under the provided session type.
         """
         del sessiontype  # Unused arg.
         return [] if cls.available_settings is None else cls.available_settings
@@ -403,7 +350,6 @@ class GameActivity(Activity[PlayerType, TeamType]):
         return ''
 
     def on_transition_in(self) -> None:
-
         super().on_transition_in()
 
         # Make our map.
@@ -575,8 +521,9 @@ class GameActivity(Activity[PlayerType, TeamType]):
                                              victim_player=player,
                                              importance=importance,
                                              showpoints=self.show_kill_points)
-            return None
-        return super().handlemessage(msg)
+        else:
+            return super().handlemessage(msg)
+        return None
 
     def _show_scoreboard_info(self) -> None:
         """Create the game info display.
@@ -599,7 +546,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         else:
             sb_desc_l = sb_desc_in
         if not isinstance(sb_desc_l[0], str):
-            raise TypeError('Invalid format for instance description')
+            raise TypeError('Invalid format for instance description.')
 
         is_empty = (sb_desc_l[0] == '')
         subs = []
@@ -608,9 +555,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         translation = Lstr(translate=('gameDescriptions', sb_desc_l[0]),
                            subs=subs)
         sb_desc = translation
-
         vrmode = _ba.app.vr_mode
-
         yval = -34 if is_empty else -20
         yval -= 16
         sbpos = ((15, yval) if isinstance(self.session, FreeForAllSession) else
@@ -727,7 +672,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
 
     def _show_tip(self) -> None:
         # pylint: disable=too-many-locals
-        from ba._gameutils import animate
+        from ba._gameutils import animate, GameTip
         from ba._enums import SpecialChar
 
         # If there's any tips left on the list, display one.
@@ -735,14 +680,12 @@ class GameActivity(Activity[PlayerType, TeamType]):
             tip = self.tips.pop(random.randrange(len(self.tips)))
             tip_title = Lstr(value='${A}:',
                              subs=[('${A}', Lstr(resource='tipText'))])
-            icon = None
-            sound = None
-            if isinstance(tip, dict):
-                if 'icon' in tip:
-                    icon = tip['icon']
-                if 'sound' in tip:
-                    sound = tip['sound']
-                tip = tip['tip']
+            icon: Optional[ba.Texture] = None
+            sound: Optional[ba.Sound] = None
+            if isinstance(tip, GameTip):
+                icon = tip.icon
+                sound = tip.sound
+                tip = tip.text
                 assert isinstance(tip, str)
 
             # Do a few substitutions.
@@ -844,12 +787,11 @@ class GameActivity(Activity[PlayerType, TeamType]):
         super().end(results, delay, force)
 
     def end_game(self) -> None:
-        """
-        Tells the game to wrap itself up and call ba.Activity.end()
-        immediately. This method should be overridden by subclasses.
+        """Tell the game to wrap up and call ba.Activity.end() immediately.
 
-        A game should always be prepared to end and deliver results, even if
-        there is no 'winner' yet; this way things like the standard time-limit
+        This method should be overridden by subclasses. A game should always
+        be prepared to end and deliver results, even if there is no 'winner'
+        yet; this way things like the standard time-limit
         (ba.GameActivity.setup_standard_time_limit()) will work with the game.
         """
         print('WARNING: default end_game() implementation called;'

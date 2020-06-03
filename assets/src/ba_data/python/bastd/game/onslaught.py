@@ -141,7 +141,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
     name = 'Onslaught'
     description = 'Defeat all enemies.'
 
-    tips: List[Union[str, Dict[str, Any]]] = [
+    tips: List[Union[str, ba.GameTip]] = [
         'Hold any button to run.'
         '  (Trigger buttons work well if you have them)',
         'Try tricking enemies into killing eachother or running off cliffs.',
@@ -213,43 +213,45 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
 
     def on_transition_in(self) -> None:
         super().on_transition_in()
-        session = ba.getsession()
+        customdata = ba.getsession().customdata
 
         # Show special landmine tip on rookie preset.
         if self._preset in {Preset.ROOKIE, Preset.ROOKIE_EASY}:
             # Show once per session only (then we revert to regular tips).
-            if not getattr(session, '_g_showed_onslaught_landmine_tip', False):
-                setattr(session, '_g_showed_onslaught_landmine_tip', True)
-                self.tips = [{
-                    'tip': 'Land-mines are a good way'
-                           ' to stop speedy enemies.',
-                    'icon': ba.gettexture('powerupLandMines'),
-                    'sound': ba.getsound('ding')
-                }]
+            if not customdata.get('_showed_onslaught_landmine_tip', False):
+                customdata['_showed_onslaught_landmine_tip'] = True
+                self.tips = [
+                    ba.GameTip(
+                        'Land-mines are a good way to stop speedy enemies.',
+                        icon=ba.gettexture('powerupLandMines'),
+                        sound=ba.getsound('ding'))
+                ]
 
         # Show special tnt tip on pro preset.
         if self._preset in {Preset.PRO, Preset.PRO_EASY}:
             # Show once per session only (then we revert to regular tips).
-            if not getattr(session, '_g_showed_onslaught_tnt_tip', False):
-                setattr(session, '_g_showed_onslaught_tnt_tip', True)
-                self.tips = [{
-                    'tip': 'Take out a group of enemies by\n'
-                           'setting off a bomb near a TNT box.',
-                    'icon': ba.gettexture('tnt'),
-                    'sound': ba.getsound('ding')
-                }]
+            if not customdata.get('_showed_onslaught_tnt_tip', False):
+                customdata['_showed_onslaught_tnt_tip'] = True
+                self.tips = [
+                    ba.GameTip(
+                        'Take out a group of enemies by\n'
+                        'setting off a bomb near a TNT box.',
+                        icon=ba.gettexture('tnt'),
+                        sound=ba.getsound('ding'))
+                ]
 
         # Show special curse tip on uber preset.
         if self._preset in {Preset.UBER, Preset.UBER_EASY}:
             # Show once per session only (then we revert to regular tips).
-            if not getattr(session, '_g_showed_onslaught_curse_tip', False):
-                setattr(session, '_g_showed_onslaught_curse_tip', True)
-                self.tips = [{
-                    'tip': 'Curse boxes turn you into a ticking time bomb.\n'
-                           'The only cure is to quickly grab a health-pack.',
-                    'icon': ba.gettexture('powerupCurse'),
-                    'sound': ba.getsound('ding')
-                }]
+            if not customdata.get('_showed_onslaught_curse_tip', False):
+                customdata['_showed_onslaught_curse_tip'] = True
+                self.tips = [
+                    ba.GameTip(
+                        'Curse boxes turn you into a ticking time bomb.\n'
+                        'The only cure is to quickly grab a health-pack.',
+                        icon=ba.gettexture('powerupCurse'),
+                        sound=ba.getsound('ding'))
+                ]
 
         self._spawn_info_text = ba.NodeActor(
             ba.newnode('text',

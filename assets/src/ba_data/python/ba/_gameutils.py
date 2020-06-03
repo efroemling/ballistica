@@ -22,6 +22,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import _ba
@@ -40,6 +41,17 @@ TROPHY_CHARS = {
     '0b': SpecialChar.TROPHY0B,
     '4': SpecialChar.TROPHY4
 }
+
+
+@dataclass
+class GameTip:
+    """Defines a tip presentable to the user at the start of a game.
+
+    Category: Gameplay Classes
+    """
+    text: str
+    icon: Optional[ba.Texture] = None
+    sound: Optional[ba.Sound] = None
 
 
 def get_trophy_string(trophy_id: str) -> str:

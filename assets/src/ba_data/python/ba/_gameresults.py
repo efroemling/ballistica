@@ -84,8 +84,7 @@ class GameResults:
         sessionteam = team.sessionteam
         self._scores[sessionteam.id] = (weakref.ref(sessionteam), score)
 
-    def get_team_score(self,
-                       sessionteam: Union[ba.SessionTeam]) -> Optional[int]:
+    def get_team_score(self, sessionteam: ba.SessionTeam) -> Optional[int]:
         """Return the score for a given ba.SessionTeam."""
         for score in list(self._scores.values()):
             if score[0]() is sessionteam:
@@ -111,7 +110,7 @@ class GameResults:
         """Return whether there is a score for a given team."""
         return any(s[0]() is sessionteam for s in self._scores.values())
 
-    def get_team_score_str(self, team: ba.Team) -> ba.Lstr:
+    def get_team_score_str(self, sessionteam: ba.SessionTeam) -> ba.Lstr:
         """Return the score for the given ba.Team as an Lstr.
 
         (properly formatted for the score type.)
@@ -123,7 +122,7 @@ class GameResults:
         if not self._game_set:
             raise RuntimeError("Can't get team-score-str until game is set.")
         for score in list(self._scores.values()):
-            if score[0]() is team.sessionteam:
+            if score[0]() is sessionteam:
                 if score[1] is None:
                     return Lstr(value='-')
                 if self._scoretype is ScoreType.SECONDS:

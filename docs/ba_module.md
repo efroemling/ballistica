@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-06-02 for Ballistica version 1.5.0 build 20043</em></h4>
+<h4><em>last updated on 2020-06-03 for Ballistica version 1.5.0 build 20044</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -21,6 +21,7 @@
    </ul>
    <li><a href="#class_ba_Chooser">ba.Chooser</a></li>
    <li><a href="#class_ba_GameResults">ba.GameResults</a></li>
+   <li><a href="#class_ba_GameTip">ba.GameTip</a></li>
    <li><a href="#class_ba_InputDevice">ba.InputDevice</a></li>
    <li><a href="#class_ba_Level">ba.Level</a></li>
    <li><a href="#class_ba_Lobby">ba.Lobby</a></li>
@@ -1100,7 +1101,7 @@ manually.</p>
 <h3>Methods:</h3>
 <dl>
 <dt><h4><a name="method_ba_AppDelegate__create_default_game_settings_ui">create_default_game_settings_ui()</a></dt></h4><dd>
-<p><span>create_default_game_settings_ui(self, gameclass: Type[<a href="#class_ba_GameActivity">ba.GameActivity</a>], sessionclass: Type[<a href="#class_ba_Session">ba.Session</a>], config: Optional[dict], completion_call: Callable[[Optional[dict]], None]) -&gt; None</span></p>
+<p><span>create_default_game_settings_ui(self, gameclass: Type[<a href="#class_ba_GameActivity">ba.GameActivity</a>], sessiontype: Type[<a href="#class_ba_Session">ba.Session</a>], settings: Optional[dict], completion_call: Callable[[Optional[dict]], None]) -&gt; None</span></p>
 
 <p>Launch a UI to configure the given game config.</p>
 
@@ -1733,7 +1734,7 @@ and it should begin its actual game logic.</p>
     high score lists.</p>
 
 <h3>Attributes Inherited:</h3>
-<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__teams">teams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
+<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__customdata">customdata</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__teams">teams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
 <h3>Attributes Defined Here:</h3>
 <h5><a href="#attr_ba_CoopSession__campaign">campaign</a>, <a href="#attr_ba_CoopSession__sessionglobalsnode">sessionglobalsnode</a></h5>
 <dl>
@@ -2091,7 +2092,7 @@ its time with lingering corpses, sound effects, etc.</p>
 </p>
 
 <h3>Attributes Inherited:</h3>
-<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__teams">teams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
+<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__customdata">customdata</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__teams">teams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
 <h3>Attributes Defined Here:</h3>
 <dl>
 <dt><h4><a name="attr_ba_DualTeamSession__sessionglobalsnode">sessionglobalsnode</a></h4></dt><dd>
@@ -2156,7 +2157,7 @@ its time with lingering corpses, sound effects, etc.</p>
 <p><span><a href="#class_ba_Vec3">ba.Vec3</a></span></p>
 <p>The position of the player, as defined by its current <a href="#class_ba_Actor">ba.Actor</a>.</p>
 
-<p>        This value is undefined when the player has no Actor.</p>
+<p>        If the player currently has no actor, raises a <a href="#class_ba_ActorNotFoundError">ba.ActorNotFoundError</a>.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_EmptyPlayer__sessionplayer">sessionplayer</a></h4></dt><dd>
@@ -2272,7 +2273,7 @@ its time with lingering corpses, sound effects, etc.</p>
 </p>
 
 <h3>Attributes Inherited:</h3>
-<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__teams">teams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
+<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__customdata">customdata</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__teams">teams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
 <h3>Attributes Defined Here:</h3>
 <dl>
 <dt><h4><a name="attr_ba_FreeForAllSession__sessionglobalsnode">sessionglobalsnode</a></h4></dt><dd>
@@ -2407,14 +2408,14 @@ and calls either end_game or continue_game depending on the result</p>
 </dd>
 <dt><h4><a name="method_ba_GameActivity__create_settings_ui">create_settings_ui()</a></dt></h4><dd>
 <h5><span><em>&lt;class method&gt;</span></em></h5>
-<p><span>create_settings_ui(sessionclass: Type[<a href="#class_ba_Session">ba.Session</a>], settings: Optional[dict], completion_call: Callable[[Optional[dict]], None]) -&gt; None </span></p>
+<p><span>create_settings_ui(sessiontype: Type[<a href="#class_ba_Session">ba.Session</a>], settings: Optional[dict], completion_call: Callable[[Optional[dict]], None]) -&gt; None </span></p>
 
 <p>Launch an in-game UI to configure settings for a game type.</p>
 
-<p>'sessionclass' should be the <a href="#class_ba_Session">ba.Session</a> class the game will be used in.</p>
+<p>'sessiontype' should be the <a href="#class_ba_Session">ba.Session</a> class the game will be used in.</p>
 
-<p>'config' should be an existing config dict (specifies 'edit' ui mode)
-  or None (specifies 'add' ui mode).</p>
+<p>'settings' should be an existing settings dict (implies 'edit'
+  ui mode) or None (implies 'add' ui mode).</p>
 
 <p>'completion_call' will be called with a filled-out settings dict on
   success or None on cancel.</p>
@@ -2439,11 +2440,11 @@ will replace the old.</p>
 <dt><h4><a name="method_ba_GameActivity__end_game">end_game()</a></dt></h4><dd>
 <p><span>end_game(self) -&gt; None</span></p>
 
-<p>Tells the game to wrap itself up and call <a href="#method_ba_Activity__end">ba.Activity.end</a>()
-immediately. This method should be overridden by subclasses.</p>
+<p>Tell the game to wrap up and call <a href="#method_ba_Activity__end">ba.Activity.end</a>() immediately.</p>
 
-<p>A game should always be prepared to end and deliver results, even if
-there is no 'winner' yet; this way things like the standard time-limit
+<p>This method should be overridden by subclasses. A game should always
+be prepared to end and deliver results, even if there is no 'winner'
+yet; this way things like the standard time-limit
 (<a href="#method_ba_GameActivity__setup_standard_time_limit">ba.GameActivity.setup_standard_time_limit</a>()) will work with the game.</p>
 
 </dd>
@@ -2451,61 +2452,8 @@ there is no 'winner' yet; this way things like the standard time-limit
 <h5><span><em>&lt;class method&gt;</span></em></h5>
 <p><span>get_available_settings(sessiontype: Type[<a href="#class_ba_Session">ba.Session</a>]) -&gt; List[<a href="#class_ba_Setting">ba.Setting</a>] </span></p>
 
-<p>Called by the default <a href="#method_ba_GameActivity__create_settings_ui">ba.GameActivity.create_settings_ui</a>()
-implementation; should return a dict of config options to be presented
-to the user for the given <a href="#class_ba_Session">ba.Session</a> type.</p>
-
-<p>The format for settings is a list of 2-member tuples consisting
-of a name and a dict of options.</p>
-
-<p><strong>Available Setting Options:</strong></p>
-
-<p>'default': This determines the default value as well as the
-    type (int, float, or bool)</p>
-
-<p>'min_value': Minimum value for int/float settings.</p>
-
-<p>'max_value': Maximum value for int/float settings.</p>
-
-<p>'choices': A list of name/value pairs the user can choose from by name.</p>
-
-<p>'increment': Value increment for int/float settings.</p>
-
-<pre><span><em><small># example get_available_settings() for a capture-the-flag game:</small></em></span>
-@classmethod
-def get_available_settings(cls, sessiontype):
-    return [("Score to Win", {
-                'default': 3,
-                'min_value': 1
-            }),
-            ("Flag Touch Return Time", {
-                'default': 0,
-                'min_value': 0,
-                'increment': 1
-            }),
-            ("Flag Idle Return Time", {
-                'default': 30,
-                'min_value': 5,
-                'increment': 5
-            }),
-            ("Time Limit", {
-                'default': 0,
-                'choices': [
-                    ('None', 0), ('1 Minute', 60), ('2 Minutes', 120),
-                    ('5 Minutes', 300), ('10 Minutes', 600),
-                    ('20 Minutes', 1200)
-                ]
-            }),
-            ("Respawn Times", {
-                'default': 1.0,
-                'choices': [
-                    ('Shorter', 0.25), ('Short', 0.5), ('Normal', 1.0),
-                    ('Long', 2.0), ('Longer', 4.0)
-                ]
-            }),
-            ("Epic Mode", {
-                'default': False
-            })]</pre>
+<p>Return a list of settings relevant to this game type when
+running under the provided session type.</p>
 
 </dd>
 <dt><h4><a name="method_ba_GameActivity__get_description">get_description()</a></dt></h4><dd>
@@ -2821,13 +2769,13 @@ Results for a completed game.</p>
 
 </dd>
 <dt><h4><a name="method_ba_GameResults__get_team_score">get_team_score()</a></dt></h4><dd>
-<p><span>get_team_score(self, sessionteam: Union[<a href="#class_ba_SessionTeam">ba.SessionTeam</a>]) -&gt; Optional[int]</span></p>
+<p><span>get_team_score(self, sessionteam: <a href="#class_ba_SessionTeam">ba.SessionTeam</a>) -&gt; Optional[int]</span></p>
 
 <p>Return the score for a given <a href="#class_ba_SessionTeam">ba.SessionTeam</a>.</p>
 
 </dd>
 <dt><h4><a name="method_ba_GameResults__get_team_score_str">get_team_score_str()</a></dt></h4><dd>
-<p><span>get_team_score_str(self, team: <a href="#class_ba_Team">ba.Team</a>) -&gt; <a href="#class_ba_Lstr">ba.Lstr</a></span></p>
+<p><span>get_team_score_str(self, sessionteam: <a href="#class_ba_SessionTeam">ba.SessionTeam</a>) -&gt; <a href="#class_ba_Lstr">ba.Lstr</a></span></p>
 
 <p>Return the score for the given <a href="#class_ba_Team">ba.Team</a> as an Lstr.</p>
 
@@ -2853,6 +2801,22 @@ Results for a completed game.</p>
 
 <p>This can be a number or None.
 (see the none_is_winner arg in the constructor)</p>
+
+</dd>
+</dl>
+<hr>
+<h2><strong><a name="class_ba_GameTip">ba.GameTip</a></strong></h3>
+<p><em>&lt;top level class&gt;</em>
+</p>
+<p>Defines a tip presentable to the user at the start of a game.</p>
+
+<p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a>
+</p>
+
+<h3>Methods:</h3>
+<dl>
+<dt><h4><a name="method_ba_GameTip____init__">&lt;constructor&gt;</a></dt></h4><dd>
+<p><span>ba.GameTip(text: str, icon: Optional[<a href="#class_ba_Texture">ba.Texture</a>] = None, sound: Optional[<a href="#class_ba_Sound">ba.Sound</a>] = None)</span></p>
 
 </dd>
 </dl>
@@ -3728,7 +3692,7 @@ Use <a href="#function_ba_getmodel">ba.getmodel</a>() to instantiate one.</p>
 </p>
 
 <h3>Attributes Inherited:</h3>
-<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__teams">teams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
+<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__customdata">customdata</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__teams">teams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
 <h3>Attributes Defined Here:</h3>
 <dl>
 <dt><h4><a name="attr_ba_MultiTeamSession__sessionglobalsnode">sessionglobalsnode</a></h4></dt><dd>
@@ -4248,7 +4212,7 @@ even if myactor is set to None.</p>
 <p><span><a href="#class_ba_Vec3">ba.Vec3</a></span></p>
 <p>The position of the player, as defined by its current <a href="#class_ba_Actor">ba.Actor</a>.</p>
 
-<p>        This value is undefined when the player has no Actor.</p>
+<p>        If the player currently has no actor, raises a <a href="#class_ba_ActorNotFoundError">ba.ActorNotFoundError</a>.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_Player__sessionplayer">sessionplayer</a></h4></dt><dd>
@@ -4446,14 +4410,14 @@ the type-checker properly identifies the returned value as one.</p>
 </dd>
 </dl>
 <h3>Methods:</h3>
-<h5><a href="#method_ba_PlayerRecord____init__">&lt;constructor&gt;</a>, <a href="#method_ba_PlayerRecord__associate_with_player">associate_with_player()</a>, <a href="#method_ba_PlayerRecord__cancel_multi_kill_timer">cancel_multi_kill_timer()</a>, <a href="#method_ba_PlayerRecord__get_icon">get_icon()</a>, <a href="#method_ba_PlayerRecord__get_last_player">get_last_player()</a>, <a href="#method_ba_PlayerRecord__getactivity">getactivity()</a>, <a href="#method_ba_PlayerRecord__getname">getname()</a>, <a href="#method_ba_PlayerRecord__submit_kill">submit_kill()</a></h5>
+<h5><a href="#method_ba_PlayerRecord____init__">&lt;constructor&gt;</a>, <a href="#method_ba_PlayerRecord__associate_with_sessionplayer">associate_with_sessionplayer()</a>, <a href="#method_ba_PlayerRecord__cancel_multi_kill_timer">cancel_multi_kill_timer()</a>, <a href="#method_ba_PlayerRecord__get_icon">get_icon()</a>, <a href="#method_ba_PlayerRecord__get_last_sessionplayer">get_last_sessionplayer()</a>, <a href="#method_ba_PlayerRecord__getactivity">getactivity()</a>, <a href="#method_ba_PlayerRecord__getname">getname()</a>, <a href="#method_ba_PlayerRecord__submit_kill">submit_kill()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_PlayerRecord____init__">&lt;constructor&gt;</a></dt></h4><dd>
-<p><span>ba.PlayerRecord(name: str, name_full: str, player: <a href="#class_ba_SessionPlayer">ba.SessionPlayer</a>, stats: <a href="#class_ba_Stats">ba.Stats</a>)</span></p>
+<p><span>ba.PlayerRecord(name: str, name_full: str, sessionplayer: <a href="#class_ba_SessionPlayer">ba.SessionPlayer</a>, stats: <a href="#class_ba_Stats">ba.Stats</a>)</span></p>
 
 </dd>
-<dt><h4><a name="method_ba_PlayerRecord__associate_with_player">associate_with_player()</a></dt></h4><dd>
-<p><span>associate_with_player(self, sessionplayer: <a href="#class_ba_SessionPlayer">ba.SessionPlayer</a>) -&gt; None</span></p>
+<dt><h4><a name="method_ba_PlayerRecord__associate_with_sessionplayer">associate_with_sessionplayer()</a></dt></h4><dd>
+<p><span>associate_with_sessionplayer(self, sessionplayer: <a href="#class_ba_SessionPlayer">ba.SessionPlayer</a>) -&gt; None</span></p>
 
 <p>Associate this entry with a <a href="#class_ba_SessionPlayer">ba.SessionPlayer</a>.</p>
 
@@ -4470,8 +4434,8 @@ the type-checker properly identifies the returned value as one.</p>
 <p>Get the icon for this instance's player.</p>
 
 </dd>
-<dt><h4><a name="method_ba_PlayerRecord__get_last_player">get_last_player()</a></dt></h4><dd>
-<p><span>get_last_player(self) -&gt; <a href="#class_ba_SessionPlayer">ba.SessionPlayer</a></span></p>
+<dt><h4><a name="method_ba_PlayerRecord__get_last_sessionplayer">get_last_sessionplayer()</a></dt></h4><dd>
+<p><span>get_last_sessionplayer(self) -&gt; <a href="#class_ba_SessionPlayer">ba.SessionPlayer</a></span></p>
 
 <p>Return the last <a href="#class_ba_Player">ba.Player</a> we were associated with.</p>
 
@@ -4700,12 +4664,18 @@ Pass 0 or a negative number for no ban time.</p>
     maintaining state between them (players, teams, score tallies, etc).</p>
 
 <h3>Attributes:</h3>
-<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__sessionglobalsnode">sessionglobalsnode</a>, <a href="#attr_ba_Session__teams">teams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
+<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__customdata">customdata</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__sessionglobalsnode">sessionglobalsnode</a>, <a href="#attr_ba_Session__teams">teams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a></h4></dt><dd>
 <p><span>bool</span></p>
 <p>Whether players should be allowed to join in the middle of
 activities.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_Session__customdata">customdata</a></h4></dt><dd>
+<p><span>dict</span></p>
+<p>A shared dictionary for objects to use as storage on this session.
+Ensure that keys here are unique to avoid collisions.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_Session__lobby">lobby</a></h4></dt><dd>
@@ -5290,7 +5260,7 @@ of the session.</p>
 </p>
 
 <h3>Methods:</h3>
-<h5><a href="#method_ba_Stats____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Stats__get_records">get_records()</a>, <a href="#method_ba_Stats__getactivity">getactivity()</a>, <a href="#method_ba_Stats__player_scored">player_scored()</a>, <a href="#method_ba_Stats__player_was_killed">player_was_killed()</a>, <a href="#method_ba_Stats__register_player">register_player()</a>, <a href="#method_ba_Stats__reset">reset()</a>, <a href="#method_ba_Stats__reset_accum">reset_accum()</a>, <a href="#method_ba_Stats__setactivity">setactivity()</a></h5>
+<h5><a href="#method_ba_Stats____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Stats__get_records">get_records()</a>, <a href="#method_ba_Stats__getactivity">getactivity()</a>, <a href="#method_ba_Stats__player_scored">player_scored()</a>, <a href="#method_ba_Stats__player_was_killed">player_was_killed()</a>, <a href="#method_ba_Stats__register_sessionplayer">register_sessionplayer()</a>, <a href="#method_ba_Stats__reset">reset()</a>, <a href="#method_ba_Stats__reset_accum">reset_accum()</a>, <a href="#method_ba_Stats__setactivity">setactivity()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_Stats____init__">&lt;constructor&gt;</a></dt></h4><dd>
 <p><span>ba.Stats()</span></p>
@@ -5324,10 +5294,10 @@ of the session.</p>
 <p>Should be called when a player is killed.</p>
 
 </dd>
-<dt><h4><a name="method_ba_Stats__register_player">register_player()</a></dt></h4><dd>
-<p><span>register_player(self, player: <a href="#class_ba_SessionPlayer">ba.SessionPlayer</a>) -&gt; None</span></p>
+<dt><h4><a name="method_ba_Stats__register_sessionplayer">register_sessionplayer()</a></dt></h4><dd>
+<p><span>register_sessionplayer(self, player: <a href="#class_ba_SessionPlayer">ba.SessionPlayer</a>) -&gt; None</span></p>
 
-<p>Register a player with this score-set.</p>
+<p>Register a <a href="#class_ba_SessionPlayer">ba.SessionPlayer</a> with this score-set.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Stats__reset">reset()</a></dt></h4><dd>

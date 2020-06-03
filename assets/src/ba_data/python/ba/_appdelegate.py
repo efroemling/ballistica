@@ -36,14 +36,14 @@ class AppDelegate:
 
     def create_default_game_settings_ui(
             self, gameclass: Type[ba.GameActivity],
-            sessionclass: Type[ba.Session], config: Optional[dict],
+            sessiontype: Type[ba.Session], settings: Optional[dict],
             completion_call: Callable[[Optional[dict]], None]) -> None:
         """Launch a UI to configure the given game config.
 
         It should manipulate the contents of config and call completion_call
         when done.
         """
-        del gameclass, sessionclass, config, completion_call  # unused
+        del gameclass, sessiontype, settings, completion_call  # Unused.
         from ba import _error
         _error.print_error(
             "create_default_game_settings_ui needs to be overridden")

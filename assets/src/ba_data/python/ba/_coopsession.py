@@ -312,7 +312,7 @@ class CoopSession(Session):
 
                     # Skip players that are still choosing a team.
                     if player.in_game:
-                        self.stats.register_player(player)
+                        self.stats.register_sessionplayer(player)
                 self.stats.setactivity(next_game)
 
                 # Now flip the current activity.

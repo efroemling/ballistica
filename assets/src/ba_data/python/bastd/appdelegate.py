@@ -34,7 +34,7 @@ class AppDelegate(ba.AppDelegate):
 
     def create_default_game_settings_ui(
             self, gameclass: Type[ba.GameActivity],
-            sessionclass: Type[ba.Session], config: Optional[dict],
+            sessiontype: Type[ba.Session], settings: Optional[dict],
             completion_call: Callable[[Optional[dict]], Any]) -> None:
         """(internal)"""
 
@@ -42,6 +42,6 @@ class AppDelegate(ba.AppDelegate):
         from bastd.ui.playlist.editgame import PlaylistEditGameWindow
         prev_window = ba.app.main_menu_window
         ba.app.main_menu_window = (PlaylistEditGameWindow(
-            gameclass, sessionclass, config,
+            gameclass, sessiontype, settings,
             completion_call=completion_call).get_root_widget())
         ba.containerwidget(edit=prev_window, transition='out_left')

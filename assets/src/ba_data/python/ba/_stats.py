@@ -28,7 +28,7 @@ from dataclasses import dataclass
 
 import _ba
 from ba._error import (print_exception, print_error, SessionTeamNotFoundError,
-                       SessionPlayerNotFoundError)
+                       SessionPlayerNotFoundError, NotFoundError)
 
 if TYPE_CHECKING:
     import ba
@@ -61,8 +61,8 @@ class PlayerRecord:
     """
     character: str
 
-    def __init__(self, name: str, name_full: str, player: ba.SessionPlayer,
-                 stats: ba.Stats):
+    def __init__(self, name: str, name_full: str,
+                 sessionplayer: ba.SessionPlayer, stats: ba.Stats):
         self.name = name
         self.name_full = name_full
         self.score = 0
@@ -75,10 +75,10 @@ class PlayerRecord:
         self._multi_kill_count = 0
         self._stats = weakref.ref(stats)
         self._last_sessionplayer: Optional[ba.SessionPlayer] = None
-        self._player: Optional[ba.SessionPlayer] = None
-        self._team: Optional[ReferenceType[ba.SessionTeam]] = None
+        self._sessionplayer: Optional[ba.SessionPlayer] = None
+        self._sessionteam: Optional[ReferenceType[ba.SessionTeam]] = None
         self.streak = 0
-        self.associate_with_player(player)
+        self.associate_with_sessionplayer(sessionplayer)
 
     @property
     def team(self) -> ba.SessionTeam:
@@ -87,8 +87,8 @@ class PlayerRecord:
         This can still return a valid result even if the player is gone.
         Raises a ba.SessionTeamNotFoundError if the team no longer exists.
         """
-        assert self._team is not None
-        team = self._team()
+        assert self._sessionteam is not None
+        team = self._sessionteam()
         if team is None:
             raise SessionTeamNotFoundError()
         return team
@@ -100,9 +100,9 @@ class PlayerRecord:
         Raises a ba.SessionPlayerNotFoundError if the player
         no longer exists.
         """
-        if not self._player:
+        if not self._sessionplayer:
             raise SessionPlayerNotFoundError()
-        return self._player
+        return self._sessionplayer
 
     def getname(self, full: bool = False) -> str:
         """Return the player entry's name."""
@@ -127,19 +127,20 @@ class PlayerRecord:
             return stats.getactivity()
         return None
 
-    def associate_with_player(self, sessionplayer: ba.SessionPlayer) -> None:
+    def associate_with_sessionplayer(self,
+                                     sessionplayer: ba.SessionPlayer) -> None:
         """Associate this entry with a ba.SessionPlayer."""
-        self._team = weakref.ref(sessionplayer.sessionteam)
+        self._sessionteam = weakref.ref(sessionplayer.sessionteam)
         self.character = sessionplayer.character
         self._last_sessionplayer = sessionplayer
-        self._player = sessionplayer
+        self._sessionplayer = sessionplayer
         self.streak = 0
 
     def _end_multi_kill(self) -> None:
         self._multi_kill_timer = None
         self._multi_kill_count = 0
 
-    def get_last_player(self) -> ba.SessionPlayer:
+    def get_last_sessionplayer(self) -> ba.SessionPlayer:
         """Return the last ba.Player we were associated with."""
         assert self._last_sessionplayer is not None
         return self._last_sessionplayer
@@ -204,18 +205,20 @@ class PlayerRecord:
 
             # Only award this if they're still alive and we can get
             # a current position for them.
-            our_pos: Optional[Sequence[float]] = None
-            if self._player is not None:
-                if self._player.activityplayer is not None:
-                    if self._player.activityplayer.node:
-                        our_pos = self._player.activityplayer.node.position
+            our_pos: Optional[ba.Vec3] = None
+            if self._sessionplayer is not None:
+                if self._sessionplayer.activityplayer is not None:
+                    try:
+                        our_pos = self._sessionplayer.activityplayer.position
+                    except NotFoundError:
+                        pass
             if our_pos is None:
                 return
 
             # Jitter position a bit since these often come in clusters.
-            our_pos = (our_pos[0] + (random.random() - 0.5) * 2.0,
-                       our_pos[1] + (random.random() - 0.5) * 2.0,
-                       our_pos[2] + (random.random() - 0.5) * 2.0)
+            our_pos = _ba.Vec3(our_pos[0] + (random.random() - 0.5) * 2.0,
+                               our_pos[1] + (random.random() - 0.5) * 2.0,
+                               our_pos[2] + (random.random() - 0.5) * 2.0)
             activity = self.getactivity()
             if activity is not None:
                 PopupText(Lstr(
@@ -305,14 +308,14 @@ class Stats:
             s_player.accum_killed_count = 0
             s_player.streak = 0
 
-    def register_player(self, player: ba.SessionPlayer) -> None:
-        """Register a player with this score-set."""
+    def register_sessionplayer(self, player: ba.SessionPlayer) -> None:
+        """Register a ba.SessionPlayer with this score-set."""
         assert player.exists()  # Invalid refs should never be passed to funcs.
         name = player.getname()
         if name in self._player_records:
             # If the player already exists, update his character and such as
             # it may have changed.
-            self._player_records[name].associate_with_player(player)
+            self._player_records[name].associate_with_sessionplayer(player)
         else:
             name_full = player.getname(full=True)
             self._player_records[name] = PlayerRecord(name, name_full, player,
@@ -325,7 +328,7 @@ class Stats:
         # Go through our player records and return ones whose player id still
         # corresponds to a player with that name.
         for record_id, record in self._player_records.items():
-            lastplayer = record.get_last_player()
+            lastplayer = record.get_last_sessionplayer()
             if lastplayer and lastplayer.getname() == record_id:
                 records[record_id] = record
         return records

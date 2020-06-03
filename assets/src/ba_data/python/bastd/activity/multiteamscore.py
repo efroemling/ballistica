@@ -97,7 +97,7 @@ class MultiTeamScoreScreenActivity(ScoreScreenActivity):
             if is_free_for_all and results is not None:
                 assert isinstance(results, ba.GameResults)
                 assert p_rec.team.gameteam is not None
-                val = results.get_team_score_str(p_rec.team.gameteam)
+                val = results.get_team_score_str(p_rec.team)
                 assert val is not None
                 return val
             return str(p_rec.accumscore)

@@ -26,7 +26,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, TypeVar, Generic, cast
 
 import _ba
-from ba._error import SessionPlayerNotFoundError, print_exception
+from ba._error import (SessionPlayerNotFoundError, print_exception,
+                       ActorNotFoundError)
 from ba._messages import DeathType, DieMessage
 
 if TYPE_CHECKING:
@@ -219,11 +220,12 @@ class Player(Generic[TeamType]):
     def position(self) -> ba.Vec3:
         """The position of the player, as defined by its current ba.Actor.
 
-        This value is undefined when the player has no Actor.
+        If the player currently has no actor, raises a ba.ActorNotFoundError.
         """
         assert self._postinited
         assert not self._expired
-        assert self.actor is not None
+        if self.actor is None:
+            raise ActorNotFoundError
         return _ba.Vec3(self.node.position)
 
     def exists(self) -> bool:
