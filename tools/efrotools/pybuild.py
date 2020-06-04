@@ -38,6 +38,18 @@ ENABLE_OPENSSL = True
 
 def build_apple(arch: str, debug: bool = False) -> None:
     """Run a build for the provided apple arch (mac, ios, or tvos)."""
+    import platform
+    import subprocess
+    from efro.error import CleanError
+
+    # IMPORTANT; seems we currently wind up building against /usr/local gettext
+    # stuff. Hopefully the maintainer fixes this, but for now I need to
+    # remind myself to blow it away while building.
+    if 'MacBook-Fro' in platform.node():
+        if (subprocess.run('which gettext', shell=True,
+                           check=False).returncode == 0):
+            raise CleanError('NEED TO TEMP-KILL GETTEXT')
+
     builddir = 'build/python_apple_' + arch + ('_debug' if debug else '')
     efrotools.run('rm -rf "' + builddir + '"')
     efrotools.run('mkdir -p build')
@@ -50,8 +62,8 @@ def build_apple(arch: str, debug: bool = False) -> None:
     # We can actually fix this to use the current one, but something
     # broke in the underlying build even on old commits so keeping it
     # locked for now...
-    efrotools.run('git checkout bf1ed73d0d5ff46862ba69dd5eb2ffaeff6f19b6')
-    # efrotools.run(f'git checkout {PYTHON_VERSION_MAJOR}')
+    # efrotools.run('git checkout bf1ed73d0d5ff46862ba69dd5eb2ffaeff6f19b6')
+    efrotools.run(f'git checkout {PYTHON_VERSION_MAJOR}')
 
     # On mac we currently have to add the _scproxy module or urllib will
     # fail.
@@ -146,10 +158,10 @@ def build_apple(arch: str, debug: bool = False) -> None:
         ('build/$2/Support/OpenSSL ' if ENABLE_OPENSSL else '') +
         'build/$2/Support/XZ $$(PYTHON_DIR-$1)/Makefile\n#' + srctxt)
     srctxt = ('dist/Python-$(PYTHON_VER)-$1-support.'
-              'b$(BUILD_NUMBER).tar.gz: ')
+              '$(BUILD_NUMBER).tar.gz: ')
     txt = efrotools.replace_one(
         txt, srctxt,
-        'dist/Python-$(PYTHON_VER)-$1-support.b$(BUILD_NUMBER).tar.gz:'
+        'dist/Python-$(PYTHON_VER)-$1-support.$(BUILD_NUMBER).tar.gz:'
         ' $$(PYTHON_FRAMEWORK-$1)\n#' + srctxt)
 
     # Turn doc strings on; looks like it only adds a few hundred k.
@@ -158,13 +170,13 @@ def build_apple(arch: str, debug: bool = False) -> None:
     # Set mac/ios version reqs
     # (see issue with utimensat and futimens).
     txt = efrotools.replace_one(txt, 'MACOSX_DEPLOYMENT_TARGET=10.8',
-                                'MACOSX_DEPLOYMENT_TARGET=10.13')
+                                'MACOSX_DEPLOYMENT_TARGET=10.14')
     # And equivalent iOS (11+).
     txt = efrotools.replace_one(txt, 'CFLAGS-iOS=-mios-version-min=8.0',
-                                'CFLAGS-iOS=-mios-version-min=11.0')
+                                'CFLAGS-iOS=-mios-version-min=12.0')
     # Ditto for tvOS.
     txt = efrotools.replace_one(txt, 'CFLAGS-tvOS=-mtvos-version-min=9.0',
-                                'CFLAGS-tvOS=-mtvos-version-min=11.0')
+                                'CFLAGS-tvOS=-mtvos-version-min=12.0')
 
     if debug:
 
@@ -177,10 +189,10 @@ def build_apple(arch: str, debug: bool = False) -> None:
         txt = txt.replace(dline, '--with-pydebug ' + dline)
 
         # Debug has a different name.
-        # (Currently expect to replace 13 instances of this).
+        # (Currently expect to replace 12 instances of this).
         dline = 'python$(PYTHON_VER)m'
         splitlen = len(txt.split(dline))
-        if splitlen != 14:
+        if splitlen != 13:
             raise RuntimeError(f'Unexpected configure line count {splitlen}.')
         txt = txt.replace(dline, 'python$(PYTHON_VER)dm')
 
