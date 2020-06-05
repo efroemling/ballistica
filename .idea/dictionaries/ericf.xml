@@ -35,6 +35,7 @@
       <w>actionhero</w>
       <w>activityname</w>
       <w>activityplayer</w>
+      <w>activityteam</w>
       <w>activitytypes</w>
       <w>activityutils</w>
       <w>actorclass</w>
@@ -2178,6 +2179,7 @@
       <w>yapf</w>
       <w>yapfconfig</w>
       <w>yinyang</w>
+      <w>yoffs</w>
       <w>ypos</w>
       <w>yres</w>
       <w>yscl</w>

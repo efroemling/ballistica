@@ -61,7 +61,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         self._show_up_next = False
         self._custom_continue_message = sval
         super().on_begin()
-        winning_team = self.settings_raw['winner']
+        winning_sessionteam = self.settings_raw['winner']
 
         # Pause a moment before playing victory music.
         ba.timer(0.6, ba.WeakCall(self._play_victory_music))
@@ -171,7 +171,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         if not self._is_ffa:
             mvp, mvp_name = None, None
             for entry in player_entries:
-                if entry[2].team == winning_team:
+                if entry[2].team == winning_sessionteam:
                     mvp = entry[2]
                     mvp_name = entry[1]
                     break

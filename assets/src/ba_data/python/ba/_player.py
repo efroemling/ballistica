@@ -81,6 +81,7 @@ class Player(Generic[TeamType]):
     actor: Optional[ba.Actor]
     color: Sequence[float]
     highlight: Sequence[float]
+
     _team: TeamType
     _sessionplayer: ba.SessionPlayer
     _nodeactor: Optional[ba.NodeActor]
@@ -118,7 +119,7 @@ class Player(Generic[TeamType]):
         self.character = sessionplayer.character
         self.color = sessionplayer.color
         self.highlight = sessionplayer.highlight
-        self._team = cast(TeamType, sessionplayer.sessionteam.gameteam)
+        self._team = cast(TeamType, sessionplayer.sessionteam.activityteam)
         assert self._team is not None
         self._customdata = {}
         self._expired = False

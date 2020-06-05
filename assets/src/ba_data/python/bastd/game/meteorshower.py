@@ -177,7 +177,8 @@ class MeteorShowerGame(ba.TeamGameActivity[Player, Team]):
 
         else:
             # Default handler:
-            super().handlemessage(msg)
+            return super().handlemessage(msg)
+        return None
 
     def _check_end_game(self) -> None:
         living_team_count = 0

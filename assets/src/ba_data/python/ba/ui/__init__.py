@@ -194,12 +194,15 @@ def uicleanupcheck(obj: Any, widget: ba.Widget) -> None:
     if not isinstance(widget, _ba.Widget):
         raise TypeError('widget arg is not a ba.Widget')
 
-    def foobar() -> None:
-        """Just testing."""
-        if DEBUG_UI_CLEANUP_CHECKS:
-            print('uicleanupcheck widget dying...')
+    if bool(False):
 
-    widget.add_delete_callback(foobar)
+        def foobar() -> None:
+            """Just testing."""
+            if DEBUG_UI_CLEANUP_CHECKS:
+                print('uicleanupcheck widget dying...')
+
+        widget.add_delete_callback(foobar)
+
     _ba.app.uicleanupchecks.append(
         UICleanupCheck(obj=weakref.ref(obj),
                        widget=widget,

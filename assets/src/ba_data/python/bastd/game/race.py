@@ -532,16 +532,13 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
         self._race_started = True
 
     def _update_player_order(self) -> None:
-        # FIXME: tidy this up
 
         # Calc all player distances.
         for player in self.players:
             pos: Optional[ba.Vec3]
             try:
-                assert isinstance(player.actor, PlayerSpaz)
-                assert player.actor.node
-                pos = ba.Vec3(player.actor.node.position)
-            except Exception:
+                pos = player.position
+            except ba.NotFoundError:
                 pos = None
             if pos is not None:
                 r_index = player.last_region
@@ -560,14 +557,11 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
 
         p_list.sort(reverse=True, key=lambda x: x[0])
         for i, plr in enumerate(p_list):
-            try:
-                plr[1].rank = i
-                if plr[1].actor:
-                    node = plr[1].distance_txt
-                    if node:
-                        node.text = str(i + 1) if plr[1].is_alive() else ''
-            except Exception:
-                ba.print_exception('error updating player orders')
+            plr[1].rank = i
+            if plr[1].actor:
+                node = plr[1].distance_txt
+                if node:
+                    node.text = str(i + 1) if plr[1].is_alive() else ''
 
     def _spawn_bomb(self) -> None:
         if self._front_race_region is None:
@@ -730,7 +724,8 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
 
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, ba.PlayerDiedMessage):
-            super().handlemessage(msg)  # Augment default behavior.
+            # Augment default behavior.
+            super().handlemessage(msg)
             player = msg.getplayer(Player)
             if not player.finished:
                 self.respawn_player(player, respawn_time=1)

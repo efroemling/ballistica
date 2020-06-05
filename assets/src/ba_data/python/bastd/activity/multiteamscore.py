@@ -88,16 +88,16 @@ class MultiTeamScoreScreenActivity(ScoreScreenActivity):
         def _get_prec_score(p_rec: ba.PlayerRecord) -> Optional[int]:
             if is_free_for_all and results is not None:
                 assert isinstance(results, ba.GameResults)
-                assert p_rec.team.gameteam is not None
-                val = results.get_team_score(p_rec.team)
+                assert p_rec.team.activityteam is not None
+                val = results.get_sessionteam_score(p_rec.team)
                 return val
             return p_rec.accumscore
 
         def _get_prec_score_str(p_rec: ba.PlayerRecord) -> Union[str, ba.Lstr]:
             if is_free_for_all and results is not None:
                 assert isinstance(results, ba.GameResults)
-                assert p_rec.team.gameteam is not None
-                val = results.get_team_score_str(p_rec.team)
+                assert p_rec.team.activityteam is not None
+                val = results.get_sessionteam_score_str(p_rec.team)
                 assert val is not None
                 return val
             return str(p_rec.accumscore)
@@ -139,18 +139,18 @@ class MultiTeamScoreScreenActivity(ScoreScreenActivity):
             # Just want living player entries.
             player_records = [p[2] for p in player_records_scores if p[2]]
 
-        v_offs = -140.0 + spacing * len(player_records) * 0.5
+        voffs = -140.0 + spacing * len(player_records) * 0.5
 
-        def _txt(x_offs: float,
-                 y_offs: float,
+        def _txt(xoffs: float,
+                 yoffs: float,
                  text: ba.Lstr,
                  h_align: Text.HAlign = Text.HAlign.RIGHT,
                  extrascale: float = 1.0,
                  maxwidth: Optional[float] = 120.0) -> None:
             Text(text,
                  color=(0.5, 0.5, 0.6, 0.5),
-                 position=(ts_h_offs + x_offs * scale,
-                           ts_v_offset + (v_offs + y_offs + 4.0) * scale),
+                 position=(ts_h_offs + xoffs * scale,
+                           ts_v_offset + (voffs + yoffs + 4.0) * scale),
                  h_align=h_align,
                  v_align=Text.VAlign.CENTER,
                  scale=0.8 * scale * extrascale,
@@ -193,7 +193,7 @@ class MultiTeamScoreScreenActivity(ScoreScreenActivity):
                       maxwidth: float = 70.0) -> None:
             Text(text,
                  position=(ts_h_offs + x_offs * scale,
-                           ts_v_offset + (v_offs + 15) * scale),
+                           ts_v_offset + (voffs + 15) * scale),
                  scale=scale,
                  color=(1.0, 0.9, 0.5, 1.0) if highlight else
                  (0.5, 0.5, 0.6, 0.5),
@@ -205,10 +205,10 @@ class MultiTeamScoreScreenActivity(ScoreScreenActivity):
 
         for playerrec in player_records:
             tdelay += 0.05
-            v_offs -= spacing
+            voffs -= spacing
             Image(playerrec.get_icon(),
                   position=(ts_h_offs - 12 * scale,
-                            ts_v_offset + (v_offs + 15.0) * scale),
+                            ts_v_offset + (voffs + 15.0) * scale),
                   scale=(30.0 * scale, 30.0 * scale),
                   transition=Image.Transition.IN_LEFT,
                   transition_delay=tdelay).autoretain()
@@ -216,7 +216,7 @@ class MultiTeamScoreScreenActivity(ScoreScreenActivity):
                  maxwidth=160,
                  scale=0.75 * scale,
                  position=(ts_h_offs + 10.0 * scale,
-                           ts_v_offset + (v_offs + 15) * scale),
+                           ts_v_offset + (voffs + 15) * scale),
                  h_align=Text.HAlign.LEFT,
                  v_align=Text.VAlign.CENTER,
                  color=ba.safecolor(playerrec.team.color + (1, )),

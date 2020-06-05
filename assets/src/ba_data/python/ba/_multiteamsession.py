@@ -262,12 +262,12 @@ class MultiTeamSession(Session):
         _ba.timer(delay, Call(_ba.playsound, _ba.getsound('boxingBell')))
 
         if announce_winning_team:
-            winning_team = results.winning_team
-            if winning_team is not None:
+            winning_sessionteam = results.winning_sessionteam
+            if winning_sessionteam is not None:
                 # Have all players celebrate.
                 celebrate_msg = CelebrateMessage(duration=10.0)
-                assert winning_team.gameteam is not None
-                for player in winning_team.gameteam.players:
+                assert winning_sessionteam.activityteam is not None
+                for player in winning_sessionteam.activityteam.players:
                     if player.actor:
                         player.actor.handlemessage(celebrate_msg)
                 cameraflash()
@@ -278,11 +278,11 @@ class MultiTeamSession(Session):
                 else:
                     wins_resource = 'winsTeamText'
                 wins_text = Lstr(resource=wins_resource,
-                                 subs=[('${NAME}', winning_team.name)])
+                                 subs=[('${NAME}', winning_sessionteam.name)])
                 activity.show_zoom_message(
                     wins_text,
                     scale=0.85,
-                    color=normalized_color(winning_team.color),
+                    color=normalized_color(winning_sessionteam.color),
                 )
 
 

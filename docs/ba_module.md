@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-06-03 for Ballistica version 1.5.0 build 20045</em></h4>
+<h4><em>last updated on 2020-06-04 for Ballistica version 1.5.0 build 20045</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -2719,7 +2719,7 @@ Results for a completed game.</p>
 <a href="#method_ba_Activity__end">ba.Activity.end</a>() call.</p>
 
 <h3>Attributes:</h3>
-<h5><a href="#attr_ba_GameResults__lower_is_better">lower_is_better</a>, <a href="#attr_ba_GameResults__playerinfos">playerinfos</a>, <a href="#attr_ba_GameResults__score_label">score_label</a>, <a href="#attr_ba_GameResults__scoretype">scoretype</a>, <a href="#attr_ba_GameResults__sessionteams">sessionteams</a>, <a href="#attr_ba_GameResults__winnergroups">winnergroups</a>, <a href="#attr_ba_GameResults__winning_team">winning_team</a></h5>
+<h5><a href="#attr_ba_GameResults__lower_is_better">lower_is_better</a>, <a href="#attr_ba_GameResults__playerinfos">playerinfos</a>, <a href="#attr_ba_GameResults__score_label">score_label</a>, <a href="#attr_ba_GameResults__scoretype">scoretype</a>, <a href="#attr_ba_GameResults__sessionteams">sessionteams</a>, <a href="#attr_ba_GameResults__winnergroups">winnergroups</a>, <a href="#attr_ba_GameResults__winning_sessionteam">winning_sessionteam</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_GameResults__lower_is_better">lower_is_better</a></h4></dt><dd>
 <p><span>bool</span></p>
@@ -2751,39 +2751,37 @@ Results for a completed game.</p>
 <p>Get an ordered list of winner groups.</p>
 
 </dd>
-<dt><h4><a name="attr_ba_GameResults__winning_team">winning_team</a></h4></dt><dd>
+<dt><h4><a name="attr_ba_GameResults__winning_sessionteam">winning_sessionteam</a></h4></dt><dd>
 <p><span>Optional[<a href="#class_ba_SessionTeam">ba.SessionTeam</a>]</span></p>
 <p>The winning <a href="#class_ba_SessionTeam">ba.SessionTeam</a> if there is exactly one, or else None.</p>
 
 </dd>
 </dl>
 <h3>Methods:</h3>
-<h5><a href="#method_ba_GameResults____init__">&lt;constructor&gt;</a>, <a href="#method_ba_GameResults__get_team_score">get_team_score()</a>, <a href="#method_ba_GameResults__get_team_score_str">get_team_score_str()</a>, <a href="#method_ba_GameResults__has_score_for_team">has_score_for_team()</a>, <a href="#method_ba_GameResults__set_game">set_game()</a>, <a href="#method_ba_GameResults__set_team_score">set_team_score()</a></h5>
+<h5><a href="#method_ba_GameResults____init__">&lt;constructor&gt;</a>, <a href="#method_ba_GameResults__get_sessionteam_score">get_sessionteam_score()</a>, <a href="#method_ba_GameResults__get_sessionteam_score_str">get_sessionteam_score_str()</a>, <a href="#method_ba_GameResults__has_score_for_sessionteam">has_score_for_sessionteam()</a>, <a href="#method_ba_GameResults__set_game">set_game()</a>, <a href="#method_ba_GameResults__set_team_score">set_team_score()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_GameResults____init__">&lt;constructor&gt;</a></dt></h4><dd>
 <p><span>ba.GameResults()</span></p>
 
-<p>Instantiate a results instance.</p>
-
 </dd>
-<dt><h4><a name="method_ba_GameResults__get_team_score">get_team_score()</a></dt></h4><dd>
-<p><span>get_team_score(self, sessionteam: <a href="#class_ba_SessionTeam">ba.SessionTeam</a>) -&gt; Optional[int]</span></p>
+<dt><h4><a name="method_ba_GameResults__get_sessionteam_score">get_sessionteam_score()</a></dt></h4><dd>
+<p><span>get_sessionteam_score(self, sessionteam: <a href="#class_ba_SessionTeam">ba.SessionTeam</a>) -&gt; Optional[int]</span></p>
 
 <p>Return the score for a given <a href="#class_ba_SessionTeam">ba.SessionTeam</a>.</p>
 
 </dd>
-<dt><h4><a name="method_ba_GameResults__get_team_score_str">get_team_score_str()</a></dt></h4><dd>
-<p><span>get_team_score_str(self, sessionteam: <a href="#class_ba_SessionTeam">ba.SessionTeam</a>) -&gt; <a href="#class_ba_Lstr">ba.Lstr</a></span></p>
+<dt><h4><a name="method_ba_GameResults__get_sessionteam_score_str">get_sessionteam_score_str()</a></dt></h4><dd>
+<p><span>get_sessionteam_score_str(self, sessionteam: <a href="#class_ba_SessionTeam">ba.SessionTeam</a>) -&gt; <a href="#class_ba_Lstr">ba.Lstr</a></span></p>
 
-<p>Return the score for the given <a href="#class_ba_Team">ba.Team</a> as an Lstr.</p>
+<p>Return the score for the given session-team as an Lstr.</p>
 
 <p>(properly formatted for the score type.)</p>
 
 </dd>
-<dt><h4><a name="method_ba_GameResults__has_score_for_team">has_score_for_team()</a></dt></h4><dd>
-<p><span>has_score_for_team(self, sessionteam: <a href="#class_ba_SessionTeam">ba.SessionTeam</a>) -&gt; bool</span></p>
+<dt><h4><a name="method_ba_GameResults__has_score_for_sessionteam">has_score_for_sessionteam()</a></dt></h4><dd>
+<p><span>has_score_for_sessionteam(self, sessionteam: <a href="#class_ba_SessionTeam">ba.SessionTeam</a>) -&gt; bool</span></p>
 
-<p>Return whether there is a score for a given team.</p>
+<p>Return whether there is a score for a given session-team.</p>
 
 </dd>
 <dt><h4><a name="method_ba_GameResults__set_game">set_game()</a></dt></h4><dd>
@@ -2795,7 +2793,7 @@ Results for a completed game.</p>
 <dt><h4><a name="method_ba_GameResults__set_team_score">set_team_score()</a></dt></h4><dd>
 <p><span>set_team_score(self, team: <a href="#class_ba_Team">ba.Team</a>, score: Optional[int]) -&gt; None</span></p>
 
-<p>Set the score for a given <a href="#class_ba_Team">ba.Team</a>.</p>
+<p>Set the score for a given team.</p>
 
 <p>This can be a number or None.
 (see the none_is_winner arg in the constructor)</p>

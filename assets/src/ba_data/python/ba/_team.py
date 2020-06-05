@@ -85,7 +85,7 @@ class SessionTeam:
         self.color = tuple(color)
         self.players = []
         self.customdata = {}
-        self.gameteam: Optional[Team] = None
+        self.activityteam: Optional[Team] = None
 
     def leave(self) -> None:
         """(internal)"""

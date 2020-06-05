@@ -50,7 +50,6 @@ class GameResults:
     """
 
     def __init__(self) -> None:
-        """Instantiate a results instance."""
         self._game_set = False
         self._scores: Dict[int, Tuple[ReferenceType[ba.SessionTeam],
                                       Optional[int]]] = {}
@@ -76,7 +75,7 @@ class GameResults:
         self._scoretype = scoreconfig.scoretype
 
     def set_team_score(self, team: ba.Team, score: Optional[int]) -> None:
-        """Set the score for a given ba.Team.
+        """Set the score for a given team.
 
         This can be a number or None.
         (see the none_is_winner arg in the constructor)
@@ -84,7 +83,8 @@ class GameResults:
         sessionteam = team.sessionteam
         self._scores[sessionteam.id] = (weakref.ref(sessionteam), score)
 
-    def get_team_score(self, sessionteam: ba.SessionTeam) -> Optional[int]:
+    def get_sessionteam_score(self,
+                              sessionteam: ba.SessionTeam) -> Optional[int]:
         """Return the score for a given ba.SessionTeam."""
         for score in list(self._scores.values()):
             if score[0]() is sessionteam:
@@ -106,12 +106,13 @@ class GameResults:
                 teams.append(team)
         return teams
 
-    def has_score_for_team(self, sessionteam: ba.SessionTeam) -> bool:
-        """Return whether there is a score for a given team."""
+    def has_score_for_sessionteam(self, sessionteam: ba.SessionTeam) -> bool:
+        """Return whether there is a score for a given session-team."""
         return any(s[0]() is sessionteam for s in self._scores.values())
 
-    def get_team_score_str(self, sessionteam: ba.SessionTeam) -> ba.Lstr:
-        """Return the score for the given ba.Team as an Lstr.
+    def get_sessionteam_score_str(self,
+                                  sessionteam: ba.SessionTeam) -> ba.Lstr:
+        """Return the score for the given session-team as an Lstr.
 
         (properly formatted for the score type.)
         """
@@ -169,7 +170,7 @@ class GameResults:
         return self._lower_is_better
 
     @property
-    def winning_team(self) -> Optional[ba.SessionTeam]:
+    def winning_sessionteam(self) -> Optional[ba.SessionTeam]:
         """The winning ba.SessionTeam if there is exactly one, or else None."""
         if not self._game_set:
             raise RuntimeError("Can't get winners until game is set.")

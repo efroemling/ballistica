@@ -306,7 +306,7 @@ class Session:
 
         # Remove their Team from the Activity.
         if activity is not None:
-            if sessionteam.gameteam in activity.teams:
+            if sessionteam.activityteam in activity.teams:
                 activity.remove_team(sessionteam)
             else:
                 print('Team not found in Activity in on_player_leave.')

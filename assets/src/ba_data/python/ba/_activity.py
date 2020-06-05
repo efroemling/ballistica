@@ -557,7 +557,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         sessionplayer.resetinput()
         sessionteam = sessionplayer.sessionteam
         assert sessionplayer in sessionteam.players
-        team = sessionteam.gameteam
+        team = sessionteam.activityteam
         assert team is not None
         sessionplayer.setactivity(self)
         with _ba.Context(self):
@@ -587,7 +587,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
 
         player: Any = sessionplayer.activityplayer
         assert isinstance(player, self._playertype)
-        team: Any = sessionplayer.sessionteam.gameteam
+        team: Any = sessionplayer.sessionteam.activityteam
         assert isinstance(team, self._teamtype)
 
         assert player in team.players
@@ -629,7 +629,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         assert not self.expired
 
         with _ba.Context(self):
-            sessionteam.gameteam = team = self.create_team(sessionteam)
+            sessionteam.activityteam = team = self.create_team(sessionteam)
             team.postinit(sessionteam)
             self.teams.append(team)
             try:
@@ -643,9 +643,9 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         (internal)
         """
         assert not self.expired
-        assert sessionteam.gameteam is not None
+        assert sessionteam.activityteam is not None
 
-        team: Any = sessionteam.gameteam
+        team: Any = sessionteam.activityteam
         assert isinstance(team, self._teamtype)
 
         assert team in self.teams
@@ -663,7 +663,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
             except Exception:
                 print_exception(f'Error on leave for {team} in {self}.')
 
-            sessionteam.gameteam = None
+            sessionteam.activityteam = None
 
         # Add the team to a list to keep it around for a while. This is
         # to discourage logic from firing on team object death, which
@@ -854,7 +854,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
 
             try:
                 sessionteam = team.sessionteam
-                sessionteam.gameteam = None
+                sessionteam.activityteam = None
             except SessionTeamNotFoundError:
                 # It is expected that Team objects may last longer than
                 # the SessionTeam they came from (game objects may hold

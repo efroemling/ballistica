@@ -42,7 +42,7 @@ class PlaylistBrowserWindow(ba.Window):
                  origin_widget: ba.Widget = None):
         # pylint: disable=too-many-statements
         # pylint: disable=cyclic-import
-        from bastd.ui import playlist
+        from bastd.ui.playlist import PlaylistTypeVars
 
         # If they provided an origin-widget, scale up from that.
         scale_origin: Optional[Tuple[float, float]]
@@ -62,8 +62,8 @@ class PlaylistBrowserWindow(ba.Window):
             ba.app.main_window = 'Free-for-All Game Select'
             ba.set_analytics_screen('FreeForAll Window')
         else:
-            raise TypeError(f'invalid sessiontype: {sessiontype}')
-        self._pvars = playlist.PlaylistTypeVars(sessiontype)
+            raise TypeError(f'Invalid sessiontype: {sessiontype}.')
+        self._pvars = PlaylistTypeVars(sessiontype)
 
         self._sessiontype = sessiontype
 
@@ -74,39 +74,45 @@ class PlaylistBrowserWindow(ba.Window):
         # On new installations, go ahead and create a few playlists
         # besides the hard-coded default one:
         if not _ba.get_account_misc_val('madeStandardPlaylists', False):
-            # yapf: disable
             _ba.add_transaction({
-                'type': 'ADD_PLAYLIST',
-                'playlistType': 'Free-for-All',
+                'type':
+                    'ADD_PLAYLIST',
+                'playlistType':
+                    'Free-for-All',
                 'playlistName':
                     ba.Lstr(resource='singleGamePlaylistNameText'
                             ).evaluate().replace(
                                 '${GAME}',
-                                ba.Lstr(
-                                    translate=('gameNames',
-                                               'Death Match')).evaluate()),
+                                ba.Lstr(translate=('gameNames',
+                                                   'Death Match')).evaluate()),
                 'playlist': [
-                    {'type': 'bs_death_match.DeathMatchGame',
-                     'settings': {
-                         'Epic Mode': False,
-                         'Kills to Win Per Player': 10,
-                         'Respawn Times': 1.0,
-                         'Time Limit': 300,
-                         'map': 'Doom Shroom'}
+                    {
+                        'type': 'bs_death_match.DeathMatchGame',
+                        'settings': {
+                            'Epic Mode': False,
+                            'Kills to Win Per Player': 10,
+                            'Respawn Times': 1.0,
+                            'Time Limit': 300,
+                            'map': 'Doom Shroom'
+                        }
                     },
-                    {'type': 'bs_death_match.DeathMatchGame',
-                     'settings': {
-                         'Epic Mode': False,
-                         'Kills to Win Per Player': 10,
-                         'Respawn Times': 1.0,
-                         'Time Limit': 300,
-                         'map': 'Crag Castle'}
-                    }
+                    {
+                        'type': 'bs_death_match.DeathMatchGame',
+                        'settings': {
+                            'Epic Mode': False,
+                            'Kills to Win Per Player': 10,
+                            'Respawn Times': 1.0,
+                            'Time Limit': 300,
+                            'map': 'Crag Castle'
+                        }
+                    },
                 ]
             })
             _ba.add_transaction({
-                'type': 'ADD_PLAYLIST',
-                'playlistType': 'Team Tournament',
+                'type':
+                    'ADD_PLAYLIST',
+                'playlistType':
+                    'Team Tournament',
                 'playlistName':
                     ba.Lstr(
                         resource='singleGamePlaylistNameText'
@@ -115,92 +121,102 @@ class PlaylistBrowserWindow(ba.Window):
                         ba.Lstr(translate=('gameNames',
                                            'Capture the Flag')).evaluate()),
                 'playlist': [
-                    {'type': 'bs_capture_the_flag.CTFGame',
-                     'settings': {
-                         'map': 'Bridgit',
-                         'Score to Win': 3,
-                         'Flag Idle Return Time': 30,
-                         'Flag Touch Return Time': 0,
-                         'Respawn Times': 1.0,
-                         'Time Limit': 600,
-                         'Epic Mode': False}
+                    {
+                        'type': 'bs_capture_the_flag.CTFGame',
+                        'settings': {
+                            'map': 'Bridgit',
+                            'Score to Win': 3,
+                            'Flag Idle Return Time': 30,
+                            'Flag Touch Return Time': 0,
+                            'Respawn Times': 1.0,
+                            'Time Limit': 600,
+                            'Epic Mode': False
+                        }
                     },
-                    {'type': 'bs_capture_the_flag.CTFGame',
-                     'settings': {
-                         'map': 'Roundabout',
-                         'Score to Win': 2,
-                         'Flag Idle Return Time': 30,
-                         'Flag Touch Return Time': 0,
-                         'Respawn Times': 1.0,
-                         'Time Limit': 600,
-                         'Epic Mode': False}
+                    {
+                        'type': 'bs_capture_the_flag.CTFGame',
+                        'settings': {
+                            'map': 'Roundabout',
+                            'Score to Win': 2,
+                            'Flag Idle Return Time': 30,
+                            'Flag Touch Return Time': 0,
+                            'Respawn Times': 1.0,
+                            'Time Limit': 600,
+                            'Epic Mode': False
+                        }
                     },
-                    {'type': 'bs_capture_the_flag.CTFGame',
-                     'settings': {
-                         'map': 'Tip Top',
-                         'Score to Win': 2,
-                         'Flag Idle Return Time': 30,
-                         'Flag Touch Return Time': 3,
-                         'Respawn Times': 1.0,
-                         'Time Limit': 300,
-                         'Epic Mode': False}
-                    }
+                    {
+                        'type': 'bs_capture_the_flag.CTFGame',
+                        'settings': {
+                            'map': 'Tip Top',
+                            'Score to Win': 2,
+                            'Flag Idle Return Time': 30,
+                            'Flag Touch Return Time': 3,
+                            'Respawn Times': 1.0,
+                            'Time Limit': 300,
+                            'Epic Mode': False
+                        }
+                    },
                 ]
             })
             _ba.add_transaction({
-                'type': 'ADD_PLAYLIST',
-                'playlistType': 'Team Tournament',
+                'type':
+                    'ADD_PLAYLIST',
+                'playlistType':
+                    'Team Tournament',
                 'playlistName':
-                    ba.Lstr(translate=('playlistNames',
-                                       'Just Sports')).evaluate(),
+                    ba.Lstr(translate=('playlistNames', 'Just Sports')
+                            ).evaluate(),
                 'playlist': [
-                    {'type': 'bs_hockey.HockeyGame',
-                     'settings': {
-                         'Time Limit': 0,
-                         'map': 'Hockey Stadium',
-                         'Score to Win': 1,
-                         'Respawn Times': 1.0}
+                    {
+                        'type': 'bs_hockey.HockeyGame',
+                        'settings': {
+                            'Time Limit': 0,
+                            'map': 'Hockey Stadium',
+                            'Score to Win': 1,
+                            'Respawn Times': 1.0
+                        }
                     },
-                    {'type': 'bs_football.FootballTeamGame',
-                     'settings': {
-                         'Time Limit': 0,
-                         'map': 'Football Stadium',
-                         'Score to Win': 21,
-                         'Respawn Times': 1.0}
-                    }
+                    {
+                        'type': 'bs_football.FootballTeamGame',
+                        'settings': {
+                            'Time Limit': 0,
+                            'map': 'Football Stadium',
+                            'Score to Win': 21,
+                            'Respawn Times': 1.0
+                        }
+                    },
                 ]
             })
             _ba.add_transaction({
-                'type': 'ADD_PLAYLIST',
-                'playlistType': 'Free-for-All',
+                'type':
+                    'ADD_PLAYLIST',
+                'playlistType':
+                    'Free-for-All',
                 'playlistName':
-                    ba.Lstr(translate=('playlistNames',
-                                       'Just Epic')).evaluate(),
-                'playlist': [
-                    {'type': 'bs_elimination.EliminationGame',
-                     'settings': {
-                         'Time Limit': 120,
-                         'map': 'Tip Top',
-                         'Respawn Times': 1.0,
-                         'Lives Per Player': 1,
-                         'Epic Mode': 1}
+                    ba.Lstr(translate=('playlistNames', 'Just Epic')
+                            ).evaluate(),
+                'playlist': [{
+                    'type': 'bs_elimination.EliminationGame',
+                    'settings': {
+                        'Time Limit': 120,
+                        'map': 'Tip Top',
+                        'Respawn Times': 1.0,
+                        'Lives Per Player': 1,
+                        'Epic Mode': 1
                     }
-                ]
+                }]
             })
             _ba.add_transaction({
                 'type': 'SET_MISC_VAL',
                 'name': 'madeStandardPlaylists',
                 'value': True
             })
-            # yapf: enable
             _ba.run_transactions()
 
         # Get the current selection (if any).
-        try:
-            self._selected_playlist = ba.app.config[self._pvars.config_name +
-                                                    ' Playlist Selection']
-        except Exception:
-            self._selected_playlist = None
+        self._selected_playlist = ba.app.config.get(self._pvars.config_name +
+                                                    ' Playlist Selection')
 
         self._width = 900 if ba.app.small_ui else 800
         x_inset = 50 if ba.app.small_ui else 0
@@ -270,12 +286,13 @@ class PlaylistBrowserWindow(ba.Window):
         self._config_name_full = self._pvars.config_name + ' Playlists'
         self._last_config = None
 
-        # update now and once per second.. (this should do our initial refresh)
+        # Update now and once per second.
+        # (this should do our initial refresh)
+        self._update()
         self._update_timer = ba.Timer(1.0,
                                       ba.WeakCall(self._update),
                                       timetype=ba.TimeType.REAL,
                                       repeat=True)
-        self._update()
 
     def _refresh(self) -> None:
         # FIXME: Should tidy this up.
@@ -292,13 +309,13 @@ class PlaylistBrowserWindow(ba.Window):
             self._save_state()
             self._subcontainer.delete()
 
-        # make sure config exists
+        # Make sure config exists.
         if self._config_name_full not in ba.app.config:
             ba.app.config[self._config_name_full] = {}
 
         items = list(ba.app.config[self._config_name_full].items())
 
-        # make sure everything is unicode
+        # Make sure everything is unicode.
         items = [(i[0].decode(), i[1]) if not isinstance(i[0], str) else i
                  for i in items]
 
@@ -507,7 +524,7 @@ class PlaylistBrowserWindow(ba.Window):
                             v -= scl * 130.0
 
                 except Exception:
-                    ba.print_exception('error listing playlist maps')
+                    ba.print_exception('Error listing playlist maps.')
 
                 if not map_images:
                     ba.textwidget(parent=self._subcontainer,
@@ -563,43 +580,39 @@ class PlaylistBrowserWindow(ba.Window):
     def _on_playlist_press(self, button: ba.Widget,
                            playlist_name: str) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui import playoptions
+        from bastd.ui.playoptions import PlayOptionsWindow
+
         # Make sure the target playlist still exists.
-        try:
-            exists = (playlist_name == '__default__' or playlist_name
-                      in ba.app.config[self._config_name_full])
-        except Exception:
-            exists = False
+        exists = (playlist_name == '__default__'
+                  or playlist_name in ba.app.config.get(
+                      self._config_name_full, {}))
         if not exists:
             return
 
         self._save_state()
-        playoptions.PlayOptionsWindow(
-            sessiontype=self._sessiontype,
-            scale_origin=button.get_screen_space_center(),
-            playlist=playlist_name,
-            delegate=self)
+        PlayOptionsWindow(sessiontype=self._sessiontype,
+                          scale_origin=button.get_screen_space_center(),
+                          playlist=playlist_name,
+                          delegate=self)
 
     def _on_customize_press(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.playlist import customizebrowser as cb
+        from bastd.ui.playlist.customizebrowser import (
+            PlaylistCustomizeBrowserWindow)
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (cb.PlaylistCustomizeBrowserWindow(
+        ba.app.main_menu_window = (PlaylistCustomizeBrowserWindow(
             origin_widget=self._customize_button,
             sessiontype=self._sessiontype).get_root_widget())
 
     def _on_back_press(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui import play
+        from bastd.ui.play import PlayWindow
 
         # Store our selected playlist if that's changed.
         if self._selected_playlist is not None:
-            try:
-                prev_sel = ba.app.config[self._pvars.config_name +
-                                         ' Playlist Selection']
-            except Exception:
-                prev_sel = None
+            prev_sel = ba.app.config.get(self._pvars.config_name +
+                                         ' Playlist Selection')
             if self._selected_playlist != prev_sel:
                 cfg = ba.app.config
                 cfg[self._pvars.config_name +
@@ -609,7 +622,7 @@ class PlaylistBrowserWindow(ba.Window):
         self._save_state()
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
-        ba.app.main_menu_window = (play.PlayWindow(
+        ba.app.main_menu_window = (PlayWindow(
             transition='in_left').get_root_widget())
 
     def _save_state(self) -> None:
@@ -628,14 +641,11 @@ class PlaylistBrowserWindow(ba.Window):
                 raise Exception('unrecognized selected widget')
             ba.app.window_states[self.__class__.__name__] = sel_name
         except Exception:
-            ba.print_exception('error saving state for', self.__class__)
+            ba.print_exception(f'Error saving state for {self}.')
 
     def _restore_state(self) -> None:
         try:
-            try:
-                sel_name = ba.app.window_states[self.__class__.__name__]
-            except Exception:
-                sel_name = None
+            sel_name = ba.app.window_states.get(self.__class__.__name__)
             if sel_name == 'Back':
                 sel = self._back_button
             elif sel_name == 'Scroll':
@@ -649,4 +659,4 @@ class PlaylistBrowserWindow(ba.Window):
                 sel = self._scrollwidget
             ba.containerwidget(edit=self._root_widget, selected_child=sel)
         except Exception:
-            ba.print_exception('error restoring state for', self.__class__)
+            ba.print_exception(f'Error restoring state for {self}.')

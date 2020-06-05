@@ -346,7 +346,7 @@ class CoopSession(Session):
             # Generic team games.
             if isinstance(results, GameResults):
                 playerinfos = results.playerinfos
-                score = results.get_team_score(results.sessionteams[0])
+                score = results.get_sessionteam_score(results.sessionteams[0])
                 fail_message = None
                 score_order = ('decreasing'
                                if results.lower_is_better else 'increasing')
