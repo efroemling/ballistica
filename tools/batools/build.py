@@ -46,7 +46,7 @@ class PipRequirement:
 
 
 PIP_REQUIREMENTS = [
-    PipRequirement(modulename='pylint', minversion=[2, 5, 2]),
+    PipRequirement(modulename='pylint', minversion=[2, 5, 3]),
     PipRequirement(modulename='mypy', minversion=[0, 780]),
     PipRequirement(modulename='yapf', minversion=[0, 30, 0]),
     PipRequirement(modulename='cpplint', minversion=[1, 5, 0]),

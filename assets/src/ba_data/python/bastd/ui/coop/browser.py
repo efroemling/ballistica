@@ -61,9 +61,9 @@ class CoopBrowserWindow(ba.Window):
         app = ba.app
         cfg = app.config
 
-        # Quick note to players that tourneys won't work if we're a non-blessed
-        # or a debug build...
-        if not _ba.is_blessed() or ba.app.debug_build:
+        # Quick note to players that tourneys won't work in ballistica
+        # core builds. (need to split the word so it won't get subbed out)
+        if 'ballistica' + 'core' == _ba.appname():
             ba.timer(1.0,
                      lambda: ba.screenmessage(
                          ba.Lstr(resource='noTournamentsInTestBuildText'),

@@ -41,34 +41,33 @@ from efrotools.snippets import (
     PROJROOT, snippets_main, formatcode, formatscripts, formatmakefile,
     cpplint, pylint, runpylint, mypy, runmypy, dmypy, tool_config_install,
     sync, sync_all, scriptfiles, pycharm, clioncode, androidstudiocode,
-    makefile_target_list, spelling, spelling_all, pytest, echo)
-from efrotools.snippets import compile_python_files as _orig_compile_py_files
+    makefile_target_list, spelling, spelling_all, pytest, echo,
+    compile_python_files)
+# from efrotools.snippets import compile_python_files as _orig_compile_py_files
 # pylint: enable=unused-import
 
 if TYPE_CHECKING:
     from typing import Optional
 
+# def compile_python_files() -> None:
+#     """Override for compiling python files."""
+#     from pathlib import Path
+#     import subprocess
+#     import os
+#     from efrotools import getlocalconfig
 
-def compile_python_files() -> None:
-    """Override for compiling python files."""
-    from pathlib import Path
-    import subprocess
-    import os
-    from efrotools import getlocalconfig
+#     # Run the standard command
+#     _orig_compile_py_files()
 
-    # Run the standard command
-    _orig_compile_py_files()
+#     # Optionally also blow away blessing status to keep it clear that
+#     # things need to be re-blessed.
+#     blesspath = Path(PROJROOT, 'tools/bless')
+#     if os.path.exists(blesspath) and getlocalconfig(PROJROOT).get(
+#             'auto_clear_blessing', False):
+#         subprocess.run([blesspath, 'clear'], check=True, cwd=PROJROOT)
 
-    # Optionally also blow away blessing status to keep it clear that
-    # things need to be re-blessed.
-    blesspath = Path(PROJROOT, 'tools/bless')
-    if os.path.exists(blesspath) and getlocalconfig(PROJROOT).get(
-            'auto_clear_blessing', False):
-        subprocess.run([blesspath, 'clear'], check=True, cwd=PROJROOT)
-
-
-# Copy the original func's doc-string
-compile_python_files.__doc__ = _orig_compile_py_files.__doc__
+# # Copy the original func's doc-string
+# compile_python_files.__doc__ = _orig_compile_py_files.__doc__
 
 
 def archive_old_builds() -> None:
@@ -452,11 +451,12 @@ def install_pip_reqs() -> None:
     """Install Python Pip packages needed for this project."""
     import subprocess
     from efrotools import PYTHON_BIN
+    from efro.terminal import Clr
     from batools.build import get_pip_reqs
     subprocess.run([PYTHON_BIN, '-m', 'pip', 'install', '--upgrade'] +
                    get_pip_reqs(),
                    check=True)
-    print('All pip requirements installed!')
+    print(f'{Clr.GRN}All pip requirements installed!{Clr.RST}')
 
 
 def checkenv() -> None:
