@@ -595,9 +595,11 @@ def lazy_increment_build() -> None:
         lasthash = ''
     if codehash != lasthash:
         print(f'{Clr.SMAG}Source(s) changed; incrementing build...{Clr.RST}')
-        subprocess.run(['tools/version_utils', 'incrementbuild'], check=True)
 
-        # We just changed code, so we need to re-calc the current hash.
+        # Just go ahead and bless; this will increment the build as needed.
+        subprocess.run(['make', 'bless'], check=True)
+
+        # We probably just changed code, so we need to re-calc the hash.
         codehash = get_files_hash(codefiles)
         os.makedirs(os.path.dirname(hashfilename), exist_ok=True)
         with open(hashfilename, 'w') as outfile:
