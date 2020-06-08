@@ -68,13 +68,8 @@ class CTFFlag(Flag):
 
     @property
     def team(self) -> Team:
-        """return the flag's team."""
+        """The flag's team."""
         return self._team
-
-    @classmethod
-    def from_node(cls, node: Optional[ba.Node]) -> Optional[CTFFlag]:
-        """Attempt to get a CTFFlag from a flag node."""
-        return node.getdelegate(CTFFlag) if node else None
 
 
 class Player(ba.Player['Team']):
@@ -285,9 +280,11 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
         ba.playsound(self._swipsound, position=team.flag.node.position)
 
     def _handle_flag_entered_base(self, team: Team) -> None:
-        flag = CTFFlag.from_node(ba.getcollision().opposingnode)
-        if not flag:
-            print('Unable to get flag in _handle_flag_entered_base')
+        try:
+            flag = ba.getcollision().opposingnode.getdelegate(CTFFlag, True)
+        except ba.NotFoundError:
+            # Don't think this should logically ever happen.
+            print('Error getting CTFFlag in entering-base callback.')
             return
 
         if flag.team is team:
@@ -396,13 +393,12 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
     def _handle_flag_left_base(self, team: Team) -> None:
         cur_time = ba.time()
         try:
-            flag = CTFFlag.from_node(ba.getcollision().opposingnode)
-        except ba.NodeNotFoundError:
-            # We still get this call even if the flag stopped touching us
-            # because it was deleted; that's ok.
-            flag = None
-        if not flag:
+            flag = ba.getcollision().opposingnode.getdelegate(CTFFlag, True)
+        except ba.NotFoundError:
+            # This can happen if the flag stops touching us due to being
+            # deleted; that's ok.
             return
+
         if flag.team is team:
 
             # Check times here to prevent too much flashing.
@@ -449,21 +445,20 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
                                          return_score,
                                          screenmessage=False)
 
-    @staticmethod
-    def _player_from_node(node: Optional[ba.Node]) -> Optional[Player]:
-        """Return a player if given a node that is part of one's actor."""
-        if not node:
-            return None
-        delegate = node.getdelegate(PlayerSpaz)
-        return None if delegate is None else delegate.getplayer(Player)
-
     def _handle_touching_own_flag(self, team: Team, connecting: bool) -> None:
         """Called when a player touches or stops touching their own team flag.
 
         We keep track of when each player is touching their own flag so we
         can award points when returned.
         """
-        player = self._player_from_node(ba.getcollision().sourcenode)
+        player: Optional[Player]
+        try:
+            player = ba.getcollision().sourcenode.getdelegate(
+                PlayerSpaz, True).getplayer(Player, True)
+        except ba.NotFoundError:
+            # This can happen if the player leaves but his corpse touches/etc.
+            player = None
+
         if player:
             player.touching_own_flag += (1 if connecting else -1)
 
