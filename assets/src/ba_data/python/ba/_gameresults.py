@@ -26,6 +26,8 @@ import weakref
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from ba._team import Team, SessionTeam
+
 if TYPE_CHECKING:
     from weakref import ReferenceType
     from typing import Sequence, Tuple, Any, Optional, Dict, List, Union
@@ -66,7 +68,9 @@ class GameResults:
         if self._game_set:
             raise RuntimeError('Game set twice for GameResults.')
         self._game_set = True
-        self._sessionteams = [weakref.ref(team) for team in game.teams]
+        self._sessionteams = [
+            weakref.ref(team.sessionteam) for team in game.teams
+        ]
         scoreconfig = game.getscoreconfig()
         self._playerinfos = copy.deepcopy(game.initialplayerinfos)
         self._lower_is_better = scoreconfig.lower_is_better
@@ -80,12 +84,14 @@ class GameResults:
         This can be a number or None.
         (see the none_is_winner arg in the constructor)
         """
+        assert isinstance(team, Team)
         sessionteam = team.sessionteam
         self._scores[sessionteam.id] = (weakref.ref(sessionteam), score)
 
     def get_sessionteam_score(self,
                               sessionteam: ba.SessionTeam) -> Optional[int]:
         """Return the score for a given ba.SessionTeam."""
+        assert isinstance(sessionteam, SessionTeam)
         for score in list(self._scores.values()):
             if score[0]() is sessionteam:
                 return score[1]

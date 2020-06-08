@@ -87,7 +87,7 @@ class ReportPlayerWindow(ba.Window):
         })
         body = ba.Lstr(resource='reportPlayerExplanationText').evaluate()
         ba.open_url('mailto:support@froemling.net'
-                    '?subject=BallisticaCore Player Report: ' +
+                    f'?subject={_ba.appnameupper()} Player Report: ' +
                     self._account_id + '&body=' + parse.quote(body))
         self.close()
 
@@ -100,7 +100,7 @@ class ReportPlayerWindow(ba.Window):
         })
         body = ba.Lstr(resource='reportPlayerExplanationText').evaluate()
         ba.open_url('mailto:support@froemling.net'
-                    '?subject=BallisticaCore Player Report: ' +
+                    f'?subject={_ba.appnameupper()} Player Report: ' +
                     self._account_id + '&body=' + parse.quote(body))
         self.close()
 

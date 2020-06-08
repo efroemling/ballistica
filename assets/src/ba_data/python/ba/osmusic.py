@@ -71,7 +71,7 @@ class OSMusicPlayer(MusicPlayer):
         elif entry_type == 'musicFolder':
 
             # Launch a thread to scan this folder and give us a random
-            # valid file within.
+            # valid file within it.
             self._want_to_play = True
             self._actually_playing = False
             _PickFolderSongThread(name, self.get_valid_music_file_extensions(),

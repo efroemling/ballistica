@@ -264,10 +264,7 @@ class CoopSession(Session):
         if isinstance(results, GameResults):
             outcome = 'defeat'  # This can't be 'beaten'.
         else:
-            try:
-                outcome = results['outcome']
-            except Exception:
-                outcome = ''
+            outcome = '' if results is None else results.get('outcome', '')
 
         # If at any point we have no in-game players, quit out of the session
         # (this can happen if someone leaves in the tutorial for instance).
@@ -315,7 +312,7 @@ class CoopSession(Session):
                         self.stats.register_sessionplayer(player)
                 self.stats.setactivity(next_game)
 
-                # Now flip the current activity.
+                # Now flip the current activity..
                 self.setactivity(next_game)
 
                 if not app.kiosk_mode:

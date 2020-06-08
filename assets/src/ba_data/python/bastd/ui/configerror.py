@@ -47,7 +47,7 @@ class ConfigErrorWindow(ba.Window):
             h_align='center',
             v_align='top',
             scale=0.73,
-            text=('Error reading BallisticaCore config file'
+            text=(f'Error reading {_ba.appnameupper()} config file'
                   ':\n\n\nCheck the console'
                   ' (press ~ twice) for details.\n\nWould you like to quit and'
                   ' try to fix it by hand\nor overwrite it with defaults?\n\n'

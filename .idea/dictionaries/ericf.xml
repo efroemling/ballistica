@@ -79,6 +79,8 @@
       <w>appkit</w>
       <w>applescript</w>
       <w>appletv</w>
+      <w>appname</w>
+      <w>appnameupper</w>
       <w>appstate</w>
       <w>appstore</w>
       <w>apputils</w>
@@ -155,6 +157,7 @@
       <w>basespaz</w>
       <w>basetime</w>
       <w>baseurl</w>
+      <w>baseval</w>
       <w>basew</w>
       <w>bastd</w>
       <w>batools</w>
@@ -184,6 +187,7 @@
       <w>blas</w>
       <w>blastos</w>
       <w>bldtp</w>
+      <w>blesspath</w>
       <w>blocksize</w>
       <w>bluetooth</w>
       <w>bmag</w>
@@ -222,8 +226,11 @@
       <w>btnh</w>
       <w>btnv</w>
       <w>btnx</w>
+      <w>buildblessing</w>
+      <w>buildblessingcheck</w>
       <w>builddir</w>
       <w>buildfile</w>
+      <w>buildnum</w>
       <w>buildtype</w>
       <w>bullseye</w>
       <w>bumpmap</w>
@@ -780,6 +787,7 @@
       <w>getlevel</w>
       <w>getlevelname</w>
       <w>getlevels</w>
+      <w>getlocalconfig</w>
       <w>getlog</w>
       <w>getmaps</w>
       <w>getmodel</w>
@@ -850,6 +858,7 @@
       <w>hasstarted</w>
       <w>hatmotion</w>
       <w>hattach</w>
+      <w>hcalc</w>
       <w>hdpi</w>
       <w>headercheckline</w>
       <w>headerregistry</w>
@@ -1051,6 +1060,7 @@
       <w>lineno</w>
       <w>linenum</w>
       <w>linenumber</w>
+      <w>linenums</w>
       <w>linetype</w>
       <w>linetypes</w>
       <w>linflav</w>
@@ -1127,6 +1137,7 @@
       <w>markupbase</w>
       <w>masktex</w>
       <w>masktexstorename</w>
+      <w>masterhash</w>
       <w>mathmodule</w>
       <w>mathnode</w>
       <w>mathutils</w>
@@ -1148,6 +1159,8 @@
       <w>meteorshower</w>
       <w>mfpath</w>
       <w>mhash</w>
+      <w>mhbegin</w>
+      <w>mhend</w>
       <w>mhsh</w>
       <w>microprotocols</w>
       <w>mikirog</w>
@@ -1326,6 +1339,7 @@
       <w>osval</w>
       <w>otherplayer</w>
       <w>otherspawn</w>
+      <w>ourhash</w>
       <w>ourself</w>
       <w>outdata</w>
       <w>outdelay</w>
@@ -1548,7 +1562,9 @@
       <w>pysources</w>
       <w>pytest</w>
       <w>pythondontwritebytecode</w>
+      <w>pythonhashseed</w>
       <w>pythonpath</w>
+      <w>pythonpaths</w>
       <w>pythonw</w>
       <w>pytree</w>
       <w>pytz</w>

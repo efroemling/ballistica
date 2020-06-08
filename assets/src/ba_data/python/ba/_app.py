@@ -185,14 +185,14 @@ class App:
         return self._python_directory_user
 
     @property
-    def python_directory_ba(self) -> str:
+    def python_directory_app(self) -> str:
         """Path where the app looks for its bundled scripts."""
-        return self._python_directory_ba
+        return self._python_directory_app
 
     @property
-    def python_directory_site(self) -> str:
+    def python_directory_app_site(self) -> str:
         """Path containing pip packages bundled with the app."""
-        return self._python_directory_site
+        return self._python_directory_app_site
 
     @property
     def config(self) -> ba.AppConfig:
@@ -297,10 +297,10 @@ class App:
         assert isinstance(self._test_build, bool)
         self._python_directory_user: str = env['python_directory_user']
         assert isinstance(self._python_directory_user, str)
-        self._python_directory_ba: str = env['python_directory_ba']
-        assert isinstance(self._python_directory_ba, str)
-        self._python_directory_site: str = env['python_directory_site']
-        assert isinstance(self._python_directory_site, str)
+        self._python_directory_app: str = env['python_directory_app']
+        assert isinstance(self._python_directory_app, str)
+        self._python_directory_app_site: str = env['python_directory_app_site']
+        assert isinstance(self._python_directory_app_site, str)
         self._platform: str = env['platform']
         assert isinstance(self._platform, str)
         self._subplatform: str = env['subplatform']
@@ -325,7 +325,6 @@ class App:
         self.metascan: Optional[_meta.ScanResults] = None
         self.tips: List[str] = []
         self.stress_test_reset_timer: Optional[ba.Timer] = None
-        self.suppress_debug_reports = False
         self.last_ad_completion_time: Optional[float] = None
         self.last_ad_was_short = False
         self.did_weak_call_warning = False
@@ -477,8 +476,11 @@ class App:
         ]:
             _map.register_map(maptype)
 
-        if self.debug_build:
-            _apputils.suppress_debug_reports()
+        # Non-test, non-debug builds should generally be blessed; warn if not.
+        # (so I don't accidentally release a build that can't play tourneys)
+        if (not self.debug_build and not self.test_build
+                and not _ba.is_blessed()):
+            _ba.screenmessage('WARNING: NON-BLESSED BUILD', color=(1, 0, 0))
 
         # IMPORTANT - if tweaking UI stuff, you need to make sure it behaves
         # for small, medium, and large UI modes. (doesn't run off screen, etc).
@@ -526,7 +528,7 @@ class App:
         # Notify the user if we're using custom system scripts.
         # FIXME: This no longer works since sys-scripts is an absolute path;
         #  need to just add a proper call to query this.
-        # if env['python_directory_ba'] != 'data/scripts':
+        # if env['python_directory_app'] != 'data/scripts':
         #     ba.screenmessage("Using custom system scripts...",
         #                     color=(0, 1, 0))
 
@@ -795,8 +797,9 @@ class App:
         """Handle a deep link URL."""
         from ba._lang import Lstr
         from ba._enums import TimeType
-        if url.startswith('ballisticacore://code/'):
-            code = url.replace('ballisticacore://code/', '')
+        appname = _ba.appname()
+        if url.startswith(f'{appname}://code/'):
+            code = url.replace(f'{appname}://code/', '')
 
             # If we're not signed in, queue up the code to run the next time we
             # are and issue a warning if we haven't signed in within the next

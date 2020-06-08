@@ -76,8 +76,8 @@ def run_standard_syncs(projectroot: Path, mode: Mode,
     Syncitems should be a list of tuples consisting of a src project name,
     a src subpath, and optionally a dst subpath (src will be used by default).
     """
-    from efrotools import get_localconfig
-    localconfig = get_localconfig(projectroot)
+    from efrotools import getlocalconfig
+    localconfig = getlocalconfig(projectroot)
     for syncitem in syncitems:
         assert isinstance(syncitem, SyncItem)
         src_project = syncitem.src_project_id

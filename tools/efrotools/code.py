@@ -86,7 +86,7 @@ def cpplint(projroot: Path, full: bool) -> None:
     import tempfile
     from concurrent.futures import ThreadPoolExecutor
     from multiprocessing import cpu_count
-    from efrotools import get_config
+    from efrotools import getconfig
     from efro.terminal import Clr
     from efro.error import CleanError
 
@@ -97,7 +97,7 @@ def cpplint(projroot: Path, full: bool) -> None:
             raise Exception(f'Found space in path {fpath}; unexpected.')
 
     # Check the config for a list of ones to ignore.
-    code_blacklist: List[str] = get_config(projroot).get(
+    code_blacklist: List[str] = getconfig(projroot).get(
         'cpplint_blacklist', [])
 
     # Just pretend blacklisted ones don't exist.
@@ -170,9 +170,9 @@ def cpplint(projroot: Path, full: bool) -> None:
 
 def get_code_filenames(projroot: Path) -> List[str]:
     """Return the list of files to lint-check or auto-formatting."""
-    from efrotools import get_config
+    from efrotools import getconfig
     exts = ('.h', '.c', '.cc', '.cpp', '.cxx', '.m', '.mm')
-    places = get_config(projroot).get('code_source_dirs', None)
+    places = getconfig(projroot).get('code_source_dirs', None)
     if places is None:
         raise RuntimeError('code_source_dirs not declared in config')
     codefilenames = []
@@ -249,9 +249,9 @@ def _should_include_script(fnamefull: str) -> bool:
 
 def get_script_filenames(projroot: Path) -> List[str]:
     """Return the Python filenames to lint-check or auto-format."""
-    from efrotools import get_config
+    from efrotools import getconfig
     filenames = set()
-    places = get_config(projroot).get('python_source_dirs', None)
+    places = getconfig(projroot).get('python_source_dirs', None)
     if places is None:
         raise RuntimeError('python_source_dirs not declared in config')
     for place in places:
@@ -436,7 +436,7 @@ def _apply_pylint_run_to_cache(projroot: Path, run: Any, dirtyfiles: List[str],
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-statements
     from astroid import modutils
-    from efrotools import get_config
+    from efrotools import getconfig
     from efro.error import CleanError
 
     # First off, build a map of dirtyfiles to module names
@@ -484,7 +484,7 @@ def _apply_pylint_run_to_cache(projroot: Path, run: Any, dirtyfiles: List[str],
             else:
                 untracked_deps.add(mname)
 
-    ignored_untracked_deps: List[str] = get_config(projroot).get(
+    ignored_untracked_deps: List[str] = getconfig(projroot).get(
         'pylint_ignored_untracked_deps', [])
 
     # Add a few that this package itself triggers.

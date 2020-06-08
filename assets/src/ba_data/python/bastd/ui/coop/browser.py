@@ -61,6 +61,16 @@ class CoopBrowserWindow(ba.Window):
         app = ba.app
         cfg = app.config
 
+        # Quick note to players that tourneys won't work if we're a non-blessed
+        # or a debug build...
+        if not _ba.is_blessed() or ba.app.debug_build:
+            ba.timer(1.0,
+                     lambda: ba.screenmessage(
+                         ba.Lstr(resource='noTournamentsInTestBuildText'),
+                         color=(1, 1, 0),
+                     ),
+                     timetype=ba.TimeType.REAL)
+
         # If they provided an origin-widget, scale up from that.
         scale_origin: Optional[Tuple[float, float]]
         if origin_widget is not None:
@@ -99,10 +109,8 @@ class CoopBrowserWindow(ba.Window):
             size=(self._width, self._height + top_extra),
             toolbar_visibility='menu_full',
             scale_origin_stack_offset=scale_origin,
-            stack_offset=(0,
-                          -15) if app.small_ui else (0,
-                                                     0) if app.med_ui else (0,
-                                                                            0),
+            stack_offset=((0, -15) if app.small_ui else (
+                0, 0) if app.med_ui else (0, 0)),
             transition=transition,
             scale=1.2 if app.small_ui else 0.8 if app.med_ui else 0.75))
 

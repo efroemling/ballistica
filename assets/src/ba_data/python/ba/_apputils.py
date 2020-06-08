@@ -67,15 +67,6 @@ def should_submit_debug_info() -> bool:
     return _ba.app.config.get('Submit Debug Info', True)
 
 
-def suppress_debug_reports() -> None:
-    """Turn debug-reporting to the master server off.
-
-    This should be called in devel/debug situations to avoid spamming
-    the master server with spurious logs.
-    """
-    _ba.app.suppress_debug_reports = True
-
-
 def handle_log() -> None:
     """Called on debug log prints.
 
@@ -89,37 +80,38 @@ def handle_log() -> None:
     if not app.log_upload_timer_started:
 
         def _put_log() -> None:
-            if not app.suppress_debug_reports:
-                try:
-                    sessionname = str(_ba.get_foreground_host_session())
-                except Exception:
-                    sessionname = 'unavailable'
-                try:
-                    activityname = str(_ba.get_foreground_host_activity())
-                except Exception:
-                    activityname = 'unavailable'
-                info = {
-                    'log': _ba.getlog(),
-                    'version': app.version,
-                    'build': app.build_number,
-                    'userAgentString': app.user_agent_string,
-                    'session': sessionname,
-                    'activity': activityname,
-                    'fatal': 0,
-                    'userRanCommands': _ba.has_user_run_commands(),
-                    'time': _ba.time(TimeType.REAL),
-                    'userModded': _ba.has_user_mods()
-                }
+            try:
+                sessionname = str(_ba.get_foreground_host_session())
+            except Exception:
+                sessionname = 'unavailable'
+            try:
+                activityname = str(_ba.get_foreground_host_activity())
+            except Exception:
+                activityname = 'unavailable'
 
-                def response(data: Any) -> None:
-                    # A non-None response means success; lets
-                    # take note that we don't need to report further
-                    # log info this run
-                    if data is not None:
-                        app.log_have_new = False
-                        _ba.mark_log_sent()
+            info = {
+                'log': _ba.getlog(),
+                'version': app.version,
+                'build': app.build_number,
+                'userAgentString': app.user_agent_string,
+                'session': sessionname,
+                'activity': activityname,
+                'fatal': 0,
+                'userRanCommands': _ba.has_user_run_commands(),
+                'time': _ba.time(TimeType.REAL),
+                'userModded': _ba.has_user_mods(),
+                'newsShow': _ba.get_news_show(),
+            }
 
-                serverput('bsLog', info, response)
+            def response(data: Any) -> None:
+                # A non-None response means success; lets
+                # take note that we don't need to report further
+                # log info this run
+                if data is not None:
+                    app.log_have_new = False
+                    _ba.mark_log_sent()
+
+            serverput('bsLog', info, response)
 
         app.log_upload_timer_started = True
 

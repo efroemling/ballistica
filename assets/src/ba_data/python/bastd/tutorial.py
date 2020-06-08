@@ -239,7 +239,6 @@ class TutorialActivity(ba.Activity[Player, Team]):
         self.bomb_image_color = (1.0, 1.0, 1.0)
         self.pickup_image_color = (1.0, 1.0, 1.0)
         self.control_ui_nodes: List[ba.Node] = []
-        self._test_file = ''
         self.spazzes: Dict[int, basespaz.Spaz] = {}
         self.jump_image_color = (1.0, 1.0, 1.0)
         self._entries: List[Any] = []
@@ -400,9 +399,6 @@ class TutorialActivity(ba.Activity[Player, Team]):
         ]
         for n in self.control_ui_nodes:
             n.opacity = 0.0
-        self._test_file = ('/Users/ericf/Library/Containers/'
-                           'net.froemling.ballisticacore/Data/'
-                           'Library/Application Support/Ballisticacore/foo.py')
         self._read_entries()
 
     def set_stick_image_position(self, x: float, y: float) -> None:
@@ -844,7 +840,7 @@ class TutorialActivity(ba.Activity[Player, Team]):
                     ba.Lstr(resource=self._r + '.phrase02Text',
                             subs=[
                                 ('${APP_NAME}', ba.Lstr(resource='titleText'))
-                            ])),  # welcome to ballisticacore
+                            ])),  # welcome to <appname>
                 DelayOld(80),
                 Run(release=False),
                 Jump(release=False),

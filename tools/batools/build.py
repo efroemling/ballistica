@@ -158,7 +158,7 @@ def _lazybuild_check_paths(inpaths: List[str], category: SourceCategory,
                 if _testpath(fpath):
                     return True
                 unchanged_count += 1
-    print(f'{Clr.SBLU}Lazybuild: skipping "{tnamepretty}"'
+    print(f'{Clr.BLU}Lazybuild: skipping "{tnamepretty}"'
           f' ({unchanged_count} inputs unchanged).{Clr.RST}')
     return False
 

@@ -67,14 +67,14 @@ class App:
     """Context for an app run."""
 
     def __init__(self) -> None:
-        from efrotools import get_config, get_localconfig
+        from efrotools import getconfig, getlocalconfig
         from pathlib import Path
         self._check = ('--check' in sys.argv)
         self._fix = ('--fix' in sys.argv)
         self._checkarg = ' --check' if self._check else ''
 
         # We behave differently in the public repo
-        self._public = get_config(Path('.'))['public']
+        self._public = getconfig(Path('.'))['public']
         assert isinstance(self._public, bool)
 
         self._source_files: List[str] = []
@@ -84,7 +84,7 @@ class App:
         self._file_changes: Dict[str, str] = {}
 
         self._copyright_checks = bool(
-            get_localconfig(Path('.')).get('copyright_checks', True))
+            getlocalconfig(Path('.')).get('copyright_checks', True))
 
     def run(self) -> None:
         """Do the thing."""

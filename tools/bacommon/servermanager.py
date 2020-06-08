@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 
 @dataclass
 class ServerConfig:
-    """Configuration for the server manager app (ballisticacore_server)."""
+    """Configuration for the server manager app (<appname>_server)."""
 
     # Name of our server in the public parties list.
     party_name: str = 'FFA'
@@ -87,7 +87,7 @@ class ServerConfig:
     # Whether to enable telnet access.
     # IMPORTANT: This option is no longer available, as it was being used
     # for exploits. Live access to the running server is still possible through
-    # the mgr.cmd() function in ballisticacore_server. Run your server through
+    # the mgr.cmd() function in the server script. Run your server through
     # tools such as 'screen' or 'tmux' and you can reconnect to it remotely
     # over a secure ssh connection.
     enable_telnet: bool = False

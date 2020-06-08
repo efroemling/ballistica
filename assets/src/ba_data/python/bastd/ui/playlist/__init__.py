@@ -61,8 +61,8 @@ class PlaylistTypeVars:
             self.sessiontype = ba.FreeForAllSession
 
         else:
-            raise TypeError('playlist type vars undefined for session type: ' +
-                            str(sessiontype))
+            raise RuntimeError(
+                f'Playlist type vars undefined for sessiontype: {sessiontype}')
         self.default_list_name = ba.Lstr(resource='defaultGameListNameText',
                                          subs=[('${PLAYMODE}', play_mode_name)
                                                ])

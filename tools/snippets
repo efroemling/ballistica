@@ -41,12 +41,34 @@ from efrotools.snippets import (
     PROJROOT, snippets_main, formatcode, formatscripts, formatmakefile,
     cpplint, pylint, runpylint, mypy, runmypy, dmypy, tool_config_install,
     sync, sync_all, scriptfiles, pycharm, clioncode, androidstudiocode,
-    makefile_target_list, spelling, spelling_all, compile_python_files, pytest,
-    echo)
+    makefile_target_list, spelling, spelling_all, pytest, echo)
+from efrotools.snippets import compile_python_files as _orig_compile_py_files
 # pylint: enable=unused-import
 
 if TYPE_CHECKING:
     from typing import Optional
+
+
+def compile_python_files() -> None:
+    """Override for compiling python files."""
+    from pathlib import Path
+    import subprocess
+    import os
+    from efrotools import getlocalconfig
+
+    # Run the standard command
+    _orig_compile_py_files()
+
+    # Optionally also blow away blessing status to keep it clear that
+    # things need to be re-blessed.
+    blesspath = Path(PROJROOT, 'tools/bless')
+    if os.path.exists(blesspath) and getlocalconfig(PROJROOT).get(
+            'auto_clear_blessing', False):
+        subprocess.run([blesspath, 'clear'], check=True, cwd=PROJROOT)
+
+
+# Copy the original func's doc-string
+compile_python_files.__doc__ = _orig_compile_py_files.__doc__
 
 
 def archive_old_builds() -> None:
@@ -156,7 +178,7 @@ def get_master_asset_src_dir() -> None:
     if ('origin/master' in output.splitlines()[0]
             and 'ballistica' + 'core' == 'ballisticacore'):
 
-        # We seem to be in master in core repo.. lets do it.
+        # We seem to be in master in core repo; lets do it.
         print('/Users/ericf/Dropbox/ballisticacore_master_assets')
     else:
         # Still need to supply dummy path for makefile if not..
@@ -399,8 +421,8 @@ def warm_start_asset_build() -> None:
     import os
     import subprocess
     from pathlib import Path
-    from efrotools import get_config
-    public: bool = get_config(PROJROOT)['public']
+    from efrotools import getconfig
+    public: bool = getconfig(PROJROOT)['public']
 
     if public:
         from efrotools.efrocache import warm_start_cache

@@ -70,7 +70,7 @@ def explicit_bool(value: bool) -> bool:
     return value
 
 
-def get_localconfig(projroot: Path) -> Dict[str, Any]:
+def getlocalconfig(projroot: Path) -> Dict[str, Any]:
     """Return a project's localconfig contents (or default if missing)."""
     localconfig: Dict[str, Any]
     try:
@@ -81,7 +81,7 @@ def get_localconfig(projroot: Path) -> Dict[str, Any]:
     return localconfig
 
 
-def get_config(projroot: Path) -> Dict[str, Any]:
+def getconfig(projroot: Path) -> Dict[str, Any]:
     """Return a project's config contents (or default if missing)."""
     config: Dict[str, Any]
     try:

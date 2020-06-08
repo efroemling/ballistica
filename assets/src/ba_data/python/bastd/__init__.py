@@ -18,6 +18,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # -----------------------------------------------------------------------------
-"""BallisticaCore standard library: games, UI, etc."""
+"""Ballistica standard library: games, UI, etc."""
 
 # ba_meta require api 6

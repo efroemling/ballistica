@@ -119,9 +119,9 @@ def create_user_system_scripts() -> None:
     # Hmm; shutil.copytree doesn't seem to work nicely on android,
     # so lets do it manually.
     # NOTE: Should retry this now that we have 3.7 (this note was for 2.7)
-    src_dir = app.python_directory_ba
+    src_dir = app.python_directory_app
     dst_dir = path + '_tmp'
-    filenames = os.listdir(app.python_directory_ba)
+    filenames = os.listdir(app.python_directory_app)
     for fname in filenames:
         print('COPYING', src_dir + '/' + fname, '->', dst_dir)
         shutil.copyfile(src_dir + '/' + fname, dst_dir + '/' + fname)

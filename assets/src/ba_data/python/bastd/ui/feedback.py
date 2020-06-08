@@ -66,11 +66,13 @@ def ask_for_rating() -> Optional[ba.Widget]:
                   v_align='center')
 
     def do_rating() -> None:
+        import _ba
         if platform == 'android':
+            appname = _ba.appname()
             if subplatform == 'google':
-                url = 'market://details?id=net.froemling.ballisticacore'
+                url = f'market://details?id=net.froemling.{appname}'
             else:
-                url = 'market://details?id=net.froemling.ballisticacorecb'
+                url = 'market://details?id=net.froemling.{appname}cb'
         else:
             url = 'macappstore://itunes.apple.com/app/id416482767?ls=1&mt=12'
 

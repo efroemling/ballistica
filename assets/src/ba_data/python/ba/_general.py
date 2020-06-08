@@ -89,7 +89,7 @@ def getclass(name: str, subclassof: Type[T]) -> Type[T]:
     cls: Type = getattr(module, classname)
 
     if not issubclass(cls, subclassof):
-        raise TypeError(name + ' is not a subclass of ' + str(subclassof))
+        raise TypeError(f'{name} is not a subclass of {subclassof}.')
     return cls
 
 

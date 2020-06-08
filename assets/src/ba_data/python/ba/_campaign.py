@@ -122,6 +122,9 @@ def init_campaigns() -> None:
     from bastd.game.easteregghunt import EasterEggHuntGame
     from bastd.game.ninjafight import NinjaFightGame
 
+    # TODO: Campaigns should be load-on-demand; not all imported at launch
+    # like this.
+
     # FIXME: Once translations catch up, we can convert these to use the
     #  generic display-name '${GAME} Training' type stuff.
     campaign = Campaign('Easy')

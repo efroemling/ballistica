@@ -180,9 +180,15 @@ def _get_py_targets_subset(all_targets: Set[str], subset: str,
             ' instead, but perhaps listing these explicitly isn\'t so bad.\n')
 
     for i, target in enumerate(pyc_targets):
+        # Note: there's currently a bug which can cause python bytecode
+        # generation to be non-deterministic. This can break our blessing
+        # process since we bless in core but then regenerate bytecode in
+        # spinoffs. See https://bugs.python.org/issue34722
+        # For now setting PYTHONHASHSEED=1 is a workaround.
         out += ('\n' + target + ': \\\n      ' + py_targets[i] +
                 '\n\t@echo Compiling script: $^\n'
-                '\t@rm -rf $@ && $(TOOLS_DIR)/snippets compile_python_files $^'
+                '\t@rm -rf $@ && PYTHONHASHSEED=1 $(TOOLS_DIR)/snippets'
+                ' compile_python_files $^'
                 ' && chmod 444 $@\n')
 
     return out
@@ -248,7 +254,7 @@ def _get_extras_targets_win(all_targets: Set[str], platform: str) -> str:
 def main() -> None:
     """Main script entry point."""
     # pylint: disable=too-many-locals
-    from efrotools import get_config
+    from efrotools import getconfig
     from pathlib import Path
 
     # In 'check' mode we simply error on differences.
@@ -257,7 +263,7 @@ def main() -> None:
     # Always operate out of dist root dir.
     os.chdir(os.path.join(os.path.dirname(sys.argv[0]), '..'))
 
-    public = get_config(Path('.'))['public']
+    public = getconfig(Path('.'))['public']
     assert isinstance(public, bool)
 
     fname = 'assets/Makefile'

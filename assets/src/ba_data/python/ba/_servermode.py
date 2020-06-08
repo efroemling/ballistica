@@ -321,7 +321,7 @@ class ServerController:
 
         if self._first_run:
             curtimestr = time.strftime('%c')
-            print(f'{Clr.BLD}{Clr.BLU}BallisticaCore {app.version}'
+            print(f'{Clr.BLD}{Clr.BLU}{_ba.appnameupper()} {app.version}'
                   f' ({app.build_number})'
                   f' entering server-mode {curtimestr}{Clr.RST}')
 

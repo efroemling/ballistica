@@ -163,7 +163,7 @@ def have_pro() -> bool:
     return bool(
         _ba.get_purchased('upgrades.pro') or _ba.get_purchased('static.pro')
         or _ba.get_purchased('static.pro_sale')
-        or 'ballistica' + 'core' == 'ballisticacore')
+        or 'ballistica' + 'core' == _ba.appname())
 
 
 def have_pro_options() -> bool:
