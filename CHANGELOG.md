@@ -1,3 +1,8 @@
+### 1.5.2 (20063)
+- Fixes an issue with controls not working correctly in net-play between 1.4.x and 1.5.x.
+- Tidied up onslaught code a bit.
+- Fixes various other minor bugs.
+
 ### 1.5.1 (20062)
 - Windows server now properly displays color when run by double clicking the .bat file.
 - Misc bug fixes.

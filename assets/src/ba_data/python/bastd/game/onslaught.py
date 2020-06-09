@@ -53,13 +53,13 @@ if TYPE_CHECKING:
 @dataclass
 class Wave:
     """A wave of enemies."""
-    entries: List[Union[Bot, Spacing, Delay, None]]
+    entries: List[Union[Spawn, Spacing, Delay, None]]
     base_angle: float = 0.0
 
 
 @dataclass
-class Bot:
-    """A bot in a wave."""
+class Spawn:
+    """A bot spawn event in a wave."""
     bottype: Union[Type[SpazBot], str]
     point: Optional[Point] = None
     spacing: float = 5.0
@@ -73,7 +73,7 @@ class Spacing:
 
 @dataclass
 class Delay:
-    """A delay in a wave."""
+    """A delay between events in a wave."""
     duration: float
 
 
@@ -93,34 +93,34 @@ class Preset(Enum):
 
 @unique
 class Point(Enum):
-    """Points on the map to spawn at."""
-    LEFT_UPPER_MORE = 'left_upper_more'
-    LEFT_UPPER = 'left_upper'
-    TURRET_TOP_RIGHT = 'turret_top_right'
-    RIGHT_UPPER = 'right_upper'
-    TURRET_TOP_MIDDLE_LEFT = 'turret_top_middle_left'
-    TURRET_TOP_MIDDLE_RIGHT = 'turret_top_middle_right'
-    TURRET_TOP_LEFT = 'turret_top_left'
-    TOP_RIGHT = 'top_right'
-    TOP_LEFT = 'top_left'
-    TOP = 'top'
-    BOTTOM = 'bottom'
-    LEFT = 'left'
-    RIGHT = 'right'
-    RIGHT_UPPER_MORE = 'right_upper_more'
-    RIGHT_LOWER = 'right_lower'
-    RIGHT_LOWER_MORE = 'right_lower_more'
-    BOTTOM_RIGHT = 'bottom_right'
-    BOTTOM_LEFT = 'bottom_left'
-    TURRET_BOTTOM_RIGHT = 'turret_bottom_right'
-    TURRET_BOTTOM_LEFT = 'turret_bottom_left'
-    LEFT_LOWER = 'left_lower'
-    LEFT_LOWER_MORE = 'left_lower_more'
-    TURRET_TOP_MIDDLE = 'turret_top_middle'
-    BOTTOM_HALF_RIGHT = 'bottom_half_right'
-    BOTTOM_HALF_LEFT = 'bottom_half_left'
-    TOP_HALF_RIGHT = 'top_half_right'
-    TOP_HALF_LEFT = 'top_half_left'
+    """Points on the map we can spawn at."""
+    LEFT_UPPER_MORE = 'bot_spawn_left_upper_more'
+    LEFT_UPPER = 'bot_spawn_left_upper'
+    TURRET_TOP_RIGHT = 'bot_spawn_turret_top_right'
+    RIGHT_UPPER = 'bot_spawn_right_upper'
+    TURRET_TOP_MIDDLE_LEFT = 'bot_spawn_turret_top_middle_left'
+    TURRET_TOP_MIDDLE_RIGHT = 'bot_spawn_turret_top_middle_right'
+    TURRET_TOP_LEFT = 'bot_spawn_turret_top_left'
+    TOP_RIGHT = 'bot_spawn_top_right'
+    TOP_LEFT = 'bot_spawn_top_left'
+    TOP = 'bot_spawn_top'
+    BOTTOM = 'bot_spawn_bottom'
+    LEFT = 'bot_spawn_left'
+    RIGHT = 'bot_spawn_right'
+    RIGHT_UPPER_MORE = 'bot_spawn_right_upper_more'
+    RIGHT_LOWER = 'bot_spawn_right_lower'
+    RIGHT_LOWER_MORE = 'bot_spawn_right_lower_more'
+    BOTTOM_RIGHT = 'bot_spawn_bottom_right'
+    BOTTOM_LEFT = 'bot_spawn_bottom_left'
+    TURRET_BOTTOM_RIGHT = 'bot_spawn_turret_bottom_right'
+    TURRET_BOTTOM_LEFT = 'bot_spawn_turret_bottom_left'
+    LEFT_LOWER = 'bot_spawn_left_lower'
+    LEFT_LOWER_MORE = 'bot_spawn_left_lower_more'
+    TURRET_TOP_MIDDLE = 'bot_spawn_turret_top_middle'
+    BOTTOM_HALF_RIGHT = 'bot_spawn_bottom_half_right'
+    BOTTOM_HALF_LEFT = 'bot_spawn_bottom_half_left'
+    TOP_HALF_RIGHT = 'bot_spawn_top_half_right'
+    TOP_HALF_LEFT = 'bot_spawn_top_half_left'
 
 
 class Player(ba.Player['Team']):
@@ -283,37 +283,37 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
             self._waves = [
                 Wave(base_angle=195,
                      entries=[
-                         Bot(BomberBotLite, spacing=5),
+                         Spawn(BomberBotLite, spacing=5),
                      ] * player_count),
                 Wave(base_angle=130,
                      entries=[
-                         Bot(BrawlerBotLite, spacing=5),
+                         Spawn(BrawlerBotLite, spacing=5),
                      ] * player_count),
                 Wave(base_angle=195,
-                     entries=[Bot(BomberBotLite, spacing=10)] *
+                     entries=[Spawn(BomberBotLite, spacing=10)] *
                      (player_count + 1)),
                 Wave(base_angle=130,
                      entries=[
-                         Bot(BrawlerBotLite, spacing=10),
+                         Spawn(BrawlerBotLite, spacing=10),
                      ] * (player_count + 1)),
                 Wave(base_angle=130,
                      entries=[
-                         Bot(BrawlerBotLite, spacing=5)
+                         Spawn(BrawlerBotLite, spacing=5)
                          if player_count > 1 else None,
-                         Bot(BrawlerBotLite, spacing=5),
+                         Spawn(BrawlerBotLite, spacing=5),
                          Spacing(30),
-                         Bot(BomberBotLite, spacing=5)
+                         Spawn(BomberBotLite, spacing=5)
                          if player_count > 3 else None,
-                         Bot(BomberBotLite, spacing=5),
+                         Spawn(BomberBotLite, spacing=5),
                          Spacing(30),
-                         Bot(BrawlerBotLite, spacing=5),
-                         Bot(BrawlerBotLite, spacing=5)
+                         Spawn(BrawlerBotLite, spacing=5),
+                         Spawn(BrawlerBotLite, spacing=5)
                          if player_count > 2 else None,
                      ]),
                 Wave(base_angle=195,
                      entries=[
-                         Bot(TriggerBot, spacing=90),
-                         Bot(TriggerBot, spacing=90)
+                         Spawn(TriggerBot, spacing=90),
+                         Spawn(TriggerBot, spacing=90)
                          if player_count > 1 else None,
                      ]),
             ]
@@ -323,53 +323,53 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
             self._excluded_powerups = ['curse']
             self._waves = [
                 Wave(entries=[
-                    Bot(ChargerBot, Point.LEFT_UPPER_MORE
-                        ) if player_count > 2 else None,
-                    Bot(ChargerBot, Point.LEFT_UPPER),
+                    Spawn(ChargerBot, Point.LEFT_UPPER_MORE
+                          ) if player_count > 2 else None,
+                    Spawn(ChargerBot, Point.LEFT_UPPER),
                 ]),
                 Wave(entries=[
-                    Bot(BomberBotStaticLite, Point.TURRET_TOP_RIGHT),
-                    Bot(BrawlerBotLite, Point.RIGHT_UPPER),
-                    Bot(BrawlerBotLite, Point.RIGHT_LOWER
-                        ) if player_count > 1 else None,
-                    Bot(BomberBotStaticLite, Point.TURRET_BOTTOM_RIGHT
-                        ) if player_count > 2 else None,
+                    Spawn(BomberBotStaticLite, Point.TURRET_TOP_RIGHT),
+                    Spawn(BrawlerBotLite, Point.RIGHT_UPPER),
+                    Spawn(BrawlerBotLite, Point.RIGHT_LOWER
+                          ) if player_count > 1 else None,
+                    Spawn(BomberBotStaticLite, Point.TURRET_BOTTOM_RIGHT
+                          ) if player_count > 2 else None,
                 ]),
                 Wave(entries=[
-                    Bot(BomberBotStaticLite, Point.TURRET_BOTTOM_LEFT),
-                    Bot(TriggerBot, Point.LEFT),
-                    Bot(TriggerBot, Point.LEFT_LOWER
-                        ) if player_count > 1 else None,
-                    Bot(TriggerBot, Point.LEFT_UPPER
-                        ) if player_count > 2 else None,
+                    Spawn(BomberBotStaticLite, Point.TURRET_BOTTOM_LEFT),
+                    Spawn(TriggerBot, Point.LEFT),
+                    Spawn(TriggerBot, Point.LEFT_LOWER
+                          ) if player_count > 1 else None,
+                    Spawn(TriggerBot, Point.LEFT_UPPER
+                          ) if player_count > 2 else None,
                 ]),
                 Wave(entries=[
-                    Bot(BrawlerBotLite, Point.TOP_RIGHT),
-                    Bot(BrawlerBot, Point.TOP_HALF_RIGHT
-                        ) if player_count > 1 else None,
-                    Bot(BrawlerBotLite, Point.TOP_LEFT),
-                    Bot(BrawlerBotLite, Point.TOP_HALF_LEFT
-                        ) if player_count > 2 else None,
-                    Bot(BrawlerBot, Point.TOP),
-                    Bot(BomberBotStaticLite, Point.TURRET_TOP_MIDDLE),
+                    Spawn(BrawlerBotLite, Point.TOP_RIGHT),
+                    Spawn(BrawlerBot, Point.TOP_HALF_RIGHT
+                          ) if player_count > 1 else None,
+                    Spawn(BrawlerBotLite, Point.TOP_LEFT),
+                    Spawn(BrawlerBotLite, Point.TOP_HALF_LEFT
+                          ) if player_count > 2 else None,
+                    Spawn(BrawlerBot, Point.TOP),
+                    Spawn(BomberBotStaticLite, Point.TURRET_TOP_MIDDLE),
                 ]),
                 Wave(entries=[
-                    Bot(TriggerBotStatic, Point.TURRET_BOTTOM_LEFT),
-                    Bot(TriggerBotStatic, Point.TURRET_BOTTOM_RIGHT),
-                    Bot(TriggerBot, Point.BOTTOM),
-                    Bot(TriggerBot, Point.BOTTOM_HALF_RIGHT
-                        ) if player_count > 1 else None,
-                    Bot(TriggerBot, Point.BOTTOM_HALF_LEFT
-                        ) if player_count > 2 else None,
+                    Spawn(TriggerBotStatic, Point.TURRET_BOTTOM_LEFT),
+                    Spawn(TriggerBotStatic, Point.TURRET_BOTTOM_RIGHT),
+                    Spawn(TriggerBot, Point.BOTTOM),
+                    Spawn(TriggerBot, Point.BOTTOM_HALF_RIGHT
+                          ) if player_count > 1 else None,
+                    Spawn(TriggerBot, Point.BOTTOM_HALF_LEFT
+                          ) if player_count > 2 else None,
                 ]),
                 Wave(entries=[
-                    Bot(BomberBotStaticLite, Point.TURRET_TOP_LEFT),
-                    Bot(BomberBotStaticLite, Point.TURRET_TOP_RIGHT),
-                    Bot(ChargerBot, Point.BOTTOM),
-                    Bot(ChargerBot, Point.BOTTOM_HALF_LEFT
-                        ) if player_count > 1 else None,
-                    Bot(ChargerBot, Point.BOTTOM_HALF_RIGHT
-                        ) if player_count > 2 else None,
+                    Spawn(BomberBotStaticLite, Point.TURRET_TOP_LEFT),
+                    Spawn(BomberBotStaticLite, Point.TURRET_TOP_RIGHT),
+                    Spawn(ChargerBot, Point.BOTTOM),
+                    Spawn(ChargerBot, Point.BOTTOM_HALF_LEFT
+                          ) if player_count > 1 else None,
+                    Spawn(ChargerBot, Point.BOTTOM_HALF_RIGHT
+                          ) if player_count > 2 else None,
                 ]),
             ]
 
@@ -379,78 +379,78 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
             self._waves = [
                 Wave(base_angle=-50,
                      entries=[
-                         Bot(BrawlerBot, spacing=12)
+                         Spawn(BrawlerBot, spacing=12)
                          if player_count > 3 else None,
-                         Bot(BrawlerBot, spacing=12),
-                         Bot(BomberBot, spacing=6),
-                         Bot(BomberBot, spacing=6)
+                         Spawn(BrawlerBot, spacing=12),
+                         Spawn(BomberBot, spacing=6),
+                         Spawn(BomberBot, spacing=6)
                          if self._preset is Preset.PRO else None,
-                         Bot(BomberBot, spacing=6)
+                         Spawn(BomberBot, spacing=6)
                          if player_count > 1 else None,
-                         Bot(BrawlerBot, spacing=12),
-                         Bot(BrawlerBot, spacing=12)
+                         Spawn(BrawlerBot, spacing=12),
+                         Spawn(BrawlerBot, spacing=12)
                          if player_count > 2 else None,
                      ]),
                 Wave(base_angle=180,
                      entries=[
-                         Bot(BrawlerBot, spacing=6)
+                         Spawn(BrawlerBot, spacing=6)
                          if player_count > 3 else None,
-                         Bot(BrawlerBot, spacing=6)
+                         Spawn(BrawlerBot, spacing=6)
                          if self._preset is Preset.PRO else None,
-                         Bot(BrawlerBot, spacing=6),
-                         Bot(ChargerBot, spacing=45),
-                         Bot(ChargerBot, spacing=45)
+                         Spawn(BrawlerBot, spacing=6),
+                         Spawn(ChargerBot, spacing=45),
+                         Spawn(ChargerBot, spacing=45)
                          if player_count > 1 else None,
-                         Bot(BrawlerBot, spacing=6),
-                         Bot(BrawlerBot, spacing=6)
+                         Spawn(BrawlerBot, spacing=6),
+                         Spawn(BrawlerBot, spacing=6)
                          if self._preset is Preset.PRO else None,
-                         Bot(BrawlerBot, spacing=6)
+                         Spawn(BrawlerBot, spacing=6)
                          if player_count > 2 else None,
                      ]),
                 Wave(base_angle=0,
                      entries=[
-                         Bot(ChargerBot, spacing=30),
-                         Bot(TriggerBot, spacing=30),
-                         Bot(TriggerBot, spacing=30),
-                         Bot(TriggerBot, spacing=30)
+                         Spawn(ChargerBot, spacing=30),
+                         Spawn(TriggerBot, spacing=30),
+                         Spawn(TriggerBot, spacing=30),
+                         Spawn(TriggerBot, spacing=30)
                          if self._preset is Preset.PRO else None,
-                         Bot(TriggerBot, spacing=30)
+                         Spawn(TriggerBot, spacing=30)
                          if player_count > 1 else None,
-                         Bot(TriggerBot, spacing=30)
+                         Spawn(TriggerBot, spacing=30)
                          if player_count > 3 else None,
-                         Bot(ChargerBot, spacing=30),
+                         Spawn(ChargerBot, spacing=30),
                      ]),
                 Wave(base_angle=90,
                      entries=[
-                         Bot(StickyBot, spacing=50),
-                         Bot(StickyBot, spacing=50)
+                         Spawn(StickyBot, spacing=50),
+                         Spawn(StickyBot, spacing=50)
                          if self._preset is Preset.PRO else None,
-                         Bot(StickyBot, spacing=50),
-                         Bot(StickyBot, spacing=50)
+                         Spawn(StickyBot, spacing=50),
+                         Spawn(StickyBot, spacing=50)
                          if player_count > 1 else None,
-                         Bot(StickyBot, spacing=50)
+                         Spawn(StickyBot, spacing=50)
                          if player_count > 3 else None,
                      ]),
                 Wave(base_angle=0,
                      entries=[
-                         Bot(TriggerBot, spacing=72),
-                         Bot(TriggerBot, spacing=72),
-                         Bot(TriggerBot, spacing=72)
+                         Spawn(TriggerBot, spacing=72),
+                         Spawn(TriggerBot, spacing=72),
+                         Spawn(TriggerBot, spacing=72)
                          if self._preset is Preset.PRO else None,
-                         Bot(TriggerBot, spacing=72),
-                         Bot(TriggerBot, spacing=72),
-                         Bot(TriggerBot, spacing=36)
+                         Spawn(TriggerBot, spacing=72),
+                         Spawn(TriggerBot, spacing=72),
+                         Spawn(TriggerBot, spacing=36)
                          if player_count > 2 else None,
                      ]),
                 Wave(base_angle=30,
                      entries=[
-                         Bot(ChargerBotProShielded, spacing=50),
-                         Bot(ChargerBotProShielded, spacing=50),
-                         Bot(ChargerBotProShielded, spacing=50)
+                         Spawn(ChargerBotProShielded, spacing=50),
+                         Spawn(ChargerBotProShielded, spacing=50),
+                         Spawn(ChargerBotProShielded, spacing=50)
                          if self._preset is Preset.PRO else None,
-                         Bot(ChargerBotProShielded, spacing=50)
+                         Spawn(ChargerBotProShielded, spacing=50)
                          if player_count > 1 else None,
-                         Bot(ChargerBotProShielded, spacing=50)
+                         Spawn(ChargerBotProShielded, spacing=50)
                          if player_count > 2 else None,
                      ])
             ]
@@ -466,65 +466,65 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
             self._excluded_powerups = []
             self._waves = [
                 Wave(entries=[
-                    Bot(BomberBotProStatic, Point.TURRET_TOP_MIDDLE_LEFT
-                        ) if hard else None,
-                    Bot(BomberBotProStatic, Point.TURRET_TOP_MIDDLE_RIGHT),
-                    Bot(BomberBotProStatic, Point.TURRET_TOP_LEFT
-                        ) if player_count > 2 else None,
-                    Bot(ExplodeyBot, Point.TOP_RIGHT),
+                    Spawn(BomberBotProStatic, Point.TURRET_TOP_MIDDLE_LEFT
+                          ) if hard else None,
+                    Spawn(BomberBotProStatic, Point.TURRET_TOP_MIDDLE_RIGHT),
+                    Spawn(BomberBotProStatic, Point.TURRET_TOP_LEFT
+                          ) if player_count > 2 else None,
+                    Spawn(ExplodeyBot, Point.TOP_RIGHT),
                     Delay(4.0),
-                    Bot(ExplodeyBot, Point.TOP_LEFT),
+                    Spawn(ExplodeyBot, Point.TOP_LEFT),
                 ]),
                 Wave(entries=[
-                    Bot(ChargerBot, Point.LEFT),
-                    Bot(ChargerBot, Point.RIGHT),
-                    Bot(ChargerBot, Point.RIGHT_UPPER_MORE
-                        ) if player_count > 2 else None,
-                    Bot(BomberBotProStatic, Point.TURRET_TOP_LEFT),
-                    Bot(BomberBotProStatic, Point.TURRET_TOP_RIGHT),
+                    Spawn(ChargerBot, Point.LEFT),
+                    Spawn(ChargerBot, Point.RIGHT),
+                    Spawn(ChargerBot, Point.RIGHT_UPPER_MORE
+                          ) if player_count > 2 else None,
+                    Spawn(BomberBotProStatic, Point.TURRET_TOP_LEFT),
+                    Spawn(BomberBotProStatic, Point.TURRET_TOP_RIGHT),
                 ]),
                 Wave(entries=[
-                    Bot(TriggerBotPro, Point.TOP_RIGHT),
-                    Bot(TriggerBotPro, Point.RIGHT_UPPER_MORE
-                        ) if player_count > 1 else None,
-                    Bot(TriggerBotPro, Point.RIGHT_UPPER),
-                    Bot(TriggerBotPro, Point.RIGHT_LOWER) if hard else None,
-                    Bot(TriggerBotPro, Point.RIGHT_LOWER_MORE
-                        ) if player_count > 2 else None,
-                    Bot(TriggerBotPro, Point.BOTTOM_RIGHT),
+                    Spawn(TriggerBotPro, Point.TOP_RIGHT),
+                    Spawn(TriggerBotPro, Point.RIGHT_UPPER_MORE
+                          ) if player_count > 1 else None,
+                    Spawn(TriggerBotPro, Point.RIGHT_UPPER),
+                    Spawn(TriggerBotPro, Point.RIGHT_LOWER) if hard else None,
+                    Spawn(TriggerBotPro, Point.RIGHT_LOWER_MORE
+                          ) if player_count > 2 else None,
+                    Spawn(TriggerBotPro, Point.BOTTOM_RIGHT),
                 ]),
                 Wave(entries=[
-                    Bot(ChargerBotProShielded, Point.BOTTOM_RIGHT),
-                    Bot(ChargerBotProShielded, Point.BOTTOM
-                        ) if player_count > 2 else None,
-                    Bot(ChargerBotProShielded, Point.BOTTOM_LEFT),
-                    Bot(ChargerBotProShielded, Point.TOP) if hard else None,
-                    Bot(BomberBotProStatic, Point.TURRET_TOP_MIDDLE),
+                    Spawn(ChargerBotProShielded, Point.BOTTOM_RIGHT),
+                    Spawn(ChargerBotProShielded, Point.BOTTOM
+                          ) if player_count > 2 else None,
+                    Spawn(ChargerBotProShielded, Point.BOTTOM_LEFT),
+                    Spawn(ChargerBotProShielded, Point.TOP) if hard else None,
+                    Spawn(BomberBotProStatic, Point.TURRET_TOP_MIDDLE),
                 ]),
                 Wave(entries=[
-                    Bot(ExplodeyBot, Point.LEFT_UPPER),
+                    Spawn(ExplodeyBot, Point.LEFT_UPPER),
                     Delay(1.0),
-                    Bot(BrawlerBotProShielded, Point.LEFT_LOWER),
-                    Bot(BrawlerBotProShielded, Point.LEFT_LOWER_MORE),
+                    Spawn(BrawlerBotProShielded, Point.LEFT_LOWER),
+                    Spawn(BrawlerBotProShielded, Point.LEFT_LOWER_MORE),
                     Delay(4.0),
-                    Bot(ExplodeyBot, Point.RIGHT_UPPER),
+                    Spawn(ExplodeyBot, Point.RIGHT_UPPER),
                     Delay(1.0),
-                    Bot(BrawlerBotProShielded, Point.RIGHT_LOWER),
-                    Bot(BrawlerBotProShielded, Point.RIGHT_UPPER_MORE),
+                    Spawn(BrawlerBotProShielded, Point.RIGHT_LOWER),
+                    Spawn(BrawlerBotProShielded, Point.RIGHT_UPPER_MORE),
                     Delay(4.0),
-                    Bot(ExplodeyBot, Point.LEFT),
+                    Spawn(ExplodeyBot, Point.LEFT),
                     Delay(5.0),
-                    Bot(ExplodeyBot, Point.RIGHT),
+                    Spawn(ExplodeyBot, Point.RIGHT),
                 ]),
                 Wave(entries=[
-                    Bot(BomberBotProStatic, Point.TURRET_TOP_LEFT),
-                    Bot(BomberBotProStatic, Point.TURRET_TOP_RIGHT),
-                    Bot(BomberBotProStatic, Point.TURRET_BOTTOM_LEFT),
-                    Bot(BomberBotProStatic, Point.TURRET_BOTTOM_RIGHT),
-                    Bot(BomberBotProStatic, Point.TURRET_TOP_MIDDLE_LEFT
-                        ) if hard else None,
-                    Bot(BomberBotProStatic, Point.TURRET_TOP_MIDDLE_RIGHT
-                        ) if hard else None,
+                    Spawn(BomberBotProStatic, Point.TURRET_TOP_LEFT),
+                    Spawn(BomberBotProStatic, Point.TURRET_TOP_RIGHT),
+                    Spawn(BomberBotProStatic, Point.TURRET_BOTTOM_LEFT),
+                    Spawn(BomberBotProStatic, Point.TURRET_BOTTOM_RIGHT),
+                    Spawn(BomberBotProStatic, Point.TURRET_TOP_MIDDLE_LEFT
+                          ) if hard else None,
+                    Spawn(BomberBotProStatic, Point.TURRET_TOP_MIDDLE_RIGHT
+                          ) if hard else None,
                 ])
             ]
 
@@ -535,7 +535,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
             self._waves = []
 
         else:
-            raise Exception('Invalid preset: ' + str(self._preset))
+            raise RuntimeError(f'Invalid preset: {self._preset}')
 
         # FIXME: Should migrate to use setup_standard_powerup_drops().
 
@@ -1088,8 +1088,8 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
     def _add_entries_for_distribution_group(
             self, group: List[Tuple[int, int]],
             bot_levels: List[List[Type[SpazBot]]],
-            all_entries: List[Union[Bot, Spacing, Delay, None]]) -> None:
-        entries: List[Union[Bot, Spacing, Delay, None]] = []
+            all_entries: List[Union[Spawn, Spacing, Delay, None]]) -> None:
+        entries: List[Union[Spawn, Spacing, Delay, None]] = []
         for entry in group:
             bot_level = bot_levels[entry[0] - 1]
             bot_type = bot_level[random.randrange(len(bot_level))]
@@ -1103,9 +1103,9 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
             split = random.random() > 0.3
             for i in range(entry[1]):
                 if split and i % 2 == 0:
-                    entries.insert(0, Bot(bot_type, spacing=spacing))
+                    entries.insert(0, Spawn(bot_type, spacing=spacing))
                 else:
-                    entries.append(Bot(bot_type, spacing=spacing))
+                    entries.append(Spawn(bot_type, spacing=spacing))
         if entries:
             all_entries += entries
             all_entries.append(
@@ -1124,7 +1124,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         distribution = self._get_distribution(target_points, min_dudes,
                                               max_dudes, group_count,
                                               max_level)
-        all_entries: List[Union[Bot, Spacing, Delay, None]] = []
+        all_entries: List[Union[Spawn, Spacing, Delay, None]] = []
         for group in distribution:
             self._add_entries_for_distribution_group(group, bot_levels,
                                                      all_entries)
@@ -1149,7 +1149,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
         if self._game_over:
             return
         assert isinstance(point.value, str)
-        pointpos = self.map.defs.points['bot_spawn_' + point.value]
+        pointpos = self.map.defs.points[point.value]
         assert self._bots is not None
         self._bots.spawn_bot(spaz_type, pos=pointpos, spawn_time=spawn_time)
 
@@ -1322,9 +1322,7 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
                 self.spawn_player(player)
 
     def _checkroundover(self) -> None:
-        """
-        see if the round is over in response to an event (player died, etc)
-        """
+        """Potentially end the round based on the state of the game."""
         if self.has_ended():
             return
         if not any(player.is_alive() for player in self.teams[0].players):

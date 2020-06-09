@@ -42,7 +42,7 @@ def run_cpu_benchmark() -> None:
 
         def __init__(self) -> None:
 
-            print('FIXME: BENCHMARK SESSION WOULD CALC DEPS.')
+            # print('FIXME: BENCHMARK SESSION WOULD CALC DEPS.')
             depsets: Sequence[ba.DependencySet] = []
 
             super().__init__(depsets)
