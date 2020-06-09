@@ -1,4 +1,9 @@
+### 1.5.1 (20062)
+- Windows server now properly displays color when run by double clicking the .bat file.
+- Misc bug fixes.
+
 ### 1.5.0 (20001)
+- This build contains about 2 years worth of MAJOR internal refactoring to prepare for the future of BombSquad. As a player this should not (yet) look different from 1.4, but for modders there is a lot new. See the rest of these change entries or visit ballistica.net for more info.
 - Ported the entire scripting layer from Python 2 to to Python 3 (currently at 3.7, and I intend to keep this updated to the latest widely-available release). There's some significant changes going from python 2 to 3 (new print statement, string behavior, etc), but these are well documented online, so please read up as needed.  This should provide us some nice benefits and future-proofs everything. (my janky 2.7 custom Python builds were getting a little long in the tooth).
 - Refactored all script code to be PEP8 compliant (Python coding standards).  Basically, this means that stuff that was camel-case (fooBar) is now a single word or underscores (foobar / foo_bar).  There are a few minor exceptions such as existing resource and media filenames, but in general old code can be ported by taking a pass through and killing the camel-case.  I know this is a bit of a pain in the ass, but it'll let us use things like Pylint and just be more consistent with the rest of the Python world.
 - On a related note, I'm now using 'yapf' to keep my Python code formatted nicely (using pep8 style); I'd recommend checking it out if you're doing a lot of scripting as its a great time-saver.
@@ -48,7 +53,7 @@
 - bs.NodeActor is no more (it can simply be replaced with ba.Actor())
 - bs.playMusic() is now ba.setmusic() which better fits its functionality (it sometimes just continues playing or stops playing).
 - The bs.Vector class is no more; in its place is a shiny new ba.Vec3 which is implemented internally in C++ so its nice and speedy.  Will probably update certain things like vector node attrs to support this class in the future since it makes vector math nice and convenient.
-- Ok you get the point..
+- Ok you get the point.. see ballistica.net for more info on these changes.
 
 ### 1.4.155 (14377)
 - Added protection against a repeated-input attack in lobbies.

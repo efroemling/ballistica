@@ -1720,6 +1720,10 @@ class GatherWindow(ba.Window):
                                 # Ignore harmless errors.
                                 if exc.errno == errno.EHOSTUNREACH:
                                     pass
+                                elif exc.errno == 10051:
+                                    # Windows 'a socket operation was attempted
+                                    # to an unreachable network' error.
+                                    pass
                                 elif exc.errno == errno.EADDRNOTAVAIL:
                                     if self._port == 0:
                                         # This has happened. Ignore.

@@ -89,6 +89,7 @@
       <w>archs</w>
       <w>argh</w>
       <w>argparse</w>
+      <w>argtypes</w>
       <w>argval</w>
       <w>armeabi</w>
       <w>arraymodule</w>
@@ -360,6 +361,7 @@
       <w>configparser</w>
       <w>configpath</w>
       <w>connectattr</w>
+      <w>conout</w>
       <w>containerwidget</w>
       <w>contentmanager</w>
       <w>contextlib</w>
@@ -627,6 +629,7 @@
       <w>fdata</w>
       <w>fdesc</w>
       <w>fdict</w>
+      <w>fdout</w>
       <w>fecfc</w>
       <w>feedparser</w>
       <w>ffaeff</w>
@@ -884,6 +887,7 @@
       <w>homebook</w>
       <w>homebrew</w>
       <w>hometest</w>
+      <w>hout</w>
       <w>howtoplay</w>
       <w>hpos</w>
       <w>hscrollwidget</w>
@@ -1100,6 +1104,7 @@
       <w>loofa</w>
       <w>loosey</w>
       <w>losecount</w>
+      <w>lpdword</w>
       <w>lpos</w>
       <w>lprop</w>
       <w>lsbo</w>
@@ -1360,6 +1365,7 @@
       <w>palmos</w>
       <w>pandoc</w>
       <w>pandroid</w>
+      <w>parallelized</w>
       <w>parsermodule</w>
       <w>partyqueue</w>
       <w>partyval</w>

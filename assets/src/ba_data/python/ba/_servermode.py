@@ -321,9 +321,11 @@ class ServerController:
 
         if self._first_run:
             curtimestr = time.strftime('%c')
-            print(f'{Clr.BLD}{Clr.BLU}{_ba.appnameupper()} {app.version}'
-                  f' ({app.build_number})'
-                  f' entering server-mode {curtimestr}{Clr.RST}')
+            _ba.log(
+                f'{Clr.BLD}{Clr.BLU}{_ba.appnameupper()} {app.version}'
+                f' ({app.build_number})'
+                f' entering server-mode {curtimestr}{Clr.RST}',
+                to_server=False)
 
         if sessiontype is FreeForAllSession:
             appcfg['Free-for-All Playlist Selection'] = self._playlist_name
@@ -354,6 +356,7 @@ class ServerController:
         # And here we go.
         _ba.new_host_session(sessiontype)
 
-        if not self._ran_access_check:
+        # Run an access check if we're trying to make a public party.
+        if not self._ran_access_check and self._config.party_is_public:
             self._run_access_check()
             self._ran_access_check = True

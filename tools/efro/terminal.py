@@ -27,7 +27,7 @@ from enum import Enum, unique
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    pass
+    from typing import Any
 
 
 @unique
@@ -85,6 +85,76 @@ class TerminalColor(Enum):
     STRONG_BG_WHITE = '\033[107m'
 
 
+def _default_color_enabled() -> bool:
+    """Return whether we should enable ANSI color codes by default."""
+    import platform
+
+    # If we're not attached to a terminal, go with no-color.
+    if not sys.__stdout__.isatty():
+        return False
+
+    # On windows, try to enable ANSI color mode.
+    if platform.system() == 'Windows':
+        return _windows_enable_color()
+
+    # We seem to be a terminal with color support; let's do it!
+    return True
+
+
+# noinspection PyPep8Naming
+def _windows_enable_color() -> bool:
+    """Attempt to enable ANSI color on windows terminal; return success."""
+    # pylint: disable=invalid-name, import-error, undefined-variable
+    # Pulled from: https://bugs.python.org/issue30075
+    import msvcrt
+    import ctypes
+    from ctypes import wintypes
+    kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)  # type: ignore
+
+    ERROR_INVALID_PARAMETER = 0x0057
+    ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004
+
+    def _check_bool(result: Any, _func: Any, args: Any) -> Any:
+        if not result:
+            raise ctypes.WinError(ctypes.get_last_error())  # type: ignore
+        return args
+
+    LPDWORD = ctypes.POINTER(wintypes.DWORD)
+    kernel32.GetConsoleMode.errcheck = _check_bool
+    kernel32.GetConsoleMode.argtypes = (wintypes.HANDLE, LPDWORD)
+    kernel32.SetConsoleMode.errcheck = _check_bool
+    kernel32.SetConsoleMode.argtypes = (wintypes.HANDLE, wintypes.DWORD)
+
+    def set_conout_mode(new_mode: int, mask: int = 0xffffffff) -> int:
+        # don't assume StandardOutput is a console.
+        # open CONOUT$ instead
+        fdout = os.open('CONOUT$', os.O_RDWR)
+        try:
+            hout = msvcrt.get_osfhandle(fdout)
+            old_mode = wintypes.DWORD()
+            kernel32.GetConsoleMode(hout, ctypes.byref(old_mode))
+            mode = (new_mode & mask) | (old_mode.value & ~mask)
+            kernel32.SetConsoleMode(hout, mode)
+            return old_mode.value
+        finally:
+            os.close(fdout)
+
+    def enable_vt_mode() -> int:
+        mode = mask = ENABLE_VIRTUAL_TERMINAL_PROCESSING
+        try:
+            return set_conout_mode(mode, mask)
+        except WindowsError as exc:
+            if exc.winerror == ERROR_INVALID_PARAMETER:
+                raise NotImplementedError
+            raise
+
+    try:
+        enable_vt_mode()
+        return True
+    except NotImplementedError:
+        return False
+
+
 class Clr:
     """Convenience class for color terminal output.
 
@@ -96,7 +166,7 @@ class Clr:
     """
     _envval = os.environ.get('EFRO_TERMCOLORS')
     color_enabled = (True if _envval == '1' else
-                     False if _envval == '0' else sys.__stdout__.isatty())
+                     False if _envval == '0' else _default_color_enabled())
     if color_enabled:
 
         # Styles

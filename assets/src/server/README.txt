@@ -2,8 +2,8 @@ To run this, simply cd into this directory and run ./ballisticacore_server
 (on mac or linux) or launch_ballisticacore_server.bat (on windows).
 You'll need to open a UDP port (43210 by default) so that the world can
 communicate with your server.
-You can configure your server by creating a config.yaml file
-(see config_template.yaml as a starting point)
+You can configure your server by editing the config.yaml file.
+(if you only see config_template.yaml, you can copy/rename that to config.yaml)
 
 Platform-Specific Notes:
 
@@ -16,7 +16,7 @@ Mac:
 Linux (x86_64):
 - Server binaries are currently compiled against Ubuntu 18 LTS. They depend
   on Python 3.7, so you may need to install that.
-  This should just be something like "sudo apt install python3"
+  This should just be something like "sudo apt install python3.7"
 
 Raspberry Pi:
 - The server binary was compiled on a Raspberry Pi 4 running Raspbian Buster.
@@ -25,7 +25,8 @@ Windows:
 - You may need to run dist/Vc_redist.x64.exe to install support libraries if
   the app quits with complaints of missing DLLs
 
-Please give me a holler at support@froemling.net if you run into any problems.
+Please give me a holler at support@froemling.net or check out
+ballistica.net/wiki if you run into any problems.
 
 Enjoy!
 -Eric
