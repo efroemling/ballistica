@@ -807,7 +807,10 @@ class GatherWindow(ba.Window):
                         color=(1, 0, 0))
                     ba.playsound(ba.getsound('error'))
                     return
-                port = int(cast(str, ba.textwidget(query=port_textwidget)))
+                try:
+                    port = int(cast(str, ba.textwidget(query=port_textwidget)))
+                except ValueError:
+                    port = -1
                 if port > 65535 or port < 0:
                     ba.screenmessage(
                         ba.Lstr(resource='internal.invalidPortErrorText'),
