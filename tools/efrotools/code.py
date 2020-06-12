@@ -142,6 +142,12 @@ def cpplint(projroot: Path, full: bool) -> None:
     codelines[headercheckline] = (
         "  if False and include and include.group(1) in ('cfenv',")
 
+    # Don't complain about unknown NOLINT categories.
+    # (we use them for clang-tidy)
+    unknownlintline = codelines.index(
+        '        elif category not in _LEGACY_ERROR_CATEGORIES:')
+    codelines[unknownlintline] = '        elif False:'
+
     def lint_file(filename: str) -> None:
         result = subprocess.call(['cpplint', '--root=src', filename], env=env)
         if result != 0:

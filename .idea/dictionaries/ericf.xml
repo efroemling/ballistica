@@ -1286,6 +1286,7 @@
       <w>nodpi</w>
       <w>nofiles</w>
       <w>noinspect</w>
+      <w>nondeterministic</w>
       <w>noninfringement</w>
       <w>nonmultipart</w>
       <w>noone</w>
@@ -2055,6 +2056,7 @@
       <w>uninited</w>
       <w>uniquify</w>
       <w>unixccompiler</w>
+      <w>unknownlintline</w>
       <w>unlinkable</w>
       <w>unlinking</w>
       <w>unlinks</w>

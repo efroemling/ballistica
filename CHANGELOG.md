@@ -1,3 +1,7 @@
+### 1.5.4 (20067)
+- Should now work properly with non-ascii paths on Windows (for real this time).
+- Misc cleanup and minor bug fixes.
+
 ### 1.5.3 (20065)
 - Improved handling of non-ascii characters in file paths on windows.
 
