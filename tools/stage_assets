@@ -26,6 +26,7 @@ from __future__ import annotations
 import hashlib
 import os
 import sys
+import subprocess
 from functools import partial
 from typing import TYPE_CHECKING
 
@@ -203,22 +204,24 @@ def _write_payload_file(assets_root: str, full: bool) -> None:
             fpath = os.path.join(root, fname)
             fpathshort = fpath.replace(assets_root, '')
             if ' ' in fpathshort:
-                raise Exception("invalid filename found (contains spaces): '" +
-                                fpathshort + "'")
+                raise RuntimeError(
+                    f"Invalid filename (contains spaces): '{fpathshort}'")
             payload_str += fpathshort + ' ' + md5sum(fpath) + '\n'
             file_list.append(fpathshort)
 
+    payload_path = assets_root + '/payload_info'
     if file_list:
         # Write the file count, whether this is a 'full' payload, and finally
         # the file list.
         payload_str = (str(len(file_list)) + '\n' + ('1' if full else '0') +
                        '\n' + payload_str)
-        payload_path = assets_root + '/payload_info'
         with open(payload_path, 'w') as outfile:
             outfile.write(payload_str)
     else:
-        # Hmm; do we need to build an empty payload in this case?
-        pass
+        # Remove the payload file; this will cause the game to completely
+        # skip the payload processing step.
+        if os.path.exists(payload_path):
+            os.unlink(payload_path)
 
 
 def _sync_windows_extras(cfg: Config) -> None:
@@ -288,6 +291,9 @@ def main() -> None:
     # Do our stripped down pylib dir for platforms that use that.
     if cfg.include_pylib:
         _sync_pylib(cfg)
+    else:
+        if cfg.dst is not None and os.path.isdir(cfg.dst + '/pylib'):
+            subprocess.run(['rm', '-rf', cfg.dst + '/pylib'], check=True)
 
     # On windows we need to pull in some dlls and this and that
     # (we also include a non-stripped-down set of python libs).
