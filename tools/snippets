@@ -583,8 +583,12 @@ def lazy_increment_build() -> None:
     import os
     import subprocess
     from efro.terminal import Clr
+    from efro.error import CleanError
     from efrotools import get_files_hash
     from efrotools.code import get_code_filenames
+    if sys.argv[2:] not in [[], ['--update-hash-only']]:
+        raise CleanError('Invalid arguments')
+    update_hash_only = '--update-hash-only' in sys.argv
     codefiles = get_code_filenames(PROJROOT)
     codehash = get_files_hash(codefiles)
     hashfilename = '.cache/lazy_increment_build'
@@ -596,9 +600,11 @@ def lazy_increment_build() -> None:
     if codehash != lasthash:
         print(f'{Clr.SMAG}Source(s) changed; incrementing build...{Clr.RST}')
 
-        # Just go ahead and bless; this will increment the build as needed.
-        # subprocess.run(['make', 'bless'], check=True)
-        subprocess.run(['tools/version_utils', 'incrementbuild'], check=True)
+        if not update_hash_only:
+            # Just go ahead and bless; this will increment the build as needed.
+            # subprocess.run(['make', 'bless'], check=True)
+            subprocess.run(['tools/version_utils', 'incrementbuild'],
+                           check=True)
 
         # We probably just changed code, so we need to re-calc the hash.
         codehash = get_files_hash(codefiles)

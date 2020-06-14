@@ -1,3 +1,7 @@
+### 1.5.5 (20069)
+- Cleaned up Windows version packaging.
+- More misc bug fixes.
+
 ### 1.5.4 (20067)
 - Should now work properly with non-ascii paths on Windows (for real this time).
 - Note that Windows game data is now stored under 'Local' appdata instead of 'Roaming'; if you have an old install with data you want to preserve, you may want to move it over manually.

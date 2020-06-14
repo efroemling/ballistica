@@ -327,6 +327,7 @@
       <w>clrhdr</w>
       <w>clrnames</w>
       <w>clrred</w>
+      <w>cmakeserver</w>
       <w>cmathmodule</w>
       <w>cmds</w>
       <w>cmembers</w>
@@ -1055,6 +1056,7 @@
       <w>libssl</w>
       <w>libvorbi</w>
       <w>libvorbis</w>
+      <w>libvorbisfile</w>
       <w>libxm</w>
       <w>libxmu</w>
       <w>libxz</w>
@@ -1207,6 +1209,7 @@
       <w>msbuild</w>
       <w>mshell</w>
       <w>msvccompiler</w>
+      <w>msvcp</w>
       <w>mtarget</w>
       <w>mtime</w>
       <w>mtrans</w>
@@ -1598,6 +1601,7 @@
       <w>realsies</w>
       <w>recache</w>
       <w>redist</w>
+      <w>redistributables</w>
       <w>relpath</w>
       <w>remainingchecks</w>
       <w>remoteapp</w>
@@ -1993,6 +1997,7 @@
       <w>topkillcount</w>
       <w>topkilledcount</w>
       <w>toplevel</w>
+      <w>toplevelfiles</w>
       <w>totaldudes</w>
       <w>totalpts</w>
       <w>totalwaves</w>
@@ -2100,6 +2105,7 @@
       <w>varname</w>
       <w>varsize</w>
       <w>vartype</w>
+      <w>vcruntime</w>
       <w>vcxproj</w>
       <w>venv</w>
       <w>verlines</w>
@@ -2148,14 +2154,17 @@
       <w>willeval</w>
       <w>wincfg</w>
       <w>wincount</w>
+      <w>winempty</w>
       <w>winnergroup</w>
       <w>winnergroups</w>
       <w>winplt</w>
       <w>winprj</w>
       <w>winref</w>
       <w>winscore</w>
+      <w>winserver</w>
       <w>winsound</w>
       <w>winstate</w>
+      <w>wintype</w>
       <w>wmsbe</w>
       <w>woooo</w>
       <w>workdir</w>
