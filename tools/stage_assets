@@ -55,6 +55,7 @@ class Config:
         self.dst: Optional[str] = None
         self.win_extras_src: Optional[str] = None
         self.win_platform: Optional[str] = None
+        self.win_type: Optional[str] = None
         self.include_audio = True
         self.include_models = True
         self.include_collide_models = True
@@ -121,6 +122,7 @@ class Config:
         """Parse sub-args in the windows platform string."""
         winempty, wintype, winplt, wincfg = platform.split('-')
         self.win_platform = winplt
+        self.win_type = wintype
         assert winempty == ''
         self.dst = sys.argv[2]
         self.tex_suffix = '.dds'
@@ -243,6 +245,7 @@ def _write_payload_file(assets_root: str, full: bool) -> None:
 def _sync_windows_extras(cfg: Config) -> None:
     assert cfg.win_extras_src is not None
     assert cfg.win_platform is not None
+    assert cfg.win_type is not None
     if not os.path.isdir(cfg.win_extras_src):
         raise Exception('win extras src dir not found: ' + cfg.win_extras_src)
 
@@ -268,10 +271,15 @@ def _sync_windows_extras(cfg: Config) -> None:
     # Now sync the top level individual files that we want.
     # (we could technically copy everything over but this keeps staging
     # dirs a bit tidier)
-    toplevelfiles: List[str] = [
-        'libvorbis.dll', 'libvorbisfile.dll', 'ogg.dll', 'OpenAL32.dll',
-        'SDL2.dll'
-    ]
+    toplevelfiles: List[str] = []
+
+    if cfg.win_type == 'win':
+        toplevelfiles += [
+            'libvorbis.dll', 'libvorbisfile.dll', 'ogg.dll', 'OpenAL32.dll',
+            'SDL2.dll'
+        ]
+    elif cfg.win_type == 'winserver':
+        toplevelfiles += ['python.exe']
 
     # Include debug dlls for x64 so folks without msvc can run them.
     # (seems win32 doesn't have the same set so ignoring that for now)
