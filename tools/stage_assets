@@ -30,10 +30,11 @@ import subprocess
 from functools import partial
 from typing import TYPE_CHECKING
 
+from efro.error import CleanError
 from efrotools.pybuild import PYTHON_VERSION_MAJOR
 
 if TYPE_CHECKING:
-    from typing import Optional
+    from typing import Optional, List
 
 # Suffix for the pyc files we include in stagings.
 # We're using deterministic opt pyc files; see PEP 552.
@@ -53,6 +54,7 @@ class Config:
             os.path.dirname(sys.argv[0]) + '/../assets/build')
         self.dst: Optional[str] = None
         self.win_extras_src: Optional[str] = None
+        self.win_platform: Optional[str] = None
         self.include_audio = True
         self.include_models = True
         self.include_collide_models = True
@@ -66,6 +68,7 @@ class Config:
         self.include_payload_file = False
         self.tex_suffix: Optional[str] = None
         self.is_payload_full = False
+        self.debug = False
 
     def _parse_android_args(self) -> None:
         # On Android we get nitpicky with what
@@ -114,40 +117,53 @@ class Config:
             elif arg == '-audio':
                 self.include_audio = True
 
+    def _parse_win_platform(self, platform: str) -> None:
+        """Parse sub-args in the windows platform string."""
+        winempty, wintype, winplt, wincfg = platform.split('-')
+        self.win_platform = winplt
+        assert winempty == ''
+        self.dst = sys.argv[2]
+        self.tex_suffix = '.dds'
+
+        if wintype == 'win':
+            pass
+        elif wintype == 'winserver':
+            self.include_textures = False
+            self.include_audio = False
+            self.include_models = False
+        else:
+            raise RuntimeError(f'Invalid wintype: "{wintype}"')
+
+        if winplt == 'Win32':
+            self.win_extras_src = os.path.abspath(
+                os.path.dirname(sys.argv[0]) +
+                '/../assets/build/windows/Win32')
+        elif winplt == 'x64':
+            self.win_extras_src = os.path.abspath(
+                os.path.dirname(sys.argv[0]) + '/../assets/build/windows/x64')
+        else:
+            raise RuntimeError(f'Invalid winplt: "{winplt}"')
+
+        if wincfg == 'Debug':
+            self.debug = True
+        elif wincfg == 'Release':
+            self.debug = False
+        else:
+            raise RuntimeError(f'Invalid wincfg: "{wincfg}"')
+
     def parse_args(self) -> None:
         """Parse args and apply to the cfg."""
-        if '-android' in sys.argv:
+        if len(sys.argv) < 2:
+            raise RuntimeError('Expected a platform argument.')
+        platform = sys.argv[1]
+        if platform == '-android':
             self._parse_android_args()
-        elif '-cmake' in sys.argv:
+        elif platform.startswith('-win'):
+            self._parse_win_platform(platform)
+        elif platform == '-cmake':
             self.dst = sys.argv[2]
             self.tex_suffix = '.dds'
-        elif '-win-Win32' in sys.argv:
-            self.dst = sys.argv[2]
-            self.tex_suffix = '.dds'
-            self.win_extras_src = os.path.abspath(
-                os.path.dirname(sys.argv[0]) +
-                '/../assets/build/windows/Win32')
-        elif '-win-x64' in sys.argv:
-            self.dst = sys.argv[2]
-            self.tex_suffix = '.dds'
-            self.win_extras_src = os.path.abspath(
-                os.path.dirname(sys.argv[0]) + '/../assets/build/windows/x64')
-        elif '-win-server-Win32' in sys.argv:
-            self.dst = sys.argv[2]
-            self.win_extras_src = os.path.abspath(
-                os.path.dirname(sys.argv[0]) +
-                '/../assets/build/windows/Win32')
-            self.include_textures = False
-            self.include_audio = False
-            self.include_models = False
-        elif '-win-server-x64' in sys.argv:
-            self.dst = sys.argv[2]
-            self.win_extras_src = os.path.abspath(
-                os.path.dirname(sys.argv[0]) + '/../assets/build/windows/x64')
-            self.include_textures = False
-            self.include_audio = False
-            self.include_models = False
-        elif '-cmake-server' in sys.argv:
+        elif '-cmakeserver' in sys.argv:
             self.dst = sys.argv[2]
             self.include_textures = False
             self.include_audio = False
@@ -167,7 +183,7 @@ class Config:
             self.pylib_src_name = 'pylib-apple'
             self.tex_suffix = '.pvr'
         else:
-            raise Exception('no valid platform set')
+            raise RuntimeError('No valid platform arg provided.')
 
 
 def md5sum(filename: str) -> str:
@@ -226,20 +242,18 @@ def _write_payload_file(assets_root: str, full: bool) -> None:
 
 def _sync_windows_extras(cfg: Config) -> None:
     assert cfg.win_extras_src is not None
+    assert cfg.win_platform is not None
     if not os.path.isdir(cfg.win_extras_src):
         raise Exception('win extras src dir not found: ' + cfg.win_extras_src)
 
     # Ok, lets do full syncs on each subdir we find so we
     # properly delete anything in dst that disappeared from src.
     # Lastly we'll sync over the remaining top level files.
-    # It'll technically be possible to orphaned top level
-    # files in dst, but we should be pulling those into dists
-    # individually by name anyway so it should be safe.
+    # Note: technically it'll be possible to leave orphaned top level
+    # files in dst, so when building packages/etc. we should always start
+    # from scratch.
     assert cfg.dst is not None
     for dirname in ('DLLs', 'Lib'):
-        # We also need to be more particular about which pyc files we pull
-        # over. The Python stuff in Extras is also used by some scripts
-        # so there may be arbitrary non-opt pycs hanging around.
         _run(f'mkdir -p "{cfg.dst}/{dirname}"')
         cmd = ('rsync --recursive --update --delete --delete-excluded '
                ' --prune-empty-dirs'
@@ -251,15 +265,39 @@ def _sync_windows_extras(cfg: Config) -> None:
                '"' + cfg.dst + '/' + dirname + '/"')
         _run(cmd)
 
-    # Now sync the top level individual files.
-    cmd = ('rsync --update ' + cfg.win_extras_src + '/*.dll ' +
-           cfg.win_extras_src + '/*.exe'
-           ' "' + cfg.dst + '/"')
-    _run(cmd)
+    # Now sync the top level individual files that we want.
+    # (we could technically copy everything over but this keeps staging
+    # dirs a bit tidier)
+    toplevelfiles: List[str] = [
+        'libvorbis.dll', 'libvorbisfile.dll', 'ogg.dll', 'OpenAL32.dll',
+        'SDL2.dll'
+    ]
+
+    # Include debug dlls for x64 so folks without msvc can run them.
+    # (seems win32 doesn't have the same set so ignoring that for now)
+    if cfg.debug and cfg.win_platform == 'x64':
+        toplevelfiles += [
+            'msvcp140d.dll', 'vcruntime140d.dll', 'vcruntime140_1d.dll'
+        ]
+
+    # Include the runtime redistributables in release builds.
+    if not cfg.debug:
+        if cfg.win_platform == 'x64':
+            toplevelfiles.append('vc_redist.x64.exe')
+        elif cfg.win_platform == 'Win32':
+            toplevelfiles.append('vc_redist.x86.exe')
+        else:
+            raise RuntimeError(f'Invalid win_platform {cfg.win_platform}')
+
+    cmd2 = (['rsync', '--update'] +
+            [os.path.join(cfg.win_extras_src, f)
+             for f in toplevelfiles] + [cfg.dst + '/'])
+    subprocess.run(cmd2, check=True)
 
     # If we're running under WSL we won't be able to launch these .exe files
     # unless they're marked executable, so do that here.
-    _run(f'chmod +x {cfg.dst}/*.exe')
+    # Update: gonna try simply setting this flag on the source side.
+    # _run(f'chmod +x {cfg.dst}/*.exe')
 
 
 def _sync_pylib(cfg: Config) -> None:
@@ -339,4 +377,8 @@ def main() -> None:
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except CleanError as exc:
+        exc.pretty_print()
+        sys.exit(1)

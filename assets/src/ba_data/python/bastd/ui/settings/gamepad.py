@@ -42,12 +42,11 @@ class GamepadSettingsWindow(ba.Window):
                  settings: dict = None):
         self._input = gamepad
 
-        # If this fails, our input device went away or something;
-        # just return an empty zombie then.
-        try:
-            self._name = self._input.name
-        except Exception:
+        # If our input-device went away, just return an empty zombie.
+        if not self._input:
             return
+
+        self._name = self._input.name
 
         self._r = 'configGamepadWindow'
         self._settings = settings
@@ -776,8 +775,8 @@ class AwaitGamepadInputWindow(ba.Window):
             message2: ba.Lstr = None):
         if message is None:
             print('AwaitGamepadInputWindow message is None!')
-            message = ba.Lstr(
-                value='Press any button...')  # Shouldn't get here.
+            # Shouldn't get here.
+            message = ba.Lstr(value='Press any button...')
         self._callback = callback
         self._input = gamepad
         self._capture_button = button

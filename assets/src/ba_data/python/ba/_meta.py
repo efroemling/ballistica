@@ -56,14 +56,13 @@ def start_scan() -> None:
     app = _ba.app
     if app.metascan is not None:
         print('WARNING: meta scan run more than once.')
-    scriptdirs = [app.python_directory_app, app.python_directory_user]
-    thread = ScanThread(scriptdirs)
+    pythondirs = [app.python_directory_app, app.python_directory_user]
+    thread = ScanThread(pythondirs)
     thread.start()
 
 
 def handle_scan_results(results: ScanResults) -> None:
     """Called in the game thread with results of a completed scan."""
-    from ba import _lang
 
     # Warnings generally only get printed locally for users' benefit
     # (things like out-of-date scripts being ignored, etc.)
@@ -71,13 +70,16 @@ def handle_scan_results(results: ScanResults) -> None:
     # warnings = results.get('warnings', '')
     # errors = results.get('errors', '')
     if results.warnings != '' or results.errors != '':
-        _ba.screenmessage(_lang.Lstr(resource='scanScriptsErrorText'),
+        import textwrap
+        from ba._lang import Lstr
+        _ba.screenmessage(Lstr(resource='scanScriptsErrorText'),
                           color=(1, 0, 0))
         _ba.playsound(_ba.getsound('error'))
         if results.warnings != '':
-            _ba.log(results.warnings, to_server=False)
+            _ba.log(textwrap.indent(results.warnings, 'Warning (meta-scan): '),
+                    to_server=False)
         if results.errors != '':
-            _ba.log(results.errors)
+            _ba.log(textwrap.indent(results.errors, 'Error (meta-scan): '))
 
 
 class ScanThread(threading.Thread):
@@ -124,7 +126,9 @@ class DirectoryScan:
         'warnings': warnings from scan; should be printed for local feedback
         'errors': errors encountered during scan; should be fully logged
         """
-        self.paths = [pathlib.Path(p) for p in paths]
+
+        # Skip non-existent paths completely.
+        self.paths = [pathlib.Path(p) for p in paths if os.path.isdir(p)]
         self.results = ScanResults()
 
     def _get_path_module_entries(

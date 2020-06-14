@@ -1568,6 +1568,7 @@
       <w>pypaths</w>
       <w>pysources</w>
       <w>pytest</w>
+      <w>pythondirs</w>
       <w>pythondontwritebytecode</w>
       <w>pythonhashseed</w>
       <w>pythonpath</w>

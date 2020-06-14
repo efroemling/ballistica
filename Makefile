@@ -185,7 +185,7 @@ prefab-mac-server-debug-build: prereqs assets-cmake \
  build/prefab/mac-server/debug/ballisticacore_server \
  build/prefab/mac-server/debug/config_template.yaml \
  build/prefab/mac-server/debug/README.txt
-	@${STAGE_ASSETS} -cmake-server build/prefab/mac-server/debug/dist
+	@${STAGE_ASSETS} -cmakeserver build/prefab/mac-server/debug/dist
 
 build/prefab/mac-server/debug/ballisticacore_server: \
  assets/src/server/ballisticacore_server.py
@@ -216,7 +216,7 @@ prefab-mac-server-release-build: prereqs assets-cmake \
  build/prefab/mac-server/release/ballisticacore_server \
  build/prefab/mac-server/release/config_template.yaml \
  build/prefab/mac-server/release/README.txt
-	@${STAGE_ASSETS} -cmake-server build/prefab/mac-server/release/dist
+	@${STAGE_ASSETS} -cmakeserver build/prefab/mac-server/release/dist
 
 build/prefab/mac-server/release/ballisticacore_server: \
  assets/src/server/ballisticacore_server.py
@@ -273,7 +273,7 @@ prefab-linux-server-debug-build: prereqs assets-cmake \
  build/prefab/linux-server/debug/ballisticacore_server \
  build/prefab/linux-server/debug/config_template.yaml \
  build/prefab/linux-server/debug/README.txt
-	@${STAGE_ASSETS} -cmake-server build/prefab/linux-server/debug/dist
+	@${STAGE_ASSETS} -cmakeserver build/prefab/linux-server/debug/dist
 
 build/prefab/linux-server/debug/ballisticacore_server: \
  assets/src/server/ballisticacore_server.py
@@ -304,7 +304,7 @@ prefab-linux-server-release-build: prereqs assets-cmake \
  build/prefab/linux-server/release/ballisticacore_server \
  build/prefab/linux-server/release/config_template.yaml \
  build/prefab/linux-server/release/README.txt
-	@${STAGE_ASSETS} -cmake-server build/prefab/linux-server/release/dist
+	@${STAGE_ASSETS} -cmakeserver build/prefab/linux-server/release/dist
 
 build/prefab/linux-server/release/ballisticacore_server: \
  assets/src/server/ballisticacore_server.py
@@ -333,7 +333,8 @@ prefab-windows-debug: prefab-windows-debug-build
 
 prefab-windows-debug-build: prereqs assets-windows-${PREFAB_WINDOWS_PLATFORM} \
  build/prefab/windows/debug/BallisticaCore.exe
-	@${STAGE_ASSETS} -win-$(PREFAB_WINDOWS_PLATFORM) build/prefab/windows/debug
+	@${STAGE_ASSETS} -win-${PREFAB_WINDOWS_PLATFORM}-Debug \
+build/prefab/windows/debug
 
 build/prefab/windows/debug/BallisticaCore.exe: .efrocachemap
 	@tools/snippets efrocache_get $@
@@ -348,7 +349,8 @@ prefab-windows-release: prefab-windows-release-build
 prefab-windows-release-build: prereqs \
  assets-windows-${PREFAB_WINDOWS_PLATFORM} \
  build/prefab/windows/release/BallisticaCore.exe
-	@${STAGE_ASSETS} -win-$(PREFAB_WINDOWS_PLATFORM) build/prefab/windows/release
+	@${STAGE_ASSETS} -win-${PREFAB_WINDOWS_PLATFORM}-Release \
+build/prefab/windows/release
 
 build/prefab/windows/release/BallisticaCore.exe: .efrocachemap
 	@tools/snippets efrocache_get $@
@@ -367,7 +369,7 @@ prefab-windows-server-debug-build: prereqs \
  build/prefab/windows-server/debug/ballisticacore_server.py \
  build/prefab/windows-server/debug/config_template.yaml \
  build/prefab/windows-server/debug/README.txt
-	@${STAGE_ASSETS} -win-$(PREFAB_WINDOWS_PLATFORM) \
+	@${STAGE_ASSETS} -winserver-${PREFAB_WINDOWS_PLATFORM}-Debug \
  build/prefab/windows-server/debug/dist
 
 build/prefab/windows-server/debug/dist/ballisticacore_headless.exe: .efrocachemap
@@ -405,7 +407,7 @@ prefab-windows-server-release-build: prereqs \
  build/prefab/windows-server/release/ballisticacore_server.py \
  build/prefab/windows-server/release/config_template.yaml \
  build/prefab/windows-server/release/README.txt
-	@${STAGE_ASSETS} -win-$(PREFAB_WINDOWS_PLATFORM) \
+	@${STAGE_ASSETS} -winserver-${PREFAB_WINDOWS_PLATFORM}-Release \
  build/prefab/windows-server/release/dist
 
 build/prefab/windows-server/release/dist/ballisticacore_headless.exe: .efrocachemap

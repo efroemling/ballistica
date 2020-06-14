@@ -206,7 +206,7 @@ class PlayerRecord:
             # Only award this if they're still alive and we can get
             # a current position for them.
             our_pos: Optional[ba.Vec3] = None
-            if self._sessionplayer is not None:
+            if self._sessionplayer:
                 if self._sessionplayer.activityplayer is not None:
                     try:
                         our_pos = self._sessionplayer.activityplayer.position
