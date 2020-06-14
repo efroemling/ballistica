@@ -20235,5 +20235,5 @@ clean:
 .PHONY: cmake win mac ios android audio clean-audio fonts clean-fonts \
       data clean-data models clean-models \
       clean-textures scripts clean-scripts \
-      assets assets-cmake assets-win assets-mac assets-ios assets-android \
-      asset_sources clean
+      assets assets-cmake assets-win-Win32 assets-win-x64 assets-mac \
+      assets-ios assets-android asset_sources clean

@@ -597,7 +597,8 @@ def lazy_increment_build() -> None:
         print(f'{Clr.SMAG}Source(s) changed; incrementing build...{Clr.RST}')
 
         # Just go ahead and bless; this will increment the build as needed.
-        subprocess.run(['make', 'bless'], check=True)
+        # subprocess.run(['make', 'bless'], check=True)
+        subprocess.run(['tools/version_utils', 'incrementbuild'], check=True)
 
         # We probably just changed code, so we need to re-calc the hash.
         codehash = get_files_hash(codefiles)

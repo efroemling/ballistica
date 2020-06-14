@@ -271,7 +271,7 @@ def _sync_windows_extras(cfg: Config) -> None:
     # Now sync the top level individual files that we want.
     # (we could technically copy everything over but this keeps staging
     # dirs a bit tidier)
-    toplevelfiles: List[str] = []
+    toplevelfiles: List[str] = ['python37.dll']
 
     if cfg.win_type == 'win':
         toplevelfiles += [
