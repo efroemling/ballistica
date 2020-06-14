@@ -4139,12 +4139,12 @@
   "build/prefab/linux-server/release/dist/ballisticacore_headless": "https://files.ballistica.net/cache/ba1/32/01/1382cb73f9a4484a49ba603429fc",
   "build/prefab/linux/debug/ballisticacore": "https://files.ballistica.net/cache/ba1/b4/dc/dcbe26dc38ac257f792cf10f0460",
   "build/prefab/linux/release/ballisticacore": "https://files.ballistica.net/cache/ba1/64/16/a4f73103c2db98225fb3c7763ea7",
-  "build/prefab/mac-server/debug/dist/ballisticacore_headless": "https://files.ballistica.net/cache/ba1/e4/c6/84709839bd04b9748b923a4f0835",
+  "build/prefab/mac-server/debug/dist/ballisticacore_headless": "https://files.ballistica.net/cache/ba1/31/d7/a5fd6808a0f5031359e90d00f29b",
   "build/prefab/mac-server/release/dist/ballisticacore_headless": "https://files.ballistica.net/cache/ba1/28/dc/1b4b59fcf7e1b3a2fabfb6fa7762",
-  "build/prefab/mac/debug/ballisticacore": "https://files.ballistica.net/cache/ba1/99/f1/c660885092c3a71294ce6da4dcdb",
+  "build/prefab/mac/debug/ballisticacore": "https://files.ballistica.net/cache/ba1/ae/e2/8b6983119d468b3f01f75ab377ab",
   "build/prefab/mac/release/ballisticacore": "https://files.ballistica.net/cache/ba1/72/c7/1b3960aeb864e2d69e7588c2fd70",
-  "build/prefab/windows-server/debug/dist/ballisticacore_headless.exe": "https://files.ballistica.net/cache/ba1/e1/a8/a51c079fd89b97f7012a1d5073cf",
-  "build/prefab/windows-server/release/dist/ballisticacore_headless.exe": "https://files.ballistica.net/cache/ba1/fd/92/e3a182bde513b4ecd1c9cdda72e3",
-  "build/prefab/windows/debug/BallisticaCore.exe": "https://files.ballistica.net/cache/ba1/12/cc/152f14e0b34dee25fe4fb6cbbe74",
-  "build/prefab/windows/release/BallisticaCore.exe": "https://files.ballistica.net/cache/ba1/d7/ae/b1d17450314143afac2411bc9c64"
+  "build/prefab/windows-server/debug/dist/ballisticacore_headless.exe": "https://files.ballistica.net/cache/ba1/f0/f4/0acbb407a70243e79ecd4f9c37a4",
+  "build/prefab/windows-server/release/dist/ballisticacore_headless.exe": "https://files.ballistica.net/cache/ba1/12/48/e5bd3c897ef27c733db9b0b97c73",
+  "build/prefab/windows/debug/BallisticaCore.exe": "https://files.ballistica.net/cache/ba1/37/b7/44fbb06655436c53351def23a7d2",
+  "build/prefab/windows/release/BallisticaCore.exe": "https://files.ballistica.net/cache/ba1/d8/bd/05c1f7b7991300ae8e339880b19a"
 }
