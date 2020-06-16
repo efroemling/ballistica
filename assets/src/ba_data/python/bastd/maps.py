@@ -735,7 +735,7 @@ class ThePad(ba.Map):
 
 
 class DoomShroom(ba.Map):
-    """A giant mushroom.  Of doom."""
+    """A giant mushroom. Of doom!"""
 
     from bastd.mapdata import doom_shroom as defs
 

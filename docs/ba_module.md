@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-06-15 for Ballistica version 1.5.5 build 20069</em></h4>
+<h4><em>last updated on 2020-06-16 for Ballistica version 1.5.5 build 20070</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -1514,11 +1514,11 @@ is passed, which can be one of the following strings/objects:</p>
   Sets to the UI context. UI functions as well as loading of media to
   be used in said functions must happen in the UI context.</p>
 
-<p>a <a href="#class_ba_Activity">ba.Activity</a> instance:
+<p>A <a href="#class_ba_Activity">ba.Activity</a> instance:
   Gives the context for the provided <a href="#class_ba_Activity">ba.Activity</a>.
   Most all code run during a game happens in an Activity's Context.</p>
 
-<p>a <a href="#class_ba_Session">ba.Session</a> instance:
+<p>A <a href="#class_ba_Session">ba.Session</a> instance:
   Gives the context for the provided <a href="#class_ba_Session">ba.Session</a>.
   Generally a user should not need to run anything here.</p>
 
@@ -1565,13 +1565,13 @@ ContextCall has the added bonus that it will not run during context
 shutdown, whereas <a href="#class_ba_WeakCall">ba.WeakCall</a> simply looks at whether the target
 object still exists.</p>
 
-<pre><span><em><small># example A: code like this can inadvertently prevent our activity</small></em></span>
+<pre><span><em><small># Example A: code like this can inadvertently prevent our activity</small></em></span>
 <span><em><small># (self) from ending until the operation completes, since the bound</small></em></span>
 <span><em><small># method we're passing (self.dosomething) contains a strong-reference</small></em></span>
 <span><em><small># to self).</small></em></span>
 start_some_long_action(callback_when_done=self.dosomething)</pre>
 
-<pre><span><em><small># example B: in this case our activity (self) can still die</small></em></span>
+<pre><span><em><small># Example B: in this case our activity (self) can still die</small></em></span>
 <span><em><small># properly; the callback will clear itself when the activity starts</small></em></span>
 <span><em><small># shutting down, becoming a harmless no-op and releasing the reference</small></em></span>
 <span><em><small># to our activity.</small></em></span>
