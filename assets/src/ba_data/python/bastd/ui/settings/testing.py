@@ -106,7 +106,7 @@ class TestingWindow(ba.Window):
 
             entry_name = entry['name']
 
-            # if we haven't yet, record the default value for this name so
+            # If we haven't yet, record the default value for this name so
             # we can reset if we want..
             if entry_name not in ba.app.value_test_defaults:
                 ba.app.value_test_defaults[entry_name] = (
@@ -132,14 +132,14 @@ class TestingWindow(ba.Window):
             if i == 0:
                 ba.widget(edit=btn, up_widget=self._back_button)
             ba.widget(edit=btn, show_buffer_top=20, show_buffer_bottom=20)
-            entry['widget'] = ba.textwidget(
-                parent=self._subcontainer,
-                position=(h + 100, v),
-                size=(0, 0),
-                h_align='center',
-                v_align='center',
-                maxwidth=60,
-                text=str(round(_ba.value_test(entry_name), 4)))
+            entry['widget'] = ba.textwidget(parent=self._subcontainer,
+                                            position=(h + 100, v),
+                                            size=(0, 0),
+                                            h_align='center',
+                                            v_align='center',
+                                            maxwidth=60,
+                                            text='%.4g' %
+                                            _ba.value_test(entry_name))
             btn = ba.buttonwidget(parent=self._subcontainer,
                                   position=(h + 140, v - 19),
                                   size=(40, 40),
@@ -174,19 +174,19 @@ class TestingWindow(ba.Window):
             _ba.value_test(entry['name'],
                            absolute=ba.app.value_test_defaults[entry['name']])
             ba.textwidget(edit=entry['widget'],
-                          text=str(round(_ba.value_test(entry['name']), 4)))
+                          text='%.4g' % _ba.value_test(entry['name']))
 
     def _on_minus_press(self, entry_name: str) -> None:
         entry = self._get_entry(entry_name)
         _ba.value_test(entry['name'], change=-entry['increment'])
         ba.textwidget(edit=entry['widget'],
-                      text=str(round(_ba.value_test(entry['name']), 4)))
+                      text='%.4g' % _ba.value_test(entry['name']))
 
     def _on_plus_press(self, entry_name: str) -> None:
         entry = self._get_entry(entry_name)
         _ba.value_test(entry['name'], change=entry['increment'])
         ba.textwidget(edit=entry['widget'],
-                      text=str(round(_ba.value_test(entry['name']), 4)))
+                      text='%.4g' % _ba.value_test(entry['name']))
 
     def _do_back(self) -> None:
         # pylint: disable=cyclic-import

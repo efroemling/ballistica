@@ -399,7 +399,7 @@ def gen_fulltest_buildfile_apple() -> None:
     # (throw release build in the mix to hopefully catch opt-mode-only errors).
     lines.append('nice -n 18 make mac-appstore-release-build')
     lines.append('nice -n 18 make mac-new-build')
-    lines.append('nice -n 18 make mac-server-build')
+    lines.append('nice -n 18 make cmake-server-build')
     lines.append('nice -n 18 make cmake-build')
     if DO_SPARSE_TEST_BUILDS:
         extras = SPARSE_TEST_BUILDS[dayoffset % len(SPARSE_TEST_BUILDS)]

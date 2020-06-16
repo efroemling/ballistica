@@ -43,31 +43,10 @@ from efrotools.snippets import (
     sync, sync_all, scriptfiles, pycharm, clioncode, androidstudiocode,
     makefile_target_list, spelling, spelling_all, pytest, echo,
     compile_python_files)
-# from efrotools.snippets import compile_python_files as _orig_compile_py_files
 # pylint: enable=unused-import
 
 if TYPE_CHECKING:
     from typing import Optional
-
-# def compile_python_files() -> None:
-#     """Override for compiling python files."""
-#     from pathlib import Path
-#     import subprocess
-#     import os
-#     from efrotools import getlocalconfig
-
-#     # Run the standard command
-#     _orig_compile_py_files()
-
-#     # Optionally also blow away blessing status to keep it clear that
-#     # things need to be re-blessed.
-#     blesspath = Path(PROJROOT, 'tools/bless')
-#     if os.path.exists(blesspath) and getlocalconfig(PROJROOT).get(
-#             'auto_clear_blessing', False):
-#         subprocess.run([blesspath, 'clear'], check=True, cwd=PROJROOT)
-
-# # Copy the original func's doc-string
-# compile_python_files.__doc__ = _orig_compile_py_files.__doc__
 
 
 def archive_old_builds() -> None:
