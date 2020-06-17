@@ -143,9 +143,9 @@ def get_map_class(name: str) -> Type[ba.Map]:
     name = get_filtered_map_name(name)
     try:
         return _ba.app.maps[name]
-    except Exception:
+    except KeyError:
         from ba import _error
-        raise _error.NotFoundError("Map not found: '" + name + "'")
+        raise _error.NotFoundError(f"Map not found: '{name}'") from None
 
 
 class Map(Actor):

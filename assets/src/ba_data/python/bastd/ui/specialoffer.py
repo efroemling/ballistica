@@ -119,6 +119,7 @@ class SpecialOfferWindow(ba.Window):
                     resource='store.salePercentText').evaluate().replace(
                         '${PERCENT}', str(percent_off))
         except Exception:
+            ba.print_exception('Error setting up special-offer')
             original_price_str = new_price_str = '?'
             percent_off_text = ''
 
@@ -462,6 +463,6 @@ def show_offer() -> bool:
             app.special_offer = None
             return True
     except Exception:
-        ba.print_exception('Error showing offer')
+        ba.print_exception('Error showing offer.')
 
     return False

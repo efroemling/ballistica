@@ -210,7 +210,7 @@ class AudioSettingsWindow(ba.Window):
         try:
             ba.widget(edit=back_button, down_widget=svne.minusbutton)
         except Exception:
-            ba.print_exception('error wiring AudioSettingsWindow')
+            ba.print_exception('Error wiring AudioSettingsWindow.')
 
         self._restore_state()
 
@@ -269,14 +269,11 @@ class AudioSettingsWindow(ba.Window):
                 raise ValueError(f'unrecognized selection \'{sel}\'')
             ba.app.window_states[self.__class__.__name__] = sel_name
         except Exception:
-            ba.print_exception('error saving state for', self.__class__)
+            ba.print_exception(f'Error saving state for {self.__class__}.')
 
     def _restore_state(self) -> None:
         try:
-            try:
-                sel_name = ba.app.window_states[self.__class__.__name__]
-            except Exception:
-                sel_name = None
+            sel_name = ba.app.window_states.get(self.__class__.__name__)
             sel: Optional[ba.Widget]
             if sel_name == 'SoundMinus':
                 sel = self._sound_volume_numedit.minusbutton
@@ -297,4 +294,4 @@ class AudioSettingsWindow(ba.Window):
             if sel:
                 ba.containerwidget(edit=self._root_widget, selected_child=sel)
         except Exception:
-            ba.print_exception('error restoring state for', self.__class__)
+            ba.print_exception(f'Error restoring state for {self.__class__}.')

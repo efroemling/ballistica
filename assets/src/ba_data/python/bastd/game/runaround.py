@@ -1158,7 +1158,7 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
                                      self._dingsoundhigh,
                                      volume=0.6)
                 except Exception:
-                    ba.print_exception('Error on SpazBotDiedMessage')
+                    ba.print_exception('Error on SpazBotDiedMessage.')
 
             # Normally we pull scores from the score-set, but if there's no
             # player lets be explicit.

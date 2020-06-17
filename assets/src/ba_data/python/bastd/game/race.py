@@ -361,8 +361,8 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
                                 2.2: 0
                             })
                             ba.timer(2.3, mathnode.delete)
-                        except Exception as exc:
-                            print('Exception printing lap:', exc)
+                        except Exception:
+                            ba.print_exception('Error printing lap.')
 
     def on_team_join(self, team: Team) -> None:
         self._update_scoreboard()
@@ -392,7 +392,7 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
                     if otherplayer.actor is not None:
                         otherplayer.actor.handlemessage(ba.DieMessage())
                 except Exception:
-                    ba.print_exception('Error sending diemessages')
+                    ba.print_exception('Error sending DieMessage.')
 
         # Defer so team/player lists will be updated.
         ba.pushcall(self._check_end_game)
@@ -520,7 +520,7 @@ class RaceGame(ba.TeamGameActivity[Player, Team]):
                     assert isinstance(player.actor, PlayerSpaz)
                     player.actor.connect_controls_to_player()
                 except Exception:
-                    ba.print_exception('Error in race player connects')
+                    ba.print_exception('Error in race player connects.')
         assert self._timer is not None
         self._timer.start()
 

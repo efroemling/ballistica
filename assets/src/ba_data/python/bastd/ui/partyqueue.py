@@ -279,7 +279,7 @@ class PartyQueueWindow(ba.Window):
             })
             _ba.run_transactions()
         except Exception:
-            ba.print_exception('err removing self from party queue')
+            ba.print_exception('Error removing self from party queue.')
 
     def get_line_left(self) -> float:
         """(internal)"""

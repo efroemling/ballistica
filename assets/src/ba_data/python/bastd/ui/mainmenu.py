@@ -109,8 +109,8 @@ class MainMenuWindow(ba.Window):
                     ba.timer(2.5,
                              _check_show_bs_remote_window,
                              timetype=ba.TimeType.REAL)
-            except Exception as exc:
-                print('EXC bs_remote_show', exc)
+            except Exception:
+                ba.print_exception('Error showing get-remote-app info')
 
     def _get_store_char_tex(self) -> str:
         return ('storeCharacterXmas' if _ba.get_account_misc_read_val(
@@ -677,8 +677,8 @@ class MainMenuWindow(ba.Window):
                                          str(cme))
             except Exception:
                 custom_menu_entries = []
-                ba.print_exception('exception getting custom menu entries for',
-                                   session)
+                ba.print_exception(
+                    f'Error getting custom menu entries for {session}')
         self._width = 250.0
         self._height = 250.0 if self._input_player else 180.0
         if self._is_kiosk and self._input_player:
@@ -738,10 +738,7 @@ class MainMenuWindow(ba.Window):
 
             # Ask the entry whether we should resume when we call
             # it (defaults to true).
-            try:
-                resume = entry['resume_on_call']
-            except Exception:
-                resume = True
+            resume = bool(entry.get('resume_on_call', True))
 
             if resume:
                 call = ba.Call(self._resume_and_call, entry['call'])

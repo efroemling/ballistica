@@ -296,8 +296,8 @@ def _add_to_attr_dict(dst: AttrDict, src: Dict) -> None:
             except Exception:
                 dst_dict = dst[key] = AttrDict()
             if not isinstance(dst_dict, AttrDict):
-                raise Exception("language key '" + key +
-                                "' is defined both as a dict and value")
+                raise RuntimeError("language key '" + key +
+                                   "' is defined both as a dict and value")
             _add_to_attr_dict(dst_dict, value)
         else:
             if not isinstance(value, (float, int, bool, str, str, type(None))):
@@ -404,7 +404,8 @@ def get_resource(resource: str,
         from ba import _error
         if fallback_value is not None:
             return fallback_value
-        raise _error.NotFoundError("resource not found: '" + resource + "'")
+        raise _error.NotFoundError(
+            f"Resource not found: '{resource}'") from None
 
 
 def translate(category: str,

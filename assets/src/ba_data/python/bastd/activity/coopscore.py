@@ -322,7 +322,6 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
     def show_ui(self) -> None:
         """Show the UI for restarting, playing the next Level, etc."""
         # pylint: disable=too-many-locals
-        # pylint: disable=too-many-statements
         from bastd.ui.store.button import StoreButton
         from bastd.ui.league.rankbutton import LeagueRankButton
 
@@ -330,15 +329,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
 
         # If there's no players left in the game, lets not show the UI
         # (that would allow restarting the game with zero players, etc).
-
-        # Hmmm shouldn't need this try/except here i don't think.
-        try:
-            players = self.players
-        except Exception as exc:
-            print(('EXC bs_coop_game show_ui cant get '
-                   'self.players; shouldn\'t happen:'), exc)
-            players = []
-        if not players:
+        if not self.players:
             return
 
         rootc = self._root_ui = ba.containerwidget(size=(0, 0),
@@ -513,7 +504,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
             self._store_button_instance.set_position((pos_x + 100, pos_y))
 
     def on_begin(self) -> None:
-        # FIXME: clean this up
+        # FIXME: Clean this up.
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
@@ -661,12 +652,9 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         # Add us to high scores, filter, and store.
         our_high_scores_all = self._campaign.getlevel(
             self._level_name).get_high_scores()
-        try:
-            our_high_scores = our_high_scores_all[str(len(self._playerinfos)) +
-                                                  ' Player']
-        except Exception:
-            our_high_scores = our_high_scores_all[str(len(self._playerinfos)) +
-                                                  ' Player'] = []
+
+        our_high_scores = our_high_scores_all.setdefault(
+            str(len(self._playerinfos)) + ' Player', [])
 
         if self._score is not None:
             our_score: Optional[list] = [
@@ -685,8 +673,8 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
             our_high_scores.sort(reverse=self._score_order == 'increasing',
                                  key=lambda x: x[0])
         except Exception:
-            ba.print_exception('Error sorting scores')
-            print('our_high_scores:', our_high_scores)
+            ba.print_exception('Error sorting scores.')
+            print(f'our_high_scores: {our_high_scores}')
 
         del our_high_scores[10:]
 
@@ -809,6 +797,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                     name_str = ', '.join(
                         [p['name'] for p in display_scores[i][1]['players']])
                 except Exception:
+                    ba.print_exception('Error calcing name_str')
                     name_str = '-'
                 if display_scores[i] == our_score and not showed_ours:
                     flash = True
@@ -1256,7 +1245,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                              transition_delay=2.0).autoretain()
                         vval -= 35
         except Exception:
-            ba.print_exception('error showing prize ranges')
+            ba.print_exception('Error showing prize ranges.')
 
         if self._do_new_rating:
             if error:

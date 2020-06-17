@@ -351,7 +351,7 @@ class GamepadSettingsWindow(ba.Window):
                 ba.widget(edit=cancel_button, right_widget=save_button)
                 ba.widget(edit=save_button, left_widget=cancel_button)
         except Exception:
-            ba.print_exception('error wiring gamepad config window')
+            ba.print_exception('Error wiring up gamepad config window.')
 
     def get_r(self) -> str:
         """(internal)"""

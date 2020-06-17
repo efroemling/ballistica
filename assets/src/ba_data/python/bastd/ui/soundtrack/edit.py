@@ -213,10 +213,7 @@ class SoundtrackEditWindow(ba.Window):
                                claims_left_right=True,
                                claims_tab=True,
                                selection_loop_to_parent=True)
-            try:
-                type_name = type_names_translated[song_type]
-            except Exception:
-                type_name = song_type
+            type_name = type_names_translated.get(song_type, song_type)
             ba.textwidget(parent=row,
                           size=(230, 25),
                           always_highlight=True,

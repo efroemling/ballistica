@@ -181,7 +181,7 @@ class FileSelectorWindow(ba.Window):
                            test_path))
         except Exception:
             ba.print_exception(
-                'error on FileSelectorWindow._on_entry_activated')
+                'Error in FileSelectorWindow._on_entry_activated().')
 
         if new_path is not None:
             self._set_path(new_path)

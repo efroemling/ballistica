@@ -474,10 +474,7 @@ class ControlsSettingsWindow(ba.Window):
         ba.app.window_states[self.__class__.__name__] = sel_name
 
     def _restore_state(self) -> None:
-        try:
-            sel_name = ba.app.window_states[self.__class__.__name__]
-        except Exception:
-            sel_name = None
+        sel_name = ba.app.window_states.get(self.__class__.__name__)
         if sel_name == 'GamePads':
             sel = self._gamepads_button
         elif sel_name == 'Touch':

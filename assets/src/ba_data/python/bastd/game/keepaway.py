@@ -208,7 +208,7 @@ class KeepAwayGame(ba.TeamGameActivity[Player, Team]):
                     holdingflag = (
                         player.actor.node.hold_node.getnodetype() == 'flag')
             except Exception:
-                ba.print_exception('exception checking hold flag')
+                ba.print_exception('Error checking hold flag.')
             if holdingflag:
                 self._holding_players.append(player)
                 player.team.holdingflag = True

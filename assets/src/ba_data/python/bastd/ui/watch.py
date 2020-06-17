@@ -286,16 +286,17 @@ class WatchWindow(ba.Window):
 
         def do_it() -> None:
             try:
-                # reset to normal speed
+                # Reset to normal speed.
                 _ba.set_replay_speed_exponent(0)
                 _ba.fade_screen(True)
                 assert self._my_replay_selected is not None
                 _ba.new_replay_session(_ba.get_replays_dir() + '/' +
                                        self._my_replay_selected)
             except Exception:
-                ba.print_exception('exception running replay session')
-                # drop back into a fresh main menu session
-                # in case we half-launched or something..
+                ba.print_exception('Error running replay session.')
+
+                # Drop back into a fresh main menu session
+                # in case we half-launched or something.
                 from bastd import mainmenu
                 _ba.new_host_session(mainmenu.MainMenuSession)
 
@@ -391,11 +392,12 @@ class WatchWindow(ba.Window):
                     ba.playsound(ba.getsound('gunCocking'))
         except Exception:
             ba.print_exception(
-                f"error renaming replay '{replay}' to '{new_name}'")
+                f"Error renaming replay '{replay}' to '{new_name}'.")
             ba.playsound(ba.getsound('error'))
-            ba.screenmessage(ba.Lstr(resource=self._r +
-                                     '.replayRenameErrorText'),
-                             color=(1, 0, 0))
+            ba.screenmessage(
+                ba.Lstr(resource=self._r + '.replayRenameErrorText'),
+                color=(1, 0, 0),
+            )
 
         ba.containerwidget(edit=self._my_replays_rename_window,
                            transition='out_scale')
@@ -428,11 +430,12 @@ class WatchWindow(ba.Window):
             if replay == self._my_replay_selected:
                 self._my_replay_selected = None
         except Exception:
-            ba.print_exception("exception deleting replay '" + replay + "'")
+            ba.print_exception(f"Error deleting replay '{replay}'.")
             ba.playsound(ba.getsound('error'))
-            ba.screenmessage(ba.Lstr(resource=self._r +
-                                     '.replayDeleteErrorText'),
-                             color=(1, 0, 0))
+            ba.screenmessage(
+                ba.Lstr(resource=self._r + '.replayDeleteErrorText'),
+                color=(1, 0, 0),
+            )
 
     def _on_my_replay_select(self, replay: str) -> None:
         self._my_replay_selected = replay
@@ -448,7 +451,7 @@ class WatchWindow(ba.Window):
             names = [n for n in names if n.endswith('.brp')]
             names.sort(key=lambda x: x.lower())
         except Exception:
-            ba.print_exception('error listing replays dir')
+            ba.print_exception('Error listing replays dir.')
             names = []
 
         assert self._my_replays_scroll_width is not None
@@ -488,19 +491,13 @@ class WatchWindow(ba.Window):
                 'tab': self._current_tab
             }
         except Exception:
-            ba.print_exception('error saving state for', self.__class__)
+            ba.print_exception(f'Error saving state for {self}.')
 
     def _restore_state(self) -> None:
         try:
-            try:
-                sel_name = ba.app.window_states[
-                    self.__class__.__name__]['sel_name']
-            except Exception:
-                sel_name = None
-            try:
-                current_tab = ba.app.config['Watch Tab']
-            except Exception:
-                current_tab = None
+            sel_name = ba.app.window_states.get(self.__class__.__name__,
+                                                {}).get('sel_name')
+            current_tab = ba.app.config.get('Watch Tab')
             if current_tab is None or current_tab not in self._tab_buttons:
                 current_tab = 'my_replays'
             self._set_tab(current_tab)
@@ -517,7 +514,7 @@ class WatchWindow(ba.Window):
                     sel = self._tab_buttons[current_tab]
             ba.containerwidget(edit=self._root_widget, selected_child=sel)
         except Exception:
-            ba.print_exception('error restoring state for', self.__class__)
+            ba.print_exception(f'Error restoring state for {self}.')
 
     def _back(self) -> None:
         from bastd.ui import mainmenu

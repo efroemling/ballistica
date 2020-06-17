@@ -227,7 +227,7 @@ class LeagueRankButton:
             ba.buttonwidget(edit=self._button, color=color_used)
 
         except Exception:
-            ba.print_exception('error doing smooth update')
+            ba.print_exception('Error doing smooth update.')
             self._smooth_update_timer = None
 
     def _update_for_league_rank_data(self, data: Optional[Dict[str,
@@ -285,7 +285,7 @@ class LeagueRankButton:
                     status_text = str(int(self._smooth_percent)) + '%'
 
             except Exception:
-                ba.print_exception('error updating power ranking')
+                ba.print_exception('Error updating power ranking.')
                 self._percent = self._rank = None
                 status_text = '-'
 
@@ -326,10 +326,15 @@ class LeagueRankButton:
         else:
             try:
                 assert data is not None
-                txt = ba.Lstr(resource='league.leagueFullText',
-                              subs=[('${NAME}',
-                                     ba.Lstr(translate=('leagueNames',
-                                                        data['l']['n'])))])
+                txt = ba.Lstr(
+                    resource='league.leagueFullText',
+                    subs=[
+                        (
+                            '${NAME}',
+                            ba.Lstr(translate=('leagueNames', data['l']['n'])),
+                        ),
+                    ],
+                )
                 t_color = data['l']['c']
             except Exception:
                 txt = ba.Lstr(

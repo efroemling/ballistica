@@ -369,7 +369,8 @@ class BaseEnumValue(TypedValue[T]):
             except ValueError:
                 if error:
                     raise ValueError(
-                        f'Invalid value for {self._enumtype}: {data}')
+                        f'Invalid value for {self._enumtype}: {data}'
+                    ) from None
                 logging.error('Ignoring invalid value for %s: %s',
                               self._enumtype, data)
                 data = self._default_data

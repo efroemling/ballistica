@@ -98,6 +98,8 @@ class PowerupBoxFactory:
           that has this ba.Material applied.
     """
 
+    _STORENAME = ba.storagename()
+
     def __init__(self) -> None:
         """Instantiate a PowerupBoxFactory.
 
@@ -187,21 +189,17 @@ class PowerupBoxFactory:
         self._lastpoweruptype = ptype
         return ptype
 
-    @staticmethod
-    def get() -> PowerupBoxFactory:
+    @classmethod
+    def get(cls) -> PowerupBoxFactory:
         """Return a shared ba.PowerupBoxFactory object, creating if needed."""
         activity = ba.getactivity()
         if activity is None:
-            raise RuntimeError('no current activity')
-        try:
-            # FIXME: et better way to store stuff with activity
-            # pylint: disable=protected-access
-            # noinspection PyProtectedMember
-            return activity._shared_powerup_factory  # type: ignore
-        except Exception:
-            factory = activity._shared_powerup_factory = (  # type: ignore
-                PowerupBoxFactory())
-            return factory
+            raise ba.ContextError('No current activity.')
+        factory = activity.customdata.get(cls._STORENAME)
+        if factory is None:
+            factory = activity.customdata[cls._STORENAME] = PowerupBoxFactory()
+        assert isinstance(factory, PowerupBoxFactory)
+        return factory
 
 
 class PowerupBox(ba.Actor):

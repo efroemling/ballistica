@@ -438,7 +438,7 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         # Let's do a clean fail on keyboard interrupt.
         # Can make this optional if a backtrace is ever useful..
-        sys.exit(-1)
+        sys.exit(1)
     except CleanError as exc:
         exc.pretty_print()
-        sys.exit(-1)
+        sys.exit(1)

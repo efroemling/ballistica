@@ -259,7 +259,7 @@ class StoreButton:
                         if to_end > 0:
                             sale_times.append(to_end)
             except Exception:
-                ba.print_exception('Error parsing sales')
+                ba.print_exception('Error parsing sales.')
             if sale_times:
                 sale_time = int(min(sale_times) * 1000)
 

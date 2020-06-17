@@ -139,12 +139,15 @@ class EasterEggHuntGame(ba.TeamGameActivity[Player, Team]):
         if self.has_ended():
             return
         collision = ba.getcollision()
+
+        # Be defensive here; we could be hitting the corpse of a player
+        # who just left/etc.
         try:
             egg = collision.sourcenode.getdelegate(Egg, True)
             player = collision.opposingnode.getdelegate(PlayerSpaz,
                                                         True).getplayer(
                                                             Player, True)
-        except Exception:
+        except ba.NotFoundError:
             return
 
         player.team.score += 1

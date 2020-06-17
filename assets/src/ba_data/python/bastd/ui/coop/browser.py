@@ -83,10 +83,8 @@ class CoopBrowserWindow(ba.Window):
 
         # Try to recreate the same number of buttons we had last time so our
         # re-selection code works.
-        try:
-            self._tournament_button_count = app.config['Tournament Rows']
-        except Exception:
-            self._tournament_button_count = 0
+        self._tournament_button_count = app.config.get('Tournament Rows', 0)
+        assert isinstance(self._tournament_button_count, int)
 
         self._easy_button: Optional[ba.Widget] = None
         self._hard_button: Optional[ba.Widget] = None
@@ -345,7 +343,7 @@ class CoopBrowserWindow(ba.Window):
             ba.imagewidget(edit=self._hard_button_lock_image,
                            opacity=0.0 if have_pro_options() else 1.0)
         except Exception:
-            ba.print_exception('error updating campaign lock')
+            ba.print_exception('Error updating campaign lock.')
 
     def _update_for_data(self, data: Optional[List[Dict[str, Any]]]) -> None:
         # pylint: disable=too-many-statements
@@ -1006,7 +1004,7 @@ class CoopBrowserWindow(ba.Window):
                     up_widget=tournament_h_scroll if self._tournament_buttons
                     else self._tournament_info_button)
             except Exception:
-                ba.print_exception('Error wiring up custom buttons')
+                ba.print_exception('Error wiring up custom buttons.')
 
         if self._back_button is not None:
             ba.buttonwidget(edit=self._back_button,
@@ -1531,11 +1529,8 @@ class CoopBrowserWindow(ba.Window):
 
     def _restore_state(self) -> None:
         try:
-            try:
-                sel_name = ba.app.window_states[
-                    self.__class__.__name__]['sel_name']
-            except Exception:
-                sel_name = None
+            sel_name = ba.app.window_states.get(self.__class__.__name__,
+                                                {}).get('sel_name')
             if sel_name == 'Back':
                 sel = self._back_button
             elif sel_name == 'Scroll':
@@ -1548,7 +1543,7 @@ class CoopBrowserWindow(ba.Window):
                 sel = self._scrollwidget
             ba.containerwidget(edit=self._root_widget, selected_child=sel)
         except Exception:
-            ba.print_exception('error restoring state for', self.__class__)
+            ba.print_exception(f'Error restoring state for {self}.')
 
     def _save_state(self) -> None:
         cfg = ba.app.config
@@ -1568,7 +1563,7 @@ class CoopBrowserWindow(ba.Window):
                 'sel_name': sel_name
             }
         except Exception:
-            ba.print_exception('error saving state for', self.__class__)
+            ba.print_exception(f'Error saving state for {self}.')
 
         cfg['Selected Coop Row'] = self._selected_row
         cfg['Selected Coop Custom Level'] = self._selected_custom_level

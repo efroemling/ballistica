@@ -216,7 +216,7 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
                     assert player.actor.node
                     playerpts.append(player.actor.node.position)
             except Exception:
-                ba.print_exception('Error updating bots')
+                ba.print_exception('Error updating bots.')
         for i in range(3):
             for playerpt in playerpts:
                 dists[i] += abs(playerpt[0] - botspawnpts[i][0])

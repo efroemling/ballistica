@@ -379,19 +379,14 @@ class SoundtrackBrowserWindow(ba.Window):
 
         # If there was no prev selection, look in prefs.
         if old_selection is None:
-            try:
-                old_selection = ba.app.config['Soundtrack']
-            except Exception:
-                pass
+            old_selection = ba.app.config.get('Soundtrack')
         old_selection_index = self._selected_soundtrack_index
 
         # Delete old.
         while self._soundtrack_widgets:
             self._soundtrack_widgets.pop().delete()
-        try:
-            self._soundtracks = ba.app.config['Soundtracks']
-        except Exception:
-            self._soundtracks = {}
+
+        self._soundtracks = ba.app.config.get('Soundtracks', {})
         assert self._soundtracks is not None
         items = list(self._soundtracks.items())
         items.sort(key=lambda x: x[0].lower())
@@ -488,14 +483,11 @@ class SoundtrackBrowserWindow(ba.Window):
                 raise ValueError(f'unrecognized selection \'{sel}\'')
             ba.app.window_states[self.__class__.__name__] = sel_name
         except Exception:
-            ba.print_exception('error saving state for', self.__class__)
+            ba.print_exception(f'Error saving state for {self}.')
 
     def _restore_state(self) -> None:
         try:
-            try:
-                sel_name = ba.app.window_states[self.__class__.__name__]
-            except Exception:
-                sel_name = None
+            sel_name = ba.app.window_states.get(self.__class__.__name__)
             if sel_name == 'Scroll':
                 sel = self._scrollwidget
             elif sel_name == 'New':
@@ -510,4 +502,4 @@ class SoundtrackBrowserWindow(ba.Window):
                 sel = self._scrollwidget
             ba.containerwidget(edit=self._root_widget, selected_child=sel)
         except Exception:
-            ba.print_exception('error restoring state for', self.__class__)
+            ba.print_exception(f'Error restoring state for {self}.')

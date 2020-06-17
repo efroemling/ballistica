@@ -2305,8 +2305,7 @@ class TutorialActivity(ba.Activity[Player, Team]):
             ]
 
         except Exception:
-            import traceback
-            traceback.print_exc()
+            ba.print_exception()
 
         # If we read some, exec them.
         if self._entries:
@@ -2324,8 +2323,7 @@ class TutorialActivity(ba.Activity[Player, Team]):
                 result = entry.run(self)
             except Exception:
                 result = None
-                import traceback
-                traceback.print_exc()
+                ba.print_exception()
 
             # If the entry returns an int value, set a timer;
             # otherwise just keep going.

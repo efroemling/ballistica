@@ -257,15 +257,12 @@ class AllSettingsWindow(ba.Window):
                 'sel_name': sel_name
             }
         except Exception:
-            ba.print_exception('error saving state for', self.__class__)
+            ba.print_exception(f'Error saving state for {self}.')
 
     def _restore_state(self) -> None:
         try:
-            try:
-                sel_name = ba.app.window_states[
-                    self.__class__.__name__]['sel_name']
-            except Exception:
-                sel_name = None
+            sel_name = ba.app.window_states.get(self.__class__.__name__,
+                                                {}).get('sel_name')
             sel: Optional[ba.Widget]
             if sel_name == 'Controllers':
                 sel = self._controllers_button
@@ -282,4 +279,4 @@ class AllSettingsWindow(ba.Window):
             if sel is not None:
                 ba.containerwidget(edit=self._root_widget, selected_child=sel)
         except Exception:
-            ba.print_exception('error restoring state for', self.__class__)
+            ba.print_exception(f'Error restoring state for {self}.')

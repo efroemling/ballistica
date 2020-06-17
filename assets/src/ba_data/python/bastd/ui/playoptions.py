@@ -117,7 +117,7 @@ class PlayOptionsWindow(popup.PopupWindow):
                 maptype: Optional[Type[ba.Map]]
                 try:
                     maptype = get_map_class(mapname)
-                except Exception:
+                except ba.NotFoundError:
                     maptype = None
                 if maptype is not None:
                     tex_name = maptype.get_preview_texture_name()
@@ -141,7 +141,7 @@ class PlayOptionsWindow(popup.PopupWindow):
                 self._height += self._row_height * rows
 
         except Exception:
-            ba.print_exception('error listing playlist maps')
+            ba.print_exception('Error listing playlist maps.')
 
         show_shuffle_check_box = game_count > 1
 
@@ -304,10 +304,7 @@ class PlayOptionsWindow(popup.PopupWindow):
                 on_value_change_call=_cb_callback)
 
         # Show tutorial.
-        try:
-            show_tutorial = ba.app.config['Show Tutorial']
-        except Exception:
-            show_tutorial = True
+        show_tutorial = bool(ba.app.config.get('Show Tutorial', True))
 
         def _cb_callback_2(val: bool) -> None:
             cfg = ba.app.config
@@ -388,10 +385,8 @@ class PlayOptionsWindow(popup.PopupWindow):
     def _does_target_playlist_exist(self) -> bool:
         if self._playlist == '__default__':
             return True
-        val: bool = self._playlist in ba.app.config.get(
+        return self._playlist in ba.app.config.get(
             self._pvars.config_name + ' Playlists', {})
-        assert isinstance(val, bool)
-        return val
 
     def _update(self) -> None:
         # All we do here is make sure our targeted playlist still exists,

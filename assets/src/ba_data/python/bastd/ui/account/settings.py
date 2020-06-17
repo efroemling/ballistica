@@ -984,7 +984,7 @@ class AccountSettingsWindow(ba.Window):
                                    str(int(progress * 100.0)) + '%')])
         except Exception:
             p_str = '?'
-            ba.print_exception('error calculating co-op campaign progress')
+            ba.print_exception('Error calculating co-op campaign progress.')
         ba.textwidget(edit=self._campaign_progress_text, text=p_str)
 
     def _refresh_tickets_text(self) -> None:
@@ -1081,7 +1081,7 @@ class AccountSettingsWindow(ba.Window):
             campaign = getcampaign('Challenges')
             campaign.reset()  # also writes the config..
         except Exception:
-            ba.print_exception('exception resetting co-op campaign progress')
+            ba.print_exception('Error resetting co-op campaign progress.')
 
         ba.playsound(ba.getsound('shieldDown'))
         self._refresh()
@@ -1108,14 +1108,11 @@ class AccountSettingsWindow(ba.Window):
                 raise ValueError('unrecognized selection')
             ba.app.window_states[self.__class__.__name__] = sel_name
         except Exception:
-            ba.print_exception('exception saving state for', self.__class__)
+            ba.print_exception(f'Error saving state for {self}.')
 
     def _restore_state(self) -> None:
         try:
-            try:
-                sel_name = ba.app.window_states[self.__class__.__name__]
-            except Exception:
-                sel_name = None
+            sel_name = ba.app.window_states.get(self.__class__.__name__)
             if sel_name == 'Back':
                 sel = self._back_button
             elif sel_name == 'Scroll':
@@ -1124,4 +1121,4 @@ class AccountSettingsWindow(ba.Window):
                 sel = self._back_button
             ba.containerwidget(edit=self._root_widget, selected_child=sel)
         except Exception:
-            ba.print_exception('error restoring state for', self.__class__)
+            ba.print_exception(f'Error restoring state for {self}.')

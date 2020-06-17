@@ -1225,25 +1225,21 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
             if msg.killerplayer is not None:
                 self._handle_kill_achievements(msg)
                 target: Optional[Sequence[float]]
-                try:
-                    assert msg.spazbot.node
+                if msg.spazbot.node:
                     target = msg.spazbot.node.position
-                except Exception:
-                    ba.print_exception()
+                else:
                     target = None
-                try:
-                    killerplayer = msg.killerplayer
-                    self.stats.player_scored(killerplayer,
-                                             pts,
-                                             target=target,
-                                             kill=True,
-                                             screenmessage=False,
-                                             importance=importance)
-                    ba.playsound(self._dingsound
-                                 if importance == 1 else self._dingsoundhigh,
-                                 volume=0.6)
-                except Exception:
-                    pass
+
+                killerplayer = msg.killerplayer
+                self.stats.player_scored(killerplayer,
+                                         pts,
+                                         target=target,
+                                         kill=True,
+                                         screenmessage=False,
+                                         importance=importance)
+                ba.playsound(self._dingsound
+                             if importance == 1 else self._dingsoundhigh,
+                             volume=0.6)
 
             # Normally we pull scores from the score-set, but if there's
             # no player lets be explicit.

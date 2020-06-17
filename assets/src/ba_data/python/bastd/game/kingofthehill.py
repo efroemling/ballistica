@@ -216,11 +216,9 @@ class KingOfTheHillGame(ba.TeamGameActivity[Player, Team]):
                 self._flag.set_score_text(str(scoring_team.time_remaining))
 
             # Announce numbers we have sounds for.
-            try:
-                ba.playsound(
-                    self._countdownsounds[scoring_team.time_remaining])
-            except Exception:
-                pass
+            numsound = self._countdownsounds.get(scoring_team.time_remaining)
+            if numsound is not None:
+                ba.playsound(numsound)
 
             # winner
             if scoring_team.time_remaining <= 0:

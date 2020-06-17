@@ -259,7 +259,7 @@ class LeagueRankWindow(ba.Window):
                     ba.textwidget(edit=self._season_ends_text, text='')
                     ba.textwidget(edit=self._trophy_counts_reset_text, text='')
             except Exception:
-                ba.print_exception('error showing updated rank info')
+                ba.print_exception('Error showing updated rank info.')
 
             self._last_power_ranking_query_time = cur_time
             self._doing_power_ranking_query = True
@@ -651,7 +651,7 @@ class LeagueRankWindow(ba.Window):
                                 '${REMAINING}', str(data['scores'][-1][1])))
                     do_percent = True
             except Exception:
-                ba.print_exception('error updating power ranking')
+                ba.print_exception('Error updating power ranking.')
                 status_text = self._rdict.powerRankingNotInTopText.replace(
                     '${NUMBER}', str(data['listSize']))
                 extra_text = ''

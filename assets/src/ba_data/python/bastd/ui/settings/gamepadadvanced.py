@@ -403,10 +403,7 @@ class GamepadAdvancedSettingsWindow(ba.Window):
 
     def _inc(self, control: str, min_val: float, max_val: float,
              inc: float) -> None:
-        try:
-            val = self._parent_window.get_settings()[control]
-        except Exception:
-            val = 1.0
+        val = self._parent_window.get_settings().get(control, 1.0)
         val = min(max_val, max(min_val, val + inc))
         if abs(1.0 - val) < 0.001:
             if control in self._parent_window.get_settings():

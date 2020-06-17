@@ -653,7 +653,7 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
             assert self._flag is not None
             self._flag.handlemessage(ba.DieMessage())
         except Exception:
-            ba.print_exception('error in _kill_flag')
+            ba.print_exception('Error in _kill_flag.')
 
     def _handle_score(self) -> None:
         """ a point has been scored """

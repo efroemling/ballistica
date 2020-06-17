@@ -336,10 +336,7 @@ class KioskWindow(ba.Window):
                                       repeat=True)
 
     def _restore_state(self) -> None:
-        try:
-            sel_name = ba.app.window_states[self.__class__.__name__]
-        except Exception:
-            sel_name = None
+        sel_name = ba.app.window_states.get(self.__class__.__name__)
         sel: Optional[ba.Widget]
         if sel_name == 'b1':
             sel = self._b1

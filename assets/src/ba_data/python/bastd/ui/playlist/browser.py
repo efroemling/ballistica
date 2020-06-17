@@ -452,7 +452,7 @@ class PlaylistBrowserWindow(ba.Window):
                         maptype: Optional[Type[ba.Map]]
                         try:
                             maptype = get_map_class(mapname)
-                        except Exception:
+                        except ba.NotFoundError:
                             maptype = None
                         if maptype is not None:
                             tex_name = maptype.get_preview_texture_name()

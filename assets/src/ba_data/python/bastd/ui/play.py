@@ -541,14 +541,11 @@ class PlayWindow(ba.Window):
                 raise ValueError(f'unrecognized selection {sel}')
             ba.app.window_states[self.__class__.__name__] = sel_name
         except Exception:
-            ba.print_exception('error saving state for', self.__class__)
+            ba.print_exception(f'Error saving state for {self}.')
 
     def _restore_state(self) -> None:
         try:
-            try:
-                sel_name = ba.app.window_states[self.__class__.__name__]
-            except Exception:
-                sel_name = None
+            sel_name = ba.app.window_states.get(self.__class__.__name__)
             if sel_name == 'Team Games':
                 sel = self._teams_button
             elif sel_name == 'Co-op Games':
@@ -561,4 +558,4 @@ class PlayWindow(ba.Window):
                 sel = self._coop_button
             ba.containerwidget(edit=self._root_widget, selected_child=sel)
         except Exception:
-            ba.print_exception('error restoring state for', self.__class__)
+            ba.print_exception(f'Error restoring state for {self}.')

@@ -422,8 +422,8 @@ def test_depset() -> None:
                     if dep.cls is AssetPackage:
                         print('MISSING ASSET PACKAGE', dep.config)
                     else:
-                        raise Exception('unknown dependency error for ' +
-                                        str(dep.cls))
+                        raise RuntimeError(
+                            f'Unknown dependency error for {dep.cls}') from exc
             except Exception as exc:
                 print('DependencySet resolve failed with exc type:', type(exc))
             if depset.resolved:

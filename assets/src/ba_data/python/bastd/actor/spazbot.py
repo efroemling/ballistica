@@ -235,11 +235,7 @@ class SpazBot(Spaz):
         # towards the flag and try to pick it up.
         if self.target_flag:
             if self.node.hold_node:
-                try:
-                    holding_flag = (
-                        self.node.hold_node.getnodetype() == 'flag')
-                except Exception:
-                    holding_flag = False
+                holding_flag = (self.node.hold_node.getnodetype() == 'flag')
             else:
                 holding_flag = False
 
@@ -280,11 +276,8 @@ class SpazBot(Spaz):
 
         # Not a flag-bearer. If we're holding anything but a bomb, drop it.
         if self.node.hold_node:
-            try:
-                holding_bomb = (self.node.hold_node.getnodetype()
-                                in ['bomb', 'prop'])
-            except Exception:
-                holding_bomb = False
+            holding_bomb = (self.node.hold_node.getnodetype()
+                            in ['bomb', 'prop'])
             if not holding_bomb:
                 self.node.pickup_pressed = True
                 self.node.pickup_pressed = False
@@ -532,8 +525,8 @@ class SpazBot(Spaz):
                     picked_up_by = msg.node.source_player
                 else:
                     picked_up_by = None
-            except Exception as exc:
-                print('EXC on SpazBot DroppedMessage:', exc)
+            except Exception:
+                ba.print_exception('Error on SpazBot DroppedMessage.')
                 picked_up_by = None
 
             if picked_up_by:
@@ -969,7 +962,7 @@ class SpazBotSet:
             ])
         except Exception:
             bot_list = []
-            ba.print_exception('error updating bot list: ' +
+            ba.print_exception('Error updating bot list: ' +
                                str(self._bot_lists[self._bot_update_list]))
         self._bot_update_list = (self._bot_update_list +
                                  1) % self._bot_list_count
@@ -988,7 +981,7 @@ class SpazBotSet:
                     player_pts.append((ba.Vec3(player.actor.node.position),
                                        ba.Vec3(player.actor.node.velocity)))
             except Exception:
-                ba.print_exception('error on bot-set _update')
+                ba.print_exception('Error on bot-set _update.')
 
         for bot in bot_list:
             bot.set_player_points(player_pts)

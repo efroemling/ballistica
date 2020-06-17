@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-06-16 for Ballistica version 1.5.5 build 20070</em></h4>
+<h4><em>last updated on 2020-06-16 for Ballistica version 1.5.5 build 20071</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -6620,7 +6620,7 @@ playing, the playing track will not be restarted.</p>
 
 <hr>
 <h2><strong><a name="function_ba_storagename">ba.storagename()</a></strong></h3>
-<p><span>storagename(basename: str) -&gt; str</span></p>
+<p><span>storagename(suffix: str = None) -&gt; str</span></p>
 
 <p>Generate a (hopefully) unique name for storing things in public places.</p>
 

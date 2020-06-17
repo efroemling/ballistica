@@ -173,7 +173,7 @@ class CreditsListWindow(ba.Window):
                 translation_contributors = (json.loads(
                     infile.read())['translation_contributors'])
         except Exception:
-            ba.print_exception('error reading translation contributors')
+            ba.print_exception('Error reading translation contributors.')
             translation_contributors = []
 
         translation_names = _format_names(translation_contributors, 60)

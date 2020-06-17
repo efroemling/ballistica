@@ -290,10 +290,7 @@ class ProfileBrowserWindow(ba.Window):
         # Delete old.
         while self._profile_widgets:
             self._profile_widgets.pop().delete()
-        try:
-            self._profiles = ba.app.config['Player Profiles']
-        except Exception:
-            self._profiles = {}
+        self._profiles = ba.app.config.get('Player Profiles', {})
         assert self._profiles is not None
         items = list(self._profiles.items())
         items.sort(key=lambda x: x[0].lower())
@@ -365,14 +362,11 @@ class ProfileBrowserWindow(ba.Window):
                 sel_name = 'Back'
             ba.app.window_states[self.__class__.__name__] = sel_name
         except Exception:
-            ba.print_exception('error saving state for', self.__class__)
+            ba.print_exception(f'Error saving state for {self}.')
 
     def _restore_state(self) -> None:
         try:
-            try:
-                sel_name = ba.app.window_states[self.__class__.__name__]
-            except Exception:
-                sel_name = None
+            sel_name = ba.app.window_states.get(self.__class__.__name__)
             if sel_name == 'Scroll':
                 sel = self._scrollwidget
             elif sel_name == 'New':
@@ -392,4 +386,4 @@ class ProfileBrowserWindow(ba.Window):
                     sel = self._scrollwidget
             ba.containerwidget(edit=self._root_widget, selected_child=sel)
         except Exception:
-            ba.print_exception('error restoring state for', self.__class__)
+            ba.print_exception(f'Error restoring state for {self}.')

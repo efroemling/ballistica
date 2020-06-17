@@ -229,11 +229,8 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
 
         h = 145
 
-        try:
-            self._do_randomize_val = ba.app.config[self._pvars.config_name +
-                                                   ' Playlist Randomize']
-        except Exception:
-            self._do_randomize_val = 0
+        self._do_randomize_val = ba.app.config.get(
+            self._pvars.config_name + ' Playlist Randomize', 0)
 
         h += 210
 
@@ -300,7 +297,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
             _ba.new_host_session(self._sessiontype)
         except Exception:
             from bastd import mainmenu
-            ba.print_exception('exception running session', self._sessiontype)
+            ba.print_exception(f'Error running session {self._sessiontype}.')
 
             # Drop back into a main menu session.
             _ba.new_host_session(mainmenu.MainMenuSession)
@@ -318,11 +315,8 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
 
         # If there was no prev selection, look in prefs.
         if old_selection is None:
-            try:
-                old_selection = ba.app.config[self._pvars.config_name +
-                                              ' Playlist Selection']
-            except Exception:
-                pass
+            old_selection = ba.app.config.get(self._pvars.config_name +
+                                              ' Playlist Selection')
 
         old_selection_index = self._selected_playlist_index
 

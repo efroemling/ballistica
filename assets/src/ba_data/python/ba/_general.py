@@ -337,7 +337,7 @@ def _verify_object_death(wref: ReferenceType) -> None:
         i += 1
 
 
-def storagename(basename: str) -> str:
+def storagename(suffix: str = None) -> str:
     """Generate a (hopefully) unique name for storing things in public places.
 
     Category: General Utility Functions
@@ -371,7 +371,9 @@ def storagename(basename: str) -> str:
     qualname = fback.f_locals.get('__qualname__')
     if qualname is not None:
         assert isinstance(qualname, str)
-        fullpath = f'_{modulepath}_{qualname.lower()}_{basename}'
+        fullpath = f'_{modulepath}_{qualname.lower()}'
     else:
-        fullpath = f'_{modulepath}_{basename}'
+        fullpath = f'_{modulepath}'
+    if suffix is not None:
+        fullpath = f'{fullpath}_{suffix}'
     return fullpath.replace('.', '_')

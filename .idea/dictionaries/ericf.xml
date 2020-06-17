@@ -572,6 +572,7 @@
       <w>ensurepip</w>
       <w>entitylist</w>
       <w>entrynew</w>
+      <w>entrystorename</w>
       <w>entrytype</w>
       <w>entrytypeselect</w>
       <w>enumtype</w>
@@ -1306,6 +1307,7 @@
       <w>ntriple</w>
       <w>nturl</w>
       <w>numedit</w>
+      <w>numsound</w>
       <w>numstr</w>
       <w>nvcompress</w>
       <w>nvidia</w>

@@ -253,7 +253,7 @@ class AdvancedSettingsWindow(ba.Window):
                 lang_names_translated = (json.loads(
                     infile.read())['lang_names_translated'])
         except Exception:
-            ba.print_exception('error reading lang data')
+            ba.print_exception('Error reading lang data.')
             lang_names_translated = {}
 
         langs_translated = {}
@@ -605,16 +605,13 @@ class AdvancedSettingsWindow(ba.Window):
                 'sel_name': sel_name
             }
         except Exception:
-            ba.print_exception('error saving state for', self.__class__)
+            ba.print_exception(f'Error saving state for {self.__class__}')
 
     def _restore_state(self) -> None:
         # pylint: disable=too-many-branches
         try:
-            try:
-                sel_name = ba.app.window_states[
-                    self.__class__.__name__]['sel_name']
-            except Exception:
-                sel_name = None
+            sel_name = ba.app.window_states.get(self.__class__.__name__,
+                                                {}).get('sel_name')
             if sel_name == 'Back':
                 sel = self._back_button
             else:
@@ -654,7 +651,7 @@ class AdvancedSettingsWindow(ba.Window):
                                    selected_child=sel,
                                    visible_child=sel)
         except Exception:
-            ba.print_exception('error restoring state for', self.__class__)
+            ba.print_exception(f'Error restoring state for {self.__class__}')
 
     def _on_menu_open(self) -> None:
         self._menu_open = True

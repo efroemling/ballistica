@@ -97,7 +97,7 @@ class PlaylistEditGameWindow(ba.Window):
                 if filtered_map_name in valid_maps:
                     self._map = filtered_map_name
         except Exception:
-            ba.print_exception('exception getting map for editor')
+            ba.print_exception('Error getting map for editor.')
 
         if config is not None and 'settings' in config:
             self._settings = config['settings']
@@ -427,7 +427,7 @@ class PlaylistEditGameWindow(ba.Window):
                 prev_widgets = cwdg
         except Exception:
             ba.print_exception(
-                'error wiring up game-settings-select widget column')
+                'Error wiring up game-settings-select widget column.')
 
         ba.buttonwidget(edit=add_button, on_activate_call=ba.Call(self._add))
         ba.containerwidget(edit=self._root_widget,

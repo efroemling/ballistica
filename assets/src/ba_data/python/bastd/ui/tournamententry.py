@@ -332,10 +332,7 @@ class TournamentEntryWindow(popup.PopupWindow):
         cfg.commit()
 
     def _restore_state(self) -> None:
-        try:
-            sel_name = ba.app.config['Tournament Pay Selection']
-        except Exception:
-            sel_name = 'Tickets'
+        sel_name = ba.app.config.get('Tournament Pay Selection', 'Tickets')
         if sel_name == 'Ad' and self._pay_with_ad_btn is not None:
             sel = self._pay_with_ad_btn
         else:
@@ -457,13 +454,14 @@ class TournamentEntryWindow(popup.PopupWindow):
                 ba.screenmessage(ba.Lstr(translate=('serverResponses',
                                                     'Entering tournament...')),
                                  color=(0, 1, 0))
+
             # We can hit exceptions here if _tournament_activity ends before
             # our restart attempt happens.
             # In this case we'll fall back to launching a new session.
             # This is not ideal since players will have to rejoin, etc.,
             # but it works for now.
             except Exception:
-                pass
+                print('Error restarting tournament activity.')
 
         # If we had no existing activity (or were unable to restart it)
         # launch a new session.

@@ -1008,20 +1008,14 @@ class StoreBrowserWindow(ba.Window):
                 'tab': self._current_tab
             }
         except Exception:
-            ba.print_exception('error saving state for', self.__class__)
+            ba.print_exception(f'Error saving state for {self}.')
 
     def _restore_state(self) -> None:
         try:
             sel: Optional[ba.Widget]
-            try:
-                sel_name = (
-                    ba.app.window_states[self.__class__.__name__]['sel_name'])
-            except Exception:
-                sel_name = None
-            try:
-                current_tab = ba.app.config['Store Tab']
-            except Exception:
-                current_tab = None
+            sel_name = ba.app.window_states.get(self.__class__.__name__,
+                                                {}).get('sel_name')
+            current_tab = ba.app.config.get('Store Tab')
             if self._show_tab is not None:
                 current_tab = self._show_tab
             if current_tab is None or current_tab not in self._tab_buttons:
@@ -1044,7 +1038,7 @@ class StoreBrowserWindow(ba.Window):
             if sel is not None:
                 ba.containerwidget(edit=self._root_widget, selected_child=sel)
         except Exception:
-            ba.print_exception('error restoring state for', self.__class__)
+            ba.print_exception(f'Error restoring state for {self}.')
 
     def _on_get_more_tickets_press(self) -> None:
         # pylint: disable=cyclic-import

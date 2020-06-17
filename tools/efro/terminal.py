@@ -145,7 +145,7 @@ def _windows_enable_color() -> bool:
             return set_conout_mode(mode, mask)
         except WindowsError as exc:
             if exc.winerror == ERROR_INVALID_PARAMETER:
-                raise NotImplementedError
+                raise NotImplementedError from exc
             raise
 
     try:

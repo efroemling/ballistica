@@ -828,14 +828,14 @@ class GatherWindow(ba.Window):
                         self._call = call
 
                     def run(self) -> None:
+                        result: Optional[str]
                         try:
                             import socket
-                            addr2 = socket.gethostbyname(self._name)
-                            ba.pushcall(ba.Call(self._call, addr2),
-                                        from_other_thread=True)
+                            result = socket.gethostbyname(self._name)
                         except Exception:
-                            ba.pushcall(ba.Call(self._call, None),
-                                        from_other_thread=True)
+                            result = None
+                        ba.pushcall(ba.Call(self._call, result),
+                                    from_other_thread=True)
 
                 def do_it_2(addr2: Optional[str]) -> None:
                     if addr2 is None:
@@ -1969,7 +1969,7 @@ class GatherWindow(ba.Window):
                 'internet_tab': self._internet_tab
             }
         except Exception:
-            ba.print_exception('error saving state for', self.__class__)
+            ba.print_exception(f'Error saving state for {self}.')
 
     def _restore_state(self) -> None:
         try:
@@ -1990,7 +1990,7 @@ class GatherWindow(ba.Window):
                 sel = self._tab_buttons[current_tab]
             ba.containerwidget(edit=self._root_widget, selected_child=sel)
         except Exception:
-            ba.print_exception('error restoring state for', self.__class__)
+            ba.print_exception(f'Error restoring state for {self}.')
 
     def _back(self) -> None:
         from bastd.ui import mainmenu

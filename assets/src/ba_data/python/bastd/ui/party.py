@@ -284,7 +284,7 @@ class PartyWindow(ba.Window):
                                         'displayString']
                             except Exception:
                                 ba.print_exception(
-                                    'error calcing client name str')
+                                    'Error calcing client name str.')
                                 p_str = '???'
 
                             widget = ba.textwidget(parent=self._root_widget,

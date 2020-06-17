@@ -135,8 +135,7 @@ class PlaylistMapSelectWindow(ba.Window):
                     map_tex = ba.gettexture(map_tex_name)
                     self._maps.append((mapname, map_tex))
                 except Exception:
-                    print('invalid map preview texture: "' + map_tex_name +
-                          '"')
+                    print(f'Invalid map preview texture: "{map_tex_name}".')
             else:
                 print('Error: no map preview texture for map:', mapname)
 
