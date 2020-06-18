@@ -51,7 +51,7 @@ if TYPE_CHECKING:
 
 # Not sure how much versioning we'll do with this, but this will get
 # printed at startup in case we need it.
-VERSION_STR = '1.0.1'
+VERSION_STR = '1.0.2'
 
 
 class ServerManagerApp:
@@ -106,9 +106,13 @@ class ServerManagerApp:
 
         # Print basic usage info in interactive mode.
         if sys.stdin.isatty():
+            if __debug__:
+                modestr = '(debug mode)'
+            else:
+                modestr = '(opt mode)'
             print(f'{Clr.CYN}{Clr.BLD}BallisticaCore server'
                   f' manager {VERSION_STR}'
-                  f' starting up...{Clr.RST}\n'
+                  f' starting up {modestr}...{Clr.RST}\n'
                   f'{Clr.CYN}Use the "mgr" object to make'
                   f' live server adjustments.\n'
                   f'Type "help(mgr)" for more information.{Clr.RST}')

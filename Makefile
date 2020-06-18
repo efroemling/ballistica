@@ -188,14 +188,15 @@ prefab-mac-server-debug-build: prereqs assets-cmake \
 	@${STAGE_ASSETS} -cmakeserver build/prefab/mac-server/debug/dist
 
 build/prefab/mac-server/debug/ballisticacore_server: \
- assets/src/server/ballisticacore_server.py
-	@cp $< $@
+ assets/src/server/ballisticacore_server.py tools/batools/snippets.py
+	@tools/snippets stage_server_file debug $< $@
 
 build/prefab/mac-server/debug/config_template.yaml: \
  assets/src/server/config_template.yaml \
  tools/batools/build.py \
+ tools/batools/snippets.py \
  tools/bacommon/servermanager.py
-	@tools/snippets filter_server_config $< $@
+	@tools/snippets stage_server_file debug $< $@
 
 build/prefab/mac-server/debug/README.txt: \
  assets/src/server/README.txt
@@ -219,14 +220,15 @@ prefab-mac-server-release-build: prereqs assets-cmake \
 	@${STAGE_ASSETS} -cmakeserver build/prefab/mac-server/release/dist
 
 build/prefab/mac-server/release/ballisticacore_server: \
- assets/src/server/ballisticacore_server.py
-	@cp $< $@
+ assets/src/server/ballisticacore_server.py tools/batools/snippets.py
+	@tools/snippets stage_server_file release $< $@
 
 build/prefab/mac-server/release/config_template.yaml: \
  assets/src/server/config_template.yaml \
  tools/batools/build.py \
+ tools/batools/snippets.py \
  tools/bacommon/servermanager.py
-	@tools/snippets filter_server_config $< $@
+	@tools/snippets stage_server_file release $< $@
 
 build/prefab/mac-server/release/README.txt: \
  assets/src/server/README.txt
@@ -276,14 +278,15 @@ prefab-linux-server-debug-build: prereqs assets-cmake \
 	@${STAGE_ASSETS} -cmakeserver build/prefab/linux-server/debug/dist
 
 build/prefab/linux-server/debug/ballisticacore_server: \
- assets/src/server/ballisticacore_server.py
-	@cp $< $@
+ assets/src/server/ballisticacore_server.py tools/batools/snippets.py
+	@tools/snippets stage_server_file debug $< $@
 
 build/prefab/linux-server/debug/config_template.yaml: \
  assets/src/server/config_template.yaml \
  tools/batools/build.py \
+ tools/batools/snippets.py \
  tools/bacommon/servermanager.py
-	@tools/snippets filter_server_config $< $@
+	@tools/snippets stage_server_file debug $< $@
 
 build/prefab/linux-server/debug/README.txt: \
  assets/src/server/README.txt
@@ -307,14 +310,15 @@ prefab-linux-server-release-build: prereqs assets-cmake \
 	@${STAGE_ASSETS} -cmakeserver build/prefab/linux-server/release/dist
 
 build/prefab/linux-server/release/ballisticacore_server: \
- assets/src/server/ballisticacore_server.py
-	@cp $< $@
+ assets/src/server/ballisticacore_server.py tools/batools/snippets.py
+	@tools/snippets stage_server_file release $< $@
 
 build/prefab/linux-server/release/config_template.yaml: \
  assets/src/server/config_template.yaml \
  tools/batools/build.py \
+ tools/batools/snippets.py \
  tools/bacommon/servermanager.py
-	@tools/snippets filter_server_config $< $@
+	@tools/snippets stage_server_file release $< $@
 
 build/prefab/linux-server/release/README.txt: \
  assets/src/server/README.txt
@@ -376,25 +380,26 @@ build/prefab/windows-server/debug/dist/ballisticacore_headless.exe: .efrocachema
 	@tools/snippets efrocache_get $@
 
 build/prefab/windows-server/debug/ballisticacore_server.py: \
- assets/src/server/ballisticacore_server.py
-	@cp $< $@
+ assets/src/server/ballisticacore_server.py tools/batools/snippets.py
+	@tools/snippets stage_server_file debug $< $@
 
 build/prefab/windows-server/debug/launch_ballisticacore_server.bat: \
- assets/src/server/launch_ballisticacore_server.bat
-	@cp $< $@
+ assets/src/server/launch_ballisticacore_server.bat tools/batools/snippets.py
+	@tools/snippets stage_server_file debug $< $@
 
 build/prefab/windows-server/debug/config_template.yaml: \
  assets/src/server/config_template.yaml \
  tools/batools/build.py \
+ tools/batools/snippets.py \
  tools/bacommon/servermanager.py
-	@tools/snippets filter_server_config $< $@
+	@tools/snippets stage_server_file debug $< $@
 
 build/prefab/windows-server/debug/README.txt: \
  assets/src/server/README.txt
 	@cp $< $@
 
 RUN_PREFAB_WINDOWS_SERVER_RELEASE = cd build/prefab/windows-server/release \
- && dist/python.exe ballisticacore_server.py
+ && dist/python.exe -O ballisticacore_server.py
 
 prefab-windows-server-release: prefab-windows-server-release-build
 	@tools/snippets ensure_prefab_platform windows
@@ -414,18 +419,19 @@ build/prefab/windows-server/release/dist/ballisticacore_headless.exe: .efrocache
 	@tools/snippets efrocache_get $@
 
 build/prefab/windows-server/release/ballisticacore_server.py: \
- assets/src/server/ballisticacore_server.py
-	@cp $< $@
+ assets/src/server/ballisticacore_server.py tools/batools/snippets.py
+	@tools/snippets stage_server_file release $< $@
 
 build/prefab/windows-server/release/launch_ballisticacore_server.bat: \
- assets/src/server/launch_ballisticacore_server.bat
-	@cp $< $@
+ assets/src/server/launch_ballisticacore_server.bat tools/batools/snippets.py
+	@tools/snippets stage_server_file release $< $@
 
 build/prefab/windows-server/release/config_template.yaml: \
  assets/src/server/config_template.yaml \
  tools/batools/build.py \
+ tools/batools/snippets.py \
  tools/bacommon/servermanager.py
-	@tools/snippets filter_server_config $< $@
+	@tools/snippets stage_server_file release $< $@
 
 build/prefab/windows-server/release/README.txt: \
  assets/src/server/README.txt

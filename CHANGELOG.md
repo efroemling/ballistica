@@ -1,3 +1,9 @@
+### 1.5.6 (20072)
+- Mouse wheel now works in manual camera mode on more platforms.
+- Lots of internal event-handling cleanup/reorganization in preparation for Android 1.5 update.
+- Server scripts now run in opt mode in release builds so they can use bundled .opt-1.pyc files.
+- More misc bug fixes and tidying.
+
 ### 1.5.5 (20069)
 - Cleaned up Windows version packaging.
 - More misc bug fixes.
