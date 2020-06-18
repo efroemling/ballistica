@@ -465,7 +465,7 @@ def get_current_prefab_platform() -> str:
     if system == 'Linux':
         # If it looks like we're in Windows Subsystem for Linux,
         # go with the Windows version.
-        if 'microsoft' in platform.uname()[3].lower():
+        if 'microsoft' in platform.uname().release.lower():
             return 'windows'
 
         # We currently only support x86_64 linux.
