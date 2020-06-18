@@ -661,13 +661,16 @@ class App:
                     # FIXME: This should not be an actor attr.
                     activity.paused_text = None
 
-    def return_to_main_menu_session_gracefully(self) -> None:
+    def return_to_main_menu_session_gracefully(self,
+                                               reset_ui: bool = True) -> None:
         """Attempt to cleanly get back to the main menu."""
         # pylint: disable=cyclic-import
         from ba import _benchmark
         from ba._general import Call
         from bastd.mainmenu import MainMenuSession
-        _ba.app.main_window = None
+        if reset_ui:
+            _ba.app.main_window = None
+
         if isinstance(_ba.get_foreground_host_session(), MainMenuSession):
             # It may be possible we're on the main menu but the screen is faded
             # so fade back in.

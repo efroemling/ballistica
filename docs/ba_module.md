@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-06-16 for Ballistica version 1.5.5 build 20071</em></h4>
+<h4><em>last updated on 2020-06-17 for Ballistica version 1.5.6 build 20074</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -990,7 +990,7 @@ to resume.</p>
 
 </dd>
 <dt><h4><a name="method_ba_App__return_to_main_menu_session_gracefully">return_to_main_menu_session_gracefully()</a></dt></h4><dd>
-<p><span>return_to_main_menu_session_gracefully(self) -&gt; None</span></p>
+<p><span>return_to_main_menu_session_gracefully(self, reset_ui: bool = True) -&gt; None</span></p>
 
 <p>Attempt to cleanly get back to the main menu.</p>
 

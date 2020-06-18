@@ -874,7 +874,7 @@ class MainMenuWindow(ba.Window):
         if not self._root_widget:
             return
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.return_to_main_menu_session_gracefully()
+        ba.app.return_to_main_menu_session_gracefully(reset_ui=False)
 
     def _leave(self) -> None:
         if self._input_player:
