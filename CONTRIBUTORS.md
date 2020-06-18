@@ -9,9 +9,4 @@
 - Fixed some game modes
 
 ### Roman Trapeznikov
-###### Ballistica
-- Bug fixes
-###### beyond the project code
-- Game servers developer
-- Modder
-
+- Bug fixes and code cleanup

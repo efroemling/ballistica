@@ -26,15 +26,15 @@
 - Misc bug fixes.
 
 ### 1.5.0 (20001)
-- This build contains about 2 years worth of MAJOR internal refactoring to prepare for the future of BombSquad. As a player this should not (yet) look different from 1.4, but for modders there is a lot new. See the rest of these change entries or visit ballistica.net for more info.
+- This build contains about 2 years worth of MAJOR internal refactoring to prepare for the future of BombSquad. As a player this should not (yet) look different from 1.4, but for modders there is a lot new. See the rest of these change entries or visit [ballistica.net](https://ballistica.net) for more info.
 - Ported the entire scripting layer from Python 2 to to Python 3 (currently at 3.7, and I intend to keep this updated to the latest widely-available release). There's some significant changes going from python 2 to 3 (new print statement, string behavior, etc), but these are well documented online, so please read up as needed.  This should provide us some nice benefits and future-proofs everything. (my janky 2.7 custom Python builds were getting a little long in the tooth).
-- Refactored all script code to be PEP8 compliant (Python coding standards).  Basically, this means that stuff that was camel-case (fooBar) is now a single word or underscores (foobar / foo_bar).  There are a few minor exceptions such as existing resource and media filenames, but in general old code can be ported by taking a pass through and killing the camel-case.  I know this is a bit of a pain in the ass, but it'll let us use things like Pylint and just be more consistent with the rest of the Python world.
+- Refactored all script code to be PEP8 compliant (Python coding standards).  Basically, this means that stuff that was camel-case (fooBar) is now a single word or underscores (foobar / foo\_bar).  There are a few minor exceptions such as existing resource and media filenames, but in general old code can be ported by taking a pass through and killing the camel-case.  I know this is a bit of a pain in the ass, but it'll let us use things like Pylint and just be more consistent with the rest of the Python world.
 - On a related note, I'm now using 'yapf' to keep my Python code formatted nicely (using pep8 style); I'd recommend checking it out if you're doing a lot of scripting as its a great time-saver.
 - On another related note, I'm trying to confirm to Google's recommendations for Python code (search 'Google Python Style Guide'). There are some good bits of wisdom in there so I recommend at least skimming through it.
 - And as one last related note, I'm now running Pylint on all my own Python code. Highly recommended if you are doing serious scripting, as it can make Python almost feel as type-safe as C++.
 - The minimum required android version will now be 5.0 (a requirement of the Python 3 builds I'm using)
 - Minimum required macOS version is now 10.13 (for similar reasons)
-- 'bsInternal' module is now '_ba' (better lines up with standard Python practices)
+- 'bsInternal' module is now '\_ba' (better lines up with standard Python practices)
 - bs.writeConfig() and bs.applySettings() are no more. There is now ba.app.config which is basically a fancy dict class with some methods added such as commit() and apply()
 - bs.getEnvironment() is no more; the values there are now available through ba.app (see notes down further)
 - Fixed the mac build so command line input works again when launched from a terminal
@@ -44,7 +44,7 @@
 - Various other minor name changes (bs.getUIBounds() -> ba.app.uibounds, etc).  I'm keeping old and new Python API docs around for now so you can compare as needed.
 - Renamed bot classes based on their actions instead of their appearances (ie: PirateBot -> ExplodeyBot)
 - bs.getSharedObject() is now ba.stdobj()
-- Removed bs.uni(), bs.utf8(), bs.uni_to_ints(), and bs.uni_from_ints() which are no longer needed due to Python 3's better string handling.
+- Removed bs.uni(), bs.utf8(), bs.uni\_to\_ints(), and bs.uni\_from\_ints() which are no longer needed due to Python 3's better string handling.
 - Removed bs.SecureInt since it didn't do much to slow down hackers and hurts code readability.
 - Renamed 'finalize' to 'expire' for actors and activities. 'Finalize' sounds too much like a destructor, which is not really what that is.
 - bs.getMapsSupportingPlayType() is now simply ba.getmaps(). I might want to add more filter options to it besides just play-type, hence the rename.
@@ -52,9 +52,9 @@
 - I'm converting all scripting functions to operate on floating-point seconds by default instead of integer milliseconds. This will let us support more accurate simulations later and is just cleaner I feel. To keep existing calls working you should be able to add timeformat='ms' and you'll get the old behavior (or multiply your time values by 0.001). Specific notes listed below.
 - ba.Timer now takes its 'time' arg as seconds instead of milliseconds. To port old calls, add: timeformat='ms' to each call (or multiply your input by 0.001)
 - ba.animate() now takes times in seconds and its 'driver' arg is now 'timetype' for consistency with other time functions. To port existing code you can pass timeformat='ms' to keep the old milliseconds based behavior.
-- ditto for ba.animate_array()
+- ditto for ba.animate\_array()
 - ba.Activity.end() now takes seconds instead of milliseconds as its delay arg.
-- TNTSpawner now also takes seconds instead of milliseconds for respawn_time.
+- TNTSpawner now also takes seconds instead of milliseconds for respawn\_time.
 - There is a new ba.timer() function which is used for all one-off timer creation. It has the same args as the ba.Timer() class constructor.
 - bs.gameTimer() is no more. Pass timeformat='ms' to ba.timer() if you need to recreate its behavior.
 - bs.netTimer() is no more. Pass timetype='base' and timeformat='ms' to ba.timer() if you need to recreate its behavior.
@@ -64,19 +64,19 @@
 - bs.getNetTime() is no more. Pass timetype='base' and timeformat='ms' to ba.time() if you need to recreate its behavior.
 - bs.getRealTime() is no more. Pass timetype='real' and timeformat='ms' to ba.time() if you need to recreate its behavior.
 - bs.getTimeString() is now just ba.timestring(), and accepts seconds by default (pass timeformat='ms' to keep old calls working).
-- bs.callInGameThread() has been replaced by an optional 'from_other_thread' arg for ba.pushcall()
+- bs.callInGameThread() has been replaced by an optional 'from\_other\_thread' arg for ba.pushcall()
 - There is now a special ba.UNHANDLED value that handlemessage() calls should return any time they don't handle a passed message.  This will allow fallback message types and other nice things in the future.
 - Wired the boolean operator up to ba.Actor's exists() method, so now a simple "if mynode" will do the right thing for both Actors and None values instead of having to explicitly check for both.
 - Ditto for ba.Node; you can now just do 'if mynode' which will do the right thing for both a dead Node or None.
 - Ditto for ba.InputDevice, ba.Widget, ba.Player
 - Added a bs.App class accessible via ba.app; will be migrating global app values there instead of littering python modules with globals. The only remaining module globals should be all-caps public 'constants'
-- 'Internal' methods and classes living in _ba and elsewhere no longer start with underscores.  They are now simply marked with '(internal)' in their docstrings.  'Internal' bits are likely to have janky interfaces and can change without warning, so be wary of using them.  If you find yourself depending on some internal thing often, please let me know and I can try to clean it up and make it 'public'.
+- 'Internal' methods and classes living in \_ba and elsewhere no longer start with underscores.  They are now simply marked with '(internal)' in their docstrings.  'Internal' bits are likely to have janky interfaces and can change without warning, so be wary of using them.  If you find yourself depending on some internal thing often, please let me know and I can try to clean it up and make it 'public'.
 - bs.getLanguage() is no more; that value is now accessible via ba.app.language
 - bs.Actor now accepts an optional 'node' arg which it will store as self.node if passed.  Its default DieMessage() and exists() handlers will use self.node if it exists.  This removes the need for a separate NodeActor() for simple cases.
 - bs.NodeActor is no more (it can simply be replaced with ba.Actor())
 - bs.playMusic() is now ba.setmusic() which better fits its functionality (it sometimes just continues playing or stops playing).
 - The bs.Vector class is no more; in its place is a shiny new ba.Vec3 which is implemented internally in C++ so its nice and speedy.  Will probably update certain things like vector node attrs to support this class in the future since it makes vector math nice and convenient.
-- Ok you get the point.. see ballistica.net for more info on these changes.
+- Ok you get the point.. see [ballistica.net](https://ballistica.net) for more info on these changes.
 
 ### 1.4.155 (14377)
 - Added protection against a repeated-input attack in lobbies.
@@ -87,8 +87,8 @@
 ### 1.4.150 (14369)
 - Telnet port can now be specified in the config
 - Telnet socket no longer opens on headless build when telnet access is off (reduces DoS attack potential)
-- Added a filter_chat_message() call which can be used by servers to intercept/modify/block all chat messages.
-- bsInternal._disconnectClient() now takes an optional banTime arg (in seconds, defaults to old value of 300).
+- Added a filter\_chat\_message() call which can be used by servers to intercept/modify/block all chat messages.
+- bsInternal.\_disconnectClient() now takes an optional banTime arg (in seconds, defaults to old value of 300).
 
 ### 1.4.148 (14365)
 - Added a password option for telnet access on server builds
@@ -126,7 +126,7 @@
 - Removed the language column from the server browser.  This was more relevant back when all clients saw the game in the server's language, and is nowadays largely just hijacked for silly purposes.  Holler if you miss it.
 - Server list now re-pings servers less often and averages ping results to reduce the amount of jumping around in the list.  Please holler if this feels off.
 - Added some slick new client-verification tech.  Going forward it should be pretty much impossible to fool a server into thinking you are using a different account than you really are.
-- Added a 'get_account_id()' method to the bs.Player class.  This will return a player's signed-in account-id (when it can be verified for certain)
+- Added a 'get\_account\_id()' method to the bs.Player class.  This will return a player's signed-in account-id (when it can be verified for certain)
 
 ### 1.4.138 (14336)
 - Removed SDL library from the server builds, so that's one less dependency that needs to be installed when setting up a linux server
@@ -246,10 +246,10 @@
 - fixed a bug that could cause the windows version to freeze randomly after a while
 
 ### 1.4.95 (14233)
-- ballisticacore (both bs_headless and regular) now reads commands from standard input, making it easier to run commands via scripts or the terminal
+- ballisticacore (both bs\_headless and regular) now reads commands from standard input, making it easier to run commands via scripts or the terminal
 - server now runs using a 'server' account-type instead of the local 'device' account. (avoids daily-ticket-reward messages and other stuff that's not relevant to servers)
 - the server script now passes args to the game as a json file instead of individual args; this should keep things cleaner and more expandable
-- the ballisticacore_server script also now reads commands from stdin, allowing reconfiguring server settings on the fly
+- the ballisticacore\_server script also now reads commands from stdin, allowing reconfiguring server settings on the fly
 - added more options such as the ability to set game series lengths and to host a non-public party
 
 ### 1.4.94
