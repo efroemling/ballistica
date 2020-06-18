@@ -1721,7 +1721,9 @@ class GatherWindow(ba.Window):
                                 import errno
 
                                 # Ignore harmless errors.
-                                if exc.errno == errno.EHOSTUNREACH:
+                                if exc.errno in {
+                                        errno.EHOSTUNREACH, errno.ENETUNREACH
+                                }:
                                     pass
                                 elif exc.errno == 10051:
                                     # Windows 'a socket operation was attempted
