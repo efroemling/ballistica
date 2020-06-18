@@ -98,7 +98,7 @@ def get_target(path: str) -> None:
     # download it.
     if not os.path.exists(local_cache_path):
         os.makedirs(os.path.dirname(local_cache_path), exist_ok=True)
-        print(f'Downloading: {Clr.SBLU}{path}{Clr.RST}')
+        print(f'Downloading: {Clr.BLU}{path}{Clr.RST}')
         result = subprocess.run(
             f'curl --fail --silent {url} --output {local_cache_path_dl}',
             shell=True,
@@ -118,8 +118,25 @@ def get_target(path: str) -> None:
 
     # Ok we should have a valid .tar.gz file in our cache dir at this point.
     # Just expand it and it get placed wherever it belongs.
+
+    # Strangely, decompressing lots of these simultaneously leads to occasional
+    # "File does not exist" errors when running on Windows Subystem for Linux.
+    # There should be no overlap in files getting written, but perhaps
+    # something about how tar rebuilds the directory structure causes clashes.
+    # It seems that just explicitly creating necessary directories first
+    # prevents the problem.
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+
     print(f'Extracting: {path}')
-    run(f'tar -zxf {local_cache_path}')
+    try:
+        subprocess.run(['tar', '-zxf', local_cache_path], check=True)
+    except Exception:
+        # If something goes wrong, try to make sure we don't leave a half
+        # decompressed file lying around or whatnot.
+        print(f"Error expanding cache archive for '{local_cache_path}'.")
+        if os.path.exists(local_cache_path):
+            os.remove(local_cache_path)
+        raise
 
     # The file will wind up with the timestamp it was compressed with,
     # so let's update its timestamp or else it will still be considered
