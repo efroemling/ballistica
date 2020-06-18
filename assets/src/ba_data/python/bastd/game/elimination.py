@@ -28,7 +28,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import ba
-from bastd.actor.spaz import get_factory
+from bastd.actor.spazfactory import SpazFactory
 from bastd.actor.scoreboard import Scoreboard
 
 if TYPE_CHECKING:
@@ -525,7 +525,7 @@ class EliminationGame(ba.TeamGameActivity[Player, Team]):
             # Play big death sound on our last death
             # or for every one in solo mode.
             if self._solo_mode or player.lives == 0:
-                ba.playsound(get_factory().single_player_death_sound)
+                ba.playsound(SpazFactory.get().single_player_death_sound)
 
             # If we hit zero lives, we're dead (and our team might be too).
             if player.lives == 0:

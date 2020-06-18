@@ -29,6 +29,7 @@ from typing import TYPE_CHECKING
 import ba
 from bastd.actor import bomb as stdbomb
 from bastd.actor.powerupbox import PowerupBoxFactory
+from bastd.actor.spazfactory import SpazFactory
 from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
@@ -54,18 +55,6 @@ class CurseExplodeMessage:
 
 class BombDiedMessage:
     """A bomb has died and thus can be recycled."""
-
-
-def get_factory() -> SpazFactory:
-    """Return the shared ba.SpazFactory object, creating it if necessary."""
-    # pylint: disable=cyclic-import
-    from bastd.actor.spazfactory import SpazFactory
-    activity = ba.getactivity()
-    factory = getattr(activity, 'shared_spaz_factory', None)
-    if factory is None:
-        factory = activity.shared_spaz_factory = SpazFactory()  # type: ignore
-    assert isinstance(factory, SpazFactory)
-    return factory
 
 
 class Spaz(ba.Actor):
@@ -112,7 +101,7 @@ class Spaz(ba.Actor):
         shared = SharedObjects.get()
         activity = self.activity
 
-        factory = get_factory()
+        factory = SpazFactory.get()
 
         # we need to behave slightly different in the tutorial
         self._demo_mode = demo_mode
@@ -466,7 +455,7 @@ class Spaz(ba.Actor):
                 ba.timer(
                     0.1,
                     ba.WeakCall(self._safe_play_sound,
-                                get_factory().swish_sound, 0.8))
+                                SpazFactory.get().swish_sound, 0.8))
         self._turbo_filter_add_press('punch')
 
     def _safe_play_sound(self, sound: ba.Sound, volume: float) -> None:
@@ -605,7 +594,7 @@ class Spaz(ba.Actor):
         he will explode in 5 seconds.
         """
         if not self._cursed:
-            factory = get_factory()
+            factory = SpazFactory.get()
             self._cursed = True
 
             # Add the curse material.
@@ -637,7 +626,7 @@ class Spaz(ba.Actor):
             self._punch_power_scale = 1.7
             self._punch_cooldown = 300
         else:
-            factory = get_factory()
+            factory = SpazFactory.get()
             self._punch_power_scale = factory.punch_power_scale_gloves
             self._punch_cooldown = factory.punch_cooldown_gloves
 
@@ -650,7 +639,7 @@ class Spaz(ba.Actor):
             ba.print_error('Can\'t equip shields; no node.')
             return
 
-        factory = get_factory()
+        factory = SpazFactory.get()
         if self.shield is None:
             self.shield = ba.newnode('shield',
                                      owner=self.node,
@@ -685,7 +674,7 @@ class Spaz(ba.Actor):
                 self.shield = None
                 self.shield_decay_timer = None
                 assert self.node
-                ba.playsound(get_factory().shield_down_sound,
+                ba.playsound(SpazFactory.get().shield_down_sound,
                              1.0,
                              position=self.node.position)
         else:
@@ -802,7 +791,7 @@ class Spaz(ba.Actor):
                         ba.WeakCall(self._gloves_wear_off),
                         timeformat=ba.TimeFormat.MILLISECONDS))
             elif msg.poweruptype == 'shield':
-                factory = get_factory()
+                factory = SpazFactory.get()
 
                 # Let's allow powerup-equipped shields to lose hp over time.
                 self.equip_shields(decay=factory.shield_decay_rate > 0)
@@ -832,7 +821,7 @@ class Spaz(ba.Actor):
                     self._cursed = False
 
                     # Remove cursed material.
-                    factory = get_factory()
+                    factory = SpazFactory.get()
                     for attr in ['materials', 'roller_materials']:
                         materials = getattr(self.node, attr)
                         if factory.curse_material in materials:
@@ -856,7 +845,7 @@ class Spaz(ba.Actor):
             if not self.node:
                 return None
             if self.node.invincible:
-                ba.playsound(get_factory().block_sound,
+                ba.playsound(SpazFactory.get().block_sound,
                              1.0,
                              position=self.node.position)
                 return None
@@ -881,7 +870,7 @@ class Spaz(ba.Actor):
             if not self.node:
                 return None
             if self.node.invincible:
-                ba.playsound(get_factory().block_sound,
+                ba.playsound(SpazFactory.get().block_sound,
                              1.0,
                              position=self.node.position)
                 return True
@@ -924,13 +913,13 @@ class Spaz(ba.Actor):
                 # without damaging the player.
                 # However, massive damage events should still be able to
                 # damage the player. This hopefully gives us a happy medium.
-                max_spillover = get_factory().max_shield_spillover_damage
+                max_spillover = SpazFactory.get().max_shield_spillover_damage
                 if self.shield_hitpoints <= 0:
 
                     # FIXME: Transition out perhaps?
                     self.shield.delete()
                     self.shield = None
-                    ba.playsound(get_factory().shield_down_sound,
+                    ba.playsound(SpazFactory.get().shield_down_sound,
                                  1.0,
                                  position=self.node.position)
 
@@ -944,7 +933,7 @@ class Spaz(ba.Actor):
                               chunk_type='spark')
 
                 else:
-                    ba.playsound(get_factory().shield_hit_sound,
+                    ba.playsound(SpazFactory.get().shield_hit_sound,
                                  0.5,
                                  position=self.node.position)
 
@@ -1001,14 +990,14 @@ class Spaz(ba.Actor):
                 # Let's always add in a super-punch sound with boxing
                 # gloves just to differentiate them.
                 if msg.hit_subtype == 'super_punch':
-                    ba.playsound(get_factory().punch_sound_stronger,
+                    ba.playsound(SpazFactory.get().punch_sound_stronger,
                                  1.0,
                                  position=self.node.position)
                 if damage > 500:
-                    sounds = get_factory().punch_sound_strong
+                    sounds = SpazFactory.get().punch_sound_strong
                     sound = sounds[random.randrange(len(sounds))]
                 else:
-                    sound = get_factory().punch_sound
+                    sound = SpazFactory.get().punch_sound
                 ba.playsound(sound, 1.0, position=self.node.position)
 
                 # Throw up some chunks.
@@ -1118,7 +1107,7 @@ class Spaz(ba.Actor):
             elif self.node:
                 self.node.hurt = 1.0
                 if self.play_big_death_sound and not wasdead:
-                    ba.playsound(get_factory().single_player_death_sound)
+                    ba.playsound(SpazFactory.get().single_player_death_sound)
                 self.node.dead = True
                 ba.timer(2.0, self.node.delete)
 
@@ -1160,7 +1149,7 @@ class Spaz(ba.Actor):
                 # If its something besides another spaz, just do a muffled
                 # punch sound.
                 if node.getnodetype() != 'spaz':
-                    sounds = get_factory().impact_sounds_medium
+                    sounds = SpazFactory.get().impact_sounds_medium
                     sound = sounds[random.randrange(len(sounds))]
                     ba.playsound(sound, 1.0, position=self.node.position)
 
@@ -1347,11 +1336,11 @@ class Spaz(ba.Actor):
                       scale=0.3,
                       spread=0.2,
                       chunk_type='ice')
-            ba.playsound(get_factory().shatter_sound,
+            ba.playsound(SpazFactory.get().shatter_sound,
                          1.0,
                          position=self.node.position)
         else:
-            ba.playsound(get_factory().splatter_sound,
+            ba.playsound(SpazFactory.get().splatter_sound,
                          1.0,
                          position=self.node.position)
         self.handlemessage(ba.DieMessage())
@@ -1369,11 +1358,11 @@ class Spaz(ba.Actor):
         self.node.handlemessage('knockout', max(0.0, 50.0 * intensity))
         sounds: Sequence[ba.Sound]
         if intensity > 5.0:
-            sounds = get_factory().impact_sounds_harder
+            sounds = SpazFactory.get().impact_sounds_harder
         elif intensity > 3.0:
-            sounds = get_factory().impact_sounds_hard
+            sounds = SpazFactory.get().impact_sounds_hard
         else:
-            sounds = get_factory().impact_sounds_medium
+            sounds = SpazFactory.get().impact_sounds_medium
         sound = sounds[random.randrange(len(sounds))]
         ba.playsound(sound, position=pos, volume=5.0)
 
@@ -1418,7 +1407,7 @@ class Spaz(ba.Actor):
             self._punch_power_scale = 1.2
             self._punch_cooldown = BASE_PUNCH_COOLDOWN
         else:
-            factory = get_factory()
+            factory = SpazFactory.get()
             self._punch_power_scale = factory.punch_power_scale
             self._punch_cooldown = factory.punch_cooldown
         self._has_boxing_gloves = False

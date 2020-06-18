@@ -29,10 +29,6 @@ import ba
 if TYPE_CHECKING:
     from typing import Sequence, Optional
 
-# Attr we store these objects as on the current activity.
-# (based on our module so hopefully avoids conflicts)
-STORAGE_ATTR_NAME = '_' + __name__.replace('.', '_') + '_sharedobjs'
-
 
 class SharedObjects:
     """Various common components for use in games.
@@ -44,9 +40,11 @@ class SharedObjects:
     standard materials.
     """
 
+    _STORENAME = ba.storagename()
+
     def __init__(self) -> None:
         activity = ba.getactivity()
-        if hasattr(activity, STORAGE_ATTR_NAME):
+        if hasattr(activity, self._STORENAME):
             raise RuntimeError('Use SharedObjects.get() to fetch the'
                                ' shared instance for this activity.')
         self._object_material: Optional[ba.Material] = None
@@ -58,14 +56,14 @@ class SharedObjects:
         self._region_material: Optional[ba.Material] = None
         self._railing_material: Optional[ba.Material] = None
 
-    @staticmethod
-    def get() -> SharedObjects:
+    @classmethod
+    def get(cls) -> SharedObjects:
         """Fetch/create the instance of this class for the current activity."""
         activity = ba.getactivity()
-        shobs = getattr(activity, STORAGE_ATTR_NAME, None)
+        shobs = activity.customdata.get(cls._STORENAME)
         if shobs is None:
             shobs = SharedObjects()
-            setattr(activity, STORAGE_ATTR_NAME, shobs)
+            activity.customdata[cls._STORENAME] = shobs
         assert isinstance(shobs, SharedObjects)
         return shobs
 

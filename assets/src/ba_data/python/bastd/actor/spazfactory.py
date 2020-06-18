@@ -26,8 +26,6 @@ from typing import TYPE_CHECKING
 
 import ba
 from bastd.gameutils import SharedObjects
-from bastd.actor.spaz import (PickupMessage, PunchHitMessage,
-                              CurseExplodeMessage)
 import _ba
 
 if TYPE_CHECKING:
@@ -97,12 +95,20 @@ class SpazFactory:
           A ba.Material applied to a cursed ba.Spaz that triggers an explosion.
     """
 
+    _STORENAME = ba.storagename()
+
     def _preload(self, character: str) -> None:
         """Preload media needed for a given character."""
         self.get_media(character)
 
     def __init__(self) -> None:
         """Instantiate a factory object."""
+        # pylint: disable=cyclic-import
+        # FIXME: should probably put these somewhere common so we don't
+        # have to import them from a module that imports us.
+        from bastd.actor.spaz import (PickupMessage, PunchHitMessage,
+                                      CurseExplodeMessage)
+
         shared = SharedObjects.get()
         self.impact_sounds_medium = (ba.getsound('impactMedium'),
                                      ba.getsound('impactMedium2'))
@@ -265,3 +271,14 @@ class SpazFactory:
         else:
             media = self.spaz_media[character]
         return media
+
+    @classmethod
+    def get(cls) -> SpazFactory:
+        """Return the shared ba.SpazFactory, creating it if necessary."""
+        # pylint: disable=cyclic-import
+        activity = ba.getactivity()
+        factory = activity.customdata.get(cls._STORENAME)
+        if factory is None:
+            factory = activity.customdata[cls._STORENAME] = SpazFactory()
+        assert isinstance(factory, SpazFactory)
+        return factory

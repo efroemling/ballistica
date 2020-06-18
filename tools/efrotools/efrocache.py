@@ -120,7 +120,7 @@ def get_target(path: str) -> None:
     # Just expand it and it get placed wherever it belongs.
 
     # Strangely, decompressing lots of these simultaneously leads to occasional
-    # "File does not exist" errors when running on Windows Subystem for Linux.
+    # "File does not exist" errors when running on Windows Subsystem for Linux.
     # There should be no overlap in files getting written, but perhaps
     # something about how tar rebuilds the directory structure causes clashes.
     # It seems that just explicitly creating necessary directories first

@@ -28,7 +28,6 @@ import weakref
 from typing import TYPE_CHECKING
 
 import ba
-from bastd.actor import spaz
 import _ba
 
 if TYPE_CHECKING:
@@ -886,6 +885,7 @@ def _preload2() -> None:
 
 
 def _preload3() -> None:
+    from bastd.actor.spazfactory import SpazFactory
     for mname in ['bomb', 'bombSticky', 'impactBomb']:
         ba.getmodel(mname)
     for tname in [
@@ -895,7 +895,7 @@ def _preload3() -> None:
         ba.gettexture(tname)
     for sname in ['freeze', 'fuse01', 'activateBeep', 'warnBeep']:
         ba.getsound(sname)
-    spaz.get_factory()
+    SpazFactory.get()
     ba.timer(0.2, _preload4)
 
 

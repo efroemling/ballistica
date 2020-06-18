@@ -59,6 +59,8 @@ class FlagFactory:
           The ba.Texture for flags.
     """
 
+    _STORENAME = ba.storagename()
+
     def __init__(self) -> None:
         """Instantiate a FlagFactory.
 
@@ -123,14 +125,14 @@ class FlagFactory:
 
         self.flag_texture = ba.gettexture('flagColor')
 
-    @staticmethod
-    def get() -> FlagFactory:
+    @classmethod
+    def get(cls) -> FlagFactory:
         """Get/create a shared FlagFactory instance."""
         activity = ba.getactivity()
-        factory = getattr(activity, 'shared_flag_factory', None)
+        factory = activity.customdata.get(cls._STORENAME)
         if factory is None:
             factory = FlagFactory()
-            setattr(activity, 'shared_flag_factory', factory)
+            activity.customdata[cls._STORENAME] = factory
         assert isinstance(factory, FlagFactory)
         return factory
 

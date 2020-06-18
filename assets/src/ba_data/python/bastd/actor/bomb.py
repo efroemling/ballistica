@@ -34,10 +34,6 @@ from bastd.gameutils import SharedObjects
 if TYPE_CHECKING:
     from typing import Any, Sequence, Optional, Callable, List, Tuple, Type
 
-# Attr we store these objects as on the current activity.
-# (based on our module so hopefully avoids conflicts)
-STORAGE_ATTR_NAME = '_' + __name__.replace('.', '_') + '_bombfactory'
-
 PlayerType = TypeVar('PlayerType', bound='ba.Player')
 
 
@@ -150,14 +146,16 @@ class BombFactory:
           ba.Sound for a rolling bomb.
     """
 
-    @staticmethod
-    def get() -> BombFactory:
+    _STORENAME = ba.storagename()
+
+    @classmethod
+    def get(cls) -> BombFactory:
         """Get/create a shared bastd.actor.bomb.BombFactory object."""
         activity = ba.getactivity()
-        factory = getattr(activity, STORAGE_ATTR_NAME, None)
+        factory = activity.customdata.get(cls._STORENAME)
         if factory is None:
             factory = BombFactory()
-            setattr(activity, STORAGE_ATTR_NAME, factory)
+            activity.customdata[cls._STORENAME] = factory
         assert isinstance(factory, BombFactory)
         return factory
 
