@@ -794,10 +794,15 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                              (1.9 + i * 0.05, 2.3 + i * 0.05))
             for i in range(display_count):
                 try:
-                    name_str = ', '.join(
-                        [p['name'] for p in display_scores[i][1]['players']])
+                    if display_scores[i][1] is None:
+                        name_str = '-'
+                    else:
+                        name_str = ', '.join([
+                            p['name'] for p in display_scores[i][1]['players']
+                        ])
                 except Exception:
-                    ba.print_exception('Error calcing name_str')
+                    ba.print_exception(
+                        f'Error calcing name_str for {display_scores}')
                     name_str = '-'
                 if display_scores[i] == our_score and not showed_ours:
                     flash = True
@@ -1172,8 +1177,8 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                      if 'error' in self._show_info['results'] else None)
             rank = self._show_info['results']['rank']
             total = self._show_info['results']['total']
-            rating = 10.0 if total == 1 else round(
-                10.0 * (1.0 - (float(rank - 1) / (total - 1))), 1)
+            rating = (10.0 if total == 1 else 10.0 * (1.0 - (float(rank - 1) /
+                                                             (total - 1))))
             player_rank = self._show_info['results']['playerRank']
             best_player_rank = self._show_info['results']['bestPlayerRank']
         else:
@@ -1298,7 +1303,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                          scale=0.7,
                          transition_delay=1.0).autoretain()
         else:
-            ZoomText((str(rating) if available else ba.Lstr(
+            ZoomText((f'{rating:.1f}' if available else ba.Lstr(
                 resource='unavailableText')),
                      flash=True,
                      trail=True,

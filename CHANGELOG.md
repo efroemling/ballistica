@@ -1,6 +1,11 @@
+### 1.5.7 (20077)
+- Fixed an issue where co-op score screen rating could look like '3.99999999999999'
+- Other minor bug fixes.
+
 ### 1.5.6 (20075)
 - Lots of internal event-handling cleanup/reorganization in preparation for Android 1.5 update.
 - Lots of low level input handling cleanup, also related to Android 1.5 version. Please holler if keyboard/game-controllers/etc. are behaving odd on any platforms.
+- Now including Android test builds for the first time since 1.5. These have not been thoroughly tested yet so please holler with anything that is obviously broken.
 - Mouse wheel now works in manual camera mode on more platforms.
 - Server scripts now run in opt mode in release builds so they can use bundled .opt-1.pyc files.
 - Fixes a potential crash in the local network browser.
