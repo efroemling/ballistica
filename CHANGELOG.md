@@ -1,8 +1,10 @@
-### 1.5.6 (20072)
-- Mouse wheel now works in manual camera mode on more platforms.
+### 1.5.6 (20075)
 - Lots of internal event-handling cleanup/reorganization in preparation for Android 1.5 update.
+- Lots of low level input handling cleanup, also related to Android 1.5 version. Please holler if keyboard/game-controllers/etc. are behaving odd on any platforms.
+- Mouse wheel now works in manual camera mode on more platforms.
 - Server scripts now run in opt mode in release builds so they can use bundled .opt-1.pyc files.
 - Fixes a potential crash in the local network browser.
+- Fixes an issue where Hockey Pucks would not show up in network games.
 - More misc bug fixes and tidying.
 
 ### 1.5.5 (20069)
