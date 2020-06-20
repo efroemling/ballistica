@@ -1,5 +1,5 @@
 ### 1.5.7 (20077)
-- Fixed an issue where co-op score screen rating could look like '3.99999999999999'
+- Fixed an issue where co-op score screen rating could look like '3.9999999999999'
 - Other minor bug fixes.
 
 ### 1.5.6 (20075)

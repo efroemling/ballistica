@@ -20214,7 +20214,7 @@ scripts-android: $(SCRIPT_TARGETS_ANDROID) $(SCRIPT_TARGETS_COMMON)
 # Build scripts for all platforms
 scripts: scripts-cmake scripts-win scripts-mac scripts-ios scripts-android
 clean-scripts:
-	rm -rf build/ba_data/python
+	rm -rf build/ba_data/python build/ba_data/python-site-packages
 
 # Build all required assets for a specific platform.
 assets-cmake: $(ASSET_TARGETS_CMAKE) $(ASSET_TARGETS_COMMON)
