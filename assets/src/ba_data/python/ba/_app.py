@@ -519,11 +519,6 @@ class App:
         # If there's a leftover log file, attempt to upload
         # it to the server and/or get rid of it.
         _apputils.handle_leftover_log_file()
-        try:
-            _apputils.handle_leftover_log_file()
-        except Exception:
-            from ba import _error
-            _error.print_exception('Error handling leftover log file')
 
         # Notify the user if we're using custom system scripts.
         # FIXME: This no longer works since sys-scripts is an absolute path;

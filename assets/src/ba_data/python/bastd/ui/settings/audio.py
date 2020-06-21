@@ -206,7 +206,7 @@ class AudioSettingsWindow(ba.Window):
         else:
             self._soundtrack_button = None
 
-        # tweak a few navigation bits
+        # Tweak a few navigation bits.
         try:
             ba.widget(edit=back_button, down_widget=svne.minusbutton)
         except Exception:

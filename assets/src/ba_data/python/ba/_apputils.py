@@ -136,26 +136,36 @@ def handle_log() -> None:
 
 def handle_leftover_log_file() -> None:
     """Handle an un-uploaded log from a previous run."""
-    import json
-    from ba._netutils import serverput
+    try:
+        import json
+        from ba._netutils import serverput
 
-    if os.path.exists(_ba.get_log_file_path()):
-        with open(_ba.get_log_file_path()) as infile:
-            info = json.loads(infile.read())
-        infile.close()
-        do_send = should_submit_debug_info()
-        if do_send:
+        if os.path.exists(_ba.get_log_file_path()):
+            with open(_ba.get_log_file_path()) as infile:
+                info = json.loads(infile.read())
+            infile.close()
+            do_send = should_submit_debug_info()
+            if do_send:
 
-            def response(data: Any) -> None:
-                # Non-None response means we were successful;
-                # lets kill it.
-                if data is not None:
-                    os.remove(_ba.get_log_file_path())
+                def response(data: Any) -> None:
+                    # Non-None response means we were successful;
+                    # lets kill it.
+                    if data is not None:
+                        try:
+                            os.remove(_ba.get_log_file_path())
+                        except FileNotFoundError:
+                            # Saw this in the wild. The file just existed
+                            # a moment ago but I suppose something could have
+                            # killed it since. ¯\_(ツ)_/¯
+                            pass
 
-            serverput('bsLog', info, response)
-        else:
-            # If they don't want logs uploaded just kill it.
-            os.remove(_ba.get_log_file_path())
+                serverput('bsLog', info, response)
+            else:
+                # If they don't want logs uploaded just kill it.
+                os.remove(_ba.get_log_file_path())
+    except Exception:
+        from ba import _error
+        _error.print_exception('Error handling leftover log file.')
 
 
 def garbage_collect(session_end: bool = True) -> None:

@@ -881,6 +881,7 @@
       <w>hmac</w>
       <w>hmmm</w>
       <w>hmmmm</w>
+      <w>hmph</w>
       <w>hoffs</w>
       <w>holdingflag</w>
       <w>holdingteam</w>
@@ -1622,6 +1623,7 @@
       <w>respawned</w>
       <w>respawnicon</w>
       <w>responsetype</w>
+      <w>resultstr</w>
       <w>returncode</w>
       <w>returnfuncptrs</w>
       <w>returnspc</w>
@@ -1900,6 +1902,8 @@
       <w>sysctl</w>
       <w>syslogmodule</w>
       <w>tabval</w>
+      <w>tagargs</w>
+      <w>tagversion</w>
       <w>taobao</w>
       <w>taobaomascot</w>
       <w>targ</w>

@@ -348,8 +348,6 @@ class GatherWindow(ba.Window):
         elif tab == 'google_play':
             c_width = self._scroll_width
             c_height = 380.0
-            b_width = 250.0
-            b_width2 = 230.0
             self._tab_container = cnt = ba.containerwidget(
                 parent=self._root_widget,
                 position=(scroll_left, scroll_bottom +
@@ -357,71 +355,17 @@ class GatherWindow(ba.Window):
                 size=(c_width, c_height),
                 background=False,
                 selection_loop_to_parent=True)
-            img_size = 100
-            v = c_height - 30
-            ba.textwidget(parent=cnt,
-                          position=(c_width * 0.5, v),
-                          color=(0.6, 1.0, 0.6),
-                          scale=1.3,
-                          size=(0, 0),
-                          maxwidth=c_width * 0.9,
-                          h_align='center',
-                          v_align='center',
-                          text=ba.Lstr(resource=self._r +
-                                       '.googlePlayDescriptionText'))
-            v -= 35
-            ba.textwidget(parent=cnt,
-                          position=(c_width * 0.5, v),
-                          color=(0.6, 1.0, 0.6),
-                          scale=0.7,
-                          size=(0, 0),
-                          maxwidth=c_width * 0.9,
-                          h_align='center',
-                          v_align='center',
-                          text=ba.Lstr(resource=self._r +
-                                       '.worksWithGooglePlayDevicesText'))
-            v -= 125
-            btn = ba.buttonwidget(
+            v = c_height - 30.0
+            ba.textwidget(
                 parent=cnt,
-                label='',
-                position=(c_width * 0.5 - b_width * 0.5, v - b_width * 0.5),
-                size=(b_width, b_width * 0.9),
-                button_type='square',
-                on_activate_call=self._on_google_play_invite_press,
-                autoselect=True,
-                up_widget=self._tab_buttons[tab])
-            ba.imagewidget(parent=cnt,
-                           position=(c_width * 0.5 - img_size * 0.5, v - 35),
-                           size=(img_size, img_size),
-                           draw_controller=btn,
-                           texture=ba.gettexture('googlePlayGamesIcon'),
-                           color=(0, 1, 0))
-            ba.textwidget(parent=cnt,
-                          text=ba.Lstr(resource=self._r +
-                                       '.googlePlayInviteText'),
-                          maxwidth=b_width * 0.8,
-                          draw_controller=btn,
-                          color=(0, 1, 0),
-                          flatness=1.0,
-                          position=(c_width * 0.5, v - 60),
-                          scale=1.6,
-                          size=(0, 0),
-                          h_align='center',
-                          v_align='center')
-            v -= 180
-            ba.buttonwidget(
-                parent=cnt,
-                label=ba.Lstr(resource=self._r + '.googlePlaySeeInvitesText'),
-                color=(0.5, 0.5, 0.6),
-                textcolor=(0.75, 0.7, 0.8),
-                autoselect=True,
-                position=(c_width * 0.5 - b_width2 * 0.5, v),
-                size=(b_width2, 60),
-                on_activate_call=lambda: ba.timer(
-                    0.1,
-                    self._on_google_play_show_invites_press,
-                    timetype=ba.TimeType.REAL),
-            )
+                position=(c_width * 0.5, v - 140.0),
+                color=(0.6, 1.0, 0.6),
+                scale=1.3,
+                size=(0.0, 0.0),
+                maxwidth=c_width * 0.9,
+                h_align='center',
+                v_align='center',
+                text=ba.Lstr(resource='googleMultiplayerDiscontinuedText'))
 
         elif tab == 'internet':
             c_width = self._scroll_width
@@ -1717,6 +1661,9 @@ class GatherWindow(ba.Window):
                                     self._call, self._address, self._port,
                                     ping if accessible else None),
                                             from_other_thread=True)
+                            except ConnectionRefusedError:
+                                # Fine, server; sorry we pinged you. Hmph.
+                                pass
                             except OSError as exc:
                                 import errno
 

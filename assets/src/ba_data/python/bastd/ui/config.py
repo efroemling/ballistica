@@ -127,23 +127,23 @@ class ConfigNumberEdit:
                                       text=displayname,
                                       maxwidth=160 + xoffset,
                                       color=(0.8, 0.8, 0.8, 1.0),
-                                      h_align="left",
-                                      v_align="center",
+                                      h_align='left',
+                                      v_align='center',
                                       scale=textscale)
         self.valuetext = ba.textwidget(parent=parent,
                                        position=(246 + xoffset, position[1]),
                                        size=(60, 28),
                                        editable=False,
                                        color=(0.3, 1.0, 0.3, 1.0),
-                                       h_align="right",
-                                       v_align="center",
+                                       h_align='right',
+                                       v_align='center',
                                        text=str(self._value),
                                        padding=2)
         self.minusbutton = ba.buttonwidget(
             parent=parent,
             position=(330 + xoffset, position[1]),
             size=(28, 28),
-            label="-",
+            label='-',
             autoselect=True,
             on_activate_call=ba.Call(self._down),
             repeat=True,
@@ -152,12 +152,12 @@ class ConfigNumberEdit:
                                           position=(380 + xoffset,
                                                     position[1]),
                                           size=(28, 28),
-                                          label="+",
+                                          label='+',
                                           autoselect=True,
                                           on_activate_call=ba.Call(self._up),
                                           repeat=True,
                                           enable_sound=changesound)
-        # complain if we outlive our widgets
+        # Complain if we outlive our widgets.
         ba.uicleanupcheck(self, self.nametext)
         self._update_display()
 
@@ -177,4 +177,4 @@ class ConfigNumberEdit:
         ba.app.config.apply_and_commit()
 
     def _update_display(self) -> None:
-        ba.textwidget(edit=self.valuetext, text=str(round(self._value, 2)))
+        ba.textwidget(edit=self.valuetext, text=f'{self._value:.1f}')

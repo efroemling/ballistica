@@ -1,3 +1,9 @@
+### 1.5.8 (20079)
+- Fixed an issue where touch controls or sound settings values could look like 0.8999999999. Please holler if you see this anywhere else.
+- Fixed a potential crash when tapping the screen before the game is fully inited.
+- Restored the correct error message in the 'Google Play' connection tab from 1.4 (I am actively working on a replacement)
+- Other minor bug fixes.
+
 ### 1.5.7 (20077)
 - Fixed an issue where co-op score screen rating could look like '3.9999999999999'
 - Other minor bug fixes.
