@@ -39,6 +39,12 @@ class AllSettingsWindow(ba.Window):
                  origin_widget: ba.Widget = None):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
+        import threading
+
+        # Preload some modules we use in a background thread so we won't
+        # have a visual hitch when the user taps them.
+        threading.Thread(target=self._preload_modules).start()
+
         ba.set_analytics_screen('Settings Window')
         scale_origin: Optional[Tuple[float, float]]
         if origin_widget is not None:
@@ -197,45 +203,54 @@ class AllSettingsWindow(ba.Window):
                        texture=ba.gettexture('advancedIcon'),
                        draw_controller=avb)
 
+    @staticmethod
+    def _preload_modules() -> None:
+        """For preloading modules we use in a bg thread to prevent hitches."""
+        import bastd.ui.mainmenu as _unused1
+        import bastd.ui.settings.controls as _unused2
+        import bastd.ui.settings.graphics as _unused3
+        import bastd.ui.settings.audio as _unused4
+        import bastd.ui.settings.advanced as _unused5
+
     def _do_back(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui import mainmenu
+        from bastd.ui.mainmenu import MainMenuWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
-        ba.app.main_menu_window = (mainmenu.MainMenuWindow(
+        ba.app.main_menu_window = (MainMenuWindow(
             transition='in_left').get_root_widget())
 
     def _do_controllers(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.settings import controls
+        from bastd.ui.settings.controls import ControlsSettingsWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (controls.ControlsSettingsWindow(
+        ba.app.main_menu_window = (ControlsSettingsWindow(
             origin_widget=self._controllers_button).get_root_widget())
 
     def _do_graphics(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.settings import graphics
+        from bastd.ui.settings.graphics import GraphicsSettingsWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (graphics.GraphicsSettingsWindow(
+        ba.app.main_menu_window = (GraphicsSettingsWindow(
             origin_widget=self._graphics_button).get_root_widget())
 
     def _do_audio(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.settings import audio
+        from bastd.ui.settings.audio import AudioSettingsWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (audio.AudioSettingsWindow(
+        ba.app.main_menu_window = (AudioSettingsWindow(
             origin_widget=self._audio_button).get_root_widget())
 
     def _do_advanced(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.settings import advanced
+        from bastd.ui.settings.advanced import AdvancedSettingsWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (advanced.AdvancedSettingsWindow(
+        ba.app.main_menu_window = (AdvancedSettingsWindow(
             origin_widget=self._advanced_button).get_root_widget())
 
     def _save_state(self) -> None:

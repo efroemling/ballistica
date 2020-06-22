@@ -374,8 +374,9 @@ class LeagueRankButton:
                 callback=ba.WeakCall(self._on_power_ranking_query_response))
 
     def _default_on_activate_call(self) -> None:
-        from bastd.ui.league import rankwindow
-        rankwindow.LeagueRankWindow(modal=True, origin_widget=self._button)
+        # pylint: disable=cyclic-import
+        from bastd.ui.league.rankwindow import LeagueRankWindow
+        LeagueRankWindow(modal=True, origin_widget=self._button)
 
     def set_position(self, position: Tuple[float, float]) -> None:
         """Set the button's position."""

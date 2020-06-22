@@ -39,6 +39,12 @@ class PlayWindow(ba.Window):
                  origin_widget: ba.Widget = None):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
+        import threading
+
+        # Preload some modules we use in a background thread so we won't
+        # have a visual hitch when the user taps them.
+        threading.Thread(target=self._preload_modules).start()
+
         new_style = True
         width = 1000 if ba.app.small_ui else 800
         x_offs = 100 if ba.app.small_ui else 0
@@ -410,42 +416,50 @@ class PlayWindow(ba.Window):
 
         self._restore_state()
 
+    @staticmethod
+    def _preload_modules() -> None:
+        """For preloading modules we use in a bg thread to prevent hitches."""
+        import bastd.ui.mainmenu as _unused1
+        import bastd.ui.account as _unused2
+        import bastd.ui.coop.browser as _unused3
+        import bastd.ui.playlist.browser as _unused4
+
     def _back(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui import mainmenu
+        from bastd.ui.mainmenu import MainMenuWindow
         self._save_state()
-        ba.app.main_menu_window = (mainmenu.MainMenuWindow(
+        ba.app.main_menu_window = (MainMenuWindow(
             transition='in_left').get_root_widget())
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
 
     def _coop(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui import account
-        from bastd.ui.coop import browser
+        from bastd.ui.account import show_sign_in_prompt
+        from bastd.ui.coop.browser import CoopBrowserWindow
         if _ba.get_account_state() != 'signed_in':
-            account.show_sign_in_prompt()
+            show_sign_in_prompt()
             return
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (browser.CoopBrowserWindow(
+        ba.app.main_menu_window = (CoopBrowserWindow(
             origin_widget=self._coop_button).get_root_widget())
 
     def _team_tourney(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.playlist import browser
+        from bastd.ui.playlist.browser import PlaylistBrowserWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (browser.PlaylistBrowserWindow(
+        ba.app.main_menu_window = (PlaylistBrowserWindow(
             origin_widget=self._teams_button,
             sessiontype=ba.DualTeamSession).get_root_widget())
 
     def _free_for_all(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.playlist import browser
+        from bastd.ui.playlist.browser import PlaylistBrowserWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (browser.PlaylistBrowserWindow(
+        ba.app.main_menu_window = (PlaylistBrowserWindow(
             origin_widget=self._free_for_all_button,
             sessiontype=ba.FreeForAllSession).get_root_widget())
 

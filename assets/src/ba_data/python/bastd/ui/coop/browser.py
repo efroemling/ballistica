@@ -29,6 +29,8 @@ from typing import TYPE_CHECKING
 
 import _ba
 import ba
+from bastd.ui.store.button import StoreButton
+from bastd.ui.league.rankbutton import LeagueRankButton
 
 if TYPE_CHECKING:
     from typing import Any, Optional, Tuple, Dict, List, Union
@@ -54,8 +56,12 @@ class CoopBrowserWindow(ba.Window):
         # pylint: disable=cyclic-import
         # pylint: disable=too-many-statements
         # pylint: disable=cyclic-import
-        from bastd.ui.store.button import StoreButton
-        from bastd.ui.league.rankbutton import LeagueRankButton
+        import threading
+
+        # Preload some modules we use in a background thread so we won't
+        # have a visual hitch when the user taps them.
+        threading.Thread(target=self._preload_modules).start()
+
         ba.set_analytics_screen('Coop Window')
 
         app = ba.app
@@ -270,6 +276,20 @@ class CoopBrowserWindow(ba.Window):
                                       timetype=ba.TimeType.REAL,
                                       repeat=True)
         self._update()
+
+    @staticmethod
+    def _preload_modules() -> None:
+        """For preloading modules we use in a bg thread to prevent hitches."""
+        import bastd.ui.purchase as _unused1
+        import bastd.ui.coop.gamebutton as _unused2
+        import bastd.ui.confirm as _unused3
+        import bastd.ui.account as _unused4
+        import bastd.ui.league.rankwindow as _unused5
+        import bastd.ui.store.browser as _unused6
+        import bastd.ui.account.viewer as _unused7
+        import bastd.ui.tournamentscores as _unused8
+        import bastd.ui.tournamententry as _unused9
+        import bastd.ui.play as _unused10
 
     def _update(self) -> None:
         cur_time = ba.time(ba.TimeType.REAL)
@@ -739,13 +759,13 @@ class CoopBrowserWindow(ba.Window):
 
     def _on_tournament_info_press(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui import confirm
+        from bastd.ui.confirm import ConfirmWindow
         txt = ba.Lstr(resource=self._r + '.tournamentInfoText')
-        confirm.ConfirmWindow(txt,
-                              cancel_button=False,
-                              width=550,
-                              height=260,
-                              origin_widget=self._tournament_info_button)
+        ConfirmWindow(txt,
+                      cancel_button=False,
+                      width=550,
+                      height=260,
+                      origin_widget=self._tournament_info_button)
 
     def _refresh(self) -> None:
         # pylint: disable=too-many-statements
@@ -1335,10 +1355,10 @@ class CoopBrowserWindow(ba.Window):
 
     def _switch_to_league_rankings(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui import account
+        from bastd.ui.account import show_sign_in_prompt
         from bastd.ui.league.rankwindow import LeagueRankWindow
         if _ba.get_account_state() != 'signed_in':
-            account.show_sign_in_prompt()
+            show_sign_in_prompt()
             return
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
@@ -1349,22 +1369,22 @@ class CoopBrowserWindow(ba.Window):
 
     def _switch_to_score(self, show_tab: Optional[str] = 'extras') -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui import account
-        from bastd.ui.store import browser
+        from bastd.ui.account import show_sign_in_prompt
+        from bastd.ui.store.browser import StoreBrowserWindow
         if _ba.get_account_state() != 'signed_in':
-            account.show_sign_in_prompt()
+            show_sign_in_prompt()
             return
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         assert self._store_button is not None
-        ba.app.main_menu_window = (browser.StoreBrowserWindow(
+        ba.app.main_menu_window = (StoreBrowserWindow(
             origin_widget=self._store_button.get_button(),
             show_tab=show_tab,
             back_location='CoopBrowserWindow').get_root_widget())
 
     def _show_leader(self, tournament_button: Dict[str, Any]) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.account import viewer
+        from bastd.ui.account.viewer import AccountViewerWindow
         tournament_id = tournament_button['tournament_id']
 
         # FIXME: This assumes a single player entry in leader; should expand
@@ -1374,7 +1394,7 @@ class CoopBrowserWindow(ba.Window):
             ba.playsound(ba.getsound('error'))
             return
         ba.playsound(ba.getsound('swish'))
-        viewer.AccountViewerWindow(
+        AccountViewerWindow(
             account_id=tournament_button['leader'][2][0].get('a', None),
             profile_id=tournament_button['leader'][2][0].get('p', None),
             position=tournament_button['current_leader_name_text'].
@@ -1382,13 +1402,13 @@ class CoopBrowserWindow(ba.Window):
 
     def _show_scores(self, tournament_button: Dict[str, Any]) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui import tournamentscores
+        from bastd.ui.tournamentscores import TournamentScoresWindow
         tournament_id = tournament_button['tournament_id']
         if tournament_id is None:
             ba.playsound(ba.getsound('error'))
             return
 
-        tournamentscores.TournamentScoresWindow(
+        TournamentScoresWindow(
             tournament_id=tournament_id,
             position=tournament_button['more_scores_button'].
             get_screen_space_center())
@@ -1406,8 +1426,8 @@ class CoopBrowserWindow(ba.Window):
         # pylint: disable=too-many-return-statements
         # pylint: disable=cyclic-import
         from ba.internal import have_pro
-        from bastd.ui import confirm
-        from bastd.ui import tournamententry
+        from bastd.ui.confirm import ConfirmWindow
+        from bastd.ui.tournamententry import TournamentEntryWindow
         from bastd.ui.purchase import PurchaseWindow
         from bastd.ui.account import show_sign_in_prompt
         args: Dict[str, Any] = {}
@@ -1457,12 +1477,11 @@ class CoopBrowserWindow(ba.Window):
                 tournament_button['tournament_id']]['game']
 
         if tournament_button is None and game == 'Easy:The Last Stand':
-            confirm.ConfirmWindow(ba.Lstr(
-                resource='difficultyHardUnlockOnlyText',
-                fallback_resource='difficultyHardOnlyText'),
-                                  cancel_button=False,
-                                  width=460,
-                                  height=130)
+            ConfirmWindow(ba.Lstr(resource='difficultyHardUnlockOnlyText',
+                                  fallback_resource='difficultyHardOnlyText'),
+                          cancel_button=False,
+                          width=460,
+                          height=130)
             return
 
         # Infinite onslaught/runaround require pro; bring up a store link if
@@ -1506,7 +1525,7 @@ class CoopBrowserWindow(ba.Window):
 
         # For tournaments, we pop up the entry window.
         if tournament_button is not None:
-            tournamententry.TournamentEntryWindow(
+            TournamentEntryWindow(
                 tournament_id=tournament_button['tournament_id'],
                 position=tournament_button['button'].get_screen_space_center())
         else:

@@ -37,12 +37,17 @@ class MainMenuWindow(ba.Window):
 
     def __init__(self, transition: Optional[str] = 'in_right'):
         # pylint: disable=cyclic-import
-        from bastd import mainmenu
+        import threading
+        from bastd.mainmenu import MainMenuSession
         self._in_game = not isinstance(_ba.get_foreground_host_session(),
-                                       mainmenu.MainMenuSession)
+                                       MainMenuSession)
+
+        # Preload some modules we use in a background thread so we won't
+        # have a visual hitch when the user taps them.
+        threading.Thread(target=self._preload_modules).start()
+
         if not self._in_game:
             ba.set_analytics_screen('Main Menu')
-
             self._show_remote_app_info_on_first_launch()
 
         # Make a vanilla container; we'll modify it to our needs in refresh.
@@ -84,6 +89,22 @@ class MainMenuWindow(ba.Window):
                                        repeat=True,
                                        timetype=ba.TimeType.REAL)
 
+    @staticmethod
+    def _preload_modules() -> None:
+        """For preloading modules we use in a bg thread to prevent hitches."""
+        import bastd.ui.getremote as _unused
+        import bastd.ui.confirm as _unused2
+        import bastd.ui.store.button as _unused3
+        import bastd.ui.kiosk as _unused4
+        import bastd.ui.account.settings as _unused5
+        import bastd.ui.store.browser as _unused6
+        import bastd.ui.creditslist as _unused7
+        import bastd.ui.helpui as _unused8
+        import bastd.ui.settings.allsettings as _unused9
+        import bastd.ui.gather as _unused10
+        import bastd.ui.watch as _unused11
+        import bastd.ui.play as _unused12
+
     def _show_remote_app_info_on_first_launch(self) -> None:
         # The first time the non-in-game menu pops up, we might wanna show
         # a 'get-remote-app' dialog in front of it.
@@ -99,12 +120,12 @@ class MainMenuWindow(ba.Window):
 
                     def _check_show_bs_remote_window() -> None:
                         try:
-                            from bastd.ui import getremote
+                            from bastd.ui.getremote import GetBSRemoteWindow
                             ba.playsound(ba.getsound('swish'))
-                            getremote.GetBSRemoteWindow()
+                            GetBSRemoteWindow()
                         except Exception:
                             ba.print_exception(
-                                'error showing ba-remote window')
+                                'Error showing get-remote window.')
 
                     ba.timer(2.5,
                              _check_show_bs_remote_window,
@@ -149,7 +170,7 @@ class MainMenuWindow(ba.Window):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
-        from bastd.ui import confirm
+        from bastd.ui.confirm import QuitWindow
         from bastd.ui.store.button import StoreButton
 
         # Clear everything that was there.
@@ -323,7 +344,7 @@ class MainMenuWindow(ba.Window):
                     and ba.app.platform == 'android'):
 
                 def _do_quit() -> None:
-                    confirm.QuitWindow(swish=True, back=True)
+                    QuitWindow(swish=True, back=True)
 
                 ba.containerwidget(edit=self._root_widget,
                                    on_cancel_call=_do_quit)
@@ -804,68 +825,67 @@ class MainMenuWindow(ba.Window):
 
     def _quit(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui import confirm
-        confirm.QuitWindow(origin_widget=self._quit_button)
+        from bastd.ui.confirm import QuitWindow
+        QuitWindow(origin_widget=self._quit_button)
 
     def _demo_menu_press(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui import kiosk
+        from bastd.ui.kiosk import KioskWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_right')
-        ba.app.main_menu_window = (kiosk.KioskWindow(
+        ba.app.main_menu_window = (KioskWindow(
             transition='in_left').get_root_widget())
 
     def _show_account_window(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.account import settings
+        from bastd.ui.account.settings import AccountSettingsWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (settings.AccountSettingsWindow(
+        ba.app.main_menu_window = (AccountSettingsWindow(
             origin_widget=self._gc_button).get_root_widget())
 
     def _on_store_pressed(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.store import browser
-        from bastd.ui import account
+        from bastd.ui.store.browser import StoreBrowserWindow
+        from bastd.ui.account import show_sign_in_prompt
         if _ba.get_account_state() != 'signed_in':
-            account.show_sign_in_prompt()
+            show_sign_in_prompt()
             return
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (browser.StoreBrowserWindow(
+        ba.app.main_menu_window = (StoreBrowserWindow(
             origin_widget=self._store_button).get_root_widget())
 
     def _confirm_end_game(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui import confirm
+        from bastd.ui.confirm import ConfirmWindow
         # FIXME: Currently we crash calling this on client-sessions.
 
         # Select cancel by default; this occasionally gets called by accident
         # in a fit of button mashing and this will help reduce damage.
-        confirm.ConfirmWindow(ba.Lstr(resource=self._r + '.exitToMenuText'),
-                              self._end_game,
-                              cancel_is_selected=True)
+        ConfirmWindow(ba.Lstr(resource=self._r + '.exitToMenuText'),
+                      self._end_game,
+                      cancel_is_selected=True)
 
     def _confirm_end_replay(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui import confirm
+        from bastd.ui.confirm import ConfirmWindow
 
         # Select cancel by default; this occasionally gets called by accident
         # in a fit of button mashing and this will help reduce damage.
-        confirm.ConfirmWindow(ba.Lstr(resource=self._r + '.exitToMenuText'),
-                              self._end_game,
-                              cancel_is_selected=True)
+        ConfirmWindow(ba.Lstr(resource=self._r + '.exitToMenuText'),
+                      self._end_game,
+                      cancel_is_selected=True)
 
     def _confirm_leave_party(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui import confirm
+        from bastd.ui.confirm import ConfirmWindow
 
         # Select cancel by default; this occasionally gets called by accident
         # in a fit of button mashing and this will help reduce damage.
-        confirm.ConfirmWindow(ba.Lstr(resource=self._r +
-                                      '.leavePartyConfirmText'),
-                              self._leave_party,
-                              cancel_is_selected=True)
+        ConfirmWindow(ba.Lstr(resource=self._r + '.leavePartyConfirmText'),
+                      self._leave_party,
+                      cancel_is_selected=True)
 
     def _leave_party(self) -> None:
         _ba.disconnect_from_host()
@@ -886,27 +906,27 @@ class MainMenuWindow(ba.Window):
 
     def _credits(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui import creditslist
+        from bastd.ui.creditslist import CreditsListWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (creditslist.CreditsListWindow(
+        ba.app.main_menu_window = (CreditsListWindow(
             origin_widget=self._credits_button).get_root_widget())
 
     def _howtoplay(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui import helpui
+        from bastd.ui.helpui import HelpWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (helpui.HelpWindow(
+        ba.app.main_menu_window = (HelpWindow(
             main_menu=True,
             origin_widget=self._how_to_play_button).get_root_widget())
 
     def _settings(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.settings import allsettings
+        from bastd.ui.settings.allsettings import AllSettingsWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (allsettings.AllSettingsWindow(
+        ba.app.main_menu_window = (AllSettingsWindow(
             origin_widget=self._settings_button).get_root_widget())
 
     def _resume_and_call(self, call: Callable[[], Any]) -> None:

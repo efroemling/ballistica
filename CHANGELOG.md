@@ -1,3 +1,6 @@
+### 1.5.9 (20081)
+- Reduced some hitches when clicking on certain buttons in the UI
+
 ### 1.5.8 (20079)
 - Fixed an issue where touch controls or sound settings values could look like 0.8999999999. Please holler if you see this anywhere else.
 - Fixed a potential crash when tapping the screen before the game is fully inited.

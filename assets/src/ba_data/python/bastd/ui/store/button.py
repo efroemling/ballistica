@@ -212,12 +212,13 @@ class StoreButton:
                                 self._sale_circle_rad * 0.3))
 
     def _default_on_activate_call(self) -> None:
-        from bastd.ui import account
-        from bastd.ui.store import browser
+        # pylint: disable=cyclic-import
+        from bastd.ui.account import show_sign_in_prompt
+        from bastd.ui.store.browser import StoreBrowserWindow
         if _ba.get_account_state() != 'signed_in':
-            account.show_sign_in_prompt()
+            show_sign_in_prompt()
             return
-        browser.StoreBrowserWindow(modal=True, origin_widget=self._button)
+        StoreBrowserWindow(modal=True, origin_widget=self._button)
 
     def get_button(self) -> ba.Widget:
         """Return the underlying button widget."""
@@ -225,6 +226,7 @@ class StoreButton:
 
     def _update(self) -> None:
         # pylint: disable=too-many-branches
+        # pylint: disable=cyclic-import
         from ba import SpecialChar, TimeFormat
         from ba.internal import (get_available_sale_time,
                                  get_available_purchase_count)
