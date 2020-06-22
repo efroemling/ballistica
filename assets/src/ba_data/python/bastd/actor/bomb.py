@@ -674,6 +674,7 @@ class Bomb(ba.Actor):
                  velocity: Sequence[float] = (0.0, 0.0, 0.0),
                  bomb_type: str = 'normal',
                  blast_radius: float = 2.0,
+                 bomb_scale: float = 1.0,
                  source_player: ba.Player = None,
                  owner: ba.Node = None):
         """Create a new Bomb.
@@ -693,6 +694,7 @@ class Bomb(ba.Actor):
         self.bomb_type = bomb_type
 
         self._exploded = False
+        self.scale = bomb_scale
 
         self.texture_sequence: Optional[ba.Node] = None
 
@@ -753,6 +755,7 @@ class Bomb(ba.Actor):
                                        'model': factory.land_mine_model,
                                        'light_model': factory.land_mine_model,
                                        'body': 'landMine',
+                                       'body_scale': self.scale,
                                        'shadow_size': 0.44,
                                        'color_texture': factory.land_mine_tex,
                                        'reflection': 'powerup',
@@ -770,6 +773,7 @@ class Bomb(ba.Actor):
                                        'model': factory.tnt_model,
                                        'light_model': factory.tnt_model,
                                        'body': 'crate',
+                                       'body_scale': self.scale,
                                        'shadow_size': 0.5,
                                        'color_texture': factory.tnt_tex,
                                        'reflection': 'soft',
@@ -785,6 +789,7 @@ class Bomb(ba.Actor):
                                        'position': position,
                                        'velocity': velocity,
                                        'body': 'sphere',
+                                       'body_scale': self.scale,
                                        'model': factory.impact_bomb_model,
                                        'shadow_size': 0.3,
                                        'color_texture': factory.impact_tex,
@@ -822,6 +827,7 @@ class Bomb(ba.Actor):
                                        'position': position,
                                        'velocity': velocity,
                                        'model': model,
+                                       'body_scale': self.scale,
                                        'shadow_size': 0.3,
                                        'color_texture': tex,
                                        'sticky': sticky,
@@ -846,7 +852,11 @@ class Bomb(ba.Actor):
             ba.timer(fuse_time,
                      ba.WeakCall(self.handlemessage, ExplodeMessage()))
 
-        ba.animate(self.node, 'model_scale', {0: 0, 0.2: 1.3, 0.26: 1})
+        ba.animate(self.node, 'model_scale', {
+            0: 0,
+            0.2: 1.3 * self.scale,
+            0.26: self.scale
+        })
 
     def get_source_player(
             self, playertype: Type[PlayerType]) -> Optional[PlayerType]:

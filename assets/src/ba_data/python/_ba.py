@@ -572,6 +572,7 @@ class Node:
     color: Sequence[float] = (0.0, 0.0, 0.0)
     size: Sequence[float] = (0.0, 0.0, 0.0)
     position: Sequence[float] = (0.0, 0.0, 0.0)
+    position_center: Sequence[float] = (0.0, 0.0, 0.0)
     position_forward: Sequence[float] = (0.0, 0.0, 0.0)
     punch_position: Sequence[float] = (0.0, 0.0, 0.0)
     punch_velocity: Sequence[float] = (0.0, 0.0, 0.0)
