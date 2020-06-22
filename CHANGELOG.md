@@ -1,5 +1,9 @@
-### 1.5.9 (20081)
+### 1.5.9 (20082)
 - Reduced some hitches when clicking on certain buttons in the UI
+- Fixed an issue where very early keyboard/controller connects/disconnects could get lost on android.
+- ba._modutils is now ba.modutils since it is intended to be publicly accessible.
+- drop-down console is now properly accessible again via android hardware keyboards (` key)
+- Other minor bug fixes..
 
 ### 1.5.8 (20079)
 - Fixed an issue where touch controls or sound settings values could look like 0.8999999999. Please holler if you see this anywhere else.

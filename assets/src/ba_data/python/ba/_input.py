@@ -562,8 +562,11 @@ def _gen_android_input_hash() -> str:
                     # (since it'll vary a lot across devices)
                     if f_name == 'gpio-keys.kl':
                         continue
-                    with open(dirname + '/' + f_name, 'rb') as infile:
-                        md5.update(infile.read())
+                    try:
+                        with open(f'{dirname}/{f_name}', 'rb') as infile:
+                            md5.update(infile.read())
+                    except PermissionError:
+                        pass
         except Exception:
             from ba import _error
             _error.print_exception(

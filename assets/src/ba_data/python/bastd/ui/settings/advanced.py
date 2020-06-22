@@ -179,7 +179,7 @@ class AdvancedSettingsWindow(ba.Window):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
         from bastd.ui.config import ConfigCheckBox
-        from ba.internal import show_user_scripts
+        from ba.modutils import show_user_scripts
 
         # Don't rebuild if the menu is open or if our language and
         # language-list hasn't changed.

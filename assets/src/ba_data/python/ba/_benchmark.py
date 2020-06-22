@@ -73,7 +73,7 @@ def run_stress_test(playlist_type: str = 'Random',
                     player_count: int = 8,
                     round_duration: int = 30) -> None:
     """Run a stress test."""
-    from ba import _modutils
+    from ba import modutils
     from ba._general import Call
     from ba._enums import TimeType
     _ba.screenmessage(
@@ -90,7 +90,7 @@ def run_stress_test(playlist_type: str = 'Random',
         _ba.timer(7.0,
                   Call(_ba.screenmessage,
                        ('stats will be written to ' +
-                        _modutils.get_human_readable_user_scripts_path() +
+                        modutils.get_human_readable_user_scripts_path() +
                         '/stress_test_stats.csv')),
                   timetype=TimeType.REAL)
 

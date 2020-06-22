@@ -53,7 +53,6 @@ class CoopBrowserWindow(ba.Window):
     def __init__(self,
                  transition: Optional[str] = 'in_right',
                  origin_widget: ba.Widget = None):
-        # pylint: disable=cyclic-import
         # pylint: disable=too-many-statements
         # pylint: disable=cyclic-import
         import threading

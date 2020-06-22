@@ -1626,6 +1626,7 @@ class GatherWindow(ba.Window):
                             self._call = call
 
                         def run(self) -> None:
+                            # pylint: disable=too-many-branches
                             ba.app.ping_thread_count += 1
                             try:
                                 import socket
@@ -1669,8 +1670,12 @@ class GatherWindow(ba.Window):
 
                                 # Ignore harmless errors.
                                 if exc.errno in {
-                                        errno.EHOSTUNREACH, errno.ENETUNREACH
+                                        errno.EHOSTUNREACH,
+                                        errno.ENETUNREACH,
                                 }:
+                                    pass
+                                elif exc.errno == 10022:
+                                    # Windows 'invalid argument' error.
                                     pass
                                 elif exc.errno == 10051:
                                     # Windows 'a socket operation was attempted
@@ -1686,8 +1691,10 @@ class GatherWindow(ba.Window):
                                             f' for addr {self._address}'
                                             f' port {self._port}.')
                                 else:
-                                    ba.print_exception('Error on gather ping.',
-                                                       once=True)
+                                    ba.print_exception(
+                                        f'Error on gather ping '
+                                        f'(errno={exc.errno})',
+                                        once=True)
                             except Exception:
                                 ba.print_exception('Error on gather ping',
                                                    once=True)
@@ -1776,10 +1783,12 @@ class GatherWindow(ba.Window):
         text = self._internet_host_status_text
         if text:
             if data is None:
-                ba.textwidget(edit=text,
-                              text=ba.Lstr(resource=self._r +
-                                           '.partyStatusNoConnectionText'),
-                              color=(1, 0, 0))
+                ba.textwidget(
+                    edit=text,
+                    text=ba.Lstr(resource=self._r +
+                                 '.partyStatusNoConnectionText'),
+                    color=(1, 0, 0),
+                )
             else:
                 if not data.get('accessible', False):
                     ex_line: Union[str, ba.Lstr]
@@ -1822,10 +1831,11 @@ class GatherWindow(ba.Window):
         ba.playsound(ba.getsound('shieldDown'))
         text = self._internet_host_status_text
         if text:
-            ba.textwidget(edit=text,
-                          text=ba.Lstr(resource=self._r +
-                                       '.partyStatusNotPublicText'),
-                          color=(0.6, 0.6, 0.6))
+            ba.textwidget(
+                edit=text,
+                text=ba.Lstr(resource=self._r + '.partyStatusNotPublicText'),
+                color=(0.6, 0.6, 0.6),
+            )
 
         ba.buttonwidget(
             edit=self._internet_host_toggle_button,

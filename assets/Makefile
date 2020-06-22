@@ -178,7 +178,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/ba/_math.py \
   build/ba_data/python/ba/_messages.py \
   build/ba_data/python/ba/_meta.py \
-  build/ba_data/python/ba/_modutils.py \
   build/ba_data/python/ba/_multiteamsession.py \
   build/ba_data/python/ba/_music.py \
   build/ba_data/python/ba/_netutils.py \
@@ -199,6 +198,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/ba/deprecated.py \
   build/ba_data/python/ba/internal.py \
   build/ba_data/python/ba/macmusicapp.py \
+  build/ba_data/python/ba/modutils.py \
   build/ba_data/python/ba/osmusic.py \
   build/ba_data/python/ba/ui/__init__.py \
   build/ba_data/python/bastd/__init__.py \
@@ -409,7 +409,6 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/ba/__pycache__/_math.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_messages.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_meta.cpython-37.opt-1.pyc \
-  build/ba_data/python/ba/__pycache__/_modutils.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_multiteamsession.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_music.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_netutils.cpython-37.opt-1.pyc \
@@ -430,6 +429,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/ba/__pycache__/deprecated.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/internal.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/macmusicapp.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/modutils.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/osmusic.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/ui/__pycache__/__init__.cpython-37.opt-1.pyc \
   build/ba_data/python/bastd/__pycache__/__init__.cpython-37.opt-1.pyc \
@@ -796,11 +796,6 @@ build/ba_data/python/ba/__pycache__/_meta.cpython-37.opt-1.pyc: \
 	@echo Compiling script: $^
 	@rm -rf $@ && PYTHONHASHSEED=1 $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/ba_data/python/ba/__pycache__/_modutils.cpython-37.opt-1.pyc: \
-      build/ba_data/python/ba/_modutils.py
-	@echo Compiling script: $^
-	@rm -rf $@ && PYTHONHASHSEED=1 $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
 build/ba_data/python/ba/__pycache__/_multiteamsession.cpython-37.opt-1.pyc: \
       build/ba_data/python/ba/_multiteamsession.py
 	@echo Compiling script: $^
@@ -898,6 +893,11 @@ build/ba_data/python/ba/__pycache__/internal.cpython-37.opt-1.pyc: \
 
 build/ba_data/python/ba/__pycache__/macmusicapp.cpython-37.opt-1.pyc: \
       build/ba_data/python/ba/macmusicapp.py
+	@echo Compiling script: $^
+	@rm -rf $@ && PYTHONHASHSEED=1 $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python/ba/__pycache__/modutils.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/modutils.py
 	@echo Compiling script: $^
 	@rm -rf $@ && PYTHONHASHSEED=1 $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
