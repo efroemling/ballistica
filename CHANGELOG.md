@@ -1,3 +1,6 @@
+### 1.5.10 (20083)
+- Streamlined C++ layer bootstrapping process a bit.
+
 ### 1.5.9 (20082)
 - Reduced some hitches when clicking on certain buttons in the UI
 - Fixed an issue where very early keyboard/controller connects/disconnects could get lost on android.
