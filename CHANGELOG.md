@@ -1,3 +1,6 @@
+### 1.5.11 (20083)
+- Fixed a freeze in the local network browser.
+
 ### 1.5.10 (20083)
 - Streamlined C++ layer bootstrapping process a bit.
 - Creating sys scripts via ba.modutils now works properly.
