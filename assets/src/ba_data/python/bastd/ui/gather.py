@@ -435,19 +435,16 @@ class GatherWindow(ba.Window):
                         sock.connect(('8.8.8.8', 80))
                         val = sock.getsockname()[0]
                         sock.close()
-                        # val = ([
-                        #     (s.connect(('8.8.8.8', 80)),
-                        #      s.getsockname()[0],
-                        #      s.close()) for s in
-                        #     [socket.socket(socket.AF_INET,
-                        #         socket.SOCK_DGRAM)]
-                        # ][0][1])
                         ba.pushcall(ba.Call(self._call, val),
                                     from_other_thread=True)
-                    except Exception:
-                        # FIXME: Should filter out expected errors and
-                        # report others here.
-                        ba.print_exception()
+                    except Exception as exc:
+                        # Ignore expected network errors; log others.
+                        import errno
+                        if (isinstance(exc, OSError)
+                                and exc.errno == errno.ENETUNREACH):
+                            pass
+                        else:
+                            ba.print_exception()
 
             AddrFetchThread(ba.WeakCall(
                 self._internet_fetch_local_addr_cb)).start()

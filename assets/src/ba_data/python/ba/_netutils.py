@@ -105,9 +105,11 @@ class ServerCallThread(threading.Thread):
             self._callback(arg)
 
     def run(self) -> None:
+        # pylint: disable=too-many-branches
         import urllib.request
         import urllib.error
         import json
+        import http.client
         from ba import _general
         try:
             self._data = _general.utf8_all(self._data)
@@ -145,15 +147,34 @@ class ServerCallThread(threading.Thread):
                     response_data = json.loads(raw_data_s)
             else:
                 raise TypeError(f'invalid responsetype: {self._response_type}')
-        except (urllib.error.URLError, ConnectionError):
-            # Server rejected us, broken pipe, etc.  It happens. Ignoring.
-            response_data = None
+
         except Exception as exc:
-            # Any other error here is unexpected, so let's make a note of it.
-            print('Exc in ServerCallThread:', exc)
-            import traceback
-            traceback.print_exc()
+            import errno
+            do_print = False
             response_data = None
+
+            # Ignore common network errors; note unexpected ones.
+            if isinstance(exc, (urllib.error.URLError, ConnectionError,
+                                http.client.IncompleteRead)):
+                pass
+            elif isinstance(exc, OSError):
+                if exc.errno == 10051:  # Windows unreachable network error.
+                    pass
+                elif exc.errno in [errno.ETIMEDOUT]:
+                    pass
+                else:
+                    do_print = True
+            else:
+                do_print = True
+
+            if do_print:
+                # Any other error here is unexpected,
+                # so let's make a note of it,
+                print(f'Error in ServerCallThread'
+                      f' (response-type={self._response_type},'
+                      f' response-data={response_data}):')
+                import traceback
+                traceback.print_exc()
 
         if self._callback is not None:
             _ba.pushcall(_general.Call(self._run_callback, response_data),

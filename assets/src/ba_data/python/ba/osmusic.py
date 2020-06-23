@@ -123,6 +123,7 @@ class _PickFolderSongThread(threading.Thread):
     def run(self) -> None:
         from ba import _lang
         from ba._general import Call
+        do_print_error = True
         try:
             _ba.set_thread_name('BA_PickFolderSongThread')
             all_files: List[str] = []
@@ -134,14 +135,16 @@ class _PickFolderSongThread(threading.Thread):
                         all_files.insert(random.randrange(len(all_files) + 1),
                                          root + '/' + fname)
             if not all_files:
-                raise Exception(
+                do_print_error = False
+                raise RuntimeError(
                     _lang.Lstr(resource='internal.noMusicFilesInFolderText').
                     evaluate())
             _ba.pushcall(Call(self._callback, all_files, None),
                          from_other_thread=True)
         except Exception as exc:
             from ba import _error
-            _error.print_exception()
+            if do_print_error:
+                _error.print_exception()
             try:
                 err_str = str(exc)
             except Exception:

@@ -27,7 +27,7 @@ import os
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Optional
+    from typing import Optional, List, Sequence
 
 
 def get_human_readable_user_scripts_path() -> str:
@@ -55,18 +55,25 @@ def get_human_readable_user_scripts_path() -> str:
     return path
 
 
+def _request_storage_permission() -> bool:
+    """If needed, requests storage permission from the user (& return true)."""
+    from ba._lang import Lstr
+    from ba._enums import Permission
+    if not _ba.have_permission(Permission.STORAGE):
+        _ba.playsound(_ba.getsound('error'))
+        _ba.screenmessage(Lstr(resource='storagePermissionAccessText'),
+                          color=(1, 0, 0))
+        _ba.timer(1.0, lambda: _ba.request_permission(Permission.STORAGE))
+        return True
+    return False
+
+
 def show_user_scripts() -> None:
     """Open or nicely print the location of the user-scripts directory."""
-    from ba import _lang
-    from ba._enums import Permission
     app = _ba.app
 
     # First off, if we need permission for this, ask for it.
-    if not _ba.have_permission(Permission.STORAGE):
-        _ba.playsound(_ba.getsound('error'))
-        _ba.screenmessage(_lang.Lstr(resource='storagePermissionAccessText'),
-                          color=(1, 0, 0))
-        _ba.request_permission(Permission.STORAGE)
+    if _request_storage_permission():
         return
 
     # Secondly, if the dir doesn't exist, attempt to make it.
@@ -107,31 +114,37 @@ def create_user_system_scripts() -> None:
 
     (for editing and experiment with)
     """
-    app = _ba.app
     import shutil
+    app = _ba.app
+
+    # First off, if we need permission for this, ask for it.
+    if _request_storage_permission():
+        return
+
     path = (app.python_directory_user + '/sys/' + app.version)
+    pathtmp = path + '_tmp'
     if os.path.exists(path):
         shutil.rmtree(path)
-    if os.path.exists(path + '_tmp'):
-        shutil.rmtree(path + '_tmp')
-    os.makedirs(path + '_tmp', exist_ok=True)
+    if os.path.exists(pathtmp):
+        shutil.rmtree(pathtmp)
 
-    # Hmm; shutil.copytree doesn't seem to work nicely on android,
-    # so lets do it manually.
-    # NOTE: Should retry this now that we have 3.7 (this note was for 2.7)
-    src_dir = app.python_directory_app
-    dst_dir = path + '_tmp'
-    filenames = os.listdir(app.python_directory_app)
-    for fname in filenames:
-        print('COPYING', src_dir + '/' + fname, '->', dst_dir)
-        shutil.copyfile(src_dir + '/' + fname, dst_dir + '/' + fname)
+    def _ignore_filter(src: str, names: Sequence[str]) -> Sequence[str]:
+        del src, names  # Unused
 
-    print('MOVING', path + '_tmp', path)
-    shutil.move(path + '_tmp', path)
-    print(
-        ('Created system scripts at :\'' + path +
-         '\'\nRestart Ballistica to use them. (use ba.quit() to exit the game)'
-         ))
+        # We simply skip all __pycache__ directories. (the user would have
+        # to blow them away anyway to make changes;
+        # See https://github.com/efroemling/ballistica/wiki
+        # /Knowledge-Nuggets#python-cache-files-gotcha
+        return ('__pycache__', )
+
+    print(f'COPYING "{app.python_directory_app}" -> "{pathtmp}".')
+    shutil.copytree(app.python_directory_app, pathtmp, ignore=_ignore_filter)
+
+    print(f'MOVING "{pathtmp}" -> "{path}".')
+    shutil.move(pathtmp, path)
+    print(f"Created system scripts at :'{path}"
+          f"'\nRestart {_ba.appname()} to use them."
+          f' (use ba.quit() to exit the game)')
     if app.platform == 'android':
         print('Note: the new files may not be visible via '
               'android-file-transfer until you restart your device.')
@@ -144,9 +157,9 @@ def delete_user_system_scripts() -> None:
     path = (app.python_directory_user + '/sys/' + app.version)
     if os.path.exists(path):
         shutil.rmtree(path)
-        print(
-            'User system scripts deleted.\nRestart Ballistica to use internal'
-            ' scripts. (use ba.quit() to exit the game)')
+        print(f'User system scripts deleted.\n'
+              f'Restart {_ba.appname()} to use internal'
+              f' scripts. (use ba.quit() to exit the game)')
     else:
         print('User system scripts not found.')
 

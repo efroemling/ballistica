@@ -1,5 +1,8 @@
 ### 1.5.10 (20083)
 - Streamlined C++ layer bootstrapping process a bit.
+- Creating sys scripts via ba.modutils now works properly.
+- Custom soundtracks should now work again under Android 10.
+- Misc other bug fixes.
 
 ### 1.5.9 (20082)
 - Reduced some hitches when clicking on certain buttons in the UI
