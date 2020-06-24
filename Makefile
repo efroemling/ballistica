@@ -327,7 +327,7 @@ build/prefab/linux-server/release/README.txt: \
 build/prefab/linux-server/release/dist/ballisticacore_headless: .efrocachemap
 	@tools/snippets efrocache_get $@
 
-PREFAB_WINDOWS_PLATFORM = x64
+PREFAB_WINDOWS_PLATFORM = Win32
 
 RUN_PREFAB_WINDOWS_DEBUG = cd build/prefab/windows/debug && ./BallisticaCore.exe
 

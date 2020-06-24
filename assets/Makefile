@@ -166,7 +166,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/ba/_freeforallsession.py \
   build/ba_data/python/ba/_gameactivity.py \
   build/ba_data/python/ba/_gameresults.py \
-  build/ba_data/python/ba/_gamesettings.py \
   build/ba_data/python/ba/_gameutils.py \
   build/ba_data/python/ba/_general.py \
   build/ba_data/python/ba/_hooks.py \
@@ -189,6 +188,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/ba/_score.py \
   build/ba_data/python/ba/_servermode.py \
   build/ba_data/python/ba/_session.py \
+  build/ba_data/python/ba/_settings.py \
   build/ba_data/python/ba/_stats.py \
   build/ba_data/python/ba/_store.py \
   build/ba_data/python/ba/_team.py \
@@ -397,7 +397,6 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/ba/__pycache__/_freeforallsession.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_gameactivity.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_gameresults.cpython-37.opt-1.pyc \
-  build/ba_data/python/ba/__pycache__/_gamesettings.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_gameutils.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_general.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_hooks.cpython-37.opt-1.pyc \
@@ -420,6 +419,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/ba/__pycache__/_score.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_servermode.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_session.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_settings.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_stats.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_store.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_team.cpython-37.opt-1.pyc \
@@ -736,11 +736,6 @@ build/ba_data/python/ba/__pycache__/_gameresults.cpython-37.opt-1.pyc: \
 	@echo Compiling script: $^
 	@rm -rf $@ && PYTHONHASHSEED=1 $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
-build/ba_data/python/ba/__pycache__/_gamesettings.cpython-37.opt-1.pyc: \
-      build/ba_data/python/ba/_gamesettings.py
-	@echo Compiling script: $^
-	@rm -rf $@ && PYTHONHASHSEED=1 $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
-
 build/ba_data/python/ba/__pycache__/_gameutils.cpython-37.opt-1.pyc: \
       build/ba_data/python/ba/_gameutils.py
 	@echo Compiling script: $^
@@ -848,6 +843,11 @@ build/ba_data/python/ba/__pycache__/_servermode.cpython-37.opt-1.pyc: \
 
 build/ba_data/python/ba/__pycache__/_session.cpython-37.opt-1.pyc: \
       build/ba_data/python/ba/_session.py
+	@echo Compiling script: $^
+	@rm -rf $@ && PYTHONHASHSEED=1 $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
+
+build/ba_data/python/ba/__pycache__/_settings.cpython-37.opt-1.pyc: \
+      build/ba_data/python/ba/_settings.py
 	@echo Compiling script: $^
 	@rm -rf $@ && PYTHONHASHSEED=1 $(TOOLS_DIR)/snippets compile_python_files $^ && chmod 444 $@
 
@@ -20030,11 +20030,13 @@ EXTRAS_TARGETS_WIN_WIN32 = \
   build/windows/Win32/SDL2.dll \
   build/windows/Win32/libvorbis.dll \
   build/windows/Win32/libvorbisfile.dll \
+  build/windows/Win32/msvcp140d.dll \
   build/windows/Win32/ogg.dll \
   build/windows/Win32/python.exe \
   build/windows/Win32/python37.dll \
   build/windows/Win32/pythonw.exe \
-  build/windows/Win32/vc_redist.x86.exe
+  build/windows/Win32/vc_redist.x86.exe \
+  build/windows/Win32/vcruntime140d.dll
 
 # Rule to copy src extras to build.
 $(EXTRAS_TARGETS_WIN_WIN32) : ../.efrocachemap

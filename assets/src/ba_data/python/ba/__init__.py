@@ -56,9 +56,8 @@ from ba._error import (
 from ba._freeforallsession import FreeForAllSession
 from ba._gameactivity import GameActivity
 from ba._gameresults import GameResults
-from ba._gamesettings import (Setting, IntSetting, FloatSetting, ChoiceSetting,
-                              BoolSetting, IntChoiceSetting,
-                              FloatChoiceSetting)
+from ba._settings import (Setting, IntSetting, FloatSetting, ChoiceSetting,
+                          BoolSetting, IntChoiceSetting, FloatChoiceSetting)
 from ba._lang import Lstr, setlanguage, get_valid_languages
 from ba._map import Map, getmaps
 from ba._session import Session

@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-06-23 for Ballistica version 1.5.10 build 20084</em></h4>
+<h4><em>last updated on 2020-06-24 for Ballistica version 1.5.12 build 20088</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -1214,8 +1214,10 @@ when done.</p>
 <dt><h4><a name="method_ba_Call____init__">&lt;constructor&gt;</a></dt></h4><dd>
 <p><span>ba.Call(*args: Any, **keywds: Any)</span></p>
 
-<p>Instantiate a Call; pass a callable as the first
-arg, followed by any number of arguments or keywords.</p>
+<p>Instantiate a Call.</p>
+
+<p>Pass a callable as the first arg, followed by any number of
+arguments or keywords.</p>
 
 <pre><span><em><small># Example: wrap a method call with 1 positional and 1 keyword arg:</small></em></span>
 mycall = ba.Call(myobj.dostuff, argval1, namedarg=argval2)</pre>
@@ -5756,8 +5758,10 @@ self.t = <a href="#class_ba_Timer">ba.Timer</a>(0.3, say_it, repeat=True)
 <dt><h4><a name="method_ba_WeakCall____init__">&lt;constructor&gt;</a></dt></h4><dd>
 <p><span>ba.WeakCall(*args: Any, **keywds: Any)</span></p>
 
-<p>Instantiate a WeakCall; pass a callable as the first
-arg, followed by any number of arguments or keywords.</p>
+<p>Instantiate a WeakCall.</p>
+
+<p>Pass a callable as the first arg, followed by any number of
+arguments or keywords.</p>
 
 <pre><span><em><small># Example: wrap a method call with some positional and</small></em></span>
 <span><em><small># keyword args:</small></em></span>

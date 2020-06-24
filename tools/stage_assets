@@ -281,12 +281,14 @@ def _sync_windows_extras(cfg: Config) -> None:
     elif cfg.win_type == 'winserver':
         toplevelfiles += ['python.exe']
 
-    # Include debug dlls for x64 so folks without msvc can run them.
-    # (seems win32 doesn't have the same set so ignoring that for now)
-    if cfg.debug and cfg.win_platform == 'x64':
-        toplevelfiles += [
-            'msvcp140d.dll', 'vcruntime140d.dll', 'vcruntime140_1d.dll'
-        ]
+    # Include debug dlls so folks without msvc can run them.
+    if cfg.debug:
+        if cfg.win_platform == 'x64':
+            toplevelfiles += [
+                'msvcp140d.dll', 'vcruntime140d.dll', 'vcruntime140_1d.dll'
+            ]
+        else:
+            toplevelfiles += ['msvcp140d.dll', 'vcruntime140d.dll']
 
     # Include the runtime redistributables in release builds.
     if not cfg.debug:

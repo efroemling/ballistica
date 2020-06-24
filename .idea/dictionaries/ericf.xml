@@ -419,6 +419,7 @@
       <w>cwdg</w>
       <w>cxxabi</w>
       <w>cyaml</w>
+      <w>cycledelay</w>
       <w>cygwinccompiler</w>
       <w>darwiin</w>
       <w>darwiinremote</w>
@@ -2145,6 +2146,7 @@
       <w>vtype</w>
       <w>vval</w>
       <w>waaah</w>
+      <w>waittime</w>
       <w>wanttype</w>
       <w>wasdead</w>
       <w>wavenum</w>

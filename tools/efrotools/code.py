@@ -856,7 +856,7 @@ def clioncode(projroot: Path, full: bool, verbose: bool) -> None:
     # reason too.
     # So for now let's try blowing away caches, launching the gui
     # temporarily, and then kicking off inspections after that. Sigh.
-    print('Clearing clion caches...', flush=True)
+    print('Clearing CLion caches...', flush=True)
     subprocess.run('rm -rf ~/Library/Caches/CLion*', shell=True, check=True)
 
     # Note: I'm assuming this project needs to be open when the GUI
@@ -866,7 +866,11 @@ def clioncode(projroot: Path, full: bool, verbose: bool) -> None:
     process = subprocess.Popen(str(clionbin))
 
     # Wait a moment and ask it nicely to die.
-    time.sleep(120)
+    waittime = 120
+    while waittime > 0:
+        print(f'Waiting for {waittime} more seconds.')
+        time.sleep(10)
+        waittime -= 10
 
     # Seems killing it via applescript is more likely to leave it
     # in a working state for offline inspections than TERM signal..

@@ -1,3 +1,5 @@
+### 1.5.12 (20087)
+
 ### 1.5.11 (20083)
 - Fixed a freeze in the local network browser.
 
