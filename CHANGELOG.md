@@ -1,4 +1,10 @@
+### 1.5.13 (20095)
+- Hopefully fixed an elusive random crash on android that popped up recently.
+- Misc bug fixes.
+
 ### 1.5.12 (20087)
+- Improved exception handling and crash reporting.
+- Misc bug fixes.
 
 ### 1.5.11 (20083)
 - Fixed a freeze in the local network browser.

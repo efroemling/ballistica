@@ -74,9 +74,13 @@ def androidaddr(archive_dir: str, arch: str, addr: str) -> None:
         ['find',
          os.path.join(ndkpath, 'toolchains'), '-name',
          '*addr2line']).decode().strip().splitlines()
-    lines = [line for line in lines if archs[arch]['prefix'] in line]
+    # print('RAW LINES', lines)
+    lines = [
+        line for line in lines
+        if archs[arch]['prefix'] in line and '/llvm/' in line
+    ]
     if len(lines) != 1:
-        print("ERROR: couldn't find addr2line binary")
+        print(f"ERROR: can't find addr2line binary ({len(lines)} options).")
         sys.exit(255)
     addr2line = lines[0]
     efrotools.run('mkdir -p "' + os.path.join(rootdir, 'android_addr_tmp') +
