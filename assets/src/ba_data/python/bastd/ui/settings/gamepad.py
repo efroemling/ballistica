@@ -717,7 +717,7 @@ class GamepadSettingsWindow(ba.Window):
                 transition='in_left').get_root_widget())
 
     def _save(self) -> None:
-        from ba.internal import (serverput, get_input_device_config,
+        from ba.internal import (master_server_post, get_input_device_config,
                                  get_input_map_hash, should_submit_debug_info)
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
@@ -742,7 +742,7 @@ class GamepadSettingsWindow(ba.Window):
             # generate more defaults in the future.
             inputhash = get_input_map_hash(self._input)
             if should_submit_debug_info():
-                serverput(
+                master_server_post(
                     'controllerConfig', {
                         'ua': ba.app.user_agent_string,
                         'b': ba.app.build_number,

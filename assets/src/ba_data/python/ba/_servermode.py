@@ -204,8 +204,8 @@ class ServerController:
 
     def _run_access_check(self) -> None:
         """Check with the master server to see if we're likely joinable."""
-        from ba._netutils import serverget
-        serverget(
+        from ba._netutils import master_server_get
+        master_server_get(
             'bsAccessCheck',
             {
                 'port': _ba.get_game_port(),

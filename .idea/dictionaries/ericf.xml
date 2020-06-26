@@ -15,6 +15,7 @@
       <w>aarch</w>
       <w>abcdefghijklmnopqrstuvwxyz</w>
       <w>abeb</w>
+      <w>abishort</w>
       <w>abot</w>
       <w>abtn</w>
       <w>accesstime</w>
@@ -433,6 +434,7 @@
       <w>daynum</w>
       <w>dayoffset</w>
       <w>dbapi</w>
+      <w>dbase</w>
       <w>dbpath</w>
       <w>dcls</w>
       <w>dcmake</w>
@@ -1046,6 +1048,7 @@
       <w>lfval</w>
       <w>libcrypto</w>
       <w>libegl</w>
+      <w>libext</w>
       <w>libgen</w>
       <w>libinst</w>
       <w>liblzma</w>
@@ -2087,6 +2090,7 @@
       <w>unranked</w>
       <w>unstaged</w>
       <w>unstripped</w>
+      <w>unstrl</w>
       <w>unsubscriptable</w>
       <w>untracked</w>
       <w>upcase</w>

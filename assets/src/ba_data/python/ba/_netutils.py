@@ -114,8 +114,6 @@ class ServerCallThread(threading.Thread):
         try:
             self._data = _general.utf8_all(self._data)
             _ba.set_thread_name('BA_ServerCallThread')
-
-            # Seems pycharm doesn't know about urllib.parse.
             parse = urllib.parse
             if self._request_type == 'get':
                 response = urllib.request.urlopen(
@@ -181,7 +179,7 @@ class ServerCallThread(threading.Thread):
                          from_other_thread=True)
 
 
-def serverget(
+def master_server_get(
         request: str,
         data: Dict[str, Any],
         callback: Optional[ServerCallbackType] = None,
@@ -190,7 +188,7 @@ def serverget(
     ServerCallThread(request, 'get', data, callback, response_type).start()
 
 
-def serverput(
+def master_server_post(
         request: str,
         data: Dict[str, Any],
         callback: Optional[ServerCallbackType] = None,

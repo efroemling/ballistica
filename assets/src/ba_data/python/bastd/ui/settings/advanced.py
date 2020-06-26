@@ -39,7 +39,7 @@ class AdvancedSettingsWindow(ba.Window):
                  transition: str = 'in_right',
                  origin_widget: ba.Widget = None):
         # pylint: disable=too-many-statements
-        from ba.internal import serverget
+        from ba.internal import master_server_get
 
         app = ba.app
 
@@ -151,8 +151,8 @@ class AdvancedSettingsWindow(ba.Window):
                                        timetype=ba.TimeType.REAL)
 
         # Fetch the list of completed languages.
-        serverget('bsLangGetCompleted', {'b': app.build_number},
-                  callback=ba.WeakCall(self._completed_langs_cb))
+        master_server_get('bsLangGetCompleted', {'b': app.build_number},
+                          callback=ba.WeakCall(self._completed_langs_cb))
 
     def _update_lang_status(self) -> None:
         if self._complete_langs_list is not None:

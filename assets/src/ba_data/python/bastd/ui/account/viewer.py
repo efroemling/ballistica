@@ -41,7 +41,7 @@ class AccountViewerWindow(popup.PopupWindow):
                  position: Tuple[float, float] = (0.0, 0.0),
                  scale: float = None,
                  offset: Tuple[float, float] = (0.0, 0.0)):
-        from ba.internal import is_browser_likely_available, serverget
+        from ba.internal import is_browser_likely_available, master_server_get
 
         self._account_id = account_id
         self._profile_id = profile_id
@@ -124,12 +124,12 @@ class AccountViewerWindow(popup.PopupWindow):
         ba.containerwidget(edit=self.root_widget,
                            cancel_button=self._cancel_button)
 
-        serverget('bsAccountInfo', {
+        master_server_get('bsAccountInfo', {
             'buildNumber': ba.app.build_number,
             'accountID': self._account_id,
             'profileID': self._profile_id
         },
-                  callback=ba.WeakCall(self._on_query_response))
+                          callback=ba.WeakCall(self._on_query_response))
 
     def popup_menu_selected_choice(self, window: popup.PopupMenu,
                                    choice: str) -> None:

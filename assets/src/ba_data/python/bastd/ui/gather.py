@@ -1725,14 +1725,14 @@ class GatherWindow(ba.Window):
                 self._rebuild_public_party_list()
 
     def _do_internet_status_check(self) -> None:
-        from ba.internal import serverget
+        from ba.internal import master_server_get
         ba.textwidget(edit=self._internet_host_status_text,
                       color=(1, 1, 0),
                       text=ba.Lstr(resource=self._r +
                                    '.partyStatusCheckingText'))
-        serverget('bsAccessCheck', {'b': ba.app.build_number},
-                  callback=ba.WeakCall(
-                      self._on_public_party_accessible_response))
+        master_server_get('bsAccessCheck', {'b': ba.app.build_number},
+                          callback=ba.WeakCall(
+                              self._on_public_party_accessible_response))
 
     def _on_start_internet_advertizing_press(self) -> None:
         from bastd.ui import account
@@ -1843,7 +1843,7 @@ class GatherWindow(ba.Window):
 
     def _access_check_update(self, t_addr: ba.Widget, t_accessible: ba.Widget,
                              t_accessible_extra: ba.Widget) -> None:
-        from ba.internal import serverget
+        from ba.internal import master_server_get
 
         # If we don't have an outstanding query, start one..
         assert self._doing_access_check is not None
@@ -1854,8 +1854,9 @@ class GatherWindow(ba.Window):
             self._t_addr = t_addr
             self._t_accessible = t_accessible
             self._t_accessible_extra = t_accessible_extra
-            serverget('bsAccessCheck', {'b': ba.app.build_number},
-                      callback=ba.WeakCall(self._on_accessible_response))
+            master_server_get('bsAccessCheck', {'b': ba.app.build_number},
+                              callback=ba.WeakCall(
+                                  self._on_accessible_response))
 
     def _on_accessible_response(self, data: Optional[Dict[str, Any]]) -> None:
         t_addr = self._t_addr

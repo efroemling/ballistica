@@ -56,11 +56,15 @@ class SpecialOfferWindow(ba.Window):
             real_price = _ba.get_price('pro' if offer['item'] ==
                                        'pro_fullprice' else 'pro_sale')
             if real_price is None and ba.app.debug_build:
-                print('TEMP FAKING REAL PRICE')
+                print('NOTE: Faking prices for debug build.')
                 real_price = '$1.23'
             zombie = real_price is None
-        elif isinstance(offer['price'], str):  # a string price implies IAP id
+        elif isinstance(offer['price'], str):
+            # (a string price implies IAP id)
             real_price = _ba.get_price(offer['price'])
+            if real_price is None and ba.app.debug_build:
+                print('NOTE: Faking price for debug build.')
+                real_price = '$1.23'
             zombie = real_price is None
         else:
             real_price = None
@@ -109,16 +113,25 @@ class SpecialOfferWindow(ba.Window):
                     self._is_bundle_sale = True
                 original_price = _ba.get_account_misc_read_val(
                     'price.' + self._offer_item, 9999)
-                new_price = offer['price']
-                tchar = ba.charstr(SpecialChar.TICKET)
-                original_price_str = tchar + str(original_price)
-                new_price_str = tchar + str(new_price)
-                percent_off = int(
-                    round(100.0 - (float(new_price) / original_price) * 100.0))
-                percent_off_text = ' ' + ba.Lstr(
-                    resource='store.salePercentText').evaluate().replace(
-                        '${PERCENT}', str(percent_off))
+
+                # For pure ticket prices we can show a percent-off.
+                if isinstance(offer['price'], int):
+                    new_price = offer['price']
+                    tchar = ba.charstr(SpecialChar.TICKET)
+                    original_price_str = tchar + str(original_price)
+                    new_price_str = tchar + str(new_price)
+                    percent_off = int(
+                        round(100.0 -
+                              (float(new_price) / original_price) * 100.0))
+                    percent_off_text = ' ' + ba.Lstr(
+                        resource='store.salePercentText').evaluate().replace(
+                            '${PERCENT}', str(percent_off))
+                else:
+                    original_price_str = new_price_str = '?'
+                    percent_off_text = ''
+
         except Exception:
+            print(f'Offer: {offer}')
             ba.print_exception('Error setting up special-offer')
             original_price_str = new_price_str = '?'
             percent_off_text = ''
@@ -211,8 +224,8 @@ class SpecialOfferWindow(ba.Window):
             total_worth_item = offer.get('valueItem', None)
             if total_worth_item is not None:
                 price = _ba.get_price(total_worth_item)
-                assert price is not None
-                total_worth_price = get_clean_price(price)
+                total_worth_price = (get_clean_price(price)
+                                     if price is not None else None)
                 if total_worth_price is not None:
                     total_worth_text = ba.Lstr(resource='store.totalWorthText',
                                                subs=[('${TOTAL_WORTH}',
@@ -246,7 +259,7 @@ class SpecialOfferWindow(ba.Window):
                           text=new_price_str)
 
         # Add ticket button only if this is ticket-purchasable.
-        if offer['price'] is not None and isinstance(offer['price'], int):
+        if isinstance(offer.get('price'), int):
             self._get_tickets_button = ba.buttonwidget(
                 parent=self._root_widget,
                 position=(self._width - 125, self._height - 68),

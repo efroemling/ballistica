@@ -449,13 +449,13 @@ class StoreBrowserWindow(ba.Window):
     def _do_purchase_check(self,
                            item: str,
                            is_ticket_purchase: bool = False) -> None:
-        from ba.internal import serverget
+        from ba.internal import master_server_get
 
         # Here we ping the server to ask if it's valid for us to
         # purchase this. Better to fail now than after we've
         # paid locally.
         app = ba.app
-        serverget(
+        master_server_get(
             'bsAccountPurchaseCheck',
             {
                 'item': item,

@@ -40,7 +40,7 @@ class ProfileUpgradeWindow(ba.Window):
     def __init__(self,
                  edit_profile_window: EditProfileWindow,
                  transition: str = 'in_right'):
-        from ba.internal import serverget
+        from ba.internal import master_server_get
         self._r = 'editProfileWindow'
 
         self._width = 680
@@ -138,11 +138,11 @@ class ProfileUpgradeWindow(ba.Window):
         else:
             self._tickets_text = None
 
-        serverget('bsGlobalProfileCheck', {
+        master_server_get('bsGlobalProfileCheck', {
             'name': self._name,
             'b': ba.app.build_number
         },
-                  callback=ba.WeakCall(self._profile_check_result))
+                          callback=ba.WeakCall(self._profile_check_result))
         self._cost = _ba.get_account_misc_read_val('price.global_profile', 500)
         self._status: Optional[str] = 'waiting'
         self._update_timer = ba.Timer(1.0,

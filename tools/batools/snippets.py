@@ -616,3 +616,38 @@ def lazybuild() -> None:
         batools.build.lazybuild(target, category, command)
     except subprocess.CalledProcessError as exc:
         raise CleanError(exc)
+
+
+def android_archive_unstripped_libs() -> None:
+    """Copy libs to a build archive."""
+    import subprocess
+    from pathlib import Path
+    from efro.error import CleanError
+    from efro.terminal import Clr
+    if len(sys.argv) != 4:
+        raise CleanError('Expected 2 args; src-dir and dst-dir')
+    src = Path(sys.argv[2])
+    dst = Path(sys.argv[3])
+    if dst.exists():
+        subprocess.run(['rm', '-rf', dst], check=True)
+    dst.mkdir(parents=True, exist_ok=True)
+    if not src.is_dir():
+        raise CleanError(f"Source dir not found: '{src}'")
+    libname = 'libmain'
+    libext = '.so'
+    for abi, abishort in [
+        ('armeabi-v7a', 'arm'),
+        ('arm64-v8a', 'arm64'),
+        ('x86', 'x86'),
+        ('x86_64', 'x86-64'),
+    ]:
+        srcpath = Path(src, abi, libname + libext)
+        dstname = f'{libname}_{abishort}{libext}'
+        dstpath = Path(dst, dstname)
+        if srcpath.exists():
+            print(f'Archiving unstripped library: {Clr.BLD}{dstname}{Clr.RST}')
+            subprocess.run(['cp', srcpath, dstpath], check=True)
+            subprocess.run(['tar', '-zcf', dstname + '.tgz', dstname],
+                           cwd=dst,
+                           check=True)
+            subprocess.run(['rm', dstpath], check=True)

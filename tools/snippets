@@ -54,7 +54,7 @@ from batools.snippets import (
     python_gather, capitalize, efrocache_update, efrocache_get,
     get_modern_make, warm_start_asset_build, update_docs_md, list_pip_reqs,
     install_pip_reqs, checkenv, ensure_prefab_platform, prefab_run_var,
-    make_prefab, update_makebob, lazybuild)
+    make_prefab, update_makebob, lazybuild, android_archive_unstripped_libs)
 # pylint: enable=unused-import
 
 if TYPE_CHECKING:

@@ -79,8 +79,9 @@ def snippets_main(globs: Dict[str, Any]) -> None:
                 exc.pretty_print()
                 sys.exit(1)
         else:
-            print('Unknown snippets command: "' + sys.argv[1] + '"',
-                  file=sys.stderr)
+            print(
+                f'{Clr.RED}Unknown snippets command: "{sys.argv[1]}"{Clr.RST}',
+                file=sys.stderr)
             retval = 255
 
     if show_help:

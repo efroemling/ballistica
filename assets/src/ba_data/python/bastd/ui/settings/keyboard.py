@@ -230,7 +230,7 @@ class ConfigKeyboardWindow(ba.Window):
     def _save(self) -> None:
         from bastd.ui.settings.controls import ControlsSettingsWindow
         from ba.internal import (get_input_device_config,
-                                 should_submit_debug_info, serverput)
+                                 should_submit_debug_info, master_server_post)
 
         ba.containerwidget(edit=self._root_widget, transition='out_right')
         ba.playsound(ba.getsound('gunCocking'))
@@ -246,7 +246,7 @@ class ConfigKeyboardWindow(ba.Window):
         # If we're allowed to phone home, send this config so we can generate
         # more defaults in the future.
         if should_submit_debug_info():
-            serverput(
+            master_server_post(
                 'controllerConfig', {
                     'ua': ba.app.user_agent_string,
                     'name': self._name,

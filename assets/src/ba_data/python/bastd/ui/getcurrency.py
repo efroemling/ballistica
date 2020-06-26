@@ -523,7 +523,7 @@ class GetCurrencyWindow(ba.Window):
     def _purchase(self, item: str) -> None:
         from bastd.ui import account
         from bastd.ui import appinvite
-        from ba.internal import serverget
+        from ba.internal import master_server_get
         if item == 'app_invite':
             if _ba.get_account_state() != 'signed_in':
                 account.show_sign_in_prompt()
@@ -533,14 +533,15 @@ class GetCurrencyWindow(ba.Window):
         # here we ping the server to ask if it's valid for us to
         # purchase this.. (better to fail now than after we've paid locally)
         app = ba.app
-        serverget('bsAccountPurchaseCheck', {
+        master_server_get('bsAccountPurchaseCheck', {
             'item': item,
             'platform': app.platform,
             'subplatform': app.subplatform,
             'version': app.version,
             'buildNumber': app.build_number
         },
-                  callback=ba.WeakCall(self._purchase_check_result, item))
+                          callback=ba.WeakCall(self._purchase_check_result,
+                                               item))
 
     def _purchase_check_result(self, item: str,
                                result: Optional[Dict[str, Any]]) -> None:
