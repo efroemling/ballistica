@@ -1,3 +1,10 @@
+### 1.5.16 (20099)
+- Hopefully finally fixed that pesky crash bug on score submissions.
+
+### 1.5.14 (20096)
+- Fixed Android VR version failing to launch.
+- More bug fixing and crash reporting improvements.
+
 ### 1.5.13 (20095)
 - Hopefully fixed an elusive random crash on android that popped up recently.
 - Misc bug fixes.
