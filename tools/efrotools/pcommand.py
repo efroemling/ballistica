@@ -18,11 +18,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # -----------------------------------------------------------------------------
-"""Standard snippets that can be pulled into project snippets scripts.
+"""Standard snippets that can be pulled into project pcommand scripts.
 
 A snippet is a mini-program that directly takes input from stdin and does
 some focused task. This module is a repository of common snippets that can
-be imported into projects' snippets script for easy reuse.
+be imported into projects' pcommand script for easy reuse.
 """
 from __future__ import annotations
 
@@ -39,8 +39,8 @@ if TYPE_CHECKING:
 PROJROOT = Path(__file__).resolve().parents[2]
 
 
-def snippets_main(globs: Dict[str, Any]) -> None:
-    """Run a snippet contained in the snippets script.
+def pcommand_main(globs: Dict[str, Any]) -> None:
+    """Run a snippet contained in the pcommand script.
 
     We simply look for all public functions and call
     the one corresponding to the first passed arg.
@@ -49,7 +49,7 @@ def snippets_main(globs: Dict[str, Any]) -> None:
     from efro.error import CleanError
     from efro.terminal import Clr
     funcs = dict(((name, obj) for name, obj in globs.items()
-                  if not name.startswith('_') and name != 'snippets_main'
+                  if not name.startswith('_') and name != 'pcommand_main'
                   and isinstance(obj, types.FunctionType)))
     show_help = False
     retval = 0
@@ -67,7 +67,7 @@ def snippets_main(globs: Dict[str, Any]) -> None:
             else:
                 docs = _trim_docstring(
                     getattr(funcs[sys.argv[2]], '__doc__', '<no docs>'))
-                print(f'\n{Clr.MAG}{Clr.BLD}snippets {sys.argv[2]}:{Clr.RST}\n'
+                print(f'\n{Clr.MAG}{Clr.BLD}pcommand {sys.argv[2]}:{Clr.RST}\n'
                       f'{Clr.MAG}{docs}{Clr.RST}\n')
         elif sys.argv[1] in funcs:
             try:
@@ -80,14 +80,14 @@ def snippets_main(globs: Dict[str, Any]) -> None:
                 sys.exit(1)
         else:
             print(
-                f'{Clr.RED}Unknown snippets command: "{sys.argv[1]}"{Clr.RST}',
+                f'{Clr.RED}Unknown pcommand command: "{sys.argv[1]}"{Clr.RST}',
                 file=sys.stderr)
             retval = 255
 
     if show_help:
-        print('Snippets contains project related commands too small'
+        print('Pcommand contains project related commands too small'
               ' to warrant full scripts.')
-        print(f"Run {Clr.MAG}'snippets help {Clr.BLD}<COMMAND>'"
+        print(f"Run {Clr.MAG}'pcommand help {Clr.BLD}<COMMAND>'"
               f'{Clr.RST} for full command documentation.')
         print('Available commands:')
         for func, obj in sorted(funcs.items()):

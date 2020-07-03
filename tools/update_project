@@ -155,7 +155,7 @@ class App:
         # been updated.
         # (only do this if gendocs is available)
         if os.path.exists('tools/gendocs.py'):
-            if os.system('tools/snippets update_docs_md' +
+            if os.system('tools/pcommand update_docs_md' +
                          self._checkarg) != 0:
                 print(f'{Clr.RED}Error checking/updating'
                       f' docs markdown.{Clr.RST}')
@@ -628,7 +628,7 @@ class App:
     def _check_sync_states(self) -> None:
         # Make sure none of our sync targets have been mucked with since
         # their last sync.
-        if os.system('tools/snippets sync check') != 0:
+        if os.system('tools/pcommand sync check') != 0:
             print(Clr.RED + 'Sync check failed; you may need to run "sync".' +
                   Clr.RST)
             sys.exit(255)

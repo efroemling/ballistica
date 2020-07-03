@@ -291,7 +291,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
         ftxt, '    def build(self):',
         '    def build(self):\n        import os\n'
         '        if os.system(\'"' + rootdir +
-        '/tools/snippets" python_android_patch "' + os.getcwd() +
+        '/tools/pcommand" python_android_patch "' + os.getcwd() +
         '"\') != 0: raise Exception("patch apply failed")')
 
     efrotools.writefile('pybuild/packages/python.py', ftxt)

@@ -37,13 +37,13 @@ from typing import TYPE_CHECKING
 # Pull in the snippets we want to expose. Its more efficient to define them in
 # modules rather than inline here because we'll be able to load them via pyc.
 # pylint: disable=unused-import
-from efrotools.snippets import (
-    PROJROOT, snippets_main, formatcode, formatscripts, formatmakefile,
+from efrotools.pcommand import (
+    PROJROOT, pcommand_main, formatcode, formatscripts, formatmakefile,
     cpplint, pylint, runpylint, mypy, runmypy, dmypy, tool_config_install,
     sync, sync_all, scriptfiles, pycharm, clioncode, androidstudiocode,
     makefile_target_list, spelling, spelling_all, pytest, echo,
     compile_python_files)
-from batools.snippets import (
+from batools.pcommand import (
     stage_server_file, py_examine, fix_mac_ssh, check_mac_ssh, resize_image,
     check_clean_safety, clean_orphaned_assets, archive_old_builds,
     lazy_increment_build, get_master_asset_src_dir, androidaddr, push_ipa,
@@ -62,4 +62,4 @@ if TYPE_CHECKING:
     pass
 
 if __name__ == '__main__':
-    snippets_main(globals())
+    pcommand_main(globals())

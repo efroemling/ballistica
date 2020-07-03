@@ -158,7 +158,7 @@ def filter_makefile(makefile_dir: str, contents: str) -> str:
 
     cachemap = os.path.join(to_proj_root, CACHE_MAP_NAME)
     lines = contents.splitlines()
-    snippets = 'tools/snippets'
+    pcommand = 'tools/pcommand'
 
     # Strip out parts they don't want.
     while STRIP_BEGIN_TAG in lines:
@@ -184,7 +184,7 @@ def filter_makefile(makefile_dir: str, contents: str) -> str:
         lines.insert(index, tname + ': ' + cachemap)
         target = (makefile_dir + '/' + '$@') if makefile_dir else '$@'
         pre = f'cd {to_proj_root} && ' if makefile_dir else ''
-        lines.insert(index + 1, f'\t@{pre}{snippets} efrocache_get {target}')
+        lines.insert(index + 1, f'\t@{pre}{pcommand} efrocache_get {target}')
     return '\n'.join(lines) + '\n'
 
 

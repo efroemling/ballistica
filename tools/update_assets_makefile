@@ -187,7 +187,7 @@ def _get_py_targets_subset(all_targets: Set[str], subset: str,
         # For now setting PYTHONHASHSEED=1 is a workaround.
         out += ('\n' + target + ': \\\n      ' + py_targets[i] +
                 '\n\t@echo Compiling script: $^\n'
-                '\t@rm -rf $@ && PYTHONHASHSEED=1 $(TOOLS_DIR)/snippets'
+                '\t@rm -rf $@ && PYTHONHASHSEED=1 $(TOOLS_DIR)/pcommand'
                 ' compile_python_files $^'
                 ' && chmod 444 $@\n')
 

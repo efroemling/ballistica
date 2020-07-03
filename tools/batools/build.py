@@ -201,7 +201,7 @@ def lazybuild(target: str, category: SourceCategory, command: str) -> None:
     # Everything possibly affecting resource builds.
     elif category is SourceCategory.RESOURCES:
         paths = [
-            'Makefile', 'tools/snippets', 'resources/src', 'resources/Makefile'
+            'Makefile', 'tools/pcommand', 'resources/src', 'resources/Makefile'
         ]
     else:
         raise ValueError(f'Invalid source category: {category}')
@@ -284,22 +284,22 @@ def gen_fulltest_buildfile_android() -> None:
         extras = [e for e in extras if e.startswith('android.')]
         for extra in extras:
             if extra == 'android.pylibs.arm':
-                lines.append('tools/snippets python_build_android arm')
+                lines.append('tools/pcommand python_build_android arm')
             elif extra == 'android.pylibs.arm.debug':
-                lines.append('tools/snippets python_build_android_debug arm')
+                lines.append('tools/pcommand python_build_android_debug arm')
             elif extra == 'android.pylibs.arm64':
-                lines.append('tools/snippets python_build_android arm64')
+                lines.append('tools/pcommand python_build_android arm64')
             elif extra == 'android.pylibs.arm64.debug':
-                lines.append('tools/snippets python_build_android_debug arm64')
+                lines.append('tools/pcommand python_build_android_debug arm64')
             elif extra == 'android.pylibs.x86':
-                lines.append('tools/snippets python_build_android x86')
+                lines.append('tools/pcommand python_build_android x86')
             elif extra == 'android.pylibs.x86.debug':
-                lines.append('tools/snippets python_build_android_debug x86')
+                lines.append('tools/pcommand python_build_android_debug x86')
             elif extra == 'android.pylibs.x86_64':
-                lines.append('tools/snippets python_build_android x86_64')
+                lines.append('tools/pcommand python_build_android x86_64')
             elif extra == 'android.pylibs.x86_64.debug':
                 lines.append(
-                    'tools/snippets python_build_android_debug x86_64')
+                    'tools/pcommand python_build_android_debug x86_64')
             elif extra == 'android.package':
                 lines.append('make android-package')
             else:
@@ -375,9 +375,9 @@ def gen_fulltest_buildfile_apple() -> None:
         extras = [e for e in extras if e.startswith('ios.')]
         for extra in extras:
             if extra == 'ios.pylibs':
-                lines.append('tools/snippets python_build_apple ios')
+                lines.append('tools/pcommand python_build_apple ios')
             elif extra == 'ios.pylibs.debug':
-                lines.append('tools/snippets python_build_apple_debug ios')
+                lines.append('tools/pcommand python_build_apple_debug ios')
             else:
                 raise RuntimeError(f'Unknown extra: {extra}')
 
@@ -388,9 +388,9 @@ def gen_fulltest_buildfile_apple() -> None:
         extras = [e for e in extras if e.startswith('tvos.')]
         for extra in extras:
             if extra == 'tvos.pylibs':
-                lines.append('tools/snippets python_build_apple tvos')
+                lines.append('tools/pcommand python_build_apple tvos')
             elif extra == 'tvos.pylibs.debug':
-                lines.append('tools/snippets python_build_apple_debug tvos')
+                lines.append('tools/pcommand python_build_apple_debug tvos')
             else:
                 raise RuntimeError(f'Unknown extra: {extra}')
 
@@ -410,9 +410,9 @@ def gen_fulltest_buildfile_apple() -> None:
             elif extra == 'mac.package.server':
                 lines.append('make mac-server-package')
             elif extra == 'mac.pylibs':
-                lines.append('tools/snippets python_build_apple mac')
+                lines.append('tools/pcommand python_build_apple mac')
             elif extra == 'mac.pylibs.debug':
-                lines.append('tools/snippets python_build_apple_debug mac')
+                lines.append('tools/pcommand python_build_apple_debug mac')
             else:
                 raise RuntimeError(f'Unknown extra: {extra}')
 
@@ -540,7 +540,7 @@ def checkenv() -> None:
                     f' found {_vstr(vnums)}.\n'
                     f'To upgrade it, try: "{PYTHON_BIN}'
                     f' -m pip install --upgrade {packagename}".\n'
-                    'Alternately, "tools/snippets install_pip_reqs"'
+                    'Alternately, "tools/pcommand install_pip_reqs"'
                     ' will update all pip requirements.')
 
     print(f'{Clr.BLD}Environment ok.{Clr.RST}', flush=True)

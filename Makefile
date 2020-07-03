@@ -37,7 +37,7 @@ DOCPREFIX = "ballisticacore_"
 
 # List targets in this Makefile and basic descriptions for them.
 help:
-	@tools/snippets makefile_target_list Makefile
+	@tools/pcommand makefile_target_list Makefile
 
 PREREQS = .cache/checkenv .dir-locals.el \
   .mypy.ini .pycheckers .pylintrc .style.yapf .clang-format \
@@ -115,42 +115,42 @@ clean-list:
 
 # Assemble & run a debug build for this platform.
 prefab-debug: prefab-debug-build
-	${${shell tools/snippets prefab_run_var debug}}
+	${${shell tools/pcommand prefab_run_var debug}}
 
 # Assemble & run a release build for this platform.
 prefab-release: prefab-release-build
-	${${shell tools/snippets prefab_run_var release}}
+	${${shell tools/pcommand prefab_run_var release}}
 
 # Assemble a debug build for this platform.
 prefab-debug-build:
-	@tools/snippets make_prefab debug
+	@tools/pcommand make_prefab debug
 
 # Assemble a release build for this platform.
 prefab-release-build:
-	@tools/snippets make_prefab release
+	@tools/pcommand make_prefab release
 
 # Assemble & run a server debug build for this platform.
 prefab-server-debug: prefab-server-debug-build
-	${${shell tools/snippets prefab_run_var server-debug}}
+	${${shell tools/pcommand prefab_run_var server-debug}}
 
 # Assemble & run a server release build for this platform.
 prefab-server-release: prefab-server-release-build
-	${${shell tools/snippets prefab_run_var server-release}}
+	${${shell tools/pcommand prefab_run_var server-release}}
 
 # Assemble a server debug build for this platform.
 prefab-server-debug-build:
-	@tools/snippets make_prefab server-debug
+	@tools/pcommand make_prefab server-debug
 
 # Assemble a server release build for this platform.
 prefab-server-release-build:
-	@tools/snippets make_prefab server-release
+	@tools/pcommand make_prefab server-release
 
 # Specific platform prefab targets:
 
 RUN_PREFAB_MAC_DEBUG = cd build/prefab/mac/debug && ./ballisticacore
 
 prefab-mac-debug: prefab-mac-debug-build
-	@tools/snippets ensure_prefab_platform mac
+	@tools/pcommand ensure_prefab_platform mac
 	@${RUN_PREFAB_MAC_DEBUG}
 
 prefab-mac-debug-build: prereqs assets-cmake \
@@ -158,12 +158,12 @@ prefab-mac-debug-build: prereqs assets-cmake \
 	@${STAGE_ASSETS} -cmake build/prefab/mac/debug
 
 build/prefab/mac/debug/ballisticacore: .efrocachemap
-	@tools/snippets efrocache_get $@
+	@tools/pcommand efrocache_get $@
 
 RUN_PREFAB_MAC_RELEASE = cd build/prefab/mac/release && ./ballisticacore
 
 prefab-mac-release: prefab-mac-release-build
-	@tools/snippets ensure_prefab_platform mac
+	@tools/pcommand ensure_prefab_platform mac
 	@${RUN_PREFAB_MAC_RELEASE}
 
 prefab-mac-release-build: prereqs assets-cmake \
@@ -171,13 +171,13 @@ prefab-mac-release-build: prereqs assets-cmake \
 	@${STAGE_ASSETS} -cmake build/prefab/mac/release
 
 build/prefab/mac/release/ballisticacore: .efrocachemap
-	@tools/snippets efrocache_get $@
+	@tools/pcommand efrocache_get $@
 
 RUN_PREFAB_MAC_SERVER_DEBUG = cd build/prefab/mac-server/debug \
  && ./ballisticacore_server
 
 prefab-mac-server-debug: prefab-mac-server-debug-build
-	@tools/snippets ensure_prefab_platform mac
+	@tools/pcommand ensure_prefab_platform mac
 	@${RUN_PREFAB_MAC_SERVER_DEBUG}
 
 prefab-mac-server-debug-build: prereqs assets-cmake \
@@ -188,28 +188,28 @@ prefab-mac-server-debug-build: prereqs assets-cmake \
 	@${STAGE_ASSETS} -cmakeserver build/prefab/mac-server/debug/dist
 
 build/prefab/mac-server/debug/ballisticacore_server: \
- assets/src/server/ballisticacore_server.py tools/batools/snippets.py
-	@tools/snippets stage_server_file debug $< $@
+ assets/src/server/ballisticacore_server.py tools/batools/pcommand.py
+	@tools/pcommand stage_server_file debug $< $@
 
 build/prefab/mac-server/debug/config_template.yaml: \
  assets/src/server/config_template.yaml \
  tools/batools/build.py \
- tools/batools/snippets.py \
+ tools/batools/pcommand.py \
  tools/bacommon/servermanager.py
-	@tools/snippets stage_server_file debug $< $@
+	@tools/pcommand stage_server_file debug $< $@
 
 build/prefab/mac-server/debug/README.txt: \
  assets/src/server/README.txt
 	@cp $< $@
 
 build/prefab/mac-server/debug/dist/ballisticacore_headless: .efrocachemap
-	@tools/snippets efrocache_get $@
+	@tools/pcommand efrocache_get $@
 
 RUN_PREFAB_MAC_SERVER_RELEASE = cd build/prefab/mac-server/release \
  && ./ballisticacore_server
 
 prefab-mac-server-release: prefab-mac-server-release-build
-	@tools/snippets ensure_prefab_platform mac
+	@tools/pcommand ensure_prefab_platform mac
 	@${RUN_PREFAB_MAC_SERVER_RELEASE}
 
 prefab-mac-server-release-build: prereqs assets-cmake \
@@ -220,27 +220,27 @@ prefab-mac-server-release-build: prereqs assets-cmake \
 	@${STAGE_ASSETS} -cmakeserver build/prefab/mac-server/release/dist
 
 build/prefab/mac-server/release/ballisticacore_server: \
- assets/src/server/ballisticacore_server.py tools/batools/snippets.py
-	@tools/snippets stage_server_file release $< $@
+ assets/src/server/ballisticacore_server.py tools/batools/pcommand.py
+	@tools/pcommand stage_server_file release $< $@
 
 build/prefab/mac-server/release/config_template.yaml: \
  assets/src/server/config_template.yaml \
  tools/batools/build.py \
- tools/batools/snippets.py \
+ tools/batools/pcommand.py \
  tools/bacommon/servermanager.py
-	@tools/snippets stage_server_file release $< $@
+	@tools/pcommand stage_server_file release $< $@
 
 build/prefab/mac-server/release/README.txt: \
  assets/src/server/README.txt
 	@cp $< $@
 
 build/prefab/mac-server/release/dist/ballisticacore_headless: .efrocachemap
-	@tools/snippets efrocache_get $@
+	@tools/pcommand efrocache_get $@
 
 RUN_PREFAB_LINUX_DEBUG = cd build/prefab/linux/debug && ./ballisticacore
 
 prefab-linux-debug: prefab-linux-debug-build
-	@tools/snippets ensure_prefab_platform linux
+	@tools/pcommand ensure_prefab_platform linux
 	@${RUN_PREFAB_LINUX_DEBUG}
 
 prefab-linux-debug-build: prereqs assets-cmake \
@@ -248,12 +248,12 @@ prefab-linux-debug-build: prereqs assets-cmake \
 	@${STAGE_ASSETS} -cmake build/prefab/linux/debug
 
 build/prefab/linux/debug/ballisticacore: .efrocachemap
-	@tools/snippets efrocache_get $@
+	@tools/pcommand efrocache_get $@
 
 RUN_PREFAB_LINUX_RELEASE = cd build/prefab/linux/release && ./ballisticacore
 
 prefab-linux-release: prefab-linux-release-build
-	@tools/snippets ensure_prefab_platform linux
+	@tools/pcommand ensure_prefab_platform linux
 	@${RUN_PREFAB_LINUX_RELEASE}
 
 prefab-linux-release-build: prereqs assets-cmake \
@@ -261,13 +261,13 @@ prefab-linux-release-build: prereqs assets-cmake \
 	@${STAGE_ASSETS} -cmake build/prefab/linux/release
 
 build/prefab/linux/release/ballisticacore: .efrocachemap
-	@tools/snippets efrocache_get $@
+	@tools/pcommand efrocache_get $@
 
 RUN_PREFAB_LINUX_SERVER_DEBUG = cd build/prefab/linux-server/debug \
  && ./ballisticacore_server
 
 prefab-linux-server-debug: prefab-linux-server-debug-build
-	@tools/snippets ensure_prefab_platform linux
+	@tools/pcommand ensure_prefab_platform linux
 	@${RUN_PREFAB_LINUX_SERVER_DEBUG}
 
 prefab-linux-server-debug-build: prereqs assets-cmake \
@@ -278,28 +278,28 @@ prefab-linux-server-debug-build: prereqs assets-cmake \
 	@${STAGE_ASSETS} -cmakeserver build/prefab/linux-server/debug/dist
 
 build/prefab/linux-server/debug/ballisticacore_server: \
- assets/src/server/ballisticacore_server.py tools/batools/snippets.py
-	@tools/snippets stage_server_file debug $< $@
+ assets/src/server/ballisticacore_server.py tools/batools/pcommand.py
+	@tools/pcommand stage_server_file debug $< $@
 
 build/prefab/linux-server/debug/config_template.yaml: \
  assets/src/server/config_template.yaml \
  tools/batools/build.py \
- tools/batools/snippets.py \
+ tools/batools/pcommand.py \
  tools/bacommon/servermanager.py
-	@tools/snippets stage_server_file debug $< $@
+	@tools/pcommand stage_server_file debug $< $@
 
 build/prefab/linux-server/debug/README.txt: \
  assets/src/server/README.txt
 	@cp $< $@
 
 build/prefab/linux-server/debug/dist/ballisticacore_headless: .efrocachemap
-	@tools/snippets efrocache_get $@
+	@tools/pcommand efrocache_get $@
 
 RUN_PREFAB_LINUX_SERVER_RELEASE = cd build/prefab/linux-server/release \
  && ./ballisticacore_server
 
 prefab-linux-server-release: prefab-linux-server-release-build
-	@tools/snippets ensure_prefab_platform linux
+	@tools/pcommand ensure_prefab_platform linux
 	@${RUN_PREFAB_LINUX_SERVER_RELEASE}
 
 prefab-linux-server-release-build: prereqs assets-cmake \
@@ -310,29 +310,29 @@ prefab-linux-server-release-build: prereqs assets-cmake \
 	@${STAGE_ASSETS} -cmakeserver build/prefab/linux-server/release/dist
 
 build/prefab/linux-server/release/ballisticacore_server: \
- assets/src/server/ballisticacore_server.py tools/batools/snippets.py
-	@tools/snippets stage_server_file release $< $@
+ assets/src/server/ballisticacore_server.py tools/batools/pcommand.py
+	@tools/pcommand stage_server_file release $< $@
 
 build/prefab/linux-server/release/config_template.yaml: \
  assets/src/server/config_template.yaml \
  tools/batools/build.py \
- tools/batools/snippets.py \
+ tools/batools/pcommand.py \
  tools/bacommon/servermanager.py
-	@tools/snippets stage_server_file release $< $@
+	@tools/pcommand stage_server_file release $< $@
 
 build/prefab/linux-server/release/README.txt: \
  assets/src/server/README.txt
 	@cp $< $@
 
 build/prefab/linux-server/release/dist/ballisticacore_headless: .efrocachemap
-	@tools/snippets efrocache_get $@
+	@tools/pcommand efrocache_get $@
 
 PREFAB_WINDOWS_PLATFORM = Win32
 
 RUN_PREFAB_WINDOWS_DEBUG = cd build/prefab/windows/debug && ./BallisticaCore.exe
 
 prefab-windows-debug: prefab-windows-debug-build
-	@tools/snippets ensure_prefab_platform windows
+	@tools/pcommand ensure_prefab_platform windows
 	@{RUN_PREFAB_WINDOWS_DEBUG}
 
 prefab-windows-debug-build: prereqs assets-windows-${PREFAB_WINDOWS_PLATFORM} \
@@ -341,13 +341,13 @@ prefab-windows-debug-build: prereqs assets-windows-${PREFAB_WINDOWS_PLATFORM} \
 build/prefab/windows/debug
 
 build/prefab/windows/debug/BallisticaCore.exe: .efrocachemap
-	@tools/snippets efrocache_get $@
+	@tools/pcommand efrocache_get $@
 
 RUN_PREFAB_WINDOWS_RELEASE = cd build/prefab/windows/release \
  && ./BallisticaCore.exe
 
 prefab-windows-release: prefab-windows-release-build
-	@tools/snippets ensure_prefab_platform windows
+	@tools/pcommand ensure_prefab_platform windows
 	@{RUN_PREFAB_WINDOWS_RELEASE}
 
 prefab-windows-release-build: prereqs \
@@ -357,13 +357,13 @@ prefab-windows-release-build: prereqs \
 build/prefab/windows/release
 
 build/prefab/windows/release/BallisticaCore.exe: .efrocachemap
-	@tools/snippets efrocache_get $@
+	@tools/pcommand efrocache_get $@
 
 RUN_PREFAB_WINDOWS_SERVER_DEBUG = cd build/prefab/windows-server/debug \
  && dist/python.exe ballisticacore_server.py
 
 prefab-windows-server-debug: prefab-windows-server-debug-build
-	@tools/snippets ensure_prefab_platform windows
+	@tools/pcommand ensure_prefab_platform windows
 	@{RUN_PREFAB_WINDOWS_SERVER_DEBUG}
 
 prefab-windows-server-debug-build: prereqs \
@@ -377,22 +377,22 @@ prefab-windows-server-debug-build: prereqs \
  build/prefab/windows-server/debug/dist
 
 build/prefab/windows-server/debug/dist/ballisticacore_headless.exe: .efrocachemap
-	@tools/snippets efrocache_get $@
+	@tools/pcommand efrocache_get $@
 
 build/prefab/windows-server/debug/ballisticacore_server.py: \
- assets/src/server/ballisticacore_server.py tools/batools/snippets.py
-	@tools/snippets stage_server_file debug $< $@
+ assets/src/server/ballisticacore_server.py tools/batools/pcommand.py
+	@tools/pcommand stage_server_file debug $< $@
 
 build/prefab/windows-server/debug/launch_ballisticacore_server.bat: \
- assets/src/server/launch_ballisticacore_server.bat tools/batools/snippets.py
-	@tools/snippets stage_server_file debug $< $@
+ assets/src/server/launch_ballisticacore_server.bat tools/batools/pcommand.py
+	@tools/pcommand stage_server_file debug $< $@
 
 build/prefab/windows-server/debug/config_template.yaml: \
  assets/src/server/config_template.yaml \
  tools/batools/build.py \
- tools/batools/snippets.py \
+ tools/batools/pcommand.py \
  tools/bacommon/servermanager.py
-	@tools/snippets stage_server_file debug $< $@
+	@tools/pcommand stage_server_file debug $< $@
 
 build/prefab/windows-server/debug/README.txt: \
  assets/src/server/README.txt
@@ -402,7 +402,7 @@ RUN_PREFAB_WINDOWS_SERVER_RELEASE = cd build/prefab/windows-server/release \
  && dist/python.exe -O ballisticacore_server.py
 
 prefab-windows-server-release: prefab-windows-server-release-build
-	@tools/snippets ensure_prefab_platform windows
+	@tools/pcommand ensure_prefab_platform windows
 	@{RUN_PREFAB_WINDOWS_SERVER_RELEASE}
 
 prefab-windows-server-release-build: prereqs \
@@ -416,22 +416,22 @@ prefab-windows-server-release-build: prereqs \
  build/prefab/windows-server/release/dist
 
 build/prefab/windows-server/release/dist/ballisticacore_headless.exe: .efrocachemap
-	@tools/snippets efrocache_get $@
+	@tools/pcommand efrocache_get $@
 
 build/prefab/windows-server/release/ballisticacore_server.py: \
- assets/src/server/ballisticacore_server.py tools/batools/snippets.py
-	@tools/snippets stage_server_file release $< $@
+ assets/src/server/ballisticacore_server.py tools/batools/pcommand.py
+	@tools/pcommand stage_server_file release $< $@
 
 build/prefab/windows-server/release/launch_ballisticacore_server.bat: \
- assets/src/server/launch_ballisticacore_server.bat tools/batools/snippets.py
-	@tools/snippets stage_server_file release $< $@
+ assets/src/server/launch_ballisticacore_server.bat tools/batools/pcommand.py
+	@tools/pcommand stage_server_file release $< $@
 
 build/prefab/windows-server/release/config_template.yaml: \
  assets/src/server/config_template.yaml \
  tools/batools/build.py \
- tools/batools/snippets.py \
+ tools/batools/pcommand.py \
  tools/bacommon/servermanager.py
-	@tools/snippets stage_server_file release $< $@
+	@tools/pcommand stage_server_file release $< $@
 
 build/prefab/windows-server/release/README.txt: \
  assets/src/server/README.txt
@@ -483,32 +483,32 @@ update-check: prereqs
 # Run formatting on all files in the project considered 'dirty'.
 format:
 	@${MAKE} -j3 format-code format-scripts format-makefile
-	@tools/snippets echo GRN Formatting complete!
+	@tools/pcommand echo GRN Formatting complete!
 
 # Same but always formats; ignores dirty state.
 format-full:
 	@${MAKE} -j3 format-code-full format-scripts-full format-makefile
-	@tools/snippets echo GRN Formatting complete!
+	@tools/pcommand echo GRN Formatting complete!
 
 # Run formatting for compiled code sources (.cc, .h, etc.).
 format-code: prereqs
-	@tools/snippets formatcode
+	@tools/pcommand formatcode
 
 # Same but always formats; ignores dirty state.
 format-code-full: prereqs
-	@tools/snippets formatcode -full
+	@tools/pcommand formatcode -full
 
 # Runs formatting for scripts (.py, etc).
 format-scripts: prereqs
-	@tools/snippets formatscripts
+	@tools/pcommand formatscripts
 
 # Same but always formats; ignores dirty state.
 format-scripts-full: prereqs
-	@tools/snippets formatscripts -full
+	@tools/pcommand formatscripts -full
 
 # Runs formatting on the project Makefile.
 format-makefile: prereqs
-	@tools/snippets formatmakefile
+	@tools/pcommand formatmakefile
 
 .PHONY: format format-full format-code format-code-full format-scripts \
  format-scripts-full
@@ -523,62 +523,62 @@ format-makefile: prereqs
 # Run all project checks. (static analysis)
 check: update-check
 	@${MAKE} -j3 cpplint pylint mypy
-	@tools/snippets echo GRN ALL CHECKS PASSED!
+	@tools/pcommand echo GRN ALL CHECKS PASSED!
 
 # Same as check but no caching (all files are checked).
 check-full: update-check
 	@${MAKE} -j3 cpplint-full pylint-full mypy-full
-	@tools/snippets echo GRN ALL CHECKS PASSED!
+	@tools/pcommand echo GRN ALL CHECKS PASSED!
 
 # Same as 'check' plus optional/slow extra checks.
 check2: update-check
 	@${MAKE} -j4 cpplint pylint mypy pycharm
-	@tools/snippets echo GRN ALL CHECKS PASSED!
+	@tools/pcommand echo GRN ALL CHECKS PASSED!
 
 # Same as check2 but no caching (all files are checked).
 check2-full: update-check
 	@${MAKE} -j4 cpplint-full pylint-full mypy-full pycharm-full
-	@tools/snippets echo GRN ALL CHECKS PASSED!
+	@tools/pcommand echo GRN ALL CHECKS PASSED!
 
 # Run Cpplint checks on all C/C++ code.
 cpplint: prereqs
-	@tools/snippets cpplint
+	@tools/pcommand cpplint
 
 # Run Cpplint checks without caching (all files are checked).
 cpplint-full: prereqs
-	@tools/snippets cpplint -full
+	@tools/pcommand cpplint -full
 
 # Run Pylint checks on all Python Code.
 pylint: prereqs
-	@tools/snippets pylint
+	@tools/pcommand pylint
 
 # Run Pylint checks without caching (all files are checked).
 pylint-full: prereqs
-	@tools/snippets pylint -full
+	@tools/pcommand pylint -full
 
 # Run Mypy checks on all Python code.
 mypy: prereqs
-	@tools/snippets mypy
+	@tools/pcommand mypy
 
 # Run Mypy checks without caching (all files are checked).
 mypy-full: prereqs
-	@tools/snippets mypy -full
+	@tools/pcommand mypy -full
 
 # Run Mypy checks on all Python code using daemon mode.
 dmypy: prereqs
-	@tools/snippets dmypy
+	@tools/pcommand dmypy
 
 # Stop the mypy daemon
 dmypy-stop: prereqs
-	@tools/snippets dmypy -stop
+	@tools/pcommand dmypy -stop
 
 # Run PyCharm checks on all Python code.
 pycharm: prereqs
-	@tools/snippets pycharm
+	@tools/pcommand pycharm
 
 # Run PyCharm checks without caching (all files are checked).
 pycharm-full: prereqs
-	@tools/snippets pycharm -full
+	@tools/pcommand pycharm -full
 
 # Tell make which of these targets don't represent files.
 .PHONY: check check-full check2 check2-full \
@@ -594,19 +594,19 @@ pycharm-full: prereqs
 
 # Run all tests. (live execution verification)
 test: prereqs
-	@tools/snippets echo BLU Running all tests...
-	@tools/snippets pytest -v tests
+	@tools/pcommand echo BLU Running all tests...
+	@tools/pcommand pytest -v tests
 
 # Run tests with any caching disabled.
 test-full: test
 
 # Iterate on individual tests with extra debug output enabled.
 test-assetmanager:
-	@tools/snippets pytest -o log_cli=true -o log_cli_level=debug -s -v \
+	@tools/pcommand pytest -o log_cli=true -o log_cli_level=debug -s -v \
       tests/test_ba/test_assetmanager.py::test_assetmanager
 
 test-dataclasses:
-	@tools/snippets pytest -o log_cli=true -o log_cli_level=debug -s -v \
+	@tools/pcommand pytest -o log_cli=true -o log_cli_level=debug -s -v \
       tests/test_efro/test_dataclasses.py
 
 # Tell make which of these targets don't represent files.
@@ -624,28 +624,28 @@ preflight:
 	@${MAKE} format
 	@${MAKE} update
 	@${MAKE} -j4 cpplint pylint mypy test
-	@tools/snippets echo SGRN BLD PREFLIGHT SUCCESSFUL!
+	@tools/pcommand echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
 # Same as 'preflight' without caching (all files are visited).
 preflight-full:
 	@${MAKE} format-full
 	@${MAKE} update
 	@${MAKE} -j4 cpplint-full pylint-full mypy-full test-full
-	@tools/snippets echo SGRN BLD PREFLIGHT SUCCESSFUL!
+	@tools/pcommand echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
 # Same as 'preflight' plus optional/slow extra checks.
 preflight2:
 	@${MAKE} format
 	@${MAKE} update
 	@${MAKE} -j5 cpplint pylint mypy pycharm test
-	@tools/snippets echo SGRN BLD PREFLIGHT SUCCESSFUL!
+	@tools/pcommand echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
 # Same as 'preflight2' but without caching (all files visited).
 preflight2-full:
 	@${MAKE} format-full
 	@${MAKE} update
 	@${MAKE} -j5 cpplint-full pylint-full mypy-full pycharm-full test-full
-	@tools/snippets echo SGRN BLD PREFLIGHT SUCCESSFUL!
+	@tools/pcommand echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
 # Tell make which of these targets don't represent files.
 .PHONY: preflight preflight-full preflight2 preflight2-full
@@ -672,16 +672,16 @@ ROOT_CLEAN_IGNORES = --exclude=assets/src_master \
   --exclude=config/localconfig.json \
   --exclude=.spinoffdata
 
-CHECK_CLEAN_SAFETY = ${PROJ_DIR}/tools/snippets check_clean_safety
+CHECK_CLEAN_SAFETY = ${PROJ_DIR}/tools/pcommand check_clean_safety
 
 # Some tool configs that need filtering (mainly injecting projroot path).
-TOOL_CFG_INST = tools/snippets tool_config_install
+TOOL_CFG_INST = tools/pcommand tool_config_install
 
 # Anything that affects tool-config generation.
-TOOL_CFG_SRC = tools/efrotools/snippets.py config/config.json
+TOOL_CFG_SRC = tools/efrotools/pcommand.py config/config.json
 
 # Anything that should trigger an environment-check when changed.
-ENV_SRC = tools/snippets tools/batools/build.py
+ENV_SRC = tools/pcommand tools/batools/build.py
 
 .clang-format: config/toolconfigsrc/clang-format ${TOOL_CFG_SRC}
 	@${TOOL_CFG_INST} $< $@
@@ -709,7 +709,7 @@ ENV_SRC = tools/snippets tools/batools/build.py
 
 # Include anything as sources here that should require
 .cache/checkenv: ${ENV_SRC}
-	@tools/snippets checkenv
+	@tools/pcommand checkenv
 	@mkdir -p .cache
 	@touch .cache/checkenv
 

@@ -461,7 +461,7 @@ class TournamentEntryWindow(popup.PopupWindow):
             # This is not ideal since players will have to rejoin, etc.,
             # but it works for now.
             except Exception:
-                print('Error restarting tournament activity.')
+                ba.print_exception('Error restarting tournament activity.')
 
         # If we had no existing activity (or were unable to restart it)
         # launch a new session.

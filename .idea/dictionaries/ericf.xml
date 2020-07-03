@@ -1402,6 +1402,7 @@
       <w>pbxproj</w>
       <w>pcall</w>
       <w>pchild</w>
+      <w>pcommand</w>
       <w>pcstr</w>
       <w>pedit</w>
       <w>peditui</w>

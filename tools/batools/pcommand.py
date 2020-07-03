@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # -----------------------------------------------------------------------------
-"""Standard snippets that can be pulled into project snippets scripts.
+"""Standard snippets that can be pulled into project pcommand scripts.
 
 A snippet is a mini-program that directly takes input from stdin and does
 some focused task. This module consists of ballistica-specific ones.
@@ -30,7 +30,7 @@ from __future__ import annotations
 import sys
 from typing import TYPE_CHECKING
 
-from efrotools.snippets import PROJROOT
+from efrotools.pcommand import PROJROOT
 
 if TYPE_CHECKING:
     from typing import Optional, List, Set
@@ -171,7 +171,7 @@ def check_mac_ssh() -> None:
     if ('UsePAM yes' in lines or '#PasswordAuthentication yes' in lines
             or '#ChallengeResponseAuthentication yes' in lines):
         print('ERROR: ssh config is allowing password access.\n'
-              'To fix: sudo tools/snippets fix_mac_ssh')
+              'To fix: sudo tools/pcommand fix_mac_ssh')
         sys.exit(255)
     print('password ssh auth seems disabled; hooray!')
 
@@ -204,7 +204,7 @@ def check_clean_safety() -> None:
     adding something.
     """
     import os
-    from efrotools.snippets import check_clean_safety as std_snippet
+    from efrotools.pcommand import check_clean_safety as std_snippet
 
     # First do standard checks.
     std_snippet()
@@ -304,7 +304,7 @@ def androidaddr() -> None:
     from efro.error import CleanError
     if len(sys.argv) != 5:
         raise CleanError(f'ERROR: expected 3 args; got {len(sys.argv) - 2}\n'
-                         f'Usage: "tools/snippets android_addr'
+                         f'Usage: "tools/pcommand android_addr'
                          f' <ARCHIVE-PATH> <ARCH> <ADDR>"')
     archive_dir = sys.argv[2]
     arch = sys.argv[3]
