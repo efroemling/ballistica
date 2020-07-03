@@ -2803,12 +2803,9 @@ def lock_all_input() -> None:
     return None
 
 
-def log(message: str,
-        to_console: bool = True,
-        newline: bool = True,
-        to_server: bool = True) -> None:
-    """log(message: str, to_console: bool = True, newline: bool = True,
-      to_server: bool = True) -> None
+def log(message: str, to_stdout: bool = True, to_server: bool = True) -> None:
+    """log(message: str, to_stdout: bool = True,
+        to_server: bool = True) -> None
 
     Category: General Utility Functions
 
@@ -3081,6 +3078,22 @@ def print_load_info() -> None:
     return None
 
 
+def print_stderr(message: str) -> None:
+    """print_stderr(message: str) -> None
+
+    (internal)
+    """
+    return None
+
+
+def print_stdout(message: str) -> None:
+    """print_stdout(message: str) -> None
+
+    (internal)
+    """
+    return None
+
+
 def printnodes() -> None:
     """printnodes() -> None
 
@@ -3112,8 +3125,11 @@ def purchase(item: str) -> None:
     return None
 
 
-def pushcall(call: Callable, from_other_thread: bool = False) -> None:
-    """pushcall(call: Callable, from_other_thread: bool = False) -> None
+def pushcall(call: Callable,
+             from_other_thread: bool = False,
+             suppress_other_thread_warning: bool = False) -> None:
+    """pushcall(call: Callable, from_other_thread: bool = False,
+         suppress_other_thread_warning: bool = False ) -> None
 
     Pushes a call onto the event loop to be run during the next cycle.
 

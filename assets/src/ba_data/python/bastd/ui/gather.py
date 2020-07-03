@@ -1667,8 +1667,8 @@ class GatherWindow(ba.Window):
 
                                 # Ignore harmless errors.
                                 if exc.errno in {
-                                        errno.EHOSTUNREACH,
-                                        errno.ENETUNREACH,
+                                        errno.EHOSTUNREACH, errno.ENETUNREACH,
+                                        errno.EINVAL
                                 }:
                                     pass
                                 elif exc.errno == 10022:

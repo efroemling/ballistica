@@ -149,7 +149,7 @@ def read_config() -> Tuple[AppConfig, bool]:
         try:
             _ba.log('broken config contents:\n' +
                     config_contents.replace('\000', '<NULL_BYTE>'),
-                    to_console=False)
+                    to_stdout=False)
         except Exception as exc:
             print('EXC logging broken config contents:', exc)
         config = AppConfig()

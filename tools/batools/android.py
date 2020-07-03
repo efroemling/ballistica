@@ -30,7 +30,7 @@ from typing import TYPE_CHECKING
 import efrotools
 
 if TYPE_CHECKING:
-    pass
+    from typing import List, Optional, Set
 
 
 def androidaddr(archive_dir: str, arch: str, addr: str) -> None:

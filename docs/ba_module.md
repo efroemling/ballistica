@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-06-30 for Ballistica version 1.5.15 build 20098</em></h4>
+<h4><em>last updated on 2020-07-03 for Ballistica version 1.5.17 build 20102</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -6352,8 +6352,8 @@ is only useful for simple URLs.)</p>
 
 <hr>
 <h2><strong><a name="function_ba_log">ba.log()</a></strong></h3>
-<p><span>log(message: str, to_console: bool = True, newline: bool = True,
-  to_server: bool = True) -&gt; None</span></p>
+<p><span>log(message: str, to_stdout: bool = True,
+    to_server: bool = True) -&gt; None</span></p>
 
 <p>Category: <a href="#function_category_General_Utility_Functions">General Utility Functions</a></p>
 
@@ -6481,7 +6481,8 @@ It prints various info about the current object count, etc.</p>
 
 <hr>
 <h2><strong><a name="function_ba_pushcall">ba.pushcall()</a></strong></h3>
-<p><span>pushcall(call: Callable, from_other_thread: bool = False) -&gt; None</span></p>
+<p><span>pushcall(call: Callable, from_other_thread: bool = False,
+     suppress_other_thread_warning: bool = False ) -&gt; None</span></p>
 
 <p>Pushes a call onto the event loop to be run during the next cycle.</p>
 

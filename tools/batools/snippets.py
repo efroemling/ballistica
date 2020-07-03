@@ -33,7 +33,7 @@ from typing import TYPE_CHECKING
 from efrotools.snippets import PROJROOT
 
 if TYPE_CHECKING:
-    from typing import Optional
+    from typing import Optional, List, Set
 
 
 def stage_server_file() -> None:
@@ -651,3 +651,37 @@ def android_archive_unstripped_libs() -> None:
                            cwd=dst,
                            check=True)
             subprocess.run(['rm', dstpath], check=True)
+
+
+def _camel_case_split(string: str) -> List[str]:
+    words = [[string[0]]]
+    for char in string[1:]:
+        if words[-1][-1].islower() and char.isupper():
+            words.append(list(char))
+        else:
+            words[-1].append(char)
+    return [''.join(word) for word in words]
+
+
+def efro_gradle() -> None:
+    """Calls ./gradlew with some extra magic."""
+    import subprocess
+    from efrotools.android import filter_gradle_file
+    args = ['./gradlew'] + sys.argv[2:]
+    enabled_tags: Set[str] = set()
+    target_words = [w.lower() for w in _camel_case_split(args[-1])]
+    if 'google' in target_words:
+        enabled_tags = {'google', 'crashlytics'}
+    filter_gradle_file('BallisticaCore/build.gradle', enabled_tags)
+
+    try:
+        subprocess.run(args, check=True)
+        errored = False
+    except BaseException:
+        errored = True
+
+    # Put things back to default state.
+    filter_gradle_file('BallisticaCore/build.gradle', set())
+
+    if errored:
+        sys.exit(1)

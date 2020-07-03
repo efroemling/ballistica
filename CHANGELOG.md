@@ -1,3 +1,7 @@
+### 1.5.17 (20102)
+- More cleanup to logging and crash reporting system.
+- Various other minor bug fixes..
+
 ### 1.5.16 (20099)
 - Hopefully finally fixed that pesky crash bug on score submissions.
 

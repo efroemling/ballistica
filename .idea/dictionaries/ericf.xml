@@ -232,6 +232,7 @@
       <w>buildblessingcheck</w>
       <w>builddir</w>
       <w>buildfile</w>
+      <w>buildfilename</w>
       <w>buildnum</w>
       <w>buildtype</w>
       <w>bullseye</w>
@@ -407,6 +408,7 @@
       <w>ctex</w>
       <w>ctuple</w>
       <w>ctype</w>
+      <w>cupcmd</w>
       <w>curdir</w>
       <w>curhash</w>
       <w>curhashes</w>
@@ -548,11 +550,13 @@
       <w>editcontroller</w>
       <w>editgame</w>
       <w>editorconfig</w>
+      <w>efgrd</w>
       <w>efile</w>
       <w>efro</w>
       <w>efrocache</w>
       <w>efrocachemap</w>
       <w>efroemling</w>
+      <w>efrogradle</w>
       <w>efrosync</w>
       <w>efrotool</w>
       <w>efrotools</w>
@@ -1068,6 +1072,7 @@
       <w>libxz</w>
       <w>lindex</w>
       <w>lindexorig</w>
+      <w>linebits</w>
       <w>lineheight</w>
       <w>lineno</w>
       <w>linenum</w>
@@ -1534,6 +1539,7 @@
       <w>pushdocs</w>
       <w>pushish</w>
       <w>pushlist</w>
+      <w>pushsymbols</w>
       <w>putasset</w>
       <w>putassetmanifest</w>
       <w>putassetpack</w>
@@ -1752,6 +1758,7 @@
       <w>shellapi</w>
       <w>shiftdelay</w>
       <w>shiftposition</w>
+      <w>shiplog</w>
       <w>shobs</w>
       <w>shortname</w>
       <w>shouldn</w>
