@@ -10,3 +10,7 @@
 
 ### Roman Trapeznikov
 - Bug fixes and code cleanup
+
+### Benefit-Zebra
+- Unofficial BombSquad Bug Finder
+- Code Cleanup
