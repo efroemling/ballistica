@@ -22,7 +22,7 @@ jobs:
       with:
         python-version: 3.7
     - name: Install dependencies
-      run: tools/snippets install_pip_reqs
+      run: tools/pcommand install_pip_reqs
     - name: Run checks and tests
       run: make -j2 check test
 
@@ -42,5 +42,5 @@ jobs:
         python -m pip install --upgrade pip
         pip install pytest typing_extensions
     - name: Run tests
-      run: python tools/snippets pytest -v tests
+      run: python tools/pcommand pytest -v tests
         
