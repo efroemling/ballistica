@@ -174,22 +174,30 @@ def _get_py_targets_subset(all_targets: Set[str], subset: str,
             '\t@cp $^ $@\n'
             '\t@chmod 444 $@\n')
 
-    out += ('\n# Looks like path mangling from py to pyc is too complex for'
+    # Fancy new simple loop-based target generation.
+    out += (f'\n# These are too complex to define in a pattern rule;\n'
+            f'# Instead we generate individual targets in a loop.\n'
+            f'$(foreach element,$(SCRIPT_TARGETS_PYC{suffix}),\\\n'
+            f'$(eval $(call make-opt-pyc-target,$(element))))')
+
+    # Old code to explicitly emit individual targets.
+    if bool(False):
+        out += (
+            '\n# Looks like path mangling from py to pyc is too complex for'
             ' pattern rules so\n# just generating explicit targets'
             ' for each. Could perhaps look into using a\n# fancy for-loop'
             ' instead, but perhaps listing these explicitly isn\'t so bad.\n')
-
-    for i, target in enumerate(pyc_targets):
-        # Note: there's currently a bug which can cause python bytecode
-        # generation to be non-deterministic. This can break our blessing
-        # process since we bless in core but then regenerate bytecode in
-        # spinoffs. See https://bugs.python.org/issue34722
-        # For now setting PYTHONHASHSEED=1 is a workaround.
-        out += ('\n' + target + ': \\\n      ' + py_targets[i] +
-                '\n\t@echo Compiling script: $^\n'
-                '\t@rm -rf $@ && PYTHONHASHSEED=1 $(TOOLS_DIR)/pcommand'
-                ' compile_python_files $^'
-                ' && chmod 444 $@\n')
+        for i, target in enumerate(pyc_targets):
+            # Note: there's currently a bug which can cause python bytecode
+            # generation to be non-deterministic. This can break our blessing
+            # process since we bless in core but then regenerate bytecode in
+            # spinoffs. See https://bugs.python.org/issue34722
+            # For now setting PYTHONHASHSEED=1 is a workaround.
+            out += ('\n' + target + ': \\\n      ' + py_targets[i] +
+                    '\n\t@echo Compiling script: $^\n'
+                    '\t@rm -rf $@ && PYTHONHASHSEED=1 $(TOOLS_DIR)/pcommand'
+                    ' compile_python_files $^'
+                    ' && chmod 444 $@\n')
 
     return out
 

@@ -572,6 +572,7 @@
       <w>encerr</w>
       <w>endcall</w>
       <w>endcommand</w>
+      <w>endef</w>
       <w>endindex</w>
       <w>endmessage</w>
       <w>endparen</w>
