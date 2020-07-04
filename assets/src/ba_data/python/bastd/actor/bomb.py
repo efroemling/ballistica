@@ -1014,7 +1014,7 @@ class Bomb(ba.Actor):
             # We don't want to give the credit and points to player,
             # who punched the bomb of other player in a chain reaction.
             # And this will protect the bomb from getting hit_type 'punch'.
-            
+
             # Also lets change the owner of the bomb to whoever is setting
             # us off. (this way points for big chain reactions go to the
             # person causing them).
