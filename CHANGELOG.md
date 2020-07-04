@@ -1,5 +1,6 @@
 ### 1.5.18 (20106)
 - A bit of project cleanup; tools/snippets is now tools/pcommand, etc.
+- More code improvement
 
 ### 1.5.17 (20102)
 - More cleanup to logging and crash reporting system.
