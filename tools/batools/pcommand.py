@@ -672,7 +672,13 @@ def efro_gradle() -> None:
     target_words = [w.lower() for w in _camel_case_split(args[-1])]
     if 'google' in target_words:
         enabled_tags = {'google', 'crashlytics'}
-    filter_gradle_file('BallisticaCore/build.gradle', enabled_tags)
+
+    buildfilename = 'BallisticaCore/build.gradle'
+    # Backup the original file, preserving timestamps and whatnot so as to not
+    # trip modification tests.
+    subprocess.run(['cp', '-p', buildfilename, f'{buildfilename}.prev'],
+                   check=True)
+    filter_gradle_file(buildfilename, enabled_tags)
 
     try:
         subprocess.run(args, check=True)
@@ -680,8 +686,8 @@ def efro_gradle() -> None:
     except BaseException:
         errored = True
 
-    # Put things back to default state.
-    filter_gradle_file('BallisticaCore/build.gradle', set())
+    # Restore the original.
+    subprocess.run(['mv', f'{buildfilename}.prev', buildfilename], check=True)
 
     if errored:
         sys.exit(1)

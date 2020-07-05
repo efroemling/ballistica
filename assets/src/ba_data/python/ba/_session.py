@@ -591,28 +591,32 @@ class Session:
         lobby = chooser.lobby
         activity = self._activity_weak()
 
+        # It seems this can happen..
+        if activity is None:
+            print('_on_player_ready called with no activity.')
+            return
+
         # In joining-activities, we wait till all choosers are ready
         # and then create all players at once.
-        if activity is not None and activity.is_joining_activity:
-            if lobby.check_all_ready():
-                choosers = lobby.get_choosers()
-                min_players = self.min_players
-                if len(choosers) >= min_players:
-                    for lch in lobby.get_choosers():
-                        self._add_chosen_player(lch)
-                    lobby.remove_all_choosers()
-
-                    # Get our next activity going.
-                    self._complete_end_activity(activity, {})
-                else:
-                    _ba.screenmessage(
-                        Lstr(resource='notEnoughPlayersText',
-                             subs=[('${COUNT}', str(min_players))]),
-                        color=(1, 1, 0),
-                    )
-                    _ba.playsound(_ba.getsound('error'))
-            else:
+        if activity.is_joining_activity:
+            if not lobby.check_all_ready():
                 return
+            choosers = lobby.get_choosers()
+            min_players = self.min_players
+            if len(choosers) >= min_players:
+                for lch in lobby.get_choosers():
+                    self._add_chosen_player(lch)
+                lobby.remove_all_choosers()
+
+                # Get our next activity going.
+                self._complete_end_activity(activity, {})
+            else:
+                _ba.screenmessage(
+                    Lstr(resource='notEnoughPlayersText',
+                         subs=[('${COUNT}', str(min_players))]),
+                    color=(1, 1, 0),
+                )
+                _ba.playsound(_ba.getsound('error'))
 
         # Otherwise just add players on the fly.
         else:
