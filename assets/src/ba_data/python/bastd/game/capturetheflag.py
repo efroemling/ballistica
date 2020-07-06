@@ -426,16 +426,16 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
                                'loop': True
                            }))
         flag = team.flag
-        assert flag.touch_return_time is not None
-        flag.touch_return_time -= 0.1
-        if flag.counter:
-            flag.counter.text = f'{flag.touch_return_time:.1f}'
-            flag.counter.color = (1, 1, 0, 1)
-            flag.counter.scale = 0.02
+        if flag.touch_return_time is not None:
+            flag.touch_return_time -= 0.1
+            if flag.counter:
+                flag.counter.text = f'{flag.touch_return_time:.1f}'
+                flag.counter.color = (1, 1, 0, 1)
+                flag.counter.scale = 0.02
 
-        if flag.touch_return_time <= 0.0:
-            self._award_players_touching_own_flag(team)
-            flag.handlemessage(ba.DieMessage())
+            if flag.touch_return_time <= 0.0:
+                self._award_players_touching_own_flag(team)
+                flag.handlemessage(ba.DieMessage())
 
     def _award_players_touching_own_flag(self, team: Team) -> None:
         for player in team.players:
