@@ -1005,12 +1005,16 @@ class Bomb(ba.Actor):
         ba.playsound(factory.activate_sound, 0.5, position=self.node.position)
 
     def _handle_hit(self, msg: ba.HitMessage) -> None:
-        ispunch = (msg.srcnode and msg.srcnode.getnodetype() == 'spaz')
+        ispunched = (msg.srcnode and msg.srcnode.getnodetype() == 'spaz')
 
         # Normal bombs are triggered by non-punch impacts;
         # impact-bombs by all impacts.
-        if (not self._exploded and not ispunch
+        if not ispunched and (not self._exploded
                 or self.bomb_type in ['impact', 'land_mine']):
+            # We don't want to give the credit and points to player,
+            # who punched the bomb of other player in a chain reaction.
+            # And this will protect the bomb from getting hit_type 'punch'.
+
             # Also lets change the owner of the bomb to whoever is setting
             # us off. (this way points for big chain reactions go to the
             # person causing them).
