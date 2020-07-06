@@ -718,10 +718,16 @@ class Bomb(ba.Actor):
 
         # By default our hit type/subtype is our own, but we pick up types of
         # whoever sets us off so we know what caused a chain reaction.
+        # UPDATE (July 2020): not inheriting hit-types anymore; this causes
+        # weird effects such as land-mines inheriting 'punch' hit types and
+        # then not being able to destroy certain things they normally could,
+        # etc. Inheriting owner/source-node from things that set us off
+        # should be all we need I think...
         self.hit_type = 'explosion'
         self.hit_subtype = self.bomb_type
 
         # The node this came from.
+        # FIXME: can we unify this and source_player?
         self.owner = owner
 
         # Adding footing-materials to things can screw up jumping and flying
@@ -1005,12 +1011,13 @@ class Bomb(ba.Actor):
         ba.playsound(factory.activate_sound, 0.5, position=self.node.position)
 
     def _handle_hit(self, msg: ba.HitMessage) -> None:
-        ispunch = (msg.srcnode and msg.srcnode.getnodetype() == 'spaz')
+        ispunched = (msg.srcnode and msg.srcnode.getnodetype() == 'spaz')
 
         # Normal bombs are triggered by non-punch impacts;
         # impact-bombs by all impacts.
-        if (not self._exploded and not ispunch
-                or self.bomb_type in ['impact', 'land_mine']):
+        if (not self._exploded and
+            (not ispunched or self.bomb_type in ['impact', 'land_mine'])):
+
             # Also lets change the owner of the bomb to whoever is setting
             # us off. (this way points for big chain reactions go to the
             # person causing them).
@@ -1021,13 +1028,15 @@ class Bomb(ba.Actor):
                 # Also inherit the hit type (if a landmine sets off by a bomb,
                 # the credit should go to the mine)
                 # the exception is TNT.  TNT always gets credit.
-                if self.bomb_type != 'tnt':
-                    self.hit_type = msg.hit_type
-                    self.hit_subtype = msg.hit_subtype
+                # UPDATE (July 2020): not doing this anymore. Causes too much
+                # weird logic such as bombs acting like punches. Holler if
+                # anything is noticeably broken due to this.
+                # if self.bomb_type != 'tnt':
+                #     self.hit_type = msg.hit_type
+                #     self.hit_subtype = msg.hit_subtype
 
-            ba.timer(100 + int(random.random() * 100),
-                     ba.WeakCall(self.handlemessage, ExplodeMessage()),
-                     timeformat=ba.TimeFormat.MILLISECONDS)
+            ba.timer(0.1 + random.random() * 0.1,
+                     ba.WeakCall(self.handlemessage, ExplodeMessage()))
         assert self.node
         self.node.handlemessage('impulse', msg.pos[0], msg.pos[1], msg.pos[2],
                                 msg.velocity[0], msg.velocity[1],
