@@ -1,3 +1,6 @@
+### 1.5.19 (20114)
+- Cleaned up some bomb chain-reaction logic to avoid weird corner-cases such as land-mine explosions behaving like punches when set off by a punch. Holler if anything explosion-related looks broken.
+
 ### 1.5.18 (20108)
 - A bit of project cleanup; tools/snippets is now tools/pcommand, etc.
 - More minor bug fixes and crash/bug-logging improvements.

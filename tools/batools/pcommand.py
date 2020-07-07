@@ -674,10 +674,11 @@ def efro_gradle() -> None:
         enabled_tags = {'google', 'crashlytics'}
 
     buildfilename = 'BallisticaCore/build.gradle'
-    # Backup the original file, preserving timestamps and whatnot so as to not
-    # trip modification tests.
-    subprocess.run(['cp', '-p', buildfilename, f'{buildfilename}.prev'],
-                   check=True)
+
+    # Move the original file out of the way and operate on a copy of it.
+    subprocess.run(['mv', buildfilename, f'{buildfilename}.prev'], check=True)
+    subprocess.run(['cp', f'{buildfilename}.prev', buildfilename], check=True)
+
     filter_gradle_file(buildfilename, enabled_tags)
 
     try:

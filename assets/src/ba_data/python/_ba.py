@@ -613,6 +613,7 @@ class Node:
     model_opaque: Optional[ba.Model] = None
     model_transparent: Optional[ba.Model] = None
     damage_smoothed: float = 0.0
+    gravity_scale: float = 1.0
     punch_power: float = 0.0
     punch_momentum_linear: Sequence[float] = (0.0, 0.0, 0.0)
     punch_momentum_angular: float = 0.0
