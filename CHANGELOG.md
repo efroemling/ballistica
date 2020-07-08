@@ -3,6 +3,7 @@
 - Reactivated and cleaned up fatal-error message dialogs; they should now show up more consistently and on more platforms when something really bad happens instead of getting a silent crash.
 - Certain hardware buttons on Android which stopped working in 1.5 should now be working again..
 
+
 ### 1.5.18 (20108)
 - A bit of project cleanup; tools/snippets is now tools/pcommand, etc.
 - More minor bug fixes and crash/bug-logging improvements.
