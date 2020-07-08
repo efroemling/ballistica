@@ -520,13 +520,6 @@ class App:
         # it to the server and/or get rid of it.
         _apputils.handle_leftover_log_file()
 
-        # Notify the user if we're using custom system scripts.
-        # FIXME: This no longer works since sys-scripts is an absolute path;
-        #  need to just add a proper call to query this.
-        # if env['python_directory_app'] != 'data/scripts':
-        #     ba.screenmessage("Using custom system scripts...",
-        #                     color=(0, 1, 0))
-
         # Only do this stuff if our config file is healthy so we don't
         # overwrite a broken one or whatnot and wipe out data.
         if not self.config_file_healthy:

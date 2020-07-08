@@ -158,10 +158,13 @@ class ServerCallThread(threading.Thread):
             elif isinstance(exc, OSError):
                 if exc.errno == 10051:  # Windows unreachable network error.
                     pass
-                elif exc.errno in [errno.ETIMEDOUT]:
+                elif exc.errno in [errno.ETIMEDOUT, errno.EHOSTUNREACH]:
                     pass
                 else:
                     do_print = True
+            elif (self._response_type == ServerResponseType.JSON
+                  and isinstance(exc, json.decoder.JSONDecodeError)):
+                pass
             else:
                 do_print = True
 

@@ -1,5 +1,7 @@
-### 1.5.19 (20114)
-- Cleaned up some bomb chain-reaction logic to avoid weird corner-cases such as land-mine explosions behaving like punches when set off by a punch. Holler if anything explosion-related looks broken.
+### 1.5.19 (20123)
+- Cleaned up some bomb logic to avoid weird corner-cases such as land-mine explosions behaving like punches when set off by punches or bombs potentially resulting in multiple explosions when triggered by multiple other bombs simultaneously. Holler if anything explosion-related seems off now.
+- Reactivated and cleaned up fatal-error message dialogs; they should now show up more consistently and on more platforms when something really bad happens instead of getting a silent crash.
+- Certain hardware buttons on Android which stopped working in 1.5 should now be working again..
 
 ### 1.5.18 (20108)
 - A bit of project cleanup; tools/snippets is now tools/pcommand, etc.
