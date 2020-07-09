@@ -577,6 +577,7 @@ class Node:
     punch_position: Sequence[float] = (0.0, 0.0, 0.0)
     punch_velocity: Sequence[float] = (0.0, 0.0, 0.0)
     velocity: Sequence[float] = (0.0, 0.0, 0.0)
+    extra_acceleration: Sequence[float] = (0.0, 0.0, 0.0)
     name_color: Sequence[float] = (0.0, 0.0, 0.0)
     tint_color: Sequence[float] = (0.0, 0.0, 0.0)
     tint2_color: Sequence[float] = (0.0, 0.0, 0.0)
