@@ -271,7 +271,9 @@ class ControlsGuide(ba.Actor):
             # We look at the session's players; not the activity's.
             # We want to get ones who are still in the process of
             # selecting a character, etc.
-            input_devices = [p.inputdevice for p in ba.getsession().players]
+            input_devices = [
+                p.inputdevice for p in ba.getsession().sessionplayers
+            ]
             input_devices = [
                 i for i in input_devices if i and i is not touchscreen
             ]
@@ -323,7 +325,7 @@ class ControlsGuide(ba.Actor):
 
         # We look at the session's players; not the activity's - we want to
         # get ones who are still in the process of selecting a character, etc.
-        input_devices = [p.inputdevice for p in ba.getsession().players]
+        input_devices = [p.inputdevice for p in ba.getsession().sessionplayers]
         input_devices = [i for i in input_devices if i]
 
         # If there's no players with input devices yet, try to default to

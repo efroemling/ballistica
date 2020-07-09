@@ -189,7 +189,7 @@ class CoopSession(Session):
         # If there's *no* players left in the current activity but there *is*
         # in the session, restart the activity to pull them into the game
         # (or quit if they're just in the lobby).
-        if not activity.players and self.players:
+        if not activity.players and self.sessionplayers:
 
             # Special exception for tourney games; don't auto-restart these.
             if self.tournament_id is not None:
@@ -226,7 +226,7 @@ class CoopSession(Session):
 
         # Make an exception if there's no players left. Otherwise this
         # can override the default session end that occurs in that case.
-        if not self.players:
+        if not self.sessionplayers:
             return
 
         # This method may get called from the UI context so make sure we
@@ -268,7 +268,7 @@ class CoopSession(Session):
 
         # If at any point we have no in-game players, quit out of the session
         # (this can happen if someone leaves in the tutorial for instance).
-        active_players = [p for p in self.players if p.in_game]
+        active_players = [p for p in self.sessionplayers if p.in_game]
         if not active_players:
             self.end()
             return
@@ -305,7 +305,7 @@ class CoopSession(Session):
 
                 # Reset stats for the new activity.
                 self.stats.reset()
-                for player in self.players:
+                for player in self.sessionplayers:
 
                     # Skip players that are still choosing a team.
                     if player.in_game:

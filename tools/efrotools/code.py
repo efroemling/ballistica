@@ -149,7 +149,8 @@ def cpplint(projroot: Path, full: bool) -> None:
     codelines[unknownlintline] = '        elif False:'
 
     def lint_file(filename: str) -> None:
-        result = subprocess.call(['cpplint', '--root=src', filename], env=env)
+        result = subprocess.call(
+            ['python3.7', '-m', 'cpplint', '--root=src', filename], env=env)
         if result != 0:
             raise CleanError(
                 f'{Clr.RED}Cpplint failed for {filename}.{Clr.RST}')
@@ -213,7 +214,8 @@ def formatscripts(projroot: Path, full: bool) -> None:
 
     def format_file(filename: str) -> None:
         start_time = time.time()
-        result = subprocess.call(['yapf', '--in-place', filename])
+        result = subprocess.call(
+            ['python3.7', '-m', 'yapf', '--in-place', filename])
         if result != 0:
             raise Exception(f'Formatting failed for {filename}')
         duration = time.time() - start_time

@@ -494,11 +494,11 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
         self._stats = session.stats
 
         # Add session's teams in.
-        for team in session.teams:
+        for team in session.sessionteams:
             self.add_team(team)
 
         # Add session's players in.
-        for player in session.players:
+        for player in session.sessionplayers:
             self.add_player(player)
 
         self._has_begun = True

@@ -48,21 +48,22 @@ class Session:
 
     Attrs:
 
-        teams
-            All the ba.Teams in the Session. Most things should use the team
-            list in ba.Activity; not this.
+        sessionteams
+            All the ba.SessionTeams in the Session. Most things should use the
+            list of ba.Teams in ba.Activity; not this.
 
-        players
-            All ba.Players in the Session. Most things should use the player
-            list in ba.Activity; not this. Some players, such as those who have
-            not yet selected a character, will only appear on this list.
+        sessionplayers
+            All ba.SessionPlayers in the Session. Most things should use the
+            list of ba.Players in ba.Activity; not this. Some players, such as
+            those who have not yet selected a character, will only be
+            found on this list.
 
         min_players
-            The minimum number of Players who must be present for the Session
+            The minimum number of players who must be present for the Session
             to proceed past the initial joining screen.
 
         max_players
-            The maximum number of Players allowed in the Session.
+            The maximum number of players allowed in the Session.
 
         lobby
             The ba.Lobby instance where new ba.Players go to select a
@@ -98,9 +99,9 @@ class Session:
     lobby: ba.Lobby
     max_players: int
     min_players: int
-    players: List[ba.SessionPlayer]
+    sessionplayers: List[ba.SessionPlayer]
     customdata: dict
-    teams: List[ba.SessionTeam]
+    sessionteams: List[ba.SessionTeam]
 
     def __init__(self,
                  depsets: Sequence[ba.DependencySet],
@@ -166,8 +167,8 @@ class Session:
         # Should remove this if possible.
         self.tournament_id: Optional[str] = None
 
-        self.teams = []
-        self.players = []
+        self.sessionteams = []
+        self.sessionplayers = []
         self.min_players = min_players
         self.max_players = max_players
 
@@ -195,7 +196,7 @@ class Session:
                                    name=GameActivity.get_team_display_string(
                                        team_names[i]),
                                    color=color)
-                self.teams.append(team)
+                self.sessionteams.append(team)
                 self._next_team_id += 1
                 try:
                     with _ba.Context(self):
@@ -226,7 +227,7 @@ class Session:
         # Limit player counts *unless* we're in a stress test.
         if _ba.app.stress_test_reset_timer is None:
 
-            if len(self.players) >= self.max_players:
+            if len(self.sessionplayers) >= self.max_players:
 
                 # Print a rejection message *only* to the client trying to
                 # join (prevents spamming everyone else in the game).
@@ -245,7 +246,7 @@ class Session:
     def on_player_leave(self, sessionplayer: ba.SessionPlayer) -> None:
         """Called when a previously-accepted ba.SessionPlayer leaves."""
 
-        if sessionplayer not in self.players:
+        if sessionplayer not in self.sessionplayers:
             print('ERROR: Session.on_player_leave called'
                   ' for player not in our list.')
             return
@@ -295,7 +296,7 @@ class Session:
                 self._remove_player_team(sessionteam, activity)
 
         # Now remove them from the session list.
-        self.players.remove(sessionplayer)
+        self.sessionplayers.remove(sessionplayer)
 
     def _remove_player_team(self, sessionteam: ba.SessionTeam,
                             activity: Optional[ba.Activity]) -> None:
@@ -313,9 +314,9 @@ class Session:
 
         # And then from the Session.
         with _ba.Context(self):
-            if sessionteam in self.teams:
+            if sessionteam in self.sessionteams:
                 try:
-                    self.teams.remove(sessionteam)
+                    self.sessionteams.remove(sessionteam)
                     self.on_team_leave(sessionteam)
                 except Exception:
                     print_exception(
@@ -535,7 +536,7 @@ class Session:
 
         # If they said yes, add the player to the lobby.
         if result:
-            self.players.append(sessionplayer)
+            self.sessionplayers.append(sessionplayer)
             with _ba.Context(self):
                 try:
                     self.lobby.add_chooser(sessionplayer)
@@ -643,7 +644,7 @@ class Session:
     def _add_chosen_player(self, chooser: ba.Chooser) -> ba.SessionPlayer:
         from ba._team import SessionTeam
         sessionplayer = chooser.getplayer()
-        assert sessionplayer in self.players, (
+        assert sessionplayer in self.sessionplayers, (
             'SessionPlayer not found in session '
             'player-list after chooser selection.')
 
@@ -686,7 +687,7 @@ class Session:
             )
 
             # Add player's team to the Session.
-            self.teams.append(sessionteam)
+            self.sessionteams.append(sessionteam)
 
             with _ba.Context(self):
                 try:

@@ -158,7 +158,9 @@ class ServerCallThread(threading.Thread):
             elif isinstance(exc, OSError):
                 if exc.errno == 10051:  # Windows unreachable network error.
                     pass
-                elif exc.errno in [errno.ETIMEDOUT, errno.EHOSTUNREACH]:
+                elif exc.errno in [
+                        errno.ETIMEDOUT, errno.EHOSTUNREACH, errno.ENETUNREACH
+                ]:
                     pass
                 else:
                     do_print = True

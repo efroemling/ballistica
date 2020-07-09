@@ -49,17 +49,17 @@ class FreeForAllSession(MultiTeamSession):
         This is based on the current number of players.
         """
         point_awards: Dict[int, int]
-        if len(self.players) == 1:
+        if len(self.sessionplayers) == 1:
             point_awards = {}
-        elif len(self.players) == 2:
+        elif len(self.sessionplayers) == 2:
             point_awards = {0: 6}
-        elif len(self.players) == 3:
+        elif len(self.sessionplayers) == 3:
             point_awards = {0: 6, 1: 3}
-        elif len(self.players) == 4:
+        elif len(self.sessionplayers) == 4:
             point_awards = {0: 8, 1: 4, 2: 2}
-        elif len(self.players) == 5:
+        elif len(self.sessionplayers) == 5:
             point_awards = {0: 8, 1: 4, 2: 2}
-        elif len(self.players) == 6:
+        elif len(self.sessionplayers) == 6:
             point_awards = {0: 8, 1: 4, 2: 2}
         else:
             point_awards = {0: 8, 1: 4, 2: 2, 3: 1}
@@ -80,7 +80,7 @@ class FreeForAllSession(MultiTeamSession):
 
         # If there's multiple players and everyone has the same score,
         # call it a draw.
-        if len(self.players) > 1 and len(winners) < 2:
+        if len(self.sessionplayers) > 1 and len(winners) < 2:
             self.setactivity(
                 _ba.newactivity(DrawScoreScreenActivity, {'results': results}))
         else:
@@ -95,7 +95,7 @@ class FreeForAllSession(MultiTeamSession):
                     team.customdata['score'] += points
 
             series_winners = [
-                team for team in self.teams
+                team for team in self.sessionteams
                 if team.customdata['score'] >= self._ffa_series_length
             ]
             series_winners.sort(reverse=True,

@@ -199,7 +199,7 @@ class MultiTeamSession(Session):
             if isinstance(activity, TeamSeriesVictoryScoreScreenActivity):
                 self.stats.reset()
                 self._game_number = 0
-                for team in self.teams:
+                for team in self.sessionteams:
                     team.customdata['score'] = 0
 
             # Otherwise just set accum (per-game) scores.
@@ -216,7 +216,7 @@ class MultiTeamSession(Session):
             self._instantiate_next_game()
 
             # (Re)register all players and wire stats to our next activity.
-            for player in self.players:
+            for player in self.sessionplayers:
                 # ..but only ones who have been placed on a team
                 # (ie: no longer sitting in the lobby).
                 try:

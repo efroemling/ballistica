@@ -66,9 +66,10 @@ class MultiTeamJoinActivity(JoinActivity):
         # In teams mode, show our two team names.
         # FIXME: Lobby should handle this.
         if isinstance(ba.getsession(), DualTeamSession):
-            team_names = [team.name for team in ba.getsession().teams]
+            team_names = [team.name for team in ba.getsession().sessionteams]
             team_colors = [
-                tuple(team.color) + (0.5, ) for team in ba.getsession().teams
+                tuple(team.color) + (0.5, )
+                for team in ba.getsession().sessionteams
             ]
             if len(team_names) == 2:
                 for i in range(2):

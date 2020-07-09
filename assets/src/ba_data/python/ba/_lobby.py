@@ -841,7 +841,9 @@ class Lobby:
         session = _ba.getsession()
         self._use_team_colors = session.use_team_colors
         if session.use_teams:
-            self._sessionteams = [weakref.ref(team) for team in session.teams]
+            self._sessionteams = [
+                weakref.ref(team) for team in session.sessionteams
+            ]
         else:
             self._dummy_teams = SessionTeam()
             self._sessionteams = [weakref.ref(self._dummy_teams)]

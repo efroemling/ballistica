@@ -75,7 +75,7 @@ class TeamVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                  scale=0.25,
                  color=(0.5, 0.5, 0.5, 1.0),
                  jitter=3.0).autoretain()
-        for team in self.session.teams:
+        for team in self.session.sessionteams:
             ba.timer(
                 i * 0.15 + 0.15,
                 ba.WeakCall(self._show_team_name, vval - i * height, team,

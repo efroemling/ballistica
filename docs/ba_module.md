@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-07-08 for Ballistica version 1.5.19 build 20119</em></h4>
+<h4><em>last updated on 2020-07-09 for Ballistica version 1.5.20 build 20128</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -1734,7 +1734,7 @@ and it should begin its actual game logic.</p>
     high score lists.</p>
 
 <h3>Attributes Inherited:</h3>
-<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__customdata">customdata</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__teams">teams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
+<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__customdata">customdata</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__sessionplayers">sessionplayers</a>, <a href="#attr_ba_Session__sessionteams">sessionteams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
 <h3>Attributes Defined Here:</h3>
 <h5><a href="#attr_ba_CoopSession__campaign">campaign</a>, <a href="#attr_ba_CoopSession__sessionglobalsnode">sessionglobalsnode</a></h5>
 <dl>
@@ -2092,7 +2092,7 @@ its time with lingering corpses, sound effects, etc.</p>
 </p>
 
 <h3>Attributes Inherited:</h3>
-<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__customdata">customdata</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__teams">teams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
+<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__customdata">customdata</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__sessionplayers">sessionplayers</a>, <a href="#attr_ba_Session__sessionteams">sessionteams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
 <h3>Attributes Defined Here:</h3>
 <dl>
 <dt><h4><a name="attr_ba_DualTeamSession__sessionglobalsnode">sessionglobalsnode</a></h4></dt><dd>
@@ -2219,7 +2219,7 @@ its time with lingering corpses, sound effects, etc.</p>
 <p>&lt;all methods inherited from <a href="#class_ba_Team">ba.Team</a>&gt;</p>
 <hr>
 <h2><strong><a name="class_ba_Existable">ba.Existable</a></strong></h3>
-<p>Inherits from: <a href="#class_typing_extensions_Protocol">typing_extensions.Protocol</a></p>
+<p>Inherits from: <a href="#class_typing_Protocol">typing.Protocol</a>, <a href="#class_typing_Generic">typing.Generic</a></p>
 <p>A Protocol for objects supporting an exists() method.</p>
 
 <p>Category: <a href="#class_category_Protocols">Protocols</a>
@@ -2273,7 +2273,7 @@ its time with lingering corpses, sound effects, etc.</p>
 </p>
 
 <h3>Attributes Inherited:</h3>
-<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__customdata">customdata</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__teams">teams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
+<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__customdata">customdata</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__sessionplayers">sessionplayers</a>, <a href="#attr_ba_Session__sessionteams">sessionteams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
 <h3>Attributes Defined Here:</h3>
 <dl>
 <dt><h4><a name="attr_ba_FreeForAllSession__sessionglobalsnode">sessionglobalsnode</a></h4></dt><dd>
@@ -3687,7 +3687,7 @@ Use <a href="#function_ba_getmodel">ba.getmodel</a>() to instantiate one.</p>
 </p>
 
 <h3>Attributes Inherited:</h3>
-<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__customdata">customdata</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__teams">teams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
+<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__customdata">customdata</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__sessionplayers">sessionplayers</a>, <a href="#attr_ba_Session__sessionteams">sessionteams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
 <h3>Attributes Defined Here:</h3>
 <dl>
 <dt><h4><a name="attr_ba_MultiTeamSession__sessionglobalsnode">sessionglobalsnode</a></h4></dt><dd>
@@ -4659,7 +4659,7 @@ Pass 0 or a negative number for no ban time.</p>
     maintaining state between them (players, teams, score tallies, etc).</p>
 
 <h3>Attributes:</h3>
-<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__customdata">customdata</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__players">players</a>, <a href="#attr_ba_Session__sessionglobalsnode">sessionglobalsnode</a>, <a href="#attr_ba_Session__teams">teams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
+<h5><a href="#attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a>, <a href="#attr_ba_Session__customdata">customdata</a>, <a href="#attr_ba_Session__lobby">lobby</a>, <a href="#attr_ba_Session__max_players">max_players</a>, <a href="#attr_ba_Session__min_players">min_players</a>, <a href="#attr_ba_Session__sessionglobalsnode">sessionglobalsnode</a>, <a href="#attr_ba_Session__sessionplayers">sessionplayers</a>, <a href="#attr_ba_Session__sessionteams">sessionteams</a>, <a href="#attr_ba_Session__use_team_colors">use_team_colors</a>, <a href="#attr_ba_Session__use_teams">use_teams</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_Session__allow_mid_activity_joins">allow_mid_activity_joins</a></h4></dt><dd>
 <p><span>bool</span></p>
@@ -4683,20 +4683,13 @@ any such selection.</p>
 </dd>
 <dt><h4><a name="attr_ba_Session__max_players">max_players</a></h4></dt><dd>
 <p><span>int</span></p>
-<p>The maximum number of Players allowed in the Session.</p>
+<p>The maximum number of players allowed in the Session.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_Session__min_players">min_players</a></h4></dt><dd>
 <p><span>int</span></p>
-<p>The minimum number of Players who must be present for the Session
+<p>The minimum number of players who must be present for the Session
 to proceed past the initial joining screen.</p>
-
-</dd>
-<dt><h4><a name="attr_ba_Session__players">players</a></h4></dt><dd>
-<p><span>List[<a href="#class_ba_SessionPlayer">ba.SessionPlayer</a>]</span></p>
-<p>All <a href="#class_ba_Player">ba.Players</a> in the Session. Most things should use the player
-list in <a href="#class_ba_Activity">ba.Activity</a>; not this. Some players, such as those who have
-not yet selected a character, will only appear on this list.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_Session__sessionglobalsnode">sessionglobalsnode</a></h4></dt><dd>
@@ -4704,10 +4697,18 @@ not yet selected a character, will only appear on this list.</p>
 <p>The sessionglobals <a href="#class_ba_Node">ba.Node</a> for the session.</p>
 
 </dd>
-<dt><h4><a name="attr_ba_Session__teams">teams</a></h4></dt><dd>
+<dt><h4><a name="attr_ba_Session__sessionplayers">sessionplayers</a></h4></dt><dd>
+<p><span>List[<a href="#class_ba_SessionPlayer">ba.SessionPlayer</a>]</span></p>
+<p>All <a href="#class_ba_SessionPlayer">ba.SessionPlayers</a> in the Session. Most things should use the
+list of <a href="#class_ba_Player">ba.Players</a> in <a href="#class_ba_Activity">ba.Activity</a>; not this. Some players, such as
+those who have not yet selected a character, will only be
+found on this list.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_Session__sessionteams">sessionteams</a></h4></dt><dd>
 <p><span>List[<a href="#class_ba_SessionTeam">ba.SessionTeam</a>]</span></p>
-<p>All the <a href="#class_ba_Team">ba.Teams</a> in the Session. Most things should use the team
-list in <a href="#class_ba_Activity">ba.Activity</a>; not this.</p>
+<p>All the <a href="#class_ba_SessionTeam">ba.SessionTeams</a> in the Session. Most things should use the
+list of <a href="#class_ba_Team">ba.Teams</a> in <a href="#class_ba_Activity">ba.Activity</a>; not this.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_Session__use_team_colors">use_team_colors</a></h4></dt><dd>
