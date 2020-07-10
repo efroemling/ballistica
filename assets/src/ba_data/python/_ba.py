@@ -569,118 +569,150 @@ class Node:
     # future I hope to create proper individual classes
     # corresponding to different node types with correct
     # attributes per node-type.
-    color: Sequence[float] = (0.0, 0.0, 0.0)
-    size: Sequence[float] = (0.0, 0.0, 0.0)
+
+    # Model
+    model_opaque: Optional[ba.Model] = None
+    model_transparent: Optional[ba.Model] = None
+
+    # Position
     position: Sequence[float] = (0.0, 0.0, 0.0)
     position_center: Sequence[float] = (0.0, 0.0, 0.0)
     position_forward: Sequence[float] = (0.0, 0.0, 0.0)
-    punch_position: Sequence[float] = (0.0, 0.0, 0.0)
-    punch_velocity: Sequence[float] = (0.0, 0.0, 0.0)
-    velocity: Sequence[float] = (0.0, 0.0, 0.0)
-    extra_acceleration: Sequence[float] = (0.0, 0.0, 0.0)
-    name_color: Sequence[float] = (0.0, 0.0, 0.0)
+
+    # Textures and Colors
+    texture: Optional[ba.Texture] = None
+    tint: Sequence[float] = (1.0, 1.0, 1.0)
     tint_color: Sequence[float] = (0.0, 0.0, 0.0)
     tint2_color: Sequence[float] = (0.0, 0.0, 0.0)
-    text: Union[ba.Lstr, str] = ''
-    texture: Optional[ba.Texture] = None
     tint_texture: Optional[ba.Texture] = None
+    opacity: float = 0.0
+    vignette_inner: Sequence[float] = (0.0, 0.0)
+    vignette_outer: Sequence[float] = (0.0, 0.0)
+    color: Sequence[float] = (0.0, 0.0, 0.0)
+    ambient_color: Sequence[float] = (1.0, 1.0, 1.0)
+
+    # Shadow
+    shadow_offset: Sequence[float] = (0.0, 0.0)
+    shadow_ortho: bool = False
+    shadow_range: Sequence[float] = (0, 0, 0, 0)
+
+    # Materials
+    materials: Sequence[Material] = ()
+    pickup_materials: Sequence[ba.Material] = ()
+    punch_materials: Sequence[ba.Material] = ()
+    roller_materials: Sequence[Material] = ()
+    extras_material: Sequence[ba.Material] = ()
+
+    # Billboards
+    billboard_cross_out: bool = False
+    billboard_opacity: float = 0.0
+    billboard_texture: Optional[ba.Texture] = None
+    mini_billboard_1_end_time: int = 0
+    mini_billboard_1_start_time: int = 0
+    mini_billboard_1_texture: Optional[ba.Texture] = None
+    mini_billboard_2_end_time: int = 0
+    mini_billboard_2_start_time: int = 0
+    mini_billboard_2_texture: Optional[ba.Texture] = None
+    mini_billboard_3_end_time: int = 0
+    mini_billboard_3_start_time: int = 0
+    mini_billboard_3_texture: Optional[ba.Texture] = None
+
+    # Time
+    time1: int = 0
+    time2: int = 0
+    time: int = 0
+    timemax: int = 0
     times: Sequence[int] = (1, 2, 3, 4, 5)
-    values: Sequence[float] = (1.0, 2.0, 3.0, 4.0)
-    offset: float = 0.0
+
+    # Music
+    music: str = ''
+    music_continuous: bool = False
+    music_count: int = 0
+
+    # Gameplay
+    text: Union[ba.Lstr, str] = ''
+    client_only: bool = False
+    counter_text: str = ''
+    counter_texture: Optional[ba.Texture] = None
+    loop: bool = False
+    allow_kick_idle_players: bool = False
+    host_only: bool = False
+    paused: bool = False
+
+    # Map
+    is_area_of_interest: bool = False
+    area_of_interest_bounds: Sequence[float] = (-1, -1, -1, 1, 1, 1)
+    happy_thoughts_mode: bool = False
+    camera_mode: str = 'rotate'
+
+    # Input
     input0: float = 0.0
     input1: float = 0.0
     input2: float = 0.0
     input3: float = 0.0
-    flashing: bool = False
-    scale: Union[float, Sequence[float]] = 0.0
-    opacity: float = 0.0
-    loop: bool = False
-    time1: int = 0
-    time2: int = 0
-    timemax: int = 0
-    client_only: bool = False
-    materials: Sequence[Material] = ()
-    roller_materials: Sequence[Material] = ()
-    name: str = ''
-    punch_materials: Sequence[ba.Material] = ()
-    pickup_materials: Sequence[ba.Material] = ()
-    extras_material: Sequence[ba.Material] = ()
-    rotate: float = 0.0
-    hold_node: Optional[ba.Node] = None
-    hold_body: int = 0
-    host_only: bool = False
-    premultiplied: bool = False
-    source_player: Optional[ba.Player] = None
-    model_opaque: Optional[ba.Model] = None
-    model_transparent: Optional[ba.Model] = None
-    damage_smoothed: float = 0.0
-    gravity_scale: float = 1.0
-    punch_power: float = 0.0
-    punch_momentum_linear: Sequence[float] = (0.0, 0.0, 0.0)
-    punch_momentum_angular: float = 0.0
-    rate: int = 0
-    vr_depth: float = 0.0
-    is_area_of_interest: bool = False
-    jump_pressed: bool = False
-    pickup_pressed: bool = False
-    punch_pressed: bool = False
+
+    # Button Pressed
     bomb_pressed: bool = False
     fly_pressed: bool = False
     hold_position_pressed: bool = False
-    knockout: float = 0.0
-    invincible: bool = False
-    stick_to_owner: bool = False
-    damage: int = 0
-    run: float = 0.0
-    move_up_down: float = 0.0
-    move_left_right: float = 0.0
-    curse_death_time: int = 0
+    jump_pressed: bool = False
+    pickup_pressed: bool = False
+    punch_pressed: bool = False
+
+    # Spaz
+    name: str = ''
+    name_color: Sequence[float] = (0.0, 0.0, 0.0)
     boxing_gloves: bool = False
-    use_fixed_vr_overlay: bool = False
-    allow_kick_idle_players: bool = False
-    music_continuous: bool = False
-    music_count: int = 0
-    hurt: float = 0.0
-    always_show_health_bar: bool = False
-    mini_billboard_1_texture: Optional[ba.Texture] = None
-    mini_billboard_1_start_time: int = 0
-    mini_billboard_1_end_time: int = 0
-    mini_billboard_2_texture: Optional[ba.Texture] = None
-    mini_billboard_2_start_time: int = 0
-    mini_billboard_2_end_time: int = 0
-    mini_billboard_3_texture: Optional[ba.Texture] = None
-    mini_billboard_3_start_time: int = 0
-    mini_billboard_3_end_time: int = 0
     boxing_gloves_flashing: bool = False
-    dead: bool = False
-    floor_reflection: bool = False
-    debris_friction: float = 0.0
-    debris_kill_height: float = 0.0
-    vr_near_clip: float = 0.0
-    shadow_ortho: bool = False
-    happy_thoughts_mode: bool = False
-    shadow_offset: Sequence[float] = (0.0, 0.0)
-    paused: bool = False
-    time: int = 0
-    ambient_color: Sequence[float] = (1.0, 1.0, 1.0)
-    camera_mode: str = 'rotate'
+    always_show_health_bar: bool = False
+    curse_death_time: int = 0
     frozen: bool = False
-    area_of_interest_bounds: Sequence[float] = (-1, -1, -1, 1, 1, 1)
-    shadow_range: Sequence[float] = (0, 0, 0, 0)
-    counter_text: str = ''
-    counter_texture: Optional[ba.Texture] = None
+    hold_body: int = 0
+    hold_node: Optional[ba.Node] = None
+    invincible: bool = False
+    knockout: float = 0.0
+    move_left_right: float = 0.0
+    move_up_down: float = 0.0
+    run: float = 0.0
     shattered: int = 0
-    billboard_texture: Optional[ba.Texture] = None
-    billboard_cross_out: bool = False
-    billboard_opacity: float = 0.0
-    slow_motion: bool = False
-    music: str = ''
+    source_player: Optional[ba.Player] = None
+    stick_to_owner: bool = False
+
+    # Spaz punch
+    punch_momentum_angular: float = 0.0
+    punch_momentum_linear: Sequence[float] = (0.0, 0.0, 0.0)
+    punch_power: float = 0.0
+    punch_position: Sequence[float] = (0.0, 0.0, 0.0)
+    punch_velocity: Sequence[float] = (0.0, 0.0, 0.0)
+
+    # vr
     vr_camera_offset: Sequence[float] = (0.0, 0.0, 0.0)
+    vr_depth: float = 0.0
+    vr_near_clip: float = 0.0
     vr_overlay_center: Sequence[float] = (0.0, 0.0, 0.0)
     vr_overlay_center_enabled: bool = False
-    vignette_outer: Sequence[float] = (0.0, 0.0)
-    vignette_inner: Sequence[float] = (0.0, 0.0)
-    tint: Sequence[float] = (1.0, 1.0, 1.0)
+    use_fixed_vr_overlay: bool = False
+
+    # Miscellaneous/Physics
+    offset: float = 0.0
+    premultiplied: bool = False
+    rate: int = 0
+    rotate: float = 0.0
+    scale: Union[float, Sequence[float]] = 0.0
+    values: Sequence[float] = (1.0, 2.0, 3.0, 4.0)
+    velocity: Sequence[float] = (0.0, 0.0, 0.0)
+    extra_acceleration: Sequence[float] = (0.0, 0.0, 0.0)
+    size: Sequence[float] = (0.0, 0.0, 0.0)
+    slow_motion: bool = False
+    damage: int = 0
+    damage_smoothed: float = 0.0
+    dead: bool = False
+    debris_friction: float = 0.0
+    debris_kill_height: float = 0.0
+    flashing: bool = False
+    floor_reflection: bool = False
+    gravity_scale: float = 1.0
+    hurt: float = 0.0
 
     def add_death_action(self, action: Callable[[], None]) -> None:
         """add_death_action(action: Callable[[], None]) -> None
