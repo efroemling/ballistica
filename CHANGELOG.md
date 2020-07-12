@@ -2,6 +2,7 @@
 - The ba.Session.teams and ba.Session.players lists are now ba.Session.sessionteams and ba.Session.sessionplayers. This is to help keep it clear that a Team/Player and a SessionTeam/SessionPlayer are different things now.
 - Disconnecting an input-device now immediately removes the player instead of doing so in the next cycle; this prevents possible issues where code would try to access player.inputdevice before the removal happens which would lead to errors.
 - Updated mac prefab builds to point at homebrew's python@3.7 package now that 3.8 has been made the default.
+- Fixed an issue where adding/deleting UI widgets within certain callbacks could cause a crash.
 
 ### 1.5.19 (20123)
 - Cleaned up some bomb logic to avoid weird corner-cases such as land-mine explosions behaving like punches when set off by punches or bombs potentially resulting in multiple explosions when triggered by multiple other bombs simultaneously. Holler if anything explosion-related seems off now.

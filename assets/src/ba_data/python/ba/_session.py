@@ -592,7 +592,9 @@ class Session:
         lobby = chooser.lobby
         activity = self._activity_weak()
 
-        # It seems this can happen..
+        # This happens sometimes. That seems like it shouldn't be happening;
+        # when would we have a session and a chooser with players but no
+        # active activity?
         if activity is None:
             print('_on_player_ready called with no activity.')
             return

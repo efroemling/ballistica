@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-07-09 for Ballistica version 1.5.20 build 20128</em></h4>
+<h4><em>last updated on 2020-07-11 for Ballistica version 1.5.20 build 20132</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -2219,7 +2219,7 @@ its time with lingering corpses, sound effects, etc.</p>
 <p>&lt;all methods inherited from <a href="#class_ba_Team">ba.Team</a>&gt;</p>
 <hr>
 <h2><strong><a name="class_ba_Existable">ba.Existable</a></strong></h3>
-<p>Inherits from: <a href="#class_typing_Protocol">typing.Protocol</a>, <a href="#class_typing_Generic">typing.Generic</a></p>
+<p>Inherits from: <a href="#class_typing_extensions_Protocol">typing_extensions.Protocol</a></p>
 <p>A Protocol for objects supporting an exists() method.</p>
 
 <p>Category: <a href="#class_category_Protocols">Protocols</a>

@@ -30,7 +30,6 @@ import subprocess
 from functools import partial
 from typing import TYPE_CHECKING
 
-from efro.error import CleanError
 from efrotools.pybuild import PYTHON_VERSION_MAJOR
 
 if TYPE_CHECKING:
@@ -48,10 +47,10 @@ OPT_PYC_SUFFIX = ('cpython-' + PYTHON_VERSION_MAJOR.replace('.', '') +
 class Config:
     """Encapsulates command options."""
 
-    def __init__(self) -> None:
+    def __init__(self, projroot: str) -> None:
+        self.projroot = projroot
         # We always calc src relative to this script.
-        self.src = os.path.abspath(
-            os.path.dirname(sys.argv[0]) + '/../assets/build')
+        self.src = self.projroot + '/assets/build'
         self.dst: Optional[str] = None
         self.win_extras_src: Optional[str] = None
         self.win_platform: Optional[str] = None
@@ -71,7 +70,7 @@ class Config:
         self.is_payload_full = False
         self.debug = False
 
-    def _parse_android_args(self) -> None:
+    def _parse_android_args(self, args: List[str]) -> None:
         # On Android we get nitpicky with what
         # we want to copy in since we can speed up
         # iterations by installing stripped down
@@ -89,7 +88,7 @@ class Config:
         self.include_fonts = False
         self.include_json = False
         self.include_pylib = False
-        for arg in sys.argv[1:]:
+        for arg in args:
             if arg == '-full':
                 self.include_audio = True
                 self.include_models = True
@@ -118,13 +117,13 @@ class Config:
             elif arg == '-audio':
                 self.include_audio = True
 
-    def _parse_win_platform(self, platform: str) -> None:
+    def _parse_win_platform(self, platform: str, args: List[str]) -> None:
         """Parse sub-args in the windows platform string."""
         winempty, wintype, winplt, wincfg = platform.split('-')
         self.win_platform = winplt
         self.win_type = wintype
         assert winempty == ''
-        self.dst = sys.argv[2]
+        self.dst = args[1]
         self.tex_suffix = '.dds'
 
         if wintype == 'win':
@@ -137,12 +136,9 @@ class Config:
             raise RuntimeError(f'Invalid wintype: "{wintype}"')
 
         if winplt == 'Win32':
-            self.win_extras_src = os.path.abspath(
-                os.path.dirname(sys.argv[0]) +
-                '/../assets/build/windows/Win32')
+            self.win_extras_src = self.projroot + '/assets/build/windows/Win32'
         elif winplt == 'x64':
-            self.win_extras_src = os.path.abspath(
-                os.path.dirname(sys.argv[0]) + '/../assets/build/windows/x64')
+            self.win_extras_src = self.projroot + '/assets/build/windows/x64'
         else:
             raise RuntimeError(f'Invalid winplt: "{winplt}"')
 
@@ -153,31 +149,31 @@ class Config:
         else:
             raise RuntimeError(f'Invalid wincfg: "{wincfg}"')
 
-    def parse_args(self) -> None:
+    def parse_args(self, args: List[str]) -> None:
         """Parse args and apply to the cfg."""
-        if len(sys.argv) < 2:
+        if len(args) < 1:
             raise RuntimeError('Expected a platform argument.')
-        platform = sys.argv[1]
+        platform = args[0]
         if platform == '-android':
-            self._parse_android_args()
+            self._parse_android_args(args)
         elif platform.startswith('-win'):
-            self._parse_win_platform(platform)
+            self._parse_win_platform(platform, args)
         elif platform == '-cmake':
-            self.dst = sys.argv[2]
+            self.dst = args[1]
             self.tex_suffix = '.dds'
-        elif '-cmakeserver' in sys.argv:
-            self.dst = sys.argv[2]
+        elif '-cmakeserver' in args:
+            self.dst = args[1]
             self.include_textures = False
             self.include_audio = False
             self.include_models = False
-        elif '-xcode-mac' in sys.argv:
+        elif '-xcode-mac' in args:
             self.src = os.environ['SOURCE_ROOT'] + '/assets/build'
             self.dst = (os.environ['TARGET_BUILD_DIR'] + '/' +
                         os.environ['UNLOCALIZED_RESOURCES_FOLDER_PATH'])
             self.include_pylib = True
             self.pylib_src_name = 'pylib-apple'
             self.tex_suffix = '.dds'
-        elif '-xcode-ios' in sys.argv:
+        elif '-xcode-ios' in args:
             self.src = os.environ['SOURCE_ROOT'] + '/assets/build'
             self.dst = (os.environ['TARGET_BUILD_DIR'] + '/' +
                         os.environ['UNLOCALIZED_RESOURCES_FOLDER_PATH'])
@@ -323,11 +319,14 @@ def _sync_pylib(cfg: Config) -> None:
     _run(cmd)
 
 
-def main() -> None:
+def main(projroot: str, args: Optional[List[str]] = None) -> None:
     """Stage assets for a build."""
 
-    cfg = Config()
-    cfg.parse_args()
+    if args is None:
+        args = sys.argv
+
+    cfg = Config(projroot)
+    cfg.parse_args(args)
 
     # Ok, now for every top level dir in src, come up with a nice single
     # command to sync the needed subset of it to dst.
@@ -386,9 +385,9 @@ def main() -> None:
         _write_payload_file(cfg.dst, cfg.is_payload_full)
 
 
-if __name__ == '__main__':
-    try:
-        main()
-    except CleanError as exc:
-        exc.pretty_print()
-        sys.exit(1)
+# if __name__ == '__main__':
+#     try:
+#         main()
+#     except CleanError as exc:
+#         exc.pretty_print()
+#         sys.exit(1)

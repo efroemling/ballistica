@@ -374,8 +374,15 @@ class PartyQueueWindow(ba.Window):
 
     def on_update_response(self, response: Optional[Dict[str, Any]]) -> None:
         """We've received a response from an update to the server."""
+        # pylint: disable=too-many-branches
         if not self._root_widget:
             return
+
+        # Seeing this in logs; debugging...
+        if not self._title_text:
+            print('PartyQueueWindows update: Have root but no title_text.')
+            return
+
         if response is not None:
             should_show_field = (response.get('d') is not None)
             self._smoothing = response['s']
