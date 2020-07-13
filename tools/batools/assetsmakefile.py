@@ -259,17 +259,14 @@ def _get_extras_targets_win(all_targets: Set[str], platform: str) -> str:
     return out
 
 
-def main() -> None:
+def update_assets_makefile(projroot: str, check: bool) -> None:
     """Main script entry point."""
     # pylint: disable=too-many-locals
     from efrotools import getconfig
     from pathlib import Path
 
-    # In 'check' mode we simply error on differences.
-    check = ('--check' in sys.argv)
-
     # Always operate out of dist root dir.
-    os.chdir(os.path.join(os.path.dirname(sys.argv[0]), '..'))
+    os.chdir(projroot)
 
     public = getconfig(Path('.'))['public']
     assert isinstance(public, bool)
@@ -396,7 +393,3 @@ def _write_manifest(manifest_path: str, all_targets: Set[str],
         print(f'{Clr.SBLU}Updating: {manifest_path}{Clr.RST}')
         with open(manifest_path, 'w') as outfile:
             outfile.write(json.dumps(manifest, indent=1))
-
-
-if __name__ == '__main__':
-    main()

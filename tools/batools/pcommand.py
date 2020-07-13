@@ -703,3 +703,10 @@ def stage_assets() -> None:
     except CleanError as exc:
         exc.pretty_print()
         sys.exit(1)
+
+
+def update_assets_makefile() -> None:
+    """Update the assets makefile."""
+    from batools.assetsmakefile import update_assets_makefile as uam
+    check = ('--check' in sys.argv)
+    uam(projroot=str(PROJROOT), check=check)

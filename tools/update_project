@@ -634,8 +634,8 @@ class App:
             sys.exit(255)
 
     def _update_assets_makefile(self) -> None:
-        assert os.path.exists('tools/update_assets_makefile')
-        if os.system('tools/update_assets_makefile' + self._checkarg) != 0:
+        if os.system(f'tools/pcommand update_assets_makefile {self._checkarg}'
+                     ) != 0:
             print(
                 f'{Clr.RED}Error checking/updating assets Makefile.f{Clr.RST}')
             sys.exit(255)
