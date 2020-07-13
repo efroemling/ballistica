@@ -46,13 +46,15 @@ class AccountViewerWindow(popup.PopupWindow):
         self._account_id = account_id
         self._profile_id = profile_id
 
+        uiscale = ba.app.uiscale
         if scale is None:
-            scale = (2.6 if ba.app.small_ui else 1.8 if ba.app.med_ui else 1.4)
+            scale = (2.6 if uiscale is ba.UIScale.SMALL else
+                     1.8 if uiscale is ba.UIScale.MEDIUM else 1.4)
         self._transitioning_out = False
 
         self._width = 400
-        self._height = (300
-                        if ba.app.small_ui else 400 if ba.app.med_ui else 450)
+        self._height = (300 if uiscale is ba.UIScale.SMALL else
+                        400 if uiscale is ba.UIScale.MEDIUM else 450)
         self._subcontainer: Optional[ba.Widget] = None
 
         bg_color = (0.5, 0.4, 0.6)
@@ -159,9 +161,11 @@ class AccountViewerWindow(popup.PopupWindow):
             choices.append('ban')
             choices_display.append(ba.Lstr(resource='banThisPlayerText'))
 
+        uiscale = ba.app.uiscale
         popup.PopupMenuWindow(
             position=self._extras_menu_button.get_screen_space_center(),
-            scale=2.3 if ba.app.small_ui else 1.65 if ba.app.med_ui else 1.23,
+            scale=(2.3 if uiscale is ba.UIScale.SMALL else
+                   1.65 if uiscale is ba.UIScale.MEDIUM else 1.23),
             choices=choices,
             choices_display=choices_display,
             current_choice='more',

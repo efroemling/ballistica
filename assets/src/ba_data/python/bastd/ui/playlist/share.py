@@ -89,11 +89,13 @@ class SharePlaylistResultsWindow(ba.Window):
         del origin  # unused arg
         self._width = 450
         self._height = 300
+        uiscale = ba.app.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             color=(0.45, 0.63, 0.15),
             transition='in_scale',
-            scale=1.8 if ba.app.small_ui else 1.35 if ba.app.med_ui else 1.0))
+            scale=(1.8 if uiscale is ba.UIScale.SMALL else
+                   1.35 if uiscale is ba.UIScale.MEDIUM else 1.0)))
         ba.playsound(ba.getsound('cashRegister'))
         ba.playsound(ba.getsound('swish'))
 

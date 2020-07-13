@@ -44,10 +44,12 @@ class ServerDialogWindow(ba.Window):
                       txt_scale)
         self._width = 500
         self._height = 130 + min(200, txt_height)
+        uiscale = ba.app.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             transition='in_scale',
-            scale=1.8 if ba.app.small_ui else 1.35 if ba.app.med_ui else 1.0))
+            scale=(1.8 if uiscale is ba.UIScale.SMALL else
+                   1.35 if uiscale is ba.UIScale.MEDIUM else 1.0)))
         self._starttime = ba.time(ba.TimeType.REAL, ba.TimeFormat.MILLISECONDS)
 
         ba.playsound(ba.getsound('swish'))

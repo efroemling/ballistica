@@ -39,16 +39,18 @@ class OnScreenKeyboardWindow(ba.Window):
         self._target_text = textwidget
         self._width = 700
         self._height = 400
-        top_extra = 20 if ba.app.small_ui else 0
+        uiscale = ba.app.uiscale
+        top_extra = 20 if uiscale is ba.UIScale.SMALL else 0
         super().__init__(root_widget=ba.containerwidget(
             parent=_ba.get_special_widget('overlay_stack'),
             size=(self._width, self._height + top_extra),
             transition='in_scale',
             scale_origin_stack_offset=self._target_text.
             get_screen_space_center(),
-            scale=(2.0 if ba.app.small_ui else 1.5 if ba.app.med_ui else 1.0),
-            stack_offset=(0, 0) if ba.app.small_ui else (
-                0, 0) if ba.app.med_ui else (0, 0)))
+            scale=(2.0 if uiscale is ba.UIScale.SMALL else
+                   1.5 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, 0) if uiscale is ba.UIScale.SMALL else (
+                0, 0) if uiscale is ba.UIScale.MEDIUM else (0, 0)))
         self._done_button = ba.buttonwidget(parent=self._root_widget,
                                             position=(self._width - 200, 44),
                                             size=(140, 60),

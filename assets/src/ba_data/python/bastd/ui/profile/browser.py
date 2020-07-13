@@ -47,10 +47,11 @@ class ProfileBrowserWindow(ba.Window):
             back_label = ba.Lstr(resource='backText')
         else:
             back_label = ba.Lstr(resource='doneText')
-        self._width = 700.0 if ba.app.small_ui else 600.0
-        x_inset = 50.0 if ba.app.small_ui else 0.0
-        self._height = (360.0 if ba.app.small_ui else
-                        385.0 if ba.app.med_ui else 410.0)
+        uiscale = ba.app.uiscale
+        self._width = 700.0 if uiscale is ba.UIScale.SMALL else 600.0
+        x_inset = 50.0 if uiscale is ba.UIScale.SMALL else 0.0
+        self._height = (360.0 if uiscale is ba.UIScale.SMALL else
+                        385.0 if uiscale is ba.UIScale.MEDIUM else 410.0)
 
         # If we're being called up standalone, handle pause/resume ourself.
         if not self._in_main_menu:
@@ -71,14 +72,15 @@ class ProfileBrowserWindow(ba.Window):
         # Ensure we've got an account-profile in cases where we're signed in.
         ensure_have_account_player_profile()
 
-        top_extra = 20 if ba.app.small_ui else 0
+        top_extra = 20 if uiscale is ba.UIScale.SMALL else 0
 
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height + top_extra),
             transition=transition,
             scale_origin_stack_offset=scale_origin,
-            scale=(2.2 if ba.app.small_ui else 1.6 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -14) if ba.app.small_ui else (0, 0)))
+            scale=(2.2 if uiscale is ba.UIScale.SMALL else
+                   1.6 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -14) if uiscale is ba.UIScale.SMALL else (0, 0)))
 
         self._back_button = btn = ba.buttonwidget(
             parent=self._root_widget,
@@ -113,7 +115,8 @@ class ProfileBrowserWindow(ba.Window):
         h = 50 + x_inset
         b_color = (0.6, 0.53, 0.63)
 
-        scl = (1.055 if ba.app.small_ui else 1.18 if ba.app.med_ui else 1.3)
+        scl = (1.055 if uiscale is ba.UIScale.SMALL else
+               1.18 if uiscale is ba.UIScale.MEDIUM else 1.3)
         v -= 70.0 * scl
         self._new_button = ba.buttonwidget(parent=self._root_widget,
                                            position=(h, v),

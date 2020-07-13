@@ -49,14 +49,15 @@ class AccountLinkWindow(ba.Window):
         bg_color = (0.4, 0.4, 0.5)
         self._width = 560
         self._height = 420
-        base_scale = (1.65
-                      if ba.app.small_ui else 1.5 if ba.app.med_ui else 1.1)
+        uiscale = ba.app.uiscale
+        base_scale = (1.65 if uiscale is ba.UIScale.SMALL else
+                      1.5 if uiscale is ba.UIScale.MEDIUM else 1.1)
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             transition=transition,
             scale=base_scale,
             scale_origin_stack_offset=scale_origin,
-            stack_offset=(0, -10) if ba.app.small_ui else (0, 0)))
+            stack_offset=(0, -10) if uiscale is ba.UIScale.SMALL else (0, 0)))
         self._cancel_button = ba.buttonwidget(parent=self._root_widget,
                                               position=(40, self._height - 45),
                                               size=(50, 50),
@@ -131,11 +132,13 @@ class AccountLinkCodeWindow(ba.Window):
     def __init__(self, data: Dict[str, Any]):
         self._width = 350
         self._height = 200
+        uiscale = ba.app.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             color=(0.45, 0.63, 0.15),
             transition='in_scale',
-            scale=1.8 if ba.app.small_ui else 1.35 if ba.app.med_ui else 1.0))
+            scale=(1.8 if uiscale is ba.UIScale.SMALL else
+                   1.35 if uiscale is ba.UIScale.MEDIUM else 1.0)))
         self._data = copy.deepcopy(data)
         ba.playsound(ba.getsound('cashRegister'))
         ba.playsound(ba.getsound('swish'))

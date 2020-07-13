@@ -57,14 +57,14 @@ class GraphicsSettingsWindow(ba.Window):
 
         spacing = 32
         self._have_selected_child = False
-        interface_type = app.interface_type
+        uiscale = app.uiscale
         width = 450.0
         height = 302.0
 
         self._show_fullscreen = False
         fullscreen_spacing_top = spacing * 0.2
         fullscreen_spacing = spacing * 1.2
-        if interface_type == 'large' and app.platform != 'android':
+        if uiscale == ba.UIScale.LARGE and app.platform != 'android':
             self._show_fullscreen = True
             height += fullscreen_spacing + fullscreen_spacing_top
 
@@ -83,8 +83,9 @@ class GraphicsSettingsWindow(ba.Window):
             show_resolution = (app.platform == 'android'
                                and app.subplatform == 'cardboard')
 
-        base_scale = (2.4
-                      if ba.app.small_ui else 1.5 if ba.app.med_ui else 1.0)
+        uiscale = ba.app.uiscale
+        base_scale = (2.4 if uiscale is ba.UIScale.SMALL else
+                      1.5 if uiscale is ba.UIScale.MEDIUM else 1.0)
         popup_menu_scale = base_scale * 1.2
         v = height - 50
         v -= spacing * 1.15
@@ -93,7 +94,7 @@ class GraphicsSettingsWindow(ba.Window):
             transition=transition,
             scale_origin_stack_offset=scale_origin,
             scale=base_scale,
-            stack_offset=(0, -30) if ba.app.small_ui else (0, 0)))
+            stack_offset=(0, -30) if uiscale is ba.UIScale.SMALL else (0, 0)))
 
         btn = ba.buttonwidget(parent=self._root_widget,
                               position=(35, height - 50),

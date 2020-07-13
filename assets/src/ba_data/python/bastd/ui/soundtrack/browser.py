@@ -38,6 +38,7 @@ class SoundtrackBrowserWindow(ba.Window):
     def __init__(self,
                  transition: str = 'in_right',
                  origin_widget: ba.Widget = None):
+        # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
 
         # If they provided an origin-widget, scale up from that.
@@ -51,10 +52,11 @@ class SoundtrackBrowserWindow(ba.Window):
             scale_origin = None
 
         self._r = 'editSoundtrackWindow'
-        self._width = 800 if ba.app.small_ui else 600
-        x_inset = 100 if ba.app.small_ui else 0
-        self._height = (340
-                        if ba.app.small_ui else 370 if ba.app.med_ui else 440)
+        uiscale = ba.app.uiscale
+        self._width = 800 if uiscale is ba.UIScale.SMALL else 600
+        x_inset = 100 if uiscale is ba.UIScale.SMALL else 0
+        self._height = (340 if uiscale is ba.UIScale.SMALL else
+                        370 if uiscale is ba.UIScale.MEDIUM else 440)
         spacing = 40.0
         v = self._height - 40.0
         v -= spacing * 1.0
@@ -64,10 +66,11 @@ class SoundtrackBrowserWindow(ba.Window):
             transition=transition,
             toolbar_visibility='menu_minimal',
             scale_origin_stack_offset=scale_origin,
-            scale=(2.3 if ba.app.small_ui else 1.6 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -18) if ba.app.small_ui else (0, 0)))
+            scale=(2.3 if uiscale is ba.UIScale.SMALL else
+                   1.6 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -18) if uiscale is ba.UIScale.SMALL else (0, 0)))
 
-        if ba.app.toolbars and ba.app.small_ui:
+        if ba.app.toolbars and uiscale is ba.UIScale.SMALL:
             self._back_button = None
         else:
             self._back_button = ba.buttonwidget(
@@ -98,7 +101,8 @@ class SoundtrackBrowserWindow(ba.Window):
         lock_tex = ba.gettexture('lock')
         self._lock_images: List[ba.Widget] = []
 
-        scl = (1.0 if ba.app.small_ui else 1.13 if ba.app.med_ui else 1.4)
+        scl = (1.0 if uiscale is ba.UIScale.SMALL else
+               1.13 if uiscale is ba.UIScale.MEDIUM else 1.4)
         v -= 60.0 * scl
         self._new_button = btn = ba.buttonwidget(
             parent=self._root_widget,

@@ -54,23 +54,25 @@ class AllSettingsWindow(ba.Window):
         else:
             self._transition_out = 'out_right'
             scale_origin = None
-        width = 900 if ba.app.small_ui else 580
-        x_inset = 75 if ba.app.small_ui else 0
+        uiscale = ba.app.uiscale
+        width = 900 if uiscale is ba.UIScale.SMALL else 580
+        x_inset = 75 if uiscale is ba.UIScale.SMALL else 0
         height = 435
         # button_height = 42
         self._r = 'settingsWindow'
-        top_extra = 20 if ba.app.small_ui else 0
+        top_extra = 20 if uiscale is ba.UIScale.SMALL else 0
 
+        uiscale = ba.app.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(width, height + top_extra),
             transition=transition,
             toolbar_visibility='menu_minimal',
             scale_origin_stack_offset=scale_origin,
-            scale=(
-                1.75 if ba.app.small_ui else 1.35 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -8) if ba.app.small_ui else (0, 0)))
+            scale=(1.75 if uiscale is ba.UIScale.SMALL else
+                   1.35 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -8) if uiscale is ba.UIScale.SMALL else (0, 0)))
 
-        if ba.app.toolbars and ba.app.small_ui:
+        if ba.app.toolbars and uiscale is ba.UIScale.SMALL:
             self._back_button = None
             ba.containerwidget(edit=self._root_widget,
                                on_cancel_call=self._do_back)
@@ -105,10 +107,10 @@ class AllSettingsWindow(ba.Window):
         v = height - 80
         v -= 145
 
-        basew = 280 if ba.app.small_ui else 230
+        basew = 280 if uiscale is ba.UIScale.SMALL else 230
         baseh = 170
-        x_offs = x_inset + (105
-                            if ba.app.small_ui else 72) - basew  # now unused
+        x_offs = x_inset + (105 if uiscale is ba.UIScale.SMALL else
+                            72) - basew  # now unused
         x_offs2 = x_offs + basew - 7
         x_offs3 = x_offs + 2 * (basew - 7)
         x_offs4 = x_offs2

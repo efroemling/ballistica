@@ -43,16 +43,18 @@ class SoundtrackEditWindow(ba.Window):
         self._r = 'editSoundtrackWindow'
         self._folder_tex = ba.gettexture('folder')
         self._file_tex = ba.gettexture('file')
-        self._width = 848 if ba.app.small_ui else 648
-        x_inset = 100 if ba.app.small_ui else 0
-        self._height = (395
-                        if ba.app.small_ui else 450 if ba.app.med_ui else 560)
+        uiscale = ba.app.uiscale
+        self._width = 848 if uiscale is ba.UIScale.SMALL else 648
+        x_inset = 100 if uiscale is ba.UIScale.SMALL else 0
+        self._height = (395 if uiscale is ba.UIScale.SMALL else
+                        450 if uiscale is ba.UIScale.MEDIUM else 560)
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             transition=transition,
-            scale=(2.08 if ba.app.small_ui else 1.5 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -48) if ba.app.small_ui else (
-                0, 15) if ba.app.med_ui else (0, 0)))
+            scale=(2.08 if uiscale is ba.UIScale.SMALL else
+                   1.5 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -48) if uiscale is ba.UIScale.SMALL else (
+                0, 15) if uiscale is ba.UIScale.MEDIUM else (0, 0)))
         cancel_button = ba.buttonwidget(parent=self._root_widget,
                                         position=(38 + x_inset,
                                                   self._height - 60),

@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-07-11 for Ballistica version 1.5.20 build 20132</em></h4>
+<h4><em>last updated on 2020-07-12 for Ballistica version 1.5.20 build 20133</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -191,6 +191,7 @@
    <li><a href="#class_ba_SpecialChar">ba.SpecialChar</a></li>
    <li><a href="#class_ba_TimeFormat">ba.TimeFormat</a></li>
    <li><a href="#class_ba_TimeType">ba.TimeType</a></li>
+   <li><a href="#class_ba_UIScale">ba.UIScale</a></li>
 </ul>
 <h4><a name="class_category_Exception_Classes">Exception Classes</a></h4>
 <ul>
@@ -805,7 +806,7 @@ likely result in errors.</p>
 </p>
 
 <h3>Attributes:</h3>
-<h5><a href="#attr_ba_App__api_version">api_version</a>, <a href="#attr_ba_App__build_number">build_number</a>, <a href="#attr_ba_App__config">config</a>, <a href="#attr_ba_App__config_file_path">config_file_path</a>, <a href="#attr_ba_App__debug_build">debug_build</a>, <a href="#attr_ba_App__interface_type">interface_type</a>, <a href="#attr_ba_App__language">language</a>, <a href="#attr_ba_App__locale">locale</a>, <a href="#attr_ba_App__on_tv">on_tv</a>, <a href="#attr_ba_App__platform">platform</a>, <a href="#attr_ba_App__python_directory_app">python_directory_app</a>, <a href="#attr_ba_App__python_directory_app_site">python_directory_app_site</a>, <a href="#attr_ba_App__python_directory_user">python_directory_user</a>, <a href="#attr_ba_App__subplatform">subplatform</a>, <a href="#attr_ba_App__test_build">test_build</a>, <a href="#attr_ba_App__ui_bounds">ui_bounds</a>, <a href="#attr_ba_App__user_agent_string">user_agent_string</a>, <a href="#attr_ba_App__version">version</a>, <a href="#attr_ba_App__vr_mode">vr_mode</a></h5>
+<h5><a href="#attr_ba_App__api_version">api_version</a>, <a href="#attr_ba_App__build_number">build_number</a>, <a href="#attr_ba_App__config">config</a>, <a href="#attr_ba_App__config_file_path">config_file_path</a>, <a href="#attr_ba_App__debug_build">debug_build</a>, <a href="#attr_ba_App__language">language</a>, <a href="#attr_ba_App__locale">locale</a>, <a href="#attr_ba_App__on_tv">on_tv</a>, <a href="#attr_ba_App__platform">platform</a>, <a href="#attr_ba_App__python_directory_app">python_directory_app</a>, <a href="#attr_ba_App__python_directory_app_site">python_directory_app_site</a>, <a href="#attr_ba_App__python_directory_user">python_directory_user</a>, <a href="#attr_ba_App__subplatform">subplatform</a>, <a href="#attr_ba_App__test_build">test_build</a>, <a href="#attr_ba_App__ui_bounds">ui_bounds</a>, <a href="#attr_ba_App__uiscale">uiscale</a>, <a href="#attr_ba_App__user_agent_string">user_agent_string</a>, <a href="#attr_ba_App__version">version</a>, <a href="#attr_ba_App__vr_mode">vr_mode</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_App__api_version">api_version</a></h4></dt><dd>
 <p><span>int</span></p>
@@ -843,18 +844,6 @@ likely result in errors.</p>
 <p>        Debug builds generally run substantially slower than non-debug
         builds due to compiler optimizations being disabled and extra
         checks being run.</p>
-
-</dd>
-<dt><h4><a name="attr_ba_App__interface_type">interface_type</a></h4></dt><dd>
-<p><span>str</span></p>
-<p>Interface mode the game is in; can be 'large', 'medium', or 'small'.</p>
-
-<p>        'large' is used by system such as desktop PC where elements on screen
-          remain usable even at small sizes, allowing more to be shown.
-        'small' is used by small devices such as phones, where elements on
-          screen must be larger to remain readable and usable.
-        'medium' is used by tablets and other middle-of-the-road situations
-          such as VR or TV.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_App__language">language</a></h4></dt><dd>
@@ -922,6 +911,11 @@ likely result in errors.</p>
 <p>Bounds of the 'safe' screen area in ui space.</p>
 
 <p>        This tuple contains: (x-min, x-max, y-min, y-max)</p>
+
+</dd>
+<dt><h4><a name="attr_ba_App__uiscale">uiscale</a></h4></dt><dd>
+<p><span><a href="#class_ba_UIScale">ba.UIScale</a></span></p>
+<p>Current ui scale for the app.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_App__user_agent_string">user_agent_string</a></h4></dt><dd>
@@ -5657,6 +5651,35 @@ self.t = <a href="#class_ba_Timer">ba.Timer</a>(0.3, say_it, repeat=True)
 
 </dd>
 </dl>
+<hr>
+<h2><strong><a name="class_ba_UIScale">ba.UIScale</a></strong></h3>
+<p>Inherits from: enum.Enum</p>
+<p>The overall scale the UI is being rendered for. Note that this is
+    independent of pixel resolution. For example, a phone and a desktop PC
+    might render the game at similar pixel resolutions but the size they
+    display content at will vary significantly.</p>
+
+<p>Category: <a href="#class_category_Enums">Enums</a></p>
+
+<p>    'large' is used for devices such as desktop PCs where fine details can
+       be clearly seen. UI elements are generally smaller on the screen
+       and more content can be seen at once.</p>
+
+<p>    'medium' is used for devices such as tablets, TVs, or VR headsets.
+       This mode strikes a balance between clean readability and amount of
+       content visible.</p>
+
+<p>    'small' is used primarily for phones or other small devices where
+       content needs to be presented as large and clear in order to remain
+       readable from an average distance.
+</p>
+
+<h3>Values:</h3>
+<ul>
+<li>LARGE</li>
+<li>MEDIUM</li>
+<li>SMALL</li>
+</ul>
 <hr>
 <h2><strong><a name="class_ba_Vec3">ba.Vec3</a></strong></h3>
 <p><em>&lt;top level class&gt;</em>

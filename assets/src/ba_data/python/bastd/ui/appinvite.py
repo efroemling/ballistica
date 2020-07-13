@@ -42,10 +42,12 @@ class AppInviteWindow(ba.Window):
         self._width = 650
         self._height = 400
 
+        uiscale = ba.app.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             transition='in_scale',
-            scale=1.8 if ba.app.small_ui else 1.35 if ba.app.med_ui else 1.0))
+            scale=(1.8 if uiscale is ba.UIScale.SMALL else
+                   1.35 if uiscale is ba.UIScale.MEDIUM else 1.0)))
 
         self._cancel_button = ba.buttonwidget(parent=self._root_widget,
                                               scale=0.8,
@@ -172,11 +174,13 @@ class ShowFriendCodeWindow(ba.Window):
         ba.set_analytics_screen('Friend Promo Code')
         self._width = 650
         self._height = 400
+        uiscale = ba.app.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             color=(0.45, 0.63, 0.15),
             transition='in_scale',
-            scale=1.7 if ba.app.small_ui else 1.35 if ba.app.med_ui else 1.0))
+            scale=(1.7 if uiscale is ba.UIScale.SMALL else
+                   1.35 if uiscale is ba.UIScale.MEDIUM else 1.0)))
         self._data = copy.deepcopy(data)
         ba.playsound(ba.getsound('cashRegister'))
         ba.playsound(ba.getsound('swish'))

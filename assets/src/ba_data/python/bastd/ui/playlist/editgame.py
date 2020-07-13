@@ -106,9 +106,11 @@ class PlaylistEditGameWindow(ba.Window):
 
         self._choice_selections: Dict[str, int] = {}
 
-        width = 720 if ba.app.small_ui else 620
-        x_inset = 50 if ba.app.small_ui else 0
-        height = (365 if ba.app.small_ui else 460 if ba.app.med_ui else 550)
+        uiscale = ba.app.uiscale
+        width = 720 if uiscale is ba.UIScale.SMALL else 620
+        x_inset = 50 if uiscale is ba.UIScale.SMALL else 0
+        height = (365 if uiscale is ba.UIScale.SMALL else
+                  460 if uiscale is ba.UIScale.MEDIUM else 550)
         spacing = 52
         y_extra = 15
         y_extra2 = 21
@@ -118,13 +120,13 @@ class PlaylistEditGameWindow(ba.Window):
             raise Exception('no map preview tex found for' + self._map)
         map_tex = ba.gettexture(map_tex_name)
 
-        top_extra = 20 if ba.app.small_ui else 0
+        top_extra = 20 if uiscale is ba.UIScale.SMALL else 0
         super().__init__(root_widget=ba.containerwidget(
             size=(width, height + top_extra),
             transition=transition,
-            scale=(
-                2.19 if ba.app.small_ui else 1.35 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -17) if ba.app.small_ui else (0, 0)))
+            scale=(2.19 if uiscale is ba.UIScale.SMALL else
+                   1.35 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -17) if uiscale is ba.UIScale.SMALL else (0, 0)))
 
         btn = ba.buttonwidget(
             parent=self._root_widget,

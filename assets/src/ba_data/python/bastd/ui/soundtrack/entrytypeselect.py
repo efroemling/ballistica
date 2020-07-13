@@ -64,10 +64,12 @@ class SoundtrackEntryTypeSelectWindow(ba.Window):
         if do_music_folder:
             self._height += spacing
 
+        uiscale = ba.app.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             transition=transition,
-            scale=1.7 if ba.app.small_ui else 1.4 if ba.app.med_ui else 1.0))
+            scale=(1.7 if uiscale is ba.UIScale.SMALL else
+                   1.4 if uiscale is ba.UIScale.MEDIUM else 1.0)))
         btn = ba.buttonwidget(parent=self._root_widget,
                               position=(35, self._height - 65),
                               size=(160, 60),

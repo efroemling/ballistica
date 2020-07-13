@@ -47,8 +47,9 @@ class PartyWindow(ba.Window):
         self._popup_party_member_client_id: Optional[int] = None
         self._popup_party_member_is_host: Optional[bool] = None
         self._width = 500
-        self._height = (365
-                        if ba.app.small_ui else 480 if ba.app.med_ui else 600)
+        uiscale = ba.app.uiscale
+        self._height = (365 if uiscale is ba.UIScale.SMALL else
+                        480 if uiscale is ba.UIScale.MEDIUM else 600)
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             transition='in_scale',
@@ -56,9 +57,10 @@ class PartyWindow(ba.Window):
             parent=_ba.get_special_widget('overlay_stack'),
             on_outside_click_call=self.close_with_sound,
             scale_origin_stack_offset=origin,
-            scale=(2.0 if ba.app.small_ui else 1.35 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -10) if ba.app.small_ui else (
-                240, 0) if ba.app.med_ui else (330, 20)))
+            scale=(2.0 if uiscale is ba.UIScale.SMALL else
+                   1.35 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -10) if uiscale is ba.UIScale.SMALL else (
+                240, 0) if uiscale is ba.UIScale.MEDIUM else (330, 20)))
 
         self._cancel_button = ba.buttonwidget(parent=self._root_widget,
                                               scale=0.7,
@@ -198,9 +200,11 @@ class PartyWindow(ba.Window):
 
     def _on_menu_button_press(self) -> None:
         is_muted = ba.app.config.resolve('Chat Muted')
+        uiscale = ba.app.uiscale
         popup.PopupMenuWindow(
             position=self._menu_button.get_screen_space_center(),
-            scale=2.3 if ba.app.small_ui else 1.65 if ba.app.med_ui else 1.23,
+            scale=(2.3 if uiscale is ba.UIScale.SMALL else
+                   1.65 if uiscale is ba.UIScale.MEDIUM else 1.23),
             choices=['unmute' if is_muted else 'mute'],
             choices_display=[
                 ba.Lstr(
@@ -400,9 +404,11 @@ class PartyWindow(ba.Window):
                     14248):
                 return
             kick_str = ba.Lstr(resource='kickVoteText')
+        uiscale = ba.app.uiscale
         popup.PopupMenuWindow(
             position=widget.get_screen_space_center(),
-            scale=2.3 if ba.app.small_ui else 1.65 if ba.app.med_ui else 1.23,
+            scale=(2.3 if uiscale is ba.UIScale.SMALL else
+                   1.65 if uiscale is ba.UIScale.MEDIUM else 1.23),
             choices=['kick'],
             choices_display=[kick_str],
             current_choice='kick',

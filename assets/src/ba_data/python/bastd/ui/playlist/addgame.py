@@ -40,18 +40,20 @@ class PlaylistAddGameWindow(ba.Window):
                  transition: str = 'in_right'):
         self._editcontroller = editcontroller
         self._r = 'addGameWindow'
-        self._width = 750 if ba.app.small_ui else 650
-        x_inset = 50 if ba.app.small_ui else 0
-        self._height = (346
-                        if ba.app.small_ui else 380 if ba.app.med_ui else 440)
-        top_extra = 30 if ba.app.small_ui else 20
+        uiscale = ba.app.uiscale
+        self._width = 750 if uiscale is ba.UIScale.SMALL else 650
+        x_inset = 50 if uiscale is ba.UIScale.SMALL else 0
+        self._height = (346 if uiscale is ba.UIScale.SMALL else
+                        380 if uiscale is ba.UIScale.MEDIUM else 440)
+        top_extra = 30 if uiscale is ba.UIScale.SMALL else 20
         self._scroll_width = 210
 
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height + top_extra),
             transition=transition,
-            scale=(2.17 if ba.app.small_ui else 1.5 if ba.app.med_ui else 1.0),
-            stack_offset=(0, 1) if ba.app.small_ui else (0, 0)))
+            scale=(2.17 if uiscale is ba.UIScale.SMALL else
+                   1.5 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, 1) if uiscale is ba.UIScale.SMALL else (0, 0)))
 
         self._back_button = ba.buttonwidget(parent=self._root_widget,
                                             position=(58 + x_inset,

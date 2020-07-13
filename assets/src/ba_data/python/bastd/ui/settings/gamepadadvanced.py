@@ -41,22 +41,23 @@ class GamepadAdvancedSettingsWindow(ba.Window):
         app = ba.app
 
         self._r = parent_window.get_r()
-        self._width = 900 if ba.app.small_ui else 700
-        self._x_inset = x_inset = 100 if ba.app.small_ui else 0
-        self._height = 402 if ba.app.small_ui else 512
+        uiscale = ba.app.uiscale
+        self._width = 900 if uiscale is ba.UIScale.SMALL else 700
+        self._x_inset = x_inset = 100 if uiscale is ba.UIScale.SMALL else 0
+        self._height = 402 if uiscale is ba.UIScale.SMALL else 512
         self._textwidgets: Dict[str, ba.Widget] = {}
         super().__init__(root_widget=ba.containerwidget(
             transition='in_scale',
             size=(self._width, self._height),
-            scale=1.06 *
-            (1.85 if ba.app.small_ui else 1.35 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -25) if ba.app.small_ui else (0, 0),
+            scale=1.06 * (1.85 if uiscale is ba.UIScale.SMALL else
+                          1.35 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -25) if uiscale is ba.UIScale.SMALL else (0, 0),
             scale_origin_stack_offset=(parent_window.get_advanced_button().
                                        get_screen_space_center())))
 
         ba.textwidget(parent=self._root_widget,
                       position=(self._width * 0.5, self._height -
-                                (40 if ba.app.small_ui else 34)),
+                                (40 if uiscale is ba.UIScale.SMALL else 34)),
                       size=(0, 0),
                       text=ba.Lstr(resource=self._r + '.advancedTitleText'),
                       maxwidth=320,
@@ -67,8 +68,8 @@ class GamepadAdvancedSettingsWindow(ba.Window):
         back_button = btn = ba.buttonwidget(
             parent=self._root_widget,
             autoselect=True,
-            position=(self._width - (176 + x_inset),
-                      self._height - (60 if ba.app.small_ui else 55)),
+            position=(self._width - (176 + x_inset), self._height -
+                      (60 if uiscale is ba.UIScale.SMALL else 55)),
             size=(120, 48),
             text_scale=0.8,
             label=ba.Lstr(resource='doneText'),

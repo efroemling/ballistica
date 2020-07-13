@@ -59,18 +59,20 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
         self._pvars = playlist.PlaylistTypeVars(sessiontype)
         self._max_playlists = 30
         self._r = 'gameListWindow'
-        self._width = 750.0 if ba.app.small_ui else 650.0
-        x_inset = 50.0 if ba.app.small_ui else 0.0
-        self._height = (380.0 if ba.app.small_ui else
-                        420.0 if ba.app.med_ui else 500.0)
-        top_extra = 20.0 if ba.app.small_ui else 0.0
+        uiscale = ba.app.uiscale
+        self._width = 750.0 if uiscale is ba.UIScale.SMALL else 650.0
+        x_inset = 50.0 if uiscale is ba.UIScale.SMALL else 0.0
+        self._height = (380.0 if uiscale is ba.UIScale.SMALL else
+                        420.0 if uiscale is ba.UIScale.MEDIUM else 500.0)
+        top_extra = 20.0 if uiscale is ba.UIScale.SMALL else 0.0
 
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height + top_extra),
             transition=transition,
             scale_origin_stack_offset=scale_origin,
-            scale=(2.05 if ba.app.small_ui else 1.5 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -10) if ba.app.small_ui else (0, 0)))
+            scale=(2.05 if uiscale is ba.UIScale.SMALL else
+                   1.5 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -10) if uiscale is ba.UIScale.SMALL else (0, 0)))
 
         self._back_button = back_button = btn = ba.buttonwidget(
             parent=self._root_widget,
@@ -105,7 +107,8 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
         self._lock_images: List[ba.Widget] = []
         lock_tex = ba.gettexture('lock')
 
-        scl = (1.1 if ba.app.small_ui else 1.27 if ba.app.med_ui else 1.57)
+        scl = (1.1 if uiscale is ba.UIScale.SMALL else
+               1.27 if uiscale is ba.UIScale.MEDIUM else 1.57)
         scl *= 0.63
         v -= 65.0 * scl
         new_button = btn = ba.buttonwidget(

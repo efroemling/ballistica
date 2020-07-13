@@ -39,10 +39,12 @@ class XBox360ControllerSettingsWindow(ba.Window):
         width = 700
         height = 300 if _ba.is_running_on_fire_tv() else 485
         spacing = 40
+        uiscale = ba.app.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(width, height),
             transition='in_right',
-            scale=1.4 if ba.app.small_ui else 1.4 if ba.app.med_ui else 1.0))
+            scale=(1.4 if uiscale is ba.UIScale.SMALL else
+                   1.4 if uiscale is ba.UIScale.MEDIUM else 1.0)))
 
         btn = ba.buttonwidget(parent=self._root_widget,
                               position=(35, height - 65),

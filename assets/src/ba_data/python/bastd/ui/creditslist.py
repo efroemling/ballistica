@@ -51,9 +51,10 @@ class CreditsListWindow(ba.Window):
             scale_origin = None
             transition = 'in_right'
 
-        width = 870 if ba.app.small_ui else 670
-        x_inset = 100 if ba.app.small_ui else 0
-        height = 398 if ba.app.small_ui else 500
+        uiscale = ba.app.uiscale
+        width = 870 if uiscale is ba.UIScale.SMALL else 670
+        x_inset = 100 if uiscale is ba.UIScale.SMALL else 0
+        height = 398 if uiscale is ba.UIScale.SMALL else 500
 
         self._r = 'creditsWindow'
         super().__init__(root_widget=ba.containerwidget(
@@ -61,33 +62,37 @@ class CreditsListWindow(ba.Window):
             transition=transition,
             toolbar_visibility='menu_minimal',
             scale_origin_stack_offset=scale_origin,
-            scale=(2.0 if ba.app.small_ui else 1.3 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -8) if ba.app.small_ui else (0, 0)))
+            scale=(2.0 if uiscale is ba.UIScale.SMALL else
+                   1.3 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -8) if uiscale is ba.UIScale.SMALL else (0, 0)))
 
-        if ba.app.toolbars and ba.app.small_ui:
+        if ba.app.toolbars and uiscale is ba.UIScale.SMALL:
             ba.containerwidget(edit=self._root_widget,
                                on_cancel_call=self._back)
         else:
-            btn = ba.buttonwidget(parent=self._root_widget,
-                                  position=(40 + x_inset, height -
-                                            (68 if ba.app.small_ui else 62)),
-                                  size=(140, 60),
-                                  scale=0.8,
-                                  label=ba.Lstr(resource='backText'),
-                                  button_type='back',
-                                  on_activate_call=self._back,
-                                  autoselect=True)
+            btn = ba.buttonwidget(
+                parent=self._root_widget,
+                position=(40 + x_inset, height -
+                          (68 if uiscale is ba.UIScale.SMALL else 62)),
+                size=(140, 60),
+                scale=0.8,
+                label=ba.Lstr(resource='backText'),
+                button_type='back',
+                on_activate_call=self._back,
+                autoselect=True)
             ba.containerwidget(edit=self._root_widget, cancel_button=btn)
 
-            ba.buttonwidget(edit=btn,
-                            button_type='backSmall',
-                            position=(40 + x_inset, height -
-                                      (68 if ba.app.small_ui else 62) + 5),
-                            size=(60, 48),
-                            label=ba.charstr(ba.SpecialChar.BACK))
+            ba.buttonwidget(
+                edit=btn,
+                button_type='backSmall',
+                position=(40 + x_inset, height -
+                          (68 if uiscale is ba.UIScale.SMALL else 62) + 5),
+                size=(60, 48),
+                label=ba.charstr(ba.SpecialChar.BACK))
 
         ba.textwidget(parent=self._root_widget,
-                      position=(0, height - (59 if ba.app.small_ui else 54)),
+                      position=(0, height -
+                                (59 if uiscale is ba.UIScale.SMALL else 54)),
                       size=(width, 30),
                       text=ba.Lstr(resource=self._r + '.titleText',
                                    subs=[('${APP_NAME}',
@@ -106,7 +111,7 @@ class CreditsListWindow(ba.Window):
         if ba.app.toolbars:
             ba.widget(edit=scroll,
                       right_widget=_ba.get_special_widget('party_button'))
-            if ba.app.small_ui:
+            if uiscale is ba.UIScale.SMALL:
                 ba.widget(edit=scroll,
                           left_widget=_ba.get_special_widget('back_button'))
 

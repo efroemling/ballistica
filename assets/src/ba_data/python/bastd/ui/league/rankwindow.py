@@ -40,6 +40,7 @@ class LeagueRankWindow(ba.Window):
                  transition: str = 'in_right',
                  modal: bool = False,
                  origin_widget: ba.Widget = None):
+        # pylint: disable=too-many-statements
         from ba.internal import get_cached_league_rank_data
         from ba.deprecated import get_resource
         ba.set_analytics_screen('League Rank Window')
@@ -57,13 +58,14 @@ class LeagueRankWindow(ba.Window):
             self._transition_out = 'out_right'
             scale_origin = None
 
-        self._width = 1320 if ba.app.small_ui else 1120
-        x_inset = 100 if ba.app.small_ui else 0
-        self._height = (657
-                        if ba.app.small_ui else 710 if ba.app.med_ui else 800)
+        uiscale = ba.app.uiscale
+        self._width = 1320 if uiscale is ba.UIScale.SMALL else 1120
+        x_inset = 100 if uiscale is ba.UIScale.SMALL else 0
+        self._height = (657 if uiscale is ba.UIScale.SMALL else
+                        710 if uiscale is ba.UIScale.MEDIUM else 800)
         self._r = 'coopSelectWindow'
         self._rdict = get_resource(self._r)
-        top_extra = 20 if ba.app.small_ui else 0
+        top_extra = 20 if uiscale is ba.UIScale.SMALL else 0
 
         self._league_url_arg = ''
 
@@ -72,17 +74,17 @@ class LeagueRankWindow(ba.Window):
 
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height + top_extra),
-            stack_offset=(0, -15) if ba.app.small_ui else (
-                0, 10) if ba.app.med_ui else (0, 0),
+            stack_offset=(0, -15) if uiscale is ba.UIScale.SMALL else (
+                0, 10) if uiscale is ba.UIScale.MEDIUM else (0, 0),
             transition=transition,
             scale_origin_stack_offset=scale_origin,
-            scale=(
-                1.2 if ba.app.small_ui else 0.93 if ba.app.med_ui else 0.8)))
+            scale=(1.2 if uiscale is ba.UIScale.SMALL else
+                   0.93 if uiscale is ba.UIScale.MEDIUM else 0.8)))
 
         self._back_button = btn = ba.buttonwidget(
             parent=self._root_widget,
-            position=(75 + x_inset,
-                      self._height - 87 - (4 if ba.app.small_ui else 0)),
+            position=(75 + x_inset, self._height - 87 -
+                      (4 if uiscale is ba.UIScale.SMALL else 0)),
             size=(120, 60),
             scale=1.2,
             autoselect=True,
@@ -106,7 +108,7 @@ class LeagueRankWindow(ba.Window):
         ba.buttonwidget(edit=btn,
                         button_type='backSmall',
                         position=(75 + x_inset, self._height - 87 -
-                                  (2 if ba.app.small_ui else 0)),
+                                  (2 if uiscale is ba.UIScale.SMALL else 0)),
                         size=(60, 55),
                         label=ba.charstr(ba.SpecialChar.BACK))
 

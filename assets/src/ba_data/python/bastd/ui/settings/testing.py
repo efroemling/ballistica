@@ -39,14 +39,16 @@ class TestingWindow(ba.Window):
                  title: ba.Lstr,
                  entries: List[Dict[str, Any]],
                  transition: str = 'in_right'):
+        uiscale = ba.app.uiscale
         self._width = 600
-        self._height = 324 if ba.app.small_ui else 400
+        self._height = 324 if uiscale is ba.UIScale.SMALL else 400
         self._entries = copy.deepcopy(entries)
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             transition=transition,
-            scale=(2.5 if ba.app.small_ui else 1.2 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -28) if ba.app.small_ui else (0, 0)))
+            scale=(2.5 if uiscale is ba.UIScale.SMALL else
+                   1.2 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -28) if uiscale is ba.UIScale.SMALL else (0, 0)))
         self._back_button = btn = ba.buttonwidget(
             parent=self._root_widget,
             autoselect=True,

@@ -65,7 +65,7 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
             color = ((1.0, 1.0, 1.0, 1.0) if vr_mode else (0.5, 0.6, 0.5, 0.6))
             # FIXME: Need a node attr for vr-specific-scale.
             scale = (0.9 if
-                     (app.interface_type == 'small' or vr_mode) else 0.7)
+                     (app.uiscale is ba.UIScale.SMALL or vr_mode) else 0.7)
             self.my_name = ba.NodeActor(
                 ba.newnode('text',
                            attrs={
@@ -104,7 +104,7 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
         #  Any differences need to happen at the engine level so everyone sees
         #  things in their own optimal way.
         vr_mode = app.vr_mode
-        interface_type = app.interface_type
+        uiscale = app.uiscale
 
         # In cases where we're doing lots of dev work lets always show the
         # build number.
@@ -127,7 +127,7 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
                                    ])
             else:
                 text = ba.Lstr(value='${V}', subs=[('${V}', app.version)])
-            scale = 0.9 if (interface_type == 'small' or vr_mode) else 0.7
+            scale = 0.9 if (uiscale is ba.UIScale.SMALL or vr_mode) else 0.7
             color = (1, 1, 1, 1) if vr_mode else (0.5, 0.6, 0.5, 0.7)
             self.version = ba.NodeActor(
                 ba.newnode(
@@ -373,7 +373,7 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
                         ba.WeakCall(self._change_phrase),
                         repeat=True)
 
-                    scl = 1.2 if (ba.app.interface_type == 'small'
+                    scl = 1.2 if (ba.app.uiscale is ba.UIScale.SMALL
                                   or ba.app.vr_mode) else 0.8
 
                     color2 = ((1, 1, 1, 1) if ba.app.vr_mode else

@@ -37,13 +37,14 @@ class ReportPlayerWindow(ba.Window):
         scale_origin = origin_widget.get_screen_space_center()
 
         overlay_stack = _ba.get_special_widget('overlay_stack')
+        uiscale = ba.app.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             parent=overlay_stack,
             transition='in_scale',
             scale_origin_stack_offset=scale_origin,
-            scale=(
-                1.8 if ba.app.small_ui else 1.35 if ba.app.med_ui else 1.0)))
+            scale=(1.8 if uiscale is ba.UIScale.SMALL else
+                   1.35 if uiscale is ba.UIScale.MEDIUM else 1.0)))
         self._cancel_button = ba.buttonwidget(parent=self._root_widget,
                                               scale=0.7,
                                               position=(40, self._height - 50),

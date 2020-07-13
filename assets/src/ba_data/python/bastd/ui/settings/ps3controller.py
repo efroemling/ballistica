@@ -34,10 +34,12 @@ class PS3ControllerSettingsWindow(ba.Window):
         height = 330 if _ba.is_running_on_fire_tv() else 540
         spacing = 40
         self._r = 'ps3ControllersWindow'
+        uiscale = ba.app.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(width, height),
             transition='in_right',
-            scale=1.35 if ba.app.small_ui else 1.3 if ba.app.med_ui else 1.0))
+            scale=(1.35 if uiscale is ba.UIScale.SMALL else
+                   1.3 if uiscale is ba.UIScale.MEDIUM else 1.0)))
 
         btn = ba.buttonwidget(parent=self._root_widget,
                               position=(37, height - 73),

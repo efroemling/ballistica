@@ -58,12 +58,13 @@ class GatherWindow(ba.Window):
         ba.app.main_window = 'Gather'
         _ba.set_party_icon_always_visible(True)
         self._public_parties: Dict[str, Dict[str, Any]] = {}
-        self._width = 1240 if ba.app.small_ui else 1040
-        x_offs = 100 if ba.app.small_ui else 0
-        self._height = (582
-                        if ba.app.small_ui else 680 if ba.app.med_ui else 800)
+        uiscale = ba.app.uiscale
+        self._width = 1240 if uiscale is ba.UIScale.SMALL else 1040
+        x_offs = 100 if uiscale is ba.UIScale.SMALL else 0
+        self._height = (582 if uiscale is ba.UIScale.SMALL else
+                        680 if uiscale is ba.UIScale.MEDIUM else 800)
         self._current_tab: Optional[str] = None
-        extra_top = 20 if ba.app.small_ui else 0
+        extra_top = 20 if uiscale is ba.UIScale.SMALL else 0
         self._r = 'gatherWindow'
         self._tab_data: Any = None
         self._internet_local_address: Optional[str] = None
@@ -108,11 +109,12 @@ class GatherWindow(ba.Window):
             transition=transition,
             toolbar_visibility='menu_minimal',
             scale_origin_stack_offset=scale_origin,
-            scale=(1.3 if ba.app.small_ui else 0.97 if ba.app.med_ui else 0.8),
-            stack_offset=(0, -11) if ba.app.small_ui else (
-                0, 0) if ba.app.med_ui else (0, 0)))
+            scale=(1.3 if uiscale is ba.UIScale.SMALL else
+                   0.97 if uiscale is ba.UIScale.MEDIUM else 0.8),
+            stack_offset=(0, -11) if uiscale is ba.UIScale.SMALL else (
+                0, 0) if uiscale is ba.UIScale.MEDIUM else (0, 0)))
 
-        if ba.app.small_ui and ba.app.toolbars:
+        if uiscale is ba.UIScale.SMALL and ba.app.toolbars:
             ba.containerwidget(edit=self._root_widget,
                                on_cancel_call=self._back)
             self._back_button = None
@@ -173,7 +175,7 @@ class GatherWindow(ba.Window):
         if ba.app.toolbars:
             ba.widget(edit=self._tab_buttons[tabs_def[-1][0]],
                       right_widget=_ba.get_special_widget('party_button'))
-            if ba.app.small_ui:
+            if uiscale is ba.UIScale.SMALL:
                 ba.widget(edit=self._tab_buttons[tabs_def[0][0]],
                           left_widget=_ba.get_special_widget('back_button'))
 

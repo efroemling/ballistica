@@ -149,7 +149,9 @@ class PlayOptionsWindow(popup.PopupWindow):
             self._height += 40
 
         # Creates our _root_widget.
-        scale = (1.69 if ba.app.small_ui else 1.1 if ba.app.med_ui else 0.85)
+        uiscale = ba.app.uiscale
+        scale = (1.69 if uiscale is ba.UIScale.SMALL else
+                 1.1 if uiscale is ba.UIScale.MEDIUM else 0.85)
         super().__init__(position=scale_origin,
                          size=(self._width, self._height),
                          scale=scale)

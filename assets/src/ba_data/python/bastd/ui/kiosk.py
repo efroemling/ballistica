@@ -311,6 +311,7 @@ class KioskWindow(ba.Window):
             self._b4 = self._b5 = self._b6 = None
 
         self._b7: Optional[ba.Widget]
+        uiscale = ba.app.uiscale
         if bool(False):
             self._b7 = ba.buttonwidget(
                 parent=self._root_widget,
@@ -321,8 +322,8 @@ class KioskWindow(ba.Window):
                 scale=0.5,
                 position=((self._width * 0.5 - 37.5,
                            y_extra + 120) if not self._show_multiplayer else
-                          (self._width + 100,
-                           y_extra + (140 if ba.app.small_ui else 120))),
+                          (self._width + 100, y_extra +
+                           (140 if uiscale is ba.UIScale.SMALL else 120))),
                 transition_delay=tdelay,
                 label=ba.Lstr(resource=self._r + '.fullMenuText'),
                 on_activate_call=self._do_full_menu)

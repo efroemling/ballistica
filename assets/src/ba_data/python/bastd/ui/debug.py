@@ -38,9 +38,10 @@ class DebugWindow(ba.Window):
         # pylint: disable=cyclic-import
         from bastd.ui import popup
 
+        uiscale = ba.app.uiscale
         self._width = width = 580
-        self._height = height = (350 if ba.app.small_ui else
-                                 420 if ba.app.med_ui else 520)
+        self._height = height = (350 if uiscale is ba.UIScale.SMALL else
+                                 420 if uiscale is ba.UIScale.MEDIUM else 520)
 
         self._scroll_width = self._width - 100
         self._scroll_height = self._height - 120
@@ -54,12 +55,13 @@ class DebugWindow(ba.Window):
         self._stress_test_round_duration = 30
 
         self._r = 'debugWindow'
+        uiscale = ba.app.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(width, height),
             transition=transition,
-            scale=(
-                2.35 if ba.app.small_ui else 1.55 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -30) if ba.app.small_ui else (0, 0)))
+            scale=(2.35 if uiscale is ba.UIScale.SMALL else
+                   1.55 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -30) if uiscale is ba.UIScale.SMALL else (0, 0)))
 
         self._done_button = btn = ba.buttonwidget(
             parent=self._root_widget,

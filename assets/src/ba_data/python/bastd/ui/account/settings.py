@@ -77,11 +77,12 @@ class AccountSettingsWindow(ba.Window):
         self._can_reset_achievements = (account_type == 'Game Center')
 
         app = ba.app
+        uiscale = app.uiscale
 
-        self._width = 760 if ba.app.small_ui else 660
-        x_offs = 50 if ba.app.small_ui else 0
-        self._height = (390
-                        if ba.app.small_ui else 430 if ba.app.med_ui else 490)
+        self._width = 760 if uiscale is ba.UIScale.SMALL else 660
+        x_offs = 50 if uiscale is ba.UIScale.SMALL else 0
+        self._height = (390 if uiscale is ba.UIScale.SMALL else
+                        430 if uiscale is ba.UIScale.MEDIUM else 490)
 
         self._sign_in_button = None
         self._sign_in_text = None
@@ -103,15 +104,16 @@ class AccountSettingsWindow(ba.Window):
         # exceptions.
         self._show_sign_in_buttons.append('Local')
 
-        top_extra = 15 if ba.app.small_ui else 0
+        top_extra = 15 if uiscale is ba.UIScale.SMALL else 0
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height + top_extra),
             transition=transition,
             toolbar_visibility='menu_minimal',
             scale_origin_stack_offset=scale_origin,
-            scale=(2.09 if ba.app.small_ui else 1.4 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -19) if ba.app.small_ui else (0, 0)))
-        if ba.app.small_ui and ba.app.toolbars:
+            scale=(2.09 if uiscale is ba.UIScale.SMALL else
+                   1.4 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -19) if uiscale is ba.UIScale.SMALL else (0, 0)))
+        if uiscale is ba.UIScale.SMALL and ba.app.toolbars:
             self._back_button = None
             ba.containerwidget(edit=self._root_widget,
                                on_cancel_call=self._back)

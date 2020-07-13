@@ -26,7 +26,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import _ba
-from ba._enums import TimeType, TimeFormat, SpecialChar
+from ba._enums import TimeType, TimeFormat, SpecialChar, UIScale
 from ba._error import ActivityNotFoundError
 
 if TYPE_CHECKING:
@@ -224,7 +224,7 @@ def show_damage_count(damage: str, position: Sequence[float],
     # FIXME: Should never vary game elements based on local config.
     #  (connected clients may have differing configs so they won't
     #  get the intended results).
-    do_big = app.interface_type == 'small' or app.vr_mode
+    do_big = app.uiscale is UIScale.SMALL or app.vr_mode
     txtnode = _ba.newnode('text',
                           attrs={
                               'text': damage,

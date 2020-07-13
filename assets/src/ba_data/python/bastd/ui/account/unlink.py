@@ -50,14 +50,15 @@ class AccountUnlinkWindow(ba.Window):
         self._height = 350
         self._scroll_width = 400
         self._scroll_height = 200
-        base_scale = (2.0
-                      if ba.app.small_ui else 1.6 if ba.app.med_ui else 1.1)
+        uiscale = ba.app.uiscale
+        base_scale = (2.0 if uiscale is ba.UIScale.SMALL else
+                      1.6 if uiscale is ba.UIScale.MEDIUM else 1.1)
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             transition=transition,
             scale=base_scale,
             scale_origin_stack_offset=scale_origin,
-            stack_offset=(0, -10) if ba.app.small_ui else (0, 0)))
+            stack_offset=(0, -10) if uiscale is ba.UIScale.SMALL else (0, 0)))
         self._cancel_button = ba.buttonwidget(parent=self._root_widget,
                                               position=(30, self._height - 50),
                                               size=(50, 50),

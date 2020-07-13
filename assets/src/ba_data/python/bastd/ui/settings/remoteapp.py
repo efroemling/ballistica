@@ -34,11 +34,13 @@ class RemoteAppSettingsWindow(ba.Window):
         width = 700
         height = 390
         spacing = 40
+        uiscale = ba.app.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(width, height),
             transition='in_right',
-            scale=(1.85 if ba.app.small_ui else 1.3 if ba.app.med_ui else 1.0),
-            stack_offset=(-10, 0) if ba.app.small_ui else (0, 0)))
+            scale=(1.85 if uiscale is ba.UIScale.SMALL else
+                   1.3 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(-10, 0) if uiscale is ba.UIScale.SMALL else (0, 0)))
         btn = ba.buttonwidget(parent=self._root_widget,
                               position=(40, height - 67),
                               size=(140, 65),

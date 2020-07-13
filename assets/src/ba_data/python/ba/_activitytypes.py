@@ -26,7 +26,7 @@ from typing import TYPE_CHECKING
 import _ba
 from ba._activity import Activity
 from ba._music import setmusic, MusicType
-from ba._enums import InputType
+from ba._enums import InputType, UIScale
 # False-positive from pylint due to our class-generics-filter.
 from ba._player import EmptyPlayer  # pylint: disable=W0611
 from ba._team import EmptyTeam  # pylint: disable=W0611
@@ -191,7 +191,7 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
         # Pop up a 'press any button to continue' statement after our
         # min-view-time show a 'press any button to continue..'
         # thing after a bit.
-        if _ba.app.interface_type == 'large':
+        if _ba.app.uiscale is UIScale.LARGE:
             # FIXME: Need a better way to determine whether we've probably
             #  got a keyboard.
             sval = _lang.Lstr(resource='pressAnyKeyButtonText')

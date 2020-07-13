@@ -57,22 +57,25 @@ class HelpWindow(ba.Window):
         self._r = 'helpWindow'
 
         self._main_menu = main_menu
-        width = 950 if ba.app.small_ui else 750
-        x_offs = 100 if ba.app.small_ui else 0
-        height = 460 if ba.app.small_ui else 530 if ba.app.med_ui else 600
+        uiscale = ba.app.uiscale
+        width = 950 if uiscale is ba.UIScale.SMALL else 750
+        x_offs = 100 if uiscale is ba.UIScale.SMALL else 0
+        height = (460 if uiscale is ba.UIScale.SMALL else
+                  530 if uiscale is ba.UIScale.MEDIUM else 600)
 
         super().__init__(root_widget=ba.containerwidget(
             size=(width, height),
             transition=transition,
             toolbar_visibility='menu_minimal',
             scale_origin_stack_offset=scale_origin,
-            scale=(
-                1.77 if ba.app.small_ui else 1.25 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -30) if ba.app.small_ui else (
-                0, 15) if ba.app.med_ui else (0, 0)))
+            scale=(1.77 if uiscale is ba.UIScale.SMALL else
+                   1.25 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -30) if uiscale is ba.UIScale.SMALL else (
+                0, 15) if uiscale is ba.UIScale.MEDIUM else (0, 0)))
 
         ba.textwidget(parent=self._root_widget,
-                      position=(0, height - (50 if ba.app.small_ui else 45)),
+                      position=(0, height -
+                                (50 if uiscale is ba.UIScale.SMALL else 45)),
                       size=(width, 25),
                       text=ba.Lstr(resource=self._r + '.titleText',
                                    subs=[('${APP_NAME}',
@@ -83,10 +86,10 @@ class HelpWindow(ba.Window):
 
         self._scrollwidget = ba.scrollwidget(
             parent=self._root_widget,
-            position=(44 + x_offs, 55 if ba.app.small_ui else 55),
+            position=(44 + x_offs, 55 if uiscale is ba.UIScale.SMALL else 55),
             simple_culling_v=100.0,
             size=(width - (88 + 2 * x_offs),
-                  height - 120 + (5 if ba.app.small_ui else 0)),
+                  height - 120 + (5 if uiscale is ba.UIScale.SMALL else 0)),
             capture_arrows=True)
 
         if ba.app.toolbars:
@@ -97,7 +100,7 @@ class HelpWindow(ba.Window):
 
         # ugly: create this last so it gets first dibs at touch events (since
         # we have it close to the scroll widget)
-        if ba.app.small_ui and ba.app.toolbars:
+        if uiscale is ba.UIScale.SMALL and ba.app.toolbars:
             ba.containerwidget(edit=self._root_widget,
                                on_cancel_call=self._close)
             ba.widget(edit=self._scrollwidget,
@@ -105,10 +108,12 @@ class HelpWindow(ba.Window):
         else:
             btn = ba.buttonwidget(
                 parent=self._root_widget,
-                position=(x_offs + (40 + 0 if ba.app.small_ui else 70),
-                          height - (59 if ba.app.small_ui else 50)),
+                position=(x_offs +
+                          (40 + 0 if uiscale is ba.UIScale.SMALL else 70),
+                          height -
+                          (59 if uiscale is ba.UIScale.SMALL else 50)),
                 size=(140, 60),
-                scale=0.7 if ba.app.small_ui else 0.8,
+                scale=0.7 if uiscale is ba.UIScale.SMALL else 0.8,
                 label=ba.Lstr(
                     resource='backText') if self._main_menu else 'Close',
                 button_type='back' if self._main_menu else None,
@@ -122,8 +127,6 @@ class HelpWindow(ba.Window):
                                 button_type='backSmall',
                                 size=(60, 55),
                                 label=ba.charstr(ba.SpecialChar.BACK))
-
-        # interface_type = ba.app.interface_type
 
         self._sub_width = 660
         self._sub_height = 1590 + get_resource(

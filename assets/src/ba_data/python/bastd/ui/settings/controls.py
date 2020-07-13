@@ -144,12 +144,14 @@ class ControlsSettingsWindow(ba.Window):
         if show_xinput_toggle:
             height += spacing
 
+        uiscale = ba.app.uiscale
+        smallscale = (1.7 if show_keyboard else 2.2)
         super().__init__(root_widget=ba.containerwidget(
             size=(width, height),
             transition=transition,
             scale_origin_stack_offset=scale_origin,
-            scale=(1.7 if show_keyboard else 2.2
-                   ) if ba.app.small_ui else 1.5 if ba.app.med_ui else 1.0))
+            scale=(smallscale if uiscale is ba.UIScale.SMALL else
+                   1.5 if uiscale is ba.UIScale.MEDIUM else 1.0)))
         self._back_button = btn = ba.buttonwidget(
             parent=self._root_widget,
             position=(35, height - 60),

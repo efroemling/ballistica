@@ -40,15 +40,17 @@ class CoopBrowserWindow(ba.Window):
     """Window for browsing co-op levels/games/etc."""
 
     def _update_corner_button_positions(self) -> None:
-        offs = (-55 if ba.app.small_ui and _ba.is_party_icon_visible() else 0)
+        uiscale = ba.app.uiscale
+        offs = (-55 if uiscale is ba.UIScale.SMALL
+                and _ba.is_party_icon_visible() else 0)
         if self._league_rank_button is not None:
             self._league_rank_button.set_position(
-                (self._width - 282 + offs - self._x_inset,
-                 self._height - 85 - (4 if ba.app.small_ui else 0)))
+                (self._width - 282 + offs - self._x_inset, self._height - 85 -
+                 (4 if uiscale is ba.UIScale.SMALL else 0)))
         if self._store_button is not None:
             self._store_button.set_position(
-                (self._width - 170 + offs - self._x_inset,
-                 self._height - 85 - (4 if ba.app.small_ui else 0)))
+                (self._width - 170 + offs - self._x_inset, self._height - 85 -
+                 (4 if uiscale is ba.UIScale.SMALL else 0)))
 
     def __init__(self,
                  transition: Optional[str] = 'in_right',
@@ -96,12 +98,14 @@ class CoopBrowserWindow(ba.Window):
         self._hard_button_lock_image: Optional[ba.Widget] = None
         self._campaign_percent_text: Optional[ba.Widget] = None
 
-        self._width = 1320 if app.small_ui else 1120
-        self._x_inset = x_inset = 100 if app.small_ui else 0
-        self._height = (657 if app.small_ui else 730 if app.med_ui else 800)
+        uiscale = ba.app.uiscale
+        self._width = 1320 if uiscale is ba.UIScale.SMALL else 1120
+        self._x_inset = x_inset = 100 if uiscale is ba.UIScale.SMALL else 0
+        self._height = (657 if uiscale is ba.UIScale.SMALL else
+                        730 if uiscale is ba.UIScale.MEDIUM else 800)
         app.main_window = 'Coop Select'
         self._r = 'coopSelectWindow'
-        top_extra = 20 if app.small_ui else 0
+        top_extra = 20 if uiscale is ba.UIScale.SMALL else 0
 
         self._tourney_data_up_to_date = False
 
@@ -112,18 +116,19 @@ class CoopBrowserWindow(ba.Window):
             size=(self._width, self._height + top_extra),
             toolbar_visibility='menu_full',
             scale_origin_stack_offset=scale_origin,
-            stack_offset=((0, -15) if app.small_ui else (
-                0, 0) if app.med_ui else (0, 0)),
+            stack_offset=((0, -15) if uiscale is ba.UIScale.SMALL else (
+                0, 0) if uiscale is ba.UIScale.MEDIUM else (0, 0)),
             transition=transition,
-            scale=1.2 if app.small_ui else 0.8 if app.med_ui else 0.75))
+            scale=(1.2 if uiscale is ba.UIScale.SMALL else
+                   0.8 if uiscale is ba.UIScale.MEDIUM else 0.75)))
 
-        if app.toolbars and app.small_ui:
+        if app.toolbars and uiscale is ba.UIScale.SMALL:
             self._back_button = None
         else:
             self._back_button = ba.buttonwidget(
                 parent=self._root_widget,
-                position=(75 + x_inset,
-                          self._height - 87 - (4 if app.small_ui else 0)),
+                position=(75 + x_inset, self._height - 87 -
+                          (4 if uiscale is ba.UIScale.SMALL else 0)),
                 size=(120, 60),
                 scale=1.2,
                 autoselect=True,
@@ -138,8 +143,8 @@ class CoopBrowserWindow(ba.Window):
         if not app.toolbars:
             prb = self._league_rank_button = LeagueRankButton(
                 parent=self._root_widget,
-                position=(self._width - (282 + x_inset),
-                          self._height - 85 - (4 if app.small_ui else 0)),
+                position=(self._width - (282 + x_inset), self._height - 85 -
+                          (4 if uiscale is ba.UIScale.SMALL else 0)),
                 size=(100, 60),
                 color=(0.4, 0.4, 0.9),
                 textcolor=(0.9, 0.9, 2.0),
@@ -149,8 +154,8 @@ class CoopBrowserWindow(ba.Window):
 
             sbtn = self._store_button = StoreButton(
                 parent=self._root_widget,
-                position=(self._width - (170 + x_inset),
-                          self._height - 85 - (4 if app.small_ui else 0)),
+                position=(self._width - (170 + x_inset), self._height - 85 -
+                          (4 if uiscale is ba.UIScale.SMALL else 0)),
                 size=(100, 60),
                 color=(0.6, 0.4, 0.7),
                 show_tickets=True,
@@ -195,7 +200,8 @@ class CoopBrowserWindow(ba.Window):
         v = self._height - 95
         txt = ba.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, v + 40 - (0 if app.small_ui else 0)),
+            position=(self._width * 0.5,
+                      v + 40 - (0 if uiscale is ba.UIScale.SMALL else 0)),
             size=(0, 0),
             text=ba.Lstr(resource='playModes.singlePlayerCoopText',
                          fallback_resource='playModes.coopText'),
@@ -205,16 +211,17 @@ class CoopBrowserWindow(ba.Window):
             maxwidth=500,
             v_align='center')
 
-        if app.toolbars and app.small_ui:
+        if app.toolbars and uiscale is ba.UIScale.SMALL:
             ba.textwidget(edit=txt, text='')
 
         if self._back_button is not None:
-            ba.buttonwidget(edit=self._back_button,
-                            button_type='backSmall',
-                            size=(60, 50),
-                            position=(75 + x_inset, self._height - 87 -
-                                      (4 if app.small_ui else 0) + 6),
-                            label=ba.charstr(ba.SpecialChar.BACK))
+            ba.buttonwidget(
+                edit=self._back_button,
+                button_type='backSmall',
+                size=(60, 50),
+                position=(75 + x_inset, self._height - 87 -
+                          (4 if uiscale is ba.UIScale.SMALL else 0) + 6),
+                label=ba.charstr(ba.SpecialChar.BACK))
 
         self._selected_row = cfg.get('Selected Coop Row', None)
 
@@ -225,8 +232,9 @@ class CoopBrowserWindow(ba.Window):
         self.a_outline_model = ba.getmodel('achievementOutline')
 
         self._scroll_width = self._width - (130 + 2 * x_inset)
-        self._scroll_height = self._height - (190 if app.small_ui
-                                              and app.toolbars else 160)
+        self._scroll_height = (
+            self._height -
+            (190 if uiscale is ba.UIScale.SMALL and app.toolbars else 160))
 
         self._subcontainerwidth = 800.0
         self._subcontainerheight = 1400.0
@@ -234,7 +242,8 @@ class CoopBrowserWindow(ba.Window):
         self._scrollwidget = ba.scrollwidget(
             parent=self._root_widget,
             highlight=False,
-            position=(65 + x_inset, 120) if app.small_ui and app.toolbars else
+            position=(65 + x_inset,
+                      120) if uiscale is ba.UIScale.SMALL and app.toolbars else
             (65 + x_inset, 70),
             size=(self._scroll_width, self._scroll_height),
             simple_culling_v=10.0)

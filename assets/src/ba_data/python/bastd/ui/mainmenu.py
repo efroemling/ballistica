@@ -187,7 +187,7 @@ class MainMenuWindow(ba.Window):
         self._r = 'mainMenu'
 
         app = ba.app
-        self._have_quit_button = (app.interface_type == 'large'
+        self._have_quit_button = (app.uiscale is ba.UIScale.LARGE
                                   or (app.platform == 'windows'
                                       and app.subplatform == 'oculus'))
 
@@ -288,8 +288,9 @@ class MainMenuWindow(ba.Window):
                 sale_scale=1.3,
                 transition_delay=self._tdelay)
             self._store_button = store_button = sbtn.get_button()
-            icon_size = (55
-                         if ba.app.small_ui else 55 if ba.app.med_ui else 70)
+            uiscale = ba.app.uiscale
+            icon_size = (55 if uiscale is ba.UIScale.SMALL else
+                         55 if uiscale is ba.UIScale.MEDIUM else 70)
             ba.imagewidget(
                 parent=self._root_widget,
                 position=(h - icon_size * 0.5,
@@ -356,12 +357,13 @@ class MainMenuWindow(ba.Window):
             b_size = 50.0
             b_buffer = 10.0
             t_scale = 0.75
-            if ba.app.small_ui:
+            uiscale = ba.app.uiscale
+            if uiscale is ba.UIScale.SMALL:
                 b_size *= 0.6
                 b_buffer *= 1.0
                 v_offs = -40
                 t_scale = 0.5
-            elif ba.app.med_ui:
+            elif uiscale is ba.UIScale.MEDIUM:
                 v_offs = -70
             else:
                 v_offs = -100
@@ -457,7 +459,8 @@ class MainMenuWindow(ba.Window):
             b_count += 1
         if self._have_store_button:
             b_count += 1
-        if ba.app.small_ui:
+        uiscale = ba.app.uiscale
+        if uiscale is ba.UIScale.SMALL:
             root_widget_scale = 1.6
             play_button_width = self._button_width * 0.65
             play_button_height = self._button_height * 1.1
@@ -466,7 +469,7 @@ class MainMenuWindow(ba.Window):
             button_y_offs2 = -60.0
             self._button_height *= 1.3
             button_spacing = 1.04
-        elif ba.app.med_ui:
+        elif uiscale is ba.UIScale.MEDIUM:
             root_widget_scale = 1.3
             play_button_width = self._button_width * 0.65
             play_button_height = self._button_height * 1.1
@@ -514,7 +517,9 @@ class MainMenuWindow(ba.Window):
                 on_activate_call=self._demo_menu_press)
         else:
             self._demo_menu_button = None
-        foof = (-1 if ba.app.small_ui else 1 if ba.app.med_ui else 3)
+        uiscale = ba.app.uiscale
+        foof = (-1 if uiscale is ba.UIScale.SMALL else
+                1 if uiscale is ba.UIScale.MEDIUM else 3)
         h, v, scale = positions[self._p_index]
         v = v + foof
         gather_delay = 0.0 if self._t_delay_play == 0.0 else max(
@@ -710,10 +715,12 @@ class MainMenuWindow(ba.Window):
             # In this case we have a leave *and* a disconnect button.
             self._height += 50
         self._height += 50 * (len(custom_menu_entries))
+        uiscale = ba.app.uiscale
         ba.containerwidget(
             edit=self._root_widget,
             size=(self._width, self._height),
-            scale=2.15 if ba.app.small_ui else 1.6 if ba.app.med_ui else 1.0)
+            scale=(2.15 if uiscale is ba.UIScale.SMALL else
+                   1.6 if uiscale is ba.UIScale.MEDIUM else 1.0))
         h = 125.0
         v = (self._height - 80.0 if self._input_player else self._height - 60)
         h_offset = 0

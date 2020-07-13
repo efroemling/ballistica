@@ -55,8 +55,10 @@ def gamepad_configure_callback(event: Dict[str, Any]) -> None:
         width = 700
         height = 200
         button_width = 100
+        uiscale = ba.app.uiscale
         ba.app.main_menu_window = dlg = (ba.containerwidget(
-            scale=1.7 if ba.app.small_ui else 1.4 if ba.app.med_ui else 1.0,
+            scale=(1.7 if uiscale is ba.UIScale.SMALL else
+                   1.4 if uiscale is ba.UIScale.MEDIUM else 1.0),
             size=(width, height),
             transition='in_right'))
         device_name = inputdevice.name
@@ -97,10 +99,13 @@ class GamepadSelectWindow(ba.Window):
         spacing = 40
         self._r = 'configGamepadSelectWindow'
 
+        uiscale = ba.app.uiscale
         super().__init__(root_widget=ba.containerwidget(
-            scale=2.3 if ba.app.small_ui else 1.5 if ba.app.med_ui else 1.0,
+            scale=(2.3 if uiscale is ba.UIScale.SMALL else
+                   1.5 if uiscale is ba.UIScale.MEDIUM else 1.0),
             size=(width, height),
-            transition='in_right'))
+            transition='in_right',
+        ))
 
         btn = ba.buttonwidget(parent=self._root_widget,
                               position=(20, height - 60),

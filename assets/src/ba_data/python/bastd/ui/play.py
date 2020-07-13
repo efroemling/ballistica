@@ -46,8 +46,9 @@ class PlayWindow(ba.Window):
         threading.Thread(target=self._preload_modules).start()
 
         new_style = True
-        width = 1000 if ba.app.small_ui else 800
-        x_offs = 100 if ba.app.small_ui else 0
+        uiscale = ba.app.uiscale
+        width = 1000 if uiscale is ba.UIScale.SMALL else 800
+        x_offs = 100 if uiscale is ba.UIScale.SMALL else 0
         height = 550 if new_style else 400
         button_width = 400
 
@@ -67,10 +68,10 @@ class PlayWindow(ba.Window):
             transition=transition,
             toolbar_visibility='menu_full',
             scale_origin_stack_offset=scale_origin,
-            scale=(1.6 if new_style else 1.52
-                   ) if ba.app.small_ui else 0.9 if ba.app.med_ui else 0.8,
+            scale=((1.6 if new_style else 1.52) if uiscale is ba.UIScale.SMALL
+                   else 0.9 if uiscale is ba.UIScale.MEDIUM else 0.8),
             stack_offset=((0, 0) if new_style else (
-                10, 7)) if ba.app.small_ui else (0, 0)))
+                10, 7)) if uiscale is ba.UIScale.SMALL else (0, 0)))
         self._back_button = back_button = btn = ba.buttonwidget(
             parent=self._root_widget,
             position=(55 + x_offs, height - 132) if new_style else
@@ -99,14 +100,14 @@ class PlayWindow(ba.Window):
                         button_type='backSmall',
                         size=(60, 60),
                         label=ba.charstr(ba.SpecialChar.BACK))
-        if ba.app.toolbars and ba.app.small_ui:
+        if ba.app.toolbars and uiscale is ba.UIScale.SMALL:
             ba.textwidget(edit=txt, text='')
 
         v = height - (110 if new_style else 60)
         v -= 100
         clr = (0.6, 0.7, 0.6, 1.0)
         v -= 280 if new_style else 180
-        v += 30 if ba.app.toolbars and ba.app.small_ui else 0
+        v += 30 if ba.app.toolbars and uiscale is ba.UIScale.SMALL else 0
         hoffs = x_offs + 80 if new_style else 0
         scl = 1.13 if new_style else 0.68
 
@@ -134,7 +135,7 @@ class PlayWindow(ba.Window):
             text_scale=1.13,
             on_activate_call=self._coop)
 
-        if ba.app.toolbars and ba.app.small_ui:
+        if ba.app.toolbars and uiscale is ba.UIScale.SMALL:
             ba.widget(edit=btn,
                       left_widget=_ba.get_special_widget('back_button'))
             ba.widget(edit=btn,
@@ -403,7 +404,7 @@ class PlayWindow(ba.Window):
                       maxwidth=scl * button_width * 0.7,
                       color=clr)
 
-        if ba.app.toolbars and ba.app.small_ui:
+        if ba.app.toolbars and uiscale is ba.UIScale.SMALL:
             back_button.delete()
             ba.containerwidget(edit=self._root_widget,
                                on_cancel_call=self._back,

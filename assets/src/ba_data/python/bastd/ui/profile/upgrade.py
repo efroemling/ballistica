@@ -45,19 +45,20 @@ class ProfileUpgradeWindow(ba.Window):
 
         self._width = 680
         self._height = 350
-        self._base_scale = (2.05 if ba.app.small_ui else
-                            1.5 if ba.app.med_ui else 1.2)
+        uiscale = ba.app.uiscale
+        self._base_scale = (2.05 if uiscale is ba.UIScale.SMALL else
+                            1.5 if uiscale is ba.UIScale.MEDIUM else 1.2)
         self._upgrade_start_time: Optional[float] = None
         self._name = edit_profile_window.getname()
         self._edit_profile_window = weakref.ref(edit_profile_window)
 
-        top_extra = 15 if ba.app.small_ui else 15
+        top_extra = 15 if uiscale is ba.UIScale.SMALL else 15
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height + top_extra),
             toolbar_visibility='menu_currency',
             transition=transition,
             scale=self._base_scale,
-            stack_offset=(0, 15) if ba.app.small_ui else (0, 0)))
+            stack_offset=(0, 15) if uiscale is ba.UIScale.SMALL else (0, 0)))
         cancel_button = ba.buttonwidget(parent=self._root_widget,
                                         position=(52, 30),
                                         size=(155, 60),

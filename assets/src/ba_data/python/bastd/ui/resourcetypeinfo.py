@@ -30,7 +30,9 @@ class ResourceTypeInfoWindow(popup.PopupWindow):
     """Popup window providing info about resource types."""
 
     def __init__(self, origin_widget: ba.Widget):
-        scale = (2.3 if ba.app.small_ui else 1.65 if ba.app.med_ui else 1.23)
+        uiscale = ba.app.uiscale
+        scale = (2.3 if uiscale is ba.UIScale.SMALL else
+                 1.65 if uiscale is ba.UIScale.MEDIUM else 1.23)
         self._transitioning_out = False
         self._width = 570
         self._height = 350

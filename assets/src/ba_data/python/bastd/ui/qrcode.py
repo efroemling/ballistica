@@ -31,7 +31,9 @@ class QRCodeWindow(popup.PopupWindow):
     def __init__(self, origin_widget: ba.Widget, qr_tex: ba.Texture):
 
         position = origin_widget.get_screen_space_center()
-        scale = (2.3 if ba.app.small_ui else 1.65 if ba.app.med_ui else 1.23)
+        uiscale = ba.app.uiscale
+        scale = (2.3 if uiscale is ba.UIScale.SMALL else
+                 1.65 if uiscale is ba.UIScale.MEDIUM else 1.23)
         self._transitioning_out = False
         self._width = 450
         self._height = 400

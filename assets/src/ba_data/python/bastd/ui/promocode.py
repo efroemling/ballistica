@@ -53,12 +53,14 @@ class PromoCodeWindow(ba.Window):
         self._modal = modal
         self._r = 'promoCodeWindow'
 
+        uiscale = ba.app.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(width, height),
             transition=transition,
             toolbar_visibility='menu_minimal_no_back',
             scale_origin_stack_offset=scale_origin,
-            scale=(2.0 if ba.app.small_ui else 1.5 if ba.app.med_ui else 1.0)))
+            scale=(2.0 if uiscale is ba.UIScale.SMALL else
+                   1.5 if uiscale is ba.UIScale.MEDIUM else 1.0)))
 
         btn = ba.buttonwidget(parent=self._root_widget,
                               scale=0.5,

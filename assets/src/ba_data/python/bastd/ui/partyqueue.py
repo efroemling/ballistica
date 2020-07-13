@@ -223,11 +223,13 @@ class PartyQueueWindow(ba.Window):
         self._line_image: Optional[ba.Widget] = None
         self.eyes_model = ba.getmodel('plasticEyesTransparent')
         self._white_tex = ba.gettexture('white')
+        uiscale = ba.app.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             color=(0.45, 0.63, 0.15),
             transition='in_scale',
-            scale=1.4 if ba.app.small_ui else 1.2 if ba.app.med_ui else 1.0))
+            scale=(1.4 if uiscale is ba.UIScale.SMALL else
+                   1.2 if uiscale is ba.UIScale.MEDIUM else 1.0)))
 
         self._cancel_button = ba.buttonwidget(parent=self._root_widget,
                                               scale=1.0,

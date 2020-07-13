@@ -39,9 +39,10 @@ class StoreBrowserWindow(ba.Window):
     """Window for browsing the store."""
 
     def _update_get_tickets_button_pos(self) -> None:
+        uiscale = ba.app.uiscale
         if self._get_tickets_button:
             pos = (self._width - 252 -
-                   (self._x_inset + (47 if ba.app.small_ui
+                   (self._x_inset + (47 if uiscale is ba.UIScale.SMALL
                                      and _ba.is_party_icon_visible() else 0)),
                    self._height - 70)
             ba.buttonwidget(edit=self._get_tickets_button, position=pos)
@@ -59,6 +60,7 @@ class StoreBrowserWindow(ba.Window):
         from ba import SpecialChar
 
         app = ba.app
+        uiscale = app.uiscale
 
         ba.set_analytics_screen('Store Window')
 
@@ -81,11 +83,12 @@ class StoreBrowserWindow(ba.Window):
         self._on_close_call = on_close_call
         self._show_tab = show_tab
         self._modal = modal
-        self._width = 1240 if app.small_ui else 1040
-        self._x_inset = x_inset = 100 if app.small_ui else 0
-        self._height = (578 if app.small_ui else 645 if app.med_ui else 800)
+        self._width = 1240 if uiscale is ba.UIScale.SMALL else 1040
+        self._x_inset = x_inset = 100 if uiscale is ba.UIScale.SMALL else 0
+        self._height = (578 if uiscale is ba.UIScale.SMALL else
+                        645 if uiscale is ba.UIScale.MEDIUM else 800)
         self._current_tab: Optional[str] = None
-        extra_top = 30 if app.small_ui else 0
+        extra_top = 30 if uiscale is ba.UIScale.SMALL else 0
 
         self._request: Any = None
         self._r = 'store'
@@ -95,12 +98,11 @@ class StoreBrowserWindow(ba.Window):
             size=(self._width, self._height + extra_top),
             transition=transition,
             toolbar_visibility='menu_full',
-            scale=1.3 if app.small_ui else 0.9 if app.med_ui else 0.8,
+            scale=(1.3 if uiscale is ba.UIScale.SMALL else
+                   0.9 if uiscale is ba.UIScale.MEDIUM else 0.8),
             scale_origin_stack_offset=scale_origin,
-            stack_offset=(0,
-                          -5) if app.small_ui else (0,
-                                                    0) if app.med_ui else (0,
-                                                                           0)))
+            stack_offset=((0, -5) if uiscale is ba.UIScale.SMALL else (
+                0, 0) if uiscale is ba.UIScale.MEDIUM else (0, 0))))
 
         self._back_button = btn = ba.buttonwidget(
             parent=self._root_widget,
@@ -718,6 +720,8 @@ class StoreBrowserWindow(ba.Window):
                     self._sections = copy.deepcopy(store_data[sdata['tab']])
                     self._height: Optional[float] = None
 
+                    uiscale = ba.app.uiscale
+
                     # Pre-calc a few things and add them to store-data.
                     for section in self._sections:
                         if self._tab == 'characters':
@@ -739,8 +743,9 @@ class StoreBrowserWindow(ba.Window):
                         section['x_offs'] = (130 if self._tab == 'extras' else
                                              270 if self._tab == 'maps' else 0)
                         section['y_offs'] = (
-                            55 if (self._tab == 'extras' and ba.app.small_ui)
-                            else -20 if self._tab == 'icons' else 0)
+                            55 if (self._tab == 'extras'
+                                   and uiscale is ba.UIScale.SMALL) else
+                            -20 if self._tab == 'icons' else 0)
 
                 def instantiate(self, scrollwidget: ba.Widget,
                                 tab_button: ba.Widget) -> None:

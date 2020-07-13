@@ -34,10 +34,12 @@ class TelnetAccessRequestWindow(ba.Window):
         height = 100
         text = ba.Lstr(resource='telnetAccessText')
 
+        uiscale = ba.app.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(width, height + 40),
             transition='in_right',
-            scale=1.7 if ba.app.small_ui else 1.3 if ba.app.med_ui else 1.0))
+            scale=(1.7 if uiscale is ba.UIScale.SMALL else
+                   1.3 if uiscale is ba.UIScale.MEDIUM else 1.0)))
         padding = 20
         ba.textwidget(parent=self._root_widget,
                       position=(padding, padding + 33),

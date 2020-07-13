@@ -53,20 +53,22 @@ class AdvancedSettingsWindow(ba.Window):
             self._transition_out = 'out_right'
             scale_origin = None
 
-        self._width = 870.0 if app.small_ui else 670.0
-        x_inset = 100 if app.small_ui else 0
-        self._height = (390.0
-                        if app.small_ui else 450.0 if app.med_ui else 520.0)
+        uiscale = ba.app.uiscale
+        self._width = 870.0 if uiscale is ba.UIScale.SMALL else 670.0
+        x_inset = 100 if uiscale is ba.UIScale.SMALL else 0
+        self._height = (390.0 if uiscale is ba.UIScale.SMALL else
+                        450.0 if uiscale is ba.UIScale.MEDIUM else 520.0)
         self._spacing = 32
         self._menu_open = False
-        top_extra = 10 if app.small_ui else 0
+        top_extra = 10 if uiscale is ba.UIScale.SMALL else 0
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height + top_extra),
             transition=transition,
             toolbar_visibility='menu_minimal',
             scale_origin_stack_offset=scale_origin,
-            scale=2.06 if app.small_ui else 1.4 if app.med_ui else 1.0,
-            stack_offset=(0, -25) if app.small_ui else (0, 0)))
+            scale=(2.06 if uiscale is ba.UIScale.SMALL else
+                   1.4 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -25) if uiscale is ba.UIScale.SMALL else (0, 0)))
         self._prev_lang = ''
         self._prev_lang_list: List[str] = []
         self._complete_langs_list: Optional[List] = None
@@ -96,7 +98,7 @@ class AdvancedSettingsWindow(ba.Window):
 
         self._r = 'settingsWindowAdvanced'
 
-        if app.toolbars and app.small_ui:
+        if app.toolbars and uiscale is ba.UIScale.SMALL:
             ba.containerwidget(edit=self._root_widget,
                                on_cancel_call=self._do_back)
             self._back_button = None

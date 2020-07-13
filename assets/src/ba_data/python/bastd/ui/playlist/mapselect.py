@@ -55,16 +55,19 @@ class PlaylistMapSelectWindow(ba.Window):
         except Exception:
             self._previous_map = ''
 
-        width = 715 if ba.app.small_ui else 615
-        x_inset = 50 if ba.app.small_ui else 0
-        height = (400 if ba.app.small_ui else 480 if ba.app.med_ui else 600)
+        uiscale = ba.app.uiscale
+        width = 715 if uiscale is ba.UIScale.SMALL else 615
+        x_inset = 50 if uiscale is ba.UIScale.SMALL else 0
+        height = (400 if uiscale is ba.UIScale.SMALL else
+                  480 if uiscale is ba.UIScale.MEDIUM else 600)
 
-        top_extra = 20 if ba.app.small_ui else 0
+        top_extra = 20 if uiscale is ba.UIScale.SMALL else 0
         super().__init__(root_widget=ba.containerwidget(
             size=(width, height + top_extra),
             transition=transition,
-            scale=(2.17 if ba.app.small_ui else 1.3 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -27) if ba.app.small_ui else (0, 0)))
+            scale=(2.17 if uiscale is ba.UIScale.SMALL else
+                   1.3 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -27) if uiscale is ba.UIScale.SMALL else (0, 0)))
 
         self._cancel_button = btn = ba.buttonwidget(
             parent=self._root_widget,

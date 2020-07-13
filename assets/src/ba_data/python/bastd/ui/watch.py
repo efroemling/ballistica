@@ -60,23 +60,25 @@ class WatchWindow(ba.Window):
         self._my_replays_rename_window: Optional[ba.Widget] = None
         self._my_replay_rename_text: Optional[ba.Widget] = None
         self._r = 'watchWindow'
-        self._width = 1240 if ba.app.small_ui else 1040
-        x_inset = 100 if ba.app.small_ui else 0
-        self._height = (578
-                        if ba.app.small_ui else 670 if ba.app.med_ui else 800)
+        uiscale = ba.app.uiscale
+        self._width = 1240 if uiscale is ba.UIScale.SMALL else 1040
+        x_inset = 100 if uiscale is ba.UIScale.SMALL else 0
+        self._height = (578 if uiscale is ba.UIScale.SMALL else
+                        670 if uiscale is ba.UIScale.MEDIUM else 800)
         self._current_tab: Optional[str] = None
-        extra_top = 20 if ba.app.small_ui else 0
+        extra_top = 20 if uiscale is ba.UIScale.SMALL else 0
 
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height + extra_top),
             transition=transition,
             toolbar_visibility='menu_minimal',
             scale_origin_stack_offset=scale_origin,
-            scale=(1.3 if ba.app.small_ui else 0.97 if ba.app.med_ui else 0.8),
-            stack_offset=(0, -10) if ba.app.small_ui else (
-                0, 15) if ba.app.med_ui else (0, 0)))
+            scale=(1.3 if uiscale is ba.UIScale.SMALL else
+                   0.97 if uiscale is ba.UIScale.MEDIUM else 0.8),
+            stack_offset=(0, -10) if uiscale is ba.UIScale.SMALL else (
+                0, 15) if uiscale is ba.UIScale.MEDIUM else (0, 0)))
 
-        if ba.app.small_ui and ba.app.toolbars:
+        if uiscale is ba.UIScale.SMALL and ba.app.toolbars:
             ba.containerwidget(edit=self._root_widget,
                                on_cancel_call=self._back)
             self._back_button = None
@@ -122,7 +124,7 @@ class WatchWindow(ba.Window):
         if ba.app.toolbars:
             ba.widget(edit=self._tab_buttons[tabs_def[-1][0]],
                       right_widget=_ba.get_special_widget('party_button'))
-            if ba.app.small_ui:
+            if uiscale is ba.UIScale.SMALL:
                 bbtn = _ba.get_special_widget('back_button')
                 ba.widget(edit=self._tab_buttons[tabs_def[0][0]],
                           up_widget=bbtn,
@@ -172,12 +174,13 @@ class WatchWindow(ba.Window):
         # switching to a different tab
         self._tab_data = {}
 
+        uiscale = ba.app.uiscale
         if tab == 'my_replays':
             c_width = self._scroll_width
             c_height = self._scroll_height - 20
             sub_scroll_height = c_height - 63
             self._my_replays_scroll_width = sub_scroll_width = (
-                680 if ba.app.small_ui else 640)
+                680 if uiscale is ba.UIScale.SMALL else 640)
 
             self._tab_container = cnt = ba.containerwidget(
                 parent=self._root_widget,
@@ -202,19 +205,20 @@ class WatchWindow(ba.Window):
                                      ba.Lstr(resource='replayNameDefaultText'))
                                     ]))
 
-            b_width = 140 if ba.app.small_ui else 178
-            b_height = (107
-                        if ba.app.small_ui else 142 if ba.app.med_ui else 190)
-            b_space_extra = (0 if ba.app.small_ui else
-                             -2 if ba.app.med_ui else -5)
+            b_width = 140 if uiscale is ba.UIScale.SMALL else 178
+            b_height = (107 if uiscale is ba.UIScale.SMALL else
+                        142 if uiscale is ba.UIScale.MEDIUM else 190)
+            b_space_extra = (0 if uiscale is ba.UIScale.SMALL else
+                             -2 if uiscale is ba.UIScale.MEDIUM else -5)
 
             b_color = (0.6, 0.53, 0.63)
             b_textcolor = (0.75, 0.7, 0.8)
-            btnv = c_height - (48 if ba.app.small_ui else
-                               45 if ba.app.med_ui else 40) - b_height
-            btnh = 40 if ba.app.small_ui else 40
-            smlh = 190 if ba.app.small_ui else 225
-            tscl = 1.0 if ba.app.small_ui else 1.2
+            btnv = (c_height - (48 if uiscale is ba.UIScale.SMALL else
+                                45 if uiscale is ba.UIScale.MEDIUM else 40) -
+                    b_height)
+            btnh = 40 if uiscale is ba.UIScale.SMALL else 40
+            smlh = 190 if uiscale is ba.UIScale.SMALL else 225
+            tscl = 1.0 if uiscale is ba.UIScale.SMALL else 1.2
             self._my_replays_watch_replay_button = btn1 = ba.buttonwidget(
                 parent=cnt,
                 size=(b_width, b_height),
@@ -227,7 +231,7 @@ class WatchWindow(ba.Window):
                 label=ba.Lstr(resource=self._r + '.watchReplayButtonText'),
                 autoselect=True)
             ba.widget(edit=btn1, up_widget=self._tab_buttons[tab])
-            if ba.app.small_ui and ba.app.toolbars:
+            if uiscale is ba.UIScale.SMALL and ba.app.toolbars:
                 ba.widget(edit=btn1,
                           left_widget=_ba.get_special_widget('back_button'))
             btnv -= b_height + b_space_extra
@@ -309,8 +313,10 @@ class WatchWindow(ba.Window):
             return
         c_width = 600
         c_height = 250
+        uiscale = ba.app.uiscale
         self._my_replays_rename_window = cnt = ba.containerwidget(
-            scale=1.8 if ba.app.small_ui else 1.55 if ba.app.med_ui else 1.0,
+            scale=(1.8 if uiscale is ba.UIScale.SMALL else
+                   1.55 if uiscale is ba.UIScale.MEDIUM else 1.0),
             size=(c_width, c_height),
             transition='in_scale')
         dname = self._get_replay_display_name(self._my_replay_selected)

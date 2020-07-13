@@ -291,13 +291,15 @@ class PopupMenu:
                  choices_display: Sequence[ba.Lstr] = None,
                  button_size: Tuple[float, float] = (160.0, 50.0),
                  autoselect: bool = True):
+        # pylint: disable=too-many-locals
         if choices_disabled is None:
             choices_disabled = []
         if choices_display is None:
             choices_display = []
+        uiscale = ba.app.uiscale
         if scale is None:
-            scale = (2.3
-                     if ba.app.small_ui else 1.65 if ba.app.med_ui else 1.23)
+            scale = (2.3 if uiscale is ba.UIScale.SMALL else
+                     1.65 if uiscale is ba.UIScale.MEDIUM else 1.23)
         if current_choice not in choices:
             current_choice = None
         self._choices = list(choices)

@@ -56,6 +56,31 @@ class InputType(Enum):
     DOWN_RELEASE = 26
 
 
+class UIScale(Enum):
+    """The overall scale the UI is being rendered for. Note that this is
+    independent of pixel resolution. For example, a phone and a desktop PC
+    might render the game at similar pixel resolutions but the size they
+    display content at will vary significantly.
+
+    Category: Enums
+
+    'large' is used for devices such as desktop PCs where fine details can
+       be clearly seen. UI elements are generally smaller on the screen
+       and more content can be seen at once.
+
+    'medium' is used for devices such as tablets, TVs, or VR headsets.
+       This mode strikes a balance between clean readability and amount of
+       content visible.
+
+    'small' is used primarily for phones or other small devices where
+       content needs to be presented as large and clear in order to remain
+       readable from an average distance.
+    """
+    LARGE = 0
+    MEDIUM = 1
+    SMALL = 2
+
+
 class TimeType(Enum):
     """Specifies the type of time for various operations to target/use.
 

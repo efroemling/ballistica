@@ -963,6 +963,7 @@
       <w>insta</w>
       <w>installdir</w>
       <w>instancer</w>
+      <w>interfacetype</w>
       <w>interstitials</w>
       <w>intex</w>
       <w>intp</w>
@@ -1779,6 +1780,7 @@
       <w>sline</w>
       <w>slval</w>
       <w>smag</w>
+      <w>smallscale</w>
       <w>smlh</w>
       <w>smtpd</w>
       <w>smtplib</w>

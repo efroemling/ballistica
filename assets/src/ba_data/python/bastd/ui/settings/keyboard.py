@@ -45,14 +45,16 @@ class ConfigKeyboardWindow(ba.Window):
         self._displayname = ba.Lstr(translate=('inputDeviceNames', dname_raw))
         self._width = 700
         if self._unique_id != '#1':
-            self._height = 450
+            self._height = 480
         else:
-            self._height = 345
+            self._height = 375
         self._spacing = 40
+        uiscale = ba.app.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
-            scale=(1.6 if ba.app.small_ui else 1.3 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -10) if ba.app.small_ui else (0, 0),
+            scale=(1.6 if uiscale is ba.UIScale.SMALL else
+                   1.3 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -10) if uiscale is ba.UIScale.SMALL else (0, 0),
             transition=transition))
 
         self._rebuild_ui()
@@ -73,7 +75,7 @@ class ConfigKeyboardWindow(ba.Window):
 
         cancel_button = ba.buttonwidget(parent=self._root_widget,
                                         autoselect=True,
-                                        position=(38, self._height - 65),
+                                        position=(38, self._height - 85),
                                         size=(170, 60),
                                         label=ba.Lstr(resource='cancelText'),
                                         scale=0.9,
@@ -81,9 +83,9 @@ class ConfigKeyboardWindow(ba.Window):
         save_button = ba.buttonwidget(parent=self._root_widget,
                                       autoselect=True,
                                       position=(self._width - 190,
-                                                self._height - 65),
+                                                self._height - 85),
                                       size=(180, 60),
-                                      label=ba.Lstr(resource='makeItSoText'),
+                                      label=ba.Lstr(resource='saveText'),
                                       scale=0.9,
                                       text_scale=0.9,
                                       on_activate_call=self._save)
@@ -94,7 +96,7 @@ class ConfigKeyboardWindow(ba.Window):
         ba.widget(edit=cancel_button, right_widget=save_button)
         ba.widget(edit=save_button, left_widget=cancel_button)
 
-        v = self._height - 54.0
+        v = self._height - 74.0
         ba.textwidget(parent=self._root_widget,
                       position=(self._width * 0.5, v + 15),
                       size=(0, 0),
@@ -270,10 +272,12 @@ class AwaitKeyboardInputWindow(ba.Window):
 
         width = 400
         height = 150
+        uiscale = ba.app.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(width, height),
             transition='in_right',
-            scale=2.0 if ba.app.small_ui else 1.5 if ba.app.med_ui else 1.0))
+            scale=(2.0 if uiscale is ba.UIScale.SMALL else
+                   1.5 if uiscale is ba.UIScale.MEDIUM else 1.0)))
         ba.textwidget(parent=self._root_widget,
                       position=(0, height - 60),
                       size=(width, 25),

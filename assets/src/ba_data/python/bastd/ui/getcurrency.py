@@ -65,23 +65,25 @@ class GetCurrencyWindow(ba.Window):
             self._transition_out = 'out_right'
             scale_origin = None
 
-        self._width = 1000.0 if ba.app.small_ui else 800.0
-        x_inset = 100.0 if ba.app.small_ui else 0.0
+        uiscale = ba.app.uiscale
+        self._width = 1000.0 if uiscale is ba.UIScale.SMALL else 800.0
+        x_inset = 100.0 if uiscale is ba.UIScale.SMALL else 0.0
         self._height = 480.0
 
         self._modal = modal
         self._from_modal_store = from_modal_store
         self._r = 'getTicketsWindow'
 
-        top_extra = 20 if ba.app.small_ui else 0
+        top_extra = 20 if uiscale is ba.UIScale.SMALL else 0
 
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height + top_extra),
             transition=transition,
             scale_origin_stack_offset=scale_origin,
             color=(0.4, 0.37, 0.55),
-            scale=(1.63 if ba.app.small_ui else 1.2 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -3) if ba.app.small_ui else (0, 0)))
+            scale=(1.63 if uiscale is ba.UIScale.SMALL else
+                   1.2 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -3) if uiscale is ba.UIScale.SMALL else (0, 0)))
 
         btn = ba.buttonwidget(
             parent=self._root_widget,

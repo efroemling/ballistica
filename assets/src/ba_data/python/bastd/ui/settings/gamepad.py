@@ -60,11 +60,12 @@ class GamepadSettingsWindow(ba.Window):
         self._width = 700 if self._is_secondary else 730
         self._height = 440 if self._is_secondary else 450
         self._spacing = 40
+        uiscale = ba.app.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
-            scale=(
-                1.63 if ba.app.small_ui else 1.35 if ba.app.med_ui else 1.0),
-            stack_offset=(-20, -16) if ba.app.small_ui else (0, 0),
+            scale=(1.63 if uiscale is ba.UIScale.SMALL else
+                   1.35 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(-20, -16) if uiscale is ba.UIScale.SMALL else (0, 0),
             transition=transition))
 
         # Don't ask to config joysticks while we're in here.
@@ -782,10 +783,12 @@ class AwaitGamepadInputWindow(ba.Window):
         self._capture_button = button
         width = 400
         height = 150
+        uiscale = ba.app.uiscale
         super().__init__(root_widget=ba.containerwidget(
-            scale=2.0 if ba.app.small_ui else 1.9 if ba.app.med_ui else 1.0,
+            scale=(2.0 if uiscale is ba.UIScale.SMALL else
+                   1.9 if uiscale is ba.UIScale.MEDIUM else 1.0),
             size=(width, height),
-            transition='in_scale'))
+            transition='in_scale'), )
         ba.textwidget(parent=self._root_widget,
                       position=(0, (height - 60) if message2 is None else
                                 (height - 50)),

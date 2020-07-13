@@ -125,7 +125,7 @@ class App:
             'hi': 'Hindi'
         }
 
-        # Special case Chinese: specific variations map to traditional.
+        # Special case for Chinese: specific variations map to traditional.
         # (otherwise will map to 'Chinese' which is simplified)
         if self.locale in ('zh_HANT', 'zh_TW'):
             language = 'ChineseTraditional'
@@ -231,17 +231,9 @@ class App:
         return CURRENT_API_VERSION
 
     @property
-    def interface_type(self) -> str:
-        """Interface mode the game is in; can be 'large', 'medium', or 'small'.
-
-        'large' is used by system such as desktop PC where elements on screen
-          remain usable even at small sizes, allowing more to be shown.
-        'small' is used by small devices such as phones, where elements on
-          screen must be larger to remain readable and usable.
-        'medium' is used by tablets and other middle-of-the-road situations
-          such as VR or TV.
-        """
-        return self._interface_type
+    def uiscale(self) -> ba.UIScale:
+        """Current ui scale for the app."""
+        return self._uiscale
 
     @property
     def on_tv(self) -> bool:
@@ -269,6 +261,7 @@ class App:
         """
         # pylint: disable=too-many-statements
         from ba._music import MusicController
+        from ba._enums import UIScale
 
         # Config.
         self.config_file_healthy = False
@@ -305,8 +298,16 @@ class App:
         assert isinstance(self._platform, str)
         self._subplatform: str = env['subplatform']
         assert isinstance(self._subplatform, str)
-        self._interface_type: str = env['interface_type']
-        assert isinstance(self._interface_type, str)
+        self._uiscale: ba.UIScale
+        interfacetype = env['interface_type']
+        if interfacetype == 'large':
+            self._uiscale = UIScale.LARGE
+        elif interfacetype == 'medium':
+            self._uiscale = UIScale.MEDIUM
+        elif interfacetype == 'small':
+            self._uiscale = UIScale.SMALL
+        else:
+            raise RuntimeError('Invalid UIScale value: {interfacetype}')
         self._on_tv: bool = env['on_tv']
         assert isinstance(self._on_tv, bool)
         self._vr_mode: bool = env['vr_mode']
@@ -427,14 +428,9 @@ class App:
         self.infotextcolor = (0.7, 0.9, 0.7)
         self.uicleanupchecks: List[UICleanupCheck] = []
         self.uiupkeeptimer: Optional[ba.Timer] = None
+        self.toolbars = env.get('toolbar_test', True)
 
         self.delegate: Optional[ba.AppDelegate] = None
-
-        # A few shortcuts.
-        self.small_ui = env['interface_type'] == 'small'
-        self.med_ui = env['interface_type'] == 'medium'
-        self.large_ui = env['interface_type'] == 'large'
-        self.toolbars = env.get('toolbar_test', True)
 
     def on_app_launch(self) -> None:
         """Runs after the app finishes bootstrapping.
@@ -454,7 +450,7 @@ class App:
         from bastd import appdelegate
         from bastd import maps as stdmaps
         from bastd.actor import spazappearance
-        from ba._enums import TimeType
+        from ba._enums import TimeType, UIScale
 
         cfg = self.config
 
@@ -482,12 +478,6 @@ class App:
                 and not _ba.is_blessed()):
             _ba.screenmessage('WARNING: NON-BLESSED BUILD', color=(1, 0, 0))
 
-        # IMPORTANT - if tweaking UI stuff, you need to make sure it behaves
-        # for small, medium, and large UI modes. (doesn't run off screen, etc).
-        # Set these to 1 to test with different sizes. Generally small is used
-        # on phones, medium is used on tablets, and large is on desktops or
-        # large tablets.
-
         # Kick off our periodic UI upkeep.
         # FIXME: Can probably kill this if we do immediate UI death checks.
         self.uiupkeeptimer = _ba.Timer(2.6543,
@@ -495,29 +485,31 @@ class App:
                                        timetype=TimeType.REAL,
                                        repeat=True)
 
-        if bool(False):  # force-test small UI
-            self.small_ui = True
-            self.med_ui = False
-            with _ba.Context('ui'):
-                _ba.pushcall(lambda: _ba.screenmessage(
-                    'FORCING SMALL UI FOR TESTING', color=(1, 0, 1), log=True))
+        # IMPORTANT: If tweaking UI stuff, make sure it behaves for small,
+        # medium, and large UI modes. (doesn't run off screen, etc).
+        # The overrides below can be used to test with different sizes.
+        # Generally small is used on phones, medium is used on tablets/tvs,
+        # and large is on desktop computers or perhaps large tablets. When
+        # possible, run in windowed mode and resize the window to assure
+        # this holds true at all aspect ratios.
 
-        if bool(False):  # force-test medium UI
-            self.small_ui = False
-            self.med_ui = True
-            with _ba.Context('ui'):
-                _ba.pushcall(lambda: _ba.screenmessage(
-                    'FORCING MEDIUM UI FOR TESTING', color=(1, 0, 1
-                                                            ), log=True))
-        if bool(False):  # force-test large UI
-            self.small_ui = False
-            self.med_ui = False
-            with _ba.Context('ui'):
-                _ba.pushcall(lambda: _ba.screenmessage(
-                    'FORCING LARGE UI FOR TESTING', color=(1, 0, 1), log=True))
+        # UPDATE: A better way to test this is now by setting the environment
+        # variable BA_FORCE_UI_SCALE to "small", "medium", or "large".
+        # This will affect system UIs not covered by the values below such
+        # as screen-messages. The below values remain functional, however,
+        # for cases such as Android where environment variables can't be set
+        # easily.
 
-        # If there's a leftover log file, attempt to upload
-        # it to the server and/or get rid of it.
+        if bool(False):  # force-test ui scale
+            self._uiscale = UIScale.SMALL
+            with _ba.Context('ui'):
+                _ba.pushcall(lambda: _ba.screenmessage(
+                    f'FORCING UISCALE {self._uiscale.name} FOR TESTING',
+                    color=(1, 0, 1),
+                    log=True))
+
+        # If there's a leftover log file, attempt to upload it to the
+        # master-server and/or get rid of it.
         _apputils.handle_leftover_log_file()
 
         # Only do this stuff if our config file is healthy so we don't
@@ -545,7 +537,7 @@ class App:
 
         # Debugging - make note if we're using the local test server so we
         # don't accidentally leave it on in a release.
-        # FIXME - move this to native layer.
+        # FIXME - should move this to the native layer.
         server_addr = _ba.get_master_server_address()
         if 'localhost' in server_addr:
             _ba.timer(2.0,
@@ -582,9 +574,7 @@ class App:
 
         # Auto-sign-in to a local account in a moment if we're set to.
         def do_auto_sign_in() -> None:
-            if self.headless_build:
-                _ba.sign_in('Local')
-            elif cfg.get('Auto Account State') == 'Local':
+            if self.headless_build or cfg.get('Auto Account State') == 'Local':
                 _ba.sign_in('Local')
 
         _ba.pushcall(do_auto_sign_in)
@@ -610,6 +600,7 @@ class App:
                 and not _ba.have_connected_clients()):
             from ba import _gameutils, _lang
             from ba._nodeactor import NodeActor
+
             # FIXME: Shouldn't be touching scene stuff here;
             #  should just pass the request on to the host-session.
             with _ba.Context(activity):

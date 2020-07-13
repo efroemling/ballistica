@@ -43,8 +43,9 @@ class TournamentEntryWindow(popup.PopupWindow):
                  scale: float = None,
                  offset: Tuple[float, float] = (0.0, 0.0),
                  on_close_call: Callable[[], Any] = None):
-        # needs some tidying
+        # Needs some tidying.
         # pylint: disable=too-many-branches
+        # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
 
         ba.set_analytics_screen('Tournament Entry Window')
@@ -77,8 +78,9 @@ class TournamentEntryWindow(popup.PopupWindow):
 
         self._on_close_call = on_close_call
         if scale is None:
-            scale = (2.3
-                     if ba.app.small_ui else 1.65 if ba.app.med_ui else 1.23)
+            uiscale = ba.app.uiscale
+            scale = (2.3 if uiscale is ba.UIScale.SMALL else
+                     1.65 if uiscale is ba.UIScale.MEDIUM else 1.23)
         self._delegate = delegate
         self._transitioning_out = False
 

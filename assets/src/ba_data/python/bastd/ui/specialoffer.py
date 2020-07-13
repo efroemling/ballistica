@@ -91,11 +91,13 @@ class SpecialOfferWindow(ba.Window):
         self._offer = copy.deepcopy(offer)
         self._width = 580
         self._height = 590
+        uiscale = ba.app.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             transition=transition,
-            scale=(1.2 if ba.app.small_ui else 1.15 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -15) if ba.app.small_ui else (0, 0)))
+            scale=(1.2 if uiscale is ba.UIScale.SMALL else
+                   1.15 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -15) if uiscale is ba.UIScale.SMALL else (0, 0)))
         self._is_bundle_sale = False
         try:
             if offer['item'] in ['pro', 'pro_fullprice']:

@@ -45,9 +45,10 @@ class FileSelectorWindow(ba.Window):
                  allow_folders: bool = False):
         if valid_file_extensions is None:
             valid_file_extensions = []
-        self._width = 700 if ba.app.small_ui else 600
-        self._x_inset = x_inset = 50 if ba.app.small_ui else 0
-        self._height = 365 if ba.app.small_ui else 418
+        uiscale = ba.app.uiscale
+        self._width = 700 if uiscale is ba.UIScale.SMALL else 600
+        self._x_inset = x_inset = 50 if uiscale is ba.UIScale.SMALL else 0
+        self._height = 365 if uiscale is ba.UIScale.SMALL else 418
         self._callback = callback
         self._base_path = path
         self._path: Optional[str] = None
@@ -65,8 +66,9 @@ class FileSelectorWindow(ba.Window):
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             transition='in_right',
-            scale=(2.23 if ba.app.small_ui else 1.4 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -35) if ba.app.small_ui else (0, 0)))
+            scale=(2.23 if uiscale is ba.UIScale.SMALL else
+                   1.4 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -35) if uiscale is ba.UIScale.SMALL else (0, 0)))
         ba.textwidget(
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 42),

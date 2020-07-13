@@ -34,14 +34,15 @@ class ShowURLWindow(ba.Window):
         # in some cases we might want to show it as a qr code
         # (for long URLs especially)
         app = ba.app
+        uiscale = app.uiscale
         if app.platform == 'android' and app.subplatform == 'alibaba':
             self._width = 500
             self._height = 500
             super().__init__(root_widget=ba.containerwidget(
                 size=(self._width, self._height),
                 transition='in_right',
-                scale=(1.25 if ba.app.small_ui else 1.25 if ba.app.
-                       med_ui else 1.25)))
+                scale=(1.25 if uiscale is ba.UIScale.SMALL else
+                       1.25 if uiscale is ba.UIScale.MEDIUM else 1.25)))
             self._cancel_button = ba.buttonwidget(
                 parent=self._root_widget,
                 position=(50, self._height - 30),
@@ -68,8 +69,8 @@ class ShowURLWindow(ba.Window):
             self._root_widget = ba.containerwidget(
                 size=(self._width, self._height + 40),
                 transition='in_right',
-                scale=1.25
-                if ba.app.small_ui else 1.25 if ba.app.med_ui else 1.25)
+                scale=(1.25 if uiscale is ba.UIScale.SMALL else
+                       1.25 if uiscale is ba.UIScale.MEDIUM else 1.25))
             ba.textwidget(parent=self._root_widget,
                           position=(self._width * 0.5, self._height - 10),
                           size=(0, 0),

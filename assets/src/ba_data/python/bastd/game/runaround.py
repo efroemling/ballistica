@@ -398,9 +398,9 @@ class RunaroundGame(ba.CoopGameActivity[Player, Team]):
             self._tntspawner = TNTSpawner(position=self._tntspawnpos)
 
         # Make sure to stay out of the way of menu/party buttons in the corner.
-        interface_type = ba.app.interface_type
-        l_offs = (-80 if interface_type == 'small' else
-                  -40 if interface_type == 'medium' else 0)
+        uiscale = ba.app.uiscale
+        l_offs = (-80 if uiscale is ba.UIScale.SMALL else
+                  -40 if uiscale is ba.UIScale.MEDIUM else 0)
 
         self._lives_bg = ba.NodeActor(
             ba.newnode('image',

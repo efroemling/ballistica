@@ -62,19 +62,21 @@ class EditProfileWindow(ba.Window):
         # Grab profile colors or pick random ones.
         self._color, self._highlight = get_player_profile_colors(
             existing_profile)
-        self._width = width = 780.0 if ba.app.small_ui else 680.0
-        self._x_inset = x_inset = 50.0 if ba.app.small_ui else 0.0
-        self._height = height = (350.0 if ba.app.small_ui else
-                                 400.0 if ba.app.med_ui else 450.0)
+        uiscale = ba.app.uiscale
+        self._width = width = 780.0 if uiscale is ba.UIScale.SMALL else 680.0
+        self._x_inset = x_inset = 50.0 if uiscale is ba.UIScale.SMALL else 0.0
+        self._height = height = (
+            350.0 if uiscale is ba.UIScale.SMALL else
+            400.0 if uiscale is ba.UIScale.MEDIUM else 450.0)
         spacing = 40
-        self._base_scale = (2.05 if ba.app.small_ui else
-                            1.5 if ba.app.med_ui else 1.0)
-        top_extra = 15 if ba.app.small_ui else 15
+        self._base_scale = (2.05 if uiscale is ba.UIScale.SMALL else
+                            1.5 if uiscale is ba.UIScale.MEDIUM else 1.0)
+        top_extra = 15 if uiscale is ba.UIScale.SMALL else 15
         super().__init__(root_widget=ba.containerwidget(
             size=(width, height + top_extra),
             transition=transition,
             scale=self._base_scale,
-            stack_offset=(0, 15) if ba.app.small_ui else (0, 0)))
+            stack_offset=(0, 15) if uiscale is ba.UIScale.SMALL else (0, 0)))
         cancel_button = btn = ba.buttonwidget(
             parent=self._root_widget,
             position=(52 + x_inset, height - 60),

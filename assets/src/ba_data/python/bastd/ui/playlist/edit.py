@@ -45,17 +45,19 @@ class PlaylistEditWindow(ba.Window):
         self._r = 'editGameListWindow'
         prev_selection = self._editcontroller.get_edit_ui_selection()
 
-        self._width = 770 if ba.app.small_ui else 670
-        x_inset = 50 if ba.app.small_ui else 0
-        self._height = (400
-                        if ba.app.small_ui else 470 if ba.app.med_ui else 540)
+        uiscale = ba.app.uiscale
+        self._width = 770 if uiscale is ba.UIScale.SMALL else 670
+        x_inset = 50 if uiscale is ba.UIScale.SMALL else 0
+        self._height = (400 if uiscale is ba.UIScale.SMALL else
+                        470 if uiscale is ba.UIScale.MEDIUM else 540)
 
-        top_extra = 20 if ba.app.small_ui else 0
+        top_extra = 20 if uiscale is ba.UIScale.SMALL else 0
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height + top_extra),
             transition=transition,
-            scale=(2.0 if ba.app.small_ui else 1.3 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -16) if ba.app.small_ui else (0, 0)))
+            scale=(2.0 if uiscale is ba.UIScale.SMALL else
+                   1.3 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -16) if uiscale is ba.UIScale.SMALL else (0, 0)))
         cancel_button = ba.buttonwidget(parent=self._root_widget,
                                         position=(35 + x_inset,
                                                   self._height - 60),
@@ -133,7 +135,8 @@ class PlaylistEditWindow(ba.Window):
         v -= 2.0
         v += 63
 
-        scl = (1.03 if ba.app.small_ui else 1.36 if ba.app.med_ui else 1.74)
+        scl = (1.03 if uiscale is ba.UIScale.SMALL else
+               1.36 if uiscale is ba.UIScale.MEDIUM else 1.74)
         v -= 63.0 * scl
 
         add_game_button = ba.buttonwidget(

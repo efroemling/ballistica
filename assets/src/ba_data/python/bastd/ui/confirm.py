@@ -68,12 +68,14 @@ class ConfirmWindow:
             scale_origin = None
             transition = 'in_right'
 
+        uiscale = ba.app.uiscale
         self.root_widget = ba.containerwidget(
             size=(width, height),
             transition=transition,
             toolbar_visibility='menu_minimal_no_back',
             parent=_ba.get_special_widget('overlay_stack'),
-            scale=2.1 if ba.app.small_ui else 1.5 if ba.app.med_ui else 1.0,
+            scale=(2.1 if uiscale is ba.UIScale.SMALL else
+                   1.5 if uiscale is ba.UIScale.MEDIUM else 1.0),
             scale_origin_stack_offset=scale_origin)
 
         ba.textwidget(parent=self.root_widget,

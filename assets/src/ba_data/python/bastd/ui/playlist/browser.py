@@ -218,21 +218,22 @@ class PlaylistBrowserWindow(ba.Window):
         self._selected_playlist = ba.app.config.get(self._pvars.config_name +
                                                     ' Playlist Selection')
 
-        self._width = 900 if ba.app.small_ui else 800
-        x_inset = 50 if ba.app.small_ui else 0
-        self._height = (480
-                        if ba.app.small_ui else 510 if ba.app.med_ui else 580)
+        uiscale = ba.app.uiscale
+        self._width = 900 if uiscale is ba.UIScale.SMALL else 800
+        x_inset = 50 if uiscale is ba.UIScale.SMALL else 0
+        self._height = (480 if uiscale is ba.UIScale.SMALL else
+                        510 if uiscale is ba.UIScale.MEDIUM else 580)
 
-        top_extra = 20 if ba.app.small_ui else 0
+        top_extra = 20 if uiscale is ba.UIScale.SMALL else 0
 
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height + top_extra),
             transition=transition,
             toolbar_visibility='menu_full',
             scale_origin_stack_offset=scale_origin,
-            scale=(
-                1.69 if ba.app.small_ui else 1.05 if ba.app.med_ui else 0.9),
-            stack_offset=(0, -26) if ba.app.small_ui else (0, 0)))
+            scale=(1.69 if uiscale is ba.UIScale.SMALL else
+                   1.05 if uiscale is ba.UIScale.MEDIUM else 0.9),
+            stack_offset=(0, -26) if uiscale is ba.UIScale.SMALL else (0, 0)))
 
         self._back_button: Optional[ba.Widget] = ba.buttonwidget(
             parent=self._root_widget,
@@ -255,7 +256,7 @@ class PlaylistBrowserWindow(ba.Window):
             color=ba.app.heading_color,
             h_align='center',
             v_align='center')
-        if ba.app.small_ui and ba.app.toolbars:
+        if uiscale is ba.UIScale.SMALL and ba.app.toolbars:
             ba.textwidget(edit=txt, text='')
 
         ba.buttonwidget(edit=self._back_button,
@@ -264,7 +265,7 @@ class PlaylistBrowserWindow(ba.Window):
                         position=(59 + x_inset, self._height - 67),
                         label=ba.charstr(ba.SpecialChar.BACK))
 
-        if ba.app.small_ui and ba.app.toolbars:
+        if uiscale is ba.UIScale.SMALL and ba.app.toolbars:
             self._back_button.delete()
             self._back_button = None
             ba.containerwidget(edit=self._root_widget,
@@ -273,8 +274,8 @@ class PlaylistBrowserWindow(ba.Window):
         else:
             scroll_offs = 0
         self._scroll_width = self._width - (100 + 2 * x_inset)
-        self._scroll_height = self._height - (146 if ba.app.small_ui
-                                              and ba.app.toolbars else 136)
+        self._scroll_height = self._height - (
+            146 if uiscale is ba.UIScale.SMALL and ba.app.toolbars else 136)
         self._scrollwidget = ba.scrollwidget(
             parent=self._root_widget,
             highlight=False,
@@ -364,6 +365,7 @@ class PlaylistBrowserWindow(ba.Window):
         h_offs = 225 if count == 1 else 115 if count == 2 else 0
         h_offs_bottom = 0
 
+        uiscale = ba.app.uiscale
         for y in range(rows):
             for x in range(columns):
                 name = items[index][0]
@@ -378,11 +380,12 @@ class PlaylistBrowserWindow(ba.Window):
                                       label='',
                                       position=pos)
 
-                if x == 0 and ba.app.toolbars and ba.app.small_ui:
+                if x == 0 and ba.app.toolbars and uiscale is ba.UIScale.SMALL:
                     ba.widget(
                         edit=btn,
                         left_widget=_ba.get_special_widget('back_button'))
-                if x == columns - 1 and ba.app.toolbars and ba.app.small_ui:
+                if (x == columns - 1 and ba.app.toolbars
+                        and uiscale is ba.UIScale.SMALL):
                     ba.widget(
                         edit=btn,
                         right_widget=_ba.get_special_widget('party_button'))

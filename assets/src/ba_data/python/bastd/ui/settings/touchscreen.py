@@ -45,10 +45,12 @@ class TouchscreenSettingsWindow(ba.Window):
 
         _ba.set_touchscreen_editing(True)
 
+        uiscale = ba.app.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             transition='in_right',
-            scale=1.9 if ba.app.small_ui else 1.55 if ba.app.med_ui else 1.2))
+            scale=(1.9 if uiscale is ba.UIScale.SMALL else
+                   1.55 if uiscale is ba.UIScale.MEDIUM else 1.2)))
 
         btn = ba.buttonwidget(parent=self._root_widget,
                               position=(55, self._height - 60),

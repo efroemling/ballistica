@@ -53,14 +53,15 @@ class TournamentScoresWindow(popup_ui.PopupWindow):
         self._tournament_id = tournament_id
         self._subcontainer: Optional[ba.Widget] = None
         self._on_close_call = on_close_call
+        uiscale = ba.app.uiscale
         if scale is None:
-            scale = (2.3
-                     if ba.app.small_ui else 1.65 if ba.app.med_ui else 1.23)
+            scale = (2.3 if uiscale is ba.UIScale.SMALL else
+                     1.65 if uiscale is ba.UIScale.MEDIUM else 1.23)
         self._transitioning_out = False
 
         self._width = 400
-        self._height = (300
-                        if ba.app.small_ui else 370 if ba.app.med_ui else 450)
+        self._height = (300 if uiscale is ba.UIScale.SMALL else
+                        370 if uiscale is ba.UIScale.MEDIUM else 450)
 
         bg_color = (0.5, 0.4, 0.6)
 

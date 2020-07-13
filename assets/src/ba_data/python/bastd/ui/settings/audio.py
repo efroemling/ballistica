@@ -74,8 +74,9 @@ class AudioSettingsWindow(ba.Window):
             show_soundtracks = True
             height += spacing * 2.0
 
-        base_scale = (2.05
-                      if ba.app.small_ui else 1.6 if ba.app.med_ui else 1.0)
+        uiscale = ba.app.uiscale
+        base_scale = (2.05 if uiscale is ba.UIScale.SMALL else
+                      1.6 if uiscale is ba.UIScale.MEDIUM else 1.0)
         popup_menu_scale = base_scale * 1.2
 
         super().__init__(root_widget=ba.containerwidget(
@@ -83,7 +84,7 @@ class AudioSettingsWindow(ba.Window):
             transition=transition,
             scale=base_scale,
             scale_origin_stack_offset=scale_origin,
-            stack_offset=(0, -20) if ba.app.small_ui else (0, 0)))
+            stack_offset=(0, -20) if uiscale is ba.UIScale.SMALL else (0, 0)))
 
         self._back_button = back_button = btn = ba.buttonwidget(
             parent=self._root_widget,

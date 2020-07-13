@@ -50,9 +50,10 @@ class IconPicker(popup.PopupWindow):
         del parent  # unused here
         del tint_color  # unused_here
         del tint2_color  # unused here
+        uiscale = ba.app.uiscale
         if scale is None:
-            scale = (1.85
-                     if ba.app.small_ui else 1.65 if ba.app.med_ui else 1.23)
+            scale = (1.85 if uiscale is ba.UIScale.SMALL else
+                     1.65 if uiscale is ba.UIScale.MEDIUM else 1.23)
 
         self._delegate = delegate
         self._transitioning_out = False
@@ -69,7 +70,8 @@ class IconPicker(popup.PopupWindow):
 
         self._width = (10 + columns * (button_width + 2 * button_buffer_h) *
                        (1.0 / 0.95) * (1.0 / 0.8))
-        self._height = self._width * (0.8 if ba.app.small_ui else 1.06)
+        self._height = (self._width *
+                        (0.8 if uiscale is ba.UIScale.SMALL else 1.06))
 
         self._scroll_width = self._width * 0.8
         self._scroll_height = self._height * 0.8

@@ -3,6 +3,9 @@
 - Disconnecting an input-device now immediately removes the player instead of doing so in the next cycle; this prevents possible issues where code would try to access player.inputdevice before the removal happens which would lead to errors.
 - Updated mac prefab builds to point at homebrew's python@3.7 package now that 3.8 has been made the default.
 - Fixed an issue where adding/deleting UI widgets within certain callbacks could cause a crash.
+- Fixed a case where an early fatal error could lead to a hung app and no error dialog.
+- Added environment variables which can override UI scale for testing. Set BA_FORCE_UI_SCALE to small, medium or large.
+- Added a ba.UIScale enum. The value at ba.app.uiscale replaces the old ba.app.interface_type, ba.app.small_ui, and ba.app.med_ui values.
 
 ### 1.5.19 (20123)
 - Cleaned up some bomb logic to avoid weird corner-cases such as land-mine explosions behaving like punches when set off by punches or bombs potentially resulting in multiple explosions when triggered by multiple other bombs simultaneously. Holler if anything explosion-related seems off now.
