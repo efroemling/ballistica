@@ -63,14 +63,14 @@ class LineChange:
     can_auto_update: bool
 
 
-class App:
+class Updater:
     """Context for an app run."""
 
-    def __init__(self) -> None:
+    def __init__(self, check: bool, fix: bool) -> None:
         from efrotools import getconfig, getlocalconfig
         from pathlib import Path
-        self._check = ('--check' in sys.argv)
-        self._fix = ('--fix' in sys.argv)
+        self._check = check
+        self._fix = fix
         self._checkarg = ' --check' if self._check else ''
 
         # We behave differently in the public repo
@@ -239,10 +239,9 @@ class App:
                         lines = infile.read().splitlines()
                     line = lines[change[1].line_number]
                     print(f'{Clr.RED}  Found "{line}"{Clr.RST}')
-                print(Clr.RED +
-                      f'All {len(auto_changes)} errors are auto-fixable;'
-                      ' run tools/update_project --fix to apply corrections.' +
-                      Clr.RST)
+                print(f'{Clr.RED}All {len(auto_changes)} errors are'
+                      f' auto-fixable; run tools/pcommand update_project'
+                      f' --fix to apply corrections. {Clr.RST}')
                 sys.exit(255)
             else:
                 for i, change in enumerate(auto_changes):
@@ -665,5 +664,5 @@ class App:
                 sys.exit(255)
 
 
-if __name__ == '__main__':
-    App().run()
+# if __name__ == '__main__':
+#     App().run()

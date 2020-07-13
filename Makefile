@@ -464,11 +464,11 @@ prefab-clean:
 
 # Update any project files that need it (does NOT build projects).
 update: prereqs
-	@tools/update_project
+	@tools/pcommand update_project
 
 # Don't update but fail if anything needs it.
 update-check: prereqs
-	@tools/update_project --check
+	@tools/pcommand update_project --check
 
 # Tell make which of these targets don't represent files.
 .PHONY: update update-check

@@ -710,3 +710,12 @@ def update_assets_makefile() -> None:
     from batools.assetsmakefile import update_assets_makefile as uam
     check = ('--check' in sys.argv)
     uam(projroot=str(PROJROOT), check=check)
+
+
+def update_project() -> None:
+    """Update project files."""
+    from batools.updateproject import Updater
+    check = '--check' in sys.argv
+    fix = '--fix' in sys.argv
+
+    Updater(check=check, fix=fix).run()

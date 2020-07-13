@@ -4145,6 +4145,6 @@
   "build/prefab/mac/release/ballisticacore": "https://files.ballistica.net/cache/ba1/b9/c6/ac98c7aad5847fea5a37087d5aa0",
   "build/prefab/windows-server/debug/dist/ballisticacore_headless.exe": "https://files.ballistica.net/cache/ba1/4e/59/c8cbb6d6909ab853bfa61a5160ce",
   "build/prefab/windows-server/release/dist/ballisticacore_headless.exe": "https://files.ballistica.net/cache/ba1/26/cd/737e2615e116d110aac319a3e293",
-  "build/prefab/windows/debug/BallisticaCore.exe": "https://files.ballistica.net/cache/ba1/45/28/ff409cd1913fc71bf9b677b87df0",
-  "build/prefab/windows/release/BallisticaCore.exe": "https://files.ballistica.net/cache/ba1/a4/15/f823745542ea46f679552669b131"
+  "build/prefab/windows/debug/BallisticaCore.exe": "https://files.ballistica.net/cache/ba1/94/c1/efd04026c6a251c288511ce3b037",
+  "build/prefab/windows/release/BallisticaCore.exe": "https://files.ballistica.net/cache/ba1/b4/50/b5fe4c0946537354fdc80aec5bb9"
 }
