@@ -285,7 +285,7 @@ class PartyWindow(ba.Window):
                                             p_str = p_str[:25] + '...'
                                 else:
                                     p_str = self._roster[index][
-                                        'displayString']
+                                        'display_string']
                             except Exception:
                                 ba.print_exception(
                                     'Error calcing client name str.')

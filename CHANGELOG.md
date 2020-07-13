@@ -6,7 +6,8 @@
 - Fixed a case where an early fatal error could lead to a hung app and no error dialog.
 - Added environment variables which can override UI scale for testing. Set BA_FORCE_UI_SCALE to small, medium or large.
 - Added a ba.UIScale enum. The value at ba.app.uiscale replaces the old ba.app.interface_type, ba.app.small_ui, and ba.app.med_ui values.
-- Emoji no longer display in-game with a washed-out appearance. If there are any places in-game where bright colored emoji become distracing, please holler.
+- Emoji no longer display in-game with a washed-out appearance. If there are any places in-game where bright colored emoji become distracting, please holler.
+- _ba.get_game_roster() now includes 'account_id' which is the validated account id of all clients (will be None until completes). Also a few keys are renamed: specString->spec_string and displayString->display_string.
 
 ### 1.5.19 (20123)
 - Cleaned up some bomb logic to avoid weird corner-cases such as land-mine explosions behaving like punches when set off by punches or bombs potentially resulting in multiple explosions when triggered by multiple other bombs simultaneously. Holler if anything explosion-related seems off now.

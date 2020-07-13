@@ -138,7 +138,7 @@ class ServerController:
         for client in roster:
             if client['client_id'] == -1:
                 continue
-            spec = json.loads(client['specString'])
+            spec = json.loads(client['spec_string'])
             name = spec['n']
             players = ', '.join(n['name'] for n in client['players'])
             clientid = client['client_id']
