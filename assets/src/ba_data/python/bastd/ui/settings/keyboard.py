@@ -54,7 +54,7 @@ class ConfigKeyboardWindow(ba.Window):
             size=(self._width, self._height),
             scale=(1.6 if uiscale is ba.UIScale.SMALL else
                    1.3 if uiscale is ba.UIScale.MEDIUM else 1.0),
-            stack_offset=(0, -10) if uiscale is ba.UIScale.SMALL else (0, 0),
+            stack_offset=(0, 5) if uiscale is ba.UIScale.SMALL else (0, 0),
             transition=transition))
 
         self._rebuild_ui()
@@ -123,7 +123,7 @@ class ConfigKeyboardWindow(ba.Window):
                           color=ba.app.infotextcolor,
                           h_align='center',
                           v_align='top')
-            v -= 45
+            v -= 40
         v -= 10
         v -= self._spacing * 2.2
         v += 25

@@ -59,7 +59,7 @@ class ControlsSettingsWindow(ba.Window):
         self._r = 'configControllersWindow'
         app = ba.app
 
-        is_fire_tv = _ba.is_running_on_fire_tv()
+        # is_fire_tv = _ba.is_running_on_fire_tv()
 
         spacing = 50.0
         button_width = 350.0
@@ -110,17 +110,17 @@ class ControlsSettingsWindow(ba.Window):
             show_remote = False
 
         show_ps3 = False
-        if platform == 'mac':
-            show_ps3 = True
-            height += spacing
+        # if platform == 'mac':
+        #     show_ps3 = True
+        #     height += spacing
 
         show360 = False
-        if platform == 'mac' or is_fire_tv:
-            show360 = True
-            height += spacing
+        # if platform == 'mac' or is_fire_tv:
+        #     show360 = True
+        #     height += spacing
 
         show_mac_wiimote = False
-        if platform == 'mac':
+        if platform == 'mac' and subplatform == 'appstore':
             show_mac_wiimote = True
             height += spacing
 
@@ -135,7 +135,7 @@ class ControlsSettingsWindow(ba.Window):
         # (we can run into problems where devices register as one of each
         # type otherwise)..
         show_mac_controller_subsystem = False
-        if platform == 'mac':
+        if platform == 'mac' and subplatform == 'appstore':
             show_mac_controller_subsystem = True
 
         if show_mac_controller_subsystem:
