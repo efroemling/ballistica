@@ -1,3 +1,6 @@
+### 1.5.21 (20136)
+- Added a UI subsystem at ba.app.ui (containing globals/functionality that was previously directly under ba.app). And hopefully added a fix for rare state of two main menus appearing on-screen at once.
+
 ### 1.5.20 (20126)
 - The ba.Session.teams and ba.Session.players lists are now ba.Session.sessionteams and ba.Session.sessionplayers. This is to help keep it clear that a Team/Player and a SessionTeam/SessionPlayer are different things now.
 - Disconnecting an input-device now immediately removes the player instead of doing so in the next cycle; this prevents possible issues where code would try to access player.inputdevice before the removal happens which would lead to errors.
