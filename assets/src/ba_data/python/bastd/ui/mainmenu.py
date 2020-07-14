@@ -840,16 +840,17 @@ class MainMenuWindow(ba.Window):
         from bastd.ui.kiosk import KioskWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_right')
-        ba.app.main_menu_window = (KioskWindow(
-            transition='in_left').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            KioskWindow(transition='in_left').get_root_widget())
 
     def _show_account_window(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.account.settings import AccountSettingsWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (AccountSettingsWindow(
-            origin_widget=self._gc_button).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            AccountSettingsWindow(
+                origin_widget=self._gc_button).get_root_widget())
 
     def _on_store_pressed(self) -> None:
         # pylint: disable=cyclic-import
@@ -860,8 +861,9 @@ class MainMenuWindow(ba.Window):
             return
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (StoreBrowserWindow(
-            origin_widget=self._store_button).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            StoreBrowserWindow(
+                origin_widget=self._store_button).get_root_widget())
 
     def _confirm_end_game(self) -> None:
         # pylint: disable=cyclic-import
@@ -916,25 +918,28 @@ class MainMenuWindow(ba.Window):
         from bastd.ui.creditslist import CreditsListWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (CreditsListWindow(
-            origin_widget=self._credits_button).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            CreditsListWindow(
+                origin_widget=self._credits_button).get_root_widget())
 
     def _howtoplay(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.helpui import HelpWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (HelpWindow(
-            main_menu=True,
-            origin_widget=self._how_to_play_button).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            HelpWindow(
+                main_menu=True,
+                origin_widget=self._how_to_play_button).get_root_widget())
 
     def _settings(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.settings.allsettings import AllSettingsWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (AllSettingsWindow(
-            origin_widget=self._settings_button).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            AllSettingsWindow(
+                origin_widget=self._settings_button).get_root_widget())
 
     def _resume_and_call(self, call: Callable[[], Any]) -> None:
         self._resume()
@@ -951,28 +956,28 @@ class MainMenuWindow(ba.Window):
             return
         sel = self._root_widget.get_selected_child()
         if sel == self._start_button:
-            ba.app.main_menu_selection = 'Start'
+            ba.app.ui.main_menu_selection = 'Start'
         elif sel == self._gather_button:
-            ba.app.main_menu_selection = 'Gather'
+            ba.app.ui.main_menu_selection = 'Gather'
         elif sel == self._watch_button:
-            ba.app.main_menu_selection = 'Watch'
+            ba.app.ui.main_menu_selection = 'Watch'
         elif sel == self._how_to_play_button:
-            ba.app.main_menu_selection = 'HowToPlay'
+            ba.app.ui.main_menu_selection = 'HowToPlay'
         elif sel == self._credits_button:
-            ba.app.main_menu_selection = 'Credits'
+            ba.app.ui.main_menu_selection = 'Credits'
         elif sel == self._settings_button:
-            ba.app.main_menu_selection = 'Settings'
+            ba.app.ui.main_menu_selection = 'Settings'
         elif sel == self._gc_button:
-            ba.app.main_menu_selection = 'GameService'
+            ba.app.ui.main_menu_selection = 'GameService'
         elif sel == self._store_button:
-            ba.app.main_menu_selection = 'Store'
+            ba.app.ui.main_menu_selection = 'Store'
         elif sel == self._quit_button:
-            ba.app.main_menu_selection = 'Quit'
+            ba.app.ui.main_menu_selection = 'Quit'
         elif sel == self._demo_menu_button:
-            ba.app.main_menu_selection = 'DemoMenu'
+            ba.app.ui.main_menu_selection = 'DemoMenu'
         else:
             print('unknown widget in main menu store selection:', sel)
-            ba.app.main_menu_selection = 'Start'
+            ba.app.ui.main_menu_selection = 'Start'
 
     def _restore_state(self) -> None:
         # pylint: disable=too-many-branches
@@ -980,7 +985,7 @@ class MainMenuWindow(ba.Window):
         # Don't do this for the in-game menu.
         if self._in_game:
             return
-        sel_name = ba.app.main_menu_selection
+        sel_name = ba.app.ui.main_menu_selection
         sel: Optional[ba.Widget]
         if sel_name is None:
             sel_name = 'Start'
@@ -1012,30 +1017,30 @@ class MainMenuWindow(ba.Window):
         from bastd.ui.gather import GatherWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (GatherWindow(
-            origin_widget=self._gather_button).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            GatherWindow(origin_widget=self._gather_button).get_root_widget())
 
     def _watch_press(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.watch import WatchWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (WatchWindow(
-            origin_widget=self._watch_button).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            WatchWindow(origin_widget=self._watch_button).get_root_widget())
 
     def _play_press(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.play import PlayWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (PlayWindow(
-            origin_widget=self._start_button).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            PlayWindow(origin_widget=self._start_button).get_root_widget())
 
     def _resume(self) -> None:
         ba.app.resume()
         if self._root_widget:
             ba.containerwidget(edit=self._root_widget, transition='out_right')
-        ba.app.main_menu_window = None
+        ba.app.ui.clear_main_menu_window()
 
         # If there's callbacks waiting for this window to go away, call them.
         for call in ba.app.main_menu_resume_callbacks:

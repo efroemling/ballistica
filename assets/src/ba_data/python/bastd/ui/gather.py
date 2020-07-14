@@ -55,7 +55,7 @@ class GatherWindow(ba.Window):
         else:
             self._transition_out = 'out_right'
             scale_origin = None
-        ba.app.main_window = 'Gather'
+        ba.app.ui.set_main_menu_location('Gather')
         _ba.set_party_icon_always_visible(True)
         self._public_parties: Dict[str, Dict[str, Any]] = {}
         uiscale = ba.app.uiscale
@@ -114,7 +114,7 @@ class GatherWindow(ba.Window):
             stack_offset=(0, -11) if uiscale is ba.UIScale.SMALL else (
                 0, 0) if uiscale is ba.UIScale.MEDIUM else (0, 0)))
 
-        if uiscale is ba.UIScale.SMALL and ba.app.toolbars:
+        if uiscale is ba.UIScale.SMALL and ba.app.ui.use_toolbars:
             ba.containerwidget(edit=self._root_widget,
                                on_cancel_call=self._back)
             self._back_button = None
@@ -138,7 +138,7 @@ class GatherWindow(ba.Window):
         ba.textwidget(parent=self._root_widget,
                       position=(self._width * 0.5, self._height - 42),
                       size=(0, 0),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       scale=1.5,
                       h_align='center',
                       v_align='center',
@@ -172,7 +172,7 @@ class GatherWindow(ba.Window):
             size=(self._width - tab_buffer_h, 50),
             on_select_call=self._set_tab)
 
-        if ba.app.toolbars:
+        if ba.app.ui.use_toolbars:
             ba.widget(edit=self._tab_buttons[tabs_def[-1][0]],
                       right_widget=_ba.get_special_widget('party_button'))
             if uiscale is ba.UIScale.SMALL:
@@ -1147,7 +1147,7 @@ class GatherWindow(ba.Window):
                 v_align='center',
                 maxwidth=200,
                 scale=0.8,
-                color=ba.app.infotextcolor,
+                color=ba.app.ui.infotextcolor,
                 position=(210, v - 9),
                 text=party_name_text)
             self._internet_host_name_text = ba.textwidget(
@@ -1172,7 +1172,7 @@ class GatherWindow(ba.Window):
                 v_align='center',
                 maxwidth=200,
                 scale=0.8,
-                color=ba.app.infotextcolor,
+                color=ba.app.ui.infotextcolor,
                 position=(210, v - 9),
                 text=ba.Lstr(resource='maxPartySizeText',
                              fallback_resource='maxConnectionsText'))
@@ -1251,7 +1251,7 @@ class GatherWindow(ba.Window):
                 h_align='center',
                 v_align='center',
                 maxwidth=c_width * 0.9,
-                color=ba.app.infotextcolor,
+                color=ba.app.ui.infotextcolor,
                 position=(c_width * 0.5, v))
 
             # If public sharing is already on,
@@ -1561,7 +1561,7 @@ class GatherWindow(ba.Window):
 
         # Special case: if a party-queue window is up, don't do any of this
         # (keeps things smoother).
-        if ba.app.have_party_queue_window:
+        if ba.app.ui.have_party_queue_window:
             return
 
         # If we've got a party-name text widget, keep its value plugged
@@ -1922,7 +1922,7 @@ class GatherWindow(ba.Window):
                 sel_name = 'TabContainer'
             else:
                 raise ValueError(f'unrecognized selection: \'{sel}\'')
-            ba.app.window_states[self.__class__.__name__] = {
+            ba.app.ui.window_states[self.__class__.__name__] = {
                 'sel_name': sel_name,
                 'tab': self._current_tab,
                 'internet_tab': self._internet_tab
@@ -1932,7 +1932,7 @@ class GatherWindow(ba.Window):
 
     def _restore_state(self) -> None:
         try:
-            winstate = ba.app.window_states.get(self.__class__.__name__, {})
+            winstate = ba.app.ui.window_states.get(self.__class__.__name__, {})
             sel_name = winstate.get('sel_name', None)
             self._internet_tab = winstate.get('internet_tab', 'join')
             current_tab = ba.app.config.get('Gather Tab', None)
@@ -1952,9 +1952,9 @@ class GatherWindow(ba.Window):
             ba.print_exception(f'Error restoring state for {self}.')
 
     def _back(self) -> None:
-        from bastd.ui import mainmenu
+        from bastd.ui.mainmenu import MainMenuWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
-        ba.app.main_menu_window = (mainmenu.MainMenuWindow(
-            transition='in_left').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            MainMenuWindow(transition='in_left').get_root_widget())

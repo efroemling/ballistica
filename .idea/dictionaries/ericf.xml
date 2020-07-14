@@ -316,6 +316,7 @@
       <w>classnames</w>
       <w>cleancheck</w>
       <w>cleanlist</w>
+      <w>cleanupchecks</w>
       <w>clientid</w>
       <w>clientlist</w>
       <w>clionbin</w>
@@ -715,6 +716,8 @@
       <w>fprint</w>
       <w>fproject</w>
       <w>fpsc</w>
+      <w>frameinfo</w>
+      <w>frameline</w>
       <w>framerate</w>
       <w>freefly</w>
       <w>freeforallendscreen</w>
@@ -2110,6 +2113,7 @@
       <w>updatethencheck</w>
       <w>updatethencheckfast</w>
       <w>updatethencheckfull</w>
+      <w>upkeeptimer</w>
       <w>uploadargs</w>
       <w>uploadcmd</w>
       <w>uptime</w>

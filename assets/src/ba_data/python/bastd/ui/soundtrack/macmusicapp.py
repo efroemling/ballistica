@@ -58,7 +58,7 @@ class MacMusicAppPlaylistSelectWindow(ba.Window):
                       position=(20, self._height - 54),
                       size=(self._width, 25),
                       text=ba.Lstr(resource=self._r + '.selectAPlaylistText'),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       h_align='center',
                       v_align='center',
                       maxwidth=200)

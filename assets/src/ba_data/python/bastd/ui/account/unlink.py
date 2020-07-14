@@ -77,7 +77,7 @@ class AccountUnlinkWindow(ba.Window):
                 resource='accountSettingsWindow.unlinkAccountsInstructionsText'
             ),
             maxwidth=self._width * 0.7,
-            color=ba.app.infotextcolor,
+            color=ba.app.ui.infotextcolor,
             h_align='center',
             v_align='center')
         ba.containerwidget(edit=self._root_widget,

@@ -72,7 +72,7 @@ class AllSettingsWindow(ba.Window):
                    1.35 if uiscale is ba.UIScale.MEDIUM else 1.0),
             stack_offset=(0, -8) if uiscale is ba.UIScale.SMALL else (0, 0)))
 
-        if ba.app.toolbars and uiscale is ba.UIScale.SMALL:
+        if ba.app.ui.use_toolbars and uiscale is ba.UIScale.SMALL:
             self._back_button = None
             ba.containerwidget(edit=self._root_widget,
                                on_cancel_call=self._do_back)
@@ -93,7 +93,7 @@ class AllSettingsWindow(ba.Window):
                       position=(0, height - 44),
                       size=(width, 25),
                       text=ba.Lstr(resource=self._r + '.titleText'),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       h_align='center',
                       v_align='center',
                       maxwidth=130)
@@ -136,7 +136,7 @@ class AllSettingsWindow(ba.Window):
             button_type='square',
             label='',
             on_activate_call=self._do_controllers)
-        if ba.app.toolbars and self._back_button is None:
+        if ba.app.ui.use_toolbars and self._back_button is None:
             bbtn = _ba.get_special_widget('back_button')
             ba.widget(edit=ctb, left_widget=bbtn)
         _b_title(x_offs2, v, ctb,
@@ -156,7 +156,7 @@ class AllSettingsWindow(ba.Window):
             button_type='square',
             label='',
             on_activate_call=self._do_graphics)
-        if ba.app.toolbars:
+        if ba.app.ui.use_toolbars:
             pbtn = _ba.get_special_widget('party_button')
             ba.widget(edit=gfxb, up_widget=pbtn, right_widget=pbtn)
         _b_title(x_offs3, v, gfxb, ba.Lstr(resource=self._r + '.graphicsText'))
@@ -220,40 +220,44 @@ class AllSettingsWindow(ba.Window):
         self._save_state()
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
-        ba.app.main_menu_window = (MainMenuWindow(
-            transition='in_left').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            MainMenuWindow(transition='in_left').get_root_widget())
 
     def _do_controllers(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.settings.controls import ControlsSettingsWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (ControlsSettingsWindow(
-            origin_widget=self._controllers_button).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            ControlsSettingsWindow(
+                origin_widget=self._controllers_button).get_root_widget())
 
     def _do_graphics(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.settings.graphics import GraphicsSettingsWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (GraphicsSettingsWindow(
-            origin_widget=self._graphics_button).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            GraphicsSettingsWindow(
+                origin_widget=self._graphics_button).get_root_widget())
 
     def _do_audio(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.settings.audio import AudioSettingsWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (AudioSettingsWindow(
-            origin_widget=self._audio_button).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            AudioSettingsWindow(
+                origin_widget=self._audio_button).get_root_widget())
 
     def _do_advanced(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.settings.advanced import AdvancedSettingsWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (AdvancedSettingsWindow(
-            origin_widget=self._advanced_button).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            AdvancedSettingsWindow(
+                origin_widget=self._advanced_button).get_root_widget())
 
     def _save_state(self) -> None:
         try:
@@ -270,7 +274,7 @@ class AllSettingsWindow(ba.Window):
                 sel_name = 'Back'
             else:
                 raise ValueError(f'unrecognized selection \'{sel}\'')
-            ba.app.window_states[self.__class__.__name__] = {
+            ba.app.ui.window_states[self.__class__.__name__] = {
                 'sel_name': sel_name
             }
         except Exception:
@@ -278,8 +282,8 @@ class AllSettingsWindow(ba.Window):
 
     def _restore_state(self) -> None:
         try:
-            sel_name = ba.app.window_states.get(self.__class__.__name__,
-                                                {}).get('sel_name')
+            sel_name = ba.app.ui.window_states.get(self.__class__.__name__,
+                                                   {}).get('sel_name')
             sel: Optional[ba.Widget]
             if sel_name == 'Controllers':
                 sel = self._controllers_button

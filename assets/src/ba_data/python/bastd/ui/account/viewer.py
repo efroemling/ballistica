@@ -292,7 +292,7 @@ class AccountViewerWindow(popup.PopupWindow):
                               h_align='center',
                               v_align='center',
                               scale=title_scale,
-                              color=ba.app.infotextcolor,
+                              color=ba.app.ui.infotextcolor,
                               text=account_title,
                               maxwidth=sub_width * maxwidth_scale)
                 draw_small = (showing_character
@@ -319,7 +319,7 @@ class AccountViewerWindow(popup.PopupWindow):
                               h_align='center',
                               v_align='center',
                               scale=title_scale,
-                              color=ba.app.infotextcolor,
+                              color=ba.app.ui.infotextcolor,
                               text=ba.Lstr(resource='rankText'),
                               maxwidth=sub_width * maxwidth_scale)
                 v -= 14
@@ -433,7 +433,7 @@ class AccountViewerWindow(popup.PopupWindow):
                               h_align='center',
                               v_align='center',
                               scale=title_scale,
-                              color=ba.app.infotextcolor,
+                              color=ba.app.ui.infotextcolor,
                               text=ba.Lstr(resource='achievementsText'),
                               maxwidth=sub_width * maxwidth_scale)
                 v -= 14
@@ -462,7 +462,7 @@ class AccountViewerWindow(popup.PopupWindow):
                               h_align='center',
                               v_align='center',
                               scale=title_scale,
-                              color=ba.app.infotextcolor,
+                              color=ba.app.ui.infotextcolor,
                               flatness=1.0,
                               text=ba.Lstr(resource='trophiesThisSeasonText',
                                            fallback_resource='trophiesText'),

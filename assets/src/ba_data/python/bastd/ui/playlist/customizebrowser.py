@@ -90,7 +90,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
                       text=ba.Lstr(resource=self._r + '.titleText',
                                    subs=[('${TYPE}',
                                           self._pvars.window_title_name)]),
-                      color=ba.app.heading_color,
+                      color=ba.app.ui.heading_color,
                       maxwidth=290,
                       h_align='center',
                       v_align='center')
@@ -242,7 +242,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
         ba.widget(edit=scrollwidget,
                   left_widget=new_button,
                   right_widget=_ba.get_special_widget('party_button')
-                  if ba.app.toolbars else None)
+                  if ba.app.ui.use_toolbars else None)
 
         # make sure config exists
         self._config_name_full = self._pvars.config_name + ' Playlists'
@@ -285,9 +285,10 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
 
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
-        ba.app.main_menu_window = (browser.PlaylistBrowserWindow(
-            transition='in_left',
-            sessiontype=self._sessiontype).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            browser.PlaylistBrowserWindow(
+                transition='in_left',
+                sessiontype=self._sessiontype).get_root_widget())
 
     def _select(self, name: str, index: int) -> None:
         self._selected_playlist_name = name

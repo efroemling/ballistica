@@ -233,7 +233,7 @@ class TournamentEntryWindow(popup.PopupWindow):
             self._pay_with_ad_btn = None
 
         self._get_tickets_button: Optional[ba.Widget]
-        if not ba.app.toolbars:
+        if not ba.app.ui.use_toolbars:
             self._get_tickets_button = ba.buttonwidget(
                 parent=self.root_widget,
                 position=(self._width - 190 + 110, 15),
@@ -255,7 +255,7 @@ class TournamentEntryWindow(popup.PopupWindow):
         # Let's also ask the server for info about this tournament
         # (time remaining, etc) so we can show the user time remaining,
         # disallow entry if time has run out, etc.
-        xoffs = 104 if ba.app.toolbars else 0
+        xoffs = 104 if ba.app.ui.use_toolbars else 0
         self._time_remaining_text = ba.textwidget(parent=self.root_widget,
                                                   position=(70 + xoffs, 23),
                                                   size=(0, 0),

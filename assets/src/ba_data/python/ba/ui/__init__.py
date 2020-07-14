@@ -203,7 +203,7 @@ def uicleanupcheck(obj: Any, widget: ba.Widget) -> None:
 
         widget.add_delete_callback(foobar)
 
-    _ba.app.uicleanupchecks.append(
+    _ba.app.ui.cleanupchecks.append(
         UICleanupCheck(obj=weakref.ref(obj),
                        widget=widget,
                        widget_death_time=None))
@@ -211,10 +211,10 @@ def uicleanupcheck(obj: Any, widget: ba.Widget) -> None:
 
 def ui_upkeep() -> None:
     """Run UI cleanup checks, etc. should be called periodically."""
-    app = _ba.app
+    ui = _ba.app.ui
     remainingchecks = []
     now = _ba.time(TimeType.REAL)
-    for check in app.uicleanupchecks:
+    for check in ui.cleanupchecks:
         obj = check.obj()
 
         # If the object has died, ignore and don't re-add.
@@ -237,4 +237,4 @@ def ui_upkeep() -> None:
                     ' you probably have a memory leak.')
             else:
                 remainingchecks.append(check)
-    app.uicleanupchecks = remainingchecks
+    ui.cleanupchecks = remainingchecks

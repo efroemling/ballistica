@@ -94,7 +94,7 @@ class ContinuesWindow(ba.Window):
 
         self._tickets_text_base: Optional[str]
         self._tickets_text: Optional[ba.Widget]
-        if not ba.app.toolbars:
+        if not ba.app.ui.use_toolbars:
             self._tickets_text_base = ba.Lstr(
                 resource='getTicketsWindow.youHaveShortText',
                 fallback_resource='getTicketsWindow.youHaveText').evaluate()

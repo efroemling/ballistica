@@ -82,7 +82,7 @@ class SoundtrackEntryTypeSelectWindow(ba.Window):
                       position=(self._width * 0.5, self._height - 32),
                       size=(0, 0),
                       text=ba.Lstr(resource=self._r + '.selectASourceText'),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       maxwidth=230,
                       h_align='center',
                       v_align='center')
@@ -91,7 +91,7 @@ class SoundtrackEntryTypeSelectWindow(ba.Window):
                       position=(self._width * 0.5, self._height - 56),
                       size=(0, 0),
                       text=selection_target_name,
-                      color=ba.app.infotextcolor,
+                      color=ba.app.ui.infotextcolor,
                       scale=0.7,
                       maxwidth=230,
                       h_align='center',
@@ -161,33 +161,36 @@ class SoundtrackEntryTypeSelectWindow(ba.Window):
                 self._current_entry)
         else:
             current_playlist_entry = None
-        ba.app.main_menu_window = (macmusicapp.MacMusicAppPlaylistSelectWindow(
-            self._callback, current_playlist_entry,
-            self._current_entry).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            macmusicapp.MacMusicAppPlaylistSelectWindow(
+                self._callback, current_playlist_entry,
+                self._current_entry).get_root_widget())
 
     def _on_music_file_press(self) -> None:
         from ba.osmusic import OSMusicPlayer
         from bastd.ui import fileselector
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         base_path = _ba.android_get_external_storage_path()
-        ba.app.main_menu_window = (fileselector.FileSelectorWindow(
-            base_path,
-            callback=self._music_file_selector_cb,
-            show_base_path=False,
-            valid_file_extensions=(
-                OSMusicPlayer.get_valid_music_file_extensions()),
-            allow_folders=False).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            fileselector.FileSelectorWindow(
+                base_path,
+                callback=self._music_file_selector_cb,
+                show_base_path=False,
+                valid_file_extensions=(
+                    OSMusicPlayer.get_valid_music_file_extensions()),
+                allow_folders=False).get_root_widget())
 
     def _on_music_folder_press(self) -> None:
         from bastd.ui import fileselector
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         base_path = _ba.android_get_external_storage_path()
-        ba.app.main_menu_window = (fileselector.FileSelectorWindow(
-            base_path,
-            callback=self._music_folder_selector_cb,
-            show_base_path=False,
-            valid_file_extensions=[],
-            allow_folders=True).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            fileselector.FileSelectorWindow(
+                base_path,
+                callback=self._music_folder_selector_cb,
+                show_base_path=False,
+                valid_file_extensions=[],
+                allow_folders=True).get_root_widget())
 
     def _music_file_selector_cb(self, result: Optional[str]) -> None:
         if result is None:

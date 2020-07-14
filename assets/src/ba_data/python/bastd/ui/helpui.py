@@ -80,7 +80,7 @@ class HelpWindow(ba.Window):
                       text=ba.Lstr(resource=self._r + '.titleText',
                                    subs=[('${APP_NAME}',
                                           ba.Lstr(resource='titleText'))]),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       h_align='center',
                       v_align='top')
 
@@ -92,7 +92,7 @@ class HelpWindow(ba.Window):
                   height - 120 + (5 if uiscale is ba.UIScale.SMALL else 0)),
             capture_arrows=True)
 
-        if ba.app.toolbars:
+        if ba.app.ui.use_toolbars:
             ba.widget(edit=self._scrollwidget,
                       right_widget=_ba.get_special_widget('party_button'))
         ba.containerwidget(edit=self._root_widget,
@@ -100,7 +100,7 @@ class HelpWindow(ba.Window):
 
         # ugly: create this last so it gets first dibs at touch events (since
         # we have it close to the scroll widget)
-        if uiscale is ba.UIScale.SMALL and ba.app.toolbars:
+        if uiscale is ba.UIScale.SMALL and ba.app.ui.use_toolbars:
             ba.containerwidget(edit=self._root_widget,
                                on_cancel_call=self._close)
             ba.widget(edit=self._scrollwidget,
@@ -600,9 +600,9 @@ class HelpWindow(ba.Window):
 
     def _close(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui import mainmenu
+        from bastd.ui.mainmenu import MainMenuWindow
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
         if self._main_menu:
-            ba.app.main_menu_window = (mainmenu.MainMenuWindow(
-                transition='in_left').get_root_widget())
+            ba.app.ui.set_main_menu_window(
+                MainMenuWindow(transition='in_left').get_root_widget())

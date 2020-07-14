@@ -103,7 +103,7 @@ class AudioSettingsWindow(ba.Window):
                       position=(width * 0.5, height - 32),
                       size=(0, 0),
                       text=ba.Lstr(resource=self._r + '.titleText'),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       maxwidth=180,
                       h_align='center',
                       v_align='center')
@@ -122,7 +122,7 @@ class AudioSettingsWindow(ba.Window):
             minval=0.0,
             maxval=1.0,
             increment=0.1)
-        if ba.app.toolbars:
+        if ba.app.ui.use_toolbars:
             ba.widget(edit=svne.plusbutton,
                       right_widget=_ba.get_special_widget('party_button'))
         v -= spacing
@@ -237,8 +237,9 @@ class AudioSettingsWindow(ba.Window):
 
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (stb.SoundtrackBrowserWindow(
-            origin_widget=self._soundtrack_button).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            stb.SoundtrackBrowserWindow(
+                origin_widget=self._soundtrack_button).get_root_widget())
 
     def _back(self) -> None:
         # pylint: disable=cyclic-import
@@ -246,8 +247,9 @@ class AudioSettingsWindow(ba.Window):
         self._save_state()
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
-        ba.app.main_menu_window = (allsettings.AllSettingsWindow(
-            transition='in_left').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            allsettings.AllSettingsWindow(
+                transition='in_left').get_root_widget())
 
     def _save_state(self) -> None:
         try:
@@ -268,13 +270,13 @@ class AudioSettingsWindow(ba.Window):
                 sel_name = 'VRHeadRelative'
             else:
                 raise ValueError(f'unrecognized selection \'{sel}\'')
-            ba.app.window_states[self.__class__.__name__] = sel_name
+            ba.app.ui.window_states[self.__class__.__name__] = sel_name
         except Exception:
             ba.print_exception(f'Error saving state for {self.__class__}.')
 
     def _restore_state(self) -> None:
         try:
-            sel_name = ba.app.window_states.get(self.__class__.__name__)
+            sel_name = ba.app.ui.window_states.get(self.__class__.__name__)
             sel: Optional[ba.Widget]
             if sel_name == 'SoundMinus':
                 sel = self._sound_volume_numedit.minusbutton

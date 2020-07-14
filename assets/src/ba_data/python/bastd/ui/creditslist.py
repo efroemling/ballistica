@@ -66,7 +66,7 @@ class CreditsListWindow(ba.Window):
                    1.3 if uiscale is ba.UIScale.MEDIUM else 1.0),
             stack_offset=(0, -8) if uiscale is ba.UIScale.SMALL else (0, 0)))
 
-        if ba.app.toolbars and uiscale is ba.UIScale.SMALL:
+        if ba.app.ui.use_toolbars and uiscale is ba.UIScale.SMALL:
             ba.containerwidget(edit=self._root_widget,
                                on_cancel_call=self._back)
         else:
@@ -98,7 +98,7 @@ class CreditsListWindow(ba.Window):
                                    subs=[('${APP_NAME}',
                                           ba.Lstr(resource='titleText'))]),
                       h_align='center',
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       maxwidth=330,
                       v_align='center')
 
@@ -108,7 +108,7 @@ class CreditsListWindow(ba.Window):
                                        height - 100),
                                  capture_arrows=True)
 
-        if ba.app.toolbars:
+        if ba.app.ui.use_toolbars:
             ba.widget(edit=scroll,
                       right_widget=_ba.get_special_widget('party_button'))
             if uiscale is ba.UIScale.SMALL:
@@ -280,8 +280,8 @@ class CreditsListWindow(ba.Window):
             voffs -= line_height
 
     def _back(self) -> None:
-        from bastd.ui import mainmenu
+        from bastd.ui.mainmenu import MainMenuWindow
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
-        ba.app.main_menu_window = mainmenu.MainMenuWindow(
-            transition='in_left').get_root_widget()
+        ba.app.ui.set_main_menu_window(
+            MainMenuWindow(transition='in_left').get_root_widget())

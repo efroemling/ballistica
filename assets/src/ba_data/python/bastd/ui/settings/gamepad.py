@@ -202,7 +202,7 @@ class GamepadSettingsWindow(ba.Window):
                           position=(0, v + 5),
                           size=(self._width, 25),
                           text=ba.Lstr(resource=self._r + '.titleText'),
-                          color=ba.app.title_color,
+                          color=ba.app.ui.title_color,
                           maxwidth=310,
                           h_align='center',
                           v_align='center')
@@ -212,7 +212,7 @@ class GamepadSettingsWindow(ba.Window):
                           position=(0, v + 3),
                           size=(self._width, 25),
                           text=self._name,
-                          color=ba.app.infotextcolor,
+                          color=ba.app.ui.infotextcolor,
                           maxwidth=self._width * 0.9,
                           h_align='center',
                           v_align='center')
@@ -235,7 +235,7 @@ class GamepadSettingsWindow(ba.Window):
                           position=(0, v + 5),
                           size=(self._width, 25),
                           text=ba.Lstr(resource=self._r + '.secondaryText'),
-                          color=ba.app.title_color,
+                          color=ba.app.ui.title_color,
                           maxwidth=300,
                           h_align='center',
                           v_align='center')
@@ -710,12 +710,12 @@ class GamepadSettingsWindow(ba.Window):
         return btn
 
     def _cancel(self) -> None:
-        from bastd.ui.settings import controls
+        from bastd.ui.settings.controls import ControlsSettingsWindow
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
         if self._is_main_menu:
-            ba.app.main_menu_window = (controls.ControlsSettingsWindow(
-                transition='in_left').get_root_widget())
+            ba.app.ui.set_main_menu_window(
+                ControlsSettingsWindow(transition='in_left').get_root_widget())
 
     def _save(self) -> None:
         from ba.internal import (master_server_post, get_input_device_config,
@@ -758,9 +758,9 @@ class GamepadSettingsWindow(ba.Window):
             ba.playsound(ba.getsound('error'))
 
         if self._is_main_menu:
-            from bastd.ui.settings import controls
-            ba.app.main_menu_window = (controls.ControlsSettingsWindow(
-                transition='in_left').get_root_widget())
+            from bastd.ui.settings.controls import ControlsSettingsWindow
+            ba.app.ui.set_main_menu_window(
+                ControlsSettingsWindow(transition='in_left').get_root_widget())
 
 
 class AwaitGamepadInputWindow(ba.Window):

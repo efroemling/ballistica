@@ -40,8 +40,9 @@ class EditProfileWindow(ba.Window):
     def reload_window(self) -> None:
         """Transitions out and recreates ourself."""
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = EditProfileWindow(
-            self.getname(), self._in_main_menu).get_root_widget()
+        ba.app.ui.set_main_menu_window(
+            EditProfileWindow(self.getname(),
+                              self._in_main_menu).get_root_widget())
 
     def __init__(self,
                  existing_profile: Optional[str],
@@ -102,7 +103,7 @@ class EditProfileWindow(ba.Window):
                       text=(ba.Lstr(resource=self._r + '.titleNewText')
                             if existing_profile is None else ba.Lstr(
                                 resource=self._r + '.titleEditText')),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       maxwidth=290,
                       scale=1.0,
                       h_align='center',
@@ -211,7 +212,7 @@ class EditProfileWindow(ba.Window):
                           position=(self._width * 0.5, v - 39),
                           size=(0, 0),
                           scale=0.6,
-                          color=ba.app.infotextcolor,
+                          color=ba.app.ui.infotextcolor,
                           text=txtl,
                           maxwidth=270,
                           h_align='center',
@@ -258,7 +259,7 @@ class EditProfileWindow(ba.Window):
                           draw_controller=btn,
                           text=ba.Lstr(resource=self._r + '.iconText'),
                           scale=0.7,
-                          color=ba.app.title_color,
+                          color=ba.app.ui.title_color,
                           maxwidth=120)
 
             self._update_icon()
@@ -281,7 +282,7 @@ class EditProfileWindow(ba.Window):
                           position=(self._width * 0.5, v - 39),
                           size=(0, 0),
                           scale=0.6,
-                          color=ba.app.infotextcolor,
+                          color=ba.app.ui.infotextcolor,
                           text=txtl,
                           maxwidth=240,
                           h_align='center',
@@ -322,7 +323,7 @@ class EditProfileWindow(ba.Window):
                           position=(self._width * 0.5, v - 43),
                           size=(0, 0),
                           scale=0.6,
-                          color=ba.app.infotextcolor,
+                          color=ba.app.ui.infotextcolor,
                           text=txtl,
                           maxwidth=270,
                           h_align='center',
@@ -379,7 +380,7 @@ class EditProfileWindow(ba.Window):
                       draw_controller=btn,
                       text=ba.Lstr(resource=self._r + '.colorText'),
                       scale=0.7,
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       maxwidth=120)
 
         self._character_button = btn = ba.buttonwidget(
@@ -403,7 +404,7 @@ class EditProfileWindow(ba.Window):
                       draw_controller=btn,
                       text=ba.Lstr(resource=self._r + '.characterText'),
                       scale=0.7,
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       maxwidth=130)
 
         self._highlight_button = btn = ba.buttonwidget(
@@ -436,7 +437,7 @@ class EditProfileWindow(ba.Window):
                       draw_controller=btn,
                       text=ba.Lstr(resource=self._r + '.highlightText'),
                       scale=0.7,
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       maxwidth=120)
         self._update_character()
 
@@ -559,12 +560,13 @@ class EditProfileWindow(ba.Window):
             tag=picker_type)
 
     def _cancel(self) -> None:
-        from bastd.ui.profile import browser as pbrowser
+        from bastd.ui.profile.browser import ProfileBrowserWindow
         ba.containerwidget(edit=self._root_widget, transition='out_right')
-        ba.app.main_menu_window = pbrowser.ProfileBrowserWindow(
-            'in_left',
-            selected_profile=self._existing_profile,
-            in_main_menu=self._in_main_menu).get_root_widget()
+        ba.app.ui.set_main_menu_window(
+            ProfileBrowserWindow(
+                'in_left',
+                selected_profile=self._existing_profile,
+                in_main_menu=self._in_main_menu).get_root_widget())
 
     def _set_color(self, color: Tuple[float, float, float]) -> None:
         self._color = color
@@ -644,7 +646,7 @@ class EditProfileWindow(ba.Window):
 
     def save(self, transition_out: bool = True) -> bool:
         """Save has been selected."""
-        from bastd.ui.profile import browser as pbrowser
+        from bastd.ui.profile.browser import ProfileBrowserWindow
         new_name = self.getname().strip()
 
         if not new_name:
@@ -681,8 +683,9 @@ class EditProfileWindow(ba.Window):
         if transition_out:
             _ba.run_transactions()
             ba.containerwidget(edit=self._root_widget, transition='out_right')
-            ba.app.main_menu_window = (pbrowser.ProfileBrowserWindow(
-                'in_left',
-                selected_profile=new_name,
-                in_main_menu=self._in_main_menu).get_root_widget())
+            ba.app.ui.set_main_menu_window(
+                ProfileBrowserWindow(
+                    'in_left',
+                    selected_profile=new_name,
+                    in_main_menu=self._in_main_menu).get_root_widget())
         return True

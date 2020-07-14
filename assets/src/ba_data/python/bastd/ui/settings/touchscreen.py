@@ -65,7 +65,7 @@ class TouchscreenSettingsWindow(ba.Window):
                       position=(25, self._height - 50),
                       size=(self._width, 25),
                       text=ba.Lstr(resource=self._r + '.titleText'),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       maxwidth=280,
                       h_align='center',
                       v_align='center')
@@ -251,6 +251,7 @@ class TouchscreenSettingsWindow(ba.Window):
     def _back(self) -> None:
         from bastd.ui.settings import controls
         ba.containerwidget(edit=self._root_widget, transition='out_right')
-        ba.app.main_menu_window = (controls.ControlsSettingsWindow(
-            transition='in_left').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            controls.ControlsSettingsWindow(
+                transition='in_left').get_root_widget())
         _ba.set_touchscreen_editing(False)

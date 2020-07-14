@@ -2965,7 +2965,7 @@ def newactivity(activity_type: Type[ba.Activity],
     Category: General Utility Functions
 
     Activities require special setup and thus cannot be directly
-    instantiated; You must go through this function.
+    instantiated; you must go through this function.
     """
     import ba  # pylint: disable=cyclic-import
     return ba.Activity(settings={})

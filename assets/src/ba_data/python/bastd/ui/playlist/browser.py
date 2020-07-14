@@ -56,10 +56,10 @@ class PlaylistBrowserWindow(ba.Window):
 
         # Store state for when we exit the next game.
         if issubclass(sessiontype, ba.DualTeamSession):
-            ba.app.main_window = 'Team Game Select'
+            ba.app.ui.set_main_menu_location('Team Game Select')
             ba.set_analytics_screen('Teams Window')
         elif issubclass(sessiontype, ba.FreeForAllSession):
-            ba.app.main_window = 'Free-for-All Game Select'
+            ba.app.ui.set_main_menu_location('Free-for-All Game Select')
             ba.set_analytics_screen('FreeForAll Window')
         else:
             raise TypeError(f'Invalid sessiontype: {sessiontype}.')
@@ -253,10 +253,10 @@ class PlaylistBrowserWindow(ba.Window):
             text=self._pvars.window_title_name,
             scale=1.3,
             res_scale=1.5,
-            color=ba.app.heading_color,
+            color=ba.app.ui.heading_color,
             h_align='center',
             v_align='center')
-        if uiscale is ba.UIScale.SMALL and ba.app.toolbars:
+        if uiscale is ba.UIScale.SMALL and ba.app.ui.use_toolbars:
             ba.textwidget(edit=txt, text='')
 
         ba.buttonwidget(edit=self._back_button,
@@ -265,7 +265,7 @@ class PlaylistBrowserWindow(ba.Window):
                         position=(59 + x_inset, self._height - 67),
                         label=ba.charstr(ba.SpecialChar.BACK))
 
-        if uiscale is ba.UIScale.SMALL and ba.app.toolbars:
+        if uiscale is ba.UIScale.SMALL and ba.app.ui.use_toolbars:
             self._back_button.delete()
             self._back_button = None
             ba.containerwidget(edit=self._root_widget,
@@ -274,8 +274,9 @@ class PlaylistBrowserWindow(ba.Window):
         else:
             scroll_offs = 0
         self._scroll_width = self._width - (100 + 2 * x_inset)
-        self._scroll_height = self._height - (
-            146 if uiscale is ba.UIScale.SMALL and ba.app.toolbars else 136)
+        self._scroll_height = (self._height -
+                               (146 if uiscale is ba.UIScale.SMALL
+                                and ba.app.ui.use_toolbars else 136))
         self._scrollwidget = ba.scrollwidget(
             parent=self._root_widget,
             highlight=False,
@@ -351,7 +352,7 @@ class PlaylistBrowserWindow(ba.Window):
                       size=(0, 0),
                       scale=1.0,
                       maxwidth=400,
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       h_align='left',
                       v_align='center')
 
@@ -380,11 +381,12 @@ class PlaylistBrowserWindow(ba.Window):
                                       label='',
                                       position=pos)
 
-                if x == 0 and ba.app.toolbars and uiscale is ba.UIScale.SMALL:
+                if (x == 0 and ba.app.ui.use_toolbars
+                        and uiscale is ba.UIScale.SMALL):
                     ba.widget(
                         edit=btn,
                         left_widget=_ba.get_special_widget('back_button'))
-                if (x == columns - 1 and ba.app.toolbars
+                if (x == columns - 1 and ba.app.ui.use_toolbars
                         and uiscale is ba.UIScale.SMALL):
                     ba.widget(
                         edit=btn,
@@ -604,9 +606,10 @@ class PlaylistBrowserWindow(ba.Window):
             PlaylistCustomizeBrowserWindow)
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (PlaylistCustomizeBrowserWindow(
-            origin_widget=self._customize_button,
-            sessiontype=self._sessiontype).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            PlaylistCustomizeBrowserWindow(
+                origin_widget=self._customize_button,
+                sessiontype=self._sessiontype).get_root_widget())
 
     def _on_back_press(self) -> None:
         # pylint: disable=cyclic-import
@@ -625,8 +628,8 @@ class PlaylistBrowserWindow(ba.Window):
         self._save_state()
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
-        ba.app.main_menu_window = (PlayWindow(
-            transition='in_left').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            PlayWindow(transition='in_left').get_root_widget())
 
     def _save_state(self) -> None:
         try:
@@ -642,13 +645,13 @@ class PlaylistBrowserWindow(ba.Window):
                     sel_name = 'Scroll'
             else:
                 raise Exception('unrecognized selected widget')
-            ba.app.window_states[self.__class__.__name__] = sel_name
+            ba.app.ui.window_states[self.__class__.__name__] = sel_name
         except Exception:
             ba.print_exception(f'Error saving state for {self}.')
 
     def _restore_state(self) -> None:
         try:
-            sel_name = ba.app.window_states.get(self.__class__.__name__)
+            sel_name = ba.app.ui.window_states.get(self.__class__.__name__)
             if sel_name == 'Back':
                 sel = self._back_button
             elif sel_name == 'Scroll':

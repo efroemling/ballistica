@@ -110,24 +110,24 @@ class PromoCodeWindow(ba.Window):
 
     def _do_back(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.settings import advanced
+        from bastd.ui.settings.advanced import AdvancedSettingsWindow
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
         if not self._modal:
-            ba.app.main_menu_window = (advanced.AdvancedSettingsWindow(
-                transition='in_left').get_root_widget())
+            ba.app.ui.set_main_menu_window(
+                AdvancedSettingsWindow(transition='in_left').get_root_widget())
 
     def _activate_enter_button(self) -> None:
         self._enter_button.activate()
 
     def _do_enter(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.settings import advanced
+        from bastd.ui.settings.advanced import AdvancedSettingsWindow
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
         if not self._modal:
-            ba.app.main_menu_window = (advanced.AdvancedSettingsWindow(
-                transition='in_left').get_root_widget())
+            ba.app.ui.set_main_menu_window(
+                AdvancedSettingsWindow(transition='in_left').get_root_widget())
         _ba.add_transaction({
             'type': 'PROMO_CODE',
             'expire_time': time.time() + 5,

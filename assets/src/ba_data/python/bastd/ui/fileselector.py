@@ -73,7 +73,7 @@ class FileSelectorWindow(ba.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 42),
             size=(0, 0),
-            color=ba.app.title_color,
+            color=ba.app.ui.title_color,
             h_align='center',
             v_align='center',
             text=ba.Lstr(resource=self._r + '.titleFolderText') if
@@ -121,7 +121,7 @@ class FileSelectorWindow(ba.Window):
                                         position=(self._folder_center,
                                                   self._height - 98),
                                         size=(0, 0),
-                                        color=ba.app.title_color,
+                                        color=ba.app.ui.title_color,
                                         h_align='center',
                                         v_align='center',
                                         text=self._path,

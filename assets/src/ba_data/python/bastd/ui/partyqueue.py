@@ -187,7 +187,7 @@ class PartyQueueWindow(ba.Window):
             self._boost_brightness += 0.6
 
     def __init__(self, queue_id: str, address: str, port: int):
-        ba.app.have_party_queue_window = True
+        ba.app.ui.have_party_queue_window = True
         self._address = address
         self._port = port
         self._queue_id = queue_id
@@ -274,7 +274,7 @@ class PartyQueueWindow(ba.Window):
 
     def __del__(self) -> None:
         try:
-            ba.app.have_party_queue_window = False
+            ba.app.ui.have_party_queue_window = False
             _ba.add_transaction({
                 'type': 'PARTY_QUEUE_REMOVE',
                 'q': self._queue_id

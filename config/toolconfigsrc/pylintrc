@@ -62,26 +62,26 @@ disable=broad-except,
 enable=useless-suppression
 
 [BASIC]
-# I use x, y, h, and v for graphical purposes often, where I feel like they are
-# meaningful, so adding them to the allowed list.
-# Also t, r, s for translate/rotate/scale
-# (i found myself just changing them to xval and yval which doesnt help)
+# Allowing a handfull of short names commonly understood to be iterators,
+# math concepts, or temporary variables.
 
 good-names=i,
            j,
            k,
            x,
            y,
+           z,
            h,
            v,
            s,
+           ui,
            h2,
            v2,
            ex,
            Run,
            id,
-           T,
            S,
+           T,
            U,
            _
 

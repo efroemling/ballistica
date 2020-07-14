@@ -340,7 +340,7 @@ class LeagueRankButton:
                 txt = ba.Lstr(
                     resource='league.leagueRankText',
                     fallback_resource='coopSelectWindow.powerRankingText')
-                t_color = ba.app.title_color
+                t_color = ba.app.ui.title_color
             ba.textwidget(edit=self._title_text, text=txt, color=t_color)
         ba.textwidget(edit=self._value_text, text=status_text)
 

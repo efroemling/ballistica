@@ -89,7 +89,7 @@ class PlaylistMapSelectWindow(ba.Window):
                                    subs=[('${GAME}',
                                           self._gameclass.get_display_string())
                                          ]),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       h_align='center',
                       v_align='center')
         v = height - 70
@@ -182,7 +182,7 @@ class PlaylistMapSelectWindow(ba.Window):
                     ba.widget(edit=btn, left_widget=self._cancel_button)
                 if y == 0:
                     ba.widget(edit=btn, up_widget=self._cancel_button)
-                if x == columns - 1 and ba.app.toolbars:
+                if x == columns - 1 and ba.app.ui.use_toolbars:
                     ba.widget(
                         edit=btn,
                         right_widget=_ba.get_special_widget('party_button'))
@@ -240,17 +240,18 @@ class PlaylistMapSelectWindow(ba.Window):
         self._refresh(select_get_more_maps_button=True)
 
     def _select(self, map_name: str) -> None:
-        from bastd.ui.playlist import editgame
+        from bastd.ui.playlist.editgame import PlaylistEditGameWindow
         self._config['settings']['map'] = map_name
         ba.containerwidget(edit=self._root_widget, transition='out_right')
-        ba.app.main_menu_window = (editgame.PlaylistEditGameWindow(
-            self._gameclass,
-            self._sessiontype,
-            self._config,
-            self._completion_call,
-            default_selection='map',
-            transition='in_left',
-            edit_info=self._edit_info).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            PlaylistEditGameWindow(
+                self._gameclass,
+                self._sessiontype,
+                self._config,
+                self._completion_call,
+                default_selection='map',
+                transition='in_left',
+                edit_info=self._edit_info).get_root_widget())
 
     def _select_with_delay(self, map_name: str) -> None:
         _ba.lock_all_input()
@@ -260,13 +261,14 @@ class PlaylistMapSelectWindow(ba.Window):
                  timetype=ba.TimeType.REAL)
 
     def _cancel(self) -> None:
-        from bastd.ui.playlist import editgame
+        from bastd.ui.playlist.editgame import PlaylistEditGameWindow
         ba.containerwidget(edit=self._root_widget, transition='out_right')
-        ba.app.main_menu_window = (editgame.PlaylistEditGameWindow(
-            self._gameclass,
-            self._sessiontype,
-            self._config,
-            self._completion_call,
-            default_selection='map',
-            transition='in_left',
-            edit_info=self._edit_info).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            PlaylistEditGameWindow(
+                self._gameclass,
+                self._sessiontype,
+                self._config,
+                self._completion_call,
+                default_selection='map',
+                transition='in_left',
+                edit_info=self._edit_info).get_root_widget())

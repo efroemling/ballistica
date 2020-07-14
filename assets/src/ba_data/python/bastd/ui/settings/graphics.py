@@ -112,7 +112,7 @@ class GraphicsSettingsWindow(ba.Window):
                       position=(0, height - 44),
                       size=(width, 25),
                       text=ba.Lstr(resource=self._r + '.titleText'),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       h_align='center',
                       v_align='top')
 
@@ -153,7 +153,7 @@ class GraphicsSettingsWindow(ba.Window):
                 increment=0.1,
                 xoffset=-70,
                 textscale=0.85)
-            if ba.app.toolbars:
+            if ba.app.ui.use_toolbars:
                 ba.widget(edit=gmc.plusbutton,
                           right_widget=_ba.get_special_widget('party_button'))
             if not self._have_selected_child:
@@ -172,7 +172,7 @@ class GraphicsSettingsWindow(ba.Window):
                       position=(60, v),
                       size=(160, 25),
                       text=ba.Lstr(resource=self._r + '.visualsText'),
-                      color=ba.app.heading_color,
+                      color=ba.app.ui.heading_color,
                       scale=0.65,
                       maxwidth=150,
                       h_align='center',
@@ -200,7 +200,7 @@ class GraphicsSettingsWindow(ba.Window):
                       position=(230, v),
                       size=(160, 25),
                       text=ba.Lstr(resource=self._r + '.texturesText'),
-                      color=ba.app.heading_color,
+                      color=ba.app.ui.heading_color,
                       scale=0.65,
                       maxwidth=150,
                       h_align='center',
@@ -219,7 +219,7 @@ class GraphicsSettingsWindow(ba.Window):
             ],
             current_choice=ba.app.config.resolve('Texture Quality'),
             on_value_change_call=self._set_textures)
-        if ba.app.toolbars:
+        if ba.app.ui.use_toolbars:
             ba.widget(edit=textures_popup.get_button(),
                       right_widget=_ba.get_special_widget('party_button'))
         v -= 80
@@ -232,7 +232,7 @@ class GraphicsSettingsWindow(ba.Window):
                           position=(h_offs + 60, v),
                           size=(160, 25),
                           text=ba.Lstr(resource=self._r + '.resolutionText'),
-                          color=ba.app.heading_color,
+                          color=ba.app.ui.heading_color,
                           scale=0.65,
                           maxwidth=150,
                           h_align='center',
@@ -306,7 +306,7 @@ class GraphicsSettingsWindow(ba.Window):
                           position=(230, v),
                           size=(160, 25),
                           text=ba.Lstr(resource=self._r + '.verticalSyncText'),
-                          color=ba.app.heading_color,
+                          color=ba.app.ui.heading_color,
                           scale=0.65,
                           maxwidth=150,
                           h_align='center',
@@ -367,8 +367,9 @@ class GraphicsSettingsWindow(ba.Window):
         from bastd.ui.settings import allsettings
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
-        ba.app.main_menu_window = (allsettings.AllSettingsWindow(
-            transition='in_left').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            allsettings.AllSettingsWindow(
+                transition='in_left').get_root_widget())
 
     def _set_quality(self, quality: str) -> None:
         cfg = ba.app.config

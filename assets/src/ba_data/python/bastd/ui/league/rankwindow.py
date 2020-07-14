@@ -100,7 +100,7 @@ class LeagueRankWindow(ba.Window):
                 resource='league.leagueRankText',
                 fallback_resource='coopSelectWindow.powerRankingText'),
             h_align='center',
-            color=ba.app.title_color,
+            color=ba.app.ui.title_color,
             scale=1.4,
             maxwidth=600,
             v_align='center')
@@ -931,10 +931,10 @@ class LeagueRankWindow(ba.Window):
         pass
 
     def _back(self) -> None:
-        from bastd.ui.coop import browser
+        from bastd.ui.coop.browser import CoopBrowserWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
         if not self._modal:
-            ba.app.main_menu_window = (browser.CoopBrowserWindow(
-                transition='in_left').get_root_widget())
+            ba.app.ui.set_main_menu_window(
+                CoopBrowserWindow(transition='in_left').get_root_widget())

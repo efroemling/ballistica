@@ -52,7 +52,7 @@ class WiimoteSettingsWindow(ba.Window):
                       size=(0, 0),
                       text=ba.Lstr(resource=self._r + '.titleText'),
                       maxwidth=270,
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       h_align='center',
                       v_align='center')
 
@@ -108,8 +108,9 @@ class WiimoteSettingsWindow(ba.Window):
     def _back(self) -> None:
         from bastd.ui.settings import controls
         ba.containerwidget(edit=self._root_widget, transition='out_right')
-        ba.app.main_menu_window = (controls.ControlsSettingsWindow(
-            transition='in_left').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            controls.ControlsSettingsWindow(
+                transition='in_left').get_root_widget())
 
 
 class WiimoteListenWindow(ba.Window):
@@ -131,12 +132,12 @@ class WiimoteListenWindow(ba.Window):
         ba.containerwidget(edit=self._root_widget, cancel_button=btn)
         _ba.start_listening_for_wii_remotes()
         self._wiimote_connect_counter = 15
-        ba.app.dismiss_wii_remotes_window_call = ba.WeakCall(self._dismiss)
+        ba.app.ui.dismiss_wii_remotes_window_call = ba.WeakCall(self._dismiss)
         ba.textwidget(parent=self._root_widget,
                       position=(15, height - 55),
                       size=(width - 30, 30),
                       text=ba.Lstr(resource=self._r + '.listeningText'),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       maxwidth=320,
                       h_align='center',
                       v_align='center')
@@ -204,7 +205,7 @@ class WiimoteLicenseWindow(ba.Window):
                       size=(width, 30),
                       text=ba.Lstr(resource=self._r + '.titleText'),
                       h_align='center',
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       v_align='center')
         license_text = (
             'Copyright (c) 2007, DarwiinRemote Team\n'

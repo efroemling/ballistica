@@ -50,7 +50,7 @@ class WatchWindow(ba.Window):
         else:
             self._transition_out = 'out_right'
             scale_origin = None
-        ba.app.main_window = 'Watch'
+        ba.app.ui.set_main_menu_location('Watch')
         self._tab_data: Dict[str, Any] = {}
         self._my_replays_scroll_width: Optional[float] = None
         self._my_replays_watch_replay_button: Optional[ba.Widget] = None
@@ -78,7 +78,7 @@ class WatchWindow(ba.Window):
             stack_offset=(0, -10) if uiscale is ba.UIScale.SMALL else (
                 0, 15) if uiscale is ba.UIScale.MEDIUM else (0, 0)))
 
-        if uiscale is ba.UIScale.SMALL and ba.app.toolbars:
+        if uiscale is ba.UIScale.SMALL and ba.app.ui.use_toolbars:
             ba.containerwidget(edit=self._root_widget,
                                on_cancel_call=self._back)
             self._back_button = None
@@ -101,7 +101,7 @@ class WatchWindow(ba.Window):
         ba.textwidget(parent=self._root_widget,
                       position=(self._width * 0.5, self._height - 38),
                       size=(0, 0),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       scale=1.5,
                       h_align='center',
                       v_align='center',
@@ -121,7 +121,7 @@ class WatchWindow(ba.Window):
             size=(self._width - tab_buffer_h, 50),
             on_select_call=self._set_tab)
 
-        if ba.app.toolbars:
+        if ba.app.ui.use_toolbars:
             ba.widget(edit=self._tab_buttons[tabs_def[-1][0]],
                       right_widget=_ba.get_special_widget('party_button'))
             if uiscale is ba.UIScale.SMALL:
@@ -231,7 +231,7 @@ class WatchWindow(ba.Window):
                 label=ba.Lstr(resource=self._r + '.watchReplayButtonText'),
                 autoselect=True)
             ba.widget(edit=btn1, up_widget=self._tab_buttons[tab])
-            if uiscale is ba.UIScale.SMALL and ba.app.toolbars:
+            if uiscale is ba.UIScale.SMALL and ba.app.ui.use_toolbars:
                 ba.widget(edit=btn1,
                           left_widget=_ba.get_special_widget('back_button'))
             btnv -= b_height + b_space_extra
@@ -492,7 +492,7 @@ class WatchWindow(ba.Window):
                 sel_name = 'TabContainer'
             else:
                 raise ValueError(f'unrecognized selection {sel}')
-            ba.app.window_states[self.__class__.__name__] = {
+            ba.app.ui.window_states[self.__class__.__name__] = {
                 'sel_name': sel_name,
                 'tab': self._current_tab
             }
@@ -501,8 +501,8 @@ class WatchWindow(ba.Window):
 
     def _restore_state(self) -> None:
         try:
-            sel_name = ba.app.window_states.get(self.__class__.__name__,
-                                                {}).get('sel_name')
+            sel_name = ba.app.ui.window_states.get(self.__class__.__name__,
+                                                   {}).get('sel_name')
             current_tab = ba.app.config.get('Watch Tab')
             if current_tab is None or current_tab not in self._tab_buttons:
                 current_tab = 'my_replays'
@@ -523,9 +523,9 @@ class WatchWindow(ba.Window):
             ba.print_exception(f'Error restoring state for {self}.')
 
     def _back(self) -> None:
-        from bastd.ui import mainmenu
+        from bastd.ui.mainmenu import MainMenuWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
-        ba.app.main_menu_window = (mainmenu.MainMenuWindow(
-            transition='in_left').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            MainMenuWindow(transition='in_left').get_root_widget())

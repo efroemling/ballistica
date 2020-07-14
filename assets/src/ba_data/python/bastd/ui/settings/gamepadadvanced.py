@@ -61,7 +61,7 @@ class GamepadAdvancedSettingsWindow(ba.Window):
                       size=(0, 0),
                       text=ba.Lstr(resource=self._r + '.advancedTitleText'),
                       maxwidth=320,
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       h_align='center',
                       v_align='center')
 

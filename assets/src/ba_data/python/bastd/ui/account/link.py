@@ -77,7 +77,7 @@ class AccountLinkWindow(ba.Window):
                 'accountSettingsWindow.linkAccountsInstructionsNewText'),
                          subs=[('${COUNT}', str(maxlinks))]),
             maxwidth=self._width * 0.9,
-            color=ba.app.infotextcolor,
+            color=ba.app.ui.infotextcolor,
             max_height=self._height * 0.6,
             h_align='center',
             v_align='center')

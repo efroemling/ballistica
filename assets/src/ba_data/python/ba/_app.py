@@ -262,6 +262,7 @@ class App:
         # pylint: disable=too-many-statements
         from ba._music import MusicController
         from ba._enums import UIScale
+        from ba._ui import UI
 
         # Config.
         self.config_file_healthy = False
@@ -397,20 +398,12 @@ class App:
         self.coop_session_args: Dict = {}
 
         # UI.
-        self.uicontroller: Optional[ba.UIController] = None
-        self.main_menu_window: Optional[_ba.Widget] = None  # FIXME: Kill this.
-        self.window_states: Dict = {}  # FIXME: Kill this.
-        self.windows: Dict = {}  # FIXME: Kill this.
-        self.main_window: Optional[str] = None  # FIXME: Kill this.
-        self.main_menu_selection: Optional[str] = None  # FIXME: Kill this.
-        self.have_party_queue_window = False
-        self.quit_window: Any = None
-        self.dismiss_wii_remotes_window_call: (Optional[Callable[[],
-                                                                 Any]]) = None
+        self.ui = UI()
+
         self.value_test_defaults: dict = {}
-        self.main_menu_window_refresh_check_count = 0
         self.first_main_menu = True  # FIXME: Move to mainmenu class.
         self.did_menu_intro = False  # FIXME: Move to mainmenu class.
+        self.main_menu_window_refresh_check_count = 0  # FIXME: Mv to mainmenu.
         self.main_menu_resume_callbacks: list = []  # Can probably go away.
         self.special_offer: Optional[Dict] = None
         self.league_rank_cache: Dict = {}
@@ -422,13 +415,6 @@ class App:
         self.store_items: Optional[Dict[str, Dict]] = None
         self.pro_sale_start_time: Optional[int] = None
         self.pro_sale_start_val: Optional[int] = None
-        self.party_window: Any = None  # FIXME: Don't use Any.
-        self.title_color = (0.72, 0.7, 0.75)
-        self.heading_color = (0.72, 0.7, 0.75)
-        self.infotextcolor = (0.7, 0.9, 0.7)
-        self.uicleanupchecks: List[UICleanupCheck] = []
-        self.uiupkeeptimer: Optional[ba.Timer] = None
-        self.toolbars = env.get('toolbar_test', True)
 
         self.delegate: Optional[ba.AppDelegate] = None
 
@@ -442,7 +428,6 @@ class App:
         # pylint: disable=cyclic-import
         from ba import _apputils
         from ba import _appconfig
-        from ba.ui import UIController, ui_upkeep
         from ba import _achievement
         from ba import _map
         from ba import _meta
@@ -456,7 +441,8 @@ class App:
 
         self.delegate = appdelegate.AppDelegate()
 
-        self.uicontroller = UIController()
+        self.ui.on_app_launch()
+
         _achievement.init_achievements()
         spazappearance.register_appearances()
         _campaign.init_campaigns()
@@ -477,13 +463,6 @@ class App:
         if (not self.debug_build and not self.test_build
                 and not _ba.is_blessed()):
             _ba.screenmessage('WARNING: NON-BLESSED BUILD', color=(1, 0, 0))
-
-        # Kick off our periodic UI upkeep.
-        # FIXME: Can probably kill this if we do immediate UI death checks.
-        self.uiupkeeptimer = _ba.Timer(2.6543,
-                                       ui_upkeep,
-                                       timetype=TimeType.REAL,
-                                       repeat=True)
 
         # IMPORTANT: If tweaking UI stuff, make sure it behaves for small,
         # medium, and large UI modes. (doesn't run off screen, etc).
@@ -648,7 +627,7 @@ class App:
         from ba._general import Call
         from bastd.mainmenu import MainMenuSession
         if reset_ui:
-            _ba.app.main_window = None
+            _ba.app.ui.clear_main_menu_window()
 
         if isinstance(_ba.get_foreground_host_session(), MainMenuSession):
             # It may be possible we're on the main menu but the screen is faded
@@ -681,7 +660,7 @@ class App:
         """(internal)"""
 
         # If there's no main menu up, just call immediately.
-        if not self.main_menu_window:
+        if not self.ui.has_main_menu_window():
             with _ba.Context('ui'):
                 call()
         else:

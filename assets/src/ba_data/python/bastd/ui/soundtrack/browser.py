@@ -70,7 +70,7 @@ class SoundtrackBrowserWindow(ba.Window):
                    1.6 if uiscale is ba.UIScale.MEDIUM else 1.0),
             stack_offset=(0, -18) if uiscale is ba.UIScale.SMALL else (0, 0)))
 
-        if ba.app.toolbars and uiscale is ba.UIScale.SMALL:
+        if ba.app.ui.use_toolbars and uiscale is ba.UIScale.SMALL:
             self._back_button = None
         else:
             self._back_button = ba.buttonwidget(
@@ -90,7 +90,7 @@ class SoundtrackBrowserWindow(ba.Window):
                       size=(0, 0),
                       maxwidth=300,
                       text=ba.Lstr(resource=self._r + '.titleText'),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       h_align='center',
                       v_align='center')
 
@@ -210,7 +210,7 @@ class SoundtrackBrowserWindow(ba.Window):
         ba.widget(edit=self._scrollwidget,
                   left_widget=self._new_button,
                   right_widget=_ba.get_special_widget('party_button')
-                  if ba.app.toolbars else self._scrollwidget)
+                  if ba.app.ui.use_toolbars else self._scrollwidget)
         self._col = ba.columnwidget(parent=scrollwidget)
 
         self._soundtracks: Optional[Dict[str, Any]] = None
@@ -337,8 +337,8 @@ class SoundtrackBrowserWindow(ba.Window):
         self._save_state()
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
-        ba.app.main_menu_window = (audio.AudioSettingsWindow(
-            transition='in_left').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            audio.AudioSettingsWindow(transition='in_left').get_root_widget())
 
     def _edit_soundtrack_with_sound(self) -> None:
         # pylint: disable=cyclic-import
@@ -369,8 +369,10 @@ class SoundtrackBrowserWindow(ba.Window):
 
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (stedit.SoundtrackEditWindow(
-            existing_soundtrack=self._selected_soundtrack).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            stedit.SoundtrackEditWindow(
+                existing_soundtrack=self._selected_soundtrack).get_root_widget(
+                ))
 
     def _get_soundtrack_display_name(self, soundtrack: str) -> ba.Lstr:
         if soundtrack == '__default__':
@@ -485,13 +487,13 @@ class SoundtrackBrowserWindow(ba.Window):
                 sel_name = 'Back'
             else:
                 raise ValueError(f'unrecognized selection \'{sel}\'')
-            ba.app.window_states[self.__class__.__name__] = sel_name
+            ba.app.ui.window_states[self.__class__.__name__] = sel_name
         except Exception:
             ba.print_exception(f'Error saving state for {self}.')
 
     def _restore_state(self) -> None:
         try:
-            sel_name = ba.app.window_states.get(self.__class__.__name__)
+            sel_name = ba.app.ui.window_states.get(self.__class__.__name__)
             if sel_name == 'Scroll':
                 sel = self._scrollwidget
             elif sel_name == 'New':

@@ -147,18 +147,19 @@ class QuitWindow:
                  swish: bool = False,
                  back: bool = False,
                  origin_widget: ba.Widget = None):
+        ui = ba.app.ui
         app = ba.app
         self._back = back
 
         # If there's already one of us up somewhere, kill it.
-        if app.quit_window is not None:
-            app.quit_window.delete()
-            app.quit_window = None
+        if ui.quit_window is not None:
+            ui.quit_window.delete()
+            ui.quit_window = None
         if swish:
             ba.playsound(ba.getsound('swish'))
         quit_resource = ('quitGameText'
                          if app.platform == 'mac' else 'exitGameText')
-        self._root_widget = app.quit_window = (ConfirmWindow(
+        self._root_widget = ui.quit_window = (ConfirmWindow(
             ba.Lstr(resource=quit_resource,
                     subs=[('${APP_NAME}', ba.Lstr(resource='titleText'))]),
             self._fade_and_quit,

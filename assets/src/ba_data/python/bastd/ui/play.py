@@ -92,7 +92,7 @@ class PlayWindow(ba.Window):
                             scale=1.7,
                             res_scale=2.0,
                             maxwidth=400,
-                            color=ba.app.heading_color,
+                            color=ba.app.ui.heading_color,
                             h_align='center',
                             v_align='center')
 
@@ -100,14 +100,15 @@ class PlayWindow(ba.Window):
                         button_type='backSmall',
                         size=(60, 60),
                         label=ba.charstr(ba.SpecialChar.BACK))
-        if ba.app.toolbars and uiscale is ba.UIScale.SMALL:
+        if ba.app.ui.use_toolbars and uiscale is ba.UIScale.SMALL:
             ba.textwidget(edit=txt, text='')
 
         v = height - (110 if new_style else 60)
         v -= 100
         clr = (0.6, 0.7, 0.6, 1.0)
         v -= 280 if new_style else 180
-        v += 30 if ba.app.toolbars and uiscale is ba.UIScale.SMALL else 0
+        v += (30
+              if ba.app.ui.use_toolbars and uiscale is ba.UIScale.SMALL else 0)
         hoffs = x_offs + 80 if new_style else 0
         scl = 1.13 if new_style else 0.68
 
@@ -135,7 +136,7 @@ class PlayWindow(ba.Window):
             text_scale=1.13,
             on_activate_call=self._coop)
 
-        if ba.app.toolbars and uiscale is ba.UIScale.SMALL:
+        if ba.app.ui.use_toolbars and uiscale is ba.UIScale.SMALL:
             ba.widget(edit=btn,
                       left_widget=_ba.get_special_widget('back_button'))
             ba.widget(edit=btn,
@@ -218,7 +219,7 @@ class PlayWindow(ba.Window):
             text_scale=1.13,
             on_activate_call=self._team_tourney)
 
-        if ba.app.toolbars:
+        if ba.app.ui.use_toolbars:
             ba.widget(edit=btn,
                       up_widget=_ba.get_special_widget('tickets_plus_button'),
                       right_widget=_ba.get_special_widget('party_button'))
@@ -404,7 +405,7 @@ class PlayWindow(ba.Window):
                       maxwidth=scl * button_width * 0.7,
                       color=clr)
 
-        if ba.app.toolbars and uiscale is ba.UIScale.SMALL:
+        if ba.app.ui.use_toolbars and uiscale is ba.UIScale.SMALL:
             back_button.delete()
             ba.containerwidget(edit=self._root_widget,
                                on_cancel_call=self._back,
@@ -429,8 +430,8 @@ class PlayWindow(ba.Window):
         # pylint: disable=cyclic-import
         from bastd.ui.mainmenu import MainMenuWindow
         self._save_state()
-        ba.app.main_menu_window = (MainMenuWindow(
-            transition='in_left').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            MainMenuWindow(transition='in_left').get_root_widget())
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
 
@@ -443,26 +444,29 @@ class PlayWindow(ba.Window):
             return
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (CoopBrowserWindow(
-            origin_widget=self._coop_button).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            CoopBrowserWindow(
+                origin_widget=self._coop_button).get_root_widget())
 
     def _team_tourney(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.playlist.browser import PlaylistBrowserWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (PlaylistBrowserWindow(
-            origin_widget=self._teams_button,
-            sessiontype=ba.DualTeamSession).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            PlaylistBrowserWindow(
+                origin_widget=self._teams_button,
+                sessiontype=ba.DualTeamSession).get_root_widget())
 
     def _free_for_all(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.playlist.browser import PlaylistBrowserWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (PlaylistBrowserWindow(
-            origin_widget=self._free_for_all_button,
-            sessiontype=ba.FreeForAllSession).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            PlaylistBrowserWindow(
+                origin_widget=self._free_for_all_button,
+                sessiontype=ba.FreeForAllSession).get_root_widget())
 
     def _draw_dude(self, i: int, btn: ba.Widget, hoffs: float, v: float,
                    scl: float, position: Tuple[float, float],
@@ -554,13 +558,13 @@ class PlayWindow(ba.Window):
                 sel_name = 'Back'
             else:
                 raise ValueError(f'unrecognized selection {sel}')
-            ba.app.window_states[self.__class__.__name__] = sel_name
+            ba.app.ui.window_states[self.__class__.__name__] = sel_name
         except Exception:
             ba.print_exception(f'Error saving state for {self}.')
 
     def _restore_state(self) -> None:
         try:
-            sel_name = ba.app.window_states.get(self.__class__.__name__)
+            sel_name = ba.app.ui.window_states.get(self.__class__.__name__)
             if sel_name == 'Team Games':
                 sel = self._teams_button
             elif sel_name == 'Co-op Games':

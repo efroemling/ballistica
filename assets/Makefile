@@ -202,6 +202,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/ba/_teamgame.py \
   build/ba_data/python/ba/_tips.py \
   build/ba_data/python/ba/_tournament.py \
+  build/ba_data/python/ba/_ui.py \
   build/ba_data/python/ba/deprecated.py \
   build/ba_data/python/ba/internal.py \
   build/ba_data/python/ba/macmusicapp.py \
@@ -433,6 +434,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/ba/__pycache__/_teamgame.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_tips.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_tournament.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_ui.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/deprecated.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/internal.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/macmusicapp.cpython-37.opt-1.pyc \

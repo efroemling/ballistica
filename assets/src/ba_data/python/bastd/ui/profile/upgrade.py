@@ -84,7 +84,7 @@ class ProfileUpgradeWindow(ba.Window):
                       size=(0, 0),
                       text=ba.Lstr(resource=self._r +
                                    '.upgradeToGlobalProfileText'),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       maxwidth=self._width * 0.45,
                       scale=1.0,
                       h_align='center',
@@ -95,7 +95,7 @@ class ProfileUpgradeWindow(ba.Window):
                       size=(0, 0),
                       text=ba.Lstr(resource=self._r +
                                    '.upgradeProfileInfoText'),
-                      color=ba.app.infotextcolor,
+                      color=ba.app.ui.infotextcolor,
                       maxwidth=self._width * 0.8,
                       scale=0.7,
                       h_align='center',
@@ -125,7 +125,7 @@ class ProfileUpgradeWindow(ba.Window):
                                          v_align='center')
 
         self._tickets_text: Optional[ba.Widget]
-        if not ba.app.toolbars:
+        if not ba.app.ui.use_toolbars:
             self._tickets_text = ba.textwidget(
                 parent=self._root_widget,
                 position=(self._width * 0.9 - 5, self._height - 30),

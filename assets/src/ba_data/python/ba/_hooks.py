@@ -180,7 +180,7 @@ def purchases_restored_message() -> None:
 
 
 def dismiss_wii_remotes_window() -> None:
-    call = _ba.app.dismiss_wii_remotes_window_call
+    call = _ba.app.ui.dismiss_wii_remotes_window_call
     if call is not None:
         call()
 
@@ -256,10 +256,10 @@ def party_icon_activate(origin: Sequence[float]) -> None:
     _ba.playsound(_ba.getsound('swish'))
 
     # If it exists, dismiss it; otherwise make a new one.
-    if app.party_window is not None and app.party_window() is not None:
-        app.party_window().close()
+    if app.ui.party_window is not None and app.ui.party_window() is not None:
+        app.ui.party_window().close()
     else:
-        app.party_window = weakref.ref(PartyWindow(origin=origin))
+        app.ui.party_window = weakref.ref(PartyWindow(origin=origin))
 
 
 def read_config() -> None:
@@ -303,11 +303,11 @@ def gc_disable() -> None:
 
 def device_menu_press(device: ba.InputDevice) -> None:
     from bastd.ui.mainmenu import MainMenuWindow
-    in_main_menu = bool(_ba.app.main_menu_window)
+    in_main_menu = _ba.app.ui.has_main_menu_window()
     if not in_main_menu:
         _ba.set_ui_input_device(device)
         _ba.playsound(_ba.getsound('swish'))
-        _ba.app.main_menu_window = (MainMenuWindow().get_root_widget())
+        _ba.app.ui.set_main_menu_window(MainMenuWindow().get_root_widget())
 
 
 def show_url_window(address: str) -> None:
@@ -338,9 +338,9 @@ def filter_chat_message(msg: str, client_id: int) -> Optional[str]:
 
 
 def local_chat_message(msg: str) -> None:
-    if (_ba.app.party_window is not None
-            and _ba.app.party_window() is not None):
-        _ba.app.party_window().on_chat_message(msg)
+    if (_ba.app.ui.party_window is not None
+            and _ba.app.ui.party_window() is not None):
+        _ba.app.ui.party_window().on_chat_message(msg)
 
 
 def handle_remote_achievement_list(completed_achievements: List[str]) -> None:

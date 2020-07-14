@@ -403,55 +403,58 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
         with ba.Context('ui'):
             from bastd.ui import specialoffer
             if bool(False):
-                uicontroller = ba.app.uicontroller
+                uicontroller = ba.app.ui.controller
                 assert uicontroller is not None
                 uicontroller.show_main_menu()
             else:
-                main_window = ba.app.main_window
+                main_menu_location = ba.app.ui.get_main_menu_location()
 
                 # When coming back from a kiosk-mode game, jump to
                 # the kiosk start screen.
                 if ba.app.kiosk_mode:
                     # pylint: disable=cyclic-import
                     from bastd.ui.kiosk import KioskWindow
-                    ba.app.main_menu_window = KioskWindow().get_root_widget()
+                    ba.app.ui.set_main_menu_window(
+                        KioskWindow().get_root_widget())
                 # ..or in normal cases go back to the main menu
                 else:
-                    main_window = ba.app.main_window
-                    if main_window == 'Gather':
+                    if main_menu_location == 'Gather':
                         # pylint: disable=cyclic-import
                         from bastd.ui.gather import GatherWindow
-                        ba.app.main_menu_window = (GatherWindow(
-                            transition=None).get_root_widget())
-                    elif main_window == 'Watch':
+                        ba.app.ui.set_main_menu_window(
+                            GatherWindow(transition=None).get_root_widget())
+                    elif main_menu_location == 'Watch':
                         # pylint: disable=cyclic-import
                         from bastd.ui.watch import WatchWindow
-                        ba.app.main_menu_window = WatchWindow(
-                            transition=None).get_root_widget()
-                    elif main_window == 'Team Game Select':
+                        ba.app.ui.set_main_menu_window(
+                            WatchWindow(transition=None).get_root_widget())
+                    elif main_menu_location == 'Team Game Select':
                         # pylint: disable=cyclic-import
                         from bastd.ui.playlist.browser import (
                             PlaylistBrowserWindow)
-                        ba.app.main_menu_window = PlaylistBrowserWindow(
-                            sessiontype=ba.DualTeamSession,
-                            transition=None).get_root_widget()
-                    elif main_window == 'Free-for-All Game Select':
+                        ba.app.ui.set_main_menu_window(
+                            PlaylistBrowserWindow(
+                                sessiontype=ba.DualTeamSession,
+                                transition=None).get_root_widget())
+                    elif main_menu_location == 'Free-for-All Game Select':
                         # pylint: disable=cyclic-import
                         from bastd.ui.playlist.browser import (
                             PlaylistBrowserWindow)
-                        ba.app.main_menu_window = PlaylistBrowserWindow(
-                            sessiontype=ba.FreeForAllSession,
-                            transition=None).get_root_widget()
-                    elif main_window == 'Coop Select':
+                        ba.app.ui.set_main_menu_window(
+                            PlaylistBrowserWindow(
+                                sessiontype=ba.FreeForAllSession,
+                                transition=None).get_root_widget())
+                    elif main_menu_location == 'Coop Select':
                         # pylint: disable=cyclic-import
                         from bastd.ui.coop.browser import CoopBrowserWindow
-                        ba.app.main_menu_window = CoopBrowserWindow(
-                            transition=None).get_root_widget()
+                        ba.app.ui.set_main_menu_window(
+                            CoopBrowserWindow(
+                                transition=None).get_root_widget())
                     else:
                         # pylint: disable=cyclic-import
                         from bastd.ui.mainmenu import MainMenuWindow
-                        ba.app.main_menu_window = MainMenuWindow(
-                            transition=None).get_root_widget()
+                        ba.app.ui.set_main_menu_window(
+                            MainMenuWindow(transition=None).get_root_widget())
 
                 # attempt to show any pending offers immediately.
                 # If that doesn't work, try again in a few seconds

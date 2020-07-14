@@ -62,7 +62,7 @@ class TestingWindow(ba.Window):
         ba.textwidget(parent=self._root_widget,
                       position=(self._width * 0.5, self._height - 35),
                       size=(0, 0),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       h_align='center',
                       v_align='center',
                       maxwidth=245,
@@ -77,7 +77,7 @@ class TestingWindow(ba.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 75),
             size=(0, 0),
-            color=ba.app.infotextcolor,
+            color=ba.app.ui.infotextcolor,
             h_align='center',
             v_align='center',
             maxwidth=self._width * 0.75,
@@ -194,6 +194,6 @@ class TestingWindow(ba.Window):
         # pylint: disable=cyclic-import
         import bastd.ui.settings.advanced
         ba.containerwidget(edit=self._root_widget, transition='out_right')
-        ba.app.main_menu_window = (
+        ba.app.ui.set_main_menu_window(
             bastd.ui.settings.advanced.AdvancedSettingsWindow(
                 transition='in_left').get_root_widget())

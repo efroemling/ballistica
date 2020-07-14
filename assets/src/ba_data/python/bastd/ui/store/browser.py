@@ -160,7 +160,7 @@ class StoreBrowserWindow(ba.Window):
         ba.textwidget(parent=self._root_widget,
                       position=(self._width * 0.5, self._height - 44),
                       size=(0, 0),
-                      color=app.title_color,
+                      color=app.ui.title_color,
                       scale=1.5,
                       h_align='center',
                       v_align='center',
@@ -1008,7 +1008,7 @@ class StoreBrowserWindow(ba.Window):
                     self._tab_buttons.values()).index(sel)]
             else:
                 raise ValueError(f'unrecognized selection \'{sel}\'')
-            ba.app.window_states[self.__class__.__name__] = {
+            ba.app.ui.window_states[self.__class__.__name__] = {
                 'sel_name': sel_name,
                 'tab': self._current_tab
             }
@@ -1018,8 +1018,8 @@ class StoreBrowserWindow(ba.Window):
     def _restore_state(self) -> None:
         try:
             sel: Optional[ba.Widget]
-            sel_name = ba.app.window_states.get(self.__class__.__name__,
-                                                {}).get('sel_name')
+            sel_name = ba.app.ui.window_states.get(self.__class__.__name__,
+                                                   {}).get('sel_name')
             current_tab = ba.app.config.get('Store Tab')
             if self._show_tab is not None:
                 current_tab = self._show_tab
@@ -1047,18 +1047,18 @@ class StoreBrowserWindow(ba.Window):
 
     def _on_get_more_tickets_press(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui import account
-        from bastd.ui import getcurrency
+        from bastd.ui.account import show_sign_in_prompt
+        from bastd.ui.getcurrency import GetCurrencyWindow
         if _ba.get_account_state() != 'signed_in':
-            account.show_sign_in_prompt()
+            show_sign_in_prompt()
             return
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        window = getcurrency.GetCurrencyWindow(
+        window = GetCurrencyWindow(
             from_modal_store=self._modal,
             store_back_location=self._back_location).get_root_widget()
         if not self._modal:
-            ba.app.main_menu_window = window
+            ba.app.ui.set_main_menu_window(window)
 
     def _back(self) -> None:
         # pylint: disable=cyclic-import
@@ -1069,10 +1069,12 @@ class StoreBrowserWindow(ba.Window):
                            transition=self._transition_out)
         if not self._modal:
             if self._back_location == 'CoopBrowserWindow':
-                ba.app.main_menu_window = (browser.CoopBrowserWindow(
-                    transition='in_left').get_root_widget())
+                ba.app.ui.set_main_menu_window(
+                    browser.CoopBrowserWindow(
+                        transition='in_left').get_root_widget())
             else:
-                ba.app.main_menu_window = (mainmenu.MainMenuWindow(
-                    transition='in_left').get_root_widget())
+                ba.app.ui.set_main_menu_window(
+                    mainmenu.MainMenuWindow(
+                        transition='in_left').get_root_widget())
         if self._on_close_call is not None:
             self._on_close_call()

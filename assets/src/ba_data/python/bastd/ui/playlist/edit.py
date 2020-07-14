@@ -76,7 +76,7 @@ class PlaylistEditWindow(ba.Window):
             label=ba.Lstr(resource='saveText'),
             text_scale=1.2)
 
-        if ba.app.toolbars:
+        if ba.app.ui.use_toolbars:
             ba.widget(edit=btn,
                       right_widget=_ba.get_special_widget('party_button'))
 
@@ -88,7 +88,7 @@ class PlaylistEditWindow(ba.Window):
                       position=(-10, self._height - 50),
                       size=(self._width, 25),
                       text=ba.Lstr(resource=self._r + '.titleText'),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       scale=1.05,
                       h_align='center',
                       v_align='center',
@@ -246,14 +246,16 @@ class PlaylistEditWindow(ba.Window):
         self._editcontroller.set_edit_ui_selection(selection)
 
     def _cancel(self) -> None:
-        from bastd.ui.playlist import customizebrowser as cb
+        from bastd.ui.playlist.customizebrowser import (
+            PlaylistCustomizeBrowserWindow)
         ba.playsound(ba.getsound('powerdown01'))
         ba.containerwidget(edit=self._root_widget, transition='out_right')
-        ba.app.main_menu_window = (cb.PlaylistCustomizeBrowserWindow(
-            transition='in_left',
-            sessiontype=self._editcontroller.get_session_type(),
-            select_playlist=self._editcontroller.get_existing_playlist_name()).
-                                   get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            PlaylistCustomizeBrowserWindow(
+                transition='in_left',
+                sessiontype=self._editcontroller.get_session_type(),
+                select_playlist=self._editcontroller.
+                get_existing_playlist_name()).get_root_widget())
 
     def _add(self) -> None:
         # Store list name then tell the session to perform an add.
@@ -268,7 +270,8 @@ class PlaylistEditWindow(ba.Window):
         self._editcontroller.edit_game_pressed()
 
     def _save_press(self) -> None:
-        from bastd.ui.playlist import customizebrowser as cb
+        from bastd.ui.playlist.customizebrowser import (
+            PlaylistCustomizeBrowserWindow)
         new_name = cast(str, ba.textwidget(query=self._text_field))
         if (new_name != self._editcontroller.get_existing_playlist_name()
                 and new_name
@@ -316,10 +319,11 @@ class PlaylistEditWindow(ba.Window):
 
         ba.containerwidget(edit=self._root_widget, transition='out_right')
         ba.playsound(ba.getsound('gunCocking'))
-        ba.app.main_menu_window = (cb.PlaylistCustomizeBrowserWindow(
-            transition='in_left',
-            sessiontype=self._editcontroller.get_session_type(),
-            select_playlist=new_name).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            PlaylistCustomizeBrowserWindow(
+                transition='in_left',
+                sessiontype=self._editcontroller.get_session_type(),
+                select_playlist=new_name).get_root_widget())
 
     def _save_press_with_sound(self) -> None:
         ba.playsound(ba.getsound('swish'))

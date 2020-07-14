@@ -102,7 +102,7 @@ class ConfigKeyboardWindow(ba.Window):
                       size=(0, 0),
                       text=ba.Lstr(resource=self._r + '.configuringText',
                                    subs=[('${DEVICE}', self._displayname)]),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       h_align='center',
                       v_align='center',
                       maxwidth=270,
@@ -120,7 +120,7 @@ class ConfigKeyboardWindow(ba.Window):
                           scale=0.7,
                           maxwidth=self._width * 0.75,
                           max_height=110,
-                          color=ba.app.infotextcolor,
+                          color=ba.app.ui.infotextcolor,
                           h_align='center',
                           v_align='top')
             v -= 40
@@ -226,8 +226,8 @@ class ConfigKeyboardWindow(ba.Window):
     def _cancel(self) -> None:
         from bastd.ui.settings.controls import ControlsSettingsWindow
         ba.containerwidget(edit=self._root_widget, transition='out_right')
-        ba.app.main_menu_window = (ControlsSettingsWindow(
-            transition='in_left').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            ControlsSettingsWindow(transition='in_left').get_root_widget())
 
     def _save(self) -> None:
         from bastd.ui.settings.controls import ControlsSettingsWindow
@@ -257,8 +257,8 @@ class ConfigKeyboardWindow(ba.Window):
                     'v': 2
                 })
         ba.app.config.apply_and_commit()
-        ba.app.main_menu_window = (ControlsSettingsWindow(
-            transition='in_left').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            ControlsSettingsWindow(transition='in_left').get_root_widget())
 
 
 class AwaitKeyboardInputWindow(ba.Window):

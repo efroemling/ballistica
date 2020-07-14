@@ -40,8 +40,10 @@ class AppDelegate(ba.AppDelegate):
 
         # Replace the main window once we come up successfully.
         from bastd.ui.playlist.editgame import PlaylistEditGameWindow
-        prev_window = ba.app.main_menu_window
-        ba.app.main_menu_window = (PlaylistEditGameWindow(
-            gameclass, sessiontype, settings,
-            completion_call=completion_call).get_root_widget())
-        ba.containerwidget(edit=prev_window, transition='out_left')
+        ba.app.ui.clear_main_menu_window(transition='out_left')
+        ba.app.ui.set_main_menu_window(
+            PlaylistEditGameWindow(
+                gameclass,
+                sessiontype,
+                settings,
+                completion_call=completion_call).get_root_widget())

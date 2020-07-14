@@ -63,7 +63,7 @@ class XBox360ControllerSettingsWindow(ba.Window):
                       text=ba.Lstr(resource=self._r + '.titleText',
                                    subs=[('${APP_NAME}',
                                           ba.Lstr(resource='titleText'))]),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       maxwidth=400,
                       h_align='center',
                       v_align='center')
@@ -128,5 +128,6 @@ class XBox360ControllerSettingsWindow(ba.Window):
     def _back(self) -> None:
         from bastd.ui.settings import controls
         ba.containerwidget(edit=self._root_widget, transition='out_right')
-        ba.app.main_menu_window = (controls.ControlsSettingsWindow(
-            transition='in_left').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            controls.ControlsSettingsWindow(
+                transition='in_left').get_root_widget())

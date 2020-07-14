@@ -151,7 +151,7 @@ class PlaylistEditGameWindow(ba.Window):
                           '.addGameText') if is_add else ba.Lstr(
                               resource='doneText'))
 
-        if ba.app.toolbars:
+        if ba.app.ui.use_toolbars:
             pbtn = _ba.get_special_widget('party_button')
             ba.widget(edit=add_button, right_widget=pbtn, up_widget=pbtn)
 
@@ -159,7 +159,7 @@ class PlaylistEditGameWindow(ba.Window):
                       position=(-8, height - 70 + y_extra2),
                       size=(width, 25),
                       text=gameclass.get_display_string(),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       maxwidth=235,
                       scale=1.1,
                       h_align='center',
@@ -451,10 +451,11 @@ class PlaylistEditGameWindow(ba.Window):
 
         # Replace ourself with the map-select UI.
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = PlaylistMapSelectWindow(
-            self._gameclass, self._sessiontype,
-            copy.deepcopy(self._getconfig()), self._edit_info,
-            self._completion_call).get_root_widget()
+        ba.app.ui.set_main_menu_window(
+            PlaylistMapSelectWindow(self._gameclass, self._sessiontype,
+                                    copy.deepcopy(self._getconfig()),
+                                    self._edit_info,
+                                    self._completion_call).get_root_widget())
 
     def _choice_inc(self, setting_name: str, widget: ba.Widget,
                     setting: ba.ChoiceSetting, increment: int) -> None:

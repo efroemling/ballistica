@@ -67,7 +67,7 @@ class OnScreenKeyboardWindow(ba.Window):
                       scale=0.95,
                       text=label,
                       maxwidth=self._width - 140,
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       h_align='center',
                       v_align='center')
 

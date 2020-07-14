@@ -75,7 +75,7 @@ class PlaylistAddGameWindow(ba.Window):
             label=ba.Lstr(resource='selectText'),
             on_activate_call=self._add)
 
-        if ba.app.toolbars:
+        if ba.app.ui.use_toolbars:
             ba.widget(edit=select_button,
                       right_widget=_ba.get_special_widget('party_button'))
 
@@ -85,7 +85,7 @@ class PlaylistAddGameWindow(ba.Window):
                       scale=1.0,
                       text=ba.Lstr(resource=self._r + '.titleText'),
                       h_align='center',
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       maxwidth=250,
                       v_align='center')
         v = self._height - 64

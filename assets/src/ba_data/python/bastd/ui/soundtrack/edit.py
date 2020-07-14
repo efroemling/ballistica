@@ -78,7 +78,7 @@ class SoundtrackEditWindow(ba.Window):
             text=ba.Lstr(resource=self._r +
                          ('.editSoundtrackText' if existing_soundtrack
                           is not None else '.newSoundtrackText')),
-            color=ba.app.title_color,
+            color=ba.app.ui.title_color,
             h_align='center',
             v_align='center',
             maxwidth=280)
@@ -310,8 +310,8 @@ class SoundtrackEditWindow(ba.Window):
         else:
             soundtrack[musictype] = entry
 
-        ba.app.main_menu_window = (cls(state,
-                                       transition='in_left').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            cls(state, transition='in_left').get_root_widget())
 
     def _get_entry(self, song_type: str, entry: Any,
                    selection_target_name: str) -> None:
@@ -325,7 +325,7 @@ class SoundtrackEditWindow(ba.Window):
             'last_edited_song_type': song_type
         }
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (music.get_music_player().select_entry(
+        ba.app.ui.set_main_menu_window(music.get_music_player().select_entry(
             ba.Call(self._restore_editor, state, song_type), entry,
             selection_target_name).get_root_widget())
 
@@ -372,8 +372,9 @@ class SoundtrackEditWindow(ba.Window):
         # Resets music back to normal.
         music.set_music_play_mode(ba.MusicPlayMode.REGULAR)
         ba.containerwidget(edit=self._root_widget, transition='out_right')
-        ba.app.main_menu_window = (stb.SoundtrackBrowserWindow(
-            transition='in_left').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            stb.SoundtrackBrowserWindow(
+                transition='in_left').get_root_widget())
 
     def _do_it(self) -> None:
         from bastd.ui.soundtrack import browser as stb
@@ -414,8 +415,9 @@ class SoundtrackEditWindow(ba.Window):
         # Resets music back to normal.
         music.set_music_play_mode(ba.MusicPlayMode.REGULAR, force_restart=True)
 
-        ba.app.main_menu_window = (stb.SoundtrackBrowserWindow(
-            transition='in_left').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            stb.SoundtrackBrowserWindow(
+                transition='in_left').get_root_widget())
 
     def _do_it_with_sound(self) -> None:
         ba.playsound(ba.getsound('swish'))

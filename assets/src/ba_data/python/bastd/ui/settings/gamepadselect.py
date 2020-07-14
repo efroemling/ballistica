@@ -41,7 +41,7 @@ def gamepad_configure_callback(event: Dict[str, Any]) -> None:
         return
     _ba.release_gamepad_input()
     try:
-        ba.containerwidget(edit=ba.app.main_menu_window, transition='out_left')
+        ba.app.ui.clear_main_menu_window(transition='out_left')
     except Exception:
         ba.print_exception('Error transitioning out main_menu_window.')
     ba.playsound(ba.getsound('activateBeep'))
@@ -49,18 +49,19 @@ def gamepad_configure_callback(event: Dict[str, Any]) -> None:
     inputdevice = event['input_device']
     assert isinstance(inputdevice, ba.InputDevice)
     if inputdevice.allows_configuring:
-        ba.app.main_menu_window = (
+        ba.app.ui.set_main_menu_window(
             gamepad.GamepadSettingsWindow(inputdevice).get_root_widget())
     else:
         width = 700
         height = 200
         button_width = 100
         uiscale = ba.app.uiscale
-        ba.app.main_menu_window = dlg = (ba.containerwidget(
+        dlg = (ba.containerwidget(
             scale=(1.7 if uiscale is ba.UIScale.SMALL else
                    1.4 if uiscale is ba.UIScale.MEDIUM else 1.0),
             size=(width, height),
             transition='in_right'))
+        ba.app.ui.set_main_menu_window(dlg)
         device_name = inputdevice.name
         if device_name == 'iDevice':
             msg = ba.Lstr(resource='bsRemoteConfigureInAppText',
@@ -79,8 +80,9 @@ def gamepad_configure_callback(event: Dict[str, Any]) -> None:
         def _ok() -> None:
             from bastd.ui.settings import controls
             ba.containerwidget(edit=dlg, transition='out_right')
-            ba.app.main_menu_window = (controls.ControlsSettingsWindow(
-                transition='in_left').get_root_widget())
+            ba.app.ui.set_main_menu_window(
+                controls.ControlsSettingsWindow(
+                    transition='in_left').get_root_widget())
 
         ba.buttonwidget(parent=dlg,
                         position=((width - button_width) / 2, 20),
@@ -124,7 +126,7 @@ class GamepadSelectWindow(ba.Window):
                       size=(width, 25),
                       text=ba.Lstr(resource=self._r + '.titleText'),
                       maxwidth=250,
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       h_align='center',
                       v_align='center')
 
@@ -141,7 +143,7 @@ class GamepadSelectWindow(ba.Window):
                       scale=0.8,
                       text=ba.Lstr(resource=self._r + '.pressAnyButtonText'),
                       maxwidth=width * 0.95,
-                      color=ba.app.infotextcolor,
+                      color=ba.app.ui.infotextcolor,
                       h_align='center',
                       v_align='top')
         v -= spacing * 1.24
@@ -162,5 +164,6 @@ class GamepadSelectWindow(ba.Window):
         from bastd.ui.settings import controls
         _ba.release_gamepad_input()
         ba.containerwidget(edit=self._root_widget, transition='out_right')
-        ba.app.main_menu_window = (controls.ControlsSettingsWindow(
-            transition='in_left').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            controls.ControlsSettingsWindow(
+                transition='in_left').get_root_widget())

@@ -57,7 +57,7 @@ def ask_for_rating() -> Optional[ba.Widget]:
     ba.textwidget(parent=dlg,
                   position=(15, v - 55),
                   size=(width - 30, 30),
-                  color=ba.app.infotextcolor,
+                  color=ba.app.ui.infotextcolor,
                   text=ba.Lstr(resource='pleaseRateText',
                                subs=[('${APP_NAME}',
                                       ba.Lstr(resource='titleText'))]),

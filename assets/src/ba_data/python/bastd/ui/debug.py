@@ -77,7 +77,7 @@ class DebugWindow(ba.Window):
                       size=(width, 30),
                       text=ba.Lstr(resource=self._r + '.titleText'),
                       h_align='center',
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       v_align='center',
                       maxwidth=260)
 
@@ -130,7 +130,7 @@ class DebugWindow(ba.Window):
                       size=(0, 0),
                       text=ba.Lstr(resource=self._r + '.stressTestTitleText'),
                       maxwidth=200,
-                      color=ba.app.heading_color,
+                      color=ba.app.ui.heading_color,
                       scale=0.85,
                       h_align='center',
                       v_align='center')
@@ -143,7 +143,7 @@ class DebugWindow(ba.Window):
                       text=ba.Lstr(resource=self._r +
                                    '.stressTestPlaylistTypeText'),
                       maxwidth=130,
-                      color=ba.app.heading_color,
+                      color=ba.app.ui.heading_color,
                       scale=0.65,
                       h_align='right',
                       v_align='center')
@@ -169,7 +169,7 @@ class DebugWindow(ba.Window):
                       text=ba.Lstr(resource=self._r +
                                    '.stressTestPlaylistNameText'),
                       maxwidth=130,
-                      color=ba.app.heading_color,
+                      color=ba.app.ui.heading_color,
                       scale=0.65,
                       h_align='right',
                       v_align='center')
@@ -333,5 +333,5 @@ class DebugWindow(ba.Window):
         # pylint: disable=cyclic-import
         from bastd.ui.settings.advanced import AdvancedSettingsWindow
         ba.containerwidget(edit=self._root_widget, transition='out_right')
-        ba.app.main_menu_window = (AdvancedSettingsWindow(
-            transition='in_left').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            AdvancedSettingsWindow(transition='in_left').get_root_widget())

@@ -423,8 +423,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
                             # Only attempt this if we're not currently paused
                             # and there appears to be no UI.
                             if (not gnode.paused
-                                    and _ba.app.main_menu_window is None
-                                    or not _ba.app.main_menu_window):
+                                    and not _ba.app.ui.has_main_menu_window()):
                                 self._is_waiting_for_continue = True
                                 with _ba.Context('ui'):
                                     _ba.timer(

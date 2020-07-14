@@ -56,7 +56,7 @@ class CoopLevelLockedWindow(ba.Window):
                       text=ba.Lstr(resource='levelMustBeCompletedFirstText',
                                    subs=[('${LEVEL}', dep_name)]),
                       maxwidth=400,
-                      color=ba.app.infotextcolor,
+                      color=ba.app.ui.infotextcolor,
                       scale=0.8)
         ba.imagewidget(parent=self._root_widget,
                        position=(56 - 20, height * 0.39),

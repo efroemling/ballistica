@@ -100,7 +100,7 @@ class GetCurrencyWindow(ba.Window):
         ba.textwidget(parent=self._root_widget,
                       position=(self._width * 0.5, self._height - 55),
                       size=(0, 0),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       scale=1.2,
                       h_align='center',
                       v_align='center',
@@ -602,7 +602,7 @@ class GetCurrencyWindow(ba.Window):
                 modal=self._from_modal_store,
                 back_location=self._store_back_location).get_root_widget()
             if not self._from_modal_store:
-                ba.app.main_menu_window = window
+                ba.app.ui.set_main_menu_window(window)
         self._transitioning_out = True
 
 

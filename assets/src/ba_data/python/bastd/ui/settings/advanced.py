@@ -98,7 +98,7 @@ class AdvancedSettingsWindow(ba.Window):
 
         self._r = 'settingsWindowAdvanced'
 
-        if app.toolbars and uiscale is ba.UIScale.SMALL:
+        if app.ui.use_toolbars and uiscale is ba.UIScale.SMALL:
             ba.containerwidget(edit=self._root_widget,
                                on_cancel_call=self._do_back)
             self._back_button = None
@@ -120,7 +120,7 @@ class AdvancedSettingsWindow(ba.Window):
                                          size=(self._width, 25),
                                          text=ba.Lstr(resource=self._r +
                                                       '.titleText'),
-                                         color=app.title_color,
+                                         color=app.ui.title_color,
                                          h_align='center',
                                          v_align='top')
 
@@ -238,7 +238,7 @@ class AdvancedSettingsWindow(ba.Window):
                       text=ba.Lstr(resource=self._r + '.languageText'),
                       maxwidth=150,
                       scale=0.95,
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       h_align='right',
                       v_align='center')
 
@@ -500,7 +500,7 @@ class AdvancedSettingsWindow(ba.Window):
         for child in self._subcontainer.get_children():
             ba.widget(edit=child, show_buffer_bottom=30, show_buffer_top=20)
 
-        if ba.app.toolbars:
+        if ba.app.ui.use_toolbars:
             pbtn = _ba.get_special_widget('party_button')
             ba.widget(edit=self._scrollwidget, right_widget=pbtn)
             if self._back_button is None:
@@ -523,18 +523,18 @@ class AdvancedSettingsWindow(ba.Window):
         _ba.run_transactions()
 
     def _on_vr_test_press(self) -> None:
-        from bastd.ui.settings import vrtesting
+        from bastd.ui.settings.vrtesting import VRTestingWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (vrtesting.VRTestingWindow(
-            transition='in_right').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            VRTestingWindow(transition='in_right').get_root_widget())
 
     def _on_net_test_press(self) -> None:
-        from bastd.ui.settings import nettesting
+        from bastd.ui.settings.nettesting import NetTestingWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (nettesting.NetTestingWindow(
-            transition='in_right').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            NetTestingWindow(transition='in_right').get_root_widget())
 
     def _on_friend_promo_code_press(self) -> None:
         from bastd.ui import appinvite
@@ -545,24 +545,25 @@ class AdvancedSettingsWindow(ba.Window):
         appinvite.handle_app_invites_press()
 
     def _on_promo_code_press(self) -> None:
-        from bastd.ui import promocode
-        from bastd.ui import account
+        from bastd.ui.promocode import PromoCodeWindow
+        from bastd.ui.account import show_sign_in_prompt
 
         # We have to be logged in for promo-codes to work.
         if _ba.get_account_state() != 'signed_in':
-            account.show_sign_in_prompt()
+            show_sign_in_prompt()
             return
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (promocode.PromoCodeWindow(
-            origin_widget=self._promo_code_button).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            PromoCodeWindow(
+                origin_widget=self._promo_code_button).get_root_widget())
 
     def _on_benchmark_press(self) -> None:
-        from bastd.ui import debug
+        from bastd.ui.debug import DebugWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (debug.DebugWindow(
-            transition='in_right').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            DebugWindow(transition='in_right').get_root_widget())
 
     def _save_state(self) -> None:
         # pylint: disable=too-many-branches
@@ -603,7 +604,7 @@ class AdvancedSettingsWindow(ba.Window):
                 sel_name = 'Back'
             else:
                 raise ValueError(f'unrecognized selection \'{sel}\'')
-            ba.app.window_states[self.__class__.__name__] = {
+            ba.app.ui.window_states[self.__class__.__name__] = {
                 'sel_name': sel_name
             }
         except Exception:
@@ -612,8 +613,8 @@ class AdvancedSettingsWindow(ba.Window):
     def _restore_state(self) -> None:
         # pylint: disable=too-many-branches
         try:
-            sel_name = ba.app.window_states.get(self.__class__.__name__,
-                                                {}).get('sel_name')
+            sel_name = ba.app.ui.window_states.get(self.__class__.__name__,
+                                                   {}).get('sel_name')
             if sel_name == 'Back':
                 sel = self._back_button
             else:
@@ -678,9 +679,9 @@ class AdvancedSettingsWindow(ba.Window):
                  timetype=ba.TimeType.REAL)
 
     def _do_back(self) -> None:
-        from bastd.ui.settings import allsettings
+        from bastd.ui.settings.allsettings import AllSettingsWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
-        ba.app.main_menu_window = (allsettings.AllSettingsWindow(
-            transition='in_left').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            AllSettingsWindow(transition='in_left').get_root_widget())

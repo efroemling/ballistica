@@ -337,7 +337,7 @@ class KioskWindow(ba.Window):
                                       repeat=True)
 
     def _restore_state(self) -> None:
-        sel_name = ba.app.window_states.get(self.__class__.__name__)
+        sel_name = ba.app.ui.window_states.get(self.__class__.__name__)
         sel: Optional[ba.Widget]
         if sel_name == 'b1':
             sel = self._b1
@@ -376,7 +376,7 @@ class KioskWindow(ba.Window):
             sel_name = 'b7'
         else:
             sel_name = 'b1'
-        ba.app.window_states[self.__class__.__name__] = sel_name
+        ba.app.ui.window_states[self.__class__.__name__] = sel_name
 
     def _update(self) -> None:
         # Kiosk-mode is designed to be used signed-out... try for force
@@ -466,4 +466,4 @@ class KioskWindow(ba.Window):
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         ba.app.did_menu_intro = True  # prevent delayed transition-in
-        ba.app.main_menu_window = (MainMenuWindow().get_root_widget())
+        ba.app.ui.set_main_menu_window(MainMenuWindow().get_root_widget())
