@@ -82,10 +82,14 @@ class AdvancedSettingsWindow(ba.Window):
         self._scroll_width = self._width - (100 + 2 * x_inset)
         self._scroll_height = self._height - 115.0
         self._sub_width = self._scroll_width * 0.95
-        self._sub_height = 740.0
+        self._sub_height = 724.0
 
         if self._show_always_use_internal_keyboard:
             self._sub_height += 62
+
+        self._show_disable_gyro = app.platform in {'ios', 'android'}
+        if self._show_disable_gyro:
+            self._sub_height += 42
 
         self._do_vr_test_button = app.vr_mode
         self._do_net_test_button = True
@@ -359,6 +363,29 @@ class AdvancedSettingsWindow(ba.Window):
             scale=1.0,
             maxwidth=430)
 
+        v -= 42
+        self._disable_camera_shake_check_box = ConfigCheckBox(
+            parent=self._subcontainer,
+            position=(50, v),
+            size=(self._sub_width - 100, 30),
+            configkey='Disable Camera Shake',
+            displayname=ba.Lstr(resource=self._r + '.disableCameraShakeText'),
+            scale=1.0,
+            maxwidth=430)
+
+        self._disable_gyro_check_box: Optional[ConfigCheckBox] = None
+        if self._show_disable_gyro:
+            v -= 42
+            self._disable_gyro_check_box = ConfigCheckBox(
+                parent=self._subcontainer,
+                position=(50, v),
+                size=(self._sub_width - 100, 30),
+                configkey='Disable Camera Gyro',
+                displayname=ba.Lstr(resource=self._r +
+                                    '.disableCameraGyroscopeMotionText'),
+                scale=1.0,
+                maxwidth=430)
+
         self._always_use_internal_keyboard_check_box: Optional[ConfigCheckBox]
         if self._show_always_use_internal_keyboard:
             v -= 42
@@ -414,7 +441,7 @@ class AdvancedSettingsWindow(ba.Window):
 
         v -= self._spacing * 2.0
 
-        btn = self._modding_guide_button = ba.buttonwidget(
+        self._modding_guide_button = ba.buttonwidget(
             parent=self._subcontainer,
             position=(self._sub_width / 2 - this_button_width / 2, v - 10),
             size=(this_button_width, 60),
@@ -424,33 +451,6 @@ class AdvancedSettingsWindow(ba.Window):
             on_activate_call=ba.Call(
                 ba.open_url,
                 'http://www.froemling.net/docs/bombsquad-modding-guide'))
-
-        v -= self._spacing * 1.8
-
-        self._enable_package_mods_checkbox = ConfigCheckBox(
-            parent=self._subcontainer,
-            position=(80, v),
-            size=(self._sub_width - 100, 30),
-            configkey='Enable Package Mods',
-            autoselect=True,
-            value_change_call=ba.WeakCall(self._show_restart_needed),
-            displayname=ba.Lstr(resource=self._r + '.enablePackageModsText'),
-            scale=1.0,
-            maxwidth=400)
-        ccb = self._enable_package_mods_checkbox.widget
-        ba.widget(edit=btn, down_widget=ccb)
-        ba.widget(edit=ccb, up_widget=btn)
-        ba.textwidget(parent=self._subcontainer,
-                      position=(90, v - 10),
-                      size=(0, 0),
-                      text=ba.Lstr(resource=self._r +
-                                   '.enablePackageModsDescriptionText'),
-                      maxwidth=400,
-                      flatness=1.0,
-                      scale=0.65,
-                      color=(0.4, 0.9, 0.4, 0.8),
-                      h_align='left',
-                      v_align='center')
 
         v -= self._spacing * 0.6
 
@@ -491,11 +491,6 @@ class AdvancedSettingsWindow(ba.Window):
             label=ba.Lstr(resource=self._r + '.benchmarksText'),
             text_scale=1.0,
             on_activate_call=self._on_benchmark_press)
-
-        ba.widget(edit=self._vr_test_button if self._vr_test_button is not None
-                  else self._net_test_button if self._net_test_button
-                  is not None else self._benchmarks_button,
-                  up_widget=cbw)
 
         for child in self._subcontainer.get_children():
             ba.widget(edit=child, show_buffer_bottom=30, show_buffer_top=20)
@@ -581,10 +576,15 @@ class AdvancedSettingsWindow(ba.Window):
                     sel_name = 'Benchmarks'
                 elif sel == self._kick_idle_players_check_box.widget:
                     sel_name = 'KickIdlePlayers'
+                elif sel == self._disable_camera_shake_check_box.widget:
+                    sel_name = 'DisableCameraShake'
                 elif (self._always_use_internal_keyboard_check_box is not None
                       and sel
                       == self._always_use_internal_keyboard_check_box.widget):
                     sel_name = 'AlwaysUseInternalKeyboard'
+                elif (self._disable_gyro_check_box is not None
+                      and sel == self._disable_gyro_check_box.widget):
+                    sel_name = 'DisableGyro'
                 elif (self._language_popup is not None
                       and sel == self._language_popup.get_button()):
                     sel_name = 'Languages'
@@ -594,8 +594,6 @@ class AdvancedSettingsWindow(ba.Window):
                     sel_name = 'ShowUserMods'
                 elif sel == self._modding_guide_button:
                     sel_name = 'ModdingGuide'
-                elif sel == self._enable_package_mods_checkbox.widget:
-                    sel_name = 'PackageMods'
                 elif sel == self._language_inform_checkbox:
                     sel_name = 'LangInform'
                 else:
@@ -630,10 +628,15 @@ class AdvancedSettingsWindow(ba.Window):
                     sel = self._benchmarks_button
                 elif sel_name == 'KickIdlePlayers':
                     sel = self._kick_idle_players_check_box.widget
+                elif sel_name == 'DisableCameraShake':
+                    sel = self._disable_camera_shake_check_box.widget
                 elif (sel_name == 'AlwaysUseInternalKeyboard'
                       and self._always_use_internal_keyboard_check_box
                       is not None):
                     sel = self._always_use_internal_keyboard_check_box.widget
+                elif (sel_name == 'DisableGyro'
+                      and self._disable_gyro_check_box is not None):
+                    sel = self._disable_gyro_check_box.widget
                 elif (sel_name == 'Languages'
                       and self._language_popup is not None):
                     sel = self._language_popup.get_button()
@@ -643,8 +646,6 @@ class AdvancedSettingsWindow(ba.Window):
                     sel = self._show_user_mods_button
                 elif sel_name == 'ModdingGuide':
                     sel = self._modding_guide_button
-                elif sel_name == 'PackageMods':
-                    sel = self._enable_package_mods_checkbox.widget
                 elif sel_name == 'LangInform':
                     sel = self._language_inform_checkbox
                 else:
