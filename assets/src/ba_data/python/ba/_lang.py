@@ -28,6 +28,7 @@ from typing import TYPE_CHECKING, overload
 import _ba
 
 if TYPE_CHECKING:
+    import ba
     from typing import Any, Dict, List, Optional, Tuple, Union, Sequence
 
 
@@ -192,6 +193,13 @@ class Lstr:
     def __repr__(self) -> str:
         return '<ba.Lstr: ' + self._get_json() + '>'
 
+    @staticmethod
+    def from_json(json_string: str) -> ba.Lstr:
+        """Given a json string, returns a ba.Lstr. Does no data validation."""
+        lstr = Lstr(value='')
+        lstr.args = json.loads(json_string)
+        return lstr
+
 
 def setlanguage(language: Optional[str],
                 print_change: bool = True,
@@ -203,6 +211,7 @@ def setlanguage(language: Optional[str],
     Pass None to use OS default language.
     """
     # pylint: disable=too-many-locals
+    # pylint: disable=too-many-statements
     # pylint: disable=too-many-branches
     cfg = _ba.app.config
     cur_language = cfg.get('Lang', None)
@@ -273,6 +282,7 @@ def setlanguage(language: Optional[str],
         internal_vals.append((value, lfull[value]))
     internal_vals.append(
         ('axisText', lfull['configGamepadWindow']['axisText']))
+    internal_vals.append(('buttonText', lfull['buttonText']))
     lmerged = _ba.app.language_merged
     assert lmerged is not None
     random_names = [

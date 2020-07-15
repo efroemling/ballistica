@@ -256,6 +256,11 @@ class InputDevice:
        allows_configuring: bool
           Whether the input-device can be configured.
 
+       has_meaningful_button_names: bool
+          Whether button names returned by this instance match labels
+          on the actual device. (Can be used to determine whether to show
+          them in controls-overlays, etc.)
+
        player: Optional[ba.SessionPlayer]
           The player associated with this input device.
 
@@ -288,6 +293,7 @@ class InputDevice:
 
     """
     allows_configuring: bool
+    has_meaningful_button_names: bool
     player: Optional[ba.SessionPlayer]
     client_id: int
     name: str
@@ -316,16 +322,21 @@ class InputDevice:
     def get_axis_name(self, axis_id: int) -> str:
         """get_axis_name(axis_id: int) -> str
 
-        Given an axis ID, returns the name of the axis on this device.
+        Given an axis ID, return the name of the axis on this device.
+
+        Can return an empty string if the value is not meaningful to humans.
         """
         return str()
 
-    def get_button_name(self, button_id: int) -> str:
-        """get_button_name(button_id: int) -> str
+    def get_button_name(self, button_id: int) -> ba.Lstr:
+        """get_button_name(button_id: int) -> ba.Lstr
 
-        Given a button ID, returns the name of the key/button on this device.
+        Given a button ID, return a human-readable name for that key/button.
+
+        Can return an empty string if the value is not meaningful to humans.
         """
-        return str()
+        import ba  # pylint: disable=cyclic-import
+        return ba.Lstr(value='')
 
     def get_default_player_name(self) -> str:
         """get_default_player_name() -> str

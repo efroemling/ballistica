@@ -243,6 +243,13 @@ class ControlsGuide(ba.Actor):
         # Don't do anything until our delay has passed.
         ba.timer(delay, ba.WeakCall(self._start_updating))
 
+    @staticmethod
+    def _meaningful_button_name(device: ba.InputDevice, button: int) -> str:
+        """Return a flattened string button name; empty for non-meaningful."""
+        if not device.has_meaningful_button_names:
+            return ''
+        return device.get_button_name(button).evaluate()
+
     def _start_updating(self) -> None:
 
         # Ok, our delay has passed. Now lets periodically see if we can fade
@@ -284,8 +291,8 @@ class ControlsGuide(ba.Actor):
                 for device in input_devices:
                     for name in ('buttonPunch', 'buttonJump', 'buttonBomb',
                                  'buttonPickUp'):
-                        if device.get_button_name(
-                                get_device_value(device, name)) != '':
+                        if self._meaningful_button_name(
+                                device, get_device_value(device, name)) != '':
                             fade_in = True
                             break
                     if fade_in:
@@ -368,20 +375,20 @@ class ControlsGuide(ba.Actor):
 
             # Ignore empty values; things like the remote app or
             # wiimotes can return these.
-            bname = device.get_button_name(
-                get_device_value(device, 'buttonPunch'))
+            bname = self._meaningful_button_name(
+                device, get_device_value(device, 'buttonPunch'))
             if bname != '':
                 punch_button_names.add(bname)
-            bname = device.get_button_name(
-                get_device_value(device, 'buttonJump'))
+            bname = self._meaningful_button_name(
+                device, get_device_value(device, 'buttonJump'))
             if bname != '':
                 jump_button_names.add(bname)
-            bname = device.get_button_name(
-                get_device_value(device, 'buttonBomb'))
+            bname = self._meaningful_button_name(
+                device, get_device_value(device, 'buttonBomb'))
             if bname != '':
                 bomb_button_names.add(bname)
-            bname = device.get_button_name(
-                get_device_value(device, 'buttonPickUp'))
+            bname = self._meaningful_button_name(
+                device, get_device_value(device, 'buttonPickUp'))
             if bname != '':
                 pickup_button_names.add(bname)
 

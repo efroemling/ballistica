@@ -64,7 +64,7 @@ class ControlsSettingsWindow(ba.Window):
         spacing = 50.0
         button_width = 350.0
         width = 460.0
-        height = 135.0
+        height = 85.0
 
         space_height = spacing * 0.3
 

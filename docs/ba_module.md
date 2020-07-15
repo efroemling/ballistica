@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-07-14 for Ballistica version 1.5.21 build 20138</em></h4>
+<h4><em>last updated on 2020-07-15 for Ballistica version 1.5.22 build 20140</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -2872,7 +2872,7 @@ Results for a completed game.</p>
 <p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a></p>
 
 <h3>Attributes:</h3>
-<h5><a href="#attr_ba_InputDevice__allows_configuring">allows_configuring</a>, <a href="#attr_ba_InputDevice__client_id">client_id</a>, <a href="#attr_ba_InputDevice__id">id</a>, <a href="#attr_ba_InputDevice__instance_number">instance_number</a>, <a href="#attr_ba_InputDevice__is_controller_app">is_controller_app</a>, <a href="#attr_ba_InputDevice__is_remote_client">is_remote_client</a>, <a href="#attr_ba_InputDevice__name">name</a>, <a href="#attr_ba_InputDevice__player">player</a>, <a href="#attr_ba_InputDevice__unique_identifier">unique_identifier</a></h5>
+<h5><a href="#attr_ba_InputDevice__allows_configuring">allows_configuring</a>, <a href="#attr_ba_InputDevice__client_id">client_id</a>, <a href="#attr_ba_InputDevice__has_meaningful_button_names">has_meaningful_button_names</a>, <a href="#attr_ba_InputDevice__id">id</a>, <a href="#attr_ba_InputDevice__instance_number">instance_number</a>, <a href="#attr_ba_InputDevice__is_controller_app">is_controller_app</a>, <a href="#attr_ba_InputDevice__is_remote_client">is_remote_client</a>, <a href="#attr_ba_InputDevice__name">name</a>, <a href="#attr_ba_InputDevice__player">player</a>, <a href="#attr_ba_InputDevice__unique_identifier">unique_identifier</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_InputDevice__allows_configuring">allows_configuring</a></h4></dt><dd>
 <p><span> bool</span></p>
@@ -2884,6 +2884,13 @@ Results for a completed game.</p>
 <p>The numeric client-id this device is associated with.
 This is only meaningful for remote client inputs; for
 all local devices this will be -1.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_InputDevice__has_meaningful_button_names">has_meaningful_button_names</a></h4></dt><dd>
+<p><span> bool</span></p>
+<p>Whether button names returned by this instance match labels
+on the actual device. (Can be used to determine whether to show
+them in controls-overlays, etc.)</p>
 
 </dd>
 <dt><h4><a name="attr_ba_InputDevice__id">id</a></h4></dt><dd>
@@ -2946,13 +2953,17 @@ prefs, etc.</p>
 <dt><h4><a name="method_ba_InputDevice__get_axis_name">get_axis_name()</a></dt></h4><dd>
 <p><span>get_axis_name(axis_id: int) -&gt; str</span></p>
 
-<p>Given an axis ID, returns the name of the axis on this device.</p>
+<p>Given an axis ID, return the name of the axis on this device.</p>
+
+<p>Can return an empty string if the value is not meaningful to humans.</p>
 
 </dd>
 <dt><h4><a name="method_ba_InputDevice__get_button_name">get_button_name()</a></dt></h4><dd>
-<p><span>get_button_name(button_id: int) -&gt; str</span></p>
+<p><span>get_button_name(button_id: int) -&gt; <a href="#class_ba_Lstr">ba.Lstr</a></span></p>
 
-<p>Given a button ID, returns the name of the key/button on this device.</p>
+<p>Given a button ID, return a human-readable name for that key/button.</p>
+
+<p>Can return an empty string if the value is not meaningful to humans.</p>
 
 </dd>
 </dl>
@@ -3273,7 +3284,7 @@ needs a chooser.</p>
 </pre>
 
 <h3>Methods:</h3>
-<h5><a href="#method_ba_Lstr____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Lstr__evaluate">evaluate()</a>, <a href="#method_ba_Lstr__is_flat_value">is_flat_value()</a></h5>
+<h5><a href="#method_ba_Lstr____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Lstr__evaluate">evaluate()</a>, <a href="#method_ba_Lstr__from_json">from_json()</a>, <a href="#method_ba_Lstr__is_flat_value">is_flat_value()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_Lstr____init__">&lt;constructor&gt;</a></dt></h4><dd>
 <p><span>ba.Lstr(*args: Any, **keywds: Any)</span></p>
@@ -3299,6 +3310,12 @@ the resource nor the fallback resource is found ('resource' mode only).</p>
 
 <p>You should avoid doing this as much as possible and instead pass
 and store Lstr values.</p>
+
+</dd>
+<dt><h4><a name="method_ba_Lstr__from_json">from_json()</a></dt></h4><dd>
+<p><span>from_json(json_string: str) -&gt; <a href="#class_ba_Lstr">ba.Lstr</a></span></p>
+
+<p>Given a json string, returns a <a href="#class_ba_Lstr">ba.Lstr</a>. Does no data validation.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Lstr__is_flat_value">is_flat_value()</a></dt></h4><dd>

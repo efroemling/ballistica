@@ -188,7 +188,7 @@ class GamepadSettingsWindow(ba.Window):
                 size=((160 if self._is_secondary else 180), 60),
                 autoselect=True,
                 label=ba.Lstr(resource='doneText')
-                if self._is_secondary else ba.Lstr(resource='makeItSoText'),
+                if self._is_secondary else ba.Lstr(resource='saveText'),
                 scale=0.9,
                 on_activate_call=self._save)
             ba.containerwidget(edit=self._root_widget,

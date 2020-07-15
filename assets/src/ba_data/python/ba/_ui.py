@@ -103,9 +103,10 @@ class UI:
         # on the old after a short bit of time and kill it if its still alive.
         # That will be a bit ugly on screen but at least will un-break things.
         def _delay_kill() -> None:
+            import time
             if existing:
                 print(f'Killing old main_menu_window'
-                      f' when called at: {frameline}')
+                      f' when called at: {frameline} t={time.time():.3f}')
                 existing.delete()
 
         _ba.timer(1.0, _delay_kill, timetype=TimeType.REAL)
