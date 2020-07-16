@@ -14,3 +14,6 @@
 ### Benefit-Zebra
 - Unofficial BombSquad Bug Finder
 - Code Cleanup
+
+### Ali Borhani
+- Bug fixes
