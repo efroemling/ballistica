@@ -1,3 +1,6 @@
+### Unreleased
+- Fixed the shebang line in `bombsquad_server` file by using `-S` flag for `/usr/bin/env`.
+
 ### 1.5.22 (20139)
 - Button and key names now display correctly again on Android (and are cleaned up on other platforms too).
 
