@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-07-15 for Ballistica version 1.5.22 build 20140</em></h4>
+<h4><em>last updated on 2020-07-16 for Ballistica version 1.5.22 build 20144</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -6127,7 +6127,7 @@ are applied to the Widget.</p>
 <h2><strong><a name="function_ba_do_once">ba.do_once()</a></strong></h3>
 <p><span>do_once() -&gt; bool</span></p>
 
-<p>Register a call at a location and return whether one already happened.</p>
+<p>Return whether this is the first time running a line of code.</p>
 
 <p>Category: <a href="#function_category_General_Utility_Functions">General Utility Functions</a></p>
 

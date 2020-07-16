@@ -824,6 +824,10 @@ class MainMenuWindow(ba.Window):
         return h, v, scale
 
     def _change_replay_speed(self, offs: int) -> None:
+        if not self._replay_speed_text:
+            if ba.do_once():
+                print('_change_replay_speed called without widget')
+            return
         _ba.set_replay_speed_exponent(_ba.get_replay_speed_exponent() + offs)
         actual_speed = pow(2.0, _ba.get_replay_speed_exponent())
         ba.textwidget(edit=self._replay_speed_text,

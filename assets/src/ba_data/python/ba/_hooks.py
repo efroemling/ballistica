@@ -269,9 +269,12 @@ def read_config() -> None:
 def ui_remote_press() -> None:
     """Handle a press by a remote device that is only usable for nav."""
     from ba._lang import Lstr
-    _ba.screenmessage(Lstr(resource='internal.controllerForMenusOnlyText'),
-                      color=(1, 0, 0))
-    _ba.playsound(_ba.getsound('error'))
+
+    # Can be called without a context; need a context for getsound.
+    with _ba.Context('ui'):
+        _ba.screenmessage(Lstr(resource='internal.controllerForMenusOnlyText'),
+                          color=(1, 0, 0))
+        _ba.playsound(_ba.getsound('error'))
 
 
 def quit_window() -> None:

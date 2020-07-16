@@ -1761,7 +1761,7 @@ def disconnect_from_host() -> None:
 def do_once() -> bool:
     """do_once() -> bool
 
-    Register a call at a location and return whether one already happened.
+    Return whether this is the first time running a line of code.
 
     Category: General Utility Functions
 
