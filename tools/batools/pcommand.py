@@ -62,7 +62,7 @@ def stage_server_file() -> None:
             lines = infile.read().splitlines()
             if mode == 'release':
                 lines[0] = replace_one(lines[0], '#!/usr/bin/env python3.7',
-                                       '#!/usr/bin/env python3.7 -O')
+                                       '#!/usr/bin/env -S python3.7 -O')
         with open(outfilename, 'w') as outfile:
             outfile.write('\n'.join(lines) + '\n')
         subprocess.run(['chmod', '+x', outfilename], check=True)
