@@ -91,7 +91,7 @@ class MainMenuWindow(ba.Window):
 
     @staticmethod
     def _preload_modules() -> None:
-        """For preloading modules we use in a bg thread to prevent hitches."""
+        """Preload modules we use (called in bg thread)."""
         import bastd.ui.getremote as _unused
         import bastd.ui.confirm as _unused2
         import bastd.ui.store.button as _unused3

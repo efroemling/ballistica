@@ -41,6 +41,12 @@ class AdvancedSettingsWindow(ba.Window):
         # pylint: disable=too-many-statements
         from ba.internal import master_server_get
 
+        import threading
+
+        # Preload some modules we use in a background thread so we won't
+        # have a visual hitch when the user taps them.
+        threading.Thread(target=self._preload_modules).start()
+
         app = ba.app
 
         # If they provided an origin-widget, scale up from that.
@@ -99,6 +105,7 @@ class AdvancedSettingsWindow(ba.Window):
             self._sub_height += self._extra_button_spacing
         if self._do_net_test_button:
             self._sub_height += self._extra_button_spacing
+        self._sub_height += self._spacing * 2.0  # plugins
 
         self._r = 'settingsWindowAdvanced'
 
@@ -159,6 +166,19 @@ class AdvancedSettingsWindow(ba.Window):
         # Fetch the list of completed languages.
         master_server_get('bsLangGetCompleted', {'b': app.build_number},
                           callback=ba.WeakCall(self._completed_langs_cb))
+
+    @staticmethod
+    def _preload_modules() -> None:
+        """Preload modules we use (called in bg thread)."""
+        from bastd.ui import config as _unused1
+        from ba import modutils as _unused2
+        from bastd.ui.settings import vrtesting as _unused3
+        from bastd.ui.settings import nettesting as _unused4
+        from bastd.ui import appinvite as _unused5
+        from bastd.ui import account as _unused6
+        from bastd.ui import promocode as _unused7
+        from bastd.ui import debug as _unused8
+        from bastd.ui.settings import plugins as _unused9
 
     def _update_lang_status(self) -> None:
         if self._complete_langs_list is not None:
@@ -452,6 +472,17 @@ class AdvancedSettingsWindow(ba.Window):
                 ba.open_url,
                 'http://www.froemling.net/docs/bombsquad-modding-guide'))
 
+        v -= self._spacing * 2.0
+
+        self._plugins_button = ba.buttonwidget(
+            parent=self._subcontainer,
+            position=(self._sub_width / 2 - this_button_width / 2, v - 10),
+            size=(this_button_width, 60),
+            autoselect=True,
+            label=ba.Lstr(resource='pluginsText'),
+            text_scale=1.0,
+            on_activate_call=self._on_plugins_button_press)
+
         v -= self._spacing * 0.6
 
         self._vr_test_button: Optional[ba.Widget]
@@ -539,6 +570,14 @@ class AdvancedSettingsWindow(ba.Window):
             return
         appinvite.handle_app_invites_press()
 
+    def _on_plugins_button_press(self) -> None:
+        from bastd.ui.settings.plugins import PluginSettingsWindow
+        self._save_state()
+        ba.containerwidget(edit=self._root_widget, transition='out_left')
+        ba.app.ui.set_main_menu_window(
+            PluginSettingsWindow(
+                origin_widget=self._plugins_button).get_root_widget())
+
     def _on_promo_code_press(self) -> None:
         from bastd.ui.promocode import PromoCodeWindow
         from bastd.ui.account import show_sign_in_prompt
@@ -592,6 +631,8 @@ class AdvancedSettingsWindow(ba.Window):
                     sel_name = 'TranslationEditor'
                 elif sel == self._show_user_mods_button:
                     sel_name = 'ShowUserMods'
+                elif sel == self._plugins_button:
+                    sel_name = 'Plugins'
                 elif sel == self._modding_guide_button:
                     sel_name = 'ModdingGuide'
                 elif sel == self._language_inform_checkbox:
@@ -644,6 +685,8 @@ class AdvancedSettingsWindow(ba.Window):
                     sel = self._translation_editor_button
                 elif sel_name == 'ShowUserMods':
                     sel = self._show_user_mods_button
+                elif sel_name == 'Plugins':
+                    sel = self._plugins_button
                 elif sel_name == 'ModdingGuide':
                     sel = self._modding_guide_button
                 elif sel_name == 'LangInform':

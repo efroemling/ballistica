@@ -353,6 +353,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/bastd/ui/settings/graphics.py \
   build/ba_data/python/bastd/ui/settings/keyboard.py \
   build/ba_data/python/bastd/ui/settings/nettesting.py \
+  build/ba_data/python/bastd/ui/settings/plugins.py \
   build/ba_data/python/bastd/ui/settings/ps3controller.py \
   build/ba_data/python/bastd/ui/settings/remoteapp.py \
   build/ba_data/python/bastd/ui/settings/testing.py \
@@ -585,6 +586,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/bastd/ui/settings/__pycache__/graphics.cpython-37.opt-1.pyc \
   build/ba_data/python/bastd/ui/settings/__pycache__/keyboard.cpython-37.opt-1.pyc \
   build/ba_data/python/bastd/ui/settings/__pycache__/nettesting.cpython-37.opt-1.pyc \
+  build/ba_data/python/bastd/ui/settings/__pycache__/plugins.cpython-37.opt-1.pyc \
   build/ba_data/python/bastd/ui/settings/__pycache__/ps3controller.cpython-37.opt-1.pyc \
   build/ba_data/python/bastd/ui/settings/__pycache__/remoteapp.cpython-37.opt-1.pyc \
   build/ba_data/python/bastd/ui/settings/__pycache__/testing.cpython-37.opt-1.pyc \
