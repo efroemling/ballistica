@@ -1,5 +1,7 @@
-### Unreleased
+### 1.5.23
 - Fixed the shebang line in `bombsquad_server` file by using `-S` flag for `/usr/bin/env`.
+- Fixed a bug with hardware keyboards emitting extra characters in the in-game console (~ or F2)
+- Added support for 'plugin' mods and user controls to configure them in settings->advanced->plugins.
 
 ### 1.5.22 (20139)
 - Button and key names now display correctly again on Android (and are cleaned up on other platforms too).
