@@ -297,7 +297,8 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     efrotools.writefile('pybuild/packages/python.py', ftxt)
 
     # Set this to a particular cpython commit to target exact releases from git
-    commit = 'd7c567b08f9d7d6aef21b881340a2b72731129db'  # 3.7.7 release
+    # commit = 'd7c567b08f9d7d6aef21b881340a2b72731129db'  # 3.7.7 release
+    commit = '4b47a5b6ba66b02df9392feb97b8ead916f8c1fa'  # 3.7.8 release
 
     if commit is not None:
         ftxt = efrotools.readfile('pybuild/source.py')
@@ -415,6 +416,52 @@ def android_patch() -> None:
     txt = efrotools.replace_one(
         txt, '		*=*)	DEFS="$line$NL$DEFS"; continue;;',
         '		[A-Z]*=*)	DEFS="$line$NL$DEFS"; continue;;')
+    efrotools.writefile(fname, txt)
+
+    # Add custom callbacks to Python's PyParser_ParseFileObject
+    # and PyParser_ParseString calls to debug a crash.
+    fname = 'src/cpython/Parser/parsetok.c'
+    txt = efrotools.readfile(fname)
+    txt = efrotools.replace_one(
+        txt, 'node *\n'
+        'PyParser_ParseFileObject(FILE *fp, PyObject *filename,\n'
+        '                         const char *enc, grammar *g, int start,\n'
+        '                         const char *ps1, const char *ps2,\n'
+        '                         perrdetail *err_ret, int *flags)\n'
+        '{\n', 'void (*PyParser_ParseFileObject_EfroCB)'
+        '(FILE *fp, PyObject *filename,\n'
+        '                         const char *enc, grammar *g, int start,\n'
+        '                         const char *ps1, const char *ps2,\n'
+        '                         perrdetail *err_ret, int *flags) = NULL;\n'
+        'node *\n'
+        'PyParser_ParseFileObject(FILE *fp, PyObject *filename,\n'
+        '                         const char *enc, grammar *g, int start,\n'
+        '                         const char *ps1, const char *ps2,\n'
+        '                         perrdetail *err_ret, int *flags)\n'
+        '{\n'
+        '    if (PyParser_ParseFileObject_EfroCB != NULL) {\n'
+        '        PyParser_ParseFileObject_EfroCB(fp, filename, enc, g,\n'
+        '                                       start, ps1, ps2,\n'
+        '                                       err_ret, flags);\n'
+        '    }\n')
+    txt = efrotools.replace_one(
+        txt, 'node *\n'
+        'PyParser_ParseStringObject(const char *s, PyObject *filename,\n'
+        '                           grammar *g, int start,\n'
+        '                           perrdetail *err_ret, int *flags)\n'
+        '{\n', 'void (*PyParser_ParseStringObject_EfroCB)'
+        '(const char *s, PyObject *filename,\n'
+        '                           grammar *g, int start,\n'
+        '                           perrdetail *err_ret, int *flags) = NULL;\n'
+        'node *\n'
+        'PyParser_ParseStringObject(const char *s, PyObject *filename,\n'
+        '                           grammar *g, int start,\n'
+        '                           perrdetail *err_ret, int *flags)\n'
+        '{\n'
+        '    if (PyParser_ParseStringObject_EfroCB != NULL) {\n'
+        '        PyParser_ParseStringObject_EfroCB(s, filename, g, start,\n'
+        '                                          err_ret, flags);\n'
+        '    }\n')
     efrotools.writefile(fname, txt)
 
     print('APPLIED EFROTOOLS ANDROID BUILD PATCHES.')
