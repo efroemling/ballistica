@@ -140,7 +140,7 @@ def _add_build_to_xcarchive(workdir: pathlib.Path, xcprojpath: pathlib.Path,
             MODES['debug']['configuration'], '-archivePath',
             str(archivepathbase)
         ]
-        subprocess.run(args, check=True, capture_output=True)
+        subprocess.run(args, check=True, capture_output=False)
 
     # Now copy our just-built app into the archive.
     print('Copying build to archive...')
