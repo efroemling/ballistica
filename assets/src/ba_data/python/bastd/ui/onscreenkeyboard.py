@@ -203,6 +203,7 @@ class OnScreenKeyboardWindow(ba.Window):
                                        label=ba.Lstr(resource='spaceKeyText'),
                                        on_activate_call=ba.Call(
                                            self._type_char, ' '))
+                btn3 = self._emoji_button
                 ba.widget(edit=btn1, right_widget=btn2)
                 ba.widget(edit=btn2,
                           left_widget=btn1,
