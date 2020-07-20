@@ -217,16 +217,23 @@ class OnScreenKeyboardWindow(ba.Window):
             ba.buttonwidget(edit=self._num_mode_button,
                             label='123#&*',
                             on_activate_call=self._num_mode)
-        elif self._mode == 'num':
+        elif self._mode in ['num', 'emoji']:
             chars = [
                 '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '/',
                 ':', ';', '(', ')', '$', '&', '@', '"', '.', ',', '?', '!',
                 '\'', '_'
             ]
+            if self._mode == 'emoji':
+                chars = [
+                    ba.charstr(ba.SpecialChar.LOGO_FLAT), ba.charstr(ba.SpecialChar.UP_ARROW), ba.charstr(ba.SpecialChar.DOWN_ARROW), ba.charstr(ba.SpecialChar.LEFT_ARROW), ba.charstr(ba.SpecialChar.RIGHT_ARROW), ba.charstr(ba.SpecialChar.DELETE), ba.charstr(ba.SpecialChar.BACK), ba.charstr(ba.SpecialChar.TICKET),  ba.charstr(ba.SpecialChar.PARTY_ICON), ba.charstr(ba.SpecialChar.LOCAL_ACCOUNT),
+                    ba.charstr(ba.SpecialChar.FEDORA), ba.charstr(ba.SpecialChar.HAL), ba.charstr(ba.SpecialChar.CROWN), ba.charstr(ba.SpecialChar.YIN_YANG), ba.charstr(ba.SpecialChar.EYE_BALL), ba.charstr(ba.SpecialChar.SKULL), ba.charstr(ba.SpecialChar.HEART), ba.charstr(ba.SpecialChar.DRAGON), ba.charstr(ba.SpecialChar.HELMET), 
+                    ba.charstr(ba.SpecialChar.MUSHROOM), ba.charstr(ba.SpecialChar.NINJA_STAR), ba.charstr(ba.SpecialChar.VIKING_HELMET), ba.charstr(ba.SpecialChar.MOON), ba.charstr(ba.SpecialChar.SPIDER), ba.charstr(ba.SpecialChar.FIREBALL), ba.charstr(ba.SpecialChar.MIKIROG)
+                ]
             ba.buttonwidget(edit=self._shift_button,
-                            color=self._key_color_dark,
-                            label='',
-                            on_activate_call=self._null_press)
+                            color=self._key_color_lit
+                            if self._mode == 'emoji' else self._key_color_dark,
+                            label='Emoji',
+                            on_activate_call=self._shift2)
             ba.buttonwidget(edit=self._num_mode_button,
                             label='abc',
                             on_activate_call=self._abc_mode)
@@ -259,6 +266,14 @@ class OnScreenKeyboardWindow(ba.Window):
             self._mode = 'normal'
         self._refresh()
 
+    def _shift2(self) -> None:
+        ba.playsound(self._click_sound)
+        if self._mode == 'num':
+            self._mode = 'emoji'
+        elif self._mode == 'emoji':
+            self._mode = 'num'
+        self._refresh()
+
     def _del(self) -> None:
         ba.playsound(self._click_sound)
         txt = cast(str, ba.textwidget(query=self._text_field))
@@ -275,6 +290,8 @@ class OnScreenKeyboardWindow(ba.Window):
         ba.textwidget(edit=self._text_field, text=txt)
         # if we were caps, go back
         if self._mode == 'caps':
+            self._mode = 'normal'
+        elif self._mode == 'emoji':
             self._mode = 'normal'
         self._refresh()
 
