@@ -86,9 +86,12 @@ class OnScreenKeyboardWindow(ba.Window):
             always_show_carat=True)
 
         self._shift_button = None
+        self._double_press_shift = False
         self._num_mode_button = None
+        self._emoji_button = None
         self._char_keys: List[ba.Widget] = []
         self._mode = 'normal'
+        self._last_mode = 'normal'
 
         v = self._height - 180
         key_width = 46
@@ -176,6 +179,19 @@ class OnScreenKeyboardWindow(ba.Window):
                         color=key_color_dark,
                         label='',
                     )
+                if self._emoji_button is None:
+                    self._emoji_button = ba.buttonwidget(
+                        parent=self._root_widget,
+                        position=(56, v - 8),
+                        size=(key_width, key_height + 5),
+                        autoselect=True,
+                        enable_sound=False,
+                        textcolor=key_textcolor,
+                        color=key_color_dark,
+                        label=ba.charstr(ba.SpecialChar.LOGO_FLAT),
+                        extra_touch_border_scale=0.3,
+                        button_type='square',
+                    )
                 btn1 = self._num_mode_button
                 btn2 = ba.buttonwidget(parent=self._root_widget,
                                        position=(210, v - 12),
@@ -188,10 +204,12 @@ class OnScreenKeyboardWindow(ba.Window):
                                        label=ba.Lstr(resource='spaceKeyText'),
                                        on_activate_call=ba.Call(
                                            self._type_char, ' '))
+                btn3 = self._emoji_button
                 ba.widget(edit=btn1, right_widget=btn2)
                 ba.widget(edit=btn2,
                           left_widget=btn1,
                           right_widget=self._done_button)
+                ba.widget(edit=btn3, left_widget=btn1)
                 ba.widget(edit=self._done_button, left_widget=btn2)
 
         ba.containerwidget(edit=self._root_widget,
@@ -201,7 +219,7 @@ class OnScreenKeyboardWindow(ba.Window):
 
     def _refresh(self) -> None:
         chars: Optional[List[str]] = None
-        if self._mode in ['normal', 'caps']:
+        if self._mode in ['normal', 'caps', 'emoji']:
             chars = [
                 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's',
                 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'z', 'x', 'c', 'v', 'b',
@@ -217,6 +235,40 @@ class OnScreenKeyboardWindow(ba.Window):
             ba.buttonwidget(edit=self._num_mode_button,
                             label='123#&*',
                             on_activate_call=self._num_mode)
+            if self._mode == 'emoji':
+                chars = [
+                    ba.charstr(
+                        ba.SpecialChar.LOGO_FLAT), ba.charstr(
+                        ba.SpecialChar.UP_ARROW), ba.charstr(
+                        ba.SpecialChar.DOWN_ARROW), ba.charstr(
+                        ba.SpecialChar.LEFT_ARROW), ba.charstr(
+                        ba.SpecialChar.RIGHT_ARROW), ba.charstr(
+                            ba.SpecialChar.DELETE), ba.charstr(
+                                ba.SpecialChar.BACK), ba.charstr(
+                                    ba.SpecialChar.TICKET), ba.charstr(
+                                        ba.SpecialChar.PARTY_ICON), ba.charstr(
+                                            ba.SpecialChar.LOCAL_ACCOUNT), ba.charstr(
+                                                ba.SpecialChar.FEDORA), ba.charstr(
+                                                    ba.SpecialChar.HAL), ba.charstr(
+                                                        ba.SpecialChar.CROWN), ba.charstr(
+                                                            ba.SpecialChar.YIN_YANG), ba.charstr(
+                                                                ba.SpecialChar.EYE_BALL), ba.charstr(
+                                                                    ba.SpecialChar.SKULL), ba.charstr(
+                                                                        ba.SpecialChar.HEART), ba.charstr(
+                                                                            ba.SpecialChar.DRAGON), ba.charstr(
+                                                                                ba.SpecialChar.HELMET), ba.charstr(
+                                                                                    ba.SpecialChar.MUSHROOM), ba.charstr(
+                                                                                        ba.SpecialChar.NINJA_STAR), ba.charstr(
+                                                                                            ba.SpecialChar.VIKING_HELMET), ba.charstr(
+                                                                                                ba.SpecialChar.MOON), ba.charstr(
+                                                                                                    ba.SpecialChar.SPIDER), ba.charstr(
+                                                                                                        ba.SpecialChar.FIREBALL), ba.charstr(
+                                                                                                            ba.SpecialChar.MIKIROG)]
+            ba.buttonwidget(edit=self._emoji_button,
+                            color=self._key_color_lit
+                            if self._mode == 'emoji' else self._key_color_dark,
+                            label=ba.charstr(ba.SpecialChar.LOGO_FLAT),
+                            on_activate_call=self._emoji_mode)
         elif self._mode == 'num':
             chars = [
                 '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '/',
@@ -251,12 +303,25 @@ class OnScreenKeyboardWindow(ba.Window):
         self._mode = 'num'
         self._refresh()
 
+    def _emoji_mode(self) -> None:
+        ba.playsound(self._click_sound)
+        if self._mode in ['normal', 'caps', 'num']:
+            self._last_mode = self._mode
+            self._mode = 'emoji'
+        elif self._mode == 'emoji':
+            self._mode = self._last_mode
+        self._refresh()
+
     def _shift(self) -> None:
         ba.playsound(self._click_sound)
         if self._mode == 'normal':
             self._mode = 'caps'
+            self._double_press_shift = False
         elif self._mode == 'caps':
-            self._mode = 'normal'
+            if not self._double_press_shift:
+                self._double_press_shift = True
+            else:
+                self._mode = 'normal'
         self._refresh()
 
     def _del(self) -> None:
@@ -273,8 +338,9 @@ class OnScreenKeyboardWindow(ba.Window):
         txt = cast(str, ba.textwidget(query=self._text_field))
         txt += char
         ba.textwidget(edit=self._text_field, text=txt)
-        # if we were caps, go back
-        if self._mode == 'caps':
+        # if we were caps,
+        # go back only if not Shift is pressed twice
+        if self._mode == 'caps' and self._double_press_shift != True:
             self._mode = 'normal'
         self._refresh()
 
