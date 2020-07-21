@@ -26,6 +26,8 @@ from typing import TYPE_CHECKING, cast
 
 import _ba
 import ba
+from ba import charstr
+from ba import SpecialChar as SpCh
 
 if TYPE_CHECKING:
     from typing import List, Tuple, Optional
@@ -128,7 +130,7 @@ class OnScreenKeyboardWindow(ba.Window):
                     autoselect=True,
                     textcolor=key_textcolor,
                     color=key_color_dark,
-                    label=ba.charstr(ba.SpecialChar.SHIFT),
+                    label=charstr(SpCh.SHIFT),
                     enable_sound=False,
                     extra_touch_border_scale=0.3,
                     button_type='square',
@@ -160,7 +162,7 @@ class OnScreenKeyboardWindow(ba.Window):
                                 repeat=True,
                                 textcolor=key_textcolor,
                                 color=key_color_dark,
-                                label=ba.charstr(ba.SpecialChar.DELETE),
+                                label=charstr(SpCh.DELETE),
                                 button_type='square',
                                 on_activate_call=self._del)
             v -= (key_height + 9)
@@ -188,7 +190,7 @@ class OnScreenKeyboardWindow(ba.Window):
                         enable_sound=False,
                         textcolor=key_textcolor,
                         color=key_color_dark,
-                        label=ba.charstr(ba.SpecialChar.LOGO_FLAT),
+                        label=charstr(SpCh.LOGO_FLAT),
                         extra_touch_border_scale=0.3,
                         button_type='square',
                     )
@@ -205,7 +207,7 @@ class OnScreenKeyboardWindow(ba.Window):
                                        on_activate_call=ba.Call(
                                            self._type_char, ' '))
                 btn3 = self._emoji_button
-                ba.widget(edit=btn1, right_widget=btn2)
+                ba.widget(edit=btn1, right_widget=btn2, left_widget=btn3)
                 ba.widget(edit=btn2,
                           left_widget=btn1,
                           right_widget=self._done_button)
@@ -219,7 +221,7 @@ class OnScreenKeyboardWindow(ba.Window):
 
     def _refresh(self) -> None:
         chars: Optional[List[str]] = None
-        if self._mode in ['normal', 'caps', 'emoji']:
+        if self._mode in ['normal', 'caps']:
             chars = [
                 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's',
                 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'z', 'x', 'c', 'v', 'b',
@@ -230,44 +232,14 @@ class OnScreenKeyboardWindow(ba.Window):
             ba.buttonwidget(edit=self._shift_button,
                             color=self._key_color_lit
                             if self._mode == 'caps' else self._key_color_dark,
-                            label=ba.charstr(ba.SpecialChar.SHIFT),
+                            label=charstr(SpCh.SHIFT),
                             on_activate_call=self._shift)
             ba.buttonwidget(edit=self._num_mode_button,
                             label='123#&*',
                             on_activate_call=self._num_mode)
-            if self._mode == 'emoji':
-                chars = [
-                    ba.charstr(
-                        ba.SpecialChar.LOGO_FLAT), ba.charstr(
-                        ba.SpecialChar.UP_ARROW), ba.charstr(
-                        ba.SpecialChar.DOWN_ARROW), ba.charstr(
-                        ba.SpecialChar.LEFT_ARROW), ba.charstr(
-                        ba.SpecialChar.RIGHT_ARROW), ba.charstr(
-                            ba.SpecialChar.DELETE), ba.charstr(
-                                ba.SpecialChar.BACK), ba.charstr(
-                                    ba.SpecialChar.TICKET), ba.charstr(
-                                        ba.SpecialChar.PARTY_ICON), ba.charstr(
-                                            ba.SpecialChar.LOCAL_ACCOUNT), ba.charstr(
-                                                ba.SpecialChar.FEDORA), ba.charstr(
-                                                    ba.SpecialChar.HAL), ba.charstr(
-                                                        ba.SpecialChar.CROWN), ba.charstr(
-                                                            ba.SpecialChar.YIN_YANG), ba.charstr(
-                                                                ba.SpecialChar.EYE_BALL), ba.charstr(
-                                                                    ba.SpecialChar.SKULL), ba.charstr(
-                                                                        ba.SpecialChar.HEART), ba.charstr(
-                                                                            ba.SpecialChar.DRAGON), ba.charstr(
-                                                                                ba.SpecialChar.HELMET), ba.charstr(
-                                                                                    ba.SpecialChar.MUSHROOM), ba.charstr(
-                                                                                        ba.SpecialChar.NINJA_STAR), ba.charstr(
-                                                                                            ba.SpecialChar.VIKING_HELMET), ba.charstr(
-                                                                                                ba.SpecialChar.MOON), ba.charstr(
-                                                                                                    ba.SpecialChar.SPIDER), ba.charstr(
-                                                                                                        ba.SpecialChar.FIREBALL), ba.charstr(
-                                                                                                            ba.SpecialChar.MIKIROG)]
             ba.buttonwidget(edit=self._emoji_button,
-                            color=self._key_color_lit
-                            if self._mode == 'emoji' else self._key_color_dark,
-                            label=ba.charstr(ba.SpecialChar.LOGO_FLAT),
+                            color=self._key_color_dark,
+                            label=charstr(SpCh.LOGO_FLAT),
                             on_activate_call=self._emoji_mode)
         elif self._mode == 'num':
             chars = [
@@ -282,6 +254,54 @@ class OnScreenKeyboardWindow(ba.Window):
             ba.buttonwidget(edit=self._num_mode_button,
                             label='abc',
                             on_activate_call=self._abc_mode)
+            ba.buttonwidget(edit=self._emoji_button,
+                            color=self._key_color_dark,
+                            label=charstr(SpCh.LOGO_FLAT),
+                            on_activate_call=self._emoji_mode)
+
+        elif self._mode in ['emoji', 'emoji2']:
+            chars = [
+                '🙂', '😄', '😆', '😅', '😂', '☺', '😀', '😉', '😇', '😍', '😘', '😎',
+                '😏', '😛', '😜', '😝', '😐', '😑', '😢', '😵', '😬', '😌', '😔', '😡',
+                '😴', '😷'
+            ]
+            if self._mode == 'emoji2':
+                chars = [
+                    charstr(SpCh.LOGO_FLAT),
+                    charstr(SpCh.UP_ARROW),
+                    charstr(SpCh.DOWN_ARROW),
+                    charstr(SpCh.LEFT_ARROW),
+                    charstr(SpCh.RIGHT_ARROW),
+                    charstr(SpCh.DELETE),
+                    charstr(SpCh.BACK),
+                    charstr(SpCh.TICKET),
+                    charstr(SpCh.PARTY_ICON),
+                    charstr(SpCh.LOCAL_ACCOUNT),
+                    charstr(SpCh.FEDORA),
+                    charstr(SpCh.HAL),
+                    charstr(SpCh.CROWN),
+                    charstr(SpCh.YIN_YANG),
+                    charstr(SpCh.EYE_BALL),
+                    charstr(SpCh.SKULL),
+                    charstr(SpCh.HEART),
+                    charstr(SpCh.DRAGON),
+                    charstr(SpCh.HELMET),
+                    charstr(SpCh.MUSHROOM),
+                    charstr(SpCh.NINJA_STAR),
+                    charstr(SpCh.VIKING_HELMET),
+                    charstr(SpCh.MOON),
+                    charstr(SpCh.SPIDER),
+                    charstr(SpCh.FIREBALL),
+                    charstr(SpCh.MIKIROG)]
+            ba.buttonwidget(edit=self._shift_button,
+                            color=self._key_color_lit
+                            if self._mode == 'emoji2' else self._key_color_dark,
+                            label=charstr(SpCh.SHIFT),
+                            on_activate_call=self._emoji_mode_2)
+            ba.buttonwidget(edit=self._emoji_button,
+                            color=self._key_color_lit,
+                            label=charstr(SpCh.LOGO_FLAT),
+                            on_activate_call=self._emoji_mode)
 
         for i, btn in enumerate(self._char_keys):
             assert chars is not None
@@ -308,8 +328,16 @@ class OnScreenKeyboardWindow(ba.Window):
         if self._mode in ['normal', 'caps', 'num']:
             self._last_mode = self._mode
             self._mode = 'emoji'
-        elif self._mode == 'emoji':
+        elif self._mode == 'emoji' or self._mode == 'emoji2':
             self._mode = self._last_mode
+        self._refresh()
+
+    def _emoji_mode_2(self) -> None:
+        ba.playsound(self._click_sound)
+        if self._mode == 'emoji':
+            self._mode = 'emoji2'
+        elif self._mode == 'emoji2':
+            self._mode = 'emoji'
         self._refresh()
 
     def _shift(self) -> None:
