@@ -105,23 +105,35 @@ class PluginSettingsWindow(ba.Window):
                                              simple_culling_v=20.0,
                                              highlight=False,
                                              size=(self._scroll_width,
-                                                   self._scroll_height))
-        ba.containerwidget(edit=self._scrollwidget,
-                           selection_loop_to_parent=True)
-        self._subcontainer = ba.containerwidget(parent=self._scrollwidget,
-                                                size=(self._sub_width,
-                                                      self._sub_height),
-                                                background=False,
-                                                selection_loop_to_parent=True)
+                                                   self._scroll_height),
+                                             selection_loops_to_parent=True)
+        ba.widget(edit=self._scrollwidget, right_widget=self._scrollwidget)
+        self._subcontainer = ba.columnwidget(parent=self._scrollwidget,
+                                             selection_loops_to_parent=True)
 
-        ba.screenmessage('Work in progress...')
+        pluglist = [f'Test {i}' for i in range(10)]
+        for i, plug in enumerate(pluglist):
+            check = ba.checkboxwidget(parent=self._subcontainer,
+                                      text=plug,
+                                      size=(self._scroll_width - 40, 50))
+
+            # Make sure we scroll all the way to the end when using
+            # keyboard/button nav.
+            ba.widget(edit=check, show_buffer_top=40, show_buffer_bottom=40)
+
+            # Keep last from looping to back button when down is pressed.
+            if i == len(pluglist) - 1:
+                ba.widget(edit=check, down_widget=check)
+        ba.containerwidget(edit=self._root_widget,
+                           selected_child=self._scrollwidget)
+
         self._restore_state()
 
     def _save_state(self) -> None:
-        print('would save state')
+        pass
 
     def _restore_state(self) -> None:
-        print('would restore state')
+        pass
 
     def _do_back(self) -> None:
         # pylint: disable=cyclic-import

@@ -146,14 +146,14 @@ class AdvancedSettingsWindow(ba.Window):
                                              simple_culling_v=20.0,
                                              highlight=False,
                                              size=(self._scroll_width,
-                                                   self._scroll_height))
-        ba.containerwidget(edit=self._scrollwidget,
-                           selection_loop_to_parent=True)
+                                                   self._scroll_height),
+                                             selection_loops_to_parent=True)
+        ba.widget(edit=self._scrollwidget, right_widget=self._scrollwidget)
         self._subcontainer = ba.containerwidget(parent=self._scrollwidget,
                                                 size=(self._sub_width,
                                                       self._sub_height),
                                                 background=False,
-                                                selection_loop_to_parent=True)
+                                                selection_loops_to_parent=True)
 
         self._rebuild()
 
@@ -693,10 +693,10 @@ class AdvancedSettingsWindow(ba.Window):
                     sel = self._language_inform_checkbox
                 else:
                     sel = None
-            if sel is not None:
-                ba.containerwidget(edit=self._subcontainer,
-                                   selected_child=sel,
-                                   visible_child=sel)
+                if sel is not None:
+                    ba.containerwidget(edit=self._subcontainer,
+                                       selected_child=sel,
+                                       visible_child=sel)
         except Exception:
             ba.print_exception(f'Error restoring state for {self.__class__}')
 

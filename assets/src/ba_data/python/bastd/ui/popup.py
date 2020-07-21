@@ -199,14 +199,18 @@ class PopupMenuWindow(PopupWindow):
                                                  color=(0.35, 0.55, 0.15),
                                                  size=(self._width - 40,
                                                        self._height - 40))
-            self._columnwidget = ba.columnwidget(parent=self._scrollwidget)
+            self._columnwidget = ba.columnwidget(parent=self._scrollwidget,
+                                                 border=2,
+                                                 margin=0)
         else:
             self._offset_widget = ba.containerwidget(parent=self.root_widget,
                                                      position=(30, 15),
                                                      size=(self._width - 40,
                                                            self._height),
                                                      background=False)
-            self._columnwidget = ba.columnwidget(parent=self._offset_widget)
+            self._columnwidget = ba.columnwidget(parent=self._offset_widget,
+                                                 border=2,
+                                                 margin=0)
         for index, choice in enumerate(choices):
             if len(choices_display_fin) == len(choices):
                 choice_display_name = choices_display_fin[index]

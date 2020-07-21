@@ -214,7 +214,9 @@ class PlaylistEditWindow(ba.Window):
         ba.widget(edit=scrollwidget,
                   left_widget=add_game_button,
                   right_widget=scrollwidget)
-        self._columnwidget = ba.columnwidget(parent=scrollwidget)
+        self._columnwidget = ba.columnwidget(parent=scrollwidget,
+                                             border=2,
+                                             margin=0)
         ba.widget(edit=self._columnwidget, up_widget=self._text_field)
 
         for button in [add_game_button, edit_game_button, remove_game_button]:

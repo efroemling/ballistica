@@ -1598,7 +1598,12 @@ def columnwidget(edit: ba.Widget = None,
                  print_list_exit_instructions: bool = None,
                  left_border: float = None,
                  top_border: float = None,
-                 bottom_border: float = None) -> ba.Widget:
+                 bottom_border: float = None,
+                 selection_loops_to_parent: bool = None,
+                 border: float = None,
+                 margin: float = None,
+                 claims_left_right: bool = None,
+                 claims_tab: bool = None) -> ba.Widget:
     """columnwidget(edit: ba.Widget = None,
       parent: ba.Widget = None,
       size: Sequence[float] = None,
@@ -1610,7 +1615,12 @@ def columnwidget(edit: ba.Widget = None,
       print_list_exit_instructions: bool = None,
       left_border: float = None,
       top_border: float = None,
-      bottom_border: float = None) -> ba.Widget
+      bottom_border: float = None,
+      selection_loops_to_parent: bool = None,
+      border: float = None,
+      margin: float = None,
+      claims_left_right: bool = None,
+      claims_tab: bool = None) -> ba.Widget
 
     Create or edit a column widget.
 
@@ -1669,7 +1679,7 @@ def containerwidget(edit: ba.Widget = None,
                     claims_left_right: bool = None,
                     claims_tab: bool = None,
                     selection_loops: bool = None,
-                    selection_loop_to_parent: bool = None,
+                    selection_loops_to_parent: bool = None,
                     scale: float = None,
                     on_outside_click_call: Callable[[], None] = None,
                     single_depth: bool = None,
@@ -1700,7 +1710,7 @@ def containerwidget(edit: ba.Widget = None,
       claims_left_right: bool = None,
       claims_tab: bool = None,
       selection_loops: bool = None,
-      selection_loop_to_parent: bool = None,
+      selection_loops_to_parent: bool = None,
       scale: float = None,
       on_outside_click_call: Callable[[], None] = None,
       single_depth: bool = None,
@@ -2618,7 +2628,9 @@ def hscrollwidget(edit: ba.Widget = None,
                   color: Sequence[float] = None,
                   highlight: bool = None,
                   border_opacity: float = None,
-                  simple_culling_h: float = None) -> ba.Widget:
+                  simple_culling_h: float = None,
+                  claims_left_right: bool = None,
+                  claims_tab: bool = None) -> ba.Widget:
     """hscrollwidget(edit: ba.Widget = None, parent: ba.Widget = None,
       size: Sequence[float] = None, position: Sequence[float] = None,
       background: bool = None, selected_child: ba.Widget = None,
@@ -2626,7 +2638,9 @@ def hscrollwidget(edit: ba.Widget = None,
       on_select_call: Callable[[], None] = None,
       center_small_content: bool = None, color: Sequence[float] = None,
       highlight: bool = None, border_opacity: float = None,
-      simple_culling_h: float = None)  -> ba.Widget
+      simple_culling_h: float = None,
+      claims_left_right: bool = None,
+      claims_tab: bool = None)  -> ba.Widget
 
     Create or edit a horizontal scroll widget.
 
@@ -3283,12 +3297,18 @@ def rowwidget(edit: Widget = None,
               position: Sequence[float] = None,
               background: bool = None,
               selected_child: Widget = None,
-              visible_child: Widget = None) -> Widget:
-    """rowwidget(edit: Widget =None, parent: Widget =None,
+              visible_child: Widget = None,
+              claims_left_right: bool = None,
+              claims_tab: bool = None,
+              selection_loops_to_parent: bool = None) -> Widget:
+    """rowwidget(edit: Widget = None, parent: Widget = None,
       size: Sequence[float] = None,
       position: Sequence[float] = None,
       background: bool = None, selected_child: Widget = None,
-      visible_child: Widget = None) -> Widget
+      visible_child: Widget = None,
+      claims_left_right: bool = None,
+      claims_tab: bool = None,
+      selection_loops_to_parent: bool = None) -> Widget
 
     Create or edit a row widget.
 
@@ -3365,14 +3385,20 @@ def scrollwidget(edit: ba.Widget = None,
                  color: Sequence[float] = None,
                  highlight: bool = None,
                  border_opacity: float = None,
-                 simple_culling_v: float = None) -> ba.Widget:
+                 simple_culling_v: float = None,
+                 selection_loops_to_parent: bool = None,
+                 claims_left_right: bool = None,
+                 claims_tab: bool = None) -> ba.Widget:
     """scrollwidget(edit: ba.Widget = None, parent: ba.Widget = None,
       size: Sequence[float] = None, position: Sequence[float] = None,
       background: bool = None, selected_child: ba.Widget = None,
       capture_arrows: bool = False, on_select_call: Callable = None,
       center_small_content: bool = None, color: Sequence[float] = None,
       highlight: bool = None, border_opacity: float = None,
-      simple_culling_v: float = None) -> ba.Widget
+      simple_culling_v: float = None,
+      selection_loops_to_parent: bool = None,
+      claims_left_right: bool = None,
+      claims_tab: bool = None) -> ba.Widget
 
     Create or edit a scroll widget.
 

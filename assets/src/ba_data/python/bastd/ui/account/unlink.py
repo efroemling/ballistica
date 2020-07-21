@@ -91,6 +91,8 @@ class AccountUnlinkWindow(ba.Window):
             size=(self._scroll_width, self._scroll_height))
         ba.containerwidget(edit=self._scrollwidget, claims_left_right=True)
         self._columnwidget = ba.columnwidget(parent=self._scrollwidget,
+                                             border=2,
+                                             margin=0,
                                              left_border=10)
 
         our_login_id = _ba.get_public_login_id()

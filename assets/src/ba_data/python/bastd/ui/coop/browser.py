@@ -245,7 +245,10 @@ class CoopBrowserWindow(ba.Window):
             position=(65 + x_inset, 120) if uiscale is ba.UIScale.SMALL
             and app.ui.use_toolbars else (65 + x_inset, 70),
             size=(self._scroll_width, self._scroll_height),
-            simple_culling_v=10.0)
+            simple_culling_v=10.0,
+            claims_left_right=True,
+            claims_tab=True,
+            selection_loops_to_parent=True)
         self._subcontainer: Optional[ba.Widget] = None
 
         # Take note of our account state; we'll refresh later if this changes.
@@ -792,17 +795,11 @@ class CoopBrowserWindow(ba.Window):
         self._subcontainer = ba.containerwidget(
             parent=self._scrollwidget,
             size=(self._subcontainerwidth, self._subcontainerheight),
-            background=False)
+            background=False,
+            claims_left_right=True,
+            claims_tab=True,
+            selection_loops_to_parent=True)
 
-        # So we can still select root level widgets with controllers.
-        ba.containerwidget(edit=self._scrollwidget,
-                           claims_left_right=True,
-                           claims_tab=True,
-                           selection_loop_to_parent=True)
-        ba.containerwidget(edit=self._subcontainer,
-                           claims_left_right=True,
-                           claims_tab=True,
-                           selection_loop_to_parent=True)
         ba.containerwidget(edit=self._root_widget,
                            selected_child=self._scrollwidget)
         if self._back_button is not None:

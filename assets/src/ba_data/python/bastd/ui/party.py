@@ -119,7 +119,9 @@ class PartyWindow(ba.Window):
                                                    self._height - 200),
                                              position=(30, 80),
                                              color=(0.4, 0.6, 0.3))
-        self._columnwidget = ba.columnwidget(parent=self._scrollwidget)
+        self._columnwidget = ba.columnwidget(parent=self._scrollwidget,
+                                             border=2,
+                                             margin=0)
         ba.widget(edit=self._menu_button, down_widget=self._columnwidget)
 
         self._muted_text = ba.textwidget(

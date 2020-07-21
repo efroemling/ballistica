@@ -356,7 +356,7 @@ class GatherWindow(ba.Window):
                           (self._scroll_height - c_height) * 0.5),
                 size=(c_width, c_height),
                 background=False,
-                selection_loop_to_parent=True)
+                selection_loops_to_parent=True)
             v = c_height - 30.0
             ba.textwidget(
                 parent=cnt,
@@ -378,7 +378,7 @@ class GatherWindow(ba.Window):
                           (self._scroll_height - c_height) * 0.5),
                 size=(c_width, c_height),
                 background=False,
-                selection_loop_to_parent=True)
+                selection_loops_to_parent=True)
             v = c_height - 30
             self._internet_join_text = txt = ba.textwidget(
                 parent=cnt,
@@ -479,7 +479,10 @@ class GatherWindow(ba.Window):
                     self._scrollwidget = scrollwidget
                     self._tab_button = tab_button
                     self._columnwidget = ba.columnwidget(
-                        parent=self._scrollwidget, left_border=10)
+                        parent=self._scrollwidget,
+                        border=2,
+                        margin=0,
+                        left_border=10)
                     ba.widget(edit=self._columnwidget, up_widget=tab_button)
                     self._width = width
                     self._last_selected_host: Optional[Dict[str, Any]] = None
@@ -540,7 +543,7 @@ class GatherWindow(ba.Window):
                           (self._scroll_height - c_height) * 0.5),
                 size=(c_width, c_height),
                 background=False,
-                selection_loop_to_parent=True)
+                selection_loops_to_parent=True)
             v = c_height - 30
             ba.textwidget(parent=cnt,
                           position=(c_width * 0.5, v - 3),
@@ -578,7 +581,7 @@ class GatherWindow(ba.Window):
                           (self._scroll_height - c_height) * 0.5),
                 size=(c_width, c_height),
                 background=False,
-                selection_loop_to_parent=True)
+                selection_loops_to_parent=True)
             v = c_height - 30
             ba.textwidget(parent=cnt,
                           position=(c_width * 0.5, v),
@@ -631,7 +634,7 @@ class GatherWindow(ba.Window):
                           (self._scroll_height - c_height) * 0.5),
                 size=(c_width, c_height),
                 background=False,
-                selection_loop_to_parent=True)
+                selection_loops_to_parent=True)
             v = c_height - 80
 
             ba.textwidget(parent=cnt,
@@ -684,7 +687,7 @@ class GatherWindow(ba.Window):
                           (self._scroll_height - c_height) * 0.5),
                 size=(c_width, c_height),
                 background=False,
-                selection_loop_to_parent=True)
+                selection_loops_to_parent=True)
             v = c_height - 30
             ba.textwidget(parent=cnt,
                           position=(c_width * 0.5, v),

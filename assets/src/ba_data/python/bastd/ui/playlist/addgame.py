@@ -143,7 +143,9 @@ class PlaylistAddGameWindow(ba.Window):
         if self._column is not None:
             self._column.delete()
 
-        self._column = ba.columnwidget(parent=self._scrollwidget)
+        self._column = ba.columnwidget(parent=self._scrollwidget,
+                                       border=2,
+                                       margin=0)
 
         gametypes = [
             gt for gt in get_game_types() if gt.supports_session_type(

@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-07-19 for Ballistica version 1.5.23 build 20148</em></h4>
+<h4><em>last updated on 2020-07-21 for Ballistica version 1.5.23 build 20149</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -6071,7 +6071,12 @@ are applied to the Widget.</p>
   print_list_exit_instructions: bool = None,
   left_border: float = None,
   top_border: float = None,
-  bottom_border: float = None) -&gt; <a href="#class_ba_Widget">ba.Widget</a></span></p>
+  bottom_border: float = None,
+  selection_loops_to_parent: bool = None,
+  border: float = None,
+  margin: float = None,
+  claims_left_right: bool = None,
+  claims_tab: bool = None) -&gt; <a href="#class_ba_Widget">ba.Widget</a></span></p>
 
 <p>Create or edit a column widget.</p>
 
@@ -6097,7 +6102,7 @@ are applied to the Widget.</p>
   claims_left_right: bool = None,
   claims_tab: bool = None,
   selection_loops: bool = None,
-  selection_loop_to_parent: bool = None,
+  selection_loops_to_parent: bool = None,
   scale: float = None,
   on_outside_click_call: Callable[[], None] = None,
   single_depth: bool = None,
@@ -6337,7 +6342,9 @@ in the background if necessary.</p>
   on_select_call: Callable[[], None] = None,
   center_small_content: bool = None, color: Sequence[float] = None,
   highlight: bool = None, border_opacity: float = None,
-  simple_culling_h: float = None)  -&gt; <a href="#class_ba_Widget">ba.Widget</a></span></p>
+  simple_culling_h: float = None,
+  claims_left_right: bool = None,
+  claims_tab: bool = None)  -&gt; <a href="#class_ba_Widget">ba.Widget</a></span></p>
 
 <p>Create or edit a horizontal scroll widget.</p>
 
@@ -6552,11 +6559,14 @@ app running.</p>
 
 <hr>
 <h2><strong><a name="function_ba_rowwidget">ba.rowwidget()</a></strong></h3>
-<p><span>rowwidget(edit: Widget =None, parent: Widget =None,
+<p><span>rowwidget(edit: Widget = None, parent: Widget = None,
   size: Sequence[float] = None,
   position: Sequence[float] = None,
   background: bool = None, selected_child: Widget = None,
-  visible_child: Widget = None) -&gt; Widget</span></p>
+  visible_child: Widget = None,
+  claims_left_right: bool = None,
+  claims_tab: bool = None,
+  selection_loops_to_parent: bool = None) -&gt; Widget</span></p>
 
 <p>Create or edit a row widget.</p>
 
@@ -6607,7 +6617,10 @@ Currently the 'clients' option only works for transient messages.</p>
   capture_arrows: bool = False, on_select_call: Callable = None,
   center_small_content: bool = None, color: Sequence[float] = None,
   highlight: bool = None, border_opacity: float = None,
-  simple_culling_v: float = None) -&gt; <a href="#class_ba_Widget">ba.Widget</a></span></p>
+  simple_culling_v: float = None,
+  selection_loops_to_parent: bool = None,
+  claims_left_right: bool = None,
+  claims_tab: bool = None) -&gt; <a href="#class_ba_Widget">ba.Widget</a></span></p>
 
 <p>Create or edit a scroll widget.</p>
 

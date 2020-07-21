@@ -188,7 +188,7 @@ class WatchWindow(ba.Window):
                           (self._scroll_height - c_height) * 0.5),
                 size=(c_width, c_height),
                 background=False,
-                selection_loop_to_parent=True)
+                selection_loops_to_parent=True)
 
             v = c_height - 30
             ba.textwidget(parent=cnt,
@@ -265,7 +265,10 @@ class WatchWindow(ba.Window):
                 position=(smlh, v),
                 size=(sub_scroll_width, sub_scroll_height))
             ba.containerwidget(edit=cnt, selected_child=scrlw)
-            self._columnwidget = ba.columnwidget(parent=scrlw, left_border=10)
+            self._columnwidget = ba.columnwidget(parent=scrlw,
+                                                 left_border=10,
+                                                 border=2,
+                                                 margin=0)
 
             ba.widget(edit=scrlw,
                       autoselect=True,

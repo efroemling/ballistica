@@ -228,7 +228,9 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
                                              self._scroll_height + 10),
                                        highlight=False)
         ba.widget(edit=back_button, right_widget=scrollwidget)
-        self._columnwidget = ba.columnwidget(parent=scrollwidget)
+        self._columnwidget = ba.columnwidget(parent=scrollwidget,
+                                             border=2,
+                                             margin=0)
 
         h = 145
 
