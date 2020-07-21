@@ -146,7 +146,7 @@ class MainMenuWindow(ba.Window):
         # Don't refresh for the first few seconds the game is up so we don't
         # interrupt the transition in.
         ba.app.main_menu_window_refresh_check_count += 1
-        if ba.app.main_menu_window_refresh_check_count < 3:
+        if ba.app.main_menu_window_refresh_check_count < 4:
             return
 
         store_char_tex = self._get_store_char_tex()

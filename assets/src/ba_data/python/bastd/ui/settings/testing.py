@@ -133,7 +133,6 @@ class TestingWindow(ba.Window):
                                       self._on_minus_press, entry['name']))
             if i == 0:
                 ba.widget(edit=btn, up_widget=self._back_button)
-            ba.widget(edit=btn, show_buffer_top=20, show_buffer_bottom=20)
             entry['widget'] = ba.textwidget(parent=self._subcontainer,
                                             position=(h + 100, v),
                                             size=(0, 0),
@@ -155,7 +154,7 @@ class TestingWindow(ba.Window):
                 ba.widget(edit=btn, up_widget=self._back_button)
             v -= self._spacing
         v -= 35
-        b_reset = ba.buttonwidget(
+        ba.buttonwidget(
             parent=self._subcontainer,
             autoselect=True,
             size=(200, 50),
@@ -163,7 +162,6 @@ class TestingWindow(ba.Window):
             label=ba.Lstr(resource='settingsWindowAdvanced.resetText'),
             right_widget=btn,
             on_activate_call=self._on_reset_press)
-        ba.widget(edit=b_reset, show_buffer_top=20, show_buffer_bottom=20)
 
     def _get_entry(self, name: str) -> Dict[str, Any]:
         for entry in self._entries:

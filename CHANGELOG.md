@@ -2,6 +2,14 @@
 - Fixed the shebang line in `bombsquad_server` file by using `-S` flag for `/usr/bin/env`.
 - Fixed a bug with hardware keyboards emitting extra characters in the in-game console (~ or F2)
 - Added support for 'plugin' mods and user controls to configure them in settings->advanced->plugins.
+- renamed selection_loop_to_parent to selection_loops_to_parent in widget calls.
+- Added 'selection_loops_to_parent', 'border', 'margin', 'claims_left_right', and 'claims_tab' args to ba.columnwidget().
+- Column-widget now has a default 'border' of 0 (explicitly pass 2 to get the old look).
+- Column-widget now has a default 'margin' of 10 (explicitly pass 0 to get the old look).
+- Added 'selection_loops_to_parent', 'claims_left_right', and 'claims_tab' args to ba.scrollwidget.
+- Added 'selection_loops_to_parent', 'claims_left_right', and 'claims_tab' args to ba.rowwidget.
+- Added 'claims_left_right' and 'claims_tab' to ba.hscrollwidget().
+- Default widget 'show_buffer' is now 20 instead of 0 (causes scrolling to stay slightly ahead of widget selection). This can be overridden with the ba.widget() call if anything breaks.
 - BombSquad now has its own Exclusive Emojis in the Internal Game Keyboard.
 - Added continuos CAPITAL letters typing feature in the Internal Game Keyboard.
 

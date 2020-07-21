@@ -211,7 +211,7 @@ class SoundtrackBrowserWindow(ba.Window):
                   left_widget=self._new_button,
                   right_widget=_ba.get_special_widget('party_button')
                   if ba.app.ui.use_toolbars else self._scrollwidget)
-        self._col = ba.columnwidget(parent=scrollwidget)
+        self._col = ba.columnwidget(parent=scrollwidget, border=2, margin=0)
 
         self._soundtracks: Optional[Dict[str, Any]] = None
         self._selected_soundtrack: Optional[str] = None

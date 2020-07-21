@@ -353,18 +353,15 @@ class StoreBrowserWindow(ba.Window):
             highlight=False,
             position=((self._width - self._scroll_width) * 0.5,
                       self._height - self._scroll_height - 79 - 48),
-            size=(self._scroll_width, self._scroll_height))
+            size=(self._scroll_width, self._scroll_height),
+            claims_left_right=True,
+            claims_tab=True,
+            selection_loops_to_parent=True)
 
         # NOTE: this stuff is modified by the _Store class.
         # Should maybe clean that up.
         self.button_infos = {}
         self.update_buttons_timer = None
-
-        # So we can still select root level widgets with controllers.
-        ba.containerwidget(edit=self._scrollwidget,
-                           claims_left_right=True,
-                           claims_tab=True,
-                           selection_loop_to_parent=True)
 
         # Show status over top.
         if self._status_textwidget:
@@ -781,11 +778,10 @@ class StoreBrowserWindow(ba.Window):
                     cnt2 = ba.containerwidget(parent=scrollwidget,
                                               scale=1.0,
                                               size=(self._width, self._height),
-                                              background=False)
-                    ba.containerwidget(edit=cnt2,
-                                       claims_left_right=True,
-                                       claims_tab=True,
-                                       selection_loop_to_parent=True)
+                                              background=False,
+                                              claims_left_right=True,
+                                              claims_tab=True,
+                                              selection_loops_to_parent=True)
                     v = self._height - 20
 
                     if self._tab == 'characters':
@@ -976,11 +972,10 @@ class StoreBrowserWindow(ba.Window):
                                          scale=1.0,
                                          size=(self._scroll_width,
                                                self._scroll_height * 0.95),
-                                         background=False)
-                ba.containerwidget(edit=cnt,
-                                   claims_left_right=True,
-                                   claims_tab=True,
-                                   selection_loop_to_parent=True)
+                                         background=False,
+                                         claims_left_right=True,
+                                         claims_tab=True,
+                                         selection_loops_to_parent=True)
                 self._status_textwidget = ba.textwidget(
                     parent=cnt,
                     position=(self._scroll_width * 0.5,

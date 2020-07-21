@@ -36,12 +36,12 @@ class KioskWindow(ba.Window):
 
     def __init__(self, transition: str = 'in_right'):
         # pylint: disable=too-many-locals, too-many-statements
-        from bastd.ui import confirm
+        from bastd.ui.confirm import QuitWindow
         self._width = 720.0
         self._height = 340.0
 
         def _do_cancel() -> None:
-            confirm.QuitWindow(swish=True, back=True)
+            QuitWindow(swish=True, back=True)
 
         super().__init__(
             root_widget=ba.containerwidget(size=(self._width, self._height),

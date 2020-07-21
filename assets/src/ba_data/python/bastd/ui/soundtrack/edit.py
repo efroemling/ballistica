@@ -155,18 +155,15 @@ class SoundtrackEditWindow(ba.Window):
             highlight=False,
             position=(40 + x_inset, v - (scroll_height + 10)),
             size=(self._width - (80 + 2 * x_inset), scroll_height),
-            simple_culling_v=10)
+            simple_culling_v=10,
+            claims_left_right=True,
+            claims_tab=True,
+            selection_loops_to_parent=True)
         ba.widget(edit=self._text_field, down_widget=self._scrollwidget)
-        self._col = ba.columnwidget(parent=scrollwidget)
-
-        ba.containerwidget(edit=self._scrollwidget,
-                           claims_left_right=True,
-                           claims_tab=True,
-                           selection_loop_to_parent=True)
-        ba.containerwidget(edit=self._col,
-                           claims_left_right=True,
-                           claims_tab=True,
-                           selection_loop_to_parent=True)
+        self._col = ba.columnwidget(parent=scrollwidget,
+                                    claims_left_right=True,
+                                    claims_tab=True,
+                                    selection_loops_to_parent=True)
 
         self._song_type_buttons: Dict[str, ba.Widget] = {}
         self._refresh()
@@ -210,11 +207,11 @@ class SoundtrackEditWindow(ba.Window):
         prev_test_button: Optional[ba.Widget] = None
 
         for index, song_type in enumerate(types):
-            row = ba.rowwidget(parent=self._col, size=(self._width - 40, 40))
-            ba.containerwidget(edit=row,
+            row = ba.rowwidget(parent=self._col,
+                               size=(self._width - 40, 40),
                                claims_left_right=True,
                                claims_tab=True,
-                               selection_loop_to_parent=True)
+                               selection_loops_to_parent=True)
             type_name = type_names_translated.get(song_type, song_type)
             ba.textwidget(parent=row,
                           size=(230, 25),
@@ -231,7 +228,7 @@ class SoundtrackEditWindow(ba.Window):
                 entry = None
 
             if entry is not None:
-                # make sure they don't muck with this after it gets to us
+                # Make sure they don't muck with this after it gets to us.
                 entry = copy.deepcopy(entry)
 
             icon_type = self._get_entry_button_display_icon_type(entry)

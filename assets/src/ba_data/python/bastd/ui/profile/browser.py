@@ -177,7 +177,9 @@ class ProfileBrowserWindow(ba.Window):
                   left_widget=self._new_button)
         ba.containerwidget(edit=self._root_widget,
                            selected_child=self._scrollwidget)
-        self._columnwidget = ba.columnwidget(parent=self._scrollwidget)
+        self._columnwidget = ba.columnwidget(parent=self._scrollwidget,
+                                             border=2,
+                                             margin=0)
         v -= 255
         self._profiles: Optional[Dict[str, Dict[str, Any]]] = None
         self._selected_profile = selected_profile

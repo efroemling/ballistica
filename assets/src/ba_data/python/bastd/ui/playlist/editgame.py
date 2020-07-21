@@ -177,22 +177,17 @@ class PlaylistEditGameWindow(ba.Window):
                                              position=(44 + x_inset,
                                                        35 + y_extra),
                                              size=(scroll_width, height - 116),
-                                             highlight=False)
-        self._subcontainer = cnt = ba.containerwidget(
-            parent=self._scrollwidget,
-            size=(scroll_width, scroll_height),
-            background=False)
-
-        # So selection loops through everything and doesn't get stuck in
-        # sub-containers.
-        ba.containerwidget(edit=self._scrollwidget,
-                           claims_left_right=True,
-                           claims_tab=True,
-                           selection_loop_to_parent=True)
-        ba.containerwidget(edit=cnt,
-                           claims_left_right=True,
-                           claims_tab=True,
-                           selection_loop_to_parent=True)
+                                             highlight=False,
+                                             claims_left_right=True,
+                                             claims_tab=True,
+                                             selection_loops_to_parent=True)
+        self._subcontainer = ba.containerwidget(parent=self._scrollwidget,
+                                                size=(scroll_width,
+                                                      scroll_height),
+                                                background=False,
+                                                claims_left_right=True,
+                                                claims_tab=True,
+                                                selection_loops_to_parent=True)
 
         v = scroll_height - 5
         h = -40

@@ -84,26 +84,24 @@ class TouchscreenSettingsWindow(ba.Window):
             parent=self._root_widget,
             position=((self._width - self._scroll_width) * 0.5,
                       self._height - 65 - self._scroll_height),
-            size=(self._scroll_width, self._scroll_height))
+            size=(self._scroll_width, self._scroll_height),
+            claims_left_right=True,
+            claims_tab=True,
+            selection_loops_to_parent=True)
         self._subcontainer = ba.containerwidget(parent=self._scrollwidget,
                                                 size=(self._sub_width,
                                                       self._sub_height),
-                                                background=False)
-        ba.containerwidget(edit=self._scrollwidget,
-                           claims_left_right=True,
-                           claims_tab=True,
-                           selection_loop_to_parent=True)
-        ba.containerwidget(edit=self._subcontainer,
-                           claims_left_right=True,
-                           claims_tab=True,
-                           selection_loop_to_parent=True)
-
+                                                background=False,
+                                                claims_left_right=True,
+                                                claims_tab=True,
+                                                selection_loops_to_parent=True)
         self._build_gui()
 
     def _build_gui(self) -> None:
-        from bastd.ui import config as cfgui
-        from bastd.ui import radiogroup
-        # clear anything already there
+        from bastd.ui.config import ConfigNumberEdit, ConfigCheckBox
+        from bastd.ui.radiogroup import make_radio_group
+
+        # Clear anything already there.
         children = self._subcontainer.get_children()
         for child in children:
             child.delete()
@@ -145,20 +143,19 @@ class TouchscreenSettingsWindow(ba.Window):
                                 textcolor=clr2,
                                 value=False,
                                 scale=0.9)
-        radiogroup.make_radio_group((cb1, cb2), ('joystick', 'swipe'), cur_val,
-                                    self._movement_changed)
+        make_radio_group((cb1, cb2), ('joystick', 'swipe'), cur_val,
+                         self._movement_changed)
         v -= 50
-        cfgui.ConfigNumberEdit(
-            parent=self._subcontainer,
-            position=(h, v),
-            xoffset=65,
-            configkey='Touch Controls Scale Movement',
-            displayname=ba.Lstr(resource=self._r +
-                                '.movementControlScaleText'),
-            changesound=False,
-            minval=0.1,
-            maxval=4.0,
-            increment=0.1)
+        ConfigNumberEdit(parent=self._subcontainer,
+                         position=(h, v),
+                         xoffset=65,
+                         configkey='Touch Controls Scale Movement',
+                         displayname=ba.Lstr(resource=self._r +
+                                             '.movementControlScaleText'),
+                         changesound=False,
+                         minval=0.1,
+                         maxval=4.0,
+                         increment=0.1)
         v -= 50
         cur_val = ba.app.config.get('Touch Action Control Type', 'buttons')
         ba.textwidget(parent=self._subcontainer,
@@ -183,28 +180,28 @@ class TouchscreenSettingsWindow(ba.Window):
                                 maxwidth=100,
                                 textcolor=clr2,
                                 scale=0.9)
-        radiogroup.make_radio_group((cb1, cb2), ('buttons', 'swipe'), cur_val,
-                                    self._actions_changed)
+        make_radio_group((cb1, cb2), ('buttons', 'swipe'), cur_val,
+                         self._actions_changed)
         v -= 50
-        cfgui.ConfigNumberEdit(parent=self._subcontainer,
-                               position=(h, v),
-                               xoffset=65,
-                               configkey='Touch Controls Scale Actions',
-                               displayname=ba.Lstr(resource=self._r +
-                                                   '.actionControlScaleText'),
-                               changesound=False,
-                               minval=0.1,
-                               maxval=4.0,
-                               increment=0.1)
+        ConfigNumberEdit(parent=self._subcontainer,
+                         position=(h, v),
+                         xoffset=65,
+                         configkey='Touch Controls Scale Actions',
+                         displayname=ba.Lstr(resource=self._r +
+                                             '.actionControlScaleText'),
+                         changesound=False,
+                         minval=0.1,
+                         maxval=4.0,
+                         increment=0.1)
 
         v -= 50
-        cfgui.ConfigCheckBox(parent=self._subcontainer,
-                             position=(h, v),
-                             size=(400, 30),
-                             maxwidth=400,
-                             configkey='Touch Controls Swipe Hidden',
-                             displayname=ba.Lstr(resource=self._r +
-                                                 '.swipeControlsHiddenText'))
+        ConfigCheckBox(parent=self._subcontainer,
+                       position=(h, v),
+                       size=(400, 30),
+                       maxwidth=400,
+                       configkey='Touch Controls Swipe Hidden',
+                       displayname=ba.Lstr(resource=self._r +
+                                           '.swipeControlsHiddenText'))
         v -= 65
 
         ba.buttonwidget(parent=self._subcontainer,

@@ -89,19 +89,17 @@ class GamepadAdvancedSettingsWindow(ba.Window):
             parent=self._root_widget,
             position=((self._width - self._scroll_width) * 0.5,
                       self._height - 65 - self._scroll_height),
-            size=(self._scroll_width, self._scroll_height))
+            size=(self._scroll_width, self._scroll_height),
+            claims_left_right=True,
+            claims_tab=True,
+            selection_loops_to_parent=True)
         self._subcontainer = ba.containerwidget(parent=self._scrollwidget,
                                                 size=(self._sub_width,
                                                       self._sub_height),
-                                                background=False)
-        ba.containerwidget(edit=self._scrollwidget,
-                           claims_left_right=True,
-                           claims_tab=True,
-                           selection_loop_to_parent=True)
-        ba.containerwidget(edit=self._subcontainer,
-                           claims_left_right=True,
-                           claims_tab=True,
-                           selection_loop_to_parent=True)
+                                                background=False,
+                                                claims_left_right=True,
+                                                claims_tab=True,
+                                                selection_loops_to_parent=True)
         ba.containerwidget(edit=self._root_widget,
                            selected_child=self._scrollwidget)
 
