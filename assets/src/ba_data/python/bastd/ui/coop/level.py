@@ -32,7 +32,7 @@ class CoopLevelLockedWindow(ba.Window):
         width = 550.0
         height = 250.0
         lock_tex = ba.gettexture('lock')
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(width, height),
             transition='in_right',

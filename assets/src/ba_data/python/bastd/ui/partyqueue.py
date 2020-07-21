@@ -223,7 +223,7 @@ class PartyQueueWindow(ba.Window):
         self._line_image: Optional[ba.Widget] = None
         self.eyes_model = ba.getmodel('plasticEyesTransparent')
         self._white_tex = ba.gettexture('white')
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             color=(0.45, 0.63, 0.15),

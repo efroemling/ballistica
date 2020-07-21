@@ -54,7 +54,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         from ba.deprecated import get_resource
         ba.set_analytics_screen('FreeForAll Series Victory Screen' if self.
                                 _is_ffa else 'Teams Series Victory Screen')
-        if ba.app.uiscale is ba.UIScale.LARGE:
+        if ba.app.ui.uiscale is ba.UIScale.LARGE:
             sval = ba.Lstr(resource='pressAnyKeyButtonPlayAgainText')
         else:
             sval = ba.Lstr(resource='pressAnyButtonPlayAgainText')

@@ -49,7 +49,7 @@ class AccountLinkWindow(ba.Window):
         bg_color = (0.4, 0.4, 0.5)
         self._width = 560
         self._height = 420
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         base_scale = (1.65 if uiscale is ba.UIScale.SMALL else
                       1.5 if uiscale is ba.UIScale.MEDIUM else 1.1)
         super().__init__(root_widget=ba.containerwidget(
@@ -132,7 +132,7 @@ class AccountLinkCodeWindow(ba.Window):
     def __init__(self, data: Dict[str, Any]):
         self._width = 350
         self._height = 200
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             color=(0.45, 0.63, 0.15),

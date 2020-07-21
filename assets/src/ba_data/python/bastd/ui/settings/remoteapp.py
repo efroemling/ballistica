@@ -34,7 +34,7 @@ class RemoteAppSettingsWindow(ba.Window):
         width = 700
         height = 390
         spacing = 40
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(width, height),
             transition='in_right',

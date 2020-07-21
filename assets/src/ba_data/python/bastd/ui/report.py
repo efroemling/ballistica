@@ -37,7 +37,7 @@ class ReportPlayerWindow(ba.Window):
         scale_origin = origin_widget.get_screen_space_center()
 
         overlay_stack = _ba.get_special_widget('overlay_stack')
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             parent=overlay_stack,

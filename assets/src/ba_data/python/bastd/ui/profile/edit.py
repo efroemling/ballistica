@@ -63,7 +63,7 @@ class EditProfileWindow(ba.Window):
         # Grab profile colors or pick random ones.
         self._color, self._highlight = get_player_profile_colors(
             existing_profile)
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         self._width = width = 780.0 if uiscale is ba.UIScale.SMALL else 680.0
         self._x_inset = x_inset = 50.0 if uiscale is ba.UIScale.SMALL else 0.0
         self._height = height = (

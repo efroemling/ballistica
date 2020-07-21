@@ -50,7 +50,7 @@ class AccountUnlinkWindow(ba.Window):
         self._height = 350
         self._scroll_width = 400
         self._scroll_height = 200
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         base_scale = (2.0 if uiscale is ba.UIScale.SMALL else
                       1.6 if uiscale is ba.UIScale.MEDIUM else 1.1)
         super().__init__(root_widget=ba.containerwidget(

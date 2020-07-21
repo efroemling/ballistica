@@ -40,7 +40,7 @@ class CoopBrowserWindow(ba.Window):
     """Window for browsing co-op levels/games/etc."""
 
     def _update_corner_button_positions(self) -> None:
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         offs = (-55 if uiscale is ba.UIScale.SMALL
                 and _ba.is_party_icon_visible() else 0)
         if self._league_rank_button is not None:
@@ -98,7 +98,7 @@ class CoopBrowserWindow(ba.Window):
         self._hard_button_lock_image: Optional[ba.Widget] = None
         self._campaign_percent_text: Optional[ba.Widget] = None
 
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         self._width = 1320 if uiscale is ba.UIScale.SMALL else 1120
         self._x_inset = x_inset = 100 if uiscale is ba.UIScale.SMALL else 0
         self._height = (657 if uiscale is ba.UIScale.SMALL else

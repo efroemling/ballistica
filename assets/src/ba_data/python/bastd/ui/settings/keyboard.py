@@ -49,7 +49,7 @@ class ConfigKeyboardWindow(ba.Window):
         else:
             self._height = 375
         self._spacing = 40
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             scale=(1.6 if uiscale is ba.UIScale.SMALL else
@@ -272,7 +272,7 @@ class AwaitKeyboardInputWindow(ba.Window):
 
         width = 400
         height = 150
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(width, height),
             transition='in_right',

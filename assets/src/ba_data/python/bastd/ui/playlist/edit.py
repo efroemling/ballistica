@@ -45,7 +45,7 @@ class PlaylistEditWindow(ba.Window):
         self._r = 'editGameListWindow'
         prev_selection = self._editcontroller.get_edit_ui_selection()
 
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         self._width = 770 if uiscale is ba.UIScale.SMALL else 670
         x_inset = 50 if uiscale is ba.UIScale.SMALL else 0
         self._height = (400 if uiscale is ba.UIScale.SMALL else

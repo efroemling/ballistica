@@ -54,7 +54,7 @@ class AllSettingsWindow(ba.Window):
         else:
             self._transition_out = 'out_right'
             scale_origin = None
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         width = 900 if uiscale is ba.UIScale.SMALL else 580
         x_inset = 75 if uiscale is ba.UIScale.SMALL else 0
         height = 435
@@ -62,7 +62,7 @@ class AllSettingsWindow(ba.Window):
         self._r = 'settingsWindow'
         top_extra = 20 if uiscale is ba.UIScale.SMALL else 0
 
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(width, height + top_extra),
             transition=transition,

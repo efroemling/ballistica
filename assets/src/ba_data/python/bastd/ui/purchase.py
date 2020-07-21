@@ -48,7 +48,7 @@ class PurchaseWindow(ba.Window):
         self._items = list(items)
         self._width = 580
         self._height = 520
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             transition=transition,

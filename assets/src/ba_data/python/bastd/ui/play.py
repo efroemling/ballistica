@@ -46,7 +46,7 @@ class PlayWindow(ba.Window):
         threading.Thread(target=self._preload_modules).start()
 
         new_style = True
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         width = 1000 if uiscale is ba.UIScale.SMALL else 800
         x_offs = 100 if uiscale is ba.UIScale.SMALL else 0
         height = 550 if new_style else 400

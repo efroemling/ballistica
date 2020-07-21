@@ -65,7 +65,7 @@ class GetCurrencyWindow(ba.Window):
             self._transition_out = 'out_right'
             scale_origin = None
 
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         self._width = 1000.0 if uiscale is ba.UIScale.SMALL else 800.0
         x_inset = 100.0 if uiscale is ba.UIScale.SMALL else 0.0
         self._height = 480.0

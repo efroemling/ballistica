@@ -64,7 +64,7 @@ class SoundtrackEntryTypeSelectWindow(ba.Window):
         if do_music_folder:
             self._height += spacing
 
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             transition=transition,

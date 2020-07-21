@@ -51,7 +51,7 @@ class CreditsListWindow(ba.Window):
             scale_origin = None
             transition = 'in_right'
 
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         width = 870 if uiscale is ba.UIScale.SMALL else 670
         x_inset = 100 if uiscale is ba.UIScale.SMALL else 0
         height = 398 if uiscale is ba.UIScale.SMALL else 500

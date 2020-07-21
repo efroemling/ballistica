@@ -311,7 +311,7 @@ class KioskWindow(ba.Window):
             self._b4 = self._b5 = self._b6 = None
 
         self._b7: Optional[ba.Widget]
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         if bool(False):
             self._b7 = ba.buttonwidget(
                 parent=self._root_widget,

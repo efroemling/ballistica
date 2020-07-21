@@ -74,7 +74,7 @@ class AudioSettingsWindow(ba.Window):
             show_soundtracks = True
             height += spacing * 2.0
 
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         base_scale = (2.05 if uiscale is ba.UIScale.SMALL else
                       1.6 if uiscale is ba.UIScale.MEDIUM else 1.0)
         popup_menu_scale = base_scale * 1.2

@@ -48,7 +48,7 @@ class CharacterPicker(popup.PopupWindow):
         # pylint: disable=too-many-locals
         from bastd.actor import spazappearance
         del parent  # unused here
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         if scale is None:
             scale = (1.85 if uiscale is ba.UIScale.SMALL else
                      1.65 if uiscale is ba.UIScale.MEDIUM else 1.23)

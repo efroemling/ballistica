@@ -60,7 +60,7 @@ class WatchWindow(ba.Window):
         self._my_replays_rename_window: Optional[ba.Widget] = None
         self._my_replay_rename_text: Optional[ba.Widget] = None
         self._r = 'watchWindow'
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         self._width = 1240 if uiscale is ba.UIScale.SMALL else 1040
         x_inset = 100 if uiscale is ba.UIScale.SMALL else 0
         self._height = (578 if uiscale is ba.UIScale.SMALL else
@@ -174,7 +174,7 @@ class WatchWindow(ba.Window):
         # switching to a different tab
         self._tab_data = {}
 
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         if tab == 'my_replays':
             c_width = self._scroll_width
             c_height = self._scroll_height - 20
@@ -316,7 +316,7 @@ class WatchWindow(ba.Window):
             return
         c_width = 600
         c_height = 250
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         self._my_replays_rename_window = cnt = ba.containerwidget(
             scale=(1.8 if uiscale is ba.UIScale.SMALL else
                    1.55 if uiscale is ba.UIScale.MEDIUM else 1.0),

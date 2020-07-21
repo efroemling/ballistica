@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-07-21 for Ballistica version 1.5.23 build 20149</em></h4>
+<h4><em>last updated on 2020-07-21 for Ballistica version 1.5.23 build 20150</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -806,7 +806,7 @@ likely result in errors.</p>
 </p>
 
 <h3>Attributes:</h3>
-<h5><a href="#attr_ba_App__api_version">api_version</a>, <a href="#attr_ba_App__build_number">build_number</a>, <a href="#attr_ba_App__config">config</a>, <a href="#attr_ba_App__config_file_path">config_file_path</a>, <a href="#attr_ba_App__debug_build">debug_build</a>, <a href="#attr_ba_App__language">language</a>, <a href="#attr_ba_App__locale">locale</a>, <a href="#attr_ba_App__on_tv">on_tv</a>, <a href="#attr_ba_App__platform">platform</a>, <a href="#attr_ba_App__python_directory_app">python_directory_app</a>, <a href="#attr_ba_App__python_directory_app_site">python_directory_app_site</a>, <a href="#attr_ba_App__python_directory_user">python_directory_user</a>, <a href="#attr_ba_App__subplatform">subplatform</a>, <a href="#attr_ba_App__test_build">test_build</a>, <a href="#attr_ba_App__ui_bounds">ui_bounds</a>, <a href="#attr_ba_App__uiscale">uiscale</a>, <a href="#attr_ba_App__user_agent_string">user_agent_string</a>, <a href="#attr_ba_App__version">version</a>, <a href="#attr_ba_App__vr_mode">vr_mode</a></h5>
+<h5><a href="#attr_ba_App__api_version">api_version</a>, <a href="#attr_ba_App__build_number">build_number</a>, <a href="#attr_ba_App__config">config</a>, <a href="#attr_ba_App__config_file_path">config_file_path</a>, <a href="#attr_ba_App__debug_build">debug_build</a>, <a href="#attr_ba_App__language">language</a>, <a href="#attr_ba_App__locale">locale</a>, <a href="#attr_ba_App__on_tv">on_tv</a>, <a href="#attr_ba_App__platform">platform</a>, <a href="#attr_ba_App__python_directory_app">python_directory_app</a>, <a href="#attr_ba_App__python_directory_app_site">python_directory_app_site</a>, <a href="#attr_ba_App__python_directory_user">python_directory_user</a>, <a href="#attr_ba_App__subplatform">subplatform</a>, <a href="#attr_ba_App__test_build">test_build</a>, <a href="#attr_ba_App__ui_bounds">ui_bounds</a>, <a href="#attr_ba_App__user_agent_string">user_agent_string</a>, <a href="#attr_ba_App__version">version</a>, <a href="#attr_ba_App__vr_mode">vr_mode</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_App__api_version">api_version</a></h4></dt><dd>
 <p><span>int</span></p>
@@ -911,11 +911,6 @@ likely result in errors.</p>
 <p>Bounds of the 'safe' screen area in ui space.</p>
 
 <p>        This tuple contains: (x-min, x-max, y-min, y-max)</p>
-
-</dd>
-<dt><h4><a name="attr_ba_App__uiscale">uiscale</a></h4></dt><dd>
-<p><span><a href="#class_ba_UIScale">ba.UIScale</a></span></p>
-<p>Current ui scale for the app.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_App__user_agent_string">user_agent_string</a></h4></dt><dd>

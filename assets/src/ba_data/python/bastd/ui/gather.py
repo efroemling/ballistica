@@ -58,7 +58,7 @@ class GatherWindow(ba.Window):
         ba.app.ui.set_main_menu_location('Gather')
         _ba.set_party_icon_always_visible(True)
         self._public_parties: Dict[str, Dict[str, Any]] = {}
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         self._width = 1240 if uiscale is ba.UIScale.SMALL else 1040
         x_offs = 100 if uiscale is ba.UIScale.SMALL else 0
         self._height = (582 if uiscale is ba.UIScale.SMALL else

@@ -39,7 +39,7 @@ class StoreBrowserWindow(ba.Window):
     """Window for browsing the store."""
 
     def _update_get_tickets_button_pos(self) -> None:
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         if self._get_tickets_button:
             pos = (self._width - 252 -
                    (self._x_inset + (47 if uiscale is ba.UIScale.SMALL
@@ -60,7 +60,7 @@ class StoreBrowserWindow(ba.Window):
         from ba import SpecialChar
 
         app = ba.app
-        uiscale = app.uiscale
+        uiscale = app.ui.uiscale
 
         ba.set_analytics_screen('Store Window')
 
@@ -717,7 +717,7 @@ class StoreBrowserWindow(ba.Window):
                     self._sections = copy.deepcopy(store_data[sdata['tab']])
                     self._height: Optional[float] = None
 
-                    uiscale = ba.app.uiscale
+                    uiscale = ba.app.ui.uiscale
 
                     # Pre-calc a few things and add them to store-data.
                     for section in self._sections:

@@ -144,7 +144,7 @@ class ControlsSettingsWindow(ba.Window):
         if show_xinput_toggle:
             height += spacing
 
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         smallscale = (1.7 if show_keyboard else 2.2)
         super().__init__(root_widget=ba.containerwidget(
             size=(width, height),

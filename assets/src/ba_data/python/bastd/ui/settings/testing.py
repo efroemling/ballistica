@@ -39,7 +39,7 @@ class TestingWindow(ba.Window):
                  title: ba.Lstr,
                  entries: List[Dict[str, Any]],
                  transition: str = 'in_right'):
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         self._width = 600
         self._height = 324 if uiscale is ba.UIScale.SMALL else 400
         self._entries = copy.deepcopy(entries)

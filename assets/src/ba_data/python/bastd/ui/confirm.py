@@ -68,7 +68,7 @@ class ConfirmWindow:
             scale_origin = None
             transition = 'in_right'
 
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         self.root_widget = ba.containerwidget(
             size=(width, height),
             transition=transition,

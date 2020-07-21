@@ -38,7 +38,7 @@ class DebugWindow(ba.Window):
         # pylint: disable=cyclic-import
         from bastd.ui import popup
 
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         self._width = width = 580
         self._height = height = (350 if uiscale is ba.UIScale.SMALL else
                                  420 if uiscale is ba.UIScale.MEDIUM else 520)
@@ -55,7 +55,7 @@ class DebugWindow(ba.Window):
         self._stress_test_round_duration = 30
 
         self._r = 'debugWindow'
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(width, height),
             transition=transition,

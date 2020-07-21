@@ -300,7 +300,7 @@ class PopupMenu:
             choices_disabled = []
         if choices_display is None:
             choices_display = []
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         if scale is None:
             scale = (2.3 if uiscale is ba.UIScale.SMALL else
                      1.65 if uiscale is ba.UIScale.MEDIUM else 1.23)

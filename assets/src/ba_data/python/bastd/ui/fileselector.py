@@ -45,7 +45,7 @@ class FileSelectorWindow(ba.Window):
                  allow_folders: bool = False):
         if valid_file_extensions is None:
             valid_file_extensions = []
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         self._width = 700 if uiscale is ba.UIScale.SMALL else 600
         self._x_inset = x_inset = 50 if uiscale is ba.UIScale.SMALL else 0
         self._height = 365 if uiscale is ba.UIScale.SMALL else 418
