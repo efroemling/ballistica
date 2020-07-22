@@ -27,20 +27,16 @@ from typing import TYPE_CHECKING
 import ba
 
 if TYPE_CHECKING:
-    from typing import Tuple, Optional
+    from typing import Tuple, Optional, Dict
 
 
 class PluginSettingsWindow(ba.Window):
     """Window for configuring plugins."""
 
-    def __del__(self) -> None:
-        print('~PluginSettingsWindow()')
-
     def __init__(self,
                  transition: str = 'in_right',
                  origin_widget: ba.Widget = None):
-        print('PluginSettingsWindow()')
-
+        # pylint: disable=too-many-locals
         app = ba.app
 
         # If they provided an origin-widget, scale up from that.
@@ -115,22 +111,29 @@ class PluginSettingsWindow(ba.Window):
         self._subcontainer = ba.columnwidget(parent=self._scrollwidget,
                                              selection_loops_to_parent=True)
 
-        pluglist = [
-            ba.AvailablePlugin(display_name=f'Test {i}',
-                               class_path='fakemodule') for i in range(10)
-        ]
+        if ba.app.metascan is None:
+            ba.screenmessage('Still scanning plugins; please try again.',
+                             color=(1, 0, 0))
+            ba.playsound(ba.getsound('error'))
+        pluglist = ba.app.potential_plugins
+        plugstates: Dict[str, Dict] = ba.app.config.setdefault('Plugins', {})
+        assert isinstance(plugstates, dict)
         for i, availplug in enumerate(pluglist):
-            active = i % 3 < 2
-            check = ba.checkboxwidget(parent=self._subcontainer,
-                                      text=availplug.display_name,
-                                      value=active,
-                                      maxwidth=self._scroll_width - 100,
-                                      size=(self._scroll_width - 40, 50),
-                                      on_value_change_call=ba.Call(
-                                          self._check_value_changed,
-                                          availplug),
-                                      textcolor=((0, 1, 0) if active else
-                                                 (0.6, 0.6, 0.6)))
+            active = availplug.class_path in ba.app.active_plugins
+
+            plugstate = plugstates.setdefault(availplug.class_path, {})
+            checked = plugstate.get('enabled', False)
+            assert isinstance(checked, bool)
+            check = ba.checkboxwidget(
+                parent=self._subcontainer,
+                text=availplug.display_name,
+                value=checked,
+                maxwidth=self._scroll_width - 100,
+                size=(self._scroll_width - 40, 50),
+                on_value_change_call=ba.Call(self._check_value_changed,
+                                             availplug),
+                textcolor=((0.8, 0.3, 0.3) if not availplug.available else
+                           (0, 1, 0) if active else (0.6, 0.6, 0.6)))
 
             # Make sure we scroll all the way to the end when using
             # keyboard/button nav.
@@ -144,12 +147,16 @@ class PluginSettingsWindow(ba.Window):
 
         self._restore_state()
 
-    def _check_value_changed(self, plug: ba.AvailablePlugin,
+    def _check_value_changed(self, plug: ba.PotentialPlugin,
                              value: bool) -> None:
         ba.screenmessage(
             ba.Lstr(resource='settingsWindowAdvanced.mustRestartText'),
             color=(1.0, 0.5, 0.0))
-        print(f'check value changed for {plug} to {value}')
+        plugstates: Dict[str, Dict] = ba.app.config.setdefault('Plugins', {})
+        assert isinstance(plugstates, dict)
+        plugstate = plugstates.setdefault(plug.class_path, {})
+        plugstate['enabled'] = value
+        ba.app.config.commit()
 
     def _save_state(self) -> None:
         pass

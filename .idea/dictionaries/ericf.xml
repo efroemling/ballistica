@@ -570,6 +570,7 @@
       <w>elim</w>
       <w>emitfx</w>
       <w>emoji</w>
+      <w>emojis</w>
       <w>enablexinput</w>
       <w>ename</w>
       <w>encerr</w>
@@ -1453,7 +1454,10 @@
       <w>plistname</w>
       <w>plpt</w>
       <w>plst</w>
+      <w>plugkey</w>
+      <w>plugkeys</w>
       <w>pluglist</w>
+      <w>plugstate</w>
       <w>plugstates</w>
       <w>plusbutton</w>
       <w>plvel</w>

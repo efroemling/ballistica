@@ -66,6 +66,7 @@ def handle_scan_results(results: ScanResults) -> None:
     """Called in the game thread with results of a completed scan."""
 
     from ba._lang import Lstr
+    from ba._plugin import PotentialPlugin
 
     # Warnings generally only get printed locally for users' benefit
     # (things like out-of-date scripts being ignored, etc.)
@@ -87,17 +88,31 @@ def handle_scan_results(results: ScanResults) -> None:
     config_changed = False
     found_new = False
     plugstates: Dict[str, Dict] = _ba.app.config.setdefault('Plugins', {})
-    if not isinstance(plugstates, dict):
-        print('Warning; found non-dict for "Plugins" in config.')
-        plugstates = {}
-        config_changed = True
+    assert isinstance(plugstates, dict)
 
-    for plug in results.plugins:
-        if plug not in plugstates:
-            print('found new plugin:', plug)
-            plugstates[plug] = {'enabled': False}
+    # Create a potential-plugin for each class we found in the scan.
+    for class_path in results.plugins:
+        _ba.app.potential_plugins.append(
+            PotentialPlugin(display_name=Lstr(value=class_path),
+                            class_path=class_path,
+                            available=True))
+        if class_path not in plugstates:
+            plugstates[class_path] = {'enabled': False}
             config_changed = True
             found_new = True
+
+    # Also add a special one for any plugins set to load but *not* found
+    # in the scan (this way they will show up in the UI so we can disable them)
+    for class_path, plugstate in plugstates.items():
+        enabled = plugstate.get('enabled', False)
+        assert isinstance(enabled, bool)
+        if enabled and class_path not in results.plugins:
+            _ba.app.potential_plugins.append(
+                PotentialPlugin(display_name=Lstr(value=class_path),
+                                class_path=class_path,
+                                available=False))
+
+    _ba.app.potential_plugins.sort(key=lambda p: p.class_path)
 
     if found_new:
         _ba.screenmessage(Lstr(resource='pluginsDetectedText'),
@@ -106,7 +121,6 @@ def handle_scan_results(results: ScanResults) -> None:
 
     if config_changed:
         _ba.app.config.commit()
-    # print(f'would check {len(results.plugins)} plugs')
 
 
 class ScanThread(threading.Thread):
@@ -189,6 +203,9 @@ class DirectoryScan:
                 self.results.warnings += ("Error scanning '" + str(subpath) +
                                           "': " + traceback.format_exc() +
                                           '\n')
+        # Sort our results
+        self.results.games.sort()
+        self.results.plugins.sort()
 
     def scan_module(self, moduledir: pathlib.Path,
                     subpath: pathlib.Path) -> None:
