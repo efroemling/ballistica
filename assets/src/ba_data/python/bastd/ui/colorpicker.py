@@ -52,7 +52,7 @@ class ColorPicker(PopupWindow):
         assert len(c_raw) == 16
         self.colors = [c_raw[0:4], c_raw[4:8], c_raw[8:12], c_raw[12:16]]
 
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         if scale is None:
             scale = (2.3 if uiscale is ba.UIScale.SMALL else
                      1.65 if uiscale is ba.UIScale.MEDIUM else 1.23)
@@ -191,7 +191,7 @@ class ColorPickerExact(PopupWindow):
         assert len(c_raw) == 16
         self.colors = [c_raw[0:4], c_raw[4:8], c_raw[8:12], c_raw[12:16]]
 
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         if scale is None:
             scale = (2.3 if uiscale is ba.UIScale.SMALL else
                      1.65 if uiscale is ba.UIScale.MEDIUM else 1.23)

@@ -41,7 +41,7 @@ class GamepadAdvancedSettingsWindow(ba.Window):
         app = ba.app
 
         self._r = parent_window.get_r()
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         self._width = 900 if uiscale is ba.UIScale.SMALL else 700
         self._x_inset = x_inset = 100 if uiscale is ba.UIScale.SMALL else 0
         self._height = 402 if uiscale is ba.UIScale.SMALL else 512

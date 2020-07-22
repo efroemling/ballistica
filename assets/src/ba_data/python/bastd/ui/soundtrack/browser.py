@@ -52,7 +52,7 @@ class SoundtrackBrowserWindow(ba.Window):
             scale_origin = None
 
         self._r = 'editSoundtrackWindow'
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         self._width = 800 if uiscale is ba.UIScale.SMALL else 600
         x_inset = 100 if uiscale is ba.UIScale.SMALL else 0
         self._height = (340 if uiscale is ba.UIScale.SMALL else

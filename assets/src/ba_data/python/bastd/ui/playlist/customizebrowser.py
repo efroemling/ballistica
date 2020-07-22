@@ -59,7 +59,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
         self._pvars = playlist.PlaylistTypeVars(sessiontype)
         self._max_playlists = 30
         self._r = 'gameListWindow'
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         self._width = 750.0 if uiscale is ba.UIScale.SMALL else 650.0
         x_inset = 50.0 if uiscale is ba.UIScale.SMALL else 0.0
         self._height = (380.0 if uiscale is ba.UIScale.SMALL else

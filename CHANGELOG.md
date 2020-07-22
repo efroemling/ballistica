@@ -10,6 +10,8 @@
 - Added 'selection_loops_to_parent', 'claims_left_right', and 'claims_tab' args to ba.rowwidget.
 - Added 'claims_left_right' and 'claims_tab' to ba.hscrollwidget().
 - Default widget 'show_buffer' is now 20 instead of 0 (causes scrolling to stay slightly ahead of widget selection). This can be overridden with the ba.widget() call if anything breaks.
+- Relocated ba.app.uiscale to ba.app.ui.uiscale
+- Top level settings window now properly saves/restores its state again.
 - BombSquad now has its own Exclusive Emojis in the Internal Game Keyboard.
 - Added continuos CAPITAL letters typing feature in the Internal Game Keyboard.
 

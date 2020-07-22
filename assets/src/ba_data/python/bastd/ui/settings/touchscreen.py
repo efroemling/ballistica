@@ -45,7 +45,7 @@ class TouchscreenSettingsWindow(ba.Window):
 
         _ba.set_touchscreen_editing(True)
 
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             transition='in_right',

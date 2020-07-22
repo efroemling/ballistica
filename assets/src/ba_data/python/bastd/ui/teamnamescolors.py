@@ -43,7 +43,7 @@ class TeamNamesColorsWindow(popup.PopupWindow):
         self._max_name_length = 16
 
         # Creates our _root_widget.
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         scale = (1.69 if uiscale is ba.UIScale.SMALL else
                  1.1 if uiscale is ba.UIScale.MEDIUM else 0.85)
         super().__init__(position=scale_origin,

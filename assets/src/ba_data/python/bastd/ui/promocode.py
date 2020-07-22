@@ -53,7 +53,7 @@ class PromoCodeWindow(ba.Window):
         self._modal = modal
         self._r = 'promoCodeWindow'
 
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(width, height),
             transition=transition,

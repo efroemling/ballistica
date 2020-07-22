@@ -60,7 +60,7 @@ class GamepadSettingsWindow(ba.Window):
         self._width = 700 if self._is_secondary else 730
         self._height = 440 if self._is_secondary else 450
         self._spacing = 40
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             scale=(1.63 if uiscale is ba.UIScale.SMALL else
@@ -783,7 +783,7 @@ class AwaitGamepadInputWindow(ba.Window):
         self._capture_button = button
         width = 400
         height = 150
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             scale=(2.0 if uiscale is ba.UIScale.SMALL else
                    1.9 if uiscale is ba.UIScale.MEDIUM else 1.0),

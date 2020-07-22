@@ -44,7 +44,7 @@ class ServerDialogWindow(ba.Window):
                       txt_scale)
         self._width = 500
         self._height = 130 + min(200, txt_height)
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             transition='in_scale',

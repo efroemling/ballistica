@@ -47,7 +47,7 @@ class PartyWindow(ba.Window):
         self._popup_party_member_client_id: Optional[int] = None
         self._popup_party_member_is_host: Optional[bool] = None
         self._width = 500
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         self._height = (365 if uiscale is ba.UIScale.SMALL else
                         480 if uiscale is ba.UIScale.MEDIUM else 600)
         super().__init__(root_widget=ba.containerwidget(
@@ -202,7 +202,7 @@ class PartyWindow(ba.Window):
 
     def _on_menu_button_press(self) -> None:
         is_muted = ba.app.config.resolve('Chat Muted')
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         popup.PopupMenuWindow(
             position=self._menu_button.get_screen_space_center(),
             scale=(2.3 if uiscale is ba.UIScale.SMALL else
@@ -406,7 +406,7 @@ class PartyWindow(ba.Window):
                     14248):
                 return
             kick_str = ba.Lstr(resource='kickVoteText')
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         popup.PopupMenuWindow(
             position=widget.get_screen_space_center(),
             scale=(2.3 if uiscale is ba.UIScale.SMALL else

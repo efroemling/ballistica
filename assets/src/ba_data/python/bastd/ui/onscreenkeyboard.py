@@ -41,7 +41,7 @@ class OnScreenKeyboardWindow(ba.Window):
         self._target_text = textwidget
         self._width = 700
         self._height = 400
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         top_extra = 20 if uiscale is ba.UIScale.SMALL else 0
         super().__init__(root_widget=ba.containerwidget(
             parent=_ba.get_special_widget('overlay_stack'),

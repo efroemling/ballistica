@@ -45,7 +45,7 @@ class ProfileUpgradeWindow(ba.Window):
 
         self._width = 680
         self._height = 350
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         self._base_scale = (2.05 if uiscale is ba.UIScale.SMALL else
                             1.5 if uiscale is ba.UIScale.MEDIUM else 1.2)
         self._upgrade_start_time: Optional[float] = None

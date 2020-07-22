@@ -218,7 +218,7 @@ class PlaylistBrowserWindow(ba.Window):
         self._selected_playlist = ba.app.config.get(self._pvars.config_name +
                                                     ' Playlist Selection')
 
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         self._width = 900 if uiscale is ba.UIScale.SMALL else 800
         x_inset = 50 if uiscale is ba.UIScale.SMALL else 0
         self._height = (480 if uiscale is ba.UIScale.SMALL else
@@ -366,7 +366,7 @@ class PlaylistBrowserWindow(ba.Window):
         h_offs = 225 if count == 1 else 115 if count == 2 else 0
         h_offs_bottom = 0
 
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         for y in range(rows):
             for x in range(columns):
                 name = items[index][0]

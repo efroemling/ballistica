@@ -57,7 +57,7 @@ class HelpWindow(ba.Window):
         self._r = 'helpWindow'
 
         self._main_menu = main_menu
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         width = 950 if uiscale is ba.UIScale.SMALL else 750
         x_offs = 100 if uiscale is ba.UIScale.SMALL else 0
         height = (460 if uiscale is ba.UIScale.SMALL else

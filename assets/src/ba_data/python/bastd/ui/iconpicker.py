@@ -50,7 +50,7 @@ class IconPicker(popup.PopupWindow):
         del parent  # unused here
         del tint_color  # unused_here
         del tint2_color  # unused here
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         if scale is None:
             scale = (1.85 if uiscale is ba.UIScale.SMALL else
                      1.65 if uiscale is ba.UIScale.MEDIUM else 1.23)

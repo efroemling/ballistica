@@ -34,7 +34,7 @@ class PS3ControllerSettingsWindow(ba.Window):
         height = 330 if _ba.is_running_on_fire_tv() else 540
         spacing = 40
         self._r = 'ps3ControllersWindow'
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(width, height),
             transition='in_right',

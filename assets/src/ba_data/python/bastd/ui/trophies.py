@@ -40,7 +40,7 @@ class TrophiesWindow(popup.PopupWindow):
                  scale: float = None):
         from ba.deprecated import get_resource
         self._data = data
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         if scale is None:
             scale = (2.3 if uiscale is ba.UIScale.SMALL else
                      1.65 if uiscale is ba.UIScale.MEDIUM else 1.23)

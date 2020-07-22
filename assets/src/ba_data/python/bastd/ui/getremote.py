@@ -36,7 +36,7 @@ class GetBSRemoteWindow(popup.PopupWindow):
 
     def __init__(self) -> None:
         position = (0.0, 0.0)
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         scale = (2.3 if uiscale is ba.UIScale.SMALL else
                  1.65 if uiscale is ba.UIScale.MEDIUM else 1.23)
         self._transitioning_out = False

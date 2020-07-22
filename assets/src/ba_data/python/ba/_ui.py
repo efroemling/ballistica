@@ -25,6 +25,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import _ba
+from ba._enums import UIScale
 
 if TYPE_CHECKING:
     from typing import Optional, Dict, Any, Callable, List
@@ -43,8 +44,19 @@ class UI:
         self._main_menu_window: Optional[ba.Widget] = None
         self._main_menu_location: Optional[str] = None
 
+        self._uiscale: ba.UIScale
+
+        interfacetype = env['interface_type']
+        if interfacetype == 'large':
+            self._uiscale = UIScale.LARGE
+        elif interfacetype == 'medium':
+            self._uiscale = UIScale.MEDIUM
+        elif interfacetype == 'small':
+            self._uiscale = UIScale.SMALL
+        else:
+            raise RuntimeError('Invalid UIScale value: {interfacetype}')
+
         self.window_states: Dict = {}  # FIXME: Kill this.
-        # self.windows: Dict = {}  # FIXME: Kill this.
         self.main_menu_selection: Optional[str] = None  # FIXME: Kill this.
         self.have_party_queue_window = False
         self.quit_window: Any = None
@@ -58,10 +70,38 @@ class UI:
         self.heading_color = (0.72, 0.7, 0.75)
         self.infotextcolor = (0.7, 0.9, 0.7)
 
+    @property
+    def uiscale(self) -> ba.UIScale:
+        """Current ui scale for the app."""
+        return self._uiscale
+
     def on_app_launch(self) -> None:
         """Should be run on app launch."""
         from ba.ui import UIController, ui_upkeep
         from ba._enums import TimeType
+
+        # IMPORTANT: If tweaking UI stuff, make sure it behaves for small,
+        # medium, and large UI modes. (doesn't run off screen, etc).
+        # The overrides below can be used to test with different sizes.
+        # Generally small is used on phones, medium is used on tablets/tvs,
+        # and large is on desktop computers or perhaps large tablets. When
+        # possible, run in windowed mode and resize the window to assure
+        # this holds true at all aspect ratios.
+
+        # UPDATE: A better way to test this is now by setting the environment
+        # variable BA_FORCE_UI_SCALE to "small", "medium", or "large".
+        # This will affect system UIs not covered by the values below such
+        # as screen-messages. The below values remain functional, however,
+        # for cases such as Android where environment variables can't be set
+        # easily.
+
+        if bool(False):  # force-test ui scale
+            self._uiscale = UIScale.SMALL
+            with _ba.Context('ui'):
+                _ba.pushcall(lambda: _ba.screenmessage(
+                    f'FORCING UISCALE {self._uiscale.name} FOR TESTING',
+                    color=(1, 0, 1),
+                    log=True))
 
         self.controller = UIController()
 

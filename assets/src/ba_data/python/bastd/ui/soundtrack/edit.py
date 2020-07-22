@@ -43,7 +43,7 @@ class SoundtrackEditWindow(ba.Window):
         self._r = 'editSoundtrackWindow'
         self._folder_tex = ba.gettexture('folder')
         self._file_tex = ba.gettexture('file')
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         self._width = 848 if uiscale is ba.UIScale.SMALL else 648
         x_inset = 100 if uiscale is ba.UIScale.SMALL else 0
         self._height = (395 if uiscale is ba.UIScale.SMALL else

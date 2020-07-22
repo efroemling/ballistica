@@ -59,7 +59,7 @@ class AdvancedSettingsWindow(ba.Window):
             self._transition_out = 'out_right'
             scale_origin = None
 
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         self._width = 870.0 if uiscale is ba.UIScale.SMALL else 670.0
         x_inset = 100 if uiscale is ba.UIScale.SMALL else 0
         self._height = (390.0 if uiscale is ba.UIScale.SMALL else

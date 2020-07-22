@@ -77,7 +77,7 @@ class AccountSettingsWindow(ba.Window):
         self._can_reset_achievements = (account_type == 'Game Center')
 
         app = ba.app
-        uiscale = app.uiscale
+        uiscale = app.ui.uiscale
 
         self._width = 760 if uiscale is ba.UIScale.SMALL else 660
         x_offs = 50 if uiscale is ba.UIScale.SMALL else 0

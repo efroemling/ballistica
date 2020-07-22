@@ -34,7 +34,7 @@ class ShowURLWindow(ba.Window):
         # in some cases we might want to show it as a qr code
         # (for long URLs especially)
         app = ba.app
-        uiscale = app.uiscale
+        uiscale = app.ui.uiscale
         if app.platform == 'android' and app.subplatform == 'alibaba':
             self._width = 500
             self._height = 500

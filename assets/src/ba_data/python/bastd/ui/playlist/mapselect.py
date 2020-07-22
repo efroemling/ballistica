@@ -55,7 +55,7 @@ class PlaylistMapSelectWindow(ba.Window):
         except Exception:
             self._previous_map = ''
 
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         width = 715 if uiscale is ba.UIScale.SMALL else 615
         x_inset = 50 if uiscale is ba.UIScale.SMALL else 0
         height = (400 if uiscale is ba.UIScale.SMALL else

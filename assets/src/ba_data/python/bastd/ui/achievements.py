@@ -36,7 +36,7 @@ class AchievementsWindow(popup.PopupWindow):
 
     def __init__(self, position: Tuple[float, float], scale: float = None):
         # pylint: disable=too-many-locals
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         if scale is None:
             scale = (2.3 if uiscale is ba.UIScale.SMALL else
                      1.65 if uiscale is ba.UIScale.MEDIUM else 1.23)

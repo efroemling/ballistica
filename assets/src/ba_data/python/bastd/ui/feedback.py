@@ -41,7 +41,7 @@ def ask_for_rating() -> Optional[ba.Widget]:
     width = 700
     height = 400
     spacing = 40
-    uiscale = ba.app.uiscale
+    uiscale = ba.app.ui.uiscale
     dlg = ba.containerwidget(
         size=(width, height),
         transition='in_right',

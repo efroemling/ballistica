@@ -39,7 +39,7 @@ class XBox360ControllerSettingsWindow(ba.Window):
         width = 700
         height = 300 if _ba.is_running_on_fire_tv() else 485
         spacing = 40
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(width, height),
             transition='in_right',

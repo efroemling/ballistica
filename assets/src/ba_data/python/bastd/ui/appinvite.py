@@ -42,7 +42,7 @@ class AppInviteWindow(ba.Window):
         self._width = 650
         self._height = 400
 
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             transition='in_scale',
@@ -174,7 +174,7 @@ class ShowFriendCodeWindow(ba.Window):
         ba.set_analytics_screen('Friend Promo Code')
         self._width = 650
         self._height = 400
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             color=(0.45, 0.63, 0.15),

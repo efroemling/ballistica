@@ -57,7 +57,7 @@ class GraphicsSettingsWindow(ba.Window):
 
         spacing = 32
         self._have_selected_child = False
-        uiscale = app.uiscale
+        uiscale = app.ui.uiscale
         width = 450.0
         height = 302.0
 
@@ -83,7 +83,7 @@ class GraphicsSettingsWindow(ba.Window):
             show_resolution = (app.platform == 'android'
                                and app.subplatform == 'cardboard')
 
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         base_scale = (2.4 if uiscale is ba.UIScale.SMALL else
                       1.5 if uiscale is ba.UIScale.MEDIUM else 1.0)
         popup_menu_scale = base_scale * 1.2

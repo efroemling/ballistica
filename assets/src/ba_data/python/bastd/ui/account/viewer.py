@@ -46,7 +46,7 @@ class AccountViewerWindow(popup.PopupWindow):
         self._account_id = account_id
         self._profile_id = profile_id
 
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         if scale is None:
             scale = (2.6 if uiscale is ba.UIScale.SMALL else
                      1.8 if uiscale is ba.UIScale.MEDIUM else 1.4)
@@ -161,7 +161,7 @@ class AccountViewerWindow(popup.PopupWindow):
             choices.append('ban')
             choices_display.append(ba.Lstr(resource='banThisPlayerText'))
 
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         popup.PopupMenuWindow(
             position=self._extras_menu_button.get_screen_space_center(),
             scale=(2.3 if uiscale is ba.UIScale.SMALL else

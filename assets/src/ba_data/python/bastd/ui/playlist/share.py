@@ -89,7 +89,7 @@ class SharePlaylistResultsWindow(ba.Window):
         del origin  # unused arg
         self._width = 450
         self._height = 300
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             color=(0.45, 0.63, 0.15),

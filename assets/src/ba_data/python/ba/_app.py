@@ -30,7 +30,6 @@ import _ba
 if TYPE_CHECKING:
     import ba
     from ba import _lang, _meta
-    from ba.ui import UICleanupCheck
     from bastd.actor import spazappearance
     from typing import Optional, Dict, Set, Any, Type, Tuple, Callable, List
 
@@ -231,11 +230,6 @@ class App:
         return CURRENT_API_VERSION
 
     @property
-    def uiscale(self) -> ba.UIScale:
-        """Current ui scale for the app."""
-        return self._uiscale
-
-    @property
     def on_tv(self) -> bool:
         """Bool value for if the game is running on a TV."""
         return self._on_tv
@@ -261,7 +255,6 @@ class App:
         """
         # pylint: disable=too-many-statements
         from ba._music import MusicController
-        from ba._enums import UIScale
         from ba._ui import UI
 
         # Config.
@@ -299,16 +292,6 @@ class App:
         assert isinstance(self._platform, str)
         self._subplatform: str = env['subplatform']
         assert isinstance(self._subplatform, str)
-        self._uiscale: ba.UIScale
-        interfacetype = env['interface_type']
-        if interfacetype == 'large':
-            self._uiscale = UIScale.LARGE
-        elif interfacetype == 'medium':
-            self._uiscale = UIScale.MEDIUM
-        elif interfacetype == 'small':
-            self._uiscale = UIScale.SMALL
-        else:
-            raise RuntimeError('Invalid UIScale value: {interfacetype}')
         self._on_tv: bool = env['on_tv']
         assert isinstance(self._on_tv, bool)
         self._vr_mode: bool = env['vr_mode']
@@ -422,8 +405,6 @@ class App:
         """Runs after the app finishes bootstrapping.
 
         (internal)"""
-        # FIXME: Break this up.
-        # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
         from ba import _apputils
@@ -435,7 +416,7 @@ class App:
         from bastd import appdelegate
         from bastd import maps as stdmaps
         from bastd.actor import spazappearance
-        from ba._enums import TimeType, UIScale
+        from ba._enums import TimeType
 
         cfg = self.config
 
@@ -463,29 +444,6 @@ class App:
         if (not self.debug_build and not self.test_build
                 and not _ba.is_blessed()):
             _ba.screenmessage('WARNING: NON-BLESSED BUILD', color=(1, 0, 0))
-
-        # IMPORTANT: If tweaking UI stuff, make sure it behaves for small,
-        # medium, and large UI modes. (doesn't run off screen, etc).
-        # The overrides below can be used to test with different sizes.
-        # Generally small is used on phones, medium is used on tablets/tvs,
-        # and large is on desktop computers or perhaps large tablets. When
-        # possible, run in windowed mode and resize the window to assure
-        # this holds true at all aspect ratios.
-
-        # UPDATE: A better way to test this is now by setting the environment
-        # variable BA_FORCE_UI_SCALE to "small", "medium", or "large".
-        # This will affect system UIs not covered by the values below such
-        # as screen-messages. The below values remain functional, however,
-        # for cases such as Android where environment variables can't be set
-        # easily.
-
-        if bool(False):  # force-test ui scale
-            self._uiscale = UIScale.SMALL
-            with _ba.Context('ui'):
-                _ba.pushcall(lambda: _ba.screenmessage(
-                    f'FORCING UISCALE {self._uiscale.name} FOR TESTING',
-                    color=(1, 0, 1),
-                    log=True))
 
         # If there's a leftover log file, attempt to upload it to the
         # master-server and/or get rid of it.

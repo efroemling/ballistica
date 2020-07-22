@@ -40,7 +40,7 @@ class PlaylistAddGameWindow(ba.Window):
                  transition: str = 'in_right'):
         self._editcontroller = editcontroller
         self._r = 'addGameWindow'
-        uiscale = ba.app.uiscale
+        uiscale = ba.app.ui.uiscale
         self._width = 750 if uiscale is ba.UIScale.SMALL else 650
         x_inset = 50 if uiscale is ba.UIScale.SMALL else 0
         self._height = (346 if uiscale is ba.UIScale.SMALL else
