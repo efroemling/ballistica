@@ -164,7 +164,7 @@ class ControlsSettingsWindow(ba.Window):
             on_activate_call=self._back)
         ba.containerwidget(edit=self._root_widget, cancel_button=btn)
 
-        # need these vars to exist even if the buttons don't
+        # We need these vars to exist even if the buttons don't.
         self._gamepads_button: Optional[ba.Widget] = None
         self._touch_button: Optional[ba.Widget] = None
         self._keyboard_button: Optional[ba.Widget] = None

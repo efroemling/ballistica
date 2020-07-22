@@ -161,3 +161,13 @@ class SharedObjects:
                 ),
             )
         return self._railing_material
+
+
+# ba _meta export plugin
+class TestPlug1(ba.Plugin):
+    """Just Testing."""
+
+
+# ba _meta export plugin
+class TestPlug2(ba.Plugin):
+    """Just Testing 2."""

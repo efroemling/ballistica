@@ -190,6 +190,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/ba/_nodeactor.py \
   build/ba_data/python/ba/_player.py \
   build/ba_data/python/ba/_playlist.py \
+  build/ba_data/python/ba/_plugin.py \
   build/ba_data/python/ba/_powerup.py \
   build/ba_data/python/ba/_profile.py \
   build/ba_data/python/ba/_score.py \
@@ -423,6 +424,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/ba/__pycache__/_nodeactor.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_player.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_playlist.cpython-37.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_plugin.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_powerup.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_profile.cpython-37.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_score.cpython-37.opt-1.pyc \

@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-07-21 for Ballistica version 1.5.23 build 20150</em></h4>
+<h4><em>last updated on 2020-07-21 for Ballistica version 1.5.23 build 20151</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -150,8 +150,10 @@
    <li><a href="#class_ba_App">ba.App</a></li>
    <li><a href="#class_ba_AppConfig">ba.AppConfig</a></li>
    <li><a href="#class_ba_AppDelegate">ba.AppDelegate</a></li>
+   <li><a href="#class_ba_AvailablePlugin">ba.AvailablePlugin</a></li>
    <li><a href="#class_ba_Campaign">ba.Campaign</a></li>
    <li><a href="#class_ba_MusicPlayer">ba.MusicPlayer</a></li>
+   <li><a href="#class_ba_Plugin">ba.Plugin</a></li>
    <li><a href="#class_ba_ServerController">ba.ServerController</a></li>
 </ul>
 <h4><a name="class_category_User_Interface_Classes">User Interface Classes</a></h4>
@@ -1163,6 +1165,22 @@ when done.</p>
 <p>Load a named <a href="#class_ba_Texture">ba.Texture</a> from the AssetPackage.</p>
 
 <p>Behavior is similar to <a href="#function_ba_gettexture">ba.gettexture</a>()</p>
+
+</dd>
+</dl>
+<hr>
+<h2><strong><a name="class_ba_AvailablePlugin">ba.AvailablePlugin</a></strong></h3>
+<p><em>&lt;top level class&gt;</em>
+</p>
+<p>Defines a plugin which can potentially be loaded.</p>
+
+<p>Category: <a href="#class_category_App_Classes">App Classes</a>
+</p>
+
+<h3>Methods:</h3>
+<dl>
+<dt><h4><a name="method_ba_AvailablePlugin____init__">&lt;constructor&gt;</a></dt></h4><dd>
+<p><span>ba.AvailablePlugin(display_name: str, class_path: str)</span></p>
 
 </dd>
 </dl>
@@ -4485,6 +4503,15 @@ the type-checker properly identifies the returned value as one.</p>
 
 </dd>
 </dl>
+<hr>
+<h2><strong><a name="class_ba_Plugin">ba.Plugin</a></strong></h3>
+<p><em>&lt;top level class&gt;</em>
+</p>
+<p>A plugin to alter app behavior in some way.</p>
+
+<p>Category: <a href="#class_category_App_Classes">App Classes</a>
+</p>
+
 <hr>
 <h2><strong><a name="class_ba_PowerupAcceptMessage">ba.PowerupAcceptMessage</a></strong></h3>
 <p><em>&lt;top level class&gt;</em>

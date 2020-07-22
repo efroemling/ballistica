@@ -137,6 +137,7 @@
       <w>autoretain</w>
       <w>autoselect</w>
       <w>autotools</w>
+      <w>availplug</w>
       <w>aval</w>
       <w>axismotion</w>
       <w>bacfg</w>
@@ -628,6 +629,7 @@
       <w>extrascale</w>
       <w>exts</w>
       <w>factoryclass</w>
+      <w>fakemodule</w>
       <w>fallbacks</w>
       <w>farthestpt</w>
       <w>fback</w>
@@ -1452,6 +1454,7 @@
       <w>plpt</w>
       <w>plst</w>
       <w>pluglist</w>
+      <w>plugstates</w>
       <w>plusbutton</w>
       <w>plvel</w>
       <w>pmats</w>

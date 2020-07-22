@@ -45,6 +45,7 @@ CURRENT_API_VERSION = 6
 class ScanResults:
     """Final results from a metadata scan."""
     games: List[str] = field(default_factory=list)
+    plugins: List[str] = field(default_factory=list)
     errors: str = ''
     warnings: str = ''
 
@@ -64,6 +65,8 @@ def start_scan() -> None:
 def handle_scan_results(results: ScanResults) -> None:
     """Called in the game thread with results of a completed scan."""
 
+    from ba._lang import Lstr
+
     # Warnings generally only get printed locally for users' benefit
     # (things like out-of-date scripts being ignored, etc.)
     # Errors are more serious and will get included in the regular log
@@ -71,7 +74,6 @@ def handle_scan_results(results: ScanResults) -> None:
     # errors = results.get('errors', '')
     if results.warnings != '' or results.errors != '':
         import textwrap
-        from ba._lang import Lstr
         _ba.screenmessage(Lstr(resource='scanScriptsErrorText'),
                           color=(1, 0, 0))
         _ba.playsound(_ba.getsound('error'))
@@ -80,6 +82,31 @@ def handle_scan_results(results: ScanResults) -> None:
                     to_server=False)
         if results.errors != '':
             _ba.log(textwrap.indent(results.errors, 'Error (meta-scan): '))
+
+    # Handle plugins.
+    config_changed = False
+    found_new = False
+    plugstates: Dict[str, Dict] = _ba.app.config.setdefault('Plugins', {})
+    if not isinstance(plugstates, dict):
+        print('Warning; found non-dict for "Plugins" in config.')
+        plugstates = {}
+        config_changed = True
+
+    for plug in results.plugins:
+        if plug not in plugstates:
+            print('found new plugin:', plug)
+            plugstates[plug] = {'enabled': False}
+            config_changed = True
+            found_new = True
+
+    if found_new:
+        _ba.screenmessage(Lstr(resource='pluginsDetectedText'),
+                          color=(0, 1, 0))
+        _ba.playsound(_ba.getsound('ding'))
+
+    if config_changed:
+        _ba.app.config.commit()
+    # print(f'would check {len(results.plugins)} plugs')
 
 
 class ScanThread(threading.Thread):
@@ -90,7 +117,7 @@ class ScanThread(threading.Thread):
         self._dirs = dirs
 
     def run(self) -> None:
-        from ba import _general
+        from ba._general import Call
         try:
             scan = DirectoryScan(self._dirs)
             scan.scan()
@@ -100,7 +127,7 @@ class ScanThread(threading.Thread):
 
         # Push a call to the game thread to print warnings/errors
         # or otherwise deal with scan results.
-        _ba.pushcall(_general.Call(handle_scan_results, results),
+        _ba.pushcall(Call(handle_scan_results, results),
                      from_other_thread=True)
 
         # We also, however, immediately make results available.
@@ -117,14 +144,6 @@ class DirectoryScan:
 
         It is assumed that these paths are also in PYTHONPATH.
         It is also assumed that any subdirectories are Python packages.
-        The returned dict contains the following:
-        'powerups': list of ba.Powerup classes found.
-        'campaigns': list of ba.Campaign classes found.
-        'modifiers': list of ba.Modifier classes found.
-        'maps': list of ba.Map classes found.
-        'games': list of ba.GameActivity classes found.
-        'warnings': warnings from scan; should be printed for local feedback
-        'errors': errors encountered during scan; should be fully logged
         """
 
         # Skip non-existent paths completely.
@@ -251,6 +270,8 @@ class DirectoryScan:
                     classname = modulename + '.' + export_class_name
                     if exporttype == 'game':
                         self.results.games.append(classname)
+                    elif exporttype == 'plugin':
+                        self.results.plugins.append(classname)
                     else:
                         self.results.warnings += (
                             'Warning: ' + str(subpath) +

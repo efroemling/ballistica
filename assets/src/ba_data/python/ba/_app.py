@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 class App:
     """A class for high level app functionality and state.
 
-    category: App Classes
+    Category: App Classes
 
     Use ba.app to access the single shared instance of this class.
 
@@ -304,6 +304,10 @@ class App:
         assert isinstance(self.kiosk_mode, bool)
         self.headless_build: bool = env['headless_build']
         assert isinstance(self.headless_build, bool)
+
+        # Plugins.
+        self.loaded_plugins: List[ba.Plugin] = []
+        self.available_plugins: List[ba.AvailablePlugin] = []
 
         # Misc.
         self.default_language = self._get_default_language()

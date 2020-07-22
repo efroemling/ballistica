@@ -33,9 +33,13 @@ if TYPE_CHECKING:
 class PluginSettingsWindow(ba.Window):
     """Window for configuring plugins."""
 
+    def __del__(self) -> None:
+        print('~PluginSettingsWindow()')
+
     def __init__(self,
                  transition: str = 'in_right',
                  origin_widget: ba.Widget = None):
+        print('PluginSettingsWindow()')
 
         app = ba.app
 
@@ -111,11 +115,22 @@ class PluginSettingsWindow(ba.Window):
         self._subcontainer = ba.columnwidget(parent=self._scrollwidget,
                                              selection_loops_to_parent=True)
 
-        pluglist = [f'Test {i}' for i in range(10)]
-        for i, plug in enumerate(pluglist):
+        pluglist = [
+            ba.AvailablePlugin(display_name=f'Test {i}',
+                               class_path='fakemodule') for i in range(10)
+        ]
+        for i, availplug in enumerate(pluglist):
+            active = i % 3 < 2
             check = ba.checkboxwidget(parent=self._subcontainer,
-                                      text=plug,
-                                      size=(self._scroll_width - 40, 50))
+                                      text=availplug.display_name,
+                                      value=active,
+                                      maxwidth=self._scroll_width - 100,
+                                      size=(self._scroll_width - 40, 50),
+                                      on_value_change_call=ba.Call(
+                                          self._check_value_changed,
+                                          availplug),
+                                      textcolor=((0, 1, 0) if active else
+                                                 (0.6, 0.6, 0.6)))
 
             # Make sure we scroll all the way to the end when using
             # keyboard/button nav.
@@ -128,6 +143,13 @@ class PluginSettingsWindow(ba.Window):
                            selected_child=self._scrollwidget)
 
         self._restore_state()
+
+    def _check_value_changed(self, plug: ba.AvailablePlugin,
+                             value: bool) -> None:
+        ba.screenmessage(
+            ba.Lstr(resource='settingsWindowAdvanced.mustRestartText'),
+            color=(1.0, 0.5, 0.0))
+        print(f'check value changed for {plug} to {value}')
 
     def _save_state(self) -> None:
         pass
