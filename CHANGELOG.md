@@ -11,6 +11,7 @@
 - Added 'claims_left_right' and 'claims_tab' to ba.hscrollwidget().
 - Default widget 'show_buffer' is now 20 instead of 0 (causes scrolling to stay slightly ahead of widget selection). This can be overridden with the ba.widget() call if anything breaks.
 - Relocated ba.app.uiscale to ba.app.ui.uiscale
+- Top level settings window now properly saves/restores its state again.
 
 ### 1.5.22 (20139)
 - Button and key names now display correctly again on Android (and are cleaned up on other platforms too).

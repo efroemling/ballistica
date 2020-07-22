@@ -58,7 +58,6 @@ class AllSettingsWindow(ba.Window):
         width = 900 if uiscale is ba.UIScale.SMALL else 580
         x_inset = 75 if uiscale is ba.UIScale.SMALL else 0
         height = 435
-        # button_height = 42
         self._r = 'settingsWindow'
         top_extra = 20 if uiscale is ba.UIScale.SMALL else 0
 
@@ -204,6 +203,7 @@ class AllSettingsWindow(ba.Window):
                        color=(0.8, 0.95, 1),
                        texture=ba.gettexture('advancedIcon'),
                        draw_controller=avb)
+        self._restore_state()
 
     @staticmethod
     def _preload_modules() -> None:

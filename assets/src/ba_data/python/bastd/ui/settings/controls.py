@@ -64,12 +64,12 @@ class ControlsSettingsWindow(ba.Window):
         spacing = 50.0
         button_width = 350.0
         width = 460.0
-        height = 85.0
+        height = 130.0
 
         space_height = spacing * 0.3
 
         # FIXME: should create vis settings in platform for these,
-        #  not hard code them here..
+        #  not hard code them here.
 
         show_gamepads = False
         platform = app.platform
@@ -93,7 +93,7 @@ class ControlsSettingsWindow(ba.Window):
         show_keyboard = False
         if _ba.getinputdevice('Keyboard', '#1', doraise=False) is not None:
             show_keyboard = True
-            height += spacing * 2
+            height += spacing
         show_keyboard_p2 = False if app.vr_mode else show_keyboard
         if show_keyboard_p2:
             height += spacing
@@ -120,26 +120,25 @@ class ControlsSettingsWindow(ba.Window):
         #     height += spacing
 
         show_mac_wiimote = False
-        if platform == 'mac' and subplatform == 'appstore':
-            show_mac_wiimote = True
-            height += spacing
+        # if platform == 'mac' and _ba.is_xcode_build():
+        #     show_mac_wiimote = True
+        #     height += spacing
 
-        # on non-oculus-vr windows, show an option to disable xinput
+        # On windows (outside of oculus/vr), show an option to disable xinput.
         show_xinput_toggle = False
-        if platform == 'windows' and (subplatform != 'oculus'
-                                      or not app.vr_mode):
+        if platform == 'windows' and not app.vr_mode:
             show_xinput_toggle = True
 
-        # on mac builds, show an option to switch between generic and
+        # On mac builds, show an option to switch between generic and
         # made-for-iOS/Mac systems
         # (we can run into problems where devices register as one of each
         # type otherwise)..
         show_mac_controller_subsystem = False
-        if platform == 'mac' and subplatform == 'appstore':
+        if platform == 'mac' and _ba.is_xcode_build():
             show_mac_controller_subsystem = True
 
         if show_mac_controller_subsystem:
-            height += spacing
+            height += spacing * 1.5
 
         if show_xinput_toggle:
             height += spacing
@@ -150,6 +149,7 @@ class ControlsSettingsWindow(ba.Window):
             size=(width, height),
             transition=transition,
             scale_origin_stack_offset=scale_origin,
+            stack_offset=((0, -10) if uiscale is ba.UIScale.SMALL else (0, 0)),
             scale=(smallscale if uiscale is ba.UIScale.SMALL else
                    1.5 if uiscale is ba.UIScale.MEDIUM else 1.0)))
         self._back_button = btn = ba.buttonwidget(
@@ -381,7 +381,7 @@ class ControlsSettingsWindow(ba.Window):
                 v_align='center',
                 color=ba.app.ui.infotextcolor,
                 maxwidth=width * 0.8)
-            v -= spacing
+            v -= spacing * 1.5
         self._restore_state()
 
     def _set_mac_controller_subsystem(self, val: str) -> None:

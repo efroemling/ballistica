@@ -2819,6 +2819,14 @@ def is_running_on_ouya() -> bool:
     return bool()
 
 
+def is_xcode_build() -> bool:
+    """is_xcode_build() -> bool
+
+    (internal)
+    """
+    return bool()
+
+
 def lock_all_input() -> None:
     """lock_all_input() -> None
 
