@@ -38,6 +38,7 @@ class OnScreenKeyboardWindow(ba.Window):
 
     def __init__(self, textwidget: ba.Widget, label: str, max_chars: int):
         # pylint: disable=too-many-locals
+        # pylint: disable=too-many-statements
         self._target_text = textwidget
         self._width = 700
         self._height = 400
@@ -261,63 +262,19 @@ class OnScreenKeyboardWindow(ba.Window):
 
         elif self._mode in ['emoji', 'emoji2']:
             chars = [
-                '💣',
-                '💥',
-                '🙂',
-                '😄',
-                '😆',
-                '😅',
-                '😂',
-                '☺',
-                '😀',
-                '😉',
-                '😇',
-                '😎',
-                '😰',
-                '😠',
-                '😈',
-                '😨',
-                '😛',
-                '😜',
-                '😝',
-                '😐',
-                '😑',
-                '😵',
-                '😬',
-                '😡',
-                '😌',
-                '😍']
+                '💣', '💥', '🙂', '😄', '😆', '😅', '😂', '☺', '😀', '😉', '😇', '😎',
+                '😰', '😠', '😈', '😨', '😛', '😜', '😝', '😐', '😑', '😵', '😬', '😡',
+                '😌', '😍'
+            ]
             if self._mode == 'emoji2':
                 chars = [
-                    '😔',
-                    '😥',
-                    '😭',
-                    '😖',
-                    '😓',
-                    '😉',
-                    '😴',
-                    '😷',
-                    '👋',
-                    '💯',
-                    '🙏',
-                    '💪',
-                    '👀',
-                    '💬',
-                    '💀',
-                    '☠',
-                    '💩',
-                    '👻',
-                    '👽',
-                    '👾',
-                    '❤',
-                    '💛',
-                    '💚',
-                    '💙',
-                    '💜',
-                    '💔']
+                    '😔', '😥', '😭', '😖', '😓', '😉', '😴', '😷', '👋', '💯', '🙏', '💪',
+                    '👀', '💬', '💀', '☠', '💩', '👻', '👽', '👾', '❤', '💛', '💚', '💙',
+                    '💜', '💔'
+                ]
             ba.buttonwidget(edit=self._shift_button,
-                            color=self._key_color_lit
-                            if self._mode == 'emoji2' else self._key_color_dark,
+                            color=self._key_color_lit if self._mode == 'emoji2'
+                            else self._key_color_dark,
                             label=charstr(SpCh.SHIFT),
                             on_activate_call=self._emoji_mode_2)
             ba.buttonwidget(edit=self._emoji_button,
