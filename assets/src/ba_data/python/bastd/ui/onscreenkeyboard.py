@@ -261,38 +261,60 @@ class OnScreenKeyboardWindow(ba.Window):
 
         elif self._mode in ['emoji', 'emoji2']:
             chars = [
-                '🙂', '😄', '😆', '😅', '😂', '☺', '😀', '😉', '😇', '😍', '😘', '😎',
-                '😏', '😛', '😜', '😝', '😐', '😑', '😢', '😵', '😬', '😌', '😔', '😡',
-                '😴', '😷'
-            ]
+                '💣',
+                '💥',
+                '🙂',
+                '😄',
+                '😆',
+                '😅',
+                '😂',
+                '☺',
+                '😀',
+                '😉',
+                '😇',
+                '😎',
+                '😰',
+                '😠',
+                '😈',
+                '😨',
+                '😛',
+                '😜',
+                '😝',
+                '😐',
+                '😑',
+                '😵',
+                '😬',
+                '😡',
+                '😌',
+                '😍']
             if self._mode == 'emoji2':
                 chars = [
-                    charstr(SpCh.LOGO_FLAT),
-                    charstr(SpCh.UP_ARROW),
-                    charstr(SpCh.DOWN_ARROW),
-                    charstr(SpCh.LEFT_ARROW),
-                    charstr(SpCh.RIGHT_ARROW),
-                    charstr(SpCh.DELETE),
-                    charstr(SpCh.BACK),
-                    charstr(SpCh.TICKET),
-                    charstr(SpCh.PARTY_ICON),
-                    charstr(SpCh.LOCAL_ACCOUNT),
-                    charstr(SpCh.FEDORA),
-                    charstr(SpCh.HAL),
-                    charstr(SpCh.CROWN),
-                    charstr(SpCh.YIN_YANG),
-                    charstr(SpCh.EYE_BALL),
-                    charstr(SpCh.SKULL),
-                    charstr(SpCh.HEART),
-                    charstr(SpCh.DRAGON),
-                    charstr(SpCh.HELMET),
-                    charstr(SpCh.MUSHROOM),
-                    charstr(SpCh.NINJA_STAR),
-                    charstr(SpCh.VIKING_HELMET),
-                    charstr(SpCh.MOON),
-                    charstr(SpCh.SPIDER),
-                    charstr(SpCh.FIREBALL),
-                    charstr(SpCh.MIKIROG)]
+                    '😔',
+                    '😥',
+                    '😭',
+                    '😖',
+                    '😓',
+                    '😉',
+                    '😴',
+                    '😷',
+                    '👋',
+                    '💯',
+                    '🙏',
+                    '💪',
+                    '👀',
+                    '💬',
+                    '💀',
+                    '☠',
+                    '💩',
+                    '👻',
+                    '👽',
+                    '👾',
+                    '❤',
+                    '💛',
+                    '💚',
+                    '💙',
+                    '💜',
+                    '💔']
             ba.buttonwidget(edit=self._shift_button,
                             color=self._key_color_lit
                             if self._mode == 'emoji2' else self._key_color_dark,
@@ -368,7 +390,7 @@ class OnScreenKeyboardWindow(ba.Window):
         ba.textwidget(edit=self._text_field, text=txt)
         # if we were caps,
         # go back only if not Shift is pressed twice
-        if self._mode == 'caps' and self._double_press_shift != True:
+        if self._mode == 'caps' and not self._double_press_shift:
             self._mode = 'normal'
         self._refresh()
 
