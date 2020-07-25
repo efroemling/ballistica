@@ -180,10 +180,17 @@ class PowerupBoxFactory:
             if self._lastpoweruptype == 'curse':
                 ptype = 'health'
             else:
+                iter_times = 0
                 while True:
                     ptype = self._powerupdist[random.randint(
                         0,
                         len(self._powerupdist) - 1)]
+                    chance = random.randint(1, 100)
+                    iter_times += 1
+                    if ptype == 'curse' and
+                    (iter_times % 2 == 0 and chance > 50):
+                        iter_times = 0
+                        break
                     if ptype not in excludetypes:
                         break
         self._lastpoweruptype = ptype
