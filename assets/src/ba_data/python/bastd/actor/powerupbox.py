@@ -187,8 +187,8 @@ class PowerupBoxFactory:
                         len(self._powerupdist) - 1)]
                     chance = random.randint(1, 100)
                     iter_times += 1
-                    if ptype == 'curse' and
-                    (iter_times % 2 == 0 and chance > 50):
+                    if (ptype == 'curse' and 
+                    (iter_times % 2 == 0 and chance > 50)) :
                         iter_times = 0
                         break
                     if ptype not in excludetypes:
