@@ -893,11 +893,14 @@ class Bomb(ba.Actor):
         # try:
         node_delegate = node.getdelegate(object)
         if node:
-            if (self.bomb_type == 'impact' and
-                (node is self.owner or
-                 (isinstance(node_delegate, Bomb) and node_delegate.bomb_type
-                  == 'impact' and node_delegate.owner is self.owner))):
-                return
+            # UPDATE (July 2020): Not checking this since this causes impact
+            # bomb to not blast on its owner's head. Holler if anything
+            # seems to be broken.
+            # if (self.bomb_type == 'impact' and
+            #   (node is self.owner or
+            #   (isinstance(node_delegate, Bomb) and node_delegate.bomb_type
+            #     == 'impact' and node_delegate.owner is self.owner))):
+            #   return
             self.handlemessage(ExplodeMessage())
 
     def _handle_dropped(self) -> None:
