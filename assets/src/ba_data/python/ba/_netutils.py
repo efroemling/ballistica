@@ -56,7 +56,7 @@ def get_ip_address_type(addr: str) -> socket.AddressFamily:
         except OSError:
             pass
     if socket_type is None:
-        raise ValueError('addr seems to be neither v4 or v6: ' + str(addr))
+        raise ValueError(f'addr seems to be neither v4 or v6: {addr}')
     return socket_type
 
 
@@ -152,8 +152,10 @@ class ServerCallThread(threading.Thread):
             response_data = None
 
             # Ignore common network errors; note unexpected ones.
-            if isinstance(exc, (urllib.error.URLError, ConnectionError,
-                                http.client.IncompleteRead)):
+            if isinstance(
+                    exc,
+                (urllib.error.URLError, ConnectionError,
+                 http.client.IncompleteRead, http.client.BadStatusLine)):
                 pass
             elif isinstance(exc, OSError):
                 if exc.errno == 10051:  # Windows unreachable network error.

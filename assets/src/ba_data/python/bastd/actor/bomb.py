@@ -887,10 +887,11 @@ class Bomb(ba.Actor):
     def _handle_impact(self) -> None:
         node = ba.getcollision().opposingnode
 
-        # If we're an impact bomb and we came from this node, don't explode...
-        # alternately if we're hitting another impact-bomb from the same
-        # source, don't explode...
-        # try:
+        # If we're an impact bomb and we came from this node, don't explode.
+        # (otherwise we blow up on our own head when jumping).
+        # Alternately if we're hitting another impact-bomb from the same
+        # source, don't explode. (can cause accidental explosions if rapidly
+        # throwing/etc.)
         node_delegate = node.getdelegate(object)
         if node:
             if (self.bomb_type == 'impact' and

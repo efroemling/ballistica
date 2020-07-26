@@ -115,9 +115,10 @@ def dispatchmethod(
     # All we do here is recreate the end of functools.singledispatch
     # where it returns a wrapper except instead of the wrapper using the
     # first arg to the function ours uses the second (to skip 'self').
-    # This was made with Python 3.7; we should probably check up on
+    # This was made against Python 3.7; we should probably check up on
     # this in later versions in case anything has changed.
     # (or hopefully they'll add this functionality to their version)
+    # NOTE: sounds like we can use functools singledispatchmethod in 3.8
     def wrapper(*args: Any, **kw: Any) -> Any:
         if not args or len(args) < 2:
             raise TypeError(f'{funcname} requires at least '

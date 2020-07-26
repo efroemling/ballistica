@@ -42,7 +42,7 @@ from efrotools.pcommand import (
     cpplint, pylint, runpylint, mypy, runmypy, dmypy, tool_config_install,
     sync, sync_all, scriptfiles, pycharm, clioncode, androidstudiocode,
     makefile_target_list, spelling, spelling_all, pytest, echo,
-    compile_python_files)
+    compile_python_files, pyver)
 from batools.pcommand import (
     stage_server_file, py_examine, fix_mac_ssh, check_mac_ssh, resize_image,
     check_clean_safety, clean_orphaned_assets, archive_old_builds,

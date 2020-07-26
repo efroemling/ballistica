@@ -30,7 +30,7 @@ import subprocess
 from functools import partial
 from typing import TYPE_CHECKING
 
-from efrotools.pybuild import PYTHON_VERSION_MAJOR
+from efrotools import PYVER
 
 if TYPE_CHECKING:
     from typing import Optional, List
@@ -40,8 +40,7 @@ if TYPE_CHECKING:
 # Note: this means anyone wanting to modify .py files in a build
 # will need to wipe out the existing .pyc files first or the changes
 # will be ignored.
-OPT_PYC_SUFFIX = ('cpython-' + PYTHON_VERSION_MAJOR.replace('.', '') +
-                  '.opt-1.pyc')
+OPT_PYC_SUFFIX = ('cpython-' + PYVER.replace('.', '') + '.opt-1.pyc')
 
 
 class Config:

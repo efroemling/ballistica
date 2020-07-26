@@ -86,7 +86,7 @@ def cpplint(projroot: Path, full: bool) -> None:
     import tempfile
     from concurrent.futures import ThreadPoolExecutor
     from multiprocessing import cpu_count
-    from efrotools import getconfig
+    from efrotools import getconfig, PYVER
     from efro.terminal import Clr
     from efro.error import CleanError
 
@@ -150,7 +150,8 @@ def cpplint(projroot: Path, full: bool) -> None:
 
     def lint_file(filename: str) -> None:
         result = subprocess.call(
-            ['python3.7', '-m', 'cpplint', '--root=src', filename], env=env)
+            [f'python{PYVER}', '-m', 'cpplint', '--root=src', filename],
+            env=env)
         if result != 0:
             raise CleanError(
                 f'{Clr.RED}Cpplint failed for {filename}.{Clr.RST}')
@@ -197,7 +198,7 @@ def formatscripts(projroot: Path, full: bool) -> None:
     import time
     from concurrent.futures import ThreadPoolExecutor
     from multiprocessing import cpu_count
-    from efrotools import get_files_hash
+    from efrotools import get_files_hash, PYVER
     os.chdir(projroot)
     cachepath = Path(projroot, 'config/.cache-formatscripts')
     if full and cachepath.exists():
@@ -215,7 +216,7 @@ def formatscripts(projroot: Path, full: bool) -> None:
     def format_file(filename: str) -> None:
         start_time = time.time()
         result = subprocess.call(
-            ['python3.7', '-m', 'yapf', '--in-place', filename])
+            [f'python{PYVER}', '-m', 'yapf', '--in-place', filename])
         if result != 0:
             raise Exception(f'Formatting failed for {filename}')
         duration = time.time() - start_time
