@@ -502,7 +502,7 @@ def checkenv() -> None:
                       check=False,
                       capture_output=True).returncode != 0:
         raise RuntimeError(
-            'pip (for {PYTHON_BIN}) is required; please install it.')
+            f'pip (for {PYTHON_BIN}) is required; please install it.')
 
     # Check for some required python modules.
     for req in PIP_REQUIREMENTS:
