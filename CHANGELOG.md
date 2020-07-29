@@ -1,5 +1,5 @@
-### Unreleased
-- Fixed a corner case of Curse powerup box.
+### 1.5.24 (20159)
+- Misc bug fixes.
 
 ### 1.5.23 (20146)
 - Fixed the shebang line in `bombsquad_server` file by using `-S` flag for `/usr/bin/env`.

@@ -43,6 +43,7 @@ def stage_server_file() -> None:
     import batools.build
     from efro.error import CleanError
     from efrotools import replace_one
+    from efrotools import PYVER
     if len(sys.argv) != 5:
         raise CleanError('Expected 3 args (mode, infile, outfile).')
     mode, infilename, outfilename = sys.argv[2], sys.argv[3], sys.argv[4]
@@ -56,13 +57,15 @@ def stage_server_file() -> None:
         # Inject all available config values into the config file.
         batools.build.filter_server_config(str(PROJROOT), infilename,
                                            outfilename)
+
     elif basename == 'ballisticacore_server.py':
         # Run Python in opt mode for release builds.
         with open(infilename) as infile:
             lines = infile.read().splitlines()
             if mode == 'release':
-                lines[0] = replace_one(lines[0], '#!/usr/bin/env python3.7',
-                                       '#!/usr/bin/env -S python3.7 -O')
+                lines[0] = replace_one(lines[0],
+                                       f'#!/usr/bin/env python{PYVER}',
+                                       f'#!/usr/bin/env -S python{PYVER} -O')
         with open(outfilename, 'w') as outfile:
             outfile.write('\n'.join(lines) + '\n')
         subprocess.run(['chmod', '+x', outfilename], check=True)

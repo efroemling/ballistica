@@ -174,6 +174,12 @@ def spelling() -> None:
     _spelling(sys.argv[2:])
 
 
+def pyver() -> None:
+    """Prints the Python version used by this project."""
+    from efrotools import PYVER
+    print(PYVER, end='')
+
+
 def check_clean_safety() -> None:
     """Ensure all files are are added to git or in gitignore.
 

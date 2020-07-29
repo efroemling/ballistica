@@ -838,7 +838,8 @@ class AwaitGamepadInputWindow(ba.Window):
         assert isinstance(input_device, ba.InputDevice)
 
         # Update - we now allow *any* input device of this type.
-        if input_device.exists() and input_device.name == self._input.name:
+        if (self._input and input_device
+                and input_device.name == self._input.name):
             self._callback(self._capture_button, event, self)
 
     def _decrement(self) -> None:

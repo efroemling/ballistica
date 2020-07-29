@@ -40,8 +40,11 @@ if TYPE_CHECKING:
     from typing import Dict, Union, Sequence, Optional, Any
     from typing_extensions import Literal
 
+# Python major version we're using for all this stuff.
+PYVER = '3.7'
+
 # Python binary assumed by these tools.
-PYTHON_BIN = 'python3.7' if platform.system() != 'Windows' else 'python'
+PYTHON_BIN = f'python{PYVER}' if platform.system() != 'Windows' else 'python'
 
 MIT_LICENSE = """Copyright (c) 2011-2020 Eric Froemling
 

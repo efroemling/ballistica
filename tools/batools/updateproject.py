@@ -377,7 +377,7 @@ class Updater:
 
     def _check_python_file(self, fname: str) -> None:
         # pylint: disable=too-many-branches
-        from efrotools import get_public_license
+        from efrotools import get_public_license, PYVER
         with open(fname) as infile:
             contents = infile.read()
             lines = contents.splitlines()
@@ -390,7 +390,7 @@ class Updater:
             if fname not in [
                     'tools/devtool', 'tools/version_utils', 'tools/vmshell'
             ]:
-                if not contents.startswith('#!/usr/bin/env python3.7'):
+                if not contents.startswith(f'#!/usr/bin/env python{PYVER}'):
                     print(f'{Clr.RED}Incorrect shebang (first line) for '
                           f'{fname}.{Clr.RST}')
                     sys.exit(255)

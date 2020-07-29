@@ -25,13 +25,10 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING
 
-import efrotools
+from efrotools import PYVER, run, readfile, writefile, replace_one
 
 if TYPE_CHECKING:
     from typing import List, Dict, Any
-
-# Overall version we're using for the game currently.
-PYTHON_VERSION_MAJOR = '3.7'
 
 ENABLE_OPENSSL = True
 
@@ -51,23 +48,22 @@ def build_apple(arch: str, debug: bool = False) -> None:
             raise CleanError('NEED TO TEMP-KILL GETTEXT')
 
     builddir = 'build/python_apple_' + arch + ('_debug' if debug else '')
-    efrotools.run('rm -rf "' + builddir + '"')
-    efrotools.run('mkdir -p build')
-    efrotools.run('git clone '
-                  'git@github.com:pybee/Python-Apple-support.git "' +
-                  builddir + '"')
+    run('rm -rf "' + builddir + '"')
+    run('mkdir -p build')
+    run('git clone '
+        'git@github.com:pybee/Python-Apple-support.git "' + builddir + '"')
     os.chdir(builddir)
 
     # TEMP: Check out a particular commit while the branch head is broken.
     # We can actually fix this to use the current one, but something
     # broke in the underlying build even on old commits so keeping it
     # locked for now...
-    # efrotools.run('git checkout bf1ed73d0d5ff46862ba69dd5eb2ffaeff6f19b6')
-    efrotools.run(f'git checkout {PYTHON_VERSION_MAJOR}')
+    # run('git checkout bf1ed73d0d5ff46862ba69dd5eb2ffaeff6f19b6')
+    run(f'git checkout {PYVER}')
 
     # On mac we currently have to add the _scproxy module or urllib will
     # fail.
-    txt = efrotools.readfile('patch/Python/Setup.embedded')
+    txt = readfile('patch/Python/Setup.embedded')
     if arch == 'mac':
         txt += ('\n'
                 '# ericf added - mac urllib needs this\n'
@@ -76,19 +72,19 @@ def build_apple(arch: str, debug: bool = False) -> None:
                 '-framework CoreFoundation')
 
     # Turn off sqlite module. (scratch that; leaving it in.)
-    # txt = efrotools.replace_one(txt, '_sqlite3 -I$(', '#_sqlite3 -I$(')
+    # txt = replace_one(txt, '_sqlite3 -I$(', '#_sqlite3 -I$(')
     # txt = txt.replace('    _sqlite/', '#    _sqlite/')
 
     # Turn off xz compression module. (scratch that; leaving it in.)
-    # txt = efrotools.replace_one(txt, '_lzma _', '#_lzma _')
+    # txt = replace_one(txt, '_lzma _', '#_lzma _')
 
     # Turn off bzip2 module.
-    txt = efrotools.replace_one(txt, '_bz2 _b', '#_bz2 _b')
+    txt = replace_one(txt, '_bz2 _b', '#_bz2 _b')
 
     # Turn off openssl module (only if not doing openssl).
     if not ENABLE_OPENSSL:
-        txt = efrotools.replace_one(txt, '_hashlib _hashopenssl.c',
-                                    '#_hashlib _hashopenssl.c')
+        txt = replace_one(txt, '_hashlib _hashopenssl.c',
+                          '#_hashlib _hashopenssl.c')
 
     # Turn off various other stuff we don't use.
     for line in [
@@ -123,7 +119,7 @@ def build_apple(arch: str, debug: bool = False) -> None:
             '_testimportmultiple _testimportmultiple.c',
             '_crypt _cryptmodule.c',  # not on android so disabling here too
     ]:
-        txt = efrotools.replace_one(txt, line, '#' + line)
+        txt = replace_one(txt, line, '#' + line)
 
     if ENABLE_OPENSSL:
 
@@ -138,28 +134,28 @@ def build_apple(arch: str, debug: bool = False) -> None:
                 '_sha256 sha256module.c',
                 '_sha512 sha512module.c',
         ]:
-            txt = efrotools.replace_one(txt, line, '#' + line)
+            txt = replace_one(txt, line, '#' + line)
     else:
-        txt = efrotools.replace_one(txt, '_ssl _ssl.c', '#_ssl _ssl.c')
-    efrotools.writefile('patch/Python/Setup.embedded', txt)
+        txt = replace_one(txt, '_ssl _ssl.c', '#_ssl _ssl.c')
+    writefile('patch/Python/Setup.embedded', txt)
 
-    txt = efrotools.readfile('Makefile')
+    txt = readfile('Makefile')
 
     # Fix a bug where spaces in PATH cause errors (darn you vmware fusion!)
-    txt = efrotools.replace_one(
+    txt = replace_one(
         txt, '&& PATH=$(PROJECT_DIR)/$(PYTHON_DIR-macOS)/dist/bin:$(PATH) .',
         '&& PATH="$(PROJECT_DIR)/$(PYTHON_DIR-macOS)/dist/bin:$(PATH)" .')
 
     # Remove makefile dependencies so we don't build the
     # libs we're not using.
     srctxt = '$$(PYTHON_DIR-$1)/dist/lib/libpython$(PYTHON_VER)m.a: '
-    txt = efrotools.replace_one(
+    txt = replace_one(
         txt, srctxt, '$$(PYTHON_DIR-$1)/dist/lib/libpython$(PYTHON_VER)m.a: ' +
         ('build/$2/Support/OpenSSL ' if ENABLE_OPENSSL else '') +
         'build/$2/Support/XZ $$(PYTHON_DIR-$1)/Makefile\n#' + srctxt)
     srctxt = ('dist/Python-$(PYTHON_VER)-$1-support.'
               '$(BUILD_NUMBER).tar.gz: ')
-    txt = efrotools.replace_one(
+    txt = replace_one(
         txt, srctxt,
         'dist/Python-$(PYTHON_VER)-$1-support.$(BUILD_NUMBER).tar.gz:'
         ' $$(PYTHON_FRAMEWORK-$1)\n#' + srctxt)
@@ -169,14 +165,14 @@ def build_apple(arch: str, debug: bool = False) -> None:
 
     # Set mac/ios version reqs
     # (see issue with utimensat and futimens).
-    txt = efrotools.replace_one(txt, 'MACOSX_DEPLOYMENT_TARGET=10.8',
-                                'MACOSX_DEPLOYMENT_TARGET=10.14')
+    txt = replace_one(txt, 'MACOSX_DEPLOYMENT_TARGET=10.8',
+                      'MACOSX_DEPLOYMENT_TARGET=10.14')
     # And equivalent iOS (11+).
-    txt = efrotools.replace_one(txt, 'CFLAGS-iOS=-mios-version-min=8.0',
-                                'CFLAGS-iOS=-mios-version-min=12.0')
+    txt = replace_one(txt, 'CFLAGS-iOS=-mios-version-min=8.0',
+                      'CFLAGS-iOS=-mios-version-min=12.0')
     # Ditto for tvOS.
-    txt = efrotools.replace_one(txt, 'CFLAGS-tvOS=-mtvos-version-min=9.0',
-                                'CFLAGS-tvOS=-mtvos-version-min=12.0')
+    txt = replace_one(txt, 'CFLAGS-tvOS=-mtvos-version-min=9.0',
+                      'CFLAGS-tvOS=-mtvos-version-min=12.0')
 
     if debug:
 
@@ -196,13 +192,13 @@ def build_apple(arch: str, debug: bool = False) -> None:
             raise RuntimeError(f'Unexpected configure line count {splitlen}.')
         txt = txt.replace(dline, 'python$(PYTHON_VER)dm')
 
-    efrotools.writefile('Makefile', txt)
+    writefile('Makefile', txt)
 
     # Ok; let 'er rip.
     # (we run these in parallel so limit to 1 job a piece;
     # otherwise they inherit the -j12 or whatever from the top level)
     # (also this build seems to fail with multiple threads)
-    efrotools.run('make -j1 ' + {
+    run('make -j1 ' + {
         'mac': 'Python-macOS',
         'ios': 'Python-iOS',
         'tvos': 'Python-tvOS'
@@ -217,11 +213,10 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     """
     import subprocess
     builddir = 'build/python_android_' + arch + ('_debug' if debug else '')
-    efrotools.run('rm -rf "' + builddir + '"')
-    efrotools.run('mkdir -p build')
-    efrotools.run('git clone '
-                  'git@github.com:yan12125/python3-android.git "' + builddir +
-                  '"')
+    run('rm -rf "' + builddir + '"')
+    run('mkdir -p build')
+    run('git clone '
+        'git@github.com:yan12125/python3-android.git "' + builddir + '"')
     os.chdir(builddir)
 
     # It seems we now need 'autopoint' as part of this build, but on mac it
@@ -242,69 +237,69 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     # a a completely new minimal one which will take some work to update here.
     # Punting on that for now...
     if True:  # pylint: disable=using-constant-test
-        efrotools.run('git checkout 9adbcfaca37f40b7a86381f83f0f6af4187233ae')
-    ftxt = efrotools.readfile('pybuild/env.py')
+        run('git checkout 9adbcfaca37f40b7a86381f83f0f6af4187233ae')
+    ftxt = readfile('pybuild/env.py')
 
     # Set the packages we build.
-    ftxt = efrotools.replace_one(
+    ftxt = replace_one(
         ftxt, 'packages = (', "packages = ('zlib', 'sqlite', 'xz'," +
         (" 'openssl'" if ENABLE_OPENSSL else '') + ')\n# packages = (')
 
     # Don't wanna bother with gpg signing stuff.
-    ftxt = efrotools.replace_one(ftxt, 'verify_source = True',
-                                 'verify_source = False')
+    ftxt = replace_one(ftxt, 'verify_source = True', 'verify_source = False')
 
     # Sub in the min api level we're targeting.
-    ftxt = efrotools.replace_one(ftxt, 'android_api_level = 21',
-                                 'android_api_level = 21')
-    ftxt = efrotools.replace_one(ftxt, "target_arch = 'arm'",
-                                 "target_arch = '" + arch + "'")
-    efrotools.writefile('pybuild/env.py', ftxt)
-    ftxt = efrotools.readfile('Makefile')
+    ftxt = replace_one(ftxt, 'android_api_level = 21',
+                       'android_api_level = 21')
+    ftxt = replace_one(ftxt, "target_arch = 'arm'",
+                       "target_arch = '" + arch + "'")
+    writefile('pybuild/env.py', ftxt)
+    ftxt = readfile('Makefile')
 
     # This needs to be python3 for us.
-    ftxt = efrotools.replace_one(ftxt, 'PYTHON?=python\n', 'PYTHON?=python3\n')
-    efrotools.writefile('Makefile', ftxt)
-    ftxt = efrotools.readfile('pybuild/packages/python.py')
+    ftxt = replace_one(ftxt, 'PYTHON?=python\n', 'PYTHON?=python3\n')
+    writefile('Makefile', ftxt)
+    ftxt = readfile('pybuild/packages/python.py')
 
     # We currently build as a static lib.
-    ftxt = efrotools.replace_one(ftxt, "            '--enable-shared',\n", '')
-    ftxt = efrotools.replace_one(
+    ftxt = replace_one(ftxt, "            '--enable-shared',\n", '')
+    ftxt = replace_one(
         ftxt, "super().__init__('https://github.com/python/cpython/')",
-        "super().__init__('https://github.com/python/cpython/', branch='3.7')")
+        "super().__init__('https://github.com/python/cpython/'"
+        f", branch='{PYVER}')")
 
     # Turn ipv6 on (curious why its turned off here?...)
     # Also, turn on low level debugging features for our debug builds.
-    ftxt = efrotools.replace_one(ftxt, "'--disable-ipv6',", "'--enable-ipv6',")
+    ftxt = replace_one(ftxt, "'--disable-ipv6',", "'--enable-ipv6',")
     if debug:
-        ftxt = efrotools.replace_one(ftxt, "'./configure',",
-                                     "'./configure', '--with-pydebug',")
+        ftxt = replace_one(ftxt, "'./configure',",
+                           "'./configure', '--with-pydebug',")
 
     # We don't use this stuff so lets strip it out to simplify.
-    ftxt = efrotools.replace_one(ftxt, "'--without-ensurepip',", '')
+    ftxt = replace_one(ftxt, "'--without-ensurepip',", '')
 
     # This builds all modules as dynamic libs, but we want to be consistent
     # with our other embedded builds and just static-build the ones we
     # need... so to change that we'll need to add a hook for ourself after
     # python is downloaded but before it is built so we can muck with it.
-    ftxt = efrotools.replace_one(
+    ftxt = replace_one(
         ftxt, '    def build(self):',
         '    def build(self):\n        import os\n'
         '        if os.system(\'"' + rootdir +
         '/tools/pcommand" python_android_patch "' + os.getcwd() +
         '"\') != 0: raise Exception("patch apply failed")')
 
-    efrotools.writefile('pybuild/packages/python.py', ftxt)
+    writefile('pybuild/packages/python.py', ftxt)
 
     # Set this to a particular cpython commit to target exact releases from git
     # commit = 'd7c567b08f9d7d6aef21b881340a2b72731129db'  # 3.7.7 release
     commit = '4b47a5b6ba66b02df9392feb97b8ead916f8c1fa'  # 3.7.8 release
 
     if commit is not None:
-        ftxt = efrotools.readfile('pybuild/source.py')
+        ftxt = readfile('pybuild/source.py')
 
         # Check out a particular commit right after the clone.
-        ftxt = efrotools.replace_one(
+        ftxt = replace_one(
             ftxt, "'git', 'clone', '--single-branch', '-b',"
             ' self.branch, self.source_url, self.dest])',
             "'git', 'clone', '-b',"
@@ -315,16 +310,16 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
             "'https://github.com/python/cpython/':\n"
             "            run_in_dir(['git', 'checkout', '" + commit +
             "'], self.source_dir)")
-        efrotools.writefile('pybuild/source.py', ftxt)
-    ftxt = efrotools.readfile('pybuild/util.py')
+        writefile('pybuild/source.py', ftxt)
+    ftxt = readfile('pybuild/util.py')
 
     # Still don't wanna bother with gpg signing stuff.
-    ftxt = efrotools.replace_one(
+    ftxt = replace_one(
         ftxt, 'def gpg_verify_file(sig_filename, filename, validpgpkeys):\n',
         'def gpg_verify_file(sig_filename, filename, validpgpkeys):\n'
         '    print("gpg-verify disabled by ericf")\n'
         '    return\n')
-    efrotools.writefile('pybuild/util.py', ftxt)
+    writefile('pybuild/util.py', ftxt)
 
     # These builds require ANDROID_NDK to be set, so make sure that's
     # the case.
@@ -335,18 +330,18 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     # Ok, let 'er rip
     # (we often run these builds in parallel so limit to 1 job a piece;
     # otherwise they each inherit the -j12 or whatever from the top level).
-    efrotools.run('make -j1')
+    run('make -j1')
     print('python build complete! (android/' + arch + ')')
 
 
 def android_patch() -> None:
     """Run necessary patches on an android archive before building."""
     fname = 'src/cpython/Modules/Setup.dist'
-    txt = efrotools.readfile(fname)
+    txt = readfile(fname)
 
     # Need to switch some flags on this one.
-    txt = efrotools.replace_one(txt, '#zlib zlibmodule.c',
-                                'zlib zlibmodule.c -lz\n#zlib zlibmodule.c')
+    txt = replace_one(txt, '#zlib zlibmodule.c',
+                      'zlib zlibmodule.c -lz\n#zlib zlibmodule.c')
     # Just turn all these on.
     for enable in [
             '#array arraymodule.c', '#cmath cmathmodule.c _math.c',
@@ -362,10 +357,10 @@ def android_patch() -> None:
             '#binascii binascii.c', '#_posixsubprocess _posixsubprocess.c',
             '#_sha3 _sha3/sha3module.c'
     ]:
-        txt = efrotools.replace_one(txt, enable, enable[1:])
+        txt = replace_one(txt, enable, enable[1:])
     if ENABLE_OPENSSL:
-        txt = efrotools.replace_one(txt, '#_ssl _ssl.c \\',
-                                    '_ssl _ssl.c -DUSE_SSL -lssl -lcrypto')
+        txt = replace_one(txt, '#_ssl _ssl.c \\',
+                          '_ssl _ssl.c -DUSE_SSL -lssl -lcrypto')
     else:
         # Note that the _md5 and _sha modules are normally only built if the
         # system does not have the OpenSSL libs containing an optimized
@@ -374,11 +369,10 @@ def android_patch() -> None:
                 '#_md5 md5module.c', '#_sha1 sha1module.c',
                 '#_sha256 sha256module.c', '#_sha512 sha512module.c'
         ]:
-            txt = efrotools.replace_one(txt, enable, enable[1:])
+            txt = replace_one(txt, enable, enable[1:])
 
     # Turn this off (its just an example module).
-    txt = efrotools.replace_one(txt, 'xxsubtype xxsubtype.c',
-                                '#xxsubtype xxsubtype.c')
+    txt = replace_one(txt, 'xxsubtype xxsubtype.c', '#xxsubtype xxsubtype.c')
 
     # For whatever reason this stuff isn't in there at all; add it.
     txt += '\n_json _json.c\n'
@@ -403,7 +397,7 @@ def android_patch() -> None:
 
     txt += '\n\n*disabled*\n_ctypes _crypt grp'
 
-    efrotools.writefile(fname, txt)
+    writefile(fname, txt)
 
     # Ok, this is weird.
     # When applying the module Setup, python looks for any line containing *=*
@@ -412,17 +406,16 @@ def android_patch() -> None:
     # The check used to look for [A-Z]*=* which didn't break, so let' just
     # change it back to that for now.
     fname = 'src/cpython/Modules/makesetup'
-    txt = efrotools.readfile(fname)
-    txt = efrotools.replace_one(
-        txt, '		*=*)	DEFS="$line$NL$DEFS"; continue;;',
-        '		[A-Z]*=*)	DEFS="$line$NL$DEFS"; continue;;')
-    efrotools.writefile(fname, txt)
+    txt = readfile(fname)
+    txt = replace_one(txt, '		*=*)	DEFS="$line$NL$DEFS"; continue;;',
+                      '		[A-Z]*=*)	DEFS="$line$NL$DEFS"; continue;;')
+    writefile(fname, txt)
 
     # Add custom callbacks to Python's PyParser_ParseFileObject
     # and PyParser_ParseString calls to debug a crash.
     fname = 'src/cpython/Parser/parsetok.c'
-    txt = efrotools.readfile(fname)
-    txt = efrotools.replace_one(
+    txt = readfile(fname)
+    txt = replace_one(
         txt, 'node *\n'
         'PyParser_ParseFileObject(FILE *fp, PyObject *filename,\n'
         '                         const char *enc, grammar *g, int start,\n'
@@ -444,7 +437,7 @@ def android_patch() -> None:
         '                                       start, ps1, ps2,\n'
         '                                       err_ret, flags);\n'
         '    }\n')
-    txt = efrotools.replace_one(
+    txt = replace_one(
         txt, 'node *\n'
         'PyParser_ParseStringObject(const char *s, PyObject *filename,\n'
         '                           grammar *g, int start,\n'
@@ -462,7 +455,7 @@ def android_patch() -> None:
         '        PyParser_ParseStringObject_EfroCB(s, filename, g, start,\n'
         '                                          err_ret, flags);\n'
         '    }\n')
-    efrotools.writefile(fname, txt)
+    writefile(fname, txt)
 
     print('APPLIED EFROTOOLS ANDROID BUILD PATCHES.')
 
@@ -485,14 +478,14 @@ def gather() -> None:
         if d.startswith('pylib-')
     ]
     for existing_dir in existing_dirs:
-        efrotools.run('rm -rf "' + existing_dir + '"')
+        run('rm -rf "' + existing_dir + '"')
 
     for buildtype in ['debug', 'release']:
         debug = buildtype == 'debug'
         bsuffix = '_debug' if buildtype == 'debug' else ''
         bsuffix2 = '-debug' if buildtype == 'debug' else ''
 
-        libname = 'python' + PYTHON_VERSION_MAJOR + ('dm' if debug else 'm')
+        libname = 'python' + PYVER + ('dm' if debug else 'm')
 
         bases = {
             'mac':
@@ -513,19 +506,15 @@ def gather() -> None:
 
         # Note: only need pylib for the first in each group.
         builds: List[Dict[str, Any]] = [{
-            'name':
-                'macos',
-            'group':
-                'apple',
-            'headers':
-                bases['mac'] + '/Support/Python/Headers',
+            'name': 'macos',
+            'group': 'apple',
+            'headers': bases['mac'] + '/Support/Python/Headers',
             'libs': [
                 bases['mac'] + '/Support/Python/libPython.a',
                 bases['mac'] + '/Support/OpenSSL/libOpenSSL.a',
                 bases['mac'] + '/Support/XZ/libxz.a'
             ],
-            'pylib':
-                (bases['mac'] + '/python/lib/python' + PYTHON_VERSION_MAJOR),
+            'pylib': (bases['mac'] + '/python/lib/python' + PYVER),
         }, {
             'name':
                 'ios',
@@ -551,12 +540,9 @@ def gather() -> None:
                 bases['tvos'] + '/Support/XZ/libxz.a'
             ],
         }, {
-            'name':
-                'android_arm',
-            'group':
-                'android',
-            'headers':
-                bases['android_arm'] + f'/usr/include/{libname}',
+            'name': 'android_arm',
+            'group': 'android',
+            'headers': bases['android_arm'] + f'/usr/include/{libname}',
             'libs': [
                 bases['android_arm'] + f'/usr/lib/lib{libname}.a',
                 bases['android_arm'] + '/usr/lib/libssl.a',
@@ -564,10 +550,8 @@ def gather() -> None:
                 bases['android_arm'] + '/usr/lib/liblzma.a',
                 bases['android_arm'] + '/usr/lib/libsqlite3.a'
             ],
-            'libinst':
-                'android_armeabi-v7a',
-            'pylib': (bases['android_arm'] + '/usr/lib/python' +
-                      PYTHON_VERSION_MAJOR),
+            'libinst': 'android_armeabi-v7a',
+            'pylib': (bases['android_arm'] + '/usr/lib/python' + PYVER),
         }, {
             'name': 'android_arm64',
             'group': 'android',
@@ -616,16 +600,15 @@ def gather() -> None:
 
             # Do some setup only once per group.
             if not os.path.exists(builddir):
-                efrotools.run('mkdir -p "' + builddir + '"')
-                efrotools.run('mkdir -p "' + lib_dst + '"')
+                run('mkdir -p "' + builddir + '"')
+                run('mkdir -p "' + lib_dst + '"')
 
                 # Only pull modules into game assets on release pass.
                 if not debug:
                     # Copy system modules into the src assets
                     # dir for this group.
-                    efrotools.run('mkdir -p "' + assets_src_dst + '"')
-                    efrotools.run(
-                        'rsync --recursive --include "*.py"'
+                    run('mkdir -p "' + assets_src_dst + '"')
+                    run('rsync --recursive --include "*.py"'
                         ' --exclude __pycache__ --include "*/" --exclude "*" "'
                         + build['pylib'] + '/" "' + assets_src_dst + '"')
 
@@ -639,30 +622,30 @@ def gather() -> None:
                         'unittest', 'dbm', 'venv', 'ctypes/test', 'imaplib.py',
                         '_sysconfigdata_*'
                     ]
-                    efrotools.run('cd "' + assets_src_dst + '" && rm -rf ' +
-                                  ' '.join(prune))
+                    run('cd "' + assets_src_dst + '" && rm -rf ' +
+                        ' '.join(prune))
 
                     # Some minor filtering to system scripts:
                     # on iOS/tvOS, addusersitepackages() leads to a crash
                     # due to _sysconfigdata_dm_ios_darwin module not existing,
                     # so let's skip that.
                     fname = f'{assets_src_dst}/site.py'
-                    txt = efrotools.readfile(fname)
-                    txt = efrotools.replace_one(
+                    txt = readfile(fname)
+                    txt = replace_one(
                         txt,
                         '    known_paths = addusersitepackages(known_paths)',
                         '    # efro tweak: this craps out on ios/tvos.\n'
                         '    # (and we don\'t use it anyway)\n'
                         '    # known_paths = addusersitepackages(known_paths)')
-                    efrotools.writefile(fname, txt)
+                    writefile(fname, txt)
 
                 # Copy in a base set of headers (everything in a group should
                 # be using the same headers)
-                efrotools.run(f'cp -r "{build["headers"]}" "{header_dst}"')
+                run(f'cp -r "{build["headers"]}" "{header_dst}"')
 
                 # Clear whatever pyconfigs came across; we'll build our own
                 # universal one below.
-                efrotools.run('rm ' + header_dst + '/pyconfig*')
+                run('rm ' + header_dst + '/pyconfig*')
 
                 # Write a master pyconfig header that reroutes to each
                 # platform's actual header.
@@ -701,21 +684,21 @@ def gather() -> None:
                     # contents too (those headers can themselves include
                     # others; ios for instance points to a arm64 and a
                     # x86_64 variant).
-                    contents = efrotools.readfile(build['headers'] + '/' + cfg)
+                    contents = readfile(build['headers'] + '/' + cfg)
                     contents = contents.replace('pyconfig',
                                                 'pyconfig-' + build['name'])
-                    efrotools.writefile(header_dst + '/' + out, contents)
+                    writefile(header_dst + '/' + out, contents)
                 else:
                     # other configs we just rename
-                    efrotools.run('cp "' + build['headers'] + '/' + cfg +
-                                  '" "' + header_dst + '/' + out + '"')
+                    run('cp "' + build['headers'] + '/' + cfg + '" "' +
+                        header_dst + '/' + out + '"')
 
             # Copy in libs. If the lib gave a specific install name,
             # use that; otherwise use name.
             targetdir = lib_dst + '/' + build.get('libinst', build['name'])
-            efrotools.run('rm -rf "' + targetdir + '"')
-            efrotools.run('mkdir -p "' + targetdir + '"')
+            run('rm -rf "' + targetdir + '"')
+            run('mkdir -p "' + targetdir + '"')
             for lib in build['libs']:
-                efrotools.run('cp "' + lib + '" "' + targetdir + '"')
+                run('cp "' + lib + '" "' + targetdir + '"')
 
     print('Great success!')

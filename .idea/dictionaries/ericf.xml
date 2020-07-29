@@ -1613,6 +1613,7 @@
       <w>pythonw</w>
       <w>pytree</w>
       <w>pytz</w>
+      <w>pyver</w>
       <w>qrcode</w>
       <w>qrencode</w>
       <w>qual</w>
@@ -1788,6 +1789,7 @@
       <w>simplesubclasses</w>
       <w>sincelaunch</w>
       <w>singledispatch</w>
+      <w>singledispatchmethod</w>
       <w>sirplus</w>
       <w>sitebuiltins</w>
       <w>skey</w>

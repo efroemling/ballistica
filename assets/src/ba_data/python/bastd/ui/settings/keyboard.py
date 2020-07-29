@@ -236,6 +236,11 @@ class ConfigKeyboardWindow(ba.Window):
 
         ba.containerwidget(edit=self._root_widget, transition='out_right')
         ba.playsound(ba.getsound('gunCocking'))
+
+        # There's a chance the device disappeared; handle that gracefully.
+        if not self._input:
+            return
+
         dst = get_input_device_config(self._input, default=False)
         dst2: Dict[str, Any] = dst[0][dst[1]]
         dst2.clear()
