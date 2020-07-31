@@ -14,9 +14,7 @@ Mac:
   (brew install python3).
 
 Linux (x86_64):
-- Server binaries are currently compiled against Ubuntu 18 LTS. They depend
-  on Python 3.7, so you may need to install that.
-  This should just be something like "sudo apt install python3.7"
+- Server binaries are currently compiled against Ubuntu 20 LTS. 
 
 Raspberry Pi:
 - The server binary was compiled on a Raspberry Pi 4 running Raspbian Buster.

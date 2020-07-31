@@ -41,7 +41,7 @@ if TYPE_CHECKING:
     from typing_extensions import Literal
 
 # Python major version we're using for all this stuff.
-PYVER = '3.7'
+PYVER = '3.8'
 
 # Python binary assumed by these tools.
 PYTHON_BIN = f'python{PYVER}' if platform.system() != 'Windows' else 'python'

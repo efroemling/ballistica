@@ -42,6 +42,7 @@
     </inspection_tool>
     <inspection_tool class="PyRedundantParenthesesInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
       <scope name="UncheckedPython" level="WEAK WARNING" enabled="false" />
+      <option name="myIgnoreTupleInReturn" value="true" />
     </inspection_tool>
     <inspection_tool class="PyShadowingBuiltinsInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
       <scope name="UncheckedPython" level="WEAK WARNING" enabled="false" />

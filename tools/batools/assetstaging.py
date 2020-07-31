@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.7
+#!/usr/bin/env python3.8
 # Copyright (c) 2011-2020 Eric Froemling
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -238,6 +238,7 @@ def _write_payload_file(assets_root: str, full: bool) -> None:
 
 
 def _sync_windows_extras(cfg: Config) -> None:
+    # pylint: disable=too-many-branches
     assert cfg.win_extras_src is not None
     assert cfg.win_platform is not None
     assert cfg.win_type is not None
@@ -251,12 +252,17 @@ def _sync_windows_extras(cfg: Config) -> None:
     # files in dst, so when building packages/etc. we should always start
     # from scratch.
     assert cfg.dst is not None
+    if cfg.debug:
+        pyd_rules = "--include '*_d.pyd'"
+    else:
+        pyd_rules = "--exclude '*_d.pyd' --include '*.pyd'"
+
     for dirname in ('DLLs', 'Lib'):
         _run(f'mkdir -p "{cfg.dst}/{dirname}"')
         cmd = ('rsync --recursive --update --delete --delete-excluded '
                ' --prune-empty-dirs'
                " --include '*.ico' --include '*.cat'"
-               " --include '*.dll' --include '*.pyd'"
+               f" --include '*.dll' {pyd_rules}"
                " --include '*.py' --include '*." + OPT_PYC_SUFFIX + "'"
                " --include '*/' --exclude '*' \"" +
                os.path.join(cfg.win_extras_src, dirname) + '/" '
@@ -266,7 +272,8 @@ def _sync_windows_extras(cfg: Config) -> None:
     # Now sync the top level individual files that we want.
     # (we could technically copy everything over but this keeps staging
     # dirs a bit tidier)
-    toplevelfiles: List[str] = ['python37.dll']
+    dbgsfx = '_d' if cfg.debug else ''
+    toplevelfiles: List[str] = [f'python38{dbgsfx}.dll']
 
     if cfg.win_type == 'win':
         toplevelfiles += [

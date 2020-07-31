@@ -31,10 +31,24 @@ if TYPE_CHECKING:
     from typing import List, Dict, Any
 
 ENABLE_OPENSSL = True
+PY38 = True
+
+# Filenames we prune from Python lib dirs in source repo to cut down on size.
+PRUNE_LIB_NAMES = [
+    'config-*', 'idlelib', 'lib-dynload', 'lib2to3', 'multiprocessing',
+    'pydoc_data', 'site-packages', 'ensurepip', 'tkinter', 'wsgiref',
+    'distutils', 'turtle.py', 'turtledemo', 'test', 'sqlite3/test', 'unittest',
+    'dbm', 'venv', 'ctypes/test', 'imaplib.py', '_sysconfigdata_*'
+]
+
+# Same but for DLLs dir (windows only)
+PRUNE_DLL_NAMES = ['*.ico']
 
 
 def build_apple(arch: str, debug: bool = False) -> None:
     """Run a build for the provided apple arch (mac, ios, or tvos)."""
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-statements
     import platform
     import subprocess
     from efro.error import CleanError
@@ -42,6 +56,7 @@ def build_apple(arch: str, debug: bool = False) -> None:
     # IMPORTANT; seems we currently wind up building against /usr/local gettext
     # stuff. Hopefully the maintainer fixes this, but for now I need to
     # remind myself to blow it away while building.
+    # (via brew remove gettext --ignore-dependencies)
     if 'MacBook-Fro' in platform.node():
         if (subprocess.run('which gettext', shell=True,
                            check=False).returncode == 0):
@@ -148,11 +163,19 @@ def build_apple(arch: str, debug: bool = False) -> None:
 
     # Remove makefile dependencies so we don't build the
     # libs we're not using.
-    srctxt = '$$(PYTHON_DIR-$1)/dist/lib/libpython$(PYTHON_VER)m.a: '
-    txt = replace_one(
-        txt, srctxt, '$$(PYTHON_DIR-$1)/dist/lib/libpython$(PYTHON_VER)m.a: ' +
-        ('build/$2/Support/OpenSSL ' if ENABLE_OPENSSL else '') +
-        'build/$2/Support/XZ $$(PYTHON_DIR-$1)/Makefile\n#' + srctxt)
+    srctxt = '$$(PYTHON_DIR-$1)/dist/lib/libpython$(PYTHON_VER).a: '
+    if PY38:
+        txt = replace_one(
+            txt, srctxt,
+            '$$(PYTHON_DIR-$1)/dist/lib/libpython$(PYTHON_VER).a: ' +
+            ('build/$2/Support/OpenSSL ' if ENABLE_OPENSSL else '') +
+            'build/$2/Support/XZ $$(PYTHON_DIR-$1)/Makefile\n#' + srctxt)
+    else:
+        txt = replace_one(
+            txt, srctxt,
+            '$$(PYTHON_DIR-$1)/dist/lib/libpython$(PYTHON_VER)m.a: ' +
+            ('build/$2/Support/OpenSSL ' if ENABLE_OPENSSL else '') +
+            'build/$2/Support/XZ $$(PYTHON_DIR-$1)/Makefile\n#' + srctxt)
     srctxt = ('dist/Python-$(PYTHON_VER)-$1-support.'
               '$(BUILD_NUMBER).tar.gz: ')
     txt = replace_one(
@@ -166,13 +189,13 @@ def build_apple(arch: str, debug: bool = False) -> None:
     # Set mac/ios version reqs
     # (see issue with utimensat and futimens).
     txt = replace_one(txt, 'MACOSX_DEPLOYMENT_TARGET=10.8',
-                      'MACOSX_DEPLOYMENT_TARGET=10.14')
+                      'MACOSX_DEPLOYMENT_TARGET=10.15')
     # And equivalent iOS (11+).
     txt = replace_one(txt, 'CFLAGS-iOS=-mios-version-min=8.0',
-                      'CFLAGS-iOS=-mios-version-min=12.0')
+                      'CFLAGS-iOS=-mios-version-min=13.0')
     # Ditto for tvOS.
     txt = replace_one(txt, 'CFLAGS-tvOS=-mtvos-version-min=9.0',
-                      'CFLAGS-tvOS=-mtvos-version-min=12.0')
+                      'CFLAGS-tvOS=-mtvos-version-min=13.0')
 
     if debug:
 
@@ -186,11 +209,12 @@ def build_apple(arch: str, debug: bool = False) -> None:
 
         # Debug has a different name.
         # (Currently expect to replace 12 instances of this).
-        dline = 'python$(PYTHON_VER)m'
+        dline = 'python$(PYTHON_VER)' if PY38 else 'python$(PYTHON_VER)m'
         splitlen = len(txt.split(dline))
         if splitlen != 13:
             raise RuntimeError(f'Unexpected configure line count {splitlen}.')
-        txt = txt.replace(dline, 'python$(PYTHON_VER)dm')
+        txt = txt.replace(
+            dline, 'python$(PYTHON_VER)d' if PY38 else 'python$(PYTHON_VER)dm')
 
     writefile('Makefile', txt)
 
@@ -293,7 +317,8 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
 
     # Set this to a particular cpython commit to target exact releases from git
     # commit = 'd7c567b08f9d7d6aef21b881340a2b72731129db'  # 3.7.7 release
-    commit = '4b47a5b6ba66b02df9392feb97b8ead916f8c1fa'  # 3.7.8 release
+    # commit = '4b47a5b6ba66b02df9392feb97b8ead916f8c1fa'  # 3.7.8 release
+    commit = '580fbb018fd0844806119614d752b41fc69660f9'  # 3.8.5
 
     if commit is not None:
         ftxt = readfile('pybuild/source.py')
@@ -336,7 +361,10 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
 
 def android_patch() -> None:
     """Run necessary patches on an android archive before building."""
-    fname = 'src/cpython/Modules/Setup.dist'
+    if PY38:
+        fname = 'src/cpython/Modules/Setup'
+    else:
+        fname = 'src/cpython/Modules/Setup.dist'
     txt = readfile(fname)
 
     # Need to switch some flags on this one.
@@ -344,17 +372,28 @@ def android_patch() -> None:
                       'zlib zlibmodule.c -lz\n#zlib zlibmodule.c')
     # Just turn all these on.
     for enable in [
-            '#array arraymodule.c', '#cmath cmathmodule.c _math.c',
-            '#math mathmodule.c', '#_contextvars _contextvarsmodule.c',
-            '#_struct _struct.c', '#_weakref _weakref.c',
-            '#_testcapi _testcapimodule.c', '#_random _randommodule.c',
-            '#_elementtree -I', '#_pickle _pickle.c',
-            '#_datetime _datetimemodule.c', '#_bisect _bisectmodule.c',
-            '#_heapq _heapqmodule.c', '#_asyncio _asynciomodule.c',
-            '#unicodedata unicodedata.c', '#fcntl fcntlmodule.c',
-            '#select selectmodule.c', '#_csv _csv.c',
-            '#_socket socketmodule.c', '#_blake2 _blake2/blake2module.c',
-            '#binascii binascii.c', '#_posixsubprocess _posixsubprocess.c',
+            '#array arraymodule.c',
+            '#cmath cmathmodule.c _math.c',
+            '#math mathmodule.c',
+            '#_contextvars _contextvarsmodule.c',
+            '#_struct _struct.c',
+            '#_weakref _weakref.c',
+            # '#_testcapi _testcapimodule.c',
+            '#_random _randommodule.c',
+            '#_elementtree -I',
+            '#_pickle _pickle.c',
+            '#_datetime _datetimemodule.c',
+            '#_bisect _bisectmodule.c',
+            '#_heapq _heapqmodule.c',
+            '#_asyncio _asynciomodule.c',
+            '#unicodedata unicodedata.c',
+            '#fcntl fcntlmodule.c',
+            '#select selectmodule.c',
+            '#_csv _csv.c',
+            '#_socket socketmodule.c',
+            '#_blake2 _blake2/blake2module.c',
+            '#binascii binascii.c',
+            '#_posixsubprocess _posixsubprocess.c',
             '#_sha3 _sha3/sha3module.c'
     ]:
         txt = replace_one(txt, enable, enable[1:])
@@ -460,6 +499,19 @@ def android_patch() -> None:
     print('APPLIED EFROTOOLS ANDROID BUILD PATCHES.')
 
 
+def winprune() -> None:
+    """Prune unneeded files from windows python dists."""
+    for libdir in ('assets/src/windows/Win32/Lib',
+                   'assets/src/windows/x64/Lib'):
+        assert os.path.isdir(libdir)
+        run('cd "' + libdir + '" && rm -rf ' + ' '.join(PRUNE_LIB_NAMES))
+    for dlldir in ('assets/src/windows/Win32/DLLs',
+                   'assets/src/windows/x64/DLLs'):
+        assert os.path.isdir(dlldir)
+        run('cd "' + dlldir + '" && rm -rf ' + ' '.join(PRUNE_DLL_NAMES))
+    print('Win-prune successful.')
+
+
 def gather() -> None:
     """Gather per-platform python headers, libs, and modules together.
 
@@ -485,7 +537,7 @@ def gather() -> None:
         bsuffix = '_debug' if buildtype == 'debug' else ''
         bsuffix2 = '-debug' if buildtype == 'debug' else ''
 
-        libname = 'python' + PYVER + ('dm' if debug else 'm')
+        libname = 'python' + PYVER + ('d' if debug else '')
 
         bases = {
             'mac':
@@ -614,16 +666,8 @@ def gather() -> None:
 
                     # Prune a bunch of modules we don't need to cut
                     # down on size.
-                    prune = [
-                        'config-*', 'idlelib', 'lib-dynload', 'lib2to3',
-                        'multiprocessing', 'pydoc_data', 'site-packages',
-                        'ensurepip', 'tkinter', 'wsgiref', 'distutils',
-                        'turtle.py', 'turtledemo', 'test', 'sqlite3/test',
-                        'unittest', 'dbm', 'venv', 'ctypes/test', 'imaplib.py',
-                        '_sysconfigdata_*'
-                    ]
                     run('cd "' + assets_src_dst + '" && rm -rf ' +
-                        ' '.join(prune))
+                        ' '.join(PRUNE_LIB_NAMES))
 
                     # Some minor filtering to system scripts:
                     # on iOS/tvOS, addusersitepackages() leads to a crash

@@ -440,6 +440,7 @@
       <w>dayoffset</w>
       <w>dbapi</w>
       <w>dbase</w>
+      <w>dbgsfx</w>
       <w>dbpath</w>
       <w>dcls</w>
       <w>dcmake</w>
@@ -485,6 +486,7 @@
       <w>distroot</w>
       <w>distros</w>
       <w>dline</w>
+      <w>dlldir</w>
       <w>dlls</w>
       <w>dmitry</w>
       <w>dmodule</w>
@@ -1061,8 +1063,10 @@
       <w>lfull</w>
       <w>lfval</w>
       <w>libcrypto</w>
+      <w>libdir</w>
       <w>libegl</w>
       <w>libext</w>
+      <w>libffi</w>
       <w>libgen</w>
       <w>libinst</w>
       <w>liblzma</w>
@@ -1977,6 +1981,7 @@
       <w>testcapi</w>
       <w>testcapimodule</w>
       <w>testclass</w>
+      <w>testconsole</w>
       <w>testd</w>
       <w>testdl</w>
       <w>testfoo</w>
@@ -1987,6 +1992,7 @@
       <w>testm</w>
       <w>testmagicmethods</w>
       <w>testmock</w>
+      <w>testmultiphase</w>
       <w>testobj</w>
       <w>testpatch</w>
       <w>testpath</w>
@@ -2058,6 +2064,7 @@
       <w>tref</w>
       <w>tret</w>
       <w>trophystr</w>
+      <w>trsock</w>
       <w>tscale</w>
       <w>tscl</w>
       <w>tspc</w>
@@ -2203,6 +2210,7 @@
       <w>winnergroups</w>
       <w>winplt</w>
       <w>winprj</w>
+      <w>winprune</w>
       <w>winref</w>
       <w>winscore</w>
       <w>winserver</w>

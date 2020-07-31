@@ -455,6 +455,14 @@ def python_gather() -> None:
     pybuild.gather()
 
 
+def python_winprune() -> None:
+    """Prune unneeded files from windows python."""
+    import os
+    from efrotools import pybuild
+    os.chdir(PROJROOT)
+    pybuild.winprune()
+
+
 def capitalize() -> None:
     """Print args capitalized."""
     print(' '.join(w.capitalize() for w in sys.argv[2:]))

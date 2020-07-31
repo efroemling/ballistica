@@ -525,7 +525,9 @@ def checkenv() -> None:
             raise RuntimeError(
                 f'{packagename} (for {PYTHON_BIN}) is required.\n'
                 f'To install it, try: "{PYTHON_BIN}'
-                f' -m pip install {packagename}"')
+                f' -m pip install {packagename}"\n'
+                f'Alternately, "tools/pcommand install_pip_reqs"'
+                f' will update all pip requirements.')
         if minver is not None:
             verlines = results.stdout.decode().splitlines()
             if verlines[0].startswith('Cpplint fork'):

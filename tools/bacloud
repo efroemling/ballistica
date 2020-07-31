@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.7
+#!/usr/bin/env python3.8
 # Copyright (c) 2011-2020 Eric Froemling
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy

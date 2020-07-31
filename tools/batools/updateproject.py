@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.7
+#!/usr/bin/env python3.8
 # Copyright (c) 2011-2020 Eric Froemling
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -42,6 +42,7 @@ import subprocess
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from efro.error import CleanError
 from efro.terminal import Clr
 
 if TYPE_CHECKING:
@@ -391,9 +392,10 @@ class Updater:
                     'tools/devtool', 'tools/version_utils', 'tools/vmshell'
             ]:
                 if not contents.startswith(f'#!/usr/bin/env python{PYVER}'):
-                    print(f'{Clr.RED}Incorrect shebang (first line) for '
-                          f'{fname}.{Clr.RST}')
-                    sys.exit(255)
+                    # TEMP: allow this until ballistica.net is updated
+                    if fname != 'tools/staging_server_upkeep':
+                        raise CleanError(f'Incorrect shebang (first line) for '
+                                         f'{fname}.')
         else:
             copyrightline = 0
 
@@ -636,7 +638,7 @@ class Updater:
         if os.system(f'tools/pcommand update_assets_makefile {self._checkarg}'
                      ) != 0:
             print(
-                f'{Clr.RED}Error checking/updating assets Makefile.f{Clr.RST}')
+                f'{Clr.RED}Error checking/updating assets Makefile.{Clr.RST}')
             sys.exit(255)
 
     def _update_generated_code_makefile(self) -> None:
@@ -644,7 +646,7 @@ class Updater:
             if os.system('tools/update_generated_code_makefile' +
                          self._checkarg) != 0:
                 print(f'{Clr.RED}Error checking/updating'
-                      f' generated-code Makefile{Clr.RED}')
+                      f' generated-code Makefile.{Clr.RED}')
                 sys.exit(255)
 
     def _update_resources_makefile(self) -> None:

@@ -113,8 +113,7 @@ class TheLastStandGame(ba.CoopGameActivity[Player, Team]):
             ChargerBot:             SpawnInfo(0.30, 0.05, 0.000),
             StickyBot:              SpawnInfo(0.10, 0.03, 0.001),
             ExplodeyBot:            SpawnInfo(0.05, 0.02, 0.002)
-        } # yapf: disable
-
+        }  # yapf: disable
 
     def on_transition_in(self) -> None:
         super().on_transition_in()

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.7
+#!/usr/bin/env python3.8
 # Copyright (c) 2011-2020 Eric Froemling
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -33,7 +33,7 @@ from efro.terminal import Clr
 if TYPE_CHECKING:
     from typing import List, Set
 
-PYC_SUFFIX = '.cpython-37.opt-1.pyc'
+PYC_SUFFIX = '.cpython-38.opt-1.pyc'
 
 
 def _get_targets(varname: str,
@@ -228,7 +228,7 @@ def _get_extras_targets_win(all_targets: Set[str], platform: str) -> str:
             if ext in [
                     '.exe', '.dll', '.bat', '.txt', '.whl', '.ps1', '.css',
                     '.sample', '.ico', '.pyd', '.ctypes', '.rst', '.fish',
-                    '.csh', '.cat'
+                    '.csh', '.cat', '.pdb', '.lib', '.html'
             ] or fname in [
                     'activate', 'README', 'command_template', 'fetch_macholib'
             ]:
