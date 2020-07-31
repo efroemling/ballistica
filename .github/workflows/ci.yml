@@ -14,13 +14,13 @@ jobs:
   # We run most of our testing on linux but it should apply to mac too;
   # we can always add an explicit mac job if it seems worthwhile.
   ci_unix:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v1
     - name: Set up Python
       uses: actions/setup-python@v1
       with:
-        python-version: 3.7
+        python-version: 3.8
     - name: Install dependencies
       run: tools/pcommand install_pip_reqs
     - name: Run checks and tests
@@ -36,7 +36,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v1
       with:
-        python-version: 3.7
+        python-version: 3.8
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
