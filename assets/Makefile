@@ -6876,6 +6876,7 @@ EXTRAS_TARGETS_WIN_WIN32 = \
   build/windows/Win32/python_d.exe \
   build/windows/Win32/pythonw.exe \
   build/windows/Win32/pythonw_d.exe \
+  build/windows/Win32/ucrtbased.dll \
   build/windows/Win32/vc_redist.x86.exe \
   build/windows/Win32/vcruntime140d.dll
 
@@ -6961,6 +6962,7 @@ EXTRAS_TARGETS_WIN_X64 = \
   build/windows/x64/python_d.exe \
   build/windows/x64/pythonw.exe \
   build/windows/x64/pythonw_d.exe \
+  build/windows/x64/ucrtbased.dll \
   build/windows/x64/vc_redist.x64.exe \
   build/windows/x64/vcruntime140_1d.dll \
   build/windows/x64/vcruntime140d.dll

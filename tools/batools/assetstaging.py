@@ -287,10 +287,13 @@ def _sync_windows_extras(cfg: Config) -> None:
     if cfg.debug:
         if cfg.win_platform == 'x64':
             toplevelfiles += [
-                'msvcp140d.dll', 'vcruntime140d.dll', 'vcruntime140_1d.dll'
+                'msvcp140d.dll', 'vcruntime140d.dll', 'vcruntime140_1d.dll',
+                'ucrtbased.dll'
             ]
         else:
-            toplevelfiles += ['msvcp140d.dll', 'vcruntime140d.dll']
+            toplevelfiles += [
+                'msvcp140d.dll', 'vcruntime140d.dll', 'ucrtbased.dll'
+            ]
 
     # Include the runtime redistributables in release builds.
     if not cfg.debug:

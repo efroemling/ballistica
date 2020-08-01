@@ -5233,6 +5233,7 @@
  "windows/Win32/python_d.exe",
  "windows/Win32/pythonw.exe",
  "windows/Win32/pythonw_d.exe",
+ "windows/Win32/ucrtbased.dll",
  "windows/Win32/vc_redist.x86.exe",
  "windows/Win32/vcruntime140d.dll",
  "windows/x64/DLLs/_asyncio.pyd",
@@ -6177,6 +6178,7 @@
  "windows/x64/python_d.exe",
  "windows/x64/pythonw.exe",
  "windows/x64/pythonw_d.exe",
+ "windows/x64/ucrtbased.dll",
  "windows/x64/vc_redist.x64.exe",
  "windows/x64/vcruntime140_1d.dll",
  "windows/x64/vcruntime140d.dll"

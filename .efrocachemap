@@ -3924,6 +3924,7 @@
   "assets/build/windows/Win32/python_d.exe": "https://files.ballistica.net/cache/ba1/57/2f/7cda5f442a832f8f92fc76e8370d",
   "assets/build/windows/Win32/pythonw.exe": "https://files.ballistica.net/cache/ba1/3b/01/7819c084c81c84562a2dab70033e",
   "assets/build/windows/Win32/pythonw_d.exe": "https://files.ballistica.net/cache/ba1/4b/df/7ebb1be3e018abc04660d932a7b2",
+  "assets/build/windows/Win32/ucrtbased.dll": "https://files.ballistica.net/cache/ba1/b5/85/f8b6d0558ddb87267f34254b1450",
   "assets/build/windows/Win32/vc_redist.x86.exe": "https://files.ballistica.net/cache/ba1/1c/e1/4a1a2eddda2f4aebd5f8b64ab08e",
   "assets/build/windows/Win32/vcruntime140d.dll": "https://files.ballistica.net/cache/ba1/50/8d/bc2600ac9491f1b14d659709451f",
   "build/prefab/linux-server/debug/dist/ballisticacore_headless": "https://files.ballistica.net/cache/ba1/5a/b6/9438d9e41b904ee9eae03cf75c6a",
