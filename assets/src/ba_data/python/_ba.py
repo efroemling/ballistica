@@ -1357,6 +1357,9 @@ def appnameupper() -> str:
     """appnameupper() -> str
 
     (internal)
+
+    Return whether this build of the game can display full unicode such as
+    Emoji, Asian languages, etc.
     """
     return str()
 
@@ -1476,6 +1479,14 @@ def camerashake(intensity: float = 1.0) -> None:
     player as a gameplay cue.
     """
     return None
+
+
+def can_display_full_unicode() -> bool:
+    """can_display_full_unicode() -> bool
+
+    (internal)
+    """
+    return bool()
 
 
 def can_show_ad() -> bool:

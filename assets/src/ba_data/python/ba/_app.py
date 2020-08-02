@@ -88,7 +88,7 @@ class App:
         if (language in {
                 'Chinese', 'ChineseTraditional', 'Persian', 'Korean', 'Arabic',
                 'Hindi', 'Vietnamese'
-        } and self.platform in ('windows', 'linux')):
+        } and not _ba.can_display_full_unicode()):
             return False
         return True
 
