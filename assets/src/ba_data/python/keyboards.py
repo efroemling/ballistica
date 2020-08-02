@@ -30,21 +30,7 @@ from typing import TYPE_CHECKING
 import ba
 
 if TYPE_CHECKING:
-    from typing import Iterable, List
-
-
-def split(chars: Iterable[ba.SpecialChar],
-          maxlen: int) -> List[List[ba.SpecialChar]]:
-    """Returns ba.SpecialChar groups with a fixed number of elements"""
-    result = []
-    shatter: List[ba.SpecialChar] = []
-    for i in chars:
-        if len(shatter) < maxlen:
-            shatter.append(i)
-        else:
-            result.append(shatter)
-            shatter = [i]
-    return result
+    from typing import Dict, Tuple
 
 
 # ba_meta export keyboard
@@ -55,7 +41,4 @@ class EnglishKeyboard(ba.Keyboard):
              ('z', 'x', 'c', 'v', 'b', 'n', 'm')]
     nums = ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '/', ':',
             ';', '(', ')', '$', '&', '@', '"', '.', ',', '?', '!', '\'', '_')
-    pages = {
-        f'emoji{i}': tuple(ba.charstr(char) for char in page)
-        for i, page in enumerate(split(ba.SpecialChar, len(nums)))
-    }
+    pages: Dict[str, Tuple[str, ...]] = {}
