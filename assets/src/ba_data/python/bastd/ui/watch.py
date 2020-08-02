@@ -23,6 +23,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 from typing import TYPE_CHECKING, cast
 
 import _ba
@@ -92,6 +93,21 @@ class WatchWindow(ba.Window):
                 label=ba.Lstr(resource='backText'),
                 button_type='back',
                 on_activate_call=self._back)
+            self._export_replay = ba.buttonwidget(
+                parent=self._root_widget,
+                position=(800 + x_inset, self._height - 74),
+                size=(140, 60),
+                scale=1.1,
+                label="Export",
+                on_activate_call=self._on_export_press)
+
+            self._import_replay = ba.buttonwidget(
+                parent=self._root_widget,
+                position=(150 + x_inset, self._height - 74),
+                size=(140, 60),
+                scale=1.1,
+                label="Import",
+                on_activate_call=self._on_import_press)
             ba.containerwidget(edit=self._root_widget, cancel_button=btn)
             ba.buttonwidget(edit=btn,
                             button_type='backSmall',
@@ -482,6 +498,75 @@ class WatchWindow(ba.Window):
                 maxwidth=(self._my_replays_scroll_width / t_scale) * 0.93)
             if i == 0:
                 ba.widget(edit=txt, up_widget=self._tab_buttons['my_replays'])
+
+    def _on_import_press(self) -> None:
+        user_dir = _ba.app.python_directory_user
+        try:
+            import_dir = (user_dir + '/replays')
+            if not os.path.exists(import_dir):
+                os.mkdir(import_dir)
+            replay_list = os.listdir(import_dir)
+            if replay_list == []:
+                ba.screenmessage(f"No replay is present in folder to import",
+                                 color=(1, 0, 0))
+                return
+            names = [n for n in replay_list if n.endswith(".brp")]
+            export_dir = (_ba.get_replays_dir() + '/')
+            for name in names:
+                old_name_full = (import_dir + '/' + name).encode('utf-8')
+                new_name_full = (export_dir + name).encode('utf-8')
+                if os.path.exists(new_name_full):
+                    ba.playsound(ba.getsound('error'))
+                    ba.screenmessage(
+                        f"A replay with {name[:-4]} name already exists",
+                        color=(1, 0, 0))
+                else:
+                    shutil.copyfile(old_name_full, new_name_full)
+                    self._refresh_my_replays()
+                    ba.playsound(ba.getsound('gunCocking'))
+                    ba.screenmessage(f"Successfully Imported {name[:-4]}",
+                                     color=(0, 1, 0))
+        except Exception as e:
+            ba.screenmessage(f"{e}", color=(1, 0, 0))
+        return
+
+    def _on_export_press(self) -> None:
+        if self._my_replay_selected is None:
+            self._no_replay_selected_error()
+            return
+        self._export_my_replay(self._my_replay_selected)
+
+    def _export_my_replay(self, replay) -> None:
+        user_dir = _ba.app.python_directory_user
+        try:
+            if replay != '__lastReplay.brp':
+                export_dir = (user_dir + '/replays').encode('utf-8')
+                if not os.path.exists(export_dir):
+                    os.mkdir(export_dir)
+                old_name_full = (_ba.get_replays_dir() + '/' +
+                                 replay).encode('utf-8')
+                new_name_full = (export_dir.decode('utf-8') + '/' +
+                                 replay).encode('utf-8')
+                if os.path.exists(new_name_full):
+                    ba.playsound(ba.getsound('error'))
+                    ba.screenmessage(
+                        f"A replay with {replay[:-4]} name already exists in folder",
+                        color=(1, 0, 0))
+                else:
+                    shutil.copyfile(old_name_full, new_name_full)
+                    self._refresh_my_replays()
+                    ba.playsound(ba.getsound('gunCocking'))
+                    ba.screenmessage(f"Successfully Exported {replay[:-4]}",
+                                     color=(0, 1, 0))
+            else:
+                ba.playsound(ba.getsound('error'))
+                ba.screenmessage(
+                    "Cannot Export Last Game Replay. Please rename it",
+                    color=(1, 0, 0))
+        except Exception as e:
+            ba.screenmessage(f"{e}", color=(1, 0, 0))
+            # ba.print_exception("error copying replay '" + old_name_full + "' to '" + new_name_full + "'")
+            ba.playsound(ba.getsound('error'))
 
     def _save_state(self) -> None:
         try:
