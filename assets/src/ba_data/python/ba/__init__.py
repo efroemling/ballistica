@@ -78,6 +78,7 @@ from ba._gameutils import (GameTip, animate, animate_array, show_damage_count,
                            timestring, cameraflash)
 from ba._general import (WeakCall, Call, existing, Existable,
                          verify_object_death, storagename)
+from ba._keyboard import Keyboard
 from ba._level import Level
 from ba._lobby import Lobby, Chooser
 from ba._math import normalized_color, is_point_in_box, vec3validate
