@@ -30,7 +30,7 @@ from ba import charstr
 from ba import SpecialChar as SpCh
 
 if TYPE_CHECKING:
-    from typing import List, Tuple, Optional
+    from typing import List, Tuple, Optional, Type
 
 
 class OnScreenKeyboardWindow(ba.Window):
@@ -242,13 +242,13 @@ class OnScreenKeyboardWindow(ba.Window):
 
         self._refresh()
 
-    def _get_keyboard(self) -> ba.Keyboard:
+    def _get_keyboard(self) -> Type[ba.Keyboard]:
         assert ba.app.metascan is not None
         path = ba.app.metascan.keyboards[self._keyboard_index]
         classname = path.split('.')[-1]
         module = path[:-len(classname) - 1]
         keyboard = getattr(__import__(module), classname)
-        assert isinstance(keyboard, ba.Keyboard)
+        assert issubclass(keyboard, ba.Keyboard)
         return keyboard
 
     def _refresh(self) -> None:
