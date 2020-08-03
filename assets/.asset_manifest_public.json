@@ -1,5 +1,4 @@
 [
- "ba_data/python/__pycache__/keyboards.cpython-38.opt-1.pyc",
  "ba_data/python/ba/__init__.py",
  "ba_data/python/ba/__pycache__/__init__.cpython-38.opt-1.pyc",
  "ba_data/python/ba/__pycache__/_account.cpython-38.opt-1.pyc",
@@ -240,6 +239,10 @@
  "ba_data/python/bastd/game/targetpractice.py",
  "ba_data/python/bastd/game/thelaststand.py",
  "ba_data/python/bastd/gameutils.py",
+ "ba_data/python/bastd/keyboard/__init__.py",
+ "ba_data/python/bastd/keyboard/__pycache__/__init__.cpython-38.opt-1.pyc",
+ "ba_data/python/bastd/keyboard/__pycache__/englishkeyboard.cpython-38.opt-1.pyc",
+ "ba_data/python/bastd/keyboard/englishkeyboard.py",
  "ba_data/python/bastd/mainmenu.py",
  "ba_data/python/bastd/mapdata/__init__.py",
  "ba_data/python/bastd/mapdata/__pycache__/__init__.cpython-38.opt-1.pyc",
@@ -500,7 +503,6 @@
  "ba_data/python/efro/json.py",
  "ba_data/python/efro/terminal.py",
  "ba_data/python/efro/util.py",
- "ba_data/python/keyboards.py",
  "server/__pycache__/ballisticacore_server.cpython-38.opt-1.pyc",
  "server/ballisticacore_server.py"
 ]

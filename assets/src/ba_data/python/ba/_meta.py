@@ -379,13 +379,13 @@ def get_scan_results() -> ScanResults:
 
 def get_game_types() -> List[Type[ba.GameActivity]]:
     """Return available game types."""
-    from ba import _general
-    from ba import _gameactivity
+    from ba._general import getclass
+    from ba._gameactivity import GameActivity
     gameclassnames = get_scan_results().games
     gameclasses = []
     for gameclassname in gameclassnames:
         try:
-            cls = _general.getclass(gameclassname, _gameactivity.GameActivity)
+            cls = getclass(gameclassname, GameActivity)
             gameclasses.append(cls)
         except Exception:
             from ba import _error

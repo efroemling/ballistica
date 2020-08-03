@@ -85,6 +85,7 @@
    <li><a href="#function_ba_charstr">ba.charstr()</a></li>
    <li><a href="#function_ba_do_once">ba.do_once()</a></li>
    <li><a href="#function_ba_get_valid_languages">ba.get_valid_languages()</a></li>
+   <li><a href="#function_ba_getclass">ba.getclass()</a></li>
    <li><a href="#function_ba_is_browser_likely_available">ba.is_browser_likely_available()</a></li>
    <li><a href="#function_ba_is_point_in_box">ba.is_point_in_box()</a></li>
    <li><a href="#function_ba_log">ba.log()</a></li>
@@ -6282,6 +6283,17 @@ in Activity 'foo' will properly return 'foo' here, even if another
 Activity has since been created or is transitioning in.
 If there is no current Activity, raises a <a href="#class_ba_ActivityNotFoundError">ba.ActivityNotFoundError</a>.
 If doraise is False, None will be returned instead in that case.</p>
+
+<hr>
+<h2><strong><a name="function_ba_getclass">ba.getclass()</a></strong></h3>
+<p><span>getclass(name: str, subclassof: Type[T]) -&gt; Type[T]</span></p>
+
+<p>Given a full class name such as foo.bar.MyClass, return the class.</p>
+
+<p>Category: <a href="#function_category_General_Utility_Functions">General Utility Functions</a></p>
+
+<p>The class will be checked to make sure it is a subclass of the provided
+'subclassof' class, and a TypeError will be raised if not.</p>
 
 <hr>
 <h2><strong><a name="function_ba_getcollidemodel">ba.getcollidemodel()</a></strong></h3>

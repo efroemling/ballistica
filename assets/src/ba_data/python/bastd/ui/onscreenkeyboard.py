@@ -228,12 +228,19 @@ class OnScreenKeyboardWindow(ba.Window):
                         color=key_color_dark,
                         label=ba.Lstr(resource='spaceKeyText'),
                         on_activate_call=ba.Call(self._type_char, ' '))
-                    ba.textwidget(parent=self._root_widget,
-                                  h_align='center',
-                                  position=(210, v - 70),
-                                  size=(key_width * 6.1, key_height + 15),
-                                  text='Double press space to change keyboard',
-                                  scale=0.75)
+
+                    # Show change instructions only if we have more than one
+                    # keyboard option.
+                    if (ba.app.metascan is not None
+                            and len(ba.app.metascan.keyboards) > 1):
+                        ba.textwidget(
+                            parent=self._root_widget,
+                            h_align='center',
+                            position=(210, v - 70),
+                            size=(key_width * 6.1, key_height + 15),
+                            text=ba.Lstr(
+                                resource='keyboardChangeInstructionsText'),
+                            scale=0.75)
                 btn2 = self._space_button
                 btn3 = self._emoji_button
                 ba.widget(edit=btn1, right_widget=btn2, left_widget=btn3)
@@ -250,12 +257,9 @@ class OnScreenKeyboardWindow(ba.Window):
 
     def _get_keyboard(self) -> ba.Keyboard:
         assert ba.app.metascan is not None
-        path = ba.app.metascan.keyboards[self._keyboard_index]
-        classname = path.split('.')[-1]
-        module = path[:-len(classname) - 1]
-        keyboard = getattr(__import__(module), classname)()
-        assert isinstance(keyboard, ba.Keyboard)
-        return keyboard
+        classname = ba.app.metascan.keyboards[self._keyboard_index]
+        kbclass = ba.getclass(classname, ba.Keyboard)
+        return kbclass()
 
     def _refresh(self) -> None:
         chars: Optional[List[str]] = None
@@ -325,9 +329,11 @@ class OnScreenKeyboardWindow(ba.Window):
         self._load_keyboard()
         if len(ba.app.metascan.keyboards) < 2:
             ba.playsound(ba.getsound('error'))
-            ba.screenmessage('No other keyboards available', color=(1, 0, 0))
+            ba.screenmessage(ba.Lstr(resource='keyboardNoOthersAvailableText'),
+                             color=(1, 0, 0))
         else:
-            ba.screenmessage(f'Switching keyboard to "{self._keyboard.name}"',
+            ba.screenmessage(ba.Lstr(resource='keyboardSwitchText',
+                                     subs=[('${NAME}', self._keyboard.name)]),
                              color=(0, 1, 0))
 
     def _shift(self) -> None:
@@ -360,13 +366,13 @@ class OnScreenKeyboardWindow(ba.Window):
                 return
             self._last_space_press = ba.time(ba.TimeType.REAL)
 
-        # operate in unicode so we don't do anything funky like chop utf-8
-        # chars in half
+        # Operate in unicode so we don't do anything funky like chop utf-8
+        # chars in half.
         txt = cast(str, ba.textwidget(query=self._text_field))
         txt += char
         ba.textwidget(edit=self._text_field, text=txt)
-        # if we were caps,
-        # go back only if not Shift is pressed twice
+
+        # If we were caps, go back only if not Shift is pressed twice.
         if self._mode == 'caps' and not self._double_press_shift:
             self._mode = 'normal'
         self._refresh()

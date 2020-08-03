@@ -263,6 +263,8 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/bastd/game/targetpractice.py \
   build/ba_data/python/bastd/game/thelaststand.py \
   build/ba_data/python/bastd/gameutils.py \
+  build/ba_data/python/bastd/keyboard/__init__.py \
+  build/ba_data/python/bastd/keyboard/englishkeyboard.py \
   build/ba_data/python/bastd/mainmenu.py \
   build/ba_data/python/bastd/mapdata/__init__.py \
   build/ba_data/python/bastd/mapdata/big_g.py \
@@ -381,7 +383,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/bastd/ui/trophies.py \
   build/ba_data/python/bastd/ui/url.py \
   build/ba_data/python/bastd/ui/watch.py \
-  build/ba_data/python/keyboards.py \
   build/server/ballisticacore_server.py
 
 SCRIPT_TARGETS_PYC_PUBLIC = \
@@ -499,6 +500,8 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/bastd/game/__pycache__/targetpractice.cpython-38.opt-1.pyc \
   build/ba_data/python/bastd/game/__pycache__/thelaststand.cpython-38.opt-1.pyc \
   build/ba_data/python/bastd/__pycache__/gameutils.cpython-38.opt-1.pyc \
+  build/ba_data/python/bastd/keyboard/__pycache__/__init__.cpython-38.opt-1.pyc \
+  build/ba_data/python/bastd/keyboard/__pycache__/englishkeyboard.cpython-38.opt-1.pyc \
   build/ba_data/python/bastd/__pycache__/mainmenu.cpython-38.opt-1.pyc \
   build/ba_data/python/bastd/mapdata/__pycache__/__init__.cpython-38.opt-1.pyc \
   build/ba_data/python/bastd/mapdata/__pycache__/big_g.cpython-38.opt-1.pyc \
@@ -617,7 +620,6 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/bastd/ui/__pycache__/trophies.cpython-38.opt-1.pyc \
   build/ba_data/python/bastd/ui/__pycache__/url.cpython-38.opt-1.pyc \
   build/ba_data/python/bastd/ui/__pycache__/watch.cpython-38.opt-1.pyc \
-  build/ba_data/python/__pycache__/keyboards.cpython-38.opt-1.pyc \
   build/server/__pycache__/ballisticacore_server.cpython-38.opt-1.pyc
 
 # Rule to copy src asset scripts to dst.
