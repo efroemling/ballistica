@@ -151,6 +151,7 @@
    <li><a href="#class_ba_AppConfig">ba.AppConfig</a></li>
    <li><a href="#class_ba_AppDelegate">ba.AppDelegate</a></li>
    <li><a href="#class_ba_Campaign">ba.Campaign</a></li>
+   <li><a href="#class_ba_Keyboard">ba.Keyboard</a></li>
    <li><a href="#class_ba_MusicPlayer">ba.MusicPlayer</a></li>
    <li><a href="#class_ba_Plugin">ba.Plugin</a></li>
    <li><a href="#class_ba_PotentialPlugin">ba.PotentialPlugin</a></li>
@@ -3038,6 +3039,42 @@ prefs, etc.</p>
 <dl>
 <dt><h4><a name="method_ba_IntSetting____init__">&lt;constructor&gt;</a></dt></h4><dd>
 <p><span>ba.IntSetting(name: str, default: int, min_value: int = 0, max_value: int = 9999, increment: int = 1)</span></p>
+
+</dd>
+</dl>
+<hr>
+<h2><strong><a name="class_ba_Keyboard">ba.Keyboard</a></strong></h3>
+<p><em>&lt;top level class&gt;</em>
+</p>
+<p>Chars definitions for on-screen keyboard.</p>
+
+<p>Category: <a href="#class_category_App_Classes">App Classes</a></p>
+
+<p>    Keyboards are discoverable by the meta-tag system
+    and the user can select which one they want to use.
+    On-screen keyboard uses chars from active <a href="#class_ba_Keyboard">ba.Keyboard</a>.</p>
+
+<h3>Attributes:</h3>
+<h5><a href="#attr_ba_Keyboard__chars">chars</a>, <a href="#attr_ba_Keyboard__name">name</a>, <a href="#attr_ba_Keyboard__nums">nums</a>, <a href="#attr_ba_Keyboard__pages">pages</a></h5>
+<dl>
+<dt><h4><a name="attr_ba_Keyboard__chars">chars</a></h4></dt><dd>
+<p><span>List[Tuple[str, ...]]</span></p>
+<p>Used for row/column lengths.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_Keyboard__name">name</a></h4></dt><dd>
+<p><span>str</span></p>
+<p>Displays when user selecting this keyboard.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_Keyboard__nums">nums</a></h4></dt><dd>
+<p><span>Tuple[str, ...]</span></p>
+<p>The 'num' page.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_Keyboard__pages">pages</a></h4></dt><dd>
+<p><span>Dict[str, Tuple[str, ...]]</span></p>
+<p>Extra chars like emojis.</p>
 
 </dd>
 </dl>
