@@ -228,6 +228,12 @@ class OnScreenKeyboardWindow(ba.Window):
                         color=key_color_dark,
                         label=ba.Lstr(resource='spaceKeyText'),
                         on_activate_call=ba.Call(self._type_char, ' '))
+                    ba.textwidget(parent=self._root_widget,
+                                  h_align='center',
+                                  position=(210, v - 70),
+                                  size=(key_width * 6.1, key_height + 15),
+                                  text='Double press space to change keyboard',
+                                  scale=0.75)
                 btn2 = self._space_button
                 btn3 = self._emoji_button
                 ba.widget(edit=btn1, right_widget=btn2, left_widget=btn3)
@@ -317,6 +323,12 @@ class OnScreenKeyboardWindow(ba.Window):
         self._keyboard_index = (self._keyboard_index + 1) % len(
             ba.app.metascan.keyboards)
         self._load_keyboard()
+        if len(ba.app.metascan.keyboards) < 2:
+            ba.playsound(ba.getsound('error'))
+            ba.screenmessage('No other keyboards available', color=(1, 0, 0))
+        else:
+            ba.screenmessage(f'Switching keyboard to "{self._keyboard.name}"',
+                             color=(0, 1, 0))
 
     def _shift(self) -> None:
         ba.playsound(self._click_sound)

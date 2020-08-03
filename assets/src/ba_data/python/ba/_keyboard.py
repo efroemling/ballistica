@@ -37,6 +37,8 @@ class Keyboard:
     and the user can select which one they want to use.
     On-screen keyboard uses chars from active ba.Keyboard.
     Attributes:
+      name
+        Displays when user selecting this keyboard.
       chars
         Used for row/column lengths.
       pages
@@ -45,6 +47,7 @@ class Keyboard:
         The 'num' page.
     """
 
+    name: str
     chars: List[Tuple[str, ...]]
     pages: Dict[str, Tuple[str, ...]]
     nums: Tuple[str, ...]
