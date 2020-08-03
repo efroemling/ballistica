@@ -246,7 +246,8 @@ class DirectoryScan:
                 submodules: List[Tuple[pathlib.Path, pathlib.Path]] = []
                 self._get_path_module_entries(moduledir, subpath, submodules)
                 for submodule in submodules:
-                    self.scan_module(submodule[0], submodule[1])
+                    if submodule[1].name != '__init__.py':
+                        self.scan_module(submodule[0], submodule[1])
             except Exception:
                 import traceback
                 self.results.warnings += (
