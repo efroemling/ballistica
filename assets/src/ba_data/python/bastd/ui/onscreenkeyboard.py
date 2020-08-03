@@ -37,8 +37,6 @@ class OnScreenKeyboardWindow(ba.Window):
     """Simple built-in on-screen keyboard."""
 
     def __init__(self, textwidget: ba.Widget, label: str, max_chars: int):
-        # pylint: disable=too-many-locals
-        # pylint: disable=too-many-statements
         self._target_text = textwidget
         self._width = 700
         self._height = 400
@@ -88,22 +86,44 @@ class OnScreenKeyboardWindow(ba.Window):
             force_internal_editing=True,
             always_show_carat=True)
 
-        self._shift_button = None
-        self._double_press_shift = False
-        self._num_mode_button = None
-        self._emoji_button = None
-        self._char_keys: List[ba.Widget] = []
-        self._mode = 'normal'
-        self._last_mode = 'normal'
-
-        v = self._height - 180
-        key_width = 46
-        key_height = 46
         self._key_color_lit = (1.4, 1.2, 1.4)
-        self._key_color = key_color = (0.69, 0.6, 0.74)
-        self._key_color_dark = key_color_dark = (0.55, 0.55, 0.71)
+        self._key_color = (0.69, 0.6, 0.74)
+        self._key_color_dark = (0.55, 0.55, 0.71)
+
+        self._shift_button: Optional[ba.Widget] = None
+        self._backspace_button: Optional[ba.Widget] = None
+        self._space_button: Optional[ba.Widget] = None
+        self._double_press_shift = False
+        self._num_mode_button: Optional[ba.Widget] = None
+        self._emoji_button: Optional[ba.Widget] = None
+        self._char_keys: List[ba.Widget] = []
+        self._keyboard_index = 0
+        self._last_space_press = 0.0
+        self._double_space_interval = 0.3
+
+        self._keyboard: ba.Keyboard
+        self._chars: List[str]
+        self._modes: List[str]
+        self._mode: str
+        self._mode_index: int
+        self._load_keyboard()
+
+    def _load_keyboard(self) -> None:
+        # pylint: disable=too-many-locals
+        self._keyboard = self._get_keyboard()
+        # We want to get just chars without column data, etc.
+        self._chars = [j for i in self._keyboard.chars for j in i]
+        self._modes = ['normal'] + list(self._keyboard.pages)
+        self._mode_index = 0
+        self._mode = self._modes[self._mode_index]
+
+        v = self._height - 180.0
+        key_width = 46 * 10 / len(self._keyboard.chars[0])
+        key_height = 46 * 3 / len(self._keyboard.chars)
         key_textcolor = (1, 1, 1)
-        row_starts = (69, 95, 151)
+        row_starts = (69.0, 95.0, 151.0)
+        key_color = self._key_color
+        key_color_dark = self._key_color_dark
 
         self._click_sound = ba.getsound('click01')
 
@@ -114,16 +134,12 @@ class OnScreenKeyboardWindow(ba.Window):
 
         # dummy data just used for row/column lengths... we don't actually
         # set things until refresh
-        chars: List[Tuple[str, ...]] = [
-            ('q', 'u', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'),
-            ('a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'),
-            ('z', 'x', 'c', 'v', 'b', 'n', 'm')
-        ]
+        chars: List[Tuple[str, ...]] = self._keyboard.chars
 
         for row_num, row in enumerate(chars):
             h = row_starts[row_num]
             # shift key before row 3
-            if row_num == 2:
+            if row_num == 2 and self._shift_button is None:
                 self._shift_button = ba.buttonwidget(
                     parent=self._root_widget,
                     position=(h - key_width * 2.0, v),
@@ -155,17 +171,21 @@ class OnScreenKeyboardWindow(ba.Window):
 
             # Add delete key at end of third row.
             if row_num == 2:
-                ba.buttonwidget(parent=self._root_widget,
-                                position=(h + 4, v),
-                                size=(key_width * 1.8, key_height),
-                                autoselect=True,
-                                enable_sound=False,
-                                repeat=True,
-                                textcolor=key_textcolor,
-                                color=key_color_dark,
-                                label=charstr(SpCh.DELETE),
-                                button_type='square',
-                                on_activate_call=self._del)
+                if self._backspace_button is not None:
+                    self._backspace_button.delete()
+
+                self._backspace_button = ba.buttonwidget(
+                    parent=self._root_widget,
+                    position=(h + 4, v),
+                    size=(key_width * 1.8, key_height),
+                    autoselect=True,
+                    enable_sound=False,
+                    repeat=True,
+                    textcolor=key_textcolor,
+                    color=key_color_dark,
+                    label=charstr(SpCh.DELETE),
+                    button_type='square',
+                    on_activate_call=self._del)
             v -= (key_height + 9)
             # Do space bar and stuff.
             if row_num == 2:
@@ -196,17 +216,25 @@ class OnScreenKeyboardWindow(ba.Window):
                         button_type='square',
                     )
                 btn1 = self._num_mode_button
-                btn2 = ba.buttonwidget(parent=self._root_widget,
-                                       position=(210, v - 12),
-                                       size=(key_width * 6.1, key_height + 15),
-                                       extra_touch_border_scale=0.3,
-                                       enable_sound=False,
-                                       autoselect=True,
-                                       textcolor=key_textcolor,
-                                       color=key_color_dark,
-                                       label=ba.Lstr(resource='spaceKeyText'),
-                                       on_activate_call=ba.Call(
-                                           self._type_char, ' '))
+                if self._space_button is None:
+                    self._space_button = ba.buttonwidget(
+                        parent=self._root_widget,
+                        position=(210, v - 12),
+                        size=(key_width * 6.1, key_height + 15),
+                        extra_touch_border_scale=0.3,
+                        enable_sound=False,
+                        autoselect=True,
+                        textcolor=key_textcolor,
+                        color=key_color_dark,
+                        label=ba.Lstr(resource='spaceKeyText'),
+                        on_activate_call=ba.Call(self._type_char, ' '))
+                    ba.textwidget(parent=self._root_widget,
+                                  h_align='center',
+                                  position=(210, v - 70),
+                                  size=(key_width * 6.1, key_height + 15),
+                                  text='Double press space to change keyboard',
+                                  scale=0.75)
+                btn2 = self._space_button
                 btn3 = self._emoji_button
                 ba.widget(edit=btn1, right_widget=btn2, left_widget=btn3)
                 ba.widget(edit=btn2,
@@ -220,14 +248,19 @@ class OnScreenKeyboardWindow(ba.Window):
 
         self._refresh()
 
+    def _get_keyboard(self) -> ba.Keyboard:
+        assert ba.app.metascan is not None
+        path = ba.app.metascan.keyboards[self._keyboard_index]
+        classname = path.split('.')[-1]
+        module = path[:-len(classname) - 1]
+        keyboard = getattr(__import__(module), classname)()
+        assert isinstance(keyboard, ba.Keyboard)
+        return keyboard
+
     def _refresh(self) -> None:
         chars: Optional[List[str]] = None
         if self._mode in ['normal', 'caps']:
-            chars = [
-                'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's',
-                'd', 'f', 'g', 'h', 'j', 'k', 'l', 'z', 'x', 'c', 'v', 'b',
-                'n', 'm'
-            ]
+            chars = list(self._chars)
             if self._mode == 'caps':
                 chars = [c.upper() for c in chars]
             ba.buttonwidget(edit=self._shift_button,
@@ -241,13 +274,12 @@ class OnScreenKeyboardWindow(ba.Window):
             ba.buttonwidget(edit=self._emoji_button,
                             color=self._key_color_dark,
                             label=charstr(SpCh.LOGO_FLAT),
-                            on_activate_call=self._emoji_mode)
-        elif self._mode == 'num':
-            chars = [
-                '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '/',
-                ':', ';', '(', ')', '$', '&', '@', '"', '.', ',', '?', '!',
-                '\'', '_'
-            ]
+                            on_activate_call=self._next_mode)
+        else:
+            if self._mode == 'num':
+                chars = list(self._keyboard.nums)
+            else:
+                chars = list(self._keyboard.pages[self._mode])
             ba.buttonwidget(edit=self._shift_button,
                             color=self._key_color_dark,
                             label='',
@@ -258,29 +290,7 @@ class OnScreenKeyboardWindow(ba.Window):
             ba.buttonwidget(edit=self._emoji_button,
                             color=self._key_color_dark,
                             label=charstr(SpCh.LOGO_FLAT),
-                            on_activate_call=self._emoji_mode)
-
-        elif self._mode in ['emoji', 'emoji2']:
-            chars = [
-                '💣', '💥', '🙂', '😄', '😆', '😅', '😂', '☺', '😀', '😉', '😇', '😎',
-                '😰', '😠', '😈', '😨', '😛', '😜', '😝', '😐', '😑', '😵', '😬', '😡',
-                '😌', '😍'
-            ]
-            if self._mode == 'emoji2':
-                chars = [
-                    '😔', '😥', '😭', '😖', '😓', '😉', '😴', '😷', '👋', '💯', '🙏', '💪',
-                    '👀', '💬', '💀', '☠', '💩', '👻', '👽', '👾', '❤', '💛', '💚', '💙',
-                    '💜', '💔'
-                ]
-            ba.buttonwidget(edit=self._shift_button,
-                            color=self._key_color_lit if self._mode == 'emoji2'
-                            else self._key_color_dark,
-                            label=charstr(SpCh.SHIFT),
-                            on_activate_call=self._emoji_mode_2)
-            ba.buttonwidget(edit=self._emoji_button,
-                            color=self._key_color_lit,
-                            label=charstr(SpCh.LOGO_FLAT),
-                            on_activate_call=self._emoji_mode)
+                            on_activate_call=self._next_mode)
 
         for i, btn in enumerate(self._char_keys):
             assert chars is not None
@@ -302,22 +312,23 @@ class OnScreenKeyboardWindow(ba.Window):
         self._mode = 'num'
         self._refresh()
 
-    def _emoji_mode(self) -> None:
+    def _next_mode(self) -> None:
         ba.playsound(self._click_sound)
-        if self._mode in ['normal', 'caps', 'num']:
-            self._last_mode = self._mode
-            self._mode = 'emoji'
-        elif self._mode == 'emoji' or self._mode == 'emoji2':
-            self._mode = self._last_mode
+        self._mode_index = (self._mode_index + 1) % len(self._modes)
+        self._mode = self._modes[self._mode_index]
         self._refresh()
 
-    def _emoji_mode_2(self) -> None:
-        ba.playsound(self._click_sound)
-        if self._mode == 'emoji':
-            self._mode = 'emoji2'
-        elif self._mode == 'emoji2':
-            self._mode = 'emoji'
-        self._refresh()
+    def _next_keyboard(self) -> None:
+        assert ba.app.metascan is not None
+        self._keyboard_index = (self._keyboard_index + 1) % len(
+            ba.app.metascan.keyboards)
+        self._load_keyboard()
+        if len(ba.app.metascan.keyboards) < 2:
+            ba.playsound(ba.getsound('error'))
+            ba.screenmessage('No other keyboards available', color=(1, 0, 0))
+        else:
+            ba.screenmessage(f'Switching keyboard to "{self._keyboard.name}"',
+                             color=(0, 1, 0))
 
     def _shift(self) -> None:
         ba.playsound(self._click_sound)
@@ -340,6 +351,15 @@ class OnScreenKeyboardWindow(ba.Window):
 
     def _type_char(self, char: str) -> None:
         ba.playsound(self._click_sound)
+        if char.isspace():
+            if (ba.time(ba.TimeType.REAL) - self._last_space_press <
+                    self._double_space_interval):
+                self._last_space_press = 0
+                self._next_keyboard()
+                self._del()  # We typed unneeded space around 1s ago.
+                return
+            self._last_space_press = ba.time(ba.TimeType.REAL)
+
         # operate in unicode so we don't do anything funky like chop utf-8
         # chars in half
         txt = cast(str, ba.textwidget(query=self._text_field))

@@ -1,4 +1,5 @@
 [
+ "ba_data/python/__pycache__/keyboards.cpython-38.opt-1.pyc",
  "ba_data/python/ba/__init__.py",
  "ba_data/python/ba/__pycache__/__init__.cpython-38.opt-1.pyc",
  "ba_data/python/ba/__pycache__/_account.cpython-38.opt-1.pyc",
@@ -28,6 +29,7 @@
  "ba_data/python/ba/__pycache__/_general.cpython-38.opt-1.pyc",
  "ba_data/python/ba/__pycache__/_hooks.cpython-38.opt-1.pyc",
  "ba_data/python/ba/__pycache__/_input.cpython-38.opt-1.pyc",
+ "ba_data/python/ba/__pycache__/_keyboard.cpython-38.opt-1.pyc",
  "ba_data/python/ba/__pycache__/_lang.cpython-38.opt-1.pyc",
  "ba_data/python/ba/__pycache__/_level.cpython-38.opt-1.pyc",
  "ba_data/python/ba/__pycache__/_lobby.cpython-38.opt-1.pyc",
@@ -87,6 +89,7 @@
  "ba_data/python/ba/_general.py",
  "ba_data/python/ba/_hooks.py",
  "ba_data/python/ba/_input.py",
+ "ba_data/python/ba/_keyboard.py",
  "ba_data/python/ba/_lang.py",
  "ba_data/python/ba/_level.py",
  "ba_data/python/ba/_lobby.py",
@@ -497,6 +500,7 @@
  "ba_data/python/efro/json.py",
  "ba_data/python/efro/terminal.py",
  "ba_data/python/efro/util.py",
+ "ba_data/python/keyboards.py",
  "server/__pycache__/ballisticacore_server.cpython-38.opt-1.pyc",
  "server/ballisticacore_server.py"
 ]

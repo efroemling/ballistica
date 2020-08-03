@@ -46,6 +46,7 @@ class ScanResults:
     """Final results from a metadata scan."""
     games: List[str] = field(default_factory=list)
     plugins: List[str] = field(default_factory=list)
+    keyboards: List[str] = field(default_factory=list)
     errors: str = ''
     warnings: str = ''
 
@@ -290,6 +291,8 @@ class DirectoryScan:
                         self.results.games.append(classname)
                     elif exporttype == 'plugin':
                         self.results.plugins.append(classname)
+                    elif exporttype == 'keyboard':
+                        self.results.keyboards.append(classname)
                     else:
                         self.results.warnings += (
                             'Warning: ' + str(subpath) +

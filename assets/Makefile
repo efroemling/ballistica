@@ -177,6 +177,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/ba/_general.py \
   build/ba_data/python/ba/_hooks.py \
   build/ba_data/python/ba/_input.py \
+  build/ba_data/python/ba/_keyboard.py \
   build/ba_data/python/ba/_lang.py \
   build/ba_data/python/ba/_level.py \
   build/ba_data/python/ba/_lobby.py \
@@ -380,6 +381,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/bastd/ui/trophies.py \
   build/ba_data/python/bastd/ui/url.py \
   build/ba_data/python/bastd/ui/watch.py \
+  build/ba_data/python/keyboards.py \
   build/server/ballisticacore_server.py
 
 SCRIPT_TARGETS_PYC_PUBLIC = \
@@ -411,6 +413,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/ba/__pycache__/_general.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_hooks.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_input.cpython-38.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_keyboard.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_lang.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_level.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_lobby.cpython-38.opt-1.pyc \
@@ -614,6 +617,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/bastd/ui/__pycache__/trophies.cpython-38.opt-1.pyc \
   build/ba_data/python/bastd/ui/__pycache__/url.cpython-38.opt-1.pyc \
   build/ba_data/python/bastd/ui/__pycache__/watch.cpython-38.opt-1.pyc \
+  build/ba_data/python/__pycache__/keyboards.cpython-38.opt-1.pyc \
   build/server/__pycache__/ballisticacore_server.cpython-38.opt-1.pyc
 
 # Rule to copy src asset scripts to dst.
