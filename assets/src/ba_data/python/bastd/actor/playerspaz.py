@@ -28,8 +28,7 @@ import ba
 from bastd.actor.spaz import Spaz
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence, Tuple, Optional, Type
-    from typing_extensions import Literal
+    from typing import Any, Sequence, Tuple, Optional, Type, Literal
 
 PlayerType = TypeVar('PlayerType', bound=ba.Player)
 TeamType = TypeVar('TeamType', bound=ba.Team)

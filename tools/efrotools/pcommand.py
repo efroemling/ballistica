@@ -162,10 +162,14 @@ def spelling_all() -> None:
             capture_output=True).stdout.decode().splitlines()
         if 'Typo: In word' in line
     ]
-    words = [
-        line.split('Typo: In word')[1].strip().replace("'", '')
-        for line in lines
-    ]
+    words = [line.split('Typo: In word')[1].strip() for line in lines]
+
+    # Strip enclosing quotes but not internal ones.
+    for i, word in enumerate(words):
+        assert word[0] == "'"
+        assert word[-1] == "'"
+        words[i] = word[1:-1]
+
     _spelling(words)
 
 

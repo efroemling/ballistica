@@ -37,8 +37,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Dict, Union, Sequence, Optional, Any
-    from typing_extensions import Literal
+    from typing import Dict, Union, Sequence, Optional, Any, Literal
 
 # Python major version we're using for all this stuff.
 PYVER = '3.8'

@@ -30,9 +30,7 @@ from ba._error import print_exception, ActivityNotFoundError
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
-    from typing_extensions import Literal
-
+    from typing import Any, Optional, Literal
     import ba
 
 T = TypeVar('T', bound='Actor')

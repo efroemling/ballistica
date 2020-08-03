@@ -26,8 +26,7 @@ import types
 import weakref
 import random
 import inspect
-from typing import TYPE_CHECKING, TypeVar
-from typing_extensions import Protocol
+from typing import TYPE_CHECKING, TypeVar, Protocol
 
 from efro.terminal import Clr
 from ba._error import print_error, print_exception

@@ -101,10 +101,11 @@ def have_matching_fields(val1: CompoundValue, val2: CompoundValue) -> bool:
 
     Note this just refers to the field configuration; not data.
     """
-    # quick-out: matching types will always have identical fields
+    # Quick-out: matching types will always have identical fields.
     if type(val1) is type(val2):
         return True
-    # otherwise do a full comparision
+
+    # Otherwise do a full comparison.
     return val1.get_fields() == val2.get_fields()
 
 

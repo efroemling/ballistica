@@ -47,9 +47,9 @@ class PipRequirement:
 
 PIP_REQUIREMENTS = [
     PipRequirement(modulename='pylint', minversion=[2, 5, 3]),
-    PipRequirement(modulename='mypy', minversion=[0, 781]),
+    PipRequirement(modulename='mypy', minversion=[0, 782]),
     PipRequirement(modulename='yapf', minversion=[0, 30, 0]),
-    PipRequirement(modulename='cpplint', minversion=[1, 5, 1]),
+    PipRequirement(modulename='cpplint', minversion=[1, 5, 3]),
     PipRequirement(modulename='typing_extensions'),
     PipRequirement(modulename='pytz'),
     PipRequirement(modulename='yaml', pipname='PyYAML'),

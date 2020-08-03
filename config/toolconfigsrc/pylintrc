@@ -62,7 +62,7 @@ disable=broad-except,
 enable=useless-suppression
 
 [BASIC]
-# Allowing a handfull of short names commonly understood to be iterators,
+# Allowing a handful of short names commonly understood to be iterators,
 # math concepts, or temporary variables.
 
 good-names=i,

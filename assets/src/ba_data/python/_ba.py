@@ -54,8 +54,7 @@ from ba._enums import TimeFormat, TimeType
 
 if TYPE_CHECKING:
     from typing import (Any, Dict, Callable, Tuple, List, Optional, Union,
-                        List, Type)
-    from typing_extensions import Literal
+                        List, Type, Literal)
     from ba._app import App
     import ba
 

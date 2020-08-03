@@ -26,8 +26,7 @@ from typing import TYPE_CHECKING, overload
 import ba
 
 if TYPE_CHECKING:
-    from typing import Optional, Union, Any
-    from typing_extensions import Literal
+    from typing import Optional, Union, Any, Literal
 
 
 class OnScreenTimer(ba.Actor):

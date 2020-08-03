@@ -3,6 +3,7 @@
 - Windows debug builds now use Python debug libraries. This should hopefully catch more errors that would otherwise go undetected and potentially cause crashes.
 - Switched windows builds to use 'fast' mode math instead of 'strict'. This should make the game run more efficiently (similar modes are already in use on other platforms) but holler if any odd breakage happens such as things falling through floors (more often than the occasional random fluke-y case that happens now).
 - Added _ba.can_display_full_unicode() for any code that wants to avoid printing things that won't show up locally.
+- Now pulling some classes such as Literal and Protocol from typing instead of typing_extensions (they were officially added to Python in 3.8)
 
 ### 1.5.23 (20146)
 - Fixed the shebang line in `bombsquad_server` file by using `-S` flag for `/usr/bin/env`.

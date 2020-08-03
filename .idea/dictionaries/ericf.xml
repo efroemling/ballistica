@@ -30,6 +30,7 @@
       <w>achs</w>
       <w>acinstance</w>
       <w>ack</w>
+      <w>ack'ed</w>
       <w>acked</w>
       <w>acks</w>
       <w>acnt</w>
@@ -149,6 +150,7 @@
       <w>badguy</w>
       <w>bafoundation</w>
       <w>ballistica</w>
+      <w>ballistica's</w>
       <w>ballisticacore</w>
       <w>ballisticacorecb</w>
       <w>bamaster</w>
@@ -204,6 +206,7 @@
       <w>bools</w>
       <w>bootlocale</w>
       <w>borhani</w>
+      <w>bot's</w>
       <w>botdist</w>
       <w>botlist</w>
       <w>botpos</w>
@@ -607,6 +610,7 @@
       <w>etsel</w>
       <w>etxt</w>
       <w>etype</w>
+      <w>eval'ed</w>
       <w>evalpydata</w>
       <w>evel</w>
       <w>eventid</w>
@@ -631,6 +635,10 @@
       <w>extrahash</w>
       <w>extrascale</w>
       <w>exts</w>
+      <w>f'baseval</w>
+      <w>f'chmod</w>
+      <w>f'final</w>
+      <w>f'fixme</w>
       <w>factoryclass</w>
       <w>fakemodule</w>
       <w>fallbacks</w>
@@ -772,6 +780,7 @@
       <w>gameinstance</w>
       <w>gamemap</w>
       <w>gamepad</w>
+      <w>gamepad's</w>
       <w>gamepadadvanced</w>
       <w>gamepads</w>
       <w>gamepadselect</w>
@@ -1141,6 +1150,7 @@
       <w>lssl</w>
       <w>lstart</w>
       <w>lstr</w>
+      <w>lstr's</w>
       <w>lstrs</w>
       <w>lsval</w>
       <w>ltex</w>
@@ -1337,6 +1347,7 @@
       <w>nvcompress</w>
       <w>nvidia</w>
       <w>nyko</w>
+      <w>obj's</w>
       <w>objname</w>
       <w>objs</w>
       <w>objt</w>
@@ -1578,6 +1589,7 @@
       <w>pybee</w>
       <w>pybuild</w>
       <w>pycache</w>
+      <w>pycharm's</w>
       <w>pycharmbin</w>
       <w>pycharmfull</w>
       <w>pycharmroot</w>
@@ -1760,6 +1772,7 @@
       <w>sessionplayer</w>
       <w>sessionplayers</w>
       <w>sessionteam</w>
+      <w>sessionteam's</w>
       <w>sessionteams</w>
       <w>sessiontype</w>
       <w>setactivity</w>
@@ -1906,6 +1919,7 @@
       <w>subpath</w>
       <w>subplatform</w>
       <w>subplatforms</w>
+      <w>subprocess's</w>
       <w>subprocesses</w>
       <w>subrepos</w>
       <w>subsel</w>
@@ -2016,6 +2030,7 @@
       <w>thelaststand</w>
       <w>themself</w>
       <w>thingie</w>
+      <w>this'll</w>
       <w>threadtype</w>
       <w>throwiness</w>
       <w>timedisplay</w>
@@ -2084,6 +2099,7 @@
       <w>typeargs</w>
       <w>typecheck</w>
       <w>typechecker</w>
+      <w>typechecker's</w>
       <w>typedval</w>
       <w>typeshed</w>
       <w>typestr</w>
