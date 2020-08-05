@@ -582,7 +582,7 @@ class WatchWindow(ba.Window):
                     ba.playsound(ba.getsound('error'))
                     ba.screenmessage(
                         (f"A replay with '{replay[:-4]}' name "
-                        'already exists in folder'),color=(1, 0, 0))
+                        'already exists in folder'), color=(1, 0, 0))
                 else:
                     copyfile(old_name_full, new_name_full)
                     self._refresh_my_replays()
