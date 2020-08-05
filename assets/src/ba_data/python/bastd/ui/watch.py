@@ -23,6 +23,7 @@
 from __future__ import annotations
 
 import os
+from shutil import copyfile
 from typing import TYPE_CHECKING, cast
 
 import _ba
@@ -54,6 +55,8 @@ class WatchWindow(ba.Window):
         self._tab_data: Dict[str, Any] = {}
         self._my_replays_scroll_width: Optional[float] = None
         self._my_replays_watch_replay_button: Optional[ba.Widget] = None
+        self._scroll_replay_option: Optional[ba.Widget] = None
+        self._option_widget: Optional[ba.Widget] = None
         self._scrollwidget: Optional[ba.Widget] = None
         self._columnwidget: Optional[ba.Widget] = None
         self._my_replay_selected: Optional[str] = None
@@ -151,6 +154,7 @@ class WatchWindow(ba.Window):
 
     def _set_tab(self, tab: str) -> None:
         # pylint: disable=too-many-locals
+        # pylint: disable=too-many-statements
         from bastd.ui import tabs
 
         if self._current_tab == tab:
@@ -216,11 +220,21 @@ class WatchWindow(ba.Window):
             btnv = (c_height - (48 if uiscale is ba.UIScale.SMALL else
                                 45 if uiscale is ba.UIScale.MEDIUM else 40) -
                     b_height)
-            btnh = 40 if uiscale is ba.UIScale.SMALL else 40
+            btnh = 30 if uiscale is ba.UIScale.SMALL else 30
             smlh = 190 if uiscale is ba.UIScale.SMALL else 225
             tscl = 1.0 if uiscale is ba.UIScale.SMALL else 1.2
-            self._my_replays_watch_replay_button = btn1 = ba.buttonwidget(
+            self._scroll_replay_option = sro = ba.scrollwidget(
                 parent=cnt,
+                position=(20, 0),
+                size=(165, 337),
+                simple_culling_v=70)
+            ba.containerwidget(edit=cnt, selected_child=sro)
+            self._option_widget = ba.columnwidget(parent=sro,
+                                                  left_border=0,
+                                                  border=2,
+                                                  margin=0)
+            self._my_replays_watch_replay_button = btn1 = ba.buttonwidget(
+                parent=self._option_widget,
                 size=(b_width, b_height),
                 position=(btnh, btnv),
                 button_type='square',
@@ -235,7 +249,7 @@ class WatchWindow(ba.Window):
                 ba.widget(edit=btn1,
                           left_widget=_ba.get_special_widget('back_button'))
             btnv -= b_height + b_space_extra
-            ba.buttonwidget(parent=cnt,
+            ba.buttonwidget(parent=self._option_widget,
                             size=(b_width, b_height),
                             position=(btnh, btnv),
                             button_type='square',
@@ -247,7 +261,7 @@ class WatchWindow(ba.Window):
                                           '.renameReplayButtonText'),
                             autoselect=True)
             btnv -= b_height + b_space_extra
-            ba.buttonwidget(parent=cnt,
+            ba.buttonwidget(parent=self._option_widget,
                             size=(b_width, b_height),
                             position=(btnh, btnv),
                             button_type='square',
@@ -257,6 +271,38 @@ class WatchWindow(ba.Window):
                             text_scale=tscl,
                             label=ba.Lstr(resource=self._r +
                                           '.deleteReplayButtonText'),
+                            autoselect=True)
+            ba.buttonwidget(parent=self._option_widget,
+                            size=(b_width, b_height),
+                            position=(btnh, btnv),
+                            button_type='square',
+                            color=b_color,
+                            textcolor=b_textcolor,
+                            on_activate_call=self._import_replay_press,
+                            text_scale=tscl,
+                            label='Import\nReplay',
+                            autoselect=True)
+            btnv -= b_height + b_space_extra
+            ba.buttonwidget(parent=self._option_widget,
+                            size=(b_width, b_height),
+                            position=(btnh, btnv),
+                            button_type='square',
+                            color=b_color,
+                            textcolor=b_textcolor,
+                            on_activate_call=self._export_my_replay,
+                            text_scale=tscl,
+                            label='Export\nReplay',
+                            autoselect=True)
+            btnv -= b_height + b_space_extra
+            ba.buttonwidget(parent=self._option_widget,
+                            size=(b_width, b_height),
+                            position=(btnh, btnv),
+                            button_type='square',
+                            color=b_color,
+                            textcolor=b_textcolor,
+                            on_activate_call=self._duplicate_my_replay,
+                            text_scale=tscl,
+                            label='Duplicate\nReplay',
                             autoselect=True)
 
             v -= sub_scroll_height + 23
@@ -482,6 +528,107 @@ class WatchWindow(ba.Window):
                 maxwidth=(self._my_replays_scroll_width / t_scale) * 0.93)
             if i == 0:
                 ba.widget(edit=txt, up_widget=self._tab_buttons['my_replays'])
+
+    def _import_replay_press(self) -> None:
+        from bastd.ui.fileselector import FileSelectorWindow
+        user_dir = _ba.app.python_directory_user
+        import_dir = (user_dir + '/replays')
+        if not os.path.exists(import_dir):
+            os.mkdir(import_dir)
+        with ba.Context('ui'):
+            FileSelectorWindow(import_dir, self._import_my_replay, True,
+                               ['brp'], False)
+
+    def _import_my_replay(self, replay_path: str = None) -> None:
+        try:
+            # Handling corner-case if user presses
+            # cancel button in the file selector
+            if not isinstance(replay_path, str):
+                return
+            old_name_full = replay_path
+            i = replay_path.rfind('/')
+            replay_name = (replay_path[i + 1:-4] + '.brp')
+            new_name_full = (_ba.get_replays_dir() + '/' + replay_name)
+            if os.path.exists(new_name_full):
+                ba.playsound(ba.getsound('error'))
+                ba.screenmessage(
+                    f"A replay with '{replay_name[:-4]}' name already exists",
+                    color=(1, 0, 0))
+            else:
+                copyfile(old_name_full, new_name_full)
+                self._refresh_my_replays()
+                ba.playsound(ba.getsound('gunCocking'))
+                ba.screenmessage(f"Successfully Imported '{replay_name[:-4]}'",
+                                 color=(0, 1, 0))
+        except Exception as _:
+            ba.screenmessage(f'{_}', color=(1, 0, 0))
+            ba.playsound(ba.getsound('error'))
+        return
+
+    def _export_my_replay(self) -> None:
+        if self._my_replay_selected is None:
+            self._no_replay_selected_error()
+            return
+        replay = self._my_replay_selected
+        user_dir = _ba.app.python_directory_user
+        try:
+            if replay != '__lastReplay.brp':
+                export_dir = (user_dir + '/replays')
+                if not os.path.exists(export_dir):
+                    os.mkdir(export_dir)
+                old_name_full = (_ba.get_replays_dir() + '/' + replay)
+                new_name_full = (export_dir + '/' + replay)
+                if os.path.exists(new_name_full):
+                    ba.playsound(ba.getsound('error'))
+                    ba.screenmessage(
+                        (f"A replay with '{replay[:-4]}' name "
+                        'already exists in folder'),color=(1, 0, 0))
+                else:
+                    copyfile(old_name_full, new_name_full)
+                    self._refresh_my_replays()
+                    ba.playsound(ba.getsound('gunCocking'))
+                    ba.screenmessage(f"Successfully Exported '{replay[:-4]}'",
+                                     color=(0, 1, 0))
+            else:
+                ba.playsound(ba.getsound('error'))
+                ba.screenmessage(
+                    "Cannot Export 'Last Game Replay'. Please rename it",
+                    color=(1, 0, 0))
+        except Exception as _:
+            ba.screenmessage(f'{_}', color=(1, 0, 0))
+            ba.playsound(ba.getsound('error'))
+
+    def _duplicate_my_replay(self) -> None:
+        if self._my_replay_selected is None:
+            self._no_replay_selected_error()
+            return
+        replay = self._my_replay_selected
+        dup_id = 1
+        can_be_duplicated = False
+        try:
+            if replay != '__lastReplay.brp':
+                old_name_full = (_ba.get_replays_dir() + '/' + replay)
+                while not can_be_duplicated:
+                    new_name_full = (_ba.get_replays_dir() +
+                                     f'/{replay[:-4]}_{dup_id}.brp')
+                    if os.path.exists(new_name_full):
+                        dup_id += 1
+                    else:
+                        can_be_duplicated = True
+                        copyfile(old_name_full, new_name_full)
+                        self._refresh_my_replays()
+                        ba.playsound(ba.getsound('gunCocking'))
+                        ba.screenmessage(
+                            f"Successfully Duplicated '{replay[:-4]}'",
+                            color=(0, 1, 0))
+            else:
+                ba.playsound(ba.getsound('error'))
+                ba.screenmessage(
+                    "Cannot Duplicate 'Last Game Replay'. Please rename it",
+                    color=(1, 0, 0))
+        except Exception as _:
+            ba.screenmessage(f'{_}', color=(1, 0, 0))
+            ba.playsound(ba.getsound('error'))
 
     def _save_state(self) -> None:
         try:
