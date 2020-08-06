@@ -177,6 +177,9 @@ class CreditsListWindow(ba.Window):
             with open('ba_data/data/langdata.json') as infile:
                 translation_contributors = (json.loads(
                     infile.read())['translation_contributors'])
+                translation_contributors = list(
+                    dict.fromkeys(translation_contributors))
+                translation_contributors.sort()
         except Exception:
             ba.print_exception('Error reading translation contributors.')
             translation_contributors = []
