@@ -91,7 +91,7 @@ class PurchaseWindow(ba.Window):
             else:
                 pyoffs = 0
                 price = self._price = _ba.get_account_misc_read_val(
-                    'price.' + str(items[0]), -1)
+                    'price.' + str(items[0]), '?')
                 price_str = ba.charstr(ba.SpecialChar.TICKET) + str(price)
             self._price_text = ba.textwidget(parent=self._root_widget,
                                              position=(self._width * 0.5,
@@ -151,6 +151,12 @@ class PurchaseWindow(ba.Window):
         if self._items == ['pro']:
             _ba.purchase('pro')
         else:
+            if self._price == '?':
+                ba.playsound(ba.getsound('error'))
+                ba.screenmessage(
+                ba.Lstr(resource='internal.unavailableNoConnectionText'),
+                color=(1, 0, 0))
+                return
             ticket_count: Optional[int]
             try:
                 ticket_count = _ba.get_account_ticket_count()
