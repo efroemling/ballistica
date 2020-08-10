@@ -271,6 +271,8 @@ class ControlsGuide(ba.Actor):
 
         # If we have a touchscreen, we only fade in if we have a player with
         # an input device that is *not* the touchscreen.
+        # (otherwise it is confusing to see the touchscreen buttons right
+        # next to our display buttons)
         touchscreen: Optional[ba.InputDevice] = _ba.getinputdevice(
             'TouchScreen', '#1', doraise=False)
 

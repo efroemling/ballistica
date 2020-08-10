@@ -121,6 +121,7 @@ class App:
             'sr': 'Serbian',
             'uk': 'Ukrainian',
             'vi': 'Vietnamese',
+            'vec': 'Venetian',
             'hi': 'Hindi'
         }
 

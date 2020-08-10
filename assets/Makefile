@@ -4755,6 +4755,7 @@ DATA_TARGETS = \
   build/ba_data/data/languages/swedish.json \
   build/ba_data/data/languages/turkish.json \
   build/ba_data/data/languages/ukrainian.json \
+  build/ba_data/data/languages/venetian.json \
   build/ba_data/data/languages/vietnamese.json \
   build/ba_data/data/maps/big_g.json \
   build/ba_data/data/maps/bridgit.json \

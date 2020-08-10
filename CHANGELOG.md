@@ -1,3 +1,6 @@
+### 1.5.25 (20164)
+- Added Venetian language (thanks Federico!)
+
 ### 1.5.24 (20163)
 - Upgraded Python from version 3.7 to 3.8. This is a substantial change (though nothing like the previous update from 2.7 to 3.7) so please holler if anything is broken. These updates will happen once every year or two now..
 - Windows debug builds now use Python debug libraries. This should hopefully catch more errors that would otherwise go undetected and potentially cause crashes.
