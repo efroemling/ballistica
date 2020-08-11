@@ -24,10 +24,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import _ba
 import ba
 
 if TYPE_CHECKING:
-    from typing import Tuple, Optional, Dict
+    from typing import Optional, Dict, Tuple, Callable, List
 
 
 class PluginSettingsWindow(ba.Window):
@@ -85,6 +86,14 @@ class PluginSettingsWindow(ba.Window):
                 on_activate_call=self._do_back)
             ba.containerwidget(edit=self._root_widget,
                                cancel_button=self._back_button)
+
+        ba.buttonwidget(parent=self._root_widget,
+                        position=(500 + x_inset, self._height - 60),
+                        size=(140, 60),
+                        scale=0.8,
+                        autoselect=True,
+                        label='Rescan Plugins',
+                        on_activate_call=self._rescan_plugin)
 
         self._title_text = ba.textwidget(parent=self._root_widget,
                                          position=(0, self._height - 52),
@@ -150,13 +159,80 @@ class PluginSettingsWindow(ba.Window):
     def _check_value_changed(self, plug: ba.PotentialPlugin,
                              value: bool) -> None:
         ba.screenmessage(
-            ba.Lstr(resource='settingsWindowAdvanced.mustRestartText'),
+            "You must press 'Rescan Plugins' for this to take effect",
             color=(1.0, 0.5, 0.0))
         plugstates: Dict[str, Dict] = ba.app.config.setdefault('Plugins', {})
         assert isinstance(plugstates, dict)
         plugstate = plugstates.setdefault(plug.class_path, {})
         plugstate['enabled'] = value
         ba.app.config.commit()
+
+    def _reset_plugins(self) -> None:
+
+        from ba import app
+        from ba._meta import ScanResults as results
+        app.metascan = None
+        app.potential_plugins = []
+        app.active_plugins = {}
+        results.games = []
+        results.plugins = []
+        results.keyboards = []
+        results.errors = ''
+        results.warnings = ''
+
+    def _rescan_plugin(self) -> None:
+
+        from ba import _meta
+        from ba._general import getclass
+        from ba._plugin import Plugin
+
+        try:
+            deactive_plugins = {}
+            self._reset_plugins()
+            self._do_back()
+
+            _meta.start_scan()
+            ba.app.load_plugins()
+
+            for plugin in ba.app.active_plugins.values():
+                try:
+                    plugin.on_app_launch()
+                except Exception:
+                    from ba import _error
+                    _error.print_exception('Error in plugin on_app_launch()')
+
+            # FIXME: We should move the below stuff to ba._app
+            plugstates: Dict[str, Dict] = ba.app.config.get('Plugins', {})
+            assert isinstance(plugstates, dict)
+            plugkeys: List[str] = sorted(key
+                                         for key, val in plugstates.items()
+                                         if not val.get('enabled', False))
+            for plugkey in plugkeys:
+                try:
+                    cls = getclass(plugkey, Plugin)
+                except Exception as exc:
+                    _ba.log(f"Error loading plugin class '{plugkey}': {exc}",
+                            to_server=False)
+                    continue
+                try:
+                    plugin = cls()
+                    assert plugkey not in deactive_plugins
+                    deactive_plugins[plugkey] = plugin
+                except Exception:
+                    from ba import _error
+                    _error.print_exception(f'Error loading plugin: {plugkey}')
+
+            for plugin in deactive_plugins.values():
+                try:
+                    plugin.on_disable()
+                except Exception:
+                    from ba import _error
+                    _error.print_exception('Error in plugin on_disable()')
+
+            ba.playsound(ba.getsound('gunCocking'))
+            ba.screenmessage('Successfully Scanned Plugins', color=(0, 1, 0))
+        except Exception as _:
+            ba.screenmessage(f'{_}', color=(1, 0, 0))
 
     def _save_state(self) -> None:
         pass
