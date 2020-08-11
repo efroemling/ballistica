@@ -292,7 +292,7 @@ class CoopSession(Session):
             # tutorial first.
             if (isinstance(activity, JoinActivity)
                     and self.campaign_level_name == 'Onslaught Training'
-                    and not app.kiosk_mode):
+                    and not (app.demo_mode or app.arcade_mode)):
                 if self._tutorial_activity is None:
                     raise RuntimeError('Tutorial not preloaded properly.')
                 self.setactivity(self._tutorial_activity)
@@ -315,7 +315,7 @@ class CoopSession(Session):
                 # Now flip the current activity..
                 self.setactivity(next_game)
 
-                if not app.kiosk_mode:
+                if not (app.demo_mode or app.arcade_mode):
                     if self.tournament_id is not None:
                         self._custom_menu_ui = [{
                             'label':

@@ -301,8 +301,10 @@ class App:
         assert isinstance(self.protocol_version, int)
         self.toolbar_test: bool = env['toolbar_test']
         assert isinstance(self.toolbar_test, bool)
-        self.kiosk_mode: bool = env['kiosk_mode']
-        assert isinstance(self.kiosk_mode, bool)
+        self.demo_mode: bool = env['demo_mode']
+        assert isinstance(self.demo_mode, bool)
+        self.arcade_mode: bool = env['arcade_mode']
+        assert isinstance(self.arcade_mode, bool)
         self.headless_build: bool = env['headless_build']
         assert isinstance(self.headless_build, bool)
 

@@ -64,7 +64,7 @@ class CoopGameActivity(GameActivity[PlayerType, TeamType]):
         super().on_begin()
 
         # Show achievements remaining.
-        if not _ba.app.kiosk_mode:
+        if not (_ba.app.demo_mode or _ba.app.arcade_mode):
             _ba.timer(3.8, WeakCall(self._show_remaining_achievements))
 
         # Preload achievement images in case we get some.

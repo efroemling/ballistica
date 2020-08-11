@@ -99,8 +99,9 @@ class KioskWindow(ba.Window):
                 size=(0, 0),
                 position=(self._width * 0.5, self._height + y_extra - 34),
                 transition_delay=tdelay,
-                text=ba.Lstr(resource='demoText',
-                             fallback_resource='mainMenu.demoMenuText'),
+                text=(ba.Lstr(resource='demoText',
+                              fallback_resource='mainMenu.demoMenuText')
+                      if ba.app.demo_mode else 'ARCADE'),
                 flatness=1.0,
                 scale=1.2,
                 h_align='center',
@@ -311,8 +312,7 @@ class KioskWindow(ba.Window):
             self._b4 = self._b5 = self._b6 = None
 
         self._b7: Optional[ba.Widget]
-        uiscale = ba.app.ui.uiscale
-        if bool(False):
+        if ba.app.arcade_mode:
             self._b7 = ba.buttonwidget(
                 parent=self._root_widget,
                 autoselect=True,
@@ -320,10 +320,7 @@ class KioskWindow(ba.Window):
                 color=(0.45, 0.55, 0.45),
                 textcolor=(0.7, 0.8, 0.7),
                 scale=0.5,
-                position=((self._width * 0.5 - 37.5,
-                           y_extra + 120) if not self._show_multiplayer else
-                          (self._width + 100, y_extra +
-                           (140 if uiscale is ba.UIScale.SMALL else 120))),
+                position=(self._width * 0.5 - 60.0, b_v - 70.0),
                 transition_delay=tdelay,
                 label=ba.Lstr(resource=self._r + '.fullMenuText'),
                 on_activate_call=self._do_full_menu)

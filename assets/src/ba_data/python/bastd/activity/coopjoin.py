@@ -173,7 +173,7 @@ class CoopJoinActivity(JoinActivity):
                          self.session.campaign_level_name)
             ts_h_offs = 60
 
-            if not ba.app.kiosk_mode:
+            if not (ba.app.demo_mode or ba.app.arcade_mode):
                 achievements = [
                     a for a in get_achievements_for_coop_level(levelname)
                     if not a.complete

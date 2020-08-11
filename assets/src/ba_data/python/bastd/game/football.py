@@ -450,7 +450,7 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
         super().on_begin()
 
         # Show controls help in kiosk mode.
-        if ba.app.kiosk_mode:
+        if ba.app.demo_mode or ba.app.arcade_mode:
             controlsguide.ControlsGuide(delay=3.0, lifespan=10.0,
                                         bright=True).autoretain()
         assert self.initialplayerinfos is not None

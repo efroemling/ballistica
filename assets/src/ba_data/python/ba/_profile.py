@@ -77,7 +77,7 @@ def get_player_profile_colors(
 
     # Special case: when being asked for a random color in kiosk mode,
     # always return default purple.
-    if _ba.app.kiosk_mode and profilename is None:
+    if (_ba.app.demo_mode or _ba.app.arcade_mode) and profilename is None:
         color = (0.5, 0.4, 1.0)
         highlight = (0.4, 0.4, 0.5)
     else:

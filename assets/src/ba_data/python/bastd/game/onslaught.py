@@ -457,8 +457,8 @@ class OnslaughtGame(ba.CoopGameActivity[Player, Team]):
 
         elif self._preset in {Preset.UBER, Preset.UBER_EASY}:
 
-            # Show controls help in kiosk mode.
-            if ba.app.kiosk_mode:
+            # Show controls help in demo/arcade modes.
+            if ba.app.demo_mode or ba.app.arcade_mode:
                 ControlsGuide(delay=3.0, lifespan=10.0,
                               bright=True).autoretain()
 

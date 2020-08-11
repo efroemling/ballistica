@@ -56,7 +56,8 @@ class MainMenuWindow(ba.Window):
             toolbar_visibility='menu_minimal_no_back' if self.
             _in_game else 'menu_minimal_no_back'))
 
-        self._is_kiosk = ba.app.kiosk_mode
+        self._is_demo = ba.app.demo_mode
+        self._is_arcade = ba.app.arcade_mode
         self._tdelay = 0.0
         self._t_delay_inc = 0.02
         self._t_delay_play = 1.7
@@ -73,6 +74,7 @@ class MainMenuWindow(ba.Window):
         self._gc_button: Optional[ba.Widget] = None
         self._how_to_play_button: Optional[ba.Widget] = None
         self._credits_button: Optional[ba.Widget] = None
+        self._settings_button: Optional[ba.Widget] = None
 
         self._store_char_tex = self._get_store_char_tex()
 
@@ -193,9 +195,9 @@ class MainMenuWindow(ba.Window):
 
         self._have_store_button = not self._in_game
 
-        self._have_settings_button = ((not self._in_game
-                                       or not app.toolbar_test)
-                                      and not self._is_kiosk)
+        self._have_settings_button = (
+            (not self._in_game or not app.toolbar_test)
+            and not (self._is_demo or self._is_arcade))
 
         self._input_device = input_device = _ba.get_ui_input_device()
         self._input_player = input_device.player if input_device else None
@@ -500,7 +502,7 @@ class MainMenuWindow(ba.Window):
                 (x_offs + spc * i - 1.0, button_y_offs + button_y_offs2,
                  small_button_scale))
         # In kiosk mode, provide a button to get back to the kiosk menu.
-        if ba.app.kiosk_mode:
+        if ba.app.demo_mode or ba.app.arcade_mode:
             h, v, scale = positions[self._p_index]
             this_b_width = self._button_width * 0.4 * scale
             demo_menu_delay = 0.0 if self._t_delay_play == 0.0 else max(
@@ -512,7 +514,8 @@ class MainMenuWindow(ba.Window):
                 autoselect=True,
                 color=(0.45, 0.55, 0.45),
                 textcolor=(0.7, 0.8, 0.7),
-                label=ba.Lstr(resource=self._r + '.demoMenuText'),
+                label=ba.Lstr(resource='modeArcadeText' if ba.app.
+                              arcade_mode else 'modeDemoText'),
                 transition_delay=demo_menu_delay,
                 on_activate_call=self._demo_menu_press)
         else:
@@ -707,7 +710,7 @@ class MainMenuWindow(ba.Window):
                     f'Error getting custom menu entries for {session}')
         self._width = 250.0
         self._height = 250.0 if self._input_player else 180.0
-        if self._is_kiosk and self._input_player:
+        if (self._is_demo or self._is_arcade) and self._input_player:
             self._height -= 40
         if not self._have_settings_button:
             self._height -= 50
@@ -782,7 +785,7 @@ class MainMenuWindow(ba.Window):
                             autoselect=self._use_autoselect)
         # Add a 'leave' button if the menu-owner has a player.
         if ((self._input_player or self._connected_to_remote_player)
-                and not self._is_kiosk):
+                and not (self._is_demo or self._is_arcade)):
             h, v, scale = positions[self._p_index]
             self._p_index += 1
             btn = ba.buttonwidget(parent=self._root_widget,

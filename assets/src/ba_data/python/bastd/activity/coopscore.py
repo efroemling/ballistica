@@ -389,7 +389,8 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         else:
             pass
 
-        show_next_button = self._is_more_levels and not ba.app.kiosk_mode
+        show_next_button = self._is_more_levels and not (ba.app.demo_mode
+                                                         or ba.app.arcade_mode)
 
         if not show_next_button:
             h_offs += 70
@@ -455,7 +456,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         self._corner_button_offs = (h_offs + 300.0 + 100.0 + x_offs_extra,
                                     v_offs + 560.0)
 
-        if ba.app.kiosk_mode:
+        if ba.app.demo_mode or ba.app.arcade_mode:
             self._league_rank_button = None
             self._store_button_instance = None
         else:
@@ -542,7 +543,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         ba.timer(1.0, ba.WeakCall(self.request_ui))
 
         if (self._is_complete and self._victory and self._is_more_levels
-                and not ba.app.kiosk_mode):
+                and not (ba.app.demo_mode or ba.app.arcade_mode)):
             Text(ba.Lstr(value='${A}:\n',
                          subs=[('${A}', ba.Lstr(resource='levelUnlockedText'))
                                ]) if self._newly_complete else
@@ -690,7 +691,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
             })
         if _ba.get_account_state() != 'signed_in':
             # We expect this only in kiosk mode; complain otherwise.
-            if not ba.app.kiosk_mode:
+            if not (ba.app.demo_mode or ba.app.arcade_mode):
                 print('got not-signed-in at score-submit; unexpected')
             if self._show_friend_scores:
                 ba.pushcall(ba.WeakCall(self._got_friend_score_results, None))
