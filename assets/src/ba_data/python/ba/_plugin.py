@@ -58,3 +58,6 @@ class Plugin:
 
     def on_app_launch(self) -> None:
         """Called when the app is being launched."""
+
+    def on_disable(self) -> None:
+        """Called when the plugin is disabled."""
