@@ -96,6 +96,7 @@ class Team(ba.Team[Player]):
         self.score = 0
         self.flag_return_touches = 0
         self.home_flag_at_base = True
+        self.flash_once = False
         self.touch_return_timer: Optional[ba.Timer] = None
         self.enemy_flag_at_base = False
         self.flag: Optional[CTFFlag] = None
@@ -274,6 +275,7 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
 
     def _spawn_flag_for_team(self, team: Team) -> None:
         team.flag = CTFFlag(team)
+        team.flash_once = False
         team.flag_return_touches = 0
         self._flash_base(team, length=1.0)
         assert team.flag.node
@@ -402,10 +404,12 @@ class CaptureTheFlagGame(ba.TeamGameActivity[Player, Team]):
         if flag.team is team:
 
             # Check times here to prevent too much flashing.
-            if (team.last_flag_leave_time is None
-                    or cur_time - team.last_flag_leave_time > 3.0):
+            if ((team.last_flag_leave_time is None
+                    or cur_time - team.last_flag_leave_time > 3.0)
+                    and not team.flash_once):
                 ba.playsound(self._alarmsound, position=team.base_pos)
                 self._flash_base(team)
+                team.flash_once = True
             team.last_flag_leave_time = cur_time
             team.home_flag_at_base = False
         else:
