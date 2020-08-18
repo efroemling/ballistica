@@ -184,6 +184,7 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
                                         })
 
     def _get_chosen_one_player(self) -> Optional[Player]:
+        # Should never return invalid references; return None in that case.
         if self._chosen_one_player:
             return self._chosen_one_player
         return None
@@ -269,8 +270,9 @@ class ChosenOneGame(ba.TeamGameActivity[Player, Team]):
         self.end(results=results, announce_delay=0)
 
     def _set_chosen_one_player(self, player: Optional[Player]) -> None:
-        for p_other in self.players:
-            p_other.chosen_light = None
+        existing = self._get_chosen_one_player()
+        if existing:
+            existing.chosen_light = None
         ba.playsound(self._swipsound)
         if not player:
             assert self._flag_spawn_pos is not None
