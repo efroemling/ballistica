@@ -85,10 +85,12 @@ def pcommand_main(globs: Dict[str, Any]) -> None:
             retval = 255
 
     if show_help:
-        print('Pcommand contains project related commands too small'
-              ' to warrant full scripts.')
-        print(f"Run {Clr.MAG}'pcommand help {Clr.BLD}<COMMAND>'"
-              f'{Clr.RST} for full command documentation.')
+        print(f'The {Clr.MAG}{Clr.BLD}pcommand{Clr.RST} script encapsulates'
+              f' a collection of project-related commands.')
+        print(f"Run {Clr.MAG}{Clr.BLD}'pcommand [COMMAND] ...'"
+              f'{Clr.RST} to run a command.')
+        print(f"Run {Clr.MAG}{Clr.BLD}'pcommand help [COMMAND]'"
+              f'{Clr.RST} for full documentation for a command.')
         print('Available commands:')
         for func, obj in sorted(funcs.items()):
             doc = getattr(obj, '__doc__', '').splitlines()[0].strip()

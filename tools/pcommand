@@ -19,22 +19,21 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # -----------------------------------------------------------------------------
-"""Wee little snippets of functionality specific to this project.
+"""A collection of commands for use with this project.
 
 All top level functions here can be run by passing them as the first
 argument on the command line. (or pass no arguments to get a list of them).
-
-Functions can be placed here when they're not complex enough to warrant
-their own files. Often these functions act as user-facing entry points
-to functionality contained in efrotools or other standalone tool modules.
 """
+
+# Note: we import as little as possible here at the module level to
+# keep launch times fast; most imports should happen within individual command
+# functions.
+
 from __future__ import annotations
 
-# Note: import as little as possible here at the module level to
-# keep launch times fast for small snippets.
 from typing import TYPE_CHECKING
 
-# Pull in the snippets we want to expose. Its more efficient to define them in
+# Pull in commands we want to expose. Its more efficient to define them in
 # modules rather than inline here because we'll be able to load them via pyc.
 # pylint: disable=unused-import
 from efrotools.pcommand import (
