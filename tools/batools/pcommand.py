@@ -551,11 +551,7 @@ def install_pip_reqs() -> None:
 def checkenv() -> None:
     """Check for tools necessary to build and run the app."""
     import batools.build
-    from efro.error import CleanError
-    try:
-        batools.build.checkenv()
-    except RuntimeError as exc:
-        raise CleanError(exc)
+    batools.build.checkenv()
 
 
 def ensure_prefab_platform() -> None:
@@ -620,13 +616,13 @@ def lazybuild() -> None:
     try:
         category = batools.build.SourceCategory(sys.argv[2])
     except ValueError as exc:
-        raise CleanError(exc)
+        raise CleanError(exc) from exc
     target = sys.argv[3]
     command = ' '.join(sys.argv[4:])
     try:
         batools.build.lazybuild(target, category, command)
     except subprocess.CalledProcessError as exc:
-        raise CleanError(exc)
+        raise CleanError(exc) from exc
 
 
 def android_archive_unstripped_libs() -> None:
@@ -730,3 +726,43 @@ def update_project() -> None:
     fix = '--fix' in sys.argv
 
     Updater(check=check, fix=fix).run()
+
+
+def cmake_prep_dir() -> None:
+    """Create a dir, recreating it when cmake version changes.
+
+    Useful to prevent builds from breaking when cmake is updated.
+    """
+    import os
+    import subprocess
+    from efro.error import CleanError
+    from efro.terminal import Clr
+
+    if len(sys.argv) != 3:
+        raise CleanError('Expected 1 arg (dir name)')
+    dirname = sys.argv[2]
+
+    # Look for cmake version associated with the dir.
+    verfilename = os.path.join(dirname, '.ba_cmake_version')
+    ver: Optional[str]
+    if os.path.isfile(verfilename):
+        with open(verfilename) as infile:
+            ver = infile.read()
+    else:
+        ver = None
+
+    # Get version of installed cmake.
+    cmake_ver_output = subprocess.run(['cmake', '--version'],
+                                      check=True,
+                                      capture_output=True).stdout.decode()
+    cmake_ver = cmake_ver_output.splitlines()[0].split('cmake version ')[1]
+
+    # If they don't match, blow away the dir and write the current version.
+    if ver != cmake_ver:
+        if ver is not None:
+            print(f'{Clr.BLU}CMake version changed from {ver} to {cmake_ver};'
+                  f' clearing existing build at "{dirname}".{Clr.RST}')
+        subprocess.run(['rm', '-rf', dirname], check=True)
+        os.makedirs(dirname, exist_ok=True)
+        with open(verfilename, 'w') as outfile:
+            outfile.write(cmake_ver)

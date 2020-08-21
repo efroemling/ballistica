@@ -65,7 +65,7 @@ class ServerManagerApp:
         try:
             self._config = self._load_config()
         except Exception as exc:
-            raise CleanError(f'Error loading config: {exc}')
+            raise CleanError(f'Error loading config: {exc}') from exc
         self._done = False
         self._process_commands: List[Union[str, ServerCommand]] = []
         self._process_commands_lock = Lock()

@@ -208,9 +208,10 @@ class App:
             subprocess.run(['make', '--quiet', 'prereqs'],
                            check=True,
                            cwd=self._project_root)
-        except subprocess.CalledProcessError:
-            raise CleanError('"make prereqs" check failed. '
-                             'Install missing requirements and try again.')
+        except subprocess.CalledProcessError as exc:
+            raise CleanError(
+                '"make prereqs" check failed. '
+                'Install missing requirements and try again.') from exc
 
         self._load_state()
 
@@ -439,6 +440,6 @@ if __name__ == '__main__':
         # Let's do a clean fail on keyboard interrupt.
         # Can make this optional if a backtrace is ever useful..
         sys.exit(1)
-    except CleanError as exc:
-        exc.pretty_print()
+    except CleanError as clean_exc:
+        clean_exc.pretty_print()
         sys.exit(1)

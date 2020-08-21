@@ -218,12 +218,12 @@ class Map(Actor):
         # (and instruct the user if we weren't preloaded properly).
         try:
             self.preloaddata = _ba.getactivity().preloads[type(self)]
-        except Exception:
+        except Exception as exc:
             from ba import _error
             raise _error.NotFoundError(
                 'Preload data not found for ' + str(type(self)) +
                 '; make sure to call the type\'s preload()'
-                ' staticmethod in the activity constructor')
+                ' staticmethod in the activity constructor') from exc
 
         # Set various globals.
         gnode = _ba.getactivity().globalsnode

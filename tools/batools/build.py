@@ -30,6 +30,7 @@ import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from efro.error import CleanError
 from efro.terminal import Clr
 
 if TYPE_CHECKING:
@@ -46,10 +47,10 @@ class PipRequirement:
 
 
 PIP_REQUIREMENTS = [
-    PipRequirement(modulename='pylint', minversion=[2, 5, 3]),
+    PipRequirement(modulename='pylint', minversion=[2, 6, 0]),
     PipRequirement(modulename='mypy', minversion=[0, 782]),
     PipRequirement(modulename='yapf', minversion=[0, 30, 0]),
-    PipRequirement(modulename='cpplint', minversion=[1, 5, 3]),
+    PipRequirement(modulename='cpplint', minversion=[1, 5, 4]),
     PipRequirement(modulename='typing_extensions'),
     PipRequirement(modulename='pytz'),
     PipRequirement(modulename='yaml', pipname='PyYAML'),
@@ -489,19 +490,19 @@ def checkenv() -> None:
     # Make sure they've got curl.
     if subprocess.run(['which', 'curl'], check=False,
                       capture_output=True).returncode != 0:
-        raise RuntimeError('curl is required; please install it.')
+        raise CleanError('curl is required; please install it.')
 
     # Make sure they've got our target python version.
     if subprocess.run(['which', PYTHON_BIN], check=False,
                       capture_output=True).returncode != 0:
-        raise RuntimeError(f'{PYTHON_BIN} is required; please install it.')
+        raise CleanError(f'{PYTHON_BIN} is required; please install it.')
 
     # Make sure they've got pip for that python version.
     if subprocess.run(f'{PYTHON_BIN} -m pip --version',
                       shell=True,
                       check=False,
                       capture_output=True).returncode != 0:
-        raise RuntimeError(
+        raise CleanError(
             f'pip (for {PYTHON_BIN}) is required; please install it.')
 
     # Check for some required python modules.
@@ -522,12 +523,11 @@ def checkenv() -> None:
                                      check=False,
                                      capture_output=True)
         if results.returncode != 0:
-            raise RuntimeError(
-                f'{packagename} (for {PYTHON_BIN}) is required.\n'
-                f'To install it, try: "{PYTHON_BIN}'
-                f' -m pip install {packagename}"\n'
-                f'Alternately, "tools/pcommand install_pip_reqs"'
-                f' will update all pip requirements.')
+            raise CleanError(f'{packagename} (for {PYTHON_BIN}) is required.\n'
+                             f'To install it, try: "{PYTHON_BIN}'
+                             f' -m pip install {packagename}"\n'
+                             f'Alternately, "tools/pcommand install_pip_reqs"'
+                             f' will update all pip requirements.')
         if minver is not None:
             verlines = results.stdout.decode().splitlines()
             if verlines[0].startswith('Cpplint fork'):
@@ -537,7 +537,7 @@ def checkenv() -> None:
             vnums = [int(x) for x in ver_line.split()[-1].split('.')]
             assert len(vnums) == len(minver)
             if vnums < minver:
-                raise RuntimeError(
+                raise CleanError(
                     f'{packagename} ver. {_vstr(minver)} or newer is required;'
                     f' found {_vstr(vnums)}.\n'
                     f'To upgrade it, try: "{PYTHON_BIN}'

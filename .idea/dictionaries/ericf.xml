@@ -29,8 +29,8 @@
       <w>achname</w>
       <w>achs</w>
       <w>acinstance</w>
-      <w>ack</w>
       <w>ack'ed</w>
+      <w>ack</w>
       <w>acked</w>
       <w>acks</w>
       <w>acnt</w>
@@ -149,8 +149,8 @@
       <w>bacommon</w>
       <w>badguy</w>
       <w>bafoundation</w>
-      <w>ballistica</w>
       <w>ballistica's</w>
+      <w>ballistica</w>
       <w>ballisticacore</w>
       <w>ballisticacorecb</w>
       <w>bamaster</w>
@@ -780,8 +780,8 @@
       <w>gamedata</w>
       <w>gameinstance</w>
       <w>gamemap</w>
-      <w>gamepad</w>
       <w>gamepad's</w>
+      <w>gamepad</w>
       <w>gamepadadvanced</w>
       <w>gamepads</w>
       <w>gamepadselect</w>
@@ -1151,8 +1151,8 @@
       <w>lsqlite</w>
       <w>lssl</w>
       <w>lstart</w>
-      <w>lstr</w>
       <w>lstr's</w>
+      <w>lstr</w>
       <w>lstrs</w>
       <w>lsval</w>
       <w>ltex</w>
@@ -1773,8 +1773,8 @@
       <w>sessionname</w>
       <w>sessionplayer</w>
       <w>sessionplayers</w>
-      <w>sessionteam</w>
       <w>sessionteam's</w>
+      <w>sessionteam</w>
       <w>sessionteams</w>
       <w>sessiontype</w>
       <w>setactivity</w>
@@ -2100,8 +2100,8 @@
       <w>txtw</w>
       <w>typeargs</w>
       <w>typecheck</w>
-      <w>typechecker</w>
       <w>typechecker's</w>
+      <w>typechecker</w>
       <w>typedval</w>
       <w>typeshed</w>
       <w>typestr</w>
@@ -2177,6 +2177,7 @@
       <w>vcruntime</w>
       <w>vcxproj</w>
       <w>venv</w>
+      <w>verfilename</w>
       <w>verlines</w>
       <w>versioning</w>
       <w>versionpredicate</w>

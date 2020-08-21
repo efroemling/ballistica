@@ -297,8 +297,8 @@ def runmypy() -> None:
     try:
         efrotools.code.runmypy(PROJROOT, filenames)
         print(f'{Clr.GRN}Mypy Passed.{Clr.RST}')
-    except Exception:
-        raise CleanError('Mypy Failed.')
+    except Exception as exc:
+        raise CleanError('Mypy Failed.') from exc
 
 
 def dmypy() -> None:

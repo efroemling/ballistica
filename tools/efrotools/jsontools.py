@@ -43,7 +43,7 @@ class NoIndentEncoder(json.JSONEncoder):
     """Our custom encoder implementing selective indentation."""
 
     def __init__(self, *args: Any, **kwargs: Any):
-        super(NoIndentEncoder, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.kwargs = dict(kwargs)
         del self.kwargs['indent']
         self._replacement_map: Dict = {}
@@ -55,10 +55,10 @@ class NoIndentEncoder(json.JSONEncoder):
             key = uuid.uuid4().hex
             self._replacement_map[key] = json.dumps(o.value, **self.kwargs)
             return '@@%s@@' % (key, )
-        return super(NoIndentEncoder, self).default(o)
+        return super().default(o)
 
     def encode(self, o: Any) -> Any:
-        result = super(NoIndentEncoder, self).encode(o)
+        result = super().encode(o)
         for k, v in self._replacement_map.items():
             result = result.replace('"@@%s@@"' % (k, ), v)
         return result

@@ -121,8 +121,8 @@ def cpplint(projroot: Path, full: bool) -> None:
     # We want to do a few custom modifications to the cpplint module...
     try:
         import cpplint as cpplintmodule
-    except Exception:
-        raise CleanError('Unable to import cpplint')
+    except Exception as exc:
+        raise CleanError('Unable to import cpplint.') from exc
     with open(cpplintmodule.__file__) as infile:
         codelines = infile.read().splitlines()
     cheadersline = codelines.index('_C_HEADERS = frozenset([')
@@ -598,8 +598,8 @@ def mypy(projroot: Path, full: bool) -> None:
     starttime = time.time()
     try:
         runmypy(projroot, filenames, full)
-    except Exception:
-        raise CleanError('Mypy failed.')
+    except Exception as exc:
+        raise CleanError('Mypy failed.') from exc
     duration = time.time() - starttime
     print(f'{Clr.GRN}Mypy passed in {duration:.1f} seconds.{Clr.RST}',
           flush=True)
@@ -625,8 +625,8 @@ def dmypy(projroot: Path) -> None:
             '.mypy.ini', '--follow-imports=error', '--pretty'
         ] + filenames
         subprocess.run(args, check=True)
-    except Exception:
-        raise CleanError('Mypy daemon: fail.')
+    except Exception as exc:
+        raise CleanError('Mypy daemon: fail.') from exc
     duration = time.time() - starttime
     print(f'{Clr.GRN}Mypy daemon passed in {duration:.1f} seconds.{Clr.RST}',
           flush=True)

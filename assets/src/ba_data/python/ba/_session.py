@@ -143,7 +143,8 @@ class Session:
                 else:
                     missing_info = [(d.cls, d.config) for d in exc.deps]
                     raise RuntimeError(
-                        f'Missing non-asset dependencies: {missing_info}')
+                        f'Missing non-asset dependencies: {missing_info}'
+                    ) from exc
 
         # Throw a combined exception if we found anything missing.
         if missing_asset_packages:
