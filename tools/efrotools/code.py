@@ -622,7 +622,7 @@ def dmypy(projroot: Path) -> None:
     try:
         args = [
             'dmypy', 'run', '--timeout', '3600', '--', '--config-file',
-            '.mypy.ini', '--follow-imports=error', '--pretty'
+            '.mypy.ini', '--pretty'
         ] + filenames
         subprocess.run(args, check=True)
     except Exception as exc:

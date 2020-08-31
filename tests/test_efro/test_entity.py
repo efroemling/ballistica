@@ -27,8 +27,13 @@ from enum import Enum, unique
 
 import pytest
 
+# Seeming to get some non-deterministic behavior here as of pylint 2.6.0
+# Where sometimes pylint wants these in one order and sometimes another.
+# pylint: disable=useless-suppression
+# pylint: disable=wrong-import-order
 from efro import entity
 from efrotools.statictest import static_type_equals
+# pylint: enable=useless-suppression
 
 if TYPE_CHECKING:
     pass

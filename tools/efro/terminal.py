@@ -27,7 +27,7 @@ from enum import Enum, unique
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, ClassVar, Type
 
 
 @unique
@@ -155,109 +155,169 @@ def _windows_enable_color() -> bool:
         return False
 
 
-class Clr:
+class ClrBase:
+    """Base class for color convenience class."""
+    RST: ClassVar[str]
+    BLD: ClassVar[str]
+    UND: ClassVar[str]
+    INV: ClassVar[str]
+
+    # Normal foreground colors
+    BLK: ClassVar[str]
+    RED: ClassVar[str]
+    GRN: ClassVar[str]
+    YLW: ClassVar[str]
+    BLU: ClassVar[str]
+    MAG: ClassVar[str]
+    CYN: ClassVar[str]
+    WHT: ClassVar[str]
+
+    # Normal background colors.
+    BBLK: ClassVar[str]
+    BRED: ClassVar[str]
+    BGRN: ClassVar[str]
+    BYLW: ClassVar[str]
+    BBLU: ClassVar[str]
+    BMAG: ClassVar[str]
+    BCYN: ClassVar[str]
+    BWHT: ClassVar[str]
+
+    # Strong foreground colors
+    SBLK: ClassVar[str]
+    SRED: ClassVar[str]
+    SGRN: ClassVar[str]
+    SYLW: ClassVar[str]
+    SBLU: ClassVar[str]
+    SMAG: ClassVar[str]
+    SCYN: ClassVar[str]
+    SWHT: ClassVar[str]
+
+    # Strong background colors.
+    SBBLK: ClassVar[str]
+    SBRED: ClassVar[str]
+    SBGRN: ClassVar[str]
+    SBYLW: ClassVar[str]
+    SBBLU: ClassVar[str]
+    SBMAG: ClassVar[str]
+    SBCYN: ClassVar[str]
+    SBWHT: ClassVar[str]
+
+
+class Clr1(ClrBase):
     """Convenience class for color terminal output.
 
-    These will be set to ANSI color escape sequences if the current process
-    seems to be an interactive terminal (sys.__stdout__.isatty()), otherwise
-    they will be empty strings.
-    If the environment variable EFRO_TERMCOLORS is set to 0 or 1, that
-    value will be used instead.
+    This version has colors always enabled. Generally you should use Clr which
+    points to the correct enabled/disabled class depending on the environment.
     """
-    _envval = os.environ.get('EFRO_TERMCOLORS')
-    color_enabled = (True if _envval == '1' else
-                     False if _envval == '0' else _default_color_enabled())
-    if color_enabled:
+    color_enabled = True
 
-        # Styles
-        RST = TerminalColor.RESET.value
-        BLD = TerminalColor.BOLD.value
-        UND = TerminalColor.UNDERLINE.value
-        INV = TerminalColor.INVERSE.value
+    # Styles
+    RST = TerminalColor.RESET.value
+    BLD = TerminalColor.BOLD.value
+    UND = TerminalColor.UNDERLINE.value
+    INV = TerminalColor.INVERSE.value
 
-        # Normal foreground colors
-        BLK = TerminalColor.BLACK.value
-        RED = TerminalColor.RED.value
-        GRN = TerminalColor.GREEN.value
-        YLW = TerminalColor.YELLOW.value
-        BLU = TerminalColor.BLUE.value
-        MAG = TerminalColor.MAGENTA.value
-        CYN = TerminalColor.CYAN.value
-        WHT = TerminalColor.WHITE.value
+    # Normal foreground colors
+    BLK = TerminalColor.BLACK.value
+    RED = TerminalColor.RED.value
+    GRN = TerminalColor.GREEN.value
+    YLW = TerminalColor.YELLOW.value
+    BLU = TerminalColor.BLUE.value
+    MAG = TerminalColor.MAGENTA.value
+    CYN = TerminalColor.CYAN.value
+    WHT = TerminalColor.WHITE.value
 
-        # Normal background colors.
-        BBLK = TerminalColor.BG_BLACK.value
-        BRED = TerminalColor.BG_RED.value
-        BGRN = TerminalColor.BG_GREEN.value
-        BYLW = TerminalColor.BG_YELLOW.value
-        BBLU = TerminalColor.BG_BLUE.value
-        BMAG = TerminalColor.BG_MAGENTA.value
-        BCYN = TerminalColor.BG_CYAN.value
-        BWHT = TerminalColor.BG_WHITE.value
+    # Normal background colors.
+    BBLK = TerminalColor.BG_BLACK.value
+    BRED = TerminalColor.BG_RED.value
+    BGRN = TerminalColor.BG_GREEN.value
+    BYLW = TerminalColor.BG_YELLOW.value
+    BBLU = TerminalColor.BG_BLUE.value
+    BMAG = TerminalColor.BG_MAGENTA.value
+    BCYN = TerminalColor.BG_CYAN.value
+    BWHT = TerminalColor.BG_WHITE.value
 
-        # Strong foreground colors
-        SBLK = TerminalColor.STRONG_BLACK.value
-        SRED = TerminalColor.STRONG_RED.value
-        SGRN = TerminalColor.STRONG_GREEN.value
-        SYLW = TerminalColor.STRONG_YELLOW.value
-        SBLU = TerminalColor.STRONG_BLUE.value
-        SMAG = TerminalColor.STRONG_MAGENTA.value
-        SCYN = TerminalColor.STRONG_CYAN.value
-        SWHT = TerminalColor.STRONG_WHITE.value
+    # Strong foreground colors
+    SBLK = TerminalColor.STRONG_BLACK.value
+    SRED = TerminalColor.STRONG_RED.value
+    SGRN = TerminalColor.STRONG_GREEN.value
+    SYLW = TerminalColor.STRONG_YELLOW.value
+    SBLU = TerminalColor.STRONG_BLUE.value
+    SMAG = TerminalColor.STRONG_MAGENTA.value
+    SCYN = TerminalColor.STRONG_CYAN.value
+    SWHT = TerminalColor.STRONG_WHITE.value
 
-        # Strong background colors.
-        SBBLK = TerminalColor.STRONG_BG_BLACK.value
-        SBRED = TerminalColor.STRONG_BG_RED.value
-        SBGRN = TerminalColor.STRONG_BG_GREEN.value
-        SBYLW = TerminalColor.STRONG_BG_YELLOW.value
-        SBBLU = TerminalColor.STRONG_BG_BLUE.value
-        SBMAG = TerminalColor.STRONG_BG_MAGENTA.value
-        SBCYN = TerminalColor.STRONG_BG_CYAN.value
-        SBWHT = TerminalColor.STRONG_BG_WHITE.value
+    # Strong background colors.
+    SBBLK = TerminalColor.STRONG_BG_BLACK.value
+    SBRED = TerminalColor.STRONG_BG_RED.value
+    SBGRN = TerminalColor.STRONG_BG_GREEN.value
+    SBYLW = TerminalColor.STRONG_BG_YELLOW.value
+    SBBLU = TerminalColor.STRONG_BG_BLUE.value
+    SBMAG = TerminalColor.STRONG_BG_MAGENTA.value
+    SBCYN = TerminalColor.STRONG_BG_CYAN.value
+    SBWHT = TerminalColor.STRONG_BG_WHITE.value
 
-    else:
-        # Styles
-        RST = ''
-        BLD = ''
-        UND = ''
-        INV = ''
 
-        # Normal foreground colors
-        BLK = ''
-        RED = ''
-        GRN = ''
-        YLW = ''
-        BLU = ''
-        MAG = ''
-        CYN = ''
-        WHT = ''
+class Clr0(ClrBase):
+    """Convenience class for color terminal output.
 
-        # Normal background colors.
-        BBLK = ''
-        BRED = ''
-        BGRN = ''
-        BYLW = ''
-        BBLU = ''
-        BMAG = ''
-        BCYN = ''
-        BWHT = ''
+    This version has colors disabled. Generally you should use Clr which
+    points to the correct enabled/disabled class depending on the environment.
+    """
+    color_enabled = False
 
-        # Strong foreground colors
-        SBLK = ''
-        SRED = ''
-        SGRN = ''
-        SYLW = ''
-        SBLU = ''
-        SMAG = ''
-        SCYN = ''
-        SWHT = ''
+    # Styles
+    RST = ''
+    BLD = ''
+    UND = ''
+    INV = ''
 
-        # Strong background colors.
-        SBBLK = ''
-        SBRED = ''
-        SBGRN = ''
-        SBYLW = ''
-        SBBLU = ''
-        SBMAG = ''
-        SBCYN = ''
-        SBWHT = ''
+    # Normal foreground colors
+    BLK = ''
+    RED = ''
+    GRN = ''
+    YLW = ''
+    BLU = ''
+    MAG = ''
+    CYN = ''
+    WHT = ''
+
+    # Normal background colors.
+    BBLK = ''
+    BRED = ''
+    BGRN = ''
+    BYLW = ''
+    BBLU = ''
+    BMAG = ''
+    BCYN = ''
+    BWHT = ''
+
+    # Strong foreground colors
+    SBLK = ''
+    SRED = ''
+    SGRN = ''
+    SYLW = ''
+    SBLU = ''
+    SMAG = ''
+    SCYN = ''
+    SWHT = ''
+
+    # Strong background colors.
+    SBBLK = ''
+    SBRED = ''
+    SBGRN = ''
+    SBYLW = ''
+    SBBLU = ''
+    SBMAG = ''
+    SBCYN = ''
+    SBWHT = ''
+
+
+_envval = os.environ.get('EFRO_TERMCOLORS')
+_color_enabled: bool = (True if _envval == '1' else
+                        False if _envval == '0' else _default_color_enabled())
+Clr: Type[ClrBase]
+if _color_enabled:
+    Clr = Clr1
+else:
+    Clr = Clr0

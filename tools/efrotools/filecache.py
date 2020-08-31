@@ -26,8 +26,8 @@ import json
 import os
 from typing import TYPE_CHECKING
 
-from efro.terminal import Clr
 from efrotools import get_files_hash
+from efro.terminal import Clr
 
 if TYPE_CHECKING:
     from typing import Dict, Optional, Sequence, Any

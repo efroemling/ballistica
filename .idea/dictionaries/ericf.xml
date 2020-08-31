@@ -56,6 +56,7 @@
       <w>allsettings</w>
       <w>allteams</w>
       <w>aman</w>
+      <w>amazonaws</w>
       <w>aname</w>
       <w>anamorphosis</w>
       <w>andr</w>
@@ -597,6 +598,7 @@
       <w>enumtype</w>
       <w>enumval</w>
       <w>envhash</w>
+      <w>envname</w>
       <w>envval</w>
       <w>epath</w>
       <w>epicfail</w>
@@ -892,6 +894,7 @@
       <w>hatmotion</w>
       <w>hattach</w>
       <w>hcalc</w>
+      <w>hcfg</w>
       <w>hdpi</w>
       <w>headercheckline</w>
       <w>headerregistry</w>
@@ -918,11 +921,14 @@
       <w>homebook</w>
       <w>homebrew</w>
       <w>hometest</w>
+      <w>hostconfig</w>
+      <w>hostuser</w>
       <w>hout</w>
       <w>howtoplay</w>
       <w>hpos</w>
       <w>hscrollwidget</w>
       <w>hspacing</w>
+      <w>httprequest</w>
       <w>hurtiness</w>
       <w>hval</w>
       <w>iasset</w>
@@ -1096,6 +1102,7 @@
       <w>libxm</w>
       <w>libxmu</w>
       <w>libxz</w>
+      <w>linbeast</w>
       <w>lindex</w>
       <w>lindexorig</w>
       <w>linebits</w>
@@ -1130,6 +1137,7 @@
       <w>lnums</w>
       <w>loadpackage</w>
       <w>localconfig</w>
+      <w>localuser</w>
       <w>locationgroup</w>
       <w>locationgroups</w>
       <w>locationlist</w>
@@ -1512,6 +1520,7 @@
       <w>pragmas</w>
       <w>prch</w>
       <w>prec</w>
+      <w>precommand</w>
       <w>preexec</w>
       <w>preflightfast</w>
       <w>preflightfull</w>
@@ -1919,6 +1928,7 @@
       <w>subdeps</w>
       <w>subdirs</w>
       <w>subfolders</w>
+      <w>subname</w>
       <w>subpath</w>
       <w>subplatform</w>
       <w>subplatforms</w>
@@ -1946,7 +1956,9 @@
       <w>syncable</w>
       <w>syncall</w>
       <w>syncalllist</w>
+      <w>synccfg</w>
       <w>synccheck</w>
+      <w>syncconfig</w>
       <w>syncforce</w>
       <w>syncfull</w>
       <w>syncitem</w>
