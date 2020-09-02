@@ -1,7 +1,8 @@
-### 1.5.25 (20174)
+### 1.5.25 (20175)
 - Added Venetian language (thanks Federico!)
 - Fixed an issue where chosen-one flashes would remain if the player leaves the game
 - Added android input-device detection log messages for debugging
+- Android asset-sync phase (completing install...) now emits log output for debugging.
 
 ### 1.5.24 (20163)
 - Upgraded Python from version 3.7 to 3.8. This is a substantial change (though nothing like the previous update from 2.7 to 3.7) so please holler if anything is broken. These updates will happen once every year or two now..

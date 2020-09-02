@@ -372,7 +372,13 @@ def _filter_tool_config(cfg: str) -> str:
     cfg = cfg.replace('__EFRO_PROJECT_ROOT__', str(PROJROOT))
 
     # Short project name.
-    short_names = {'ballistica-internal': 'ba-int', 'ballistica': 'ba'}
+    short_names = {
+        'ballistica-internal': 'ba-int',
+        'ballistica': 'ba',
+        'ballistica-master-server-2.0': 'bamaster2',
+        'ballistica-master-server': 'bamaster',
+        'ballistica-server-node': 'baservnode',
+    }
     shortname = short_names.get(PROJROOT.name, PROJROOT.name)
     cfg = cfg.replace('__EFRO_PROJECT_SHORTNAME__', shortname)
 
