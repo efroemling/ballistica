@@ -160,6 +160,7 @@
       <w>baseh</w>
       <w>basemult</w>
       <w>basepos</w>
+      <w>baservnode</w>
       <w>basespaz</w>
       <w>basetime</w>
       <w>baseurl</w>
@@ -240,6 +241,7 @@
       <w>buildfile</w>
       <w>buildfilename</w>
       <w>buildnum</w>
+      <w>buildserver</w>
       <w>buildtype</w>
       <w>bullseye</w>
       <w>bumpmap</w>
@@ -329,6 +331,7 @@
       <w>clioncode</w>
       <w>clionroot</w>
       <w>cloudshell</w>
+      <w>cloudshellbuild</w>
       <w>cloudtool</w>
       <w>cloudtoolcmd</w>
       <w>clrblu</w>
@@ -397,6 +400,8 @@
       <w>cornerpin</w>
       <w>coroutines</w>
       <w>countdownsounds</w>
+      <w>cpbd</w>
+      <w>cpnf</w>
       <w>cpplint</w>
       <w>cpplintcode</w>
       <w>cpplintcodefull</w>
@@ -409,6 +414,8 @@
       <w>creationflags</w>
       <w>creditslist</w>
       <w>cryptmodule</w>
+      <w>cspbd</w>
+      <w>cspnf</w>
       <w>cssclass</w>
       <w>cstr</w>
       <w>csum</w>
@@ -1029,6 +1036,8 @@
       <w>jsonutils</w>
       <w>kbclass</w>
       <w>kbytecount</w>
+      <w>keepalive</w>
+      <w>keepalives</w>
       <w>keepaway</w>
       <w>keeprefs</w>
       <w>keylayout</w>
@@ -1137,6 +1146,7 @@
       <w>lnums</w>
       <w>loadpackage</w>
       <w>localconfig</w>
+      <w>localdir</w>
       <w>localuser</w>
       <w>locationgroup</w>
       <w>locationgroups</w>

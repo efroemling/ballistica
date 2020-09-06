@@ -430,19 +430,18 @@ def gen_fulltest_buildfile_linux() -> None:
     dayoffset = datetime.datetime.now().timetuple().tm_yday
 
     targets = ['build', 'server-build']
-    linflav = 'LINUX_FLAVOR=u18s'
     lines = []
     for target in targets:
-        lines.append(f'{linflav} make linux-{target}')
+        lines.append(f'make cmake-cloudshell-{target}')
 
     if DO_SPARSE_TEST_BUILDS:
         extras = SPARSE_TEST_BUILDS[dayoffset % len(SPARSE_TEST_BUILDS)]
         extras = [e for e in extras if e.startswith('linux.')]
         for extra in extras:
             if extra == 'linux.package':
-                lines.append(f'{linflav} make linux-package')
+                lines.append('make linux-package')
             elif extra == 'linux.package.server':
-                lines.append(f'{linflav} make linux-server-package')
+                lines.append('make linux-server-package')
             else:
                 raise RuntimeError(f'Unknown extra: {extra}')
 

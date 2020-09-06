@@ -1,4 +1,4 @@
-### 1.5.25 (20175)
+### 1.5.25 (20176)
 - Added Venetian language (thanks Federico!)
 - Fixed an issue where chosen-one flashes would remain if the player leaves the game
 - Added android input-device detection log messages for debugging
