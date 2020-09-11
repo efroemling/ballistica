@@ -1,3 +1,6 @@
+### 1.5.26 (20178)
+- Simplified licensing header on python scripts.
+
 ### 1.5.25 (20176)
 - Added Venetian language (thanks Federico!)
 - Fixed an issue where chosen-one flashes would remain if the player leaves the game

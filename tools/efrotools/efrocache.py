@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """A simple cloud caching system for making built binaries/assets available.
 
 The basic idea here is the ballistica-internal project can flag file targets
@@ -289,7 +271,7 @@ def _upload_cache(fnames1: List[str], fnames2: List[str], hashes_str: str,
 
     # Sync all individual cache files to the staging server.
     print(f'{Clr.SBLU}Pushing cache to staging...{Clr.RST}', flush=True)
-    run('rsync --progress --recursive build/efrocache/'
+    run('rsync --progress --recursive --human-readable build/efrocache/'
         ' ubuntu@ballistica.net:files.ballistica.net/cache/ba1/')
 
     # Now generate the starter cache on the server..

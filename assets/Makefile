@@ -159,6 +159,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/ba/_app.py \
   build/ba_data/python/ba/_appconfig.py \
   build/ba_data/python/ba/_appdelegate.py \
+  build/ba_data/python/ba/_appmode.py \
   build/ba_data/python/ba/_apputils.py \
   build/ba_data/python/ba/_assetmanager.py \
   build/ba_data/python/ba/_benchmark.py \
@@ -396,6 +397,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/ba/__pycache__/_app.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_appconfig.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_appdelegate.cpython-38.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_appmode.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_apputils.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_assetmanager.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_benchmark.cpython-38.opt-1.pyc \

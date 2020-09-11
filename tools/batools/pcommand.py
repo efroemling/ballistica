@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Standard snippets that can be pulled into project pcommand scripts.
 
 A snippet is a mini-program that directly takes input from stdin and does
@@ -279,23 +261,31 @@ def lazy_increment_build() -> None:
 def get_master_asset_src_dir() -> None:
     """Print master-asset-source dir for this repo."""
     import subprocess
+    import os
 
-    # Ok, for now lets simply use our hard-coded master-src
-    # path if we're on master in and not otherwise.  Should
-    # probably make this configurable.
-    output = subprocess.check_output(
-        ['git', 'status', '--branch', '--porcelain']).decode()
+    master_assets_dir = '/Users/ericf/Dropbox/ballisticacore_master_assets'
+    dummy_dir = '/__DUMMY_MASTER_SRC_DISABLED_PATH__'
 
-    # Also compare repo name to split version of itself to
-    # see if we're outside of core (filtering will cause mismatch if so).
-    if ('origin/master' in output.splitlines()[0]
-            and 'ballistica' + 'core' == 'ballisticacore'):
+    # Only apply this on my setup
+    if os.path.exists(master_assets_dir):
 
-        # We seem to be in master in core repo; lets do it.
-        print('/Users/ericf/Dropbox/ballisticacore_master_assets')
-    else:
-        # Still need to supply dummy path for makefile if not..
-        print('/__DUMMY_MASTER_SRC_DISABLED_PATH__')
+        # Ok, for now lets simply use our hard-coded master-src
+        # path if we're on master in and not otherwise.  Should
+        # probably make this configurable.
+        output = subprocess.check_output(
+            ['git', 'status', '--branch', '--porcelain']).decode()
+
+        # Also compare repo name to split version of itself to
+        # see if we're outside of core (filtering will cause mismatch if so).
+        if ('origin/master' in output.splitlines()[0]
+                and 'ballistica' + 'core' == 'ballisticacore'):
+
+            # We seem to be in master in core repo; lets do it.
+            print(master_assets_dir)
+            return
+
+    # Still need to supply dummy path for makefile if not..
+    print(dummy_dir)
 
 
 def androidaddr() -> None:
@@ -673,8 +663,10 @@ def _camel_case_split(string: str) -> List[str]:
 def efro_gradle() -> None:
     """Calls ./gradlew with some extra magic."""
     import subprocess
+    from efro.terminal import Clr
     from efrotools.android import filter_gradle_file
     args = ['./gradlew'] + sys.argv[2:]
+    print(f'{Clr.BLU}Running gradle with args:{Clr.RST} {args}.', flush=True)
     enabled_tags: Set[str] = set()
     target_words = [w.lower() for w in _camel_case_split(args[-1])]
     if 'google' in target_words:
