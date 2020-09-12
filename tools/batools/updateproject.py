@@ -67,7 +67,7 @@ class Updater:
         self._file_changes: Dict[str, str] = {}
 
         self._license_line_checks = bool(
-            getlocalconfig(Path('.')).get('license_line_checks', False))
+            getlocalconfig(Path('.')).get('license_line_checks', True))
 
     def run(self) -> None:
         """Do the thing."""
@@ -351,12 +351,15 @@ class Updater:
         for fname in fnames:
             with open(fname) as infile:
                 makefile = infile.read()
-            if get_legal_notice_private() not in makefile:
-                raise RuntimeError(f'Priv legal not found in {fname}')
             if self._public:
                 public_license = get_public_license('makefile')
                 if public_license not in makefile:
-                    raise RuntimeError(f'Pub license not found in {fname}')
+                    raise CleanError(f'Pub license not found in {fname}.')
+            else:
+                if (get_legal_notice_private() not in makefile
+                        and get_public_license('makefile') not in makefile):
+                    raise CleanError(
+                        f'Priv or pub legal not found in {fname}.')
 
     def _check_python_file(self, fname: str) -> None:
         from efrotools import get_public_license, PYVER
@@ -391,60 +394,37 @@ class Updater:
         if self._license_line_checks:
             public_license = get_public_license('python')
             private_license = '# ' + get_legal_notice_private()
-
-            # (Sanity check: public license's first line should be
-            # same as priv)
-            # if line != public_license.splitlines()[0]:
-            #     raise RuntimeError(
-            #         'Public license first line should match priv.')
-
             lnum = copyrightline
             if len(lines) < lnum + 1:
                 raise RuntimeError('Not enough lines in file:', fname)
 
-            # if lines[lnum] != private_license:
-            #     # Allow auto-correcting if it looks close already
-            #     # (don't want to blow away an unrelated line)
-            #     # allow_auto = 'Copyright' in lines[
-            #     #     lnum] and 'Eric Froemling' in lines[lnum]
-            #     allow_auto = False
-            #     self._add_line_correction(fname,
-            #                               line_number=lnum,
-            #                               expected=private_license,
-            #                               can_auto_update=allow_auto)
-            #     found_intact_private = False
-            # else:
-            #     found_intact_private = True
+            disable_note = ('NOTE: You can disable license line'
+                            ' checks by adding "license_line_checks": false\n'
+                            'to the root dict in config/localconfig.json.\n'
+                            'see https://ballistica.net/wiki'
+                            '/Knowledge-Nuggets#'
+                            'hello-world-creating-a-new-game-type')
 
             if self._public:
                 # Check for public license only.
                 if lines[lnum] != public_license:
-                    raise RuntimeError(
-                        f'Found incorrect license text in {fname};'
-                        f' please correct.')
+                    raise CleanError(f'License text not found'
+                                     f" at '{fname}' line {lnum+1};"
+                                     f' please correct.\n'
+                                     f'Expected text is: {public_license}\n'
+                                     f'{disable_note}')
             else:
+                # Check for public or private license.
                 if (lines[lnum] != public_license
                         and lines[lnum] != private_license):
-                    raise RuntimeError(
-                        f'Found incorrect license text in {fname};'
-                        f' please correct.')
-
-                # # Try to be reasonably certain it's not in here...
-                # definitely_have_full = public_license in contents
-                # might_have_full = ('Permission is hereby granted' in contents
-                #                    or 'THE SOFTWARE IS PROVIDED' in contents)
-
-                # # Only muck with it if we're not sure we've got it.
-                # if not definitely_have_full:
-                #     if found_intact_private and not might_have_full:
-                #         self._add_line_correction(fname,
-                #                                   line_number=lnum,
-                #                                   expected=public_license,
-                #                                   can_auto_update=True)
-                #     else:
-                #         raise RuntimeError(
-                #             f'Found incorrect license text in {fname};'
-                #             f' please correct.')
+                    raise CleanError(f'License text not found'
+                                     f" at '{fname}' line {lnum+1};"
+                                     f' please correct.\n'
+                                     f'Expected text (for public files):'
+                                     f' {public_license}\n'
+                                     f'Expected text (for private files):'
+                                     f' {private_license}\n'
+                                     f'{disable_note}')
 
     def _check_python_files(self) -> None:
         from pathlib import Path

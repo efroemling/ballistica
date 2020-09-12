@@ -84,27 +84,22 @@ def set_config(projroot: Path, config: Dict[str, Any]) -> None:
 
 
 def get_public_license(style: str) -> str:
-    """Return the MIT license as used for our public facing stuff.
+    """Return the license notice as used for our public facing stuff.
 
     'style' arg can be 'python', 'c++', or 'makefile, or 'raw'.
     """
-    raw = MIT_LICENSE
     if style == 'raw':
-        return raw
+        return 'Released under the MIT License. See LICENSE for details.'
     if style == 'python':
         # Add a line at the bottom since our python-formatters tend to smush
         # our code up against the license; this keeps things a bit more
         # visually separated.
         return '# Released under the MIT License. See LICENSE for details.'
-        #return ('\n'.join('#' + (' ' if l else '') + l
-        # for l in raw.splitlines()) + '\n' + '# ' + '-' * 77)
     if style == 'makefile':
         # Basically same as python except without the last line.
-        return ('\n'.join('#' + (' ' if l else '') + l
-                          for l in raw.splitlines()))
+        return '# Released under the MIT License. See LICENSE for details.'
     if style == 'c++':
-        return '\n'.join('//' + (' ' if l else '') + l
-                         for l in raw.splitlines())
+        return '// Released under the MIT License. See LICENSE for details.'
     raise RuntimeError(f'Invalid style: {style}')
 
 
