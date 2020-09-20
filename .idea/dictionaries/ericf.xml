@@ -29,8 +29,8 @@
       <w>achname</w>
       <w>achs</w>
       <w>acinstance</w>
-      <w>ack</w>
       <w>ack'ed</w>
+      <w>ack</w>
       <w>acked</w>
       <w>acks</w>
       <w>acnt</w>
@@ -82,6 +82,7 @@
       <w>appkit</w>
       <w>applescript</w>
       <w>appletv</w>
+      <w>appmode</w>
       <w>appname</w>
       <w>appnameupper</w>
       <w>appstate</w>
@@ -150,8 +151,8 @@
       <w>bacommon</w>
       <w>badguy</w>
       <w>bafoundation</w>
-      <w>ballistica</w>
       <w>ballistica's</w>
+      <w>ballistica</w>
       <w>ballisticacore</w>
       <w>ballisticacorecb</w>
       <w>bamaster</w>
@@ -330,6 +331,7 @@
       <w>clionbin</w>
       <w>clioncode</w>
       <w>clionroot</w>
+      <w>cloudbuild</w>
       <w>cloudshell</w>
       <w>cloudshellbuild</w>
       <w>cloudtool</w>
@@ -791,8 +793,8 @@
       <w>gamedata</w>
       <w>gameinstance</w>
       <w>gamemap</w>
-      <w>gamepad</w>
       <w>gamepad's</w>
+      <w>gamepad</w>
       <w>gamepadadvanced</w>
       <w>gamepads</w>
       <w>gamepadselect</w>
@@ -949,6 +951,8 @@
       <w>idevices</w>
       <w>ifeq</w>
       <w>ifneq</w>
+      <w>iiarcade</w>
+      <w>iircade</w>
       <w>ilang</w>
       <w>ilck</w>
       <w>ilogput</w>
@@ -958,6 +962,7 @@
       <w>imagestacklayer</w>
       <w>imagewidget</w>
       <w>imaplib</w>
+      <w>imgdelay</w>
       <w>imgh</w>
       <w>imghdr</w>
       <w>imgw</w>
@@ -1172,8 +1177,8 @@
       <w>lsqlite</w>
       <w>lssl</w>
       <w>lstart</w>
-      <w>lstr</w>
       <w>lstr's</w>
+      <w>lstr</w>
       <w>lstrs</w>
       <w>lsval</w>
       <w>ltex</w>
@@ -1795,8 +1800,8 @@
       <w>sessionname</w>
       <w>sessionplayer</w>
       <w>sessionplayers</w>
-      <w>sessionteam</w>
       <w>sessionteam's</w>
+      <w>sessionteam</w>
       <w>sessionteams</w>
       <w>sessiontype</w>
       <w>setactivity</w>
@@ -2126,8 +2131,8 @@
       <w>txtw</w>
       <w>typeargs</w>
       <w>typecheck</w>
-      <w>typechecker</w>
       <w>typechecker's</w>
+      <w>typechecker</w>
       <w>typedval</w>
       <w>typeshed</w>
       <w>typestr</w>
@@ -2249,6 +2254,7 @@
       <w>wiimote</w>
       <w>wiimotes</w>
       <w>willeval</w>
+      <w>winbeast</w>
       <w>wincfg</w>
       <w>wincount</w>
       <w>winempty</w>
@@ -2271,6 +2277,7 @@
       <w>wref</w>
       <w>writeclasses</w>
       <w>writefuncs</w>
+      <w>wslpath</w>
       <w>wtcolor</w>
       <w>wtflib</w>
       <w>wttxt</w>

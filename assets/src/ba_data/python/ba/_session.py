@@ -28,7 +28,7 @@ class Session:
     ba.Activity instances such as mini-games and score-screens, and for
     maintaining state between them (players, teams, score tallies, etc).
 
-    Attrs:
+    Attributes:
 
         sessionteams
             All the ba.SessionTeams in the Session. Most things should use the

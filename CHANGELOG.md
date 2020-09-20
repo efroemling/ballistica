@@ -1,5 +1,5 @@
 ### 1.5.26 (20178)
-- Simplified licensing header on python scripts.
+- Simplified licensing header on python scripts..
 
 ### 1.5.25 (20176)
 - Added Venetian language (thanks Federico!)

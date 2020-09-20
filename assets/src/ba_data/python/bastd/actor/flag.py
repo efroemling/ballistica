@@ -125,7 +125,7 @@ class FlagPickedUpMessage:
 
         category: Message Classes
 
-        Attrs:
+        Attributes:
 
            flag
               The ba.Flag that has been picked up.
@@ -143,7 +143,7 @@ class FlagDiedMessage:
 
     category: Message Classes
 
-    Attrs:
+    Attributes:
 
        flag
           The ba.Flag that died.
@@ -157,7 +157,7 @@ class FlagDroppedMessage:
 
     category: Message Classes
 
-    Attrs:
+    Attributes:
 
        flag
           The ba.Flag that was dropped.

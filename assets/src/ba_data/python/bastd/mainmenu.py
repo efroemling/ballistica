@@ -130,6 +130,24 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
                 assert self.version.node
                 ba.animate(self.version.node, 'opacity', {2.3: 0, 3.0: 1.0})
 
+        # Show the iircade logo on our iircade build.
+        if app.iircade_mode:
+            img = ba.NodeActor(
+                ba.newnode('image',
+                           attrs={
+                               'texture': ba.gettexture('iircadeLogo'),
+                               'attach': 'center',
+                               'scale': (250, 250),
+                               'position': (0, 0),
+                               'tilt_translate': 0.21,
+                               'absolute_scale': True
+                           })).autoretain()
+            imgdelay = 0.0 if app.main_menu_did_initial_transition else 1.0
+            ba.animate(img.node, 'opacity', {
+                imgdelay + 1.5: 0.0,
+                imgdelay + 2.5: 1.0
+            })
+
         # Throw in test build info.
         self.beta_info = self.beta_info_2 = None
         if app.test_build and not (app.demo_mode or app.arcade_mode):

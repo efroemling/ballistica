@@ -48,7 +48,7 @@ class StateData:
 class Response:
     """Response sent from the bacloud server to the client.
 
-    Attrs:
+    Attributes:
       message: If present, client should print this message before any other
         response processing (including error handling) occurs.
       message_end: end arg for message print() call.

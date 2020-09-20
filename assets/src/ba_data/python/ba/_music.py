@@ -116,8 +116,8 @@ ASSET_SOUNDTRACK_ENTRIES: Dict[MusicType, AssetSoundtrackEntry] = {
 }
 
 
-class MusicController:
-    """Controller for overall music playback in the app.
+class MusicSubsystem:
+    """Subsystem for music playback in the app.
 
     Category: App Classes
     """

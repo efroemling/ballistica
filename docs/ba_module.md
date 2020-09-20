@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-09-11 for Ballistica version 1.5.25 build 20179</em></h4>
+<h4><em>last updated on 2020-09-17 for Ballistica version 1.5.26 build 20188</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -816,11 +816,11 @@ likely result in errors.</p>
 <p><span>int</span></p>
 <p>The game's api version.</p>
 
-<p>        Only python modules and packages associated with the current api
-        version will be detected by the game (see the ba_meta tag). This
-        value will change whenever backward-incompatible changes are
-        introduced to game apis; when that happens, scripts should be updated
-        accordingly and set to target the new api.</p>
+<p>        Only Python modules and packages associated with the current API
+        version number will be detected by the game (see the ba_meta tag).
+        This value will change whenever backward-incompatible changes are
+        introduced to game APIs. When that happens, scripts should be updated
+        accordingly and set to target the new API version number.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_App__build_number">build_number</a></h4></dt><dd>
@@ -869,7 +869,7 @@ likely result in errors.</p>
 </dd>
 <dt><h4><a name="attr_ba_App__on_tv">on_tv</a></h4></dt><dd>
 <p><span>bool</span></p>
-<p>Bool value for if the game is running on a TV.</p>
+<p>Whether the game is currently running on a TV.</p>
 
 </dd>
 <dt><h4><a name="attr_ba_App__platform">platform</a></h4></dt><dd>
@@ -933,7 +933,7 @@ likely result in errors.</p>
 </dd>
 <dt><h4><a name="attr_ba_App__vr_mode">vr_mode</a></h4></dt><dd>
 <p><span>bool</span></p>
-<p>Bool value for if the game is running in VR.</p>
+<p>Whether the game is currently running in VR.</p>
 
 </dd>
 </dl>

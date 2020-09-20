@@ -381,7 +381,7 @@ def get_unowned_game_types() -> Set[Type[ba.GameActivity]]:
     try:
         from ba import _store
         unowned_games: Set[Type[ba.GameActivity]] = set()
-        if not _ba.app.headless_build:
+        if not _ba.app.headless_mode:
             for section in _store.get_store_layout()['minigames']:
                 for mname in section['items']:
                     if not _ba.get_purchased(mname):

@@ -5361,6 +5361,7 @@ TEX2D_DDS_TARGETS = \
   build/ba_data/textures/hockeyStadiumPreview.dds \
   build/ba_data/textures/iconOnslaught.dds \
   build/ba_data/textures/iconRunaround.dds \
+  build/ba_data/textures/iircadeLogo.dds \
   build/ba_data/textures/impactBombColor.dds \
   build/ba_data/textures/impactBombColorLit.dds \
   build/ba_data/textures/inventoryIcon.dds \
@@ -5763,6 +5764,7 @@ TEX2D_PVR_TARGETS = \
   build/ba_data/textures/hockeyStadiumPreview.pvr \
   build/ba_data/textures/iconOnslaught.pvr \
   build/ba_data/textures/iconRunaround.pvr \
+  build/ba_data/textures/iircadeLogo.pvr \
   build/ba_data/textures/impactBombColor.pvr \
   build/ba_data/textures/impactBombColorLit.pvr \
   build/ba_data/textures/inventoryIcon.pvr \
@@ -6165,6 +6167,7 @@ TEX2D_KTX_TARGETS = \
   build/ba_data/textures/hockeyStadiumPreview.ktx \
   build/ba_data/textures/iconOnslaught.ktx \
   build/ba_data/textures/iconRunaround.ktx \
+  build/ba_data/textures/iircadeLogo.ktx \
   build/ba_data/textures/impactBombColor.ktx \
   build/ba_data/textures/impactBombColorLit.ktx \
   build/ba_data/textures/inventoryIcon.ktx \
@@ -6567,6 +6570,7 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   build/ba_data/textures/hockeyStadium_preview.png \
   build/ba_data/textures/iconOnslaught_preview.png \
   build/ba_data/textures/iconRunaround_preview.png \
+  build/ba_data/textures/iircadeLogo_preview.png \
   build/ba_data/textures/impactBombColorLit_preview.png \
   build/ba_data/textures/impactBombColor_preview.png \
   build/ba_data/textures/inventoryIcon_preview.png \
@@ -6990,13 +6994,13 @@ build/ba_data/data/languages/%.json : ../.efrocachemap
 build/ba_data/data/maps/%.json : ../.efrocachemap
 	@cd .. && tools/pcommand efrocache_get assets/$@
 
-src/%.tex2d.png : ../.efrocachemap
+src/ba_data/%.tex2d.png : ../.efrocachemap
 	@cd .. && tools/pcommand efrocache_get assets/$@
 
-src/%_+x.tex2d.png : ../.efrocachemap
+src/ba_data/%_+x.tex2d.png : ../.efrocachemap
 	@cd .. && tools/pcommand efrocache_get assets/$@
 
-build/%_preview.png : ../.efrocachemap
+build/ba_data/%_preview.png : ../.efrocachemap
 	@cd .. && tools/pcommand efrocache_get assets/$@
 
 build/%.dds : ../.efrocachemap

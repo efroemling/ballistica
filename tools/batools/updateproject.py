@@ -179,7 +179,6 @@ class Updater:
                 f'All {unchanged_project_count} project files are up to date.')
 
     def _apply_line_changes(self) -> None:
-        # pylint: disable=too-many-branches
 
         # Build a flat list of entries that can and can-not be auto applied.
         manual_changes: List[Tuple[str, LineChange]] = []
@@ -201,14 +200,6 @@ class Updater:
                     f'{Clr.RED}{change[0]}:{change[1].line_number + 1}:'
                     f' Expected line to be:\n  {change[1].expected}{Clr.RST}')
 
-                # Make a note on copyright lines that this can be disabled.
-                if 'Copyright' in change[1].expected:
-                    print(f'{Clr.RED}NOTE: You can disable copyright'
-                          f' checks by adding "license_line_checks": false\n'
-                          f'to the root dict in config/localconfig.json.\n'
-                          f'see https://ballistica.net/wiki'
-                          f'/Knowledge-Nuggets#'
-                          f'hello-world-creating-a-new-game-type{Clr.RST}')
             sys.exit(-1)
 
         # Now, if we've got auto entries, either list or auto-correct them.
@@ -262,7 +253,7 @@ class Updater:
         with open(fname) as infile:
             lines = infile.read().splitlines()
 
-        # Look for copyright/legal-notice line(s)
+        # Look for license line(s)
         if self._license_line_checks:
             legal_notice = '// ' + get_legal_notice_private()
             lnum = 0
@@ -301,7 +292,7 @@ class Updater:
         if self._public:
             raise RuntimeError('FIXME: Check for full license.')
 
-        # Look for copyright/legal-notice line(s)
+        # Look for copyright/legal-notice line(s).
         line = '// ' + get_legal_notice_private()
         lnum = 0
         if lines[lnum] != line:

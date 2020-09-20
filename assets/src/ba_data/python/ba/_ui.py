@@ -1,6 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""User interface functionality."""
+"""User interface related functionality."""
 
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ class UI:
 
         self._uiscale: ba.UIScale
 
-        interfacetype = env['interface_type']
+        interfacetype = env['ui_scale']
         if interfacetype == 'large':
             self._uiscale = UIScale.LARGE
         elif interfacetype == 'medium':
@@ -36,7 +36,7 @@ class UI:
         elif interfacetype == 'small':
             self._uiscale = UIScale.SMALL
         else:
-            raise RuntimeError('Invalid UIScale value: {interfacetype}')
+            raise RuntimeError(f'Invalid UIScale value: {interfacetype}')
 
         self.window_states: Dict = {}  # FIXME: Kill this.
         self.main_menu_selection: Optional[str] = None  # FIXME: Kill this.

@@ -24,7 +24,7 @@ class PlayerScoredMessage:
 
     Category: Message Classes
 
-    Attrs:
+    Attributes:
 
         score
             The score value.

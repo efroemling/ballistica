@@ -33,11 +33,11 @@ PIP_REQUIREMENTS = [
     PipRequirement(modulename='mypy', minversion=[0, 782]),
     PipRequirement(modulename='yapf', minversion=[0, 30, 0]),
     PipRequirement(modulename='cpplint', minversion=[1, 5, 4]),
+    PipRequirement(modulename='pytest', minversion=[6, 0, 2]),
     PipRequirement(modulename='typing_extensions'),
     PipRequirement(modulename='pytz'),
     PipRequirement(modulename='yaml', pipname='PyYAML'),
     PipRequirement(modulename='requests'),
-    PipRequirement(modulename='pytest'),
 ]
 
 # Parts of full-tests suite we only run on particular days.
@@ -225,7 +225,7 @@ def archive_old_builds(ssh_server: str, builds_dir: str,
         for old_file in [f for f in files if f.startswith(prefix)][1:]:
             files_to_archive.add(old_file)
 
-    # Would be faster to package this into a single command but
+    # Would be more efficient to package this into a single command but
     # this works.
     for fname in sorted(files_to_archive):
         print('Archiving ' + fname, file=sys.stderr)
@@ -252,12 +252,27 @@ def gen_fulltest_buildfile_android() -> None:
     modes += modes
     modes.append('prod')
 
+    # By default we cycle through build architectures for each flavor.
+    # However, for minor flavor with low risk of platform-dependent breakage
+    # we stick to a single one to keep disk space costs lower. (build files
+    # amount to several gigs per mode per flavor)
+    # UPDATE: Now that we have CPU time to spare, we simply always do 'arm64'
+    # or 'prod' depending on build type; this results in 1 or 4 architectures
+    # worth of build files per flavor instead of 8 (prod + 4 singles) and
+    # keeps our daily runs identical.
+    lightweight_flavors = {'template', 'arcade', 'demo', 'iircade'}
+
     lines = []
-    for i, flavor in enumerate(
+    for _i, flavor in enumerate(
             sorted(os.listdir('ballisticacore-android/BallisticaCore/src'))):
         if flavor == 'main' or flavor.startswith('.'):
             continue
-        mode = modes[(dayoffset + i) % len(modes)]
+
+        if flavor in lightweight_flavors:
+            mode = 'arm64'
+        else:
+            # mode = modes[(dayoffset + i) % len(modes)]
+            mode = 'prod'
         lines.append('ANDROID_PLATFORM=' + flavor + ' ANDROID_MODE=' + mode +
                      ' make android-cloud-build')
 
@@ -314,11 +329,11 @@ def gen_fulltest_buildfile_windows() -> None:
     cfg3 = 'Release' if (dayoffset + 2) % 7 == 0 else 'Debug'
 
     lines.append(f'WINDOWS_PROJECT= WINDOWS_PLATFORM={pval1} '
-                 f'WINDOWS_CONFIGURATION={cfg1} make windows-build')
+                 f'WINDOWS_CONFIGURATION={cfg1} make windows-cloud-build')
     lines.append(f'WINDOWS_PROJECT=Headless WINDOWS_PLATFORM={pval2} '
-                 f'WINDOWS_CONFIGURATION={cfg2} make windows-build')
+                 f'WINDOWS_CONFIGURATION={cfg2} make windows-cloud-build')
     lines.append(f'WINDOWS_PROJECT=Oculus WINDOWS_PLATFORM={pval3} '
-                 f'WINDOWS_CONFIGURATION={cfg3} make windows-build')
+                 f'WINDOWS_CONFIGURATION={cfg3} make windows-cloud-build')
 
     # Now add sparse tests that land on today.
     if DO_SPARSE_TEST_BUILDS:
@@ -391,7 +406,7 @@ def gen_fulltest_buildfile_apple() -> None:
             if extra == 'mac.package':
                 lines.append('make mac-package')
             elif extra == 'mac.package.server':
-                lines.append('make mac-server-package')
+                lines.append('make mac-cloud-server-package')
             elif extra == 'mac.pylibs':
                 lines.append('tools/pcommand python_build_apple mac')
             elif extra == 'mac.pylibs.debug':
@@ -510,7 +525,9 @@ def checkenv() -> None:
                              f'Alternately, "tools/pcommand install_pip_reqs"'
                              f' will update all pip requirements.')
         if minver is not None:
-            verlines = results.stdout.decode().splitlines()
+            # Note: some modules such as pytest print their version to stderr,
+            # so grab both.
+            verlines = (results.stdout + results.stderr).decode().splitlines()
             if verlines[0].startswith('Cpplint fork'):
                 verlines = verlines[1:]
             ver_line = verlines[0]
@@ -664,6 +681,7 @@ def update_docs_md(check: bool) -> None:
             for fname in files:
                 if any(fname.endswith(ext) for ext in exts):
                     pysources.append(os.path.join(root, fname))
+    pysources.sort()
     curhash = get_files_hash(pysources)
 
     # Extract the current embedded hash.

@@ -29,7 +29,7 @@ class ScoreConfig:
 
     Category: Gameplay Classes
 
-    Attrs:
+    Attributes:
 
        label
           A label show to the user for scores; 'Score', 'Time Survived', etc.

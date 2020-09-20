@@ -25,7 +25,7 @@ class CoopSession(Session):
     the computer and include functionality such as
     high score lists.
 
-    Attrs:
+    Attributes:
 
         campaign
             The ba.Campaign instance this Session represents, or None if

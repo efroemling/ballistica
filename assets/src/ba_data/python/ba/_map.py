@@ -108,7 +108,7 @@ def get_unowned_maps() -> List[str]:
     """
     from ba import _store
     unowned_maps: Set[str] = set()
-    if not _ba.app.headless_build:
+    if not _ba.app.headless_mode:
         for map_section in _store.get_store_layout()['maps']:
             for mapitem in map_section['items']:
                 if not _ba.get_purchased(mapitem):
