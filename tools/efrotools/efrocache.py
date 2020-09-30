@@ -25,8 +25,6 @@ if TYPE_CHECKING:
 BASE_URL = 'https://files.ballistica.net/cache/ba1/'
 
 TARGET_TAG = '#__EFROCACHE_TARGET__'
-STRIP_BEGIN_TAG = '#__EFROCACHE_STRIP_BEGIN__'
-STRIP_END_TAG = '#__EFROCACHE_STRIP_END__'
 
 CACHE_DIR_NAME = '.efrocache'
 CACHE_MAP_NAME = '.efrocachemap'
@@ -141,19 +139,6 @@ def filter_makefile(makefile_dir: str, contents: str) -> str:
     cachemap = os.path.join(to_proj_root, CACHE_MAP_NAME)
     lines = contents.splitlines()
     pcommand = 'tools/pcommand'
-
-    # Strip out parts they don't want.
-    while STRIP_BEGIN_TAG in lines:
-        index = lines.index(STRIP_BEGIN_TAG)
-        endindex = index
-        while lines[endindex] != STRIP_END_TAG:
-            endindex += 1
-
-        # If the line after us is blank, include it too to keep spacing clean.
-        if not lines[endindex + 1].strip():
-            endindex += 1
-
-        del lines[index:endindex + 1]
 
     # Replace cachable targets with cache lookups
     while TARGET_TAG in lines:
