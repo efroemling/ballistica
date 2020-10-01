@@ -25,7 +25,7 @@ help:
 
 PREREQS = .cache/checkenv .dir-locals.el \
   .mypy.ini .pycheckers .pylintrc .style.yapf .clang-format \
-  .projectile .editorconfig
+  ballisticacore-cmake/.clang-format .projectile .editorconfig
 
 # Target that should be built before running most any other build.
 # This installs tool config files, runs environment checks, etc.
@@ -637,6 +637,57 @@ preflight2-full:
 
 ################################################################################
 #                                                                              #
+#                                    CMake                                     #
+#                                                                              #
+################################################################################
+
+# Set the following from the command line to influence the build:
+
+# This can be Debug or Release
+CMAKE_BUILD_TYPE ?= Debug
+
+# Host to use when building via cloudshell
+CMAKE_CLOUDSHELL_HOST ?= linbeast
+
+# Base names for assembled packages
+CMAKE_CLOUDSHELL_PACKAGE_NAME ?= BallisticaCore
+CMAKE_CLOUDSHELL_SERVER_PACKAGE_NAME ?= BallisticaCore_Server
+
+# Build and run the cmake build.
+cmake: cmake-build
+	@cd ballisticacore-cmake/build/$(CM_BT_LC) && ./ballisticacore
+
+# Build but don't run it.
+cmake-build: assets-cmake resources code
+	@tools/pcommand cmake_prep_dir ballisticacore-cmake/build/$(CM_BT_LC)
+	@${STAGE_ASSETS} -cmake ballisticacore-cmake/build/$(CM_BT_LC)
+	@cd ballisticacore-cmake/build/$(CM_BT_LC) && test -f Makefile \
+      || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) ../..
+	@cd ballisticacore-cmake/build/$(CM_BT_LC) && ${MAKE} -j${CPUS}
+
+cmake-clean:
+	rm -rf ballisticacore-cmake/build/$(CM_BT_LC)
+
+cmake-server: cmake-server-build
+	@cd ballisticacore-cmake/build/server-$(CM_BT_LC) && ./ballisticacore
+
+cmake-server-build: assets-cmake resources code
+	@tools/pcommand cmake_prep_dir ballisticacore-cmake/build/server-$(CM_BT_LC)
+	@${STAGE_ASSETS} -cmakeserver ballisticacore-cmake/build/server-$(CM_BT_LC)
+	@cd ballisticacore-cmake/build/server-$(CM_BT_LC) && test -f Makefile \
+      || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) -DHEADLESS=true ../..
+	@cd ballisticacore-cmake/build/server-$(CM_BT_LC) && ${MAKE} -j${CPUS}
+
+cmake-server-clean:
+	rm -rf ballisticacore-cmake/build/server-$(CM_BT_LC)
+
+# Tell make which of these targets don't represent files.
+.PHONY: cmake cmake-build cmake-clean cmake-server cmake-server-build \
+      cmake-server-clean
+
+
+################################################################################
+#                                                                              #
 #                                  Auxiliary                                   #
 #                                                                              #
 ################################################################################
@@ -699,3 +750,14 @@ ENV_SRC = tools/pcommand tools/batools/build.py
 
 # Tell make which of these targets don't represent files.
 .PHONY:
+
+
+################################################################################
+#                                                                              #
+#                                  Auxiliary                                   #
+#                                                                              #
+################################################################################
+
+# When using CLion, our cmake dir is root. Expose .clang-format there too.
+ballisticacore-cmake/.clang-format: .clang-format
+	@cd ballisticacore-cmake && ln -sf ../.clang-format .

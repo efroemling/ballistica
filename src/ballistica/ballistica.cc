@@ -29,7 +29,7 @@
 namespace ballistica {
 
 // These are set automatically via script; don't change here.
-const int kAppBuildNumber = 20192;
+const int kAppBuildNumber = 20193;
 const char* kAppVersion = "1.5.26";
 const char* kBlessingHash = nullptr;
 
