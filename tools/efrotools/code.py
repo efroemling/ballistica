@@ -64,7 +64,7 @@ def formatcode(projroot: Path, full: bool) -> None:
 
 def cpplint(projroot: Path, full: bool) -> None:
     """Run lint-checking on all code deemed lint-able."""
-    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-locals, too-many-statements
     import tempfile
     from concurrent.futures import ThreadPoolExecutor
     from multiprocessing import cpu_count
@@ -123,6 +123,13 @@ def cpplint(projroot: Path, full: bool) -> None:
         "  if include and include.group(1) in ('cfenv',")
     codelines[headercheckline] = (
         "  if False and include and include.group(1) in ('cfenv',")
+
+    # Skip copyright line check (our public repo code is MIT licensed
+    # so not crucial to keep track of who wrote exactly what)
+    copyrightline = codelines.index(
+        '  """Logs an error if no Copyright'
+        ' message appears at the top of the file."""')
+    codelines[copyrightline] = '  return'
 
     # Don't complain about unknown NOLINT categories.
     # (we use them for clang-tidy)

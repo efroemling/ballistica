@@ -33,9 +33,7 @@ if TYPE_CHECKING:
 
 def get_legal_notice_private() -> str:
     """Return the one line legal notice we expect private files to have."""
-    # We just use the first line of the mit license (just the copyright)
-    from efrotools import MIT_LICENSE
-    return MIT_LICENSE.splitlines()[0]
+    return 'Copyright (c) 2011-2020 Eric Froemling'
 
 
 @dataclass
@@ -287,27 +285,33 @@ class Updater:
                        can_auto_update=can_auto_update))
 
     def _check_header(self, fname: str) -> None:
+        from efrotools import get_public_license
 
         # Make sure its define guard is correct.
         guard = (fname[4:].upper().replace('/', '_').replace('.', '_') + '_')
         with open(fname) as fhdr:
             lines = fhdr.read().splitlines()
 
-        if self._public:
-            raise RuntimeError('FIXME: Check for full license.')
-
-        # Look for copyright/legal-notice line(s).
-        line = '// ' + get_legal_notice_private()
+        # Look for public license line (public or private repo)
+        # or private license line (private repo only)
+        line_private = '// ' + get_legal_notice_private()
+        line_public = get_public_license('c++')
         lnum = 0
-        if lines[lnum] != line:
-            # Allow auto-correcting if it looks close already
-            # (don't want to blow away an unrelated line)
-            allow_auto = 'Copyright' in lines[
-                lnum] and 'Eric Froemling' in lines[lnum]
-            self._add_line_correction(fname,
-                                      line_number=lnum,
-                                      expected=line,
-                                      can_auto_update=allow_auto)
+
+        if self._public:
+            if lines[lnum] != line_public:
+                # Allow auto-correcting from private to public line
+                allow_auto = lines[lnum] == line_private
+                self._add_line_correction(fname,
+                                          line_number=lnum,
+                                          expected=line_public,
+                                          can_auto_update=allow_auto)
+        else:
+            if lines[lnum] not in [line_public, line_private]:
+                self._add_line_correction(fname,
+                                          line_number=lnum,
+                                          expected=line_private,
+                                          can_auto_update=False)
 
         # Check for header guard at top
         line = '#ifndef ' + guard
