@@ -95,7 +95,7 @@ clean-list:
 .PHONY: list prereqs prereqs-clean assets assets-cmake assets-windows \
   assets-windows-Win32 assets-windows-x64 \
   assets-mac assets-ios assets-android assets-clean \
-  resources resources-clean-clean\
+  resources resources-cleancode-clean \
   clean clean-list
 
 
