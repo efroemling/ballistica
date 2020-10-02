@@ -778,6 +778,9 @@ ENV_SRC = tools/pcommand tools/batools/build.py
 #                                                                              #
 ################################################################################
 
+# CMake build-type lowercase
+CM_BT_LC = $(shell echo $(CMAKE_BUILD_TYPE) | tr A-Z a-z)
+
 # When using CLion, our cmake dir is root. Expose .clang-format there too.
 ballisticacore-cmake/.clang-format: .clang-format
 	@cd ballisticacore-cmake && ln -sf ../.clang-format .
