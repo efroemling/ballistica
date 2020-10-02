@@ -63,7 +63,7 @@ class HostActivity : public ContextTarget {
   auto globals_node() const -> GlobalsNode*;
   void SetPaused(bool val);
   auto paused() const -> bool { return paused_; }
-  void setAllowKickIdlePlayers(bool val) { allow_kick_idle_players_ = val; }
+  void set_allow_kick_idle_players(bool val) { allow_kick_idle_players_ = val; }
   auto getAllowKickIdlePlayers() const -> bool {
     return allow_kick_idle_players_;
   }
