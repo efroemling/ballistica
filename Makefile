@@ -70,6 +70,16 @@ assets-android: prereqs
 assets-clean:
 	@cd assets && ${MAKE} clean
 
+# Build resources.
+resources: prereqs
+	@tools/pcommand lazybuild resources_src ${LAZYBUILDDIR}/resources \
+ cd resources \&\& ${MAKE} -j${CPUS} resources
+
+# Clean resources.
+resources-clean:
+	@cd resources && ${MAKE} clean
+	@rm -f ${LAZYBUILDDIR}/resources
+
 # Remove *ALL* files and directories that aren't managed by git
 # (except for a few things such as localconfig.json).
 clean:
@@ -85,7 +95,7 @@ clean-list:
 .PHONY: list prereqs prereqs-clean assets assets-cmake assets-windows \
   assets-windows-Win32 assets-windows-x64 \
   assets-mac assets-ios assets-android assets-clean \
- -clean-clean\
+  resources resources-clean-clean\
   clean clean-list
 
 
