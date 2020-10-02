@@ -80,6 +80,16 @@ resources-clean:
 	@cd resources && ${MAKE} clean
 	@rm -f ${LAZYBUILDDIR}/resources
 
+# Build our generated code.
+code: prereqs
+	@tools/pcommand lazybuild code_gen_src ${LAZYBUILDDIR}/code \
+ cd src/generated_src \&\& ${MAKE} -j${CPUS} generated_code
+
+# Clean generated code.
+code-clean:
+	@cd src/generated_src && ${MAKE} clean
+	@rm -f ${LAZYBUILDDIR}/code
+
 # Remove *ALL* files and directories that aren't managed by git
 # (except for a few things such as localconfig.json).
 clean:
@@ -95,7 +105,7 @@ clean-list:
 .PHONY: list prereqs prereqs-clean assets assets-cmake assets-windows \
   assets-windows-Win32 assets-windows-x64 \
   assets-mac assets-ios assets-android assets-clean \
-  resources resources-clean \
+  resources resources-clean code code-clean \
   clean clean-list
 
 
