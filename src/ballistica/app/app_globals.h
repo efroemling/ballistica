@@ -10,7 +10,6 @@
 #include <vector>
 
 #include "ballistica/ballistica.h"
-#include "ballistica/networking/master_server_config.h"
 
 namespace ballistica {
 
@@ -85,8 +84,6 @@ class AppGlobals {
   std::mutex real_time_mutex;
   std::mutex thread_name_map_mutex;
   std::map<std::thread::id, std::string> thread_name_map;
-  std::string master_server_addr{BA_MASTER_SERVER_DEFAULT_ADDR};
-  std::string master_server_fallback_addr{BA_MASTER_SERVER_FALLBACK_ADDR};
 #if BA_DEBUG_BUILD
   std::mutex object_list_mutex;
   Object* object_list_first{};
