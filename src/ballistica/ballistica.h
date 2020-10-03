@@ -119,6 +119,7 @@ extern Account* g_account;
 extern App* g_app;
 extern AppConfig* g_app_config;
 extern AppGlobals* g_app_globals;
+extern AppInternal* g_app_internal;
 extern Audio* g_audio;
 extern AudioServer* g_audio_server;
 extern BGDynamics* g_bg_dynamics;
@@ -150,6 +151,10 @@ auto GetUniqueSessionIdentifier() -> const std::string&;
 
 /// Have our main threads/modules all been inited yet?
 auto IsBootstrapped() -> bool;
+
+/// Create/init our internal (non-public) parts.
+auto CreateAppInternal() -> AppInternal*;
+auto AppInternalGameThreadInit() -> void;
 
 /// Does it appear that we are a blessed build with no known user-modifications?
 auto IsUnmodifiedBlessedBuild() -> bool;

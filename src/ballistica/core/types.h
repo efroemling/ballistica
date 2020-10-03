@@ -40,6 +40,7 @@ class Account;
 class App;
 class AppConfig;
 class AppGlobals;
+class AppInternal;
 class AreaOfInterest;
 class Audio;
 class AudioServer;

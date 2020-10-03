@@ -29,7 +29,7 @@
 namespace ballistica {
 
 // These are set automatically via script; don't change here.
-const int kAppBuildNumber = 20194;
+const int kAppBuildNumber = 20195;
 const char* kAppVersion = "1.5.26";
 const char* kBlessingHash = nullptr;
 
@@ -40,6 +40,7 @@ int g_early_log_writes{10};
 Thread* g_main_thread{};
 AppGlobals* g_app_globals{};
 AppConfig* g_app_config{};
+AppInternal* g_app_internal{};
 App* g_app{};
 Account* g_account{};
 Game* g_game{};
@@ -81,7 +82,7 @@ TextGraphics* g_text_graphics{};
 auto BallisticaMain(int argc, char** argv) -> int {
   try {
     // Even at the absolute start of execution we should be able to
-    // phone home on errors. Set BA_CRASH_TEST=1 to test this.
+    // phone home on errors. Set env var BA_CRASH_TEST=1 to test this.
     if (const char* crashenv = getenv("BA_CRASH_TEST")) {
       if (!strcmp(crashenv, "1")) {
         FatalError("Fatal-Error-Test");
@@ -93,6 +94,7 @@ auto BallisticaMain(int argc, char** argv) -> int {
     // -------------------------------------------------------------------------
 
     g_app_globals = new AppGlobals(argc, argv);
+    g_app_internal = CreateAppInternal();
     g_platform = Platform::Create();
     g_platform->PostInit();
     g_account = new Account();
