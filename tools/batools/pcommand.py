@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 from efrotools.pcommand import PROJROOT
 
 if TYPE_CHECKING:
-    from typing import Optional, List, Set
+    from typing import Optional, List, Set, Dict
 
 
 def stage_server_file() -> None:
@@ -721,27 +721,32 @@ def update_project() -> None:
 
 
 def cmake_prep_dir() -> None:
-    """Create a dir, recreating it when cmake version changes.
+    """Create a dir, recreating it when cmake/python/etc. version changes.
 
-    Useful to prevent builds from breaking when cmake is updated.
+    Useful to prevent builds from breaking when cmake or other components
+    are updated.
     """
+    # pylint: disable=too-many-locals
     import os
     import subprocess
+    import json
     from efro.error import CleanError
     from efro.terminal import Clr
+    from efrotools import PYVER
 
     if len(sys.argv) != 3:
         raise CleanError('Expected 1 arg (dir name)')
     dirname = sys.argv[2]
 
-    # Look for cmake version associated with the dir.
-    verfilename = os.path.join(dirname, '.ba_cmake_version')
-    ver: Optional[str]
+    verfilename = os.path.join(dirname, '.ba_cmake_env')
+
+    versions: Dict[str, str]
     if os.path.isfile(verfilename):
         with open(verfilename) as infile:
-            ver = infile.read()
+            versions = json.loads(infile.read())
+            assert isinstance(versions, dict)
     else:
-        ver = None
+        versions = {}
 
     # Get version of installed cmake.
     cmake_ver_output = subprocess.run(['cmake', '--version'],
@@ -749,12 +754,35 @@ def cmake_prep_dir() -> None:
                                       capture_output=True).stdout.decode()
     cmake_ver = cmake_ver_output.splitlines()[0].split('cmake version ')[1]
 
+    cmake_ver_existing = versions.get('cmake')
+    assert isinstance(cmake_ver_existing, (str, type(None)))
+
+    # Get specific version of our target python.
+    python_ver_output = subprocess.run([f'python{PYVER}', '--version'],
+                                       check=True,
+                                       capture_output=True).stdout.decode()
+    python_ver = python_ver_output.splitlines()[0].split('Python ')[1]
+
+    python_ver_existing = versions.get('python')
+    assert isinstance(python_ver_existing, (str, type(None)))
+
     # If they don't match, blow away the dir and write the current version.
-    if ver != cmake_ver:
-        if ver is not None:
-            print(f'{Clr.BLU}CMake version changed from {ver} to {cmake_ver};'
-                  f' clearing existing build at "{dirname}".{Clr.RST}')
+    if cmake_ver_existing != cmake_ver or python_ver_existing != python_ver:
+        if (cmake_ver_existing != cmake_ver
+                and cmake_ver_existing is not None):
+            print(f'{Clr.BLU}CMake version changed from {cmake_ver_existing}'
+                  f' to {cmake_ver}; clearing existing build at'
+                  f' "{dirname}".{Clr.RST}')
+        if (python_ver_existing != python_ver
+                and python_ver_existing is not None):
+            print(f'{Clr.BLU}Python version changed from {python_ver_existing}'
+                  f' to {python_ver}; clearing existing build at'
+                  f' "{dirname}".{Clr.RST}')
         subprocess.run(['rm', '-rf', dirname], check=True)
         os.makedirs(dirname, exist_ok=True)
         with open(verfilename, 'w') as outfile:
-            outfile.write(cmake_ver)
+            outfile.write(
+                json.dumps({
+                    'cmake': cmake_ver,
+                    'python': python_ver
+                }))
