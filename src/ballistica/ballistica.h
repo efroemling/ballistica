@@ -38,7 +38,6 @@ namespace ballistica {
 
 extern const int kAppBuildNumber;
 extern const char* kAppVersion;
-extern const char* kBlessingHash;
 
 // Protocol version we host games with and write replays to.
 // This should be incremented whenever there are changes made to the
@@ -155,6 +154,7 @@ auto IsBootstrapped() -> bool;
 /// Create/init our internal (non-public) parts.
 auto CreateAppInternal() -> AppInternal*;
 auto AppInternalGameThreadInit() -> void;
+auto AppInternalHasBlessingHash() -> bool;
 
 /// Does it appear that we are a blessed build with no known user-modifications?
 auto IsUnmodifiedBlessedBuild() -> bool;

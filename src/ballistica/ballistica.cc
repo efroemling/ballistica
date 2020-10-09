@@ -29,9 +29,8 @@
 namespace ballistica {
 
 // These are set automatically via script; don't change here.
-const int kAppBuildNumber = 20195;
+const int kAppBuildNumber = 20196;
 const char* kAppVersion = "1.5.26";
-const char* kBlessingHash = nullptr;
 
 // Our standalone globals.
 // These are separated out for easy access.
@@ -178,7 +177,6 @@ auto BallisticaMain(int argc, char** argv) -> int {
       }
     }
   }
-  // printf("BLESSED? %d\n", static_cast<int>(IsUnmodifiedBlessedBuild()));
 
   g_platform->WillExitMain(false);
   return g_app_globals->return_value;
@@ -299,40 +297,6 @@ auto IsBootstrapped() -> bool { return g_app_globals->is_bootstrapped; }
 // Used by our built in exception type.
 void SetPythonException(PyExcType python_type, const char* description) {
   Python::SetPythonException(python_type, description);
-}
-
-auto IsUnmodifiedBlessedBuild() -> bool {
-  // Assume debug builds are not blessed (we'll determine this after
-  // we finish calcing blessing hash, but this we don't get false positives
-  // up until that point)
-  if (g_buildconfig.debug_build()) {
-    return false;
-  }
-
-  // Return false if we're unblessed or it seems that the user is likely
-  // mucking around with stuff. If we just don't know yet
-  // (for instance if blessing has calc hasn't completed) we assume we're
-  // clean.
-  if (g_app_globals && g_app_globals->user_ran_commands) {
-    return false;
-  }
-
-  // If they're using custom app scripts, just consider it modified.
-  // Otherwise can can tend to get errors in early bootstrapping before
-  // we've been able to calc hashes to see if things are modified.
-  if (g_platform && g_platform->using_custom_app_python_dir()) {
-    return false;
-  }
-
-  // If we don't have an embedded blessing hash, we're not blessed. Duh.
-  if (kBlessingHash == nullptr) {
-    return false;
-  }
-
-  // If we have an embedded hash and we've calced ours
-  // and it doesn't match, consider ourself modified.
-  return !(g_app_globals && !g_app_globals->calced_blessing_hash.empty()
-           && g_app_globals->calced_blessing_hash != kBlessingHash);
 }
 
 }  // namespace ballistica

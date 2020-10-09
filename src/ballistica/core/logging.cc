@@ -156,7 +156,7 @@ auto Logging::DirectSendLogs(const std::string& prefix,
     // between blessing not being calced yet and being confirmed as un-blessed.
     // FIXME: should probably do this in python layer log submits too.
     std::string bless_calc_state;
-    if (kBlessingHash == nullptr) {
+    if (!AppInternalHasBlessingHash()) {
       bless_calc_state = "nointhash";
     } else if (g_app_globals == nullptr) {
       bless_calc_state = "noglobs";
