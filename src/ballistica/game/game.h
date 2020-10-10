@@ -336,9 +336,6 @@ class Game : public Module {
 
  private:
   auto InitSpecialChars() -> void;
-  auto AdViewComplete(const std::string& purpose, bool actually_showed) -> void;
-  auto AwardAdTickets() -> void;
-  auto AwardAdTournamentEntry() -> void;
   auto Draw() -> void;
   auto UDPConnectionPacket(const std::vector<uint8_t>& data,
                            const SockAddr& addr) -> void;

@@ -112,11 +112,6 @@ class Python {
 
   auto inited() const -> bool { return inited_; }
 
-  /// Attempt to push the log to the server - returns true if no error occurs
-  /// (note; this doesn't mean that the log actually made it; just that it got
-  /// sent off)
-  static auto PutLog(bool fatal, bool short_suicide_timer = true) -> bool;
-
   /// Filter incoming chat message from client.
   /// If returns false, message should be ignored.
   auto FilterChatMessage(std::string* message, int client_id) -> bool;
