@@ -252,8 +252,8 @@ def _sync_windows_extras(cfg: Config) -> None:
         _run(cmd)
 
     # Now sync the top level individual files that we want.
-    # (we could technically copy everything over but this keeps staging
-    # dirs a bit tidier)
+    # We could technically copy everything over but this keeps staging
+    # dirs a bit tidier.
     dbgsfx = '_d' if cfg.debug else ''
     toplevelfiles: List[str] = [f'python38{dbgsfx}.dll']
 
