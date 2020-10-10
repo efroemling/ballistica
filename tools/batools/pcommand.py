@@ -57,14 +57,19 @@ def stage_server_file() -> None:
         # Run Python in opt mode for release builds.
         with open(infilename) as infile:
             lines = infile.read().splitlines()
-            if mode == 'release':
-                lines[1] = replace_one(
-                    lines[1], ':: Python interpreter.',
-                    ':: Python interpreter.'
-                    ' (in opt mode so we use bundled .opt-1.pyc files)')
-                lines[2] = replace_one(
-                    lines[2], 'dist\\\\python.exe ballisticacore_server.py',
-                    'dist\\\\python.exe -O ballisticacore_server.py')
+        if mode == 'release':
+            lines[1] = replace_one(
+                lines[1], ':: Python interpreter.', ':: Python interpreter.'
+                ' (in opt mode so we use bundled .opt-1.pyc files)')
+            lines[2] = replace_one(
+                lines[2], 'dist\\\\python.exe ballisticacore_server.py',
+                'dist\\\\python.exe -O ballisticacore_server.py')
+        else:
+            # In debug mode we use the bundled debug interpreter.
+            lines[2] = replace_one(
+                lines[2], 'dist\\\\python.exe ballisticacore_server.py',
+                'dist\\\\python_d.exe ballisticacore_server.py')
+
         with open(outfilename, 'w') as outfile:
             outfile.write('\n'.join(lines) + '\n')
     else:

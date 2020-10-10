@@ -263,7 +263,7 @@ def _sync_windows_extras(cfg: Config) -> None:
             'SDL2.dll'
         ]
     elif cfg.win_type == 'winserver':
-        toplevelfiles += ['python.exe']
+        toplevelfiles += [f'python{dbgsfx}.exe']
 
     # Include debug dlls so folks without msvc can run them.
     if cfg.debug:
