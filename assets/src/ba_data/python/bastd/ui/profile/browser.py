@@ -270,6 +270,7 @@ class ProfileBrowserWindow(ba.Window):
 
     def _refresh(self) -> None:
         # pylint: disable=too-many-locals
+        from efro.util import asserttype
         from ba.internal import (PlayerProfilesChangedMessage,
                                  get_player_profile_colors,
                                  get_player_profile_icon)
@@ -281,7 +282,7 @@ class ProfileBrowserWindow(ba.Window):
         self._profiles = ba.app.config.get('Player Profiles', {})
         assert self._profiles is not None
         items = list(self._profiles.items())
-        items.sort(key=lambda x: x[0].lower())
+        items.sort(key=lambda x: asserttype(x[0], str).lower())
         index = 0
         account_name: Optional[str]
         if _ba.get_account_state() == 'signed_in':

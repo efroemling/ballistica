@@ -299,6 +299,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
         _ba.lock_all_input()
 
     def _refresh(self, select_playlist: str = None) -> None:
+        from efro.util import asserttype
         old_selection = self._selected_playlist_name
 
         # If there was no prev selection, look in prefs.
@@ -318,7 +319,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
         items = [(i[0].decode(), i[1]) if not isinstance(i[0], str) else i
                  for i in items]
 
-        items.sort(key=lambda x: x[0].lower())
+        items.sort(key=lambda x: asserttype(x[0], str).lower())
 
         items = [['__default__', None]] + items  # Default is always first.
         index = 0

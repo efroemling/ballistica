@@ -328,11 +328,6 @@ def local_chat_message(msg: str) -> None:
         _ba.app.ui.party_window().on_chat_message(msg)
 
 
-def handle_remote_achievement_list(completed_achievements: List[str]) -> None:
-    from ba import _achievement
-    _achievement.set_completed_achievements(completed_achievements)
-
-
 def get_player_icon(sessionplayer: ba.SessionPlayer) -> Dict[str, Any]:
     info = sessionplayer.get_icon_info()
     return {

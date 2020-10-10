@@ -362,6 +362,7 @@ class SoundtrackBrowserWindow(ba.Window):
         return ba.Lstr(value=soundtrack)
 
     def _refresh(self, select_soundtrack: str = None) -> None:
+        from efro.util import asserttype
         self._allow_changing_soundtracks = False
         old_selection = self._selected_soundtrack
 
@@ -377,7 +378,7 @@ class SoundtrackBrowserWindow(ba.Window):
         self._soundtracks = ba.app.config.get('Soundtracks', {})
         assert self._soundtracks is not None
         items = list(self._soundtracks.items())
-        items.sort(key=lambda x: x[0].lower())
+        items.sort(key=lambda x: asserttype(x[0], str).lower())
         items = [('__default__', None)] + items  # default is always first
         index = 0
         for pname, _pval in items:

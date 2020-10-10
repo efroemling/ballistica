@@ -67,6 +67,7 @@ class CoopGameActivity(GameActivity[PlayerType, TeamType]):
 
     def _show_standard_scores_to_beat_ui(self,
                                          scores: List[Dict[str, Any]]) -> None:
+        from efro.util import asserttype
         from ba._gameutils import timestring, animate
         from ba._nodeactor import NodeActor
         from ba._enums import TimeFormat
@@ -74,7 +75,7 @@ class CoopGameActivity(GameActivity[PlayerType, TeamType]):
         if scores is not None:
 
             # Sort by originating date so that the most recent is first.
-            scores.sort(reverse=True, key=lambda s: s['time'])
+            scores.sort(reverse=True, key=lambda s: asserttype(s['time'], int))
 
             # Now make a display for the most recent challenge.
             for score in scores:

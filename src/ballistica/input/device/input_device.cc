@@ -78,14 +78,10 @@ auto InputDevice::GetPlayerProfiles() const -> PyObject* { return nullptr; }
 auto InputDevice::GetPublicAccountID() const -> std::string {
   assert(InGameThread());
 
-  // this default implementation assumes the device is local
-  // so just returns the locally signed in account's public id..
+  // This default implementation assumes the device is local
+  // so just returns the locally signed in account's public id.
 
-  // the master-server makes our public account-id available to us
-  // through a misc-read-val; look for that..
-  std::string pub_id =
-      g_python->GetAccountMiscReadVal2String("resolvedAccountID");
-  return pub_id;
+  return AppInternalGetPublicAccountID();
 }
 
 auto InputDevice::GetAccountName(bool full) const -> std::string {

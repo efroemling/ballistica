@@ -343,28 +343,6 @@ class Utils {
   static float precalc_rands_3[];
   auto huffman() -> Huffman* { return huffman_.get(); }
 
-  /// Encrypt a string in a manner specific to this device.
-  static auto LocalEncrypt(const std::string& s) -> std::string;
-  static auto LocalEncrypt2(const std::string& s) -> std::string;
-
-  /// Decode a local string that was encoded specific to this device.
-  /// Throws an exception on failure.
-  static auto LocalDecrypt(const std::string& s) -> std::string;
-  static auto LocalDecrypt2(const std::string& s) -> std::string;
-
-  /// Encrypt a string using a custom key.
-  static auto EncryptCustom(const std::string& s, const std::string& key)
-      -> std::string;
-  /// Decrypt a string using a custom key.
-  static auto DecryptCustom(const std::string& s, const std::string& key)
-      -> std::string;
-
-  /// Encrypt/decrypt strings to send to the master-server
-  static auto PublicEncrypt(const std::string& s) -> std::string;
-  static auto PublicDecrypt(const std::string& s) -> std::string;
-  static auto PublicEncrypt2(const std::string& s) -> std::string;
-  static auto PublicDecrypt2(const std::string& s) -> std::string;
-
   // FIXME - move to a nice math-y place
   static auto Sphrand(float radius = 1.0f) -> Vector3f;
 

@@ -36,16 +36,8 @@ class Game : public Module {
                           const std::string& account_id) -> void;
   auto PushSetAccountTokenCall(const std::string& account_id,
                                const std::string& token) -> void;
-  auto PushAdViewCompleteCall(const std::string& purpose, bool actually_showed)
-      -> void;
-  auto PushAnalyticsCall(const std::string& type, int increment) -> void;
   auto PushAwardAdTicketsCall() -> void;
   auto PushAwardAdTournamentEntryCall() -> void;
-  auto PushPurchaseTransactionCall(const std::string& item,
-                                   const std::string& receipt,
-                                   const std::string& signature,
-                                   const std::string& order_id,
-                                   bool user_initiated) -> void;
   auto PushUDPConnectionPacketCall(const std::vector<uint8_t>& data,
                                    const SockAddr& addr) -> void;
   auto PushPartyInviteCall(const std::string& name,
@@ -78,7 +70,6 @@ class Game : public Module {
   auto PushHavePendingLoadsDoneCall() -> void;
   auto PushFreeMediaComponentRefsCall(
       const std::vector<Object::Ref<MediaComponentData>*>& components) -> void;
-  auto PushSetFriendListCall(const std::vector<std::string>& friends) -> void;
   auto PushHavePendingLoadsCall() -> void;
   auto PushShutdownCall(bool soft) -> void;
 
@@ -289,10 +280,6 @@ class Game : public Module {
   auto LocalDisplayChatMessage(const std::vector<uint8_t>& buffer) -> void;
   auto ShouldAnnouncePartyJoinsAndLeaves() -> bool;
 
-  auto SetAdCompletionCall(PyObject* obj, bool pass_actually_showed) -> void;
-  auto CallAdCompletionCall(bool actually_showed) -> void;
-  auto RunGeneralAdComplete(bool actually_watched) -> void;
-
   auto StartKickVote(ConnectionToClient* starter, ConnectionToClient* target)
       -> void;
   auto require_client_authentication() const {
@@ -330,6 +317,15 @@ class Game : public Module {
   auto public_party_size() const { return public_party_size_; }
   auto SetPublicPartySize(int count) -> void;
   auto public_party_max_size() const { return public_party_max_size_; }
+  auto public_party_max_player_count() const {
+    return public_party_max_player_count_;
+  }
+  auto public_party_min_league() const -> const std::string& {
+    return public_party_min_league_;
+  }
+  auto public_party_stats_url() const -> const std::string& {
+    return public_party_stats_url_;
+  }
   auto SetPublicPartyMaxSize(int count) -> void;
   auto SetPublicPartyName(const std::string& name) -> void;
   auto SetPublicPartyStatsURL(const std::string& name) -> void;
@@ -341,14 +337,9 @@ class Game : public Module {
  private:
   auto InitSpecialChars() -> void;
   auto AdViewComplete(const std::string& purpose, bool actually_showed) -> void;
-  auto Analytics(const std::string& type, int increment) -> void;
   auto AwardAdTickets() -> void;
   auto AwardAdTournamentEntry() -> void;
   auto Draw() -> void;
-  auto PurchaseTransaction(const std::string& item, const std::string& receipt,
-                           const std::string& signature,
-                           const std::string& order_id, bool user_initiated)
-      -> void;
   auto UDPConnectionPacket(const std::vector<uint8_t>& data,
                            const SockAddr& addr) -> void;
   auto PartyInvite(const std::string& name, const std::string& invite_id)
@@ -384,7 +375,6 @@ class Game : public Module {
   auto GetGameRosterMessage() -> std::vector<uint8_t>;
   auto CleanUpBeforeConnectingToHost() -> void;
   auto Shutdown(bool soft) -> void;
-  auto PushPublicPartyState() -> void;
 
   std::map<int, int> google_play_id_to_client_id_map_;
   std::map<int, int> client_id_to_google_play_id_map_;
@@ -446,9 +436,6 @@ class Game : public Module {
   int last_kick_votes_needed_{-1};
   Object::WeakRef<ConnectionToClient> kick_vote_starter_;
   Object::WeakRef<ConnectionToClient> kick_vote_target_;
-  Object::Ref<PythonContextCall> ad_completion_callback_;
-  millisecs_t last_ad_start_time_{};
-  bool ad_completion_callback_pass_actually_showed_{};
   bool public_party_enabled_{false};
   int public_party_size_{1};  // Always count ourself (is that what we want?).
   int public_party_max_size_{8};

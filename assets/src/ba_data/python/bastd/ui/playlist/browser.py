@@ -284,6 +284,7 @@ class PlaylistBrowserWindow(ba.Window):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-nested-blocks
+        from efro.util import asserttype
         from ba.internal import (get_map_class,
                                  get_default_free_for_all_playlist,
                                  get_default_teams_playlist, filter_playlist)
@@ -303,7 +304,7 @@ class PlaylistBrowserWindow(ba.Window):
         items = [(i[0].decode(), i[1]) if not isinstance(i[0], str) else i
                  for i in items]
 
-        items.sort(key=lambda x2: x2[0].lower())
+        items.sort(key=lambda x2: asserttype(x2[0], str).lower())
         items = [['__default__', None]] + items  # default is always first
 
         count = len(items)

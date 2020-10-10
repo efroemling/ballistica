@@ -306,3 +306,45 @@ def make_hash(obj: Any) -> int:
     # NOTE: there is sorted works correctly because it compares only
     # unique first values (i.e. dict keys)
     return hash(tuple(frozenset(sorted(new_obj.items()))))
+
+
+def asserttype(obj: Any, typ: Type[T]) -> T:
+    """Return an object typed as a given type.
+
+    Assert is used to check its actual type, so only use this when
+    failures are not expected. Otherwise use checktype.
+    """
+    assert isinstance(obj, typ)
+    return obj
+
+
+def checktype(obj: Any, typ: Type[T]) -> T:
+    """Return an object typed as a given type.
+
+    Always checks the type at runtime with isinstance and throws a TypeError
+    on failure. Use asserttype for more efficient (but less safe) equivalent.
+    """
+    if not isinstance(obj, typ):
+        raise TypeError(f'Expected a {typ}; got a {type(obj)}.')
+    return obj
+
+
+def assert_non_optional(obj: Optional[T]) -> T:
+    """Return an object with Optional typing removed.
+
+    Assert is used to check its actual type, so only use this when
+    failures are not expected. Use check_non_optional otherwise.
+    """
+    assert obj is not None
+    return obj
+
+
+def check_non_optional(obj: Optional[T]) -> T:
+    """Return an object with Optional typing removed.
+
+    Always checks the actual type and throws a TypeError on failure.
+    Use assert_non_optional for a more efficient (but less safe) equivalent.
+    """
+    if obj is None:
+        raise TypeError('Got None value in check_non_optional.')
+    return obj

@@ -18,6 +18,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <thread>
@@ -151,10 +152,32 @@ auto GetUniqueSessionIdentifier() -> const std::string&;
 /// Have our main threads/modules all been inited yet?
 auto IsBootstrapped() -> bool;
 
-/// Create/init our internal (non-public) parts.
+/// Internal bits.
 auto CreateAppInternal() -> AppInternal*;
-auto AppInternalGameThreadInit() -> void;
+auto AppInternalPythonInit() -> PyObject*;
+auto AppInternalPythonInit2() -> void;
 auto AppInternalHasBlessingHash() -> bool;
+auto AppInternalPutLog(bool fatal) -> bool;
+auto AppInternalAwardAdTickets() -> void;
+auto AppInternalAwardAdTournamentEntry() -> void;
+auto AppInternalSetAdCompletionCall(PyObject* obj, bool pass_actually_showed)
+    -> void;
+auto AppInternalPushAdViewComplete(const std::string& purpose,
+                                   bool actually_showed) -> void;
+auto AppInternalPushPublicPartyState() -> void;
+auto AppInternalPushSetFriendListCall(const std::vector<std::string>& friends)
+    -> void;
+auto AppInternalDispatchRemoteAchievementList(const std::set<std::string>& achs)
+    -> void;
+auto AppInternalPushAnalyticsCall(const std::string& type, int increment)
+    -> void;
+auto AppInternalPushPurchaseTransactionCall(const std::string& item,
+                                            const std::string& receipt,
+                                            const std::string& signature,
+                                            const std::string& order_id,
+                                            bool user_initiated) -> void;
+auto AppInternalGetPublicAccountID() -> std::string;
+auto AppInternalOnGameThreadPause() -> void;
 
 /// Does it appear that we are a blessed build with no known user-modifications?
 auto IsUnmodifiedBlessedBuild() -> bool;

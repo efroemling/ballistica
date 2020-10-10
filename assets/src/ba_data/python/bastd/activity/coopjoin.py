@@ -57,12 +57,14 @@ class CoopJoinActivity(JoinActivity):
                                scores: Optional[List[Dict[str, Any]]]) -> None:
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
+        from efro.util import asserttype
         from bastd.actor.text import Text
         from ba.internal import get_achievements_for_coop_level
 
         # Sort by originating date so that the most recent is first.
         if scores is not None:
-            scores.sort(reverse=True, key=lambda score: score['time'])
+            scores.sort(reverse=True,
+                        key=lambda score: asserttype(score['time'], int))
 
         # We only show achievements and challenges for CoopGameActivities.
         session = self.session

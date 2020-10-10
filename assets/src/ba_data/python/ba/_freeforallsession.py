@@ -53,6 +53,7 @@ class FreeForAllSession(MultiTeamSession):
 
     def _switch_to_score_screen(self, results: ba.GameResults) -> None:
         # pylint: disable=cyclic-import
+        from efro.util import asserttype
         from bastd.activity.drawscore import DrawScoreScreenActivity
         from bastd.activity.multiteamvictory import (
             TeamSeriesVictoryScoreScreenActivity)
@@ -80,8 +81,9 @@ class FreeForAllSession(MultiTeamSession):
                 team for team in self.sessionteams
                 if team.customdata['score'] >= self._ffa_series_length
             ]
-            series_winners.sort(reverse=True,
-                                key=lambda tm: (tm.customdata['score']))
+            series_winners.sort(
+                reverse=True,
+                key=lambda t: asserttype(t.customdata['score'], int))
             if (len(series_winners) == 1
                     or (len(series_winners) > 1
                         and series_winners[0].customdata['score'] !=

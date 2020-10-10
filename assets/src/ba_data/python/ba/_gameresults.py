@@ -8,6 +8,7 @@ import weakref
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from efro.util import asserttype
 from ba._team import Team, SessionTeam
 
 if TYPE_CHECKING:
@@ -187,7 +188,8 @@ class GameResults:
             sval.append(team)
         results: List[Tuple[Optional[int],
                             List[ba.SessionTeam]]] = list(winners.items())
-        results.sort(reverse=not self._lower_is_better, key=lambda x: x[0])
+        results.sort(reverse=not self._lower_is_better,
+                     key=lambda x: asserttype(x[0], int))
 
         # Also group the 'None' scores.
         none_sessionteams: List[ba.SessionTeam] = []

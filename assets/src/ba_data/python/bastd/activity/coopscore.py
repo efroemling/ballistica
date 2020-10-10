@@ -873,6 +873,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
+        from efro.util import asserttype
         # delay a bit if results come in too fast
         assert self._begin_time is not None
         base_delay = max(0, 1.9 - (ba.time() - self._begin_time))
@@ -909,7 +910,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                     break
             results.append(our_score_entry)
             results.sort(reverse=self._score_order == 'increasing',
-                         key=lambda x: x[0])
+                         key=lambda x: asserttype(x[0], int))
 
         # If we're not submitting our own score, we still want to change the
         # name of our own score to 'Me'.

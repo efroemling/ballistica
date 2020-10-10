@@ -500,8 +500,9 @@ def get_available_sale_time(tab: str) -> Optional[int]:
                         if to_end > 0:
                             sale_times.append(int(to_end * 1000))
 
-        # Return the smallest time i guess?
-        return min(sale_times) if sale_times else None
+        # Return the smallest time I guess?
+        sale_times_int = [t for t in sale_times if isinstance(t, int)]
+        return min(sale_times_int) if sale_times_int else None
 
     except Exception:
         from ba import _error
