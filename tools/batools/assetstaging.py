@@ -240,7 +240,11 @@ def _sync_windows_extras(cfg: Config) -> None:
         pyd_rules = "--exclude '*_d.pyd' --include '*.pyd'"
 
     for dirname in ('DLLs', 'Lib'):
-        _run(f'mkdir -p "{cfg.dst}/{dirname}"')
+        # EWW: seems windows python currently sets its path to ./lib but it
+        # comes with Lib. Windows is normally case-insensitive but this messes
+        # it up when running under WSL. Let's install it as lib for now.
+        dstdirname = 'lib' if dirname == 'Lib' else dirname
+        _run(f'mkdir -p "{cfg.dst}/{dstdirname}"')
         cmd = ('rsync --recursive --update --delete --delete-excluded '
                ' --prune-empty-dirs'
                " --include '*.ico' --include '*.cat'"
@@ -248,7 +252,7 @@ def _sync_windows_extras(cfg: Config) -> None:
                " --include '*.py' --include '*." + OPT_PYC_SUFFIX + "'"
                " --include '*/' --exclude '*' \"" +
                os.path.join(cfg.win_extras_src, dirname) + '/" '
-               '"' + cfg.dst + '/' + dirname + '/"')
+               '"' + cfg.dst + '/' + dstdirname + '/"')
         _run(cmd)
 
     # Now sync the top level individual files that we want.
