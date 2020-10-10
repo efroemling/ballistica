@@ -458,7 +458,7 @@ build/prefab/windows_x86/release/BallisticaCore.exe: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
 RUN_PREFAB_WINDOWS_X86_SERVER_DEBUG = cd build/prefab/windows_x86_server/debug \
- && dist/python.exe ballisticacore_server.py
+ && dist/python_d.exe ballisticacore_server.py
 
 prefab-windows-x86-server-debug: prefab-windows-x86-server-debug-build
 	@tools/pcommand ensure_prefab_platform windows_x86
