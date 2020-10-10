@@ -349,6 +349,7 @@
       <w>cmds</w>
       <w>cmembers</w>
       <w>cmodel</w>
+      <w>cmpf</w>
       <w>cnode</w>
       <w>codecsmodule</w>
       <w>codefilenames</w>
@@ -2266,6 +2267,7 @@
       <w>winempty</w>
       <w>winnergroup</w>
       <w>winnergroups</w>
+      <w>winplat</w>
       <w>winplt</w>
       <w>winprj</w>
       <w>winprune</w>

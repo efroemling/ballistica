@@ -34,6 +34,8 @@ def stage_server_file() -> None:
 
     print(f'Building server file: {os.path.basename(outfilename)}')
 
+    os.makedirs(os.path.dirname(outfilename), exist_ok=True)
+
     basename = os.path.basename(infilename)
     if basename == 'config_template.yaml':
         # Inject all available config values into the config file.
@@ -581,6 +583,9 @@ def make_prefab() -> None:
         raise RuntimeError('Expected one argument')
     target = batools.build.PrefabTarget(sys.argv[2])
     platform = batools.build.get_current_prefab_platform()
+
+    # We use dashes instead of underscores in target names.
+    platform = platform.replace('_', '-')
     try:
         subprocess.run(['make', f'prefab-{platform}-{target.value}-build'],
                        check=True)

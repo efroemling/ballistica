@@ -186,5 +186,5 @@ target_include_directories(ballisticacore PRIVATE
 # NOTE: seems we need to add 'dl' here for raspberry pi with a manually
 # built Python 3.8. Might be able to remove later.
 target_link_libraries(ballisticacore PRIVATE
-  ballisticacore_private ode pthread ${Python_LIBRARIES}
+  ballisticacore_internal ode pthread ${Python_LIBRARIES}
   ${SDL2_LIBRARIES} ${EXTRA_LIBRARIES} dl)

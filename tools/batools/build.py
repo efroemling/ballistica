@@ -455,19 +455,24 @@ def get_current_prefab_platform() -> str:
     system = platform.system()
     machine = platform.machine()
     if system == 'Darwin':
-        # Currently there's just x86_64 on mac;
-        # will need to revisit when arm
-        # cpus happen.
-        return 'mac'
+        if machine == 'x86_64':
+            return 'mac_x86_64'
+        # TODO: add support for arm macs.
+        raise RuntimeError(f'make_prefab: unsupported mac machine type:'
+                           f' {machine}.')
     if system == 'Linux':
         # If it looks like we're in Windows Subsystem for Linux,
         # go with the Windows version.
         if 'microsoft' in platform.uname().release.lower():
-            return 'windows'
+            # TODO: add support for arm windows
+            if machine == 'x86_64':
+                return 'windows_x86'
+            raise RuntimeError(f'make_prefab: unsupported win machine type:'
+                               f' {machine}.')
 
-        # We currently only support x86_64 linux.
+        # TODO: add support for arm linux.
         if machine == 'x86_64':
-            return 'linux'
+            return 'linux_x86_64'
         raise RuntimeError(f'make_prefab: unsupported linux machine type:'
                            f' {machine}.')
     raise RuntimeError(f'make_prefab: unrecognized platform:'
