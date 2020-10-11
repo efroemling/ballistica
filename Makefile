@@ -149,7 +149,15 @@ prefab-server-debug-build:
 prefab-server-release-build:
 	@tools/pcommand make_prefab server-release
 
+# Clean all prefab builds.
+prefab-clean:
+	rm -rf build/prefab
+
 # Specific platform prefab targets:
+
+WINPLAT_X86 = Win32
+
+# Mac debug:
 
 RUN_PREFAB_MAC_X86_64_DEBUG = cd build/prefab/full/mac_x86_64/debug \
   && ./ballisticacore
@@ -179,6 +187,8 @@ build/prefab/full/mac_%/debug/ballisticacore: .efrocachemap
 build/prefab/lib/mac_%/debug/libballisticacore_internal.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
+# Mac release:
+
 RUN_PREFAB_MAC_X86_64_RELEASE = cd build/prefab/full/mac_x86_64/release \
   && ./ballisticacore
 
@@ -206,6 +216,8 @@ build/prefab/full/mac_%/release/ballisticacore: .efrocachemap
 
 build/prefab/lib/mac_%/release/libballisticacore_internal.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
+
+# Mac server debug:
 
 RUN_PREFAB_MAC_X86_64_SERVER_DEBUG = cd \
  build/prefab/full/mac_x86_64_server/debug && ./ballisticacore_server
@@ -256,6 +268,8 @@ build/prefab/full/mac_%_server/debug/dist/ballisticacore_headless: .efrocachemap
 build/prefab/lib/mac_%_server/debug/libballisticacore_internal.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
+# Mac server release:
+
 RUN_PREFAB_MAC_X86_64_SERVER_RELEASE = cd \
  build/prefab/full/mac_x86_64_server/release && ./ballisticacore_server
 
@@ -305,6 +319,8 @@ build/prefab/full/mac_%_server/release/dist/ballisticacore_headless: .efrocachem
 build/prefab/lib/mac_%_server/release/libballisticacore_internal.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
+# Linux debug:
+
 RUN_PREFAB_LINUX_X86_64_DEBUG = cd \
   build/prefab/full/linux_x86_64/debug && ./ballisticacore
 
@@ -333,6 +349,8 @@ build/prefab/full/linux_%/debug/ballisticacore: .efrocachemap
 build/prefab/lib/linux_%/debug/libballisticacore_internal.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
+# Linux release:
+
 RUN_PREFAB_LINUX_X86_64_RELEASE = cd \
   build/prefab/full/linux_x86_64/release && ./ballisticacore
 
@@ -360,6 +378,8 @@ build/prefab/full/linux_%/release/ballisticacore: .efrocachemap
 
 build/prefab/lib/linux_%/release/libballisticacore_internal.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
+
+# Linux server debug:
 
 RUN_PREFAB_LINUX_X86_64_SERVER_DEBUG = cd \
   build/prefab/full/linux_x86_64_server/debug && ./ballisticacore_server
@@ -410,6 +430,8 @@ build/prefab/full/linux_%_server/debug/dist/ballisticacore_headless: .efrocachem
 build/prefab/lib/linux_%_server/debug/libballisticacore_internal.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
+# Linux server release:
+
 RUN_PREFAB_LINUX_X86_64_SERVER_RELEASE = cd \
   build/prefab/full/linux_x86_64_server/release && ./ballisticacore_server
 
@@ -449,7 +471,7 @@ build/prefab/full/linux_%_server/release/dist/ballisticacore_headless: .efrocach
 build/prefab/lib/linux_%_server/release/libballisticacore_internal.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-WINPLAT_X86 = Win32
+# Windows debug:
 
 RUN_PREFAB_WINDOWS_X86_DEBUG = cd build/prefab/full/windows_x86/debug \
   && ./BallisticaCore.exe
@@ -466,6 +488,8 @@ build/prefab/full/windows_x86/debug
 build/prefab/full/windows_x86/debug/BallisticaCore.exe: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
+# Windows release:
+
 RUN_PREFAB_WINDOWS_X86_RELEASE = cd build/prefab/full/windows_x86/release \
  && ./BallisticaCore.exe
 
@@ -481,6 +505,8 @@ build/prefab/full/windows_x86/release
 
 build/prefab/full/windows_x86/release/BallisticaCore.exe: .efrocachemap
 	@tools/pcommand efrocache_get $@
+
+# Windows server debug:
 
 RUN_PREFAB_WINDOWS_X86_SERVER_DEBUG = cd \
  build/prefab/full/windows_x86_server/debug \
@@ -522,6 +548,8 @@ build/prefab/full/windows_%_server/debug/README.txt: \
  assets/src/server/README.txt
 	@cp $< $@
 
+# Windows server release:
+
 RUN_PREFAB_WINDOWS_X86_SERVER_RELEASE = cd \
   build/prefab/full/windows_x86_server/release \
   && dist/python.exe -O ballisticacore_server.py
@@ -562,23 +590,29 @@ build/prefab/full/windows_%_server/release/README.txt: \
  assets/src/server/README.txt
 	@cp $< $@
 
-prefab-clean:
-	rm -rf build/prefab
-
 # Tell make which of these targets don't represent files.
-.PHONY: prefab-debug prefab-debug-build prefab-release prefab-release-build \
- prefab-server-debug prefab-server-debug-build prefab-server-release \
- prefab-server-release-build prefab-mac-debug prefab-mac-debug-build \
- prefab-mac-release prefab-mac-release-build prefab-mac-server-debug \
- prefab-mac-server-debug-build prefab-mac-server-release \
- prefab-mac-server-release-build prefab-linux-debug prefab-linux-debug-build \
- prefab-linux-release prefab-linux-release-build prefab-linux-server-debug \
- prefab-linux-server-debug-build prefab-linux-server-release \
- prefab-linux-server-release-build prefab-windows-debug \
- prefab-windows-debug-build prefab-windows-release \
- prefab-windows-release-build prefab-windows-server-debug \
- prefab-windows-server-debug-build prefab-windows-server-release \
- prefab-windows-server-release-build prefab-clean
+.PHONY: prefab-debug prefab-release prefab-debug-build prefab-release-build \
+ prefab-server-debug prefab-server-release prefab-server-debug-build \
+ prefab-server-release-build prefab-clean _cmake_prefab_binary \
+ _cmake_prefab_server_binary prefab-mac-x86-64-debug prefab-mac-arm64-debug \
+ prefab-mac-x86-64-debug-build prefab-mac-arm64-debug-build \
+ prefab-mac-x86-64-release prefab-mac-arm64-release \
+ prefab-mac-x86-64-release-build prefab-mac-arm64-release-build \
+ prefab-mac-x86-64-server-debug prefab-mac-arm64-server-debug \
+ prefab-mac-x86-64-server-debug-build prefab-mac-arm64-server-debug-build \
+ prefab-mac-x86-64-server-release prefab-mac-arm64-server-release \
+ prefab-mac-x86-64-server-release-build prefab-mac-arm64-server-release-build \
+ prefab-linux-x86-64-debug prefab-linux-arm64-debug \
+ prefab-linux-x86-64-debug-build prefab-linux-arm64-debug-build \
+ prefab-linux-x86-64-release prefab-linux-arm64-release \
+ prefab-linux-x86-64-release-build prefab-linux-arm64-release-build \
+ prefab-linux-x86-64-server-debug prefab-linux-arm64-server-debug \
+ prefab-linux-x86-64-server-debug-build prefab-linux-arm64-server-debug-build \
+ prefab-linux-x86-64-server-release prefab-linux-x86-64-server-release-build \
+ prefab-windows-x86-debug prefab-windows-x86-debug-build \
+ prefab-windows-x86-release prefab-windows-x86-release-build \
+ prefab-windows-x86-server-debug prefab-windows-x86-server-debug-build \
+ prefab-windows-x86-server-release prefab-windows-x86-server-release-build 
 
 
 ################################################################################
