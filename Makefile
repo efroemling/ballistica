@@ -151,10 +151,10 @@ prefab-server-release-build:
 
 # Specific platform prefab targets:
 
-RUN_PREFAB_MAC_X86_64_DEBUG = cd build/prefab/mac_x86_64/debug \
+RUN_PREFAB_MAC_X86_64_DEBUG = cd build/prefab/full/mac_x86_64/debug \
   && ./ballisticacore
 
-RUN_PREFAB_MAC_ARM64_DEBUG = cd build/prefab/mac_arm64/debug \
+RUN_PREFAB_MAC_ARM64_DEBUG = cd build/prefab/full/mac_arm64/debug \
   && ./ballisticacore
 
 prefab-mac-x86-64-debug: prefab-mac-x86-64-debug-build
@@ -166,20 +166,23 @@ prefab-mac-arm64-debug: prefab-mac-arm64-debug-build
 	@${RUN_PREFAB_MAC_ARM64_DEBUG}
 
 prefab-mac-x86-64-debug-build: prereqs assets-cmake \
- build/prefab/mac_x86_64/debug/ballisticacore
-	@${STAGE_ASSETS} -cmake build/prefab/mac_x86_64/debug
+ build/prefab/full/mac_x86_64/debug/ballisticacore
+	@${STAGE_ASSETS} -cmake build/prefab/full/mac_x86_64/debug
 
 prefab-mac-arm64-debug-build: prereqs assets-cmake \
- build/prefab/mac_arm64/debug/ballisticacore
-	@${STAGE_ASSETS} -cmake build/prefab/mac_arm64/debug
+ build/prefab/full/mac_arm64/debug/ballisticacore
+	@${STAGE_ASSETS} -cmake build/prefab/full/mac_arm64/debug
 
-build/prefab/mac_%/debug/ballisticacore: .efrocachemap
+build/prefab/full/mac_%/debug/ballisticacore: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-RUN_PREFAB_MAC_X86_64_RELEASE = cd build/prefab/mac_x86_64/release \
+build/prefab/lib/mac_%/debug/libballisticacore_internal.a: .efrocachemap
+	@tools/pcommand efrocache_get $@
+
+RUN_PREFAB_MAC_X86_64_RELEASE = cd build/prefab/full/mac_x86_64/release \
   && ./ballisticacore
 
-RUN_PREFAB_MAC_ARM64_RELEASE = cd build/prefab/mac_arm64/release \
+RUN_PREFAB_MAC_ARM64_RELEASE = cd build/prefab/full/mac_arm64/release \
   && ./ballisticacore
 
 prefab-mac-x86-64-release: prefab-mac-x86-64-release-build
@@ -191,21 +194,24 @@ prefab-mac-arm64-release: prefab-mac-arm64-release-build
 	@${RUN_PREFAB_MAC_ARM64_RELEASE}
 
 prefab-mac-x86-64-release-build: prereqs assets-cmake \
- build/prefab/mac_x86_64/release/ballisticacore
-	@${STAGE_ASSETS} -cmake build/prefab/mac_x86_64/release
+ build/prefab/full/mac_x86_64/release/ballisticacore
+	@${STAGE_ASSETS} -cmake build/prefab/full/mac_x86_64/release
 
 prefab-mac-arm64-release-build: prereqs assets-cmake \
- build/prefab/mac_arm64/release/ballisticacore
-	@${STAGE_ASSETS} -cmake build/prefab/mac_arm64/release
+ build/prefab/full/mac_arm64/release/ballisticacore
+	@${STAGE_ASSETS} -cmake build/prefab/full/mac_arm64/release
 
-build/prefab/mac_%/release/ballisticacore: .efrocachemap
+build/prefab/full/mac_%/release/ballisticacore: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-RUN_PREFAB_MAC_X86_64_SERVER_DEBUG = cd build/prefab/mac_x86_64_server/debug \
- && ./ballisticacore_server
+build/prefab/lib/mac_%/release/libballisticacore_internal.a: .efrocachemap
+	@tools/pcommand efrocache_get $@
 
-RUN_PREFAB_MAC_ARM64_SERVER_DEBUG = cd build/prefab/mac_arm64_server/debug \
- && ./ballisticacore_server
+RUN_PREFAB_MAC_X86_64_SERVER_DEBUG = cd \
+ build/prefab/full/mac_x86_64_server/debug && ./ballisticacore_server
+
+RUN_PREFAB_MAC_ARM64_SERVER_DEBUG = cd \
+ build/prefab/full/mac_arm64_server/debug && ./ballisticacore_server
 
 prefab-mac-x86-64-server-debug: prefab-mac-x86-64-server-debug-build
 	@tools/pcommand ensure_prefab_platform mac_x86_64
@@ -216,42 +222,45 @@ prefab-mac-arm64-server-debug: prefab-mac-arm64-server-debug-build
 	@${RUN_PREFAB_MAC_ARM64_SERVER_DEBUG}
 
 prefab-mac-x86-64-server-debug-build: prereqs assets-cmake \
- build/prefab/mac_x86_64_server/debug/dist/ballisticacore_headless \
- build/prefab/mac_x86_64_server/debug/ballisticacore_server \
- build/prefab/mac_x86_64_server/debug/config_template.yaml \
- build/prefab/mac_x86_64_server/debug/README.txt
-	@${STAGE_ASSETS} -cmakeserver build/prefab/mac_x86_64_server/debug/dist
+ build/prefab/full/mac_x86_64_server/debug/dist/ballisticacore_headless \
+ build/prefab/full/mac_x86_64_server/debug/ballisticacore_server \
+ build/prefab/full/mac_x86_64_server/debug/config_template.yaml \
+ build/prefab/full/mac_x86_64_server/debug/README.txt
+	@${STAGE_ASSETS} -cmakeserver build/prefab/full/mac_x86_64_server/debug/dist
 
 prefab-mac-arm64-server-debug-build: prereqs assets-cmake \
- build/prefab/mac_arm64_server/debug/dist/ballisticacore_headless \
- build/prefab/mac_arm64_server/debug/ballisticacore_server \
- build/prefab/mac_arm64_server/debug/config_template.yaml \
- build/prefab/mac_arm64_server/debug/README.txt
-	@${STAGE_ASSETS} -cmakeserver build/prefab/mac_arm64_server/debug/dist
+ build/prefab/full/mac_arm64_server/debug/dist/ballisticacore_headless \
+ build/prefab/full/mac_arm64_server/debug/ballisticacore_server \
+ build/prefab/full/mac_arm64_server/debug/config_template.yaml \
+ build/prefab/full/mac_arm64_server/debug/README.txt
+	@${STAGE_ASSETS} -cmakeserver build/prefab/full/mac_arm64_server/debug/dist
 
-build/prefab/mac_%_server/debug/ballisticacore_server: \
+build/prefab/full/mac_%_server/debug/ballisticacore_server: \
  assets/src/server/ballisticacore_server.py tools/batools/pcommand.py
 	@tools/pcommand stage_server_file debug $< $@
 
-build/prefab/mac_%_server/debug/config_template.yaml: \
+build/prefab/full/mac_%_server/debug/config_template.yaml: \
  assets/src/server/config_template.yaml \
  tools/batools/build.py \
  tools/batools/pcommand.py \
  tools/bacommon/servermanager.py
 	@tools/pcommand stage_server_file debug $< $@
 
-build/prefab/mac_%_server/debug/README.txt: \
+build/prefab/full/mac_%_server/debug/README.txt: \
  assets/src/server/README.txt
 	@cp $< $@
 
-build/prefab/mac_%_server/debug/dist/ballisticacore_headless: .efrocachemap
+build/prefab/full/mac_%_server/debug/dist/ballisticacore_headless: .efrocachemap
+	@tools/pcommand efrocache_get $@
+
+build/prefab/lib/mac_%_server/debug/libballisticacore_internal.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
 RUN_PREFAB_MAC_X86_64_SERVER_RELEASE = cd \
- build/prefab/mac_x86_64_server/release && ./ballisticacore_server
+ build/prefab/full/mac_x86_64_server/release && ./ballisticacore_server
 
 RUN_PREFAB_MAC_ARM64_SERVER_RELEASE = cd \
- build/prefab/mac_arm64_server/release && ./ballisticacore_server
+ build/prefab/full/mac_arm64_server/release && ./ballisticacore_server
 
 prefab-mac-x86-64-server-release: prefab-mac-x86-64-server-release-build
 	@tools/pcommand ensure_prefab_platform mac_x86_64
@@ -262,42 +271,45 @@ prefab-mac-arm64-server-release: prefab-mac-arm64-server-release-build
 	@${RUN_PREFAB_MAC_ARM64_SERVER_RELEASE}
 
 prefab-mac-x86-64-server-release-build: prereqs assets-cmake \
- build/prefab/mac_x86_64_server/release/dist/ballisticacore_headless \
- build/prefab/mac_x86_64_server/release/ballisticacore_server \
- build/prefab/mac_x86_64_server/release/config_template.yaml \
- build/prefab/mac_x86_64_server/release/README.txt
-	@${STAGE_ASSETS} -cmakeserver build/prefab/mac_x86_64_server/release/dist
+ build/prefab/full/mac_x86_64_server/release/dist/ballisticacore_headless \
+ build/prefab/full/mac_x86_64_server/release/ballisticacore_server \
+ build/prefab/full/mac_x86_64_server/release/config_template.yaml \
+ build/prefab/full/mac_x86_64_server/release/README.txt
+	@${STAGE_ASSETS} -cmakeserver build/prefab/full/mac_x86_64_server/release/dist
 
 prefab-mac-arm64-server-release-build: prereqs assets-cmake \
- build/prefab/mac_arm64_server/release/dist/ballisticacore_headless \
- build/prefab/mac_arm64_server/release/ballisticacore_server \
- build/prefab/mac_arm64_server/release/config_template.yaml \
- build/prefab/mac_arm64_server/release/README.txt
-	@${STAGE_ASSETS} -cmakeserver build/prefab/mac_arm64_server/release/dist
+ build/prefab/full/mac_arm64_server/release/dist/ballisticacore_headless \
+ build/prefab/full/mac_arm64_server/release/ballisticacore_server \
+ build/prefab/full/mac_arm64_server/release/config_template.yaml \
+ build/prefab/full/mac_arm64_server/release/README.txt
+	@${STAGE_ASSETS} -cmakeserver build/prefab/full/mac_arm64_server/release/dist
 
-build/prefab/mac_%_server/release/ballisticacore_server: \
+build/prefab/full/mac_%_server/release/ballisticacore_server: \
  assets/src/server/ballisticacore_server.py tools/batools/pcommand.py
 	@tools/pcommand stage_server_file release $< $@
 
-build/prefab/mac_%_server/release/config_template.yaml: \
+build/prefab/full/mac_%_server/release/config_template.yaml: \
  assets/src/server/config_template.yaml \
  tools/batools/build.py \
  tools/batools/pcommand.py \
  tools/bacommon/servermanager.py
 	@tools/pcommand stage_server_file release $< $@
 
-build/prefab/mac_%_server/release/README.txt: \
+build/prefab/full/mac_%_server/release/README.txt: \
  assets/src/server/README.txt
 	@cp $< $@
 
-build/prefab/mac_%_server/release/dist/ballisticacore_headless: .efrocachemap
+build/prefab/full/mac_%_server/release/dist/ballisticacore_headless: .efrocachemap
+	@tools/pcommand efrocache_get $@
+
+build/prefab/lib/mac_%_server/release/libballisticacore_internal.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
 RUN_PREFAB_LINUX_X86_64_DEBUG = cd \
-  build/prefab/linux_x86_64/debug && ./ballisticacore
+  build/prefab/full/linux_x86_64/debug && ./ballisticacore
 
 RUN_PREFAB_LINUX_ARM64_DEBUG = cd \
-  build/prefab/linux_arm64/debug && ./ballisticacore
+  build/prefab/full/linux_arm64/debug && ./ballisticacore
 
 prefab-linux-x86-64-debug: prefab-linux-x86-64-debug-build
 	@tools/pcommand ensure_prefab_platform linux_x86_64
@@ -308,21 +320,24 @@ prefab-linux-arm64-debug: prefab-linux-arm64-debug-build
 	@${RUN_PREFAB_LINUX_ARM64_DEBUG}
 
 prefab-linux-x86-64-debug-build: prereqs assets-cmake \
- build/prefab/linux_x86_64/debug/ballisticacore
-	@${STAGE_ASSETS} -cmake build/prefab/linux_x86_64/debug
+ build/prefab/full/linux_x86_64/debug/ballisticacore
+	@${STAGE_ASSETS} -cmake build/prefab/full/linux_x86_64/debug
 
 prefab-linux-arm64-debug-build: prereqs assets-cmake \
- build/prefab/linux_arm64/debug/ballisticacore
-	@${STAGE_ASSETS} -cmake build/prefab/linux_arm64/debug
+ build/prefab/full/linux_arm64/debug/ballisticacore
+	@${STAGE_ASSETS} -cmake build/prefab/full/linux_arm64/debug
 
-build/prefab/linux_%/debug/ballisticacore: .efrocachemap
+build/prefab/full/linux_%/debug/ballisticacore: .efrocachemap
+	@tools/pcommand efrocache_get $@
+
+build/prefab/lib/linux_%/debug/libballisticacore_internal.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
 RUN_PREFAB_LINUX_X86_64_RELEASE = cd \
-  build/prefab/linux_x86_64/release && ./ballisticacore
+  build/prefab/full/linux_x86_64/release && ./ballisticacore
 
 RUN_PREFAB_LINUX_ARM64_RELEASE = cd \
-  build/prefab/linux_arm64/release && ./ballisticacore
+  build/prefab/full/linux_arm64/release && ./ballisticacore
 
 prefab-linux-x86-64-release: prefab-linux-x86-64-release-build
 	@tools/pcommand ensure_prefab_platform linux_x86_64
@@ -333,21 +348,24 @@ prefab-linux-arm64-release: prefab-linux-arm64-release-build
 	@${RUN_PREFAB_LINUX_ARM64_RELEASE}
 
 prefab-linux-x86-64-release-build: prereqs assets-cmake \
- build/prefab/linux_x86_64/release/ballisticacore
-	@${STAGE_ASSETS} -cmake build/prefab/linux_x86_64/release
+ build/prefab/full/linux_x86_64/release/ballisticacore
+	@${STAGE_ASSETS} -cmake build/prefab/full/linux_x86_64/release
 
 prefab-linux-arm64-release-build: prereqs assets-cmake \
- build/prefab/linux_arm64/release/ballisticacore
-	@${STAGE_ASSETS} -cmake build/prefab/linux_arm64/release
+ build/prefab/full/linux_arm64/release/ballisticacore
+	@${STAGE_ASSETS} -cmake build/prefab/full/linux_arm64/release
 
-build/prefab/linux_%/release/ballisticacore: .efrocachemap
+build/prefab/full/linux_%/release/ballisticacore: .efrocachemap
+	@tools/pcommand efrocache_get $@
+
+build/prefab/lib/linux_%/release/libballisticacore_internal.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
 RUN_PREFAB_LINUX_X86_64_SERVER_DEBUG = cd \
-  build/prefab/linux_x86_64_server/debug && ./ballisticacore_server
+  build/prefab/full/linux_x86_64_server/debug && ./ballisticacore_server
 
 RUN_PREFAB_LINUX_ARM64_SERVER_DEBUG = cd \
-  build/prefab/linux_arm64_server/debug && ./ballisticacore_server
+  build/prefab/full/linux_arm64_server/debug && ./ballisticacore_server
 
 prefab-linux-x86-64-server-debug: prefab-linux-x86-64-server-debug-build
 	@tools/pcommand ensure_prefab_platform linux_x86_64
@@ -358,75 +376,82 @@ prefab-linux-arm64-server-debug: prefab-linux-arm64-server-debug-build
 	@${RUN_PREFAB_LINUX_ARM64_SERVER_DEBUG}
 
 prefab-linux-x86-64-server-debug-build: prereqs assets-cmake \
- build/prefab/linux_x86_64_server/debug/dist/ballisticacore_headless \
- build/prefab/linux_x86_64_server/debug/ballisticacore_server \
- build/prefab/linux_x86_64_server/debug/config_template.yaml \
- build/prefab/linux_x86_64_server/debug/README.txt
-	@${STAGE_ASSETS} -cmakeserver build/prefab/linux_x86_64_server/debug/dist
+ build/prefab/full/linux_x86_64_server/debug/dist/ballisticacore_headless \
+ build/prefab/full/linux_x86_64_server/debug/ballisticacore_server \
+ build/prefab/full/linux_x86_64_server/debug/config_template.yaml \
+ build/prefab/full/linux_x86_64_server/debug/README.txt
+	@${STAGE_ASSETS} -cmakeserver build/prefab/full/linux_x86_64_server/debug/dist
 
 prefab-linux-arm64-server-debug-build: prereqs assets-cmake \
- build/prefab/linux_arm64_server/debug/dist/ballisticacore_headless \
- build/prefab/linux_arm64_server/debug/ballisticacore_server \
- build/prefab/linux_arm64_server/debug/config_template.yaml \
- build/prefab/linux_arm64_server/debug/README.txt
-	@${STAGE_ASSETS} -cmakeserver build/prefab/linux_arm64_server/debug/dist
+ build/prefab/full/linux_arm64_server/debug/dist/ballisticacore_headless \
+ build/prefab/full/linux_arm64_server/debug/ballisticacore_server \
+ build/prefab/full/linux_arm64_server/debug/config_template.yaml \
+ build/prefab/full/linux_arm64_server/debug/README.txt
+	@${STAGE_ASSETS} -cmakeserver build/prefab/full/linux_arm64_server/debug/dist
 
-build/prefab/linux_%_server/debug/ballisticacore_server: \
+build/prefab/full/linux_%_server/debug/ballisticacore_server: \
  assets/src/server/ballisticacore_server.py tools/batools/pcommand.py
 	@tools/pcommand stage_server_file debug $< $@
 
-build/prefab/linux_%_server/debug/config_template.yaml: \
+build/prefab/full/linux_%_server/debug/config_template.yaml: \
  assets/src/server/config_template.yaml \
  tools/batools/build.py \
  tools/batools/pcommand.py \
  tools/bacommon/servermanager.py
 	@tools/pcommand stage_server_file debug $< $@
 
-build/prefab/linux_%_server/debug/README.txt: \
+build/prefab/full/linux_%_server/debug/README.txt: \
  assets/src/server/README.txt
 	@cp $< $@
 
-build/prefab/linux_%_server/debug/dist/ballisticacore_headless: .efrocachemap
+build/prefab/full/linux_%_server/debug/dist/ballisticacore_headless: .efrocachemap
+	@tools/pcommand efrocache_get $@
+
+build/prefab/lib/linux_%_server/debug/libballisticacore_internal.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
 RUN_PREFAB_LINUX_X86_64_SERVER_RELEASE = cd \
-  build/prefab/linux_x86_64_server/release && ./ballisticacore_server
+  build/prefab/full/linux_x86_64_server/release && ./ballisticacore_server
 
 RUN_PREFAB_LINUX_ARM64_SERVER_RELEASE = cd \
-  build/prefab/linux_arm64_server/release && ./ballisticacore_server
+  build/prefab/full/linux_arm64_server/release && ./ballisticacore_server
 
 prefab-linux-x86-64-server-release: prefab-linux-x86-64-server-release-build
 	@tools/pcommand ensure_prefab_platform linux_x86_64
 	@${RUN_PREFAB_LINUX_X86_64_SERVER_RELEASE}
 
 prefab-linux-x86-64-server-release-build: prereqs assets-cmake \
- build/prefab/linux_x86_64_server/release/dist/ballisticacore_headless \
- build/prefab/linux_x86_64_server/release/ballisticacore_server \
- build/prefab/linux_x86_64_server/release/config_template.yaml \
- build/prefab/linux_x86_64_server/release/README.txt
-	@${STAGE_ASSETS} -cmakeserver build/prefab/linux_x86_64_server/release/dist
+ build/prefab/full/linux_x86_64_server/release/dist/ballisticacore_headless \
+ build/prefab/full/linux_x86_64_server/release/ballisticacore_server \
+ build/prefab/full/linux_x86_64_server/release/config_template.yaml \
+ build/prefab/full/linux_x86_64_server/release/README.txt
+	@${STAGE_ASSETS} \
+      -cmakeserver build/prefab/full/linux_x86_64_server/release/dist
 
-build/prefab/linux_%_server/release/ballisticacore_server: \
+build/prefab/full/linux_%_server/release/ballisticacore_server: \
  assets/src/server/ballisticacore_server.py tools/batools/pcommand.py
 	@tools/pcommand stage_server_file release $< $@
 
-build/prefab/linux_%_server/release/config_template.yaml: \
+build/prefab/full/linux_%_server/release/config_template.yaml: \
  assets/src/server/config_template.yaml \
  tools/batools/build.py \
  tools/batools/pcommand.py \
  tools/bacommon/servermanager.py
 	@tools/pcommand stage_server_file release $< $@
 
-build/prefab/linux_%_server/release/README.txt: \
+build/prefab/full/linux_%_server/release/README.txt: \
  assets/src/server/README.txt
 	@cp $< $@
 
-build/prefab/linux_%_server/release/dist/ballisticacore_headless: .efrocachemap
+build/prefab/full/linux_%_server/release/dist/ballisticacore_headless: .efrocachemap
+	@tools/pcommand efrocache_get $@
+
+build/prefab/lib/linux_%_server/release/libballisticacore_internal.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
 WINPLAT_X86 = Win32
 
-RUN_PREFAB_WINDOWS_X86_DEBUG = cd build/prefab/windows_x86/debug \
+RUN_PREFAB_WINDOWS_X86_DEBUG = cd build/prefab/full/windows_x86/debug \
   && ./BallisticaCore.exe
 
 prefab-windows-x86-debug: prefab-windows-x86-debug-build
@@ -434,14 +459,14 @@ prefab-windows-x86-debug: prefab-windows-x86-debug-build
 	@{RUN_PREFAB_WINDOWS_X86_DEBUG}
 
 prefab-windows-x86-debug-build: prereqs assets-windows-${WINPLAT_X86} \
- build/prefab/windows_x86/debug/BallisticaCore.exe
+ build/prefab/full/windows_x86/debug/BallisticaCore.exe
 	@${STAGE_ASSETS} -win-${WINPLAT_X86}-Debug \
-build/prefab/windows_x86/debug
+build/prefab/full/windows_x86/debug
 
-build/prefab/windows_x86/debug/BallisticaCore.exe: .efrocachemap
+build/prefab/full/windows_x86/debug/BallisticaCore.exe: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-RUN_PREFAB_WINDOWS_X86_RELEASE = cd build/prefab/windows_x86/release \
+RUN_PREFAB_WINDOWS_X86_RELEASE = cd build/prefab/full/windows_x86/release \
  && ./BallisticaCore.exe
 
 prefab-windows-x86-release: prefab-windows-x86-release-build
@@ -450,14 +475,15 @@ prefab-windows-x86-release: prefab-windows-x86-release-build
 
 prefab-windows-x86-release-build: prereqs \
  assets-windows-${WINPLAT_X86} \
- build/prefab/windows_x86/release/BallisticaCore.exe
+ build/prefab/full/windows_x86/release/BallisticaCore.exe
 	@${STAGE_ASSETS} -win-${WINPLAT_X86}-Release \
-build/prefab/windows_x86/release
+build/prefab/full/windows_x86/release
 
-build/prefab/windows_x86/release/BallisticaCore.exe: .efrocachemap
+build/prefab/full/windows_x86/release/BallisticaCore.exe: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-RUN_PREFAB_WINDOWS_X86_SERVER_DEBUG = cd build/prefab/windows_x86_server/debug \
+RUN_PREFAB_WINDOWS_X86_SERVER_DEBUG = cd \
+ build/prefab/full/windows_x86_server/debug \
  && dist/python_d.exe ballisticacore_server.py
 
 prefab-windows-x86-server-debug: prefab-windows-x86-server-debug-build
@@ -466,38 +492,38 @@ prefab-windows-x86-server-debug: prefab-windows-x86-server-debug-build
 
 prefab-windows-x86-server-debug-build: prereqs \
  assets-windows-${WINPLAT_X86} \
- build/prefab/windows_x86_server/debug/dist/ballisticacore_headless.exe \
- build/prefab/windows_x86_server/debug/launch_ballisticacore_server.bat \
- build/prefab/windows_x86_server/debug/ballisticacore_server.py \
- build/prefab/windows_x86_server/debug/config_template.yaml \
- build/prefab/windows_x86_server/debug/README.txt
+ build/prefab/full/windows_x86_server/debug/dist/ballisticacore_headless.exe \
+ build/prefab/full/windows_x86_server/debug/launch_ballisticacore_server.bat \
+ build/prefab/full/windows_x86_server/debug/ballisticacore_server.py \
+ build/prefab/full/windows_x86_server/debug/config_template.yaml \
+ build/prefab/full/windows_x86_server/debug/README.txt
 	@${STAGE_ASSETS} -winserver-${WINPLAT_X86}-Debug \
- build/prefab/windows_x86_server/debug/dist
+ build/prefab/full/windows_x86_server/debug/dist
 
-build/prefab/windows_x86_server/debug/dist/ballisticacore_headless.exe: .efrocachemap
+build/prefab/full/windows_x86_server/debug/dist/ballisticacore_headless.exe: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-build/prefab/windows_%_server/debug/ballisticacore_server.py: \
+build/prefab/full/windows_%_server/debug/ballisticacore_server.py: \
  assets/src/server/ballisticacore_server.py tools/batools/pcommand.py
 	@tools/pcommand stage_server_file debug $< $@
 
-build/prefab/windows_%_server/debug/launch_ballisticacore_server.bat: \
+build/prefab/full/windows_%_server/debug/launch_ballisticacore_server.bat: \
  assets/src/server/launch_ballisticacore_server.bat tools/batools/pcommand.py
 	@tools/pcommand stage_server_file debug $< $@
 
-build/prefab/windows_%_server/debug/config_template.yaml: \
+build/prefab/full/windows_%_server/debug/config_template.yaml: \
  assets/src/server/config_template.yaml \
  tools/batools/build.py \
  tools/batools/pcommand.py \
  tools/bacommon/servermanager.py
 	@tools/pcommand stage_server_file debug $< $@
 
-build/prefab/windows_%_server/debug/README.txt: \
+build/prefab/full/windows_%_server/debug/README.txt: \
  assets/src/server/README.txt
 	@cp $< $@
 
 RUN_PREFAB_WINDOWS_X86_SERVER_RELEASE = cd \
-  build/prefab/windows_x86_server/release \
+  build/prefab/full/windows_x86_server/release \
   && dist/python.exe -O ballisticacore_server.py
 
 prefab-windows-x86-server-release: prefab-windows-x86-server-release-build
@@ -506,33 +532,33 @@ prefab-windows-x86-server-release: prefab-windows-x86-server-release-build
 
 prefab-windows-x86-server-release-build: prereqs \
  assets-windows-${WINPLAT_X86} \
- build/prefab/windows_x86_server/release/dist/ballisticacore_headless.exe \
- build/prefab/windows_x86_server/release/launch_ballisticacore_server.bat \
- build/prefab/windows_x86_server/release/ballisticacore_server.py \
- build/prefab/windows_x86_server/release/config_template.yaml \
- build/prefab/windows_x86_server/release/README.txt
+ build/prefab/full/windows_x86_server/release/dist/ballisticacore_headless.exe \
+ build/prefab/full/windows_x86_server/release/launch_ballisticacore_server.bat \
+ build/prefab/full/windows_x86_server/release/ballisticacore_server.py \
+ build/prefab/full/windows_x86_server/release/config_template.yaml \
+ build/prefab/full/windows_x86_server/release/README.txt
 	@${STAGE_ASSETS} -winserver-${WINPLAT_X86}-Release \
- build/prefab/windows_x86_server/release/dist
+ build/prefab/full/windows_x86_server/release/dist
 
-build/prefab/windows_x86_server/release/dist/ballisticacore_headless.exe: .efrocachemap
+build/prefab/full/windows_x86_server/release/dist/ballisticacore_headless.exe: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-build/prefab/windows_%_server/release/ballisticacore_server.py: \
+build/prefab/full/windows_%_server/release/ballisticacore_server.py: \
  assets/src/server/ballisticacore_server.py tools/batools/pcommand.py
 	@tools/pcommand stage_server_file release $< $@
 
-build/prefab/windows_%_server/release/launch_ballisticacore_server.bat: \
+build/prefab/full/windows_%_server/release/launch_ballisticacore_server.bat: \
  assets/src/server/launch_ballisticacore_server.bat tools/batools/pcommand.py
 	@tools/pcommand stage_server_file release $< $@
 
-build/prefab/windows_%_server/release/config_template.yaml: \
+build/prefab/full/windows_%_server/release/config_template.yaml: \
  assets/src/server/config_template.yaml \
  tools/batools/build.py \
  tools/batools/pcommand.py \
  tools/bacommon/servermanager.py
 	@tools/pcommand stage_server_file release $< $@
 
-build/prefab/windows_%_server/release/README.txt: \
+build/prefab/full/windows_%_server/release/README.txt: \
  assets/src/server/README.txt
 	@cp $< $@
 
