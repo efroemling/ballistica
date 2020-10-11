@@ -234,11 +234,11 @@ prefab-mac-arm64-server-debug: prefab-mac-arm64-server-debug-build
 	@${RUN_PREFAB_MAC_ARM64_SERVER_DEBUG}
 
 prefab-mac-x86-64-server-debug-build: prereqs assets-cmake \
- build/prefab/full/mac_x86_64_server/debug/dist/ballisticacore_headless \
+ build/prefab/full/mac_x86_64_server/debug/dist/ballisticacore_headless
 	@${STAGE_ASSETS} -cmakeserver -debug build/prefab/full/mac_x86_64_server/debug
 
 prefab-mac-arm64-server-debug-build: prereqs assets-cmake \
- build/prefab/full/mac_arm64_server/debug/dist/ballisticacore_headless \
+ build/prefab/full/mac_arm64_server/debug/dist/ballisticacore_headless
 	@${STAGE_ASSETS} -cmakeserver -debug build/prefab/full/mac_arm64_server/debug
 
 build/prefab/full/mac_%_server/debug/dist/ballisticacore_headless: .efrocachemap
@@ -264,12 +264,12 @@ prefab-mac-arm64-server-release: prefab-mac-arm64-server-release-build
 	@${RUN_PREFAB_MAC_ARM64_SERVER_RELEASE}
 
 prefab-mac-x86-64-server-release-build: prereqs assets-cmake \
- build/prefab/full/mac_x86_64_server/release/dist/ballisticacore_headless \
+ build/prefab/full/mac_x86_64_server/release/dist/ballisticacore_headless
 	@${STAGE_ASSETS} -cmakeserver -release \
       build/prefab/full/mac_x86_64_server/release
 
 prefab-mac-arm64-server-release-build: prereqs assets-cmake \
- build/prefab/full/mac_arm64_server/release/dist/ballisticacore_headless \
+ build/prefab/full/mac_arm64_server/release/dist/ballisticacore_headless
 	@${STAGE_ASSETS} -cmakeserver -release \
       build/prefab/full/mac_arm64_server/release
 
@@ -356,12 +356,12 @@ prefab-linux-arm64-server-debug: prefab-linux-arm64-server-debug-build
 	@${RUN_PREFAB_LINUX_ARM64_SERVER_DEBUG}
 
 prefab-linux-x86-64-server-debug-build: prereqs assets-cmake \
- build/prefab/full/linux_x86_64_server/debug/dist/ballisticacore_headless \
+ build/prefab/full/linux_x86_64_server/debug/dist/ballisticacore_headless
 	@${STAGE_ASSETS} -cmakeserver -debug \
       build/prefab/full/linux_x86_64_server/debug
 
 prefab-linux-arm64-server-debug-build: prereqs assets-cmake \
- build/prefab/full/linux_arm64_server/debug/dist/ballisticacore_headless \
+ build/prefab/full/linux_arm64_server/debug/dist/ballisticacore_headless
 	@${STAGE_ASSETS} -cmakeserver -debug \
       build/prefab/full/linux_arm64_server/debug
 
@@ -388,12 +388,12 @@ prefab-linux-arm64-server-release: prefab-linux-arm64-server-release-build
 	@${RUN_PREFAB_LINUX_ARM64_SERVER_RELEASE}
 
 prefab-linux-x86-64-server-release-build: prereqs assets-cmake \
- build/prefab/full/linux_x86_64_server/release/dist/ballisticacore_headless \
+ build/prefab/full/linux_x86_64_server/release/dist/ballisticacore_headless
 	@${STAGE_ASSETS} -cmakeserver -release \
       build/prefab/full/linux_x86_64_server/release
 
 prefab-linux-arm64-server-release-build: prereqs assets-cmake \
- build/prefab/full/linux_arm64_server/release/dist/ballisticacore_headless \
+ build/prefab/full/linux_arm64_server/release/dist/ballisticacore_headless
 	@${STAGE_ASSETS} -cmakeserver -release \
       build/prefab/full/linux_arm64_server/release
 
@@ -450,7 +450,7 @@ prefab-windows-x86-server-debug: prefab-windows-x86-server-debug-build
 
 prefab-windows-x86-server-debug-build: prereqs \
  assets-windows-${WINPLAT_X86} \
- build/prefab/full/windows_x86_server/debug/dist/ballisticacore_headless.exe \
+ build/prefab/full/windows_x86_server/debug/dist/ballisticacore_headless.exe
 	@${STAGE_ASSETS} -winserver-${WINPLAT_X86}-Debug \
  build/prefab/full/windows_x86_server/debug
 
