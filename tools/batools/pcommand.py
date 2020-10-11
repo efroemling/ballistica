@@ -20,60 +20,13 @@ if TYPE_CHECKING:
 
 def stage_server_file() -> None:
     """Stage files for the server environment with some filtering."""
-    import os
-    import subprocess
-    import batools.build
     from efro.error import CleanError
-    from efrotools import replace_one
-    from efrotools import PYVER
+    import batools.assetstaging
     if len(sys.argv) != 5:
         raise CleanError('Expected 3 args (mode, infile, outfile).')
     mode, infilename, outfilename = sys.argv[2], sys.argv[3], sys.argv[4]
-    if mode not in ('debug', 'release'):
-        raise CleanError(f"Invalid mode '{mode}'; expected debug or release.")
-
-    print(f'Building server file: {os.path.basename(outfilename)}')
-
-    os.makedirs(os.path.dirname(outfilename), exist_ok=True)
-
-    basename = os.path.basename(infilename)
-    if basename == 'config_template.yaml':
-        # Inject all available config values into the config file.
-        batools.build.filter_server_config(str(PROJROOT), infilename,
+    batools.assetstaging.stage_server_file(str(PROJROOT), mode, infilename,
                                            outfilename)
-
-    elif basename == 'ballisticacore_server.py':
-        # Run Python in opt mode for release builds.
-        with open(infilename) as infile:
-            lines = infile.read().splitlines()
-            if mode == 'release':
-                lines[0] = replace_one(lines[0],
-                                       f'#!/usr/bin/env python{PYVER}',
-                                       f'#!/usr/bin/env -S python{PYVER} -O')
-        with open(outfilename, 'w') as outfile:
-            outfile.write('\n'.join(lines) + '\n')
-        subprocess.run(['chmod', '+x', outfilename], check=True)
-    elif basename == 'launch_ballisticacore_server.bat':
-        # Run Python in opt mode for release builds.
-        with open(infilename) as infile:
-            lines = infile.read().splitlines()
-        if mode == 'release':
-            lines[1] = replace_one(
-                lines[1], ':: Python interpreter.', ':: Python interpreter.'
-                ' (in opt mode so we use bundled .opt-1.pyc files)')
-            lines[2] = replace_one(
-                lines[2], 'dist\\\\python.exe ballisticacore_server.py',
-                'dist\\\\python.exe -O ballisticacore_server.py')
-        else:
-            # In debug mode we use the bundled debug interpreter.
-            lines[2] = replace_one(
-                lines[2], 'dist\\\\python.exe ballisticacore_server.py',
-                'dist\\\\python_d.exe ballisticacore_server.py')
-
-        with open(outfilename, 'w') as outfile:
-            outfile.write('\n'.join(lines) + '\n')
-    else:
-        raise CleanError(f"Unknown server file for staging: '{basename}'.")
 
 
 def py_examine() -> None:

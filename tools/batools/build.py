@@ -648,15 +648,12 @@ def _get_server_config_template_yaml(projroot: str) -> str:
     return '\n'.join(lines_out)
 
 
-def filter_server_config(projroot: str, infilepath: str,
-                         outfilepath: str) -> None:
+def filter_server_config(projroot: str, infilepath: str) -> str:
     """Add commented-out config options to a server config."""
     with open(infilepath) as infile:
         cfg = infile.read()
-    cfg = cfg.replace('#__CONFIG_TEMPLATE_VALUES__',
-                      _get_server_config_template_yaml(projroot))
-    with open(outfilepath, 'w') as outfile:
-        outfile.write(cfg)
+    return cfg.replace('#__CONFIG_TEMPLATE_VALUES__',
+                       _get_server_config_template_yaml(projroot))
 
 
 def update_docs_md(check: bool) -> None:

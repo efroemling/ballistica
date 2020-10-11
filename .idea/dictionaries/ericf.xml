@@ -541,6 +541,7 @@
       <w>dstattr</w>
       <w>dstbase</w>
       <w>dstdata</w>
+      <w>dstdirname</w>
       <w>dstfile</w>
       <w>dstfin</w>
       <w>dstjson</w>
@@ -1098,6 +1099,7 @@
       <w>levelname</w>
       <w>lfull</w>
       <w>lfval</w>
+      <w>libballisticacore</w>
       <w>libcrypto</w>
       <w>libdir</w>
       <w>libegl</w>
@@ -1262,6 +1264,7 @@
       <w>modders</w>
       <w>modename</w>
       <w>modestr</w>
+      <w>modeval</w>
       <w>modpack</w>
       <w>modtimes</w>
       <w>moduledir</w>
@@ -1794,6 +1797,7 @@
       <w>servercfg</w>
       <w>servercmd</w>
       <w>serverdialog</w>
+      <w>serverdst</w>
       <w>serverget</w>
       <w>servermanager</w>
       <w>servermode</w>
