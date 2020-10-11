@@ -719,22 +719,24 @@ cmake-build: assets-cmake resources code
 	@${STAGE_ASSETS} -cmake build/cmake/$(CM_BT_LC)
 	@cd build/cmake/$(CM_BT_LC) && test -f Makefile \
       || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
-      ../../../ballisticacore-cmake
+      ${PWD}/ballisticacore-cmake
 	@cd build/cmake/$(CM_BT_LC) && ${MAKE} -j${CPUS}
 
 cmake-clean:
 	rm -rf build/cmake/$(CM_BT_LC)
 
 cmake-server: cmake-server-build
-	@cd build/cmake/server-$(CM_BT_LC) && ./ballisticacore
+	@cd build/cmake/server-$(CM_BT_LC) && ./ballisticacore_server
 
 cmake-server-build: assets-cmake resources code
-	@tools/pcommand cmake_prep_dir build/cmake/server-$(CM_BT_LC)
+	@tools/pcommand cmake_prep_dir build/cmake/server-$(CM_BT_LC)/dist
 	@${STAGE_ASSETS} -cmakeserver -${CM_BT_LC} build/cmake/server-$(CM_BT_LC)
-	@cd build/cmake/server-$(CM_BT_LC) && test -f Makefile \
+	@cd build/cmake/server-$(CM_BT_LC)/dist && test -f Makefile \
       || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) -DHEADLESS=true \
-      ../../../ballisticacore-cmake
-	@cd build/cmake/server-$(CM_BT_LC) && ${MAKE} -j${CPUS}
+      ${PWD}/ballisticacore-cmake
+	@cd build/cmake/server-$(CM_BT_LC)/dist && ${MAKE} -j${CPUS}
+	@cd build/cmake/server-$(CM_BT_LC)/dist && test -f ballisticacore_headless \
+      || ln -sf ballisticacore ballisticacore_headless
 
 cmake-server-clean:
 	rm -rf build/cmake/server-$(CM_BT_LC)

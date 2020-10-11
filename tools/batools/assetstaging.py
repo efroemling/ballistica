@@ -457,8 +457,7 @@ def stage_server_file(projroot: str, mode: str, infilename: str,
                 lines[2], 'dist\\\\python.exe ballisticacore_server.py',
                 'dist\\\\python_d.exe ballisticacore_server.py')
 
-        with open(outfilename, 'w') as outfile:
-            outfile.write('\n'.join(lines) + '\n')
+        _write_if_changed(outfilename, '\n'.join(lines) + '\n')
     else:
         raise RuntimeError(f"Unknown server file for staging: '{basename}'.")
 
