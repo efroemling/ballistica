@@ -817,5 +817,12 @@ CM_BT_LC = $(shell echo $(CMAKE_BUILD_TYPE) | tr A-Z a-z)
 ballisticacore-cmake/.clang-format: .clang-format
 	@cd ballisticacore-cmake && ln -sf ../.clang-format .
 
+# Simple target for CI to build a binary but no assets/etc.
+_cmake-simple-ci-server-build:
+	mkdir -p build/cmake_ci
+	cd build/cmake_ci && cmake -DCMAKE_BUILD_TYPE=Debug -DHEADLESS=true \
+      ${PWD}/ballisticacore-cmake
+	cd build/cmake_ci && ${MAKE} -j${CPUS}
+
 # Tell make which of these targets don't represent files.
-.PHONY: _cmake-prefab-lib
+.PHONY: _cmake-simple-ci-server-build
