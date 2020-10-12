@@ -716,7 +716,7 @@ cmake: cmake-build
 # Build but don't run it.
 cmake-build: assets-cmake resources code
 	@tools/pcommand cmake_prep_dir build/cmake/$(CM_BT_LC)
-	@tools/pcommand update_prefab_libs standard ${CM_BT_LC}
+	@tools/pcommand update_prefab_libs standard ${CM_BT_LC} build/cmake/${CM_BT_LC}
 	@${STAGE_ASSETS} -cmake build/cmake/$(CM_BT_LC)
 	@cd build/cmake/$(CM_BT_LC) && test -f Makefile \
       || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
@@ -731,7 +731,7 @@ cmake-server: cmake-server-build
 
 cmake-server-build: assets-cmake resources code
 	@tools/pcommand cmake_prep_dir build/cmake/server-$(CM_BT_LC)/dist
-	@tools/pcommand update_prefab_libs server ${CM_BT_LC}
+	@tools/pcommand update_prefab_libs server ${CM_BT_LC} build/cmake/server-${CM_BT_LC}/dist
 	@${STAGE_ASSETS} -cmakeserver -${CM_BT_LC} build/cmake/server-$(CM_BT_LC)
 	@cd build/cmake/server-$(CM_BT_LC)/dist && test -f Makefile \
       || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) -DHEADLESS=true \
@@ -819,12 +819,12 @@ ballisticacore-cmake/.clang-format: .clang-format
 
 # Simple target for CI to build a binary but no assets/etc.
 _cmake-simple-ci-server-build:
-	rm -rf build/cmake/server-debug
-	mkdir -p build/cmake/server-debug
-	tools/pcommand update_prefab_libs server debug
-	cd build/cmake/server-debug && \
+	rm -rf build/cmake_scsb
+	mkdir -p build/cmake_scsb
+	tools/pcommand update_prefab_libs server debug build/cmake_scsb
+	cd build/cmake_scsb && \
       cmake -DCMAKE_BUILD_TYPE=Debug -DHEADLESS=true ${PWD}/ballisticacore-cmake
-	cd build/cmake/server-debug && ${MAKE} -j${CPUS}
+	cd build/cmake_scsb && ${MAKE} -j${CPUS}
 
 # Tell make which of these targets don't represent files.
 .PHONY: _cmake-simple-ci-server-build

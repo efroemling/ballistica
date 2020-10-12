@@ -689,10 +689,11 @@ def update_prefab_libs() -> None:
     import os
     from efro.error import CleanError
     import batools.build
-    if len(sys.argv) != 4:
+    if len(sys.argv) != 5:
         raise CleanError('Expected 2 args (standard/server, debug/release)')
     buildtype = sys.argv[2]
     mode = sys.argv[3]
+    builddir = sys.argv[4]
     if buildtype not in {'standard', 'server'}:
         raise CleanError(f'Invalid buildtype: {buildtype}')
     if mode not in {'debug', 'release'}:
@@ -706,9 +707,10 @@ def update_prefab_libs() -> None:
     # or the existing one is older than our target.
     subprocess.run(['make', target], check=True)
 
-    prefix = 'server-' if buildtype == 'server' else ''
-    suffix = '/dist' if buildtype == 'server' else ''
-    libdir = f'build/cmake/{prefix}{mode}{suffix}/prefablib'
+    # prefix = 'server-' if buildtype == 'server' else ''
+    # suffix = '/dist' if buildtype == 'server' else ''
+    # libdir = f'build/cmake/{prefix}{mode}{suffix}/prefablib'
+    libdir = os.path.join(builddir, 'prefablib')
     libpath = os.path.join(libdir, 'libballisticacore_internal.a')
 
     update = True
