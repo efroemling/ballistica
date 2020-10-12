@@ -569,7 +569,7 @@ def update_makebob() -> None:
     subprocess.run(['make', 'cmake-build'], check=True, env=env)
     subprocess.run(
         [
-            'cp', '-v', 'ballisticacore-cmake/build/release/make_bob',
+            'cp', '-v', 'build/cmake/release/make_bob',
             'tools/make_bob/mac_x86_64/'
         ],
         check=True,

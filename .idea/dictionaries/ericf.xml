@@ -237,6 +237,7 @@
       <w>btnh</w>
       <w>btnv</w>
       <w>btnx</w>
+      <w>btype</w>
       <w>buildblessing</w>
       <w>buildblessingcheck</w>
       <w>builddir</w>
@@ -344,6 +345,7 @@
       <w>clrhdr</w>
       <w>clrnames</w>
       <w>clrred</w>
+      <w>cmakelists</w>
       <w>cmakeserver</w>
       <w>cmathmodule</w>
       <w>cmds</w>
@@ -1112,6 +1114,7 @@
       <w>libogg</w>
       <w>libopena</w>
       <w>libopenal</w>
+      <w>libpath</w>
       <w>libpython</w>
       <w>libsd</w>
       <w>libsdl</w>
@@ -1548,6 +1551,7 @@
       <w>prec</w>
       <w>precommand</w>
       <w>preexec</w>
+      <w>prefablib</w>
       <w>preflightfast</w>
       <w>preflightfull</w>
       <w>preflighting</w>

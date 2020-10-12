@@ -255,19 +255,8 @@ class Updater:
         with open(fname) as infile:
             lines = infile.read().splitlines()
 
-        # Look for license line(s)
         if self._license_line_checks:
-            legal_notice = '// ' + get_legal_notice_private()
-            lnum = 0
-            if lines[lnum] != legal_notice:
-                # Allow auto-correcting if it looks close already
-                # (don't want to blow away an unrelated line)
-                allow_auto = 'Copyright' in lines[
-                    lnum] and 'Eric Froemling' in lines[lnum]
-                self._add_line_correction(fname,
-                                          line_number=lnum,
-                                          expected=legal_notice,
-                                          can_auto_update=allow_auto)
+            self._check_c_license(fname, lines)
 
     def _check_headers(self) -> None:
         for header_file_raw in self._header_files:
@@ -284,13 +273,8 @@ class Updater:
                        expected=expected,
                        can_auto_update=can_auto_update))
 
-    def _check_header(self, fname: str) -> None:
+    def _check_c_license(self, fname: str, lines: List[str]) -> None:
         from efrotools import get_public_license
-
-        # Make sure its define guard is correct.
-        guard = (fname[4:].upper().replace('/', '_').replace('.', '_') + '_')
-        with open(fname) as fhdr:
-            lines = fhdr.read().splitlines()
 
         # Look for public license line (public or private repo)
         # or private license line (private repo only)
@@ -312,6 +296,16 @@ class Updater:
                                           line_number=lnum,
                                           expected=line_private,
                                           can_auto_update=False)
+
+    def _check_header(self, fname: str) -> None:
+
+        # Make sure its define guard is correct.
+        guard = (fname[4:].upper().replace('/', '_').replace('.', '_') + '_')
+        with open(fname) as fhdr:
+            lines = fhdr.read().splitlines()
+
+        if self._license_line_checks:
+            self._check_c_license(fname, lines)
 
         # Check for header guard at top
         line = '#ifndef ' + guard

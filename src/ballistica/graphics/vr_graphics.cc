@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2020 Eric Froemling
+// Released under the MIT License. See LICENSE for details.
 #if BA_VR_BUILD
 
 #include "ballistica/graphics/vr_graphics.h"

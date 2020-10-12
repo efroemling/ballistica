@@ -813,12 +813,6 @@ ENV_SRC = tools/pcommand tools/batools/build.py
 # CMake build-type lowercase
 CM_BT_LC = $(shell echo $(CMAKE_BUILD_TYPE) | tr A-Z a-z)
 
-_update-prefab-libs:
-	@tools/pcommand update_prefab_libs standard ${CM_BT_LC}
-
-_update-prefab-libs-server:
-	@tools/pcommand update_prefab_libs server ${CM_BT_LC}
-
 # When using CLion, our cmake dir is root. Expose .clang-format there too.
 ballisticacore-cmake/.clang-format: .clang-format
 	@cd ballisticacore-cmake && ln -sf ../.clang-format .

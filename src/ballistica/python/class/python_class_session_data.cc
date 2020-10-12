@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2020 Eric Froemling
+// Released under the MIT License. See LICENSE for details.
 
 #include "ballistica/python/class/python_class_session_data.h"
 

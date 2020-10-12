@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2020 Eric Froemling
+// Released under the MIT License. See LICENSE for details.
 
 #if BA_OSTYPE_LINUX
 #include "ballistica/platform/linux/platform_linux.h"
