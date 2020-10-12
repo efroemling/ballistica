@@ -67,6 +67,9 @@ class Updater:
         self._license_line_checks = bool(
             getlocalconfig(Path('.')).get('license_line_checks', True))
 
+        self._internal_source_dirs: Optional[Set[str]] = None
+        self._internal_source_files: Optional[Set[str]] = None
+
     def run(self) -> None:
         """Do the thing."""
 
@@ -117,6 +120,40 @@ class Updater:
             print(f'{Clr.BLU}Check-Builds: Everything up to date.{Clr.RST}')
         else:
             print(f'{Clr.GRN}Update-Project: SUCCESS!{Clr.RST}')
+
+    def _get_internal_source_files(self) -> Set[str]:
+        from pathlib import Path
+        from efrotools import getconfig
+
+        # Fetch/calc just once and cache results.
+        if self._internal_source_files is None:
+            sources: List[str]
+            if self._public:
+                sources = []
+            else:
+                sources = getconfig(Path('.')).get('internal_source_files', [])
+            if not isinstance(sources, list):
+                raise CleanError(f'Expected list for internal_source_files;'
+                                 f' got {type(sources)}')
+            self._internal_source_files = set(sources)
+        return self._internal_source_files
+
+    def _get_internal_source_dirs(self) -> Set[str]:
+        from pathlib import Path
+        from efrotools import getconfig
+
+        # Fetch/calc just once and cache results.
+        if self._internal_source_dirs is None:
+            sources: List[str]
+            if self._public:
+                sources = []
+            else:
+                sources = getconfig(Path('.')).get('internal_source_dirs', [])
+            if not isinstance(sources, list):
+                raise CleanError(f'Expected list for internal_source_dirs;'
+                                 f' got {type(sources)}')
+            self._internal_source_dirs = set(sources)
+        return self._internal_source_dirs
 
     def _update_dummy_module(self) -> None:
         # Update our dummy _ba module.
@@ -546,9 +583,18 @@ class Updater:
             self._update_visual_studio_project(fname, '..\\..\\src')
 
     def _is_public_source_file(self, filename: str) -> bool:
-        if filename == '/app/app.cc':
-            return True
-        return False
+        assert filename.startswith('/')
+        filename = f'src/ballistica{filename}'
+
+        # If its under any of our internal source dirs, make it internal.
+        for srcdir in self._get_internal_source_dirs():
+            assert not srcdir.startswith('/')
+            assert not srcdir.endswith('/')
+            if filename.startswith(f'{srcdir}/'):
+                return False
+
+        # If its specifically listed as an internal file, make it internal.
+        return filename not in self._get_internal_source_files()
 
     def _update_cmake_file(self, fname: str) -> None:
         with open(fname) as infile:

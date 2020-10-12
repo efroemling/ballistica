@@ -55,7 +55,7 @@ def getconfig(projroot: Path) -> Dict[str, Any]:
     return config
 
 
-def set_config(projroot: Path, config: Dict[str, Any]) -> None:
+def setconfig(projroot: Path, config: Dict[str, Any]) -> None:
     """Set the project config contents."""
     os.makedirs(Path(projroot, 'config'), exist_ok=True)
     with Path(projroot, 'config/config.json').open('w') as outfile:

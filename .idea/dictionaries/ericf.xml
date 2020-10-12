@@ -1009,6 +1009,7 @@
       <w>installdir</w>
       <w>instancer</w>
       <w>interfacetype</w>
+      <w>internalsrc</w>
       <w>interstitials</w>
       <w>intex</w>
       <w>intp</w>
@@ -1370,8 +1371,10 @@
       <w>nospeak</w>
       <w>nosub</w>
       <w>nosyncdir</w>
+      <w>nosyncdirlist</w>
       <w>nosyncdirs</w>
       <w>nosyncfile</w>
+      <w>nosyncfilelist</w>
       <w>nosyncfiles</w>
       <w>nosynctool</w>
       <w>nosynctools</w>
@@ -1821,6 +1824,7 @@
       <w>setactivity</w>
       <w>setalpha</w>
       <w>setbuild</w>
+      <w>setconfig</w>
       <w>setdata</w>
       <w>setlanguage</w>
       <w>setmusic</w>
