@@ -13,7 +13,7 @@ jobs:
 
   # We run most of our testing only on linux but it should apply to mac too;
   # we can always add an explicit mac job later if it seems worthwhile.
-  ci_unix:
+  check_linux:
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v1
@@ -26,10 +26,23 @@ jobs:
     - name: Run checks and tests
       run: make -j2 check test
 
+  compile_linux:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.8
+    - name: Install dependencies
+      run: tools/pcommand install_pip_reqs
+    - name: Compile binary
+      run: make cmake-server-build
+      
   # Most of our toolset doesn't work on raw windows (outside of WSL).
   # However, it's nice to at least run unit tests there since some behavior
   # (filesystem, etc) can vary significantly between windows and linux/apple.
-  ci_windows:
+  check_windows:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v1
