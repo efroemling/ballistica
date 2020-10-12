@@ -25,8 +25,6 @@ jobs:
       run: tools/pcommand install_pip_reqs
     - name: Run checks and tests
       run: make -j2 check test
-    - name: Prefab server build
-      run: make prefab-server-debug-build
 
   # Most of our toolset doesn't work on raw windows (outside of WSL).
   # However, it's nice to at least run unit tests there since some behavior
