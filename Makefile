@@ -819,10 +819,12 @@ ballisticacore-cmake/.clang-format: .clang-format
 
 # Simple target for CI to build a binary but no assets/etc.
 _cmake-simple-ci-server-build:
-	mkdir -p build/cmake_ci
-	cd build/cmake_ci && cmake -DCMAKE_BUILD_TYPE=Debug -DHEADLESS=true \
-      ${PWD}/ballisticacore-cmake
-	cd build/cmake_ci && ${MAKE} -j${CPUS}
+	rm -rf build/cmake/server-debug
+	mkdir -p build/cmake/server-debug
+	tools/pcommand update_prefab_libs server debug
+	cd build/cmake/server-debug && \
+      cmake -DCMAKE_BUILD_TYPE=Debug -DHEADLESS=true ${PWD}/ballisticacore-cmake
+	cd build/cmake/server-debug && ${MAKE} -j${CPUS}
 
 # Tell make which of these targets don't represent files.
 .PHONY: _cmake-simple-ci-server-build
