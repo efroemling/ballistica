@@ -716,6 +716,7 @@ cmake: cmake-build
 # Build but don't run it.
 cmake-build: assets-cmake resources code
 	@tools/pcommand cmake_prep_dir build/cmake/$(CM_BT_LC)
+	@tools/pcommand update_prefab_libs standard ${CM_BT_LC}
 	@${STAGE_ASSETS} -cmake build/cmake/$(CM_BT_LC)
 	@cd build/cmake/$(CM_BT_LC) && test -f Makefile \
       || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
@@ -730,6 +731,7 @@ cmake-server: cmake-server-build
 
 cmake-server-build: assets-cmake resources code
 	@tools/pcommand cmake_prep_dir build/cmake/server-$(CM_BT_LC)/dist
+	@tools/pcommand update_prefab_libs server ${CM_BT_LC}
 	@${STAGE_ASSETS} -cmakeserver -${CM_BT_LC} build/cmake/server-$(CM_BT_LC)
 	@cd build/cmake/server-$(CM_BT_LC)/dist && test -f Makefile \
       || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) -DHEADLESS=true \
@@ -811,9 +813,15 @@ ENV_SRC = tools/pcommand tools/batools/build.py
 # CMake build-type lowercase
 CM_BT_LC = $(shell echo $(CMAKE_BUILD_TYPE) | tr A-Z a-z)
 
+_update-prefab-libs:
+	@tools/pcommand update_prefab_libs standard ${CM_BT_LC}
+
+_update-prefab-libs-server:
+	@tools/pcommand update_prefab_libs server ${CM_BT_LC}
+
 # When using CLion, our cmake dir is root. Expose .clang-format there too.
 ballisticacore-cmake/.clang-format: .clang-format
 	@cd ballisticacore-cmake && ln -sf ../.clang-format .
 
 # Tell make which of these targets don't represent files.
-.PHONY:
+.PHONY: _cmake-prefab-lib

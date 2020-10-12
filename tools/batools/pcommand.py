@@ -683,6 +683,47 @@ def update_project() -> None:
     Updater(check=check, fix=fix).run()
 
 
+def update_prefab_libs() -> None:
+    """Update prefab internal libs for builds."""
+    import subprocess
+    import os
+    from efro.error import CleanError
+    import batools.build
+    if len(sys.argv) != 4:
+        raise CleanError('Expected 2 args (standard/server, debug/release)')
+    buildtype = sys.argv[2]
+    mode = sys.argv[3]
+    if buildtype not in {'standard', 'server'}:
+        raise CleanError(f'Invalid buildtype: {buildtype}')
+    if mode not in {'debug', 'release'}:
+        raise CleanError(f'Invalid mode: {mode}')
+    platform = batools.build.get_current_prefab_platform()
+    suffix = '_server' if buildtype == 'server' else ''
+    target = (f'build/prefab/lib/{platform}{suffix}/{mode}/'
+              f'libballisticacore_internal.a')
+
+    # Build the target and then copy it to dst if it doesn't exist there yet
+    # or the existing one is older than our target.
+    subprocess.run(['make', target], check=True)
+
+    prefix = 'server-' if buildtype == 'server' else ''
+    suffix = '/dist' if buildtype == 'server' else ''
+    libdir = f'build/cmake/{prefix}{mode}{suffix}/prefablib'
+    libpath = os.path.join(libdir, 'libballisticacore_internal.a')
+
+    update = True
+    time1 = os.path.getmtime(target)
+    if os.path.exists(libpath):
+        time2 = os.path.getmtime(libpath)
+        if time1 <= time2:
+            update = False
+
+    if update:
+        if not os.path.exists(libdir):
+            os.makedirs(libdir, exist_ok=True)
+        subprocess.run(['cp', target, libdir], check=True)
+
+
 def cmake_prep_dir() -> None:
     """Create a dir, recreating it when cmake/python/etc. version changes.
 
