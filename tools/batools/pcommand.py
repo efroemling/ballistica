@@ -699,7 +699,8 @@ def update_cmake_prefab_lib() -> None:
         raise CleanError(f'Invalid buildtype: {buildtype}')
     if mode not in {'debug', 'release'}:
         raise CleanError(f'Invalid mode: {mode}')
-    platform = batools.build.get_current_prefab_platform()
+    platform = batools.build.get_current_prefab_platform(
+        wsl_gives_windows=False)
     suffix = '_server' if buildtype == 'server' else ''
     target = (f'build/prefab/lib/{platform}{suffix}/{mode}/'
               f'libballisticacore_internal.a')
