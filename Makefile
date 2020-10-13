@@ -804,11 +804,13 @@ ENV_SRC = tools/pcommand tools/batools/build.py
 .pycheckers: config/toolconfigsrc/pycheckers ${TOOL_CFG_SRC}
 	@${TOOL_CFG_INST} $< $@
 
-# Include anything as sources here that should require
+# Set this to 1 to skip environment checks.
+SKIP_CHECKENV ?= 0
+
 .cache/checkenv: ${ENV_SRC}
-	@tools/pcommand checkenv
-	@mkdir -p .cache
-	@touch .cache/checkenv
+	@if [ ${SKIP_CHECKENV} -ne 1 ]; then \
+      tools/pcommand checkenv && mkdir -p .cache && touch .cache/checkenv; \
+  fi
 
 # CMake build-type lowercase
 CM_BT_LC = $(shell echo $(CMAKE_BUILD_TYPE) | tr A-Z a-z)
