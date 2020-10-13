@@ -817,14 +817,15 @@ CM_BT_LC = $(shell echo $(CMAKE_BUILD_TYPE) | tr A-Z a-z)
 ballisticacore-cmake/.clang-format: .clang-format
 	@cd ballisticacore-cmake && ln -sf ../.clang-format .
 
-# Simple target for CI to build a binary but no assets/etc.
-_cmake-simple-ci-server-build:
-	rm -rf build/cmake_scsb
-	mkdir -p build/cmake_scsb
-	tools/pcommand update_cmake_prefab_lib server debug build/cmake_scsb
-	cd build/cmake_scsb && \
+# Simple target for CI to build a binary but not download/assemble assets/etc.
+_cmake-simple-ci-server-build: code
+	rm -rf build/cmake_simple_ci_server_build
+	mkdir -p build/cmake_simple_ci_server_build
+	tools/pcommand update_cmake_prefab_lib \
+      server debug build/cmake_simple_ci_server_build
+	cd build/cmake_simple_ci_server_build && \
       cmake -DCMAKE_BUILD_TYPE=Debug -DHEADLESS=true ${PWD}/ballisticacore-cmake
-	cd build/cmake_scsb && ${MAKE} -j${CPUS}
+	cd build/cmake_simple_ci_server_build && ${MAKE} -j${CPUS}
 
 # Tell make which of these targets don't represent files.
 .PHONY: _cmake-simple-ci-server-build
