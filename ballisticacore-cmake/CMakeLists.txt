@@ -512,6 +512,7 @@ add_executable(ballisticacore
   ${BA_SRC_ROOT}/ballistica/python/methods/python_methods_system.h
   ${BA_SRC_ROOT}/ballistica/python/methods/python_methods_ui.cc
   ${BA_SRC_ROOT}/ballistica/python/methods/python_methods_ui.h
+  ${BA_SRC_ROOT}/ballistica/python/python.cc
   ${BA_SRC_ROOT}/ballistica/python/python.h
   ${BA_SRC_ROOT}/ballistica/python/python_command.cc
   ${BA_SRC_ROOT}/ballistica/python/python_command.h
