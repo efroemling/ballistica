@@ -64,13 +64,10 @@ endif ()
 # Currently seeing warnings about parameter order changing in GCC 7.1
 # on Raspberry Pi builds. We never need to care about C++ abi compatibility
 # so just silencing them for now. Can maybe remove this later if they stop.
-if (CMAKE_COMPILER_IS_GNUCXX)
+if (CMAKE_CXX_COMPILER_ID MATCHES GNU)
   set(CMAKE_CXX_FLAGS
     "${CMAKE_CXX_FLAGS} -Wno-psabi")
 endif()
-
-# message("GOT SDL INC ${SDL2_INCLUDE_DIRS}")
-# message(FATAL_ERROR "SO FAR SO GOOD")
 
 set(BA_SRC_ROOT src)
 include_directories(${BA_SRC_ROOT})
@@ -162,11 +159,13 @@ add_library(ode
   )
 target_include_directories(ode PRIVATE ${ODE_SRC_ROOT})
 
-# EWWW; GCC gives us bad mesh collisions with -O3 (and maybe -O2)
+# EWWW; GCC gives us bad mesh collisions with -O3 (and maybe -O2?)
 # need to finally get to the bottom of this but limiting to -01 for now.
 # (-O2 might be safe??... or what about -Os?  Should test again.)
 if (CMAKE_BUILD_TYPE MATCHES Release)
-  target_compile_options(ode PRIVATE -O1)
+  if (CMAKE_CXX_COMPILER_ID MATCHES GNU)
+    target_compile_options(ode PRIVATE -O1)
+  endif()
 endif ()
 
 # BallisticaCore binary.
