@@ -177,6 +177,7 @@
       <w>bcppcompiler</w>
       <w>bcyn</w>
       <w>bdfl</w>
+      <w>bdir</w>
       <w>belarussian</w>
       <w>benboncan</w>
       <w>bfiledir</w>
@@ -1792,6 +1793,7 @@
       <w>scrlw</w>
       <w>scrollw</w>
       <w>scrollwidget</w>
+      <w>scsb</w>
       <w>scyn</w>
       <w>sdata</w>
       <w>sdkutils</w>
@@ -2258,6 +2260,7 @@
       <w>waaah</w>
       <w>waittime</w>
       <w>wanttype</w>
+      <w>warntype</w>
       <w>wasdead</w>
       <w>wavenum</w>
       <w>weakref</w>

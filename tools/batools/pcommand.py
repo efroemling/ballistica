@@ -683,14 +683,15 @@ def update_project() -> None:
     Updater(check=check, fix=fix).run()
 
 
-def update_prefab_libs() -> None:
+def update_cmake_prefab_lib() -> None:
     """Update prefab internal libs for builds."""
     import subprocess
     import os
     from efro.error import CleanError
     import batools.build
     if len(sys.argv) != 5:
-        raise CleanError('Expected 2 args (standard/server, debug/release)')
+        raise CleanError('Expected 3 args (standard/server,'
+                         ' debug/release, build-dir)')
     buildtype = sys.argv[2]
     mode = sys.argv[3]
     builddir = sys.argv[4]
@@ -707,9 +708,6 @@ def update_prefab_libs() -> None:
     # or the existing one is older than our target.
     subprocess.run(['make', target], check=True)
 
-    # prefix = 'server-' if buildtype == 'server' else ''
-    # suffix = '/dist' if buildtype == 'server' else ''
-    # libdir = f'build/cmake/{prefix}{mode}{suffix}/prefablib'
     libdir = os.path.join(builddir, 'prefablib')
     libpath = os.path.join(libdir, 'libballisticacore_internal.a')
 

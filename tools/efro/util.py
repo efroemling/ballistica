@@ -329,6 +329,18 @@ def checktype(obj: Any, typ: Type[T]) -> T:
     return obj
 
 
+def warntype(obj: Any, typ: Type[T]) -> T:
+    """Return an object typed as a given type.
+
+    Always checks the type at runtime and simply logs a warning if it is
+    not what is expected.
+    """
+    if not isinstance(obj, typ):
+        import logging
+        logging.warning('warntype: expected a %s, got a %s', typ, type(obj))
+    return obj  # type: ignore
+
+
 def assert_non_optional(obj: Optional[T]) -> T:
     """Return an object with Optional typing removed.
 
