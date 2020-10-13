@@ -3948,8 +3948,8 @@
   "build/prefab/lib/linux_x86_64/release/libballisticacore_internal.a": "https://files.ballistica.net/cache/ba1/e1/1a/ff5b7abc008154a71152a1635d33",
   "build/prefab/lib/linux_x86_64_server/debug/libballisticacore_internal.a": "https://files.ballistica.net/cache/ba1/e6/93/af621822f3d5d6021efecac32235",
   "build/prefab/lib/linux_x86_64_server/release/libballisticacore_internal.a": "https://files.ballistica.net/cache/ba1/3e/62/cc942c068c685832f6b7664bbb0f",
-  "build/prefab/lib/mac_x86_64/debug/libballisticacore_internal.a": "https://files.ballistica.net/cache/ba1/d0/51/f99dfba5fffabe2706db7fac2472",
-  "build/prefab/lib/mac_x86_64/release/libballisticacore_internal.a": "https://files.ballistica.net/cache/ba1/86/18/d8ddf9ba6fea3e35f941155151c7",
-  "build/prefab/lib/mac_x86_64_server/debug/libballisticacore_internal.a": "https://files.ballistica.net/cache/ba1/cc/26/a468f189bef013ba7d92f543bd0b",
-  "build/prefab/lib/mac_x86_64_server/release/libballisticacore_internal.a": "https://files.ballistica.net/cache/ba1/1b/fd/3fba7ca92c1ed628cbf7542eee4c"
+  "build/prefab/lib/mac_x86_64/debug/libballisticacore_internal.a": "https://files.ballistica.net/cache/ba1/68/1a/8e04067c191229b1dcfb6a470ec1",
+  "build/prefab/lib/mac_x86_64/release/libballisticacore_internal.a": "https://files.ballistica.net/cache/ba1/dd/1f/646dd2c8f69f3d123aa02de7ec5c",
+  "build/prefab/lib/mac_x86_64_server/debug/libballisticacore_internal.a": "https://files.ballistica.net/cache/ba1/28/45/922dc5d0c0b61d252355cf09997d",
+  "build/prefab/lib/mac_x86_64_server/release/libballisticacore_internal.a": "https://files.ballistica.net/cache/ba1/41/25/842bf633e2f05dd3c037460064ab"
 }

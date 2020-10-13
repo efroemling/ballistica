@@ -805,10 +805,10 @@ ENV_SRC = tools/pcommand tools/batools/build.py
 	@${TOOL_CFG_INST} $< $@
 
 # Set this to 1 to skip environment checks.
-SKIP_CHECKENV ?= 0
+SKIP_ENV_CHECKS ?= 0
 
 .cache/checkenv: ${ENV_SRC}
-	@if [ ${SKIP_CHECKENV} -ne 1 ]; then \
+	@if [ ${SKIP_ENV_CHECKS} -ne 1 ]; then \
       tools/pcommand checkenv && mkdir -p .cache && touch .cache/checkenv; \
   fi
 
@@ -820,7 +820,8 @@ ballisticacore-cmake/.clang-format: .clang-format
 	@cd ballisticacore-cmake && ln -sf ../.clang-format .
 
 # Simple target for CI to build a binary but not download/assemble assets/etc.
-_cmake-simple-ci-server-build: code
+_cmake-simple-ci-server-build:
+	SKIP_ENV_CHECKS=1 ${MAKE} code
 	rm -rf build/cmake_simple_ci_server_build
 	mkdir -p build/cmake_simple_ci_server_build
 	tools/pcommand update_cmake_prefab_lib \
