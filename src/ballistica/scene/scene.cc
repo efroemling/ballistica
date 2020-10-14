@@ -621,4 +621,11 @@ auto Scene::GetCorrectionMessage(bool blended) -> std::vector<uint8_t> {
 
 void Scene::SetOutputStream(GameStream* val) { output_stream_ = val; }
 
+auto Scene::AddNode(Node* node, int64_t* node_id, NodeList::iterator* i)
+    -> void {
+  assert(node && node_id && i);
+  *node_id = next_node_id_++;
+  *i = nodes_.insert(nodes_.end(), Object::Ref<Node>(node));
+}
+
 }  // namespace ballistica

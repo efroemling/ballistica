@@ -18,18 +18,20 @@ class CollisionCache {
   ~CollisionCache();
 
   // If returns true, the provided AABB *may* intersect the geoms.
-  void SetGeoms(const std::vector<dGeomID>& geoms);
-  void Draw(FrameDef* f);  // For debugging.
-  void CollideAgainstSpace(dSpaceID space, void* data, dNearCallback* callback);
-  void CollideAgainstGeom(dGeomID geom, void* data, dNearCallback* callback);
+  auto SetGeoms(const std::vector<dGeomID>& geoms) -> void;
+  auto Draw(FrameDef* f) -> void;  // For debugging.
+  auto CollideAgainstSpace(dSpaceID space, void* data, dNearCallback* callback)
+      -> void;
+  auto CollideAgainstGeom(dGeomID geom, void* data, dNearCallback* callback)
+      -> void;
 
   // Call this periodically (once per cycle or so) to slowly fill in
   // the cache so there's less to do during spurts of activity;
   void Precalc();
 
  private:
-  void TestCell(size_t cell_index, int x, int z);
-  void Update();
+  auto TestCell(size_t cell_index, int x, int z) -> void;
+  auto Update() -> void;
   uint32_t precalc_index_{};
   std::vector<dGeomID> geoms_;
   struct Cell {

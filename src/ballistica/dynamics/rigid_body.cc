@@ -150,7 +150,7 @@ RigidBody::RigidBody(int id_in, Part* part_in, Type type_in, Shape shape_in,
   SetDimensions(dimensions_[0], dimensions_[1], dimensions_[2]);
 }
 
-void RigidBody::Check() {
+auto RigidBody::Check() -> void {
   if (type_ == Type::kBody) {
     const dReal* p = dBodyGetPosition(body_);
     const dReal* q = dBodyGetQuaternion(body_);
@@ -178,7 +178,7 @@ void RigidBody::Check() {
       prev_vel_[i] = lv[i];
       prev_a_vel_[i] = av[i];
     }
-#endif
+#endif  // BA_DEBUG_BUILD
   }
 }
 
@@ -206,7 +206,7 @@ RigidBody::~RigidBody() {
   }
 }
 
-void RigidBody::KillConstraints() {
+auto RigidBody::KillConstraints() -> void {
   while (joints_.begin() != joints_.end()) {
     (**joints_.begin()).Kill();
   }
@@ -233,7 +233,7 @@ auto RigidBody::GetEmbeddedSizeFull() -> int {
 // store a body to a buffer
 // FIXME - theoretically we should embed birth-time
 // as this can affect collisions with this object
-void RigidBody::EmbedFull(char** buffer) {
+auto RigidBody::EmbedFull(char** buffer) -> void {
   assert(type_ == Type::kBody);
 
   const dReal* p = dBodyGetPosition(body_);
@@ -276,7 +276,7 @@ void RigidBody::EmbedFull(char** buffer) {
 }
 
 // Position a body from buffer data.
-void RigidBody::ExtractFull(const char** buffer) {
+auto RigidBody::ExtractFull(const char** buffer) -> void {
   assert(type_ == Type::kBody);
 
   dReal p[3], lv[3], av[3];
@@ -326,7 +326,7 @@ void RigidBody::ExtractFull(const char** buffer) {
   }
 }
 
-void RigidBody::Draw(RenderPass* pass, bool shaded) {
+auto RigidBody::Draw(RenderPass* pass, bool shaded) -> void {
   assert(pass);
   RenderPass::Type pass_type = pass->type();
   // only passes we draw in are light_shadow and beauty
@@ -341,7 +341,8 @@ void RigidBody::Draw(RenderPass* pass, bool shaded) {
   }
 }
 
-void RigidBody::AddCallback(CollideCallbackFunc callbackIn, void* data_in) {
+auto RigidBody::AddCallback(CollideCallbackFunc callbackIn, void* data_in)
+    -> void {
   CollideCallback c{};
   c.callback = callbackIn;
   c.data = data_in;
@@ -358,8 +359,8 @@ auto RigidBody::CallCollideCallbacks(dContact* contacts, int count,
   return true;
 }
 
-void RigidBody::SetDimensions(float d1, float d2, float d3, float m1, float m2,
-                              float m3, float density_mult) {
+auto RigidBody::SetDimensions(float d1, float d2, float d3, float m1, float m2,
+                              float m3, float density_mult) -> void {
   dimensions_[0] = d1;
   dimensions_[1] = d2;
   dimensions_[2] = d3;
@@ -569,8 +570,8 @@ auto RigidBody::ApplyImpulse(float px, float py, float pz, float vx, float vy,
   return total_mag;
 }
 
-void RigidBody::ApplyGlobalImpulse(float px, float py, float pz, float fx,
-                                   float fy, float fz) {
+auto RigidBody::ApplyGlobalImpulse(float px, float py, float pz, float fx,
+                                   float fy, float fz) -> void {
   if (type_ != Type::kBody) {
     return;
   }
@@ -581,7 +582,7 @@ void RigidBody::ApplyGlobalImpulse(float px, float py, float pz, float fx,
 
 RigidBody::Joint::Joint() = default;
 
-void RigidBody::Joint::SetJoint(dxJointFixed* id_in, Scene* scene) {
+auto RigidBody::Joint::SetJoint(dxJointFixed* id_in, Scene* scene) -> void {
   Kill();
   creation_time_ = scene->time();
   id_ = id_in;
@@ -589,7 +590,8 @@ void RigidBody::Joint::SetJoint(dxJointFixed* id_in, Scene* scene) {
 
 RigidBody::Joint::~Joint() { Kill(); }
 
-void RigidBody::Joint::AttachToBodies(RigidBody* b1_in, RigidBody* b2_in) {
+auto RigidBody::Joint::AttachToBodies(RigidBody* b1_in, RigidBody* b2_in)
+    -> void {
   assert(id_);
   b1_ = b1_in;
   b2_ = b2_in;
@@ -608,7 +610,7 @@ void RigidBody::Joint::AttachToBodies(RigidBody* b1_in, RigidBody* b2_in) {
   dJointAttach(id_, b_id_1, b_id_2);
 }
 
-void RigidBody::Joint::Kill() {
+auto RigidBody::Joint::Kill() -> void {
   if (id_) {
     if (b1_) {
       b1_->RemoveJoint(this);
@@ -671,13 +673,13 @@ auto RigidBody::GetTransform() -> Matrix44f {
   return matrix;
 }
 
-void RigidBody::AddBlendOffset(float x, float y, float z) {
+auto RigidBody::AddBlendOffset(float x, float y, float z) -> void {
   //  blend_offset_.x += x;
   //  blend_offset_.y += y;
   //  blend_offset_.z += z;
 }
 
-void RigidBody::UpdateBlending() {
+auto RigidBody::UpdateBlending() -> void {
   // FIXME - this seems broken. We never update blend_time_ currently
   //  and its also set to time whereas we're comparing it with steps.
   //  Should revisit.

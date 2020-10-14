@@ -143,7 +143,7 @@ class Node : public Object {
   auto HasAttribute(const std::string& name) const -> bool;
   auto has_py_ref() -> bool { return (py_ref_ != nullptr); }
   void UpdateConnections();
-  auto iterator() -> NodeList::iterator { return our_iterator; }
+  auto iterator() -> NodeList::iterator { return iterator_; }
 
   void CheckBodies();
 
@@ -205,7 +205,7 @@ class Node : public Object {
   std::vector<Object::WeakRef<Node> > dependent_nodes_;
   std::vector<Part*> parts_;
   int64_t id_{};
-  NodeList::iterator our_iterator;
+  NodeList::iterator iterator_;
 
   // Put this stuff at the bottom so it gets killed first
   PythonRef delegate_;

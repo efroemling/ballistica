@@ -26,9 +26,11 @@ void Node::AddToScene(Scene* scene) {
   // (can't create strong refs in constructors)
   assert(scene_ == scene);
   assert(id_ == 0);
-  id_ = scene->next_node_id_++;
-  our_iterator =
-      scene->nodes_.insert(scene->nodes_.end(), Object::Ref<Node>(this));
+
+  scene->AddNode(this, &id_, &iterator_);
+  // id_ = scene->next_node_id_++;
+  // our_iterator_ =
+  //     scene->nodes_.insert(scene->nodes_.end(), Object::Ref<Node>(this));
   if (GameStream* os = scene->GetGameStream()) {
     os->AddNode(this);
   }

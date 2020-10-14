@@ -78,8 +78,8 @@ class RigidBody : public Object {
 
   // these are needed for full states
   auto GetEmbeddedSizeFull() -> int;
-  void ExtractFull(const char** buffer);
-  void EmbedFull(char** buffer);
+  auto ExtractFull(const char** buffer) -> void;
+  auto EmbedFull(char** buffer) -> void;
   RigidBody(int id_in, Part* part_in, Type type_in, Shape shape_in,
             uint32_t collide_type_in, uint32_t collide_mask_in,
             CollideModel* collide_model_in = nullptr, uint32_t flags = 0);
@@ -88,37 +88,39 @@ class RigidBody : public Object {
   auto geom(int i = 0) const -> dGeomID { return geoms_[i]; }
 
   // Draw a representation of the rigid body for debugging.
-  void Draw(RenderPass* pass, bool shaded = true);
+  auto Draw(RenderPass* pass, bool shaded = true) -> void;
   auto part() const -> Part* {
     assert(part_.exists());
     return part_.get();
   }
-  void Wake() {
+  auto Wake() -> void {
     if (body_) {
       dBodyEnable(body_);
     }
   }
-  void AddCallback(CollideCallbackFunc callback_in, void* data_in);
+  auto AddCallback(CollideCallbackFunc callback_in, void* data_in) -> void;
   auto CallCollideCallbacks(dContact* contacts, int count,
                             RigidBody* opposingbody) -> bool;
-  void SetDimensions(
+  auto SetDimensions(
       float d1, float d2 = 0.0f, float d3 = 0.0f,  // body dimensions
       float m1 = 0.0f, float m2 = 0.0f,
       float m3 = 0.0f,  // Mass dimensions (default to regular if zero).
-      float density = 1.0f);
+      float density = 1.0f) -> void;
 
   // If geomWakeOnCollide is true, a GEOM_ONLY object colliding with a sleeping
   // body will wake it up. Generally this should be true if the geom is moving
   // or changing.
-  void set_geom_wake_on_collide(bool enable) { geom_wake_on_collide_ = enable; }
+  auto set_geom_wake_on_collide(bool enable) -> void {
+    geom_wake_on_collide_ = enable;
+  }
   auto geom_wake_on_collide() const -> bool { return geom_wake_on_collide_; }
   auto id() const -> int { return id_; }
-  void ApplyGlobalImpulse(float px, float py, float pz, float fx, float fy,
-                          float fz);
+  auto ApplyGlobalImpulse(float px, float py, float pz, float fx, float fy,
+                          float fz) -> void;
   auto ApplyImpulse(float px, float py, float pz, float vx, float vy, float vz,
                     float fdirx, float fdiry, float fdirz, float mag,
                     float v_mag, float radiusm, bool calc_only) -> float;
-  void KillConstraints();
+  auto KillConstraints() -> void;
 
   // Rigid body joint wrapper.  This takes ownership of joints it is passed
   // all joints should use this mechanism so they are automatically
@@ -151,8 +153,8 @@ class RigidBody : public Object {
   };
 
   // Used by Joint.
-  void AddJoint(Joint* j) { joints_.push_back(j); }
-  void RemoveJoint(Joint* j) {
+  auto AddJoint(Joint* j) -> void { joints_.push_back(j); }
+  auto RemoveJoint(Joint* j) -> void {
     for (auto i = joints_.begin(); i != joints_.end(); i++) {
       if ((*i) == j) {
         joints_.erase(i);
@@ -160,22 +162,24 @@ class RigidBody : public Object {
       }
     }
   }
-  void Check();
+  auto Check() -> void;
   auto type() const -> Type { return type_; }
   auto collide_type() const -> uint32_t { return collide_type_; }
   auto collide_mask() const -> uint32_t { return collide_mask_; }
   auto flags() const -> uint32_t { return flags_; }
-  void set_flags(uint32_t flags) { flags_ = flags; }
+  auto set_flags(uint32_t flags) -> void { flags_ = flags; }
   auto can_cause_impact_damage() const -> bool {
     return can_cause_impact_damage_;
   }
-  void set_can_cause_impact_damage(bool val) { can_cause_impact_damage_ = val; }
+  auto set_can_cause_impact_damage(bool val) -> void {
+    can_cause_impact_damage_ = val;
+  }
 
   // Applies to spheres.
   auto radius() const -> float { return dimensions_[0]; }
   auto GetTransform() -> Matrix44f;
-  void UpdateBlending();
-  void AddBlendOffset([[maybe_unused]] float x, float y, float z);
+  auto UpdateBlending() -> void;
+  auto AddBlendOffset(float x, float y, float z) -> void;
   auto blend_offset() const -> const Vector3f& { return blend_offset_; }
 
  private:

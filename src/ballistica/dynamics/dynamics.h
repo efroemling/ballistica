@@ -16,14 +16,15 @@ class Dynamics : public Object {
  public:
   explicit Dynamics(Scene* scene_in);
   ~Dynamics() override;
-  void Draw(FrameDef* frame_def);  // Draw any debug stuff, etc.
+  auto Draw(FrameDef* frame_def) -> void;  // Draw any debug stuff, etc.
   auto ode_world() -> dWorldID { return ode_world_; }
   auto getContactGroup() -> dJointGroupID { return ode_contact_group_; }
   auto space() -> dSpaceID { return ode_space_; }
 
   // Discontinues a collision. Used by parts when changing materials
   // so that new collisions may enter effect.
-  void ResetCollision(int64_t node1, int part1, int64_t node2, int part2);
+  auto ResetCollision(int64_t node1, int part1, int64_t node2, int part2)
+      -> void;
 
   // Used by collision callbacks - internal.
   auto active_collision() const -> Collision* { return active_collision_; }
@@ -47,25 +48,25 @@ class Dynamics : public Object {
   }
 
   // Used by collide message handlers.
-  void set_collide_message_state(bool inCollideMessageIn,
-                                 bool target_other_in = false) {
+  auto set_collide_message_state(bool inCollideMessageIn,
+                                 bool target_other_in = false) -> void {
     in_collide_message_ = inCollideMessageIn;
     collide_message_reverse_order_ = target_other_in;
   }
   auto in_collide_message() const -> bool { return in_collide_message_; }
-  void process();
-  void increment_skid_sound_count() { skid_sound_count_++; }
-  void decrement_skid_sound_count() { skid_sound_count_--; }
+  auto process() -> void;
+  auto increment_skid_sound_count() -> void { skid_sound_count_++; }
+  auto decrement_skid_sound_count() -> void { skid_sound_count_--; }
   auto skid_sound_count() const -> int { return skid_sound_count_; }
-  void incrementRollSoundCount() { roll_sound_count_++; }
-  void decrement_roll_sound_count() { roll_sound_count_--; }
+  auto incrementRollSoundCount() -> void { roll_sound_count_++; }
+  auto decrement_roll_sound_count() -> void { roll_sound_count_--; }
   auto getRollSoundCount() const -> int { return roll_sound_count_; }
 
   // We do some fancy collision testing stuff for trimeshes instead
   // of going through regular ODE space collision testing.. so we have
   // to keep track of these ourself.
-  void AddTrimesh(dGeomID g);
-  void RemoveTrimesh(dGeomID g);
+  auto AddTrimesh(dGeomID g) -> void;
+  auto RemoveTrimesh(dGeomID g) -> void;
 
   auto collision_count() const -> int { return collision_count_; }
   auto process_real_time() const -> millisecs_t { return real_time_; }
@@ -91,33 +92,33 @@ class Dynamics : public Object {
   // Contains in-progress collisions for current nodes.
   std::map<int64_t, SrcNodeCollideMap> node_collisions_;
   std::vector<CollisionEvent> collision_events_;
-  void HandleDisconnect(
+  auto HandleDisconnect(
       const std::map<int64_t,
                      ballistica::Dynamics::SrcNodeCollideMap>::iterator& i,
       const std::map<int64_t,
                      ballistica::Dynamics::DstNodeCollideMap>::iterator& j,
       const std::map<int, SrcPartCollideMap>::iterator& k,
-      const std::map<int, Object::Ref<Collision> >::iterator& l);
-  void ResetODE();
-  void ShutdownODE();
-  static void DoCollideCallback(void* data, dGeomID o1, dGeomID o2);
-  void CollideCallback(dGeomID o1, dGeomID o2);
-  void ProcessCollisions();
-  bool processing_collisions_ = false;
-  dWorldID ode_world_ = nullptr;
-  dJointGroupID ode_contact_group_ = nullptr;
-  dSpaceID ode_space_ = nullptr;
-  millisecs_t real_time_ = 0;
-  bool in_process_ = false;
+      const std::map<int, Object::Ref<Collision> >::iterator& l) -> void;
+  auto ResetODE() -> void;
+  auto ShutdownODE() -> void;
+  static auto DoCollideCallback(void* data, dGeomID o1, dGeomID o2) -> void;
+  auto CollideCallback(dGeomID o1, dGeomID o2) -> void;
+  auto ProcessCollisions() -> void;
+  bool processing_collisions_{};
+  dWorldID ode_world_{};
+  dJointGroupID ode_contact_group_{};
+  dSpaceID ode_space_{};
+  millisecs_t real_time_{};
+  bool in_process_{};
   std::vector<dGeomID> trimeshes_;
-  millisecs_t last_impact_sound_time_ = 0;
-  int skid_sound_count_ = 0;
-  int roll_sound_count_ = 0;
-  int collision_count_ = 0;
-  Scene* scene_;
-  bool in_collide_message_ = false;
-  bool collide_message_reverse_order_ = false;
-  Collision* active_collision_ = nullptr;
+  millisecs_t last_impact_sound_time_{};
+  int skid_sound_count_{};
+  int roll_sound_count_{};
+  int collision_count_{};
+  Scene* scene_{};
+  bool in_collide_message_{};
+  bool collide_message_reverse_order_{};
+  Collision* active_collision_{};
   Object::WeakRef<Node> active_collide_src_node_;
   Object::WeakRef<Node> active_collide_dst_node_;
   std::unique_ptr<CollisionCache> collision_cache_;
