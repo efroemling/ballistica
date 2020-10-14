@@ -18,13 +18,13 @@ class HostActivity : public ContextTarget {
   explicit HostActivity(HostSession* host_session);
   ~HostActivity() override;
   auto GetHostSession() -> HostSession* override;
-  void SetGameSpeed(float speed);
+  auto SetGameSpeed(float speed) -> void;
   auto game_speed() const -> float { return game_speed_; }
 
   // ContextTarget time/timer support.
   auto NewTimer(TimeType timetype, TimerMedium length, bool repeat,
                 const Object::Ref<Runnable>& runnable) -> int override;
-  void DeleteTimer(TimeType timetype, int timer_id) override;
+  auto DeleteTimer(TimeType timetype, int timer_id) -> void override;
   auto GetTime(TimeType timetype) -> millisecs_t override;
 
   /// Return a borrowed ref to the python activity; Py_None if nonexistent.
@@ -45,43 +45,49 @@ class HostActivity : public ContextTarget {
     assert(scene_.exists());
     return scene_.get();
   }
-  void start();
+  auto start() -> void;
 
   // A utility function; faster than dynamic_cast.
   auto GetAsHostActivity() -> HostActivity* override;
   auto GetMutableScene() -> Scene* override;
-  void Draw(FrameDef* frame_def);
-  void ScreenSizeChanged();
-  void LanguageChanged();
-  void DebugSpeedMultChanged();
-  void GraphicsQualityChanged(GraphicsQuality q);
+  auto Draw(FrameDef* frame_def) -> void;
+  auto ScreenSizeChanged() -> void;
+  auto LanguageChanged() -> void;
+  auto DebugSpeedMultChanged() -> void;
+  auto GraphicsQualityChanged(GraphicsQuality q) -> void;
 
   // Used to register python calls created in this context so we can make sure
   // they got properly cleaned up.
-  void RegisterCall(PythonContextCall* call);
+  auto RegisterCall(PythonContextCall* call) -> void;
   auto shutting_down() const -> bool { return shutting_down_; }
   auto globals_node() const -> GlobalsNode*;
-  void SetPaused(bool val);
+  auto SetPaused(bool val) -> void;
   auto paused() const -> bool { return paused_; }
-  void set_allow_kick_idle_players(bool val) { allow_kick_idle_players_ = val; }
+  auto set_allow_kick_idle_players(bool val) -> void {
+    allow_kick_idle_players_ = val;
+  }
   auto getAllowKickIdlePlayers() const -> bool {
     return allow_kick_idle_players_;
   }
   auto GetGameStream() const -> GameStream*;
-  void DumpFullState(GameStream* out);
+  auto DumpFullState(GameStream* out) -> void;
+  auto SetGlobalsNode(GlobalsNode* node) -> void;
+  auto SetIsForeground(bool val) -> void;
+  auto RegisterPyActivity(PyObject* pyActivity) -> void;
 
  private:
+  auto HandleOutOfBoundsNodes() -> void;
   auto NewSimTimer(millisecs_t length, bool repeat,
                    const Object::Ref<Runnable>& runnable) -> int;
-  void DeleteSimTimer(int timer_id);
+  auto DeleteSimTimer(int timer_id) -> void;
   auto NewBaseTimer(millisecs_t length, bool repeat,
                     const Object::Ref<Runnable>& runnable) -> int;
-  void DeleteBaseTimer(int timer_id);
-  void UpdateStepTimerLength();
+  auto DeleteBaseTimer(int timer_id) -> void;
+  auto UpdateStepTimerLength() -> void;
+  auto StepScene() -> void;
+
   Object::WeakRef<GlobalsNode> globals_node_;
-  void SetIsForeground(bool val);
   bool allow_kick_idle_players_ = false;
-  void StepScene();
   Timer* step_scene_timer_ = nullptr;
   std::map<std::string, Object::WeakRef<Texture> > textures_;
   std::map<std::string, Object::WeakRef<Sound> > sounds_;
@@ -98,21 +104,17 @@ class HostActivity : public ContextTarget {
   millisecs_t next_prune_time_ = 0;
   bool _started = false;
   int out_of_bounds_in_a_row_ = 0;
-  void HandleOutOfBoundsNodes();
   bool paused_ = false;
   float game_speed_ = 0.0f;
   millisecs_t base_time_ = 0;
   Object::Ref<Scene> scene_;
   Object::WeakRef<HostSession> host_session_;
   PythonRef py_activity_weak_ref_;
-  void RegisterPyActivity(PyObject* pyActivity);
 
-  // Want this at the bottom so it dies first since this may cause python stuff
-  // to access us.
+  // Want this at the bottom so it dies first since this may cause Python
+  // stuff to access us.
   TimerList sim_timers_;
   TimerList base_timers_;
-  friend class HostSession;
-  friend class GlobalsNode;
 };
 
 }  // namespace ballistica

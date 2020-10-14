@@ -35,7 +35,6 @@ class AppGlobals {
   std::map<int, NodeType*> node_types_by_id;
   std::map<std::string, NodeMessageType> node_message_types;
   std::vector<std::string> node_message_formats;
-  std::string calced_blessing_hash;
   bool have_mods{};
   bool replay_open{};
   std::vector<Thread*> pausable_threads;

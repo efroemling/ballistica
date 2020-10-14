@@ -178,6 +178,9 @@ auto AppInternalPushPurchaseTransactionCall(const std::string& item,
                                             bool user_initiated) -> void;
 auto AppInternalGetPublicAccountID() -> std::string;
 auto AppInternalOnGameThreadPause() -> void;
+auto AppInternalDirectSendLogs(const std::string& prefix,
+                               const std::string& suffix, bool instant,
+                               int* result = nullptr) -> void;
 
 /// Does it appear that we are a blessed build with no known user-modifications?
 auto IsUnmodifiedBlessedBuild() -> bool;

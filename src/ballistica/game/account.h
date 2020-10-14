@@ -32,14 +32,15 @@ class Account {
 
   // An extra value included when passing our account info to the server
   // ..(can be used for platform-specific install-signature stuff, etc).
-  void SetAccountExtra(const std::string& extra);
-  void SetAccountExtra2(const std::string& extra);
-  void SetAccountToken(const std::string& account_id, const std::string& token);
+  auto SetAccountExtra(const std::string& extra) -> void;
+  auto SetAccountExtra2(const std::string& extra) -> void;
+  auto SetAccountToken(const std::string& account_id, const std::string& token)
+      -> void;
 
-  void SetAccount(AccountType account_type, AccountState account_state,
-                  const std::string& name, const std::string& id);
+  auto SetAccount(AccountType account_type, AccountState account_state,
+                  const std::string& name, const std::string& id) -> void;
 
-  void SetProductsPurchased(const std::vector<std::string>& products);
+  auto SetProductsPurchased(const std::vector<std::string>& products) -> void;
   auto GetProductPurchased(const std::string& product) -> bool;
   auto product_purchases_state() const -> int {
     return product_purchases_state_;

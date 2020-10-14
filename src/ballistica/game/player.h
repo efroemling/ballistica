@@ -24,15 +24,15 @@ class Player : public Object {
   Player(int id, HostSession* host_session);
   ~Player() override;
 
-  void SetInputDevice(InputDevice* input_device);
-  void AssignInputCall(InputType type, PyObject* call_obj);
-  void InputCommand(InputType type, float value = 0.0f);
+  auto SetInputDevice(InputDevice* input_device) -> void;
+  auto AssignInputCall(InputType type, PyObject* call_obj) -> void;
+  auto InputCommand(InputType type, float value = 0.0f) -> void;
 
-  void SetName(const std::string& name, const std::string& full_name,
-               bool real);
+  auto SetName(const std::string& name, const std::string& full_name, bool real)
+      -> void;
   auto GetName(bool full = false, bool icon = true) const -> std::string;
   auto name_is_real() const -> bool { return name_is_real_; }
-  void ResetInput();
+  auto ResetInput() -> void;
   auto GetHostSession() const -> HostSession*;
 
   auto id() const -> int { return id_; }
@@ -41,7 +41,7 @@ class Player : public Object {
   auto BorrowPyRef() -> PyObject* { return GetPyRef(false); }
 
   // Set the player node for the current activity.
-  void set_node(Node* node) {
+  auto set_node(Node* node) -> void {
     assert(InGameThread());
     node_ = node;
   }
@@ -50,43 +50,43 @@ class Player : public Object {
     return node_.get();
   }
 
-  void SetPyTeam(PyObject* team);
+  auto SetPyTeam(PyObject* team) -> void;
   auto GetPyTeam() -> PyObject*;  // Returns a borrowed ref.
 
-  void SetPyCharacter(PyObject* team);
+  auto SetPyCharacter(PyObject* team) -> void;
   auto GetPyCharacter() -> PyObject*;  // Returns a borrowed ref.
 
-  void SetPyColor(PyObject* team);
+  auto SetPyColor(PyObject* team) -> void;
   auto GetPyColor() -> PyObject*;  // Returns a borrowed ref.
 
-  void SetPyHighlight(PyObject* team);
+  auto SetPyHighlight(PyObject* team) -> void;
   auto GetPyHighlight() -> PyObject*;  // Returns a borrowed ref.
 
-  void SetPyActivityPlayer(PyObject* team);
+  auto SetPyActivityPlayer(PyObject* team) -> void;
   auto GetPyActivityPlayer() -> PyObject*;  // Returns a borrowed ref.
 
-  void set_has_py_data(bool has) { has_py_data_ = has; }
+  auto set_has_py_data(bool has) -> void { has_py_data_ = has; }
   auto has_py_data() const -> bool { return has_py_data_; }
 
   auto GetInputDevice() const -> InputDevice* { return input_device_.get(); }
   auto GetAge() const -> millisecs_t { return GetRealTime() - creation_time_; }
   auto accepted() const -> bool { return accepted_; }
 
-  void SetPosition(const Vector3f& position);
+  auto SetPosition(const Vector3f& position) -> void;
 
   // If an public account-id can be determined with relative
   // certainty for this player, returns it. Otherwise returns
   // an empty string.
   auto GetPublicAccountID() const -> std::string;
 
-  void SetHostActivity(HostActivity* host_activity);
+  auto SetHostActivity(HostActivity* host_activity) -> void;
   auto GetHostActivity() const -> HostActivity*;
 
   auto has_py_ref() -> bool { return (py_ref_ != nullptr); }
 
-  void SetIcon(const std::string& tex_name, const std::string& tint_tex_name,
+  auto SetIcon(const std::string& tex_name, const std::string& tint_tex_name,
                const std::vector<float>& tint_color,
-               const std::vector<float>& tint2_color);
+               const std::vector<float>& tint2_color) -> void;
 
   auto icon_tex_name() const -> const std::string& {
     BA_PRECONDITION(icon_set_);
@@ -104,14 +104,14 @@ class Player : public Object {
     BA_PRECONDITION(icon_set_);
     return icon_tint2_color_;
   }
-  void set_accepted(bool value) { accepted_ = value; }
+  auto set_accepted(bool value) -> void { accepted_ = value; }
   auto time_out() const -> millisecs_t { return time_out_; }
-  void set_time_out(millisecs_t value) { time_out_ = value; }
-  void set_have_position(bool value) { have_position_ = value; }
+  auto set_time_out(millisecs_t value) -> void { time_out_ = value; }
+  auto set_have_position(bool value) -> void { have_position_ = value; }
 
  private:
   auto GetPyRef(bool new_ref) -> PyObject*;
-  void RunInput(InputType type, float value = 0.0f);
+  auto RunInput(InputType type, float value = 0.0f) -> void;
   bool icon_set_{};
   std::string icon_tex_name_;
   std::string icon_tint_tex_name_;

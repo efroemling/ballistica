@@ -12,19 +12,7 @@
 
 namespace ballistica {
 
-CollisionCache::CollisionCache()
-    : dirty_(true),
-      shadow_ray_(nullptr),
-      x_min_(-1),
-      x_max_(1),
-      y_min_(-1),
-      y_max_(1),
-      z_min_(-1),
-      z_max_(1) {
-  grid_width_ = 1;
-  grid_height_ = 1;
-  test_box_ = dCreateBox(nullptr, 1, 1, 1);
-}
+CollisionCache::CollisionCache() { test_box_ = dCreateBox(nullptr, 1, 1, 1); }
 
 CollisionCache::~CollisionCache() {
   if (shadow_ray_) {

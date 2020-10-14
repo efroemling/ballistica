@@ -7,14 +7,14 @@
 
 namespace ballistica {
 
-// An interface for something that can control client-connections.
-// (such as an output-stream or a replay-client-session)
-// objects can register themselves as the current client-connection-controller
-// and then they will get control of all existing (and forthcoming) clients
+/// An interface for something that can control client-connections
+/// (such as an output-stream or a replay-client-session).
+/// Objects can register themselves as the current client-connection-controller
+/// and then they will get control of all existing (and forthcoming) clients.
 class ClientControllerInterface {
  public:
-  virtual void OnClientConnected(ConnectionToClient* c) = 0;
-  virtual void OnClientDisconnected(ConnectionToClient* c) = 0;
+  virtual auto OnClientConnected(ConnectionToClient* c) -> void = 0;
+  virtual auto OnClientDisconnected(ConnectionToClient* c) -> void = 0;
 };
 
 }  // namespace ballistica

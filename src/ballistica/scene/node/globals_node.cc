@@ -105,7 +105,7 @@ GlobalsNode::GlobalsNode(Scene* scene) : Node(scene, node_type) {
       Log("WARNING: more than one globals node created in HostActivity; this "
           "shouldn't happen");
     }
-    ha->globals_node_ = this;
+    ha->SetGlobalsNode(this);
 
     // Set some values we always drive even when not the singleton 'current'
     // globals (stuff that only affects our activity/scene).

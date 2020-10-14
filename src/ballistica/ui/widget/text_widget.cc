@@ -512,25 +512,24 @@ auto TextWidget::GetHeight() -> float {
 auto TextWidget::ShouldUseStringEditDialog() const -> bool {
   if (HeadlessMode()) {
     return false;
-  } else {
-    if (force_internal_editing_) {
-      return false;
-    }
-    if (always_use_internal_keyboard_) {
-      return true;
-    }
+  }
+  if (force_internal_editing_) {
+    return false;
+  }
+  if (always_use_internal_keyboard_) {
+    return true;
+  }
 
-    // On most platforms we always want to do this.
-    // on mac/pc, however, we use inline editing if the current UI input-device
-    // is the mouse or keyboard
-    if (g_buildconfig.ostype_macos() || g_buildconfig.ostype_windows()
-        || g_buildconfig.ostype_linux()) {
-      InputDevice* ui_input_device = g_ui->GetUIInputDevice();
-      return !(ui_input_device == nullptr
-               || ui_input_device == g_input->keyboard_input());
-    } else {
-      return true;
-    }
+  // On most platforms we always want to do this.
+  // on mac/pc, however, we use inline editing if the current UI input-device
+  // is the mouse or keyboard
+  if (g_buildconfig.ostype_macos() || g_buildconfig.ostype_windows()
+      || g_buildconfig.ostype_linux()) {
+    InputDevice* ui_input_device = g_ui->GetUIInputDevice();
+    return !(ui_input_device == nullptr
+             || ui_input_device == g_input->keyboard_input());
+  } else {
+    return true;
   }
 }
 

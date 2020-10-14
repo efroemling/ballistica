@@ -12,7 +12,7 @@
 
 namespace ballistica {
 
-PlayerSpec::PlayerSpec() : account_type_(AccountType::kInvalid) {}
+PlayerSpec::PlayerSpec() = default;
 
 PlayerSpec::PlayerSpec(const std::string& s) {
   cJSON* root_obj = cJSON_Parse(s.c_str());

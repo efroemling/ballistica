@@ -38,19 +38,19 @@ class CollisionCache {
   };
   std::vector<Cell> cells_;
   std::vector<uint8_t> glow_;
-  bool dirty_;
-  dGeomID shadow_ray_;
-  dGeomID test_box_;
-  int grid_width_;
-  int grid_height_;
+  bool dirty_{true};
+  dGeomID shadow_ray_{};
+  dGeomID test_box_{};
+  int grid_width_{1};
+  int grid_height_{1};
   float cell_width_{};
   float cell_height_{};
-  float x_min_;
-  float x_max_;
-  float y_min_;
-  float y_max_;
-  float z_min_;
-  float z_max_;
+  float x_min_{-1.0f};
+  float x_max_{1.0f};
+  float y_min_{-1.0f};
+  float y_max_{1.0f};
+  float z_min_{-1.0f};
+  float z_max_{1.0f};
 };
 
 }  // namespace ballistica

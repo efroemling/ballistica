@@ -22,12 +22,6 @@ class Logging {
   /// on the platform.
   static auto Log(const std::string& msg, bool to_stdout = true,
                   bool to_server = true) -> void;
-
-  /// Ship logs to the master-server in a bg thread. If result is passed,
-  /// it will be set to 1 on success and -1 on error.
-  static auto DirectSendLogs(const std::string& prefix,
-                             const std::string& suffix, bool instant,
-                             int* result = nullptr) -> void;
 };
 
 }  // namespace ballistica
