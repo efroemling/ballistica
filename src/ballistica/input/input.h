@@ -13,7 +13,8 @@
 
 namespace ballistica {
 
-/// Class for managing input; owned and used by the game thread.
+/// Class for managing input.
+/// Should only be used in the game thread unless otherwise specified.
 class Input {
  public:
   Input();
@@ -169,21 +170,21 @@ class Input {
   millisecs_t last_mouse_move_time_{};
   int mouse_move_count_{};
   std::vector<Object::Ref<InputDevice> > input_devices_;
-  KeyboardInput* keyboard_input_ = nullptr;
-  KeyboardInput* keyboard_input_2_ = nullptr;
-  TouchInput* touch_input_ = nullptr;
-  int input_lock_count_temp_ = 0;
-  int input_lock_count_permanent_ = 0;
+  KeyboardInput* keyboard_input_{};
+  KeyboardInput* keyboard_input_2_{};
+  TouchInput* touch_input_{};
+  int input_lock_count_temp_{};
+  int input_lock_count_permanent_{};
   std::list<std::string> input_lock_temp_labels_;
   std::list<std::string> input_unlock_temp_labels_;
   std::list<std::string> input_lock_permanent_labels_;
   std::list<std::string> input_unlock_permanent_labels_;
   std::list<std::string> recent_input_locks_unlocks_;
   std::set<int> keys_held_;
-  millisecs_t last_input_device_count_update_time_ = 0;
-  millisecs_t last_input_temp_lock_time_ = 0;
-  bool ignore_mfi_controllers_ = false;
-  bool ignore_sdl_controllers_ = false;
+  millisecs_t last_input_device_count_update_time_{};
+  millisecs_t last_input_temp_lock_time_{};
+  bool ignore_mfi_controllers_{};
+  bool ignore_sdl_controllers_{};
   std::list<TestInput*> test_inputs_;
   millisecs_t stress_test_time_{};
   millisecs_t stress_test_last_leave_time_{};

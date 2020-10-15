@@ -363,27 +363,30 @@ def _sync_standard_game_data(cfg: Config) -> None:
 def _sync_server_files(cfg: Config) -> None:
     assert cfg.serverdst is not None
     modeval = 'debug' if cfg.debug else 'release'
+
+    # NOTE: staging these directly from src; not build.
+    stage_server_file(
+        projroot=cfg.projroot,
+        mode=modeval,
+        infilename=f'{cfg.src}/../src/server/ballisticacore_server.py',
+        outfilename=os.path.join(
+            cfg.serverdst, 'ballisticacore_server.py'
+            if cfg.win_type is not None else 'ballisticacore_server'))
     stage_server_file(projroot=cfg.projroot,
                       mode=modeval,
-                      infilename='assets/src/server/ballisticacore_server.py',
-                      outfilename=os.path.join(
-                          cfg.serverdst,
-                          'ballisticacore_server.py' if cfg.win_type
-                          is not None else 'ballisticacore_server'))
-    stage_server_file(projroot=cfg.projroot,
-                      mode=modeval,
-                      infilename='assets/src/server/README.txt',
+                      infilename=f'{cfg.src}/../src/server/README.txt',
                       outfilename=os.path.join(cfg.serverdst, 'README.txt'))
-    stage_server_file(projroot=cfg.projroot,
-                      mode=modeval,
-                      infilename='assets/src/server/config_template.yaml',
-                      outfilename=os.path.join(cfg.serverdst,
-                                               'config_template.yaml'))
+    stage_server_file(
+        projroot=cfg.projroot,
+        mode=modeval,
+        infilename=f'{cfg.src}/../src/server/config_template.yaml',
+        outfilename=os.path.join(cfg.serverdst, 'config_template.yaml'))
     if cfg.win_type is not None:
         stage_server_file(
             projroot=cfg.projroot,
             mode=modeval,
-            infilename='assets/src/server/launch_ballisticacore_server.bat',
+            infilename=
+            f'{cfg.src}/../src/server/launch_ballisticacore_server.bat',
             outfilename=os.path.join(cfg.serverdst,
                                      'launch_ballisticacore_server.bat'))
 

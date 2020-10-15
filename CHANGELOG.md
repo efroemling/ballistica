@@ -1,6 +1,6 @@
 ### 1.5.26 (20178)
 - Simplified licensing header on python scripts.
-- Project rework in prep for open-sourcing parts of c++ layer.
+- General project refactoring in order to open source most of the C++ layer.
 
 ### 1.5.25 (20176)
 - Added Venetian language (thanks Federico!)
