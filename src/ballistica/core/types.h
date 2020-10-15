@@ -68,6 +68,7 @@ class CollideModelData;
 class Collision;
 class CollisionCache;
 class Connection;
+class ConnectionSet;
 class ConnectionToClient;
 class Context;
 class ContextTarget;

@@ -8,6 +8,7 @@
 #include "ballistica/app/app.h"
 #include "ballistica/app/app_globals.h"
 #include "ballistica/audio/audio.h"
+#include "ballistica/game/connection/connection_set.h"
 #include "ballistica/game/player.h"
 #include "ballistica/graphics/renderer.h"
 #include "ballistica/python/python.h"
@@ -1024,7 +1025,7 @@ void Joystick::HandleSDLEvent(const SDL_Event* e) {
             // FIXME: Need a call we can make for this.
             bool do_party_button = false;
             int party_size = g_game->GetPartySize();
-            if (party_size > 1 || g_game->connection_to_host()
+            if (party_size > 1 || g_game->connections()->connection_to_host()
                 || g_ui->root_ui()->always_draw_party_icon()) {
               do_party_button = true;
             }

@@ -8,6 +8,7 @@
 #include "ballistica/app/app.h"
 #include "ballistica/app/app_globals.h"
 #include "ballistica/core/logging.h"
+#include "ballistica/game/connection/connection_set.h"
 #include "ballistica/game/game_stream.h"
 #include "ballistica/game/host_activity.h"
 #include "ballistica/game/session/host_session.h"
@@ -501,10 +502,11 @@ auto PyScreenMessage(PyObject* self, PyObject* args, PyObject* keywds)
     std::vector<int32_t> client_ids;
     if (clients_obj != Py_None) {
       std::vector<int> client_ids2 = Python::GetPyInts(clients_obj);
-      g_game->SendScreenMessageToSpecificClients(message, color.x, color.y,
-                                                 color.z, client_ids2);
+      g_game->connections()->SendScreenMessageToSpecificClients(
+          message, color.x, color.y, color.z, client_ids2);
     } else {
-      g_game->SendScreenMessageToAll(message, color.x, color.y, color.z);
+      g_game->connections()->SendScreenMessageToAll(message, color.x, color.y,
+                                                    color.z);
     }
   } else {
     // Currently specifying client_ids only works for transient messages; we'd

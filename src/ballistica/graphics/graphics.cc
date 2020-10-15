@@ -9,6 +9,7 @@
 #include "ballistica/app/app.h"
 #include "ballistica/app/app_globals.h"
 #include "ballistica/dynamics/bg/bg_dynamics.h"
+#include "ballistica/game/connection/connection_set.h"
 #include "ballistica/game/connection/connection_to_client.h"
 #include "ballistica/game/connection/connection_to_host.h"
 #include "ballistica/game/session/session.h"
@@ -295,7 +296,8 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
     bool show = false;
 
     // Add in/out data for any host connection.
-    if (ConnectionToHost* connection_to_host = g_game->connection_to_host()) {
+    if (ConnectionToHost* connection_to_host =
+            g_game->connections()->connection_to_host()) {
       if (connection_to_host->can_communicate()) show = true;
       in_size += connection_to_host->GetBytesInPerSecond();
       in_size_compressed += connection_to_host->GetBytesInPerSecondCompressed();
@@ -309,7 +311,7 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
       ping = connection_to_host->average_ping();
     } else {
       int connected_count = 0;
-      for (auto&& i : g_game->connections_to_clients()) {
+      for (auto&& i : g_game->connections()->connections_to_clients()) {
         ConnectionToClient* client = i.second.get();
         if (client->can_communicate()) {
           show = true;

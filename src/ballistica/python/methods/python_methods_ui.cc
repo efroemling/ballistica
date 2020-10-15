@@ -8,6 +8,7 @@
 #include "ballistica/app/app.h"
 #include "ballistica/app/app_globals.h"
 #include "ballistica/game/account.h"
+#include "ballistica/game/connection/connection_set.h"
 #include "ballistica/game/game.h"
 #include "ballistica/input/input.h"
 #include "ballistica/python/python.h"
@@ -2053,7 +2054,7 @@ auto PyChatMessage(PyObject* self, PyObject* args, PyObject* keywds)
     std::vector<int> clients = Python::GetPyInts(clients_obj);
     clients_p = &clients;
   }
-  g_game->SendChatMessage(message, clients_p, sender_override_p);
+  g_game->connections()->SendChatMessage(message, clients_p, sender_override_p);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -2150,7 +2151,8 @@ auto PyCanShowAd(PyObject* self, PyObject* args, PyObject* keywds)
   // them or whatnot) also disallow ads if remote apps are connected; at least
   // on android ads pause our activity which disconnects the remote app.. (could
   // potentially still allow on other platforms; should verify..)
-  if (g_game->connection_to_host() || g_game->has_connection_to_clients()
+  if (g_game->connections()->connection_to_host()
+      || g_game->connections()->has_connection_to_clients()
       || g_input->HaveRemoteAppController()) {
     Py_RETURN_FALSE;
   }
@@ -2262,7 +2264,8 @@ auto PyIsPartyIconVisible(PyObject* self, PyObject* args, PyObject* keywds)
   Platform::SetLastPyCall("is_party_icon_visible");
   BA_PYTHON_TRY;
   bool party_button_active =
-      (g_game->GetConnectedClientCount() > 0 || g_game->connection_to_host()
+      (g_game->connections()->GetConnectedClientCount() > 0
+       || g_game->connections()->connection_to_host()
        || g_ui->root_ui()->always_draw_party_icon());
   if (party_button_active) {
     Py_RETURN_TRUE;

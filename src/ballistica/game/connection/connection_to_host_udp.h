@@ -34,7 +34,7 @@ class ConnectionToHostUDP : public ConnectionToHost {
   bool did_die_{};
   void Die();
   void SendDisconnectRequest();
-  millisecs_t last_client_i_d_request_time_{};
+  millisecs_t last_client_id_request_time_{};
   millisecs_t last_disconnect_request_time_{};
   int client_id_{};
   millisecs_t last_host_response_time_{};

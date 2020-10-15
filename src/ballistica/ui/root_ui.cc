@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <string>
 
+#include "ballistica/game/connection/connection_set.h"
 #include "ballistica/game/game.h"
 #include "ballistica/game/session/host_session.h"
 #include "ballistica/graphics/component/simple_component.h"
@@ -46,7 +47,7 @@ RootUI::~RootUI() = default;
 
 void RootUI::TogglePartyWindowKeyPress() {
   assert(InGameThread());
-  if (g_game->GetPartySize() > 1 || g_game->connection_to_host()
+  if (g_game->GetPartySize() > 1 || g_game->connections()->connection_to_host()
       || always_draw_party_icon()) {
     ActivatePartyIcon();
   }
@@ -81,8 +82,9 @@ auto RootUI::HandleMouseButtonDown(float x, float y) -> bool {
   if (explicit_bool(DO_OLD_MENU_PARTY_BUTTONS)) {
     bool party_button_active =
         (!party_window_open_
-         && (g_game->GetConnectedClientCount() > 0
-             || g_game->connection_to_host() || always_draw_party_icon()));
+         && (g_game->connections()->GetConnectedClientCount() > 0
+             || g_game->connections()->connection_to_host()
+             || always_draw_party_icon()));
     float party_button_left =
         menu_active ? 2 * menu_button_size_ : menu_button_size_;
     float party_button_right = menu_active ? menu_button_size_ : 0;
@@ -202,7 +204,7 @@ void RootUI::Draw(FrameDef* frame_def) {
     // (this probably shouldn't live here).
     bool draw_connected_players_icon = false;
     int party_size = g_game->GetPartySize();
-    bool is_host = (g_game->connection_to_host() == nullptr);
+    bool is_host = (g_game->connections()->connection_to_host() == nullptr);
     millisecs_t last_connection_to_client_join_time =
         g_game->last_connection_to_client_join_time();
 
@@ -211,7 +213,7 @@ void RootUI::Draw(FrameDef* frame_def) {
          && real_time - last_connection_to_client_join_time < 5000);
 
     if (!party_window_open_
-        && (party_size != 0 || g_game->connection_to_host()
+        && (party_size != 0 || g_game->connections()->connection_to_host()
             || always_draw_party_icon_)) {
       draw_connected_players_icon = true;
     }

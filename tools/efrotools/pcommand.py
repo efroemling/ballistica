@@ -116,23 +116,30 @@ def _trim_docstring(docstring: str) -> str:
 
 
 def _spelling(words: List[str]) -> None:
-    fname = '.idea/dictionaries/ericf.xml'
-    with open(fname) as infile:
-        lines = infile.read().splitlines()
-    if lines[2] != '    <words>':
-        raise RuntimeError('Unexpected dictionary format.')
-    added_count = 0
-    for word in words:
-        line = f'      <w>{word.lower()}</w>'
-        if line not in lines:
-            lines.insert(3, line)
-            added_count += 1
+    import os
+    for fname in [
+            '.idea/dictionaries/ericf.xml',
+            'ballisticacore-cmake/.idea/dictionaries/ericf.xml'
+    ]:
+        if not os.path.exists(fname):
+            continue
+        with open(fname) as infile:
+            lines = infile.read().splitlines()
+        if lines[2] != '    <words>':
+            raise RuntimeError('Unexpected dictionary format.')
+        added_count = 0
+        for word in words:
+            line = f'      <w>{word.lower()}</w>'
+            if line not in lines:
+                lines.insert(3, line)
+                added_count += 1
 
-    with open(fname, 'w') as outfile:
-        # Sort lines in the words section.
-        assert all(l.startswith('      <w>') for l in lines[3:-3])
-        outfile.write('\n'.join(lines[:3] + sorted(lines[3:-3]) + lines[-3:]))
-    print('Added', added_count, 'words to the dictionary.')
+        with open(fname, 'w') as outfile:
+            # Sort lines in the words section.
+            assert all(l.startswith('      <w>') for l in lines[3:-3])
+            outfile.write('\n'.join(lines[:3] + sorted(lines[3:-3]) +
+                                    lines[-3:]))
+        print(f'Added {added_count} words to {fname}.')
 
 
 def spelling_all() -> None:

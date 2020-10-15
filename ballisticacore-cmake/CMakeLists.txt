@@ -274,11 +274,13 @@ add_executable(ballisticacore
   ${BA_SRC_ROOT}/ballistica/game/account.h
   ${BA_SRC_ROOT}/ballistica/game/client_controller_interface.h
   ${BA_SRC_ROOT}/ballistica/game/connection/connection.h
+  ${BA_SRC_ROOT}/ballistica/game/connection/connection_set.h
   ${BA_SRC_ROOT}/ballistica/game/connection/connection_to_client.h
   ${BA_SRC_ROOT}/ballistica/game/connection/connection_to_client_udp.h
   ${BA_SRC_ROOT}/ballistica/game/connection/connection_to_host.h
   ${BA_SRC_ROOT}/ballistica/game/connection/connection_to_host_udp.h
   ${BA_SRC_ROOT}/ballistica/game/friend_score_set.h
+  ${BA_SRC_ROOT}/ballistica/game/game.cc
   ${BA_SRC_ROOT}/ballistica/game/game.h
   ${BA_SRC_ROOT}/ballistica/game/game_stream.h
   ${BA_SRC_ROOT}/ballistica/game/host_activity.h

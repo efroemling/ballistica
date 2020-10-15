@@ -22,7 +22,6 @@ class AdvancedSettingsWindow(ba.Window):
                  origin_widget: ba.Widget = None):
         # pylint: disable=too-many-statements
         from ba.internal import master_server_get
-
         import threading
 
         # Preload some modules we use in a background thread so we won't
@@ -65,7 +64,8 @@ class AdvancedSettingsWindow(ba.Window):
 
         # In vr-mode, the internal keyboard is currently the *only* option,
         # so no need to show this.
-        self._show_always_use_internal_keyboard = (not app.vr_mode)
+        self._show_always_use_internal_keyboard = (not app.vr_mode
+                                                   and not app.iircade_mode)
 
         self._scroll_width = self._width - (100 + 2 * x_inset)
         self._scroll_height = self._height - 115.0

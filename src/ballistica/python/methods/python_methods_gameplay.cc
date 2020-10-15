@@ -11,6 +11,7 @@
 #include "ballistica/dynamics/collision.h"
 #include "ballistica/dynamics/dynamics.h"
 #include "ballistica/dynamics/material/material_action.h"
+#include "ballistica/game/connection/connection_set.h"
 #include "ballistica/game/connection/connection_to_client.h"
 #include "ballistica/game/game_stream.h"
 #include "ballistica/game/host_activity.h"
@@ -467,8 +468,9 @@ auto PyGetGameRoster(PyObject* self, PyObject* args, PyObject* keywds)
     if (clientid == -1) {
       account_id = AppInternalGetPublicAccountID();
     } else {
-      auto client2 = g_game->connections_to_clients().find(clientid);
-      if (client2 != g_game->connections_to_clients().end()) {
+      auto client2 =
+          g_game->connections()->connections_to_clients().find(clientid);
+      if (client2 != g_game->connections()->connections_to_clients().end()) {
         account_id = client2->second->peer_public_account_id();
       }
     }

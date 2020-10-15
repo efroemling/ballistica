@@ -137,22 +137,6 @@ class Networking {
   };
   auto GetScanResults() -> std::vector<ScanResultsEntry>;
 
-  /// Sends a POST request to the master server and returns the response.
-  /// path should be something like "/mystatspage".
-  /// Throws std::exceptions (NOT ballistica Exceptions) if something goes
-  /// wrong.
-  static auto MasterServerPost(
-      const std::string& path,
-      const std::map<std::string, std::string>& parameters,
-      bool use_fallback_addr = false) -> std::string;
-
-  /// Sends a GET request to the master server and returns the response.
-  /// path should be something like "/mystatspage".
-  /// Throws std::exceptions (NOT ballistica Exceptions) if something goes
-  /// wrong.
-  static auto MasterServerGet(const std::string& path,
-                              bool use_fallback_addr = false) -> std::string;
-
  private:
   void PruneScanResults();
   struct ScanResultsEntryPriv;
