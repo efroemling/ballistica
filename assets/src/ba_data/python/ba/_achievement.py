@@ -409,10 +409,9 @@ def _get_ach_mult(include_pro_bonus: bool = False) -> int:
 
     (just for display; changing this here won't affect actual rewards)
     """
-    from ba import _account
     val: int = _ba.get_account_misc_read_val('achAwardMult', 5)
     assert isinstance(val, int)
-    if include_pro_bonus and _account.have_pro():
+    if include_pro_bonus and _ba.app.accounts.have_pro():
         val *= 2
     return val
 
@@ -1178,7 +1177,7 @@ class Achievement:
         objt.node.host_only = True
 
         # Add the 'x 2' if we've got pro.
-        if _account.have_pro():
+        if app.accounts.have_pro():
             objt = Text('x 2',
                         position=(-120 - 180 + 45, 80 + y_offs - 50),
                         v_attach=Text.VAttach.BOTTOM,

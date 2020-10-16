@@ -28,7 +28,6 @@ class IconPicker(popup.PopupWindow):
                  tint2_color: Sequence[float] = (1.0, 1.0, 1.0),
                  selected_icon: str = None):
         # pylint: disable=too-many-locals
-        from ba.internal import get_purchased_icons
         del parent  # unused here
         del tint_color  # unused_here
         del tint2_color  # unused here
@@ -40,7 +39,8 @@ class IconPicker(popup.PopupWindow):
         self._delegate = delegate
         self._transitioning_out = False
 
-        self._icons = [ba.charstr(ba.SpecialChar.LOGO)] + get_purchased_icons()
+        self._icons = [ba.charstr(ba.SpecialChar.LOGO)
+                       ] + ba.app.accounts.get_purchased_icons()
         count = len(self._icons)
         columns = 4
         rows = int(math.ceil(float(count) / columns))

@@ -8,6 +8,7 @@ from __future__ import annotations
 import random
 from typing import TYPE_CHECKING, TypeVar
 
+import _ba
 from ba._activity import Activity
 from ba._score import ScoreConfig
 from ba._language import Lstr
@@ -16,7 +17,6 @@ from ba._error import NotFoundError, print_error, print_exception
 from ba._general import Call, WeakCall
 from ba._player import PlayerInfo
 from ba import _map
-import _ba
 
 if TYPE_CHECKING:
     from typing import (List, Optional, Dict, Type, Any, Callable, Sequence,
@@ -461,12 +461,11 @@ class GameActivity(Activity[PlayerType, TeamType]):
 
     def _on_tournament_query_response(self, data: Optional[Dict[str,
                                                                 Any]]) -> None:
-        from ba._account import cache_tournament_info
         if data is not None:
             data_t = data['t']  # This used to be the whole payload.
 
             # Keep our cached tourney info up to date
-            cache_tournament_info(data_t)
+            _ba.app.accounts.cache_tournament_info(data_t)
             self._setup_tournament_time_limit(
                 max(5, data_t[0]['timeRemaining']))
 

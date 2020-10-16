@@ -28,7 +28,7 @@ class ColorPicker(PopupWindow):
                  offset: Tuple[float, float] = (0.0, 0.0),
                  tag: Any = ''):
         # pylint: disable=too-many-locals
-        from ba.internal import have_pro, get_player_colors
+        from ba.internal import get_player_colors
 
         c_raw = get_player_colors()
         assert len(c_raw) == 16
@@ -94,7 +94,7 @@ class ColorPicker(PopupWindow):
             on_activate_call=ba.WeakCall(self._select_other))
 
         # Custom colors are limited to pro currently.
-        if not have_pro():
+        if not ba.app.accounts.have_pro():
             ba.imagewidget(parent=self.root_widget,
                            position=(50, 12),
                            size=(30, 30),
@@ -116,10 +116,9 @@ class ColorPicker(PopupWindow):
 
     def _select_other(self) -> None:
         from bastd.ui import purchase
-        from ba.internal import have_pro
 
         # Requires pro.
-        if not have_pro():
+        if not ba.app.accounts.have_pro():
             purchase.PurchaseWindow(items=['pro'])
             self._transition_out()
             return

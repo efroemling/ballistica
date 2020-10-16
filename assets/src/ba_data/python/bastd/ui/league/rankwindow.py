@@ -22,7 +22,6 @@ class LeagueRankWindow(ba.Window):
                  transition: str = 'in_right',
                  modal: bool = False,
                  origin_widget: ba.Widget = None):
-        from ba.internal import get_cached_league_rank_data
         ba.set_analytics_screen('League Rank Window')
 
         self._league_rank_data: Optional[Dict[str, Any]] = None
@@ -125,7 +124,7 @@ class LeagueRankWindow(ba.Window):
         self._restore_state()
 
         # if we've got cached power-ranking data already, display it
-        info = get_cached_league_rank_data()
+        info = ba.app.accounts.get_cached_league_rank_data()
         if info is not None:
             self._update_for_league_rank_data(info)
 
@@ -194,11 +193,10 @@ class LeagueRankWindow(ba.Window):
 
     def _on_power_ranking_query_response(
             self, data: Optional[Dict[str, Any]]) -> None:
-        from ba.internal import cache_league_rank_data
         self._doing_power_ranking_query = False
         # important: *only* cache this if we requested the current season..
         if data is not None and data.get('s', None) is None:
-            cache_league_rank_data(data)
+            ba.app.accounts.cache_league_rank_data(data)
         # always store a copy locally though (even for other seasons)
         self._league_rank_data = copy.deepcopy(data)
         self._update_for_league_rank_data(data)
@@ -594,9 +592,9 @@ class LeagueRankWindow(ba.Window):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
-        from ba.internal import get_league_rank_points
         if not self._root_widget:
             return
+        accounts = ba.app.accounts
         in_top = (data is not None and data['rank'] is not None)
         eq_text = self._rdict.powerRankingPointsEqualsText
         pts_txt = self._rdict.powerRankingPointsText
@@ -622,7 +620,7 @@ class LeagueRankWindow(ba.Window):
                     finished_season_unranked = True
                     self._can_do_more_button = False
                 else:
-                    our_points = get_league_rank_points(data)
+                    our_points = accounts.get_league_rank_points(data)
                     progress = float(our_points) / max(1,
                                                        data['scores'][-1][1])
                     status_text = str(int(progress * 100.0)) + '%'
@@ -820,8 +818,10 @@ class LeagueRankWindow(ba.Window):
                       ('+ ' +
                        pts_txt.replace('${NUMBER}', str(total_ach_value))))
 
-        total_trophies_count = (get_league_rank_points(data, 'trophyCount'))
-        total_trophies_value = (get_league_rank_points(data, 'trophies'))
+        total_trophies_count = (accounts.get_league_rank_points(
+            data, 'trophyCount'))
+        total_trophies_value = (accounts.get_league_rank_points(
+            data, 'trophies'))
         ba.buttonwidget(edit=self._power_ranking_trophies_button,
                         label=('' if data is None else
                                (str(total_trophies_count) + ' ')) +
@@ -831,9 +831,10 @@ class LeagueRankWindow(ba.Window):
             text='-' if data is None else
             ('+ ' + pts_txt.replace('${NUMBER}', str(total_trophies_value))))
 
-        ba.textwidget(edit=self._power_ranking_total_text,
-                      text='-' if data is None else eq_text.replace(
-                          '${NUMBER}', str(get_league_rank_points(data))))
+        ba.textwidget(
+            edit=self._power_ranking_total_text,
+            text='-' if data is None else eq_text.replace(
+                '${NUMBER}', str(accounts.get_league_rank_points(data))))
         for widget in self._power_ranking_score_widgets:
             widget.delete()
         self._power_ranking_score_widgets = []

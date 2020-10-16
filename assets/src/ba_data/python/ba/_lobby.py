@@ -881,7 +881,6 @@ class Lobby:
     def reload_profiles(self) -> None:
         """Reload available player profiles."""
         # pylint: disable=cyclic-import
-        from ba._account import ensure_have_account_player_profile
         from bastd.actor.spazappearance import get_appearances
 
         # We may have gained or lost character names if the user
@@ -890,7 +889,7 @@ class Lobby:
         self.character_names_local_unlocked.sort(key=lambda x: x.lower())
 
         # Do any overall prep we need to such as creating account profile.
-        ensure_have_account_player_profile()
+        _ba.app.accounts.ensure_have_account_player_profile()
         for chooser in self.choosers:
             try:
                 chooser.reload_profiles()

@@ -23,7 +23,6 @@ class ProfileBrowserWindow(ba.Window):
                  origin_widget: ba.Widget = None):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
-        from ba.internal import ensure_have_account_player_profile
         self._in_main_menu = in_main_menu
         if self._in_main_menu:
             back_label = ba.Lstr(resource='backText')
@@ -52,7 +51,7 @@ class ProfileBrowserWindow(ba.Window):
         self._r = 'playerProfilesWindow'
 
         # Ensure we've got an account-profile in cases where we're signed in.
-        ensure_have_account_player_profile()
+        ba.app.accounts.ensure_have_account_player_profile()
 
         top_extra = 20 if uiscale is ba.UIScale.SMALL else 0
 
@@ -171,14 +170,13 @@ class ProfileBrowserWindow(ba.Window):
 
     def _new_profile(self) -> None:
         # pylint: disable=cyclic-import
-        from ba.internal import have_pro_options
         from bastd.ui.profile.edit import EditProfileWindow
         from bastd.ui.purchase import PurchaseWindow
 
         # Limit to a handful profiles if they don't have pro-options.
         max_non_pro_profiles = _ba.get_account_misc_read_val('mnpp', 5)
         assert self._profiles is not None
-        if (not have_pro_options()
+        if (not ba.app.accounts.have_pro_options()
                 and len(self._profiles) >= max_non_pro_profiles):
             PurchaseWindow(items=['pro'],
                            header_text=ba.Lstr(

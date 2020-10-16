@@ -1256,9 +1256,8 @@ class GatherWindow(ba.Window):
             texture=ba.gettexture('lock'))
 
     def _is_internet_locked(self) -> bool:
-        from ba.internal import have_pro
         if _ba.get_account_misc_read_val('ilck', False):
-            return not have_pro()
+            return not ba.app.accounts.have_pro()
         return False
 
     def _on_max_public_party_size_minus_press(self) -> None:

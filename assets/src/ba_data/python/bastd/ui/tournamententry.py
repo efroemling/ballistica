@@ -33,7 +33,8 @@ class TournamentEntryWindow(popup.PopupWindow):
         ba.set_analytics_screen('Tournament Entry Window')
 
         self._tournament_id = tournament_id
-        self._tournament_info = (ba.app.tournament_info[self._tournament_id])
+        self._tournament_info = (
+            ba.app.accounts.tournament_info[self._tournament_id])
 
         # Set a few vars depending on the tourney fee.
         self._fee = self._tournament_info['fee']
@@ -264,13 +265,13 @@ class TournamentEntryWindow(popup.PopupWindow):
 
         # If there seems to be a relatively-recent valid cached info for this
         # tournament, use it. Otherwise we'll kick off a query ourselves.
-        if (self._tournament_id in ba.app.tournament_info
-                and ba.app.tournament_info[self._tournament_id]['valid'] and
-            (ba.time(ba.TimeType.REAL, ba.TimeFormat.MILLISECONDS) -
-             ba.app.tournament_info[self._tournament_id]['timeReceived'] <
-             1000 * 60 * 5)):
+        if (self._tournament_id in ba.app.accounts.tournament_info and
+                ba.app.accounts.tournament_info[self._tournament_id]['valid']
+                and (ba.time(ba.TimeType.REAL, ba.TimeFormat.MILLISECONDS) -
+                     ba.app.accounts.tournament_info[self._tournament_id]
+                     ['timeReceived'] < 1000 * 60 * 5)):
             try:
-                info = ba.app.tournament_info[self._tournament_id]
+                info = ba.app.accounts.tournament_info[self._tournament_id]
                 self._seconds_remaining = max(
                     0, info['timeRemaining'] - int(
                         (ba.time(ba.TimeType.REAL, ba.TimeFormat.MILLISECONDS)
@@ -294,12 +295,12 @@ class TournamentEntryWindow(popup.PopupWindow):
 
     def _on_tournament_query_response(self, data: Optional[Dict[str,
                                                                 Any]]) -> None:
-        from ba.internal import cache_tournament_info
+        accounts = ba.app.accounts
         self._running_query = False
         if data is not None:
             data = data['t']  # This used to be the whole payload.
-            cache_tournament_info(data)
-            self._seconds_remaining = ba.app.tournament_info[
+            accounts.cache_tournament_info(data)
+            self._seconds_remaining = accounts.tournament_info[
                 self._tournament_id]['timeRemaining']
             self._have_valid_data = True
 
@@ -348,7 +349,8 @@ class TournamentEntryWindow(popup.PopupWindow):
             self._running_query = True
 
         # Grab the latest info on our tourney.
-        self._tournament_info = ba.app.tournament_info[self._tournament_id]
+        self._tournament_info = ba.app.accounts.tournament_info[
+            self._tournament_id]
 
         # If we don't have valid data always show a '-' for time.
         if not self._have_valid_data:

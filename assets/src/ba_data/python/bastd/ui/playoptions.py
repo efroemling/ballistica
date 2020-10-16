@@ -26,8 +26,7 @@ class PlayOptionsWindow(popup.PopupWindow):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
-        from ba.internal import (getclass, have_pro,
-                                 get_default_teams_playlist,
+        from ba.internal import (getclass, get_default_teams_playlist,
                                  get_default_free_for_all_playlist,
                                  filter_playlist)
         from ba.internal import get_map_class
@@ -256,7 +255,7 @@ class PlayOptionsWindow(popup.PopupWindow):
                 autoselect=True,
                 textcolor=(0.8, 0.8, 0.8),
                 label=ba.Lstr(resource='teamNamesColorText'))
-            if not have_pro():
+            if not ba.app.accounts.have_pro():
                 ba.imagewidget(
                     parent=self.root_widget,
                     size=(30, 30),
@@ -350,21 +349,19 @@ class PlayOptionsWindow(popup.PopupWindow):
         self._update()
 
     def _custom_colors_names_press(self) -> None:
-        from ba.internal import have_pro
-        from bastd.ui import account as accountui
-        from bastd.ui import teamnamescolors
-        from bastd.ui import purchase
-        if not have_pro():
+        from bastd.ui.account import show_sign_in_prompt
+        from bastd.ui.teamnamescolors import TeamNamesColorsWindow
+        from bastd.ui.purchase import PurchaseWindow
+        if not ba.app.accounts.have_pro():
             if _ba.get_account_state() != 'signed_in':
-                accountui.show_sign_in_prompt()
+                show_sign_in_prompt()
             else:
-                purchase.PurchaseWindow(items=['pro'])
+                PurchaseWindow(items=['pro'])
             self._transition_out()
             return
         assert self._custom_colors_names_button
-        teamnamescolors.TeamNamesColorsWindow(
-            scale_origin=self._custom_colors_names_button.
-            get_screen_space_center())
+        TeamNamesColorsWindow(scale_origin=self._custom_colors_names_button.
+                              get_screen_space_center())
 
     def _does_target_playlist_exist(self) -> bool:
         if self._playlist == '__default__':

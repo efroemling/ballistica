@@ -209,15 +209,11 @@ class App:
         self.did_weak_call_warning = False
         self.ran_on_app_launch = False
 
-        # If we try to run promo-codes due to launch-args/etc we might
-        # not be signed in yet; go ahead and queue them up in that case.
-        self.pending_promo_codes: List[str] = []
         self.last_in_game_ad_remove_message_show_time: Optional[float] = None
         self.log_have_new = False
         self.log_upload_timer_started = False
         self._config: Optional[ba.AppConfig] = None
         self.printed_live_object_warning = False
-        self.last_post_purchase_message_time: Optional[float] = None
 
         # We include this extra hash with shared input-mapping names so
         # that we don't share mappings between differently-configured
@@ -273,8 +269,6 @@ class App:
         self.main_menu_window_refresh_check_count = 0  # FIXME: Mv to mainmenu.
         self.main_menu_resume_callbacks: list = []  # Can probably go away.
         self.special_offer: Optional[Dict] = None
-        self.league_rank_cache: Dict = {}
-        self.tournament_info: Dict = {}
         self.ping_thread_count = 0
         self.invite_confirm_windows: List[Any] = []  # FIXME: Don't use Any.
         self.store_layout: Optional[Dict[str, List[Dict[str, Any]]]] = None
@@ -512,13 +506,9 @@ class App:
     def on_app_resume(self) -> None:
         """Run when the app resumes from a suspended state."""
 
-        self.music.on_app_resume()
         self.fg_state += 1
-
-        # Mark our cached tourneys as invalid so anyone using them knows
-        # they might be out of date.
-        for entry in list(self.tournament_info.values()):
-            entry['valid'] = False
+        self.accounts.on_app_resume()
+        self.music.on_app_resume()
 
     def launch_coop_game(self,
                          game: str,
@@ -596,38 +586,10 @@ class App:
     def handle_deep_link(self, url: str) -> None:
         """Handle a deep link URL."""
         from ba._language import Lstr
-        from ba._enums import TimeType
         appname = _ba.appname()
         if url.startswith(f'{appname}://code/'):
             code = url.replace(f'{appname}://code/', '')
-
-            # If we're not signed in, queue up the code to run the next time we
-            # are and issue a warning if we haven't signed in within the next
-            # few seconds.
-            if _ba.get_account_state() != 'signed_in':
-
-                def check_pending_codes() -> None:
-                    """(internal)"""
-
-                    # If we're still not signed in and have pending codes,
-                    # inform the user that they need to sign in to use them.
-                    if self.pending_promo_codes:
-                        _ba.screenmessage(
-                            Lstr(resource='signInForPromoCodeText'),
-                            color=(1, 0, 0))
-                        _ba.playsound(_ba.getsound('error'))
-
-                self.pending_promo_codes.append(code)
-                _ba.timer(6.0, check_pending_codes, timetype=TimeType.REAL)
-                return
-            _ba.screenmessage(Lstr(resource='submittingPromoCodeText'),
-                              color=(0, 1, 0))
-            _ba.add_transaction({
-                'type': 'PROMO_CODE',
-                'expire_time': time.time() + 5,
-                'code': code
-            })
-            _ba.run_transactions()
+            self.accounts.add_pending_promo_code(code)
         else:
             _ba.screenmessage(Lstr(resource='errorText'), color=(1, 0, 0))
             _ba.playsound(_ba.getsound('error'))

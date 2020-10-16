@@ -331,7 +331,6 @@ class SpecialOfferWindow(ba.Window):
             text=str(self._cancel_delay) if self._cancel_delay > 0 else '')
 
     def _update(self) -> None:
-        from ba.internal import have_pro
 
         # If we've got seconds left on our countdown, update it.
         if self._cancel_delay > 0:
@@ -342,7 +341,7 @@ class SpecialOfferWindow(ba.Window):
 
         # We go away if we see that our target item is owned.
         if self._offer_item == 'pro':
-            if have_pro():
+            if _ba.app.accounts.have_pro():
                 can_die = True
         else:
             if _ba.get_purchased(self._offer_item):

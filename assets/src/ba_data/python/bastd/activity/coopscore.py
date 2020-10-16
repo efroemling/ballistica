@@ -1197,8 +1197,9 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         try:
             tournament_id = self.session.tournament_id
             if tournament_id is not None:
-                if tournament_id in ba.app.tournament_info:
-                    tourney_info = ba.app.tournament_info[tournament_id]
+                if tournament_id in ba.app.accounts.tournament_info:
+                    tourney_info = ba.app.accounts.tournament_info[
+                        tournament_id]
                     # pylint: disable=unbalanced-tuple-unpacking
                     pr1, pv1, pr2, pv2, pr3, pv3 = (
                         get_tournament_prize_strings(tourney_info))

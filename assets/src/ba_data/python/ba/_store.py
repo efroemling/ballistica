@@ -440,7 +440,6 @@ def get_available_sale_time(tab: str) -> Optional[int]:
     # pylint: disable=too-many-locals
     try:
         import datetime
-        from ba._account import have_pro
         from ba._enums import TimeType, TimeFormat
         app = _ba.app
         sale_times: List[Optional[int]] = []
@@ -448,7 +447,7 @@ def get_available_sale_time(tab: str) -> Optional[int]:
         # Calc time for our pro sale (old special case).
         if tab == 'extras':
             config = app.config
-            if have_pro():
+            if app.accounts.have_pro():
                 return None
 
             # If we haven't calced/loaded start times yet.

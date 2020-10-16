@@ -114,12 +114,11 @@ class PurchaseWindow(ba.Window):
                            selected_child=self._purchase_button)
 
     def _update(self) -> None:
-        from ba.internal import have_pro
         can_die = False
 
         # We go away if we see that our target item is owned.
         if self._items == ['pro']:
-            if have_pro():
+            if ba.app.accounts.have_pro():
                 can_die = True
         else:
             if _ba.get_purchased(self._items[0]):

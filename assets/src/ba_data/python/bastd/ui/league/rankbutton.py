@@ -26,7 +26,6 @@ class LeagueRankButton:
                  color: Tuple[float, float, float] = None,
                  textcolor: Tuple[float, float, float] = None,
                  smooth_update_delay: float = None):
-        from ba.internal import get_cached_league_rank_data
         if on_activate_call is None:
             on_activate_call = ba.WeakCall(self._default_on_activate_call)
         self._on_activate_call = on_activate_call
@@ -107,7 +106,7 @@ class LeagueRankButton:
         self._update()
 
         # If we've got cached power-ranking data already, apply it.
-        data = get_cached_league_rank_data()
+        data = ba.app.accounts.get_cached_league_rank_data()
         if data is not None:
             self._update_for_league_rank_data(data)
 
@@ -216,7 +215,6 @@ class LeagueRankButton:
                                                                Any]]) -> None:
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
-        from ba.internal import get_league_rank_points
 
         # If our button has died, ignore.
         if not self._button:
@@ -250,7 +248,7 @@ class LeagueRankButton:
                     self._percent = self._rank = None
                     status_text = '-'
                 else:
-                    our_points = get_league_rank_points(data)
+                    our_points = ba.app.accounts.get_league_rank_points(data)
                     progress = float(our_points) / data['scores'][-1][1]
                     self._percent = int(progress * 100.0)
                     self._rank = None
@@ -328,9 +326,8 @@ class LeagueRankButton:
 
     def _on_power_ranking_query_response(
             self, data: Optional[Dict[str, Any]]) -> None:
-        from ba.internal import cache_league_rank_data
         self._doing_power_ranking_query = False
-        cache_league_rank_data(data)
+        ba.app.accounts.cache_league_rank_data(data)
         self._update_for_league_rank_data(data)
 
     def _update(self) -> None:

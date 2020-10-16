@@ -164,7 +164,7 @@ class GameButton:
 
     def _update(self) -> None:
         # pylint: disable=too-many-boolean-expressions
-        from ba.internal import have_pro, getcampaign
+        from ba.internal import getcampaign
         game = self._game
         campaignname, levelname = game.split(':')
 
@@ -193,7 +193,8 @@ class GameButton:
 
         # Hard-code games we haven't unlocked.
         if ((game in ('Challenges:Infinite Runaround',
-                      'Challenges:Infinite Onslaught') and not have_pro())
+                      'Challenges:Infinite Onslaught')
+             and not ba.app.accounts.have_pro())
                 or (game in ('Challenges:Meteor Shower', )
                     and not _ba.get_purchased('games.meteor_shower'))
                 or (game in ('Challenges:Target Practice',

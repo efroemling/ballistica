@@ -246,7 +246,6 @@ def call_after_ad(call: Callable[[], Any]) -> None:
     # pylint: disable=too-many-statements
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-locals
-    from ba._account import have_pro
     from ba._enums import TimeType
     import time
     app = _ba.app
@@ -255,7 +254,7 @@ def call_after_ad(call: Callable[[], Any]) -> None:
     # No ads without net-connections, etc.
     if not _ba.can_show_ad():
         show = False
-    if have_pro():
+    if app.accounts.have_pro():
         show = False  # Pro disables interstitials.
     try:
         session = _ba.get_foreground_host_session()

@@ -73,7 +73,7 @@ def get_binding_values() -> object:
         _hooks.do_quit,  # kQuitCall
         _hooks.shutdown,  # kShutdownCall
         _hooks.gc_disable,  # kGCDisableCall
-        _account.show_post_purchase_message,  # kShowPostPurchaseMessageCall
+        ba.app.accounts.show_post_purchase_message,  # kShowPostPurchaseMessageCall
         _hooks.device_menu_press,  # kDeviceMenuPressCall
         _hooks.show_url_window,  # kShowURLWindowCall
         _hooks.party_invite_revoke,  # kHandlePartyInviteRevokeCall

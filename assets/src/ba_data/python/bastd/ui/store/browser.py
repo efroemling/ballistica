@@ -515,7 +515,7 @@ class StoreBrowserWindow(ba.Window):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
-        from ba.internal import have_pro, get_available_sale_time
+        from ba.internal import get_available_sale_time
         from ba import SpecialChar
         if not self._root_widget:
             return
@@ -539,7 +539,7 @@ class StoreBrowserWindow(ba.Window):
         for b_type, b_info in self.button_infos.items():
 
             if b_type in ['upgrades.pro', 'pro']:
-                purchased = have_pro()
+                purchased = _ba.app.accounts.have_pro()
             else:
                 purchased = _ba.get_purchased(b_type)
 
