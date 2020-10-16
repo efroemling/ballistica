@@ -68,6 +68,7 @@ def handle_scan_results(results: ScanResults) -> None:
             _ba.log(textwrap.indent(results.errors, 'Error (meta-scan): '))
 
     # Handle plugins.
+    plugs = _ba.app.plugins
     config_changed = False
     found_new = False
     plugstates: Dict[str, Dict] = _ba.app.config.setdefault('Plugins', {})
@@ -75,7 +76,7 @@ def handle_scan_results(results: ScanResults) -> None:
 
     # Create a potential-plugin for each class we found in the scan.
     for class_path in results.plugins:
-        _ba.app.potential_plugins.append(
+        plugs.potential_plugins.append(
             PotentialPlugin(display_name=Lstr(value=class_path),
                             class_path=class_path,
                             available=True))
@@ -90,12 +91,12 @@ def handle_scan_results(results: ScanResults) -> None:
         enabled = plugstate.get('enabled', False)
         assert isinstance(enabled, bool)
         if enabled and class_path not in results.plugins:
-            _ba.app.potential_plugins.append(
+            plugs.potential_plugins.append(
                 PotentialPlugin(display_name=Lstr(value=class_path),
                                 class_path=class_path,
                                 available=False))
 
-    _ba.app.potential_plugins.sort(key=lambda p: p.class_path)
+    plugs.potential_plugins.sort(key=lambda p: p.class_path)
 
     if found_new:
         _ba.screenmessage(Lstr(resource='pluginsDetectedText'),

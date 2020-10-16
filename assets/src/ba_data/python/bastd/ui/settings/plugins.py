@@ -97,11 +97,11 @@ class PluginSettingsWindow(ba.Window):
             ba.screenmessage('Still scanning plugins; please try again.',
                              color=(1, 0, 0))
             ba.playsound(ba.getsound('error'))
-        pluglist = ba.app.potential_plugins
+        pluglist = ba.app.plugins.potential_plugins
         plugstates: Dict[str, Dict] = ba.app.config.setdefault('Plugins', {})
         assert isinstance(plugstates, dict)
         for i, availplug in enumerate(pluglist):
-            active = availplug.class_path in ba.app.active_plugins
+            active = availplug.class_path in ba.app.plugins.active_plugins
 
             plugstate = plugstates.setdefault(availplug.class_path, {})
             checked = plugstate.get('enabled', False)

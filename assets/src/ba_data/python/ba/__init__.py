@@ -20,7 +20,7 @@ from _ba import (CollideModel, Context, ContextCall, Data, InputDevice,
                  set_analytics_screen, charstr, textwidget, time, timer,
                  open_url, widget)
 from ba._activity import Activity
-from ba._plugin import PotentialPlugin, Plugin
+from ba._plugin import PotentialPlugin, Plugin, PluginSubsystem
 from ba._actor import Actor
 from ba._player import PlayerInfo, Player, EmptyPlayer, StandLocation
 from ba._nodeactor import NodeActor
