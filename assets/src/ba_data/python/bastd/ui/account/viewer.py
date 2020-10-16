@@ -426,7 +426,7 @@ class AccountViewerWindow(popup.PopupWindow):
                               v_align='center',
                               scale=0.55,
                               text=str(data['achievementsCompleted']) + ' / ' +
-                              str(len(ba.app.achievements)),
+                              str(len(ba.app.ach.achievements)),
                               maxwidth=sub_width * maxwidth_scale)
                 v -= 25
 

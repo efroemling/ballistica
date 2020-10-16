@@ -23,9 +23,6 @@ from ba._account import (on_account_state_changed,
                          get_purchased_icons, get_cached_league_rank_data,
                          get_league_rank_points, cache_league_rank_data)
 from ba._activitytypes import JoinActivity, ScoreScreenActivity
-from ba._achievement import (get_achievement, set_completed_achievements,
-                             display_achievement_banner,
-                             get_achievements_for_coop_level)
 from ba._apputils import (is_browser_likely_available, get_remote_app_name,
                           should_submit_debug_info, show_ad, show_ad_2)
 from ba._benchmark import (run_gpu_benchmark, run_cpu_benchmark,

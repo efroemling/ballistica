@@ -121,7 +121,7 @@ class MusicSubsystem:
 
     Category: App Classes
 
-    To use this class, access the single instance of it at 'ba.app.music'.
+    Access the single shared instance of this class at 'ba.app.music'.
     """
 
     def __init__(self) -> None:

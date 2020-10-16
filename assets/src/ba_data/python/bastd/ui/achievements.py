@@ -47,7 +47,7 @@ class AchievementsWindow(popup.PopupWindow):
             icon=ba.gettexture('crossOut'),
             iconscale=1.2)
 
-        achievements = ba.app.achievements
+        achievements = ba.app.ach.achievements
         num_complete = len([a for a in achievements if a.complete])
 
         txt_final = ba.Lstr(

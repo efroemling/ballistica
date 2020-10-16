@@ -99,7 +99,6 @@ class App:
         """Path where the app looks for its bundled scripts."""
         assert isinstance(self._env['python_directory_app'], str)
         return self._env['python_directory_app']
-        # return self._python_directory_app
 
     @property
     def python_directory_app_site(self) -> str:
@@ -175,6 +174,7 @@ class App:
         from ba._music import MusicSubsystem
         from ba._language import LanguageSubsystem
         from ba._ui import UISubsystem
+        from ba._achievement import AchievementSubsystem
 
         # Config.
         self.config_file_healthy = False
@@ -241,18 +241,10 @@ class App:
         self.last_ad_purpose = 'invalid'
         self.attempted_first_ad = False
 
-        # Music.
         self.music = MusicSubsystem()
-
-        # Language.
         self.lang = LanguageSubsystem()
-
-        # Achievements.
-        self.achievements: List[ba.Achievement] = []
-        self.achievements_to_display: (List[Tuple[ba.Achievement, bool]]) = []
-        self.achievement_display_timer: Optional[_ba.Timer] = None
-        self.last_achievement_display_time: float = 0.0
-        self.achievement_completion_banner_slots: Set[int] = set()
+        self.ach = AchievementSubsystem()
+        self.ui = UISubsystem()
 
         # Lobby.
         self.lobby_random_profile_index: int = 1
@@ -274,9 +266,6 @@ class App:
         self.teams_series_length = 7
         self.ffa_series_length = 24
         self.coop_session_args: Dict = {}
-
-        # UI.
-        self.ui = UISubsystem()
 
         self.value_test_defaults: dict = {}
         self.first_main_menu = True  # FIXME: Move to mainmenu class.
@@ -320,7 +309,7 @@ class App:
 
         self.ui.on_app_launch()
 
-        _achievement.init_achievements()
+        # _achievement.init_achievements()
         spazappearance.register_appearances()
         _campaign.init_campaigns()
 

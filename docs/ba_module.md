@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-10-15 for Ballistica version 1.5.27 build 20218</em></h4>
+<h4><em>last updated on 2020-10-16 for Ballistica version 1.5.27 build 20219</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -148,6 +148,7 @@
 <h4><a name="class_category_App_Classes">App Classes</a></h4>
 <ul>
    <li><a href="#class_ba_Achievement">ba.Achievement</a></li>
+   <li><a href="#class_ba_AchievementSubsystem">ba.AchievementSubsystem</a></li>
    <li><a href="#class_ba_App">ba.App</a></li>
    <li><a href="#class_ba_AppConfig">ba.AppConfig</a></li>
    <li><a href="#class_ba_AppDelegate">ba.AppDelegate</a></li>
@@ -349,6 +350,43 @@ actually award achievements.</p>
 <p><span>show_completion_banner(self, sound: bool = True) -&gt; None</span></p>
 
 <p>Create the banner/sound for an acquired achievement announcement.</p>
+
+</dd>
+</dl>
+<hr>
+<h2><strong><a name="class_ba_AchievementSubsystem">ba.AchievementSubsystem</a></strong></h3>
+<p><em>&lt;top level class&gt;</em>
+</p>
+<p>Subsystem for achievement handling.</p>
+
+<p>Category: <a href="#class_category_App_Classes">App Classes</a></p>
+
+<p>    Access the single shared instance of this class at 'ba.app.ach'.
+</p>
+
+<h3>Methods:</h3>
+<h5><a href="#method_ba_AchievementSubsystem____init__">&lt;constructor&gt;</a>, <a href="#method_ba_AchievementSubsystem__achievements_for_coop_level">achievements_for_coop_level()</a>, <a href="#method_ba_AchievementSubsystem__award_local_achievement">award_local_achievement()</a>, <a href="#method_ba_AchievementSubsystem__get_achievement">get_achievement()</a></h5>
+<dl>
+<dt><h4><a name="method_ba_AchievementSubsystem____init__">&lt;constructor&gt;</a></dt></h4><dd>
+<p><span>ba.AchievementSubsystem()</span></p>
+
+</dd>
+<dt><h4><a name="method_ba_AchievementSubsystem__achievements_for_coop_level">achievements_for_coop_level()</a></dt></h4><dd>
+<p><span>achievements_for_coop_level(self, level_name: str) -&gt; List[Achievement]</span></p>
+
+<p>Given a level name, return achievements available for it.</p>
+
+</dd>
+<dt><h4><a name="method_ba_AchievementSubsystem__award_local_achievement">award_local_achievement()</a></dt></h4><dd>
+<p><span>award_local_achievement(self, achname: str) -&gt; None</span></p>
+
+<p>For non-game-based achievements such as controller-connection.</p>
+
+</dd>
+<dt><h4><a name="method_ba_AchievementSubsystem__get_achievement">get_achievement()</a></dt></h4><dd>
+<p><span>get_achievement(self, name: str) -&gt; Achievement</span></p>
+
+<p>Return an Achievement by name.</p>
 
 </dd>
 </dl>
@@ -3974,7 +4012,7 @@ signify that the default soundtrack should be used..</p>
 
 <p>Category: <a href="#class_category_App_Classes">App Classes</a></p>
 
-<p>    To use this class, access the single instance of it at 'ba.app.music'.
+<p>    Access the single shared instance of this class at 'ba.app.music'.
 </p>
 
 <h3>Methods:</h3>

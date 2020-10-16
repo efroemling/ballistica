@@ -130,21 +130,19 @@ class CoopGameActivity(GameActivity[PlayerType, TeamType]):
                 player.actor.handlemessage(CelebrateMessage(duration))
 
     def _preload_achievements(self) -> None:
-        from ba import _achievement
-        achievements = _achievement.get_achievements_for_coop_level(
+        achievements = _ba.app.ach.achievements_for_coop_level(
             self._get_coop_level_name())
         for ach in achievements:
             ach.get_icon_texture(True)
 
     def _show_remaining_achievements(self) -> None:
         # pylint: disable=cyclic-import
-        from ba._achievement import get_achievements_for_coop_level
         from ba._language import Lstr
         from bastd.actor.text import Text
         ts_h_offs = 30
         v_offs = -200
         achievements = [
-            a for a in get_achievements_for_coop_level(
+            a for a in _ba.app.ach.achievements_for_coop_level(
                 self._get_coop_level_name()) if not a.complete
         ]
         vrmode = _ba.app.vr_mode
@@ -193,12 +191,11 @@ class CoopGameActivity(GameActivity[PlayerType, TeamType]):
         Returns True if a banner will be shown;
         False otherwise
         """
-        from ba._achievement import get_achievement
 
         if achievement_name in self._achievements_awarded:
             return
 
-        ach = get_achievement(achievement_name)
+        ach = _ba.app.ach.get_achievement(achievement_name)
 
         # If we're in the easy campaign and this achievement is hard-mode-only,
         # ignore it.

@@ -6,11 +6,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeVar
 
+import _ba
 from ba._freeforallsession import FreeForAllSession
 from ba._gameactivity import GameActivity
 from ba._gameresults import GameResults
 from ba._dualteamsession import DualTeamSession
-import _ba
 
 if TYPE_CHECKING:
     from typing import Any, Dict, Type, Sequence
@@ -78,12 +78,11 @@ class TeamGameActivity(GameActivity[PlayerType, TeamType]):
             # Award a few achievements.
             if isinstance(self.session, FreeForAllSession):
                 if len(self.players) >= 2:
-                    from ba import _achievement
-                    _achievement.award_local_achievement('Free Loader')
+                    _ba.app.ach.award_local_achievement('Free Loader')
             elif isinstance(self.session, DualTeamSession):
                 if len(self.players) >= 4:
                     from ba import _achievement
-                    _achievement.award_local_achievement('Team Player')
+                    _ba.app.ach.award_local_achievement('Team Player')
         except Exception:
             from ba import _error
             _error.print_exception()

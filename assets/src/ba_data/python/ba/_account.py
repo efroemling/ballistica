@@ -47,7 +47,7 @@ def get_league_rank_points(data: Optional[Dict[str, Any]],
         total_ach_value = data['at']
     else:
         total_ach_value = 0
-        for ach in _ba.app.achievements:
+        for ach in _ba.app.ach.achievements:
             if ach.complete:
                 total_ach_value += ach.power_ranking_value
 

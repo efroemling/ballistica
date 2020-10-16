@@ -319,7 +319,8 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
                                  transition_out_delay=self._message_duration
                                  ).autoretain()
                             achs = [
-                                a for a in app.achievements if not a.complete
+                                a for a in app.ach.achievements
+                                if not a.complete
                             ]
                             if achs:
                                 ach = achs.pop(

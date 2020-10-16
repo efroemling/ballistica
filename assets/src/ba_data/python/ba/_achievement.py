@@ -6,9 +6,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import _ba
+from ba._error import print_exception
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence, List, Dict, Union, Optional
+    from typing import Any, Sequence, List, Dict, Union, Optional, Tuple, Set
     import ba
 
 # This could use some cleanup.
@@ -61,69 +62,346 @@ ACH_LEVEL_NAMES = {
 }
 
 
-def award_local_achievement(achname: str) -> None:
-    """For non-game-based achievements such as controller-connection ones."""
-    try:
-        ach = get_achievement(achname)
-        if not ach.complete:
+class AchievementSubsystem:
+    """Subsystem for achievement handling.
 
-            # Report new achievements to the game-service.
-            _ba.report_achievement(achname)
+    Category: App Classes
 
-            # And to our account.
-            _ba.add_transaction({'type': 'ACHIEVEMENT', 'name': achname})
-
-            # Now attempt to show a banner.
-            display_achievement_banner(achname)
-
-    except Exception:
-        from ba import _error
-        _error.print_exception()
-
-
-def display_achievement_banner(achname: str) -> None:
-    """Display a completion banner for an achievement.
-
-    Used for server-driven achievements.
+    Access the single shared instance of this class at 'ba.app.ach'.
     """
-    try:
-        # FIXME: Need to get these using the UI context or some other
-        #  purely local context somehow instead of trying to inject these
-        #  into whatever activity happens to be active
-        #  (since that won't work while in client mode).
-        activity = _ba.get_foreground_host_activity()
-        if activity is not None:
-            with _ba.Context(activity):
-                get_achievement(achname).announce_completion()
-    except Exception:
-        from ba import _error
-        _error.print_exception('error showing server ach')
 
+    def __init__(self) -> None:
+        self.achievements: List[Achievement] = []
+        self.achievements_to_display: (List[Tuple[ba.Achievement, bool]]) = []
+        self.achievement_display_timer: Optional[_ba.Timer] = None
+        self.last_achievement_display_time: float = 0.0
+        self.achievement_completion_banner_slots: Set[int] = set()
+        self._init_achievements()
 
-# This gets called whenever game-center/game-circle/etc tells us which
-# achievements we currently have.  We always defer to them, even if that
-# means we have to un-set an achievement we think we have
+    def _init_achievements(self) -> None:
+        """Fill in available achievements."""
 
+        achs = self.achievements
 
-def set_completed_achievements(achs: Sequence[str]) -> None:
-    """Set the current state of completed achievements.
+        # 5
+        achs.append(
+            Achievement('In Control', 'achievementInControl', (1, 1, 1), '',
+                        5))
+        # 15
+        achs.append(
+            Achievement('Sharing is Caring', 'achievementSharingIsCaring',
+                        (1, 1, 1), '', 15))
+        # 10
+        achs.append(
+            Achievement('Dual Wielding', 'achievementDualWielding', (1, 1, 1),
+                        '', 10))
 
-    All achievements not included here will be set incomplete.
-    """
-    cfg = _ba.app.config
-    cfg['Achievements'] = {}
-    for a_name in achs:
-        get_achievement(a_name).set_complete(True)
-    cfg.commit()
+        # 10
+        achs.append(
+            Achievement('Free Loader', 'achievementFreeLoader', (1, 1, 1), '',
+                        10))
+        # 20
+        achs.append(
+            Achievement('Team Player', 'achievementTeamPlayer', (1, 1, 1), '',
+                        20))
 
+        # 5
+        achs.append(
+            Achievement('Onslaught Training Victory', 'achievementOnslaught',
+                        (1, 1, 1), 'Default:Onslaught Training', 5))
+        # 5
+        achs.append(
+            Achievement('Off You Go Then', 'achievementOffYouGo',
+                        (1, 1.1, 1.3), 'Default:Onslaught Training', 5))
+        # 10
+        achs.append(
+            Achievement('Boxer',
+                        'achievementBoxer', (1, 0.6, 0.6),
+                        'Default:Onslaught Training',
+                        10,
+                        hard_mode_only=True))
 
-def get_achievement(name: str) -> Achievement:
-    """Return an Achievement by name."""
-    achs = [a for a in _ba.app.achievements if a.name == name]
-    assert len(achs) < 2
-    if not achs:
-        raise ValueError("Invalid achievement name: '" + name + "'")
-    return achs[0]
+        # 10
+        achs.append(
+            Achievement('Rookie Onslaught Victory', 'achievementOnslaught',
+                        (0.5, 1.4, 0.6), 'Default:Rookie Onslaught', 10))
+        # 10
+        achs.append(
+            Achievement('Mine Games', 'achievementMine', (1, 1, 1.4),
+                        'Default:Rookie Onslaught', 10))
+        # 15
+        achs.append(
+            Achievement('Flawless Victory',
+                        'achievementFlawlessVictory', (1, 1, 1),
+                        'Default:Rookie Onslaught',
+                        15,
+                        hard_mode_only=True))
+
+        # 10
+        achs.append(
+            Achievement('Rookie Football Victory',
+                        'achievementFootballVictory', (1.0, 1, 0.6),
+                        'Default:Rookie Football', 10))
+        # 10
+        achs.append(
+            Achievement('Super Punch', 'achievementSuperPunch', (1, 1, 1.8),
+                        'Default:Rookie Football', 10))
+        # 15
+        achs.append(
+            Achievement('Rookie Football Shutout',
+                        'achievementFootballShutout', (1, 1, 1),
+                        'Default:Rookie Football',
+                        15,
+                        hard_mode_only=True))
+
+        # 15
+        achs.append(
+            Achievement('Pro Onslaught Victory', 'achievementOnslaught',
+                        (0.3, 1, 2.0), 'Default:Pro Onslaught', 15))
+        # 15
+        achs.append(
+            Achievement('Boom Goes the Dynamite', 'achievementTNT',
+                        (1.4, 1.2, 0.8), 'Default:Pro Onslaught', 15))
+        # 20
+        achs.append(
+            Achievement('Pro Boxer',
+                        'achievementBoxer', (2, 2, 0),
+                        'Default:Pro Onslaught',
+                        20,
+                        hard_mode_only=True))
+
+        # 15
+        achs.append(
+            Achievement('Pro Football Victory', 'achievementFootballVictory',
+                        (1.3, 1.3, 2.0), 'Default:Pro Football', 15))
+        # 15
+        achs.append(
+            Achievement('Super Mega Punch', 'achievementSuperPunch',
+                        (2, 1, 0.6), 'Default:Pro Football', 15))
+        # 20
+        achs.append(
+            Achievement('Pro Football Shutout',
+                        'achievementFootballShutout', (0.7, 0.7, 2.0),
+                        'Default:Pro Football',
+                        20,
+                        hard_mode_only=True))
+
+        # 15
+        achs.append(
+            Achievement('Pro Runaround Victory', 'achievementRunaround',
+                        (1, 1, 1), 'Default:Pro Runaround', 15))
+        # 20
+        achs.append(
+            Achievement('Precision Bombing',
+                        'achievementCrossHair', (1, 1, 1.3),
+                        'Default:Pro Runaround',
+                        20,
+                        hard_mode_only=True))
+        # 25
+        achs.append(
+            Achievement('The Wall',
+                        'achievementWall', (1, 0.7, 0.7),
+                        'Default:Pro Runaround',
+                        25,
+                        hard_mode_only=True))
+
+        # 30
+        achs.append(
+            Achievement('Uber Onslaught Victory', 'achievementOnslaught',
+                        (2, 2, 1), 'Default:Uber Onslaught', 30))
+        # 30
+        achs.append(
+            Achievement('Gold Miner',
+                        'achievementMine', (2, 1.6, 0.2),
+                        'Default:Uber Onslaught',
+                        30,
+                        hard_mode_only=True))
+        # 30
+        achs.append(
+            Achievement('TNT Terror',
+                        'achievementTNT', (2, 1.8, 0.3),
+                        'Default:Uber Onslaught',
+                        30,
+                        hard_mode_only=True))
+
+        # 30
+        achs.append(
+            Achievement('Uber Football Victory', 'achievementFootballVictory',
+                        (1.8, 1.4, 0.3), 'Default:Uber Football', 30))
+        # 30
+        achs.append(
+            Achievement('Got the Moves',
+                        'achievementGotTheMoves', (2, 1, 0),
+                        'Default:Uber Football',
+                        30,
+                        hard_mode_only=True))
+        # 40
+        achs.append(
+            Achievement('Uber Football Shutout',
+                        'achievementFootballShutout', (2, 2, 0),
+                        'Default:Uber Football',
+                        40,
+                        hard_mode_only=True))
+
+        # 30
+        achs.append(
+            Achievement('Uber Runaround Victory', 'achievementRunaround',
+                        (1.5, 1.2, 0.2), 'Default:Uber Runaround', 30))
+        # 40
+        achs.append(
+            Achievement('The Great Wall',
+                        'achievementWall', (2, 1.7, 0.4),
+                        'Default:Uber Runaround',
+                        40,
+                        hard_mode_only=True))
+        # 40
+        achs.append(
+            Achievement('Stayin\' Alive',
+                        'achievementStayinAlive', (2, 2, 1),
+                        'Default:Uber Runaround',
+                        40,
+                        hard_mode_only=True))
+
+        # 20
+        achs.append(
+            Achievement('Last Stand Master',
+                        'achievementMedalSmall', (2, 1.5, 0.3),
+                        'Default:The Last Stand',
+                        20,
+                        hard_mode_only=True))
+        # 40
+        achs.append(
+            Achievement('Last Stand Wizard',
+                        'achievementMedalMedium', (2, 1.5, 0.3),
+                        'Default:The Last Stand',
+                        40,
+                        hard_mode_only=True))
+        # 60
+        achs.append(
+            Achievement('Last Stand God',
+                        'achievementMedalLarge', (2, 1.5, 0.3),
+                        'Default:The Last Stand',
+                        60,
+                        hard_mode_only=True))
+
+        # 5
+        achs.append(
+            Achievement('Onslaught Master', 'achievementMedalSmall',
+                        (0.7, 1, 0.7), 'Challenges:Infinite Onslaught', 5))
+        # 15
+        achs.append(
+            Achievement('Onslaught Wizard', 'achievementMedalMedium',
+                        (0.7, 1.0, 0.7), 'Challenges:Infinite Onslaught', 15))
+        # 30
+        achs.append(
+            Achievement('Onslaught God', 'achievementMedalLarge',
+                        (0.7, 1.0, 0.7), 'Challenges:Infinite Onslaught', 30))
+
+        # 5
+        achs.append(
+            Achievement('Runaround Master', 'achievementMedalSmall',
+                        (1.0, 1.0, 1.2), 'Challenges:Infinite Runaround', 5))
+        # 15
+        achs.append(
+            Achievement('Runaround Wizard', 'achievementMedalMedium',
+                        (1.0, 1.0, 1.2), 'Challenges:Infinite Runaround', 15))
+        # 30
+        achs.append(
+            Achievement('Runaround God', 'achievementMedalLarge',
+                        (1.0, 1.0, 1.2), 'Challenges:Infinite Runaround', 30))
+
+    def award_local_achievement(self, achname: str) -> None:
+        """For non-game-based achievements such as controller-connection."""
+        try:
+            ach = self.get_achievement(achname)
+            if not ach.complete:
+
+                # Report new achievements to the game-service.
+                _ba.report_achievement(achname)
+
+                # And to our account.
+                _ba.add_transaction({'type': 'ACHIEVEMENT', 'name': achname})
+
+                # Now attempt to show a banner.
+                self.display_achievement_banner(achname)
+
+        except Exception:
+            print_exception()
+
+    def display_achievement_banner(self, achname: str) -> None:
+        """Display a completion banner for an achievement.
+
+        (internal)
+
+        Used for server-driven achievements.
+        """
+        try:
+            # FIXME: Need to get these using the UI context or some other
+            #  purely local context somehow instead of trying to inject these
+            #  into whatever activity happens to be active
+            #  (since that won't work while in client mode).
+            activity = _ba.get_foreground_host_activity()
+            if activity is not None:
+                with _ba.Context(activity):
+                    self.get_achievement(achname).announce_completion()
+        except Exception:
+            print_exception('error showing server ach')
+
+    def set_completed_achievements(self, achs: Sequence[str]) -> None:
+        """Set the current state of completed achievements.
+
+        (internal)
+
+        All achievements not included here will be set incomplete.
+        """
+
+        # Note: This gets called whenever game-center/game-circle/etc tells
+        # us which achievements we currently have.  We always defer to them,
+        # even if that means we have to un-set an achievement we think we have.
+
+        cfg = _ba.app.config
+        cfg['Achievements'] = {}
+        for a_name in achs:
+            self.get_achievement(a_name).set_complete(True)
+        cfg.commit()
+
+    def get_achievement(self, name: str) -> Achievement:
+        """Return an Achievement by name."""
+        achs = [a for a in self.achievements if a.name == name]
+        assert len(achs) < 2
+        if not achs:
+            raise ValueError("Invalid achievement name: '" + name + "'")
+        return achs[0]
+
+    def achievements_for_coop_level(self,
+                                    level_name: str) -> List[Achievement]:
+        """Given a level name, return achievements available for it."""
+
+        # For the Easy campaign we return achievements for the Default
+        # campaign too. (want the user to see what achievements are part of the
+        # level even if they can't unlock them all on easy mode).
+        return [
+            a for a in self.achievements
+            if a.level_name in (level_name,
+                                level_name.replace('Easy', 'Default'))
+        ]
+
+    def _test(self) -> None:
+        """For testing achievement animations."""
+        from ba._enums import TimeType
+
+        def testcall1() -> None:
+            self.achievements[0].announce_completion()
+            self.achievements[1].announce_completion()
+            self.achievements[2].announce_completion()
+
+        def testcall2() -> None:
+            self.achievements[3].announce_completion()
+            self.achievements[4].announce_completion()
+            self.achievements[5].announce_completion()
+
+        _ba.timer(3.0, testcall1, timetype=TimeType.BASE)
+        _ba.timer(7.0, testcall2, timetype=TimeType.BASE)
 
 
 def _get_ach_mult(include_pro_bonus: bool = False) -> int:
@@ -139,34 +417,21 @@ def _get_ach_mult(include_pro_bonus: bool = False) -> int:
     return val
 
 
-def get_achievements_for_coop_level(level_name: str) -> List[Achievement]:
-    """Given a level name, return achievements available for it."""
-
-    # For the Easy campaign we return achievements for the Default
-    # campaign too. (want the user to see what achievements are part of the
-    # level even if they can't unlock them all on easy mode).
-    return [
-        a for a in _ba.app.achievements
-        if a.level_name in (level_name, level_name.replace('Easy', 'Default'))
-    ]
-
-
 def _display_next_achievement() -> None:
 
     # Pull the first achievement off the list and display it, or kill the
     # display-timer if the list is empty.
     app = _ba.app
-    if app.achievements_to_display:
+    if app.ach.achievements_to_display:
         try:
-            ach, sound = app.achievements_to_display.pop(0)
+            ach, sound = app.ach.achievements_to_display.pop(0)
             ach.show_completion_banner(sound)
         except Exception:
-            from ba import _error
-            _error.print_exception('error showing next achievement')
-            app.achievements_to_display = []
-            app.achievement_display_timer = None
+            print_exception('error showing next achievement')
+            app.ach.achievements_to_display = []
+            app.ach.achievement_display_timer = None
     else:
-        app.achievement_display_timer = None
+        app.ach.achievement_display_timer = None
 
 
 class Achievement:
@@ -236,18 +501,18 @@ class Achievement:
             return
 
         # If we're being freshly complete, display/report it and whatnot.
-        if (self, sound) not in app.achievements_to_display:
-            app.achievements_to_display.append((self, sound))
+        if (self, sound) not in app.ach.achievements_to_display:
+            app.ach.achievements_to_display.append((self, sound))
 
         # If there's no achievement display timer going, kick one off
         # (if one's already running it will pick this up before it dies).
 
         # Need to check last time too; its possible our timer wasn't able to
         # clear itself if an activity died and took it down with it.
-        if ((app.achievement_display_timer is None or
-             _ba.time(TimeType.REAL) - app.last_achievement_display_time > 2.0)
-                and _ba.getactivity(doraise=False) is not None):
-            app.achievement_display_timer = _ba.Timer(
+        if ((app.ach.achievement_display_timer is None
+             or _ba.time(TimeType.REAL) - app.ach.last_achievement_display_time
+             > 2.0) and _ba.getactivity(doraise=False) is not None):
+            app.ach.achievement_display_timer = _ba.Timer(
                 1.0,
                 _display_next_achievement,
                 repeat=True,
@@ -280,9 +545,8 @@ class Achievement:
             else:
                 name = ''
         except Exception:
-            from ba import _error
             name = ''
-            _error.print_exception()
+            print_exception()
         return Lstr(resource='achievements.' + self._name + '.name',
                     subs=[('${LEVEL}', name)])
 
@@ -397,8 +661,7 @@ class Achievement:
                 else:
                     hmo = False
             except Exception:
-                from ba import _error
-                _error.print_exception('Error determining campaign')
+                print_exception('Error determining campaign.')
                 hmo = False
 
         objs: List[ba.Actor]
@@ -648,7 +911,7 @@ class Achievement:
 
     def _remove_banner_slot(self) -> None:
         assert self._completion_banner_slot is not None
-        _ba.app.achievement_completion_banner_slots.remove(
+        _ba.app.ach.achievement_completion_banner_slots.remove(
             self._completion_banner_slot)
         self._completion_banner_slot = None
 
@@ -663,7 +926,7 @@ class Achievement:
         from ba._messages import DieMessage
         from ba._enums import TimeType, SpecialChar
         app = _ba.app
-        app.last_achievement_display_time = _ba.time(TimeType.REAL)
+        app.ach.last_achievement_display_time = _ba.time(TimeType.REAL)
 
         # Just piggy-back onto any current activity
         # (should we use the session instead?..)
@@ -694,8 +957,8 @@ class Achievement:
         # Find the first free slot.
         i = 0
         while True:
-            if i not in app.achievement_completion_banner_slots:
-                app.achievement_completion_banner_slots.add(i)
+            if i not in app.ach.achievement_completion_banner_slots:
+                app.ach.achievement_completion_banner_slots.add(i)
                 self._completion_banner_slot = i
 
                 # Remove us from that slot when we close.
@@ -953,252 +1216,3 @@ class Achievement:
         for actor in objs:
             _ba.timer(out_time + 1.000,
                       WeakCall(actor.handlemessage, DieMessage()))
-
-
-def init_achievements() -> None:
-    """Fill in available achievements."""
-
-    achs = _ba.app.achievements
-
-    # 5
-    achs.append(
-        Achievement('In Control', 'achievementInControl', (1, 1, 1), '', 5))
-    # 15
-    achs.append(
-        Achievement('Sharing is Caring', 'achievementSharingIsCaring',
-                    (1, 1, 1), '', 15))
-    # 10
-    achs.append(
-        Achievement('Dual Wielding', 'achievementDualWielding', (1, 1, 1), '',
-                    10))
-
-    # 10
-    achs.append(
-        Achievement('Free Loader', 'achievementFreeLoader', (1, 1, 1), '', 10))
-    # 20
-    achs.append(
-        Achievement('Team Player', 'achievementTeamPlayer', (1, 1, 1), '', 20))
-
-    # 5
-    achs.append(
-        Achievement('Onslaught Training Victory', 'achievementOnslaught',
-                    (1, 1, 1), 'Default:Onslaught Training', 5))
-    # 5
-    achs.append(
-        Achievement('Off You Go Then', 'achievementOffYouGo', (1, 1.1, 1.3),
-                    'Default:Onslaught Training', 5))
-    # 10
-    achs.append(
-        Achievement('Boxer',
-                    'achievementBoxer', (1, 0.6, 0.6),
-                    'Default:Onslaught Training',
-                    10,
-                    hard_mode_only=True))
-
-    # 10
-    achs.append(
-        Achievement('Rookie Onslaught Victory', 'achievementOnslaught',
-                    (0.5, 1.4, 0.6), 'Default:Rookie Onslaught', 10))
-    # 10
-    achs.append(
-        Achievement('Mine Games', 'achievementMine', (1, 1, 1.4),
-                    'Default:Rookie Onslaught', 10))
-    # 15
-    achs.append(
-        Achievement('Flawless Victory',
-                    'achievementFlawlessVictory', (1, 1, 1),
-                    'Default:Rookie Onslaught',
-                    15,
-                    hard_mode_only=True))
-
-    # 10
-    achs.append(
-        Achievement('Rookie Football Victory', 'achievementFootballVictory',
-                    (1.0, 1, 0.6), 'Default:Rookie Football', 10))
-    # 10
-    achs.append(
-        Achievement('Super Punch', 'achievementSuperPunch', (1, 1, 1.8),
-                    'Default:Rookie Football', 10))
-    # 15
-    achs.append(
-        Achievement('Rookie Football Shutout',
-                    'achievementFootballShutout', (1, 1, 1),
-                    'Default:Rookie Football',
-                    15,
-                    hard_mode_only=True))
-
-    # 15
-    achs.append(
-        Achievement('Pro Onslaught Victory', 'achievementOnslaught',
-                    (0.3, 1, 2.0), 'Default:Pro Onslaught', 15))
-    # 15
-    achs.append(
-        Achievement('Boom Goes the Dynamite', 'achievementTNT',
-                    (1.4, 1.2, 0.8), 'Default:Pro Onslaught', 15))
-    # 20
-    achs.append(
-        Achievement('Pro Boxer',
-                    'achievementBoxer', (2, 2, 0),
-                    'Default:Pro Onslaught',
-                    20,
-                    hard_mode_only=True))
-
-    # 15
-    achs.append(
-        Achievement('Pro Football Victory', 'achievementFootballVictory',
-                    (1.3, 1.3, 2.0), 'Default:Pro Football', 15))
-    # 15
-    achs.append(
-        Achievement('Super Mega Punch', 'achievementSuperPunch', (2, 1, 0.6),
-                    'Default:Pro Football', 15))
-    # 20
-    achs.append(
-        Achievement('Pro Football Shutout',
-                    'achievementFootballShutout', (0.7, 0.7, 2.0),
-                    'Default:Pro Football',
-                    20,
-                    hard_mode_only=True))
-
-    # 15
-    achs.append(
-        Achievement('Pro Runaround Victory', 'achievementRunaround', (1, 1, 1),
-                    'Default:Pro Runaround', 15))
-    # 20
-    achs.append(
-        Achievement('Precision Bombing',
-                    'achievementCrossHair', (1, 1, 1.3),
-                    'Default:Pro Runaround',
-                    20,
-                    hard_mode_only=True))
-    # 25
-    achs.append(
-        Achievement('The Wall',
-                    'achievementWall', (1, 0.7, 0.7),
-                    'Default:Pro Runaround',
-                    25,
-                    hard_mode_only=True))
-
-    # 30
-    achs.append(
-        Achievement('Uber Onslaught Victory', 'achievementOnslaught',
-                    (2, 2, 1), 'Default:Uber Onslaught', 30))
-    # 30
-    achs.append(
-        Achievement('Gold Miner',
-                    'achievementMine', (2, 1.6, 0.2),
-                    'Default:Uber Onslaught',
-                    30,
-                    hard_mode_only=True))
-    # 30
-    achs.append(
-        Achievement('TNT Terror',
-                    'achievementTNT', (2, 1.8, 0.3),
-                    'Default:Uber Onslaught',
-                    30,
-                    hard_mode_only=True))
-
-    # 30
-    achs.append(
-        Achievement('Uber Football Victory', 'achievementFootballVictory',
-                    (1.8, 1.4, 0.3), 'Default:Uber Football', 30))
-    # 30
-    achs.append(
-        Achievement('Got the Moves',
-                    'achievementGotTheMoves', (2, 1, 0),
-                    'Default:Uber Football',
-                    30,
-                    hard_mode_only=True))
-    # 40
-    achs.append(
-        Achievement('Uber Football Shutout',
-                    'achievementFootballShutout', (2, 2, 0),
-                    'Default:Uber Football',
-                    40,
-                    hard_mode_only=True))
-
-    # 30
-    achs.append(
-        Achievement('Uber Runaround Victory', 'achievementRunaround',
-                    (1.5, 1.2, 0.2), 'Default:Uber Runaround', 30))
-    # 40
-    achs.append(
-        Achievement('The Great Wall',
-                    'achievementWall', (2, 1.7, 0.4),
-                    'Default:Uber Runaround',
-                    40,
-                    hard_mode_only=True))
-    # 40
-    achs.append(
-        Achievement('Stayin\' Alive',
-                    'achievementStayinAlive', (2, 2, 1),
-                    'Default:Uber Runaround',
-                    40,
-                    hard_mode_only=True))
-
-    # 20
-    achs.append(
-        Achievement('Last Stand Master',
-                    'achievementMedalSmall', (2, 1.5, 0.3),
-                    'Default:The Last Stand',
-                    20,
-                    hard_mode_only=True))
-    # 40
-    achs.append(
-        Achievement('Last Stand Wizard',
-                    'achievementMedalMedium', (2, 1.5, 0.3),
-                    'Default:The Last Stand',
-                    40,
-                    hard_mode_only=True))
-    # 60
-    achs.append(
-        Achievement('Last Stand God',
-                    'achievementMedalLarge', (2, 1.5, 0.3),
-                    'Default:The Last Stand',
-                    60,
-                    hard_mode_only=True))
-
-    # 5
-    achs.append(
-        Achievement('Onslaught Master', 'achievementMedalSmall', (0.7, 1, 0.7),
-                    'Challenges:Infinite Onslaught', 5))
-    # 15
-    achs.append(
-        Achievement('Onslaught Wizard', 'achievementMedalMedium',
-                    (0.7, 1.0, 0.7), 'Challenges:Infinite Onslaught', 15))
-    # 30
-    achs.append(
-        Achievement('Onslaught God', 'achievementMedalLarge', (0.7, 1.0, 0.7),
-                    'Challenges:Infinite Onslaught', 30))
-
-    # 5
-    achs.append(
-        Achievement('Runaround Master', 'achievementMedalSmall',
-                    (1.0, 1.0, 1.2), 'Challenges:Infinite Runaround', 5))
-    # 15
-    achs.append(
-        Achievement('Runaround Wizard', 'achievementMedalMedium',
-                    (1.0, 1.0, 1.2), 'Challenges:Infinite Runaround', 15))
-    # 30
-    achs.append(
-        Achievement('Runaround God', 'achievementMedalLarge', (1.0, 1.0, 1.2),
-                    'Challenges:Infinite Runaround', 30))
-
-
-def _test() -> None:
-    """For testing achievement animations."""
-    from ba._enums import TimeType
-
-    def testcall1() -> None:
-        app = _ba.app
-        app.achievements[0].announce_completion()
-        app.achievements[1].announce_completion()
-        app.achievements[2].announce_completion()
-
-    def testcall2() -> None:
-        app = _ba.app
-        app.achievements[3].announce_completion()
-        app.achievements[4].announce_completion()
-        app.achievements[5].announce_completion()
-
-    _ba.timer(3.0, testcall1, timetype=TimeType.BASE)
-    _ba.timer(7.0, testcall2, timetype=TimeType.BASE)

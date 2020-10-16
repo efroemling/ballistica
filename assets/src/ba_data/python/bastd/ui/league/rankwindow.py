@@ -808,7 +808,7 @@ class LeagueRankWindow(ba.Window):
         # for the achievement value, use the number they gave us for
         # non-current seasons; otherwise calc our own
         total_ach_value = 0
-        for ach in ba.app.achievements:
+        for ach in ba.app.ach.achievements:
             if ach.complete:
                 total_ach_value += ach.power_ranking_value
         if self._season != 'a' and not self._is_current_season:

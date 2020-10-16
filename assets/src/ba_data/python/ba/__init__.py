@@ -52,7 +52,7 @@ from ba._stats import PlayerScoredMessage, PlayerRecord, Stats
 from ba._team import SessionTeam, Team, EmptyTeam
 from ba._teamgame import TeamGameActivity
 from ba._dualteamsession import DualTeamSession
-from ba._achievement import Achievement
+from ba._achievement import Achievement, AchievementSubsystem
 from ba._appconfig import AppConfig
 from ba._appdelegate import AppDelegate
 from ba._apputils import is_browser_likely_available

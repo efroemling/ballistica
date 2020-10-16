@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING
 
 import _ba
 import ba
-from ba.internal import get_achievements_for_coop_level
 from bastd.actor.text import Text
 from bastd.actor.zoomtext import ZoomText
 
@@ -50,8 +49,8 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         self._campaign: ba.Campaign = settings['campaign']
 
         self._have_achievements = bool(
-            get_achievements_for_coop_level(self._campaign.name + ':' +
-                                            settings['level']))
+            ba.app.ach.achievements_for_coop_level(self._campaign.name + ':' +
+                                                   settings['level']))
 
         self._account_type = (_ba.get_account_type() if
                               _ba.get_account_state() == 'signed_in' else None)
@@ -847,7 +846,8 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                      transition_delay=2.8).autoretain()
 
             assert self._game_name_str is not None
-            achievements = get_achievements_for_coop_level(self._game_name_str)
+            achievements = ba.app.ach.achievements_for_coop_level(
+                self._game_name_str)
             hval = -455
             vval = -100
             tdelay = 0.0

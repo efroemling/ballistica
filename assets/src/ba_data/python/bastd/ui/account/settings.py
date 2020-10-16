@@ -995,8 +995,8 @@ class AccountSettingsWindow(ba.Window):
         if (self._achievements_text is None
                 and self._achievements_button is None):
             return
-        complete = sum(1 if a.complete else 0 for a in ba.app.achievements)
-        total = len(ba.app.achievements)
+        complete = sum(1 if a.complete else 0 for a in ba.app.ach.achievements)
+        total = len(ba.app.ach.achievements)
         txt_final = ba.Lstr(resource=self._r + '.achievementProgressText',
                             subs=[('${COUNT}', str(complete)),
                                   ('${TOTAL}', str(total))])

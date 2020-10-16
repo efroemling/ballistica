@@ -138,13 +138,11 @@ def language_test_toggle() -> None:
 
 
 def award_in_control_achievement() -> None:
-    from ba._achievement import award_local_achievement
-    award_local_achievement('In Control')
+    _ba.app.ach.award_local_achievement('In Control')
 
 
 def award_dual_wielding_achievement() -> None:
-    from ba._achievement import award_local_achievement
-    award_local_achievement('Dual Wielding')
+    _ba.app.ach.award_local_achievement('Dual Wielding')
 
 
 def play_gong_sound() -> None:

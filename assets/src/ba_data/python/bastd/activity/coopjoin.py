@@ -59,7 +59,6 @@ class CoopJoinActivity(JoinActivity):
         # pylint: disable=too-many-statements
         from efro.util import asserttype
         from bastd.actor.text import Text
-        from ba.internal import get_achievements_for_coop_level
 
         # Sort by originating date so that the most recent is first.
         if scores is not None:
@@ -159,7 +158,8 @@ class CoopJoinActivity(JoinActivity):
 
             if not (ba.app.demo_mode or ba.app.arcade_mode):
                 achievements = [
-                    a for a in get_achievements_for_coop_level(levelname)
+                    a
+                    for a in ba.app.ach.achievements_for_coop_level(levelname)
                     if not a.complete
                 ]
                 have_achievements = bool(achievements)
