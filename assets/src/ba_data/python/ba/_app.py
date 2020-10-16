@@ -176,6 +176,7 @@ class App:
         from ba._ui import UISubsystem
         from ba._achievement import AchievementSubsystem
         from ba._plugin import PluginSubsystem
+        from ba._account import AccountSubsystem
 
         # Config.
         self.config_file_healthy = False
@@ -238,6 +239,7 @@ class App:
         self.last_ad_purpose = 'invalid'
         self.attempted_first_ad = False
 
+        self.accounts = AccountSubsystem()
         self.plugins = PluginSubsystem()
         self.music = MusicSubsystem()
         self.lang = LanguageSubsystem()
@@ -273,7 +275,6 @@ class App:
         self.special_offer: Optional[Dict] = None
         self.league_rank_cache: Dict = {}
         self.tournament_info: Dict = {}
-        self.account_tournament_list: Optional[Tuple[int, List[str]]] = None
         self.ping_thread_count = 0
         self.invite_confirm_windows: List[Any] = []  # FIXME: Don't use Any.
         self.store_layout: Optional[Dict[str, List[Dict[str, Any]]]] = None
@@ -306,7 +307,6 @@ class App:
 
         self.ui.on_app_launch()
 
-        # _achievement.init_achievements()
         spazappearance.register_appearances()
         _campaign.init_campaigns()
 
@@ -391,13 +391,7 @@ class App:
         # Start scanning for things exposed via ba_meta.
         _meta.start_scan()
 
-        # Auto-sign-in to a local account in a moment if we're set to.
-        def do_auto_sign_in() -> None:
-            if self.headless_mode or cfg.get('Auto Account State') == 'Local':
-                _ba.sign_in('Local')
-
-        _ba.pushcall(do_auto_sign_in)
-
+        self.accounts.on_app_launch()
         self.plugins.on_app_launch()
 
         self.ran_on_app_launch = True

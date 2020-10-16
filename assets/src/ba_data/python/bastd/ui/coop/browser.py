@@ -250,15 +250,15 @@ class CoopBrowserWindow(ba.Window):
         # If we've got a cached tournament list for our account and info for
         # each one of those tournaments, go ahead and display it as a
         # starting point.
-        if (app.account_tournament_list is not None and
-                app.account_tournament_list[0] == _ba.get_account_state_num()
-                and all([
+        if (app.accounts.account_tournament_list is not None
+                and app.accounts.account_tournament_list[0]
+                == _ba.get_account_state_num() and all([
                     t_id in app.tournament_info
-                    for t_id in app.account_tournament_list[1]
+                    for t_id in app.accounts.account_tournament_list[1]
                 ])):
             tourney_data = [
                 app.tournament_info[t_id]
-                for t_id in app.account_tournament_list[1]
+                for t_id in app.accounts.account_tournament_list[1]
             ]
             self._update_for_data(tourney_data)
 
@@ -601,9 +601,9 @@ class CoopBrowserWindow(ba.Window):
             cache_tournament_info(tournament_data)
 
             # Also cache the current tourney list/order for this account.
-            app.account_tournament_list = (_ba.get_account_state_num(), [
-                e['tournamentID'] for e in tournament_data
-            ])
+            app.accounts.account_tournament_list = (
+                _ba.get_account_state_num(),
+                [e['tournamentID'] for e in tournament_data])
 
         self._doing_tournament_query = False
         self._update_for_data(tournament_data)

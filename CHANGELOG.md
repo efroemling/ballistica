@@ -3,6 +3,7 @@
 - ba.get_valid_languages() is now an attr: ba.app.lang.available_languages
 - Achievement functionality has been consolidated into an AchievementSubsystem object at ba.app.ach
 - Plugin functionality has been consolidated into a PluginSubsystem obj at ba.app.plugins
+- Ditto with AccountSubsystem and ba.app.accounts
 
 ### 1.5.26 (20217)
 - Simplified licensing header on python scripts.

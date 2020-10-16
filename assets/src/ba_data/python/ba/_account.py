@@ -10,7 +10,31 @@ from typing import TYPE_CHECKING
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Dict, List
+    from typing import Any, Optional, Dict, List, Tuple
+    import ba
+
+
+class AccountSubsystem:
+    """Subsystem for account handling in the app.
+
+    Category: App Classes
+
+    Access the single shared instance of this class at 'ba.app.plugins'.
+    """
+
+    def __init__(self) -> None:
+        self.account_tournament_list: Optional[Tuple[int, List[str]]] = None
+
+    def on_app_launch(self) -> None:
+        """Called when the app is done bootstrapping."""
+
+        # Auto-sign-in to a local account in a moment if we're set to.
+        def do_auto_sign_in() -> None:
+            if _ba.app.headless_mode or _ba.app.config.get(
+                    'Auto Account State') == 'Local':
+                _ba.sign_in('Local')
+
+        _ba.pushcall(do_auto_sign_in)
 
 
 def handle_account_gained_tickets(count: int) -> None:
