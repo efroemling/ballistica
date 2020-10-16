@@ -22,9 +22,7 @@ class LeagueRankWindow(ba.Window):
                  transition: str = 'in_right',
                  modal: bool = False,
                  origin_widget: ba.Widget = None):
-        # pylint: disable=too-many-statements
         from ba.internal import get_cached_league_rank_data
-        from ba.deprecated import get_resource
         ba.set_analytics_screen('League Rank Window')
 
         self._league_rank_data: Optional[Dict[str, Any]] = None
@@ -46,7 +44,7 @@ class LeagueRankWindow(ba.Window):
         self._height = (657 if uiscale is ba.UIScale.SMALL else
                         710 if uiscale is ba.UIScale.MEDIUM else 800)
         self._r = 'coopSelectWindow'
-        self._rdict = get_resource(self._r)
+        self._rdict = ba.app.lang.get_resource(self._r)
         top_extra = 20 if uiscale is ba.UIScale.SMALL else 0
 
         self._league_url_arg = ''

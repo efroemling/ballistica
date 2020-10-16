@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 import _ba
 from ba._error import print_error, print_exception, NodeNotFoundError
-from ba._lang import Lstr
+from ba._language import Lstr
 from ba._player import Player
 
 if TYPE_CHECKING:

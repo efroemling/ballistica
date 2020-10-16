@@ -22,7 +22,6 @@ class HelpWindow(ba.Window):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
         from ba.internal import get_remote_app_name
-        from ba.deprecated import get_resource
         ba.set_analytics_screen('Help Window')
 
         # If they provided an origin-widget, scale up from that.
@@ -37,6 +36,8 @@ class HelpWindow(ba.Window):
             transition = 'in_right'
 
         self._r = 'helpWindow'
+
+        getres = ba.app.lang.get_resource
 
         self._main_menu = main_menu
         uiscale = ba.app.ui.uiscale
@@ -111,8 +112,8 @@ class HelpWindow(ba.Window):
                                 label=ba.charstr(ba.SpecialChar.BACK))
 
         self._sub_width = 660
-        self._sub_height = 1590 + get_resource(
-            self._r + '.someDaysExtraSpace') + get_resource(
+        self._sub_height = 1590 + ba.app.lang.get_resource(
+            self._r + '.someDaysExtraSpace') + ba.app.lang.get_resource(
                 self._r + '.orPunchingSomethingExtraSpace')
 
         self._subcontainer = ba.containerwidget(parent=self._scrollwidget,
@@ -212,8 +213,7 @@ class HelpWindow(ba.Window):
                           color=paragraph,
                           v_align='center',
                           flatness=1.0)
-            v -= (spacing * 25.0 +
-                  get_resource(self._r + '.someDaysExtraSpace'))
+            v -= (spacing * 25.0 + getres(self._r + '.someDaysExtraSpace'))
             txt_scale = 0.66
             txt = ba.Lstr(resource=self._r +
                           '.orPunchingSomethingText').evaluate()
@@ -228,7 +228,7 @@ class HelpWindow(ba.Window):
                           v_align='center',
                           flatness=1.0)
             v -= (spacing * 27.0 +
-                  get_resource(self._r + '.orPunchingSomethingExtraSpace'))
+                  getres(self._r + '.orPunchingSomethingExtraSpace'))
             txt_scale = 1.0
             txt = ba.Lstr(resource=self._r + '.canHelpText',
                           subs=[('${APP_NAME}', ba.Lstr(resource='titleText'))
@@ -387,7 +387,7 @@ class HelpWindow(ba.Window):
                        texture=ba.gettexture('buttonPunch'),
                        color=(1, 0.7, 0.3))
 
-        txt_scale = get_resource(self._r + '.punchInfoTextScale')
+        txt_scale = getres(self._r + '.punchInfoTextScale')
         txt = ba.Lstr(resource=self._r + '.punchInfoText').evaluate()
         ba.textwidget(parent=self._subcontainer,
                       position=(h - sep - 185 + 70, v + 120),
@@ -409,7 +409,7 @@ class HelpWindow(ba.Window):
                        color=(1, 0.3, 0.3))
 
         txt = ba.Lstr(resource=self._r + '.bombInfoText').evaluate()
-        txt_scale = get_resource(self._r + '.bombInfoTextScale')
+        txt_scale = getres(self._r + '.bombInfoTextScale')
         ba.textwidget(parent=self._subcontainer,
                       position=(h + sep + 50 + 60, v - 35),
                       size=(0, 0),
@@ -431,7 +431,7 @@ class HelpWindow(ba.Window):
                        color=(0.5, 0.5, 1))
 
         txtl = ba.Lstr(resource=self._r + '.pickUpInfoText')
-        txt_scale = get_resource(self._r + '.pickUpInfoTextScale')
+        txt_scale = getres(self._r + '.pickUpInfoTextScale')
         ba.textwidget(parent=self._subcontainer,
                       position=(h + 60 + 120, v + sep + 50),
                       size=(0, 0),
@@ -452,7 +452,7 @@ class HelpWindow(ba.Window):
                        color=(0.4, 1, 0.4))
 
         txt = ba.Lstr(resource=self._r + '.jumpInfoText').evaluate()
-        txt_scale = get_resource(self._r + '.jumpInfoTextScale')
+        txt_scale = getres(self._r + '.jumpInfoTextScale')
         ba.textwidget(parent=self._subcontainer,
                       position=(h - 250 + 75, v - sep - 15 + 30),
                       size=(0, 0),
@@ -464,7 +464,7 @@ class HelpWindow(ba.Window):
                       v_align='top')
 
         txt = ba.Lstr(resource=self._r + '.runInfoText').evaluate()
-        txt_scale = get_resource(self._r + '.runInfoTextScale')
+        txt_scale = getres(self._r + '.runInfoTextScale')
         ba.textwidget(parent=self._subcontainer,
                       position=(h, v - sep - 100),
                       size=(0, 0),
@@ -503,7 +503,7 @@ class HelpWindow(ba.Window):
                        texture=logo_tex)
 
         v -= spacing * 50.0
-        txt_scale = get_resource(self._r + '.powerupsSubtitleTextScale')
+        txt_scale = getres(self._r + '.powerupsSubtitleTextScale')
         txt = ba.Lstr(resource=self._r + '.powerupsSubtitleText').evaluate()
         ba.textwidget(parent=self._subcontainer,
                       position=(h, v),

@@ -62,9 +62,9 @@ class OSMusicPlayer(MusicPlayer):
     def _on_play_folder_cb(self,
                            result: Union[str, List[str]],
                            error: Optional[str] = None) -> None:
-        from ba import _lang
+        from ba import _language
         if error is not None:
-            rstr = (_lang.Lstr(
+            rstr = (_language.Lstr(
                 resource='internal.errorPlayingMusicText').evaluate())
             if isinstance(result, str):
                 err_str = (rstr.replace('${MUSIC}', os.path.basename(result)) +
@@ -103,7 +103,7 @@ class _PickFolderSongThread(threading.Thread):
         self._path = path
 
     def run(self) -> None:
-        from ba import _lang
+        from ba import _language
         from ba._general import Call
         do_print_error = True
         try:
@@ -119,8 +119,8 @@ class _PickFolderSongThread(threading.Thread):
             if not all_files:
                 do_print_error = False
                 raise RuntimeError(
-                    _lang.Lstr(resource='internal.noMusicFilesInFolderText').
-                    evaluate())
+                    _language.Lstr(resource='internal.noMusicFilesInFolderText'
+                                   ).evaluate())
             _ba.pushcall(Call(self._callback, all_files, None),
                          from_other_thread=True)
         except Exception as exc:

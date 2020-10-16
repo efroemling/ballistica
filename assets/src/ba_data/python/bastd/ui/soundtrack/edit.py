@@ -157,7 +157,6 @@ class SoundtrackEditWindow(ba.Window):
         ba.widget(edit=cancel_button, down_widget=self._text_field)
 
     def _refresh(self) -> None:
-        from ba.deprecated import get_resource
         for widget in self._col.get_children():
             widget.delete()
 
@@ -183,8 +182,9 @@ class SoundtrackEditWindow(ba.Window):
             'Scores',
             'Victory',
         ]
+
         # FIXME: We should probably convert this to use translations.
-        type_names_translated = get_resource('soundtrackTypeNames')
+        type_names_translated = ba.app.lang.get_resource('soundtrackTypeNames')
         prev_type_button: Optional[ba.Widget] = None
         prev_test_button: Optional[ba.Widget] = None
 

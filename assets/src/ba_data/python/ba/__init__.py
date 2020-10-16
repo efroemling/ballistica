@@ -42,9 +42,10 @@ from ba._gameactivity import GameActivity
 from ba._gameresults import GameResults
 from ba._settings import (Setting, IntSetting, FloatSetting, ChoiceSetting,
                           BoolSetting, IntChoiceSetting, FloatChoiceSetting)
-from ba._lang import Lstr, setlanguage, get_valid_languages
+from ba._language import Lstr, LanguageSubsystem
 from ba._map import Map, getmaps
 from ba._session import Session
+from ba._ui import UISubsystem
 from ba._servermode import ServerController
 from ba._score import ScoreType, ScoreConfig
 from ba._stats import PlayerScoredMessage, PlayerRecord, Stats
@@ -70,7 +71,8 @@ from ba._messages import (UNHANDLED, OutOfBoundsMessage, DeathType, DieMessage,
                           ShouldShatterMessage, ImpactDamageMessage,
                           FreezeMessage, ThawMessage, HitMessage,
                           CelebrateMessage)
-from ba._music import setmusic, MusicPlayer, MusicType, MusicPlayMode
+from ba._music import (setmusic, MusicPlayer, MusicType, MusicPlayMode,
+                       MusicSubsystem)
 from ba._powerup import PowerupMessage, PowerupAcceptMessage
 from ba._multiteamsession import MultiTeamSession
 from ba.ui import Window, UIController, uicleanupcheck

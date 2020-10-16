@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-10-15 for Ballistica version 1.5.26 build 20213</em></h4>
+<h4><em>last updated on 2020-10-15 for Ballistica version 1.5.27 build 20218</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -20,6 +20,7 @@
       <li><a href="#class_ba_NodeActor">ba.NodeActor</a></li>
    </ul>
    <li><a href="#class_ba_Chooser">ba.Chooser</a></li>
+   <li><a href="#class_ba_Collision">ba.Collision</a></li>
    <li><a href="#class_ba_GameResults">ba.GameResults</a></li>
    <li><a href="#class_ba_GameTip">ba.GameTip</a></li>
    <li><a href="#class_ba_InputDevice">ba.InputDevice</a></li>
@@ -62,6 +63,7 @@
    <li><a href="#function_ba_emitfx">ba.emitfx()</a></li>
    <li><a href="#function_ba_existing">ba.existing()</a></li>
    <li><a href="#function_ba_getactivity">ba.getactivity()</a></li>
+   <li><a href="#function_ba_getcollision">ba.getcollision()</a></li>
    <li><a href="#function_ba_getnodes">ba.getnodes()</a></li>
    <li><a href="#function_ba_getsession">ba.getsession()</a></li>
    <li><a href="#function_ba_newnode">ba.newnode()</a></li>
@@ -84,7 +86,6 @@
 <ul>
    <li><a href="#function_ba_charstr">ba.charstr()</a></li>
    <li><a href="#function_ba_do_once">ba.do_once()</a></li>
-   <li><a href="#function_ba_get_valid_languages">ba.get_valid_languages()</a></li>
    <li><a href="#function_ba_getclass">ba.getclass()</a></li>
    <li><a href="#function_ba_is_browser_likely_available">ba.is_browser_likely_available()</a></li>
    <li><a href="#function_ba_is_point_in_box">ba.is_point_in_box()</a></li>
@@ -100,7 +101,6 @@
    <li><a href="#function_ba_safecolor">ba.safecolor()</a></li>
    <li><a href="#function_ba_screenmessage">ba.screenmessage()</a></li>
    <li><a href="#function_ba_set_analytics_screen">ba.set_analytics_screen()</a></li>
-   <li><a href="#function_ba_setlanguage">ba.setlanguage()</a></li>
    <li><a href="#function_ba_storagename">ba.storagename()</a></li>
    <li><a href="#function_ba_time">ba.time()</a></li>
    <li><a href="#function_ba_timer">ba.timer()</a></li>
@@ -153,10 +153,13 @@
    <li><a href="#class_ba_AppDelegate">ba.AppDelegate</a></li>
    <li><a href="#class_ba_Campaign">ba.Campaign</a></li>
    <li><a href="#class_ba_Keyboard">ba.Keyboard</a></li>
+   <li><a href="#class_ba_LanguageSubsystem">ba.LanguageSubsystem</a></li>
    <li><a href="#class_ba_MusicPlayer">ba.MusicPlayer</a></li>
+   <li><a href="#class_ba_MusicSubsystem">ba.MusicSubsystem</a></li>
    <li><a href="#class_ba_Plugin">ba.Plugin</a></li>
    <li><a href="#class_ba_PotentialPlugin">ba.PotentialPlugin</a></li>
    <li><a href="#class_ba_ServerController">ba.ServerController</a></li>
+   <li><a href="#class_ba_UISubsystem">ba.UISubsystem</a></li>
 </ul>
 <h4><a name="class_category_User_Interface_Classes">User Interface Classes</a></h4>
 <ul>
@@ -215,14 +218,6 @@
       <li><a href="#class_ba_TeamNotFoundError">ba.TeamNotFoundError</a></li>
       <li><a href="#class_ba_WidgetNotFoundError">ba.WidgetNotFoundError</a></li>
    </ul>
-</ul>
-<h4><a name="class_category_Misc_Classes">Misc Classes</a></h4>
-<ul>
-   <li><a href="#class_ba_Collision">ba.Collision</a></li>
-</ul>
-<h4><a name="function_category_Misc_Functions">Misc Functions</a></h4>
-<ul>
-   <li><a href="#function_ba_getcollision">ba.getcollision()</a></li>
 </ul>
 <h4><a name="class_category_Protocols">Protocols</a></h4>
 <ul>
@@ -810,7 +805,7 @@ likely result in errors.</p>
 </p>
 
 <h3>Attributes:</h3>
-<h5><a href="#attr_ba_App__api_version">api_version</a>, <a href="#attr_ba_App__build_number">build_number</a>, <a href="#attr_ba_App__config">config</a>, <a href="#attr_ba_App__config_file_path">config_file_path</a>, <a href="#attr_ba_App__debug_build">debug_build</a>, <a href="#attr_ba_App__language">language</a>, <a href="#attr_ba_App__locale">locale</a>, <a href="#attr_ba_App__on_tv">on_tv</a>, <a href="#attr_ba_App__platform">platform</a>, <a href="#attr_ba_App__python_directory_app">python_directory_app</a>, <a href="#attr_ba_App__python_directory_app_site">python_directory_app_site</a>, <a href="#attr_ba_App__python_directory_user">python_directory_user</a>, <a href="#attr_ba_App__subplatform">subplatform</a>, <a href="#attr_ba_App__test_build">test_build</a>, <a href="#attr_ba_App__ui_bounds">ui_bounds</a>, <a href="#attr_ba_App__user_agent_string">user_agent_string</a>, <a href="#attr_ba_App__version">version</a>, <a href="#attr_ba_App__vr_mode">vr_mode</a></h5>
+<h5><a href="#attr_ba_App__api_version">api_version</a>, <a href="#attr_ba_App__build_number">build_number</a>, <a href="#attr_ba_App__config">config</a>, <a href="#attr_ba_App__config_file_path">config_file_path</a>, <a href="#attr_ba_App__debug_build">debug_build</a>, <a href="#attr_ba_App__on_tv">on_tv</a>, <a href="#attr_ba_App__platform">platform</a>, <a href="#attr_ba_App__python_directory_app">python_directory_app</a>, <a href="#attr_ba_App__python_directory_app_site">python_directory_app_site</a>, <a href="#attr_ba_App__python_directory_user">python_directory_user</a>, <a href="#attr_ba_App__subplatform">subplatform</a>, <a href="#attr_ba_App__test_build">test_build</a>, <a href="#attr_ba_App__ui_bounds">ui_bounds</a>, <a href="#attr_ba_App__user_agent_string">user_agent_string</a>, <a href="#attr_ba_App__version">version</a>, <a href="#attr_ba_App__vr_mode">vr_mode</a></h5>
 <dl>
 <dt><h4><a name="attr_ba_App__api_version">api_version</a></h4></dt><dd>
 <p><span>int</span></p>
@@ -848,23 +843,6 @@ likely result in errors.</p>
 <p>        Debug builds generally run substantially slower than non-debug
         builds due to compiler optimizations being disabled and extra
         checks being run.</p>
-
-</dd>
-<dt><h4><a name="attr_ba_App__language">language</a></h4></dt><dd>
-<p><span>str</span></p>
-<p>The name of the language the game is running in.</p>
-
-<p>        This can be selected explicitly by the user or may be set
-        automatically based on <a href="#attr_ba_App__locale">ba.App.locale</a> or other factors.</p>
-
-</dd>
-<dt><h4><a name="attr_ba_App__locale">locale</a></h4></dt><dd>
-<p><span>str</span></p>
-<p>Raw country/language code detected by the game (such as 'en_US').</p>
-
-<p>        Generally for language-specific code you should look at
-        <a href="#attr_ba_App__language">ba.App.language</a>, which is the language the game is using
-        (which may differ from locale if the user sets a language, etc.)</p>
 
 </dd>
 <dt><h4><a name="attr_ba_App__on_tv">on_tv</a></h4></dt><dd>
@@ -1440,6 +1418,9 @@ mycall()</pre>
 <p><em>&lt;top level class&gt;</em>
 </p>
 <p>A class providing info about occurring collisions.</p>
+
+<p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a>
+</p>
 
 <h3>Attributes:</h3>
 <h5><a href="#attr_ba_Collision__opposingbody">opposingbody</a>, <a href="#attr_ba_Collision__opposingnode">opposingnode</a>, <a href="#attr_ba_Collision__position">position</a>, <a href="#attr_ba_Collision__sourcenode">sourcenode</a></h5>
@@ -2119,7 +2100,7 @@ its time with lingering corpses, sound effects, etc.</p>
     defining a <a href="#class_ba_Activity">ba.Activity</a> that does not need custom types of its own.</p>
 
 <p>    Note that EmptyPlayer defines its team type as EmptyTeam and vice versa,
-    so if you want to define your own class for one of them you must do so
+    so if you want to define your own class for one of them you should do so
     for both.
 </p>
 
@@ -2182,7 +2163,7 @@ its time with lingering corpses, sound effects, etc.</p>
     defining a <a href="#class_ba_Activity">ba.Activity</a> that does not need custom types of its own.</p>
 
 <p>    Note that EmptyPlayer defines its team type as EmptyTeam and vice versa,
-    so if you want to define your own class for one of them you must do so
+    so if you want to define your own class for one of them you should do so
     for both.
 </p>
 
@@ -3080,6 +3061,85 @@ prefs, etc.</p>
 </dd>
 </dl>
 <hr>
+<h2><strong><a name="class_ba_LanguageSubsystem">ba.LanguageSubsystem</a></strong></h3>
+<p><em>&lt;top level class&gt;</em>
+</p>
+<p>Wraps up language related app functionality.</p>
+
+<p>Category: <a href="#class_category_App_Classes">App Classes</a></p>
+
+<p>    To use this class, access the single instance of it at 'ba.app.lang'.
+</p>
+
+<h3>Attributes:</h3>
+<h5><a href="#attr_ba_LanguageSubsystem__available_languages">available_languages</a>, <a href="#attr_ba_LanguageSubsystem__language">language</a>, <a href="#attr_ba_LanguageSubsystem__locale">locale</a></h5>
+<dl>
+<dt><h4><a name="attr_ba_LanguageSubsystem__available_languages">available_languages</a></h4></dt><dd>
+<p><span>List[str]</span></p>
+<p>A list of all available languages.</p>
+
+<p>        Note that languages that may be present in game assets but which
+        are not displayable on the running version of the game are not
+        included here.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_LanguageSubsystem__language">language</a></h4></dt><dd>
+<p><span>str</span></p>
+<p>The name of the language the game is running in.</p>
+
+<p>        This can be selected explicitly by the user or may be set
+        automatically based on <a href="#class_ba_App">ba.App</a>.locale or other factors.</p>
+
+</dd>
+<dt><h4><a name="attr_ba_LanguageSubsystem__locale">locale</a></h4></dt><dd>
+<p><span>str</span></p>
+<p>Raw country/language code detected by the game (such as 'en_US').</p>
+
+<p>        Generally for language-specific code you should look at
+        <a href="#class_ba_App">ba.App</a>.language, which is the language the game is using
+        (which may differ from locale if the user sets a language, etc.)</p>
+
+</dd>
+</dl>
+<h3>Methods:</h3>
+<h5><a href="#method_ba_LanguageSubsystem____init__">&lt;constructor&gt;</a>, <a href="#method_ba_LanguageSubsystem__get_resource">get_resource()</a>, <a href="#method_ba_LanguageSubsystem__is_custom_unicode_char">is_custom_unicode_char()</a>, <a href="#method_ba_LanguageSubsystem__setlanguage">setlanguage()</a>, <a href="#method_ba_LanguageSubsystem__translate">translate()</a></h5>
+<dl>
+<dt><h4><a name="method_ba_LanguageSubsystem____init__">&lt;constructor&gt;</a></dt></h4><dd>
+<p><span>ba.LanguageSubsystem()</span></p>
+
+</dd>
+<dt><h4><a name="method_ba_LanguageSubsystem__get_resource">get_resource()</a></dt></h4><dd>
+<p><span>get_resource(self, resource: str, fallback_resource: str = None, fallback_value: Any = None) -&gt; Any</span></p>
+
+<p>Return a translation resource by name.</p>
+
+<p>DEPRECATED; use <a href="#class_ba_Lstr">ba.Lstr</a> functionality for these purposes.</p>
+
+</dd>
+<dt><h4><a name="method_ba_LanguageSubsystem__is_custom_unicode_char">is_custom_unicode_char()</a></dt></h4><dd>
+<p><span>is_custom_unicode_char(self, char: str) -&gt; bool</span></p>
+
+<p>Return whether a char is in the custom unicode range we use.</p>
+
+</dd>
+<dt><h4><a name="method_ba_LanguageSubsystem__setlanguage">setlanguage()</a></dt></h4><dd>
+<p><span>setlanguage(self, language: Optional[str], print_change: bool = True, store_to_config: bool = True) -&gt; None</span></p>
+
+<p>Set the active language used for the game.</p>
+
+<p>Pass None to use OS default language.</p>
+
+</dd>
+<dt><h4><a name="method_ba_LanguageSubsystem__translate">translate()</a></dt></h4><dd>
+<p><span>translate(self, category: str, strval: str, raise_exceptions: bool = False, print_errors: bool = False) -&gt; str</span></p>
+
+<p>Translate a value (or return the value if no translation available)</p>
+
+<p>DEPRECATED; use <a href="#class_ba_Lstr">ba.Lstr</a> functionality for these purposes.</p>
+
+</dd>
+</dl>
+<hr>
 <h2><strong><a name="class_ba_Level">ba.Level</a></strong></h3>
 <p><em>&lt;top level class&gt;</em>
 </p>
@@ -3906,6 +3966,96 @@ signify that the default soundtrack should be used..</p>
 <li>REGULAR</li>
 <li>TEST</li>
 </ul>
+<hr>
+<h2><strong><a name="class_ba_MusicSubsystem">ba.MusicSubsystem</a></strong></h3>
+<p><em>&lt;top level class&gt;</em>
+</p>
+<p>Subsystem for music playback in the app.</p>
+
+<p>Category: <a href="#class_category_App_Classes">App Classes</a></p>
+
+<p>    To use this class, access the single instance of it at 'ba.app.music'.
+</p>
+
+<h3>Methods:</h3>
+<h5><a href="#method_ba_MusicSubsystem____init__">&lt;constructor&gt;</a>, <a href="#method_ba_MusicSubsystem__do_play_music">do_play_music()</a>, <a href="#method_ba_MusicSubsystem__get_music_player">get_music_player()</a>, <a href="#method_ba_MusicSubsystem__get_soundtrack_entry_name">get_soundtrack_entry_name()</a>, <a href="#method_ba_MusicSubsystem__get_soundtrack_entry_type">get_soundtrack_entry_type()</a>, <a href="#method_ba_MusicSubsystem__have_music_player">have_music_player()</a>, <a href="#method_ba_MusicSubsystem__music_volume_changed">music_volume_changed()</a>, <a href="#method_ba_MusicSubsystem__on_app_launch">on_app_launch()</a>, <a href="#method_ba_MusicSubsystem__on_app_resume">on_app_resume()</a>, <a href="#method_ba_MusicSubsystem__on_app_shutdown">on_app_shutdown()</a>, <a href="#method_ba_MusicSubsystem__set_music_play_mode">set_music_play_mode()</a>, <a href="#method_ba_MusicSubsystem__supports_soundtrack_entry_type">supports_soundtrack_entry_type()</a></h5>
+<dl>
+<dt><h4><a name="method_ba_MusicSubsystem____init__">&lt;constructor&gt;</a></dt></h4><dd>
+<p><span>ba.MusicSubsystem()</span></p>
+
+</dd>
+<dt><h4><a name="method_ba_MusicSubsystem__do_play_music">do_play_music()</a></dt></h4><dd>
+<p><span>do_play_music(self, musictype: Union[MusicType, str, None], continuous: bool = False, mode: MusicPlayMode = &lt;MusicPlayMode.REGULAR: regular&gt;, testsoundtrack: Dict[str, Any] = None) -&gt; None</span></p>
+
+<p>Plays the requested music type/mode.</p>
+
+<p>For most cases, setmusic() is the proper call to use, which itself
+calls this. Certain cases, however, such as soundtrack testing, may
+require calling this directly.</p>
+
+</dd>
+<dt><h4><a name="method_ba_MusicSubsystem__get_music_player">get_music_player()</a></dt></h4><dd>
+<p><span>get_music_player(self) -&gt; MusicPlayer</span></p>
+
+<p>Returns the system music player, instantiating if necessary.</p>
+
+</dd>
+<dt><h4><a name="method_ba_MusicSubsystem__get_soundtrack_entry_name">get_soundtrack_entry_name()</a></dt></h4><dd>
+<p><span>get_soundtrack_entry_name(self, entry: Any) -&gt; str</span></p>
+
+<p>Given a soundtrack entry, returns its name.</p>
+
+</dd>
+<dt><h4><a name="method_ba_MusicSubsystem__get_soundtrack_entry_type">get_soundtrack_entry_type()</a></dt></h4><dd>
+<p><span>get_soundtrack_entry_type(self, entry: Any) -&gt; str</span></p>
+
+<p>Given a soundtrack entry, returns its type, taking into
+account what is supported locally.</p>
+
+</dd>
+<dt><h4><a name="method_ba_MusicSubsystem__have_music_player">have_music_player()</a></dt></h4><dd>
+<p><span>have_music_player(self) -&gt; bool</span></p>
+
+<p>Returns whether a music player is present.</p>
+
+</dd>
+<dt><h4><a name="method_ba_MusicSubsystem__music_volume_changed">music_volume_changed()</a></dt></h4><dd>
+<p><span>music_volume_changed(self, val: float) -&gt; None</span></p>
+
+<p>Should be called when changing the music volume.</p>
+
+</dd>
+<dt><h4><a name="method_ba_MusicSubsystem__on_app_launch">on_app_launch()</a></dt></h4><dd>
+<p><span>on_app_launch(self) -&gt; None</span></p>
+
+<p>Should be called by app on_app_launch().</p>
+
+</dd>
+<dt><h4><a name="method_ba_MusicSubsystem__on_app_resume">on_app_resume()</a></dt></h4><dd>
+<p><span>on_app_resume(self) -&gt; None</span></p>
+
+<p>Should be run when the app resumes from a suspended state.</p>
+
+</dd>
+<dt><h4><a name="method_ba_MusicSubsystem__on_app_shutdown">on_app_shutdown()</a></dt></h4><dd>
+<p><span>on_app_shutdown(self) -&gt; None</span></p>
+
+<p>Should be called when the app is shutting down.</p>
+
+</dd>
+<dt><h4><a name="method_ba_MusicSubsystem__set_music_play_mode">set_music_play_mode()</a></dt></h4><dd>
+<p><span>set_music_play_mode(self, mode: MusicPlayMode, force_restart: bool = False) -&gt; None</span></p>
+
+<p>Sets music play mode; used for soundtrack testing/etc.</p>
+
+</dd>
+<dt><h4><a name="method_ba_MusicSubsystem__supports_soundtrack_entry_type">supports_soundtrack_entry_type()</a></dt></h4><dd>
+<p><span>supports_soundtrack_entry_type(self, entry_type: str) -&gt; bool</span></p>
+
+<p>Return whether provided soundtrack entry type is supported here.</p>
+
+</dd>
+</dl>
 <hr>
 <h2><strong><a name="class_ba_MusicType">ba.MusicType</a></strong></h3>
 <p>Inherits from: enum.Enum</p>
@@ -5777,6 +5927,69 @@ self.t = <a href="#class_ba_Timer">ba.Timer</a>(0.3, say_it, repeat=True)
 <li>SMALL</li>
 </ul>
 <hr>
+<h2><strong><a name="class_ba_UISubsystem">ba.UISubsystem</a></strong></h3>
+<p><em>&lt;top level class&gt;</em>
+</p>
+<p>Consolidated UI functionality for the app.</p>
+
+<p>Category: <a href="#class_category_App_Classes">App Classes</a></p>
+
+<p>    To use this class, access the single instance of it at 'ba.app.ui'.
+</p>
+
+<h3>Attributes:</h3>
+<dl>
+<dt><h4><a name="attr_ba_UISubsystem__uiscale">uiscale</a></h4></dt><dd>
+<p><span><a href="#class_ba_UIScale">ba.UIScale</a></span></p>
+<p>Current ui scale for the app.</p>
+
+</dd>
+</dl>
+<h3>Methods:</h3>
+<h5><a href="#method_ba_UISubsystem____init__">&lt;constructor&gt;</a>, <a href="#method_ba_UISubsystem__clear_main_menu_window">clear_main_menu_window()</a>, <a href="#method_ba_UISubsystem__get_main_menu_location">get_main_menu_location()</a>, <a href="#method_ba_UISubsystem__has_main_menu_window">has_main_menu_window()</a>, <a href="#method_ba_UISubsystem__on_app_launch">on_app_launch()</a>, <a href="#method_ba_UISubsystem__set_main_menu_location">set_main_menu_location()</a>, <a href="#method_ba_UISubsystem__set_main_menu_window">set_main_menu_window()</a></h5>
+<dl>
+<dt><h4><a name="method_ba_UISubsystem____init__">&lt;constructor&gt;</a></dt></h4><dd>
+<p><span>ba.UISubsystem()</span></p>
+
+</dd>
+<dt><h4><a name="method_ba_UISubsystem__clear_main_menu_window">clear_main_menu_window()</a></dt></h4><dd>
+<p><span>clear_main_menu_window(self, transition: str = None) -&gt; None</span></p>
+
+<p>Clear any existing 'main' window with the provided transition.</p>
+
+</dd>
+<dt><h4><a name="method_ba_UISubsystem__get_main_menu_location">get_main_menu_location()</a></dt></h4><dd>
+<p><span>get_main_menu_location(self) -&gt; Optional[str]</span></p>
+
+<p>Return the current named main menu location, if any.</p>
+
+</dd>
+<dt><h4><a name="method_ba_UISubsystem__has_main_menu_window">has_main_menu_window()</a></dt></h4><dd>
+<p><span>has_main_menu_window(self) -&gt; bool</span></p>
+
+<p>Return whether a main menu window is present.</p>
+
+</dd>
+<dt><h4><a name="method_ba_UISubsystem__on_app_launch">on_app_launch()</a></dt></h4><dd>
+<p><span>on_app_launch(self) -&gt; None</span></p>
+
+<p>Should be run on app launch.</p>
+
+</dd>
+<dt><h4><a name="method_ba_UISubsystem__set_main_menu_location">set_main_menu_location()</a></dt></h4><dd>
+<p><span>set_main_menu_location(self, location: str) -&gt; None</span></p>
+
+<p>Set the location represented by the current main menu window.</p>
+
+</dd>
+<dt><h4><a name="method_ba_UISubsystem__set_main_menu_window">set_main_menu_window()</a></dt></h4><dd>
+<p><span>set_main_menu_window(self, window: <a href="#class_ba_Widget">ba.Widget</a>) -&gt; None</span></p>
+
+<p>Set the current 'main' window, replacing any existing.</p>
+
+</dd>
+</dl>
+<hr>
 <h2><strong><a name="class_ba_Vec3">ba.Vec3</a></strong></h3>
 <p><em>&lt;top level class&gt;</em>
 </p>
@@ -6260,17 +6473,6 @@ For more info, see notes on 'existables' here:
 https://ballistica.net/wiki/Coding-Style-Guide</p>
 
 <hr>
-<h2><strong><a name="function_ba_get_valid_languages">ba.get_valid_languages()</a></strong></h3>
-<p><span>get_valid_languages() -&gt; List[str]</span></p>
-
-<p>Return a list containing names of all available languages.</p>
-
-<p>Category: <a href="#function_category_General_Utility_Functions">General Utility Functions</a></p>
-
-<p>Languages that may be present but are not displayable on the running
-version of the game are ignored.</p>
-
-<hr>
 <h2><strong><a name="function_ba_getactivity">ba.getactivity()</a></strong></h3>
 <p><span>getactivity(doraise: bool = True) -&gt; &lt;varies&gt;</span></p>
 
@@ -6316,6 +6518,8 @@ in the background if necessary.</p>
 <p><span>getcollision() -&gt; Collision</span></p>
 
 <p>Return the in-progress collision.</p>
+
+<p>Category: <a href="#function_category_Gameplay_Functions">Gameplay Functions</a></p>
 
 <hr>
 <h2><strong><a name="function_ba_getmaps">ba.getmaps()</a></strong></h3>
@@ -6731,16 +6935,6 @@ are applied to the Widget.</p>
 <p>Generally called when opening a new window or entering some UI.
 'screen' should be a string description of an app location
 ('Main Menu', etc.)</p>
-
-<hr>
-<h2><strong><a name="function_ba_setlanguage">ba.setlanguage()</a></strong></h3>
-<p><span>setlanguage(language: Optional[str], print_change: bool = True, store_to_config: bool = True) -&gt; None</span></p>
-
-<p>Set the active language used for the game.</p>
-
-<p>Category: <a href="#function_category_General_Utility_Functions">General Utility Functions</a></p>
-
-<p>Pass None to use OS default language.</p>
 
 <hr>
 <h2><strong><a name="function_ba_setmusic">ba.setmusic()</a></strong></h3>

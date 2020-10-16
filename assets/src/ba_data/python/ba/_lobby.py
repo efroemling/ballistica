@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 import _ba
 from ba._error import print_exception, print_error, NotFoundError
 from ba._gameutils import animate, animate_array
-from ba._lang import Lstr
+from ba._language import Lstr
 from ba._enums import SpecialChar, InputType
 from ba._profile import get_player_profile_colors
 

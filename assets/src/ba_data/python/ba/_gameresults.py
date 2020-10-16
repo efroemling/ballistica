@@ -106,7 +106,7 @@ class GameResults:
         (properly formatted for the score type.)
         """
         from ba._gameutils import timestring
-        from ba._lang import Lstr
+        from ba._language import Lstr
         from ba._enums import TimeFormat
         from ba._score import ScoreType
         if not self._game_set:

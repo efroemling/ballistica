@@ -40,8 +40,8 @@ def is_browser_likely_available() -> bool:
 
 def get_remote_app_name() -> ba.Lstr:
     """(internal)"""
-    from ba import _lang
-    return _lang.Lstr(resource='remote_app.app_name')
+    from ba import _language
+    return _language.Lstr(resource='remote_app.app_name')
 
 
 def should_submit_debug_info() -> bool:
@@ -213,15 +213,15 @@ def print_live_object_warnings(when: Any,
 
 def print_corrupt_file_error() -> None:
     """Print an error if a corrupt file is found."""
-    from ba._lang import get_resource
     from ba._general import Call
     from ba._enums import TimeType
-    _ba.timer(
-        2.0,
-        lambda: _ba.screenmessage(get_resource('internal.corruptFileText').
-                                  replace('${EMAIL}', 'support@froemling.net'),
-                                  color=(1, 0, 0)),
-        timetype=TimeType.REAL)
+    _ba.timer(2.0,
+              lambda: _ba.screenmessage(
+                  _ba.app.lang.get_resource('internal.corruptFileText').
+                  replace('${EMAIL}', 'support@froemling.net'),
+                  color=(1, 0, 0),
+              ),
+              timetype=TimeType.REAL)
     _ba.timer(2.0,
               Call(_ba.playsound, _ba.getsound('error')),
               timetype=TimeType.REAL)

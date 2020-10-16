@@ -207,6 +207,6 @@ class EmptyTeam(Team['ba.EmptyPlayer']):
     defining a ba.Activity that does not need custom types of its own.
 
     Note that EmptyPlayer defines its team type as EmptyTeam and vice versa,
-    so if you want to define your own class for one of them you must do so
+    so if you want to define your own class for one of them you should do so
     for both.
     """

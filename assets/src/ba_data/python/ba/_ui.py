@@ -15,8 +15,13 @@ if TYPE_CHECKING:
     import ba
 
 
-class UI:
-    """UI subsystem for the app."""
+class UISubsystem:
+    """Consolidated UI functionality for the app.
+
+    Category: App Classes
+
+    To use this class, access the single instance of it at 'ba.app.ui'.
+    """
 
     def __init__(self) -> None:
         env = _ba.env()

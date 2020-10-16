@@ -1575,7 +1575,7 @@ class GatherWindow(ba.Window):
                     {
                         'type': 'PUBLIC_PARTY_QUERY',
                         'proto': app.protocol_version,
-                        'lang': app.language
+                        'lang': app.lang.language
                     },
                     callback=ba.WeakCall(self._on_public_party_query_result))
                 _ba.run_transactions()

@@ -18,7 +18,7 @@ def handle_account_gained_tickets(count: int) -> None:
 
     (internal)
     """
-    from ba._lang import Lstr
+    from ba._language import Lstr
     _ba.screenmessage(Lstr(resource='getTicketsWindow.receivedTicketsText',
                            subs=[('${COUNT}', str(count))]),
                       color=(0, 1, 0))
@@ -166,7 +166,7 @@ def have_pro_options() -> bool:
 
 def show_post_purchase_message() -> None:
     """(internal)"""
-    from ba._lang import Lstr
+    from ba._language import Lstr
     from ba._enums import TimeType
     app = _ba.app
     cur_time = _ba.time(TimeType.REAL)
@@ -183,14 +183,15 @@ def show_post_purchase_message() -> None:
 def on_account_state_changed() -> None:
     """(internal)"""
     import time
-    from ba import _lang
+    from ba import _language
     app = _ba.app
 
     # Run any pending promo codes we had queued up while not signed in.
     if _ba.get_account_state() == 'signed_in' and app.pending_promo_codes:
         for code in app.pending_promo_codes:
-            _ba.screenmessage(_lang.Lstr(resource='submittingPromoCodeText'),
-                              color=(0, 1, 0))
+            _ba.screenmessage(
+                _language.Lstr(resource='submittingPromoCodeText'),
+                color=(0, 1, 0))
             _ba.add_transaction({
                 'type': 'PROMO_CODE',
                 'expire_time': time.time() + 5,

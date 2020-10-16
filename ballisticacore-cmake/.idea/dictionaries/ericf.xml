@@ -353,6 +353,7 @@
       <w>getpublicpartyenabled</w>
       <w>getpublicpartymaxsize</w>
       <w>getqrcodetexture</w>
+      <w>getres</w>
       <w>getsession</w>
       <w>getsound</w>
       <w>gettexture</w>
@@ -415,6 +416,7 @@
       <w>internalformat</w>
       <w>interuptions</w>
       <w>invote</w>
+      <w>iobj</w>
       <w>iserverget</w>
       <w>iserverput</w>
       <w>isinst</w>
@@ -552,6 +554,7 @@
       <w>nitpicky</w>
       <w>nlpos</w>
       <w>nmemb</w>
+      <w>noassets</w>
       <w>nodetype</w>
       <w>nofilename</w>
       <w>noglobs</w>

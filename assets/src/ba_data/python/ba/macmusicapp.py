@@ -68,7 +68,7 @@ class _MacMusicAppThread(threading.Thread):
     def run(self) -> None:
         """Run the Music.app thread."""
         from ba._general import Call
-        from ba._lang import Lstr
+        from ba._language import Lstr
         from ba._enums import TimeType
         _ba.set_thread_name('BA_MacMusicAppThread')
         _ba.mac_music_app_init()
@@ -212,7 +212,6 @@ class _MacMusicAppThread(threading.Thread):
 
     def _play_current_playlist(self) -> None:
         try:
-            from ba import _lang
             from ba._general import Call
             assert self._current_playlist is not None
             if _ba.mac_music_app_play_playlist(self._current_playlist):
@@ -220,8 +219,8 @@ class _MacMusicAppThread(threading.Thread):
             else:
                 _ba.pushcall(Call(
                     _ba.screenmessage,
-                    _lang.get_resource('playlistNotFoundText') + ': \'' +
-                    self._current_playlist + '\'', (1, 0, 0)),
+                    _ba.app.lang.get_resource('playlistNotFoundText') +
+                    ': \'' + self._current_playlist + '\'', (1, 0, 0)),
                              from_other_thread=True)
         except Exception:
             from ba import _error

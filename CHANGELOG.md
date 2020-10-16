@@ -1,4 +1,8 @@
-### 1.5.26 (20178)
+### 1.5.27 (20218)
+- Language functionality has been consolidated into a LanguageSubsystem object at ba.app.lang
+- ba.get_valid_languages() is now an attr: ba.app.lang.available_languages
+
+### 1.5.26 (20217)
 - Simplified licensing header on python scripts.
 - General project refactoring in order to open source most of the C++ layer.
 

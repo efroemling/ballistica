@@ -20,7 +20,6 @@ class TrophiesWindow(popup.PopupWindow):
                  position: Tuple[float, float],
                  data: Dict[str, Any],
                  scale: float = None):
-        from ba.deprecated import get_resource
         self._data = data
         uiscale = ba.app.ui.uiscale
         if scale is None:
@@ -76,7 +75,9 @@ class TrophiesWindow(popup.PopupWindow):
         trophy_types = [['0a'], ['0b'], ['1'], ['2'], ['3'], ['4']]
         sub_height = 40 + len(trophy_types) * incr
 
-        eq_text = get_resource('coopSelectWindow.powerRankingPointsEqualsText')
+        eq_text = ba.Lstr(
+            resource='coopSelectWindow.powerRankingPointsEqualsText').evaluate(
+            )
 
         self._subcontainer = ba.containerwidget(parent=self._scrollwidget,
                                                 size=(sub_width, sub_height),
@@ -84,25 +85,27 @@ class TrophiesWindow(popup.PopupWindow):
 
         total_pts = 0
 
-        multi_txt = get_resource('coopSelectWindow.powerRankingPointsMultText')
+        multi_txt = ba.Lstr(
+            resource='coopSelectWindow.powerRankingPointsMultText').evaluate()
 
         total_pts += self._create_trophy_type_widgets(eq_text, incr, multi_txt,
                                                       sub_height, sub_width,
                                                       trophy_types)
 
-        ba.textwidget(parent=self._subcontainer,
-                      position=(sub_width * 1.0,
-                                sub_height - 20 - incr * len(trophy_types)),
-                      maxwidth=sub_width * 0.5,
-                      scale=0.7,
-                      color=(0.7, 0.8, 1.0),
-                      flatness=1.0,
-                      shadow=0.0,
-                      text=get_resource('coopSelectWindow.totalText') + ' ' +
-                      eq_text.replace('${NUMBER}', str(total_pts)),
-                      size=(0, 0),
-                      h_align='right',
-                      v_align='center')
+        ba.textwidget(
+            parent=self._subcontainer,
+            position=(sub_width * 1.0,
+                      sub_height - 20 - incr * len(trophy_types)),
+            maxwidth=sub_width * 0.5,
+            scale=0.7,
+            color=(0.7, 0.8, 1.0),
+            flatness=1.0,
+            shadow=0.0,
+            text=ba.Lstr(resource='coopSelectWindow.totalText').evaluate() +
+            ' ' + eq_text.replace('${NUMBER}', str(total_pts)),
+            size=(0, 0),
+            h_align='right',
+            v_align='center')
 
     def _create_trophy_type_widgets(self, eq_text: str, incr: int,
                                     multi_txt: str, sub_height: int,

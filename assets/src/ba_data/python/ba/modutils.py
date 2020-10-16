@@ -17,7 +17,7 @@ def get_human_readable_user_scripts_path() -> str:
 
     This is NOT a valid filesystem path; may be something like "(SD Card)".
     """
-    from ba import _lang
+    from ba import _language
     app = _ba.app
     path: Optional[str] = app.python_directory_user
     if path is None:
@@ -32,14 +32,14 @@ def get_human_readable_user_scripts_path() -> str:
         if (ext_storage_path is not None
                 and app.python_directory_user.startswith(ext_storage_path)):
             path = ('<' +
-                    _lang.Lstr(resource='externalStorageText').evaluate() +
+                    _language.Lstr(resource='externalStorageText').evaluate() +
                     '>' + app.python_directory_user[len(ext_storage_path):])
     return path
 
 
 def _request_storage_permission() -> bool:
     """If needed, requests storage permission from the user (& return true)."""
-    from ba._lang import Lstr
+    from ba._language import Lstr
     from ba._enums import Permission
     if not _ba.have_permission(Permission.STORAGE):
         _ba.playsound(_ba.getsound('error'))

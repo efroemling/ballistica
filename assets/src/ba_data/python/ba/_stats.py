@@ -131,7 +131,7 @@ class PlayerRecord:
         """Submit a kill for this player entry."""
         # FIXME Clean this up.
         # pylint: disable=too-many-statements
-        from ba._lang import Lstr
+        from ba._language import Lstr
         from ba._general import Call
         self._multi_kill_count += 1
         stats = self._stats()
@@ -341,7 +341,7 @@ class Stats:
         from bastd.actor.popuptext import PopupText
         from ba import _math
         from ba._gameactivity import GameActivity
-        from ba._lang import Lstr
+        from ba._language import Lstr
         del victim_player  # Currently unused.
         name = player.getname()
         s_player = self._player_records[name]
@@ -428,7 +428,7 @@ class Stats:
                           killed: bool = False,
                           killer: ba.Player = None) -> None:
         """Should be called when a player is killed."""
-        from ba._lang import Lstr
+        from ba._language import Lstr
         name = player.getname()
         prec = self._player_records[name]
         prec.streak = 0

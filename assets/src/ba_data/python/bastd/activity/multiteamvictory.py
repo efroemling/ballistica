@@ -33,7 +33,6 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         # pylint: disable=too-many-statements
         from bastd.actor.text import Text
         from bastd.actor.image import Image
-        from ba.deprecated import get_resource
         ba.set_analytics_screen('FreeForAll Series Victory Screen' if self.
                                 _is_ffa else 'Teams Series Victory Screen')
         if ba.app.ui.uiscale is ba.UIScale.LARGE:
@@ -72,7 +71,8 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         tval = 6.4
         t_incr = 0.12
 
-        always_use_first_to = get_resource('bestOfUseFirstToInstead')
+        always_use_first_to = ba.app.lang.get_resource(
+            'bestOfUseFirstToInstead')
 
         session = self.session
         if self._is_ffa:

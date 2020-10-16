@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, TypeVar
 
 from ba._activity import Activity
 from ba._score import ScoreConfig
-from ba._lang import Lstr
+from ba._language import Lstr
 from ba._messages import PlayerDiedMessage, StandMessage
 from ba._error import NotFoundError, print_error, print_exception
 from ba._general import Call, WeakCall

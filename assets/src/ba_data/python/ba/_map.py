@@ -48,8 +48,8 @@ def get_map_display_string(name: str) -> ba.Lstr:
 
     Category: Asset Functions
     """
-    from ba import _lang
-    return _lang.Lstr(translate=('mapsNames', name))
+    from ba import _language
+    return _language.Lstr(translate=('mapsNames', name))
 
 
 def getmaps(playtype: str) -> List[str]:

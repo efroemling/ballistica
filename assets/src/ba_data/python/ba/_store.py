@@ -21,15 +21,16 @@ def get_store_item(item: str) -> Dict[str, Any]:
 def get_store_item_name_translated(item_name: str) -> ba.Lstr:
     """Return a ba.Lstr for a store item name."""
     # pylint: disable=cyclic-import
-    from ba import _lang
+    from ba import _language
     from ba import _map
     item_info = get_store_item(item_name)
     if item_name.startswith('characters.'):
-        return _lang.Lstr(translate=('characterNames', item_info['character']))
+        return _language.Lstr(translate=('characterNames',
+                                         item_info['character']))
     if item_name in ['upgrades.pro', 'pro']:
-        return _lang.Lstr(resource='store.bombSquadProNameText',
-                          subs=[('${APP_NAME}',
-                                 _lang.Lstr(resource='titleText'))])
+        return _language.Lstr(resource='store.bombSquadProNameText',
+                              subs=[('${APP_NAME}',
+                                     _language.Lstr(resource='titleText'))])
     if item_name.startswith('maps.'):
         map_type: Type[ba.Map] = item_info['map_type']
         return _map.get_map_display_string(map_type.name)
@@ -37,7 +38,7 @@ def get_store_item_name_translated(item_name: str) -> ba.Lstr:
         gametype: Type[ba.GameActivity] = item_info['gametype']
         return gametype.get_display_string()
     if item_name.startswith('icons.'):
-        return _lang.Lstr(resource='editProfileWindow.iconText')
+        return _language.Lstr(resource='editProfileWindow.iconText')
     raise ValueError('unrecognized item: ' + item_name)
 
 

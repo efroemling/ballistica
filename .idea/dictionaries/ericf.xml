@@ -850,6 +850,7 @@
       <w>getplayer</w>
       <w>getpt</w>
       <w>getremote</w>
+      <w>getres</w>
       <w>getscanresults</w>
       <w>getscoreconfig</w>
       <w>getsession</w>
@@ -1015,6 +1016,7 @@
       <w>intex</w>
       <w>intp</w>
       <w>introspectable</w>
+      <w>iobj</w>
       <w>ipaddress</w>
       <w>ipos</w>
       <w>iprof</w>
@@ -1359,6 +1361,7 @@
       <w>nline</w>
       <w>nlines</w>
       <w>nntplib</w>
+      <w>noassets</w>
       <w>nodeactor</w>
       <w>nodepos</w>
       <w>nodpi</w>

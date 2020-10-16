@@ -120,6 +120,8 @@ class MusicSubsystem:
     """Subsystem for music playback in the app.
 
     Category: App Classes
+
+    To use this class, access the single instance of it at 'ba.app.music'.
     """
 
     def __init__(self) -> None:

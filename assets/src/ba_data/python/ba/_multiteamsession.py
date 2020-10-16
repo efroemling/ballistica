@@ -238,7 +238,7 @@ class MultiTeamSession(Session):
         from ba._math import normalized_color
         from ba._general import Call
         from ba._gameutils import cameraflash
-        from ba._lang import Lstr
+        from ba._language import Lstr
         from ba._freeforallsession import FreeForAllSession
         from ba._messages import CelebrateMessage
         _ba.timer(delay, Call(_ba.playsound, _ba.getsound('boxingBell')))

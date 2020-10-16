@@ -139,7 +139,7 @@ class CoopGameActivity(GameActivity[PlayerType, TeamType]):
     def _show_remaining_achievements(self) -> None:
         # pylint: disable=cyclic-import
         from ba._achievement import get_achievements_for_coop_level
-        from ba._lang import Lstr
+        from ba._language import Lstr
         from bastd.actor.text import Text
         ts_h_offs = 30
         v_offs = -200

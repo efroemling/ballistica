@@ -10,7 +10,7 @@ def get_binding_values() -> object:
     import json
     import copy
     import ba
-    from ba import _lang
+    from ba import _language
     from ba import _music
     from ba import _input
     from ba import _apputils
@@ -99,8 +99,8 @@ def get_binding_values() -> object:
         party.handle_party_invite,  # kHandlePartyInviteCall
         _music.do_play_music,  # kDoPlayMusicCall
         ba.app.handle_deep_link,  # kDeepLinkCall
-        _lang.get_resource,  # kGetResourceCall
-        _lang.translate,  # kTranslateCall
+        ba.app.lang.get_resource,  # kGetResourceCall
+        ba.app.lang.translate,  # kTranslateCall
         ba.Lstr,  # kLStrClass
         ba.Call,  # kCallClass
         _apputils.garbage_collect,  # kGarbageCollectCall
@@ -122,5 +122,5 @@ def get_binding_values() -> object:
         _enums.SpecialChar,  # kSpecialCharClass
         _player.Player,  # kPlayerClass
         _hooks.get_player_icon,  # kGetPlayerIconCall
-        _lang.Lstr.from_json,  # kLstrFromJsonCall
+        _language.Lstr.from_json,  # kLstrFromJsonCall
     )  # yapf: disable

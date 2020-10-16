@@ -167,7 +167,7 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
     def on_begin(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.actor.text import Text
-        from ba import _lang
+        from ba import _language
         super().on_begin()
 
         # Pop up a 'press any button to continue' statement after our
@@ -176,9 +176,9 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
         if _ba.app.ui.uiscale is UIScale.LARGE:
             # FIXME: Need a better way to determine whether we've probably
             #  got a keyboard.
-            sval = _lang.Lstr(resource='pressAnyKeyButtonText')
+            sval = _language.Lstr(resource='pressAnyKeyButtonText')
         else:
-            sval = _lang.Lstr(resource='pressAnyButtonText')
+            sval = _language.Lstr(resource='pressAnyButtonText')
 
         Text(self._custom_continue_message
              if self._custom_continue_message is not None else sval,

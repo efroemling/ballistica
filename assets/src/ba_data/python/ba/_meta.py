@@ -48,7 +48,7 @@ def start_scan() -> None:
 def handle_scan_results(results: ScanResults) -> None:
     """Called in the game thread with results of a completed scan."""
 
-    from ba._lang import Lstr
+    from ba._language import Lstr
     from ba._plugin import PotentialPlugin
 
     # Warnings generally only get printed locally for users' benefit

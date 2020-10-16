@@ -164,10 +164,10 @@ class AdvancedSettingsWindow(ba.Window):
 
     def _update_lang_status(self) -> None:
         if self._complete_langs_list is not None:
-            up_to_date = (ba.app.language in self._complete_langs_list)
+            up_to_date = (ba.app.lang.language in self._complete_langs_list)
             ba.textwidget(
                 edit=self._lang_status_text,
-                text='' if ba.app.language == 'Test' else ba.Lstr(
+                text='' if ba.app.lang.language == 'Test' else ba.Lstr(
                     resource=self._r + '.translationNoUpdateNeededText')
                 if up_to_date else ba.Lstr(resource=self._r +
                                            '.translationUpdateNeededText'),
@@ -189,6 +189,8 @@ class AdvancedSettingsWindow(ba.Window):
         from bastd.ui.config import ConfigCheckBox
         from ba.modutils import show_user_scripts
 
+        available_languages = ba.app.lang.available_languages
+
         # Don't rebuild if the menu is open or if our language and
         # language-list hasn't changed.
         # NOTE - although we now support widgets updating their own
@@ -196,12 +198,11 @@ class AdvancedSettingsWindow(ba.Window):
         # menu based on the language so still need this. ...however we could
         # make this more limited to it only rebuilds that one menu instead
         # of everything.
-        if self._menu_open or (
-                self._prev_lang == _ba.app.config.get('Lang', None)
-                and self._prev_lang_list == ba.get_valid_languages()):
+        if self._menu_open or (self._prev_lang == _ba.app.config.get(
+                'Lang', None) and self._prev_lang_list == available_languages):
             return
         self._prev_lang = _ba.app.config.get('Lang', None)
-        self._prev_lang_list = ba.get_valid_languages()
+        self._prev_lang_list = available_languages
 
         # Clear out our sub-container.
         children = self._subcontainer.get_children()
@@ -248,7 +249,7 @@ class AdvancedSettingsWindow(ba.Window):
                       h_align='right',
                       v_align='center')
 
-        languages = ba.get_valid_languages()
+        languages = _ba.app.lang.available_languages
         cur_lang = _ba.app.config.get('Lang', None)
         if cur_lang is None:
             cur_lang = 'Auto'
@@ -289,9 +290,9 @@ class AdvancedSettingsWindow(ba.Window):
             button_size=(250, 60),
             choices_display=([
                 ba.Lstr(value=(ba.Lstr(resource='autoText').evaluate() + ' (' +
-                               ba.Lstr(translate=(
-                                   'languages',
-                                   ba.app.default_language)).evaluate() + ')'))
+                               ba.Lstr(translate=('languages',
+                                                  ba.app.lang.default_language
+                                                  )).evaluate() + ')'))
             ] + [ba.Lstr(value=langs_full[l]) for l in languages]),
             current_choice=cur_lang)
 
@@ -689,7 +690,7 @@ class AdvancedSettingsWindow(ba.Window):
         self._menu_open = False
 
     def _on_menu_choice(self, choice: str) -> None:
-        ba.setlanguage(None if choice == 'Auto' else choice)
+        ba.app.lang.setlanguage(None if choice == 'Auto' else choice)
         self._save_state()
         ba.timer(0.1, ba.WeakCall(self._rebuild), timetype=ba.TimeType.REAL)
 

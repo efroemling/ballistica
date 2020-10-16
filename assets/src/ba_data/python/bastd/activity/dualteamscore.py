@@ -23,7 +23,6 @@ class TeamVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         assert isinstance(self._winner, ba.SessionTeam)
 
     def on_begin(self) -> None:
-        from ba.deprecated import get_resource
         ba.set_analytics_screen('Teams Score Screen')
         super().on_begin()
 
@@ -37,7 +36,7 @@ class TeamVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         # 'First to 4'.
         session = self.session
         assert isinstance(session, ba.MultiTeamSession)
-        if get_resource('bestOfUseFirstToInstead'):
+        if ba.app.lang.get_resource('bestOfUseFirstToInstead'):
             best_txt = ba.Lstr(resource='firstToSeriesText',
                                subs=[('${COUNT}',
                                       str(session.get_series_length() / 2 + 1))

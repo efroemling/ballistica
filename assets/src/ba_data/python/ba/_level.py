@@ -62,8 +62,8 @@ class Level:
     @property
     def displayname(self) -> ba.Lstr:
         """The localized name for this Level."""
-        from ba import _lang
-        return _lang.Lstr(
+        from ba import _language
+        return _language.Lstr(
             translate=('coopLevelNames', self._displayname
                        if self._displayname is not None else self._name),
             subs=[('${GAME}',

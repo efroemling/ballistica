@@ -40,31 +40,31 @@ def set_config_fullscreen_off() -> None:
 
 
 def not_signed_in_screen_message() -> None:
-    from ba._lang import Lstr
+    from ba._language import Lstr
     _ba.screenmessage(Lstr(resource='notSignedInErrorText'))
 
 
 def connecting_to_party_message() -> None:
-    from ba._lang import Lstr
+    from ba._language import Lstr
     _ba.screenmessage(Lstr(resource='internal.connectingToPartyText'),
                       color=(1, 1, 1))
 
 
 def rejecting_invite_already_in_party_message() -> None:
-    from ba._lang import Lstr
+    from ba._language import Lstr
     _ba.screenmessage(
         Lstr(resource='internal.rejectingInviteAlreadyInPartyText'),
         color=(1, 0.5, 0))
 
 
 def connection_failed_message() -> None:
-    from ba._lang import Lstr
+    from ba._language import Lstr
     _ba.screenmessage(Lstr(resource='internal.connectionFailedText'),
                       color=(1, 0.5, 0))
 
 
 def temporarily_unavailable_message() -> None:
-    from ba._lang import Lstr
+    from ba._language import Lstr
     _ba.playsound(_ba.getsound('error'))
     _ba.screenmessage(
         Lstr(resource='getTicketsWindow.unavailableTemporarilyText'),
@@ -72,20 +72,20 @@ def temporarily_unavailable_message() -> None:
 
 
 def in_progress_message() -> None:
-    from ba._lang import Lstr
+    from ba._language import Lstr
     _ba.playsound(_ba.getsound('error'))
     _ba.screenmessage(Lstr(resource='getTicketsWindow.inProgressText'),
                       color=(1, 0, 0))
 
 
 def error_message() -> None:
-    from ba._lang import Lstr
+    from ba._language import Lstr
     _ba.playsound(_ba.getsound('error'))
     _ba.screenmessage(Lstr(resource='errorText'), color=(1, 0, 0))
 
 
 def purchase_not_valid_error() -> None:
-    from ba._lang import Lstr
+    from ba._language import Lstr
     _ba.playsound(_ba.getsound('error'))
     _ba.screenmessage(Lstr(resource='store.purchaseNotValidError',
                            subs=[('${EMAIL}', 'support@froemling.net')]),
@@ -93,28 +93,28 @@ def purchase_not_valid_error() -> None:
 
 
 def purchase_already_in_progress_error() -> None:
-    from ba._lang import Lstr
+    from ba._language import Lstr
     _ba.playsound(_ba.getsound('error'))
     _ba.screenmessage(Lstr(resource='store.purchaseAlreadyInProgressText'),
                       color=(1, 0, 0))
 
 
 def gear_vr_controller_warning() -> None:
-    from ba._lang import Lstr
+    from ba._language import Lstr
     _ba.playsound(_ba.getsound('error'))
     _ba.screenmessage(Lstr(resource='usesExternalControllerText'),
                       color=(1, 0, 0))
 
 
 def orientation_reset_cb_message() -> None:
-    from ba._lang import Lstr
+    from ba._language import Lstr
     _ba.screenmessage(
         Lstr(resource='internal.vrOrientationResetCardboardText'),
         color=(0, 1, 0))
 
 
 def orientation_reset_message() -> None:
-    from ba._lang import Lstr
+    from ba._language import Lstr
     _ba.screenmessage(Lstr(resource='internal.vrOrientationResetText'),
                       color=(0, 1, 0))
 
@@ -133,8 +133,8 @@ def launch_main_menu_session() -> None:
 
 
 def language_test_toggle() -> None:
-    from ba._lang import setlanguage
-    setlanguage('Gibberish' if _ba.app.language == 'English' else 'English')
+    _ba.app.lang.setlanguage('Gibberish' if _ba.app.lang.language ==
+                             'English' else 'English')
 
 
 def award_in_control_achievement() -> None:
@@ -156,7 +156,7 @@ def launch_coop_game(name: str) -> None:
 
 
 def purchases_restored_message() -> None:
-    from ba._lang import Lstr
+    from ba._language import Lstr
     _ba.screenmessage(Lstr(resource='getTicketsWindow.purchasesRestoredText'),
                       color=(0, 1, 0))
 
@@ -168,7 +168,7 @@ def dismiss_wii_remotes_window() -> None:
 
 
 def unavailable_message() -> None:
-    from ba._lang import Lstr
+    from ba._language import Lstr
     _ba.screenmessage(Lstr(resource='getTicketsWindow.unavailableText'),
                       color=(1, 0, 0))
 
@@ -185,7 +185,7 @@ def set_last_ad_network(sval: str) -> None:
 
 
 def no_game_circle_message() -> None:
-    from ba._lang import Lstr
+    from ba._language import Lstr
     _ba.screenmessage(Lstr(resource='noGameCircleText'), color=(1, 0, 0))
 
 
@@ -250,7 +250,7 @@ def read_config() -> None:
 
 def ui_remote_press() -> None:
     """Handle a press by a remote device that is only usable for nav."""
-    from ba._lang import Lstr
+    from ba._language import Lstr
 
     # Can be called without a context; need a context for getsound.
     with _ba.Context('ui'):

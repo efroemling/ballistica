@@ -166,7 +166,7 @@ class ServerController:
         return False
 
     def _execute_shutdown(self) -> None:
-        from ba._lang import Lstr
+        from ba._language import Lstr
         if self._executing_shutdown:
             return
         self._executing_shutdown = True

@@ -11,7 +11,7 @@ import _ba
 
 if TYPE_CHECKING:
     import ba
-    from ba import _lang, _meta
+    from ba import _language, _meta
     from bastd.actor import spazappearance
     from typing import Optional, Dict, Set, Any, Type, Tuple, Callable, List
 
@@ -48,87 +48,6 @@ class App:
         """Where the game's config file is stored on disk."""
         assert isinstance(self._env['config_file_path'], str)
         return self._env['config_file_path']
-
-    @property
-    def locale(self) -> str:
-        """Raw country/language code detected by the game (such as 'en_US').
-
-        Generally for language-specific code you should look at
-        ba.App.language, which is the language the game is using
-        (which may differ from locale if the user sets a language, etc.)
-        """
-        assert isinstance(self._env['locale'], str)
-        return self._env['locale']
-
-    def can_display_language(self, language: str) -> bool:
-        """Tell whether we can display a particular language.
-
-        (internal)
-
-        On some platforms we don't have unicode rendering yet
-        which limits the languages we can draw.
-        """
-
-        # We don't yet support full unicode display on windows or linux :-(.
-        if (language in {
-                'Chinese', 'ChineseTraditional', 'Persian', 'Korean', 'Arabic',
-                'Hindi', 'Vietnamese'
-        } and not _ba.can_display_full_unicode()):
-            return False
-        return True
-
-    def _get_default_language(self) -> str:
-        languages = {
-            'de': 'German',
-            'es': 'Spanish',
-            'sk': 'Slovak',
-            'it': 'Italian',
-            'nl': 'Dutch',
-            'da': 'Danish',
-            'pt': 'Portuguese',
-            'fr': 'French',
-            'el': 'Greek',
-            'ru': 'Russian',
-            'pl': 'Polish',
-            'sv': 'Swedish',
-            'eo': 'Esperanto',
-            'cs': 'Czech',
-            'hr': 'Croatian',
-            'hu': 'Hungarian',
-            'be': 'Belarussian',
-            'ro': 'Romanian',
-            'ko': 'Korean',
-            'fa': 'Persian',
-            'ar': 'Arabic',
-            'zh': 'Chinese',
-            'tr': 'Turkish',
-            'id': 'Indonesian',
-            'sr': 'Serbian',
-            'uk': 'Ukrainian',
-            'vi': 'Vietnamese',
-            'vec': 'Venetian',
-            'hi': 'Hindi'
-        }
-
-        # Special case for Chinese: map specific variations to traditional.
-        # (otherwise will map to 'Chinese' which is simplified)
-        if self.locale in ('zh_HANT', 'zh_TW'):
-            language = 'ChineseTraditional'
-        else:
-            language = languages.get(self.locale[:2], 'English')
-        if not self.can_display_language(language):
-            language = 'English'
-        return language
-
-    @property
-    def language(self) -> str:
-        """The name of the language the game is running in.
-
-        This can be selected explicitly by the user or may be set
-        automatically based on ba.App.locale or other factors.
-        """
-        assert isinstance(self.config, dict)
-        return self.config.get('Lang', self.default_language)
 
     @property
     def user_agent_string(self) -> str:
@@ -254,7 +173,8 @@ class App:
         """
         # pylint: disable=too-many-statements
         from ba._music import MusicSubsystem
-        from ba._ui import UI
+        from ba._language import LanguageSubsystem
+        from ba._ui import UISubsystem
 
         # Config.
         self.config_file_healthy = False
@@ -283,7 +203,6 @@ class App:
         self.active_plugins: Dict[str, ba.Plugin] = {}
 
         # Misc.
-        self.default_language = self._get_default_language()
         self.metascan: Optional[_meta.ScanResults] = None
         self.tips: List[str] = []
         self.stress_test_reset_timer: Optional[ba.Timer] = None
@@ -326,8 +245,7 @@ class App:
         self.music = MusicSubsystem()
 
         # Language.
-        self.language_target: Optional[_lang.AttrDict] = None
-        self.language_merged: Optional[_lang.AttrDict] = None
+        self.lang = LanguageSubsystem()
 
         # Achievements.
         self.achievements: List[ba.Achievement] = []
@@ -358,7 +276,7 @@ class App:
         self.coop_session_args: Dict = {}
 
         # UI.
-        self.ui = UI()
+        self.ui = UISubsystem()
 
         self.value_test_defaults: dict = {}
         self.first_main_menu = True  # FIXME: Move to mainmenu class.
@@ -551,7 +469,7 @@ class App:
         activity: Optional[ba.Activity] = _ba.get_foreground_host_activity()
         if (activity is not None and activity.allow_pausing
                 and not _ba.have_connected_clients()):
-            from ba import _gameutils, _lang
+            from ba import _gameutils, _language
             from ba._nodeactor import NodeActor
 
             # FIXME: Shouldn't be touching scene stuff here;
@@ -567,10 +485,14 @@ class App:
                     _ba.newnode(
                         'text',
                         attrs={
-                            'text': _lang.Lstr(resource='pausedByHostText'),
-                            'client_only': True,
-                            'flatness': 1.0,
-                            'h_align': 'center'
+                            'text':
+                                _language.Lstr(resource='pausedByHostText'),
+                            'client_only':
+                                True,
+                            'flatness':
+                                1.0,
+                            'h_align':
+                                'center'
                         }))
 
     def resume(self) -> None:
@@ -705,7 +627,7 @@ class App:
 
     def do_remove_in_game_ads_message(self) -> None:
         """(internal)"""
-        from ba._lang import Lstr
+        from ba._language import Lstr
         from ba._enums import TimeType
 
         # Print this message once every 10 minutes at most.
@@ -730,7 +652,7 @@ class App:
 
     def handle_deep_link(self, url: str) -> None:
         """Handle a deep link URL."""
-        from ba._lang import Lstr
+        from ba._language import Lstr
         from ba._enums import TimeType
         appname = _ba.appname()
         if url.startswith(f'{appname}://code/'):

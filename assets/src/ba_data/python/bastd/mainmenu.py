@@ -492,7 +492,7 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
                     ba.getmodel('logoTransparent'))
 
         # If language has changed, recreate our logo text/graphics.
-        lang = app.language
+        lang = app.lang.language
         if lang != self._language:
             self._language = lang
             y = 20
@@ -511,7 +511,7 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
             # We draw higher in kiosk mode (make sure to test this
             # when making adjustments) for now we're hard-coded for
             # a few languages.. should maybe look into generalizing this?..
-            if app.language == 'Chinese':
+            if app.lang.language == 'Chinese':
                 base_x = -270.0
                 x = base_x - 20.0
                 spacing = 85.0 * base_scale

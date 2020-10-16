@@ -229,7 +229,7 @@ class CoopSession(Session):
         # pylint: disable=too-many-statements
         # pylint: disable=cyclic-import
         from ba._activitytypes import JoinActivity, TransitionActivity
-        from ba._lang import Lstr
+        from ba._language import Lstr
         from ba._general import WeakCall
         from ba._coopgame import CoopGameActivity
         from ba._gameresults import GameResults

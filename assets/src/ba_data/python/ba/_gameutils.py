@@ -267,7 +267,7 @@ def timestring(timeval: float,
     use a 'timedisplay' Node and attribute connections.
 
     """
-    from ba._lang import Lstr
+    from ba._language import Lstr
 
     # Temp sanity check while we transition from milliseconds to seconds
     # based time values.

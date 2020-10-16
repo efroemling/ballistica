@@ -151,13 +151,14 @@ def run_media_reload_benchmark() -> None:
     def delay_add(start_time: float) -> None:
 
         def doit(start_time_2: float) -> None:
-            from ba import _lang
             _ba.screenmessage(
-                _lang.get_resource('debugWindow.totalReloadTimeText').replace(
-                    '${TIME}', str(_ba.time(TimeType.REAL) - start_time_2)))
+                _ba.app.lang.get_resource(
+                    'debugWindow.totalReloadTimeText').replace(
+                        '${TIME}',
+                        str(_ba.time(TimeType.REAL) - start_time_2)))
             _ba.print_load_info()
             if _ba.app.config.resolve('Texture Quality') != 'High':
-                _ba.screenmessage(_lang.get_resource(
+                _ba.screenmessage(_ba.app.lang.get_resource(
                     'debugWindow.reloadBenchmarkBestResultsText'),
                                   color=(1, 1, 0))
 

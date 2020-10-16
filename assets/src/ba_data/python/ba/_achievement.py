@@ -269,7 +269,7 @@ class Achievement:
     @property
     def display_name(self) -> ba.Lstr:
         """Return a ba.Lstr for this Achievement's name."""
-        from ba._lang import Lstr
+        from ba._language import Lstr
         name: Union[ba.Lstr, str]
         try:
             if self._level_name != '':
@@ -289,16 +289,18 @@ class Achievement:
     @property
     def description(self) -> ba.Lstr:
         """Get a ba.Lstr for the Achievement's brief description."""
-        from ba._lang import Lstr, get_resource
-        if 'description' in get_resource('achievements')[self._name]:
+        from ba._language import Lstr
+        if 'description' in _ba.app.lang.get_resource('achievements')[
+                self._name]:
             return Lstr(resource='achievements.' + self._name + '.description')
         return Lstr(resource='achievements.' + self._name + '.descriptionFull')
 
     @property
     def description_complete(self) -> ba.Lstr:
         """Get a ba.Lstr for the Achievement's description when completed."""
-        from ba._lang import Lstr, get_resource
-        if 'descriptionComplete' in get_resource('achievements')[self._name]:
+        from ba._language import Lstr
+        if 'descriptionComplete' in _ba.app.lang.get_resource('achievements')[
+                self._name]:
             return Lstr(resource='achievements.' + self._name +
                         '.descriptionComplete')
         return Lstr(resource='achievements.' + self._name +
@@ -307,7 +309,7 @@ class Achievement:
     @property
     def description_full(self) -> ba.Lstr:
         """Get a ba.Lstr for the Achievement's full description."""
-        from ba._lang import Lstr
+        from ba._language import Lstr
 
         return Lstr(
             resource='achievements.' + self._name + '.descriptionFull',
@@ -318,7 +320,7 @@ class Achievement:
     @property
     def description_full_complete(self) -> ba.Lstr:
         """Get a ba.Lstr for the Achievement's full desc. when completed."""
-        from ba._lang import Lstr
+        from ba._language import Lstr
         return Lstr(
             resource='achievements.' + self._name + '.descriptionFullComplete',
             subs=[('${LEVEL}',
@@ -353,7 +355,7 @@ class Achievement:
         Shows the Achievement icon, name, and description.
         """
         # pylint: disable=cyclic-import
-        from ba._lang import Lstr
+        from ba._language import Lstr
         from ba._enums import SpecialChar
         from ba._coopsession import CoopSession
         from bastd.actor.image import Image
@@ -657,7 +659,7 @@ class Achievement:
         from bastd.actor.text import Text
         from bastd.actor.image import Image
         from ba._general import WeakCall
-        from ba._lang import Lstr
+        from ba._language import Lstr
         from ba._messages import DieMessage
         from ba._enums import TimeType, SpecialChar
         app = _ba.app
