@@ -9,6 +9,13 @@
 # Prefix used for output of docs/changelogs/etc. targets for use in webpages.
 DOCPREFIX = "ballisticacore_"
 
+# Set env-var BA_ENABLE_IRONY_BUILD_DB=1 to enable creating/updating a
+# cmake compile-commands database for use with irony for emacs (and possibly
+# other tools).
+ifeq ($(BA_ENABLE_IRONY_BUILD_DB),1)
+ PREREQ_IRONY = .cache/irony/compile_commands.json
+endif
+
 
 ################################################################################
 #                                                                              #
@@ -23,7 +30,7 @@ MAC_CLOUDSHELL_HOST ?= homebook-fro
 help:
 	@tools/pcommand makefile_target_list Makefile
 
-PREREQS = .cache/checkenv .dir-locals.el \
+PREREQS = .cache/checkenv $(PREREQ_IRONY) .dir-locals.el \
   .mypy.ini .pycheckers .pylintrc .style.yapf .clang-format \
   ballisticacore-cmake/.clang-format .projectile .editorconfig
 
@@ -32,7 +39,7 @@ PREREQS = .cache/checkenv .dir-locals.el \
 prereqs: ${PREREQS}
 
 prereqs-clean:
-	@rm -rf ${PREREQS} .irony
+	@rm -rf ${PREREQS}
 
 # Build all assets for all platforms.
 assets: prereqs
@@ -829,6 +836,22 @@ _cmake-simple-ci-server-build:
 	cd build/cmake_simple_ci_server_build && \
       cmake -DCMAKE_BUILD_TYPE=Debug -DHEADLESS=true ${PWD}/ballisticacore-cmake
 	cd build/cmake_simple_ci_server_build && ${MAKE} -j${CPUS}
+
+# Irony in emacs requires us to use cmake to generate a full
+# list of compile commands for all files; lets try to keep it up to date
+# whenever CMakeLists changes.
+.cache/irony/compile_commands.json: ballisticacore-cmake/CMakeLists.txt
+	@tools/pcommand echo BLU Updating Irony build commands db...
+	@echo Generating Irony compile-commands-list...
+	@mkdir -p .cache/irony
+	@cd .cache/irony \
+      && cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Debug \
+      ${PWD}/ballisticacore-cmake
+	@mv .cache/irony/compile_commands.json . \
+      && rm -rf .cache/irony \
+      && mkdir .cache/irony \
+      && mv compile_commands.json .cache/irony
+	@tools/pcommand echo BLU Created Irony build db at $@
 
 # Tell make which of these targets don't represent files.
 .PHONY: _cmake-simple-ci-server-build

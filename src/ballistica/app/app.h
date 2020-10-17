@@ -22,7 +22,7 @@ class App : public Module {
 
   /// This gets run after the constructor completes.
   /// Any setup that may trigger a virtual method/etc. should go here.
-  void PostInit();
+  auto PostInit() -> void;
 
   /// Return whether this class runs its own event loop.
   /// If true, BallisticaMain() will continuously ask the app for events
@@ -36,26 +36,26 @@ class App : public Module {
   /// ensure they are self-sustaining. For instance, an app relying on
   /// frame-draws for its main thread event processing may need to
   /// manually pump events until frame rendering begins.
-  virtual void PrimeEventPump();
+  virtual auto PrimeEventPump() -> void;
 
   /// Handle any pending OS events.
   /// On normal graphical builds this is triggered by RunRenderUpkeepCycle();
   /// timer intervals for headless builds, etc.
   /// Should process any pending OS events, etc.
-  virtual void RunEvents();
+  virtual auto RunEvents() -> void;
 
   // These should be called by the window, view-controller, sdl,
   // or whatever is driving the app. They must be called from the main thread.
 
   /// Should be called on mobile when the app is backgrounded.
   /// Pauses threads, closes network sockets, etc.
-  void PauseApp();
+  auto PauseApp() -> void;
 
   auto paused() const -> bool { return actually_paused_; }
 
   /// Should be called on mobile when the app is foregrounded.
   /// Spins threads back up, re-opens network sockets, etc.
-  void ResumeApp();
+  auto ResumeApp() -> void;
 
   /// The last time the app was resumed (uses GetRealTime() value).
   auto last_app_resume_time() const -> millisecs_t {
@@ -63,27 +63,28 @@ class App : public Module {
   }
 
   /// Should be called when the window/screen resolution changes.
-  void SetScreenResolution(float width, float height);
+  auto SetScreenResolution(float width, float height) -> void;
 
   /// Should be called if the platform detects the GL context was lost.
-  void RebuildLostGLContext();
+  auto RebuildLostGLContext() -> void;
 
   /// Attempt to draw a frame.
-  void DrawFrame(bool during_resize = false);
+  auto DrawFrame(bool during_resize = false) -> void;
 
   /// Used on platforms where our main thread event processing is driven by
   /// frame-draw commands given to us. This should be called after drawing
   /// a frame in order to bring game state up to date and process OS events.
-  void RunRenderUpkeepCycle();
+  auto RunRenderUpkeepCycle() -> void;
 
   /// Called by the graphics-server when drawing completes for a frame.
-  virtual void DidFinishRenderingFrame(FrameDef* frame);
+  virtual auto DidFinishRenderingFrame(FrameDef* frame) -> void;
 
   /// Return the price of an IAP product as a human-readable string,
   /// or an empty string if not found.
   /// FIXME: move this to platform.
   auto GetProductPrice(const std::string& product) -> std::string;
-  void SetProductPrice(const std::string& product, const std::string& price);
+  auto SetProductPrice(const std::string& product, const std::string& price)
+      -> void;
 
   auto done() const -> bool { return done_; }
 
@@ -93,41 +94,43 @@ class App : public Module {
     return server_wrapper_managed_;
   }
 
-  virtual void OnBootstrapComplete();
+  virtual auto OnBootstrapComplete() -> void;
 
   // Deferred calls that can be made from other threads.
 
-  void PushCursorUpdate(bool vis);
-  void PushShowOnlineScoreUICall(const std::string& show,
+  auto PushCursorUpdate(bool vis) -> void;
+  auto PushShowOnlineScoreUICall(const std::string& show,
                                  const std::string& game,
-                                 const std::string& game_version);
-  void PushGetFriendScoresCall(const std::string& game,
-                               const std::string& game_version, void* data);
-  void PushSubmitScoreCall(const std::string& game,
-                           const std::string& game_version, int64_t score);
-  void PushAchievementReportCall(const std::string& achievement);
-  void PushGetScoresToBeatCall(const std::string& level,
-                               const std::string& config, void* py_callback);
-  void PushOpenURLCall(const std::string& url);
-  void PushStringEditCall(const std::string& name, const std::string& value,
-                          int max_chars);
-  void PushSetStressTestingCall(bool enable, int player_count);
-  void PushPurchaseCall(const std::string& item);
-  void PushRestorePurchasesCall();
-  void PushResetAchievementsCall();
-  void PushPurchaseAckCall(const std::string& purchase,
-                           const std::string& order_id);
-  void PushNetworkSetupCall(int port, int telnet_port, bool enable_telnet,
-                            const std::string& telnet_password);
-  void PushShutdownCompleteCall();
-  void PushInterruptSignalSetupCall();
+                                 const std::string& game_version) -> void;
+  auto PushGetFriendScoresCall(const std::string& game,
+                               const std::string& game_version, void* data)
+      -> void;
+  auto PushSubmitScoreCall(const std::string& game,
+                           const std::string& game_version, int64_t score)
+      -> void;
+  auto PushAchievementReportCall(const std::string& achievement) -> void;
+  auto PushGetScoresToBeatCall(const std::string& level,
+                               const std::string& config, void* py_callback)
+      -> void;
+  auto PushOpenURLCall(const std::string& url) -> void;
+  auto PushStringEditCall(const std::string& name, const std::string& value,
+                          int max_chars) -> void;
+  auto PushSetStressTestingCall(bool enable, int player_count) -> void;
+  auto PushPurchaseCall(const std::string& item) -> void;
+  auto PushRestorePurchasesCall() -> void;
+  auto PushResetAchievementsCall() -> void;
+  auto PushPurchaseAckCall(const std::string& purchase,
+                           const std::string& order_id) -> void;
+  auto PushNetworkSetupCall(int port, int telnet_port, bool enable_telnet,
+                            const std::string& telnet_password) -> void;
+  auto PushShutdownCompleteCall() -> void;
+  auto PushInterruptSignalSetupCall() -> void;
 
  private:
-  void UpdateStressTesting();
-  void UpdatePauseResume();
-  void OnPause();
-  void OnResume();
-  void ShutdownComplete();
+  auto UpdatePauseResume() -> void;
+  auto OnPause() -> void;
+  auto OnResume() -> void;
+  auto ShutdownComplete() -> void;
   bool done_{};
   bool server_wrapper_managed_{};
   bool sys_paused_app_{};

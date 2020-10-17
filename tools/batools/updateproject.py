@@ -180,16 +180,10 @@ class Updater:
                 sys.exit(255)
 
     def _update_compile_commands_file(self) -> None:
-        # Only do this in private repo:
-        if self._public:
-            return
 
-        # Update our local compile-commands file based on any changes to
-        # our cmake stuff. Do this at end so cmake changes already happened.
-        if not self._check and os.path.exists('ballisticacore-cmake'):
-            if os.system('make .irony/compile_commands.json') != 0:
-                print(f'{Clr.RED}Error updating compile-commands.{Clr.RST}')
-                sys.exit(255)
+        # This will update our prereqs which may include compile-commands
+        # files (.cache/irony/compile_commands.json, etc)
+        subprocess.run(['make', 'prereqs'], check=True)
 
     def _apply_file_changes(self) -> None:
         # Now write out any project files that have changed
