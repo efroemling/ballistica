@@ -16,6 +16,8 @@ class StressTest {
   // This used to get run from RunEvents() in App.
   void Update();
 
+  void SetStressTesting(bool enable, int player_count);
+
  private:
   FILE* stress_test_stats_file_{};
   millisecs_t last_stress_test_update_time_{};

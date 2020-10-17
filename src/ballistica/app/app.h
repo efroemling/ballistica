@@ -4,6 +4,7 @@
 #define BALLISTICA_APP_APP_H_
 
 #include <map>
+#include <memory>
 #include <mutex>
 #include <string>
 
@@ -132,15 +133,11 @@ class App : public Module {
   bool sys_paused_app_{};
   bool user_paused_app_{};
   bool actually_paused_{};
+  std::unique_ptr<StressTest> stress_test_;
   millisecs_t last_resize_draw_event_time_{};
   millisecs_t last_app_resume_time_{};
   std::map<std::string, std::string> product_prices_;
   std::mutex product_prices_mutex_;
-  FILE* stress_test_stats_file_{};
-  millisecs_t last_stress_test_update_time_{};
-  int last_total_frames_rendered_{};
-  bool stress_testing_{};
-  int stress_test_player_count_{8};
 };
 
 }  // namespace ballistica

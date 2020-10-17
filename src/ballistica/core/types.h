@@ -174,6 +174,7 @@ class Sound;
 class SoundData;
 class SpriteMesh;
 class StackWidget;
+class StressTest;
 class StdInputModule;
 class Module;
 class TelnetServer;

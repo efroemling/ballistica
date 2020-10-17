@@ -10,6 +10,26 @@
 
 namespace ballistica {
 
+void StressTest::SetStressTesting(bool enable, int player_count) {
+  bool was_stress_testing = stress_testing_;
+  stress_testing_ = enable;
+  stress_test_player_count_ = player_count;
+
+  // If we're turning on, reset our intervals and things.
+  if (!was_stress_testing && stress_testing_) {
+    // So our first sample is 1 interval from now...
+    last_stress_test_update_time_ = GetRealTime();
+    // Reset our frames-rendered tally.
+    if (g_graphics && g_graphics_server->renderer()) {
+      last_total_frames_rendered_ =
+          g_graphics_server->renderer()->total_frames_rendered();
+    } else {
+      // Assume zero if there's no graphics yet.
+      last_total_frames_rendered_ = 0;
+    }
+  }
+}
+
 void StressTest::Update() {
   assert(InMainThread());
 
