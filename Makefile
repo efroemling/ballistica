@@ -17,7 +17,7 @@ DOCPREFIX = "ballisticacore_"
 ################################################################################
 
 # Override this to 'localhost' to build cloud builds on a local Mac.
-MAC_CLOUD_BUILD_HOST ?= homebook-fro
+MAC_CLOUDSHELL_HOST ?= homebook-fro
 
 # List targets in this Makefile and basic descriptions for them.
 help:

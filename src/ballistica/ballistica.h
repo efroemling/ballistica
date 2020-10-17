@@ -98,9 +98,9 @@ const int kBaseVirtualResX = 1207;
 const int kBaseVirtualResY = 680;
 
 // Magic numbers at the start of our file types.
+const int kBrpFileID = 83749;
 const int kBobFileID = 45623;
 const int kCobFileID = 13466;
-const int kBrpFileID = 83749;
 
 const float kPi = 3.1415926535897932384626433832795028841971693993751f;
 const float kPiDeg = kPi / 180.0f;
