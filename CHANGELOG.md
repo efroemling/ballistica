@@ -4,6 +4,7 @@
 - Achievement functionality has been consolidated into an AchievementSubsystem object at ba.app.ach
 - Plugin functionality has been consolidated into a PluginSubsystem obj at ba.app.plugins
 - Ditto with AccountSubsystem and ba.app.accounts
+- Ditto with MetadataSubsystem and ba.app.meta
 
 ### 1.5.26 (20217)
 - Simplified licensing header on python scripts.

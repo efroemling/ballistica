@@ -120,7 +120,6 @@ class PlaylistAddGameWindow(ba.Window):
         self._refresh()
 
     def _refresh(self, select_get_more_games_button: bool = False) -> None:
-        from ba.internal import get_game_types
 
         if self._column is not None:
             self._column.delete()
@@ -130,8 +129,8 @@ class PlaylistAddGameWindow(ba.Window):
                                        margin=0)
 
         gametypes = [
-            gt for gt in get_game_types() if gt.supports_session_type(
-                self._editcontroller.get_session_type())
+            gt for gt in ba.app.meta.get_game_types() if
+            gt.supports_session_type(self._editcontroller.get_session_type())
         ]
 
         # Sort in the current language.

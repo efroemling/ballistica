@@ -213,8 +213,8 @@ class OnScreenKeyboardWindow(ba.Window):
 
                     # Show change instructions only if we have more than one
                     # keyboard option.
-                    if (ba.app.metascan is not None
-                            and len(ba.app.metascan.keyboards) > 1):
+                    if (ba.app.meta.metascan is not None
+                            and len(ba.app.meta.metascan.keyboards) > 1):
                         ba.textwidget(
                             parent=self._root_widget,
                             h_align='center',
@@ -238,8 +238,8 @@ class OnScreenKeyboardWindow(ba.Window):
         self._refresh()
 
     def _get_keyboard(self) -> ba.Keyboard:
-        assert ba.app.metascan is not None
-        classname = ba.app.metascan.keyboards[self._keyboard_index]
+        assert ba.app.meta.metascan is not None
+        classname = ba.app.meta.metascan.keyboards[self._keyboard_index]
         kbclass = ba.getclass(classname, ba.Keyboard)
         return kbclass()
 
@@ -305,11 +305,11 @@ class OnScreenKeyboardWindow(ba.Window):
         self._refresh()
 
     def _next_keyboard(self) -> None:
-        assert ba.app.metascan is not None
+        assert ba.app.meta.metascan is not None
         self._keyboard_index = (self._keyboard_index + 1) % len(
-            ba.app.metascan.keyboards)
+            ba.app.meta.metascan.keyboards)
         self._load_keyboard()
-        if len(ba.app.metascan.keyboards) < 2:
+        if len(ba.app.meta.metascan.keyboards) < 2:
             ba.playsound(ba.getsound('error'))
             ba.screenmessage(ba.Lstr(resource='keyboardNoOthersAvailableText'),
                              color=(1, 0, 0))

@@ -11,7 +11,7 @@ import _ba
 
 if TYPE_CHECKING:
     import ba
-    from ba import _language, _meta
+    from ba import _language
     from bastd.actor import spazappearance
     from typing import Optional, Dict, Set, Any, Type, Tuple, Callable, List
 
@@ -27,11 +27,6 @@ class App:
     and subject to change without warning.
     """
     # pylint: disable=too-many-public-methods
-
-    # Note: many values here are simple method attrs and thus don't show
-    # up in docs. If there's any that'd be useful to expose publicly, they
-    # should be converted to properties so its possible to validate values
-    # and provide docs.
 
     @property
     def build_number(self) -> int:
@@ -177,6 +172,7 @@ class App:
         from ba._achievement import AchievementSubsystem
         from ba._plugin import PluginSubsystem
         from ba._account import AccountSubsystem
+        from ba._meta import MetadataSubsystem
 
         # Config.
         self.config_file_healthy = False
@@ -201,7 +197,6 @@ class App:
         assert isinstance(self.headless_mode, bool)
 
         # Misc.
-        self.metascan: Optional[_meta.ScanResults] = None
         self.tips: List[str] = []
         self.stress_test_reset_timer: Optional[ba.Timer] = None
         self.last_ad_completion_time: Optional[float] = None
@@ -235,6 +230,7 @@ class App:
         self.last_ad_purpose = 'invalid'
         self.attempted_first_ad = False
 
+        self.meta = MetadataSubsystem()
         self.accounts = AccountSubsystem()
         self.plugins = PluginSubsystem()
         self.music = MusicSubsystem()
@@ -288,7 +284,6 @@ class App:
         from ba import _appconfig
         from ba import _achievement
         from ba import _map
-        from ba import _meta
         from ba import _campaign
         from bastd import appdelegate
         from bastd import maps as stdmaps
@@ -382,8 +377,7 @@ class App:
         if not self.headless_mode:
             _ba.timer(3.0, check_special_offer, timetype=TimeType.REAL)
 
-        # Start scanning for things exposed via ba_meta.
-        _meta.start_scan()
+        self.meta.on_app_launch()
 
         self.accounts.on_app_launch()
         self.plugins.on_app_launch()

@@ -155,6 +155,7 @@
    <li><a href="#class_ba_Campaign">ba.Campaign</a></li>
    <li><a href="#class_ba_Keyboard">ba.Keyboard</a></li>
    <li><a href="#class_ba_LanguageSubsystem">ba.LanguageSubsystem</a></li>
+   <li><a href="#class_ba_MetadataSubsystem">ba.MetadataSubsystem</a></li>
    <li><a href="#class_ba_MusicPlayer">ba.MusicPlayer</a></li>
    <li><a href="#class_ba_MusicSubsystem">ba.MusicSubsystem</a></li>
    <li><a href="#class_ba_Plugin">ba.Plugin</a></li>
@@ -3806,6 +3807,63 @@ m.add_actions(conditions=('they_have_material',
                           shared.footing_material),
               actions=(('impact_sound', <a href="#function_ba_getsound">ba.getsound</a>('metalHit'), 2, 5),
                        ('skid_sound', <a href="#function_ba_getsound">ba.getsound</a>('metalSkid'), 2, 5)))</pre>
+
+</dd>
+</dl>
+<hr>
+<h2><strong><a name="class_ba_MetadataSubsystem">ba.MetadataSubsystem</a></strong></h3>
+<p><em>&lt;top level class&gt;</em>
+</p>
+<p>Subsystem for working with script metadata in the app.</p>
+
+<p>Category: <a href="#class_category_App_Classes">App Classes</a></p>
+
+<p>    Access the single shared instance of this class at 'ba.app.meta'.
+</p>
+
+<h3>Methods:</h3>
+<h5><a href="#method_ba_MetadataSubsystem____init__">&lt;constructor&gt;</a>, <a href="#method_ba_MetadataSubsystem__get_game_types">get_game_types()</a>, <a href="#method_ba_MetadataSubsystem__get_scan_results">get_scan_results()</a>, <a href="#method_ba_MetadataSubsystem__get_unowned_game_types">get_unowned_game_types()</a>, <a href="#method_ba_MetadataSubsystem__handle_scan_results">handle_scan_results()</a>, <a href="#method_ba_MetadataSubsystem__on_app_launch">on_app_launch()</a>, <a href="#method_ba_MetadataSubsystem__start_scan">start_scan()</a></h5>
+<dl>
+<dt><h4><a name="method_ba_MetadataSubsystem____init__">&lt;constructor&gt;</a></dt></h4><dd>
+<p><span>ba.MetadataSubsystem()</span></p>
+
+</dd>
+<dt><h4><a name="method_ba_MetadataSubsystem__get_game_types">get_game_types()</a></dt></h4><dd>
+<p><span>get_game_types(self) -&gt; List[Type[<a href="#class_ba_GameActivity">ba.GameActivity</a>]]</span></p>
+
+<p>Return available game types.</p>
+
+</dd>
+<dt><h4><a name="method_ba_MetadataSubsystem__get_scan_results">get_scan_results()</a></dt></h4><dd>
+<p><span>get_scan_results(self) -&gt; ScanResults</span></p>
+
+<p>Return meta scan results; block if the scan is not yet complete.</p>
+
+</dd>
+<dt><h4><a name="method_ba_MetadataSubsystem__get_unowned_game_types">get_unowned_game_types()</a></dt></h4><dd>
+<p><span>get_unowned_game_types(self) -&gt; Set[Type[<a href="#class_ba_GameActivity">ba.GameActivity</a>]]</span></p>
+
+<p>Return present game types not owned by the current account.</p>
+
+</dd>
+<dt><h4><a name="method_ba_MetadataSubsystem__handle_scan_results">handle_scan_results()</a></dt></h4><dd>
+<p><span>handle_scan_results(self, results: ScanResults) -&gt; None</span></p>
+
+<p>Called in the game thread with results of a completed scan.</p>
+
+</dd>
+<dt><h4><a name="method_ba_MetadataSubsystem__on_app_launch">on_app_launch()</a></dt></h4><dd>
+<p><span>on_app_launch(self) -&gt; None</span></p>
+
+<p>Should be called when the app is done bootstrapping.</p>
+
+</dd>
+<dt><h4><a name="method_ba_MetadataSubsystem__start_scan">start_scan()</a></dt></h4><dd>
+<p><span>start_scan(self) -&gt; None</span></p>
+
+<p>Begin scanning script directories for scripts containing metadata.</p>
+
+<p>Should be called only once at launch.</p>
 
 </dd>
 </dl>

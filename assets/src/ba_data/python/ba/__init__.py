@@ -65,6 +65,7 @@ from ba._keyboard import Keyboard
 from ba._level import Level
 from ba._lobby import Lobby, Chooser
 from ba._math import normalized_color, is_point_in_box, vec3validate
+from ba._meta import MetadataSubsystem
 from ba._messages import (UNHANDLED, OutOfBoundsMessage, DeathType, DieMessage,
                           PlayerDiedMessage, StandMessage, PickUpMessage,
                           DropMessage, PickedUpMessage, DroppedMessage,

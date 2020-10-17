@@ -28,7 +28,7 @@ def filter_playlist(playlist: PlaylistType,
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-statements
-    from ba import _meta
+    import _ba
     from ba import _map
     from ba import _general
     from ba import _gameactivity
@@ -36,7 +36,7 @@ def filter_playlist(playlist: PlaylistType,
     unowned_maps: Sequence[str]
     if remove_unowned or mark_unowned:
         unowned_maps = _map.get_unowned_maps()
-        unowned_game_types = _meta.get_unowned_game_types()
+        unowned_game_types = _ba.app.meta.get_unowned_game_types()
     else:
         unowned_maps = []
         unowned_game_types = set()

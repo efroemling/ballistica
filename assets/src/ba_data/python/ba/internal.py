@@ -23,7 +23,6 @@ from ba._benchmark import (run_gpu_benchmark, run_cpu_benchmark,
                            run_media_reload_benchmark, run_stress_test)
 from ba._campaign import getcampaign
 from ba._messages import PlayerProfilesChangedMessage
-from ba._meta import get_game_types
 from ba._multiteamsession import DEFAULT_TEAM_COLORS, DEFAULT_TEAM_NAMES
 from ba._music import do_play_music
 from ba._netutils import (master_server_get, master_server_post,
