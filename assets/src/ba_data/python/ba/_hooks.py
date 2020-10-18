@@ -178,8 +178,8 @@ def submit_analytics_counts(sval: str) -> None:
 
 def set_last_ad_network(sval: str) -> None:
     import time
-    _ba.app.last_ad_network = sval
-    _ba.app.last_ad_network_set_time = time.time()
+    _ba.app.ads.last_ad_network = sval
+    _ba.app.ads.last_ad_network_set_time = time.time()
 
 
 def no_game_circle_message() -> None:
@@ -263,7 +263,7 @@ def quit_window() -> None:
 
 
 def remove_in_game_ads_message() -> None:
-    _ba.app.do_remove_in_game_ads_message()
+    _ba.app.ads.do_remove_in_game_ads_message()
 
 
 def telnet_access_request() -> None:

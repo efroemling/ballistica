@@ -434,8 +434,9 @@ def show_offer() -> bool:
         # Space things out a bit so we don't hit the poor user with an ad and
         # then an in-game offer.
         has_been_long_enough_since_ad = True
-        if (app.last_ad_completion_time is not None and
-            (ba.time(ba.TimeType.REAL) - app.last_ad_completion_time < 30.0)):
+        if (app.ads.last_ad_completion_time is not None and
+            (ba.time(ba.TimeType.REAL) - app.ads.last_ad_completion_time <
+             30.0)):
             has_been_long_enough_since_ad = False
 
         if app.special_offer is not None and has_been_long_enough_since_ad:

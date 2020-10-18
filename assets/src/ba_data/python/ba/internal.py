@@ -18,7 +18,7 @@ from ba._input import (get_device_value, get_input_map_hash,
 from ba._general import getclass, json_prep, get_type_name
 from ba._activitytypes import JoinActivity, ScoreScreenActivity
 from ba._apputils import (is_browser_likely_available, get_remote_app_name,
-                          should_submit_debug_info, show_ad, show_ad_2)
+                          should_submit_debug_info)
 from ba._benchmark import (run_gpu_benchmark, run_cpu_benchmark,
                            run_media_reload_benchmark, run_stress_test)
 from ba._campaign import getcampaign

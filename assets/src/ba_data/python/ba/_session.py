@@ -612,7 +612,7 @@ class Session:
     def transitioning_out_activity_was_freed(
             self, can_show_ad_on_death: bool) -> None:
         """(internal)"""
-        from ba._apputils import garbage_collect, call_after_ad
+        from ba._apputils import garbage_collect
 
         # Since things should be generally still right now, it's a good time
         # to run garbage collection to clear out any circular dependency
@@ -622,7 +622,7 @@ class Session:
 
         with _ba.Context(self):
             if can_show_ad_on_death:
-                call_after_ad(self.begin_next_activity)
+                _ba.app.ads.call_after_ad(self.begin_next_activity)
             else:
                 _ba.pushcall(self.begin_next_activity)
 

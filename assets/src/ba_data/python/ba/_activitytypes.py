@@ -40,11 +40,10 @@ class EndSessionActivity(Activity[EmptyPlayer, EmptyTeam]):
     def on_begin(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.mainmenu import MainMenuSession
-        from ba._apputils import call_after_ad
         from ba._general import Call
         super().on_begin()
         _ba.unlock_all_input()
-        call_after_ad(Call(_ba.new_host_session, MainMenuSession))
+        _ba.app.ads.call_after_ad(Call(_ba.new_host_session, MainMenuSession))
 
 
 class JoinActivity(Activity[EmptyPlayer, EmptyTeam]):

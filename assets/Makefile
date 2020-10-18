@@ -137,6 +137,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/ba/_activity.py \
   build/ba_data/python/ba/_activitytypes.py \
   build/ba_data/python/ba/_actor.py \
+  build/ba_data/python/ba/_ads.py \
   build/ba_data/python/ba/_analytics.py \
   build/ba_data/python/ba/_app.py \
   build/ba_data/python/ba/_appconfig.py \
@@ -375,6 +376,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/ba/__pycache__/_activity.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_activitytypes.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_actor.cpython-38.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_ads.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_analytics.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_app.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_appconfig.cpython-38.opt-1.pyc \

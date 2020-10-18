@@ -551,7 +551,6 @@ class GetCurrencyWindow(ba.Window):
 
     # actually start the purchase locally..
     def _do_purchase(self, item: str) -> None:
-        from ba.internal import show_ad
         if item == 'ad':
             import datetime
             # if ads are disabled until some time, error..
@@ -568,7 +567,7 @@ class GetCurrencyWindow(ba.Window):
                     resource='getTicketsWindow.unavailableTemporarilyText'),
                                  color=(1, 0, 0))
             elif self._enable_ad_button:
-                show_ad('tickets')
+                _ba.app.ads.show_ad('tickets')
         else:
             _ba.purchase(item)
 

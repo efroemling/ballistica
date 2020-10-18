@@ -3,7 +3,6 @@
 """Functionality related to the high level state of the app."""
 from __future__ import annotations
 
-import time
 import random
 from typing import TYPE_CHECKING
 
@@ -173,6 +172,7 @@ class App:
         from ba._plugin import PluginSubsystem
         from ba._account import AccountSubsystem
         from ba._meta import MetadataSubsystem
+        from ba._ads import AdsSubsystem
 
         # Config.
         self.config_file_healthy = False
@@ -199,12 +199,9 @@ class App:
         # Misc.
         self.tips: List[str] = []
         self.stress_test_reset_timer: Optional[ba.Timer] = None
-        self.last_ad_completion_time: Optional[float] = None
-        self.last_ad_was_short = False
         self.did_weak_call_warning = False
         self.ran_on_app_launch = False
 
-        self.last_in_game_ad_remove_message_show_time: Optional[float] = None
         self.log_have_new = False
         self.log_upload_timer_started = False
         self._config: Optional[ba.AppConfig] = None
@@ -223,13 +220,6 @@ class App:
         # Server Mode.
         self.server: Optional[ba.ServerController] = None
 
-        # Ads.
-        self.last_ad_network = 'unknown'
-        self.last_ad_network_set_time = time.time()
-        self.ad_amt: Optional[float] = None
-        self.last_ad_purpose = 'invalid'
-        self.attempted_first_ad = False
-
         self.meta = MetadataSubsystem()
         self.accounts = AccountSubsystem()
         self.plugins = PluginSubsystem()
@@ -237,6 +227,7 @@ class App:
         self.lang = LanguageSubsystem()
         self.ach = AchievementSubsystem()
         self.ui = UISubsystem()
+        self.ads = AdsSubsystem()
 
         # Lobby.
         self.lobby_random_profile_index: int = 1
@@ -551,27 +542,6 @@ class App:
 
         _ba.fade_screen(False, endcall=_fade_end)
         return True
-
-    def do_remove_in_game_ads_message(self) -> None:
-        """(internal)"""
-        from ba._language import Lstr
-        from ba._enums import TimeType
-
-        # Print this message once every 10 minutes at most.
-        tval = _ba.time(TimeType.REAL)
-        if (self.last_in_game_ad_remove_message_show_time is None or
-            (tval - self.last_in_game_ad_remove_message_show_time > 60 * 10)):
-            self.last_in_game_ad_remove_message_show_time = tval
-            with _ba.Context('ui'):
-                _ba.timer(
-                    1.0,
-                    lambda: _ba.screenmessage(Lstr(
-                        resource='removeInGameAdsText',
-                        subs=[('${PRO}',
-                               Lstr(resource='store.bombSquadProNameText')),
-                              ('${APP_NAME}', Lstr(resource='titleText'))]),
-                                              color=(1, 1, 0)),
-                    timetype=TimeType.REAL)
 
     def on_app_shutdown(self) -> None:
         """(internal)"""

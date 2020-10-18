@@ -5,6 +5,7 @@
 - Plugin functionality has been consolidated into a PluginSubsystem obj at ba.app.plugins
 - Ditto with AccountSubsystem and ba.app.accounts
 - Ditto with MetadataSubsystem and ba.app.meta
+- Ditto with AdsSubsystem and ba.app.ads
 
 ### 1.5.26 (20217)
 - Simplified licensing header on python scripts.
