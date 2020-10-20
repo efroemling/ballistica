@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import threading
 import time
+from enum import Enum
 from typing import TYPE_CHECKING, cast
 
 import _ba
@@ -19,6 +20,16 @@ if TYPE_CHECKING:
 class GatherWindow(ba.Window):
     """Window for joining/inviting friends."""
 
+    class TabID(Enum):
+        """Our available tab types."""
+        ABOUT = 'about'
+        INTERNET = 'internet'
+        GOOGLE_PLAY = 'google_play'
+        LOCAL_NETWORK = 'local_network'
+        BLUETOOTH = 'bluetooth'
+        WIFI_DIRECT = 'wifi_direct'
+        MANUAL = 'manual'
+
     def __del__(self) -> None:
         _ba.set_party_icon_always_visible(False)
 
@@ -27,7 +38,7 @@ class GatherWindow(ba.Window):
                  origin_widget: ba.Widget = None):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
-        from bastd.ui import tabs
+        from bastd.ui.tabs import TabRow
         ba.set_analytics_screen('Gather Window')
         scale_origin: Optional[Tuple[float, float]]
         if origin_widget is not None:
@@ -45,7 +56,7 @@ class GatherWindow(ba.Window):
         x_offs = 100 if uiscale is ba.UIScale.SMALL else 0
         self._height = (582 if uiscale is ba.UIScale.SMALL else
                         680 if uiscale is ba.UIScale.MEDIUM else 800)
-        self._current_tab: Optional[str] = None
+        self._current_tab: Optional[GatherWindow.TabID] = None
         extra_top = 20 if uiscale is ba.UIScale.SMALL else 0
         self._r = 'gatherWindow'
         self._tab_data: Any = None
@@ -130,35 +141,35 @@ class GatherWindow(ba.Window):
         platform = ba.app.platform
         subplatform = ba.app.subplatform
 
-        tabs_def: List[Tuple[str, ba.Lstr]] = [
-            ('about', ba.Lstr(resource=self._r + '.aboutText'))
+        tabs_def: List[Tuple[GatherWindow.TabID, ba.Lstr]] = [
+            (self.TabID.ABOUT, ba.Lstr(resource=self._r + '.aboutText'))
         ]
         if _ba.get_account_misc_read_val('enablePublicParties', True):
-            tabs_def.append(
-                ('internet', ba.Lstr(resource=self._r + '.internetText')))
+            tabs_def.append((self.TabID.INTERNET,
+                             ba.Lstr(resource=self._r + '.internetText')))
         if platform == 'android' and subplatform == 'google':
-            tabs_def.append(
-                ('google_play', ba.Lstr(resource=self._r + '.googlePlayText')))
-        tabs_def.append(
-            ('local_network', ba.Lstr(resource=self._r + '.localNetworkText')))
+            tabs_def.append((self.TabID.GOOGLE_PLAY,
+                             ba.Lstr(resource=self._r + '.googlePlayText')))
+        tabs_def.append((self.TabID.LOCAL_NETWORK,
+                         ba.Lstr(resource=self._r + '.localNetworkText')))
 
-        tabs_def.append(('manual', ba.Lstr(resource=self._r + '.manualText')))
+        tabs_def.append(
+            (self.TabID.MANUAL, ba.Lstr(resource=self._r + '.manualText')))
 
         scroll_buffer_h = 130 + 2 * x_offs
         tab_buffer_h = 250 + 2 * x_offs
 
-        self._tab_buttons = tabs.create_tab_buttons(
-            self._root_widget,
-            tabs_def,
-            pos=(tab_buffer_h * 0.5, self._height - 130),
-            size=(self._width - tab_buffer_h, 50),
-            on_select_call=self._set_tab)
+        self._tab_row = TabRow(self._root_widget,
+                               tabs_def,
+                               pos=(tab_buffer_h * 0.5, self._height - 130),
+                               size=(self._width - tab_buffer_h, 50),
+                               on_select_call=self._set_tab)
 
         if ba.app.ui.use_toolbars:
-            ba.widget(edit=self._tab_buttons[tabs_def[-1][0]],
+            ba.widget(edit=self._tab_row.tabs[tabs_def[-1][0]].button,
                       right_widget=_ba.get_special_widget('party_button'))
             if uiscale is ba.UIScale.SMALL:
-                ba.widget(edit=self._tab_buttons[tabs_def[0][0]],
+                ba.widget(edit=self._tab_row.tabs[tabs_def[0][0]].button,
                           left_widget=_ba.get_special_widget('back_button'))
 
         self._scroll_width = self._width - scroll_buffer_h
@@ -222,21 +233,20 @@ class GatherWindow(ba.Window):
             return
         appinvite.handle_app_invites_press()
 
-    def _set_tab(self, tab: str) -> None:
+    def _set_tab(self, tab_id: TabID) -> None:
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
-        from bastd.ui import tabs
-        if self._current_tab == tab:
+        if self._current_tab is tab_id:
             return
-        self._current_tab = tab
+        self._current_tab = tab_id
 
         # We wanna preserve our current tab between runs.
         cfg = ba.app.config
-        cfg['Gather Tab'] = tab
+        cfg['Gather Tab'] = tab_id.value
         cfg.commit()
 
         # Update tab colors based on which is selected.
-        tabs.update_tab_button_colors(self._tab_buttons, tab)
+        self._tab_row.update_appearance(tab_id)
 
         # (Re)create scroll widget.
         if self._tab_container:
@@ -249,7 +259,7 @@ class GatherWindow(ba.Window):
         self._tab_data = {}
 
         # So we can still select root level widgets with direction buttons.
-        def _simple_message(tab2: str,
+        def _simple_message(tab2: GatherWindow.TabID,
                             message: ba.Lstr,
                             string_height: float,
                             include_invite: bool = False) -> None:
@@ -268,7 +278,7 @@ class GatherWindow(ba.Window):
                 size=(c_width_2, c_height_2),
                 background=False,
                 selectable=include_invite)
-            ba.widget(edit=cnt2, up_widget=self._tab_buttons[tab2])
+            ba.widget(edit=cnt2, up_widget=self._tab_row.tabs[tab2].button)
 
             ba.textwidget(
                 parent=cnt2,
@@ -306,9 +316,9 @@ class GatherWindow(ba.Window):
                                       'gatherWindow.getFriendInviteCodeText')),
                     autoselect=True,
                     on_activate_call=ba.WeakCall(self._invite_to_try_press),
-                    up_widget=self._tab_buttons[tab2])
+                    up_widget=self._tab_row.tabs[tab2].button)
 
-        if tab == 'about':
+        if tab_id is self.TabID.ABOUT:
             msg = ba.Lstr(resource=self._r + '.aboutDescriptionText',
                           subs=[('${PARTY}',
                                  ba.charstr(ba.SpecialChar.PARTY_ICON)),
@@ -327,9 +337,9 @@ class GatherWindow(ba.Window):
                                  '.aboutDescriptionLocalMultiplayerExtraText'))
                     ])
 
-            _simple_message(tab, msg, 400, include_invite=True)
+            _simple_message(tab_id, msg, 400, include_invite=True)
 
-        elif tab == 'google_play':
+        elif tab_id is self.TabID.GOOGLE_PLAY:
             c_width = self._scroll_width
             c_height = 380.0
             self._tab_container = cnt = ba.containerwidget(
@@ -351,7 +361,7 @@ class GatherWindow(ba.Window):
                 v_align='center',
                 text=ba.Lstr(resource='googleMultiplayerDiscontinuedText'))
 
-        elif tab == 'internet':
+        elif tab_id is self.TabID.INTERNET:
             c_width = self._scroll_width
             c_height = self._scroll_height - 20
             self._tab_container = cnt = ba.containerwidget(
@@ -378,7 +388,7 @@ class GatherWindow(ba.Window):
                     'join', playsound=True),
                 text=ba.Lstr(resource=self._r +
                              '.joinPublicPartyDescriptionText'))
-            ba.widget(edit=txt, up_widget=self._tab_buttons[tab])
+            ba.widget(edit=txt, up_widget=self._tab_row.tabs[tab_id].button)
             self._internet_host_text = txt = ba.textwidget(
                 parent=cnt,
                 position=(c_width * 0.5 + 45, v - 13),
@@ -397,7 +407,7 @@ class GatherWindow(ba.Window):
                              '.hostPublicPartyDescriptionText'))
             ba.widget(edit=txt,
                       left_widget=self._internet_join_text,
-                      up_widget=self._tab_buttons[tab])
+                      up_widget=self._tab_row.tabs[tab_id].button)
             ba.widget(edit=self._internet_join_text, right_widget=txt)
 
             # Attempt to fetch our local address so we have it for
@@ -447,7 +457,7 @@ class GatherWindow(ba.Window):
             # initial query.
             self._update_internet_tab()
 
-        elif tab == 'local_network':
+        elif tab_id is self.TabID.LOCAL_NETWORK:
             c_width = self._scroll_width
             c_height = self._scroll_height - 20
             sub_scroll_height = c_height - 85
@@ -545,14 +555,14 @@ class GatherWindow(ba.Window):
                 size=(sub_scroll_width, sub_scroll_height))
 
             self._tab_data = NetScanner(scrollw,
-                                        self._tab_buttons[tab],
+                                        self._tab_row.tabs[tab_id].button,
                                         width=sub_scroll_width)
 
             ba.widget(edit=scrollw,
                       autoselect=True,
-                      up_widget=self._tab_buttons[tab])
+                      up_widget=self._tab_row.tabs[tab_id].button)
 
-        elif tab == 'bluetooth':
+        elif tab_id is self.TabID.BLUETOOTH:
             c_width = self._scroll_width
             c_height = 380
             sub_scroll_width = 650
@@ -594,7 +604,7 @@ class GatherWindow(ba.Window):
                 size=(300, 70),
                 autoselect=True,
                 label=ba.Lstr(resource=self._r + '.bluetoothHostText'))
-            ba.widget(edit=btn, up_widget=self._tab_buttons[tab])
+            ba.widget(edit=btn, up_widget=self._tab_row.tabs[tab_id].button)
             btn = ba.buttonwidget(
                 parent=cnt,
                 position=(c_width * 0.5 - sub_scroll_width * 0.5 + 330,
@@ -604,10 +614,10 @@ class GatherWindow(ba.Window):
                 on_activate_call=ba.Call(ba.screenmessage,
                                          'FIXME: Not wired up yet.'),
                 label=ba.Lstr(resource=self._r + '.bluetoothJoinText'))
-            ba.widget(edit=btn, up_widget=self._tab_buttons[tab])
-            ba.widget(edit=self._tab_buttons[tab], down_widget=btn)
+            ba.widget(edit=btn, up_widget=self._tab_row.tabs[tab_id].button)
+            ba.widget(edit=self._tab_row.tabs[tab_id].button, down_widget=btn)
 
-        elif tab == 'wifi_direct':
+        elif tab_id is self.TabID.WIFI_DIRECT:
             c_width = self._scroll_width
             c_height = self._scroll_height - 20
             self._tab_container = cnt = ba.containerwidget(
@@ -641,7 +651,7 @@ class GatherWindow(ba.Window):
                 on_activate_call=_ba.android_show_wifi_settings)
             v -= 82
 
-            ba.widget(edit=btn, up_widget=self._tab_buttons[tab])
+            ba.widget(edit=btn, up_widget=self._tab_row.tabs[tab_id].button)
 
             ba.textwidget(parent=cnt,
                           position=(c_width * 0.5, v),
@@ -657,7 +667,7 @@ class GatherWindow(ba.Window):
                                        subs=[('${APP_NAME}',
                                               ba.Lstr(resource='titleText'))]))
 
-        elif tab == 'manual':
+        elif tab_id is self.TabID.MANUAL:
             c_width = self._scroll_width
             c_height = 380
             last_addr = ba.app.config.get('Last Manual Party Connect Address',
@@ -787,7 +797,7 @@ class GatherWindow(ba.Window):
                 position=(c_width * 0.5 - 150, v),
                 autoselect=True,
                 on_activate_call=ba.Call(_connect, txt, txt2))
-            ba.widget(edit=txt, up_widget=self._tab_buttons[tab])
+            ba.widget(edit=txt, up_widget=self._tab_row.tabs[tab_id].button)
             ba.textwidget(edit=txt, on_return_press_call=btn.activate)
             ba.textwidget(edit=txt2, on_return_press_call=btn.activate)
             v -= 45
@@ -1897,18 +1907,21 @@ class GatherWindow(ba.Window):
     def _save_state(self) -> None:
         try:
             sel = self._root_widget.get_selected_child()
+            selected_tab_ids = [
+                tab_id for tab_id, tab in self._tab_row.tabs.items()
+                if sel == tab.button
+            ]
             if sel == self._back_button:
                 sel_name = 'Back'
-            elif sel in list(self._tab_buttons.values()):
-                sel_name = 'Tab:' + list(self._tab_buttons.keys())[list(
-                    self._tab_buttons.values()).index(sel)]
+            elif selected_tab_ids:
+                assert len(selected_tab_ids) == 1
+                sel_name = f'Tab:{selected_tab_ids[0].value}'
             elif sel == self._tab_container:
                 sel_name = 'TabContainer'
             else:
                 raise ValueError(f'unrecognized selection: \'{sel}\'')
             ba.app.ui.window_states[self.__class__.__name__] = {
                 'sel_name': sel_name,
-                'tab': self._current_tab,
                 'internet_tab': self._internet_tab
             }
         except Exception:
@@ -1916,21 +1929,32 @@ class GatherWindow(ba.Window):
 
     def _restore_state(self) -> None:
         try:
+            sel: Optional[ba.Widget]
             winstate = ba.app.ui.window_states.get(self.__class__.__name__, {})
             sel_name = winstate.get('sel_name', None)
+            assert isinstance(sel_name, (str, type(None)))
             self._internet_tab = winstate.get('internet_tab', 'join')
-            current_tab = ba.app.config.get('Gather Tab', None)
-            if current_tab is None or current_tab not in self._tab_buttons:
-                current_tab = 'about'
+            # current_tab = ba.app.config.get('Gather Tab', None)
+            current_tab = self.TabID.ABOUT
+            try:
+                stored_tab = self.TabID(ba.app.config.get('Gather Tab'))
+                if stored_tab in self._tab_row.tabs:
+                    current_tab = stored_tab
+            except ValueError:
+                pass
             self._set_tab(current_tab)
             if sel_name == 'Back':
                 sel = self._back_button
             elif sel_name == 'TabContainer':
                 sel = self._tab_container
             elif isinstance(sel_name, str) and sel_name.startswith('Tab:'):
-                sel = self._tab_buttons[sel_name.split(':')[-1]]
+                try:
+                    sel_tab_id = self.TabID(sel_name.split(':')[-1])
+                except ValueError:
+                    sel_tab_id = self.TabID.ABOUT
+                sel = self._tab_row.tabs[sel_tab_id].button
             else:
-                sel = self._tab_buttons[current_tab]
+                sel = self._tab_row.tabs[current_tab].button
             ba.containerwidget(edit=self._root_widget, selected_child=sel)
         except Exception:
             ba.print_exception(f'Error restoring state for {self}.')

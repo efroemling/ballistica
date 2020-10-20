@@ -504,6 +504,7 @@ class WatchWindow(ba.Window):
 
     def _restore_state(self) -> None:
         try:
+            sel: Optional[ba.Widget]
             sel_name = ba.app.ui.window_states.get(self.__class__.__name__,
                                                    {}).get('sel_name')
             assert isinstance(sel_name, (str, type(None)))
