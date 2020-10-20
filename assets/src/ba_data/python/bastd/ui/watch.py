@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import os
+from enum import Enum
 from typing import TYPE_CHECKING, cast
 
 import _ba
@@ -12,6 +13,12 @@ import ba
 
 if TYPE_CHECKING:
     from typing import Any, Optional, Tuple, Dict
+
+
+class TabID(Enum):
+    """Our available tab types."""
+    MY_REPLAYS = 'my_replays'
+    TEST_TAB = 'test_tab'
 
 
 class WatchWindow(ba.Window):
@@ -22,7 +29,7 @@ class WatchWindow(ba.Window):
                  origin_widget: ba.Widget = None):
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
-        from bastd.ui import tabs
+        from bastd.ui.tabs import TabRow
         ba.set_analytics_screen('Watch Window')
         scale_origin: Optional[Tuple[float, float]]
         if origin_widget is not None:
@@ -47,7 +54,7 @@ class WatchWindow(ba.Window):
         x_inset = 100 if uiscale is ba.UIScale.SMALL else 0
         self._height = (578 if uiscale is ba.UIScale.SMALL else
                         670 if uiscale is ba.UIScale.MEDIUM else 800)
-        self._current_tab: Optional[str] = None
+        self._current_tab: Optional[TabID] = None
         extra_top = 20 if uiscale is ba.UIScale.SMALL else 0
 
         super().__init__(root_widget=ba.containerwidget(
@@ -90,32 +97,35 @@ class WatchWindow(ba.Window):
                       text=ba.Lstr(resource=self._r + '.titleText'),
                       maxwidth=400)
 
-        tabs_def = [('my_replays',
-                     ba.Lstr(resource=self._r + '.myReplaysText'))]
+        tabdefs = [
+            (TabID.MY_REPLAYS, ba.Lstr(resource=self._r + '.myReplaysText')),
+            # (TabID.TEST_TAB, ba.Lstr(value='Testing')),
+        ]
 
         scroll_buffer_h = 130 + 2 * x_inset
         tab_buffer_h = 750 + 2 * x_inset
 
-        self._tab_buttons = tabs.create_tab_buttons(
-            self._root_widget,
-            tabs_def,
-            pos=(tab_buffer_h * 0.5, self._height - 130),
-            size=(self._width - tab_buffer_h, 50),
-            on_select_call=self._set_tab)
+        self._tab_row = TabRow(self._root_widget,
+                               tabdefs,
+                               pos=(tab_buffer_h * 0.5, self._height - 130),
+                               size=(self._width - tab_buffer_h, 50),
+                               on_select_call=self._set_tab)
 
         if ba.app.ui.use_toolbars:
-            ba.widget(edit=self._tab_buttons[tabs_def[-1][0]],
+            first_tab = self._tab_row.tabs[tabdefs[0][0]]
+            last_tab = self._tab_row.tabs[tabdefs[-1][0]]
+            ba.widget(edit=last_tab.button,
                       right_widget=_ba.get_special_widget('party_button'))
             if uiscale is ba.UIScale.SMALL:
                 bbtn = _ba.get_special_widget('back_button')
-                ba.widget(edit=self._tab_buttons[tabs_def[0][0]],
+                ba.widget(edit=first_tab.button,
                           up_widget=bbtn,
                           left_widget=bbtn)
 
         self._scroll_width = self._width - scroll_buffer_h
         self._scroll_height = self._height - 180
 
-        # not actually using a scroll widget anymore; just an image
+        # Not actually using a scroll widget anymore; just an image.
         scroll_left = (self._width - self._scroll_width) * 0.5
         scroll_bottom = self._height - self._scroll_height - 79 - 48
         buffer_h = 10
@@ -131,21 +141,21 @@ class WatchWindow(ba.Window):
 
         self._restore_state()
 
-    def _set_tab(self, tab: str) -> None:
+    def _set_tab(self, tab_id: TabID) -> None:
         # pylint: disable=too-many-locals
-        from bastd.ui import tabs
 
-        if self._current_tab == tab:
+        if self._current_tab == tab_id:
             return
-        self._current_tab = tab
+        self._current_tab = tab_id
 
-        # We wanna preserve our current tab between runs.
+        # Preserve our current tab between runs.
         cfg = ba.app.config
-        cfg['Watch Tab'] = tab
+        cfg['Watch Tab'] = tab_id.value
         cfg.commit()
 
         # Update tab colors based on which is selected.
-        tabs.update_tab_button_colors(self._tab_buttons, tab)
+        # tabs.update_tab_button_colors(self._tab_buttons, tab)
+        self._tab_row.update_appearance(tab_id)
 
         if self._tab_container:
             self._tab_container.delete()
@@ -157,7 +167,7 @@ class WatchWindow(ba.Window):
         self._tab_data = {}
 
         uiscale = ba.app.ui.uiscale
-        if tab == 'my_replays':
+        if tab_id is TabID.MY_REPLAYS:
             c_width = self._scroll_width
             c_height = self._scroll_height - 20
             sub_scroll_height = c_height - 63
@@ -212,7 +222,7 @@ class WatchWindow(ba.Window):
                 text_scale=tscl,
                 label=ba.Lstr(resource=self._r + '.watchReplayButtonText'),
                 autoselect=True)
-            ba.widget(edit=btn1, up_widget=self._tab_buttons[tab])
+            ba.widget(edit=btn1, up_widget=self._tab_row.tabs[tab_id].button)
             if uiscale is ba.UIScale.SMALL and ba.app.ui.use_toolbars:
                 ba.widget(edit=btn1,
                           left_widget=_ba.get_special_widget('back_button'))
@@ -255,8 +265,9 @@ class WatchWindow(ba.Window):
             ba.widget(edit=scrlw,
                       autoselect=True,
                       left_widget=btn1,
-                      up_widget=self._tab_buttons[tab])
-            ba.widget(edit=self._tab_buttons[tab], down_widget=scrlw)
+                      up_widget=self._tab_row.tabs[tab_id].button)
+            ba.widget(edit=self._tab_row.tabs[tab_id].button,
+                      down_widget=scrlw)
 
             self._my_replay_selected = None
             self._refresh_my_replays()
@@ -463,23 +474,28 @@ class WatchWindow(ba.Window):
                 corner_scale=t_scale,
                 maxwidth=(self._my_replays_scroll_width / t_scale) * 0.93)
             if i == 0:
-                ba.widget(edit=txt, up_widget=self._tab_buttons['my_replays'])
+                ba.widget(
+                    edit=txt,
+                    up_widget=self._tab_row.tabs[TabID.MY_REPLAYS].button)
 
     def _save_state(self) -> None:
         try:
             sel = self._root_widget.get_selected_child()
+            selected_tab_ids = [
+                tab_id for tab_id, tab in self._tab_row.tabs.items()
+                if sel == tab.button
+            ]
             if sel == self._back_button:
                 sel_name = 'Back'
-            elif sel in list(self._tab_buttons.values()):
-                sel_name = 'Tab:' + list(self._tab_buttons.keys())[list(
-                    self._tab_buttons.values()).index(sel)]
+            elif selected_tab_ids:
+                assert len(selected_tab_ids) == 1
+                sel_name = f'Tab:{selected_tab_ids[0].value}'
             elif sel == self._tab_container:
                 sel_name = 'TabContainer'
             else:
                 raise ValueError(f'unrecognized selection {sel}')
             ba.app.ui.window_states[self.__class__.__name__] = {
-                'sel_name': sel_name,
-                'tab': self._current_tab
+                'sel_name': sel_name
             }
         except Exception:
             ba.print_exception(f'Error saving state for {self}.')
@@ -488,21 +504,28 @@ class WatchWindow(ba.Window):
         try:
             sel_name = ba.app.ui.window_states.get(self.__class__.__name__,
                                                    {}).get('sel_name')
-            current_tab = ba.app.config.get('Watch Tab')
-            if current_tab is None or current_tab not in self._tab_buttons:
-                current_tab = 'my_replays'
+            assert isinstance(sel_name, (str, type(None)))
+            try:
+                current_tab = TabID(ba.app.config.get('Watch Tab'))
+            except ValueError:
+                current_tab = TabID.MY_REPLAYS
             self._set_tab(current_tab)
+
             if sel_name == 'Back':
                 sel = self._back_button
             elif sel_name == 'TabContainer':
                 sel = self._tab_container
             elif isinstance(sel_name, str) and sel_name.startswith('Tab:'):
-                sel = self._tab_buttons[sel_name.split(':')[-1]]
+                try:
+                    sel_tab_id = TabID(sel_name.split(':')[-1])
+                except ValueError:
+                    sel_tab_id = TabID.MY_REPLAYS
+                sel = self._tab_row.tabs[sel_tab_id].button
             else:
                 if self._tab_container is not None:
                     sel = self._tab_container
                 else:
-                    sel = self._tab_buttons[current_tab]
+                    sel = self._tab_row.tabs[current_tab].button
             ba.containerwidget(edit=self._root_widget, selected_child=sel)
         except Exception:
             ba.print_exception(f'Error restoring state for {self}.')

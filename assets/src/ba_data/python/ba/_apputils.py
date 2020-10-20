@@ -175,6 +175,7 @@ def print_live_object_warnings(when: Any,
     from ba._session import Session
     from ba._actor import Actor
     from ba._activity import Activity
+
     sessions: List[ba.Session] = []
     activities: List[ba.Activity] = []
     actors: List[ba.Actor] = []

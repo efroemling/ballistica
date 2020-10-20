@@ -7,6 +7,14 @@ import random
 from typing import TYPE_CHECKING
 
 import _ba
+from ba._music import MusicSubsystem
+from ba._language import LanguageSubsystem
+from ba._ui import UISubsystem
+from ba._achievement import AchievementSubsystem
+from ba._plugin import PluginSubsystem
+from ba._account import AccountSubsystem
+from ba._meta import MetadataSubsystem
+from ba._ads import AdsSubsystem
 
 if TYPE_CHECKING:
     import ba
@@ -165,14 +173,6 @@ class App:
         the single shared instance.
         """
         # pylint: disable=too-many-statements
-        from ba._music import MusicSubsystem
-        from ba._language import LanguageSubsystem
-        from ba._ui import UISubsystem
-        from ba._achievement import AchievementSubsystem
-        from ba._plugin import PluginSubsystem
-        from ba._account import AccountSubsystem
-        from ba._meta import MetadataSubsystem
-        from ba._ads import AdsSubsystem
 
         # Config.
         self.config_file_healthy = False

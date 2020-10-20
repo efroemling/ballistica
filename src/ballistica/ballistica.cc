@@ -5,23 +5,15 @@
 #include <map>
 
 #include "ballistica/app/app.h"
-#include "ballistica/app/app_config.h"
-#include "ballistica/app/app_globals.h"
-#include "ballistica/audio/audio.h"
 #include "ballistica/audio/audio_server.h"
 #include "ballistica/core/fatal_error.h"
 #include "ballistica/core/logging.h"
 #include "ballistica/core/thread.h"
-#include "ballistica/dynamics/bg/bg_dynamics.h"
 #include "ballistica/dynamics/bg/bg_dynamics_server.h"
 #include "ballistica/game/account.h"
-#include "ballistica/graphics/graphics.h"
 #include "ballistica/graphics/graphics_server.h"
-#include "ballistica/input/input.h"
-#include "ballistica/media/media.h"
 #include "ballistica/media/media_server.h"
 #include "ballistica/networking/network_write_module.h"
-#include "ballistica/networking/networking.h"
 #include "ballistica/platform/platform.h"
 #include "ballistica/python/python.h"
 #include "ballistica/scene/scene.h"
@@ -29,7 +21,7 @@
 namespace ballistica {
 
 // These are set automatically via script; don't change here.
-const int kAppBuildNumber = 20223;
+const int kAppBuildNumber = 20224;
 const char* kAppVersion = "1.5.27";
 
 // Our standalone globals.
