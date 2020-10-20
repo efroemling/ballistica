@@ -209,14 +209,14 @@ class PlaylistMapSelectWindow(ba.Window):
 
     def _on_store_press(self) -> None:
         from bastd.ui import account
-        from bastd.ui.store import browser
+        from bastd.ui.store.browser import StoreBrowserWindow
         if _ba.get_account_state() != 'signed_in':
             account.show_sign_in_prompt()
             return
-        browser.StoreBrowserWindow(modal=True,
-                                   show_tab='maps',
-                                   on_close_call=self._on_store_close,
-                                   origin_widget=self._get_more_maps_button)
+        StoreBrowserWindow(modal=True,
+                           show_tab=StoreBrowserWindow.TabID.MAPS,
+                           on_close_call=self._on_store_close,
+                           origin_widget=self._get_more_maps_button)
 
     def _on_store_close(self) -> None:
         self._refresh(select_get_more_maps_button=True)

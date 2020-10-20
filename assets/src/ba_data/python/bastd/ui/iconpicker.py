@@ -135,15 +135,15 @@ class IconPicker(popup.PopupWindow):
         ba.widget(edit=btn, show_buffer_top=30, show_buffer_bottom=30)
 
     def _on_store_press(self) -> None:
-        from bastd.ui import account
-        from bastd.ui.store import browser
+        from bastd.ui.account import show_sign_in_prompt
+        from bastd.ui.store.browser import StoreBrowserWindow
         if _ba.get_account_state() != 'signed_in':
-            account.show_sign_in_prompt()
+            show_sign_in_prompt()
             return
         self._transition_out()
-        browser.StoreBrowserWindow(modal=True,
-                                   show_tab='icons',
-                                   origin_widget=self._get_more_icons_button)
+        StoreBrowserWindow(modal=True,
+                           show_tab=StoreBrowserWindow.TabID.ICONS,
+                           origin_widget=self._get_more_icons_button)
 
     def _select_icon(self, icon: str) -> None:
         if self._delegate is not None:

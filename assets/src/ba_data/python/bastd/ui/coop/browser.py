@@ -13,6 +13,7 @@ import _ba
 import ba
 from bastd.ui.store.button import StoreButton
 from bastd.ui.league.rankbutton import LeagueRankButton
+from bastd.ui.store.browser import StoreBrowserWindow
 
 if TYPE_CHECKING:
     from typing import Any, Optional, Tuple, Dict, List, Union
@@ -1352,10 +1353,13 @@ class CoopBrowserWindow(ba.Window):
             LeagueRankWindow(origin_widget=self._league_rank_button.get_button(
             )).get_root_widget())
 
-    def _switch_to_score(self, show_tab: Optional[str] = 'extras') -> None:
+    def _switch_to_score(
+        self,
+        show_tab: Optional[
+            StoreBrowserWindow.TabID] = StoreBrowserWindow.TabID.EXTRAS
+    ) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.account import show_sign_in_prompt
-        from bastd.ui.store.browser import StoreBrowserWindow
         if _ba.get_account_state() != 'signed_in':
             show_sign_in_prompt()
             return

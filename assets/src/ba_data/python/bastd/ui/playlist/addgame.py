@@ -174,15 +174,15 @@ class PlaylistAddGameWindow(ba.Window):
                                visible_child=self._get_more_games_button)
 
     def _on_get_more_games_press(self) -> None:
-        from bastd.ui import account
-        from bastd.ui.store import browser
+        from bastd.ui.account import show_sign_in_prompt
+        from bastd.ui.store.browser import StoreBrowserWindow
         if _ba.get_account_state() != 'signed_in':
-            account.show_sign_in_prompt()
+            show_sign_in_prompt()
             return
-        browser.StoreBrowserWindow(modal=True,
-                                   show_tab='minigames',
-                                   on_close_call=self._on_store_close,
-                                   origin_widget=self._get_more_games_button)
+        StoreBrowserWindow(modal=True,
+                           show_tab=StoreBrowserWindow.TabID.MINIGAMES,
+                           on_close_call=self._on_store_close,
+                           origin_widget=self._get_more_games_button)
 
     def _on_store_close(self) -> None:
         self._refresh(select_get_more_games_button=True)

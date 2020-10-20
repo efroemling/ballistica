@@ -15,14 +15,13 @@ if TYPE_CHECKING:
     from typing import Any, Optional, Tuple, Dict
 
 
-class TabID(Enum):
-    """Our available tab types."""
-    MY_REPLAYS = 'my_replays'
-    TEST_TAB = 'test_tab'
-
-
 class WatchWindow(ba.Window):
     """Window for watching replays."""
+
+    class TabID(Enum):
+        """Our available tab types."""
+        MY_REPLAYS = 'my_replays'
+        TEST_TAB = 'test_tab'
 
     def __init__(self,
                  transition: Optional[str] = 'in_right',
@@ -54,7 +53,7 @@ class WatchWindow(ba.Window):
         x_inset = 100 if uiscale is ba.UIScale.SMALL else 0
         self._height = (578 if uiscale is ba.UIScale.SMALL else
                         670 if uiscale is ba.UIScale.MEDIUM else 800)
-        self._current_tab: Optional[TabID] = None
+        self._current_tab: Optional[WatchWindow.TabID] = None
         extra_top = 20 if uiscale is ba.UIScale.SMALL else 0
 
         super().__init__(root_widget=ba.containerwidget(
@@ -98,8 +97,9 @@ class WatchWindow(ba.Window):
                       maxwidth=400)
 
         tabdefs = [
-            (TabID.MY_REPLAYS, ba.Lstr(resource=self._r + '.myReplaysText')),
-            # (TabID.TEST_TAB, ba.Lstr(value='Testing')),
+            (self.TabID.MY_REPLAYS,
+             ba.Lstr(resource=self._r + '.myReplaysText')),
+            # (self.TabID.TEST_TAB, ba.Lstr(value='Testing')),
         ]
 
         scroll_buffer_h = 130 + 2 * x_inset
@@ -167,7 +167,7 @@ class WatchWindow(ba.Window):
         self._tab_data = {}
 
         uiscale = ba.app.ui.uiscale
-        if tab_id is TabID.MY_REPLAYS:
+        if tab_id is self.TabID.MY_REPLAYS:
             c_width = self._scroll_width
             c_height = self._scroll_height - 20
             sub_scroll_height = c_height - 63
@@ -366,15 +366,16 @@ class WatchWindow(ba.Window):
             new_name_raw = cast(
                 str, ba.textwidget(query=self._my_replay_rename_text))
             new_name = new_name_raw + '.brp'
-            # ignore attempts to change it to what it already is
-            # (or what it looks like to the user)
+
+            # Ignore attempts to change it to what it already is
+            # (or what it looks like to the user).
             if (replay != new_name
                     and self._get_replay_display_name(replay) != new_name_raw):
                 old_name_full = (_ba.get_replays_dir() + '/' +
                                  replay).encode('utf-8')
                 new_name_full = (_ba.get_replays_dir() + '/' +
                                  new_name).encode('utf-8')
-                # false alarm; ba.textwidget can return non-None val
+                # False alarm; ba.textwidget can return non-None val.
                 # pylint: disable=unsupported-membership-test
                 if os.path.exists(new_name_full):
                     ba.playsound(ba.getsound('error'))
@@ -449,7 +450,8 @@ class WatchWindow(ba.Window):
         t_scale = 1.6
         try:
             names = os.listdir(_ba.get_replays_dir())
-            # ignore random other files in there..
+
+            # Ignore random other files in there.
             names = [n for n in names if n.endswith('.brp')]
             names.sort(key=lambda x: x.lower())
         except Exception:
@@ -476,7 +478,7 @@ class WatchWindow(ba.Window):
             if i == 0:
                 ba.widget(
                     edit=txt,
-                    up_widget=self._tab_row.tabs[TabID.MY_REPLAYS].button)
+                    up_widget=self._tab_row.tabs[self.TabID.MY_REPLAYS].button)
 
     def _save_state(self) -> None:
         try:
@@ -506,9 +508,9 @@ class WatchWindow(ba.Window):
                                                    {}).get('sel_name')
             assert isinstance(sel_name, (str, type(None)))
             try:
-                current_tab = TabID(ba.app.config.get('Watch Tab'))
+                current_tab = self.TabID(ba.app.config.get('Watch Tab'))
             except ValueError:
-                current_tab = TabID.MY_REPLAYS
+                current_tab = self.TabID.MY_REPLAYS
             self._set_tab(current_tab)
 
             if sel_name == 'Back':
@@ -517,9 +519,9 @@ class WatchWindow(ba.Window):
                 sel = self._tab_container
             elif isinstance(sel_name, str) and sel_name.startswith('Tab:'):
                 try:
-                    sel_tab_id = TabID(sel_name.split(':')[-1])
+                    sel_tab_id = self.TabID(sel_name.split(':')[-1])
                 except ValueError:
-                    sel_tab_id = TabID.MY_REPLAYS
+                    sel_tab_id = self.TabID.MY_REPLAYS
                 sel = self._tab_row.tabs[sel_tab_id].button
             else:
                 if self._tab_container is not None:
