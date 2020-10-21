@@ -4,6 +4,7 @@
       <w>NOMINMAX</w>
       <w>aabb</w>
       <w>abcdefghijklmnopqrstuvwxyz</w>
+      <w>abouttab</w>
       <w>absval</w>
       <w>accel</w>
       <w>accountid</w>
@@ -360,6 +361,7 @@
       <w>gettotalrefcount</w>
       <w>gles</w>
       <w>glext</w>
+      <w>googleplaytab</w>
       <w>gpgs</w>
       <w>gqualstr</w>
       <w>grav</w>
@@ -491,6 +493,7 @@
       <w>magua</w>
       <w>mainmenu</w>
       <w>mallocs</w>
+      <w>manualtab</w>
       <w>maskhigh</w>
       <w>maskuv</w>
       <w>maximus</w>
@@ -535,6 +538,7 @@
       <w>mystatspage</w>
       <w>mywidget</w>
       <w>ndebug</w>
+      <w>nearbytab</w>
       <w>nearval</w>
       <w>needwindow</w>
       <w>negativex</w>
@@ -654,6 +658,7 @@
       <w>pton</w>
       <w>ptrs</w>
       <w>ptype</w>
+      <w>publictab</w>
       <w>pulseaudio</w>
       <w>punchmomentumlinear</w>
       <w>punchthrough</w>
@@ -815,6 +820,8 @@
       <w>symbolification</w>
       <w>syscalls</w>
       <w>tabdefs</w>
+      <w>tabtype</w>
+      <w>tabtypes</w>
       <w>talloc</w>
       <w>tegra</w>
       <w>telefonaktiebolaget</w>

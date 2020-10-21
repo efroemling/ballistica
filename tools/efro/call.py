@@ -49,7 +49,7 @@ class CallbackSet(Generic[CT]):
 
 # Define Call() which can be used in type-checking call-wrappers that behave
 # similarly to functools.partial (in that they take a callable and some
-# positional arguments to be passed to it)
+# positional arguments to be passed to it).
 
 # In type-checking land, We define several different _CallXArg classes
 # corresponding to different argument counts and define Call() as an
@@ -61,7 +61,7 @@ class CallbackSet(Generic[CT]):
 #  class _MyCallWrapper:
 #    <runtime class defined here>
 #  if TYPE_CHECKING:
-#    MyCallWrapper = bafoundation.executils.Call
+#    MyCallWrapper = efro.call.Call
 #  else:
 #    MyCallWrapper = _MyCallWrapper
 
@@ -196,7 +196,9 @@ if TYPE_CHECKING:
     # 2 arg call; no args bundled.
     # noinspection PyPep8Naming
     @overload
-    def Call(call: Callable[[In1T, In2T], OutT]) -> _CallNoArgs[OutT]:
+    def Call(
+            call: Callable[[In1T, In2T],
+                           OutT]) -> _Call2Args[In1T, In2T, OutT]:
         ...
 
     # 3 arg call; 3 args bundled.

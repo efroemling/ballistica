@@ -1,4 +1,4 @@
-### 1.5.27 (20218)
+### 1.5.27 (20224)
 - Language functionality has been consolidated into a LanguageSubsystem object at ba.app.lang
 - ba.get_valid_languages() is now an attr: ba.app.lang.available_languages
 - Achievement functionality has been consolidated into an AchievementSubsystem object at ba.app.ach
@@ -7,6 +7,7 @@
 - Ditto with MetadataSubsystem and ba.app.meta
 - Ditto with AdsSubsystem and ba.app.ads
 - Revamped tab-button functionality into a cleaner type-safe class (bastd.ui.tabs.TabRow)
+- Split Gather-Window tabs out into individual classes for future improvements (bastd.ui.gather.*)
 
 ### 1.5.26 (20217)
 - Simplified licensing header on python scripts.

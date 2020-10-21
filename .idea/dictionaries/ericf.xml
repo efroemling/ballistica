@@ -17,6 +17,7 @@
       <w>abeb</w>
       <w>abishort</w>
       <w>abot</w>
+      <w>abouttab</w>
       <w>abtn</w>
       <w>accesstime</w>
       <w>accountname</w>
@@ -877,6 +878,7 @@
       <w>gnode</w>
       <w>goles</w>
       <w>goodlist</w>
+      <w>googleplaytab</w>
       <w>googlevr</w>
       <w>goosey</w>
       <w>gotresponse</w>
@@ -1209,6 +1211,7 @@
       <w>malformatted</w>
       <w>mallimportedby</w>
       <w>mandir</w>
+      <w>manualtab</w>
       <w>mapdata</w>
       <w>mapdef</w>
       <w>mapdefs</w>
@@ -1340,6 +1343,7 @@
       <w>ncpu</w>
       <w>ndbm</w>
       <w>ndkpath</w>
+      <w>nearbytab</w>
       <w>neededsettings</w>
       <w>ness</w>
       <w>netlink</w>
@@ -1607,6 +1611,7 @@
       <w>pthreads</w>
       <w>ptrans</w>
       <w>ptype</w>
+      <w>publictab</w>
       <w>pubsync</w>
       <w>pucknode</w>
       <w>pulllist</w>
@@ -2010,6 +2015,8 @@
       <w>sysctl</w>
       <w>syslogmodule</w>
       <w>tabdefs</w>
+      <w>tabtype</w>
+      <w>tabtypes</w>
       <w>tabval</w>
       <w>tagargs</w>
       <w>tagversion</w>
