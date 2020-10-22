@@ -588,12 +588,24 @@ class GetCurrencyWindow(ba.Window):
 
 
 def show_get_tickets_prompt() -> None:
-    """Show a prompt to get more currency."""
-    from bastd.ui import confirm
-    confirm.ConfirmWindow(
-        ba.Lstr(translate=('serverResponses',
-                           'You don\'t have enough tickets for this!')),
-        lambda: GetCurrencyWindow(modal=True),
-        ok_text=ba.Lstr(resource='getTicketsWindow.titleText'),
-        width=460,
-        height=130)
+    """Show a 'not enough tickets' prompt with an option to purchase more.
+
+    Note that the purchase option may not always be available
+    depending on the build of the game.
+    """
+    from bastd.ui.confirm import ConfirmWindow
+    if ba.app.allow_ticket_purchases:
+        ConfirmWindow(
+            ba.Lstr(translate=('serverResponses',
+                               'You don\'t have enough tickets for this!')),
+            lambda: GetCurrencyWindow(modal=True),
+            ok_text=ba.Lstr(resource='getTicketsWindow.titleText'),
+            width=460,
+            height=130)
+    else:
+        ConfirmWindow(
+            ba.Lstr(translate=('serverResponses',
+                               'You don\'t have enough tickets for this!')),
+            cancel_button=False,
+            width=460,
+            height=130)

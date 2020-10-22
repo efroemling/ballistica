@@ -97,17 +97,27 @@ class StoreBrowserWindow(ba.Window):
             on_activate_call=self._back)
         ba.containerwidget(edit=self._root_widget, cancel_button=btn)
 
-        self._get_tickets_button = ba.buttonwidget(
-            parent=self._root_widget,
-            size=(210, 65),
-            on_activate_call=self._on_get_more_tickets_press,
-            autoselect=True,
-            scale=0.9,
-            text_scale=1.4,
-            left_widget=self._back_button,
-            color=(0.7, 0.5, 0.85),
-            textcolor=(0.2, 1.0, 0.2),
-            label=ba.Lstr(resource='getTicketsWindow.titleText'))
+        self._ticket_count_text: Optional[ba.Widget] = None
+        self._get_tickets_button: Optional[ba.Widget] = None
+
+        if ba.app.allow_ticket_purchases:
+            self._get_tickets_button = ba.buttonwidget(
+                parent=self._root_widget,
+                size=(210, 65),
+                on_activate_call=self._on_get_more_tickets_press,
+                autoselect=True,
+                scale=0.9,
+                text_scale=1.4,
+                left_widget=self._back_button,
+                color=(0.7, 0.5, 0.85),
+                textcolor=(0.2, 1.0, 0.2),
+                label=ba.Lstr(resource='getTicketsWindow.titleText'))
+        else:
+            self._ticket_count_text = ba.textwidget(parent=self._root_widget,
+                                                    size=(210, 64),
+                                                    color=(0.2, 1.0, 0.2),
+                                                    h_align='center',
+                                                    v_align='center')
 
         # Move this dynamically to keep it out of the way of the party icon.
         self._update_get_tickets_button_pos()
@@ -116,8 +126,9 @@ class StoreBrowserWindow(ba.Window):
             ba.WeakCall(self._update_get_tickets_button_pos),
             repeat=True,
             timetype=ba.TimeType.REAL)
-        ba.widget(edit=self._back_button,
-                  right_widget=self._get_tickets_button)
+        if self._get_tickets_button:
+            ba.widget(edit=self._back_button,
+                      right_widget=self._get_tickets_button)
         self._ticket_text_update_timer = ba.Timer(
             1.0,
             ba.WeakCall(self._update_tickets_text),
@@ -244,7 +255,7 @@ class StoreBrowserWindow(ba.Window):
                                           repeat=True)
         self._update_tabs()
 
-        if self._get_tickets_button is not None:
+        if self._get_tickets_button:
             last_tab_button = self._tab_row.tabs[tabs_def[-1][0]].button
             ba.widget(edit=self._get_tickets_button,
                       down_widget=last_tab_button)
@@ -261,12 +272,14 @@ class StoreBrowserWindow(ba.Window):
 
     def _update_get_tickets_button_pos(self) -> None:
         uiscale = ba.app.ui.uiscale
-        if self._get_tickets_button:
-            pos = (self._width - 252 -
-                   (self._x_inset + (47 if uiscale is ba.UIScale.SMALL
+        pos = (self._width - 252 - (self._x_inset +
+                                    (47 if uiscale is ba.UIScale.SMALL
                                      and _ba.is_party_icon_visible() else 0)),
-                   self._height - 70)
+               self._height - 70)
+        if self._get_tickets_button:
             ba.buttonwidget(edit=self._get_tickets_button, position=pos)
+        if self._ticket_count_text:
+            ba.textwidget(edit=self._ticket_count_text, position=pos)
 
     def _restore_purchases(self) -> None:
         from bastd.ui import account
@@ -316,7 +329,10 @@ class StoreBrowserWindow(ba.Window):
                 _ba.get_account_ticket_count())
         else:
             sval = ba.Lstr(resource='getTicketsWindow.titleText')
-        ba.buttonwidget(edit=self._get_tickets_button, label=sval)
+        if self._get_tickets_button:
+            ba.buttonwidget(edit=self._get_tickets_button, label=sval)
+        if self._ticket_count_text:
+            ba.textwidget(edit=self._ticket_count_text, text=sval)
 
     def _set_tab(self, tab_id: TabID) -> None:
         if self._current_tab is tab_id:
@@ -1014,7 +1030,7 @@ class StoreBrowserWindow(ba.Window):
                 current_tab = self.TabID.CHARACTERS
             if self._show_tab is not None:
                 current_tab = self._show_tab
-            if sel_name == 'GetTickets':
+            if sel_name == 'GetTickets' and self._get_tickets_button:
                 sel = self._get_tickets_button
             elif sel_name == 'Back':
                 sel = self._back_button

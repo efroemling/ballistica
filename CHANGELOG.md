@@ -8,6 +8,7 @@
 - Ditto with AdsSubsystem and ba.app.ads
 - Revamped tab-button functionality into a cleaner type-safe class (bastd.ui.tabs.TabRow)
 - Split Gather-Window tabs out into individual classes for future improvements (bastd.ui.gather.*)
+- Added the ability to disable ticket-purchasing UIs for builds (ba.app.allow_ticket_purchases)
 
 ### 1.5.26 (20217)
 - Simplified licensing header on python scripts.

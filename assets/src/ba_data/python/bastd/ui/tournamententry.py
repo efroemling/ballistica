@@ -215,20 +215,27 @@ class TournamentEntryWindow(popup.PopupWindow):
         else:
             self._pay_with_ad_btn = None
 
-        self._get_tickets_button: Optional[ba.Widget]
+        self._get_tickets_button: Optional[ba.Widget] = None
+        self._ticket_count_text: Optional[ba.Widget] = None
         if not ba.app.ui.use_toolbars:
-            self._get_tickets_button = ba.buttonwidget(
-                parent=self.root_widget,
-                position=(self._width - 190 + 110, 15),
-                autoselect=True,
-                scale=0.6,
-                size=(120, 60),
-                textcolor=(0.2, 1, 0.2),
-                label=ba.charstr(ba.SpecialChar.TICKET),
-                color=(0.6, 0.4, 0.7),
-                on_activate_call=self._on_get_tickets_press)
-        else:
-            self._get_tickets_button = None
+            if ba.app.allow_ticket_purchases:
+                self._get_tickets_button = ba.buttonwidget(
+                    parent=self.root_widget,
+                    position=(self._width - 190 + 110, 15),
+                    autoselect=True,
+                    scale=0.6,
+                    size=(120, 60),
+                    textcolor=(0.2, 1, 0.2),
+                    label=ba.charstr(ba.SpecialChar.TICKET),
+                    color=(0.6, 0.4, 0.7),
+                    on_activate_call=self._on_get_tickets_press)
+            else:
+                self._ticket_count_text = ba.textwidget(
+                    parent=self.root_widget,
+                    position=(self._width - 190 + 110, 15),
+                    color=(0.2, 1, 0.2),
+                    h_align='center',
+                    v_align='center')
 
         self._seconds_remaining = None
 
@@ -416,9 +423,12 @@ class TournamentEntryWindow(popup.PopupWindow):
             t_str = str(_ba.get_account_ticket_count())
         except Exception:
             t_str = '?'
-        if self._get_tickets_button is not None:
+        if self._get_tickets_button:
             ba.buttonwidget(edit=self._get_tickets_button,
                             label=ba.charstr(ba.SpecialChar.TICKET) + t_str)
+        if self._ticket_count_text:
+            ba.textwidget(edit=self._ticket_count_text,
+                          text=ba.charstr(ba.SpecialChar.TICKET) + t_str)
 
     def _launch(self) -> None:
         if self._launched:

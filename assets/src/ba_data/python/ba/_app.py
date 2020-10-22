@@ -195,6 +195,7 @@ class App:
         assert isinstance(self.headless_mode, bool)
         self.iircade_mode: bool = self._env['iircade_mode']
         assert isinstance(self.headless_mode, bool)
+        self.allow_ticket_purchases: bool = not self.iircade_mode
 
         # Misc.
         self.tips: List[str] = []
