@@ -2,7 +2,7 @@
 
 #include "ballistica/core/thread.h"
 
-#include <map>
+#include <unordered_map>
 
 #include "ballistica/app/app.h"
 #include "ballistica/core/fatal_error.h"
@@ -446,7 +446,7 @@ void Thread::LogThreadMessageTally() {
   if (!writing_tally_) {
     writing_tally_ = true;
 
-    std::map<std::string, int> tally;
+    std::unordered_map<std::string, int> tally;
     Log("Thread message tally (" + std::to_string(thread_messages_.size())
         + " in list):");
     for (auto&& m : thread_messages_) {

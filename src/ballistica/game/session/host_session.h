@@ -4,8 +4,8 @@
 #define BALLISTICA_GAME_SESSION_HOST_SESSION_H_
 
 #include <list>
-#include <map>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "ballistica/core/context.h"
@@ -120,10 +120,10 @@ class HostSession : public Session {
   bool kick_idle_players_ = false;
   millisecs_t last_kick_idle_players_decrement_time_;
   millisecs_t next_prune_time_ = 0;
-  std::map<std::string, Object::WeakRef<Texture> > textures_;
-  std::map<std::string, Object::WeakRef<Sound> > sounds_;
-  std::map<std::string, Object::WeakRef<Data> > datas_;
-  std::map<std::string, Object::WeakRef<Model> > models_;
+  std::unordered_map<std::string, Object::WeakRef<Texture> > textures_;
+  std::unordered_map<std::string, Object::WeakRef<Sound> > sounds_;
+  std::unordered_map<std::string, Object::WeakRef<Data> > datas_;
+  std::unordered_map<std::string, Object::WeakRef<Model> > models_;
 };
 
 }  // namespace ballistica

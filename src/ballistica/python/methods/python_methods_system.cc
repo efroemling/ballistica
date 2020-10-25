@@ -4,8 +4,8 @@
 
 #include <algorithm>
 #include <list>
-#include <map>
 #include <string>
+#include <unordered_map>
 
 #include "ballistica/app/app.h"
 #include "ballistica/app/app_config.h"
@@ -620,7 +620,7 @@ auto PySetInternalLanguageKeys(PyObject* self, PyObject* args) -> PyObject* {
   }
   BA_PRECONDITION(PyList_Check(list_obj));
   BA_PRECONDITION(PyList_Check(random_names_list_obj));
-  std::map<std::string, std::string> language;
+  std::unordered_map<std::string, std::string> language;
   int size = static_cast<int>(PyList_GET_SIZE(list_obj));
   for (int i = 0; i < size; i++) {
     PyObject* entry = PyList_GET_ITEM(list_obj, i);

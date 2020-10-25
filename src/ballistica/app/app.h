@@ -3,10 +3,10 @@
 #ifndef BALLISTICA_APP_APP_H_
 #define BALLISTICA_APP_APP_H_
 
-#include <map>
 #include <memory>
 #include <mutex>
 #include <string>
+#include <unordered_map>
 
 #include "ballistica/core/module.h"
 
@@ -139,7 +139,7 @@ class App : public Module {
   std::unique_ptr<StressTest> stress_test_;
   millisecs_t last_resize_draw_event_time_{};
   millisecs_t last_app_resume_time_{};
-  std::map<std::string, std::string> product_prices_;
+  std::unordered_map<std::string, std::string> product_prices_;
   std::mutex product_prices_mutex_;
 };
 

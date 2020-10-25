@@ -3,8 +3,8 @@
 #ifndef BALLISTICA_SCENE_NODE_NODE_TYPE_H_
 #define BALLISTICA_SCENE_NODE_NODE_TYPE_H_
 
-#include <map>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -71,7 +71,7 @@ class NodeType {
   NodeCreateFunc* create_call_;
   int id_;
   std::string name_;
-  std::map<std::string, NodeAttributeUnbound*> attributes_by_name_;
+  std::unordered_map<std::string, NodeAttributeUnbound*> attributes_by_name_;
   std::vector<NodeAttributeUnbound*> attributes_by_index_;
   friend class NodeAttributeUnbound;
   friend class Node;

@@ -3,8 +3,8 @@
 #ifndef BALLISTICA_DYNAMICS_DYNAMICS_H_
 #define BALLISTICA_DYNAMICS_DYNAMICS_H_
 
-#include <map>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 #include "ballistica/core/object.h"
@@ -82,6 +82,7 @@ class Dynamics : public Object {
   class SrcPartCollideMap;
   class CollisionEvent;
   class CollisionReset;
+  class Impl;
   std::vector<CollisionReset> collision_resets_;
 
   // Return a collision object between these two parts,
@@ -89,21 +90,14 @@ class Dynamics : public Object {
   auto GetCollision(Part* p1, Part* p2, MaterialContext** cc1,
                     MaterialContext** cc2) -> Collision*;
 
-  // Contains in-progress collisions for current nodes.
-  std::map<int64_t, SrcNodeCollideMap> node_collisions_;
   std::vector<CollisionEvent> collision_events_;
-  auto HandleDisconnect(
-      const std::map<int64_t,
-                     ballistica::Dynamics::SrcNodeCollideMap>::iterator& i,
-      const std::map<int64_t,
-                     ballistica::Dynamics::DstNodeCollideMap>::iterator& j,
-      const std::map<int, SrcPartCollideMap>::iterator& k,
-      const std::map<int, Object::Ref<Collision> >::iterator& l) -> void;
   auto ResetODE() -> void;
   auto ShutdownODE() -> void;
   static auto DoCollideCallback(void* data, dGeomID o1, dGeomID o2) -> void;
   auto CollideCallback(dGeomID o1, dGeomID o2) -> void;
   auto ProcessCollisions() -> void;
+
+  std::unique_ptr<Impl> impl_;
   bool processing_collisions_{};
   dWorldID ode_world_{};
   dJointGroupID ode_contact_group_{};
@@ -122,6 +116,7 @@ class Dynamics : public Object {
   Object::WeakRef<Node> active_collide_src_node_;
   Object::WeakRef<Node> active_collide_dst_node_;
   std::unique_ptr<CollisionCache> collision_cache_;
+  friend class Impl;
 };
 
 }  // namespace ballistica

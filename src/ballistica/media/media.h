@@ -3,8 +3,8 @@
 #ifndef BALLISTICA_MEDIA_MEDIA_H_
 #define BALLISTICA_MEDIA_MEDIA_H_
 
-#include <map>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "ballistica/core/context.h"
@@ -19,12 +19,12 @@ class Media {
   static void Init();
   ~Media();
 
-  /// Handy function to try to return a bit of media from a std::map
+  /// Handy function to try to return a bit of media from a std::unordered_map
   /// of weak-refs, loading/adding it if need be.
   template <typename T>
-  static auto GetMedia(std::map<std::string, Object::WeakRef<T> >* list,
-                       const std::string& name, Scene* scene)
-      -> Object::Ref<T> {
+  static auto GetMedia(
+      std::unordered_map<std::string, Object::WeakRef<T> >* list,
+      const std::string& name, Scene* scene) -> Object::Ref<T> {
     assert(InGameThread());
     assert(list);
     auto i = list->find(name);
@@ -166,16 +166,18 @@ class Media {
 
   template <class T>
   auto GetComponentPendingLoadCount(
-      std::map<std::string, Object::Ref<T> >* t_list, MediaType type) -> int;
+      std::unordered_map<std::string, Object::Ref<T> >* t_list, MediaType type)
+      -> int;
 
   template <class T>
-  auto GetComponentData(const std::string& file_name,
-                        std::map<std::string, Object::Ref<T> >* c_list)
+  auto GetComponentData(
+      const std::string& file_name,
+      std::unordered_map<std::string, Object::Ref<T> >* c_list)
       -> Object::Ref<T>;
 
   std::vector<std::string> media_paths_;
   bool have_pending_loads_[static_cast<int>(MediaType::kLast)]{};
-  std::map<std::string, std::string> packages_;
+  std::unordered_map<std::string, std::string> packages_;
 
   // For use by MediaListsLock; don't manually acquire
   std::mutex media_lists_mutex_;
@@ -193,13 +195,14 @@ class Media {
   std::vector<Object::Ref<ModelData> > system_models_;
 
   // All existing media by filename (including internal).
-  std::map<std::string, Object::Ref<TextureData> > textures_;
-  std::map<std::string, Object::Ref<TextureData> > text_textures_;
-  std::map<std::string, Object::Ref<TextureData> > qr_textures_;
-  std::map<std::string, Object::Ref<ModelData> > models_;
-  std::map<std::string, Object::Ref<SoundData> > sounds_;
-  std::map<std::string, Object::Ref<DataData> > datas_;
-  std::map<std::string, Object::Ref<CollideModelData> > collide_models_;
+  std::unordered_map<std::string, Object::Ref<TextureData> > textures_;
+  std::unordered_map<std::string, Object::Ref<TextureData> > text_textures_;
+  std::unordered_map<std::string, Object::Ref<TextureData> > qr_textures_;
+  std::unordered_map<std::string, Object::Ref<ModelData> > models_;
+  std::unordered_map<std::string, Object::Ref<SoundData> > sounds_;
+  std::unordered_map<std::string, Object::Ref<DataData> > datas_;
+  std::unordered_map<std::string, Object::Ref<CollideModelData> >
+      collide_models_;
 
   // Components that have been preloaded but need to be loaded.
   std::mutex pending_load_list_mutex_;

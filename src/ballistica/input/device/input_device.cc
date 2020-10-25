@@ -4,7 +4,7 @@
 
 #include <cstring>
 #include <list>
-#include <map>
+#include <unordered_map>
 
 #include "ballistica/app/app_globals.h"
 #include "ballistica/game/connection/connection_to_host.h"
@@ -18,7 +18,8 @@
 
 namespace ballistica {
 
-static std::map<std::string, std::string>* g_rand_name_registry = nullptr;
+static std::unordered_map<std::string, std::string>* g_rand_name_registry =
+    nullptr;
 std::list<std::string> g_default_names;
 
 InputDevice::InputDevice() = default;
@@ -46,7 +47,7 @@ static auto GetRandomName(const std::string& full_name) -> std::string {
 
   // Hmm; statically allocating this is giving some crashes on shutdown :-(
   if (g_rand_name_registry == nullptr) {
-    g_rand_name_registry = new std::map<std::string, std::string>();
+    g_rand_name_registry = new std::unordered_map<std::string, std::string>();
   }
 
   auto i = g_rand_name_registry->find(full_name);

@@ -4,10 +4,10 @@
 #define BALLISTICA_GRAPHICS_TEXT_TEXT_GRAPHICS_H_
 
 #include <list>
-#include <map>
 #include <mutex>
 #include <set>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "ballistica/core/object.h"
@@ -96,7 +96,7 @@ class TextGraphics {
   void LoadGlyphPage(uint32_t index);
 
   // Map of entries for fast lookup.
-  std::map<std::string, Object::Ref<TextSpanBoundsCacheEntry> >
+  std::unordered_map<std::string, Object::Ref<TextSpanBoundsCacheEntry> >
       text_span_bounds_cache_map_;
 
   // List of entries for sorting by last-use-time

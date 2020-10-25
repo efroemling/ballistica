@@ -4,8 +4,8 @@
 #define BALLISTICA_GAME_HOST_ACTIVITY_H_
 
 #include <list>
-#include <map>
 #include <string>
+#include <unordered_map>
 
 #include "ballistica/core/context.h"
 #include "ballistica/generic/timer_list.h"
@@ -89,11 +89,12 @@ class HostActivity : public ContextTarget {
   Object::WeakRef<GlobalsNode> globals_node_;
   bool allow_kick_idle_players_ = false;
   Timer* step_scene_timer_ = nullptr;
-  std::map<std::string, Object::WeakRef<Texture> > textures_;
-  std::map<std::string, Object::WeakRef<Sound> > sounds_;
-  std::map<std::string, Object::WeakRef<Data> > datas_;
-  std::map<std::string, Object::WeakRef<CollideModel> > collide_models_;
-  std::map<std::string, Object::WeakRef<Model> > models_;
+  std::unordered_map<std::string, Object::WeakRef<Texture> > textures_;
+  std::unordered_map<std::string, Object::WeakRef<Sound> > sounds_;
+  std::unordered_map<std::string, Object::WeakRef<Data> > datas_;
+  std::unordered_map<std::string, Object::WeakRef<CollideModel> >
+      collide_models_;
+  std::unordered_map<std::string, Object::WeakRef<Model> > models_;
   std::list<Object::WeakRef<Material> > materials_;
   bool shutting_down_ = false;
 

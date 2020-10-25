@@ -465,8 +465,9 @@ auto Media::GetCollideModelData(const std::string& file_name)
 }
 
 template <class T>
-auto Media::GetComponentData(const std::string& file_name,
-                             std::map<std::string, Object::Ref<T> >* c_list)
+auto Media::GetComponentData(
+    const std::string& file_name,
+    std::unordered_map<std::string, Object::Ref<T> >* c_list)
     -> Object::Ref<T> {
   assert(InGameThread());
   assert(media_lists_locked_);
@@ -703,7 +704,8 @@ auto Media::GetPendingLoadCount() -> int {
 
 template <class T>
 auto Media::GetComponentPendingLoadCount(
-    std::map<std::string, Object::Ref<T> >* t_list, MediaType type) -> int {
+    std::unordered_map<std::string, Object::Ref<T> >* t_list, MediaType type)
+    -> int {
   assert(InGameThread());
   assert(media_lists_locked_);
 

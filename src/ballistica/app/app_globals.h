@@ -3,10 +3,10 @@
 #ifndef BALLISTICA_APP_APP_GLOBALS_H_
 #define BALLISTICA_APP_APP_GLOBALS_H_
 
-#include <map>
 #include <mutex>
 #include <string>
 #include <thread>
+#include <unordered_map>
 #include <vector>
 
 #include "ballistica/ballistica.h"
@@ -31,9 +31,9 @@ class AppGlobals {
   /// Program argument values (on applicable platforms).
   char** argv{};
 
-  std::map<std::string, NodeType*> node_types;
-  std::map<int, NodeType*> node_types_by_id;
-  std::map<std::string, NodeMessageType> node_message_types;
+  std::unordered_map<std::string, NodeType*> node_types;
+  std::unordered_map<int, NodeType*> node_types_by_id;
+  std::unordered_map<std::string, NodeMessageType> node_message_types;
   std::vector<std::string> node_message_formats;
   bool have_mods{};
   bool replay_open{};
@@ -82,7 +82,7 @@ class AppGlobals {
   millisecs_t last_real_time_ticks{};
   std::mutex real_time_mutex;
   std::mutex thread_name_map_mutex;
-  std::map<std::thread::id, std::string> thread_name_map;
+  std::unordered_map<std::thread::id, std::string> thread_name_map;
 #if BA_DEBUG_BUILD
   std::mutex object_list_mutex;
   Object* object_list_first{};

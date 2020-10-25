@@ -3,9 +3,9 @@
 #include "ballistica/core/object.h"
 
 #include <algorithm>
-#include <map>
 #include <mutex>
 #include <string>
+#include <unordered_map>
 #include <utility>
 
 #include "ballistica/app/app_globals.h"
@@ -24,7 +24,7 @@ void Object::PrintObjects() {
         + std::to_string(GetRealTime()) + ";";
 
     if (explicit_bool(true)) {
-      std::map<std::string, int> obj_map;
+      std::unordered_map<std::string, int> obj_map;
 
       // Tally up counts for all types.
       int count = 0;

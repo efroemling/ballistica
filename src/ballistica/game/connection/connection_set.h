@@ -3,8 +3,8 @@
 #ifndef BALLISTICA_GAME_CONNECTION_CONNECTION_SET_H_
 #define BALLISTICA_GAME_CONNECTION_CONNECTION_SET_H_
 
-#include <map>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "ballistica/core/object.h"
@@ -35,7 +35,7 @@ class ConnectionSet {
   auto GetConnectionToHostUDP() -> ConnectionToHostUDP*;
 
   auto connections_to_clients()
-      -> const std::map<int, Object::Ref<ConnectionToClient> >& {
+      -> const std::unordered_map<int, Object::Ref<ConnectionToClient> >& {
     return connections_to_clients_;
   }
   auto client_controller() -> ClientControllerInterface* {
@@ -114,7 +114,8 @@ class ConnectionSet {
  private:
   // Try to minimize the chance a garbage packet will have this id.
   int next_connection_to_client_id_{113};
-  std::map<int, Object::Ref<ConnectionToClient> > connections_to_clients_;
+  std::unordered_map<int, Object::Ref<ConnectionToClient> >
+      connections_to_clients_;
   Object::Ref<ConnectionToHost> connection_to_host_;
   ClientControllerInterface* client_controller_{};
 
@@ -126,8 +127,8 @@ class ConnectionSet {
   bool printed_host_disconnect_{};
 
 #if BA_GOOGLE_BUILD
-  std::map<int, int> google_play_id_to_client_id_map_;
-  std::map<int, int> client_id_to_google_play_id_map_;
+  std::unordered_map<int, int> google_play_id_to_client_id_map_;
+  std::unordered_map<int, int> client_id_to_google_play_id_map_;
 #endif
 };
 

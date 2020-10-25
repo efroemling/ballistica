@@ -4,11 +4,11 @@
 #define BALLISTICA_GAME_GAME_H_
 
 #include <list>
-#include <map>
 #include <memory>
 #include <mutex>
 #include <set>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -129,8 +129,8 @@ class Game : public Module {
                     const Object::Ref<Runnable>& runnable) -> int;
   auto DeleteRealTimer(int timer_id) -> void;
   auto SetRealTimerLength(int timer_id, millisecs_t length) -> void;
-  auto SetLanguageKeys(const std::map<std::string, std::string>& language)
-      -> void;
+  auto SetLanguageKeys(
+      const std::unordered_map<std::string, std::string>& language) -> void;
   auto GetResourceString(const std::string& key) -> std::string;
   auto CharStr(SpecialChar id) -> std::string;
   auto CompileResourceString(const std::string& s, const std::string& loc,
@@ -309,9 +309,9 @@ class Game : public Module {
   Object::WeakRef<Scene> foreground_scene_;
   Object::WeakRef<Session> foreground_session_;
   std::mutex language_mutex_;
-  std::map<std::string, std::string> language_;
+  std::unordered_map<std::string, std::string> language_;
   std::mutex special_char_mutex_;
-  std::map<SpecialChar, std::string> special_char_strings_;
+  std::unordered_map<SpecialChar, std::string> special_char_strings_;
   bool ran_app_launch_commands_{};
   bool kick_idle_players_{};
   std::unique_ptr<TimerList> realtimers_;

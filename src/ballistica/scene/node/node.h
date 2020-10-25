@@ -4,8 +4,8 @@
 #define BALLISTICA_SCENE_NODE_NODE_H_
 
 #include <list>
-#include <map>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "ballistica/ballistica.h"
@@ -168,7 +168,7 @@ class Node : public Object {
     return attribute_connections_;
   }
   auto attribute_connections_incoming() const
-      -> const std::map<int, Object::Ref<NodeAttributeConnection> >& {
+      -> const std::unordered_map<int, Object::Ref<NodeAttributeConnection> >& {
     return attribute_connections_incoming_;
   }
 
@@ -215,7 +215,7 @@ class Node : public Object {
   std::list<Object::Ref<NodeAttributeConnection> > attribute_connections_;
 
   // Incoming attr connections by attr index.
-  std::map<int, Object::Ref<NodeAttributeConnection> >
+  std::unordered_map<int, Object::Ref<NodeAttributeConnection> >
       attribute_connections_incoming_;
 
   friend class NodeAttributeUnbound;

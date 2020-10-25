@@ -93,8 +93,52 @@ class Dynamics::CollisionEvent {
         collision(collision_in) {}
 };
 
+class Dynamics::SrcPartCollideMap {
+ public:
+  std::unordered_map<int, Object::Ref<Collision> > dst_part_collisions;
+};
+
+class Dynamics::DstNodeCollideMap {
+ public:
+  std::unordered_map<int, SrcPartCollideMap> src_parts;
+  int collideDisabled;
+  DstNodeCollideMap() : collideDisabled(0) {}
+  ~DstNodeCollideMap() = default;
+};
+
+class Dynamics::SrcNodeCollideMap {
+ public:
+  std::unordered_map<int64_t, DstNodeCollideMap> dst_nodes;
+};
+
+class Dynamics::Impl {
+ public:
+  explicit Impl(Dynamics* dynamics) : dynamics_(dynamics) {}
+
+  // NOTE: we need to implement this here in an Impl class because
+  // gcc currently chokes on unordered_maps with forward-declared types,
+  // so we can't have this in our header without pushing all our map/collision
+  // types there too.
+  auto HandleDisconnect(
+      const std::unordered_map<
+          int64_t, ballistica::Dynamics::SrcNodeCollideMap>::iterator& i,
+      const std::unordered_map<
+          int64_t, ballistica::Dynamics::DstNodeCollideMap>::iterator& j,
+      const std::unordered_map<int, SrcPartCollideMap>::iterator& k,
+      const std::unordered_map<int, Object::Ref<Collision> >::iterator& l)
+      -> void;
+
+ private:
+  Dynamics* dynamics_{};
+  // Contains in-progress collisions for current nodes.
+  std::unordered_map<int64_t, SrcNodeCollideMap> node_collisions_;
+  friend class Dynamics;
+};
+
 Dynamics::Dynamics(Scene* scene_in)
-    : scene_(scene_in), collision_cache_(new CollisionCache()) {
+    : scene_(scene_in),
+      collision_cache_(new CollisionCache()),
+      impl_(std::make_unique<Impl>(this)) {
   ResetODE();
 }
 
@@ -107,7 +151,7 @@ Dynamics::~Dynamics() {
 }
 
 void Dynamics::Draw(FrameDef* frame_def) {
-  // draw collisions if desired..
+// draw collisions if desired..
 #if BA_DEBUG_BUILD && 0
   SimpleComponent c(frame_def->overlay_3d_pass());
   c.SetColor(1, 0, 0);
@@ -162,24 +206,6 @@ void Dynamics::RemoveTrimesh(dGeomID g) {
   throw Exception("trimesh not found");
 }
 
-class Dynamics::SrcPartCollideMap {
- public:
-  std::map<int, Object::Ref<Collision> > dst_part_collisions;
-};
-
-class Dynamics::DstNodeCollideMap {
- public:
-  std::map<int, SrcPartCollideMap> src_parts;
-  int collideDisabled;
-  DstNodeCollideMap() : collideDisabled(0) {}
-  ~DstNodeCollideMap() = default;
-};
-
-class Dynamics::SrcNodeCollideMap {
- public:
-  std::map<int64_t, DstNodeCollideMap> dst_nodes;
-};
-
 auto Dynamics::AreColliding(const Part& p1_in, const Part& p2_in) -> bool {
   const Part* p1;
   const Part* p2;
@@ -194,8 +220,8 @@ auto Dynamics::AreColliding(const Part& p1_in, const Part& p2_in) -> bool {
 
   // Go down the hierarchy until we either find a missing level or
   // find the collision.
-  auto i = node_collisions_.find(p1->node()->id());
-  if (i != node_collisions_.end()) {
+  auto i = impl_->node_collisions_.find(p1->node()->id());
+  if (i != impl_->node_collisions_.end()) {
     auto j = i->second.dst_nodes.find(p2->node()->id());
     if (j != i->second.dst_nodes.end()) {
       auto k = j->second.src_parts.find(p1->id());
@@ -222,12 +248,12 @@ auto Dynamics::GetCollision(Part* p1_in, Part* p2_in, MaterialContext** cc1,
     p2 = p1_in;
   }
 
-  std::pair<std::map<int, Object::Ref<Collision> >::iterator, bool> i =
-      node_collisions_[p1->node()->id()]
-          .dst_nodes[p2->node()->id()]
-          .src_parts[p1->id()]
-          .dst_part_collisions.insert(
-              std::make_pair(p2->id(), Object::Ref<Collision>()));
+  std::pair<std::unordered_map<int, Object::Ref<Collision> >::iterator, bool>
+      i = impl_->node_collisions_[p1->node()->id()]
+              .dst_nodes[p2->node()->id()]
+              .src_parts[p1->id()]
+              .dst_part_collisions.insert(
+                  std::make_pair(p2->id(), Object::Ref<Collision>()));
 
   Collision* new_collision;
 
@@ -257,7 +283,7 @@ auto Dynamics::GetCollision(Part* p1_in, Part* p2_in, MaterialContext** cc1,
 
     // If either disabled collisions between these two nodes, store that.
     DstNodeCollideMap* dncm =
-        &node_collisions_[p1->node()->id()].dst_nodes[p2->node()->id()];
+        &impl_->node_collisions_[p1->node()->id()].dst_nodes[p2->node()->id()];
     if (!(*cc1)->node_collide || !(*cc2)->node_collide) {
       dncm->collideDisabled = true;
     }
@@ -296,13 +322,13 @@ auto Dynamics::GetCollision(Part* p1_in, Part* p2_in, MaterialContext** cc1,
   return &(*(i.first->second));
 }
 
-void Dynamics::HandleDisconnect(
-    const std::map<int64_t, ballistica::Dynamics::SrcNodeCollideMap>::iterator&
-        i,
-    const std::map<int64_t, ballistica::Dynamics::DstNodeCollideMap>::iterator&
-        j,
-    const std::map<int, SrcPartCollideMap>::iterator& k,
-    const std::map<int, Object::Ref<Collision> >::iterator& l) {
+void Dynamics::Impl::HandleDisconnect(
+    const std::unordered_map<
+        int64_t, ballistica::Dynamics::SrcNodeCollideMap>::iterator& i,
+    const std::unordered_map<
+        int64_t, ballistica::Dynamics::DstNodeCollideMap>::iterator& j,
+    const std::unordered_map<int, SrcPartCollideMap>::iterator& k,
+    const std::unordered_map<int, Object::Ref<Collision> >::iterator& l) {
   // Handle disconnect equivalents if they were colliding.
   if (l->second->collide) {
     // Add the contexts' disconnect commands to be executed.
@@ -310,18 +336,18 @@ void Dynamics::HandleDisconnect(
          m != l->second->src_context.disconnect_actions.end(); m++) {
       Part* src_part = l->second->src_part.get();
       Part* dst_part = l->second->dst_part.get();
-      collision_events_.emplace_back(src_part ? src_part->node() : nullptr,
-                                     dst_part ? dst_part->node() : nullptr, *m,
-                                     l->second);
+      dynamics_->collision_events_.emplace_back(
+          src_part ? src_part->node() : nullptr,
+          dst_part ? dst_part->node() : nullptr, *m, l->second);
     }
 
     for (auto m = l->second->dst_context.disconnect_actions.begin();
          m != l->second->dst_context.disconnect_actions.end(); m++) {
       Part* src_part = l->second->src_part.get();
       Part* dst_part = l->second->dst_part.get();
-      collision_events_.emplace_back(dst_part ? dst_part->node() : nullptr,
-                                     src_part ? src_part->node() : nullptr, *m,
-                                     l->second);
+      dynamics_->collision_events_.emplace_back(
+          dst_part ? dst_part->node() : nullptr,
+          src_part ? src_part->node() : nullptr, *m, l->second);
     }
 
     // Now see if either of the two parts involved still exist and if they do,
@@ -375,8 +401,8 @@ void Dynamics::ProcessCollisions() {
       // Go down the hierarchy until we either find a missing level or
       // find the collision to reset.
       {
-        auto i = node_collisions_.find(n1);
-        if (i != node_collisions_.end()) {
+        auto i = impl_->node_collisions_.find(n1);
+        if (i != impl_->node_collisions_.end()) {
           auto j = i->second.dst_nodes.find(n2);
           if (j != i->second.dst_nodes.end()) {
             auto k = j->second.src_parts.find(p1);
@@ -384,7 +410,7 @@ void Dynamics::ProcessCollisions() {
               auto l = k->second.dst_part_collisions.find(p2);
               if (l != k->second.dst_part_collisions.end()) {
                 // They were colliding - separate them.
-                HandleDisconnect(i, j, k, l);
+                impl_->HandleDisconnect(i, j, k, l);
               }
 
               // Erase if none left.
@@ -398,7 +424,7 @@ void Dynamics::ProcessCollisions() {
           }
 
           // Erase if none left.
-          if (i->second.dst_nodes.empty()) node_collisions_.erase(i);
+          if (i->second.dst_nodes.empty()) impl_->node_collisions_.erase(i);
         }
       }
     }
@@ -407,7 +433,7 @@ void Dynamics::ProcessCollisions() {
 
   // Reset our claim counts. When we run collision tests, claim counts
   // will be incremented for things that are still in contact.
-  for (auto& node_collision : node_collisions_) {
+  for (auto& node_collision : impl_->node_collisions_) {
     for (auto& dst_node : node_collision.second.dst_nodes) {
       for (auto& src_part : dst_node.second.src_parts) {
         for (auto& dst_part_collision : src_part.second.dst_part_collisions) {
@@ -432,12 +458,12 @@ void Dynamics::ProcessCollisions() {
   // setting parts' currently-colliding-with lists
   // based on current info,
   // removing unclaimed collisions and empty groups.
-  std::map<int64_t, SrcNodeCollideMap>::iterator i_next;
-  std::map<int64_t, DstNodeCollideMap>::iterator j_next;
-  std::map<int, SrcPartCollideMap>::iterator k_next;
-  std::map<int, Object::Ref<Collision> >::iterator l_next;
-  for (auto i = node_collisions_.begin(); i != node_collisions_.end();
-       i = i_next) {
+  std::unordered_map<int64_t, SrcNodeCollideMap>::iterator i_next;
+  std::unordered_map<int64_t, DstNodeCollideMap>::iterator j_next;
+  std::unordered_map<int, SrcPartCollideMap>::iterator k_next;
+  std::unordered_map<int, Object::Ref<Collision> >::iterator l_next;
+  for (auto i = impl_->node_collisions_.begin();
+       i != impl_->node_collisions_.end(); i = i_next) {
     i_next = i;
     i_next++;
     for (auto j = i->second.dst_nodes.begin(); j != i->second.dst_nodes.end();
@@ -455,7 +481,7 @@ void Dynamics::ProcessCollisions() {
 
           // Not claimed; separating.
           if (!l->second->claim_count) {
-            HandleDisconnect(i, j, k, l);
+            impl_->HandleDisconnect(i, j, k, l);
           }
         }
         if (k->second.dst_part_collisions.empty()) {
@@ -467,7 +493,7 @@ void Dynamics::ProcessCollisions() {
       }
     }
     if (i->second.dst_nodes.empty()) {
-      node_collisions_.erase(i);
+      impl_->node_collisions_.erase(i);
     }
   }
 
@@ -532,8 +558,8 @@ void Dynamics::CollideCallback(dGeomID o1, dGeomID o2) {
       p1 = p2_in;
       p2 = p1_in;
     }
-    auto i = node_collisions_.find(p1->node()->id());
-    if (i != node_collisions_.end()) {
+    auto i = impl_->node_collisions_.find(p1->node()->id());
+    if (i != impl_->node_collisions_.end()) {
       auto j = i->second.dst_nodes.find(p2->node()->id());
       if (j != i->second.dst_nodes.end()) {
         auto k = j->second.src_parts.find(p1->id());

@@ -3,9 +3,9 @@
 #ifndef BALLISTICA_GAME_ACCOUNT_H_
 #define BALLISTICA_GAME_ACCOUNT_H_
 
-#include <map>
 #include <mutex>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "ballistica/ballistica.h"
@@ -49,7 +49,7 @@ class Account {
  private:
   // Protects all access to this account (we're thread-safe).
   std::mutex mutex_;
-  std::map<std::string, bool> product_purchases_;
+  std::unordered_map<std::string, bool> product_purchases_;
   int product_purchases_state_{};
   std::string account_name_;
   std::string account_id_;

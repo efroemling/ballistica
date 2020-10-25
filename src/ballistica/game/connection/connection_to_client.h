@@ -3,8 +3,8 @@
 #ifndef BALLISTICA_GAME_CONNECTION_CONNECTION_TO_CLIENT_H_
 #define BALLISTICA_GAME_CONNECTION_CONNECTION_TO_CLIENT_H_
 
-#include <map>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "ballistica/game/connection/connection.h"
@@ -52,7 +52,7 @@ class ConnectionToClient : public Connection {
   std::string our_handshake_salt_;
   std::string peer_public_account_id_;
   ClientControllerInterface* controller_ = nullptr;
-  std::map<int, ClientInputDevice*> client_input_devices_;
+  std::unordered_map<int, ClientInputDevice*> client_input_devices_;
   millisecs_t last_hand_shake_send_time_ = 0;
   int id_ = -1;
   int build_number_ = 0;

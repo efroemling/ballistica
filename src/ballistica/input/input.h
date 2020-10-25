@@ -4,9 +4,9 @@
 #define BALLISTICA_INPUT_INPUT_H_
 
 #include <list>
-#include <map>
 #include <set>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "ballistica/core/object.h"
@@ -153,7 +153,8 @@ class Input {
   auto DestroyKeyboardInputDevices() -> void;
   int local_active_input_device_count_{};
   millisecs_t last_have_many_local_active_input_devices_check_time_{};
-  std::map<std::string, std::map<std::string, int> > reserved_identifiers_;
+  std::unordered_map<std::string, std::unordered_map<std::string, int> >
+      reserved_identifiers_;
   int max_controller_count_so_far_{};
   std::list<std::string> newly_connected_controllers_;
   std::list<std::string> newly_disconnected_controllers_;

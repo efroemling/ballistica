@@ -140,6 +140,9 @@ class Networking {
  private:
   void PruneScanResults();
   struct ScanResultsEntryPriv;
+
+  // Note: would use an unordered_map here but gcc doesn't seem to allow
+  // forward declarations of their template params.
   std::map<std::string, ScanResultsEntryPriv> scan_results_;
   std::mutex scan_results_mutex_;
   uint32_t next_scan_query_id_{};

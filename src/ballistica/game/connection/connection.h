@@ -3,8 +3,8 @@
 #ifndef BALLISTICA_GAME_CONNECTION_CONNECTION_H_
 #define BALLISTICA_GAME_CONNECTION_CONNECTION_H_
 
-#include <map>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "ballistica/core/object.h"
@@ -126,8 +126,8 @@ class Connection : public Object {
   millisecs_t last_average_update_time_{};
   millisecs_t creation_time_{};
   PlayerSpec peer_spec_;  // Name of the account/device on the other end.
-  std::map<uint16_t, ReliableMessageIn> in_messages_;
-  std::map<uint16_t, ReliableMessageOut> out_messages_;
+  std::unordered_map<uint16_t, ReliableMessageIn> in_messages_;
+  std::unordered_map<uint16_t, ReliableMessageOut> out_messages_;
   bool can_communicate_{};
   bool errored_{};
   millisecs_t last_prune_time_{};

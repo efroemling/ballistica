@@ -17,7 +17,8 @@ class TextGraphics::TextSpanBoundsCacheEntry : public Object {
   std::string string;
   Rect r;
   float width{};
-  std::map<std::string, Object::Ref<TextSpanBoundsCacheEntry>>::iterator
+  std::unordered_map<std::string,
+                     Object::Ref<TextSpanBoundsCacheEntry>>::iterator
       map_iterator_;
   std::list<Object::Ref<TextSpanBoundsCacheEntry>>::iterator list_iterator_;
 };

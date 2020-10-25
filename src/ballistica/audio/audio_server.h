@@ -119,6 +119,9 @@ class AudioServer : public Module {
   // Use sources, not this, for faster iterating.
   std::vector<Object::Ref<ThreadSource> > sound_source_refs_;
   struct SoundFadeNode;
+
+  // NOTE: would use unordered_map here but gcc doesn't seem to allow
+  // forward-declared template params with them.
   std::map<int, SoundFadeNode> sound_fade_nodes_;
 
   // This mutex controls access to our list of media component shared ptrs to

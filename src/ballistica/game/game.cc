@@ -1530,7 +1530,8 @@ void Game::Process() {
   UpdateProcessTimer();
 }
 
-void Game::SetLanguageKeys(const std::map<std::string, std::string>& language) {
+void Game::SetLanguageKeys(
+    const std::unordered_map<std::string, std::string>& language) {
   assert(InGameThread());
   {
     std::lock_guard<std::mutex> lock(language_mutex_);

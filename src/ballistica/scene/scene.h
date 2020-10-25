@@ -3,8 +3,8 @@
 #ifndef BALLISTICA_SCENE_SCENE_H_
 #define BALLISTICA_SCENE_SCENE_H_
 
-#include <map>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "ballistica/core/object.h"
@@ -89,7 +89,7 @@ class Scene : public Object {
                                    const std::string& format) -> void;
 
   GlobalsNode* globals_node_{};  // Current globals node (if any).
-  std::map<int, Object::WeakRef<PlayerNode> > player_nodes_;
+  std::unordered_map<int, Object::WeakRef<PlayerNode> > player_nodes_;
   int64_t stream_id_{-1};
   Object::WeakRef<GameStream> output_stream_;
   bool use_fixed_vr_overlay_{};

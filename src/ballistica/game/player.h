@@ -3,8 +3,8 @@
 #ifndef BALLISTICA_GAME_PLAYER_H_
 #define BALLISTICA_GAME_PLAYER_H_
 
-#include <map>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "ballistica/core/object.h"
@@ -159,7 +159,7 @@ class Player : public Object {
   PythonRef py_color_;
   PythonRef py_highlight_;
   PythonRef py_activityplayer_;
-  std::map<int, Object::Ref<PythonContextCall> > calls_;
+  std::unordered_map<int, Object::Ref<PythonContextCall> > calls_;
 };
 
 }  // namespace ballistica

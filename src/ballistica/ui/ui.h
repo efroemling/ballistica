@@ -3,8 +3,8 @@
 #ifndef BALLISTICA_UI_UI_H_
 #define BALLISTICA_UI_UI_H_
 
-#include <map>
 #include <string>
+#include <unordered_map>
 
 #include "ballistica/core/context.h"
 #include "ballistica/generic/timer_list.h"
@@ -138,10 +138,10 @@ class UI : public ContextTarget {
   int ui_lock_count_{};
 
   // Media loaded in the UI context.
-  std::map<std::string, Object::WeakRef<Texture> > textures_;
-  std::map<std::string, Object::WeakRef<Sound> > sounds_;
-  std::map<std::string, Object::WeakRef<Data> > datas_;
-  std::map<std::string, Object::WeakRef<Model> > models_;
+  std::unordered_map<std::string, Object::WeakRef<Texture> > textures_;
+  std::unordered_map<std::string, Object::WeakRef<Sound> > sounds_;
+  std::unordered_map<std::string, Object::WeakRef<Data> > datas_;
+  std::unordered_map<std::string, Object::WeakRef<Model> > models_;
 };
 
 }  // namespace ballistica
