@@ -52,6 +52,19 @@ class PartyEntry:
     size_widget: Optional[ba.Widget] = None
 
 
+class SelectionComponent(Enum):
+    """Describes what part of an entry is selected."""
+    NAME = 'name'
+    STATS_BUTTON = 'stats_button'
+
+
+@dataclass
+class Selection:
+    """Describes the currently selected list element."""
+    entry_index: int
+    component: SelectionComponent
+
+
 class AddrFetchThread(threading.Thread):
     """Thread for fetching an address in the bg."""
 
@@ -77,6 +90,86 @@ class AddrFetchThread(threading.Thread):
                 ba.print_exception()
 
 
+class PingThread(threading.Thread):
+    """Thread for sending out game pings."""
+
+    def __init__(self, address: str, port: int,
+                 call: Callable[[str, int, Optional[int]], Optional[int]]):
+        super().__init__()
+        self._address = address
+        self._port = port
+        self._call = call
+
+    def run(self) -> None:
+        # pylint: disable=too-many-branches
+        ba.app.ping_thread_count += 1
+        try:
+            import socket
+            from ba.internal import get_ip_address_type
+            socket_type = get_ip_address_type(self._address)
+            sock = socket.socket(socket_type, socket.SOCK_DGRAM)
+            sock.connect((self._address, self._port))
+
+            accessible = False
+            starttime = time.time()
+
+            # Send a few pings and wait a second for
+            # a response.
+            sock.settimeout(1)
+            for _i in range(3):
+                sock.send(b'\x0b')
+                result: Optional[bytes]
+                try:
+                    # 11: BA_PACKET_SIMPLE_PING
+                    result = sock.recv(10)
+                except Exception:
+                    result = None
+                if result == b'\x0c':
+                    # 12: BA_PACKET_SIMPLE_PONG
+                    accessible = True
+                    break
+                time.sleep(1)
+            sock.close()
+            ping = int((time.time() - starttime) * 1000.0)
+            ba.pushcall(ba.Call(self._call, self._address, self._port,
+                                ping if accessible else None),
+                        from_other_thread=True)
+        except ConnectionRefusedError:
+            # Fine, server; sorry we pinged you. Hmph.
+            pass
+        except OSError as exc:
+            import errno
+
+            # Ignore harmless errors.
+            if exc.errno in {
+                    errno.EHOSTUNREACH, errno.ENETUNREACH, errno.EINVAL,
+                    errno.EPERM, errno.EACCES
+            }:
+                pass
+            elif exc.errno == 10022:
+                # Windows 'invalid argument' error.
+                pass
+            elif exc.errno == 10051:
+                # Windows 'a socket operation was attempted
+                # to an unreachable network' error.
+                pass
+            elif exc.errno == errno.EADDRNOTAVAIL:
+                if self._port == 0:
+                    # This has happened. Ignore.
+                    pass
+                elif ba.do_once():
+                    print(f'Got EADDRNOTAVAIL on gather ping'
+                          f' for addr {self._address}'
+                          f' port {self._port}.')
+            else:
+                ba.print_exception(
+                    f'Error on gather ping '
+                    f'(errno={exc.errno})', once=True)
+        except Exception:
+            ba.print_exception('Error on gather ping', once=True)
+        ba.app.ping_thread_count -= 1
+
+
 class PublicGatherTab(GatherTab):
     """The public tab in the gather UI"""
 
@@ -88,8 +181,8 @@ class PublicGatherTab(GatherTab):
         self._local_address: Optional[str] = None
         self._last_public_party_connect_attempt_time: Optional[float] = None
         self._sub_tab: SubTabType = SubTabType.JOIN
-        self._public_party_list_selection: Optional[Tuple[str, str]] = None
-        self._refreshing_public_party_list: Optional[bool] = None
+        self._selection: Optional[Selection] = None
+        self._refreshing_public_party_list = False
         self._update_timer: Optional[ba.Timer] = None
         self._host_scrollwidget: Optional[ba.Widget] = None
         self._host_name_text: Optional[ba.Widget] = None
@@ -137,12 +230,14 @@ class PublicGatherTab(GatherTab):
             click_activate=True,
             selectable=True,
             autoselect=True,
-            on_activate_call=lambda: self._set_sub_tab(SubTabType.JOIN,
-                                                       region_width,
-                                                       region_height,
-                                                       region_left,
-                                                       region_bottom,
-                                                       playsound=True),
+            on_activate_call=lambda: self._set_sub_tab(
+                SubTabType.JOIN,
+                region_width,
+                region_height,
+                region_left,
+                region_bottom,
+                playsound=True,
+            ),
             text=ba.Lstr(resource='gatherWindow.'
                          'joinPublicPartyDescriptionText'))
         self._host_text = ba.textwidget(
@@ -157,12 +252,14 @@ class PublicGatherTab(GatherTab):
             click_activate=True,
             selectable=True,
             autoselect=True,
-            on_activate_call=lambda: self._set_sub_tab(SubTabType.HOST,
-                                                       region_width,
-                                                       region_height,
-                                                       region_left,
-                                                       region_bottom,
-                                                       playsound=True),
+            on_activate_call=lambda: self._set_sub_tab(
+                SubTabType.HOST,
+                region_width,
+                region_height,
+                region_left,
+                region_bottom,
+                playsound=True,
+            ),
             text=ba.Lstr(resource='gatherWindow.'
                          'hostPublicPartyDescriptionText'))
         ba.widget(edit=self._join_text, up_widget=tab_button)
@@ -220,7 +317,7 @@ class PublicGatherTab(GatherTab):
         # (prevents selecting something way down the list if we switched away
         # and came back)
         if self._sub_tab != value:
-            self._public_party_list_selection = None
+            self._selection = None
 
         self._sub_tab = value
         active_color = (0.6, 1.0, 0.6)
@@ -272,8 +369,7 @@ class PublicGatherTab(GatherTab):
                       shadow=0.0,
                       h_align='center',
                       v_align='center')
-        ba.textwidget(text=ba.Lstr(resource='gatherWindow.'
-                                   'partySizeText'),
+        ba.textwidget(text=ba.Lstr(resource='gatherWindow.partySizeText'),
                       parent=self._container,
                       size=(0, 0),
                       position=(755, v - 8),
@@ -284,8 +380,7 @@ class PublicGatherTab(GatherTab):
                       shadow=0.0,
                       h_align='center',
                       v_align='center')
-        ba.textwidget(text=ba.Lstr(resource='gatherWindow.'
-                                   'pingText'),
+        ba.textwidget(text=ba.Lstr(resource='gatherWindow.pingText'),
                       parent=self._container,
                       size=(0, 0),
                       position=(825, v - 8),
@@ -432,18 +527,18 @@ class PublicGatherTab(GatherTab):
             color=(0.6, 0.6, 0.6),
             position=(c_width * 0.5, v))
         v -= 90
-        ba.textwidget(parent=self._container,
-                      text=ba.Lstr(resource='gatherWindow.'
-                                   'dedicatedServerInfoText'),
-                      size=(0, 0),
-                      scale=0.7,
-                      flatness=1.0,
-                      shadow=0.0,
-                      h_align='center',
-                      v_align='center',
-                      maxwidth=c_width * 0.9,
-                      color=ba.app.ui.infotextcolor,
-                      position=(c_width * 0.5, v))
+        ba.textwidget(
+            parent=self._container,
+            text=ba.Lstr(resource='gatherWindow.dedicatedServerInfoText'),
+            size=(0, 0),
+            scale=0.7,
+            flatness=1.0,
+            shadow=0.0,
+            h_align='center',
+            v_align='center',
+            maxwidth=c_width * 0.9,
+            color=ba.app.ui.infotextcolor,
+            position=(c_width * 0.5, v))
 
         # If public sharing is already on,
         # launch a status-check immediately.
@@ -487,7 +582,7 @@ class PublicGatherTab(GatherTab):
                     p.queue is None,  # Show non-queued last.
                     p.ping if p.ping is not None else 999999,
                     p.index))
-            existing_selection = self._public_party_list_selection
+            existing_selection = self._selection
             first = True
 
             sub_scroll_width = 830
@@ -518,7 +613,7 @@ class PublicGatherTab(GatherTab):
                     selectable=True,
                     on_select_call=ba.WeakCall(
                         self._set_public_party_selection,
-                        (party.address, 'name')),
+                        Selection(party.index, SelectionComponent.NAME)),
                     on_activate_call=ba.WeakCall(
                         self._on_public_party_activate, party),
                     click_activate=True,
@@ -532,7 +627,9 @@ class PublicGatherTab(GatherTab):
                           left_widget=self._join_text,
                           show_buffer_top=64.0,
                           show_buffer_bottom=64.0)
-                if existing_selection == (party.address, 'name'):
+                # if existing_selection == (party.address, 'name'):
+                if existing_selection == Selection(party.index,
+                                                   SelectionComponent.NAME):
                     ba.containerwidget(edit=columnwidget,
                                        selected_child=party.name_widget)
                 if party.stats_addr:
@@ -549,11 +646,13 @@ class PublicGatherTab(GatherTab):
                         on_activate_call=ba.Call(ba.open_url, url),
                         on_select_call=ba.WeakCall(
                             self._set_public_party_selection,
-                            (party.address, 'stats_button')),
+                            Selection(party.index,
+                                      SelectionComponent.STATS_BUTTON)),
                         size=(120, 40),
                         position=(sub_scroll_width * 0.66 + hpos, 1 + vpos),
                         scale=0.9)
-                    if existing_selection == (party.address, 'stats_button'):
+                    if existing_selection == Selection(
+                            party.index, SelectionComponent.STATS_BUTTON):
                         ba.containerwidget(edit=columnwidget,
                                            selected_child=party.stats_button)
                 else:
@@ -633,27 +732,28 @@ class PublicGatherTab(GatherTab):
                 partyval.claimed = False
 
             for party_in in parties_in:
-                # Party is indexed by (ADDR)_(PORT)
-                party_key = party_in['a'] + '_' + str(party_in['p'])
+                addr = party_in['a']
+                assert isinstance(addr, str)
+                port = party_in['p']
+                assert isinstance(port, int)
+                party_key = f'{addr}_{port}'
                 party = self._public_parties.get(party_key)
                 if party is None:
                     # If this party is new to us, init it.
-                    index = self._next_public_party_entry_index
-                    self._next_public_party_entry_index = index + 1
                     party = self._public_parties[party_key] = PartyEntry(
-                        address=party_in.get('a'),
+                        address=addr,
                         next_ping_time=ba.time(ba.TimeType.REAL) +
                         0.001 * party_in['pd'],
                         ping=None,
-                        index=index)
+                        index=self._next_public_party_entry_index)
+                    self._next_public_party_entry_index += 1
                     assert isinstance(party.address, str)
                     assert isinstance(party.next_ping_time, float)
 
                 # Now, new or not, update its values.
                 party.queue = party_in.get('q')
                 assert isinstance(party.queue, (str, type(None)))
-                party.port = party_in.get('p')
-                assert isinstance(party.port, int)
+                party.port = port
                 party.name = party_in['n']
                 assert isinstance(party.name, str)
                 party.size = party_in['s']
@@ -673,11 +773,9 @@ class PublicGatherTab(GatherTab):
                 for key, val in list(self._public_parties.items())
                 if val.claimed
             }
-
             self._rebuild_public_party_list()
 
     def _update_sub_tab(self) -> None:
-        # pylint: disable=too-many-statements
 
         # Special case: if a party-queue window is up, don't do any of this
         # (keeps things smoother).
@@ -723,92 +821,6 @@ class PublicGatherTab(GatherTab):
                                     5 if party.ping > 150 else 2)
                         party.next_ping_time += party.ping_interval * mult
 
-                    class PingThread(threading.Thread):
-                        """Thread for sending out pings."""
-
-                        def __init__(self, address: str, port: int,
-                                     call: Callable[[str, int, Optional[int]],
-                                                    Optional[int]]):
-                            super().__init__()
-                            self._address = address
-                            self._port = port
-                            self._call = call
-
-                        def run(self) -> None:
-                            # pylint: disable=too-many-branches
-                            ba.app.ping_thread_count += 1
-                            try:
-                                import socket
-                                from ba.internal import get_ip_address_type
-                                socket_type = get_ip_address_type(
-                                    self._address)
-                                sock = socket.socket(socket_type,
-                                                     socket.SOCK_DGRAM)
-                                sock.connect((self._address, self._port))
-
-                                accessible = False
-                                starttime = time.time()
-
-                                # Send a few pings and wait a second for
-                                # a response.
-                                sock.settimeout(1)
-                                for _i in range(3):
-                                    sock.send(b'\x0b')
-                                    result: Optional[bytes]
-                                    try:
-                                        # 11: BA_PACKET_SIMPLE_PING
-                                        result = sock.recv(10)
-                                    except Exception:
-                                        result = None
-                                    if result == b'\x0c':
-                                        # 12: BA_PACKET_SIMPLE_PONG
-                                        accessible = True
-                                        break
-                                    time.sleep(1)
-                                sock.close()
-                                ping = int((time.time() - starttime) * 1000.0)
-                                ba.pushcall(ba.Call(
-                                    self._call, self._address, self._port,
-                                    ping if accessible else None),
-                                            from_other_thread=True)
-                            except ConnectionRefusedError:
-                                # Fine, server; sorry we pinged you. Hmph.
-                                pass
-                            except OSError as exc:
-                                import errno
-
-                                # Ignore harmless errors.
-                                if exc.errno in {
-                                        errno.EHOSTUNREACH, errno.ENETUNREACH,
-                                        errno.EINVAL, errno.EPERM, errno.EACCES
-                                }:
-                                    pass
-                                elif exc.errno == 10022:
-                                    # Windows 'invalid argument' error.
-                                    pass
-                                elif exc.errno == 10051:
-                                    # Windows 'a socket operation was attempted
-                                    # to an unreachable network' error.
-                                    pass
-                                elif exc.errno == errno.EADDRNOTAVAIL:
-                                    if self._port == 0:
-                                        # This has happened. Ignore.
-                                        pass
-                                    elif ba.do_once():
-                                        print(
-                                            f'Got EADDRNOTAVAIL on gather ping'
-                                            f' for addr {self._address}'
-                                            f' port {self._port}.')
-                                else:
-                                    ba.print_exception(
-                                        f'Error on gather ping '
-                                        f'(errno={exc.errno})',
-                                        once=True)
-                            except Exception:
-                                ba.print_exception('Error on gather ping',
-                                                   once=True)
-                            ba.app.ping_thread_count -= 1
-
                     PingThread(party.address, party.port,
                                ba.WeakCall(self._ping_callback)).start()
 
@@ -831,8 +843,6 @@ class PublicGatherTab(GatherTab):
 
             # This can happen if we switch away and then back to the
             # client tab while pings are in flight.
-            # if 'ping_widget' not in party:
-            #     pass
             if party.ping_widget:
                 self._rebuild_public_party_list()
 
@@ -963,10 +973,10 @@ class PublicGatherTab(GatherTab):
                 _ba.connect_to_party(address, port=port)
                 self._last_public_party_connect_attempt_time = now
 
-    def _set_public_party_selection(self, sel: Tuple[str, str]) -> None:
+    def _set_public_party_selection(self, sel: Selection) -> None:
         if self._refreshing_public_party_list:
             return
-        self._public_party_list_selection = sel
+        self._selection = sel
 
     def _on_max_public_party_size_minus_press(self) -> None:
         val = _ba.get_public_party_max_size()
