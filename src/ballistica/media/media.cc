@@ -1073,7 +1073,7 @@ auto Media::FindMediaFile(FileType type, const std::string& name)
     case FileType::kSound:
 #if BA_HEADLESS_BUILD
       return "headless_dummy_path.sound";
-#else   // BA_HEADLESS_BUILD
+#else  // BA_HEADLESS_BUILD
       prefix = "audio/";
       ext = ".ogg";
       break;
@@ -1082,7 +1082,7 @@ auto Media::FindMediaFile(FileType type, const std::string& name)
     case FileType::kModel:
 #if BA_HEADLESS_BUILD
       return "headless_dummy_path.model";
-#else   // BA_HEADLESS_BUILD
+#else  // BA_HEADLESS_BUILD
       prefix = "models/";
       ext = ".bob";
       break;

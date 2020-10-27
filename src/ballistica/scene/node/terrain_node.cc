@@ -217,9 +217,9 @@ void TerrainNode::Draw(FrameDef* frame_def) {
   if (vr_only_ && !IsVRMode()) {
     return;
   }
-  ObjectComponent c(overlay_ ? frame_def->overlay_3d_pass()
-                             : background_ ? frame_def->beauty_pass_bg()
-                                           : frame_def->beauty_pass());
+  ObjectComponent c(overlay_      ? frame_def->overlay_3d_pass()
+                    : background_ ? frame_def->beauty_pass_bg()
+                                  : frame_def->beauty_pass());
   c.SetWorldSpace(true);
   c.SetTexture(color_texture_);
   if (lighting_) {

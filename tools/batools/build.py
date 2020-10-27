@@ -493,12 +493,21 @@ def checkenv() -> None:
     # Make sure they've got curl.
     if subprocess.run(['which', 'curl'], check=False,
                       capture_output=True).returncode != 0:
-        raise CleanError('curl is required; please install it.')
+        raise CleanError('curl is required; please install it via apt,'
+                         ' brew, etc.')
 
     # Make sure they've got our target python version.
     if subprocess.run(['which', PYTHON_BIN], check=False,
                       capture_output=True).returncode != 0:
-        raise CleanError(f'{PYTHON_BIN} is required; please install it.')
+        raise CleanError(f'{PYTHON_BIN} is required; please install it'
+                         'via apt, brew, etc.')
+
+    # Make sure they've got clang-format.
+    if subprocess.run(['which', 'clang-format'],
+                      check=False,
+                      capture_output=True).returncode != 0:
+        raise CleanError('clang-format is required; please install '
+                         'it via apt, brew, etc.')
 
     # Make sure they've got pip for that python version.
     if subprocess.run(f'{PYTHON_BIN} -m pip --version',

@@ -327,7 +327,7 @@ GLContext::~GLContext() {
   if (!IsVRMode()) {
     BA_PRECONDITION_LOG(sdl_window_);
   }
-#else   // BA_RIFT_MODE
+#else  // BA_RIFT_MODE
   BA_PRECONDITION_LOG(sdl_window_);
 #endif  // BA_RIFT_BUILD
 

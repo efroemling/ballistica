@@ -1283,7 +1283,7 @@ void Graphics::DrawFades(FrameDef* frame_def, millisecs_t real_time) {
       c.DrawModel(g_media->GetModel(SystemModelID::kVRFade));
       c.PopTransform();
       c.Submit();
-#else   // BA_VR_BUILD
+#else  // BA_VR_BUILD
       throw Exception();
 #endif  // BA_VR_BUILD
     } else {
