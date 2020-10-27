@@ -179,10 +179,10 @@ class PublicGatherTab(GatherTab):
         self._join_text: Optional[ba.Widget] = None
         self._host_text: Optional[ba.Widget] = None
         self._local_address: Optional[str] = None
-        self._last_public_party_connect_attempt_time: Optional[float] = None
+        self._last_connect_attempt_time: Optional[float] = None
         self._sub_tab: SubTabType = SubTabType.JOIN
         self._selection: Optional[Selection] = None
-        self._refreshing_public_party_list = False
+        self._refreshing_list = False
         self._update_timer: Optional[ba.Timer] = None
         self._host_scrollwidget: Optional[ba.Widget] = None
         self._host_name_text: Optional[ba.Widget] = None
@@ -195,9 +195,9 @@ class PublicGatherTab(GatherTab):
         self._host_max_party_size_plus_button: (Optional[ba.Widget]) = None
         self._host_status_text: Optional[ba.Widget] = None
         self._public_parties: Dict[str, PartyEntry] = {}
-        self._last_public_party_list_rebuild_time: Optional[float] = None
-        self._first_public_party_list_rebuild_time: Optional[float] = None
-        self._next_public_party_entry_index = 0
+        self._last_list_rebuild_time: Optional[float] = None
+        self._first_list_rebuild_time: Optional[float] = None
+        self._next_entry_index = 0
 
     def on_activate(
         self,
@@ -329,7 +329,7 @@ class PublicGatherTab(GatherTab):
             edit=self._host_text,
             color=active_color if value is SubTabType.HOST else inactive_color)
 
-        # Clear anything in existence in our sub-tabs.
+        # Clear anything existing in the old sub-tab.
         for widget in self._container.get_children():
             if widget and widget not in {self._host_text, self._join_text}:
                 widget.delete()
@@ -356,8 +356,8 @@ class PublicGatherTab(GatherTab):
 
         # Reset our list of public parties.
         self._public_parties = {}
-        self._last_public_party_list_rebuild_time = 0
-        self._first_public_party_list_rebuild_time = None
+        self._last_list_rebuild_time = 0
+        self._first_list_rebuild_time = None
         ba.textwidget(text=ba.Lstr(resource='nameText'),
                       parent=self._container,
                       size=(0, 0),
@@ -397,13 +397,13 @@ class PublicGatherTab(GatherTab):
             parent=self._container,
             simple_culling_v=10,
             position=((c_width - sub_scroll_width) * 0.5, v),
-            size=(sub_scroll_width, sub_scroll_height))
-        ba.widget(edit=scrollw, autoselect=True)
-        colw = self._host_columnwidget = ba.containerwidget(parent=scrollw,
-                                                            background=False,
-                                                            size=(400, 400))
-        ba.containerwidget(edit=scrollw, claims_left_right=True)
-        ba.containerwidget(edit=colw, claims_left_right=True)
+            size=(sub_scroll_width, sub_scroll_height),
+            claims_left_right=True,
+            autoselect=True)
+        self._host_columnwidget = ba.containerwidget(parent=scrollw,
+                                                     background=False,
+                                                     size=(400, 400),
+                                                     claims_left_right=True)
 
         self._join_status_text = ba.textwidget(
             parent=self._container,
@@ -550,18 +550,18 @@ class PublicGatherTab(GatherTab):
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
         cur_time = ba.time(ba.TimeType.REAL)
-        if self._first_public_party_list_rebuild_time is None:
-            self._first_public_party_list_rebuild_time = cur_time
+        if self._first_list_rebuild_time is None:
+            self._first_list_rebuild_time = cur_time
 
         # Update faster for the first few seconds;
         # then ease off to keep the list from jumping around.
-        since_first = cur_time - self._first_public_party_list_rebuild_time
+        since_first = cur_time - self._first_list_rebuild_time
         wait_time = (1.0 if since_first < 2.0 else
                      2.5 if since_first < 10.0 else 5.0)
-        assert self._last_public_party_list_rebuild_time is not None
-        if cur_time - self._last_public_party_list_rebuild_time < wait_time:
+        assert self._last_list_rebuild_time is not None
+        if cur_time - self._last_list_rebuild_time < wait_time:
             return
-        self._last_public_party_list_rebuild_time = cur_time
+        self._last_list_rebuild_time = cur_time
 
         # First off, check for the existence of our column widget;
         # if we don't have this, we're done.
@@ -594,7 +594,7 @@ class PublicGatherTab(GatherTab):
             # Ew; this rebuilding generates deferred selection callbacks
             # so we need to generated deferred ignore notices for ourself.
             def refresh_on() -> None:
-                self._refreshing_public_party_list = True
+                self._refreshing_list = True
 
             ba.pushcall(refresh_on)
 
@@ -701,7 +701,7 @@ class PublicGatherTab(GatherTab):
 
             # So our selection callbacks can start firing..
             def refresh_off() -> None:
-                self._refreshing_public_party_list = False
+                self._refreshing_list = False
 
             ba.pushcall(refresh_off)
 
@@ -745,8 +745,8 @@ class PublicGatherTab(GatherTab):
                         next_ping_time=ba.time(ba.TimeType.REAL) +
                         0.001 * party_in['pd'],
                         ping=None,
-                        index=self._next_public_party_entry_index)
-                    self._next_public_party_entry_index += 1
+                        index=self._next_entry_index)
+                    self._next_entry_index += 1
                     assert isinstance(party.address, str)
                     assert isinstance(party.next_ping_time, float)
 
@@ -968,13 +968,13 @@ class PublicGatherTab(GatherTab):
 
             # Rate limit this a bit.
             now = time.time()
-            last_connect_time = self._last_public_party_connect_attempt_time
+            last_connect_time = self._last_connect_attempt_time
             if last_connect_time is None or now - last_connect_time > 2.0:
                 _ba.connect_to_party(address, port=port)
-                self._last_public_party_connect_attempt_time = now
+                self._last_connect_attempt_time = now
 
     def _set_public_party_selection(self, sel: Selection) -> None:
-        if self._refreshing_public_party_list:
+        if self._refreshing_list:
             return
         self._selection = sel
 

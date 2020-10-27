@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-10-25 for Ballistica version 1.5.27 build 20224</em></h4>
+<h4><em>last updated on 2020-10-26 for Ballistica version 1.5.27 build 20227</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -7036,7 +7036,8 @@ Currently the 'clients' option only works for transient messages.</p>
   simple_culling_v: float = None,
   selection_loops_to_parent: bool = None,
   claims_left_right: bool = None,
-  claims_tab: bool = None) -&gt; <a href="#class_ba_Widget">ba.Widget</a></span></p>
+  claims_tab: bool = None,
+  autoselect: bool = None) -&gt; <a href="#class_ba_Widget">ba.Widget</a></span></p>
 
 <p>Create or edit a scroll widget.</p>
 

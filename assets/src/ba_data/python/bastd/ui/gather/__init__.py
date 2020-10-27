@@ -89,11 +89,16 @@ class GatherWindow(ba.Window):
                             size=(60, 60),
                             label=ba.charstr(ba.SpecialChar.BACK))
 
+        condensed = uiscale is not ba.UIScale.LARGE
+        t_offs_y = (0 if not condensed else
+                    25 if uiscale is ba.UIScale.MEDIUM else 17)
         ba.textwidget(parent=self._root_widget,
-                      position=(self._width * 0.5, self._height - 42),
+                      position=(self._width * 0.5,
+                                self._height - 42 + t_offs_y),
                       size=(0, 0),
                       color=ba.app.ui.title_color,
-                      scale=1.5,
+                      scale=(1.5 if not condensed else
+                             1.0 if uiscale is ba.UIScale.MEDIUM else 0.6),
                       h_align='center',
                       v_align='center',
                       text=ba.Lstr(resource=self._r + '.titleText'),
@@ -103,7 +108,7 @@ class GatherWindow(ba.Window):
         subplatform = ba.app.subplatform
 
         scroll_buffer_h = 130 + 2 * x_offs
-        tab_buffer_h = 250 + 2 * x_offs
+        tab_buffer_h = ((320 if condensed else 250) + 2 * x_offs)
 
         # Build up the set of tabs we want.
         tabdefs: List[Tuple[GatherWindow.TabID, ba.Lstr]] = [
@@ -120,9 +125,13 @@ class GatherWindow(ba.Window):
         tabdefs.append(
             (self.TabID.MANUAL, ba.Lstr(resource=self._r + '.manualText')))
 
+        # On small UI, push our tabs up closer to the top of the screen to
+        # save a bit of space.
+        tabs_top_extra = 42 if condensed else 0
         self._tab_row = TabRow(self._root_widget,
                                tabdefs,
-                               pos=(tab_buffer_h * 0.5, self._height - 130),
+                               pos=(tab_buffer_h * 0.5,
+                                    self._height - 130 + tabs_top_extra),
                                size=(self._width - tab_buffer_h, 50),
                                on_select_call=self._set_tab)
 
@@ -148,10 +157,11 @@ class GatherWindow(ba.Window):
                           left_widget=_ba.get_special_widget('back_button'))
 
         self._scroll_width = self._width - scroll_buffer_h
-        self._scroll_height = self._height - 180.0
+        self._scroll_height = self._height - 180.0 + tabs_top_extra
 
         self._scroll_left = (self._width - self._scroll_width) * 0.5
-        self._scroll_bottom = self._height - self._scroll_height - 79 - 48
+        self._scroll_bottom = (self._height - self._scroll_height - 79 - 48 +
+                               tabs_top_extra)
         buffer_h = 10
         buffer_v = 4
 

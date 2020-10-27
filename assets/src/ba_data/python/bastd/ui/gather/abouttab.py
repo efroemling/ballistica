@@ -31,11 +31,11 @@ class AboutGatherTab(GatherTab):
         region_left: float,
         region_bottom: float,
     ) -> ba.Widget:
-        message = ba.Lstr(resource='gatherWindow.aboutDescriptionText',
-                          subs=[('${PARTY}',
-                                 ba.charstr(ba.SpecialChar.PARTY_ICON)),
-                                ('${BUTTON}',
-                                 ba.charstr(ba.SpecialChar.TOP_BUTTON))])
+        message = ba.Lstr(
+            resource='gatherWindow.aboutDescriptionText',
+            subs=[('${PARTY}', ba.charstr(ba.SpecialChar.PARTY_ICON)),
+                  ('${BUTTON}', ba.charstr(ba.SpecialChar.TOP_BUTTON))],
+        )
 
         # Let's not talk about sharing in vr-mode; its tricky to fit more
         # than one head in a VR-headset ;-)

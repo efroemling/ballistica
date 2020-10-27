@@ -1180,6 +1180,7 @@ auto PyScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* selection_loops_to_parent_obj{Py_None};
   PyObject* claims_left_right_obj{Py_None};
   PyObject* claims_tab_obj{Py_None};
+  PyObject* autoselect_obj{Py_None};
 
   static const char* kwlist[] = {"edit",
                                  "parent",
@@ -1197,16 +1198,17 @@ auto PyScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "selection_loops_to_parent",
                                  "claims_left_right",
                                  "claims_tab",
+                                 "autoselect",
                                  nullptr};
 
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
+          args, keywds, "|OOOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
           &edit_obj, &parent_obj, &size_obj, &pos_obj, &background_obj,
           &selected_child_obj, &capture_arrows_obj, &on_select_call_obj,
           &center_small_content_obj, &color_obj, &highlight_obj,
           &border_opacity_obj, &simple_culling_v_obj,
           &selection_loops_to_parent_obj, &claims_left_right_obj,
-          &claims_tab_obj))
+          &claims_tab_obj, &autoselect_obj))
     return nullptr;
 
   if (!g_game->IsInUIContext()) {
@@ -1288,6 +1290,9 @@ auto PyScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (claims_tab_obj != Py_None) {
     widget->set_claims_tab(Python::GetPyBool(claims_tab_obj));
   }
+  if (autoselect_obj != Py_None) {
+    widget->set_auto_select(Python::GetPyBool(autoselect_obj));
+  }
 
   // If making a new widget add it at the end.
   if (edit_obj == Py_None) {
@@ -1320,6 +1325,7 @@ auto PyHScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* simple_culling_h_obj = Py_None;
   PyObject* claims_left_right_obj = Py_None;
   PyObject* claims_tab_obj = Py_None;
+  PyObject* autoselect_obj = Py_None;
 
   static const char* kwlist[] = {"edit",
                                  "parent",
@@ -1336,15 +1342,16 @@ auto PyHScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "simple_culling_h",
                                  "claims_left_right",
                                  "claims_tab",
+                                 "autoselect",
                                  nullptr};
 
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
+          args, keywds, "|OOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
           &edit_obj, &parent_obj, &size_obj, &pos_obj, &background_obj,
           &selected_child_obj, &capture_arrows_obj, &on_select_call_obj,
           &center_small_content_obj, &color_obj, &highlight_obj,
           &border_opacity_obj, &simple_culling_h_obj, &claims_left_right_obj,
-          &claims_tab_obj))
+          &claims_tab_obj, &autoselect_obj))
     return nullptr;
 
   if (!g_game->IsInUIContext()) {
@@ -1420,6 +1427,9 @@ auto PyHScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
   }
   if (claims_tab_obj != Py_None) {
     widget->set_claims_tab(Python::GetPyBool(claims_tab_obj));
+  }
+  if (autoselect_obj != Py_None) {
+    widget->set_auto_select(Python::GetPyBool(autoselect_obj));
   }
 
   // if making a new widget add it at the end
@@ -2633,7 +2643,8 @@ PyMethodDef PythonMethodsUI::methods_def[] = {
      "  simple_culling_v: float = None,\n"
      "  selection_loops_to_parent: bool = None,\n"
      "  claims_left_right: bool = None,\n"
-     "  claims_tab: bool = None) -> ba.Widget\n"
+     "  claims_tab: bool = None,\n"
+     "  autoselect: bool = None) -> ba.Widget\n"
      "\n"
      "Create or edit a scroll widget.\n"
      "\n"
