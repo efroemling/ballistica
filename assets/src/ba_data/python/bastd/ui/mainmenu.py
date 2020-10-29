@@ -38,8 +38,11 @@ class MainMenuWindow(ba.Window):
             toolbar_visibility='menu_minimal_no_back' if self.
             _in_game else 'menu_minimal_no_back'))
 
+        # Grab this stuff in case it changes.
         self._is_demo = ba.app.demo_mode
         self._is_arcade = ba.app.arcade_mode
+        self._is_iircade = ba.app.iircade_mode
+
         self._tdelay = 0.0
         self._t_delay_inc = 0.02
         self._t_delay_play = 1.7
@@ -179,7 +182,7 @@ class MainMenuWindow(ba.Window):
 
         self._have_settings_button = (
             (not self._in_game or not app.toolbar_test)
-            and not (self._is_demo or self._is_arcade))
+            and not (self._is_demo or self._is_arcade or self._is_iircade))
 
         self._input_device = input_device = _ba.get_ui_input_device()
         self._input_player = input_device.player if input_device else None
@@ -436,7 +439,9 @@ class MainMenuWindow(ba.Window):
         account_type_icon_color = (1.0, 1.0, 1.0)
         account_type_call = self._show_account_window
         account_type_enable_button_sound = True
-        b_count = 4  # play, help, credits, settings
+        b_count = 3  # play, help, credits
+        if self._have_settings_button:
+            b_count += 1
         if enable_account_button:
             b_count += 1
         if self._have_quit_button:

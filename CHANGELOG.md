@@ -1,4 +1,4 @@
-### 1.5.27 (20224)
+### 1.5.27 (20231)
 - Language functionality has been consolidated into a LanguageSubsystem object at ba.app.lang
 - ba.get_valid_languages() is now an attr: ba.app.lang.available_languages
 - Achievement functionality has been consolidated into an AchievementSubsystem object at ba.app.ach
@@ -9,6 +9,8 @@
 - Revamped tab-button functionality into a cleaner type-safe class (bastd.ui.tabs.TabRow)
 - Split Gather-Window tabs out into individual classes for future improvements (bastd.ui.gather.*)
 - Added the ability to disable ticket-purchasing UIs for builds (ba.app.allow_ticket_purchases)
+- Reworked the public party gather section to perform better; it should no longer have to rebuild the list from scratch each time the UI is visited.
+- Added a filter option to the public party list (sorry it has taken so long).
 
 ### 1.5.26 (20217)
 - Simplified licensing header on python scripts.

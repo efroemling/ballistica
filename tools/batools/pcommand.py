@@ -733,7 +733,6 @@ def cmake_prep_dir() -> None:
     """
     from efro.error import CleanError
     import batools.build
-
     if len(sys.argv) != 3:
         raise CleanError('Expected 1 arg (dir name)')
     dirname = sys.argv[2]

@@ -45,6 +45,7 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
 
         if not ba.app.toolbar_test:
             color = ((1.0, 1.0, 1.0, 1.0) if vr_mode else (0.5, 0.6, 0.5, 0.6))
+
             # FIXME: Need a node attr for vr-specific-scale.
             scale = (0.9 if
                      (app.ui.uiscale is ba.UIScale.SMALL or vr_mode) else 0.7)

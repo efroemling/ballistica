@@ -1179,6 +1179,7 @@ auto PyScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* simple_culling_v_obj{Py_None};
   PyObject* selection_loops_to_parent_obj{Py_None};
   PyObject* claims_left_right_obj{Py_None};
+  PyObject* claims_up_down_obj{Py_None};
   PyObject* claims_tab_obj{Py_None};
   PyObject* autoselect_obj{Py_None};
 
@@ -1197,18 +1198,19 @@ auto PyScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "simple_culling_v",
                                  "selection_loops_to_parent",
                                  "claims_left_right",
+                                 "claims_up_down",
                                  "claims_tab",
                                  "autoselect",
                                  nullptr};
 
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
+          args, keywds, "|OOOOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
           &edit_obj, &parent_obj, &size_obj, &pos_obj, &background_obj,
           &selected_child_obj, &capture_arrows_obj, &on_select_call_obj,
           &center_small_content_obj, &color_obj, &highlight_obj,
           &border_opacity_obj, &simple_culling_v_obj,
           &selection_loops_to_parent_obj, &claims_left_right_obj,
-          &claims_tab_obj, &autoselect_obj))
+          &claims_up_down_obj, &claims_tab_obj, &autoselect_obj))
     return nullptr;
 
   if (!g_game->IsInUIContext()) {
@@ -1287,6 +1289,9 @@ auto PyScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (claims_left_right_obj != Py_None) {
     widget->set_claims_left_right(Python::GetPyBool(claims_left_right_obj));
   }
+  if (claims_up_down_obj != Py_None) {
+    widget->set_claims_up_down(Python::GetPyBool(claims_up_down_obj));
+  }
   if (claims_tab_obj != Py_None) {
     widget->set_claims_tab(Python::GetPyBool(claims_tab_obj));
   }
@@ -1324,6 +1329,7 @@ auto PyHScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* border_opacity_obj = Py_None;
   PyObject* simple_culling_h_obj = Py_None;
   PyObject* claims_left_right_obj = Py_None;
+  PyObject* claims_up_down_obj = Py_None;
   PyObject* claims_tab_obj = Py_None;
   PyObject* autoselect_obj = Py_None;
 
@@ -1341,6 +1347,7 @@ auto PyHScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "border_opacity",
                                  "simple_culling_h",
                                  "claims_left_right",
+                                 "claims_up_down",
                                  "claims_tab",
                                  "autoselect",
                                  nullptr};
@@ -1351,7 +1358,7 @@ auto PyHScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
           &selected_child_obj, &capture_arrows_obj, &on_select_call_obj,
           &center_small_content_obj, &color_obj, &highlight_obj,
           &border_opacity_obj, &simple_culling_h_obj, &claims_left_right_obj,
-          &claims_tab_obj, &autoselect_obj))
+          &claims_up_down_obj, &claims_tab_obj, &autoselect_obj))
     return nullptr;
 
   if (!g_game->IsInUIContext()) {
@@ -1424,6 +1431,9 @@ auto PyHScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
   }
   if (claims_left_right_obj != Py_None) {
     widget->set_claims_left_right(Python::GetPyBool(claims_left_right_obj));
+  }
+  if (claims_up_down_obj != Py_None) {
+    widget->set_claims_up_down(Python::GetPyBool(claims_up_down_obj));
   }
   if (claims_tab_obj != Py_None) {
     widget->set_claims_tab(Python::GetPyBool(claims_tab_obj));
@@ -2643,6 +2653,7 @@ PyMethodDef PythonMethodsUI::methods_def[] = {
      "  simple_culling_v: float = None,\n"
      "  selection_loops_to_parent: bool = None,\n"
      "  claims_left_right: bool = None,\n"
+     "  claims_up_down: bool = None,\n"
      "  claims_tab: bool = None,\n"
      "  autoselect: bool = None) -> ba.Widget\n"
      "\n"
@@ -2665,6 +2676,7 @@ PyMethodDef PythonMethodsUI::methods_def[] = {
      "  highlight: bool = None, border_opacity: float = None,\n"
      "  simple_culling_h: float = None,\n"
      "  claims_left_right: bool = None,\n"
+     "  claims_up_down: bool = None,\n"
      "  claims_tab: bool = None)  -> ba.Widget\n"
      "\n"
      "Create or edit a horizontal scroll widget.\n"

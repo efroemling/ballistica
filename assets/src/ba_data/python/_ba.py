@@ -2622,6 +2622,7 @@ def hscrollwidget(edit: ba.Widget = None,
                   border_opacity: float = None,
                   simple_culling_h: float = None,
                   claims_left_right: bool = None,
+                  claims_up_down: bool = None,
                   claims_tab: bool = None) -> ba.Widget:
     """hscrollwidget(edit: ba.Widget = None, parent: ba.Widget = None,
       size: Sequence[float] = None, position: Sequence[float] = None,
@@ -2632,6 +2633,7 @@ def hscrollwidget(edit: ba.Widget = None,
       highlight: bool = None, border_opacity: float = None,
       simple_culling_h: float = None,
       claims_left_right: bool = None,
+      claims_up_down: bool = None,
       claims_tab: bool = None)  -> ba.Widget
 
     Create or edit a horizontal scroll widget.
@@ -3388,6 +3390,7 @@ def scrollwidget(edit: ba.Widget = None,
                  simple_culling_v: float = None,
                  selection_loops_to_parent: bool = None,
                  claims_left_right: bool = None,
+                 claims_up_down: bool = None,
                  claims_tab: bool = None,
                  autoselect: bool = None) -> ba.Widget:
     """scrollwidget(edit: ba.Widget = None, parent: ba.Widget = None,
@@ -3399,6 +3402,7 @@ def scrollwidget(edit: ba.Widget = None,
       simple_culling_v: float = None,
       selection_loops_to_parent: bool = None,
       claims_left_right: bool = None,
+      claims_up_down: bool = None,
       claims_tab: bool = None,
       autoselect: bool = None) -> ba.Widget
 

@@ -301,6 +301,7 @@ void TextWidget::Draw(RenderPass* pass, bool draw_transparent) {
   if (text_group_dirty_) {
     text_group_->SetText(text_translated_, align_h, align_v, big_, res_scale_);
     text_width_ = g_text_graphics->GetStringWidth(text_translated_, big_);
+
     // FIXME: doesnt support big.
     text_height_ = g_text_graphics->GetStringHeight(text_translated_);
     text_group_dirty_ = false;
@@ -334,7 +335,9 @@ void TextWidget::Draw(RenderPass* pass, bool draw_transparent) {
     for (int e = 0; e < elem_count; e++) {
       // Gracefully skip unloaded textures..
       TextureData* t2 = text_group_->GetElementTexture(e);
-      if (!t2->preloaded()) continue;
+      if (!t2->preloaded()) {
+        continue;
+      }
       c.SetTexture(t2);
       c.SetMaskUV2Texture(text_group_->GetElementMaskUV2Texture(e));
       c.SetShadow(-0.004f * text_group_->GetElementUScale(e),
@@ -607,23 +610,22 @@ auto TextWidget::HandleMessage(const WidgetMessage& m) -> bool {
         return false;
       case SDLK_RETURN:
       case SDLK_KP_ENTER:
-
-#if BA_OSTYPE_IOS_TVOS || BA_OSTYPE_ANDROID
-        // On iOS, return currently just deselects us.
-        g_audio->PlaySound(g_media->GetSound(SystemSoundID::kSwish));
-        parent_widget()->SelectWidget(nullptr);
-        return true;
-#else
-        if (on_return_press_call_.exists()) {
-          claimed = true;
+        if (g_buildconfig.ostype_ios_tvos() || g_buildconfig.ostype_android()) {
+          // On mobile, return currently just deselects us.
+          g_audio->PlaySound(g_media->GetSound(SystemSoundID::kSwish));
+          parent_widget()->SelectWidget(nullptr);
+          return true;
+        } else {
           if (on_return_press_call_.exists()) {
-            // Call this in the next cycle (don't wanna risk mucking with UI
-            // from within a UI loop)
-            g_game->PushPythonWeakCall(
-                Object::WeakRef<PythonContextCall>(on_return_press_call_));
+            claimed = true;
+            if (on_return_press_call_.exists()) {
+              // Call this in the next cycle (don't wanna risk mucking with UI
+              // from within a UI loop)
+              g_game->PushPythonWeakCall(
+                  Object::WeakRef<PythonContextCall>(on_return_press_call_));
+            }
           }
         }
-#endif  // BA_OSTYPE_IOS_TVOS
         break;
       case SDLK_LEFT:
         if (editable()) {

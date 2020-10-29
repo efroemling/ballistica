@@ -33,7 +33,7 @@ PIP_REQUIREMENTS = [
     PipRequirement(modulename='mypy', minversion=[0, 790]),
     PipRequirement(modulename='yapf', minversion=[0, 30, 0]),
     PipRequirement(modulename='cpplint', minversion=[1, 5, 4]),
-    PipRequirement(modulename='pytest', minversion=[6, 1, 1]),
+    PipRequirement(modulename='pytest', minversion=[6, 1, 2]),
     PipRequirement(modulename='typing_extensions'),
     PipRequirement(modulename='pytz'),
     PipRequirement(modulename='yaml', pipname='PyYAML'),
@@ -739,41 +739,54 @@ def cmake_prep_dir(dirname: str) -> None:
     else:
         versions = {}
 
-    # Get version of installed cmake.
+    # Start fresh if cmake version changes.
     cmake_ver_output = subprocess.run(['cmake', '--version'],
                                       check=True,
                                       capture_output=True).stdout.decode()
     cmake_ver = cmake_ver_output.splitlines()[0].split('cmake version ')[1]
-
-    cmake_ver_existing = versions.get('cmake')
+    cmake_ver_existing = versions.get('cmake_version')
     assert isinstance(cmake_ver_existing, (str, type(None)))
 
-    # Get specific version of our target python.
+    # ...or if python's version changes.
     python_ver_output = subprocess.run([f'python{PYVER}', '--version'],
                                        check=True,
                                        capture_output=True).stdout.decode()
     python_ver = python_ver_output.splitlines()[0].split('Python ')[1]
-
-    python_ver_existing = versions.get('python')
+    python_ver_existing = versions.get('python_version')
     assert isinstance(python_ver_existing, (str, type(None)))
 
-    # If they don't match, blow away the dir and write the current version.
-    if cmake_ver_existing != cmake_ver or python_ver_existing != python_ver:
-        if (cmake_ver_existing != cmake_ver
-                and cmake_ver_existing is not None):
+    # ...or if the actual location of python on disk changes.
+    python_path = os.path.realpath(
+        subprocess.run(['which', f'python{PYVER}'],
+                       check=True,
+                       capture_output=True).stdout.decode())
+    python_path_existing = versions.get('python_path')
+    assert isinstance(python_path_existing, (str, type(None)))
+
+    # Blow away and start from scratch if any vals differ from existing.
+    if (cmake_ver_existing != cmake_ver or python_ver_existing != python_ver
+            or python_path != python_path_existing):
+        if (cmake_ver_existing is not None
+                and cmake_ver_existing != cmake_ver):
             print(f'{Clr.BLU}CMake version changed from {cmake_ver_existing}'
                   f' to {cmake_ver}; clearing existing build at'
                   f' "{dirname}".{Clr.RST}')
-        if (python_ver_existing != python_ver
-                and python_ver_existing is not None):
+        if (python_ver_existing is not None
+                and python_ver_existing != python_ver):
             print(f'{Clr.BLU}Python version changed from {python_ver_existing}'
                   f' to {python_ver}; clearing existing build at'
+                  f' "{dirname}".{Clr.RST}')
+        if (python_path_existing is not None
+                and python_path_existing != python_path):
+            print(f'{Clr.BLU}Python path changed from {python_path_existing}'
+                  f' to {python_path}; clearing existing build at'
                   f' "{dirname}".{Clr.RST}')
         subprocess.run(['rm', '-rf', dirname], check=True)
         os.makedirs(dirname, exist_ok=True)
         with open(verfilename, 'w') as outfile:
             outfile.write(
                 json.dumps({
-                    'cmake': cmake_ver,
-                    'python': python_ver
+                    'cmake_version': cmake_ver,
+                    'python_version': python_ver,
+                    'python_path': python_path
                 }))

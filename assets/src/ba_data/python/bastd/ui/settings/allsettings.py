@@ -209,15 +209,6 @@ class AllSettingsWindow(ba.Window):
         # pylint: disable=cyclic-import
         from bastd.ui.settings.controls import ControlsSettingsWindow
         self._save_state()
-
-        # Disallow this on iircade.
-        if ba.app.iircade_mode:
-            ba.playsound(ba.getsound('error'))
-            ba.screenmessage(
-                ba.Lstr(resource='getTicketsWindow.unavailableText'),
-                color=(1, 0, 0))
-            return
-
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         ba.app.ui.set_main_menu_window(
             ControlsSettingsWindow(
@@ -227,15 +218,6 @@ class AllSettingsWindow(ba.Window):
         # pylint: disable=cyclic-import
         from bastd.ui.settings.graphics import GraphicsSettingsWindow
         self._save_state()
-
-        # Disallow this on iircade.
-        if ba.app.iircade_mode:
-            ba.playsound(ba.getsound('error'))
-            ba.screenmessage(
-                ba.Lstr(resource='getTicketsWindow.unavailableText'),
-                color=(1, 0, 0))
-            return
-
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         ba.app.ui.set_main_menu_window(
             GraphicsSettingsWindow(
