@@ -112,7 +112,9 @@ class PingThread(threading.Thread):
 
     def run(self) -> None:
         # pylint: disable=too-many-branches
+        # pylint: disable=too-many-statements
         ba.app.ping_thread_count += 1
+        sock: Optional[socket.socket] = None
         try:
             import socket
             from ba.internal import get_ip_address_type
@@ -139,7 +141,6 @@ class PingThread(threading.Thread):
                     accessible = True
                     break
                 time.sleep(1)
-            sock.close()
             ping = int((time.time() - starttime) * 1000.0)
             ba.pushcall(ba.Call(self._call, self._address, self._port,
                                 ping if accessible else None),
@@ -177,6 +178,13 @@ class PingThread(threading.Thread):
                     f'(errno={exc.errno})', once=True)
         except Exception:
             ba.print_exception('Error on gather ping', once=True)
+        finally:
+            try:
+                if sock is not None:
+                    sock.close()
+            except Exception:
+                ba.print_exception('Error on gather ping cleanup', once=True)
+
         ba.app.ping_thread_count -= 1
 
 
