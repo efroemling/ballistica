@@ -240,6 +240,7 @@ class GatherWindow(ba.Window):
             ba.print_exception(f'Error saving state for {self}.')
 
     def _restore_state(self) -> None:
+        # pylint: disable=too-many-branches
         try:
             for tab in self._tabs.values():
                 tab.restore_state()
@@ -249,12 +250,25 @@ class GatherWindow(ba.Window):
             sel_name = winstate.get('sel_name', None)
             assert isinstance(sel_name, (str, type(None)))
             current_tab = self.TabID.ABOUT
-            try:
-                stored_tab = self.TabID(ba.app.config.get('Gather Tab'))
-                if stored_tab in self._tab_row.tabs:
-                    current_tab = stored_tab
-            except ValueError:
-                pass
+            gather_tab_val = ba.app.config.get('Gather Tab')
+
+            if bool(False):
+                # EWWW: normally would just do this, but it seems to result in
+                # a reference to self sticking around somewhere. (presumably
+                # in the exception?). Should get to the bottom of this.
+                try:
+                    stored_tab = self.TabID(gather_tab_val)
+                    if stored_tab in self._tab_row.tabs:
+                        current_tab = stored_tab
+                except ValueError:
+                    pass
+            else:
+                # Falling back to this for now.
+                tab_vals = {t.value for t in self.TabID}
+                if gather_tab_val in tab_vals:
+                    stored_tab = self.TabID(gather_tab_val)
+                    if stored_tab in self._tab_row.tabs:
+                        current_tab = stored_tab
             self._set_tab(current_tab)
             if sel_name == 'Back':
                 sel = self._back_button
@@ -270,7 +284,7 @@ class GatherWindow(ba.Window):
                 sel = self._tab_row.tabs[current_tab].button
             ba.containerwidget(edit=self._root_widget, selected_child=sel)
         except Exception:
-            ba.print_exception(f'Error restoring state for {self}.')
+            ba.print_exception('Error restoring gather-win state.')
 
     def _back(self) -> None:
         from bastd.ui.mainmenu import MainMenuWindow

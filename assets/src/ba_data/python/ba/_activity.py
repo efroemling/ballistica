@@ -6,6 +6,7 @@ from __future__ import annotations
 import weakref
 from typing import TYPE_CHECKING, Generic, TypeVar
 
+import _ba
 from ba._team import Team
 from ba._player import Player
 from ba._error import (print_exception, SessionTeamNotFoundError,
@@ -13,7 +14,6 @@ from ba._error import (print_exception, SessionTeamNotFoundError,
 from ba._dependency import DependencyComponent
 from ba._general import Call, verify_object_death
 from ba._messages import UNHANDLED
-import _ba
 
 if TYPE_CHECKING:
     from weakref import ReferenceType

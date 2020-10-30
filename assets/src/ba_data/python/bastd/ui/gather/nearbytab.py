@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import weakref
 from typing import TYPE_CHECKING
 
 import ba
@@ -18,8 +19,9 @@ if TYPE_CHECKING:
 class NetScanner:
     """Class for scanning for games on the lan."""
 
-    def __init__(self, scrollwidget: ba.Widget, tab_button: ba.Widget,
-                 width: float):
+    def __init__(self, tab: GatherTab, scrollwidget: ba.Widget,
+                 tab_button: ba.Widget, width: float):
+        self._tab = weakref.ref(tab)
         self._scrollwidget = scrollwidget
         self._tab_button = tab_button
         self._columnwidget = ba.columnwidget(parent=self._scrollwidget,
@@ -46,10 +48,22 @@ class NetScanner:
         self._last_selected_host = host
 
     def _on_activate(self, host: Dict[str, Any]) -> None:
+
+        # Sanity check: make sure our gather window gets freed after this.
+        tab = self._tab()
+        if tab:
+            ba.verify_object_death(tab.window)
         _ba.connect_to_party(host['address'])
 
     def update(self) -> None:
         """(internal)"""
+
+        # In case our UI was killed from under us.
+        if not self._columnwidget:
+            print(f'ERROR: NetScanner running without UI at time'
+                  f' {ba.time(timetype=ba.TimeType.REAL)}.')
+            return
+
         t_scale = 1.6
         for child in self._columnwidget.get_children():
             child.delete()
@@ -125,7 +139,8 @@ class NearbyGatherTab(GatherTab):
                                             0.5, v),
                                   size=(sub_scroll_width, sub_scroll_height))
 
-        self._net_scanner = NetScanner(scrollw,
+        self._net_scanner = NetScanner(self,
+                                       scrollw,
                                        tab_button,
                                        width=sub_scroll_width)
 

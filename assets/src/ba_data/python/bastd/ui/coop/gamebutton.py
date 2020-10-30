@@ -165,6 +165,11 @@ class GameButton:
     def _update(self) -> None:
         # pylint: disable=too-many-boolean-expressions
         from ba.internal import getcampaign
+
+        # In case we stick around after our UI...
+        if not self._button:
+            return
+
         game = self._game
         campaignname, levelname = game.split(':')
 
