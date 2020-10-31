@@ -103,7 +103,7 @@ def get_binding_values() -> object:
         ba.app.lang.translate,  # kTranslateCall
         ba.Lstr,  # kLStrClass
         ba.Call,  # kCallClass
-        _apputils.garbage_collect,  # kGarbageCollectCall
+        _apputils.garbage_collect_session_end,  # kGarbageCollectSessionEndCall
         ba.ContextError,  # kContextError
         ba.NotFoundError,  # kNotFoundError
         ba.NodeNotFoundError,  # kNodeNotFoundError

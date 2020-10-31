@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-10-29 for Ballistica version 1.5.27 build 20234</em></h4>
+<h4><em>last updated on 2020-10-31 for Ballistica version 1.5.27 build 20236</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -86,6 +86,7 @@
 <ul>
    <li><a href="#function_ba_charstr">ba.charstr()</a></li>
    <li><a href="#function_ba_do_once">ba.do_once()</a></li>
+   <li><a href="#function_ba_garbage_collect">ba.garbage_collect()</a></li>
    <li><a href="#function_ba_getclass">ba.getclass()</a></li>
    <li><a href="#function_ba_is_browser_likely_available">ba.is_browser_likely_available()</a></li>
    <li><a href="#function_ba_is_point_in_box">ba.is_point_in_box()</a></li>
@@ -6593,6 +6594,18 @@ This call can be used on any 'existable' object (one with an exists()
 method) and will convert it to a None value if it does not exist.
 For more info, see notes on 'existables' here:
 https://ballistica.net/wiki/Coding-Style-Guide</p>
+
+<hr>
+<h2><strong><a name="function_ba_garbage_collect">ba.garbage_collect()</a></strong></h3>
+<p><span>garbage_collect() -&gt; None</span></p>
+
+<p>Run an explicit pass of garbage collection.</p>
+
+<p>Category: <a href="#function_category_General_Utility_Functions">General Utility Functions</a></p>
+
+<p>May also print warnings/etc. if collection takes too long or if
+uncollectible objects are found (so use this instead of simply
+gc.collect().</p>
 
 <hr>
 <h2><strong><a name="function_ba_getactivity">ba.getactivity()</a></strong></h3>

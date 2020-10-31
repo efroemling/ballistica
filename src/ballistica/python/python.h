@@ -268,7 +268,7 @@ class Python {
     kTranslateCall,
     kLStrClass,
     kCallClass,
-    kGarbageCollectCall,
+    kGarbageCollectSessionEndCall,
     kConfig,
     kOnAppLaunchCall,
     kClientInfoQueryResponseCall,

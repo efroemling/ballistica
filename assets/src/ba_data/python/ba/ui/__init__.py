@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, cast, Type
 
 import _ba
 from ba._enums import TimeType
+from ba._general import print_active_refs
 
 if TYPE_CHECKING:
     from typing import Optional, List, Any
@@ -216,7 +217,9 @@ def ui_upkeep() -> None:
                 print(
                     'WARNING:', obj,
                     'is still alive 5 second after its widget died;'
-                    ' you probably have a memory leak.')
+                    ' you might have a memory leak.')
+                print_active_refs(obj)
+
             else:
                 remainingchecks.append(check)
     ui.cleanupchecks = remainingchecks

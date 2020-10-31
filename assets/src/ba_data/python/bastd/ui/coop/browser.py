@@ -285,6 +285,10 @@ class CoopBrowserWindow(ba.Window):
         import bastd.ui.play as _unused10
 
     def _update(self) -> None:
+        # Do nothing if we've somehow outlived our actual UI.
+        if not self._root_widget:
+            return
+
         cur_time = ba.time(ba.TimeType.REAL)
 
         # If its been a while since we got a tournament update, consider the

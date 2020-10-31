@@ -3,6 +3,7 @@
 """Utility functionality related to the overall operation of the app."""
 from __future__ import annotations
 
+import gc
 import os
 from typing import TYPE_CHECKING
 
@@ -150,9 +151,8 @@ def handle_leftover_log_file() -> None:
         _error.print_exception('Error handling leftover log file.')
 
 
-def garbage_collect(session_end: bool = True) -> None:
-    """Run an explicit pass of garbage collection."""
-    import gc
+def garbage_collect_session_end() -> None:
+    """Run explicit garbage collection with extra checks for session end."""
     gc.collect()
 
     # Can be handy to print this to check for leaks between games.
@@ -162,8 +162,19 @@ def garbage_collect(session_end: bool = True) -> None:
         print('PYTHON GC FOUND', len(gc.garbage), 'UNCOLLECTIBLE OBJECTS:')
         for i, obj in enumerate(gc.garbage):
             print(str(i) + ':', obj)
-    if session_end:
-        print_live_object_warnings('after session shutdown')
+    print_live_object_warnings('after session shutdown')
+
+
+def garbage_collect() -> None:
+    """Run an explicit pass of garbage collection.
+
+    category: General Utility Functions
+
+    May also print warnings/etc. if collection takes too long or if
+    uncollectible objects are found (so use this instead of simply
+    gc.collect().
+    """
+    gc.collect()
 
 
 def print_live_object_warnings(when: Any,
@@ -171,7 +182,6 @@ def print_live_object_warnings(when: Any,
                                ignore_activity: ba.Activity = None) -> None:
     """Print warnings for remaining objects in the current context."""
     # pylint: disable=cyclic-import
-    import gc
     from ba._session import Session
     from ba._actor import Actor
     from ba._activity import Activity

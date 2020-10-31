@@ -240,7 +240,6 @@ class GatherWindow(ba.Window):
             ba.print_exception(f'Error saving state for {self}.')
 
     def _restore_state(self) -> None:
-        # pylint: disable=too-many-branches
         try:
             for tab in self._tabs.values():
                 tab.restore_state()
@@ -251,24 +250,17 @@ class GatherWindow(ba.Window):
             assert isinstance(sel_name, (str, type(None)))
             current_tab = self.TabID.ABOUT
             gather_tab_val = ba.app.config.get('Gather Tab')
-
-            if bool(False):
-                # EWWW: normally would just do this, but it seems to result in
-                # a reference to self sticking around somewhere. (presumably
-                # in the exception?). Should get to the bottom of this.
-                try:
-                    stored_tab = self.TabID(gather_tab_val)
-                    if stored_tab in self._tab_row.tabs:
-                        current_tab = stored_tab
-                except ValueError:
-                    pass
-            else:
-                # Falling back to this for now.
-                tab_vals = {t.value for t in self.TabID}
-                if gather_tab_val in tab_vals:
-                    stored_tab = self.TabID(gather_tab_val)
-                    if stored_tab in self._tab_row.tabs:
-                        current_tab = stored_tab
+            try:
+                stored_tab = self.TabID(gather_tab_val)
+                if stored_tab in self._tab_row.tabs:
+                    current_tab = stored_tab
+            except ValueError:
+                # EWWWW; this exception causes a dependency loop that won't
+                # go away until the next cyclical collection, which can
+                # keep us alive. Perhaps should rethink our garbage
+                # collection strategy, but for now just explicitly running
+                # a cycle.
+                ba.pushcall(ba.garbage_collect)
             self._set_tab(current_tab)
             if sel_name == 'Back':
                 sel = self._back_button
@@ -279,6 +271,12 @@ class GatherWindow(ba.Window):
                     sel_tab_id = self.TabID(sel_name.split(':')[-1])
                 except ValueError:
                     sel_tab_id = self.TabID.ABOUT
+                    # EWWWW; this exception causes a dependency loop that won't
+                    # go away until the next cyclical collection, which can
+                    # keep us alive. Perhaps should rethink our garbage
+                    # collection strategy, but for now just explicitly running
+                    # a cycle.
+                    ba.pushcall(ba.garbage_collect)
                 sel = self._tab_row.tabs[sel_tab_id].button
             else:
                 sel = self._tab_row.tabs[current_tab].button

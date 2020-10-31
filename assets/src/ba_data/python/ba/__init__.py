@@ -55,7 +55,7 @@ from ba._dualteamsession import DualTeamSession
 from ba._achievement import Achievement, AchievementSubsystem
 from ba._appconfig import AppConfig
 from ba._appdelegate import AppDelegate
-from ba._apputils import is_browser_likely_available
+from ba._apputils import is_browser_likely_available, garbage_collect
 from ba._campaign import Campaign
 from ba._gameutils import (GameTip, animate, animate_array, show_damage_count,
                            timestring, cameraflash)

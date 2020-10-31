@@ -1028,6 +1028,13 @@ class StoreBrowserWindow(ba.Window):
                 current_tab = self.TabID(ba.app.config.get('Store Tab'))
             except ValueError:
                 current_tab = self.TabID.CHARACTERS
+
+                # EWWWW; this exception causes a dependency loop that won't
+                # go away until the next cyclical collection, which can keep
+                # us alive. Perhaps should rethink our garbage collection
+                # strategy, but for now just explicitly running a cycle.
+                ba.pushcall(ba.garbage_collect)
+
             if self._show_tab is not None:
                 current_tab = self._show_tab
             if sel_name == 'GetTickets' and self._get_tickets_button:

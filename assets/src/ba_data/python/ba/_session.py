@@ -618,7 +618,7 @@ class Session:
         # to run garbage collection to clear out any circular dependency
         # loops. We keep this disabled normally to avoid non-deterministic
         # hitches.
-        garbage_collect(session_end=False)
+        garbage_collect()
 
         with _ba.Context(self):
             if can_show_ad_on_death:

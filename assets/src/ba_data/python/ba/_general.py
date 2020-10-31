@@ -299,6 +299,27 @@ def verify_object_death(obj: object) -> None:
                   timetype=TimeType.REAL)
 
 
+def print_active_refs(obj: Any) -> None:
+    """Print info about things referencing a given object.
+
+    Category: General Utility Functions
+
+    Useful for tracking down cyclical references and causes for zombie objects.
+    """
+    from types import FrameType
+    refs = list(gc.get_referrers(obj))
+    print(f'{Clr.YLW}Active referrers to {obj}:{Clr.RST}')
+    for i, ref in enumerate(refs):
+        print(f'{Clr.YLW}#{i+1}:{Clr.BLU} {ref}{Clr.RST}')
+        # For certain types of objects such as stack frames, show what is
+        # keeping *them* alive too.
+        if isinstance(ref, FrameType):
+            print(f'{Clr.YLW}  Active referrers to #{i+1}:{Clr.RST}')
+            refs2 = list(gc.get_referrers(ref))
+            for j, ref2 in enumerate(refs2):
+                print(f'{Clr.YLW}  #{j+1}:{Clr.BLU} {ref2}{Clr.RST}')
+
+
 def _verify_object_death(wref: ReferenceType) -> None:
     obj = wref()
     if obj is None:
@@ -312,12 +333,7 @@ def _verify_object_death(wref: ReferenceType) -> None:
 
     print(f'{Clr.RED}Error: {name} not dying'
           f' when expected to: {Clr.BLD}{obj}{Clr.RST}')
-    refs = list(gc.get_referrers(obj))
-    print(f'{Clr.YLW}Active References:{Clr.RST}')
-    i = 1
-    for ref in refs:
-        print(f'{Clr.YLW}  reference {i}:{Clr.BLU} {ref}{Clr.RST}')
-        i += 1
+    print_active_refs(obj)
 
 
 def storagename(suffix: str = None) -> str:

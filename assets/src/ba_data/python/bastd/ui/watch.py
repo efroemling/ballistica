@@ -511,6 +511,12 @@ class WatchWindow(ba.Window):
             try:
                 current_tab = self.TabID(ba.app.config.get('Watch Tab'))
             except ValueError:
+                # EWWWW; this exception causes a dependency loop that won't
+                # go away until the next cyclical collection, which can
+                # keep us alive. Perhaps should rethink our garbage
+                # collection strategy, but for now just explicitly running
+                # a cycle.
+                ba.pushcall(ba.garbage_collect)
                 current_tab = self.TabID.MY_REPLAYS
             self._set_tab(current_tab)
 
@@ -522,6 +528,12 @@ class WatchWindow(ba.Window):
                 try:
                     sel_tab_id = self.TabID(sel_name.split(':')[-1])
                 except ValueError:
+                    # EWWWW; this exception causes a dependency loop that won't
+                    # go away until the next cyclical collection, which can
+                    # keep us alive. Perhaps should rethink our garbage
+                    # collection strategy, but for now just explicitly running
+                    # a cycle.
+                    ba.pushcall(ba.garbage_collect)
                     sel_tab_id = self.TabID.MY_REPLAYS
                 sel = self._tab_row.tabs[sel_tab_id].button
             else:
