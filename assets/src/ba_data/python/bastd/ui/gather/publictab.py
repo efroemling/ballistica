@@ -842,6 +842,10 @@ class PublicGatherTab(GatherTab):
                 key: val
                 for key, val in list(self._parties.items()) if val.claimed
             }
+
+            # Make sure we update the list immediately in response to this.
+            self._server_list_dirty = True
+
             self._update_server_list()
 
     def _update(self) -> None:

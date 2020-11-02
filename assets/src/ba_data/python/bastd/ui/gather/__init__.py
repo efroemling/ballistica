@@ -133,7 +133,7 @@ class GatherWindow(ba.Window):
                                pos=(tab_buffer_h * 0.5,
                                     self._height - 130 + tabs_top_extra),
                                size=(self._width - tab_buffer_h, 50),
-                               on_select_call=self._set_tab)
+                               on_select_call=ba.WeakCall(self._set_tab))
 
         # Now instantiate handlers for these tabs.
         tabtypes: Dict[GatherWindow.TabID, Type[GatherTab]] = {
@@ -174,6 +174,7 @@ class GatherWindow(ba.Window):
                        texture=ba.gettexture('scrollWidget'),
                        model_transparent=ba.getmodel('softEdgeOutside'))
         self._tab_container: Optional[ba.Widget] = None
+
         self._restore_state()
 
     def __del__(self) -> None:
@@ -251,16 +252,11 @@ class GatherWindow(ba.Window):
             current_tab = self.TabID.ABOUT
             gather_tab_val = ba.app.config.get('Gather Tab')
             try:
-                stored_tab = self.TabID(gather_tab_val)
+                stored_tab = ba.enum_by_value(self.TabID, gather_tab_val)
                 if stored_tab in self._tab_row.tabs:
                     current_tab = stored_tab
             except ValueError:
-                # EWWWW; this exception causes a dependency loop that won't
-                # go away until the next cyclical collection, which can
-                # keep us alive. Perhaps should rethink our garbage
-                # collection strategy, but for now just explicitly running
-                # a cycle.
-                ba.pushcall(ba.garbage_collect)
+                pass
             self._set_tab(current_tab)
             if sel_name == 'Back':
                 sel = self._back_button
@@ -268,15 +264,10 @@ class GatherWindow(ba.Window):
                 sel = self._tab_container
             elif isinstance(sel_name, str) and sel_name.startswith('Tab:'):
                 try:
-                    sel_tab_id = self.TabID(sel_name.split(':')[-1])
+                    sel_tab_id = ba.enum_by_value(self.TabID,
+                                                  sel_name.split(':')[-1])
                 except ValueError:
                     sel_tab_id = self.TabID.ABOUT
-                    # EWWWW; this exception causes a dependency loop that won't
-                    # go away until the next cyclical collection, which can
-                    # keep us alive. Perhaps should rethink our garbage
-                    # collection strategy, but for now just explicitly running
-                    # a cycle.
-                    ba.pushcall(ba.garbage_collect)
                 sel = self._tab_row.tabs[sel_tab_id].button
             else:
                 sel = self._tab_row.tabs[current_tab].button

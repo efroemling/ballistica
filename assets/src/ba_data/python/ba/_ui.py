@@ -123,12 +123,13 @@ class UISubsystem:
         # With our legacy main-menu system, the caller is responsible for
         # clearing out the old main menu window when assigning the new.
         # However there are corner cases where that doesn't happen and we get
-        # old windows stuck under the new main one. So let's guard against that
-        # However, we can't simply delete the existing main window when
+        # old windows stuck under the new main one. So let's guard against
+        # that. However, we can't simply delete the existing main window when
         # a new one is assigned because the user may transition the old out
-        # *after* the assignment. Sigh. So as a happy medium let's check in
+        # *after* the assignment. Sigh. So, as a happy medium, let's check in
         # on the old after a short bit of time and kill it if its still alive.
-        # That will be a bit ugly on screen but at least will un-break things.
+        # That will be a bit ugly on screen but at least should un-break
+        # things.
         def _delay_kill() -> None:
             import time
             if existing:

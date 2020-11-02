@@ -1025,15 +1025,10 @@ class StoreBrowserWindow(ba.Window):
             assert isinstance(sel_name, (str, type(None)))
 
             try:
-                current_tab = self.TabID(ba.app.config.get('Store Tab'))
+                current_tab = ba.enum_by_value(self.TabID,
+                                               ba.app.config.get('Store Tab'))
             except ValueError:
                 current_tab = self.TabID.CHARACTERS
-
-                # EWWWW; this exception causes a dependency loop that won't
-                # go away until the next cyclical collection, which can keep
-                # us alive. Perhaps should rethink our garbage collection
-                # strategy, but for now just explicitly running a cycle.
-                ba.pushcall(ba.garbage_collect)
 
             if self._show_tab is not None:
                 current_tab = self._show_tab
@@ -1045,7 +1040,8 @@ class StoreBrowserWindow(ba.Window):
                 sel = self._scrollwidget
             elif isinstance(sel_name, str) and sel_name.startswith('Tab:'):
                 try:
-                    sel_tab_id = self.TabID(sel_name.split(':')[-1])
+                    sel_tab_id = ba.enum_by_value(self.TabID,
+                                                  sel_name.split(':')[-1])
                 except ValueError:
                     sel_tab_id = self.TabID.CHARACTERS
                 sel = self._tab_row.tabs[sel_tab_id].button

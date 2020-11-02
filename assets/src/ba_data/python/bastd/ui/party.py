@@ -71,7 +71,7 @@ class PartyWindow(ba.Window):
 
         info = _ba.get_connection_to_host_info()
         if info.get('name', '') != '':
-            title = info['name']
+            title = ba.Lstr(value=info['name'])
         else:
             title = ba.Lstr(resource=self._r + '.titleText')
 

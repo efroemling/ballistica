@@ -8,6 +8,7 @@ import types
 import weakref
 import random
 import inspect
+from enum import Enum
 from typing import TYPE_CHECKING, TypeVar, Protocol
 
 from efro.terminal import Clr
@@ -16,6 +17,7 @@ from ba._error import print_error, print_exception
 from ba._enums import TimeType
 
 if TYPE_CHECKING:
+    from types import FrameType
     from typing import Any, Type, Optional
     from efro.call import Call as Call  # 'as Call' so we re-export.
     from weakref import ReferenceType
@@ -34,6 +36,7 @@ class Existable(Protocol):
 
 ExistableType = TypeVar('ExistableType', bound=Existable)
 T = TypeVar('T')
+ET = TypeVar('ET', bound=Enum)
 
 
 def existing(obj: Optional[ExistableType]) -> Optional[ExistableType]:
@@ -306,18 +309,38 @@ def print_active_refs(obj: Any) -> None:
 
     Useful for tracking down cyclical references and causes for zombie objects.
     """
-    from types import FrameType
+    # pylint: disable=too-many-nested-blocks
+    from types import FrameType, TracebackType
     refs = list(gc.get_referrers(obj))
     print(f'{Clr.YLW}Active referrers to {obj}:{Clr.RST}')
     for i, ref in enumerate(refs):
         print(f'{Clr.YLW}#{i+1}:{Clr.BLU} {ref}{Clr.RST}')
+
         # For certain types of objects such as stack frames, show what is
         # keeping *them* alive too.
         if isinstance(ref, FrameType):
             print(f'{Clr.YLW}  Active referrers to #{i+1}:{Clr.RST}')
             refs2 = list(gc.get_referrers(ref))
             for j, ref2 in enumerate(refs2):
-                print(f'{Clr.YLW}  #{j+1}:{Clr.BLU} {ref2}{Clr.RST}')
+                print(f'{Clr.YLW}  #a{j+1}:{Clr.BLU} {ref2}{Clr.RST}')
+
+                # Can go further down the rabbit-hole if needed...
+                if bool(False):
+                    if isinstance(ref2, TracebackType):
+                        print(f'{Clr.YLW}    '
+                              f'Active referrers to #a{j+1}:{Clr.RST}')
+                        refs3 = list(gc.get_referrers(ref2))
+                        for k, ref3 in enumerate(refs3):
+                            print(f'{Clr.YLW}    '
+                                  f'#b{k+1}:{Clr.BLU} {ref3}{Clr.RST}')
+
+                            if isinstance(ref3, BaseException):
+                                print(f'{Clr.YLW}      Active referrers to'
+                                      f' #b{k+1}:{Clr.RST}')
+                                refs4 = list(gc.get_referrers(ref3))
+                                for x, ref4 in enumerate(refs4):
+                                    print(f'{Clr.YLW}      #c{x+1}:{Clr.BLU}'
+                                          f' {ref4}{Clr.RST}')
 
 
 def _verify_object_death(wref: ReferenceType) -> None:
@@ -376,3 +399,35 @@ def storagename(suffix: str = None) -> str:
     if suffix is not None:
         fullpath = f'{fullpath}_{suffix}'
     return fullpath.replace('.', '_')
+
+
+def _gut_exception(exc: Exception) -> None:
+    assert exc.__traceback__ is not None
+    frame: Optional[FrameType] = exc.__traceback__.tb_frame
+    while frame is not None:
+        frame.clear()
+        frame = frame.f_back
+
+
+def enum_by_value(cls: Type[ET], value: Any) -> ET:
+    """Create an enum from a value.
+
+    Category: General Utility Functions
+
+    This is basically the same as doing 'obj = EnumType(value)' except
+    that it works around an issue where a reference loop is created
+    if an exception is thrown due to an invalid value. Since we disable
+    the cyclic garbage collector for most of the time, such loops can lead
+    to our objects sticking around longer than we want. This workaround is
+    not perfect in that the destruction happens in the next cycle, but it is
+    better than never.
+    This issue has been submitted to Python as a bug so hopefully we can
+    remove this eventually if it gets fixed: https://bugs.python.org/issue42248
+    """
+    try:
+        return cls(value)
+    except Exception as exc:
+        # Blow away all stack frames in the exception which will break the
+        # cycle and allow it to be destroyed.
+        _ba.pushcall(_Call(_gut_exception, exc))
+        raise

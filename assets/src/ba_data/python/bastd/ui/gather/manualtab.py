@@ -184,12 +184,6 @@ class ManualGatherTab(GatherTab):
         try:
             port = int(cast(str, ba.textwidget(query=port_textwidget)))
         except ValueError:
-            # EWWWW; this exception causes a dependency loop that won't
-            # go away until the next cyclical collection, which can
-            # keep us alive. Perhaps should rethink our garbage
-            # collection strategy, but for now just explicitly running
-            # a cycle.
-            ba.pushcall(ba.garbage_collect)
             port = -1
         if port > 65535 or port < 0:
             ba.screenmessage(ba.Lstr(resource='internal.invalidPortErrorText'),
