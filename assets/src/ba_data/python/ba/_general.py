@@ -354,8 +354,8 @@ def _verify_object_death(wref: ReferenceType) -> None:
         print(f'Note: unable to get type name for {obj}')
         name = 'object'
 
-    print(f'{Clr.RED}Error: {name} not dying'
-          f' when expected to: {Clr.BLD}{obj}{Clr.RST}')
+    print(f'{Clr.RED}Error: {name} not dying when expected to:'
+          f' {Clr.BLD}{obj}{Clr.RST}')
     print_active_refs(obj)
 
 

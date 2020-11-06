@@ -48,11 +48,6 @@ class NetScanner:
         self._last_selected_host = host
 
     def _on_activate(self, host: Dict[str, Any]) -> None:
-
-        # Sanity check: make sure our gather window gets freed after this.
-        tab = self._tab()
-        if tab:
-            ba.verify_object_death(tab.window)
         _ba.connect_to_party(host['address'])
 
     def update(self) -> None:

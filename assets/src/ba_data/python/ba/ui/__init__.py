@@ -33,6 +33,9 @@ class Window:
     def __init__(self, root_widget: ba.Widget):
         self._root_widget = root_widget
 
+        # Complain if we outlive our root widget.
+        uicleanupcheck(self, root_widget)
+
     def get_root_widget(self) -> ba.Widget:
         """Return the root widget."""
         return self._root_widget

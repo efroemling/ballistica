@@ -386,6 +386,14 @@ auto PythonClassInputDevice::GetButtonName(PythonClassInputDevice* self,
   PythonRef args2(Py_BuildValue("(s)", bname.c_str()), PythonRef::kSteal);
   PythonRef results =
       g_python->obj(Python::ObjID::kLstrFromJsonCall).Call(args2);
+  if (!results.exists()) {
+    Log("Error creating Lstr from raw button name: '" + bname + "'");
+    PythonRef args3(Py_BuildValue("(s)", "?"), PythonRef::kSteal);
+    results = g_python->obj(Python::ObjID::kLstrFromJsonCall).Call(args3);
+  }
+  if (!results.exists()) {
+    throw Exception("Internal error creating Lstr.");
+  }
   return results.NewRef();
 
   BA_PYTHON_CATCH;

@@ -1,4 +1,4 @@
-### 1.5.27 (20234)
+### 1.5.27 (20238)
 - Language functionality has been consolidated into a LanguageSubsystem object at ba.app.lang
 - ba.get_valid_languages() is now an attr: ba.app.lang.available_languages
 - Achievement functionality has been consolidated into an AchievementSubsystem object at ba.app.ach
