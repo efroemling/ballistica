@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-11-06 for Ballistica version 1.5.27 build 20238</em></h4>
+<h4><em>last updated on 2020-11-06 for Ballistica version 1.5.28 build 20239</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -6591,9 +6591,7 @@ settings, exiting element counts, or other factors.</p>
 that it works around an issue where a reference loop is created
 if an exception is thrown due to an invalid value. Since we disable
 the cyclic garbage collector for most of the time, such loops can lead
-to our objects sticking around longer than we want. This workaround is
-not perfect in that the destruction happens in the next cycle, but it is
-better than never.
+to our objects sticking around longer than we want.
 This issue has been submitted to Python as a bug so hopefully we can
 remove this eventually if it gets fixed: https://bugs.python.org/issue42248</p>
 

@@ -1,3 +1,6 @@
+### 1.5.28 (20239)
+- Simplified ba.enum_by_value()
+
 ### 1.5.27 (20238)
 - Language functionality has been consolidated into a LanguageSubsystem object at ba.app.lang
 - ba.get_valid_languages() is now an attr: ba.app.lang.available_languages
