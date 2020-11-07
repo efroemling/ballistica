@@ -47,11 +47,18 @@ class SoundtrackEntryTypeSelectWindow(ba.Window):
             self._height += spacing
 
         uiscale = ba.app.ui.uiscale
+
+        # NOTE: When something is selected, we close our UI and kick off
+        # another window which then calls us back when its done, so the
+        # standard UI-cleanup-check complains that something is holding on
+        # to our instance after its ui is gone. Should restructure in a
+        # cleaner way, but just disabling that check for now.
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             transition=transition,
             scale=(1.7 if uiscale is ba.UIScale.SMALL else
-                   1.4 if uiscale is ba.UIScale.MEDIUM else 1.0)))
+                   1.4 if uiscale is ba.UIScale.MEDIUM else 1.0)),
+                         cleanupcheck=False)
         btn = ba.buttonwidget(parent=self._root_widget,
                               position=(35, self._height - 65),
                               size=(160, 60),
@@ -133,7 +140,8 @@ class SoundtrackEntryTypeSelectWindow(ba.Window):
 
     def _on_mac_music_app_playlist_press(self) -> None:
         music = ba.app.music
-        from bastd.ui.soundtrack import macmusicapp
+        from bastd.ui.soundtrack.macmusicapp import (
+            MacMusicAppPlaylistSelectWindow)
         ba.containerwidget(edit=self._root_widget, transition='out_left')
 
         current_playlist_entry: Optional[str]
@@ -144,17 +152,17 @@ class SoundtrackEntryTypeSelectWindow(ba.Window):
         else:
             current_playlist_entry = None
         ba.app.ui.set_main_menu_window(
-            macmusicapp.MacMusicAppPlaylistSelectWindow(
+            MacMusicAppPlaylistSelectWindow(
                 self._callback, current_playlist_entry,
                 self._current_entry).get_root_widget())
 
     def _on_music_file_press(self) -> None:
         from ba.osmusic import OSMusicPlayer
-        from bastd.ui import fileselector
+        from bastd.ui.fileselector import FileSelectorWindow
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         base_path = _ba.android_get_external_storage_path()
         ba.app.ui.set_main_menu_window(
-            fileselector.FileSelectorWindow(
+            FileSelectorWindow(
                 base_path,
                 callback=self._music_file_selector_cb,
                 show_base_path=False,
@@ -163,16 +171,15 @@ class SoundtrackEntryTypeSelectWindow(ba.Window):
                 allow_folders=False).get_root_widget())
 
     def _on_music_folder_press(self) -> None:
-        from bastd.ui import fileselector
+        from bastd.ui.fileselector import FileSelectorWindow
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         base_path = _ba.android_get_external_storage_path()
         ba.app.ui.set_main_menu_window(
-            fileselector.FileSelectorWindow(
-                base_path,
-                callback=self._music_folder_selector_cb,
-                show_base_path=False,
-                valid_file_extensions=[],
-                allow_folders=True).get_root_widget())
+            FileSelectorWindow(base_path,
+                               callback=self._music_folder_selector_cb,
+                               show_base_path=False,
+                               valid_file_extensions=[],
+                               allow_folders=True).get_root_widget())
 
     def _music_file_selector_cb(self, result: Optional[str]) -> None:
         if result is None:

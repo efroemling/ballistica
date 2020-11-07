@@ -30,11 +30,12 @@ class Window:
     Category: User Interface Classes
     """
 
-    def __init__(self, root_widget: ba.Widget):
+    def __init__(self, root_widget: ba.Widget, cleanupcheck: bool = True):
         self._root_widget = root_widget
 
         # Complain if we outlive our root widget.
-        uicleanupcheck(self, root_widget)
+        if cleanupcheck:
+            uicleanupcheck(self, root_widget)
 
     def get_root_widget(self) -> ba.Widget:
         """Return the root widget."""

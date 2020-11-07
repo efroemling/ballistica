@@ -679,6 +679,8 @@ class PublicGatherTab(GatherTab):
         columnwidget = self._join_list_column
         first = True
         assert columnwidget
+        ping_good = _ba.get_account_misc_read_val('pingGood', 100)
+        ping_med = _ba.get_account_misc_read_val('pingMed', 500)
         for i, party in enumerate(ordered_parties):
             hpos = 20
             vpos = sub_scroll_height - lineheight * i - 50
@@ -766,8 +768,6 @@ class PublicGatherTab(GatherTab):
                               text='-',
                               color=(0.5, 0.5, 0.5))
             else:
-                ping_good = _ba.get_account_misc_read_val('pingGood', 100)
-                ping_med = _ba.get_account_misc_read_val('pingMed', 500)
                 ba.textwidget(edit=party.ping_widget,
                               text=str(party.ping),
                               color=(0, 1, 0) if party.ping <= ping_good else
@@ -776,6 +776,7 @@ class PublicGatherTab(GatherTab):
 
     def _on_public_party_query_result(
             self, result: Optional[Dict[str, Any]]) -> None:
+        # starttime = time.time()
         with ba.Context('ui'):
             # Any time we get any result at all, kill our loading status.
             status_text = self._join_status_text
@@ -847,6 +848,7 @@ class PublicGatherTab(GatherTab):
             self._server_list_dirty = True
 
             self._update_server_list()
+        # print('updated in {time.time()-starttime:.3f}')
 
     def _update(self) -> None:
         """Periodic updating."""

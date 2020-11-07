@@ -401,14 +401,6 @@ def storagename(suffix: str = None) -> str:
     return fullpath.replace('.', '_')
 
 
-def _gut_exception(exc: Exception) -> None:
-    assert exc.__traceback__ is not None
-    frame: Optional[FrameType] = exc.__traceback__.tb_frame
-    while frame is not None:
-        frame.clear()
-        frame = frame.f_back
-
-
 def enum_by_value(cls: Type[ET], value: Any) -> ET:
     """Create an enum from a value.
 

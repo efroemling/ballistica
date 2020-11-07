@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2020-11-06 for Ballistica version 1.5.28 build 20239</em></h4>
+<h4><em>last updated on 2020-11-07 for Ballistica version 1.5.28 build 20241</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -6328,7 +6328,7 @@ widgets.</p>
 <h5><a href="#method_ba_Window____init__">&lt;constructor&gt;</a>, <a href="#method_ba_Window__get_root_widget">get_root_widget()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_Window____init__">&lt;constructor&gt;</a></dt></h4><dd>
-<p><span>ba.Window(root_widget: <a href="#class_ba_Widget">ba.Widget</a>)</span></p>
+<p><span>ba.Window(root_widget: <a href="#class_ba_Widget">ba.Widget</a>, cleanupcheck: bool = True)</span></p>
 
 </dd>
 <dt><h4><a name="method_ba_Window__get_root_widget">get_root_widget()</a></dt></h4><dd>

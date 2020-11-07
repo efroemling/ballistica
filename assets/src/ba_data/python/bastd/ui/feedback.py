@@ -17,6 +17,10 @@ def ask_for_rating() -> Optional[ba.Widget]:
     app = ba.app
     platform = app.platform
     subplatform = app.subplatform
+
+    # FIXME: should whitelist platforms we *do* want this for.
+    if ba.app.test_build:
+        return None
     if not (platform == 'mac' or (platform == 'android'
                                   and subplatform in ['google', 'cardboard'])):
         return None
