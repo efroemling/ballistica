@@ -364,6 +364,11 @@ class PublicGatherTab(GatherTab):
             self._build_join_tab(region_width, region_height)
             self._server_list_dirty = True
 
+            # If we're not currently signed in, ignore any list we
+            # consider any list we previously retrieved.
+            if _ba.get_account_state() != 'signed_in':
+                self._have_valid_server_list = False
+
             # If we've not yet successfully fetched a server list,
             # force an attempt now and show the user a 'loading...' status.
             if not self._have_valid_server_list:
@@ -892,14 +897,18 @@ class PublicGatherTab(GatherTab):
             self._last_server_list_query_time = now
             if DEBUG_SERVER_COMMUNICATION:
                 print('REQUESTING SERVER LIST')
-            _ba.add_transaction(
-                {
-                    'type': 'PUBLIC_PARTY_QUERY',
-                    'proto': ba.app.protocol_version,
-                    'lang': ba.app.lang.language
-                },
-                callback=ba.WeakCall(self._on_public_party_query_result))
-            _ba.run_transactions()
+            if _ba.get_account_state() == 'signed_in':
+                _ba.add_transaction(
+                    {
+                        'type': 'PUBLIC_PARTY_QUERY',
+                        'proto': ba.app.protocol_version,
+                        'lang': ba.app.lang.language
+                    },
+                    callback=ba.WeakCall(self._on_public_party_query_result))
+                _ba.run_transactions()
+            else:
+                # This will kick us over to a 'not signed in' message.
+                self._on_public_party_query_result(None)
 
     def _ping_parties_periodically(self) -> None:
         now = ba.time(ba.TimeType.REAL)

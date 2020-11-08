@@ -54,7 +54,6 @@ class App:
     @property
     def user_agent_string(self) -> str:
         """String containing various bits of info about OS/device/etc."""
-        # return self._user_agent_string
         assert isinstance(self._env['user_agent_string'], str)
         return self._env['user_agent_string']
 
@@ -341,17 +340,20 @@ class App:
         server_addr = _ba.get_master_server_address()
         if 'localhost' in server_addr:
             _ba.timer(2.0,
-                      lambda: _ba.screenmessage('Note: using local server',
-                                                (1, 1, 0),
-                                                log=True),
+                      lambda: _ba.screenmessage(
+                          'Note: using local server',
+                          (1, 1, 0),
+                          log=True,
+                      ),
                       timetype=TimeType.REAL)
         elif 'test' in server_addr:
-            _ba.timer(
-                2.0,
-                lambda: _ba.screenmessage('Note: using test server-module',
-                                          (1, 1, 0),
-                                          log=True),
-                timetype=TimeType.REAL)
+            _ba.timer(2.0,
+                      lambda: _ba.screenmessage(
+                          'Note: using test server-module',
+                          (1, 1, 0),
+                          log=True,
+                      ),
+                      timetype=TimeType.REAL)
 
         cfg['launchCount'] = launch_count
         cfg.commit()
