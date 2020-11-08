@@ -132,7 +132,8 @@ void ImageNode::SetAttach(const std::string& val) {
 
 void ImageNode::SetTint2Color(const std::vector<float>& vals) {
   if (vals.size() != 3) {
-    throw Exception("Expected float array of size 3 for tint2_color");
+    throw Exception("Expected float array of size 3 for tint2_color",
+                    PyExcType::kValue);
   }
   tint2_color_ = vals;
   tint2_red_ = tint2_color_[0];
@@ -142,7 +143,8 @@ void ImageNode::SetTint2Color(const std::vector<float>& vals) {
 
 void ImageNode::SetTintColor(const std::vector<float>& vals) {
   if (vals.size() != 3) {
-    throw Exception("Expected float array of size 3 for tint_color");
+    throw Exception("Expected float array of size 3 for tint_color",
+                    PyExcType::kValue);
   }
   tint_color_ = vals;
   tint_red_ = tint_color_[0];
@@ -168,7 +170,8 @@ void ImageNode::SetColor(const std::vector<float>& vals) {
 
 void ImageNode::SetScale(const std::vector<float>& vals) {
   if (vals.size() != 1 && vals.size() != 2) {
-    throw Exception("Expected float array of length 1 or 2 for scale");
+    throw Exception("Expected float array of length 1 or 2 for scale",
+                    PyExcType::kValue);
   }
   dirty_ = true;
   scale_ = vals;
@@ -176,7 +179,8 @@ void ImageNode::SetScale(const std::vector<float>& vals) {
 
 void ImageNode::SetPosition(const std::vector<float>& vals) {
   if (vals.size() != 2) {
-    throw Exception("Expected float array of length 2 for position");
+    throw Exception("Expected float array of length 2 for position",
+                    PyExcType::kValue);
   }
   dirty_ = true;
   position_ = vals;

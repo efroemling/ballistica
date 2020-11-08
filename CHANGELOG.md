@@ -1,6 +1,6 @@
 ### 1.5.28 (20239)
 - Simplified ba.enum_by_value()
-- Updated Google Play version to hopefully show friend high scores again on score screens.
+- Updated Google Play version to hopefully show friend high scores again on score screens (at least for levels that have an associated Google Play leaderboard).
 - Public-party-list now properly shows an error instead of 'loading...' when not signed in.
 
 ### 1.5.27 (20238)

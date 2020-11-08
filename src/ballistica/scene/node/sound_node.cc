@@ -49,8 +49,10 @@ SoundNode::~SoundNode() {
 }
 
 void SoundNode::SetPosition(const std::vector<float>& vals) {
-  if (vals.size() != 3)
-    throw Exception("Expected float array of size 3 for position");
+  if (vals.size() != 3) {
+    throw Exception("Expected float array of size 3 for position",
+                    PyExcType::kValue);
+  }
   position_ = vals;
 
   // We don't actually update here; we just mark our position as dirty

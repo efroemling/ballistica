@@ -60,14 +60,16 @@ ShieldNode::~ShieldNode() = default;
 
 void ShieldNode::SetColor(const std::vector<float>& vals) {
   if (vals.size() != 3) {
-    throw Exception("Expected float array of length 3 for color");
+    throw Exception("Expected float array of length 3 for color",
+                    PyExcType::kValue);
   }
   color_ = vals;
 }
 
 void ShieldNode::SetPosition(const std::vector<float>& vals) {
   if (vals.size() != 3) {
-    throw Exception("Expected float array of length 3 for position");
+    throw Exception("Expected float array of length 3 for position",
+                    PyExcType::kValue);
   }
   position_ = vals;
 }

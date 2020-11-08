@@ -233,7 +233,8 @@ void GlobalsNode::SetHappyThoughtsMode(bool val) {
 
 void GlobalsNode::SetShadowScale(const std::vector<float>& vals) {
   if (vals.size() != 2) {
-    throw Exception("Expected float array of length 2 for shadow_scale");
+    throw Exception("Expected float array of length 2 for shadow_scale",
+                    PyExcType::kValue);
   }
   shadow_scale_ = vals;
   if (IsCurrentGlobals()) {
@@ -244,7 +245,8 @@ void GlobalsNode::SetShadowScale(const std::vector<float>& vals) {
 void GlobalsNode::set_area_of_interest_bounds(const std::vector<float>& vals) {
   if (vals.size() != 6) {
     throw Exception(
-        "Expected float array of length 6 for area_of_interest_bounds");
+        "Expected float array of length 6 for area_of_interest_bounds",
+        PyExcType::kValue);
   }
   area_of_interest_bounds_ = vals;
 
@@ -259,7 +261,8 @@ void GlobalsNode::set_area_of_interest_bounds(const std::vector<float>& vals) {
 
 void GlobalsNode::SetShadowRange(const std::vector<float>& vals) {
   if (vals.size() != 4) {
-    throw Exception("Expected float array of length 4 for shadow_range");
+    throw Exception("Expected float array of length 4 for shadow_range",
+                    PyExcType::kValue);
   }
   shadow_range_ = vals;
   if (IsCurrentGlobals()) {
@@ -270,7 +273,8 @@ void GlobalsNode::SetShadowRange(const std::vector<float>& vals) {
 
 void GlobalsNode::SetShadowOffset(const std::vector<float>& vals) {
   if (vals.size() != 3) {
-    throw Exception("Expected float array of length 3 for shadow_offset");
+    throw Exception("Expected float array of length 3 for shadow_offset",
+                    PyExcType::kValue);
   }
   shadow_offset_ = vals;
   if (IsCurrentGlobals()) {
@@ -280,7 +284,8 @@ void GlobalsNode::SetShadowOffset(const std::vector<float>& vals) {
 
 void GlobalsNode::SetVRCameraOffset(const std::vector<float>& vals) {
   if (vals.size() != 3) {
-    throw Exception("Expected float array of length 3 for vr_camera_offset");
+    throw Exception("Expected float array of length 3 for vr_camera_offset",
+                    PyExcType::kValue);
   }
   vr_camera_offset_ = vals;
   if (IsCurrentGlobals()) {
@@ -297,7 +302,8 @@ void GlobalsNode::SetShadowOrtho(bool val) {
 
 void GlobalsNode::SetTint(const std::vector<float>& vals) {
   if (vals.size() != 3) {
-    throw Exception("Expected float array of length 3 for tint");
+    throw Exception("Expected float array of length 3 for tint",
+                    PyExcType::kValue);
   }
   tint_ = vals;
   if (IsCurrentGlobals()) {
@@ -307,7 +313,8 @@ void GlobalsNode::SetTint(const std::vector<float>& vals) {
 
 void GlobalsNode::SetVROverlayCenter(const std::vector<float>& vals) {
   if (vals.size() != 3) {
-    throw Exception("Expected float array of length 3 for vr_overlay_center");
+    throw Exception("Expected float array of length 3 for vr_overlay_center",
+                    PyExcType::kValue);
   }
   vr_overlay_center_ = vals;
 #if BA_VR_BUILD
@@ -329,7 +336,8 @@ void GlobalsNode::SetVROverlayCenterEnabled(bool val) {
 
 void GlobalsNode::SetAmbientColor(const std::vector<float>& vals) {
   if (vals.size() != 3) {
-    throw Exception("Expected float array of length 3 for ambient_color");
+    throw Exception("Expected float array of length 3 for ambient_color",
+                    PyExcType::kValue);
   }
   ambient_color_ = vals;
   if (IsCurrentGlobals()) {
@@ -339,7 +347,8 @@ void GlobalsNode::SetAmbientColor(const std::vector<float>& vals) {
 
 void GlobalsNode::SetVignetteOuter(const std::vector<float>& vals) {
   if (vals.size() != 3) {
-    throw Exception("Expected float array of length 3 for vignette_outer");
+    throw Exception("Expected float array of length 3 for vignette_outer",
+                    PyExcType::kValue);
   }
   vignette_outer_ = vals;
   if (IsCurrentGlobals()) {
@@ -349,7 +358,8 @@ void GlobalsNode::SetVignetteOuter(const std::vector<float>& vals) {
 
 void GlobalsNode::SetVignetteInner(const std::vector<float>& vals) {
   if (vals.size() != 3) {
-    throw Exception("Expected float array of length 3 for vignette_inner");
+    throw Exception("Expected float array of length 3 for vignette_inner",
+                    PyExcType::kValue);
   }
   vignette_inner_ = vals;
   if (IsCurrentGlobals()) {

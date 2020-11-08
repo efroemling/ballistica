@@ -147,7 +147,8 @@ auto FlagNode::getPosition() const -> std::vector<float> {
 
 void FlagNode::SetColor(const std::vector<float>& vals) {
   if (vals.size() != 3) {
-    throw Exception("Expected float array of length 3 for color");
+    throw Exception("Expected float array of length 3 for color",
+                    PyExcType::kValue);
   }
   color_ = vals;
 }
@@ -159,7 +160,8 @@ void FlagNode::SetLightWeight(bool val) {
 
 void FlagNode::SetPosition(const std::vector<float>& vals) {
   if (vals.size() != 3) {
-    throw Exception("Expected float array of length 3 for position");
+    throw Exception("Expected float array of length 3 for position",
+                    PyExcType::kValue);
   }
   dQuaternion iq;
   dQFromAxisAndAngle(iq, 1, 0, 0, -90 * (kPi / 180.0f));

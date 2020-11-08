@@ -146,8 +146,10 @@ void TerrainNode::SetCollideModel(CollideModel* val) {
 void TerrainNode::SetColorTexture(Texture* val) { color_texture_ = val; }
 
 void TerrainNode::SetReflectionScale(const std::vector<float>& vals) {
-  if (vals.size() != 1 && vals.size() != 3)
-    throw Exception("Expected float array of size 1 or 3 for reflection_scale");
+  if (vals.size() != 1 && vals.size() != 3) {
+    throw Exception("Expected float array of size 1 or 3 for reflection_scale",
+                    PyExcType::kValue);
+  }
   reflection_scale_ = vals;
   if (reflection_scale_.size() == 1) {
     reflection_scale_r_ = reflection_scale_g_ = reflection_scale_b_ =
@@ -160,8 +162,10 @@ void TerrainNode::SetReflectionScale(const std::vector<float>& vals) {
 }
 
 void TerrainNode::SetColor(const std::vector<float>& vals) {
-  if (vals.size() != 1 && vals.size() != 3)
-    throw Exception("Expected float array of size 1 or 3 for color");
+  if (vals.size() != 1 && vals.size() != 3) {
+    throw Exception("Expected float array of size 1 or 3 for color",
+                    PyExcType::kValue);
+  }
   color_ = vals;
   if (color_.size() == 1) {
     color_r_ = color_g_ = color_b_ = color_[0];

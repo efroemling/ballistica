@@ -65,7 +65,8 @@ void RegionNode::SetMaterials(const std::vector<Material*>& vals) {
 
 void RegionNode::SetPosition(const std::vector<float>& vals) {
   if (vals.size() != 3) {
-    throw Exception("Expected float array of length 3 for position");
+    throw Exception("Expected float array of length 3 for position",
+                    PyExcType::kValue);
   }
   position_ = vals;
   size_or_pos_dirty_ = true;
@@ -73,7 +74,8 @@ void RegionNode::SetPosition(const std::vector<float>& vals) {
 
 void RegionNode::SetScale(const std::vector<float>& vals) {
   if (vals.size() != 3) {
-    throw Exception("Expected float array of length 3 for scale");
+    throw Exception("Expected float array of length 3 for scale",
+                    PyExcType::kValue);
   }
   scale_ = vals;
   size_or_pos_dirty_ = true;

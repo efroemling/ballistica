@@ -334,7 +334,8 @@ void PropNode::SetReflectionScale(const std::vector<float>& vals) {
   if (vals.size() != 1 && vals.size() != 3) {
     throw Exception(
         "Expected float array of length"
-        " 1 or 3 for reflection_scale");
+        " 1 or 3 for reflection_scale",
+        PyExcType::kValue);
   }
   reflection_scale_ = vals;
   if (reflection_scale_.size() == 1) {
@@ -381,7 +382,8 @@ auto PropNode::GetVelocity() const -> std::vector<float> {
 
 void PropNode::SetVelocity(const std::vector<float>& vals) {
   if (vals.size() != 3) {
-    throw Exception("Expected float array of size 3 for velocity");
+    throw Exception("Expected float array of size 3 for velocity",
+                    PyExcType::kValue);
   }
   // if we've got a body, apply the velocity to that
   if (body_.exists()) {
@@ -412,7 +414,8 @@ auto PropNode::GetPosition() const -> std::vector<float> {
 void PropNode::SetPosition(const std::vector<float>& vals) {
   if (vals.size() != 3) {
     throw Exception("Expected float array of size 3 for position (got "
-                    + std::to_string(vals.size()) + ")");
+                        + std::to_string(vals.size()) + ")",
+                    PyExcType::kValue);
   }
   // if we've got a body, apply the position to that
   if (body_.exists()) {

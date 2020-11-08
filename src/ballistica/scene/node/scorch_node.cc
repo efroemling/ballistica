@@ -47,14 +47,18 @@ ScorchNode::ScorchNode(Scene* scene) : Node(scene, node_type) {
 ScorchNode::~ScorchNode() = default;
 
 void ScorchNode::SetColor(const std::vector<float>& vals) {
-  if (vals.size() != 3)
-    throw Exception("Expected float array of length 3 for color");
+  if (vals.size() != 3) {
+    throw Exception("Expected float array of length 3 for color",
+                    PyExcType::kValue);
+  }
   color_ = vals;
 }
 
 void ScorchNode::SetPosition(const std::vector<float>& vals) {
-  if (vals.size() != 3)
-    throw Exception("Expected float array of length 3 for position");
+  if (vals.size() != 3) {
+    throw Exception("Expected float array of length 3 for position",
+                    PyExcType::kValue);
+  }
   position_ = vals;
 }
 

@@ -76,20 +76,25 @@ void LocatorNode::SetShape(const std::string& val) {
 
 void LocatorNode::SetColor(const std::vector<float>& vals) {
   if (vals.size() != 3) {
-    throw Exception("Expected float array of size 3 for color");
+    throw Exception("Expected float array of size 3 for color",
+                    PyExcType::kValue);
   }
   color_ = vals;
 }
 
 void LocatorNode::SetPosition(const std::vector<float>& vals) {
-  if (vals.size() != 3)
-    throw Exception("Expected float array of size 3 for position");
+  if (vals.size() != 3) {
+    throw Exception("Expected float array of size 3 for position",
+                    PyExcType::kValue);
+  }
   position_ = vals;
 }
 
 void LocatorNode::SetSize(const std::vector<float>& vals) {
-  if (vals.size() != 1 && vals.size() != 3)
-    throw Exception("Expected float array of size 1 or 3 for size");
+  if (vals.size() != 1 && vals.size() != 3) {
+    throw Exception("Expected float array of size 1 or 3 for size",
+                    PyExcType::kValue);
+  }
   size_ = vals;
   if (size_.size() == 1) {
     size_.push_back(size_[0]);

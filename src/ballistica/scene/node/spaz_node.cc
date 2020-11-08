@@ -6072,20 +6072,26 @@ void SpazNode::SetMaterials(const std::vector<Material*>& vals) {
 }
 
 void SpazNode::SetNameColor(const std::vector<float>& vals) {
-  if (vals.size() != 3)
-    throw Exception("Expected float array of length 3 for name_color");
+  if (vals.size() != 3) {
+    throw Exception("Expected float array of length 3 for name_color",
+                    PyExcType::kValue);
+  }
   name_color_ = vals;
 }
 
 void SpazNode::set_highlight(const std::vector<float>& vals) {
-  if (vals.size() != 3)
-    throw Exception("Expected float array of length 3 for highlight");
+  if (vals.size() != 3) {
+    throw Exception("Expected float array of length 3 for highlight",
+                    PyExcType::kValue);
+  }
   highlight_ = vals;
 }
 
 void SpazNode::SetColor(const std::vector<float>& vals) {
-  if (vals.size() != 3)
-    throw Exception("Expected float array of length 3 for color");
+  if (vals.size() != 3) {
+    throw Exception("Expected float array of length 3 for color",
+                    PyExcType::kValue);
+  }
   color_ = vals;
 
   // If this gets changed, make sure to change shadow-color in the constructor

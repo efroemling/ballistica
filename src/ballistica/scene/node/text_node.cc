@@ -251,7 +251,8 @@ void TextNode::SetVAttach(const std::string& val) {
 
 void TextNode::SetColor(const std::vector<float>& vals) {
   if (vals.size() != 3 && vals.size() != 4) {
-    throw Exception("Expected float array of size 3 or 4 for color");
+    throw Exception("Expected float array of size 3 or 4 for color",
+                    PyExcType::kValue);
   }
   color_ = vals;
   if (color_.size() == 3) {
@@ -261,7 +262,8 @@ void TextNode::SetColor(const std::vector<float>& vals) {
 
 void TextNode::SetTrailColor(const std::vector<float>& vals) {
   if (vals.size() != 3) {
-    throw Exception("Expected float array of size 3 for trailcolor");
+    throw Exception("Expected float array of size 3 for trailcolor",
+                    PyExcType::kValue);
   }
   trail_color_ = vals;
 }
@@ -269,7 +271,8 @@ void TextNode::SetTrailColor(const std::vector<float>& vals) {
 void TextNode::SetPosition(const std::vector<float>& val) {
   if (val.size() != 2 && val.size() != 3) {
     throw Exception("Expected float array of length 2 or 3 for position; got "
-                    + std::to_string(val.size()));
+                        + std::to_string(val.size()),
+                    PyExcType::kValue);
   }
   position_ = val;
   position_final_dirty_ = true;

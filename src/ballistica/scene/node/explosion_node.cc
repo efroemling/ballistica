@@ -62,20 +62,26 @@ void ExplosionNode::set_big(bool val) {
 }
 
 void ExplosionNode::set_position(const std::vector<float>& vals) {
-  if (vals.size() != 3)
-    throw Exception("Expected float array of size 3 for position");
+  if (vals.size() != 3) {
+    throw Exception("Expected float array of size 3 for position",
+                    PyExcType::kValue);
+  }
   position_ = vals;
 }
 
 void ExplosionNode::set_velocity(const std::vector<float>& vals) {
-  if (vals.size() != 3)
-    throw Exception("Expected float array of size 3 for velocity");
+  if (vals.size() != 3) {
+    throw Exception("Expected float array of size 3 for velocity",
+                    PyExcType::kValue);
+  }
   velocity_ = vals;
 }
 
 void ExplosionNode::set_color(const std::vector<float>& vals) {
-  if (vals.size() != 3)
-    throw Exception("Expected float array of size 3 for color");
+  if (vals.size() != 3) {
+    throw Exception("Expected float array of size 3 for color",
+                    PyExcType::kValue);
+  }
   color_ = vals;
 }
 

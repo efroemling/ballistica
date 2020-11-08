@@ -34,7 +34,8 @@ PlayerNode::~PlayerNode() = default;
 
 void PlayerNode::SetPosition(const std::vector<float>& vals) {
   if (vals.size() != 3) {
-    throw Exception("Expected float array of size 3 for position");
+    throw Exception("Expected float array of size 3 for position",
+                    PyExcType::kValue);
   }
   position_ = vals;
 }
