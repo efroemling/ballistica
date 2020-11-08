@@ -160,12 +160,8 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
 
         # If game-center/etc scores are available we show our friends'
         # scores. Otherwise we show our local high scores.
-        # self._show_friend_scores = _ba.game_service_has_leaderboard(
-        #     self._game_name_str, self._game_config_str)
-
-        # Disabling friend scores everywhere for now; can hopefully bring
-        # this back once we've fully implemented our own friends system.
-        self._show_friend_scores = False
+        self._show_friend_scores = _ba.game_service_has_leaderboard(
+            self._game_name_str, self._game_config_str)
 
         try:
             self._old_best_rank = self._campaign.getlevel(

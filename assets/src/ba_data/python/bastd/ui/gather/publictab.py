@@ -389,15 +389,17 @@ class PublicGatherTab(GatherTab):
         sub_scroll_width = 830
         v = c_height - 35
         v -= 60
+        filter_txt = ba.Lstr(resource='filterText')
         self._filter_text = ba.textwidget(parent=self._container,
                                           text=self._filter_value,
                                           size=(350, 45),
                                           position=(290, v - 10),
                                           h_align='left',
                                           v_align='center',
-                                          editable=True)
+                                          editable=True,
+                                          description=filter_txt)
         ba.widget(edit=self._filter_text, up_widget=self._join_text)
-        ba.textwidget(text=ba.Lstr(resource='filterText'),
+        ba.textwidget(text=filter_txt,
                       parent=self._container,
                       size=(0, 0),
                       position=(270, v + 13),

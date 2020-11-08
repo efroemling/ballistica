@@ -1,6 +1,6 @@
 ### 1.5.28 (20239)
 - Simplified ba.enum_by_value()
-- Score screens no longer show friend scores (this was available only on specific platforms). This may return (in a universal way) once the game has its own friend system.
+- Updated Google Play version to hopefully show friend high scores again on score screens.
 
 ### 1.5.27 (20238)
 - Language functionality has been consolidated into a LanguageSubsystem object at ba.app.lang
