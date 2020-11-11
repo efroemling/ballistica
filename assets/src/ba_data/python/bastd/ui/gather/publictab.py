@@ -802,6 +802,13 @@ class PublicGatherTab(GatherTab):
                     self._filter_value = filter_value
                     self._party_lists_dirty = True
 
+                    # Also wipe out party clean-row states.
+                    # (otherwise if a party disappears from a row due to
+                    # filtering and then reappears on that same row when
+                    # the filter is removed it may not update)
+                    for party in self._parties.values():
+                        party.clean_display_index = None
+
             self._query_party_list_periodically()
             self._ping_parties_periodically()
 
