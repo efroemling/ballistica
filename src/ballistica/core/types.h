@@ -20,6 +20,7 @@ typedef struct ALCcontext_struct ALCcontext;
 #endif
 typedef struct _object PyObject;
 typedef struct _ts PyThreadState;
+typedef struct PyMethodDef PyMethodDef;
 
 #if BA_SDL_BUILD || BA_MINSDL_BUILD
 union SDL_Event;

@@ -4,7 +4,6 @@
 
 #include <list>
 #include <string>
-#include <vector>
 
 #include "ballistica/app/app.h"
 #include "ballistica/dynamics/bg/bg_dynamics.h"
@@ -23,6 +22,7 @@
 #include "ballistica/platform/platform.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_context_call_runnable.h"
+#include "ballistica/python/python_sys.h"
 #include "ballistica/scene/node/node.h"
 #include "ballistica/scene/node/node_type.h"
 #include "ballistica/scene/scene.h"
@@ -601,166 +601,174 @@ auto PyGetRandomNames(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_CATCH;
 }
 
-PyMethodDef PythonMethodsGameplay::methods_def[] = {
-    {"get_random_names", PyGetRandomNames, METH_VARARGS,
-     "get_random_names() -> list\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Returns the random names used by the game."},
+auto PythonMethodsGameplay::GetMethods() -> std::vector<PyMethodDef> {
+  return {
+      {"get_random_names", PyGetRandomNames, METH_VARARGS,
+       "get_random_names() -> list\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Returns the random names used by the game."},
 
-    {"reset_random_player_names", (PyCFunction)PyResetRandomPlayerNames,
-     METH_VARARGS | METH_KEYWORDS,
-     "reset_random_player_names() -> None\n"
-     "\n"
-     "(internal)"},
+      {"reset_random_player_names", (PyCFunction)PyResetRandomPlayerNames,
+       METH_VARARGS | METH_KEYWORDS,
+       "reset_random_player_names() -> None\n"
+       "\n"
+       "(internal)"},
 
-    {"reset_game_activity_tracking", (PyCFunction)PyResetGameActivityTracking,
-     METH_VARARGS | METH_KEYWORDS,
-     "reset_game_activity_tracking() -> None\n"
-     "\n"
-     "(internal)"},
+      {"reset_game_activity_tracking", (PyCFunction)PyResetGameActivityTracking,
+       METH_VARARGS | METH_KEYWORDS,
+       "reset_game_activity_tracking() -> None\n"
+       "\n"
+       "(internal)"},
 
-    {"set_replay_speed_exponent", PySetReplaySpeedExponent, METH_VARARGS,
-     "set_replay_speed_exponent(speed: int) -> None\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Set replay speed. Actual displayed speed is pow(2,speed)."},
+      {"set_replay_speed_exponent", PySetReplaySpeedExponent, METH_VARARGS,
+       "set_replay_speed_exponent(speed: int) -> None\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Set replay speed. Actual displayed speed is pow(2,speed)."},
 
-    {"get_replay_speed_exponent", PyGetReplaySpeedExponent, METH_VARARGS,
-     "get_replay_speed_exponent() -> int\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Returns current replay speed value. Actual displayed speed is "
-     "pow(2,speed)."},
+      {"get_replay_speed_exponent", PyGetReplaySpeedExponent, METH_VARARGS,
+       "get_replay_speed_exponent() -> int\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Returns current replay speed value. Actual displayed speed is "
+       "pow(2,speed)."},
 
-    {"set_debug_speed_exponent", PySetDebugSpeedExponent, METH_VARARGS,
-     "set_debug_speed_exponent(speed: int) -> None\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Sets the debug speed scale for the game. Actual speed is pow(2,speed)."},
+      {"set_debug_speed_exponent", PySetDebugSpeedExponent, METH_VARARGS,
+       "set_debug_speed_exponent(speed: int) -> None\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Sets the debug speed scale for the game. Actual speed is "
+       "pow(2,speed)."},
 
-    {"get_scores_to_beat", (PyCFunction)PyGetScoresToBeat,
-     METH_VARARGS | METH_KEYWORDS,
-     "get_scores_to_beat(level: str, config: str, callback: Callable) -> None\n"
-     "\n"
-     "(internal)"},
+      {"get_scores_to_beat", (PyCFunction)PyGetScoresToBeat,
+       METH_VARARGS | METH_KEYWORDS,
+       "get_scores_to_beat(level: str, config: str, callback: Callable) -> "
+       "None\n"
+       "\n"
+       "(internal)"},
 
-    {"get_game_roster", (PyCFunction)PyGetGameRoster,
-     METH_VARARGS | METH_KEYWORDS,
-     "get_game_roster() -> List[Dict[str, Any]]\n"
-     "\n"
-     "(internal)"},
+      {"get_game_roster", (PyCFunction)PyGetGameRoster,
+       METH_VARARGS | METH_KEYWORDS,
+       "get_game_roster() -> List[Dict[str, Any]]\n"
+       "\n"
+       "(internal)"},
 
-    {"get_foreground_host_activity", (PyCFunction)PyGetForegroundHostActivity,
-     METH_VARARGS | METH_KEYWORDS,
-     "get_foreground_host_activity() -> Optional[ba.Activity]\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Returns the ba.Activity currently in the foreground, or None if there\n"
-     "is none.\n"},
+      {"get_foreground_host_activity", (PyCFunction)PyGetForegroundHostActivity,
+       METH_VARARGS | METH_KEYWORDS,
+       "get_foreground_host_activity() -> Optional[ba.Activity]\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Returns the ba.Activity currently in the foreground, or None if there\n"
+       "is none.\n"},
 
-    {"set_map_bounds", (PyCFunction)PySetMapBounds,
-     METH_VARARGS | METH_KEYWORDS,
-     "set_map_bounds(bounds: Tuple[float, float, float, float, float, float])\n"
-     "  -> None\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Set map bounds. Generally nodes that go outside of this box are "
-     "killed."},
+      {"set_map_bounds", (PyCFunction)PySetMapBounds,
+       METH_VARARGS | METH_KEYWORDS,
+       "set_map_bounds(bounds: Tuple[float, float, float, float, float, "
+       "float])\n"
+       "  -> None\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Set map bounds. Generally nodes that go outside of this box are "
+       "killed."},
 
-    {"emitfx", (PyCFunction)PyEmitFx, METH_VARARGS | METH_KEYWORDS,
-     "emitfx(position: Sequence[float],\n"
-     "  velocity: Optional[Sequence[float]] = None,\n"
-     "  count: int = 10, scale: float = 1.0, spread: float = 1.0,\n"
-     "  chunk_type: str = 'rock', emit_type: str ='chunks',\n"
-     "  tendril_type: str = 'smoke') -> None\n"
-     "\n"
-     "Emit particles, smoke, etc. into the fx sim layer.\n"
-     "\n"
-     "Category: Gameplay Functions\n"
-     "\n"
-     "The fx sim layer is a secondary dynamics simulation that runs in\n"
-     "the background and just looks pretty; it does not affect gameplay.\n"
-     "Note that the actual amount emitted may vary depending on graphics\n"
-     "settings, exiting element counts, or other factors."},
+      {"emitfx", (PyCFunction)PyEmitFx, METH_VARARGS | METH_KEYWORDS,
+       "emitfx(position: Sequence[float],\n"
+       "  velocity: Optional[Sequence[float]] = None,\n"
+       "  count: int = 10, scale: float = 1.0, spread: float = 1.0,\n"
+       "  chunk_type: str = 'rock', emit_type: str ='chunks',\n"
+       "  tendril_type: str = 'smoke') -> None\n"
+       "\n"
+       "Emit particles, smoke, etc. into the fx sim layer.\n"
+       "\n"
+       "Category: Gameplay Functions\n"
+       "\n"
+       "The fx sim layer is a secondary dynamics simulation that runs in\n"
+       "the background and just looks pretty; it does not affect gameplay.\n"
+       "Note that the actual amount emitted may vary depending on graphics\n"
+       "settings, exiting element counts, or other factors."},
 
-    {"playsound", (PyCFunction)PyPlaySound, METH_VARARGS | METH_KEYWORDS,
-     "playsound(sound: Sound, volume: float = 1.0,\n"
-     "  position: Sequence[float] = None, host_only: bool = False) -> None\n"
-     "\n"
-     "Play a ba.Sound a single time.\n"
-     "\n"
-     "Category: Gameplay Functions\n"
-     "\n"
-     "If position is not provided, the sound will be at a constant volume\n"
-     "everywhere.  Position should be a float tuple of size 3."},
+      {"playsound", (PyCFunction)PyPlaySound, METH_VARARGS | METH_KEYWORDS,
+       "playsound(sound: Sound, volume: float = 1.0,\n"
+       "  position: Sequence[float] = None, host_only: bool = False) -> None\n"
+       "\n"
+       "Play a ba.Sound a single time.\n"
+       "\n"
+       "Category: Gameplay Functions\n"
+       "\n"
+       "If position is not provided, the sound will be at a constant volume\n"
+       "everywhere.  Position should be a float tuple of size 3."},
 
-    {"camerashake", (PyCFunction)PyCameraShake, METH_VARARGS | METH_KEYWORDS,
-     "camerashake(intensity: float = 1.0) -> None\n"
-     "\n"
-     "Shake the camera.\n"
-     "\n"
-     "Category: Gameplay Functions\n"
-     "\n"
-     "Note that some cameras and/or platforms (such as VR) may not display\n"
-     "camera-shake, so do not rely on this always being visible to the\n"
-     "player as a gameplay cue."},
+      {"camerashake", (PyCFunction)PyCameraShake, METH_VARARGS | METH_KEYWORDS,
+       "camerashake(intensity: float = 1.0) -> None\n"
+       "\n"
+       "Shake the camera.\n"
+       "\n"
+       "Category: Gameplay Functions\n"
+       "\n"
+       "Note that some cameras and/or platforms (such as VR) may not display\n"
+       "camera-shake, so do not rely on this always being visible to the\n"
+       "player as a gameplay cue."},
 
-    {"get_collision_info", PyGetCollisionInfo, METH_VARARGS,
-     "get_collision_info(*args: Any) -> Any\n"
-     "\n"
-     "Return collision related values\n"
-     "\n"
-     "Category: Gameplay Functions\n"
-     "\n"
-     "Returns a single collision value or tuple of values such as location,\n"
-     "depth, nodes involved, etc. Only call this in the handler of a\n"
-     "collision-triggered callback or message"},
+      {"get_collision_info", PyGetCollisionInfo, METH_VARARGS,
+       "get_collision_info(*args: Any) -> Any\n"
+       "\n"
+       "Return collision related values\n"
+       "\n"
+       "Category: Gameplay Functions\n"
+       "\n"
+       "Returns a single collision value or tuple of values such as location,\n"
+       "depth, nodes involved, etc. Only call this in the handler of a\n"
+       "collision-triggered callback or message"},
 
-    {"getnodes", PyGetNodes, METH_VARARGS,
-     "getnodes() -> list\n"
-     "\n"
-     "Return all nodes in the current ba.Context."
-     "\n"
-     "Category: Gameplay Functions"},
+      {"getnodes", PyGetNodes, METH_VARARGS,
+       "getnodes() -> list\n"
+       "\n"
+       "Return all nodes in the current ba.Context."
+       "\n"
+       "Category: Gameplay Functions"},
 
-    {"printnodes", PyPrintNodes, METH_VARARGS,
-     "printnodes() -> None\n"
-     "\n"
-     "Print various info about existing nodes; useful for debugging.\n"
-     "\n"
-     "Category: Gameplay Functions"},
+      {"printnodes", PyPrintNodes, METH_VARARGS,
+       "printnodes() -> None\n"
+       "\n"
+       "Print various info about existing nodes; useful for debugging.\n"
+       "\n"
+       "Category: Gameplay Functions"},
 
-    {"newnode", (PyCFunction)PyNewNode, METH_VARARGS | METH_KEYWORDS,
-     "newnode(type: str, owner: ba.Node = None,\n"
-     "attrs: dict = None, name: str = None, delegate: Any = None)\n"
-     " -> Node\n"
-     "\n"
-     "Add a node of the given type to the game.\n"
-     "\n"
-     "Category: Gameplay Functions\n"
-     "\n"
-     "If a dict is provided for 'attributes', the node's initial attributes\n"
-     "will be set based on them.\n"
-     "\n"
-     "'name', if provided, will be stored with the node purely for debugging\n"
-     "purposes. If no name is provided, an automatic one will be generated\n"
-     "such as 'terrain@foo.py:30'.\n"
-     "\n"
-     "If 'delegate' is provided, Python messages sent to the node will go to\n"
-     "that object's handlemessage() method. Note that the delegate is stored\n"
-     "as a weak-ref, so the node itself will not keep the object alive.\n"
-     "\n"
-     "if 'owner' is provided, the node will be automatically killed when that\n"
-     "object dies. 'owner' can be another node or a ba.Actor"},
-
-    {nullptr, nullptr, 0, nullptr}};
+      {"newnode", (PyCFunction)PyNewNode, METH_VARARGS | METH_KEYWORDS,
+       "newnode(type: str, owner: ba.Node = None,\n"
+       "attrs: dict = None, name: str = None, delegate: Any = None)\n"
+       " -> Node\n"
+       "\n"
+       "Add a node of the given type to the game.\n"
+       "\n"
+       "Category: Gameplay Functions\n"
+       "\n"
+       "If a dict is provided for 'attributes', the node's initial attributes\n"
+       "will be set based on them.\n"
+       "\n"
+       "'name', if provided, will be stored with the node purely for "
+       "debugging\n"
+       "purposes. If no name is provided, an automatic one will be generated\n"
+       "such as 'terrain@foo.py:30'.\n"
+       "\n"
+       "If 'delegate' is provided, Python messages sent to the node will go "
+       "to\n"
+       "that object's handlemessage() method. Note that the delegate is "
+       "stored\n"
+       "as a weak-ref, so the node itself will not keep the object alive.\n"
+       "\n"
+       "if 'owner' is provided, the node will be automatically killed when "
+       "that\n"
+       "object dies. 'owner' can be another node or a ba.Actor"},
+  };
+}
 
 #pragma clang diagnostic pop
 

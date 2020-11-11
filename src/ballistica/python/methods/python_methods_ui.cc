@@ -12,6 +12,7 @@
 #include "ballistica/game/game.h"
 #include "ballistica/input/input.h"
 #include "ballistica/python/python.h"
+#include "ballistica/python/python_sys.h"
 #include "ballistica/ui/root_ui.h"
 #include "ballistica/ui/ui.h"
 #include "ballistica/ui/widget/button_widget.h"
@@ -2295,441 +2296,454 @@ auto PyIsPartyIconVisible(PyObject* self, PyObject* args, PyObject* keywds)
   BA_PYTHON_CATCH;
 }
 
-PyMethodDef PythonMethodsUI::methods_def[] = {
-    {"is_party_icon_visible", (PyCFunction)PyIsPartyIconVisible,
-     METH_VARARGS | METH_KEYWORDS,
-     "is_party_icon_visible() -> bool\n"
-     "\n"
-     "(internal)"},
+auto PythonMethodsUI::GetMethods() -> std::vector<PyMethodDef> {
+  return {
+      {"is_party_icon_visible", (PyCFunction)PyIsPartyIconVisible,
+       METH_VARARGS | METH_KEYWORDS,
+       "is_party_icon_visible() -> bool\n"
+       "\n"
+       "(internal)"},
 
-    {"console_print", PyConsolePrint, METH_VARARGS,
-     "console_print(*args: Any) -> None\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Print the provided args to the game console (using str()).\n"
-     "For most debugging/info purposes you should just use Python's standard\n"
-     "print, which will show up in the game console as well."},
+      {"console_print", PyConsolePrint, METH_VARARGS,
+       "console_print(*args: Any) -> None\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Print the provided args to the game console (using str()).\n"
+       "For most debugging/info purposes you should just use Python's "
+       "standard\n"
+       "print, which will show up in the game console as well."},
 
-    {"open_dir_externally", (PyCFunction)PyOpenDirExternally,
-     METH_VARARGS | METH_KEYWORDS,
-     "open_dir_externally(path: str) -> None\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Open the provided dir in the default external app."},
+      {"open_dir_externally", (PyCFunction)PyOpenDirExternally,
+       METH_VARARGS | METH_KEYWORDS,
+       "open_dir_externally(path: str) -> None\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Open the provided dir in the default external app."},
 
-    {"open_file_externally", (PyCFunction)PyOpenFileExternally,
-     METH_VARARGS | METH_KEYWORDS,
-     "open_file_externally(path: str) -> None\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Open the provided file in the default external app."},
+      {"open_file_externally", (PyCFunction)PyOpenFileExternally,
+       METH_VARARGS | METH_KEYWORDS,
+       "open_file_externally(path: str) -> None\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Open the provided file in the default external app."},
 
-    {"open_url", (PyCFunction)PyOpenURL, METH_VARARGS | METH_KEYWORDS,
-     "open_url(address: str) -> None\n"
-     "\n"
-     "Open a provided URL.\n"
-     "\n"
-     "Category: General Utility Functions\n"
-     "\n"
-     "Open the provided url in a web-browser, or display the URL\n"
-     "string in a window if that isn't possible.\n"},
+      {"open_url", (PyCFunction)PyOpenURL, METH_VARARGS | METH_KEYWORDS,
+       "open_url(address: str) -> None\n"
+       "\n"
+       "Open a provided URL.\n"
+       "\n"
+       "Category: General Utility Functions\n"
+       "\n"
+       "Open the provided url in a web-browser, or display the URL\n"
+       "string in a window if that isn't possible.\n"},
 
-    {"back_press", (PyCFunction)PyBackPress, METH_VARARGS | METH_KEYWORDS,
-     "back_press() -> None\n"
-     "\n"
-     "(internal)"},
+      {"back_press", (PyCFunction)PyBackPress, METH_VARARGS | METH_KEYWORDS,
+       "back_press() -> None\n"
+       "\n"
+       "(internal)"},
 
-    {"has_video_ads", (PyCFunction)PyHasVideoAds, METH_VARARGS | METH_KEYWORDS,
-     "has_video_ads() -> bool\n"
-     "\n"
-     "(internal)"},
+      {"has_video_ads", (PyCFunction)PyHasVideoAds,
+       METH_VARARGS | METH_KEYWORDS,
+       "has_video_ads() -> bool\n"
+       "\n"
+       "(internal)"},
 
-    {"can_show_ad", (PyCFunction)PyCanShowAd, METH_VARARGS | METH_KEYWORDS,
-     "can_show_ad() -> bool\n"
-     "\n"
-     "(internal)"},
+      {"can_show_ad", (PyCFunction)PyCanShowAd, METH_VARARGS | METH_KEYWORDS,
+       "can_show_ad() -> bool\n"
+       "\n"
+       "(internal)"},
 
-    {"have_incentivized_ad", (PyCFunction)PyHaveIncentivizedAd,
-     METH_VARARGS | METH_KEYWORDS,
-     "have_incentivized_ad() -> bool\n"
-     "\n"
-     "(internal)"},
+      {"have_incentivized_ad", (PyCFunction)PyHaveIncentivizedAd,
+       METH_VARARGS | METH_KEYWORDS,
+       "have_incentivized_ad() -> bool\n"
+       "\n"
+       "(internal)"},
 
-    {"get_special_widget", (PyCFunction)PyGetSpecialWidget,
-     METH_VARARGS | METH_KEYWORDS,
-     "get_special_widget(name: str) -> Widget\n"
-     "\n"
-     "(internal)"},
+      {"get_special_widget", (PyCFunction)PyGetSpecialWidget,
+       METH_VARARGS | METH_KEYWORDS,
+       "get_special_widget(name: str) -> Widget\n"
+       "\n"
+       "(internal)"},
 
-    {"set_party_window_open", (PyCFunction)PySetPartyWindowOpen,
-     METH_VARARGS | METH_KEYWORDS,
-     "set_party_window_open(value: bool) -> None\n"
-     "\n"
-     "(internal)"},
+      {"set_party_window_open", (PyCFunction)PySetPartyWindowOpen,
+       METH_VARARGS | METH_KEYWORDS,
+       "set_party_window_open(value: bool) -> None\n"
+       "\n"
+       "(internal)"},
 
-    {"get_chat_messages", (PyCFunction)PyGetChatMessages,
-     METH_VARARGS | METH_KEYWORDS,
-     "get_chat_messages() -> List[str]\n"
-     "\n"
-     "(internal)"},
+      {"get_chat_messages", (PyCFunction)PyGetChatMessages,
+       METH_VARARGS | METH_KEYWORDS,
+       "get_chat_messages() -> List[str]\n"
+       "\n"
+       "(internal)"},
 
-    {"chatmessage", (PyCFunction)PyChatMessage, METH_VARARGS | METH_KEYWORDS,
-     "chatmessage(message: Union[str, ba.Lstr],\n"
-     "  clients: Sequence[int] = None,\n"
-     "  sender_override: str = None) -> None\n"
-     "\n"
-     "(internal)"},
+      {"chatmessage", (PyCFunction)PyChatMessage, METH_VARARGS | METH_KEYWORDS,
+       "chatmessage(message: Union[str, ba.Lstr],\n"
+       "  clients: Sequence[int] = None,\n"
+       "  sender_override: str = None) -> None\n"
+       "\n"
+       "(internal)"},
 
-    {"set_party_icon_always_visible", (PyCFunction)PySetPartyIconAlwaysVisible,
-     METH_VARARGS | METH_KEYWORDS,
-     "set_party_icon_always_visible(value: bool) -> None\n"
-     "\n"
-     "(internal)"},
+      {"set_party_icon_always_visible",
+       (PyCFunction)PySetPartyIconAlwaysVisible, METH_VARARGS | METH_KEYWORDS,
+       "set_party_icon_always_visible(value: bool) -> None\n"
+       "\n"
+       "(internal)"},
 
-    {"show_invites_ui", (PyCFunction)PyShowInvitesUI,
-     METH_VARARGS | METH_KEYWORDS,
-     "show_invites_ui() -> None\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Category: General Utility Functions"},
+      {"show_invites_ui", (PyCFunction)PyShowInvitesUI,
+       METH_VARARGS | METH_KEYWORDS,
+       "show_invites_ui() -> None\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Category: General Utility Functions"},
 
-    {"show_progress_bar", (PyCFunction)PyShowProgressBar,
-     METH_VARARGS | METH_KEYWORDS,
-     "show_progress_bar() -> None\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Category: General Utility Functions"},
+      {"show_progress_bar", (PyCFunction)PyShowProgressBar,
+       METH_VARARGS | METH_KEYWORDS,
+       "show_progress_bar() -> None\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Category: General Utility Functions"},
 
-    {"show_app_invite", (PyCFunction)PyShowAppInvite,
-     METH_VARARGS | METH_KEYWORDS,
-     "show_app_invite(title: Union[str, ba.Lstr],\n"
-     "  message: Union[str, ba.Lstr],\n"
-     "  code: str) -> None\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Category: General Utility Functions"},
+      {"show_app_invite", (PyCFunction)PyShowAppInvite,
+       METH_VARARGS | METH_KEYWORDS,
+       "show_app_invite(title: Union[str, ba.Lstr],\n"
+       "  message: Union[str, ba.Lstr],\n"
+       "  code: str) -> None\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Category: General Utility Functions"},
 
-    {"show_ad", (PyCFunction)PyShowAd, METH_VARARGS | METH_KEYWORDS,
-     "show_ad(purpose: str, on_completion_call: Callable[[], None] = None)\n"
-     " -> None\n"
-     "\n"
-     "(internal)"},
+      {"show_ad", (PyCFunction)PyShowAd, METH_VARARGS | METH_KEYWORDS,
+       "show_ad(purpose: str, on_completion_call: Callable[[], None] = None)\n"
+       " -> None\n"
+       "\n"
+       "(internal)"},
 
-    {"show_ad_2", (PyCFunction)PyShowAd2, METH_VARARGS | METH_KEYWORDS,
-     "show_ad_2(purpose: str,\n"
-     " on_completion_call: Callable[[bool], None] = None)\n"
-     " -> None\n"
-     "\n"
-     "(internal)"},
+      {"show_ad_2", (PyCFunction)PyShowAd2, METH_VARARGS | METH_KEYWORDS,
+       "show_ad_2(purpose: str,\n"
+       " on_completion_call: Callable[[bool], None] = None)\n"
+       " -> None\n"
+       "\n"
+       "(internal)"},
 
-    {"fade_screen", (PyCFunction)PyFadeScreen, METH_VARARGS | METH_KEYWORDS,
-     "fade_screen(to: int = 0, time: float = 0.25,\n"
-     "  endcall: Optional[Callable[[], None]] = None) -> None\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Fade the local game screen in our out from black over a duration of\n"
-     "time. if \"to\" is 0, the screen will fade out to black.  Otherwise it\n"
-     "will fade in from black. If endcall is provided, it will be run after a\n"
-     "completely faded frame is drawn."},
+      {"fade_screen", (PyCFunction)PyFadeScreen, METH_VARARGS | METH_KEYWORDS,
+       "fade_screen(to: int = 0, time: float = 0.25,\n"
+       "  endcall: Optional[Callable[[], None]] = None) -> None\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Fade the local game screen in our out from black over a duration of\n"
+       "time. if \"to\" is 0, the screen will fade out to black.  Otherwise "
+       "it\n"
+       "will fade in from black. If endcall is provided, it will be run after "
+       "a\n"
+       "completely faded frame is drawn."},
 
-    {"show_online_score_ui", (PyCFunction)PyShowOnlineScoreUI,
-     METH_VARARGS | METH_KEYWORDS,
-     "show_online_score_ui(show: str = 'general', game: str = None,\n"
-     "  game_version: str = None) -> None\n"
-     "\n"
-     "(internal)"},
+      {"show_online_score_ui", (PyCFunction)PyShowOnlineScoreUI,
+       METH_VARARGS | METH_KEYWORDS,
+       "show_online_score_ui(show: str = 'general', game: str = None,\n"
+       "  game_version: str = None) -> None\n"
+       "\n"
+       "(internal)"},
 
-    {"focus_window", (PyCFunction)PyFocusWindow, METH_VARARGS | METH_KEYWORDS,
-     "focus_window() -> None\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "A workaround for some unintentional backgrounding that occurs on mac"},
+      {"focus_window", (PyCFunction)PyFocusWindow, METH_VARARGS | METH_KEYWORDS,
+       "focus_window() -> None\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "A workaround for some unintentional backgrounding that occurs on mac"},
 
-    {"uibounds", (PyCFunction)PyUIBounds, METH_VARARGS | METH_KEYWORDS,
-     "uibounds() -> Tuple[float, float, float, float]\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Returns a tuple of 4 values: (x-min, x-max, y-min, y-max) representing\n"
-     "the range of values that can be plugged into a root level\n"
-     "ba.ContainerWidget's stack_offset value while guaranteeing that its\n"
-     "center remains onscreen.\n"},
+      {"uibounds", (PyCFunction)PyUIBounds, METH_VARARGS | METH_KEYWORDS,
+       "uibounds() -> Tuple[float, float, float, float]\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Returns a tuple of 4 values: (x-min, x-max, y-min, y-max) "
+       "representing\n"
+       "the range of values that can be plugged into a root level\n"
+       "ba.ContainerWidget's stack_offset value while guaranteeing that its\n"
+       "center remains onscreen.\n"},
 
-    {"buttonwidget", (PyCFunction)PyButtonWidget, METH_VARARGS | METH_KEYWORDS,
-     "buttonwidget(edit: ba.Widget = None,\n"
-     "  parent: ba.Widget = None,\n"
-     "  size: Sequence[float] = None,\n"
-     "  position: Sequence[float] = None,\n"
-     "  on_activate_call: Callable = None,\n"
-     "  label: Union[str, ba.Lstr] = None,\n"
-     "  color: Sequence[float] = None,\n"
-     "  down_widget: ba.Widget = None,\n"
-     "  up_widget: ba.Widget = None,\n"
-     "  left_widget: ba.Widget = None,\n"
-     "  right_widget: ba.Widget = None,\n"
-     "  texture: ba.Texture = None,\n"
-     "  text_scale: float = None,\n"
-     "  textcolor: Sequence[float] = None,\n"
-     "  enable_sound: bool = None,\n"
-     "  model_transparent: ba.Model = None,\n"
-     "  model_opaque: ba.Model = None,\n"
-     "  repeat: bool = None,\n"
-     "  scale: float = None,\n"
-     "  transition_delay: float = None,\n"
-     "  on_select_call: Callable = None,\n"
-     "  button_type: str = None,\n"
-     "  extra_touch_border_scale: float = None,\n"
-     "  selectable: bool = None,\n"
-     "  show_buffer_top: float = None,\n"
-     "  icon: ba.Texture = None,\n"
-     "  iconscale: float = None,\n"
-     "  icon_tint: float = None,\n"
-     "  icon_color: Sequence[float] = None,\n"
-     "  autoselect: bool = None,\n"
-     "  mask_texture: ba.Texture = None,\n"
-     "  tint_texture: ba.Texture = None,\n"
-     "  tint_color: Sequence[float] = None,\n"
-     "  tint2_color: Sequence[float] = None,\n"
-     "  text_flatness: float = None,\n"
-     "  text_res_scale: float = None,\n"
-     "  enabled: bool = None) -> ba.Widget\n"
-     "\n"
-     "Create or edit a button widget.\n"
-     "\n"
-     "Category: User Interface Functions\n"
-     "\n"
-     "Pass a valid existing ba.Widget as 'edit' to modify it; otherwise\n"
-     "a new one is created and returned. Arguments that are not set to None\n"
-     "are applied to the Widget."},
+      {"buttonwidget", (PyCFunction)PyButtonWidget,
+       METH_VARARGS | METH_KEYWORDS,
+       "buttonwidget(edit: ba.Widget = None,\n"
+       "  parent: ba.Widget = None,\n"
+       "  size: Sequence[float] = None,\n"
+       "  position: Sequence[float] = None,\n"
+       "  on_activate_call: Callable = None,\n"
+       "  label: Union[str, ba.Lstr] = None,\n"
+       "  color: Sequence[float] = None,\n"
+       "  down_widget: ba.Widget = None,\n"
+       "  up_widget: ba.Widget = None,\n"
+       "  left_widget: ba.Widget = None,\n"
+       "  right_widget: ba.Widget = None,\n"
+       "  texture: ba.Texture = None,\n"
+       "  text_scale: float = None,\n"
+       "  textcolor: Sequence[float] = None,\n"
+       "  enable_sound: bool = None,\n"
+       "  model_transparent: ba.Model = None,\n"
+       "  model_opaque: ba.Model = None,\n"
+       "  repeat: bool = None,\n"
+       "  scale: float = None,\n"
+       "  transition_delay: float = None,\n"
+       "  on_select_call: Callable = None,\n"
+       "  button_type: str = None,\n"
+       "  extra_touch_border_scale: float = None,\n"
+       "  selectable: bool = None,\n"
+       "  show_buffer_top: float = None,\n"
+       "  icon: ba.Texture = None,\n"
+       "  iconscale: float = None,\n"
+       "  icon_tint: float = None,\n"
+       "  icon_color: Sequence[float] = None,\n"
+       "  autoselect: bool = None,\n"
+       "  mask_texture: ba.Texture = None,\n"
+       "  tint_texture: ba.Texture = None,\n"
+       "  tint_color: Sequence[float] = None,\n"
+       "  tint2_color: Sequence[float] = None,\n"
+       "  text_flatness: float = None,\n"
+       "  text_res_scale: float = None,\n"
+       "  enabled: bool = None) -> ba.Widget\n"
+       "\n"
+       "Create or edit a button widget.\n"
+       "\n"
+       "Category: User Interface Functions\n"
+       "\n"
+       "Pass a valid existing ba.Widget as 'edit' to modify it; otherwise\n"
+       "a new one is created and returned. Arguments that are not set to None\n"
+       "are applied to the Widget."},
 
-    {"checkboxwidget", (PyCFunction)PyCheckBoxWidget,
-     METH_VARARGS | METH_KEYWORDS,
-     "checkboxwidget(edit: ba.Widget = None,\n"
-     "  parent: ba.Widget = None,\n"
-     "  size: Sequence[float] = None,\n"
-     "  position: Sequence[float] = None,\n"
-     "  text: Union[ba.Lstr, str] = None,\n"
-     "  value: bool = None,\n"
-     "  on_value_change_call: Callable[[bool], None] = None,\n"
-     "  on_select_call: Callable[[], None] = None,\n"
-     "  text_scale: float = None,\n"
-     "  textcolor: Sequence[float] = None,\n"
-     "  scale: float = None,\n"
-     "  is_radio_button: bool = None,\n"
-     "  maxwidth: float = None,\n"
-     "  autoselect: bool = None,\n"
-     "  color: Sequence[float] = None) -> ba.Widget\n"
-     "\n"
-     "Create or edit a check-box widget.\n"
-     "\n"
-     "Category: User Interface Functions\n"
-     "\n"
-     "Pass a valid existing ba.Widget as 'edit' to modify it; otherwise\n"
-     "a new one is created and returned. Arguments that are not set to None\n"
-     "are applied to the Widget."},
+      {"checkboxwidget", (PyCFunction)PyCheckBoxWidget,
+       METH_VARARGS | METH_KEYWORDS,
+       "checkboxwidget(edit: ba.Widget = None,\n"
+       "  parent: ba.Widget = None,\n"
+       "  size: Sequence[float] = None,\n"
+       "  position: Sequence[float] = None,\n"
+       "  text: Union[ba.Lstr, str] = None,\n"
+       "  value: bool = None,\n"
+       "  on_value_change_call: Callable[[bool], None] = None,\n"
+       "  on_select_call: Callable[[], None] = None,\n"
+       "  text_scale: float = None,\n"
+       "  textcolor: Sequence[float] = None,\n"
+       "  scale: float = None,\n"
+       "  is_radio_button: bool = None,\n"
+       "  maxwidth: float = None,\n"
+       "  autoselect: bool = None,\n"
+       "  color: Sequence[float] = None) -> ba.Widget\n"
+       "\n"
+       "Create or edit a check-box widget.\n"
+       "\n"
+       "Category: User Interface Functions\n"
+       "\n"
+       "Pass a valid existing ba.Widget as 'edit' to modify it; otherwise\n"
+       "a new one is created and returned. Arguments that are not set to None\n"
+       "are applied to the Widget."},
 
-    {"imagewidget", (PyCFunction)PyImageWidget, METH_VARARGS | METH_KEYWORDS,
-     "imagewidget(edit: ba.Widget = None, parent: ba.Widget = None,\n"
-     "  size: Sequence[float] = None, position: Sequence[float] = None,\n"
-     "  color: Sequence[float] = None, texture: ba.Texture = None,\n"
-     "  opacity: float = None, model_transparent: ba.Model = None,\n"
-     "  model_opaque: ba.Model = None, has_alpha_channel: bool = True,\n"
-     "  tint_texture: ba.Texture = None, tint_color: Sequence[float] = None,\n"
-     "  transition_delay: float = None, draw_controller: ba.Widget = None,\n"
-     "  tint2_color: Sequence[float] = None, tilt_scale: float = None,\n"
-     "  mask_texture: ba.Texture = None, radial_amount: float = None)\n"
-     "  -> ba.Widget\n"
-     "\n"
-     "Create or edit an image widget.\n"
-     "\n"
-     "Category: User Interface Functions\n"
-     "\n"
-     "Pass a valid existing ba.Widget as 'edit' to modify it; otherwise\n"
-     "a new one is created and returned. Arguments that are not set to None\n"
-     "are applied to the Widget."},
+      {"imagewidget", (PyCFunction)PyImageWidget, METH_VARARGS | METH_KEYWORDS,
+       "imagewidget(edit: ba.Widget = None, parent: ba.Widget = None,\n"
+       "  size: Sequence[float] = None, position: Sequence[float] = None,\n"
+       "  color: Sequence[float] = None, texture: ba.Texture = None,\n"
+       "  opacity: float = None, model_transparent: ba.Model = None,\n"
+       "  model_opaque: ba.Model = None, has_alpha_channel: bool = True,\n"
+       "  tint_texture: ba.Texture = None, tint_color: Sequence[float] = "
+       "None,\n"
+       "  transition_delay: float = None, draw_controller: ba.Widget = None,\n"
+       "  tint2_color: Sequence[float] = None, tilt_scale: float = None,\n"
+       "  mask_texture: ba.Texture = None, radial_amount: float = None)\n"
+       "  -> ba.Widget\n"
+       "\n"
+       "Create or edit an image widget.\n"
+       "\n"
+       "Category: User Interface Functions\n"
+       "\n"
+       "Pass a valid existing ba.Widget as 'edit' to modify it; otherwise\n"
+       "a new one is created and returned. Arguments that are not set to None\n"
+       "are applied to the Widget."},
 
-    {"columnwidget", (PyCFunction)PyColumnWidget, METH_VARARGS | METH_KEYWORDS,
-     "columnwidget(edit: ba.Widget = None,\n"
-     "  parent: ba.Widget = None,\n"
-     "  size: Sequence[float] = None,\n"
-     "  position: Sequence[float] = None,\n"
-     "  background: bool = None,\n"
-     "  selected_child: ba.Widget = None,\n"
-     "  visible_child: ba.Widget = None,\n"
-     "  single_depth: bool = None,\n"
-     "  print_list_exit_instructions: bool = None,\n"
-     "  left_border: float = None,\n"
-     "  top_border: float = None,\n"
-     "  bottom_border: float = None,\n"
-     "  selection_loops_to_parent: bool = None,\n"
-     "  border: float = None,\n"
-     "  margin: float = None,\n"
-     "  claims_left_right: bool = None,\n"
-     "  claims_tab: bool = None) -> ba.Widget\n"
-     "\n"
-     "Create or edit a column widget.\n"
-     "\n"
-     "Category: User Interface Functions\n"
-     "\n"
-     "Pass a valid existing ba.Widget as 'edit' to modify it; otherwise\n"
-     "a new one is created and returned. Arguments that are not set to None\n"
-     "are applied to the Widget."},
+      {"columnwidget", (PyCFunction)PyColumnWidget,
+       METH_VARARGS | METH_KEYWORDS,
+       "columnwidget(edit: ba.Widget = None,\n"
+       "  parent: ba.Widget = None,\n"
+       "  size: Sequence[float] = None,\n"
+       "  position: Sequence[float] = None,\n"
+       "  background: bool = None,\n"
+       "  selected_child: ba.Widget = None,\n"
+       "  visible_child: ba.Widget = None,\n"
+       "  single_depth: bool = None,\n"
+       "  print_list_exit_instructions: bool = None,\n"
+       "  left_border: float = None,\n"
+       "  top_border: float = None,\n"
+       "  bottom_border: float = None,\n"
+       "  selection_loops_to_parent: bool = None,\n"
+       "  border: float = None,\n"
+       "  margin: float = None,\n"
+       "  claims_left_right: bool = None,\n"
+       "  claims_tab: bool = None) -> ba.Widget\n"
+       "\n"
+       "Create or edit a column widget.\n"
+       "\n"
+       "Category: User Interface Functions\n"
+       "\n"
+       "Pass a valid existing ba.Widget as 'edit' to modify it; otherwise\n"
+       "a new one is created and returned. Arguments that are not set to None\n"
+       "are applied to the Widget."},
 
-    {"containerwidget", (PyCFunction)PyContainerWidget,
-     METH_VARARGS | METH_KEYWORDS,
-     "containerwidget(edit: ba.Widget = None,\n"
-     "  parent: ba.Widget = None,\n"
-     "  size: Sequence[float] = None,\n"
-     "  position: Sequence[float] = None,\n"
-     "  background: bool = None,\n"
-     "  selected_child: ba.Widget = None,\n"
-     "  transition: str = None,\n"
-     "  cancel_button: ba.Widget = None,\n"
-     "  start_button: ba.Widget = None,\n"
-     "  root_selectable: bool = None,\n"
-     "  on_activate_call: Callable[[], None] = None,\n"
-     "  claims_left_right: bool = None,\n"
-     "  claims_tab: bool = None,\n"
-     "  selection_loops: bool = None,\n"
-     "  selection_loops_to_parent: bool = None,\n"
-     "  scale: float = None,\n"
-     "  on_outside_click_call: Callable[[], None] = None,\n"
-     "  single_depth: bool = None,\n"
-     "  visible_child: ba.Widget = None,\n"
-     "  stack_offset: Sequence[float] = None,\n"
-     "  color: Sequence[float] = None,\n"
-     "  on_cancel_call: Callable[[], None] = None,\n"
-     "  print_list_exit_instructions: bool = None,\n"
-     "  click_activate: bool = None,\n"
-     "  always_highlight: bool = None,\n"
-     "  selectable: bool = None,\n"
-     "  scale_origin_stack_offset: Sequence[float] = None,\n"
-     "  toolbar_visibility: str = None,\n"
-     "  on_select_call: Callable[[], None] = None,\n"
-     "  claim_outside_clicks: bool = None,\n"
-     "  claims_up_down: bool = None) -> ba.Widget\n"
-     "\n"
-     "Create or edit a container widget.\n"
-     "\n"
-     "Category: User Interface Functions\n"
-     "\n"
-     "Pass a valid existing ba.Widget as 'edit' to modify it; otherwise\n"
-     "a new one is created and returned. Arguments that are not set to None\n"
-     "are applied to the Widget."},
+      {"containerwidget", (PyCFunction)PyContainerWidget,
+       METH_VARARGS | METH_KEYWORDS,
+       "containerwidget(edit: ba.Widget = None,\n"
+       "  parent: ba.Widget = None,\n"
+       "  size: Sequence[float] = None,\n"
+       "  position: Sequence[float] = None,\n"
+       "  background: bool = None,\n"
+       "  selected_child: ba.Widget = None,\n"
+       "  transition: str = None,\n"
+       "  cancel_button: ba.Widget = None,\n"
+       "  start_button: ba.Widget = None,\n"
+       "  root_selectable: bool = None,\n"
+       "  on_activate_call: Callable[[], None] = None,\n"
+       "  claims_left_right: bool = None,\n"
+       "  claims_tab: bool = None,\n"
+       "  selection_loops: bool = None,\n"
+       "  selection_loops_to_parent: bool = None,\n"
+       "  scale: float = None,\n"
+       "  on_outside_click_call: Callable[[], None] = None,\n"
+       "  single_depth: bool = None,\n"
+       "  visible_child: ba.Widget = None,\n"
+       "  stack_offset: Sequence[float] = None,\n"
+       "  color: Sequence[float] = None,\n"
+       "  on_cancel_call: Callable[[], None] = None,\n"
+       "  print_list_exit_instructions: bool = None,\n"
+       "  click_activate: bool = None,\n"
+       "  always_highlight: bool = None,\n"
+       "  selectable: bool = None,\n"
+       "  scale_origin_stack_offset: Sequence[float] = None,\n"
+       "  toolbar_visibility: str = None,\n"
+       "  on_select_call: Callable[[], None] = None,\n"
+       "  claim_outside_clicks: bool = None,\n"
+       "  claims_up_down: bool = None) -> ba.Widget\n"
+       "\n"
+       "Create or edit a container widget.\n"
+       "\n"
+       "Category: User Interface Functions\n"
+       "\n"
+       "Pass a valid existing ba.Widget as 'edit' to modify it; otherwise\n"
+       "a new one is created and returned. Arguments that are not set to None\n"
+       "are applied to the Widget."},
 
-    {"rowwidget", (PyCFunction)PyRowWidget, METH_VARARGS | METH_KEYWORDS,
-     "rowwidget(edit: Widget = None, parent: Widget = None,\n"
-     "  size: Sequence[float] = None,\n"
-     "  position: Sequence[float] = None,\n"
-     "  background: bool = None, selected_child: Widget = None,\n"
-     "  visible_child: Widget = None,\n"
-     "  claims_left_right: bool = None,\n"
-     "  claims_tab: bool = None,\n"
-     "  selection_loops_to_parent: bool = None) -> Widget\n"
-     "\n"
-     "Create or edit a row widget.\n"
-     "\n"
-     "Category: User Interface Functions\n"
-     "\n"
-     "Pass a valid existing ba.Widget as 'edit' to modify it; otherwise\n"
-     "a new one is created and returned. Arguments that are not set to None\n"
-     "are applied to the Widget."},
+      {"rowwidget", (PyCFunction)PyRowWidget, METH_VARARGS | METH_KEYWORDS,
+       "rowwidget(edit: Widget = None, parent: Widget = None,\n"
+       "  size: Sequence[float] = None,\n"
+       "  position: Sequence[float] = None,\n"
+       "  background: bool = None, selected_child: Widget = None,\n"
+       "  visible_child: Widget = None,\n"
+       "  claims_left_right: bool = None,\n"
+       "  claims_tab: bool = None,\n"
+       "  selection_loops_to_parent: bool = None) -> Widget\n"
+       "\n"
+       "Create or edit a row widget.\n"
+       "\n"
+       "Category: User Interface Functions\n"
+       "\n"
+       "Pass a valid existing ba.Widget as 'edit' to modify it; otherwise\n"
+       "a new one is created and returned. Arguments that are not set to None\n"
+       "are applied to the Widget."},
 
-    {"scrollwidget", (PyCFunction)PyScrollWidget, METH_VARARGS | METH_KEYWORDS,
-     "scrollwidget(edit: ba.Widget = None, parent: ba.Widget = None,\n"
-     "  size: Sequence[float] = None, position: Sequence[float] = None,\n"
-     "  background: bool = None, selected_child: ba.Widget = None,\n"
-     "  capture_arrows: bool = False, on_select_call: Callable = None,\n"
-     "  center_small_content: bool = None, color: Sequence[float] = None,\n"
-     "  highlight: bool = None, border_opacity: float = None,\n"
-     "  simple_culling_v: float = None,\n"
-     "  selection_loops_to_parent: bool = None,\n"
-     "  claims_left_right: bool = None,\n"
-     "  claims_up_down: bool = None,\n"
-     "  claims_tab: bool = None,\n"
-     "  autoselect: bool = None) -> ba.Widget\n"
-     "\n"
-     "Create or edit a scroll widget.\n"
-     "\n"
-     "Category: User Interface Functions\n"
-     "\n"
-     "Pass a valid existing ba.Widget as 'edit' to modify it; otherwise\n"
-     "a new one is created and returned. Arguments that are not set to None\n"
-     "are applied to the Widget."},
+      {"scrollwidget", (PyCFunction)PyScrollWidget,
+       METH_VARARGS | METH_KEYWORDS,
+       "scrollwidget(edit: ba.Widget = None, parent: ba.Widget = None,\n"
+       "  size: Sequence[float] = None, position: Sequence[float] = None,\n"
+       "  background: bool = None, selected_child: ba.Widget = None,\n"
+       "  capture_arrows: bool = False, on_select_call: Callable = None,\n"
+       "  center_small_content: bool = None, color: Sequence[float] = None,\n"
+       "  highlight: bool = None, border_opacity: float = None,\n"
+       "  simple_culling_v: float = None,\n"
+       "  selection_loops_to_parent: bool = None,\n"
+       "  claims_left_right: bool = None,\n"
+       "  claims_up_down: bool = None,\n"
+       "  claims_tab: bool = None,\n"
+       "  autoselect: bool = None) -> ba.Widget\n"
+       "\n"
+       "Create or edit a scroll widget.\n"
+       "\n"
+       "Category: User Interface Functions\n"
+       "\n"
+       "Pass a valid existing ba.Widget as 'edit' to modify it; otherwise\n"
+       "a new one is created and returned. Arguments that are not set to None\n"
+       "are applied to the Widget."},
 
-    {"hscrollwidget", (PyCFunction)PyHScrollWidget,
-     METH_VARARGS | METH_KEYWORDS,
-     "hscrollwidget(edit: ba.Widget = None, parent: ba.Widget = None,\n"
-     "  size: Sequence[float] = None, position: Sequence[float] = None,\n"
-     "  background: bool = None, selected_child: ba.Widget = None,\n"
-     "  capture_arrows: bool = None,\n"
-     "  on_select_call: Callable[[], None] = None,\n"
-     "  center_small_content: bool = None, color: Sequence[float] = None,\n"
-     "  highlight: bool = None, border_opacity: float = None,\n"
-     "  simple_culling_h: float = None,\n"
-     "  claims_left_right: bool = None,\n"
-     "  claims_up_down: bool = None,\n"
-     "  claims_tab: bool = None)  -> ba.Widget\n"
-     "\n"
-     "Create or edit a horizontal scroll widget.\n"
-     "\n"
-     "Category: User Interface Functions\n"
-     "\n"
-     "Pass a valid existing ba.Widget as 'edit' to modify it; otherwise\n"
-     "a new one is created and returned. Arguments that are not set to None\n"
-     "are applied to the Widget."},
+      {"hscrollwidget", (PyCFunction)PyHScrollWidget,
+       METH_VARARGS | METH_KEYWORDS,
+       "hscrollwidget(edit: ba.Widget = None, parent: ba.Widget = None,\n"
+       "  size: Sequence[float] = None, position: Sequence[float] = None,\n"
+       "  background: bool = None, selected_child: ba.Widget = None,\n"
+       "  capture_arrows: bool = None,\n"
+       "  on_select_call: Callable[[], None] = None,\n"
+       "  center_small_content: bool = None, color: Sequence[float] = None,\n"
+       "  highlight: bool = None, border_opacity: float = None,\n"
+       "  simple_culling_h: float = None,\n"
+       "  claims_left_right: bool = None,\n"
+       "  claims_up_down: bool = None,\n"
+       "  claims_tab: bool = None)  -> ba.Widget\n"
+       "\n"
+       "Create or edit a horizontal scroll widget.\n"
+       "\n"
+       "Category: User Interface Functions\n"
+       "\n"
+       "Pass a valid existing ba.Widget as 'edit' to modify it; otherwise\n"
+       "a new one is created and returned. Arguments that are not set to None\n"
+       "are applied to the Widget."},
 
-    {"textwidget", (PyCFunction)PyTextWidget, METH_VARARGS | METH_KEYWORDS,
-     "textwidget(edit: Widget = None, parent: Widget = None,\n"
-     "  size: Sequence[float] = None, position: Sequence[float] = None,\n"
-     "  text: Union[str, ba.Lstr] = None, v_align: str = None,\n"
-     "  h_align: str = None, editable: bool = None, padding: float = None,\n"
-     "  on_return_press_call: Callable[[], None] = None,\n"
-     "  on_activate_call: Callable[[], None] = None,\n"
-     "  selectable: bool = None, query: Widget = None, max_chars: int = None,\n"
-     "  color: Sequence[float] = None, click_activate: bool = None,\n"
-     "  on_select_call: Callable[[], None] = None,\n"
-     "  always_highlight: bool = None, draw_controller: Widget = None,\n"
-     "  scale: float = None, corner_scale: float = None,\n"
-     "  description: Union[str, ba.Lstr] = None,\n"
-     "  transition_delay: float = None, maxwidth: float = None,\n"
-     "  max_height: float = None, flatness: float = None,\n"
-     "  shadow: float = None, autoselect: bool = None, rotate: float = None,\n"
-     "  enabled: bool = None, force_internal_editing: bool = None,\n"
-     "  always_show_carat: bool = None, big: bool = None,\n"
-     "  extra_touch_border_scale: float = None, res_scale: float = None)\n"
-     "  -> Widget\n"
-     "\n"
-     "Create or edit a text widget.\n"
-     "\n"
-     "Category: User Interface Functions\n"
-     "\n"
-     "Pass a valid existing ba.Widget as 'edit' to modify it; otherwise\n"
-     "a new one is created and returned. Arguments that are not set to None\n"
-     "are applied to the Widget."},
+      {"textwidget", (PyCFunction)PyTextWidget, METH_VARARGS | METH_KEYWORDS,
+       "textwidget(edit: Widget = None, parent: Widget = None,\n"
+       "  size: Sequence[float] = None, position: Sequence[float] = None,\n"
+       "  text: Union[str, ba.Lstr] = None, v_align: str = None,\n"
+       "  h_align: str = None, editable: bool = None, padding: float = None,\n"
+       "  on_return_press_call: Callable[[], None] = None,\n"
+       "  on_activate_call: Callable[[], None] = None,\n"
+       "  selectable: bool = None, query: Widget = None, max_chars: int = "
+       "None,\n"
+       "  color: Sequence[float] = None, click_activate: bool = None,\n"
+       "  on_select_call: Callable[[], None] = None,\n"
+       "  always_highlight: bool = None, draw_controller: Widget = None,\n"
+       "  scale: float = None, corner_scale: float = None,\n"
+       "  description: Union[str, ba.Lstr] = None,\n"
+       "  transition_delay: float = None, maxwidth: float = None,\n"
+       "  max_height: float = None, flatness: float = None,\n"
+       "  shadow: float = None, autoselect: bool = None, rotate: float = "
+       "None,\n"
+       "  enabled: bool = None, force_internal_editing: bool = None,\n"
+       "  always_show_carat: bool = None, big: bool = None,\n"
+       "  extra_touch_border_scale: float = None, res_scale: float = None)\n"
+       "  -> Widget\n"
+       "\n"
+       "Create or edit a text widget.\n"
+       "\n"
+       "Category: User Interface Functions\n"
+       "\n"
+       "Pass a valid existing ba.Widget as 'edit' to modify it; otherwise\n"
+       "a new one is created and returned. Arguments that are not set to None\n"
+       "are applied to the Widget."},
 
-    {"widget", (PyCFunction)PyWidgetCall, METH_VARARGS | METH_KEYWORDS,
-     "widget(edit: ba.Widget = None, up_widget: ba.Widget = None,\n"
-     "  down_widget: ba.Widget = None, left_widget: ba.Widget = None,\n"
-     "  right_widget: ba.Widget = None, show_buffer_top: float = None,\n"
-     "  show_buffer_bottom: float = None, show_buffer_left: float = None,\n"
-     "  show_buffer_right: float = None, autoselect: bool = None) -> None\n"
-     "\n"
-     "Edit common attributes of any widget.\n"
-     "\n"
-     "Category: User Interface Functions\n"
-     "\n"
-     "Unlike other UI calls, this can only be used to edit, not to create.\n"},
-
-    {nullptr, nullptr, 0, nullptr}};
+      {"widget", (PyCFunction)PyWidgetCall, METH_VARARGS | METH_KEYWORDS,
+       "widget(edit: ba.Widget = None, up_widget: ba.Widget = None,\n"
+       "  down_widget: ba.Widget = None, left_widget: ba.Widget = None,\n"
+       "  right_widget: ba.Widget = None, show_buffer_top: float = None,\n"
+       "  show_buffer_bottom: float = None, show_buffer_left: float = None,\n"
+       "  show_buffer_right: float = None, autoselect: bool = None) -> None\n"
+       "\n"
+       "Edit common attributes of any widget.\n"
+       "\n"
+       "Category: User Interface Functions\n"
+       "\n"
+       "Unlike other UI calls, this can only be used to edit, not to "
+       "create.\n"},
+  };
+}
 
 #pragma clang diagnostic pop
 

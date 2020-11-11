@@ -12,6 +12,7 @@
 #include "ballistica/input/input.h"
 #include "ballistica/platform/platform.h"
 #include "ballistica/python/python.h"
+#include "ballistica/python/python_sys.h"
 #include "ballistica/ui/ui.h"
 
 namespace ballistica {
@@ -265,129 +266,131 @@ auto PyGetLocalActiveInputDevicesCount(PyObject* self, PyObject* args,
   BA_PYTHON_CATCH;
 }
 
-PyMethodDef PythonMethodsInput::methods_def[] = {
-    {"get_local_active_input_devices_count",
-     (PyCFunction)PyGetLocalActiveInputDevicesCount,
-     METH_VARARGS | METH_KEYWORDS,
-     "get_local_active_input_devices_count() -> int\n"
-     "\n"
-     "(internal)"},
+auto PythonMethodsInput::GetMethods() -> std::vector<PyMethodDef> {
+  return {
+      {"get_local_active_input_devices_count",
+       (PyCFunction)PyGetLocalActiveInputDevicesCount,
+       METH_VARARGS | METH_KEYWORDS,
+       "get_local_active_input_devices_count() -> int\n"
+       "\n"
+       "(internal)"},
 
-    {"getinputdevice", (PyCFunction)PyGetInputDevice,
-     METH_VARARGS | METH_KEYWORDS,
-     "getinputdevice(name: str, unique_id: str, doraise: bool = True)\n"
-     "  -> <varies>\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Given a type name and a unique identifier, returns an InputDevice.\n"
-     "Throws an Exception if the input-device is not found, or returns None\n"
-     "if 'doraise' is False.\n"},
+      {"getinputdevice", (PyCFunction)PyGetInputDevice,
+       METH_VARARGS | METH_KEYWORDS,
+       "getinputdevice(name: str, unique_id: str, doraise: bool = True)\n"
+       "  -> <varies>\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Given a type name and a unique identifier, returns an InputDevice.\n"
+       "Throws an Exception if the input-device is not found, or returns None\n"
+       "if 'doraise' is False.\n"},
 
-    {"set_ui_input_device", (PyCFunction)PySetUIInputDevice,
-     METH_VARARGS | METH_KEYWORDS,
-     "set_ui_input_device(input_device: Optional[ba.InputDevice]) -> None\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Sets the input-device that currently owns the user interface."},
+      {"set_ui_input_device", (PyCFunction)PySetUIInputDevice,
+       METH_VARARGS | METH_KEYWORDS,
+       "set_ui_input_device(input_device: Optional[ba.InputDevice]) -> None\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Sets the input-device that currently owns the user interface."},
 
-    {"get_ui_input_device", (PyCFunction)PyGetUIInputDevice,
-     METH_VARARGS | METH_KEYWORDS,
-     "get_ui_input_device() -> ba.InputDevice\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Returns the input-device that currently owns the user interface, or\n"
-     "None if there is none."},
+      {"get_ui_input_device", (PyCFunction)PyGetUIInputDevice,
+       METH_VARARGS | METH_KEYWORDS,
+       "get_ui_input_device() -> ba.InputDevice\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Returns the input-device that currently owns the user interface, or\n"
+       "None if there is none."},
 
-    {"unlock_all_input", PyUnlockAllInput, METH_VARARGS,
-     "unlock_all_input() -> None\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Resumes normal keyboard, mouse, and gamepad event processing."},
+      {"unlock_all_input", PyUnlockAllInput, METH_VARARGS,
+       "unlock_all_input() -> None\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Resumes normal keyboard, mouse, and gamepad event processing."},
 
-    {"lock_all_input", PyLockAllInput, METH_VARARGS,
-     "lock_all_input() -> None\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Prevents all keyboard, mouse, and gamepad events from being processed."},
+      {"lock_all_input", PyLockAllInput, METH_VARARGS,
+       "lock_all_input() -> None\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Prevents all keyboard, mouse, and gamepad events from being "
+       "processed."},
 
-    {"release_keyboard_input", PyReleaseKeyboardInput, METH_VARARGS,
-     "release_keyboard_input() -> None\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Resumes normal keyboard event processing."},
+      {"release_keyboard_input", PyReleaseKeyboardInput, METH_VARARGS,
+       "release_keyboard_input() -> None\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Resumes normal keyboard event processing."},
 
-    {"capture_keyboard_input", PyCaptureKeyboardInput, METH_VARARGS,
-     "capture_keyboard_input(call: Callable[[dict], None]) -> None\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Add a callable to be called for subsequent keyboard-game-pad events.\n"
-     "The method is passed a dict containing info about the event."},
+      {"capture_keyboard_input", PyCaptureKeyboardInput, METH_VARARGS,
+       "capture_keyboard_input(call: Callable[[dict], None]) -> None\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Add a callable to be called for subsequent keyboard-game-pad events.\n"
+       "The method is passed a dict containing info about the event."},
 
-    {"release_gamepad_input", PyReleaseGamePadInput, METH_VARARGS,
-     "release_gamepad_input() -> None\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Resumes normal gamepad event processing."},
+      {"release_gamepad_input", PyReleaseGamePadInput, METH_VARARGS,
+       "release_gamepad_input() -> None\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Resumes normal gamepad event processing."},
 
-    {"capture_gamepad_input", PyCaptureGamePadInput, METH_VARARGS,
-     "capture_gamepad_input(call: Callable[[dict], None]) -> None\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Add a callable to be called for subsequent gamepad events.\n"
-     "The method is passed a dict containing info about the event."},
+      {"capture_gamepad_input", PyCaptureGamePadInput, METH_VARARGS,
+       "capture_gamepad_input(call: Callable[[dict], None]) -> None\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Add a callable to be called for subsequent gamepad events.\n"
+       "The method is passed a dict containing info about the event."},
 
-    {"set_touchscreen_editing", PySetTouchscreenEditing, METH_VARARGS,
-     "set_touchscreen_editing(editing: bool) -> None\n"
-     "\n"
-     "(internal)"},
+      {"set_touchscreen_editing", PySetTouchscreenEditing, METH_VARARGS,
+       "set_touchscreen_editing(editing: bool) -> None\n"
+       "\n"
+       "(internal)"},
 
-    {"get_device_login_id", (PyCFunction)PyGetDeviceLoginID,
-     METH_VARARGS | METH_KEYWORDS, "internal"},
+      {"get_device_login_id", (PyCFunction)PyGetDeviceLoginID,
+       METH_VARARGS | METH_KEYWORDS, "internal"},
 
-    {"set_device_account", (PyCFunction)PySetDeviceAccount,
-     METH_VARARGS | METH_KEYWORDS, "internal"},
+      {"set_device_account", (PyCFunction)PySetDeviceAccount,
+       METH_VARARGS | METH_KEYWORDS, "internal"},
 
-    {"stop_listening_for_wii_remotes", PyStopListeningForWiiRemotes,
-     METH_VARARGS,
-     "stop_listening_for_wii_remotes() -> None\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Stop listening for connections from wii remotes."},
+      {"stop_listening_for_wii_remotes", PyStopListeningForWiiRemotes,
+       METH_VARARGS,
+       "stop_listening_for_wii_remotes() -> None\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Stop listening for connections from wii remotes."},
 
-    {"start_listening_for_wii_remotes", PyStartListeningForWiiRemotes,
-     METH_VARARGS,
-     "start_listening_for_wii_remotes() -> None\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Start listening for connections from wii remotes."},
+      {"start_listening_for_wii_remotes", PyStartListeningForWiiRemotes,
+       METH_VARARGS,
+       "start_listening_for_wii_remotes() -> None\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Start listening for connections from wii remotes."},
 
-    {"have_touchscreen_input", PyHaveTouchScreenInput, METH_VARARGS,
-     "have_touchscreen_input() -> bool\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Returns whether or not a touch-screen input is present"},
+      {"have_touchscreen_input", PyHaveTouchScreenInput, METH_VARARGS,
+       "have_touchscreen_input() -> bool\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Returns whether or not a touch-screen input is present"},
 
-    {"get_configurable_game_pads", PyGetConfigurableGamePads, METH_VARARGS,
-     "get_configurable_game_pads() -> list\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Returns a list of the currently connected gamepads that can be\n"
-     "configured."},
-
-    {nullptr, nullptr, 0, nullptr}};
+      {"get_configurable_game_pads", PyGetConfigurableGamePads, METH_VARARGS,
+       "get_configurable_game_pads() -> list\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Returns a list of the currently connected gamepads that can be\n"
+       "configured."},
+  };
+}
 
 #pragma clang diagnostic pop
 

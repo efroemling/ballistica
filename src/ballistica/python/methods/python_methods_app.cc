@@ -3,7 +3,6 @@
 #include "ballistica/python/methods/python_methods_app.h"
 
 #include <string>
-#include <vector>
 
 #include "ballistica/app/app.h"
 #include "ballistica/app/app_globals.h"
@@ -19,6 +18,7 @@
 #include "ballistica/python/class/python_class_session_data.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_context_call_runnable.h"
+#include "ballistica/python/python_sys.h"
 #include "ballistica/scene/scene.h"
 
 namespace ballistica {
@@ -885,313 +885,339 @@ auto PyTimeFormatCheck(PyObject* self, PyObject* args, PyObject* keywds)
   BA_PYTHON_CATCH;
 }
 
-PyMethodDef PythonMethodsApp::methods_def[] = {
+auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
+  return {
     {"appname", (PyCFunction)PyAppName, METH_NOARGS,
      "appname() -> str\n"
      "\n"
      "(internal)\n"},
-    {"appnameupper", (PyCFunction)PyAppNameUpper, METH_NOARGS,
-     "appnameupper() -> str\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Return whether this build of the game can display full unicode such as\n"
-     "Emoji, Asian languages, etc.\n"},
-    {"is_xcode_build", (PyCFunction)PyIsXCodeBuild, METH_NOARGS,
-     "is_xcode_build() -> bool\n"
-     "\n"
-     "(internal)\n"},
-    {"can_display_full_unicode", (PyCFunction)PyCanDisplayFullUnicode,
-     METH_NOARGS,
-     "can_display_full_unicode() -> bool\n"
-     "\n"
-     "(internal)\n"},
-    {"time_format_check", (PyCFunction)PyTimeFormatCheck,
-     METH_VARARGS | METH_KEYWORDS,
-     "time_format_check(time_format: ba.TimeFormat, length: Union[float, "
-     "int])\n"
-     "  -> None\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Logs suspicious time values for timers or animate calls.\n"
-     "\n"
-     "(for helping with the transition from milliseconds-based time calls\n"
-     "to seconds-based ones)"},
+        {"appnameupper", (PyCFunction)PyAppNameUpper, METH_NOARGS,
+         "appnameupper() -> str\n"
+         "\n"
+         "(internal)\n"
+         "\n"
+         "Return whether this build of the game can display full unicode such "
+         "as\n"
+         "Emoji, Asian languages, etc.\n"},
+        {"is_xcode_build", (PyCFunction)PyIsXCodeBuild, METH_NOARGS,
+         "is_xcode_build() -> bool\n"
+         "\n"
+         "(internal)\n"},
+        {"can_display_full_unicode", (PyCFunction)PyCanDisplayFullUnicode,
+         METH_NOARGS,
+         "can_display_full_unicode() -> bool\n"
+         "\n"
+         "(internal)\n"},
+        {"time_format_check", (PyCFunction)PyTimeFormatCheck,
+         METH_VARARGS | METH_KEYWORDS,
+         "time_format_check(time_format: ba.TimeFormat, length: Union[float, "
+         "int])\n"
+         "  -> None\n"
+         "\n"
+         "(internal)\n"
+         "\n"
+         "Logs suspicious time values for timers or animate calls.\n"
+         "\n"
+         "(for helping with the transition from milliseconds-based time calls\n"
+         "to seconds-based ones)"},
 
-    {"log", (PyCFunction)PyLog, METH_VARARGS | METH_KEYWORDS,
-     "log(message: str, to_stdout: bool = True,\n"
-     "    to_server: bool = True) -> None\n"
-     "\n"
-     "Category: General Utility Functions\n"
-     "\n"
-     "Log a message. This goes to the default logging mechanism depending\n"
-     "on the platform (stdout on mac, android log on android, etc).\n"
-     "\n"
-     "Log messages also go to the in-game console unless 'to_console'\n"
-     "is False. They are also sent to the master-server for use in analyzing\n"
-     "issues unless to_server is False.\n"
-     "\n"
-     "Python's standard print() is wired to call this (with default values)\n"
-     "so in most cases you can just use that."},
+        {"log", (PyCFunction)PyLog, METH_VARARGS | METH_KEYWORDS,
+         "log(message: str, to_stdout: bool = True,\n"
+         "    to_server: bool = True) -> None\n"
+         "\n"
+         "Category: General Utility Functions\n"
+         "\n"
+         "Log a message. This goes to the default logging mechanism depending\n"
+         "on the platform (stdout on mac, android log on android, etc).\n"
+         "\n"
+         "Log messages also go to the in-game console unless 'to_console'\n"
+         "is False. They are also sent to the master-server for use in "
+         "analyzing\n"
+         "issues unless to_server is False.\n"
+         "\n"
+         "Python's standard print() is wired to call this (with default "
+         "values)\n"
+         "so in most cases you can just use that."},
 
-    {"print_stdout", PyPrintStdout, METH_VARARGS,
-     "print_stdout(message: str) -> None\n"
-     "\n"
-     "(internal)"},
+        {"print_stdout", PyPrintStdout, METH_VARARGS,
+         "print_stdout(message: str) -> None\n"
+         "\n"
+         "(internal)"},
 
-    {"print_stderr", PyPrintStderr, METH_VARARGS,
-     "print_stderr(message: str) -> None\n"
-     "\n"
-     "(internal)"},
+        {"print_stderr", PyPrintStderr, METH_VARARGS,
+         "print_stderr(message: str) -> None\n"
+         "\n"
+         "(internal)"},
 
-    {"set_stress_testing", PySetStressTesting, METH_VARARGS,
-     "set_stress_testing(testing: bool, player_count: int) -> None\n"
-     "\n"
-     "(internal)"},
+        {"set_stress_testing", PySetStressTesting, METH_VARARGS,
+         "set_stress_testing(testing: bool, player_count: int) -> None\n"
+         "\n"
+         "(internal)"},
 
-    {"env", (PyCFunction)PyEnv, METH_NOARGS,
-     "env() -> dict\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Returns a dict containing general info about the operating environment\n"
-     "such as version, platform, etc.\n"
-     "This info is now exposed through ba.App; refer to those docs for\n"
-     "info on specific elements."},
+        {"env", (PyCFunction)PyEnv, METH_NOARGS,
+         "env() -> dict\n"
+         "\n"
+         "(internal)\n"
+         "\n"
+         "Returns a dict containing general info about the operating "
+         "environment\n"
+         "such as version, platform, etc.\n"
+         "This info is now exposed through ba.App; refer to those docs for\n"
+         "info on specific elements."},
 
-    {"commit_config", (PyCFunction)PyCommitConfig, METH_VARARGS | METH_KEYWORDS,
-     "commit_config(config: str) -> None\n"
-     "\n"
-     "(internal)"},
+        {"commit_config", (PyCFunction)PyCommitConfig,
+         METH_VARARGS | METH_KEYWORDS,
+         "commit_config(config: str) -> None\n"
+         "\n"
+         "(internal)"},
 
-    {"apply_config", PyApplyConfig, METH_VARARGS,
-     "apply_config() -> None\n"
-     "\n"
-     "(internal)"},
+        {"apply_config", PyApplyConfig, METH_VARARGS,
+         "apply_config() -> None\n"
+         "\n"
+         "(internal)"},
 
 #if BA_DEBUG_BUILD
-    {"bless", (PyCFunction)PyBless, METH_VARARGS | METH_KEYWORDS,
-     "bless() -> None\n"
-     "\n"
-     "(internal)"},
+        {"bless", (PyCFunction)PyBless, METH_VARARGS | METH_KEYWORDS,
+         "bless() -> None\n"
+         "\n"
+         "(internal)"},
 #endif
 
-    {"quit", (PyCFunction)PyQuit, METH_VARARGS | METH_KEYWORDS,
-     "quit(soft: bool = False, back: bool = False) -> None\n"
-     "\n"
-     "Quit the game.\n"
-     "\n"
-     "Category: General Utility Functions\n"
-     "\n"
-     "On systems like android, 'soft' will end the activity but keep the\n"
-     "app running."},
+        {"quit", (PyCFunction)PyQuit, METH_VARARGS | METH_KEYWORDS,
+         "quit(soft: bool = False, back: bool = False) -> None\n"
+         "\n"
+         "Quit the game.\n"
+         "\n"
+         "Category: General Utility Functions\n"
+         "\n"
+         "On systems like android, 'soft' will end the activity but keep the\n"
+         "app running."},
 
-    {"screenmessage", (PyCFunction)PyScreenMessage,
-     METH_VARARGS | METH_KEYWORDS,
-     "screenmessage(message: Union[str, ba.Lstr],\n"
-     "  color: Sequence[float] = None, top: bool = False,\n"
-     "  image: Dict[str, Any] = None, log: bool = False,\n"
-     "  clients: Sequence[int] = None, transient: bool = False) -> None\n"
-     "\n"
-     "Print a message to the local client's screen, in a given color.\n"
-     "\n"
-     "Category: General Utility Functions\n"
-     "\n"
-     "If 'top' is True, the message will go to the top message area.\n"
-     "For 'top' messages, 'image' can be a texture to display alongside the\n"
-     "message.\n"
-     "If 'log' is True, the message will also be printed to the output log\n"
-     "'clients' can be a list of client-ids the message should be sent to,\n"
-     "or None to specify that everyone should receive it.\n"
-     "If 'transient' is True, the message will not be included in the\n"
-     "game-stream and thus will not show up when viewing replays.\n"
-     "Currently the 'clients' option only works for transient messages."},
+        {"screenmessage", (PyCFunction)PyScreenMessage,
+         METH_VARARGS | METH_KEYWORDS,
+         "screenmessage(message: Union[str, ba.Lstr],\n"
+         "  color: Sequence[float] = None, top: bool = False,\n"
+         "  image: Dict[str, Any] = None, log: bool = False,\n"
+         "  clients: Sequence[int] = None, transient: bool = False) -> None\n"
+         "\n"
+         "Print a message to the local client's screen, in a given color.\n"
+         "\n"
+         "Category: General Utility Functions\n"
+         "\n"
+         "If 'top' is True, the message will go to the top message area.\n"
+         "For 'top' messages, 'image' can be a texture to display alongside "
+         "the\n"
+         "message.\n"
+         "If 'log' is True, the message will also be printed to the output "
+         "log\n"
+         "'clients' can be a list of client-ids the message should be sent "
+         "to,\n"
+         "or None to specify that everyone should receive it.\n"
+         "If 'transient' is True, the message will not be included in the\n"
+         "game-stream and thus will not show up when viewing replays.\n"
+         "Currently the 'clients' option only works for transient messages."},
 
-    {"timer", (PyCFunction)PyTimer, METH_VARARGS | METH_KEYWORDS,
-     "timer(time: float, call: Callable[[], Any], repeat: bool = False,\n"
-     "  timetype: ba.TimeType = TimeType.SIM,\n"
-     "  timeformat: ba.TimeFormat = TimeFormat.SECONDS,\n"
-     "  suppress_format_warning: bool = False)\n"
-     " -> None\n"
-     "\n"
-     "Schedule a call to run at a later point in time.\n"
-     "\n"
-     "Category: General Utility Functions\n"
-     "\n"
-     "This function adds a timer to the current ba.Context.\n"
-     "This timer cannot be canceled or modified once created. If you\n"
-     " require the ability to do so, use the ba.Timer class instead.\n"
-     "\n"
-     "time: length of time (in seconds by default) that the timer will wait\n"
-     "before firing. Note that the actual delay experienced may vary\n "
-     "depending on the timetype. (see below)\n"
-     "\n"
-     "call: A callable Python object. Note that the timer will retain a\n"
-     "strong reference to the callable for as long as it exists, so you\n"
-     "may want to look into concepts such as ba.WeakCall if that is not\n"
-     "desired.\n"
-     "\n"
-     "repeat: if True, the timer will fire repeatedly, with each successive\n"
-     "firing having the same delay as the first.\n"
-     "\n"
-     "timetype can be either 'sim', 'base', or 'real'. It defaults to\n"
-     "'sim'. Types are explained below:\n"
-     "\n"
-     "'sim' time maps to local simulation time in ba.Activity or ba.Session\n"
-     "Contexts. This means that it may progress slower in slow-motion play\n"
-     "modes, stop when the game is paused, etc.  This time type is not\n"
-     "available in UI contexts.\n"
-     "\n"
-     "'base' time is also linked to gameplay in ba.Activity or ba.Session\n"
-     "Contexts, but it progresses at a constant rate regardless of\n "
-     "slow-motion states or pausing.  It can, however, slow down or stop\n"
-     "in certain cases such as network outages or game slowdowns due to\n"
-     "cpu load. Like 'sim' time, this is unavailable in UI contexts.\n"
-     "\n"
-     "'real' time always maps to actual clock time with a bit of filtering\n"
-     "added, regardless of Context.  (the filtering prevents it from going\n"
-     "backwards or jumping forward by large amounts due to the app being\n"
-     "backgrounded, system time changing, etc.)\n"
-     "Real time timers are currently only available in the UI context.\n"
-     "\n"
-     "the 'timeformat' arg defaults to seconds but can also be milliseconds.\n"
-     "\n"
-     "# timer example: print some stuff through time:\n"
-     "ba.screenmessage('hello from now!')\n"
-     "ba.timer(1.0, ba.Call(ba.screenmessage, 'hello from the future!'))\n"
-     "ba.timer(2.0, ba.Call(ba.screenmessage, 'hello from the future 2!'))\n"},
+        {"timer", (PyCFunction)PyTimer, METH_VARARGS | METH_KEYWORDS,
+         "timer(time: float, call: Callable[[], Any], repeat: bool = False,\n"
+         "  timetype: ba.TimeType = TimeType.SIM,\n"
+         "  timeformat: ba.TimeFormat = TimeFormat.SECONDS,\n"
+         "  suppress_format_warning: bool = False)\n"
+         " -> None\n"
+         "\n"
+         "Schedule a call to run at a later point in time.\n"
+         "\n"
+         "Category: General Utility Functions\n"
+         "\n"
+         "This function adds a timer to the current ba.Context.\n"
+         "This timer cannot be canceled or modified once created. If you\n"
+         " require the ability to do so, use the ba.Timer class instead.\n"
+         "\n"
+         "time: length of time (in seconds by default) that the timer will "
+         "wait\n"
+         "before firing. Note that the actual delay experienced may vary\n "
+         "depending on the timetype. (see below)\n"
+         "\n"
+         "call: A callable Python object. Note that the timer will retain a\n"
+         "strong reference to the callable for as long as it exists, so you\n"
+         "may want to look into concepts such as ba.WeakCall if that is not\n"
+         "desired.\n"
+         "\n"
+         "repeat: if True, the timer will fire repeatedly, with each "
+         "successive\n"
+         "firing having the same delay as the first.\n"
+         "\n"
+         "timetype can be either 'sim', 'base', or 'real'. It defaults to\n"
+         "'sim'. Types are explained below:\n"
+         "\n"
+         "'sim' time maps to local simulation time in ba.Activity or "
+         "ba.Session\n"
+         "Contexts. This means that it may progress slower in slow-motion "
+         "play\n"
+         "modes, stop when the game is paused, etc.  This time type is not\n"
+         "available in UI contexts.\n"
+         "\n"
+         "'base' time is also linked to gameplay in ba.Activity or ba.Session\n"
+         "Contexts, but it progresses at a constant rate regardless of\n "
+         "slow-motion states or pausing.  It can, however, slow down or stop\n"
+         "in certain cases such as network outages or game slowdowns due to\n"
+         "cpu load. Like 'sim' time, this is unavailable in UI contexts.\n"
+         "\n"
+         "'real' time always maps to actual clock time with a bit of "
+         "filtering\n"
+         "added, regardless of Context.  (the filtering prevents it from "
+         "going\n"
+         "backwards or jumping forward by large amounts due to the app being\n"
+         "backgrounded, system time changing, etc.)\n"
+         "Real time timers are currently only available in the UI context.\n"
+         "\n"
+         "the 'timeformat' arg defaults to seconds but can also be "
+         "milliseconds.\n"
+         "\n"
+         "# timer example: print some stuff through time:\n"
+         "ba.screenmessage('hello from now!')\n"
+         "ba.timer(1.0, ba.Call(ba.screenmessage, 'hello from the future!'))\n"
+         "ba.timer(2.0, ba.Call(ba.screenmessage, 'hello from the future "
+         "2!'))\n"},
 
-    {"time", (PyCFunction)PyTime, METH_VARARGS | METH_KEYWORDS,
-     "time(timetype: ba.TimeType = TimeType.SIM,\n"
-     "  timeformat: ba.TimeFormat = TimeFormat.SECONDS)\n"
-     "  -> <varies>\n"
-     "\n"
-     "Return the current time.\n"
-     "\n"
-     "Category: General Utility Functions\n"
-     "\n"
-     "The time returned depends on the current ba.Context and timetype.\n"
-     "\n"
-     "timetype can be either SIM, BASE, or REAL. It defaults to\n"
-     "SIM. Types are explained below:\n"
-     "\n"
-     "SIM time maps to local simulation time in ba.Activity or ba.Session\n"
-     "Contexts. This means that it may progress slower in slow-motion play\n"
-     "modes, stop when the game is paused, etc.  This time type is not\n"
-     "available in UI contexts.\n"
-     "\n"
-     "BASE time is also linked to gameplay in ba.Activity or ba.Session\n"
-     "Contexts, but it progresses at a constant rate regardless of\n "
-     "slow-motion states or pausing.  It can, however, slow down or stop\n"
-     "in certain cases such as network outages or game slowdowns due to\n"
-     "cpu load. Like 'sim' time, this is unavailable in UI contexts.\n"
-     "\n"
-     "REAL time always maps to actual clock time with a bit of filtering\n"
-     "added, regardless of Context.  (the filtering prevents it from going\n"
-     "backwards or jumping forward by large amounts due to the app being\n"
-     "backgrounded, system time changing, etc.)\n"
-     "\n"
-     "the 'timeformat' arg defaults to SECONDS which returns float seconds,\n"
-     "but it can also be MILLISECONDS to return integer milliseconds.\n"
-     "\n"
-     "Note: If you need pure unfiltered clock time, just use the standard\n"
-     "Python functions such as time.time()."},
+        {"time", (PyCFunction)PyTime, METH_VARARGS | METH_KEYWORDS,
+         "time(timetype: ba.TimeType = TimeType.SIM,\n"
+         "  timeformat: ba.TimeFormat = TimeFormat.SECONDS)\n"
+         "  -> <varies>\n"
+         "\n"
+         "Return the current time.\n"
+         "\n"
+         "Category: General Utility Functions\n"
+         "\n"
+         "The time returned depends on the current ba.Context and timetype.\n"
+         "\n"
+         "timetype can be either SIM, BASE, or REAL. It defaults to\n"
+         "SIM. Types are explained below:\n"
+         "\n"
+         "SIM time maps to local simulation time in ba.Activity or ba.Session\n"
+         "Contexts. This means that it may progress slower in slow-motion "
+         "play\n"
+         "modes, stop when the game is paused, etc.  This time type is not\n"
+         "available in UI contexts.\n"
+         "\n"
+         "BASE time is also linked to gameplay in ba.Activity or ba.Session\n"
+         "Contexts, but it progresses at a constant rate regardless of\n "
+         "slow-motion states or pausing.  It can, however, slow down or stop\n"
+         "in certain cases such as network outages or game slowdowns due to\n"
+         "cpu load. Like 'sim' time, this is unavailable in UI contexts.\n"
+         "\n"
+         "REAL time always maps to actual clock time with a bit of filtering\n"
+         "added, regardless of Context.  (the filtering prevents it from "
+         "going\n"
+         "backwards or jumping forward by large amounts due to the app being\n"
+         "backgrounded, system time changing, etc.)\n"
+         "\n"
+         "the 'timeformat' arg defaults to SECONDS which returns float "
+         "seconds,\n"
+         "but it can also be MILLISECONDS to return integer milliseconds.\n"
+         "\n"
+         "Note: If you need pure unfiltered clock time, just use the standard\n"
+         "Python functions such as time.time()."},
 
-    {"pushcall", (PyCFunction)PyPushCall, METH_VARARGS | METH_KEYWORDS,
-     "pushcall(call: Callable, from_other_thread: bool = False,\n"
-     "     suppress_other_thread_warning: bool = False ) -> None\n"
-     "\n"
-     "Pushes a call onto the event loop to be run during the next cycle.\n"
-     "\n"
-     "Category: General Utility Functions\n"
-     "\n"
-     "This can be handy for calls that are disallowed from within other\n"
-     "callbacks, etc.\n"
-     "\n"
-     "This call expects to be used in the game thread, and will automatically\n"
-     "save and restore the ba.Context to behave seamlessly.\n"
-     "\n"
-     "If you want to push a call from outside of the game thread,\n"
-     "however, you can pass 'from_other_thread' as True. In this case\n"
-     "the call will always run in the UI context on the game thread."},
+        {"pushcall", (PyCFunction)PyPushCall, METH_VARARGS | METH_KEYWORDS,
+         "pushcall(call: Callable, from_other_thread: bool = False,\n"
+         "     suppress_other_thread_warning: bool = False ) -> None\n"
+         "\n"
+         "Pushes a call onto the event loop to be run during the next cycle.\n"
+         "\n"
+         "Category: General Utility Functions\n"
+         "\n"
+         "This can be handy for calls that are disallowed from within other\n"
+         "callbacks, etc.\n"
+         "\n"
+         "This call expects to be used in the game thread, and will "
+         "automatically\n"
+         "save and restore the ba.Context to behave seamlessly.\n"
+         "\n"
+         "If you want to push a call from outside of the game thread,\n"
+         "however, you can pass 'from_other_thread' as True. In this case\n"
+         "the call will always run in the UI context on the game thread."},
 
-    {"getactivity", (PyCFunction)PyGetActivity, METH_VARARGS | METH_KEYWORDS,
-     "getactivity(doraise: bool = True) -> <varies>\n"
-     "\n"
-     "Return the current ba.Activity instance.\n"
-     "\n"
-     "Category: Gameplay Functions\n"
-     "\n"
-     "Note that this is based on context; thus code run in a timer generated\n"
-     "in Activity 'foo' will properly return 'foo' here, even if another\n"
-     "Activity has since been created or is transitioning in.\n"
-     "If there is no current Activity, raises a ba.ActivityNotFoundError.\n"
-     "If doraise is False, None will be returned instead in that case."},
+        {"getactivity", (PyCFunction)PyGetActivity,
+         METH_VARARGS | METH_KEYWORDS,
+         "getactivity(doraise: bool = True) -> <varies>\n"
+         "\n"
+         "Return the current ba.Activity instance.\n"
+         "\n"
+         "Category: Gameplay Functions\n"
+         "\n"
+         "Note that this is based on context; thus code run in a timer "
+         "generated\n"
+         "in Activity 'foo' will properly return 'foo' here, even if another\n"
+         "Activity has since been created or is transitioning in.\n"
+         "If there is no current Activity, raises a ba.ActivityNotFoundError.\n"
+         "If doraise is False, None will be returned instead in that case."},
 
-    {"newactivity", (PyCFunction)PyNewActivity, METH_VARARGS | METH_KEYWORDS,
-     "newactivity(activity_type: Type[ba.Activity],\n"
-     "  settings: dict = None) -> ba.Activity\n"
-     "\n"
-     "Instantiates a ba.Activity given a type object.\n"
-     "\n"
-     "Category: General Utility Functions\n"
-     "\n"
-     "Activities require special setup and thus cannot be directly\n"
-     "instantiated; you must go through this function."},
+        {"newactivity", (PyCFunction)PyNewActivity,
+         METH_VARARGS | METH_KEYWORDS,
+         "newactivity(activity_type: Type[ba.Activity],\n"
+         "  settings: dict = None) -> ba.Activity\n"
+         "\n"
+         "Instantiates a ba.Activity given a type object.\n"
+         "\n"
+         "Category: General Utility Functions\n"
+         "\n"
+         "Activities require special setup and thus cannot be directly\n"
+         "instantiated; you must go through this function."},
 
-    {"get_foreground_host_session", (PyCFunction)PyGetForegroundHostSession,
-     METH_VARARGS | METH_KEYWORDS,
-     "get_foreground_host_session() -> Optional[ba.Session]\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Return the ba.Session currently being displayed, or None if there is\n"
-     "none."},
+        {"get_foreground_host_session", (PyCFunction)PyGetForegroundHostSession,
+         METH_VARARGS | METH_KEYWORDS,
+         "get_foreground_host_session() -> Optional[ba.Session]\n"
+         "\n"
+         "(internal)\n"
+         "\n"
+         "Return the ba.Session currently being displayed, or None if there "
+         "is\n"
+         "none."},
 
-    {"register_activity", (PyCFunction)PyRegisterActivity,
-     METH_VARARGS | METH_KEYWORDS,
-     "register_activity(activity: ba.Activity) -> ActivityData\n"
-     "\n"
-     "(internal)"},
+        {"register_activity", (PyCFunction)PyRegisterActivity,
+         METH_VARARGS | METH_KEYWORDS,
+         "register_activity(activity: ba.Activity) -> ActivityData\n"
+         "\n"
+         "(internal)"},
 
-    {"register_session", (PyCFunction)PyRegisterSession,
-     METH_VARARGS | METH_KEYWORDS,
-     "register_session(session: ba.Session) -> SessionData\n"
-     "\n"
-     "(internal)"},
+        {"register_session", (PyCFunction)PyRegisterSession,
+         METH_VARARGS | METH_KEYWORDS,
+         "register_session(session: ba.Session) -> SessionData\n"
+         "\n"
+         "(internal)"},
 
-    {"is_in_replay", (PyCFunction)PyIsInReplay, METH_VARARGS | METH_KEYWORDS,
-     "is_in_replay() -> bool\n"
-     "\n"
-     "(internal)"},
+        {"is_in_replay", (PyCFunction)PyIsInReplay,
+         METH_VARARGS | METH_KEYWORDS,
+         "is_in_replay() -> bool\n"
+         "\n"
+         "(internal)"},
 
-    {"new_replay_session", (PyCFunction)PyNewReplaySession,
-     METH_VARARGS | METH_KEYWORDS,
-     "new_replay_session(file_name: str) -> None\n"
-     "\n"
-     "(internal)"},
+        {"new_replay_session", (PyCFunction)PyNewReplaySession,
+         METH_VARARGS | METH_KEYWORDS,
+         "new_replay_session(file_name: str) -> None\n"
+         "\n"
+         "(internal)"},
 
-    {"new_host_session", (PyCFunction)PyNewHostSession,
-     METH_VARARGS | METH_KEYWORDS,
-     "new_host_session(sessiontype: Type[ba.Session],\n"
-     "  benchmark_type: str = None) -> None\n"
-     "\n"
-     "(internal)"},
+        {"new_host_session", (PyCFunction)PyNewHostSession,
+         METH_VARARGS | METH_KEYWORDS,
+         "new_host_session(sessiontype: Type[ba.Session],\n"
+         "  benchmark_type: str = None) -> None\n"
+         "\n"
+         "(internal)"},
 
-    {"getsession", (PyCFunction)PyGetSession, METH_VARARGS | METH_KEYWORDS,
-     "getsession(doraise: bool = True) -> <varies>\n"
-     "\n"
-     "Category: Gameplay Functions\n"
-     "\n"
-     "Returns the current ba.Session instance.\n"
-     "Note that this is based on context; thus code being run in the UI\n"
-     "context will return the UI context here even if a game Session also\n"
-     "exists, etc. If there is no current Session, an Exception is raised, "
-     "or\n"
-     "if doraise is False then None is returned instead."},
-
-    {nullptr, nullptr, 0, nullptr}};
+        {"getsession", (PyCFunction)PyGetSession, METH_VARARGS | METH_KEYWORDS,
+         "getsession(doraise: bool = True) -> <varies>\n"
+         "\n"
+         "Category: Gameplay Functions\n"
+         "\n"
+         "Returns the current ba.Session instance.\n"
+         "Note that this is based on context; thus code being run in the UI\n"
+         "context will return the UI context here even if a game Session also\n"
+         "exists, etc. If there is no current Session, an Exception is raised, "
+         "or\n"
+         "if doraise is False then None is returned instead."},
+  };
+}
 
 #pragma clang diagnostic pop
 

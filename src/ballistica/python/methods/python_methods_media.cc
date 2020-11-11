@@ -16,6 +16,7 @@
 #include "ballistica/media/component/sound.h"
 #include "ballistica/media/component/texture.h"
 #include "ballistica/python/python.h"
+#include "ballistica/python/python_sys.h"
 #include "ballistica/ui/ui.h"
 
 namespace ballistica {
@@ -362,201 +363,208 @@ auto PyIsOSPlayingMusic(PyObject* self, PyObject* args, PyObject* keywds)
   BA_PYTHON_CATCH;
 }
 
-PyMethodDef PythonMethodsMedia::methods_def[] = {
-    {"is_os_playing_music", (PyCFunction)PyIsOSPlayingMusic,
-     METH_VARARGS | METH_KEYWORDS,
-     "is_os_playing_music() -> bool\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Tells whether the OS is currently playing music of some sort.\n"
-     "\n"
-     "(Used to determine whether the game should avoid playing its own)"},
+auto PythonMethodsMedia::GetMethods() -> std::vector<PyMethodDef> {
+  return {
+      {"is_os_playing_music", (PyCFunction)PyIsOSPlayingMusic,
+       METH_VARARGS | METH_KEYWORDS,
+       "is_os_playing_music() -> bool\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Tells whether the OS is currently playing music of some sort.\n"
+       "\n"
+       "(Used to determine whether the game should avoid playing its own)"},
 
-    {"mac_music_app_init", (PyCFunction)PyMacMusicAppInit,
-     METH_VARARGS | METH_KEYWORDS,
-     "mac_music_app_init() -> None\n"
-     "\n"
-     "(internal)"},
+      {"mac_music_app_init", (PyCFunction)PyMacMusicAppInit,
+       METH_VARARGS | METH_KEYWORDS,
+       "mac_music_app_init() -> None\n"
+       "\n"
+       "(internal)"},
 
-    {"mac_music_app_get_volume", (PyCFunction)PyMacMusicAppGetVolume,
-     METH_VARARGS | METH_KEYWORDS,
-     "mac_music_app_get_volume() -> int\n"
-     "\n"
-     "(internal)"},
+      {"mac_music_app_get_volume", (PyCFunction)PyMacMusicAppGetVolume,
+       METH_VARARGS | METH_KEYWORDS,
+       "mac_music_app_get_volume() -> int\n"
+       "\n"
+       "(internal)"},
 
-    {"mac_music_app_set_volume", (PyCFunction)PyMacMusicAppSetVolume,
-     METH_VARARGS | METH_KEYWORDS,
-     "mac_music_app_set_volume(volume: int) -> None\n"
-     "\n"
-     "(internal)"},
+      {"mac_music_app_set_volume", (PyCFunction)PyMacMusicAppSetVolume,
+       METH_VARARGS | METH_KEYWORDS,
+       "mac_music_app_set_volume(volume: int) -> None\n"
+       "\n"
+       "(internal)"},
 
-    {"mac_music_app_get_library_source",
-     (PyCFunction)PyMacMusicAppGetLibrarySource, METH_VARARGS | METH_KEYWORDS,
-     "mac_music_app_get_library_source() -> None\n"
-     "\n"
-     "(internal)"},
+      {"mac_music_app_get_library_source",
+       (PyCFunction)PyMacMusicAppGetLibrarySource, METH_VARARGS | METH_KEYWORDS,
+       "mac_music_app_get_library_source() -> None\n"
+       "\n"
+       "(internal)"},
 
-    {"mac_music_app_stop", (PyCFunction)PyMacMusicAppStop,
-     METH_VARARGS | METH_KEYWORDS,
-     "mac_music_app_stop() -> None\n"
-     "\n"
-     "(internal)"},
+      {"mac_music_app_stop", (PyCFunction)PyMacMusicAppStop,
+       METH_VARARGS | METH_KEYWORDS,
+       "mac_music_app_stop() -> None\n"
+       "\n"
+       "(internal)"},
 
-    {"mac_music_app_play_playlist", (PyCFunction)PyMacMusicAppPlayPlaylist,
-     METH_VARARGS | METH_KEYWORDS,
-     "mac_music_app_play_playlist(playlist: str) -> bool\n"
-     "\n"
-     "(internal)"},
+      {"mac_music_app_play_playlist", (PyCFunction)PyMacMusicAppPlayPlaylist,
+       METH_VARARGS | METH_KEYWORDS,
+       "mac_music_app_play_playlist(playlist: str) -> bool\n"
+       "\n"
+       "(internal)"},
 
-    {"mac_music_app_get_playlists", (PyCFunction)PyMacMusicAppGetPlaylists,
-     METH_VARARGS | METH_KEYWORDS,
-     "mac_music_app_get_playlists() -> List[str]\n"
-     "\n"
-     "(internal)"},
+      {"mac_music_app_get_playlists", (PyCFunction)PyMacMusicAppGetPlaylists,
+       METH_VARARGS | METH_KEYWORDS,
+       "mac_music_app_get_playlists() -> List[str]\n"
+       "\n"
+       "(internal)"},
 
-    {"get_qrcode_texture", (PyCFunction)PyGetQRCodeTexture,
-     METH_VARARGS | METH_KEYWORDS,
-     "get_qrcode_texture(url: str) -> ba.Texture\n"
-     "\n"
-     "(internal)"},
+      {"get_qrcode_texture", (PyCFunction)PyGetQRCodeTexture,
+       METH_VARARGS | METH_KEYWORDS,
+       "get_qrcode_texture(url: str) -> ba.Texture\n"
+       "\n"
+       "(internal)"},
 
-    {"reload_media", PyReloadMedia, METH_VARARGS,
-     "reload_media() -> None\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Reload all currently loaded game media; useful for\n"
-     "development/debugging."},
+      {"reload_media", PyReloadMedia, METH_VARARGS,
+       "reload_media() -> None\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Reload all currently loaded game media; useful for\n"
+       "development/debugging."},
 
-    {"music_player_shutdown", (PyCFunction)PyMusicPlayerShutdown,
-     METH_VARARGS | METH_KEYWORDS,
-     "music_player_shutdown() -> None\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Finalizes internal music file playback (for internal use)"},
+      {"music_player_shutdown", (PyCFunction)PyMusicPlayerShutdown,
+       METH_VARARGS | METH_KEYWORDS,
+       "music_player_shutdown() -> None\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Finalizes internal music file playback (for internal use)"},
 
-    {"music_player_set_volume", (PyCFunction)PyMusicPlayerSetVolume,
-     METH_VARARGS | METH_KEYWORDS,
-     "music_player_set_volume(volume: float) -> None\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Sets internal music player volume (for internal use)"},
+      {"music_player_set_volume", (PyCFunction)PyMusicPlayerSetVolume,
+       METH_VARARGS | METH_KEYWORDS,
+       "music_player_set_volume(volume: float) -> None\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Sets internal music player volume (for internal use)"},
 
-    {"music_player_play", (PyCFunction)PyMusicPlayerPlay,
-     METH_VARARGS | METH_KEYWORDS,
-     "music_player_play(files: Any) -> None\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Starts internal music file playback (for internal use)"},
+      {"music_player_play", (PyCFunction)PyMusicPlayerPlay,
+       METH_VARARGS | METH_KEYWORDS,
+       "music_player_play(files: Any) -> None\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Starts internal music file playback (for internal use)"},
 
-    {"music_player_stop", (PyCFunction)PyMusicPlayerStop,
-     METH_VARARGS | METH_KEYWORDS,
-     "music_player_stop() -> None\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Stops internal music file playback (for internal use)"},
+      {"music_player_stop", (PyCFunction)PyMusicPlayerStop,
+       METH_VARARGS | METH_KEYWORDS,
+       "music_player_stop() -> None\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Stops internal music file playback (for internal use)"},
 
-    {"getcollidemodel", (PyCFunction)PyGetCollideModel,
-     METH_VARARGS | METH_KEYWORDS,
-     "getcollidemodel(name: str) -> ba.CollideModel\n"
-     "\n"
-     "Return a collide-model, loading it if necessary.\n"
-     "\n"
-     "Category: Asset Functions\n"
-     "\n"
-     "Collide-models are used in physics calculations for such things as\n"
-     "terrain.\n"
-     "\n"
-     "Note that this function returns immediately even if the media has yet\n"
-     "to be loaded. To avoid hitches, instantiate your media objects in\n"
-     "advance of when you will be using them, allowing time for them to load\n"
-     "in the background if necessary."},
+      {"getcollidemodel", (PyCFunction)PyGetCollideModel,
+       METH_VARARGS | METH_KEYWORDS,
+       "getcollidemodel(name: str) -> ba.CollideModel\n"
+       "\n"
+       "Return a collide-model, loading it if necessary.\n"
+       "\n"
+       "Category: Asset Functions\n"
+       "\n"
+       "Collide-models are used in physics calculations for such things as\n"
+       "terrain.\n"
+       "\n"
+       "Note that this function returns immediately even if the media has yet\n"
+       "to be loaded. To avoid hitches, instantiate your media objects in\n"
+       "advance of when you will be using them, allowing time for them to "
+       "load\n"
+       "in the background if necessary."},
 
-    {"get_package_collide_model", (PyCFunction)PyGetPackageCollideModel,
-     METH_VARARGS | METH_KEYWORDS,
-     "get_package_collide_model(package: ba.AssetPackage, name: str)\n"
-     "-> ba.CollideModel\n"
-     "\n"
-     "(internal)\n"},
+      {"get_package_collide_model", (PyCFunction)PyGetPackageCollideModel,
+       METH_VARARGS | METH_KEYWORDS,
+       "get_package_collide_model(package: ba.AssetPackage, name: str)\n"
+       "-> ba.CollideModel\n"
+       "\n"
+       "(internal)\n"},
 
-    {"getmodel", (PyCFunction)PyGetModel, METH_VARARGS | METH_KEYWORDS,
-     "getmodel(name: str) -> ba.Model\n"
-     "\n"
-     "Return a model, loading it if necessary.\n"
-     "\n"
-     "Category: Asset Functions\n"
-     "\n"
-     "Note that this function returns immediately even if the media has yet\n"
-     "to be loaded. To avoid hitches, instantiate your media objects in\n"
-     "advance of when you will be using them, allowing time for them to load\n"
-     "in the background if necessary."},
+      {"getmodel", (PyCFunction)PyGetModel, METH_VARARGS | METH_KEYWORDS,
+       "getmodel(name: str) -> ba.Model\n"
+       "\n"
+       "Return a model, loading it if necessary.\n"
+       "\n"
+       "Category: Asset Functions\n"
+       "\n"
+       "Note that this function returns immediately even if the media has yet\n"
+       "to be loaded. To avoid hitches, instantiate your media objects in\n"
+       "advance of when you will be using them, allowing time for them to "
+       "load\n"
+       "in the background if necessary."},
 
-    {"get_package_model", (PyCFunction)PyGetPackageModel,
-     METH_VARARGS | METH_KEYWORDS,
-     "get_package_model(package: ba.AssetPackage, name: str) -> ba.Model\n"
-     "\n"
-     "(internal)\n"},
+      {"get_package_model", (PyCFunction)PyGetPackageModel,
+       METH_VARARGS | METH_KEYWORDS,
+       "get_package_model(package: ba.AssetPackage, name: str) -> ba.Model\n"
+       "\n"
+       "(internal)\n"},
 
-    {"getsound", (PyCFunction)PyGetSound, METH_VARARGS | METH_KEYWORDS,
-     "getsound(name: str) -> ba.Sound\n"
-     "\n"
-     "Return a sound, loading it if necessary.\n"
-     "\n"
-     "Category: Asset Functions\n"
-     "\n"
-     "Note that this function returns immediately even if the media has yet\n"
-     "to be loaded. To avoid hitches, instantiate your media objects in\n"
-     "advance of when you will be using them, allowing time for them to load\n"
-     "in the background if necessary."},
+      {"getsound", (PyCFunction)PyGetSound, METH_VARARGS | METH_KEYWORDS,
+       "getsound(name: str) -> ba.Sound\n"
+       "\n"
+       "Return a sound, loading it if necessary.\n"
+       "\n"
+       "Category: Asset Functions\n"
+       "\n"
+       "Note that this function returns immediately even if the media has yet\n"
+       "to be loaded. To avoid hitches, instantiate your media objects in\n"
+       "advance of when you will be using them, allowing time for them to "
+       "load\n"
+       "in the background if necessary."},
 
-    {"get_package_sound", (PyCFunction)PyGetPackageSound,
-     METH_VARARGS | METH_KEYWORDS,
-     "get_package_sound(package: ba.AssetPackage, name: str) -> ba.Sound\n"
-     "\n"
-     "(internal).\n"},
+      {"get_package_sound", (PyCFunction)PyGetPackageSound,
+       METH_VARARGS | METH_KEYWORDS,
+       "get_package_sound(package: ba.AssetPackage, name: str) -> ba.Sound\n"
+       "\n"
+       "(internal).\n"},
 
-    {"getdata", (PyCFunction)PyGetData, METH_VARARGS | METH_KEYWORDS,
-     "getdata(name: str) -> ba.Data\n"
-     "\n"
-     "Return a data, loading it if necessary.\n"
-     "\n"
-     "Category: Asset Functions\n"
-     "\n"
-     "Note that this function returns immediately even if the media has yet\n"
-     "to be loaded. To avoid hitches, instantiate your media objects in\n"
-     "advance of when you will be using them, allowing time for them to load\n"
-     "in the background if necessary."},
+      {"getdata", (PyCFunction)PyGetData, METH_VARARGS | METH_KEYWORDS,
+       "getdata(name: str) -> ba.Data\n"
+       "\n"
+       "Return a data, loading it if necessary.\n"
+       "\n"
+       "Category: Asset Functions\n"
+       "\n"
+       "Note that this function returns immediately even if the media has yet\n"
+       "to be loaded. To avoid hitches, instantiate your media objects in\n"
+       "advance of when you will be using them, allowing time for them to "
+       "load\n"
+       "in the background if necessary."},
 
-    {"get_package_data", (PyCFunction)PyGetPackageData,
-     METH_VARARGS | METH_KEYWORDS,
-     "get_package_data(package: ba.AssetPackage, name: str) -> ba.Data\n"
-     "\n"
-     "(internal).\n"},
+      {"get_package_data", (PyCFunction)PyGetPackageData,
+       METH_VARARGS | METH_KEYWORDS,
+       "get_package_data(package: ba.AssetPackage, name: str) -> ba.Data\n"
+       "\n"
+       "(internal).\n"},
 
-    {"gettexture", (PyCFunction)PyGetTexture, METH_VARARGS | METH_KEYWORDS,
-     "gettexture(name: str) -> ba.Texture\n"
-     "\n"
-     "Return a texture, loading it if necessary.\n"
-     "\n"
-     "Category: Asset Functions\n"
-     "\n"
-     "Note that this function returns immediately even if the media has yet\n"
-     "to be loaded. To avoid hitches, instantiate your media objects in\n"
-     "advance of when you will be using them, allowing time for them to load\n"
-     "in the background if necessary."},
+      {"gettexture", (PyCFunction)PyGetTexture, METH_VARARGS | METH_KEYWORDS,
+       "gettexture(name: str) -> ba.Texture\n"
+       "\n"
+       "Return a texture, loading it if necessary.\n"
+       "\n"
+       "Category: Asset Functions\n"
+       "\n"
+       "Note that this function returns immediately even if the media has yet\n"
+       "to be loaded. To avoid hitches, instantiate your media objects in\n"
+       "advance of when you will be using them, allowing time for them to "
+       "load\n"
+       "in the background if necessary."},
 
-    {"get_package_texture", (PyCFunction)PyGetPackageTexture,
-     METH_VARARGS | METH_KEYWORDS,
-     "get_package_texture(package: ba.AssetPackage, name: str) -> ba.Texture\n"
-     "\n"
-     "(internal)"},
-
-    {nullptr, nullptr, 0, nullptr}};
+      {"get_package_texture", (PyCFunction)PyGetPackageTexture,
+       METH_VARARGS | METH_KEYWORDS,
+       "get_package_texture(package: ba.AssetPackage, name: str) -> "
+       "ba.Texture\n"
+       "\n"
+       "(internal)"},
+  };
+}
 
 #pragma clang diagnostic pop
 

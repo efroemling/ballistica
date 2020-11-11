@@ -10,6 +10,7 @@
 #include "ballistica/platform/platform.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_context_call_runnable.h"
+#include "ballistica/python/python_sys.h"
 
 namespace ballistica {
 
@@ -223,92 +224,97 @@ auto PyGetDisplayResolution(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_CATCH;
 }
 
-PyMethodDef PythonMethodsGraphics::methods_def[] = {
-    {"get_display_resolution", PyGetDisplayResolution, METH_VARARGS,
-     "get_display_resolution() -> Optional[Tuple[int, int]]\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Return the currently selected display resolution for fullscreen\n"
-     "display. Returns None if resolutions cannot be directly set."},
+auto PythonMethodsGraphics::GetMethods() -> std::vector<PyMethodDef> {
+  return {
+      {"get_display_resolution", PyGetDisplayResolution, METH_VARARGS,
+       "get_display_resolution() -> Optional[Tuple[int, int]]\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Return the currently selected display resolution for fullscreen\n"
+       "display. Returns None if resolutions cannot be directly set."},
 
-    {"has_gamma_control", PyHasGammaControl, METH_VARARGS,
-     "has_gamma_control() -> bool\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Returns whether the system can adjust overall screen gamma)"},
+      {"has_gamma_control", PyHasGammaControl, METH_VARARGS,
+       "has_gamma_control() -> bool\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Returns whether the system can adjust overall screen gamma)"},
 
-    {"add_clean_frame_callback", (PyCFunction)PyAddCleanFrameCallback,
-     METH_VARARGS | METH_KEYWORDS,
-     "add_clean_frame_callback(call: Callable) -> None\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Provide an object to be called once the next non-progress-bar-frame has\n"
-     "been rendered. Useful for queueing things to load in the background\n"
-     "without elongating any current progress-bar-load."},
+      {"add_clean_frame_callback", (PyCFunction)PyAddCleanFrameCallback,
+       METH_VARARGS | METH_KEYWORDS,
+       "add_clean_frame_callback(call: Callable) -> None\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Provide an object to be called once the next non-progress-bar-frame "
+       "has\n"
+       "been rendered. Useful for queueing things to load in the background\n"
+       "without elongating any current progress-bar-load."},
 
-    {"have_chars", (PyCFunction)PyHaveChars, METH_VARARGS | METH_KEYWORDS,
-     "have_chars(text: str) -> bool\n"
-     "\n"
-     "(internal)"},
+      {"have_chars", (PyCFunction)PyHaveChars, METH_VARARGS | METH_KEYWORDS,
+       "have_chars(text: str) -> bool\n"
+       "\n"
+       "(internal)"},
 
-    {"get_string_width", (PyCFunction)PyGetStringWidth,
-     METH_VARARGS | METH_KEYWORDS,
-     "get_string_width(string: str, suppress_warning: bool = False) -> float\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Given a string, returns its width using the standard small app\n"
-     "font."},
+      {"get_string_width", (PyCFunction)PyGetStringWidth,
+       METH_VARARGS | METH_KEYWORDS,
+       "get_string_width(string: str, suppress_warning: bool = False) -> "
+       "float\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Given a string, returns its width using the standard small app\n"
+       "font."},
 
-    {"get_string_height", (PyCFunction)PyGetStringHeight,
-     METH_VARARGS | METH_KEYWORDS,
-     "get_string_height(string: str, suppress_warning: bool = False) -> float\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Given a string, returns its height using the standard small app\n"
-     "font."},
+      {"get_string_height", (PyCFunction)PyGetStringHeight,
+       METH_VARARGS | METH_KEYWORDS,
+       "get_string_height(string: str, suppress_warning: bool = False) -> "
+       "float\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Given a string, returns its height using the standard small app\n"
+       "font."},
 
-    {"evaluate_lstr", (PyCFunction)PyEvaluateLstr, METH_VARARGS | METH_KEYWORDS,
-     "evaluate_lstr(value: str) -> str\n"
-     "\n"
-     "(internal)"},
+      {"evaluate_lstr", (PyCFunction)PyEvaluateLstr,
+       METH_VARARGS | METH_KEYWORDS,
+       "evaluate_lstr(value: str) -> str\n"
+       "\n"
+       "(internal)"},
 
-    {"get_max_graphics_quality", PyGetMaxGraphicsQuality, METH_VARARGS,
-     "get_max_graphics_quality() -> str\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Return the max graphics-quality supported on the current hardware."},
+      {"get_max_graphics_quality", PyGetMaxGraphicsQuality, METH_VARARGS,
+       "get_max_graphics_quality() -> str\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Return the max graphics-quality supported on the current hardware."},
 
-    {"safecolor", (PyCFunction)PySafeColor, METH_VARARGS | METH_KEYWORDS,
-     "safecolor(color: Sequence[float], target_intensity: float = 0.6)\n"
-     "  -> Tuple[float, ...]\n"
-     "\n"
-     "Given a color tuple, return a color safe to display as text.\n"
-     "\n"
-     "Category: General Utility Functions\n"
-     "\n"
-     "Accepts tuples of length 3 or 4. This will slightly brighten very\n"
-     "dark colors, etc."},
+      {"safecolor", (PyCFunction)PySafeColor, METH_VARARGS | METH_KEYWORDS,
+       "safecolor(color: Sequence[float], target_intensity: float = 0.6)\n"
+       "  -> Tuple[float, ...]\n"
+       "\n"
+       "Given a color tuple, return a color safe to display as text.\n"
+       "\n"
+       "Category: General Utility Functions\n"
+       "\n"
+       "Accepts tuples of length 3 or 4. This will slightly brighten very\n"
+       "dark colors, etc."},
 
-    {"charstr", (PyCFunction)PyCharStr, METH_VARARGS | METH_KEYWORDS,
-     "charstr(char_id: ba.SpecialChar) -> str\n"
-     "\n"
-     "Get a unicode string representing a special character.\n"
-     "\n"
-     "Category: General Utility Functions\n"
-     "\n"
-     "Note that these utilize the private-use block of unicode characters\n"
-     "(U+E000-U+F8FF) and are specific to the game; exporting or rendering\n"
-     "them elsewhere will be meaningless.\n"
-     "\n"
-     "see ba.SpecialChar for the list of available characters."},
-
-    {nullptr, nullptr, 0, nullptr}};
+      {"charstr", (PyCFunction)PyCharStr, METH_VARARGS | METH_KEYWORDS,
+       "charstr(char_id: ba.SpecialChar) -> str\n"
+       "\n"
+       "Get a unicode string representing a special character.\n"
+       "\n"
+       "Category: General Utility Functions\n"
+       "\n"
+       "Note that these utilize the private-use block of unicode characters\n"
+       "(U+E000-U+F8FF) and are specific to the game; exporting or rendering\n"
+       "them elsewhere will be meaningless.\n"
+       "\n"
+       "see ba.SpecialChar for the list of available characters."},
+  };
+}
 
 #pragma clang diagnostic pop
 

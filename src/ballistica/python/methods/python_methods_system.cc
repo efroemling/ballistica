@@ -22,6 +22,7 @@
 #include "ballistica/platform/platform.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_context_call_runnable.h"
+#include "ballistica/python/python_sys.h"
 #include "ballistica/scene/scene.h"
 
 namespace ballistica {
@@ -740,291 +741,297 @@ auto PyApp(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   BA_PYTHON_CATCH;
 }
 
-PyMethodDef PythonMethodsSystem::methods_def[] = {
-    {"printobjects", (PyCFunction)PyPrintObjects, METH_VARARGS | METH_KEYWORDS,
-     "printobjects() -> None\n"
-     "\n"
-     "Print debugging info about game objects.\n"
-     "\n"
-     "Category: General Utility Functions\n"
-     "\n"
-     "This call only functions in debug builds of the game.\n"
-     "It prints various info about the current object count, etc."},
+auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
+  return {
+      {"printobjects", (PyCFunction)PyPrintObjects,
+       METH_VARARGS | METH_KEYWORDS,
+       "printobjects() -> None\n"
+       "\n"
+       "Print debugging info about game objects.\n"
+       "\n"
+       "Category: General Utility Functions\n"
+       "\n"
+       "This call only functions in debug builds of the game.\n"
+       "It prints various info about the current object count, etc."},
 
-    {"do_once", (PyCFunction)PyDoOnce, METH_VARARGS | METH_KEYWORDS,
-     "do_once() -> bool\n"
-     "\n"
-     "Return whether this is the first time running a line of code.\n"
-     "\n"
-     "Category: General Utility Functions\n"
-     "\n"
-     "This is used by 'print_once()' type calls to keep from overflowing\n"
-     "logs. The call functions by registering the filename and line where\n"
-     "The call is made from.  Returns True if this location has not been\n"
-     "registered already, and False if it has.\n"
-     "\n"
-     "# Example: this print will only fire for the first loop iteration:\n"
-     "for i in range(10):\n"
-     "    if ba.do_once():\n"
-     "        print('Hello once from loop!')"},
+      {"do_once", (PyCFunction)PyDoOnce, METH_VARARGS | METH_KEYWORDS,
+       "do_once() -> bool\n"
+       "\n"
+       "Return whether this is the first time running a line of code.\n"
+       "\n"
+       "Category: General Utility Functions\n"
+       "\n"
+       "This is used by 'print_once()' type calls to keep from overflowing\n"
+       "logs. The call functions by registering the filename and line where\n"
+       "The call is made from.  Returns True if this location has not been\n"
+       "registered already, and False if it has.\n"
+       "\n"
+       "# Example: this print will only fire for the first loop iteration:\n"
+       "for i in range(10):\n"
+       "    if ba.do_once():\n"
+       "        print('Hello once from loop!')"},
 
-    {"_app", (PyCFunction)PyApp, METH_VARARGS | METH_KEYWORDS,
-     "_app() -> ba.App\n"
-     "\n"
-     "(internal)"},
+      {"_app", (PyCFunction)PyApp, METH_VARARGS | METH_KEYWORDS,
+       "_app() -> ba.App\n"
+       "\n"
+       "(internal)"},
 
-    {"android_media_scan_file", (PyCFunction)PyAndroidMediaScanFile,
-     METH_VARARGS | METH_KEYWORDS,
-     "android_media_scan_file(file_name: str) -> None\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Refreshes Android MTP Index for a file; use this to get file\n"
-     "modifications to be reflected in Android File Transfer."},
+      {"android_media_scan_file", (PyCFunction)PyAndroidMediaScanFile,
+       METH_VARARGS | METH_KEYWORDS,
+       "android_media_scan_file(file_name: str) -> None\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Refreshes Android MTP Index for a file; use this to get file\n"
+       "modifications to be reflected in Android File Transfer."},
 
-    {"android_get_external_storage_path",
-     (PyCFunction)PyAndroidGetExternalStoragePath, METH_VARARGS | METH_KEYWORDS,
-     "android_get_external_storage_path() -> str\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Returns the android external storage path, or None if there is none on\n"
-     "this device"},
+      {"android_get_external_storage_path",
+       (PyCFunction)PyAndroidGetExternalStoragePath,
+       METH_VARARGS | METH_KEYWORDS,
+       "android_get_external_storage_path() -> str\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Returns the android external storage path, or None if there is none "
+       "on\n"
+       "this device"},
 
-    {"android_show_wifi_settings", (PyCFunction)PyAndroidShowWifiSettings,
-     METH_VARARGS | METH_KEYWORDS,
-     "android_show_wifi_settings() -> None\n"
-     "\n"
-     "(internal)"},
+      {"android_show_wifi_settings", (PyCFunction)PyAndroidShowWifiSettings,
+       METH_VARARGS | METH_KEYWORDS,
+       "android_show_wifi_settings() -> None\n"
+       "\n"
+       "(internal)"},
 
-    {"is_ouya_build", PyIsOuyaBuild, METH_VARARGS,
-     "is_ouya_build() -> bool\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Returns whether we're running the ouya-specific version"},
+      {"is_ouya_build", PyIsOuyaBuild, METH_VARARGS,
+       "is_ouya_build() -> bool\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Returns whether we're running the ouya-specific version"},
 
-    {"set_internal_language_keys", PySetInternalLanguageKeys, METH_VARARGS,
-     "set_internal_language_keys(listobj: List[Tuple[str, str]],\n"
-     "  random_names_list: List[Tuple[str, str]]) -> None\n"
-     "\n"
-     "(internal)"},
+      {"set_internal_language_keys", PySetInternalLanguageKeys, METH_VARARGS,
+       "set_internal_language_keys(listobj: List[Tuple[str, str]],\n"
+       "  random_names_list: List[Tuple[str, str]]) -> None\n"
+       "\n"
+       "(internal)"},
 
-    {"set_analytics_screen", (PyCFunction)PySetAnalyticsScreen,
-     METH_VARARGS | METH_KEYWORDS,
-     "set_analytics_screen(screen: str) -> None\n"
-     "\n"
-     "Used for analytics to see where in the app players spend their time.\n"
-     "\n"
-     "Category: General Utility Functions\n"
-     "\n"
-     "Generally called when opening a new window or entering some UI.\n"
-     "'screen' should be a string description of an app location\n"
-     "('Main Menu', etc.)"},
+      {"set_analytics_screen", (PyCFunction)PySetAnalyticsScreen,
+       METH_VARARGS | METH_KEYWORDS,
+       "set_analytics_screen(screen: str) -> None\n"
+       "\n"
+       "Used for analytics to see where in the app players spend their time.\n"
+       "\n"
+       "Category: General Utility Functions\n"
+       "\n"
+       "Generally called when opening a new window or entering some UI.\n"
+       "'screen' should be a string description of an app location\n"
+       "('Main Menu', etc.)"},
 
-    {"submit_analytics_counts", (PyCFunction)PySubmitAnalyticsCounts,
-     METH_VARARGS | METH_KEYWORDS,
-     "submit_analytics_counts() -> None\n"
-     "\n"
-     "(internal)"},
+      {"submit_analytics_counts", (PyCFunction)PySubmitAnalyticsCounts,
+       METH_VARARGS | METH_KEYWORDS,
+       "submit_analytics_counts() -> None\n"
+       "\n"
+       "(internal)"},
 
-    {"increment_analytics_count_raw_2",
-     (PyCFunction)PyIncrementAnalyticsCountRaw2, METH_VARARGS | METH_KEYWORDS,
-     "increment_analytics_count_raw_2(name: str,\n"
-     "  uses_increment: bool = True, increment: int = 1) -> None\n"
-     "\n"
-     "(internal)"},
+      {"increment_analytics_count_raw_2",
+       (PyCFunction)PyIncrementAnalyticsCountRaw2, METH_VARARGS | METH_KEYWORDS,
+       "increment_analytics_count_raw_2(name: str,\n"
+       "  uses_increment: bool = True, increment: int = 1) -> None\n"
+       "\n"
+       "(internal)"},
 
-    {"increment_analytics_counts_raw",
-     (PyCFunction)PyIncrementAnalyticsCountRaw, METH_VARARGS | METH_KEYWORDS,
-     "increment_analytics_counts_raw(name: str, increment: int = 1) -> None\n"
-     "\n"
-     "(internal)"},
+      {"increment_analytics_counts_raw",
+       (PyCFunction)PyIncrementAnalyticsCountRaw, METH_VARARGS | METH_KEYWORDS,
+       "increment_analytics_counts_raw(name: str, increment: int = 1) -> None\n"
+       "\n"
+       "(internal)"},
 
-    {"increment_analytics_count", (PyCFunction)PyIncrementAnalyticsCount,
-     METH_VARARGS | METH_KEYWORDS,
-     "increment_analytics_count(name: str, increment: int = 1) -> None\n"
-     "\n"
-     "(internal)"},
+      {"increment_analytics_count", (PyCFunction)PyIncrementAnalyticsCount,
+       METH_VARARGS | METH_KEYWORDS,
+       "increment_analytics_count(name: str, increment: int = 1) -> None\n"
+       "\n"
+       "(internal)"},
 
-    {"mark_log_sent", (PyCFunction)PyMarkLogSent, METH_VARARGS | METH_KEYWORDS,
-     "mark_log_sent() -> None\n"
-     "\n"
-     "(internal)"},
+      {"mark_log_sent", (PyCFunction)PyMarkLogSent,
+       METH_VARARGS | METH_KEYWORDS,
+       "mark_log_sent() -> None\n"
+       "\n"
+       "(internal)"},
 
-    {"getlog", (PyCFunction)PyGetLog, METH_VARARGS | METH_KEYWORDS,
-     "getlog() -> str\n"
-     "\n"
-     "(internal)"},
+      {"getlog", (PyCFunction)PyGetLog, METH_VARARGS | METH_KEYWORDS,
+       "getlog() -> str\n"
+       "\n"
+       "(internal)"},
 
-    {"is_log_full", PyIsLogFull, METH_VARARGS,
-     "is_log_full() -> bool\n"
-     "\n"
-     "(internal)"},
+      {"is_log_full", PyIsLogFull, METH_VARARGS,
+       "is_log_full() -> bool\n"
+       "\n"
+       "(internal)"},
 
-    {"get_log_file_path", PyGetLogFilePath, METH_VARARGS,
-     "get_log_file_path() -> str\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Return the path to the app log file."},
+      {"get_log_file_path", PyGetLogFilePath, METH_VARARGS,
+       "get_log_file_path() -> str\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Return the path to the app log file."},
 
-    {"set_platform_misc_read_vals", (PyCFunction)PySetPlatformMiscReadVals,
-     METH_VARARGS | METH_KEYWORDS,
-     "set_platform_misc_read_vals(mode: str) -> None\n"
-     "\n"
-     "(internal)"},
+      {"set_platform_misc_read_vals", (PyCFunction)PySetPlatformMiscReadVals,
+       METH_VARARGS | METH_KEYWORDS,
+       "set_platform_misc_read_vals(mode: str) -> None\n"
+       "\n"
+       "(internal)"},
 
-    {"set_low_level_config_value", (PyCFunction)PySetLowLevelConfigValue,
-     METH_VARARGS | METH_KEYWORDS,
-     "set_low_level_config_value(key: str, value: int) -> None\n"
-     "\n"
-     "(internal)"},
+      {"set_low_level_config_value", (PyCFunction)PySetLowLevelConfigValue,
+       METH_VARARGS | METH_KEYWORDS,
+       "set_low_level_config_value(key: str, value: int) -> None\n"
+       "\n"
+       "(internal)"},
 
-    {"get_low_level_config_value", (PyCFunction)PyGetLowLevelConfigValue,
-     METH_VARARGS | METH_KEYWORDS,
-     "get_low_level_config_value(key: str, default_value: int) -> int\n"
-     "\n"
-     "(internal)"},
+      {"get_low_level_config_value", (PyCFunction)PyGetLowLevelConfigValue,
+       METH_VARARGS | METH_KEYWORDS,
+       "get_low_level_config_value(key: str, default_value: int) -> int\n"
+       "\n"
+       "(internal)"},
 
-    {"resolve_appconfig_value", (PyCFunction)PyResolveAppConfigValue,
-     METH_VARARGS | METH_KEYWORDS,
-     "resolve_appconfig_value(key: str) -> Any\n"
-     "\n"
-     "(internal)"},
+      {"resolve_appconfig_value", (PyCFunction)PyResolveAppConfigValue,
+       METH_VARARGS | METH_KEYWORDS,
+       "resolve_appconfig_value(key: str) -> Any\n"
+       "\n"
+       "(internal)"},
 
-    {"get_appconfig_default_value", (PyCFunction)PyGetAppConfigDefaultValue,
-     METH_VARARGS | METH_KEYWORDS,
-     "get_appconfig_default_value(key: str) -> Any\n"
-     "\n"
-     "(internal)"},
+      {"get_appconfig_default_value", (PyCFunction)PyGetAppConfigDefaultValue,
+       METH_VARARGS | METH_KEYWORDS,
+       "get_appconfig_default_value(key: str) -> Any\n"
+       "\n"
+       "(internal)"},
 
-    {"get_appconfig_builtin_keys", (PyCFunction)PyAppConfigGetBuiltinKeys,
-     METH_VARARGS | METH_KEYWORDS,
-     "get_appconfig_builtin_keys() -> List[str]\n"
-     "\n"
-     "(internal)"},
+      {"get_appconfig_builtin_keys", (PyCFunction)PyAppConfigGetBuiltinKeys,
+       METH_VARARGS | METH_KEYWORDS,
+       "get_appconfig_builtin_keys() -> List[str]\n"
+       "\n"
+       "(internal)"},
 
-    {"get_replays_dir", (PyCFunction)PyGetReplaysDir,
-     METH_VARARGS | METH_KEYWORDS,
-     "get_replays_dir() -> str\n"
-     "\n"
-     "(internal)"},
+      {"get_replays_dir", (PyCFunction)PyGetReplaysDir,
+       METH_VARARGS | METH_KEYWORDS,
+       "get_replays_dir() -> str\n"
+       "\n"
+       "(internal)"},
 
-    {"print_load_info", (PyCFunction)PyPrintLoadInfo,
-     METH_VARARGS | METH_KEYWORDS,
-     "print_load_info() -> None\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Category: General Utility Functions"},
+      {"print_load_info", (PyCFunction)PyPrintLoadInfo,
+       METH_VARARGS | METH_KEYWORDS,
+       "print_load_info() -> None\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Category: General Utility Functions"},
 
-    {"print_context", (PyCFunction)PyPrintContext, METH_VARARGS | METH_KEYWORDS,
-     "print_context() -> None\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Prints info about the current context state; for debugging.\n"},
+      {"print_context", (PyCFunction)PyPrintContext,
+       METH_VARARGS | METH_KEYWORDS,
+       "print_context() -> None\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Prints info about the current context state; for debugging.\n"},
 
-    {"debug_print_py_err", PyDebugPrintPyErr, METH_VARARGS,
-     "debug_print_py_err() -> None\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Debugging func for tracking leaked Python errors in the C++ layer.."},
+      {"debug_print_py_err", PyDebugPrintPyErr, METH_VARARGS,
+       "debug_print_py_err() -> None\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Debugging func for tracking leaked Python errors in the C++ layer.."},
 
-    {"value_test", (PyCFunction)PyValueTest, METH_VARARGS | METH_KEYWORDS,
-     "value_test(arg: str, change: float = None, absolute: float = None)\n"
-     "  -> float\n"
-     "\n"
-     "(internal)"},
+      {"value_test", (PyCFunction)PyValueTest, METH_VARARGS | METH_KEYWORDS,
+       "value_test(arg: str, change: float = None, absolute: float = None)\n"
+       "  -> float\n"
+       "\n"
+       "(internal)"},
 
-    {"has_user_mods", PyHasUserMods, METH_VARARGS,
-     "has_user_mods() -> bool\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Returns whether the system varies from default configuration\n"
-     "(by user mods, etc)"},
+      {"has_user_mods", PyHasUserMods, METH_VARARGS,
+       "has_user_mods() -> bool\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Returns whether the system varies from default configuration\n"
+       "(by user mods, etc)"},
 
-    {"has_user_run_commands", PyHasUserRunCommands, METH_VARARGS,
-     "has_user_run_commands() -> bool\n"
-     "\n"
-     "(internal)"},
+      {"has_user_run_commands", PyHasUserRunCommands, METH_VARARGS,
+       "has_user_run_commands() -> bool\n"
+       "\n"
+       "(internal)"},
 
-    {"get_idle_time", PyGetIdleTime, METH_VARARGS,
-     "get_idle_time() -> int\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Returns the amount of time since any game input has been processed"},
+      {"get_idle_time", PyGetIdleTime, METH_VARARGS,
+       "get_idle_time() -> int\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Returns the amount of time since any game input has been processed"},
 
-    {"set_have_mods", PySetHaveMods, METH_VARARGS,
-     "set_have_mods(have_mods: bool) -> None\n"
-     "\n"
-     "(internal)"},
+      {"set_have_mods", PySetHaveMods, METH_VARARGS,
+       "set_have_mods(have_mods: bool) -> None\n"
+       "\n"
+       "(internal)"},
 
-    {"ehv", (PyCFunction)PyExtraHashValue, METH_VARARGS | METH_KEYWORDS,
-     "ehv() -> None\n"
-     "\n"
-     "(internal)"},
+      {"ehv", (PyCFunction)PyExtraHashValue, METH_VARARGS | METH_KEYWORDS,
+       "ehv() -> None\n"
+       "\n"
+       "(internal)"},
 
-    {"get_thread_name", (PyCFunction)PyGetThreadName,
-     METH_VARARGS | METH_KEYWORDS,
-     "get_thread_name() -> str\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Returns the name of the current thread.\n"
-     "This may vary depending on platform and should not be used in logic;\n"
-     "only for debugging."},
+      {"get_thread_name", (PyCFunction)PyGetThreadName,
+       METH_VARARGS | METH_KEYWORDS,
+       "get_thread_name() -> str\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Returns the name of the current thread.\n"
+       "This may vary depending on platform and should not be used in logic;\n"
+       "only for debugging."},
 
-    {"set_thread_name", (PyCFunction)PySetThreadName,
-     METH_VARARGS | METH_KEYWORDS,
-     "set_thread_name(name: str) -> None\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Sets the name of the current thread (on platforms where this is\n"
-     "available). Thread names are only for debugging and should not be\n"
-     "used in logic, as naming behavior can vary across platforms.\n"},
+      {"set_thread_name", (PyCFunction)PySetThreadName,
+       METH_VARARGS | METH_KEYWORDS,
+       "set_thread_name(name: str) -> None\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Sets the name of the current thread (on platforms where this is\n"
+       "available). Thread names are only for debugging and should not be\n"
+       "used in logic, as naming behavior can vary across platforms.\n"},
 
-    {"in_game_thread", (PyCFunction)PyInGameThread,
-     METH_VARARGS | METH_KEYWORDS,
-     "in_game_thread() -> bool\n"
-     "\n"
-     "(internal)\n"
-     "\n"
-     "Returns whether or not the current thread is the game thread."},
+      {"in_game_thread", (PyCFunction)PyInGameThread,
+       METH_VARARGS | METH_KEYWORDS,
+       "in_game_thread() -> bool\n"
+       "\n"
+       "(internal)\n"
+       "\n"
+       "Returns whether or not the current thread is the game thread."},
 
-    {"request_permission", (PyCFunction)PyRequestPermission,
-     METH_VARARGS | METH_KEYWORDS,
-     "request_permission(permission: ba.Permission) -> None\n"
-     "\n"
-     "(internal)"},
+      {"request_permission", (PyCFunction)PyRequestPermission,
+       METH_VARARGS | METH_KEYWORDS,
+       "request_permission(permission: ba.Permission) -> None\n"
+       "\n"
+       "(internal)"},
 
-    {"have_permission", (PyCFunction)PyHavePermission,
-     METH_VARARGS | METH_KEYWORDS,
-     "have_permission(permission: ba.Permission) -> bool\n"
-     "\n"
-     "(internal)"},
+      {"have_permission", (PyCFunction)PyHavePermission,
+       METH_VARARGS | METH_KEYWORDS,
+       "have_permission(permission: ba.Permission) -> bool\n"
+       "\n"
+       "(internal)"},
 
-    {"is_running_on_fire_tv", PyIsRunningOnFireTV, METH_VARARGS,
-     "is_running_on_fire_tv() -> bool\n"
-     "\n"
-     "(internal)"},
+      {"is_running_on_fire_tv", PyIsRunningOnFireTV, METH_VARARGS,
+       "is_running_on_fire_tv() -> bool\n"
+       "\n"
+       "(internal)"},
 
-    {"is_running_on_ouya", PyIsRunningOnOuya, METH_VARARGS,
-     "is_running_on_ouya() -> bool\n"
-     "\n"
-     "(internal)"},
+      {"is_running_on_ouya", PyIsRunningOnOuya, METH_VARARGS,
+       "is_running_on_ouya() -> bool\n"
+       "\n"
+       "(internal)"},
 
-    {"setup_sigint", (PyCFunction)PySetUpSigInt, METH_NOARGS,
-     "setup_sigint() -> None\n"
-     "\n"
-     "(internal)"},
-
-    {nullptr, nullptr, 0, nullptr}};
+      {"setup_sigint", (PyCFunction)PySetUpSigInt, METH_NOARGS,
+       "setup_sigint() -> None\n"
+       "\n"
+       "(internal)"},
+  };
+}
 
 #pragma clang diagnostic pop
 

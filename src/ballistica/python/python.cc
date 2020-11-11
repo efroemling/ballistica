@@ -25,6 +25,7 @@
 #include "ballistica/python/class/python_class_activity_data.h"
 #include "ballistica/python/class/python_class_collide_model.h"
 #include "ballistica/python/class/python_class_context.h"
+#include "ballistica/python/class/python_class_context_call.h"
 #include "ballistica/python/class/python_class_data.h"
 #include "ballistica/python/class/python_class_input_device.h"
 #include "ballistica/python/class/python_class_material.h"
@@ -34,8 +35,16 @@
 #include "ballistica/python/class/python_class_session_player.h"
 #include "ballistica/python/class/python_class_sound.h"
 #include "ballistica/python/class/python_class_texture.h"
+#include "ballistica/python/class/python_class_timer.h"
 #include "ballistica/python/class/python_class_vec3.h"
 #include "ballistica/python/class/python_class_widget.h"
+#include "ballistica/python/methods/python_methods_app.h"
+#include "ballistica/python/methods/python_methods_gameplay.h"
+#include "ballistica/python/methods/python_methods_graphics.h"
+#include "ballistica/python/methods/python_methods_input.h"
+#include "ballistica/python/methods/python_methods_media.h"
+#include "ballistica/python/methods/python_methods_system.h"
+#include "ballistica/python/methods/python_methods_ui.h"
 #include "ballistica/python/python_command.h"
 #include "ballistica/python/python_context_call_runnable.h"
 #include "ballistica/scene/node/node_attribute.h"
@@ -928,7 +937,7 @@ void Python::Reset(bool do_init) {
     // Set up system paths on our embedded platforms.
     SetupPythonHome();
 
-    AppInternalInitModule();
+    AppInternalInitPythonModule();
 
     Py_Initialize();
 
@@ -971,7 +980,7 @@ void Python::Reset(bool do_init) {
     // Import and grab all the Python stuff we use.
 #include "generated/ballistica/binding.inc"
 
-    AppInternalPythonInit2();
+    AppInternalPythonPostInit();
 
     // Alright I guess let's pull ba in to main, since pretty
     // much all interactive commands will be using it.
@@ -995,6 +1004,60 @@ void Python::Reset(bool do_init) {
   if (do_init) {
     inited_ = true;
   }
+}
+
+auto Python::GetModuleMethods() -> std::vector<PyMethodDef> {
+  std::vector<PyMethodDef> all_methods;
+  for (auto&& methods : {
+           PythonMethodsUI::GetMethods(),
+           PythonMethodsInput::GetMethods(),
+           PythonMethodsApp::GetMethods(),
+           PythonMethodsGameplay::GetMethods(),
+           PythonMethodsGraphics::GetMethods(),
+           PythonMethodsMedia::GetMethods(),
+           PythonMethodsSystem::GetMethods(),
+       }) {
+    all_methods.insert(all_methods.end(), methods.begin(), methods.end());
+  }
+  return all_methods;
+}
+
+template <class T>
+auto AddClass(PyObject* module) -> PyObject* {
+  T::SetupType(&T::type_obj);
+  BA_PRECONDITION(PyType_Ready(&T::type_obj) == 0);
+  Py_INCREF(&T::type_obj);
+  int r = PyModule_AddObject(module, T::type_name(),
+                             reinterpret_cast<PyObject*>(&T::type_obj));
+  BA_PRECONDITION(r == 0);
+  return reinterpret_cast<PyObject*>(&T::type_obj);
+}
+auto Python::InitModuleClasses(PyObject* module) -> void {
+  // Init our classes and add them to our module.
+  AddClass<PythonClassNode>(module);
+  AddClass<PythonClassWidget>(module);
+  AddClass<PythonClassSessionPlayer>(module);
+  AddClass<PythonClassSessionData>(module);
+  AddClass<PythonClassActivityData>(module);
+  AddClass<PythonClassContext>(module);
+  AddClass<PythonClassContextCall>(module);
+  AddClass<PythonClassInputDevice>(module);
+  AddClass<PythonClassTimer>(module);
+  AddClass<PythonClassMaterial>(module);
+  AddClass<PythonClassTexture>(module);
+  AddClass<PythonClassSound>(module);
+  AddClass<PythonClassData>(module);
+  AddClass<PythonClassModel>(module);
+  AddClass<PythonClassCollideModel>(module);
+  PyObject* vec3 = AddClass<PythonClassVec3>(module);
+
+  // Register our vec3 as an abc.Sequence
+  auto register_call =
+      PythonRef(PyImport_ImportModule("collections.abc"), PythonRef::kSteal)
+          .GetAttr("Sequence")
+          .GetAttr("register");
+  PythonRef args(Py_BuildValue("(O)", vec3), PythonRef::kSteal);
+  BA_PRECONDITION(register_call.Call(args).exists());
 }
 
 void Python::PushObjCall(ObjID obj_id) {

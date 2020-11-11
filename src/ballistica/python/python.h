@@ -80,6 +80,10 @@ class Python {
 
   void Reset(bool init = true);
 
+  /// Add classes to the newly created ba module.
+  static auto InitModuleClasses(PyObject* module) -> void;
+  static auto GetModuleMethods() -> std::vector<PyMethodDef>;
+
   auto GetContextBaseString() -> std::string;
   auto GetControllerValue(InputDevice* input_device,
                           const std::string& value_name) -> int;

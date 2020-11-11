@@ -154,8 +154,8 @@ auto IsBootstrapped() -> bool;
 
 /// Internal bits.
 auto CreateAppInternal() -> AppInternal*;
-auto AppInternalPythonInit2() -> void;
-auto AppInternalInitModule() -> void;
+auto AppInternalInitPythonModule() -> void;
+auto AppInternalPythonPostInit() -> void;
 auto AppInternalHasBlessingHash() -> bool;
 auto AppInternalPutLog(bool fatal) -> bool;
 auto AppInternalAwardAdTickets() -> void;

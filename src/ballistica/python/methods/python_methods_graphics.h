@@ -3,14 +3,16 @@
 #ifndef BALLISTICA_PYTHON_METHODS_PYTHON_METHODS_GRAPHICS_H_
 #define BALLISTICA_PYTHON_METHODS_PYTHON_METHODS_GRAPHICS_H_
 
-#include "ballistica/python/python_sys.h"
+#include <vector>
+
+#include "ballistica/ballistica.h"
 
 namespace ballistica {
 
 /// Graphics related individual python methods for our module.
 class PythonMethodsGraphics {
  public:
-  static PyMethodDef methods_def[];
+  static auto GetMethods() -> std::vector<PyMethodDef>;
 };
 
 }  // namespace ballistica

@@ -3,14 +3,16 @@
 #ifndef BALLISTICA_PYTHON_METHODS_PYTHON_METHODS_GAMEPLAY_H_
 #define BALLISTICA_PYTHON_METHODS_PYTHON_METHODS_GAMEPLAY_H_
 
-#include "ballistica/python/python_sys.h"
+#include <vector>
+
+#include "ballistica/ballistica.h"
 
 namespace ballistica {
 
 /// Gameplay related individual python methods for our module.
 class PythonMethodsGameplay {
  public:
-  static PyMethodDef methods_def[];
+  static auto GetMethods() -> std::vector<PyMethodDef>;
 };
 
 }  // namespace ballistica

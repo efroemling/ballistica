@@ -1,3 +1,6 @@
+### 1.5.29 (20246)
+- Exposed ba method/class initing in public C++ layer.
+
 ### 1.5.28 (20239)
 - Simplified ba.enum_by_value()
 - Updated Google Play version to hopefully show friend high scores again on score screens (at least for levels that have an associated Google Play leaderboard).
