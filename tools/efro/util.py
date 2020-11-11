@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Small handy bits of functionality."""
 
 from __future__ import annotations
@@ -324,3 +306,57 @@ def make_hash(obj: Any) -> int:
     # NOTE: there is sorted works correctly because it compares only
     # unique first values (i.e. dict keys)
     return hash(tuple(frozenset(sorted(new_obj.items()))))
+
+
+def asserttype(obj: Any, typ: Type[T]) -> T:
+    """Return an object typed as a given type.
+
+    Assert is used to check its actual type, so only use this when
+    failures are not expected. Otherwise use checktype.
+    """
+    assert isinstance(obj, typ)
+    return obj
+
+
+def checktype(obj: Any, typ: Type[T]) -> T:
+    """Return an object typed as a given type.
+
+    Always checks the type at runtime with isinstance and throws a TypeError
+    on failure. Use asserttype for more efficient (but less safe) equivalent.
+    """
+    if not isinstance(obj, typ):
+        raise TypeError(f'Expected a {typ}; got a {type(obj)}.')
+    return obj
+
+
+def warntype(obj: Any, typ: Type[T]) -> T:
+    """Return an object typed as a given type.
+
+    Always checks the type at runtime and simply logs a warning if it is
+    not what is expected.
+    """
+    if not isinstance(obj, typ):
+        import logging
+        logging.warning('warntype: expected a %s, got a %s', typ, type(obj))
+    return obj  # type: ignore
+
+
+def assert_non_optional(obj: Optional[T]) -> T:
+    """Return an object with Optional typing removed.
+
+    Assert is used to check its actual type, so only use this when
+    failures are not expected. Use check_non_optional otherwise.
+    """
+    assert obj is not None
+    return obj
+
+
+def check_non_optional(obj: Optional[T]) -> T:
+    """Return an object with Optional typing removed.
+
+    Always checks the actual type and throws a TypeError on failure.
+    Use assert_non_optional for a more efficient (but less safe) equivalent.
+    """
+    if obj is None:
+        raise TypeError('Got None value in check_non_optional.')
+    return obj

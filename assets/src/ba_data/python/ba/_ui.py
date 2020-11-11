@@ -1,24 +1,6 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
-"""User interface functionality."""
+"""User interface related functionality."""
 
 from __future__ import annotations
 
@@ -33,8 +15,13 @@ if TYPE_CHECKING:
     import ba
 
 
-class UI:
-    """UI subsystem for the app."""
+class UISubsystem:
+    """Consolidated UI functionality for the app.
+
+    Category: App Classes
+
+    To use this class, access the single instance of it at 'ba.app.ui'.
+    """
 
     def __init__(self) -> None:
         env = _ba.env()
@@ -46,7 +33,7 @@ class UI:
 
         self._uiscale: ba.UIScale
 
-        interfacetype = env['interface_type']
+        interfacetype = env['ui_scale']
         if interfacetype == 'large':
             self._uiscale = UIScale.LARGE
         elif interfacetype == 'medium':
@@ -54,7 +41,7 @@ class UI:
         elif interfacetype == 'small':
             self._uiscale = UIScale.SMALL
         else:
-            raise RuntimeError('Invalid UIScale value: {interfacetype}')
+            raise RuntimeError(f'Invalid UIScale value: {interfacetype}')
 
         self.window_states: Dict = {}  # FIXME: Kill this.
         self.main_menu_selection: Optional[str] = None  # FIXME: Kill this.
@@ -136,12 +123,13 @@ class UI:
         # With our legacy main-menu system, the caller is responsible for
         # clearing out the old main menu window when assigning the new.
         # However there are corner cases where that doesn't happen and we get
-        # old windows stuck under the new main one. So let's guard against that
-        # However, we can't simply delete the existing main window when
+        # old windows stuck under the new main one. So let's guard against
+        # that. However, we can't simply delete the existing main window when
         # a new one is assigned because the user may transition the old out
-        # *after* the assignment. Sigh. So as a happy medium let's check in
+        # *after* the assignment. Sigh. So, as a happy medium, let's check in
         # on the old after a short bit of time and kill it if its still alive.
-        # That will be a bit ugly on screen but at least will un-break things.
+        # That will be a bit ugly on screen but at least should un-break
+        # things.
         def _delay_kill() -> None:
             import time
             if existing:

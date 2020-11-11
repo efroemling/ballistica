@@ -1,28 +1,11 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Functionality related to dynamic discoverability of classes."""
 
 from __future__ import annotations
 
 import os
+import time
 import pathlib
 import threading
 from typing import TYPE_CHECKING
@@ -51,77 +34,146 @@ class ScanResults:
     warnings: str = ''
 
 
-def start_scan() -> None:
-    """Begin scanning script directories for scripts containing metadata.
+class MetadataSubsystem:
+    """Subsystem for working with script metadata in the app.
 
-    Should be called only once at launch."""
-    app = _ba.app
-    if app.metascan is not None:
-        print('WARNING: meta scan run more than once.')
-    pythondirs = [app.python_directory_app, app.python_directory_user]
-    thread = ScanThread(pythondirs)
-    thread.start()
+    Category: App Classes
 
+    Access the single shared instance of this class at 'ba.app.meta'.
+    """
 
-def handle_scan_results(results: ScanResults) -> None:
-    """Called in the game thread with results of a completed scan."""
+    def __init__(self) -> None:
+        self.metascan: Optional[ScanResults] = None
 
-    from ba._lang import Lstr
-    from ba._plugin import PotentialPlugin
+    def on_app_launch(self) -> None:
+        """Should be called when the app is done bootstrapping."""
 
-    # Warnings generally only get printed locally for users' benefit
-    # (things like out-of-date scripts being ignored, etc.)
-    # Errors are more serious and will get included in the regular log
-    # warnings = results.get('warnings', '')
-    # errors = results.get('errors', '')
-    if results.warnings != '' or results.errors != '':
-        import textwrap
-        _ba.screenmessage(Lstr(resource='scanScriptsErrorText'),
-                          color=(1, 0, 0))
-        _ba.playsound(_ba.getsound('error'))
-        if results.warnings != '':
-            _ba.log(textwrap.indent(results.warnings, 'Warning (meta-scan): '),
-                    to_server=False)
-        if results.errors != '':
-            _ba.log(textwrap.indent(results.errors, 'Error (meta-scan): '))
+        # Start scanning for things exposed via ba_meta.
+        self.start_scan()
 
-    # Handle plugins.
-    config_changed = False
-    found_new = False
-    plugstates: Dict[str, Dict] = _ba.app.config.setdefault('Plugins', {})
-    assert isinstance(plugstates, dict)
+    def start_scan(self) -> None:
+        """Begin scanning script directories for scripts containing metadata.
 
-    # Create a potential-plugin for each class we found in the scan.
-    for class_path in results.plugins:
-        _ba.app.potential_plugins.append(
-            PotentialPlugin(display_name=Lstr(value=class_path),
-                            class_path=class_path,
-                            available=True))
-        if class_path not in plugstates:
-            plugstates[class_path] = {'enabled': False}
-            config_changed = True
-            found_new = True
+        Should be called only once at launch."""
+        app = _ba.app
+        if self.metascan is not None:
+            print('WARNING: meta scan run more than once.')
+        pythondirs = [app.python_directory_app, app.python_directory_user]
+        thread = ScanThread(pythondirs)
+        thread.start()
 
-    # Also add a special one for any plugins set to load but *not* found
-    # in the scan (this way they will show up in the UI so we can disable them)
-    for class_path, plugstate in plugstates.items():
-        enabled = plugstate.get('enabled', False)
-        assert isinstance(enabled, bool)
-        if enabled and class_path not in results.plugins:
-            _ba.app.potential_plugins.append(
+    def handle_scan_results(self, results: ScanResults) -> None:
+        """Called in the game thread with results of a completed scan."""
+
+        from ba._language import Lstr
+        from ba._plugin import PotentialPlugin
+
+        # Warnings generally only get printed locally for users' benefit
+        # (things like out-of-date scripts being ignored, etc.)
+        # Errors are more serious and will get included in the regular log
+        # warnings = results.get('warnings', '')
+        # errors = results.get('errors', '')
+        if results.warnings != '' or results.errors != '':
+            import textwrap
+            _ba.screenmessage(Lstr(resource='scanScriptsErrorText'),
+                              color=(1, 0, 0))
+            _ba.playsound(_ba.getsound('error'))
+            if results.warnings != '':
+                _ba.log(textwrap.indent(results.warnings,
+                                        'Warning (meta-scan): '),
+                        to_server=False)
+            if results.errors != '':
+                _ba.log(textwrap.indent(results.errors, 'Error (meta-scan): '))
+
+        # Handle plugins.
+        plugs = _ba.app.plugins
+        config_changed = False
+        found_new = False
+        plugstates: Dict[str, Dict] = _ba.app.config.setdefault('Plugins', {})
+        assert isinstance(plugstates, dict)
+
+        # Create a potential-plugin for each class we found in the scan.
+        for class_path in results.plugins:
+            plugs.potential_plugins.append(
                 PotentialPlugin(display_name=Lstr(value=class_path),
                                 class_path=class_path,
-                                available=False))
+                                available=True))
+            if class_path not in plugstates:
+                plugstates[class_path] = {'enabled': False}
+                config_changed = True
+                found_new = True
 
-    _ba.app.potential_plugins.sort(key=lambda p: p.class_path)
+        # Also add a special one for any plugins set to load but *not* found
+        # in the scan (this way they will show up in the UI so we can disable
+        # them)
+        for class_path, plugstate in plugstates.items():
+            enabled = plugstate.get('enabled', False)
+            assert isinstance(enabled, bool)
+            if enabled and class_path not in results.plugins:
+                plugs.potential_plugins.append(
+                    PotentialPlugin(display_name=Lstr(value=class_path),
+                                    class_path=class_path,
+                                    available=False))
 
-    if found_new:
-        _ba.screenmessage(Lstr(resource='pluginsDetectedText'),
-                          color=(0, 1, 0))
-        _ba.playsound(_ba.getsound('ding'))
+        plugs.potential_plugins.sort(key=lambda p: p.class_path)
 
-    if config_changed:
-        _ba.app.config.commit()
+        if found_new:
+            _ba.screenmessage(Lstr(resource='pluginsDetectedText'),
+                              color=(0, 1, 0))
+            _ba.playsound(_ba.getsound('ding'))
+
+        if config_changed:
+            _ba.app.config.commit()
+
+    def get_scan_results(self) -> ScanResults:
+        """Return meta scan results; block if the scan is not yet complete."""
+        if self.metascan is None:
+            print('WARNING: ba.meta.get_scan_results()'
+                  ' called before scan completed.'
+                  ' This can cause hitches.')
+
+            # Now wait a bit for the scan to complete.
+            # Eventually error though if it doesn't.
+            starttime = time.time()
+            while self.metascan is None:
+                time.sleep(0.05)
+                if time.time() - starttime > 10.0:
+                    raise TimeoutError(
+                        'timeout waiting for meta scan to complete.')
+        return self.metascan
+
+    def get_game_types(self) -> List[Type[ba.GameActivity]]:
+        """Return available game types."""
+        from ba._general import getclass
+        from ba._gameactivity import GameActivity
+        gameclassnames = self.get_scan_results().games
+        gameclasses = []
+        for gameclassname in gameclassnames:
+            try:
+                cls = getclass(gameclassname, GameActivity)
+                gameclasses.append(cls)
+            except Exception:
+                from ba import _error
+                _error.print_exception('error importing ' + str(gameclassname))
+        unowned = self.get_unowned_game_types()
+        return [cls for cls in gameclasses if cls not in unowned]
+
+    def get_unowned_game_types(self) -> Set[Type[ba.GameActivity]]:
+        """Return present game types not owned by the current account."""
+        try:
+            from ba import _store
+            unowned_games: Set[Type[ba.GameActivity]] = set()
+            if not _ba.app.headless_mode:
+                for section in _store.get_store_layout()['minigames']:
+                    for mname in section['items']:
+                        if not _ba.get_purchased(mname):
+                            m_info = _store.get_store_item(mname)
+                            unowned_games.add(m_info['gametype'])
+            return unowned_games
+        except Exception:
+            from ba import _error
+            _error.print_exception('error calcing un-owned games')
+            return set()
 
 
 class ScanThread(threading.Thread):
@@ -142,13 +194,13 @@ class ScanThread(threading.Thread):
 
         # Push a call to the game thread to print warnings/errors
         # or otherwise deal with scan results.
-        _ba.pushcall(Call(handle_scan_results, results),
+        _ba.pushcall(Call(_ba.app.meta.handle_scan_results, results),
                      from_other_thread=True)
 
         # We also, however, immediately make results available.
         # This is because the game thread may be blocked waiting
         # for them so we can't push a call or we'd get deadlock.
-        _ba.app.metascan = results
+        _ba.app.meta.metascan = results
 
 
 class DirectoryScan:
@@ -355,58 +407,3 @@ class DirectoryScan:
                 ': no valid "# ba_meta api require <NUM>" line found;'
                 ' ignoring module.\n')
         return None
-
-
-def get_scan_results() -> ScanResults:
-    """Return meta scan results; blocking if the scan is not yet complete."""
-    import time
-    app = _ba.app
-    if app.metascan is None:
-        print(
-            'WARNING: ba.meta.get_scan_results() called before scan completed.'
-            ' This can cause hitches.')
-
-        # Now wait a bit for the scan to complete.
-        # Eventually error though if it doesn't.
-        starttime = time.time()
-        while app.metascan is None:
-            time.sleep(0.05)
-            if time.time() - starttime > 10.0:
-                raise TimeoutError(
-                    'timeout waiting for meta scan to complete.')
-    return app.metascan
-
-
-def get_game_types() -> List[Type[ba.GameActivity]]:
-    """Return available game types."""
-    from ba._general import getclass
-    from ba._gameactivity import GameActivity
-    gameclassnames = get_scan_results().games
-    gameclasses = []
-    for gameclassname in gameclassnames:
-        try:
-            cls = getclass(gameclassname, GameActivity)
-            gameclasses.append(cls)
-        except Exception:
-            from ba import _error
-            _error.print_exception('error importing ' + str(gameclassname))
-    unowned = get_unowned_game_types()
-    return [cls for cls in gameclasses if cls not in unowned]
-
-
-def get_unowned_game_types() -> Set[Type[ba.GameActivity]]:
-    """Return present game types not owned by the current account."""
-    try:
-        from ba import _store
-        unowned_games: Set[Type[ba.GameActivity]] = set()
-        if not _ba.app.headless_build:
-            for section in _store.get_store_layout()['minigames']:
-                for mname in section['items']:
-                    if not _ba.get_purchased(mname):
-                        m_info = _store.get_store_item(mname)
-                        unowned_games.add(m_info['gametype'])
-        return unowned_games
-    except Exception:
-        from ba import _error
-        _error.print_exception('error calcing un-owned games')
-        return set()

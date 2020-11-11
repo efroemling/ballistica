@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Functionality for formatting, linting, etc. code."""
 
 from __future__ import annotations
@@ -82,7 +64,7 @@ def formatcode(projroot: Path, full: bool) -> None:
 
 def cpplint(projroot: Path, full: bool) -> None:
     """Run lint-checking on all code deemed lint-able."""
-    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-locals, too-many-statements
     import tempfile
     from concurrent.futures import ThreadPoolExecutor
     from multiprocessing import cpu_count
@@ -121,8 +103,8 @@ def cpplint(projroot: Path, full: bool) -> None:
     # We want to do a few custom modifications to the cpplint module...
     try:
         import cpplint as cpplintmodule
-    except Exception:
-        raise CleanError('Unable to import cpplint')
+    except Exception as exc:
+        raise CleanError('Unable to import cpplint.') from exc
     with open(cpplintmodule.__file__) as infile:
         codelines = infile.read().splitlines()
     cheadersline = codelines.index('_C_HEADERS = frozenset([')
@@ -141,6 +123,13 @@ def cpplint(projroot: Path, full: bool) -> None:
         "  if include and include.group(1) in ('cfenv',")
     codelines[headercheckline] = (
         "  if False and include and include.group(1) in ('cfenv',")
+
+    # Skip copyright line check (our public repo code is MIT licensed
+    # so not crucial to keep track of who wrote exactly what)
+    copyrightline = codelines.index(
+        '  """Logs an error if no Copyright'
+        ' message appears at the top of the file."""')
+    codelines[copyrightline] = '  return'
 
     # Don't complain about unknown NOLINT categories.
     # (we use them for clang-tidy)
@@ -598,8 +587,8 @@ def mypy(projroot: Path, full: bool) -> None:
     starttime = time.time()
     try:
         runmypy(projroot, filenames, full)
-    except Exception:
-        raise CleanError('Mypy failed.')
+    except Exception as exc:
+        raise CleanError('Mypy failed.') from exc
     duration = time.time() - starttime
     print(f'{Clr.GRN}Mypy passed in {duration:.1f} seconds.{Clr.RST}',
           flush=True)
@@ -622,11 +611,11 @@ def dmypy(projroot: Path) -> None:
     try:
         args = [
             'dmypy', 'run', '--timeout', '3600', '--', '--config-file',
-            '.mypy.ini', '--follow-imports=error', '--pretty'
+            '.mypy.ini', '--pretty'
         ] + filenames
         subprocess.run(args, check=True)
-    except Exception:
-        raise CleanError('Mypy daemon: fail.')
+    except Exception as exc:
+        raise CleanError('Mypy daemon: fail.') from exc
     duration = time.time() - starttime
     print(f'{Clr.GRN}Mypy daemon passed in {duration:.1f} seconds.{Clr.RST}',
           flush=True)

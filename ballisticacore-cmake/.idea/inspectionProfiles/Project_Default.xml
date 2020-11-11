@@ -1,0 +1,62 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="ArrayIssues" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="CannotResolve" enabled="false" level="ERROR" enabled_by_default="false" />
+    <inspection_tool class="ClangTidy" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="clangTidyChecks" value="*,-android-*,-bugprone-bool-pointer-implicit-conversion,-bugprone-exception-escape,-bugprone-signed-char-misuse,-cert-dcl50-cpp,-cert-env33-c,-cert-mem57-cpp,-cert-oop57-cpp,-cert-oop58-cpp,-clang-analyzer-*,-clang-diagnostic-*,-cppcoreguidelines-avoid-goto,-cppcoreguidelines-init-variables,-cppcoreguidelines-macro-usage,-cppcoreguidelines-no-malloc,-cppcoreguidelines-owning-memory,-cppcoreguidelines-pro-bounds-array-to-pointer-decay,-cppcoreguidelines-pro-bounds-constant-array-index,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-cppcoreguidelines-pro-type-const-cast,-cppcoreguidelines-pro-type-cstyle-cast,-cppcoreguidelines-pro-type-reinterpret-cast,-cppcoreguidelines-pro-type-union-access,-cppcoreguidelines-pro-type-vararg,-cppcoreguidelines-special-member-functions,-darwin-*,-fuchsia-*,-google-*,-hicpp-avoid-goto,-hicpp-no-assembler,-linuxkernel-*,-llvm-*,-llvmlibc-*,-misc-bool-pointer-implicit-conversion,-misc-definitions-in-headers,-misc-non-private-member-variables-in-classes,-misc-unused-alias-decls,-misc-unused-parameters,-misc-unused-using-decls,-modernize-avoid-c-arrays,-modernize-use-default-member-init,-modernize-use-trailing-return-type,-modernize-use-using,-objc-*,-openmp-exception-escape,-readability-braces-around-statements,-readability-else-after-return,-readability-function-size,-readability-identifier-naming,-readability-implicit-bool-conversion,-readability-isolate-declaration,-readability-magic-numbers,-readability-named-parameter,-readability-qualified-auto,-readability-redundant-access-specifiers,-readability-redundant-member-init,-readability-redundant-preprocessor,-readability-simplify-boolean-expr,-readability-uppercase-literal-suffix,-zircon-*,-cert-dcl03-c,-cert-dcl16-c,-cert-dcl37-c,-cert-dcl51-cpp,-cert-dcl54-cpp,-cert-dcl59-cpp,-cert-err09-cpp,-cert-err61-cpp,-cert-fio38-c,-cert-msc30-c,-cert-msc32-c,-cert-oop11-cpp,-cert-oop54-cpp,-cert-pos44-c,-cppcoreguidelines-avoid-c-arrays,-cppcoreguidelines-avoid-magic-numbers,-cppcoreguidelines-c-copy-assignment-signature,-cppcoreguidelines-explicit-virtual-functions,-cppcoreguidelines-non-private-member-variables-in-classes,-fuchsia-header-anon-namespaces,-google-readability-braces-around-statements,-google-readability-function-size,-google-readability-namespace-comments,-hicpp-avoid-c-arrays,-hicpp-braces-around-statements,-hicpp-deprecated-headers,-hicpp-explicit-conversions,-hicpp-function-size,-hicpp-invalid-access-moved,-hicpp-member-init,-hicpp-move-const-arg,-hicpp-named-parameter,-hicpp-new-delete-operators,-hicpp-no-array-decay,-hicpp-no-malloc,-hicpp-noexcept-move,-hicpp-special-member-functions,-hicpp-static-assert,-hicpp-undelegated-constructor,-hicpp-uppercase-literal-suffix,-hicpp-use-auto,-hicpp-use-emplace,-hicpp-use-equals-default,-hicpp-use-equals-delete,-hicpp-use-noexcept,-hicpp-use-nullptr,-hicpp-use-override,-hicpp-vararg,google-default-arguments,google-explicit-constructor,google-runtime-operator,-readability-convert-member-functions-to-static,-bugprone-reserved-identifier,-cppcoreguidelines-pro-type-static-cast-downcast,-readability-make-member-function-const,-cert-err58-cpp,-bugprone-lambda-function-name,-modernize-use-nodiscard,-llvmlibc-callee-namespace,-readability-use-anyofallof,-cppcoreguidelines-avoid-non-const-global-variables " />
+    </inspection_tool>
+    <inspection_tool class="ConstructionIsNotAllowed" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="DanglingPointers" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="DuplicateSwitchCase" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="ImplicitPointerAndIntegerConversion" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="IncompatibleTypes" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="InitializationIssue" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="InterfaceHasNoImplementation" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="LoopDoesntUseConditionVariable" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="MemberFunctionCanBeStatic" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="MemberVisibility" enabled="false" level="ERROR" enabled_by_default="false" />
+    <inspection_tool class="NotAssignable" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="NotSuperclass" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="OCDFA" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="OCLoopDoesntUseConditionVariable" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="OCUnusedGlobalDeclaration" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="OCUnusedIncludeDirective" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="OCUnusedMacro" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="OCUnusedStruct" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="OtherCpp" enabled="false" level="ERROR" enabled_by_default="false" />
+    <inspection_tool class="OtherObjC" enabled="false" level="ERROR" enabled_by_default="false" />
+    <inspection_tool class="PointerTypeRequired" enabled="false" level="ERROR" enabled_by_default="false" />
+    <inspection_tool class="Simplify" enabled="false" level="WARNING" enabled_by_default="false">
+      <option name="clangTidyCheckOptions">
+        <list>
+          <ClangTidyCheckOption>
+            <option name="optionName" value="clion-simplify.SimplifyIfWithReturn" />
+            <option name="optionValue" value="0" />
+          </ClangTidyCheckOption>
+          <ClangTidyCheckOption>
+            <option name="optionName" value="clion-simplify.SimplifyEqualToTrueFalse" />
+            <option name="optionValue" value="0" />
+          </ClangTidyCheckOption>
+          <ClangTidyCheckOption>
+            <option name="optionName" value="clion-simplify.SimplifyConstantConditions" />
+            <option name="optionValue" value="1" />
+          </ClangTidyCheckOption>
+          <ClangTidyCheckOption>
+            <option name="optionName" value="clion-simplify.SimplifyTernaryWithConstantBranch" />
+            <option name="optionValue" value="0" />
+          </ClangTidyCheckOption>
+        </list>
+      </option>
+      <option name="enableSimplifyEqualToTrueFalse" value="false" />
+      <option name="enableSimplifyTernaryWithConstantBranch" value="false" />
+    </inspection_tool>
+    <inspection_tool class="StaticnessMismatch" enabled="false" level="ERROR" enabled_by_default="false" />
+    <inspection_tool class="UnusedExpressionResult" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="UnusedGlobalDeclaration" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="UnusedLocalVariable" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="UnusedMacro" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="UnusedParameter" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="UnusedStruct" enabled="false" level="WARNING" enabled_by_default="false" />
+  </profile>
+</component>

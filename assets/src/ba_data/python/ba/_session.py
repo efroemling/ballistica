@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Defines base session class."""
 from __future__ import annotations
 
@@ -26,7 +8,7 @@ from typing import TYPE_CHECKING
 
 import _ba
 from ba._error import print_error, print_exception, NodeNotFoundError
-from ba._lang import Lstr
+from ba._language import Lstr
 from ba._player import Player
 
 if TYPE_CHECKING:
@@ -46,7 +28,7 @@ class Session:
     ba.Activity instances such as mini-games and score-screens, and for
     maintaining state between them (players, teams, score tallies, etc).
 
-    Attrs:
+    Attributes:
 
         sessionteams
             All the ba.SessionTeams in the Session. Most things should use the
@@ -143,7 +125,8 @@ class Session:
                 else:
                     missing_info = [(d.cls, d.config) for d in exc.deps]
                     raise RuntimeError(
-                        f'Missing non-asset dependencies: {missing_info}')
+                        f'Missing non-asset dependencies: {missing_info}'
+                    ) from exc
 
         # Throw a combined exception if we found anything missing.
         if missing_asset_packages:
@@ -629,17 +612,17 @@ class Session:
     def transitioning_out_activity_was_freed(
             self, can_show_ad_on_death: bool) -> None:
         """(internal)"""
-        from ba._apputils import garbage_collect, call_after_ad
+        from ba._apputils import garbage_collect
 
         # Since things should be generally still right now, it's a good time
         # to run garbage collection to clear out any circular dependency
         # loops. We keep this disabled normally to avoid non-deterministic
         # hitches.
-        garbage_collect(session_end=False)
+        garbage_collect()
 
         with _ba.Context(self):
             if can_show_ad_on_death:
-                call_after_ad(self.begin_next_activity)
+                _ba.app.ads.call_after_ad(self.begin_next_activity)
             else:
                 _ba.pushcall(self.begin_next_activity)
 

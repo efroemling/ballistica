@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Utility snippets applying to generic Python code."""
 from __future__ import annotations
 
@@ -26,14 +8,16 @@ import types
 import weakref
 import random
 import inspect
+from enum import Enum
 from typing import TYPE_CHECKING, TypeVar, Protocol
 
 from efro.terminal import Clr
+import _ba
 from ba._error import print_error, print_exception
 from ba._enums import TimeType
-import _ba
 
 if TYPE_CHECKING:
+    from types import FrameType
     from typing import Any, Type, Optional
     from efro.call import Call as Call  # 'as Call' so we re-export.
     from weakref import ReferenceType
@@ -52,6 +36,7 @@ class Existable(Protocol):
 
 ExistableType = TypeVar('ExistableType', bound=Existable)
 T = TypeVar('T')
+ET = TypeVar('ET', bound=Enum)
 
 
 def existing(obj: Optional[ExistableType]) -> Optional[ExistableType]:
@@ -317,6 +302,47 @@ def verify_object_death(obj: object) -> None:
                   timetype=TimeType.REAL)
 
 
+def print_active_refs(obj: Any) -> None:
+    """Print info about things referencing a given object.
+
+    Category: General Utility Functions
+
+    Useful for tracking down cyclical references and causes for zombie objects.
+    """
+    # pylint: disable=too-many-nested-blocks
+    from types import FrameType, TracebackType
+    refs = list(gc.get_referrers(obj))
+    print(f'{Clr.YLW}Active referrers to {obj}:{Clr.RST}')
+    for i, ref in enumerate(refs):
+        print(f'{Clr.YLW}#{i+1}:{Clr.BLU} {ref}{Clr.RST}')
+
+        # For certain types of objects such as stack frames, show what is
+        # keeping *them* alive too.
+        if isinstance(ref, FrameType):
+            print(f'{Clr.YLW}  Active referrers to #{i+1}:{Clr.RST}')
+            refs2 = list(gc.get_referrers(ref))
+            for j, ref2 in enumerate(refs2):
+                print(f'{Clr.YLW}  #a{j+1}:{Clr.BLU} {ref2}{Clr.RST}')
+
+                # Can go further down the rabbit-hole if needed...
+                if bool(False):
+                    if isinstance(ref2, TracebackType):
+                        print(f'{Clr.YLW}    '
+                              f'Active referrers to #a{j+1}:{Clr.RST}')
+                        refs3 = list(gc.get_referrers(ref2))
+                        for k, ref3 in enumerate(refs3):
+                            print(f'{Clr.YLW}    '
+                                  f'#b{k+1}:{Clr.BLU} {ref3}{Clr.RST}')
+
+                            if isinstance(ref3, BaseException):
+                                print(f'{Clr.YLW}      Active referrers to'
+                                      f' #b{k+1}:{Clr.RST}')
+                                refs4 = list(gc.get_referrers(ref3))
+                                for x, ref4 in enumerate(refs4):
+                                    print(f'{Clr.YLW}      #c{x+1}:{Clr.BLU}'
+                                          f' {ref4}{Clr.RST}')
+
+
 def _verify_object_death(wref: ReferenceType) -> None:
     obj = wref()
     if obj is None:
@@ -328,14 +354,9 @@ def _verify_object_death(wref: ReferenceType) -> None:
         print(f'Note: unable to get type name for {obj}')
         name = 'object'
 
-    print(f'{Clr.RED}Error: {name} not dying'
-          f' when expected to: {Clr.BLD}{obj}{Clr.RST}')
-    refs = list(gc.get_referrers(obj))
-    print(f'{Clr.YLW}Active References:{Clr.RST}')
-    i = 1
-    for ref in refs:
-        print(f'{Clr.YLW}  reference {i}:{Clr.BLU} {ref}{Clr.RST}')
-        i += 1
+    print(f'{Clr.RED}Error: {name} not dying when expected to:'
+          f' {Clr.BLD}{obj}{Clr.RST}')
+    print_active_refs(obj)
 
 
 def storagename(suffix: str = None) -> str:
@@ -378,3 +399,30 @@ def storagename(suffix: str = None) -> str:
     if suffix is not None:
         fullpath = f'{fullpath}_{suffix}'
     return fullpath.replace('.', '_')
+
+
+def enum_by_value(cls: Type[ET], value: Any) -> ET:
+    """Create an enum from a value.
+
+    Category: General Utility Functions
+
+    This is basically the same as doing 'obj = EnumType(value)' except
+    that it works around an issue where a reference loop is created
+    if an exception is thrown due to an invalid value. Since we disable
+    the cyclic garbage collector for most of the time, such loops can lead
+    to our objects sticking around longer than we want.
+    This issue has been submitted to Python as a bug so hopefully we can
+    remove this eventually if it gets fixed: https://bugs.python.org/issue42248
+    """
+
+    # Note: we don't recreate *ALL* the functionality of the Enum constructor
+    # such as the _missing_ hook; but this should cover our basic needs.
+    value2member_map = getattr(cls, '_value2member_map_')
+    assert value2member_map is not None
+    try:
+        out = value2member_map[value]
+        assert isinstance(out, cls)
+        return out
+    except KeyError:
+        raise ValueError('%r is not a valid %s' %
+                         (value, cls.__name__)) from None

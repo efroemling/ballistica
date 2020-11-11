@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides the built-in on screen keyboard UI."""
 
 from __future__ import annotations
@@ -231,8 +213,8 @@ class OnScreenKeyboardWindow(ba.Window):
 
                     # Show change instructions only if we have more than one
                     # keyboard option.
-                    if (ba.app.metascan is not None
-                            and len(ba.app.metascan.keyboards) > 1):
+                    if (ba.app.meta.metascan is not None
+                            and len(ba.app.meta.metascan.keyboards) > 1):
                         ba.textwidget(
                             parent=self._root_widget,
                             h_align='center',
@@ -256,8 +238,8 @@ class OnScreenKeyboardWindow(ba.Window):
         self._refresh()
 
     def _get_keyboard(self) -> ba.Keyboard:
-        assert ba.app.metascan is not None
-        classname = ba.app.metascan.keyboards[self._keyboard_index]
+        assert ba.app.meta.metascan is not None
+        classname = ba.app.meta.metascan.keyboards[self._keyboard_index]
         kbclass = ba.getclass(classname, ba.Keyboard)
         return kbclass()
 
@@ -323,11 +305,11 @@ class OnScreenKeyboardWindow(ba.Window):
         self._refresh()
 
     def _next_keyboard(self) -> None:
-        assert ba.app.metascan is not None
+        assert ba.app.meta.metascan is not None
         self._keyboard_index = (self._keyboard_index + 1) % len(
-            ba.app.metascan.keyboards)
+            ba.app.meta.metascan.keyboards)
         self._load_keyboard()
-        if len(ba.app.metascan.keyboards) < 2:
+        if len(ba.app.meta.metascan.keyboards) < 2:
             ba.playsound(ba.getsound('error'))
             ba.screenmessage(ba.Lstr(resource='keyboardNoOthersAvailableText'),
                              color=(1, 0, 0))

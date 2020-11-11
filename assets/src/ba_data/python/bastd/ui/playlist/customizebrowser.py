@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides UI for viewing/creating/editing playlists."""
 
 from __future__ import annotations
@@ -271,8 +253,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
         self._update()
 
     def _update(self) -> None:
-        from ba.internal import have_pro_options
-        have = have_pro_options()
+        have = ba.app.accounts.have_pro_options()
         for lock in self._lock_images:
             ba.imagewidget(edit=lock, opacity=0.0 if have else 1.0)
 
@@ -317,6 +298,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
         _ba.lock_all_input()
 
     def _refresh(self, select_playlist: str = None) -> None:
+        from efro.util import asserttype
         old_selection = self._selected_playlist_name
 
         # If there was no prev selection, look in prefs.
@@ -336,7 +318,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
         items = [(i[0].decode(), i[1]) if not isinstance(i[0], str) else i
                  for i in items]
 
-        items.sort(key=lambda x: x[0].lower())
+        items.sort(key=lambda x: asserttype(x[0], str).lower())
 
         items = [['__default__', None]] + items  # Default is always first.
         index = 0
@@ -399,11 +381,10 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
 
     def _new_playlist(self) -> None:
         # pylint: disable=cyclic-import
-        from ba.internal import have_pro_options
-        from bastd.ui.playlist import editcontroller
-        from bastd.ui import purchase
-        if not have_pro_options():
-            purchase.PurchaseWindow(items=['pro'])
+        from bastd.ui.playlist.editcontroller import PlaylistEditController
+        from bastd.ui.purchase import PurchaseWindow
+        if not ba.app.accounts.have_pro_options():
+            PurchaseWindow(items=['pro'])
             return
 
         # Clamp at our max playlist number.
@@ -419,16 +400,15 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
         self._save_playlist_selection()
 
         # Kick off the edit UI.
-        editcontroller.PlaylistEditController(sessiontype=self._sessiontype)
+        PlaylistEditController(sessiontype=self._sessiontype)
         ba.containerwidget(edit=self._root_widget, transition='out_left')
 
     def _edit_playlist(self) -> None:
         # pylint: disable=cyclic-import
-        from ba.internal import have_pro_options
-        from bastd.ui.playlist import editcontroller
-        from bastd.ui import purchase
-        if not have_pro_options():
-            purchase.PurchaseWindow(items=['pro'])
+        from bastd.ui.playlist.editcontroller import PlaylistEditController
+        from bastd.ui.purchase import PurchaseWindow
+        if not ba.app.accounts.have_pro_options():
+            PurchaseWindow(items=['pro'])
             return
         if self._selected_playlist_name is None:
             return
@@ -438,7 +418,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
                                      '.cantEditDefaultText'))
             return
         self._save_playlist_selection()
-        editcontroller.PlaylistEditController(
+        PlaylistEditController(
             existing_playlist_name=self._selected_playlist_name,
             sessiontype=self._sessiontype)
         ba.containerwidget(edit=self._root_widget, transition='out_left')
@@ -491,10 +471,9 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
 
     def _share_playlist(self) -> None:
         # pylint: disable=cyclic-import
-        from ba.internal import have_pro_options
-        from bastd.ui import purchase
-        if not have_pro_options():
-            purchase.PurchaseWindow(items=['pro'])
+        from bastd.ui.purchase import PurchaseWindow
+        if not ba.app.accounts.have_pro_options():
+            PurchaseWindow(items=['pro'])
             return
 
         # Gotta be signed in for this to work.
@@ -527,11 +506,10 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
 
     def _delete_playlist(self) -> None:
         # pylint: disable=cyclic-import
-        from ba.internal import have_pro_options
-        from bastd.ui import purchase
-        from bastd.ui import confirm
-        if not have_pro_options():
-            purchase.PurchaseWindow(items=['pro'])
+        from bastd.ui.purchase import PurchaseWindow
+        from bastd.ui.confirm import ConfirmWindow
+        if not ba.app.accounts.have_pro_options():
+            PurchaseWindow(items=['pro'])
             return
 
         if self._selected_playlist_name is None:
@@ -541,7 +519,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
             ba.screenmessage(
                 ba.Lstr(resource=self._r + '.cantDeleteDefaultText'))
         else:
-            confirm.ConfirmWindow(
+            ConfirmWindow(
                 ba.Lstr(resource=self._r + '.deleteConfirmText',
                         subs=[('${LIST}', self._selected_playlist_name)]),
                 self._do_delete_playlist, 450, 150)
@@ -555,10 +533,9 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
     def _duplicate_playlist(self) -> None:
         # pylint: disable=too-many-branches
         # pylint: disable=cyclic-import
-        from ba.internal import have_pro_options
-        from bastd.ui import purchase
-        if not have_pro_options():
-            purchase.PurchaseWindow(items=['pro'])
+        from bastd.ui.purchase import PurchaseWindow
+        if not ba.app.accounts.have_pro_options():
+            PurchaseWindow(items=['pro'])
             return
         if self._selected_playlist_name is None:
             return

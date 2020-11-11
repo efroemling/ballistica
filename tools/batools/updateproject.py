@@ -1,24 +1,6 @@
 #!/usr/bin/env python3.8
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """This script acts as a 'meta' Makefile for the project. It is in charge
 of generating Makefiles, IDE project files, procedurally generated source
 files, etc. based on the current structure of the project.
@@ -51,9 +33,7 @@ if TYPE_CHECKING:
 
 def get_legal_notice_private() -> str:
     """Return the one line legal notice we expect private files to have."""
-    # We just use the first line of the mit license (just the copyright)
-    from efrotools import MIT_LICENSE
-    return MIT_LICENSE.splitlines()[0]
+    return 'Copyright (c) 2011-2020 Eric Froemling'
 
 
 @dataclass
@@ -84,8 +64,11 @@ class Updater:
         self._line_corrections: Dict[str, List[LineChange]] = {}
         self._file_changes: Dict[str, str] = {}
 
-        self._copyright_checks = bool(
-            getlocalconfig(Path('.')).get('copyright_checks', True))
+        self._license_line_checks = bool(
+            getlocalconfig(Path('.')).get('license_line_checks', True))
+
+        self._internal_source_dirs: Optional[Set[str]] = None
+        self._internal_source_files: Optional[Set[str]] = None
 
     def run(self) -> None:
         """Do the thing."""
@@ -138,6 +121,40 @@ class Updater:
         else:
             print(f'{Clr.GRN}Update-Project: SUCCESS!{Clr.RST}')
 
+    def _get_internal_source_files(self) -> Set[str]:
+        from pathlib import Path
+        from efrotools import getconfig
+
+        # Fetch/calc just once and cache results.
+        if self._internal_source_files is None:
+            sources: List[str]
+            if self._public:
+                sources = []
+            else:
+                sources = getconfig(Path('.')).get('internal_source_files', [])
+            if not isinstance(sources, list):
+                raise CleanError(f'Expected list for internal_source_files;'
+                                 f' got {type(sources)}')
+            self._internal_source_files = set(sources)
+        return self._internal_source_files
+
+    def _get_internal_source_dirs(self) -> Set[str]:
+        from pathlib import Path
+        from efrotools import getconfig
+
+        # Fetch/calc just once and cache results.
+        if self._internal_source_dirs is None:
+            sources: List[str]
+            if self._public:
+                sources = []
+            else:
+                sources = getconfig(Path('.')).get('internal_source_dirs', [])
+            if not isinstance(sources, list):
+                raise CleanError(f'Expected list for internal_source_dirs;'
+                                 f' got {type(sources)}')
+            self._internal_source_dirs = set(sources)
+        return self._internal_source_dirs
+
     def _update_dummy_module(self) -> None:
         # Update our dummy _ba module.
         # We need to do this near the end because it may run the cmake build
@@ -163,12 +180,10 @@ class Updater:
                 sys.exit(255)
 
     def _update_compile_commands_file(self) -> None:
-        # Update our local compile-commands file based on any changes to
-        # our cmake stuff. Do this at end so cmake changes already happened.
-        if not self._check and os.path.exists('ballisticacore-cmake'):
-            if os.system('make .irony/compile_commands.json') != 0:
-                print(f'{Clr.RED}Error updating compile-commands.{Clr.RST}')
-                sys.exit(255)
+
+        # This will update our prereqs which may include compile-commands
+        # files (.cache/irony/compile_commands.json, etc)
+        subprocess.run(['make', 'prereqs'], check=True)
 
     def _apply_file_changes(self) -> None:
         # Now write out any project files that have changed
@@ -197,7 +212,6 @@ class Updater:
                 f'All {unchanged_project_count} project files are up to date.')
 
     def _apply_line_changes(self) -> None:
-        # pylint: disable=too-many-branches
 
         # Build a flat list of entries that can and can-not be auto applied.
         manual_changes: List[Tuple[str, LineChange]] = []
@@ -219,14 +233,6 @@ class Updater:
                     f'{Clr.RED}{change[0]}:{change[1].line_number + 1}:'
                     f' Expected line to be:\n  {change[1].expected}{Clr.RST}')
 
-                # Make a note on copyright lines that this can be disabled.
-                if 'Copyright' in change[1].expected:
-                    print(f'{Clr.RED}NOTE: You can disable copyright'
-                          f' checks by adding "copyright_checks": false\n'
-                          f'to the root dict in config/localconfig.json.\n'
-                          f'see https://ballistica.net/wiki'
-                          f'/Knowledge-Nuggets#'
-                          f'hello-world-creating-a-new-game-type{Clr.RST}')
             sys.exit(-1)
 
         # Now, if we've got auto entries, either list or auto-correct them.
@@ -280,19 +286,8 @@ class Updater:
         with open(fname) as infile:
             lines = infile.read().splitlines()
 
-        # Look for copyright/legal-notice line(s)
-        if self._copyright_checks:
-            legal_notice = '// ' + get_legal_notice_private()
-            lnum = 0
-            if lines[lnum] != legal_notice:
-                # Allow auto-correcting if it looks close already
-                # (don't want to blow away an unrelated line)
-                allow_auto = 'Copyright' in lines[
-                    lnum] and 'Eric Froemling' in lines[lnum]
-                self._add_line_correction(fname,
-                                          line_number=lnum,
-                                          expected=legal_notice,
-                                          can_auto_update=allow_auto)
+        if self._license_line_checks:
+            self._check_c_license(fname, lines)
 
     def _check_headers(self) -> None:
         for header_file_raw in self._header_files:
@@ -309,6 +304,30 @@ class Updater:
                        expected=expected,
                        can_auto_update=can_auto_update))
 
+    def _check_c_license(self, fname: str, lines: List[str]) -> None:
+        from efrotools import get_public_license
+
+        # Look for public license line (public or private repo)
+        # or private license line (private repo only)
+        line_private = '// ' + get_legal_notice_private()
+        line_public = get_public_license('c++')
+        lnum = 0
+
+        if self._public:
+            if lines[lnum] != line_public:
+                # Allow auto-correcting from private to public line
+                allow_auto = lines[lnum] == line_private
+                self._add_line_correction(fname,
+                                          line_number=lnum,
+                                          expected=line_public,
+                                          can_auto_update=allow_auto)
+        else:
+            if lines[lnum] not in [line_public, line_private]:
+                self._add_line_correction(fname,
+                                          line_number=lnum,
+                                          expected=line_private,
+                                          can_auto_update=False)
+
     def _check_header(self, fname: str) -> None:
 
         # Make sure its define guard is correct.
@@ -316,21 +335,8 @@ class Updater:
         with open(fname) as fhdr:
             lines = fhdr.read().splitlines()
 
-        if self._public:
-            raise RuntimeError('FIXME: Check for full license.')
-
-        # Look for copyright/legal-notice line(s)
-        line = '// ' + get_legal_notice_private()
-        lnum = 0
-        if lines[lnum] != line:
-            # Allow auto-correcting if it looks close already
-            # (don't want to blow away an unrelated line)
-            allow_auto = 'Copyright' in lines[
-                lnum] and 'Eric Froemling' in lines[lnum]
-            self._add_line_correction(fname,
-                                      line_number=lnum,
-                                      expected=line,
-                                      can_auto_update=allow_auto)
+        if self._license_line_checks:
+            self._check_c_license(fname, lines)
 
         # Check for header guard at top
         line = '#ifndef ' + guard
@@ -369,15 +375,17 @@ class Updater:
         for fname in fnames:
             with open(fname) as infile:
                 makefile = infile.read()
-            if get_legal_notice_private() not in makefile:
-                raise RuntimeError(f'Priv legal not found in {fname}')
             if self._public:
                 public_license = get_public_license('makefile')
                 if public_license not in makefile:
-                    raise RuntimeError(f'Pub license not found in {fname}')
+                    raise CleanError(f'Pub license not found in {fname}.')
+            else:
+                if (get_legal_notice_private() not in makefile
+                        and get_public_license('makefile') not in makefile):
+                    raise CleanError(
+                        f'Priv or pub legal not found in {fname}.')
 
     def _check_python_file(self, fname: str) -> None:
-        # pylint: disable=too-many-branches
         from efrotools import get_public_license, PYVER
         with open(fname) as infile:
             contents = infile.read()
@@ -407,55 +415,40 @@ class Updater:
 
         # In all cases, look for our one-line legal notice.
         # In the public case, look for the rest of our public license too.
-        if self._copyright_checks:
+        if self._license_line_checks:
             public_license = get_public_license('python')
-            line = '# ' + get_legal_notice_private()
-
-            # (Sanity check: public license's first line should be
-            # same as priv)
-            if line != public_license.splitlines()[0]:
-                raise RuntimeError(
-                    'Public license first line should match priv.')
-
+            private_license = '# ' + get_legal_notice_private()
             lnum = copyrightline
             if len(lines) < lnum + 1:
                 raise RuntimeError('Not enough lines in file:', fname)
 
-            if lines[lnum] != line:
-                # Allow auto-correcting if it looks close already
-                # (don't want to blow away an unrelated line)
-                allow_auto = 'Copyright' in lines[
-                    lnum] and 'Eric Froemling' in lines[lnum]
-                self._add_line_correction(fname,
-                                          line_number=lnum,
-                                          expected=line,
-                                          can_auto_update=allow_auto)
-                found_intact_private = False
-            else:
-                found_intact_private = True
+            disable_note = ('NOTE: You can disable license line'
+                            ' checks by adding "license_line_checks": false\n'
+                            'to the root dict in config/localconfig.json.\n'
+                            'see https://ballistica.net/wiki'
+                            '/Knowledge-Nuggets#'
+                            'hello-world-creating-a-new-game-type')
 
             if self._public:
-                # Check for the full license.
-                # If we can't find the full license but we found
-                # a private-license line, offer to replace it with the
-                # full one. Otherwise just complain and die.
-
-                # Try to be reasonably certain it's not in here...
-                definitely_have_full = public_license in contents
-                might_have_full = ('Permission is hereby granted' in contents
-                                   or 'THE SOFTWARE IS PROVIDED' in contents)
-
-                # Only muck with it if we're not sure we've got it.
-                if not definitely_have_full:
-                    if found_intact_private and not might_have_full:
-                        self._add_line_correction(fname,
-                                                  line_number=lnum,
-                                                  expected=public_license,
-                                                  can_auto_update=True)
-                    else:
-                        raise RuntimeError(
-                            f'Found incorrect license text in {fname};'
-                            f' please correct.')
+                # Check for public license only.
+                if lines[lnum] != public_license:
+                    raise CleanError(f'License text not found'
+                                     f" at '{fname}' line {lnum+1};"
+                                     f' please correct.\n'
+                                     f'Expected text is: {public_license}\n'
+                                     f'{disable_note}')
+            else:
+                # Check for public or private license.
+                if (lines[lnum] != public_license
+                        and lines[lnum] != private_license):
+                    raise CleanError(f'License text not found'
+                                     f" at '{fname}' line {lnum+1};"
+                                     f' please correct.\n'
+                                     f'Expected text (for public files):'
+                                     f' {public_license}\n'
+                                     f'Expected text (for private files):'
+                                     f' {private_license}\n'
+                                     f'{disable_note}')
 
     def _check_python_files(self) -> None:
         from pathlib import Path
@@ -583,28 +576,52 @@ class Updater:
         if os.path.exists(fname):
             self._update_visual_studio_project(fname, '..\\..\\src')
 
-    def _update_cmake_file(self, fname: str) -> None:
+    def _is_public_source_file(self, filename: str) -> bool:
+        assert filename.startswith('/')
+        filename = f'src/ballistica{filename}'
 
+        # If its under any of our internal source dirs, make it internal.
+        for srcdir in self._get_internal_source_dirs():
+            assert not srcdir.startswith('/')
+            assert not srcdir.endswith('/')
+            if filename.startswith(f'{srcdir}/'):
+                return False
+
+        # If its specifically listed as an internal file, make it internal.
+        return filename not in self._get_internal_source_files()
+
+    def _update_cmake_file(self, fname: str) -> None:
         with open(fname) as infile:
             lines = infile.read().splitlines()
-        auto_start = lines.index('  #AUTOGENERATED_BEGIN (this section'
-                                 ' is managed by the "update_project" tool)')
-        auto_end = lines.index('  #AUTOGENERATED_END')
-        our_lines = [
-            '  ${BA_SRC_ROOT}/ballistica' + f
-            for f in sorted(self._source_files + self._header_files)
-            if not f.endswith('.mm') and not f.endswith('.m')
-        ]
-        filtered = lines[:auto_start + 1] + our_lines + lines[auto_end:]
-        self._file_changes[fname] = '\n'.join(filtered) + '\n'
+
+        for section in ['PUBLIC', 'PRIVATE']:
+            # Public repo has no private section.
+            if self._public and section == 'PRIVATE':
+                continue
+
+            auto_start = lines.index(
+                f'  # AUTOGENERATED_{section}_BEGIN (this section'
+                f' is managed by the "update_project" tool)')
+            auto_end = lines.index(f'  # AUTOGENERATED_{section}_END')
+            our_lines = [
+                '  ${BA_SRC_ROOT}/ballistica' + f
+                for f in sorted(self._source_files + self._header_files)
+                if not f.endswith('.mm') and not f.endswith('.m')
+                and self._is_public_source_file(f) == (section == 'PUBLIC')
+            ]
+            lines = lines[:auto_start + 1] + our_lines + lines[auto_end:]
+
+        self._file_changes[fname] = '\n'.join(lines) + '\n'
 
     def _update_cmake_files(self) -> None:
+        # Note: currently not updating cmake files at all in public builds;
+        # will need to get this working at some point...
         fname = 'ballisticacore-cmake/CMakeLists.txt'
-        if os.path.exists(fname):
+        if not self._public:
             self._update_cmake_file(fname)
         fname = ('ballisticacore-android/BallisticaCore'
                  '/src/main/cpp/CMakeLists.txt')
-        if os.path.exists(fname):
+        if not self._public:
             self._update_cmake_file(fname)
 
     def _find_sources_and_headers(self, scan_dir: str) -> None:

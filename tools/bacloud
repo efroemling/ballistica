@@ -1,24 +1,6 @@
 #!/usr/bin/env python3.8
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """A tool for interacting with ballistica's cloud services.
 This facilitates workflows such as creating asset-packages, etc.
 """
@@ -66,7 +48,7 @@ class StateData:
 class Response:
     """Response sent from the bacloud server to the client.
 
-    Attrs:
+    Attributes:
       message: If present, client should print this message before any other
         response processing (including error handling) occurs.
       message_end: end arg for message print() call.
@@ -208,9 +190,10 @@ class App:
             subprocess.run(['make', '--quiet', 'prereqs'],
                            check=True,
                            cwd=self._project_root)
-        except subprocess.CalledProcessError:
-            raise CleanError('"make prereqs" check failed. '
-                             'Install missing requirements and try again.')
+        except subprocess.CalledProcessError as exc:
+            raise CleanError(
+                '"make prereqs" check failed. '
+                'Install missing requirements and try again.') from exc
 
         self._load_state()
 
@@ -439,6 +422,6 @@ if __name__ == '__main__':
         # Let's do a clean fail on keyboard interrupt.
         # Can make this optional if a backtrace is ever useful..
         sys.exit(1)
-    except CleanError as exc:
-        exc.pretty_print()
+    except CleanError as clean_exc:
+        clean_exc.pretty_print()
         sys.exit(1)

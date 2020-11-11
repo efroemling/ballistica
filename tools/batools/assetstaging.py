@@ -1,24 +1,6 @@
 #!/usr/bin/env python3.8
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Stage assets for a build."""
 
 from __future__ import annotations
@@ -34,6 +16,7 @@ from efrotools import PYVER
 
 if TYPE_CHECKING:
     from typing import Optional, List
+    from pathlib import Path
 
 # Suffix for the pyc files we include in stagings.
 # We're using deterministic opt pyc files; see PEP 552.
@@ -51,6 +34,7 @@ class Config:
         # We always calc src relative to this script.
         self.src = self.projroot + '/assets/build'
         self.dst: Optional[str] = None
+        self.serverdst: Optional[str] = None
         self.win_extras_src: Optional[str] = None
         self.win_platform: Optional[str] = None
         self.win_type: Optional[str] = None
@@ -122,12 +106,13 @@ class Config:
         self.win_platform = winplt
         self.win_type = wintype
         assert winempty == ''
-        self.dst = args[1]
         self.tex_suffix = '.dds'
 
         if wintype == 'win':
-            pass
+            self.dst = args[-1]
         elif wintype == 'winserver':
+            self.dst = os.path.join(args[-1], 'dist')
+            self.serverdst = args[-1]
             self.include_textures = False
             self.include_audio = False
             self.include_models = False
@@ -161,10 +146,20 @@ class Config:
             self.dst = args[1]
             self.tex_suffix = '.dds'
         elif '-cmakeserver' in args:
-            self.dst = args[1]
+            self.dst = os.path.join(args[-1], 'dist')
+            self.serverdst = args[-1]
             self.include_textures = False
             self.include_audio = False
             self.include_models = False
+            # Require either -debug or -release in args.
+            if '-debug' in args:
+                self.debug = True
+                assert '-release' not in args
+            elif '-release' in args:
+                self.debug = False
+            else:
+                raise RuntimeError(
+                    "Expected either '-debug' or '-release' in args.")
         elif '-xcode-mac' in args:
             self.src = os.environ['SOURCE_ROOT'] + '/assets/build'
             self.dst = (os.environ['TARGET_BUILD_DIR'] + '/' +
@@ -258,7 +253,11 @@ def _sync_windows_extras(cfg: Config) -> None:
         pyd_rules = "--exclude '*_d.pyd' --include '*.pyd'"
 
     for dirname in ('DLLs', 'Lib'):
-        _run(f'mkdir -p "{cfg.dst}/{dirname}"')
+        # EWW: seems windows python currently sets its path to ./lib but it
+        # comes with Lib. Windows is normally case-insensitive but this messes
+        # it up when running under WSL. Let's install it as lib for now.
+        dstdirname = 'lib' if dirname == 'Lib' else dirname
+        _run(f'mkdir -p "{cfg.dst}/{dstdirname}"')
         cmd = ('rsync --recursive --update --delete --delete-excluded '
                ' --prune-empty-dirs'
                " --include '*.ico' --include '*.cat'"
@@ -266,12 +265,12 @@ def _sync_windows_extras(cfg: Config) -> None:
                " --include '*.py' --include '*." + OPT_PYC_SUFFIX + "'"
                " --include '*/' --exclude '*' \"" +
                os.path.join(cfg.win_extras_src, dirname) + '/" '
-               '"' + cfg.dst + '/' + dirname + '/"')
+               '"' + cfg.dst + '/' + dstdirname + '/"')
         _run(cmd)
 
     # Now sync the top level individual files that we want.
-    # (we could technically copy everything over but this keeps staging
-    # dirs a bit tidier)
+    # We could technically copy everything over but this keeps staging
+    # dirs a bit tidier.
     dbgsfx = '_d' if cfg.debug else ''
     toplevelfiles: List[str] = [f'python38{dbgsfx}.dll']
 
@@ -281,7 +280,7 @@ def _sync_windows_extras(cfg: Config) -> None:
             'SDL2.dll'
         ]
     elif cfg.win_type == 'winserver':
-        toplevelfiles += ['python.exe']
+        toplevelfiles += [f'python{dbgsfx}.exe']
 
     # Include debug dlls so folks without msvc can run them.
     if cfg.debug:
@@ -328,35 +327,7 @@ def _sync_pylib(cfg: Config) -> None:
     _run(cmd)
 
 
-def main(projroot: str, args: Optional[List[str]] = None) -> None:
-    """Stage assets for a build."""
-
-    if args is None:
-        args = sys.argv
-
-    cfg = Config(projroot)
-    cfg.parse_args(args)
-
-    # Ok, now for every top level dir in src, come up with a nice single
-    # command to sync the needed subset of it to dst.
-
-    # We can now use simple speedy timestamp based updates since
-    # we no longer have to try to preserve timestamps to get .pyc files
-    # to behave (hooray!)
-
-    # Do our stripped down pylib dir for platforms that use that.
-    if cfg.include_pylib:
-        _sync_pylib(cfg)
-    else:
-        if cfg.dst is not None and os.path.isdir(cfg.dst + '/pylib'):
-            subprocess.run(['rm', '-rf', cfg.dst + '/pylib'], check=True)
-
-    # On windows we need to pull in some dlls and this and that
-    # (we also include a non-stripped-down set of python libs).
-    if cfg.win_extras_src is not None:
-        _sync_windows_extras(cfg)
-
-    # Now standard common game data.
+def _sync_standard_game_data(cfg: Config) -> None:
     assert cfg.dst is not None
     _run('mkdir -p "' + cfg.dst + '/ba_data"')
     cmd = ('rsync --recursive --update --delete --delete-excluded'
@@ -388,15 +359,149 @@ def main(projroot: str, args: Optional[List[str]] = None) -> None:
             cfg.dst + '/ba_data/"')
     _run(cmd)
 
+
+def _sync_server_files(cfg: Config) -> None:
+    assert cfg.serverdst is not None
+    modeval = 'debug' if cfg.debug else 'release'
+
+    # NOTE: staging these directly from src; not build.
+    stage_server_file(
+        projroot=cfg.projroot,
+        mode=modeval,
+        infilename=f'{cfg.src}/../src/server/ballisticacore_server.py',
+        outfilename=os.path.join(
+            cfg.serverdst, 'ballisticacore_server.py'
+            if cfg.win_type is not None else 'ballisticacore_server'))
+    stage_server_file(projroot=cfg.projroot,
+                      mode=modeval,
+                      infilename=f'{cfg.src}/../src/server/README.txt',
+                      outfilename=os.path.join(cfg.serverdst, 'README.txt'))
+    stage_server_file(
+        projroot=cfg.projroot,
+        mode=modeval,
+        infilename=f'{cfg.src}/../src/server/config_template.yaml',
+        outfilename=os.path.join(cfg.serverdst, 'config_template.yaml'))
+    if cfg.win_type is not None:
+        stage_server_file(
+            projroot=cfg.projroot,
+            mode=modeval,
+            infilename=
+            f'{cfg.src}/../src/server/launch_ballisticacore_server.bat',
+            outfilename=os.path.join(cfg.serverdst,
+                                     'launch_ballisticacore_server.bat'))
+
+
+def _write_if_changed(path: str,
+                      contents: str,
+                      make_executable: bool = False) -> None:
+    changed: bool
+    try:
+        with open(path) as infile:
+            existing = infile.read()
+        changed = (contents != existing)
+    except FileNotFoundError:
+        changed = True
+    if changed:
+        with open(path, 'w') as outfile:
+            outfile.write(contents)
+        if make_executable:
+            subprocess.run(['chmod', '+x', path], check=True)
+
+
+def stage_server_file(projroot: str, mode: str, infilename: str,
+                      outfilename: str) -> None:
+    """Stage files for the server environment with some filtering."""
+    import batools.build
+    from efrotools import replace_one
+    if mode not in ('debug', 'release'):
+        raise RuntimeError(f"Invalid server-file-staging mode '{mode}';"
+                           f" expected 'debug' or 'release'.")
+
+    print(f'Building server file: {os.path.basename(outfilename)}')
+
+    os.makedirs(os.path.dirname(outfilename), exist_ok=True)
+
+    basename = os.path.basename(infilename)
+    if basename == 'config_template.yaml':
+        # Inject all available config values into the config file.
+        _write_if_changed(
+            outfilename,
+            batools.build.filter_server_config(str(projroot), infilename))
+
+    elif basename == 'ballisticacore_server.py':
+        # Run Python in opt mode for release builds.
+        with open(infilename) as infile:
+            lines = infile.read().splitlines()
+            if mode == 'release':
+                lines[0] = replace_one(lines[0],
+                                       f'#!/usr/bin/env python{PYVER}',
+                                       f'#!/usr/bin/env -S python{PYVER} -O')
+        _write_if_changed(outfilename,
+                          '\n'.join(lines) + '\n',
+                          make_executable=True)
+    elif basename == 'README.txt':
+        with open(infilename) as infile:
+            readme = infile.read()
+        _write_if_changed(outfilename, readme)
+    elif basename == 'launch_ballisticacore_server.bat':
+        # Run Python in opt mode for release builds.
+        with open(infilename) as infile:
+            lines = infile.read().splitlines()
+        if mode == 'release':
+            lines[1] = replace_one(
+                lines[1], ':: Python interpreter.', ':: Python interpreter.'
+                ' (in opt mode so we use bundled .opt-1.pyc files)')
+            lines[2] = replace_one(
+                lines[2], 'dist\\\\python.exe ballisticacore_server.py',
+                'dist\\\\python.exe -O ballisticacore_server.py')
+        else:
+            # In debug mode we use the bundled debug interpreter.
+            lines[2] = replace_one(
+                lines[2], 'dist\\\\python.exe ballisticacore_server.py',
+                'dist\\\\python_d.exe ballisticacore_server.py')
+
+        _write_if_changed(outfilename, '\n'.join(lines) + '\n')
+    else:
+        raise RuntimeError(f"Unknown server file for staging: '{basename}'.")
+
+
+def main(projroot: str, args: Optional[List[str]] = None) -> None:
+    """Stage assets for a build."""
+
+    if args is None:
+        args = sys.argv
+
+    cfg = Config(projroot)
+    cfg.parse_args(args)
+
+    # Ok, now for every top level dir in src, come up with a nice single
+    # command to sync the needed subset of it to dst.
+
+    # We can now use simple speedy timestamp based updates since
+    # we no longer have to try to preserve timestamps to get .pyc files
+    # to behave (hooray!)
+
+    # Do our stripped down pylib dir for platforms that use that.
+    if cfg.include_pylib:
+        _sync_pylib(cfg)
+    else:
+        if cfg.dst is not None and os.path.isdir(cfg.dst + '/pylib'):
+            subprocess.run(['rm', '-rf', cfg.dst + '/pylib'], check=True)
+
+    # Sync our server files if we're doing that.
+    if cfg.serverdst is not None:
+        _sync_server_files(cfg)
+
+    # On windows we need to pull in some dlls and this and that
+    # (we also include a non-stripped-down set of python libs).
+    if cfg.win_extras_src is not None:
+        _sync_windows_extras(cfg)
+
+    # Standard stuff in ba_data
+    _sync_standard_game_data(cfg)
+
     # On Android we need to build a payload file so it knows
     # what to pull out of the apk.
     if cfg.include_payload_file:
+        assert cfg.dst is not None
         _write_payload_file(cfg.dst, cfg.is_payload_full)
-
-
-# if __name__ == '__main__':
-#     try:
-#         main()
-#     except CleanError as exc:
-#         exc.pretty_print()
-#         sys.exit(1)

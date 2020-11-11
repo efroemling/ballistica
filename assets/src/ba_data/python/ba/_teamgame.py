@@ -1,34 +1,16 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Functionality related to team games."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeVar
 
+import _ba
 from ba._freeforallsession import FreeForAllSession
 from ba._gameactivity import GameActivity
 from ba._gameresults import GameResults
 from ba._dualteamsession import DualTeamSession
-import _ba
 
 if TYPE_CHECKING:
     from typing import Any, Dict, Type, Sequence
@@ -96,12 +78,11 @@ class TeamGameActivity(GameActivity[PlayerType, TeamType]):
             # Award a few achievements.
             if isinstance(self.session, FreeForAllSession):
                 if len(self.players) >= 2:
-                    from ba import _achievement
-                    _achievement.award_local_achievement('Free Loader')
+                    _ba.app.ach.award_local_achievement('Free Loader')
             elif isinstance(self.session, DualTeamSession):
                 if len(self.players) >= 4:
                     from ba import _achievement
-                    _achievement.award_local_achievement('Team Player')
+                    _ba.app.ach.award_local_achievement('Team Player')
         except Exception:
             from ba import _error
             _error.print_exception()

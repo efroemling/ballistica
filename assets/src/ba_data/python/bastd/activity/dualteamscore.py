@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Functionality related to the end screen in dual-team mode."""
 
 from __future__ import annotations
@@ -41,7 +23,6 @@ class TeamVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         assert isinstance(self._winner, ba.SessionTeam)
 
     def on_begin(self) -> None:
-        from ba.deprecated import get_resource
         ba.set_analytics_screen('Teams Score Screen')
         super().on_begin()
 
@@ -55,7 +36,7 @@ class TeamVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         # 'First to 4'.
         session = self.session
         assert isinstance(session, ba.MultiTeamSession)
-        if get_resource('bestOfUseFirstToInstead'):
+        if ba.app.lang.get_resource('bestOfUseFirstToInstead'):
             best_txt = ba.Lstr(resource='firstToSeriesText',
                                subs=[('${COUNT}',
                                       str(session.get_series_length() / 2 + 1))

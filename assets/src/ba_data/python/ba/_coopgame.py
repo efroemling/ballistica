@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Functionality related to co-op games."""
 from __future__ import annotations
 
@@ -64,7 +46,7 @@ class CoopGameActivity(GameActivity[PlayerType, TeamType]):
         super().on_begin()
 
         # Show achievements remaining.
-        if not _ba.app.kiosk_mode:
+        if not (_ba.app.demo_mode or _ba.app.arcade_mode):
             _ba.timer(3.8, WeakCall(self._show_remaining_achievements))
 
         # Preload achievement images in case we get some.
@@ -85,6 +67,7 @@ class CoopGameActivity(GameActivity[PlayerType, TeamType]):
 
     def _show_standard_scores_to_beat_ui(self,
                                          scores: List[Dict[str, Any]]) -> None:
+        from efro.util import asserttype
         from ba._gameutils import timestring, animate
         from ba._nodeactor import NodeActor
         from ba._enums import TimeFormat
@@ -92,7 +75,7 @@ class CoopGameActivity(GameActivity[PlayerType, TeamType]):
         if scores is not None:
 
             # Sort by originating date so that the most recent is first.
-            scores.sort(reverse=True, key=lambda s: s['time'])
+            scores.sort(reverse=True, key=lambda s: asserttype(s['time'], int))
 
             # Now make a display for the most recent challenge.
             for score in scores:
@@ -147,21 +130,19 @@ class CoopGameActivity(GameActivity[PlayerType, TeamType]):
                 player.actor.handlemessage(CelebrateMessage(duration))
 
     def _preload_achievements(self) -> None:
-        from ba import _achievement
-        achievements = _achievement.get_achievements_for_coop_level(
+        achievements = _ba.app.ach.achievements_for_coop_level(
             self._get_coop_level_name())
         for ach in achievements:
             ach.get_icon_texture(True)
 
     def _show_remaining_achievements(self) -> None:
         # pylint: disable=cyclic-import
-        from ba._achievement import get_achievements_for_coop_level
-        from ba._lang import Lstr
+        from ba._language import Lstr
         from bastd.actor.text import Text
         ts_h_offs = 30
         v_offs = -200
         achievements = [
-            a for a in get_achievements_for_coop_level(
+            a for a in _ba.app.ach.achievements_for_coop_level(
                 self._get_coop_level_name()) if not a.complete
         ]
         vrmode = _ba.app.vr_mode
@@ -210,12 +191,11 @@ class CoopGameActivity(GameActivity[PlayerType, TeamType]):
         Returns True if a banner will be shown;
         False otherwise
         """
-        from ba._achievement import get_achievement
 
         if achievement_name in self._achievements_awarded:
             return
 
-        ach = get_achievement(achievement_name)
+        ach = _ba.app.ach.get_achievement(achievement_name)
 
         # If we're in the easy campaign and this achievement is hard-mode-only,
         # ignore it.

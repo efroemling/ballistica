@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides a window for browsing and launching game playlists."""
 
 from __future__ import annotations
@@ -302,6 +284,7 @@ class PlaylistBrowserWindow(ba.Window):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-nested-blocks
+        from efro.util import asserttype
         from ba.internal import (get_map_class,
                                  get_default_free_for_all_playlist,
                                  get_default_teams_playlist, filter_playlist)
@@ -321,7 +304,7 @@ class PlaylistBrowserWindow(ba.Window):
         items = [(i[0].decode(), i[1]) if not isinstance(i[0], str) else i
                  for i in items]
 
-        items.sort(key=lambda x2: x2[0].lower())
+        items.sort(key=lambda x2: asserttype(x2[0], str).lower())
         items = [['__default__', None]] + items  # default is always first
 
         count = len(items)

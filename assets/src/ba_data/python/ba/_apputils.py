@@ -1,26 +1,9 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Utility functionality related to the overall operation of the app."""
 from __future__ import annotations
 
+import gc
 import os
 from typing import TYPE_CHECKING
 
@@ -58,8 +41,8 @@ def is_browser_likely_available() -> bool:
 
 def get_remote_app_name() -> ba.Lstr:
     """(internal)"""
-    from ba import _lang
-    return _lang.Lstr(resource='remote_app.app_name')
+    from ba import _language
+    return _language.Lstr(resource='remote_app.app_name')
 
 
 def should_submit_debug_info() -> bool:
@@ -168,9 +151,8 @@ def handle_leftover_log_file() -> None:
         _error.print_exception('Error handling leftover log file.')
 
 
-def garbage_collect(session_end: bool = True) -> None:
-    """Run an explicit pass of garbage collection."""
-    import gc
+def garbage_collect_session_end() -> None:
+    """Run explicit garbage collection with extra checks for session end."""
     gc.collect()
 
     # Can be handy to print this to check for leaks between games.
@@ -180,8 +162,19 @@ def garbage_collect(session_end: bool = True) -> None:
         print('PYTHON GC FOUND', len(gc.garbage), 'UNCOLLECTIBLE OBJECTS:')
         for i, obj in enumerate(gc.garbage):
             print(str(i) + ':', obj)
-    if session_end:
-        print_live_object_warnings('after session shutdown')
+    print_live_object_warnings('after session shutdown')
+
+
+def garbage_collect() -> None:
+    """Run an explicit pass of garbage collection.
+
+    category: General Utility Functions
+
+    May also print warnings/etc. if collection takes too long or if
+    uncollectible objects are found (so use this instead of simply
+    gc.collect().
+    """
+    gc.collect()
 
 
 def print_live_object_warnings(when: Any,
@@ -189,10 +182,10 @@ def print_live_object_warnings(when: Any,
                                ignore_activity: ba.Activity = None) -> None:
     """Print warnings for remaining objects in the current context."""
     # pylint: disable=cyclic-import
-    import gc
     from ba._session import Session
     from ba._actor import Actor
     from ba._activity import Activity
+
     sessions: List[ba.Session] = []
     activities: List[ba.Activity] = []
     actors: List[ba.Actor] = []
@@ -231,146 +224,15 @@ def print_live_object_warnings(when: Any,
 
 def print_corrupt_file_error() -> None:
     """Print an error if a corrupt file is found."""
-    from ba._lang import get_resource
     from ba._general import Call
     from ba._enums import TimeType
-    _ba.timer(
-        2.0,
-        lambda: _ba.screenmessage(get_resource('internal.corruptFileText').
-                                  replace('${EMAIL}', 'support@froemling.net'),
-                                  color=(1, 0, 0)),
-        timetype=TimeType.REAL)
+    _ba.timer(2.0,
+              lambda: _ba.screenmessage(
+                  _ba.app.lang.get_resource('internal.corruptFileText').
+                  replace('${EMAIL}', 'support@froemling.net'),
+                  color=(1, 0, 0),
+              ),
+              timetype=TimeType.REAL)
     _ba.timer(2.0,
               Call(_ba.playsound, _ba.getsound('error')),
               timetype=TimeType.REAL)
-
-
-def show_ad(purpose: str,
-            on_completion_call: Callable[[], Any] = None) -> None:
-    """(internal)"""
-    _ba.app.last_ad_purpose = purpose
-    _ba.show_ad(purpose, on_completion_call)
-
-
-def show_ad_2(purpose: str,
-              on_completion_call: Callable[[bool], Any] = None) -> None:
-    """(internal)"""
-    _ba.app.last_ad_purpose = purpose
-    _ba.show_ad_2(purpose, on_completion_call)
-
-
-def call_after_ad(call: Callable[[], Any]) -> None:
-    """Run a call after potentially showing an ad."""
-    # pylint: disable=too-many-statements
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-locals
-    from ba._account import have_pro
-    from ba._enums import TimeType
-    import time
-    app = _ba.app
-    show = True
-
-    # No ads without net-connections, etc.
-    if not _ba.can_show_ad():
-        show = False
-    if have_pro():
-        show = False  # Pro disables interstitials.
-    try:
-        session = _ba.get_foreground_host_session()
-        assert session is not None
-        is_tournament = session.tournament_id is not None
-    except Exception:
-        is_tournament = False
-    if is_tournament:
-        show = False  # Never show ads during tournaments.
-
-    if show:
-        interval: Optional[float]
-        launch_count = app.config.get('launchCount', 0)
-
-        # If we're seeing short ads we may want to space them differently.
-        interval_mult = (_ba.get_account_misc_read_val(
-            'ads.shortIntervalMult', 1.0) if app.last_ad_was_short else 1.0)
-        if app.ad_amt is None:
-            if launch_count <= 1:
-                app.ad_amt = _ba.get_account_misc_read_val(
-                    'ads.startVal1', 0.99)
-            else:
-                app.ad_amt = _ba.get_account_misc_read_val(
-                    'ads.startVal2', 1.0)
-            interval = None
-        else:
-            # So far we're cleared to show; now calc our ad-show-threshold and
-            # see if we should *actually* show (we reach our threshold faster
-            # the longer we've been playing).
-            base = 'ads' if _ba.has_video_ads() else 'ads2'
-            min_lc = _ba.get_account_misc_read_val(base + '.minLC', 0.0)
-            max_lc = _ba.get_account_misc_read_val(base + '.maxLC', 5.0)
-            min_lc_scale = (_ba.get_account_misc_read_val(
-                base + '.minLCScale', 0.25))
-            max_lc_scale = (_ba.get_account_misc_read_val(
-                base + '.maxLCScale', 0.34))
-            min_lc_interval = (_ba.get_account_misc_read_val(
-                base + '.minLCInterval', 360))
-            max_lc_interval = (_ba.get_account_misc_read_val(
-                base + '.maxLCInterval', 300))
-            if launch_count < min_lc:
-                lc_amt = 0.0
-            elif launch_count > max_lc:
-                lc_amt = 1.0
-            else:
-                lc_amt = ((float(launch_count) - min_lc) / (max_lc - min_lc))
-            incr = (1.0 - lc_amt) * min_lc_scale + lc_amt * max_lc_scale
-            interval = ((1.0 - lc_amt) * min_lc_interval +
-                        lc_amt * max_lc_interval)
-            app.ad_amt += incr
-        assert app.ad_amt is not None
-        if app.ad_amt >= 1.0:
-            app.ad_amt = app.ad_amt % 1.0
-            app.attempted_first_ad = True
-
-        # After we've reached the traditional show-threshold once,
-        # try again whenever its been INTERVAL since our last successful show.
-        elif (app.attempted_first_ad
-              and (app.last_ad_completion_time is None or
-                   (interval is not None
-                    and _ba.time(TimeType.REAL) - app.last_ad_completion_time >
-                    (interval * interval_mult)))):
-            # Reset our other counter too in this case.
-            app.ad_amt = 0.0
-        else:
-            show = False
-
-    # If we're *still* cleared to show, actually tell the system to show.
-    if show:
-        # As a safety-check, set up an object that will run
-        # the completion callback if we've returned and sat for 10 seconds
-        # (in case some random ad network doesn't properly deliver its
-        # completion callback).
-        class _Payload:
-
-            def __init__(self, pcall: Callable[[], Any]):
-                self._call = pcall
-                self._ran = False
-
-            def run(self, fallback: bool = False) -> None:
-                """Run the fallback call (and issues a warning about it)."""
-                if not self._ran:
-                    if fallback:
-                        print((
-                            'ERROR: relying on fallback ad-callback! '
-                            'last network: ' + app.last_ad_network + ' (set ' +
-                            str(int(time.time() -
-                                    app.last_ad_network_set_time)) +
-                            's ago); purpose=' + app.last_ad_purpose))
-                    _ba.pushcall(self._call)
-                    self._ran = True
-
-        payload = _Payload(call)
-        with _ba.Context('ui'):
-            _ba.timer(5.0,
-                      lambda: payload.run(fallback=True),
-                      timetype=TimeType.REAL)
-        show_ad('between_game', on_completion_call=payload.run)
-    else:
-        _ba.pushcall(call)  # Just run the callback without the ad.

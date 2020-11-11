@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Session and Activity for displaying the main menu bg."""
 
 from __future__ import annotations
@@ -63,6 +45,7 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
 
         if not ba.app.toolbar_test:
             color = ((1.0, 1.0, 1.0, 1.0) if vr_mode else (0.5, 0.6, 0.5, 0.6))
+
             # FIXME: Need a node attr for vr-specific-scale.
             scale = (0.9 if
                      (app.ui.uiscale is ba.UIScale.SMALL or vr_mode) else 0.7)
@@ -148,10 +131,29 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
                 assert self.version.node
                 ba.animate(self.version.node, 'opacity', {2.3: 0, 3.0: 1.0})
 
+        # Show the iircade logo on our iircade build.
+        if app.iircade_mode:
+            img = ba.NodeActor(
+                ba.newnode('image',
+                           attrs={
+                               'texture': ba.gettexture('iircadeLogo'),
+                               'attach': 'center',
+                               'scale': (250, 250),
+                               'position': (0, 0),
+                               'tilt_translate': 0.21,
+                               'absolute_scale': True
+                           })).autoretain()
+            imgdelay = 0.0 if app.main_menu_did_initial_transition else 1.0
+            ba.animate(img.node, 'opacity', {
+                imgdelay + 1.5: 0.0,
+                imgdelay + 2.5: 1.0
+            })
+
         # Throw in test build info.
         self.beta_info = self.beta_info_2 = None
-        if app.test_build and not app.kiosk_mode:
-            pos = (230, 125) if app.kiosk_mode else (230, 35)
+        if app.test_build and not (app.demo_mode or app.arcade_mode):
+            pos = ((230, 125) if (app.demo_mode or app.arcade_mode) else
+                   (230, 35))
             self.beta_info = ba.NodeActor(
                 ba.newnode('text',
                            attrs={
@@ -318,7 +320,8 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
                                  transition_out_delay=self._message_duration
                                  ).autoretain()
                             achs = [
-                                a for a in app.achievements if not a.complete
+                                a for a in app.ach.achievements
+                                if not a.complete
                             ]
                             if achs:
                                 ach = achs.pop(
@@ -396,7 +399,7 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
                                    }))
                     self._change_phrase()
 
-        if not app.kiosk_mode and not app.toolbar_test:
+        if not (app.demo_mode or app.arcade_mode) and not app.toolbar_test:
             self._news = News(self)
 
         # Bring up the last place we were, or start at the main menu otherwise.
@@ -411,7 +414,7 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
 
                 # When coming back from a kiosk-mode game, jump to
                 # the kiosk start screen.
-                if ba.app.kiosk_mode:
+                if ba.app.demo_mode or ba.app.arcade_mode:
                     # pylint: disable=cyclic-import
                     from bastd.ui.kiosk import KioskWindow
                     ba.app.ui.set_main_menu_window(
@@ -491,7 +494,7 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
                     ba.getmodel('logoTransparent'))
 
         # If language has changed, recreate our logo text/graphics.
-        lang = app.language
+        lang = app.lang.language
         if lang != self._language:
             self._language = lang
             y = 20
@@ -510,11 +513,11 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
             # We draw higher in kiosk mode (make sure to test this
             # when making adjustments) for now we're hard-coded for
             # a few languages.. should maybe look into generalizing this?..
-            if app.language == 'Chinese':
+            if app.lang.language == 'Chinese':
                 base_x = -270.0
                 x = base_x - 20.0
                 spacing = 85.0 * base_scale
-                y_extra = 0.0 if app.kiosk_mode else 0.0
+                y_extra = 0.0 if (app.demo_mode or app.arcade_mode) else 0.0
                 self._make_logo(x - 110 + 50,
                                 113 + y + 1.2 * y_extra,
                                 0.34 * base_scale,
@@ -567,7 +570,7 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
                 base_x = -170
                 x = base_x - 20
                 spacing = 55 * base_scale
-                y_extra = 0 if app.kiosk_mode else 0
+                y_extra = 0 if (app.demo_mode or app.arcade_mode) else 0
                 xv1 = x
                 delay1 = delay
                 for shadow in (True, False):

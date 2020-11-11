@@ -1,3 +1,33 @@
+### 1.5.28 (20239)
+- Simplified ba.enum_by_value()
+- Updated Google Play version to hopefully show friend high scores again on score screens (at least for levels that have an associated Google Play leaderboard).
+- Public-party-list now properly shows an error instead of 'loading...' when not signed in.
+- Heavily reworked public party list display code to be more efficient and avoid hitches even with large numbers of servers.
+
+### 1.5.27 (20238)
+- Language functionality has been consolidated into a LanguageSubsystem object at ba.app.lang
+- ba.get_valid_languages() is now an attr: ba.app.lang.available_languages
+- Achievement functionality has been consolidated into an AchievementSubsystem object at ba.app.ach
+- Plugin functionality has been consolidated into a PluginSubsystem obj at ba.app.plugins
+- Ditto with AccountSubsystem and ba.app.accounts
+- Ditto with MetadataSubsystem and ba.app.meta
+- Ditto with AdsSubsystem and ba.app.ads
+- Revamped tab-button functionality into a cleaner type-safe class (bastd.ui.tabs.TabRow)
+- Split Gather-Window tabs out into individual classes for future improvements (bastd.ui.gather.*)
+- Added the ability to disable ticket-purchasing UIs for builds (ba.app.allow_ticket_purchases)
+- Reworked the public party gather section to perform better; it should no longer have to rebuild the list from scratch each time the UI is visited.
+- Added a filter option to the public party list (sorry it has taken so long).
+
+### 1.5.26 (20217)
+- Simplified licensing header on python scripts.
+- General project refactoring in order to open source most of the C++ layer.
+
+### 1.5.25 (20176)
+- Added Venetian language (thanks Federico!)
+- Fixed an issue where chosen-one flashes would remain if the player leaves the game
+- Added android input-device detection log messages for debugging
+- Android asset-sync phase (completing install...) now emits log output for debugging.
+
 ### 1.5.24 (20163)
 - Upgraded Python from version 3.7 to 3.8. This is a substantial change (though nothing like the previous update from 2.7 to 3.7) so please holler if anything is broken. These updates will happen once every year or two now..
 - Windows debug builds now use Python debug libraries. This should hopefully catch more errors that would otherwise go undetected and potentially cause crashes.

@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Standard snippets that can be pulled into project pcommand scripts.
 
 A snippet is a mini-program that directly takes input from stdin and does
@@ -85,10 +67,12 @@ def pcommand_main(globs: Dict[str, Any]) -> None:
             retval = 255
 
     if show_help:
-        print('Pcommand contains project related commands too small'
-              ' to warrant full scripts.')
-        print(f"Run {Clr.MAG}'pcommand help {Clr.BLD}<COMMAND>'"
-              f'{Clr.RST} for full command documentation.')
+        print(f'The {Clr.MAG}{Clr.BLD}pcommand{Clr.RST} script encapsulates'
+              f' a collection of project-related commands.')
+        print(f"Run {Clr.MAG}{Clr.BLD}'pcommand [COMMAND] ...'"
+              f'{Clr.RST} to run a command.')
+        print(f"Run {Clr.MAG}{Clr.BLD}'pcommand help [COMMAND]'"
+              f'{Clr.RST} for full documentation for a command.')
         print('Available commands:')
         for func, obj in sorted(funcs.items()):
             doc = getattr(obj, '__doc__', '').splitlines()[0].strip()
@@ -132,23 +116,30 @@ def _trim_docstring(docstring: str) -> str:
 
 
 def _spelling(words: List[str]) -> None:
-    fname = '.idea/dictionaries/ericf.xml'
-    with open(fname) as infile:
-        lines = infile.read().splitlines()
-    if lines[2] != '    <words>':
-        raise RuntimeError('Unexpected dictionary format.')
-    added_count = 0
-    for word in words:
-        line = f'      <w>{word.lower()}</w>'
-        if line not in lines:
-            lines.insert(3, line)
-            added_count += 1
+    import os
+    for fname in [
+            '.idea/dictionaries/ericf.xml',
+            'ballisticacore-cmake/.idea/dictionaries/ericf.xml'
+    ]:
+        if not os.path.exists(fname):
+            continue
+        with open(fname) as infile:
+            lines = infile.read().splitlines()
+        if lines[2] != '    <words>':
+            raise RuntimeError('Unexpected dictionary format.')
+        added_count = 0
+        for word in words:
+            line = f'      <w>{word.lower()}</w>'
+            if line not in lines:
+                lines.insert(3, line)
+                added_count += 1
 
-    with open(fname, 'w') as outfile:
-        # Sort lines in the words section.
-        assert all(l.startswith('      <w>') for l in lines[3:-3])
-        outfile.write('\n'.join(lines[:3] + sorted(lines[3:-3]) + lines[-3:]))
-    print('Added', added_count, 'words to the dictionary.')
+        with open(fname, 'w') as outfile:
+            # Sort lines in the words section.
+            assert all(l.startswith('      <w>') for l in lines[3:-3])
+            outfile.write('\n'.join(lines[:3] + sorted(lines[3:-3]) +
+                                    lines[-3:]))
+        print(f'Added {added_count} words to {fname}.')
 
 
 def spelling_all() -> None:
@@ -295,8 +286,8 @@ def runmypy() -> None:
     try:
         efrotools.code.runmypy(PROJROOT, filenames)
         print(f'{Clr.GRN}Mypy Passed.{Clr.RST}')
-    except Exception:
-        raise CleanError('Mypy Failed.')
+    except Exception as exc:
+        raise CleanError('Mypy Failed.') from exc
 
 
 def dmypy() -> None:
@@ -370,7 +361,13 @@ def _filter_tool_config(cfg: str) -> str:
     cfg = cfg.replace('__EFRO_PROJECT_ROOT__', str(PROJROOT))
 
     # Short project name.
-    short_names = {'ballistica-internal': 'ba-int', 'ballistica': 'ba'}
+    short_names = {
+        'ballistica-internal': 'ba-int',
+        'ballistica': 'ba',
+        'ballistica-master-server-2.0': 'bamaster2',
+        'ballistica-master-server': 'bamaster',
+        'ballistica-server-node': 'baservnode',
+    }
     shortname = short_names.get(PROJROOT.name, PROJROOT.name)
     cfg = cfg.replace('__EFRO_PROJECT_SHORTNAME__', shortname)
 

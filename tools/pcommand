@@ -1,40 +1,21 @@
 #!/usr/bin/env python3.8
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
-"""Wee little snippets of functionality specific to this project.
+"""A collection of commands for use with this project.
 
 All top level functions here can be run by passing them as the first
 argument on the command line. (or pass no arguments to get a list of them).
-
-Functions can be placed here when they're not complex enough to warrant
-their own files. Often these functions act as user-facing entry points
-to functionality contained in efrotools or other standalone tool modules.
 """
+
+# Note: we import as little as possible here at the module level to
+# keep launch times fast; most imports should happen within individual command
+# functions.
+
 from __future__ import annotations
 
-# Note: import as little as possible here at the module level to
-# keep launch times fast for small snippets.
 from typing import TYPE_CHECKING
 
-# Pull in the snippets we want to expose. Its more efficient to define them in
+# Pull in commands we want to expose. Its more efficient to define them in
 # modules rather than inline here because we'll be able to load them via pyc.
 # pylint: disable=unused-import
 from efrotools.pcommand import (
@@ -56,7 +37,8 @@ from batools.pcommand import (
     list_pip_reqs, install_pip_reqs, checkenv, ensure_prefab_platform,
     prefab_run_var, make_prefab, update_makebob, lazybuild,
     android_archive_unstripped_libs, efro_gradle, stage_assets,
-    update_assets_makefile, update_project)
+    update_assets_makefile, update_project, update_cmake_prefab_lib,
+    cmake_prep_dir, gen_binding_code, gen_flat_data_code)
 # pylint: enable=unused-import
 
 if TYPE_CHECKING:

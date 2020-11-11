@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides a score screen for coop games."""
 # pylint: disable=too-many-lines
 
@@ -28,7 +10,6 @@ from typing import TYPE_CHECKING
 
 import _ba
 import ba
-from ba.internal import get_achievements_for_coop_level
 from bastd.actor.text import Text
 from bastd.actor.zoomtext import ZoomText
 
@@ -68,8 +49,8 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         self._campaign: ba.Campaign = settings['campaign']
 
         self._have_achievements = bool(
-            get_achievements_for_coop_level(self._campaign.name + ':' +
-                                            settings['level']))
+            ba.app.ach.achievements_for_coop_level(self._campaign.name + ':' +
+                                                   settings['level']))
 
         self._account_type = (_ba.get_account_type() if
                               _ba.get_account_state() == 'signed_in' else None)
@@ -389,7 +370,8 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         else:
             pass
 
-        show_next_button = self._is_more_levels and not ba.app.kiosk_mode
+        show_next_button = self._is_more_levels and not (ba.app.demo_mode
+                                                         or ba.app.arcade_mode)
 
         if not show_next_button:
             h_offs += 70
@@ -455,7 +437,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         self._corner_button_offs = (h_offs + 300.0 + 100.0 + x_offs_extra,
                                     v_offs + 560.0)
 
-        if ba.app.kiosk_mode:
+        if ba.app.demo_mode or ba.app.arcade_mode:
             self._league_rank_button = None
             self._store_button_instance = None
         else:
@@ -542,7 +524,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         ba.timer(1.0, ba.WeakCall(self.request_ui))
 
         if (self._is_complete and self._victory and self._is_more_levels
-                and not ba.app.kiosk_mode):
+                and not (ba.app.demo_mode or ba.app.arcade_mode)):
             Text(ba.Lstr(value='${A}:\n',
                          subs=[('${A}', ba.Lstr(resource='levelUnlockedText'))
                                ]) if self._newly_complete else
@@ -690,7 +672,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
             })
         if _ba.get_account_state() != 'signed_in':
             # We expect this only in kiosk mode; complain otherwise.
-            if not ba.app.kiosk_mode:
+            if not (ba.app.demo_mode or ba.app.arcade_mode):
                 print('got not-signed-in at score-submit; unexpected')
             if self._show_friend_scores:
                 ba.pushcall(ba.WeakCall(self._got_friend_score_results, None))
@@ -864,7 +846,8 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                      transition_delay=2.8).autoretain()
 
             assert self._game_name_str is not None
-            achievements = get_achievements_for_coop_level(self._game_name_str)
+            achievements = ba.app.ach.achievements_for_coop_level(
+                self._game_name_str)
             hval = -455
             vval = -100
             tdelay = 0.0
@@ -890,6 +873,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
+        from efro.util import asserttype
         # delay a bit if results come in too fast
         assert self._begin_time is not None
         base_delay = max(0, 1.9 - (ba.time() - self._begin_time))
@@ -926,7 +910,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                     break
             results.append(our_score_entry)
             results.sort(reverse=self._score_order == 'increasing',
-                         key=lambda x: x[0])
+                         key=lambda x: asserttype(x[0], int))
 
         # If we're not submitting our own score, we still want to change the
         # name of our own score to 'Me'.
@@ -1213,8 +1197,9 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         try:
             tournament_id = self.session.tournament_id
             if tournament_id is not None:
-                if tournament_id in ba.app.tournament_info:
-                    tourney_info = ba.app.tournament_info[tournament_id]
+                if tournament_id in ba.app.accounts.tournament_info:
+                    tourney_info = ba.app.accounts.tournament_info[
+                        tournament_id]
                     # pylint: disable=unbalanced-tuple-unpacking
                     pr1, pv1, pr2, pv2, pr3, pv3 = (
                         get_tournament_prize_strings(tourney_info))

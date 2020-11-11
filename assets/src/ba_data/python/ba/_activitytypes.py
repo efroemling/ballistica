@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Some handy base class and special purpose Activity types."""
 from __future__ import annotations
 
@@ -58,11 +40,10 @@ class EndSessionActivity(Activity[EmptyPlayer, EmptyTeam]):
     def on_begin(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.mainmenu import MainMenuSession
-        from ba._apputils import call_after_ad
         from ba._general import Call
         super().on_begin()
         _ba.unlock_all_input()
-        call_after_ad(Call(_ba.new_host_session, MainMenuSession))
+        _ba.app.ads.call_after_ad(Call(_ba.new_host_session, MainMenuSession))
 
 
 class JoinActivity(Activity[EmptyPlayer, EmptyTeam]):
@@ -185,7 +166,7 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
     def on_begin(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.actor.text import Text
-        from ba import _lang
+        from ba import _language
         super().on_begin()
 
         # Pop up a 'press any button to continue' statement after our
@@ -194,9 +175,9 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
         if _ba.app.ui.uiscale is UIScale.LARGE:
             # FIXME: Need a better way to determine whether we've probably
             #  got a keyboard.
-            sval = _lang.Lstr(resource='pressAnyKeyButtonText')
+            sval = _language.Lstr(resource='pressAnyKeyButtonText')
         else:
-            sval = _lang.Lstr(resource='pressAnyButtonText')
+            sval = _language.Lstr(resource='pressAnyButtonText')
 
         Text(self._custom_continue_message
              if self._custom_continue_message is not None else sval,

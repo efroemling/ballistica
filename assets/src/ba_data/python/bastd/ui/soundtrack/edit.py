@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides UI for editing a soundtrack."""
 
 from __future__ import annotations
@@ -175,7 +157,6 @@ class SoundtrackEditWindow(ba.Window):
         ba.widget(edit=cancel_button, down_widget=self._text_field)
 
     def _refresh(self) -> None:
-        from ba.deprecated import get_resource
         for widget in self._col.get_children():
             widget.delete()
 
@@ -201,8 +182,9 @@ class SoundtrackEditWindow(ba.Window):
             'Scores',
             'Victory',
         ]
+
         # FIXME: We should probably convert this to use translations.
-        type_names_translated = get_resource('soundtrackTypeNames')
+        type_names_translated = ba.app.lang.get_resource('soundtrackTypeNames')
         prev_type_button: Optional[ba.Widget] = None
         prev_test_button: Optional[ba.Widget] = None
 

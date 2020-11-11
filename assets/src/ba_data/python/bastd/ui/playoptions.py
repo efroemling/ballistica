@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides a window for configuring play options."""
 
 from __future__ import annotations
@@ -44,8 +26,7 @@ class PlayOptionsWindow(popup.PopupWindow):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
-        from ba.internal import (getclass, have_pro,
-                                 get_default_teams_playlist,
+        from ba.internal import (getclass, get_default_teams_playlist,
                                  get_default_free_for_all_playlist,
                                  filter_playlist)
         from ba.internal import get_map_class
@@ -274,7 +255,7 @@ class PlayOptionsWindow(popup.PopupWindow):
                 autoselect=True,
                 textcolor=(0.8, 0.8, 0.8),
                 label=ba.Lstr(resource='teamNamesColorText'))
-            if not have_pro():
+            if not ba.app.accounts.have_pro():
                 ba.imagewidget(
                     parent=self.root_widget,
                     size=(30, 30),
@@ -368,21 +349,19 @@ class PlayOptionsWindow(popup.PopupWindow):
         self._update()
 
     def _custom_colors_names_press(self) -> None:
-        from ba.internal import have_pro
-        from bastd.ui import account as accountui
-        from bastd.ui import teamnamescolors
-        from bastd.ui import purchase
-        if not have_pro():
+        from bastd.ui.account import show_sign_in_prompt
+        from bastd.ui.teamnamescolors import TeamNamesColorsWindow
+        from bastd.ui.purchase import PurchaseWindow
+        if not ba.app.accounts.have_pro():
             if _ba.get_account_state() != 'signed_in':
-                accountui.show_sign_in_prompt()
+                show_sign_in_prompt()
             else:
-                purchase.PurchaseWindow(items=['pro'])
+                PurchaseWindow(items=['pro'])
             self._transition_out()
             return
         assert self._custom_colors_names_button
-        teamnamescolors.TeamNamesColorsWindow(
-            scale_origin=self._custom_colors_names_button.
-            get_screen_space_center())
+        TeamNamesColorsWindow(scale_origin=self._custom_colors_names_button.
+                              get_screen_space_center())
 
     def _does_target_playlist_exist(self) -> bool:
         if self._playlist == '__default__':

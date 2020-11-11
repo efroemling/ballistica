@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Implements lobby system for gathering before games, char select, etc."""
 
 from __future__ import annotations
@@ -29,7 +11,7 @@ from typing import TYPE_CHECKING
 import _ba
 from ba._error import print_exception, print_error, NotFoundError
 from ba._gameutils import animate, animate_array
-from ba._lang import Lstr
+from ba._language import Lstr
 from ba._enums import SpecialChar, InputType
 from ba._profile import get_player_profile_colors
 
@@ -77,7 +59,7 @@ class JoinInfo:
                             'text': self._joinmsg
                         }))
 
-        if _ba.app.kiosk_mode:
+        if _ba.app.demo_mode or _ba.app.arcade_mode:
             self._messages = [self._joinmsg]
         else:
             msg1 = Lstr(resource='pressToSelectProfileText',
@@ -406,13 +388,14 @@ class Chooser:
         self._profiles['_random'] = {}
 
         # In kiosk mode we disable account profiles to force random.
-        if app.kiosk_mode:
+        if app.demo_mode or app.arcade_mode:
             if '__account__' in self._profiles:
                 del self._profiles['__account__']
 
         # For local devices, add it an 'edit' option which will pop up
         # the profile window.
-        if not is_remote and not is_test_input and not app.kiosk_mode:
+        if not is_remote and not is_test_input and not (app.demo_mode
+                                                        or app.arcade_mode):
             self._profiles['_edit'] = {}
 
         # Build a sorted name list we can iterate through.
@@ -898,7 +881,6 @@ class Lobby:
     def reload_profiles(self) -> None:
         """Reload available player profiles."""
         # pylint: disable=cyclic-import
-        from ba._account import ensure_have_account_player_profile
         from bastd.actor.spazappearance import get_appearances
 
         # We may have gained or lost character names if the user
@@ -907,7 +889,7 @@ class Lobby:
         self.character_names_local_unlocked.sort(key=lambda x: x.lower())
 
         # Do any overall prep we need to such as creating account profile.
-        ensure_have_account_player_profile()
+        _ba.app.accounts.ensure_have_account_player_profile()
         for chooser in self.choosers:
             try:
                 chooser.reload_profiles()

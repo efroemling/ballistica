@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Defines a popup window for entering tournaments."""
 
 from __future__ import annotations
@@ -51,7 +33,8 @@ class TournamentEntryWindow(popup.PopupWindow):
         ba.set_analytics_screen('Tournament Entry Window')
 
         self._tournament_id = tournament_id
-        self._tournament_info = (ba.app.tournament_info[self._tournament_id])
+        self._tournament_info = (
+            ba.app.accounts.tournament_info[self._tournament_id])
 
         # Set a few vars depending on the tourney fee.
         self._fee = self._tournament_info['fee']
@@ -232,20 +215,27 @@ class TournamentEntryWindow(popup.PopupWindow):
         else:
             self._pay_with_ad_btn = None
 
-        self._get_tickets_button: Optional[ba.Widget]
+        self._get_tickets_button: Optional[ba.Widget] = None
+        self._ticket_count_text: Optional[ba.Widget] = None
         if not ba.app.ui.use_toolbars:
-            self._get_tickets_button = ba.buttonwidget(
-                parent=self.root_widget,
-                position=(self._width - 190 + 110, 15),
-                autoselect=True,
-                scale=0.6,
-                size=(120, 60),
-                textcolor=(0.2, 1, 0.2),
-                label=ba.charstr(ba.SpecialChar.TICKET),
-                color=(0.6, 0.4, 0.7),
-                on_activate_call=self._on_get_tickets_press)
-        else:
-            self._get_tickets_button = None
+            if ba.app.allow_ticket_purchases:
+                self._get_tickets_button = ba.buttonwidget(
+                    parent=self.root_widget,
+                    position=(self._width - 190 + 110, 15),
+                    autoselect=True,
+                    scale=0.6,
+                    size=(120, 60),
+                    textcolor=(0.2, 1, 0.2),
+                    label=ba.charstr(ba.SpecialChar.TICKET),
+                    color=(0.6, 0.4, 0.7),
+                    on_activate_call=self._on_get_tickets_press)
+            else:
+                self._ticket_count_text = ba.textwidget(
+                    parent=self.root_widget,
+                    position=(self._width - 190 + 110, 15),
+                    color=(0.2, 1, 0.2),
+                    h_align='center',
+                    v_align='center')
 
         self._seconds_remaining = None
 
@@ -282,13 +272,13 @@ class TournamentEntryWindow(popup.PopupWindow):
 
         # If there seems to be a relatively-recent valid cached info for this
         # tournament, use it. Otherwise we'll kick off a query ourselves.
-        if (self._tournament_id in ba.app.tournament_info
-                and ba.app.tournament_info[self._tournament_id]['valid'] and
-            (ba.time(ba.TimeType.REAL, ba.TimeFormat.MILLISECONDS) -
-             ba.app.tournament_info[self._tournament_id]['timeReceived'] <
-             1000 * 60 * 5)):
+        if (self._tournament_id in ba.app.accounts.tournament_info and
+                ba.app.accounts.tournament_info[self._tournament_id]['valid']
+                and (ba.time(ba.TimeType.REAL, ba.TimeFormat.MILLISECONDS) -
+                     ba.app.accounts.tournament_info[self._tournament_id]
+                     ['timeReceived'] < 1000 * 60 * 5)):
             try:
-                info = ba.app.tournament_info[self._tournament_id]
+                info = ba.app.accounts.tournament_info[self._tournament_id]
                 self._seconds_remaining = max(
                     0, info['timeRemaining'] - int(
                         (ba.time(ba.TimeType.REAL, ba.TimeFormat.MILLISECONDS)
@@ -312,12 +302,12 @@ class TournamentEntryWindow(popup.PopupWindow):
 
     def _on_tournament_query_response(self, data: Optional[Dict[str,
                                                                 Any]]) -> None:
-        from ba.internal import cache_tournament_info
+        accounts = ba.app.accounts
         self._running_query = False
         if data is not None:
             data = data['t']  # This used to be the whole payload.
-            cache_tournament_info(data)
-            self._seconds_remaining = ba.app.tournament_info[
+            accounts.cache_tournament_info(data)
+            self._seconds_remaining = accounts.tournament_info[
                 self._tournament_id]['timeRemaining']
             self._have_valid_data = True
 
@@ -366,7 +356,8 @@ class TournamentEntryWindow(popup.PopupWindow):
             self._running_query = True
 
         # Grab the latest info on our tourney.
-        self._tournament_info = ba.app.tournament_info[self._tournament_id]
+        self._tournament_info = ba.app.accounts.tournament_info[
+            self._tournament_id]
 
         # If we don't have valid data always show a '-' for time.
         if not self._have_valid_data:
@@ -432,9 +423,12 @@ class TournamentEntryWindow(popup.PopupWindow):
             t_str = str(_ba.get_account_ticket_count())
         except Exception:
             t_str = '?'
-        if self._get_tickets_button is not None:
+        if self._get_tickets_button:
             ba.buttonwidget(edit=self._get_tickets_button,
                             label=ba.charstr(ba.SpecialChar.TICKET) + t_str)
+        if self._ticket_count_text:
+            ba.textwidget(edit=self._ticket_count_text,
+                          text=ba.charstr(ba.SpecialChar.TICKET) + t_str)
 
     def _launch(self) -> None:
         if self._launched:
@@ -541,7 +535,6 @@ class TournamentEntryWindow(popup.PopupWindow):
         self._launch()
 
     def _on_pay_with_ad_press(self) -> None:
-        from ba.internal import show_ad_2
 
         # If we're already entering, ignore.
         if self._entering:
@@ -563,8 +556,9 @@ class TournamentEntryWindow(popup.PopupWindow):
         cur_time = ba.time(ba.TimeType.REAL)
         if cur_time - self._last_ad_press_time > 5.0:
             self._last_ad_press_time = cur_time
-            show_ad_2('tournament_entry',
-                      on_completion_call=ba.WeakCall(self._on_ad_complete))
+            _ba.app.ads.show_ad_2('tournament_entry',
+                                  on_completion_call=ba.WeakCall(
+                                      self._on_ad_complete))
 
     def _on_ad_complete(self, actually_showed: bool) -> None:
 

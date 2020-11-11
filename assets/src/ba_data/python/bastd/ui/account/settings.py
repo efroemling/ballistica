@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides UI for account functionality."""
 # pylint: disable=too-many-lines
 
@@ -1013,8 +995,8 @@ class AccountSettingsWindow(ba.Window):
         if (self._achievements_text is None
                 and self._achievements_button is None):
             return
-        complete = sum(1 if a.complete else 0 for a in ba.app.achievements)
-        total = len(ba.app.achievements)
+        complete = sum(1 if a.complete else 0 for a in ba.app.ach.achievements)
+        total = len(ba.app.ach.achievements)
         txt_final = ba.Lstr(resource=self._r + '.achievementProgressText',
                             subs=[('${COUNT}', str(complete)),
                                   ('${TOTAL}', str(total))])

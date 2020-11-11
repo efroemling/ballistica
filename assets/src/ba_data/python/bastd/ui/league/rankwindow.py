@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """UI related to league rank."""
 
 from __future__ import annotations
@@ -40,9 +22,6 @@ class LeagueRankWindow(ba.Window):
                  transition: str = 'in_right',
                  modal: bool = False,
                  origin_widget: ba.Widget = None):
-        # pylint: disable=too-many-statements
-        from ba.internal import get_cached_league_rank_data
-        from ba.deprecated import get_resource
         ba.set_analytics_screen('League Rank Window')
 
         self._league_rank_data: Optional[Dict[str, Any]] = None
@@ -64,7 +43,7 @@ class LeagueRankWindow(ba.Window):
         self._height = (657 if uiscale is ba.UIScale.SMALL else
                         710 if uiscale is ba.UIScale.MEDIUM else 800)
         self._r = 'coopSelectWindow'
-        self._rdict = get_resource(self._r)
+        self._rdict = ba.app.lang.get_resource(self._r)
         top_extra = 20 if uiscale is ba.UIScale.SMALL else 0
 
         self._league_url_arg = ''
@@ -145,7 +124,7 @@ class LeagueRankWindow(ba.Window):
         self._restore_state()
 
         # if we've got cached power-ranking data already, display it
-        info = get_cached_league_rank_data()
+        info = ba.app.accounts.get_cached_league_rank_data()
         if info is not None:
             self._update_for_league_rank_data(info)
 
@@ -214,11 +193,10 @@ class LeagueRankWindow(ba.Window):
 
     def _on_power_ranking_query_response(
             self, data: Optional[Dict[str, Any]]) -> None:
-        from ba.internal import cache_league_rank_data
         self._doing_power_ranking_query = False
         # important: *only* cache this if we requested the current season..
         if data is not None and data.get('s', None) is None:
-            cache_league_rank_data(data)
+            ba.app.accounts.cache_league_rank_data(data)
         # always store a copy locally though (even for other seasons)
         self._league_rank_data = copy.deepcopy(data)
         self._update_for_league_rank_data(data)
@@ -614,9 +592,9 @@ class LeagueRankWindow(ba.Window):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
-        from ba.internal import get_league_rank_points
         if not self._root_widget:
             return
+        accounts = ba.app.accounts
         in_top = (data is not None and data['rank'] is not None)
         eq_text = self._rdict.powerRankingPointsEqualsText
         pts_txt = self._rdict.powerRankingPointsText
@@ -642,7 +620,7 @@ class LeagueRankWindow(ba.Window):
                     finished_season_unranked = True
                     self._can_do_more_button = False
                 else:
-                    our_points = get_league_rank_points(data)
+                    our_points = accounts.get_league_rank_points(data)
                     progress = float(our_points) / max(1,
                                                        data['scores'][-1][1])
                     status_text = str(int(progress * 100.0)) + '%'
@@ -828,7 +806,7 @@ class LeagueRankWindow(ba.Window):
         # for the achievement value, use the number they gave us for
         # non-current seasons; otherwise calc our own
         total_ach_value = 0
-        for ach in ba.app.achievements:
+        for ach in ba.app.ach.achievements:
             if ach.complete:
                 total_ach_value += ach.power_ranking_value
         if self._season != 'a' and not self._is_current_season:
@@ -840,8 +818,10 @@ class LeagueRankWindow(ba.Window):
                       ('+ ' +
                        pts_txt.replace('${NUMBER}', str(total_ach_value))))
 
-        total_trophies_count = (get_league_rank_points(data, 'trophyCount'))
-        total_trophies_value = (get_league_rank_points(data, 'trophies'))
+        total_trophies_count = (accounts.get_league_rank_points(
+            data, 'trophyCount'))
+        total_trophies_value = (accounts.get_league_rank_points(
+            data, 'trophies'))
         ba.buttonwidget(edit=self._power_ranking_trophies_button,
                         label=('' if data is None else
                                (str(total_trophies_count) + ' ')) +
@@ -851,9 +831,10 @@ class LeagueRankWindow(ba.Window):
             text='-' if data is None else
             ('+ ' + pts_txt.replace('${NUMBER}', str(total_trophies_value))))
 
-        ba.textwidget(edit=self._power_ranking_total_text,
-                      text='-' if data is None else eq_text.replace(
-                          '${NUMBER}', str(get_league_rank_points(data))))
+        ba.textwidget(
+            edit=self._power_ranking_total_text,
+            text='-' if data is None else eq_text.replace(
+                '${NUMBER}', str(accounts.get_league_rank_points(data))))
         for widget in self._power_ranking_score_widgets:
             widget.delete()
         self._power_ranking_score_widgets = []

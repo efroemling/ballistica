@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provide top level UI related functionality."""
 
 from __future__ import annotations
@@ -29,6 +11,7 @@ from typing import TYPE_CHECKING, cast, Type
 
 import _ba
 from ba._enums import TimeType
+from ba._general import print_active_refs
 
 if TYPE_CHECKING:
     from typing import Optional, List, Any
@@ -47,8 +30,12 @@ class Window:
     Category: User Interface Classes
     """
 
-    def __init__(self, root_widget: ba.Widget):
+    def __init__(self, root_widget: ba.Widget, cleanupcheck: bool = True):
         self._root_widget = root_widget
+
+        # Complain if we outlive our root widget.
+        if cleanupcheck:
+            uicleanupcheck(self, root_widget)
 
     def get_root_widget(self) -> ba.Widget:
         """Return the root widget."""
@@ -234,7 +221,9 @@ def ui_upkeep() -> None:
                 print(
                     'WARNING:', obj,
                     'is still alive 5 second after its widget died;'
-                    ' you probably have a memory leak.')
+                    ' you might have a memory leak.')
+                print_active_refs(obj)
+
             else:
                 remainingchecks.append(check)
     ui.cleanupchecks = remainingchecks

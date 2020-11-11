@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Standard snippets that can be pulled into project pcommand scripts.
 
 A snippet is a mini-program that directly takes input from stdin and does
@@ -33,58 +15,18 @@ from typing import TYPE_CHECKING
 from efrotools.pcommand import PROJROOT
 
 if TYPE_CHECKING:
-    from typing import Optional, List, Set
+    from typing import Optional, List, Set, Dict
 
 
 def stage_server_file() -> None:
     """Stage files for the server environment with some filtering."""
-    import os
-    import subprocess
-    import batools.build
     from efro.error import CleanError
-    from efrotools import replace_one
-    from efrotools import PYVER
+    import batools.assetstaging
     if len(sys.argv) != 5:
         raise CleanError('Expected 3 args (mode, infile, outfile).')
     mode, infilename, outfilename = sys.argv[2], sys.argv[3], sys.argv[4]
-    if mode not in ('debug', 'release'):
-        raise CleanError(f"Invalid mode '{mode}'; expected debug or release.")
-
-    print(f'Building server file: {os.path.basename(outfilename)}')
-
-    basename = os.path.basename(infilename)
-    if basename == 'config_template.yaml':
-        # Inject all available config values into the config file.
-        batools.build.filter_server_config(str(PROJROOT), infilename,
+    batools.assetstaging.stage_server_file(str(PROJROOT), mode, infilename,
                                            outfilename)
-
-    elif basename == 'ballisticacore_server.py':
-        # Run Python in opt mode for release builds.
-        with open(infilename) as infile:
-            lines = infile.read().splitlines()
-            if mode == 'release':
-                lines[0] = replace_one(lines[0],
-                                       f'#!/usr/bin/env python{PYVER}',
-                                       f'#!/usr/bin/env -S python{PYVER} -O')
-        with open(outfilename, 'w') as outfile:
-            outfile.write('\n'.join(lines) + '\n')
-        subprocess.run(['chmod', '+x', outfilename], check=True)
-    elif basename == 'launch_ballisticacore_server.bat':
-        # Run Python in opt mode for release builds.
-        with open(infilename) as infile:
-            lines = infile.read().splitlines()
-            if mode == 'release':
-                lines[1] = replace_one(
-                    lines[1], ':: Python interpreter.',
-                    ':: Python interpreter.'
-                    ' (in opt mode so we use bundled .opt-1.pyc files)')
-                lines[2] = replace_one(
-                    lines[2], 'dist\\\\python.exe ballisticacore_server.py',
-                    'dist\\\\python.exe -O ballisticacore_server.py')
-        with open(outfilename, 'w') as outfile:
-            outfile.write('\n'.join(lines) + '\n')
-    else:
-        raise CleanError(f"Unknown server file for staging: '{basename}'.")
 
 
 def py_examine() -> None:
@@ -279,23 +221,31 @@ def lazy_increment_build() -> None:
 def get_master_asset_src_dir() -> None:
     """Print master-asset-source dir for this repo."""
     import subprocess
+    import os
 
-    # Ok, for now lets simply use our hard-coded master-src
-    # path if we're on master in and not otherwise.  Should
-    # probably make this configurable.
-    output = subprocess.check_output(
-        ['git', 'status', '--branch', '--porcelain']).decode()
+    master_assets_dir = '/Users/ericf/Dropbox/ballisticacore_master_assets'
+    dummy_dir = '/__DUMMY_MASTER_SRC_DISABLED_PATH__'
 
-    # Also compare repo name to split version of itself to
-    # see if we're outside of core (filtering will cause mismatch if so).
-    if ('origin/master' in output.splitlines()[0]
-            and 'ballistica' + 'core' == 'ballisticacore'):
+    # Only apply this on my setup
+    if os.path.exists(master_assets_dir):
 
-        # We seem to be in master in core repo; lets do it.
-        print('/Users/ericf/Dropbox/ballisticacore_master_assets')
-    else:
-        # Still need to supply dummy path for makefile if not..
-        print('/__DUMMY_MASTER_SRC_DISABLED_PATH__')
+        # Ok, for now lets simply use our hard-coded master-src
+        # path if we're on master in and not otherwise.  Should
+        # probably make this configurable.
+        output = subprocess.check_output(
+            ['git', 'status', '--branch', '--porcelain']).decode()
+
+        # Also compare repo name to split version of itself to
+        # see if we're outside of core (filtering will cause mismatch if so).
+        if ('origin/master' in output.splitlines()[0]
+                and 'ballistica' + 'core' == 'ballisticacore'):
+
+            # We seem to be in master in core repo; lets do it.
+            print(master_assets_dir)
+            return
+
+    # Still need to supply dummy path for makefile if not..
+    print(dummy_dir)
 
 
 def androidaddr() -> None:
@@ -551,11 +501,7 @@ def install_pip_reqs() -> None:
 def checkenv() -> None:
     """Check for tools necessary to build and run the app."""
     import batools.build
-    from efro.error import CleanError
-    try:
-        batools.build.checkenv()
-    except RuntimeError as exc:
-        raise CleanError(exc)
+    batools.build.checkenv()
 
 
 def ensure_prefab_platform() -> None:
@@ -595,6 +541,9 @@ def make_prefab() -> None:
         raise RuntimeError('Expected one argument')
     target = batools.build.PrefabTarget(sys.argv[2])
     platform = batools.build.get_current_prefab_platform()
+
+    # We use dashes instead of underscores in target names.
+    platform = platform.replace('_', '-')
     try:
         subprocess.run(['make', f'prefab-{platform}-{target.value}-build'],
                        check=True)
@@ -620,13 +569,13 @@ def lazybuild() -> None:
     try:
         category = batools.build.SourceCategory(sys.argv[2])
     except ValueError as exc:
-        raise CleanError(exc)
+        raise CleanError(exc) from exc
     target = sys.argv[3]
     command = ' '.join(sys.argv[4:])
     try:
         batools.build.lazybuild(target, category, command)
     except subprocess.CalledProcessError as exc:
-        raise CleanError(exc)
+        raise CleanError(exc) from exc
 
 
 def android_archive_unstripped_libs() -> None:
@@ -677,8 +626,10 @@ def _camel_case_split(string: str) -> List[str]:
 def efro_gradle() -> None:
     """Calls ./gradlew with some extra magic."""
     import subprocess
+    from efro.terminal import Clr
     from efrotools.android import filter_gradle_file
     args = ['./gradlew'] + sys.argv[2:]
+    print(f'{Clr.BLU}Running gradle with args:{Clr.RST} {args}.', flush=True)
     enabled_tags: Set[str] = set()
     target_words = [w.lower() for w in _camel_case_split(args[-1])]
     if 'google' in target_words:
@@ -730,3 +681,82 @@ def update_project() -> None:
     fix = '--fix' in sys.argv
 
     Updater(check=check, fix=fix).run()
+
+
+def update_cmake_prefab_lib() -> None:
+    """Update prefab internal libs for builds."""
+    import subprocess
+    import os
+    from efro.error import CleanError
+    import batools.build
+    if len(sys.argv) != 5:
+        raise CleanError('Expected 3 args (standard/server,'
+                         ' debug/release, build-dir)')
+    buildtype = sys.argv[2]
+    mode = sys.argv[3]
+    builddir = sys.argv[4]
+    if buildtype not in {'standard', 'server'}:
+        raise CleanError(f'Invalid buildtype: {buildtype}')
+    if mode not in {'debug', 'release'}:
+        raise CleanError(f'Invalid mode: {mode}')
+    platform = batools.build.get_current_prefab_platform(
+        wsl_gives_windows=False)
+    suffix = '_server' if buildtype == 'server' else ''
+    target = (f'build/prefab/lib/{platform}{suffix}/{mode}/'
+              f'libballisticacore_internal.a')
+
+    # Build the target and then copy it to dst if it doesn't exist there yet
+    # or the existing one is older than our target.
+    subprocess.run(['make', target], check=True)
+
+    libdir = os.path.join(builddir, 'prefablib')
+    libpath = os.path.join(libdir, 'libballisticacore_internal.a')
+
+    update = True
+    time1 = os.path.getmtime(target)
+    if os.path.exists(libpath):
+        time2 = os.path.getmtime(libpath)
+        if time1 <= time2:
+            update = False
+
+    if update:
+        if not os.path.exists(libdir):
+            os.makedirs(libdir, exist_ok=True)
+        subprocess.run(['cp', target, libdir], check=True)
+
+
+def cmake_prep_dir() -> None:
+    """Create a dir, recreating it when cmake/python/etc. version changes.
+
+    Useful to prevent builds from breaking when cmake or other components
+    are updated.
+    """
+    from efro.error import CleanError
+    import batools.build
+    if len(sys.argv) != 3:
+        raise CleanError('Expected 1 arg (dir name)')
+    dirname = sys.argv[2]
+    batools.build.cmake_prep_dir(dirname)
+
+
+def gen_binding_code() -> None:
+    """Generate binding.inc file."""
+    from efro.error import CleanError
+    import batools.codegen
+    if len(sys.argv) != 4:
+        raise CleanError('Expected 2 args (srcfile, dstfile)')
+    inpath = sys.argv[2]
+    outpath = sys.argv[3]
+    batools.codegen.gen_binding_code(str(PROJROOT), inpath, outpath)
+
+
+def gen_flat_data_code() -> None:
+    """Generate a C++ include file from a Python file."""
+    from efro.error import CleanError
+    import batools.codegen
+    if len(sys.argv) != 5:
+        raise CleanError('Expected 3 args (srcfile, dstfile, varname)')
+    inpath = sys.argv[2]
+    outpath = sys.argv[3]
+    varname = sys.argv[4]
+    batools.codegen.gen_flat_data_code(str(PROJROOT), inpath, outpath, varname)

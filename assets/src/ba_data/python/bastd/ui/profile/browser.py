@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """UI functionality related to browsing player profiles."""
 
 from __future__ import annotations
@@ -41,7 +23,6 @@ class ProfileBrowserWindow(ba.Window):
                  origin_widget: ba.Widget = None):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
-        from ba.internal import ensure_have_account_player_profile
         self._in_main_menu = in_main_menu
         if self._in_main_menu:
             back_label = ba.Lstr(resource='backText')
@@ -70,7 +51,7 @@ class ProfileBrowserWindow(ba.Window):
         self._r = 'playerProfilesWindow'
 
         # Ensure we've got an account-profile in cases where we're signed in.
-        ensure_have_account_player_profile()
+        ba.app.accounts.ensure_have_account_player_profile()
 
         top_extra = 20 if uiscale is ba.UIScale.SMALL else 0
 
@@ -189,14 +170,13 @@ class ProfileBrowserWindow(ba.Window):
 
     def _new_profile(self) -> None:
         # pylint: disable=cyclic-import
-        from ba.internal import have_pro_options
         from bastd.ui.profile.edit import EditProfileWindow
         from bastd.ui.purchase import PurchaseWindow
 
         # Limit to a handful profiles if they don't have pro-options.
         max_non_pro_profiles = _ba.get_account_misc_read_val('mnpp', 5)
         assert self._profiles is not None
-        if (not have_pro_options()
+        if (not ba.app.accounts.have_pro_options()
                 and len(self._profiles) >= max_non_pro_profiles):
             PurchaseWindow(items=['pro'],
                            header_text=ba.Lstr(
@@ -288,6 +268,7 @@ class ProfileBrowserWindow(ba.Window):
 
     def _refresh(self) -> None:
         # pylint: disable=too-many-locals
+        from efro.util import asserttype
         from ba.internal import (PlayerProfilesChangedMessage,
                                  get_player_profile_colors,
                                  get_player_profile_icon)
@@ -299,7 +280,7 @@ class ProfileBrowserWindow(ba.Window):
         self._profiles = ba.app.config.get('Player Profiles', {})
         assert self._profiles is not None
         items = list(self._profiles.items())
-        items.sort(key=lambda x: x[0].lower())
+        items.sort(key=lambda x: asserttype(x[0], str).lower())
         index = 0
         account_name: Optional[str]
         if _ba.get_account_state() == 'signed_in':

@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides UI for browsing soundtracks."""
 
 from __future__ import annotations
@@ -229,8 +211,7 @@ class SoundtrackBrowserWindow(ba.Window):
                                on_cancel_call=self._back)
 
     def _update(self) -> None:
-        from ba.internal import have_pro_options
-        have = have_pro_options()
+        have = ba.app.accounts.have_pro_options()
         for lock in self._lock_images:
             ba.imagewidget(edit=lock, opacity=0.0 if have else 1.0)
 
@@ -249,11 +230,10 @@ class SoundtrackBrowserWindow(ba.Window):
 
     def _delete_soundtrack(self) -> None:
         # pylint: disable=cyclic-import
-        from ba.internal import have_pro_options
-        from bastd.ui import purchase
-        from bastd.ui import confirm
-        if not have_pro_options():
-            purchase.PurchaseWindow(items=['pro'])
+        from bastd.ui.purchase import PurchaseWindow
+        from bastd.ui.confirm import ConfirmWindow
+        if not ba.app.accounts.have_pro_options():
+            PurchaseWindow(items=['pro'])
             return
         if self._selected_soundtrack is None:
             return
@@ -263,17 +243,16 @@ class SoundtrackBrowserWindow(ba.Window):
                                      '.cantDeleteDefaultText'),
                              color=(1, 0, 0))
         else:
-            confirm.ConfirmWindow(
+            ConfirmWindow(
                 ba.Lstr(resource=self._r + '.deleteConfirmText',
                         subs=[('${NAME}', self._selected_soundtrack)]),
                 self._do_delete_soundtrack, 450, 150)
 
     def _duplicate_soundtrack(self) -> None:
         # pylint: disable=cyclic-import
-        from ba.internal import have_pro_options
-        from bastd.ui import purchase
-        if not have_pro_options():
-            purchase.PurchaseWindow(items=['pro'])
+        from bastd.ui.purchase import PurchaseWindow
+        if not ba.app.accounts.have_pro_options():
+            PurchaseWindow(items=['pro'])
             return
         cfg = ba.app.config
         cfg.setdefault('Soundtracks', {})
@@ -342,21 +321,19 @@ class SoundtrackBrowserWindow(ba.Window):
 
     def _edit_soundtrack_with_sound(self) -> None:
         # pylint: disable=cyclic-import
-        from ba.internal import have_pro_options
-        from bastd.ui import purchase
-        if not have_pro_options():
-            purchase.PurchaseWindow(items=['pro'])
+        from bastd.ui.purchase import PurchaseWindow
+        if not ba.app.accounts.have_pro_options():
+            PurchaseWindow(items=['pro'])
             return
         ba.playsound(ba.getsound('swish'))
         self._edit_soundtrack()
 
     def _edit_soundtrack(self) -> None:
         # pylint: disable=cyclic-import
-        from ba.internal import have_pro_options
-        from bastd.ui import purchase
-        from bastd.ui.soundtrack import edit as stedit
-        if not have_pro_options():
-            purchase.PurchaseWindow(items=['pro'])
+        from bastd.ui.purchase import PurchaseWindow
+        from bastd.ui.soundtrack.edit import SoundtrackEditWindow
+        if not ba.app.accounts.have_pro_options():
+            PurchaseWindow(items=['pro'])
             return
         if self._selected_soundtrack is None:
             return
@@ -370,9 +347,8 @@ class SoundtrackBrowserWindow(ba.Window):
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         ba.app.ui.set_main_menu_window(
-            stedit.SoundtrackEditWindow(
-                existing_soundtrack=self._selected_soundtrack).get_root_widget(
-                ))
+            SoundtrackEditWindow(existing_soundtrack=self._selected_soundtrack
+                                 ).get_root_widget())
 
     def _get_soundtrack_display_name(self, soundtrack: str) -> ba.Lstr:
         if soundtrack == '__default__':
@@ -380,6 +356,7 @@ class SoundtrackBrowserWindow(ba.Window):
         return ba.Lstr(value=soundtrack)
 
     def _refresh(self, select_soundtrack: str = None) -> None:
+        from efro.util import asserttype
         self._allow_changing_soundtracks = False
         old_selection = self._selected_soundtrack
 
@@ -395,7 +372,7 @@ class SoundtrackBrowserWindow(ba.Window):
         self._soundtracks = ba.app.config.get('Soundtracks', {})
         assert self._soundtracks is not None
         items = list(self._soundtracks.items())
-        items.sort(key=lambda x: x[0].lower())
+        items.sort(key=lambda x: asserttype(x[0], str).lower())
         items = [('__default__', None)] + items  # default is always first
         index = 0
         for pname, _pval in items:
@@ -455,15 +432,14 @@ class SoundtrackBrowserWindow(ba.Window):
 
     def _new_soundtrack(self) -> None:
         # pylint: disable=cyclic-import
-        from ba.internal import have_pro_options
-        from bastd.ui import purchase
-        from bastd.ui.soundtrack import edit as stedit
-        if not have_pro_options():
-            purchase.PurchaseWindow(items=['pro'])
+        from bastd.ui.purchase import PurchaseWindow
+        from bastd.ui.soundtrack.edit import SoundtrackEditWindow
+        if not ba.app.accounts.have_pro_options():
+            PurchaseWindow(items=['pro'])
             return
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        stedit.SoundtrackEditWindow(existing_soundtrack=None)
+        SoundtrackEditWindow(existing_soundtrack=None)
 
     def _create_done(self, new_soundtrack: str) -> None:
         if new_soundtrack is not None:

@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides UI for selecting maps in playlists."""
 
 from __future__ import annotations
@@ -227,14 +209,14 @@ class PlaylistMapSelectWindow(ba.Window):
 
     def _on_store_press(self) -> None:
         from bastd.ui import account
-        from bastd.ui.store import browser
+        from bastd.ui.store.browser import StoreBrowserWindow
         if _ba.get_account_state() != 'signed_in':
             account.show_sign_in_prompt()
             return
-        browser.StoreBrowserWindow(modal=True,
-                                   show_tab='maps',
-                                   on_close_call=self._on_store_close,
-                                   origin_widget=self._get_more_maps_button)
+        StoreBrowserWindow(modal=True,
+                           show_tab=StoreBrowserWindow.TabID.MAPS,
+                           on_close_call=self._on_store_close,
+                           origin_widget=self._get_more_maps_button)
 
     def _on_store_close(self) -> None:
         self._refresh(select_get_more_maps_button=True)

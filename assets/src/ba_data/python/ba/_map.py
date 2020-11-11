@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Map related functionality."""
 from __future__ import annotations
 
@@ -66,8 +48,8 @@ def get_map_display_string(name: str) -> ba.Lstr:
 
     Category: Asset Functions
     """
-    from ba import _lang
-    return _lang.Lstr(translate=('mapsNames', name))
+    from ba import _language
+    return _language.Lstr(translate=('mapsNames', name))
 
 
 def getmaps(playtype: str) -> List[str]:
@@ -126,7 +108,7 @@ def get_unowned_maps() -> List[str]:
     """
     from ba import _store
     unowned_maps: Set[str] = set()
-    if not _ba.app.headless_build:
+    if not _ba.app.headless_mode:
         for map_section in _store.get_store_layout()['maps']:
             for mapitem in map_section['items']:
                 if not _ba.get_purchased(mapitem):
@@ -218,12 +200,12 @@ class Map(Actor):
         # (and instruct the user if we weren't preloaded properly).
         try:
             self.preloaddata = _ba.getactivity().preloads[type(self)]
-        except Exception:
+        except Exception as exc:
             from ba import _error
             raise _error.NotFoundError(
                 'Preload data not found for ' + str(type(self)) +
                 '; make sure to call the type\'s preload()'
-                ' staticmethod in the activity constructor')
+                ' staticmethod in the activity constructor') from exc
 
         # Set various globals.
         gnode = _ba.getactivity().globalsnode

@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Build/tool functionality shared between all efro projects.
 
 This stuff can be a bit more sloppy/loosey-goosey since it is not used in
@@ -44,27 +26,6 @@ PYVER = '3.8'
 
 # Python binary assumed by these tools.
 PYTHON_BIN = f'python{PYVER}' if platform.system() != 'Windows' else 'python'
-
-MIT_LICENSE = """Copyright (c) 2011-2020 Eric Froemling
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-"""
 
 
 def explicit_bool(value: bool) -> bool:
@@ -94,7 +55,7 @@ def getconfig(projroot: Path) -> Dict[str, Any]:
     return config
 
 
-def set_config(projroot: Path, config: Dict[str, Any]) -> None:
+def setconfig(projroot: Path, config: Dict[str, Any]) -> None:
     """Set the project config contents."""
     os.makedirs(Path(projroot, 'config'), exist_ok=True)
     with Path(projroot, 'config/config.json').open('w') as outfile:
@@ -102,26 +63,22 @@ def set_config(projroot: Path, config: Dict[str, Any]) -> None:
 
 
 def get_public_license(style: str) -> str:
-    """Return the MIT license as used for our public facing stuff.
+    """Return the license notice as used for our public facing stuff.
 
     'style' arg can be 'python', 'c++', or 'makefile, or 'raw'.
     """
-    raw = MIT_LICENSE
     if style == 'raw':
-        return raw
+        return 'Released under the MIT License. See LICENSE for details.'
     if style == 'python':
         # Add a line at the bottom since our python-formatters tend to smush
         # our code up against the license; this keeps things a bit more
         # visually separated.
-        return ('\n'.join('#' + (' ' if l else '') + l
-                          for l in raw.splitlines()) + '\n' + '# ' + '-' * 77)
+        return '# Released under the MIT License. See LICENSE for details.'
     if style == 'makefile':
         # Basically same as python except without the last line.
-        return ('\n'.join('#' + (' ' if l else '') + l
-                          for l in raw.splitlines()))
+        return '# Released under the MIT License. See LICENSE for details.'
     if style == 'c++':
-        return '\n'.join('//' + (' ' if l else '') + l
-                         for l in raw.splitlines())
+        return '// Released under the MIT License. See LICENSE for details.'
     raise RuntimeError(f'Invalid style: {style}')
 
 

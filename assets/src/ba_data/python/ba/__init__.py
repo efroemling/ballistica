@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """The public face of Ballistica.
 
 This top level module is a collection of most commonly used functionality.
@@ -38,7 +20,7 @@ from _ba import (CollideModel, Context, ContextCall, Data, InputDevice,
                  set_analytics_screen, charstr, textwidget, time, timer,
                  open_url, widget)
 from ba._activity import Activity
-from ba._plugin import PotentialPlugin, Plugin
+from ba._plugin import PotentialPlugin, Plugin, PluginSubsystem
 from ba._actor import Actor
 from ba._player import PlayerInfo, Player, EmptyPlayer, StandLocation
 from ba._nodeactor import NodeActor
@@ -60,35 +42,39 @@ from ba._gameactivity import GameActivity
 from ba._gameresults import GameResults
 from ba._settings import (Setting, IntSetting, FloatSetting, ChoiceSetting,
                           BoolSetting, IntChoiceSetting, FloatChoiceSetting)
-from ba._lang import Lstr, setlanguage, get_valid_languages
+from ba._language import Lstr, LanguageSubsystem
 from ba._map import Map, getmaps
 from ba._session import Session
+from ba._ui import UISubsystem
 from ba._servermode import ServerController
 from ba._score import ScoreType, ScoreConfig
 from ba._stats import PlayerScoredMessage, PlayerRecord, Stats
 from ba._team import SessionTeam, Team, EmptyTeam
 from ba._teamgame import TeamGameActivity
 from ba._dualteamsession import DualTeamSession
-from ba._achievement import Achievement
+from ba._achievement import Achievement, AchievementSubsystem
 from ba._appconfig import AppConfig
 from ba._appdelegate import AppDelegate
-from ba._apputils import is_browser_likely_available
+from ba._apputils import is_browser_likely_available, garbage_collect
 from ba._campaign import Campaign
 from ba._gameutils import (GameTip, animate, animate_array, show_damage_count,
                            timestring, cameraflash)
 from ba._general import (WeakCall, Call, existing, Existable,
-                         verify_object_death, storagename, getclass)
+                         verify_object_death, storagename, getclass,
+                         enum_by_value)
 from ba._keyboard import Keyboard
 from ba._level import Level
 from ba._lobby import Lobby, Chooser
 from ba._math import normalized_color, is_point_in_box, vec3validate
+from ba._meta import MetadataSubsystem
 from ba._messages import (UNHANDLED, OutOfBoundsMessage, DeathType, DieMessage,
                           PlayerDiedMessage, StandMessage, PickUpMessage,
                           DropMessage, PickedUpMessage, DroppedMessage,
                           ShouldShatterMessage, ImpactDamageMessage,
                           FreezeMessage, ThawMessage, HitMessage,
                           CelebrateMessage)
-from ba._music import setmusic, MusicPlayer, MusicType, MusicPlayMode
+from ba._music import (setmusic, MusicPlayer, MusicType, MusicPlayMode,
+                       MusicSubsystem)
 from ba._powerup import PowerupMessage, PowerupAcceptMessage
 from ba._multiteamsession import MultiTeamSession
 from ba.ui import Window, UIController, uicleanupcheck

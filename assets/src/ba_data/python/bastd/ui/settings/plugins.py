@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Plugin settings UI."""
 
 from __future__ import annotations
@@ -111,15 +93,15 @@ class PluginSettingsWindow(ba.Window):
         self._subcontainer = ba.columnwidget(parent=self._scrollwidget,
                                              selection_loops_to_parent=True)
 
-        if ba.app.metascan is None:
+        if ba.app.meta.metascan is None:
             ba.screenmessage('Still scanning plugins; please try again.',
                              color=(1, 0, 0))
             ba.playsound(ba.getsound('error'))
-        pluglist = ba.app.potential_plugins
+        pluglist = ba.app.plugins.potential_plugins
         plugstates: Dict[str, Dict] = ba.app.config.setdefault('Plugins', {})
         assert isinstance(plugstates, dict)
         for i, availplug in enumerate(pluglist):
-            active = availplug.class_path in ba.app.active_plugins
+            active = availplug.class_path in ba.app.plugins.active_plugins
 
             plugstate = plugstates.setdefault(availplug.class_path, {})
             checked = plugstate.get('enabled', False)

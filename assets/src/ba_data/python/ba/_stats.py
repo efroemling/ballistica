@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Functionality related to scores and statistics."""
 from __future__ import annotations
 
@@ -42,7 +24,7 @@ class PlayerScoredMessage:
 
     Category: Message Classes
 
-    Attrs:
+    Attributes:
 
         score
             The score value.
@@ -149,7 +131,7 @@ class PlayerRecord:
         """Submit a kill for this player entry."""
         # FIXME Clean this up.
         # pylint: disable=too-many-statements
-        from ba._lang import Lstr
+        from ba._language import Lstr
         from ba._general import Call
         self._multi_kill_count += 1
         stats = self._stats()
@@ -359,7 +341,7 @@ class Stats:
         from bastd.actor.popuptext import PopupText
         from ba import _math
         from ba._gameactivity import GameActivity
-        from ba._lang import Lstr
+        from ba._language import Lstr
         del victim_player  # Currently unused.
         name = player.getname()
         s_player = self._player_records[name]
@@ -446,7 +428,7 @@ class Stats:
                           killed: bool = False,
                           killer: ba.Player = None) -> None:
         """Should be called when a player is killed."""
-        from ba._lang import Lstr
+        from ba._language import Lstr
         name = player.getname()
         prec = self._player_records[name]
         prec.streak = 0

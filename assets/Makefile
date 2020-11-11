@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
 ################################################################################
 #                                                                              #
 #                               Asset Generation                               #
@@ -155,10 +137,12 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/ba/_activity.py \
   build/ba_data/python/ba/_activitytypes.py \
   build/ba_data/python/ba/_actor.py \
+  build/ba_data/python/ba/_ads.py \
   build/ba_data/python/ba/_analytics.py \
   build/ba_data/python/ba/_app.py \
   build/ba_data/python/ba/_appconfig.py \
   build/ba_data/python/ba/_appdelegate.py \
+  build/ba_data/python/ba/_appmode.py \
   build/ba_data/python/ba/_apputils.py \
   build/ba_data/python/ba/_assetmanager.py \
   build/ba_data/python/ba/_benchmark.py \
@@ -178,7 +162,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/ba/_hooks.py \
   build/ba_data/python/ba/_input.py \
   build/ba_data/python/ba/_keyboard.py \
-  build/ba_data/python/ba/_lang.py \
+  build/ba_data/python/ba/_language.py \
   build/ba_data/python/ba/_level.py \
   build/ba_data/python/ba/_lobby.py \
   build/ba_data/python/ba/_map.py \
@@ -310,7 +294,13 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/bastd/ui/debug.py \
   build/ba_data/python/bastd/ui/feedback.py \
   build/ba_data/python/bastd/ui/fileselector.py \
-  build/ba_data/python/bastd/ui/gather.py \
+  build/ba_data/python/bastd/ui/gather/__init__.py \
+  build/ba_data/python/bastd/ui/gather/abouttab.py \
+  build/ba_data/python/bastd/ui/gather/bases.py \
+  build/ba_data/python/bastd/ui/gather/googleplaytab.py \
+  build/ba_data/python/bastd/ui/gather/manualtab.py \
+  build/ba_data/python/bastd/ui/gather/nearbytab.py \
+  build/ba_data/python/bastd/ui/gather/publictab.py \
   build/ba_data/python/bastd/ui/getcurrency.py \
   build/ba_data/python/bastd/ui/getremote.py \
   build/ba_data/python/bastd/ui/helpui.py \
@@ -392,10 +382,12 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/ba/__pycache__/_activity.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_activitytypes.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_actor.cpython-38.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_ads.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_analytics.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_app.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_appconfig.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_appdelegate.cpython-38.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_appmode.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_apputils.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_assetmanager.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_benchmark.cpython-38.opt-1.pyc \
@@ -415,7 +407,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/ba/__pycache__/_hooks.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_input.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_keyboard.cpython-38.opt-1.pyc \
-  build/ba_data/python/ba/__pycache__/_lang.cpython-38.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_language.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_level.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_lobby.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_map.cpython-38.opt-1.pyc \
@@ -547,7 +539,13 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/bastd/ui/__pycache__/debug.cpython-38.opt-1.pyc \
   build/ba_data/python/bastd/ui/__pycache__/feedback.cpython-38.opt-1.pyc \
   build/ba_data/python/bastd/ui/__pycache__/fileselector.cpython-38.opt-1.pyc \
-  build/ba_data/python/bastd/ui/__pycache__/gather.cpython-38.opt-1.pyc \
+  build/ba_data/python/bastd/ui/gather/__pycache__/__init__.cpython-38.opt-1.pyc \
+  build/ba_data/python/bastd/ui/gather/__pycache__/abouttab.cpython-38.opt-1.pyc \
+  build/ba_data/python/bastd/ui/gather/__pycache__/bases.cpython-38.opt-1.pyc \
+  build/ba_data/python/bastd/ui/gather/__pycache__/googleplaytab.cpython-38.opt-1.pyc \
+  build/ba_data/python/bastd/ui/gather/__pycache__/manualtab.cpython-38.opt-1.pyc \
+  build/ba_data/python/bastd/ui/gather/__pycache__/nearbytab.cpython-38.opt-1.pyc \
+  build/ba_data/python/bastd/ui/gather/__pycache__/publictab.cpython-38.opt-1.pyc \
   build/ba_data/python/bastd/ui/__pycache__/getcurrency.cpython-38.opt-1.pyc \
   build/ba_data/python/bastd/ui/__pycache__/getremote.cpython-38.opt-1.pyc \
   build/ba_data/python/bastd/ui/__pycache__/helpui.cpython-38.opt-1.pyc \
@@ -4755,6 +4753,7 @@ DATA_TARGETS = \
   build/ba_data/data/languages/swedish.json \
   build/ba_data/data/languages/turkish.json \
   build/ba_data/data/languages/ukrainian.json \
+  build/ba_data/data/languages/venetian.json \
   build/ba_data/data/languages/vietnamese.json \
   build/ba_data/data/maps/big_g.json \
   build/ba_data/data/maps/bridgit.json \
@@ -5376,6 +5375,7 @@ TEX2D_DDS_TARGETS = \
   build/ba_data/textures/hockeyStadiumPreview.dds \
   build/ba_data/textures/iconOnslaught.dds \
   build/ba_data/textures/iconRunaround.dds \
+  build/ba_data/textures/iircadeLogo.dds \
   build/ba_data/textures/impactBombColor.dds \
   build/ba_data/textures/impactBombColorLit.dds \
   build/ba_data/textures/inventoryIcon.dds \
@@ -5778,6 +5778,7 @@ TEX2D_PVR_TARGETS = \
   build/ba_data/textures/hockeyStadiumPreview.pvr \
   build/ba_data/textures/iconOnslaught.pvr \
   build/ba_data/textures/iconRunaround.pvr \
+  build/ba_data/textures/iircadeLogo.pvr \
   build/ba_data/textures/impactBombColor.pvr \
   build/ba_data/textures/impactBombColorLit.pvr \
   build/ba_data/textures/inventoryIcon.pvr \
@@ -6180,6 +6181,7 @@ TEX2D_KTX_TARGETS = \
   build/ba_data/textures/hockeyStadiumPreview.ktx \
   build/ba_data/textures/iconOnslaught.ktx \
   build/ba_data/textures/iconRunaround.ktx \
+  build/ba_data/textures/iircadeLogo.ktx \
   build/ba_data/textures/impactBombColor.ktx \
   build/ba_data/textures/impactBombColorLit.ktx \
   build/ba_data/textures/inventoryIcon.ktx \
@@ -6582,6 +6584,7 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   build/ba_data/textures/hockeyStadium_preview.png \
   build/ba_data/textures/iconOnslaught_preview.png \
   build/ba_data/textures/iconRunaround_preview.png \
+  build/ba_data/textures/iircadeLogo_preview.png \
   build/ba_data/textures/impactBombColorLit_preview.png \
   build/ba_data/textures/impactBombColor_preview.png \
   build/ba_data/textures/inventoryIcon_preview.png \
@@ -7005,13 +7008,13 @@ build/ba_data/data/languages/%.json : ../.efrocachemap
 build/ba_data/data/maps/%.json : ../.efrocachemap
 	@cd .. && tools/pcommand efrocache_get assets/$@
 
-src/%.tex2d.png : ../.efrocachemap
+src/ba_data/%.tex2d.png : ../.efrocachemap
 	@cd .. && tools/pcommand efrocache_get assets/$@
 
-src/%_+x.tex2d.png : ../.efrocachemap
+src/ba_data/%_+x.tex2d.png : ../.efrocachemap
 	@cd .. && tools/pcommand efrocache_get assets/$@
 
-build/%_preview.png : ../.efrocachemap
+build/ba_data/%_preview.png : ../.efrocachemap
 	@cd .. && tools/pcommand efrocache_get assets/$@
 
 build/%.dds : ../.efrocachemap

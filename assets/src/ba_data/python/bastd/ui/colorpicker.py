@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides popup windows for choosing colors."""
 
 from __future__ import annotations
@@ -46,7 +28,7 @@ class ColorPicker(PopupWindow):
                  offset: Tuple[float, float] = (0.0, 0.0),
                  tag: Any = ''):
         # pylint: disable=too-many-locals
-        from ba.internal import have_pro, get_player_colors
+        from ba.internal import get_player_colors
 
         c_raw = get_player_colors()
         assert len(c_raw) == 16
@@ -112,7 +94,7 @@ class ColorPicker(PopupWindow):
             on_activate_call=ba.WeakCall(self._select_other))
 
         # Custom colors are limited to pro currently.
-        if not have_pro():
+        if not ba.app.accounts.have_pro():
             ba.imagewidget(parent=self.root_widget,
                            position=(50, 12),
                            size=(30, 30),
@@ -134,10 +116,9 @@ class ColorPicker(PopupWindow):
 
     def _select_other(self) -> None:
         from bastd.ui import purchase
-        from ba.internal import have_pro
 
         # Requires pro.
-        if not have_pro():
+        if not ba.app.accounts.have_pro():
             purchase.PurchaseWindow(items=['pro'])
             self._transition_out()
             return

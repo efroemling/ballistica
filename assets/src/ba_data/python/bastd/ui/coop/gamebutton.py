@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Defines button for co-op games."""
 
 from __future__ import annotations
@@ -40,7 +22,7 @@ class GameButton:
                  x: float, y: float, select: bool, row: str):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
-        from ba.internal import (get_achievements_for_coop_level, getcampaign)
+        from ba.internal import getcampaign
         self._game = game
         sclx = 195.0
         scly = 195.0
@@ -99,7 +81,7 @@ class GameButton:
             mask_texture=ba.gettexture('mapPreviewMask'))
 
         translated = campaign.getlevel(levelname).displayname
-        self._achievements = (get_achievements_for_coop_level(game))
+        self._achievements = ba.app.ach.achievements_for_coop_level(game)
 
         self._name_widget = ba.textwidget(parent=parent,
                                           draw_controller=btn,
@@ -182,7 +164,12 @@ class GameButton:
 
     def _update(self) -> None:
         # pylint: disable=too-many-boolean-expressions
-        from ba.internal import have_pro, getcampaign
+        from ba.internal import getcampaign
+
+        # In case we stick around after our UI...
+        if not self._button:
+            return
+
         game = self._game
         campaignname, levelname = game.split(':')
 
@@ -211,7 +198,8 @@ class GameButton:
 
         # Hard-code games we haven't unlocked.
         if ((game in ('Challenges:Infinite Runaround',
-                      'Challenges:Infinite Onslaught') and not have_pro())
+                      'Challenges:Infinite Onslaught')
+             and not ba.app.accounts.have_pro())
                 or (game in ('Challenges:Meteor Shower', )
                     and not _ba.get_purchased('games.meteor_shower'))
                 or (game in ('Challenges:Target Practice',
