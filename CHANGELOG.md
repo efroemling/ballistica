@@ -2,6 +2,7 @@
 - Simplified ba.enum_by_value()
 - Updated Google Play version to hopefully show friend high scores again on score screens (at least for levels that have an associated Google Play leaderboard).
 - Public-party-list now properly shows an error instead of 'loading...' when not signed in.
+- Heavily reworked the public party list display code to be more efficient and avoid hitches even with large numbers of servers.
 
 ### 1.5.27 (20238)
 - Language functionality has been consolidated into a LanguageSubsystem object at ba.app.lang

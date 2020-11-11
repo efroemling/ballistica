@@ -22,6 +22,7 @@ if TYPE_CHECKING:
 
 # Print a bit of info about pings, queries, etc.
 DEBUG_SERVER_COMMUNICATION = False
+DEBUG_PROCESSING = False
 
 
 class SubTabType(Enum):
@@ -41,25 +42,151 @@ class PartyEntry:
     size: int = -1
     size_max: int = -1
     claimed: bool = False
-    ping: Optional[int] = None
+    ping: Optional[float] = None
     ping_interval: float = -1.0
     next_ping_time: float = -1.0
     ping_attempts: int = 0
     ping_responses: int = 0
     stats_addr: Optional[str] = None
-    name_widget: Optional[ba.Widget] = None
-    ping_widget: Optional[ba.Widget] = None
-    stats_button: Optional[ba.Widget] = None
-    size_widget: Optional[ba.Widget] = None
+    clean_display_index: Optional[int] = None
+
+    def get_key(self) -> str:
+        """Return the key used to store this party."""
+        return f'{self.address}_{self.port}'
+
+
+class UIRow:
+    """Wrangles UI for a row in the party list."""
+
+    def __init__(self) -> None:
+        self._name_widget: Optional[ba.Widget] = None
+        self._size_widget: Optional[ba.Widget] = None
+        self._ping_widget: Optional[ba.Widget] = None
+        self._stats_button: Optional[ba.Widget] = None
+
+    def __del__(self) -> None:
+        self._clear()
+
+    def _clear(self) -> None:
+        for widget in [
+                self._name_widget, self._size_widget, self._ping_widget,
+                self._stats_button
+        ]:
+            if widget:
+                widget.delete()
+
+    def update(self, index: int, party: PartyEntry, sub_scroll_width: float,
+               sub_scroll_height: float, lineheight: float,
+               columnwidget: ba.Widget, join_text: ba.Widget,
+               filter_text: ba.Widget, existing_selection: Optional[Selection],
+               tab: PublicGatherTab) -> None:
+        """Update for the given data."""
+        # pylint: disable=too-many-locals
+
+        # Quick-out: if we've been marked clean for a certain index and
+        # we're still at that index, we're done.
+        if party.clean_display_index == index:
+            return
+
+        ping_good = _ba.get_account_misc_read_val('pingGood', 100)
+        ping_med = _ba.get_account_misc_read_val('pingMed', 500)
+
+        self._clear()
+        hpos = 20
+        vpos = sub_scroll_height - lineheight * index - 50
+        self._name_widget = ba.textwidget(
+            text=ba.Lstr(value=party.name),
+            parent=columnwidget,
+            size=(sub_scroll_width * 0.63, 20),
+            position=(0 + hpos, 4 + vpos),
+            selectable=True,
+            on_select_call=ba.WeakCall(
+                tab.set_public_party_selection,
+                Selection(party.get_key(), SelectionComponent.NAME)),
+            on_activate_call=ba.WeakCall(tab.on_public_party_activate, party),
+            click_activate=True,
+            maxwidth=sub_scroll_width * 0.45,
+            corner_scale=1.4,
+            autoselect=True,
+            color=(1, 1, 1, 0.3 if party.ping is None else 1.0),
+            h_align='left',
+            v_align='center')
+        ba.widget(edit=self._name_widget,
+                  left_widget=join_text,
+                  show_buffer_top=64.0,
+                  show_buffer_bottom=64.0)
+        if existing_selection == Selection(party.get_key(),
+                                           SelectionComponent.NAME):
+            ba.containerwidget(edit=columnwidget,
+                               selected_child=self._name_widget)
+        if party.stats_addr:
+            url = party.stats_addr.replace(
+                '${ACCOUNT}',
+                _ba.get_account_misc_read_val_2('resolvedAccountID',
+                                                'UNKNOWN'))
+            self._stats_button = ba.buttonwidget(
+                color=(0.3, 0.6, 0.94),
+                textcolor=(1.0, 1.0, 1.0),
+                label=ba.Lstr(resource='statsText'),
+                parent=columnwidget,
+                autoselect=True,
+                on_activate_call=ba.Call(ba.open_url, url),
+                on_select_call=ba.WeakCall(
+                    tab.set_public_party_selection,
+                    Selection(party.get_key(),
+                              SelectionComponent.STATS_BUTTON)),
+                size=(120, 40),
+                position=(sub_scroll_width * 0.66 + hpos, 1 + vpos),
+                scale=0.9)
+            if existing_selection == Selection(
+                    party.get_key(), SelectionComponent.STATS_BUTTON):
+                ba.containerwidget(edit=columnwidget,
+                                   selected_child=self._stats_button)
+
+        self._size_widget = ba.textwidget(
+            text=str(party.size) + '/' + str(party.size_max),
+            parent=columnwidget,
+            size=(0, 0),
+            position=(sub_scroll_width * 0.86 + hpos, 20 + vpos),
+            scale=0.7,
+            color=(0.8, 0.8, 0.8),
+            h_align='right',
+            v_align='center')
+
+        if index == 0:
+            ba.widget(edit=self._name_widget, up_widget=filter_text)
+            if self._stats_button:
+                ba.widget(edit=self._stats_button, up_widget=filter_text)
+
+        self._ping_widget = ba.textwidget(parent=columnwidget,
+                                          size=(0, 0),
+                                          position=(sub_scroll_width * 0.94 +
+                                                    hpos, 20 + vpos),
+                                          scale=0.7,
+                                          h_align='right',
+                                          v_align='center')
+        if party.ping is None:
+            ba.textwidget(edit=self._ping_widget,
+                          text='-',
+                          color=(0.5, 0.5, 0.5))
+        else:
+            ba.textwidget(edit=self._ping_widget,
+                          text=str(int(party.ping)),
+                          color=(0, 1, 0) if party.ping <= ping_good else
+                          (1, 1, 0) if party.ping <= ping_med else (1, 0, 0))
+
+        party.clean_display_index = index
 
 
 @dataclass
 class State:
     """State saved/restored only while the app is running."""
     sub_tab: SubTabType = SubTabType.JOIN
-    parties: Optional[List[PartyEntry]] = None
+    parties: Optional[List[Tuple[str, PartyEntry]]] = None
     next_entry_index: int = 0
     filter_value: str = ''
+    have_server_list_response: bool = False
+    have_valid_server_list: bool = False
 
 
 class SelectionComponent(Enum):
@@ -71,7 +198,7 @@ class SelectionComponent(Enum):
 @dataclass
 class Selection:
     """Describes the currently selected list element."""
-    entry_index: int
+    entry_key: str
     component: SelectionComponent
 
 
@@ -104,7 +231,7 @@ class PingThread(threading.Thread):
     """Thread for sending out game pings."""
 
     def __init__(self, address: str, port: int,
-                 call: Callable[[str, int, Optional[int]], Optional[int]]):
+                 call: Callable[[str, int, Optional[float]], Optional[int]]):
         super().__init__()
         self._address = address
         self._port = port
@@ -141,7 +268,7 @@ class PingThread(threading.Thread):
                     accessible = True
                     break
                 time.sleep(1)
-            ping = int((time.time() - starttime) * 1000.0)
+            ping = (time.time() - starttime) * 1000.0
             ba.pushcall(ba.Call(self._call, self._address, self._port,
                                 ping if accessible else None),
                         from_other_thread=True)
@@ -213,13 +340,28 @@ class PublicGatherTab(GatherTab):
         self._host_max_party_size_minus_button: (Optional[ba.Widget]) = None
         self._host_max_party_size_plus_button: (Optional[ba.Widget]) = None
         self._host_status_text: Optional[ba.Widget] = None
+        self._signed_in = False
+        self._ui_rows: List[UIRow] = []
+        self._refresh_ui_row = 0
+        self._have_user_selected_row = False
+        self._first_valid_server_list_time: Optional[float] = None
+
+        # Parties indexed by id:
         self._parties: Dict[str, PartyEntry] = {}
-        self._last_server_list_update_time: Optional[float] = None
-        self._first_server_list_rebuild_time: Optional[float] = None
+
+        # Parties sorted in display order:
+        self._parties_sorted: List[Tuple[str, PartyEntry]] = []
+        self._party_lists_dirty = True
+
+        # Sorted parties with filter applied:
+        self._parties_displayed: Dict[str, PartyEntry] = {}
+
         self._next_entry_index = 0
+        self._have_server_list_response = False
         self._have_valid_server_list = False
-        self._server_list_dirty = True
         self._filter_value = ''
+        self._pending_party_infos: List[Dict[str, Any]] = []
+        self._last_sub_scroll_height = 0.0
 
     def on_activate(
         self,
@@ -291,11 +433,10 @@ class PublicGatherTab(GatherTab):
             AddrFetchThread(ba.WeakCall(self._fetch_local_addr_cb)).start()
 
         self._set_sub_tab(self._sub_tab, region_width, region_height)
-        self._update_timer = ba.Timer(0.2,
+        self._update_timer = ba.Timer(0.1,
                                       ba.WeakCall(self._update),
                                       repeat=True,
                                       timetype=ba.TimeType.REAL)
-        self._update()
         return self._container
 
     def on_deactivate(self) -> None:
@@ -309,9 +450,11 @@ class PublicGatherTab(GatherTab):
         # server re-query or whatnot.
         ba.app.ui.window_states[self.__class__.__name__] = State(
             sub_tab=self._sub_tab,
-            parties=[copy.copy(p) for p in self._get_ordered_parties()[:40]],
+            parties=[(i, copy.copy(p)) for i, p in self._parties_sorted[:40]],
             next_entry_index=self._next_entry_index,
-            filter_value=self._filter_value)
+            filter_value=self._filter_value,
+            have_server_list_response=self._have_server_list_response,
+            have_valid_server_list=self._have_valid_server_list)
 
     def restore_state(self) -> None:
         state = ba.app.ui.window_states.get(self.__class__.__name__)
@@ -323,11 +466,17 @@ class PublicGatherTab(GatherTab):
         # Restore the parties we stored.
         if state.parties:
             self._parties = {
-                f'{p.address}_{p.port}': copy.copy(p)
-                for p in state.parties
+                key: copy.copy(party)
+                for key, party in state.parties
             }
+            self._parties_sorted = list(self._parties.items())
+            self._party_lists_dirty = True
+
             self._next_entry_index = state.next_entry_index
-            self._have_valid_server_list = True
+
+            # FIXME: should save/restore these too?..
+            self._have_server_list_response = state.have_server_list_response
+            self._have_valid_server_list = state.have_valid_server_list
         self._filter_value = state.filter_value
 
     def _set_sub_tab(self,
@@ -339,11 +488,16 @@ class PublicGatherTab(GatherTab):
         if playsound:
             ba.playsound(ba.getsound('click01'))
 
-        # If we're switching in from elsewhere, reset our selection.
+        # Reset our selection.
         # (prevents selecting something way down the list if we switched away
         # and came back)
-        if self._sub_tab != value:
-            self._selection = None
+        self._selection = None
+        self._have_user_selected_row = False
+
+        # Reset refresh to the top and make sure everything refreshes.
+        self._refresh_ui_row = 0
+        for party in self._parties.values():
+            party.clean_display_index = None
 
         self._sub_tab = value
         active_color = (0.6, 1.0, 0.6)
@@ -362,26 +516,6 @@ class PublicGatherTab(GatherTab):
 
         if value is SubTabType.JOIN:
             self._build_join_tab(region_width, region_height)
-            self._server_list_dirty = True
-
-            # If we're not currently signed in, ignore any list we
-            # consider any list we previously retrieved.
-            if _ba.get_account_state() != 'signed_in':
-                self._have_valid_server_list = False
-
-            # If we've not yet successfully fetched a server list,
-            # force an attempt now and show the user a 'loading...' status.
-            if not self._have_valid_server_list:
-                self._last_server_list_query_time = None
-                join_status_str = ba.Lstr(
-                    value='${A}...',
-                    subs=[('${A}', ba.Lstr(resource='store.loadingText'))],
-                )
-            else:
-                # Otherwise we've got valid data already. Show it.
-                join_status_str = ba.Lstr(value='')
-                self._update_server_list()
-            ba.textwidget(edit=self._join_status_text, text=join_status_str)
 
         if value is SubTabType.HOST:
             self._build_host_tab(region_width, region_height)
@@ -601,269 +735,87 @@ class PublicGatherTab(GatherTab):
         if _ba.get_public_party_enabled():
             self._do_status_check()
 
-    def _get_ordered_parties(self) -> List[PartyEntry]:
-        # Sort - show queue-enabled ones first and sort by lowest ping.
-        ordered_parties = sorted(
-            self._parties.values(),
-            key=lambda p: (
-                p.queue is None,  # Show non-queued last.
-                p.ping if p.ping is not None else 999999,
-                p.index))
-        return ordered_parties
-
-    def _update_server_list(self) -> None:
-        cur_time = ba.time(ba.TimeType.REAL)
-        if self._first_server_list_rebuild_time is None:
-            self._first_server_list_rebuild_time = cur_time
-
-        # We get called quite often (for each ping response, etc) so we want
-        # to limit our rebuilds to keep the UI responsive.
-        # Let's update faster for the first few seconds,
-        # then ease off to keep the list from jumping around.
-        since_first = cur_time - self._first_server_list_rebuild_time
-        wait_time = (1.0 if since_first < 2.0 else
-                     2.5 if since_first < 10.0 else 5.0)
-        if (not self._server_list_dirty
-                and self._last_server_list_update_time is not None
-                and cur_time - self._last_server_list_update_time < wait_time):
-            return
-
-        # If we somehow got here without the required UI being in place...
-        columnwidget = self._join_list_column
-        if not columnwidget:
-            return
-
-        self._last_server_list_update_time = cur_time
-        self._server_list_dirty = False
-
-        with ba.Context('ui'):
-
-            # Now kill and recreate all widgets.
-            for widget in columnwidget.get_children():
-                widget.delete()
-
-            ordered_parties = self._get_ordered_parties()
-
-            # If we've got a filter, filter them.
-            if self._filter_value:
-                # Let's do case-insensitive searching.
-                filterval = self._filter_value.lower()
-                ordered_parties = [
-                    p for p in ordered_parties if filterval in p.name.lower()
-                ]
-
-            sub_scroll_width = 830
-            lineheight = 42
-            sub_scroll_height = lineheight * len(ordered_parties) + 50
-            ba.containerwidget(edit=columnwidget,
-                               size=(sub_scroll_width, sub_scroll_height))
-
-            # Ew; this rebuilding generates deferred selection callbacks
-            # so we need to generated deferred ignore notices for ourself.
-            def refresh_on() -> None:
-                self._refreshing_list = True
-
-            ba.pushcall(refresh_on)
-
-            # Janky - allow escaping if there's nothing in us.
-            ba.containerwidget(edit=self._host_scrollwidget,
-                               claims_up_down=(len(ordered_parties) > 0))
-
-            self._build_server_entry_lines(lineheight, ordered_parties,
-                                           sub_scroll_height, sub_scroll_width)
-
-            # So our selection callbacks can start firing..
-            def refresh_off() -> None:
-                self._refreshing_list = False
-
-            ba.pushcall(refresh_off)
-
-    def _build_server_entry_lines(self, lineheight: float,
-                                  ordered_parties: List[PartyEntry],
-                                  sub_scroll_height: float,
-                                  sub_scroll_width: float) -> None:
-        existing_selection = self._selection
-        columnwidget = self._join_list_column
-        first = True
-        assert columnwidget
-        ping_good = _ba.get_account_misc_read_val('pingGood', 100)
-        ping_med = _ba.get_account_misc_read_val('pingMed', 500)
-        for i, party in enumerate(ordered_parties):
-            hpos = 20
-            vpos = sub_scroll_height - lineheight * i - 50
-            party.name_widget = ba.textwidget(
-                text=ba.Lstr(value=party.name),
-                parent=columnwidget,
-                size=(sub_scroll_width * 0.63, 20),
-                position=(0 + hpos, 4 + vpos),
-                selectable=True,
-                on_select_call=ba.WeakCall(
-                    self._set_public_party_selection,
-                    Selection(party.index, SelectionComponent.NAME)),
-                on_activate_call=ba.WeakCall(self._on_public_party_activate,
-                                             party),
-                click_activate=True,
-                maxwidth=sub_scroll_width * 0.45,
-                corner_scale=1.4,
-                autoselect=True,
-                color=(1, 1, 1, 0.3 if party.ping is None else 1.0),
-                h_align='left',
-                v_align='center')
-            ba.widget(edit=party.name_widget,
-                      left_widget=self._join_text,
-                      show_buffer_top=64.0,
-                      show_buffer_bottom=64.0)
-            if existing_selection == Selection(party.index,
-                                               SelectionComponent.NAME):
-                ba.containerwidget(edit=columnwidget,
-                                   selected_child=party.name_widget)
-            if party.stats_addr:
-                url = party.stats_addr.replace(
-                    '${ACCOUNT}',
-                    _ba.get_account_misc_read_val_2('resolvedAccountID',
-                                                    'UNKNOWN'))
-                party.stats_button = ba.buttonwidget(
-                    color=(0.3, 0.6, 0.94),
-                    textcolor=(1.0, 1.0, 1.0),
-                    label=ba.Lstr(resource='statsText'),
-                    parent=columnwidget,
-                    autoselect=True,
-                    on_activate_call=ba.Call(ba.open_url, url),
-                    on_select_call=ba.WeakCall(
-                        self._set_public_party_selection,
-                        Selection(party.index,
-                                  SelectionComponent.STATS_BUTTON)),
-                    size=(120, 40),
-                    position=(sub_scroll_width * 0.66 + hpos, 1 + vpos),
-                    scale=0.9)
-                if existing_selection == Selection(
-                        party.index, SelectionComponent.STATS_BUTTON):
-                    ba.containerwidget(edit=columnwidget,
-                                       selected_child=party.stats_button)
-            else:
-                if party.stats_button:
-                    party.stats_button.delete()
-                    party.stats_button = None
-
-            if first:
-                if party.stats_button:
-                    ba.widget(edit=party.stats_button,
-                              up_widget=self._filter_text)
-                if party.name_widget:
-                    ba.widget(edit=party.name_widget,
-                              up_widget=self._filter_text)
-                first = False
-
-            party.size_widget = ba.textwidget(
-                text=str(party.size) + '/' + str(party.size_max),
-                parent=columnwidget,
-                size=(0, 0),
-                position=(sub_scroll_width * 0.86 + hpos, 20 + vpos),
-                scale=0.7,
-                color=(0.8, 0.8, 0.8),
-                h_align='right',
-                v_align='center')
-            party.ping_widget = ba.textwidget(
-                parent=columnwidget,
-                size=(0, 0),
-                position=(sub_scroll_width * 0.94 + hpos, 20 + vpos),
-                scale=0.7,
-                h_align='right',
-                v_align='center')
-            if party.ping is None:
-                ba.textwidget(edit=party.ping_widget,
-                              text='-',
-                              color=(0.5, 0.5, 0.5))
-            else:
-                ba.textwidget(edit=party.ping_widget,
-                              text=str(party.ping),
-                              color=(0, 1, 0) if party.ping <= ping_good else
-                              (1, 1, 0) if party.ping <= ping_med else
-                              (1, 0, 0))
-
     def _on_public_party_query_result(
             self, result: Optional[Dict[str, Any]]) -> None:
-        # starttime = time.time()
-        with ba.Context('ui'):
-            # Any time we get any result at all, kill our loading status.
-            status_text = self._join_status_text
-            if status_text:
-                # Don't show results if not signed in
-                # (probably didn't get any anyway).
-                if _ba.get_account_state() != 'signed_in':
-                    ba.textwidget(edit=status_text,
-                                  text=ba.Lstr(resource='notSignedInText'))
-                else:
-                    if result is None:
-                        ba.textwidget(edit=status_text,
-                                      text=ba.Lstr(resource='errorText'))
-                    else:
-                        ba.textwidget(edit=status_text, text='')
+        starttime = time.time()
+        self._have_server_list_response = True
 
-            if result is not None:
-                self._have_valid_server_list = True
-                parties_in = result['l']
-            else:
-                self._have_valid_server_list = False
-                parties_in = []
+        if result is None:
+            self._have_valid_server_list = False
+            return
 
-            for partyval in list(self._parties.values()):
-                partyval.claimed = False
+        if not self._have_valid_server_list:
+            self._first_valid_server_list_time = time.time()
 
-            for party_in in parties_in:
-                addr = party_in['a']
-                assert isinstance(addr, str)
-                port = party_in['p']
-                assert isinstance(port, int)
-                party_key = f'{addr}_{port}'
-                party = self._parties.get(party_key)
-                if party is None:
-                    # If this party is new to us, init it.
-                    party = self._parties[party_key] = PartyEntry(
-                        address=addr,
-                        next_ping_time=ba.time(ba.TimeType.REAL) +
-                        0.001 * party_in['pd'],
-                        index=self._next_entry_index)
-                    self._next_entry_index += 1
-                    assert isinstance(party.address, str)
-                    assert isinstance(party.next_ping_time, float)
+        self._have_valid_server_list = True
+        parties_in = result['l']
 
-                # Now, new or not, update its values.
-                party.queue = party_in.get('q')
-                assert isinstance(party.queue, (str, type(None)))
-                party.port = port
-                party.name = party_in['n']
-                assert isinstance(party.name, str)
-                party.size = party_in['s']
-                assert isinstance(party.size, int)
-                party.size_max = party_in['sm']
-                assert isinstance(party.size_max, int)
+        # parties_in.reverse()
+
+        assert isinstance(parties_in, list)
+        self._pending_party_infos += parties_in
+
+        # To avoid causing a stutter here, we do most processing of
+        # these entries incrementally in our _update() method.
+        # The one thing we do here is prune parties not contained in
+        # this result.
+        for partyval in list(self._parties.values()):
+            partyval.claimed = False
+        for party_in in parties_in:
+            addr = party_in['a']
+            assert isinstance(addr, str)
+            port = party_in['p']
+            assert isinstance(port, int)
+            party_key = f'{addr}_{port}'
+            party = self._parties.get(party_key)
+            if party is not None:
                 party.claimed = True
-                # (server provides this in milliseconds; we use seconds)
-                party.ping_interval = 0.001 * party_in['pi']
-                assert isinstance(party.ping_interval, float)
-                party.stats_addr = party_in['sa']
-                assert isinstance(party.stats_addr, (str, type(None)))
+        self._parties = {
+            key: val
+            for key, val in list(self._parties.items()) if val.claimed
+        }
+        self._parties_sorted = [
+            p for p in self._parties_sorted if p[1].claimed
+        ]
+        self._party_lists_dirty = True
 
-            # Prune unclaimed party entries.
-            self._parties = {
-                key: val
-                for key, val in list(self._parties.items()) if val.claimed
-            }
-
-            # Make sure we update the list immediately in response to this.
-            self._server_list_dirty = True
-
-            self._update_server_list()
-        # print('updated in {time.time()-starttime:.3f}')
+        # self._update_server_list()
+        if DEBUG_PROCESSING:
+            print(f'Handled public party query results in '
+                  f'{time.time()-starttime:.5f}s.')
 
     def _update(self) -> None:
         """Periodic updating."""
 
         # Special case: if a party-queue window is up, don't do any of this
         # (keeps things smoother).
-        if ba.app.ui.have_party_queue_window:
-            return
+        # if ba.app.ui.have_party_queue_window:
+        #     return
+
+        if self._sub_tab is SubTabType.JOIN:
+
+            # Keep our filter-text up to date from the UI.
+            text = self._filter_text
+            if text:
+                filter_value = cast(str, ba.textwidget(query=text))
+                if filter_value != self._filter_value:
+                    self._filter_value = filter_value
+                    self._party_lists_dirty = True
+
+            self._query_party_list_periodically()
+            self._ping_parties_periodically()
+
+        # If any new party infos have come in, apply some of them.
+        self._process_pending_party_infos()
+
+        # Anytime we sign in/out, make sure we refresh our list.
+        signed_in = _ba.get_account_state() == 'signed_in'
+        if self._signed_in != signed_in:
+            self._signed_in = signed_in
+            self._party_lists_dirty = True
+
+        # Update sorting to account for ping updates, new parties, etc.
+        self._update_party_lists()
 
         # If we've got a party-name text widget, keep its value plugged
         # into our public host name.
@@ -872,20 +824,214 @@ class PublicGatherTab(GatherTab):
             name = cast(str, ba.textwidget(query=self._host_name_text))
             _ba.set_public_party_name(name)
 
-        if self._sub_tab is SubTabType.JOIN:
+        # Update status text.
+        status_text = self._join_status_text
+        if status_text:
+            if not signed_in:
+                ba.textwidget(edit=status_text,
+                              text=ba.Lstr(resource='notSignedInText'))
+            else:
+                # If we have a valid list, show no status; just the list.
+                # Otherwise show either 'loading...' or 'error' depending
+                # on whether this is our first go-round.
+                if self._have_valid_server_list:
+                    ba.textwidget(edit=status_text, text='')
+                else:
+                    if self._have_server_list_response:
+                        ba.textwidget(edit=status_text,
+                                      text=ba.Lstr(resource='errorText'))
+                    else:
+                        ba.textwidget(
+                            edit=status_text,
+                            text=ba.Lstr(
+                                value='${A}...',
+                                subs=[('${A}',
+                                       ba.Lstr(resource='store.loadingText'))],
+                            ))
 
-            # If our filter value has changed, refresh the list
-            # using the new one.
-            text = self._filter_text
-            if text:
-                filter_value = cast(str, ba.textwidget(query=text))
-                if filter_value != self._filter_value:
-                    self._filter_value = filter_value
-                    self._server_list_dirty = True
-                    self._update_server_list()
+        self._update_party_rows()
 
-            self._query_party_list_periodically()
-            self._ping_parties_periodically()
+    def _update_party_rows(self) -> None:
+        columnwidget = self._join_list_column
+        if not columnwidget:
+            return
+
+        assert self._join_text
+        assert self._filter_text
+
+        # Janky - allow escaping when there's nothing in our list.
+        assert self._host_scrollwidget
+        ba.containerwidget(edit=self._host_scrollwidget,
+                           claims_up_down=(len(self._parties_displayed) > 0))
+
+        # Clip if we have more UI rows than parties to show.
+        clipcount = len(self._ui_rows) - len(self._parties_displayed)
+        if clipcount > 0:
+            clipcount = max(clipcount, 50)
+            self._ui_rows = self._ui_rows[:-clipcount]
+
+        # If we have no parties to show, we're done.
+        if not self._parties_displayed:
+            return
+
+        sub_scroll_width = 830
+        lineheight = 42
+        sub_scroll_height = lineheight * len(self._parties_displayed) + 50
+        ba.containerwidget(edit=columnwidget,
+                           size=(sub_scroll_width, sub_scroll_height))
+
+        # Any time our height changes, reset the refresh back to the top
+        # so we don't see ugly empty spaces appearing during initial list
+        # filling.
+        if sub_scroll_height != self._last_sub_scroll_height:
+            self._refresh_ui_row = 0
+            self._last_sub_scroll_height = sub_scroll_height
+
+            # Also note that we need to redisplay everything since its pos
+            # will have changed.. :(
+            for party in self._parties.values():
+                party.clean_display_index = None
+
+        # Ew; this rebuilding generates deferred selection callbacks
+        # so we need to push deferred notices so we know to ignore them.
+        def refresh_on() -> None:
+            self._refreshing_list = True
+
+        ba.pushcall(refresh_on)
+
+        # Ok, now here's the deal: we want to avoid creating/updating this
+        # entire list at one time because it will lead to hitches. So we
+        # refresh individual rows quickly in a loop.
+        rowcount = min(12, len(self._parties_displayed))
+
+        party_vals_displayed = list(self._parties_displayed.values())
+        while rowcount > 0:
+            refresh_row = self._refresh_ui_row % len(self._parties_displayed)
+            if refresh_row >= len(self._ui_rows):
+                self._ui_rows.append(UIRow())
+                refresh_row = len(self._ui_rows) - 1
+
+            # For the first few seconds after getting our first server-list,
+            # refresh only the top section of the list; this allows the lowest
+            # ping servers to show up more quickly.
+            if self._first_valid_server_list_time is not None:
+                if time.time() - self._first_valid_server_list_time < 4.0:
+                    if refresh_row > 40:
+                        refresh_row = 0
+
+            self._ui_rows[refresh_row].update(
+                refresh_row,
+                party_vals_displayed[refresh_row],
+                sub_scroll_width=sub_scroll_width,
+                sub_scroll_height=sub_scroll_height,
+                lineheight=lineheight,
+                columnwidget=columnwidget,
+                join_text=self._join_text,
+                existing_selection=self._selection,
+                filter_text=self._filter_text,
+                tab=self)
+            self._refresh_ui_row = refresh_row + 1
+            rowcount -= 1
+
+        # So our selection callbacks can start firing..
+        def refresh_off() -> None:
+            self._refreshing_list = False
+
+        ba.pushcall(refresh_off)
+
+    def _process_pending_party_infos(self) -> None:
+        starttime = time.time()
+
+        # We want to do this in small enough pieces to not cause UI hitches.
+        chunksize = 30
+        parties_in = self._pending_party_infos[:chunksize]
+        self._pending_party_infos = self._pending_party_infos[chunksize:]
+        for party_in in parties_in:
+            addr = party_in['a']
+            assert isinstance(addr, str)
+            port = party_in['p']
+            assert isinstance(port, int)
+            party_key = f'{addr}_{port}'
+            party = self._parties.get(party_key)
+            if party is None:
+                # If this party is new to us, init it.
+                party = PartyEntry(address=addr,
+                                   next_ping_time=ba.time(ba.TimeType.REAL) +
+                                   0.001 * party_in['pd'],
+                                   index=self._next_entry_index)
+                self._parties[party_key] = party
+                self._parties_sorted.append((party_key, party))
+                self._party_lists_dirty = True
+                self._next_entry_index += 1
+                assert isinstance(party.address, str)
+                assert isinstance(party.next_ping_time, float)
+
+            # Now, new or not, update its values.
+            party.queue = party_in.get('q')
+            assert isinstance(party.queue, (str, type(None)))
+            party.port = port
+            party.name = party_in['n']
+            assert isinstance(party.name, str)
+            party.size = party_in['s']
+            assert isinstance(party.size, int)
+            party.size_max = party_in['sm']
+            assert isinstance(party.size_max, int)
+
+            # Server provides this in milliseconds; we use seconds.
+            party.ping_interval = 0.001 * party_in['pi']
+            assert isinstance(party.ping_interval, float)
+            party.stats_addr = party_in['sa']
+            assert isinstance(party.stats_addr, (str, type(None)))
+
+            # Make sure the party's UI gets updated.
+            party.clean_display_index = None
+
+        if DEBUG_PROCESSING and parties_in:
+            print(f'Processed {len(parties_in)} raw party infos in'
+                  f' {time.time()-starttime:.5f}s.')
+
+    def _update_party_lists(self) -> None:
+        if not self._party_lists_dirty:
+            return
+        starttime = time.time()
+        assert len(self._parties_sorted) == len(self._parties)
+
+        self._parties_sorted.sort(key=lambda p: (
+            p[1].queue is None,  # Show non-queued last.
+            p[1].ping if p[1].ping is not None else 999999.0,
+            p[1].index))
+
+        # If signed out or errored, show no parties.
+        if (_ba.get_account_state() != 'signed_in'
+                or not self._have_valid_server_list):
+            self._parties_displayed = {}
+        else:
+            if self._filter_value:
+                filterval = self._filter_value.lower()
+                self._parties_displayed = {
+                    k: v
+                    for k, v in self._parties_sorted
+                    if filterval in v.name.lower()
+                }
+            else:
+                self._parties_displayed = dict(self._parties_sorted)
+
+        # Any time our selection disappears from the displayed list, go back to
+        # auto-selecting the top entry.
+        if (self._selection is not None
+                and self._selection.entry_key not in self._parties_displayed):
+            self._have_user_selected_row = False
+
+        # Whenever the user hasn't selected something, keep the first visible
+        # row selected.
+        if not self._have_user_selected_row and self._parties_displayed:
+            firstpartykey = next(iter(self._parties_displayed))
+            self._selection = Selection(firstpartykey, SelectionComponent.NAME)
+
+        self._party_lists_dirty = False
+        if DEBUG_PROCESSING:
+            print(f'Sorted {len(self._parties_sorted)} parties in'
+                  f' {time.time()-starttime:.5f}s.')
 
     def _query_party_list_periodically(self) -> None:
         now = ba.time(ba.TimeType.REAL)
@@ -943,7 +1089,7 @@ class PublicGatherTab(GatherTab):
                            ba.WeakCall(self._ping_callback)).start()
 
     def _ping_callback(self, address: str, port: Optional[int],
-                       result: Optional[int]) -> None:
+                       result: Optional[float]) -> None:
         # Look for a widget corresponding to this target.
         # If we find one, update our list.
         party_key = f'{address}_{port}'
@@ -958,11 +1104,14 @@ class PublicGatherTab(GatherTab):
             if (current_ping is not None and result is not None
                     and result < 150):
                 smoothing = 0.7
-                party.ping = int(smoothing * current_ping +
-                                 (1.0 - smoothing) * result)
+                party.ping = (smoothing * current_ping +
+                              (1.0 - smoothing) * result)
             else:
                 party.ping = result
-            self._update_server_list()
+
+            # Need to re-sort the list and update the row display.
+            party.clean_display_index = None
+            self._party_lists_dirty = True
 
     def _fetch_local_addr_cb(self, val: str) -> None:
         self._local_address = str(val)
@@ -1075,7 +1224,8 @@ class PublicGatherTab(GatherTab):
                 fallback_resource='gatherWindow.startAdvertisingText'),
             on_activate_call=self._on_start_advertizing_press)
 
-    def _on_public_party_activate(self, party: PartyEntry) -> None:
+    def on_public_party_activate(self, party: PartyEntry) -> None:
+        """Called when a party is clicked or otherwise activated."""
         if party.queue is not None:
             from bastd.ui.partyqueue import PartyQueueWindow
             ba.playsound(ba.getsound('swish'))
@@ -1091,10 +1241,12 @@ class PublicGatherTab(GatherTab):
                 _ba.connect_to_party(address, port=port)
                 self._last_connect_attempt_time = now
 
-    def _set_public_party_selection(self, sel: Selection) -> None:
+    def set_public_party_selection(self, sel: Selection) -> None:
+        """Set the sel."""
         if self._refreshing_list:
             return
         self._selection = sel
+        self._have_user_selected_row = True
 
     def _on_max_public_party_size_minus_press(self) -> None:
         val = _ba.get_public_party_max_size()

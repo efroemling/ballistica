@@ -18,7 +18,6 @@ from ba._ads import AdsSubsystem
 
 if TYPE_CHECKING:
     import ba
-    from ba import _language
     from bastd.actor import spazappearance
     from typing import Optional, Dict, Set, Any, Type, Tuple, Callable, List
 
@@ -193,7 +192,7 @@ class App:
         self.headless_mode: bool = self._env['headless_mode']
         assert isinstance(self.headless_mode, bool)
         self.iircade_mode: bool = self._env['iircade_mode']
-        assert isinstance(self.headless_mode, bool)
+        assert isinstance(self.iircade_mode, bool)
         self.allow_ticket_purchases: bool = not self.iircade_mode
 
         # Misc.
@@ -361,18 +360,17 @@ class App:
         # Run a test in a few seconds to see if we should pop up an existing
         # pending special offer.
         def check_special_offer() -> None:
-            from bastd.ui import specialoffer
+            from bastd.ui.specialoffer import show_offer
             config = self.config
             if ('pendingSpecialOffer' in config and _ba.get_public_login_id()
                     == config['pendingSpecialOffer']['a']):
                 self.special_offer = config['pendingSpecialOffer']['o']
-                specialoffer.show_offer()
+                show_offer()
 
         if not self.headless_mode:
             _ba.timer(3.0, check_special_offer, timetype=TimeType.REAL)
 
         self.meta.on_app_launch()
-
         self.accounts.on_app_launch()
         self.plugins.on_app_launch()
 
@@ -395,7 +393,8 @@ class App:
         activity: Optional[ba.Activity] = _ba.get_foreground_host_activity()
         if (activity is not None and activity.allow_pausing
                 and not _ba.have_connected_clients()):
-            from ba import _gameutils, _language
+            from ba import _gameutils
+            from ba._language import Lstr
             from ba._nodeactor import NodeActor
 
             # FIXME: Shouldn't be touching scene stuff here;
@@ -408,18 +407,13 @@ class App:
 
                 # FIXME: This should not be an attr on Actor.
                 activity.paused_text = NodeActor(
-                    _ba.newnode(
-                        'text',
-                        attrs={
-                            'text':
-                                _language.Lstr(resource='pausedByHostText'),
-                            'client_only':
-                                True,
-                            'flatness':
-                                1.0,
-                            'h_align':
-                                'center'
-                        }))
+                    _ba.newnode('text',
+                                attrs={
+                                    'text': Lstr(resource='pausedByHostText'),
+                                    'client_only': True,
+                                    'flatness': 1.0,
+                                    'h_align': 'center'
+                                }))
 
     def resume(self) -> None:
         """Resume the game due to a user request or menu closing.

@@ -323,6 +323,7 @@
       <w>chipfork</w>
       <w>chosenone</w>
       <w>chromebooks</w>
+      <w>chunksize</w>
       <w>cjkcodecs</w>
       <w>classmethod</w>
       <w>classmethods</w>
@@ -337,6 +338,7 @@
       <w>clionbin</w>
       <w>clioncode</w>
       <w>clionroot</w>
+      <w>clipcount</w>
       <w>cloudbuild</w>
       <w>cloudshell</w>
       <w>cloudshellbuild</w>
@@ -713,6 +715,7 @@
       <w>firestore</w>
       <w>firetv</w>
       <w>firstline</w>
+      <w>firstpartykey</w>
       <w>flac</w>
       <w>flagmat</w>
       <w>flagmaterial</w>

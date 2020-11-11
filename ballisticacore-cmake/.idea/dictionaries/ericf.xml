@@ -139,11 +139,13 @@
       <w>chatmessage</w>
       <w>checkboxwidget</w>
       <w>chrono</w>
+      <w>chunksize</w>
       <w>cjief</w>
       <w>classdict</w>
       <w>cleanupcheck</w>
       <w>clientid</w>
       <w>clientinfo</w>
+      <w>clipcount</w>
       <w>cmath</w>
       <w>cmds</w>
       <w>cmdvals</w>
@@ -290,6 +292,7 @@
       <w>fifteenbits</w>
       <w>filterval</w>
       <w>finishedptr</w>
+      <w>firstpartykey</w>
       <w>fjco</w>
       <w>fjcoiwef</w>
       <w>flipbit</w>
