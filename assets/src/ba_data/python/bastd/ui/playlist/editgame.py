@@ -1,6 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Provides UI for editing a game in a playlist."""
+"""Provides UI for editing a game config."""
 
 from __future__ import annotations
 
@@ -16,10 +16,10 @@ if TYPE_CHECKING:
 
 
 class PlaylistEditGameWindow(ba.Window):
-    """Window for editing a game in a playlist."""
+    """Window for editing a game config."""
 
     def __init__(self,
-                 gameclass: Type[ba.GameActivity],
+                 gametype: Type[ba.GameActivity],
                  sessiontype: Type[ba.Session],
                  config: Optional[Dict[str, Any]],
                  completion_call: Callable[[Optional[Dict[str, Any]]], Any],
@@ -31,7 +31,7 @@ class PlaylistEditGameWindow(ba.Window):
         # pylint: disable=too-many-locals
         from ba.internal import (get_unowned_maps, get_filtered_map_name,
                                  get_map_class, get_map_display_string)
-        self._gameclass = gameclass
+        self._gametype = gametype
         self._sessiontype = sessiontype
 
         # If we're within an editing session we get passed edit_info
@@ -49,12 +49,12 @@ class PlaylistEditGameWindow(ba.Window):
 
         self._r = 'gameSettingsWindow'
 
-        valid_maps = gameclass.get_supported_maps(sessiontype)
+        valid_maps = gametype.get_supported_maps(sessiontype)
         if not valid_maps:
             ba.screenmessage(ba.Lstr(resource='noValidMapsErrorText'))
             raise Exception('No valid maps')
 
-        self._settings_defs = gameclass.get_available_settings(sessiontype)
+        self._settings_defs = gametype.get_available_settings(sessiontype)
         self._completion_call = completion_call
 
         # To start with, pick a random map out of the ones we own.
@@ -140,7 +140,7 @@ class PlaylistEditGameWindow(ba.Window):
         ba.textwidget(parent=self._root_widget,
                       position=(-8, height - 70 + y_extra2),
                       size=(width, 25),
-                      text=gameclass.get_display_string(),
+                      text=gametype.get_display_string(),
                       color=ba.app.ui.title_color,
                       maxwidth=235,
                       scale=1.1,
@@ -241,7 +241,6 @@ class PlaylistEditGameWindow(ba.Window):
 
             # Handle types with choices specially:
             if isinstance(setting, ba.ChoiceSetting):
-                # if 'choices' in setting:
                 for choice in setting.choices:
                     if len(choice) != 2:
                         raise ValueError(
@@ -429,7 +428,7 @@ class PlaylistEditGameWindow(ba.Window):
         # Replace ourself with the map-select UI.
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         ba.app.ui.set_main_menu_window(
-            PlaylistMapSelectWindow(self._gameclass, self._sessiontype,
+            PlaylistMapSelectWindow(self._gametype, self._sessiontype,
                                     copy.deepcopy(self._getconfig()),
                                     self._edit_info,
                                     self._completion_call).get_root_widget())

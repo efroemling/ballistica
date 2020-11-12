@@ -642,6 +642,12 @@ def _get_server_config_template_yaml(projroot: str) -> str:
             if vname == 'playlist_code':
                 # User wouldn't want to pass the default of None here.
                 vval = 12345
+            elif vname == 'clean_exit_time':
+                vval = 60
+            elif vname == 'unclean_exit_time':
+                vval = 90
+            elif vname == 'idle_exit_time':
+                vval = 20
             elif vname == 'stats_url':
                 vval = ('https://mystatssite.com/'
                         'showstats?player=${ACCOUNT}')

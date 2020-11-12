@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import json
 import os
+import signal
 import subprocess
 import sys
 import time
@@ -33,7 +34,7 @@ if TYPE_CHECKING:
 
 # Not sure how much versioning we'll do with this, but this will get
 # printed at startup in case we need it.
-VERSION_STR = '1.0.2'
+VERSION_STR = '1.1.0'
 
 
 class ServerManagerApp:
@@ -48,15 +49,26 @@ class ServerManagerApp:
             self._config = self._load_config()
         except Exception as exc:
             raise CleanError(f'Error loading config: {exc}') from exc
+        self._shutdown_desired = False
         self._done = False
-        self._process_commands: List[Union[str, ServerCommand]] = []
-        self._process_commands_lock = Lock()
-        self._restart_minutes: Optional[float] = 360.0
+        self._subprocess_commands: List[Union[str, ServerCommand]] = []
+        self._subprocess_commands_lock = Lock()
+        self._restart_minutes: Optional[float] = None
         self._running_interactive = False
-        self._process: Optional[subprocess.Popen[bytes]] = None
-        self._process_launch_time: Optional[float] = None
-        self._process_sent_auto_restart = False
-        self._process_thread: Optional[Thread] = None
+        self._subprocess: Optional[subprocess.Popen[bytes]] = None
+        self._launch_time = time.time()
+        self._subprocess_launch_time: Optional[float] = None
+        self._subprocess_sent_auto_restart = False
+        self._subprocess_sent_unclean_exit = False
+        self._subprocess_thread: Optional[Thread] = None
+
+        # If we don't have any explicit exit conditions set,
+        # we run indefinitely (though we restart our subprocess
+        # periodically to clear out leaks/cruft)
+        if (self._config.clean_exit_minutes is None
+                and self._config.unclean_exit_minutes is None
+                and self._config.idle_exit_minutes is None):
+            self._restart_minutes = 360.0
 
     @property
     def config(self) -> ServerConfig:
@@ -80,7 +92,6 @@ class ServerManagerApp:
     def run_interactive(self) -> None:
         """Run the app loop to completion."""
         import code
-        import signal
 
         if self._running_interactive:
             raise RuntimeError('Already running interactively.')
@@ -106,8 +117,8 @@ class ServerManagerApp:
         signal.signal(signal.SIGTERM, self._handle_term_signal)
 
         # Fire off a background thread to wrangle our server binaries.
-        self._process_thread = Thread(target=self._bg_thread_main)
-        self._process_thread.start()
+        self._subprocess_thread = Thread(target=self._bg_thread_main)
+        self._subprocess_thread.start()
 
         context = {'__name__': '__console__', '__doc__': None, 'mgr': self}
 
@@ -138,7 +149,7 @@ class ServerManagerApp:
 
         # Mark ourselves as shutting down and wait for the process to wrap up.
         self._done = True
-        self._process_thread.join()
+        self._subprocess_thread.join()
 
     def cmd(self, statement: str) -> None:
         """Exec a Python command on the current running server child-process.
@@ -148,8 +159,8 @@ class ServerManagerApp:
         """
         if not isinstance(statement, str):
             raise TypeError(f'Expected a string arg; got {type(statement)}')
-        with self._process_commands_lock:
-            self._process_commands.append(statement)
+        with self._subprocess_commands_lock:
+            self._subprocess_commands.append(statement)
         self._block_for_command_completion()
 
     def _block_for_command_completion(self) -> None:
@@ -159,8 +170,8 @@ class ServerManagerApp:
         # it. In the future we can perhaps add a proper 'command port'
         # interface for proper blocking two way communication.
         while True:
-            with self._process_commands_lock:
-                if not self._process_commands:
+            with self._subprocess_commands_lock:
+                if not self._subprocess_commands:
                     break
             time.sleep(0.1)
 
@@ -225,6 +236,20 @@ class ServerManagerApp:
             ShutdownCommand(reason=ShutdownReason.RESTARTING,
                             immediate=immediate))
 
+    def shutdown(self, immediate: bool = False) -> None:
+        """Shut down the server child-process and exit the wrapper
+
+        By default, the server will exit at the next good transition
+        point (end of a series, etc) but passing immediate=True will stop
+        it immediately.
+        """
+        from bacommon.servermanager import ShutdownCommand, ShutdownReason
+        self._enqueue_server_command(
+            ShutdownCommand(reason=ShutdownReason.NONE, immediate=immediate))
+
+        # So we know to bail completely once this subprocess completes.
+        self._shutdown_desired = True
+
     def _load_config(self) -> ServerConfig:
         user_config_path = 'config.yaml'
 
@@ -266,11 +291,11 @@ class ServerManagerApp:
     def _run_server_cycle(self) -> None:
         """Spin up the server child-process and run it until exit."""
 
-        self._prep_process_environment()
+        self._prep_subprocess_environment()
 
         # Launch the binary and grab its stdin;
         # we'll use this to feed it commands.
-        self._process_launch_time = time.time()
+        self._subprocess_launch_time = time.time()
 
         # Set an environment var so the server process knows its being
         # run under us. This causes it to ignore ctrl-c presses and other
@@ -280,18 +305,26 @@ class ServerManagerApp:
         print(f'{Clr.CYN}Launching server child-process...{Clr.RST}')
         binary_name = ('ballisticacore_headless.exe'
                        if os.name == 'nt' else './ballisticacore_headless')
-        self._process = subprocess.Popen([binary_name, '-cfgdir', 'ba_root'],
-                                         stdin=subprocess.PIPE,
-                                         cwd='dist')
+        self._subprocess = subprocess.Popen(
+            [binary_name, '-cfgdir', 'ba_root'],
+            stdin=subprocess.PIPE,
+            cwd='dist')
 
         # Do the thing.
         # No matter how this ends up, make sure the process is dead after.
         try:
-            self._run_process_until_exit()
+            self._run_subprocess_until_exit()
         finally:
-            self._kill_process()
+            self._kill_subprocess()
 
-    def _prep_process_environment(self) -> None:
+        if self._shutdown_desired:
+            self._done = True
+
+            # Our main thread will still be blocked in its prompt or whatnot;
+            # let it know it should die.
+            os.kill(os.getpid(), signal.SIGTERM)
+
+    def _prep_subprocess_environment(self) -> None:
         """Write files that must exist at process launch."""
         os.makedirs('dist/ba_root', exist_ok=True)
         if os.path.exists('dist/ba_root/config.json'):
@@ -313,8 +346,8 @@ class ServerManagerApp:
 
         Can be called from any thread.
         """
-        with self._process_commands_lock:
-            self._process_commands.append(command)
+        with self._subprocess_commands_lock:
+            self._subprocess_commands.append(command)
 
     def _send_server_command(self, command: ServerCommand) -> None:
         """Send a command to the server.
@@ -322,19 +355,20 @@ class ServerManagerApp:
         Must be called from the server process thread.
         """
         import pickle
-        assert current_thread() is self._process_thread
-        assert self._process is not None
-        assert self._process.stdin is not None
+        assert current_thread() is self._subprocess_thread
+        assert self._subprocess is not None
+        assert self._subprocess.stdin is not None
         val = repr(pickle.dumps(command))
         assert '\n' not in val
         execcode = (f'import ba._servermode;'
                     f' ba._servermode._cmd({val})\n').encode()
-        self._process.stdin.write(execcode)
-        self._process.stdin.flush()
+        self._subprocess.stdin.write(execcode)
+        self._subprocess.stdin.flush()
 
-    def _run_process_until_exit(self) -> None:
-        assert self._process is not None
-        assert self._process.stdin is not None
+    def _run_subprocess_until_exit(self) -> None:
+        assert self._subprocess is not None
+        assert self._subprocess.stdin is not None
+        assert self._subprocess_launch_time is not None
 
         # Send the initial server config which should kick things off.
         # (but make sure its values are still valid first)
@@ -348,31 +382,41 @@ class ServerManagerApp:
                 break
 
             # Pass along any commands to our process.
-            with self._process_commands_lock:
-                for incmd in self._process_commands:
+            with self._subprocess_commands_lock:
+                for incmd in self._subprocess_commands:
                     # If we're passing a raw string to exec, no need to wrap it
                     # in any proper structure.
                     if isinstance(incmd, str):
-                        self._process.stdin.write((incmd + '\n').encode())
-                        self._process.stdin.flush()
+                        self._subprocess.stdin.write((incmd + '\n').encode())
+                        self._subprocess.stdin.flush()
                     else:
                         self._send_server_command(incmd)
-                self._process_commands = []
+                self._subprocess_commands = []
 
-            # Request a soft restart after a while.
-            assert self._process_launch_time is not None
-            sincelaunch = time.time() - self._process_launch_time
+            # Request restarts/shut-downs for various reasons.
+            sincelaunch = time.time() - self._subprocess_launch_time
             if (self._restart_minutes is not None and sincelaunch >
                 (self._restart_minutes * 60.0)
-                    and not self._process_sent_auto_restart):
+                    and not self._subprocess_sent_auto_restart):
                 print(f'{Clr.CYN}restart_minutes ({self._restart_minutes})'
                       f' elapsed; requesting child-process'
                       f' soft restart...{Clr.RST}')
                 self.restart()
-                self._process_sent_auto_restart = True
+                self._subprocess_sent_auto_restart = True
+            if self._config.unclean_exit_minutes is not None:
+                elapsed = (time.time() - self._launch_time) / 60.0
+                threshold = self._config.unclean_exit_minutes
+                if (elapsed > threshold
+                        and not self._subprocess_sent_unclean_exit):
+                    print(f'{Clr.CYN}unclean_exit_minutes'
+                          f' ({threshold})'
+                          f' elapsed; requesting child-process'
+                          f' shutdown...{Clr.RST}')
+                    self.shutdown(immediate=True)
+                    self._subprocess_sent_unclean_exit = True
 
-            # Watch for the process exiting.
-            code: Optional[int] = self._process.poll()
+            # Watch for the process exiting..
+            code: Optional[int] = self._subprocess.poll()
             if code is not None:
                 if code == 0:
                     clr = Clr.CYN
@@ -382,41 +426,44 @@ class ServerManagerApp:
                     slp = 5.0  # Avoid super fast death loops.
                 print(f'{clr}Server child-process exited'
                       f' with code {code}.{Clr.RST}')
-                self._reset_process_vars()
+                self._reset_subprocess_vars()
                 time.sleep(slp)
                 break
 
             time.sleep(0.25)
 
-    def _reset_process_vars(self) -> None:
-        self._process = None
-        self._process_launch_time = None
-        self._process_sent_auto_restart = False
+    def _reset_subprocess_vars(self) -> None:
+        self._subprocess = None
+        self._subprocess_launch_time = None
+        self._subprocess_sent_auto_restart = False
+        self._subprocess_sent_unclean_exit = False
 
-    def _kill_process(self) -> None:
+    def _kill_subprocess(self) -> None:
         """End the server process if it still exists."""
-        assert current_thread() is self._process_thread
-        if self._process is None:
+        assert current_thread() is self._subprocess_thread
+        if self._subprocess is None:
             return
 
         print(f'{Clr.CYN}Stopping server process...{Clr.RST}')
 
         # First, ask it nicely to die and give it a moment.
         # If that doesn't work, bring down the hammer.
-        self._process.terminate()
+        self._subprocess.terminate()
         try:
-            self._process.wait(timeout=10)
+            self._subprocess.wait(timeout=10)
         except subprocess.TimeoutExpired:
-            self._process.kill()
-        self._reset_process_vars()
+            self._subprocess.kill()
+        self._reset_subprocess_vars()
         print(f'{Clr.CYN}Server process stopped.{Clr.RST}')
 
 
 def main() -> None:
     """Run a BallisticaCore server manager in interactive mode."""
     try:
-        # Change our working directory according to file's path
-        # so that this script can be run from anywhere.
+        # ServerManager expects cwd to be the server dir (containing
+        # dist/, config.yaml, etc.)
+        # Let's change our working directory to the location of this file
+        # so we can run this script from anywhere and it'll work.
         os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
         ServerManagerApp().run_interactive()

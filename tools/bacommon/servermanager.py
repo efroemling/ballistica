@@ -91,6 +91,25 @@ class ServerConfig:
     # http://bombsquadgame.com/accountquery?id=ACCOUNT_ID_HERE
     stats_url: Optional[str] = None
 
+    # If present, the server will attempt to gracefully exit after this
+    # amount of time. A graceful exit can occur at the end of a series
+    # or other opportune time.
+    # Servers with no exit times set will run indefinitely (though the server
+    # binary will be restarted periodically to clear any leaked memory).
+    clean_exit_minutes: Optional[float] = None
+
+    # If present, the server will shut down immediately after the given
+    # amount of time). This can be useful as a fallback for clean_exit_time.
+    # Servers with no exit times set will run indefinitely (though the server
+    # binary will be restarted periodically to clear any leaked memory).
+    unclean_exit_minutes: Optional[float] = None
+
+    # If present, the server will shut down immediately if this amount of
+    # time passes with no connected clients.
+    # Servers with no exit times set will run indefinitely (though the server
+    # binary will be restarted periodically to clear any leaked memory).
+    idle_exit_minutes: Optional[float] = None
+
 
 # NOTE: as much as possible, communication from the server-manager to the
 # child-process should go through these and not ad-hoc Python string commands

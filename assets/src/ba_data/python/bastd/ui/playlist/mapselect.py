@@ -18,14 +18,14 @@ class PlaylistMapSelectWindow(ba.Window):
     """Window to select a map."""
 
     def __init__(self,
-                 gameclass: Type[ba.GameActivity],
+                 gametype: Type[ba.GameActivity],
                  sessiontype: Type[ba.Session],
                  config: Dict[str, Any],
                  edit_info: Dict[str, Any],
                  completion_call: Callable[[Optional[Dict[str, Any]]], Any],
                  transition: str = 'in_right'):
         from ba.internal import get_filtered_map_name
-        self._gameclass = gameclass
+        self._gametype = gametype
         self._sessiontype = sessiontype
         self._config = config
         self._completion_call = completion_call
@@ -69,7 +69,7 @@ class PlaylistMapSelectWindow(ba.Window):
                       scale=1.1,
                       text=ba.Lstr(resource='mapSelectTitleText',
                                    subs=[('${GAME}',
-                                          self._gameclass.get_display_string())
+                                          self._gametype.get_display_string())
                                          ]),
                       color=ba.app.ui.title_color,
                       h_align='center',
@@ -104,7 +104,7 @@ class PlaylistMapSelectWindow(ba.Window):
         model_transparent = ba.getmodel('level_select_button_transparent')
 
         self._maps = []
-        map_list = self._gameclass.get_supported_maps(self._sessiontype)
+        map_list = self._gametype.get_supported_maps(self._sessiontype)
         map_list_sorted = list(map_list)
         map_list_sorted.sort()
         unowned_maps = get_unowned_maps()
@@ -227,7 +227,7 @@ class PlaylistMapSelectWindow(ba.Window):
         ba.containerwidget(edit=self._root_widget, transition='out_right')
         ba.app.ui.set_main_menu_window(
             PlaylistEditGameWindow(
-                self._gameclass,
+                self._gametype,
                 self._sessiontype,
                 self._config,
                 self._completion_call,
@@ -247,7 +247,7 @@ class PlaylistMapSelectWindow(ba.Window):
         ba.containerwidget(edit=self._root_widget, transition='out_right')
         ba.app.ui.set_main_menu_window(
             PlaylistEditGameWindow(
-                self._gameclass,
+                self._gametype,
                 self._sessiontype,
                 self._config,
                 self._completion_call,
