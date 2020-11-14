@@ -32,9 +32,15 @@ if TYPE_CHECKING:
     from types import FrameType
     from bacommon.servermanager import ServerCommand
 
-# Not sure how much versioning we'll do with this, but this will get
-# printed at startup in case we need it.
 VERSION_STR = '1.1.0'
+
+# Version history:
+# 1.1.0:
+#  Added shutdown command
+#  Changed restart to default to immediate=True
+#  Added clean_exit_minutes, unclean_exit_minutes, and idle_exit_minutes
+# 1.0.0:
+#  Initial release
 
 
 class ServerManagerApp:
@@ -223,25 +229,25 @@ class ServerManagerApp:
         self._enqueue_server_command(
             KickCommand(client_id=client_id, ban_time=ban_time))
 
-    def restart(self, immediate: bool = False) -> None:
+    def restart(self, immediate: bool = True) -> None:
         """Restart the server child-process.
 
         This can be necessary for some config changes to take effect.
-        By default, the server will restart at the next good transition
-        point (end of a series, etc) but passing immediate=True will restart
-        it immediately.
+        By default, the server will exit immediately. If 'immediate' is passed
+        as False, however, the server will instead exit at the next clean
+        transition point (end of a series, etc).
         """
         from bacommon.servermanager import ShutdownCommand, ShutdownReason
         self._enqueue_server_command(
             ShutdownCommand(reason=ShutdownReason.RESTARTING,
                             immediate=immediate))
 
-    def shutdown(self, immediate: bool = False) -> None:
+    def shutdown(self, immediate: bool = True) -> None:
         """Shut down the server child-process and exit the wrapper
 
-        By default, the server will exit at the next good transition
-        point (end of a series, etc) but passing immediate=True will stop
-        it immediately.
+        By default, the server will exit immediately. If 'immediate' is passed
+        as False, however, the server will instead exit at the next clean
+        transition point (end of a series, etc).
         """
         from bacommon.servermanager import ShutdownCommand, ShutdownReason
         self._enqueue_server_command(
@@ -318,11 +324,14 @@ class ServerManagerApp:
             self._kill_subprocess()
 
         if self._shutdown_desired:
-            self._done = True
+            # Note: need to only do this if main thread is still in the
+            # interpreter; otherwise it seems this can lead to deadlock.
+            if not self._done:
+                self._done = True
 
-            # Our main thread will still be blocked in its prompt or whatnot;
-            # let it know it should die.
-            os.kill(os.getpid(), signal.SIGTERM)
+                # Our main thread is still be blocked in its prompt or
+                # whatnot; let it know it should die.
+                os.kill(os.getpid(), signal.SIGTERM)
 
     def _prep_subprocess_environment(self) -> None:
         """Write files that must exist at process launch."""

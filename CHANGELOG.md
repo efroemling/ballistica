@@ -1,5 +1,6 @@
 ### 1.5.29 (20246)
 - Exposed ba method/class initing in public C++ layer.
+- The 'restart' and 'shutdown' commands in the server script now default to immediate=True
 
 ### 1.5.28 (20239)
 - Simplified ba.enum_by_value()
