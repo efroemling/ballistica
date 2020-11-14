@@ -39,10 +39,12 @@ def build_apple(arch: str, debug: bool = False) -> None:
     # stuff. Hopefully the maintainer fixes this, but for now I need to
     # remind myself to blow it away while building.
     # (via brew remove gettext --ignore-dependencies)
-    if 'MacBook-Fro' in platform.node():
+    if ('MacBook-Fro' in platform.node()
+            and os.environ.get('SKIP_GETTEXT_WARNING') != '1'):
         if (subprocess.run('which gettext', shell=True,
                            check=False).returncode == 0):
-            raise CleanError('NEED TO TEMP-KILL GETTEXT')
+            raise CleanError(
+                'NEED TO TEMP-KILL GETTEXT (or set SKIP_GETTEXT_WARNING=1)')
 
     builddir = 'build/python_apple_' + arch + ('_debug' if debug else '')
     run('rm -rf "' + builddir + '"')
