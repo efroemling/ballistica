@@ -152,6 +152,7 @@ class WatchWindow(ba.Window):
 
     def _set_tab(self, tab_id: TabID) -> None:
         # pylint: disable=too-many-locals
+        # pylint: disable=too-many-statements
 
         if self._current_tab == tab_id:
             return
@@ -595,7 +596,6 @@ class WatchWindow(ba.Window):
             ba.playsound(ba.getsound('error'))
 
     def _show_my_replays(self) -> None:
-        app = _ba.app
         _ba.open_dir_externally(app.python_directory_user)
 
     def _save_state(self) -> None:
