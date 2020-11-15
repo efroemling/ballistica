@@ -42,6 +42,10 @@ VERSION_STR = '1.1.0'
 # 1.0.0:
 #  Initial release
 
+# How many seconds we wait after asking our subprocess to do an immediate
+# shutdown before bringing down the hammer.
+IMMEDIATE_SHUTDOWN_TIME_LIMIT = 5.0
+
 
 class ServerManagerApp:
     """An app which manages BallisticaCore server execution.
@@ -55,16 +59,18 @@ class ServerManagerApp:
             self._config = self._load_config()
         except Exception as exc:
             raise CleanError(f'Error loading config: {exc}') from exc
-        self._shutdown_desired = False
+        self._wrapper_shutdown_desired = False
         self._done = False
         self._subprocess_commands: List[Union[str, ServerCommand]] = []
         self._subprocess_commands_lock = Lock()
+        self._subprocess_force_kill_time: Optional[float] = None
         self._restart_minutes: Optional[float] = None
         self._running_interactive = False
         self._subprocess: Optional[subprocess.Popen[bytes]] = None
         self._launch_time = time.time()
         self._subprocess_launch_time: Optional[float] = None
         self._subprocess_sent_auto_restart = False
+        self._subprocess_sent_clean_exit = False
         self._subprocess_sent_unclean_exit = False
         self._subprocess_thread: Optional[Thread] = None
 
@@ -141,17 +147,8 @@ class ServerManagerApp:
             # left in limbo with our process thread still running.
             pass
         except BaseException as exc:
-            # Installing Python 3.7 on Ubuntu 18 can lead to this error;
-            # inform the user how to fix it.
-            if "No module named 'apt_pkg'" in str(exc):
-                print(f'{Clr.SRED}Error: Your Python environment needs to'
-                      ' be fixed (apt_pkg cannot be found).\n'
-                      f'See the final step in the Linux instructions here:\n'
-                      f'  https://github.com/efroemling/ballistica/'
-                      f'wiki/Getting-Started#linux{Clr.RST}')
-            else:
-                print(f'{Clr.SRED}Unexpected interpreter exception:'
-                      f' {exc} ({type(exc)}){Clr.RST}')
+            print(f'{Clr.SRED}Unexpected interpreter exception:'
+                  f' {exc} ({type(exc)}){Clr.RST}')
 
         # Mark ourselves as shutting down and wait for the process to wrap up.
         self._done = True
@@ -242,6 +239,12 @@ class ServerManagerApp:
             ShutdownCommand(reason=ShutdownReason.RESTARTING,
                             immediate=immediate))
 
+        # If we're asking for an immediate restart but don't get one within
+        # the grace period, bring down the hammer.
+        if immediate:
+            self._subprocess_force_kill_time = (time.time() +
+                                                IMMEDIATE_SHUTDOWN_TIME_LIMIT)
+
     def shutdown(self, immediate: bool = True) -> None:
         """Shut down the server child-process and exit the wrapper
 
@@ -254,7 +257,13 @@ class ServerManagerApp:
             ShutdownCommand(reason=ShutdownReason.NONE, immediate=immediate))
 
         # So we know to bail completely once this subprocess completes.
-        self._shutdown_desired = True
+        self._wrapper_shutdown_desired = True
+
+        # If we're asking for an immediate shutdown but don't get one within
+        # the grace period, bring down the hammer.
+        if immediate:
+            self._subprocess_force_kill_time = (time.time() +
+                                                IMMEDIATE_SHUTDOWN_TIME_LIMIT)
 
     def _load_config(self) -> ServerConfig:
         user_config_path = 'config.yaml'
@@ -323,7 +332,7 @@ class ServerManagerApp:
         finally:
             self._kill_subprocess()
 
-        if self._shutdown_desired:
+        if self._wrapper_shutdown_desired:
             # Note: need to only do this if main thread is still in the
             # interpreter; otherwise it seems this can lead to deadlock.
             if not self._done:
@@ -375,6 +384,8 @@ class ServerManagerApp:
         self._subprocess.stdin.flush()
 
     def _run_subprocess_until_exit(self) -> None:
+        # pylint: disable=too-many-branches
+        assert current_thread() is self._subprocess_thread
         assert self._subprocess is not None
         assert self._subprocess.stdin is not None
         assert self._subprocess_launch_time is not None
@@ -412,19 +423,35 @@ class ServerManagerApp:
                       f' soft restart...{Clr.RST}')
                 self.restart()
                 self._subprocess_sent_auto_restart = True
+            if self._config.clean_exit_minutes is not None:
+                elapsed = (time.time() - self._launch_time) / 60.0
+                if (elapsed > self._config.clean_exit_minutes
+                        and not self._subprocess_sent_clean_exit):
+                    print(f'{Clr.CYN}clean_exit_minutes'
+                          f' ({self._config.clean_exit_minutes})'
+                          f' elapsed; requesting child-process'
+                          f' shutdown...{Clr.RST}')
+                    self.shutdown(immediate=False)
+                    self._subprocess_sent_clean_exit = True
             if self._config.unclean_exit_minutes is not None:
                 elapsed = (time.time() - self._launch_time) / 60.0
-                threshold = self._config.unclean_exit_minutes
-                if (elapsed > threshold
+                if (elapsed > self._config.unclean_exit_minutes
                         and not self._subprocess_sent_unclean_exit):
                     print(f'{Clr.CYN}unclean_exit_minutes'
-                          f' ({threshold})'
+                          f' ({self._config.unclean_exit_minutes})'
                           f' elapsed; requesting child-process'
                           f' shutdown...{Clr.RST}')
                     self.shutdown(immediate=True)
                     self._subprocess_sent_unclean_exit = True
 
-            # Watch for the process exiting..
+            # If they want to force-kill our subprocess, simply exit this
+            # loop; the cleanup code will kill the process.
+            if (self._subprocess_force_kill_time is not None
+                    and time.time() > self._subprocess_force_kill_time):
+                print(f'{Clr.CYN}Force-killing subprocess...{Clr.RST}')
+                break
+
+            # Watch for the process exiting on its own..
             code: Optional[int] = self._subprocess.poll()
             if code is not None:
                 if code == 0:
@@ -445,7 +472,9 @@ class ServerManagerApp:
         self._subprocess = None
         self._subprocess_launch_time = None
         self._subprocess_sent_auto_restart = False
+        self._subprocess_sent_clean_exit = False
         self._subprocess_sent_unclean_exit = False
+        self._subprocess_force_kill_time = None
 
     def _kill_subprocess(self) -> None:
         """End the server process if it still exists."""
