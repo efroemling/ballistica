@@ -6,6 +6,7 @@
 #include <list>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <set>
 #include <string>
 #include <unordered_map>
@@ -251,6 +252,7 @@ class Game : public Module {
   auto mark_game_roster_dirty() -> void { game_roster_dirty_ = true; }
 
  private:
+  auto HandleQuitOnIdle() -> void;
   auto InitSpecialChars() -> void;
   auto Draw() -> void;
   auto PartyInvite(const std::string& name, const std::string& invite_id)
@@ -265,13 +267,6 @@ class Game : public Module {
   auto ScoresToBeatResponse(bool success, const std::list<ScoreToBeat>& scores,
                             void* py_callback) -> void;
 
-#if BA_VR_BUILD
-  VRHandsState vr_hands_state_;
-#endif
-#if BA_RIFT_BUILD
-  int rift_step_index_{};
-#endif
-
   auto Prune() -> void;  // Periodic pruning of dead stuff.
   auto Update() -> void;
   auto Process() -> void;
@@ -283,6 +278,13 @@ class Game : public Module {
   auto Reset() -> void;
   auto GetGameRosterMessage() -> std::vector<uint8_t>;
   auto Shutdown(bool soft) -> void;
+
+#if BA_VR_BUILD
+  VRHandsState vr_hands_state_;
+#endif
+#if BA_RIFT_BUILD
+  int rift_step_index_{};
+#endif
 
   std::unique_ptr<ConnectionSet> connections_;
   std::list<std::pair<millisecs_t, PlayerSpec> > banned_players_;
@@ -314,6 +316,8 @@ class Game : public Module {
   std::unordered_map<SpecialChar, std::string> special_char_strings_;
   bool ran_app_launch_commands_{};
   bool kick_idle_players_{};
+  std::optional<float> idle_exit_minutes_{};
+  bool idle_exiting_{};
   std::unique_ptr<TimerList> realtimers_;
   Timer* process_timer_{};
   Timer* headless_update_timer_{};

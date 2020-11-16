@@ -507,6 +507,27 @@ void Game::UpdateKickVote() {
   }
 }
 
+void Game::HandleQuitOnIdle() {
+  if (idle_exit_minutes_) {
+    float idle_seconds{g_input->input_idle_time() * 0.001f};
+    if (!idle_exiting_ && idle_seconds > (idle_exit_minutes_.value() * 60.0f)) {
+      idle_exiting_ = true;
+
+      PushCall([this, idle_seconds] {
+        assert(InGameThread());
+
+        // Special exit value the wrapper script looks for to know we
+        // idled out.
+        g_app_globals->return_value = 154;
+
+        // Just go through _ba.quit()
+        // FIXME: Shouldn't need to go out to the python layer here...
+        g_python->obj(Python::ObjID::kQuitCall).Call();
+      });
+    }
+  }
+}
+
 // Bring our scenes, real-time timers, etc up to date.
 void Game::Update() {
   assert(InGameThread());
@@ -520,6 +541,8 @@ void Game::Update() {
   in_update_ = true;
   g_input->Update();
   UpdateKickVote();
+
+  HandleQuitOnIdle();
 
   // Send the game roster to our clients if it's changed recently.
   if (game_roster_dirty_) {
@@ -548,9 +571,9 @@ void Game::Update() {
 
   // TODO(ericf): On modern systems (VR and otherwise) we'll see 80hz, 90hz,
   //  120hz, 240hz, etc. It would be great to generalize this to gravitate
-  //  towards clean step patterns in all cases, not just the 60hz and 90hz cases
-  //  we handle now. In general we want stuff like 1,1,2,1,1,2,1,1,2, not
-  //  1,1,1,2,1,2,2,1,1.
+  //  towards clean step patterns in all cases, not just the 60hz and 90hz
+  //  cases we handle now. In general we want stuff like 1,1,2,1,1,2,1,1,2,
+  //  not 1,1,1,2,1,2,2,1,1.
 
   // Figure out where our net-time *should* be getting to to match real-time.
   millisecs_t target_master_time = real_time + master_time_offset_;
@@ -1212,7 +1235,7 @@ void Game::Draw() {
   g_graphics->BuildAndPushFrameDef();
 
   // Now bring the game up to date.
-  // By doing this *after* shipping a new frame_def we're reducing the
+  // By doing this *after* shipping a new frame-def we're reducing the
   // chance of frame drops at the expense of adding a bit of visual latency.
   // Could maybe try to be smart about which to do first, but not sure
   // if its worth it.
@@ -1402,6 +1425,9 @@ void Game::ApplyConfig() {
   bool disable_camera_gyro =
       g_app_config->Resolve(AppConfig::BoolID::kDisableCameraGyro);
   g_graphics->set_camera_gyro_explicitly_disabled(disable_camera_gyro);
+
+  idle_exit_minutes_ =
+      g_app_config->Resolve(AppConfig::OptionalFloatID::kIdleExitMinutes);
 
   // Any platform-specific settings.
   g_platform->ApplyConfig();

@@ -177,7 +177,7 @@ auto PyGetIdleTime(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
   Platform::SetLastPyCall("get_idle_time");
   return PyLong_FromLong(static_cast_check_fit<long>(  // NOLINT
-      g_input ? g_input->GetIdleTime() : 0));
+      g_input ? g_input->input_idle_time() : 0));
   BA_PYTHON_CATCH;
 }
 
@@ -964,7 +964,7 @@ auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "(internal)\n"
        "\n"
-       "Returns the amount of time since any game input has been processed"},
+       "Returns the amount of time since any game input has been received."},
 
       {"set_have_mods", PySetHaveMods, METH_VARARGS,
        "set_have_mods(have_mods: bool) -> None\n"

@@ -230,7 +230,6 @@ void UI::AddWidget(Widget* w, ContainerWidget* parent) {
 
 auto UI::SendWidgetMessage(const WidgetMessage& m) -> int {
   if (!root_widget_.exists()) {
-    // Log("SendWidgetMessage() called before root widget created");
     return false;
   }
   return root_widget_->HandleMessage(m);

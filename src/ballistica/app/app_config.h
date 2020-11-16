@@ -5,6 +5,7 @@
 
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -27,6 +28,11 @@ class AppConfig {
     kSoundVolume,
     kMusicVolume,
     kGoogleVRRenderTargetScale,
+    kLast  // Sentinel.
+  };
+
+  enum class OptionalFloatID {
+    kIdleExitMinutes,
     kLast  // Sentinel.
   };
 
@@ -68,16 +74,18 @@ class AppConfig {
 
   class Entry {
    public:
-    enum class Type { kString, kInt, kFloat, kBool };
+    enum class Type { kString, kInt, kFloat, kOptionalFloat, kBool };
     Entry() = default;
     explicit Entry(const char* name) : name_(name) {}
     virtual auto GetType() const -> Type = 0;
     auto name() const -> const std::string& { return name_; }
     virtual auto FloatValue() const -> float;
+    virtual auto OptionalFloatValue() const -> std::optional<float>;
     virtual auto StringValue() const -> std::string;
     virtual auto IntValue() const -> int;
     virtual auto BoolValue() const -> bool;
     virtual auto DefaultFloatValue() const -> float;
+    virtual auto DefaultOptionalFloatValue() const -> std::optional<float>;
     virtual auto DefaultStringValue() const -> std::string;
     virtual auto DefaultIntValue() const -> int;
     virtual auto DefaultBoolValue() const -> bool;
@@ -91,6 +99,7 @@ class AppConfig {
 
   // Given specific ids, returns resolved values (fastest access).
   auto Resolve(FloatID id) -> float;
+  auto Resolve(OptionalFloatID id) -> std::optional<float>;
   auto Resolve(StringID id) -> std::string;
   auto Resolve(IntID id) -> int;
   auto Resolve(BoolID id) -> bool;
@@ -113,6 +122,7 @@ class AppConfig {
  private:
   class StringEntry;
   class FloatEntry;
+  class OptionalFloatEntry;
   class IntEntry;
   class BoolEntry;
   template <typename T>
@@ -120,6 +130,7 @@ class AppConfig {
   void SetupEntries();
   std::map<std::string, const Entry*> entries_by_name_;
   std::map<FloatID, FloatEntry> float_entries_;
+  std::map<OptionalFloatID, OptionalFloatEntry> optional_float_entries_;
   std::map<IntID, IntEntry> int_entries_;
   std::map<StringID, StringEntry> string_entries_;
   std::map<BoolID, BoolEntry> bool_entries_;

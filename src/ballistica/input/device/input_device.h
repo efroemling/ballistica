@@ -22,18 +22,18 @@ class InputDevice : public Object {
   ~InputDevice() override;
 
   /// Called when the device is attached/detached to a local player.
-  virtual void AttachToLocalPlayer(Player* player);
-  virtual void AttachToRemotePlayer(ConnectionToHost* connection_to_host,
-                                    int remote_player_id);
-  virtual void DetachFromPlayer();
+  virtual auto AttachToLocalPlayer(Player* player) -> void;
+  virtual auto AttachToRemotePlayer(ConnectionToHost* connection_to_host,
+                                    int remote_player_id) -> void;
+  virtual auto DetachFromPlayer() -> void;
 
   /// Issues a command to the remote game to remove the player we're attached
   /// to.
-  void RemoveRemotePlayerFromGame();
+  auto RemoveRemotePlayerFromGame() -> void;
 
   /// Return the (not necessarily unique) name of the input device.
   auto GetDeviceName() -> std::string;
-  virtual void ResetHeldStates();
+  virtual auto ResetHeldStates() -> void;
 
   /// Return the default base player name for players using this input device.
   virtual auto GetDefaultPlayerName() -> std::string;
@@ -69,10 +69,10 @@ class InputDevice : public Object {
   auto index() const -> int { return index_; }
 
   /// Read new control values from config.
-  virtual void UpdateMapping() {}
+  virtual auto UpdateMapping() -> void {}
 
   /// Called during the game loop - for manual button repeats, etc.
-  virtual void Update();
+  virtual auto Update() -> void;
 
   /// Return client id or -1 if local.
   virtual auto GetClientID() const -> int;
@@ -81,7 +81,7 @@ class InputDevice : public Object {
   virtual auto IsRemoteClient() const -> bool;
 
 #if BA_SDL_BUILD || BA_MINSDL_BUILD
-  virtual void HandleSDLEvent(const SDL_Event* e) {}
+  virtual auto HandleSDLEvent(const SDL_Event* e) -> void {}
 #endif
   virtual auto GetAllowsConfiguring() -> bool { return true; }
 
@@ -121,25 +121,13 @@ class InputDevice : public Object {
   auto has_py_ref() -> bool { return (py_ref_ != nullptr); }
   auto last_input_time() const -> millisecs_t { return last_input_time_; }
   virtual auto ShouldBeHiddenFromUser() -> bool;
-  static void ResetRandomNames();
-
- protected:
-  void ShipBufferIfFull();
-
-  /// Pass some input command on to whatever we're connected to
-  /// (player or remote-player).
-  void InputCommand(InputType type, float value = 0.0f);
-
-  /// Called for all devices when they've successfully been added
-  /// to the input-device list, have a valid ID, name, etc.
-  virtual void ConnectionComplete() {}
-
-  /// Subclasses should call this to request a player in the local game.
-  void RequestPlayer();
+  static auto ResetRandomNames() -> void;
 
   /// Return a human-readable name for the device's type.
   /// This is used for display and also for storing configs/etc.
   virtual auto GetRawDeviceName() -> std::string { return "Input Device"; }
+
+  auto number() const { return number_; }
 
   /// Return any extra description for the device.
   /// This portion is only used for display and not for storing configs.
@@ -152,28 +140,45 @@ class InputDevice : public Object {
   /// a string.
   virtual auto GetDeviceIdentifier() -> std::string { return ""; }
 
+  /// Called for all devices when they've successfully been added
+  /// to the input-device list, have a valid ID, name, etc.
+  virtual auto ConnectionComplete() -> void {}
+
+  auto UpdateLastInputTime() -> void;
+
+  auto set_index(int index_in) -> void { index_ = index_in; }
+  auto set_numbered_identifier(int n) -> void { number_ = n; }
+
+ protected:
+  auto ShipBufferIfFull() -> void;
+
+  /// Pass some input command on to whatever we're connected to
+  /// (player or remote-player).
+  auto InputCommand(InputType type, float value = 0.0f) -> void;
+
+  /// Subclasses should call this to request a player in the local game.
+  auto RequestPlayer() -> void;
+
   auto remote_player_id() const -> int { return remote_player_id_; }
-  void UpdateLastInputTime();
 
  private:
-  millisecs_t last_remote_input_commands_send_time_ = 0;
+  auto GetPyInputDevice(bool new_ref) -> PyObject*;
+
+  millisecs_t last_remote_input_commands_send_time_{};
   std::vector<uint8_t> remote_input_commands_buffer_;
 
   // note: this is in base-net-time
-  millisecs_t last_input_time_ = 0;
+  millisecs_t last_input_time_{};
 
   // We're attached to *one* of these two.
   Object::WeakRef<Player> player_;
   Object::WeakRef<ConnectionToHost> remote_player_;
 
-  int remote_player_id_ = -1;
-  PyObject* py_ref_ = nullptr;
-  auto GetPyInputDevice(bool new_ref) -> PyObject*;
-  void set_index(int index_in) { index_ = index_in; }
-  void set_numbered_identifier(int n) { number_ = n; }
-  int index_ = -1;   // Our overall device index.
-  int number_ = -1;  // Our type-specific number.
-  friend class Input;
+  int remote_player_id_{-1};
+  PyObject* py_ref_{};
+  int index_{-1};   // Our overall device index.
+  int number_{-1};  // Our type-specific number.
+
   BA_DISALLOW_CLASS_COPIES(InputDevice);
 };
 

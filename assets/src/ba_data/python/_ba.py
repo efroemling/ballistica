@@ -2079,7 +2079,7 @@ def get_idle_time() -> int:
 
     (internal)
 
-    Returns the amount of time since any game input has been processed
+    Returns the amount of time since any game input has been received.
     """
     return int()
 

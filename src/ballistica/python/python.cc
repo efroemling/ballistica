@@ -2442,6 +2442,26 @@ auto Python::GetRawConfigValue(const char* name, float default_value) -> float {
   }
 }
 
+auto Python::GetRawConfigValue(const char* name,
+                               std::optional<float> default_value)
+    -> std::optional<float> {
+  assert(InGameThread());
+  assert(objexists(ObjID::kConfig));
+  PyObject* value = PyDict_GetItemString(obj(ObjID::kConfig).get(), name);
+  if (value == nullptr) {
+    return default_value;
+  }
+  try {
+    if (value == Py_None) {
+      return std::optional<float>();
+    }
+    return GetPyFloat(value);
+  } catch (const std::exception&) {
+    Log("expected a float for config value '" + std::string(name) + "'");
+    return default_value;
+  }
+}
+
 auto Python::GetRawConfigValue(const char* name, int default_value) -> int {
   assert(InGameThread());
   assert(objexists(ObjID::kConfig));

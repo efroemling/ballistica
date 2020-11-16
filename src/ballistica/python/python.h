@@ -5,6 +5,7 @@
 
 #include <list>
 #include <map>
+#include <optional>
 #include <set>
 #include <string>
 #include <vector>
@@ -160,6 +161,8 @@ class Python {
   auto GetRawConfigValue(const char* name, const char* default_value)
       -> std::string;
   auto GetRawConfigValue(const char* name, float default_value) -> float;
+  auto GetRawConfigValue(const char* name, std::optional<float> default_value)
+      -> std::optional<float>;
   auto GetRawConfigValue(const char* name, int default_value) -> int;
   auto GetRawConfigValue(const char* name, bool default_value) -> bool;
   void SetRawConfigValue(const char* name, float value);

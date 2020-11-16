@@ -268,7 +268,10 @@ void InputDevice::Update() {
 }
 
 void InputDevice::UpdateLastInputTime() {
+  // Keep our own individual time, and also let
+  // the overall input system know something happened.
   last_input_time_ = g_game->master_time();
+  g_input->mark_input_active();
 }
 
 void InputDevice::InputCommand(InputType type, float value) {

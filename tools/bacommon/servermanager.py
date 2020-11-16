@@ -91,23 +91,26 @@ class ServerConfig:
     # http://bombsquadgame.com/accountquery?id=ACCOUNT_ID_HERE
     stats_url: Optional[str] = None
 
-    # If present, the server will attempt to gracefully exit after this
-    # amount of time. A graceful exit can occur at the end of a series
+    # If present, the server manager will attempt to gracefully exit after
+    # this amount of time. A graceful exit can occur at the end of a series
     # or other opportune time.
-    # Servers with no exit times set will run indefinitely (though the server
-    # binary will be restarted periodically to clear any leaked memory).
+    # Servers with no exit times set will run indefinitely, though the
+    # server binary will be restarted periodically to clear any memory
+    # leaks or other bad state.
     clean_exit_minutes: Optional[float] = None
 
-    # If present, the server will shut down immediately after the given
-    # amount of time). This can be useful as a fallback for clean_exit_time.
-    # Servers with no exit times set will run indefinitely (though the server
-    # binary will be restarted periodically to clear any leaked memory).
+    # If present, the server manager will shut down immediately after this
+    # amount of time. This can be useful as a fallback for clean_exit_time.
+    # Servers with no exit times set will run indefinitely, though the
+    # server binary will be restarted periodically to clear any memory
+    # leaks or other bad state.
     unclean_exit_minutes: Optional[float] = None
 
     # If present, the server will shut down immediately if this amount of
-    # time passes with no connected clients.
-    # Servers with no exit times set will run indefinitely (though the server
-    # binary will be restarted periodically to clear any leaked memory).
+    # time passes with no activity from any players.
+    # Servers with no exit times set will run indefinitely, though the
+    # server binary will be restarted periodically to clear any memory
+    # leaks or other bad state.
     idle_exit_minutes: Optional[float] = None
 
 

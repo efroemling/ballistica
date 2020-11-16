@@ -81,10 +81,11 @@ class Input {
 
   // Get the total idle time for the system.
   // FIXME - should better coordinate this with InputDevice::getLastUsedTime().
-  auto GetIdleTime() const -> millisecs_t;
+  // auto GetIdleTime() const -> millisecs_t;
 
   // Should be called whenever user-input of some form comes through.
-  auto ResetIdleTime() -> void { last_input_time_ = GetRealTime(); }
+  // auto ResetIdleTime() -> void { last_input_time_ = GetRealTime(); }
+  auto mark_input_active() { input_active_ = true; }
 
   // Should be called regularly to update button repeats, etc.
   auto Update() -> void;
@@ -128,6 +129,9 @@ class Input {
   auto PushDestroyKeyboardInputDevices() -> void;
   auto PushCreateKeyboardInputDevices() -> void;
 
+  /// Roughly how long in milliseconds have all input devices been idle.
+  auto input_idle_time() const { return input_idle_time_; }
+
  private:
   auto UpdateInputDeviceCounts() -> void;
   auto GetNewNumberedIdentifier(const std::string& name,
@@ -151,8 +155,11 @@ class Input {
   auto UpdateModKeyStates(const SDL_Keysym* keysym, bool press) -> void;
   auto CreateKeyboardInputDevices() -> void;
   auto DestroyKeyboardInputDevices() -> void;
+
+  bool input_active_{};
+  millisecs_t input_idle_time_{};
   int local_active_input_device_count_{};
-  millisecs_t last_have_many_local_active_input_devices_check_time_{};
+  millisecs_t last_get_local_active_input_device_count_check_time_{};
   std::unordered_map<std::string, std::unordered_map<std::string, int> >
       reserved_identifiers_;
   int max_controller_count_so_far_{};
@@ -165,7 +172,7 @@ class Input {
   bool have_non_touch_inputs_{};
   float cursor_pos_x_{};
   float cursor_pos_y_{};
-  millisecs_t last_input_time_{};
+  // millisecs_t last_input_time_{};
   millisecs_t last_click_time_{};
   millisecs_t double_click_time_{200};
   millisecs_t last_mouse_move_time_{};

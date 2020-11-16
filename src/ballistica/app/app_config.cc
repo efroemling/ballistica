@@ -16,6 +16,10 @@ auto AppConfig::Entry::FloatValue() const -> float {
   throw Exception("not a float entry");
 }
 
+auto AppConfig::Entry::OptionalFloatValue() const -> std::optional<float> {
+  throw Exception("not an optional float entry");
+}
+
 auto AppConfig::Entry::StringValue() const -> std::string {
   throw Exception("not a string entry");
 }
@@ -30,6 +34,11 @@ auto AppConfig::Entry::BoolValue() const -> bool {
 
 auto AppConfig::Entry::DefaultFloatValue() const -> float {
   throw Exception("not a float entry");
+}
+
+auto AppConfig::Entry::DefaultOptionalFloatValue() const
+    -> std::optional<float> {
+  throw Exception("not an optional float entry");
 }
 
 auto AppConfig::Entry::DefaultStringValue() const -> std::string {
@@ -76,6 +85,26 @@ class AppConfig::FloatEntry : public AppConfig::Entry {
 
  private:
   float default_value_{};
+};
+
+class AppConfig::OptionalFloatEntry : public AppConfig::Entry {
+ public:
+  OptionalFloatEntry() = default;
+  OptionalFloatEntry(const char* name, std::optional<float> default_value)
+      : Entry(name), default_value_(default_value) {}
+  auto GetType() const -> Type override { return Type::kOptionalFloat; }
+  auto Resolve() const -> std::optional<float> {
+    return g_python->GetRawConfigValue(name().c_str(), default_value_);
+  }
+  auto OptionalFloatValue() const -> std::optional<float> override {
+    return Resolve();
+  }
+  auto DefaultOptionalFloatValue() const -> std::optional<float> override {
+    return default_value_;
+  }
+
+ private:
+  std::optional<float> default_value_{};
 };
 
 class AppConfig::IntEntry : public AppConfig::Entry {
@@ -157,6 +186,9 @@ void AppConfig::SetupEntries() {
   float_entries_[FloatID::kGoogleVRRenderTargetScale] =
       FloatEntry("GVR Render Target Scale", gvrrts_default);
 
+  optional_float_entries_[OptionalFloatID::kIdleExitMinutes] =
+      OptionalFloatEntry("Idle Exit Minutes", std::optional<float>());
+
   string_entries_[StringID::kResolutionAndroid] =
       StringEntry("Resolution (Android)", "Auto");
   string_entries_[StringID::kTouchActionControlType] =
@@ -215,6 +247,14 @@ void AppConfig::SetupEntries() {
 auto AppConfig::Resolve(FloatID id) -> float {
   auto i = float_entries_.find(id);
   if (i == float_entries_.end()) {
+    throw Exception("Invalid config entry");
+  }
+  return i->second.Resolve();
+}
+
+auto AppConfig::Resolve(OptionalFloatID id) -> std::optional<float> {
+  auto i = optional_float_entries_.find(id);
+  if (i == optional_float_entries_.end()) {
     throw Exception("Invalid config entry");
   }
   return i->second.Resolve();

@@ -411,7 +411,7 @@ auto Input::GetNewNumberedIdentifier(const std::string& name,
     // suffix that's not taken.
     for (auto&& i : input_devices_) {
       if (i.exists()) {
-        if ((i->GetRawDeviceName() == name) && i->number_ == num) {
+        if ((i->GetRawDeviceName() == name) && i->number() == num) {
           in_use = true;
           break;
         }
@@ -717,18 +717,18 @@ auto Input::GetLocalActiveInputDeviceCount() -> int {
 
   // This can get called alot so lets cache the value.
   millisecs_t current_time = g_game->master_time();
-  if (current_time != last_have_many_local_active_input_devices_check_time_) {
-    last_have_many_local_active_input_devices_check_time_ = current_time;
+  if (current_time != last_get_local_active_input_device_count_check_time_) {
+    last_get_local_active_input_device_count_check_time_ = current_time;
 
     int count = 0;
     for (auto& input_device : input_devices_) {
-      // Only count non-keyboard, non-touchscreen, local devices that have been
+      // Tally up local non-keyboard, non-touchscreen devices that have been
       // used in the last minute.
-      if (input_device.exists() && !(*input_device).IsKeyboard()
-          && !(*input_device).IsTouchScreen() && !(*input_device).IsUIOnly()
-          && (*input_device).IsLocal()
-          && ((*input_device).last_input_time() != 0
-              && g_game->master_time() - (*input_device).last_input_time()
+      if (input_device.exists() && !input_device->IsKeyboard()
+          && !input_device->IsTouchScreen() && !input_device->IsUIOnly()
+          && input_device->IsLocal()
+          && (input_device->last_input_time() != 0
+              && g_game->master_time() - input_device->last_input_time()
                      < 60000)) {
         count++;
       }
@@ -801,9 +801,9 @@ auto Input::ShouldCompletelyIgnoreInputDevice(InputDevice* input_device)
   return ignore_sdl_controllers_ && input_device->IsSDLController();
 }
 
-auto Input::GetIdleTime() const -> millisecs_t {
-  return GetRealTime() - last_input_time_;
-}
+// auto Input::GetIdleTime() const -> millisecs_t {
+//   return GetRealTime() - last_input_time_;
+// }
 
 void Input::UpdateEnabledControllerSubsystems() {
   assert(IsBootstrapped());
@@ -872,6 +872,14 @@ void Input::Update() {
   if (real_time - last_input_device_count_update_time_ > incr) {
     UpdateInputDeviceCounts();
     last_input_device_count_update_time_ = real_time;
+
+    // Keep our idle-time up to date.
+    if (input_active_) {
+      input_idle_time_ = 0;
+    } else {
+      input_idle_time_ += incr;
+    }
+    input_active_ = false;
   }
 
   for (auto& input_device : input_devices_) {
@@ -1080,7 +1088,7 @@ void Input::HandleBackPress(bool from_toolbar) {
 
 void Input::PushTextInputEvent(const std::string& text) {
   g_game->PushCall([this, text] {
-    ResetIdleTime();
+    mark_input_active();
 
     // Ignore  if input is locked.
     if (IsInputLocked()) {
@@ -1115,7 +1123,7 @@ void Input::HandleJoystickEvent(const SDL_Event& event,
   }
 
   // Make note that we're not idle.
-  ResetIdleTime();
+  mark_input_active();
 
   // And that this particular device isn't idle either.
   input_device->UpdateLastInputTime();
@@ -1139,7 +1147,7 @@ void Input::PushKeyReleaseEvent(const SDL_Keysym& keysym) {
 void Input::HandleKeyPress(const SDL_Keysym* keysym) {
   assert(InGameThread());
 
-  ResetIdleTime();
+  mark_input_active();
 
   // Ignore all key presses if input is locked.
   if (IsInputLocked()) {
@@ -1304,7 +1312,7 @@ void Input::HandleKeyRelease(const SDL_Keysym* keysym) {
 
   // Note: we want to let these through even if input is locked.
 
-  ResetIdleTime();
+  mark_input_active();
 
   // Give Python a crack at it for captures, etc.
   if (g_python->HandleKeyReleaseEvent(*keysym)) {
@@ -1381,7 +1389,7 @@ auto Input::HandleMouseScroll(const Vector2f& amount) -> void {
   if (IsInputLocked()) {
     return;
   }
-  ResetIdleTime();
+  mark_input_active();
 
   Widget* root_widget = g_ui->root_widget();
   if (std::abs(amount.y) > 0.0001f && root_widget) {
@@ -1417,7 +1425,7 @@ auto Input::HandleSmoothMouseScroll(const Vector2f& velocity, bool momentum)
   if (IsInputLocked()) {
     return;
   }
-  ResetIdleTime();
+  mark_input_active();
 
   bool handled = false;
   Widget* root_widget = g_ui->root_widget();
@@ -1447,7 +1455,7 @@ auto Input::PushMouseMotionEvent(const Vector2f& position) -> void {
 auto Input::HandleMouseMotion(const Vector2f& position) -> void {
   assert(g_graphics);
   assert(InGameThread());
-  ResetIdleTime();
+  mark_input_active();
 
   float old_cursor_pos_x = cursor_pos_x_;
   float old_cursor_pos_y = cursor_pos_y_;
@@ -1508,7 +1516,7 @@ auto Input::HandleMouseDown(int button, const Vector2f& position) -> void {
     return;
   }
 
-  ResetIdleTime();
+  mark_input_active();
 
   last_mouse_move_time_ = GetRealTime();
   mouse_move_count_++;
@@ -1575,7 +1583,7 @@ auto Input::PushMouseUpEvent(int button, const Vector2f& position) -> void {
 
 auto Input::HandleMouseUp(int button, const Vector2f& position) -> void {
   assert(InGameThread());
-  ResetIdleTime();
+  mark_input_active();
 
   // Convert normalized view coords to our virtual ones.
   cursor_pos_x_ = g_graphics->PixelToVirtualX(
@@ -1629,7 +1637,7 @@ void Input::HandleTouchEvent(const TouchEvent& e) {
     return;
   }
 
-  ResetIdleTime();
+  mark_input_active();
 
   // float x = e.x;
   // float y = e.y;
