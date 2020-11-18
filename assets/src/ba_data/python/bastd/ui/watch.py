@@ -262,7 +262,7 @@ class WatchWindow(ba.Window):
                                           '.deleteReplayButtonText'),
                             autoselect=True)
             if app.platform == 'android':
-                btnv -= b_height*0.7 + b_space_extra
+                btnv -= int(b_height*0.7) + b_space_extra
                 ba.buttonwidget(parent=cnt,
                                 size=(b_width, b_height*0.67),
                                 position=(btnh, btnv),
@@ -273,7 +273,7 @@ class WatchWindow(ba.Window):
                                 text_scale=tscl,
                                 label=ba.Lstr(resource='importText'),
                                 autoselect=True)
-                btnv -= b_height*0.73 + b_space_extra
+                btnv -= int(b_height*0.73) + b_space_extra
                 ba.buttonwidget(parent=cnt,
                                 size=(b_width, b_height*0.67),
                                 position=(btnh, btnv),
@@ -596,7 +596,7 @@ class WatchWindow(ba.Window):
             ba.playsound(ba.getsound('error'))
 
     def _show_my_replays(self) -> None:
-        _ba.open_dir_externally(app.python_directory_user)
+        _ba.open_dir_externally(_ba.get_replays_dir())
 
     def _save_state(self) -> None:
         try:
