@@ -14,9 +14,12 @@
 // We currently support regular and client builds on 64 bit mac posix
 #if __amd64__
 #define BA_PLATFORM_STRING "x86_64_macos"
+#elif __aarch64__
+#define BA_PLATFORM_STRING "arm64_macos"
 #else
 #error Unknown processor architecture.
 #endif
+
 #define BA_OSTYPE_MACOS 1
 #define HAVE_FRAMEWORK_OPENAL 1
 
