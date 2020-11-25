@@ -25,20 +25,20 @@ from efrotools.pcommand import (
     makefile_target_list, spelling, spelling_all, pytest, echo,
     compile_python_files, pyver)
 from batools.pcommand import (
-    stage_server_file, py_examine, fix_mac_ssh, check_mac_ssh, resize_image,
-    check_clean_safety, clean_orphaned_assets, archive_old_builds,
-    lazy_increment_build, get_master_asset_src_dir, androidaddr, push_ipa,
-    printcolors, gen_fulltest_buildfile_android,
-    gen_fulltest_buildfile_windows, gen_fulltest_buildfile_apple,
-    gen_fulltest_buildfile_linux, python_build_apple, python_build_apple_debug,
-    python_build_android, python_build_android_debug, python_android_patch,
-    python_gather, python_winprune, capitalize, efrocache_update,
-    efrocache_get, get_modern_make, warm_start_asset_build, update_docs_md,
-    list_pip_reqs, install_pip_reqs, checkenv, ensure_prefab_platform,
-    prefab_run_var, make_prefab, update_makebob, lazybuild,
-    android_archive_unstripped_libs, efro_gradle, stage_assets,
-    update_assets_makefile, update_project, update_cmake_prefab_lib,
-    cmake_prep_dir, gen_binding_code, gen_flat_data_code)
+    stage_server_file, py_examine, resize_image, check_clean_safety,
+    clean_orphaned_assets, archive_old_builds, lazy_increment_build,
+    get_master_asset_src_dir, androidaddr, push_ipa, printcolors,
+    gen_fulltest_buildfile_android, gen_fulltest_buildfile_windows,
+    gen_fulltest_buildfile_apple, gen_fulltest_buildfile_linux,
+    python_build_apple, python_build_apple_debug, python_build_android,
+    python_build_android_debug, python_android_patch, python_gather,
+    python_winprune, capitalize, upper, efrocache_update, efrocache_get,
+    get_modern_make, warm_start_asset_build, update_docs_md, list_pip_reqs,
+    install_pip_reqs, checkenv, ensure_prefab_platform, prefab_run_var,
+    make_prefab, update_makebob, lazybuild, android_archive_unstripped_libs,
+    efro_gradle, stage_assets, update_assets_makefile, update_project,
+    update_cmake_prefab_lib, cmake_prep_dir, gen_binding_code,
+    gen_flat_data_code)
 # pylint: enable=unused-import
 
 if TYPE_CHECKING:

@@ -366,8 +366,8 @@ def gen_fulltest_buildfile_apple() -> None:
     lines = []
 
     # iOS stuff
-    lines.append('nice -n 18 make ios-build')
-    lines.append('nice -n 18 make ios-new-build')
+    lines.append('make ios-build')
+    lines.append('make ios-new-build')
     if DO_SPARSE_TEST_BUILDS:
         extras = SPARSE_TEST_BUILDS[dayoffset % len(SPARSE_TEST_BUILDS)]
         extras = [e for e in extras if e.startswith('ios.')]
@@ -380,7 +380,7 @@ def gen_fulltest_buildfile_apple() -> None:
                 raise RuntimeError(f'Unknown extra: {extra}')
 
     # tvOS stuff
-    lines.append('nice -n 18 make tvos-build')
+    lines.append('make tvos-build')
     if DO_SPARSE_TEST_BUILDS:
         extras = SPARSE_TEST_BUILDS[dayoffset % len(SPARSE_TEST_BUILDS)]
         extras = [e for e in extras if e.startswith('tvos.')]
@@ -393,12 +393,12 @@ def gen_fulltest_buildfile_apple() -> None:
                 raise RuntimeError(f'Unknown extra: {extra}')
 
     # macOS stuff
-    lines.append('nice -n 18 make mac-build')
+    lines.append('make mac-build')
     # (throw release build in the mix to hopefully catch opt-mode-only errors).
-    lines.append('nice -n 18 make mac-appstore-release-build')
-    lines.append('nice -n 18 make mac-new-build')
-    lines.append('nice -n 18 make cmake-server-build')
-    lines.append('nice -n 18 make cmake-build')
+    lines.append('make mac-appstore-release-build')
+    lines.append('make mac-new-build')
+    lines.append('make cmake-server-build')
+    lines.append('make cmake-build')
     if DO_SPARSE_TEST_BUILDS:
         extras = SPARSE_TEST_BUILDS[dayoffset % len(SPARSE_TEST_BUILDS)]
         extras = [e for e in extras if e.startswith('mac.')]
@@ -457,6 +457,8 @@ def get_current_prefab_platform(wsl_gives_windows: bool = True) -> str:
     if system == 'Darwin':
         if machine == 'x86_64':
             return 'mac_x86_64'
+        if machine == 'arm64':
+            return 'mac_arm64'
         # TODO: add support for arm macs.
         raise RuntimeError(f'make_prefab: unsupported mac machine type:'
                            f' {machine}.')
@@ -727,15 +729,19 @@ def update_docs_md(check: bool) -> None:
     print(f'{docs_path} is up to date.')
 
 
-def cmake_prep_dir(dirname: str) -> None:
+def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
     """Create a dir, recreating it when cmake/python/etc. version changes.
 
     Useful to prevent builds from breaking when cmake or other components
     are updated.
     """
+    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-statements
     import json
     from efrotools import PYVER
     verfilename = os.path.join(dirname, '.ba_cmake_env')
+    title = 'cmake_prep_dir'
 
     versions: Dict[str, str]
     if os.path.isfile(verfilename):
@@ -752,14 +758,29 @@ def cmake_prep_dir(dirname: str) -> None:
     cmake_ver = cmake_ver_output.splitlines()[0].split('cmake version ')[1]
     cmake_ver_existing = versions.get('cmake_version')
     assert isinstance(cmake_ver_existing, (str, type(None)))
+    if verbose:
+        print(f'{Clr.BLD}{title}:{Clr.RST} {cmake_ver=} {cmake_ver_existing=}')
+
+    # ...or if the actual location of cmake on disk changes.
+    cmake_path = os.path.realpath(
+        subprocess.run(['which', 'cmake'], check=True,
+                       capture_output=True).stdout.decode().strip())
+    cmake_path_existing = versions.get('cmake_path')
+    assert isinstance(cmake_path_existing, (str, type(None)))
+    if verbose:
+        print(f'{Clr.BLD}{title}:{Clr.RST}'
+              f' {cmake_path=} {cmake_path_existing=}')
 
     # ...or if python's version changes.
-    python_ver_output = subprocess.run([f'python{PYVER}', '--version'],
-                                       check=True,
-                                       capture_output=True).stdout.decode()
+    python_ver_output = subprocess.run(
+        [f'python{PYVER}', '--version'], check=True,
+        capture_output=True).stdout.decode().strip()
     python_ver = python_ver_output.splitlines()[0].split('Python ')[1]
     python_ver_existing = versions.get('python_version')
     assert isinstance(python_ver_existing, (str, type(None)))
+    if verbose:
+        print(f'{Clr.BLD}{title}:{Clr.RST}'
+              f' {python_ver=} {python_ver_existing=}')
 
     # ...or if the actual location of python on disk changes.
     python_path = os.path.realpath(
@@ -768,14 +789,30 @@ def cmake_prep_dir(dirname: str) -> None:
                        capture_output=True).stdout.decode())
     python_path_existing = versions.get('python_path')
     assert isinstance(python_path_existing, (str, type(None)))
+    if verbose:
+        print(f'{Clr.BLD}{title}:{Clr.RST}'
+              f' {python_path=} {python_path_existing=}')
 
     # Blow away and start from scratch if any vals differ from existing.
-    if (cmake_ver_existing != cmake_ver or python_ver_existing != python_ver
-            or python_path != python_path_existing):
+    if (cmake_ver_existing == cmake_ver and cmake_path == cmake_path_existing
+            and python_ver_existing == python_ver
+            and python_path == python_path_existing):
+        if verbose:
+            print(f'{Clr.BLD}{title}:{Clr.RST} Keeping existing build dir.')
+    else:
+        if verbose:
+            print(
+                f'{Clr.BLD}{title}:{Clr.RST} Blowing away existing build dir.')
+
         if (cmake_ver_existing is not None
                 and cmake_ver_existing != cmake_ver):
             print(f'{Clr.BLU}CMake version changed from {cmake_ver_existing}'
                   f' to {cmake_ver}; clearing existing build at'
+                  f' "{dirname}".{Clr.RST}')
+        if (cmake_path_existing is not None
+                and cmake_path_existing != cmake_path):
+            print(f'{Clr.BLU}CMake path changed from {cmake_path_existing}'
+                  f' to {cmake_path}; clearing existing build at'
                   f' "{dirname}".{Clr.RST}')
         if (python_ver_existing is not None
                 and python_ver_existing != python_ver):
@@ -793,6 +830,7 @@ def cmake_prep_dir(dirname: str) -> None:
             outfile.write(
                 json.dumps({
                     'cmake_version': cmake_ver,
+                    'cmake_path': cmake_path,
                     'python_version': python_ver,
                     'python_path': python_path
                 }))

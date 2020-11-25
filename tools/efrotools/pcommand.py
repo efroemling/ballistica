@@ -61,9 +61,8 @@ def pcommand_main(globs: Dict[str, Any]) -> None:
                 exc.pretty_print()
                 sys.exit(1)
         else:
-            print(
-                f'{Clr.RED}Unknown pcommand command: "{sys.argv[1]}"{Clr.RST}',
-                file=sys.stderr)
+            print(f'{Clr.RED}Unknown pcommand: "{sys.argv[1]}"{Clr.RST}',
+                  file=sys.stderr)
             retval = 255
 
     if show_help:
@@ -422,7 +421,7 @@ def sync_all() -> None:
     import concurrent.futures
     from efro.error import CleanError
     from efro.terminal import Clr
-    print(f'{Clr.BLU}Updating formatting for all projects...{Clr.RST}')
+    print(f'{Clr.BLD}Updating formatting for all projects...{Clr.RST}')
     projects_str = os.environ.get('EFROTOOLS_SYNC_PROJECTS')
     if projects_str is None:
         raise CleanError('EFROTOOL_SYNC_PROJECTS is not defined.')
@@ -453,17 +452,17 @@ def sync_all() -> None:
         # Real mode
         for i in range(2):
             if i == 0:
-                print(Clr.BLU + 'Running sync pass 1:'
+                print(Clr.BLD + 'Running sync pass 1:'
                       ' (ensures all changes at dsts are pushed to src)' +
                       Clr.RST)
             else:
-                print(Clr.BLU + 'Running sync pass 2:'
+                print(Clr.BLD + 'Running sync pass 2:'
                       ' (ensures latest src is pulled to all dsts)' + Clr.RST)
             for project in projects_str.split(':'):
                 cmd = f'cd "{project}" && make sync-full'
                 print(cmd)
                 subprocess.run(cmd, shell=True, check=True)
-        print(Clr.BLU + 'Sync-all successful!' + Clr.RST)
+        print(Clr.BLD + 'Sync-all successful!' + Clr.RST)
 
 
 def sync() -> None:

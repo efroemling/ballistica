@@ -86,41 +86,6 @@ def clean_orphaned_assets() -> None:
     efrotools.run('find assets/build -depth -empty -type d -delete')
 
 
-def fix_mac_ssh() -> None:
-    """Turn off mac ssh password access.
-
-    (This totally doesn't belong in this project btw..)
-    """
-    configpath = '/etc/ssh/sshd_config'
-    with open(configpath) as infile:
-        lines = infile.readlines()
-    index = lines.index('#PasswordAuthentication yes\n')
-    lines[index] = 'PasswordAuthentication no\n'
-    index = lines.index('#ChallengeResponseAuthentication yes\n')
-    lines[index] = 'ChallengeResponseAuthentication no\n'
-    index = lines.index('UsePAM yes\n')
-    lines[index] = 'UsePAM no\n'
-    with open(configpath, 'w') as outfile:
-        outfile.write(''.join(lines))
-    print('SSH config updated successfully!')
-
-
-def check_mac_ssh() -> None:
-    """Make sure ssh password access is turned off.
-
-    (This totally doesn't belong here, but I use it it to remind myself to
-    fix mac ssh after system updates which blow away ssh customizations).
-    """
-    with open('/etc/ssh/sshd_config') as infile:
-        lines = infile.read().splitlines()
-    if ('UsePAM yes' in lines or '#PasswordAuthentication yes' in lines
-            or '#ChallengeResponseAuthentication yes' in lines):
-        print('ERROR: ssh config is allowing password access.\n'
-              'To fix: sudo tools/pcommand fix_mac_ssh')
-        sys.exit(255)
-    print('password ssh auth seems disabled; hooray!')
-
-
 def resize_image() -> None:
     """Resize an image and save it to a new location.
 
@@ -415,7 +380,12 @@ def python_winprune() -> None:
 
 def capitalize() -> None:
     """Print args capitalized."""
-    print(' '.join(w.capitalize() for w in sys.argv[2:]))
+    print(' '.join(w.capitalize() for w in sys.argv[2:]), end='')
+
+
+def upper() -> None:
+    """Print args uppercased."""
+    print(' '.join(w.upper() for w in sys.argv[2:]), end='')
 
 
 def efrocache_update() -> None:
@@ -518,13 +488,7 @@ def ensure_prefab_platform() -> None:
 
 
 def prefab_run_var() -> None:
-    """Print a var for running a prefab run for the current platform.
-
-    We use this mechanism instead of just having a command recursively run
-    a make target so that ctrl-c can be handled cleanly and directly by the
-    command getting run instead of generating extra errors in the recursive
-    processes.
-    """
+    """Print the current platform prefab run target var."""
     import batools.build
     if len(sys.argv) != 3:
         raise RuntimeError('Expected 1 arg.')
@@ -731,12 +695,14 @@ def cmake_prep_dir() -> None:
     Useful to prevent builds from breaking when cmake or other components
     are updated.
     """
+    import os
     from efro.error import CleanError
     import batools.build
     if len(sys.argv) != 3:
         raise CleanError('Expected 1 arg (dir name)')
     dirname = sys.argv[2]
-    batools.build.cmake_prep_dir(dirname)
+    batools.build.cmake_prep_dir(dirname,
+                                 verbose=os.environ.get('VERBOSE') == '1')
 
 
 def gen_binding_code() -> None:

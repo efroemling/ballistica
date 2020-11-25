@@ -9,16 +9,24 @@ option(TEST_BUILD "include testing features" OFF)
 set(CMAKE_CXX_STANDARD 17)
 
 if (APPLE)
-  # Seems as of Mojave we need to explicitly pull in /usr/local stuff.
-  include_directories("/usr/local/include")
-  link_directories("/usr/local/lib")
+  # Seems as of Mojave we need to explicitly pull in homebrew paths.
+  # Just hard-coding recommended homebrew install paths for now.
+  # Is there a more elegant way to do this?
+  if (CMAKE_SYSTEM_PROCESSOR MATCHES arm64)
+    list(APPEND CMAKE_PREFIX_PATH /opt/homebrew)
+    include_directories("/opt/homebrew/include")
+    link_directories("/opt/homebrew/lib")
+  else()
+    list(APPEND CMAKE_PREFIX_PATH /usr/local)
+    include_directories("/usr/local/include")
+    link_directories("/usr/local/lib")
+  endif()
 
-  # On Mac with homebrew it seems that Requesting 3.7 when we've got
-  # 3.8 installed will point us at the 3.8 framework but will attempt
-  # to load a 3.7 library from within it which doesn't exist. So we need
-  # to be a bit more explicit telling it where to look. This is no longer
-  # necessary since we're using 3.8 now but may be once 3.9 becomes available
-  # through homebrew.
+  # On Mac with homebrew it seems that Requesting 3.X when we've got
+  # 3.(X+1) installed will point us at the 3.(X+1) framework but will attempt
+  # to load a 3.X library from within it which doesn't exist. So we need
+  # to be a bit more explicit telling it where to look. Note: this was last
+  # tested with 3.7; should revisit sometime to make sure still applies.
   execute_process(COMMAND "python3.8-config" "--prefix"
     OUTPUT_VARIABLE Python_ROOT_DIR
     OUTPUT_STRIP_TRAILING_WHITESPACE)

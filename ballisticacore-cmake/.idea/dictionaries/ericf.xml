@@ -13,8 +13,8 @@
       <w>ack'ed</w>
       <w>acked</w>
       <w>acks</w>
-      <w>aclass</w>
       <w>aclass's</w>
+      <w>aclass</w>
       <w>activityplayer</w>
       <w>addrs</w>
       <w>adjoint</w>
@@ -149,8 +149,8 @@
       <w>cmath</w>
       <w>cmds</w>
       <w>cmdvals</w>
-      <w>codewarrior</w>
       <w>codewarrior's</w>
+      <w>codewarrior</w>
       <w>cofnodes</w>
       <w>collapseable</w>
       <w>collidable</w>
@@ -241,6 +241,7 @@
       <w>echidna</w>
       <w>edef</w>
       <w>efro</w>
+      <w>efrohome</w>
       <w>elems</w>
       <w>elevenbase</w>
       <w>elevenbits</w>
@@ -252,6 +253,7 @@
       <w>endline</w>
       <w>endtime</w>
       <w>entrypoint</w>
+      <w>envcfg</w>
       <w>envval</w>
       <w>ericf</w>
       <w>ericsson</w>
@@ -315,6 +317,7 @@
       <w>freeifaddrs</w>
       <w>freqs</w>
       <w>froemling</w>
+      <w>fromini</w>
       <w>frompos</w>
       <w>frontmost</w>
       <w>ftos</w>
@@ -815,6 +818,7 @@
       <w>stringi</w>
       <w>strlen</w>
       <w>strtof</w>
+      <w>subargs</w>
       <w>subclsssing</w>
       <w>subentities</w>
       <w>subitems</w>
@@ -894,6 +898,7 @@
       <w>unsignaled</w>
       <w>unstuff</w>
       <w>unsynchronized</w>
+      <w>uppercased</w>
       <w>userspace</w>
       <w>uther</w>
       <w>uuids</w>

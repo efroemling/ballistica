@@ -23,8 +23,9 @@ endif
 #                                                                              #
 ################################################################################
 
-# Override this to 'localhost' to build cloud builds on a local Mac.
-MAC_CLOUDSHELL_HOST ?= homebook-fro
+# Cloudshell hosts used to build various platforms/architectures.
+CLOUDSHELL_HOST_MAC_X86_64 ?= homebook-fro
+CLOUDSHELL_HOST_MAC_ARM64 ?= fromini
 
 # List targets in this Makefile and basic descriptions for them.
 help:
@@ -109,7 +110,7 @@ clean-list:
 	@git clean -dnx ${ROOT_CLEAN_IGNORES}
 
 # Tell make which of these targets don't represent files.
-.PHONY: list prereqs prereqs-clean assets assets-cmake assets-windows \
+.PHONY: help prereqs prereqs-clean assets assets-cmake assets-windows \
   assets-windows-Win32 assets-windows-x64 \
   assets-mac assets-ios assets-android assets-clean \
   resources resources-clean code code-clean \
@@ -537,12 +538,12 @@ update-check: prereqs
 # Run formatting on all files in the project considered 'dirty'.
 format:
 	@${MAKE} -j3 format-code format-scripts format-makefile
-	@tools/pcommand echo GRN Formatting complete!
+	@tools/pcommand echo BLD Formatting complete!
 
 # Same but always formats; ignores dirty state.
 format-full:
 	@${MAKE} -j3 format-code-full format-scripts-full format-makefile
-	@tools/pcommand echo GRN Formatting complete!
+	@tools/pcommand echo BLD Formatting complete!
 
 # Run formatting for compiled code sources (.cc, .h, etc.).
 format-code: prereqs
