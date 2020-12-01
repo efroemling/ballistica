@@ -361,7 +361,7 @@ class Scoreboard:
                        flash: bool = True,
                        show_value: bool = True) -> None:
         """Update the score-board display for the given ba.Team."""
-        if not team.id in self._entries:
+        if team.id not in self._entries:
             self._add_team(team)
 
             # Create a proxy in the team which will kill
