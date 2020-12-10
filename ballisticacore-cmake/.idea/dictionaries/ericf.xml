@@ -13,8 +13,8 @@
       <w>ack'ed</w>
       <w>acked</w>
       <w>acks</w>
-      <w>aclass</w>
       <w>aclass's</w>
+      <w>aclass</w>
       <w>activityplayer</w>
       <w>addrs</w>
       <w>adjoint</w>
@@ -107,6 +107,7 @@
       <w>bsivu</w>
       <w>bsmhi</w>
       <w>bsstd</w>
+      <w>bstat</w>
       <w>bsuuid</w>
       <w>bufs</w>
       <w>buildconfig</w>
@@ -149,8 +150,8 @@
       <w>cmath</w>
       <w>cmds</w>
       <w>cmdvals</w>
-      <w>codewarrior</w>
       <w>codewarrior's</w>
+      <w>codewarrior</w>
       <w>cofnodes</w>
       <w>collapseable</w>
       <w>collidable</w>
@@ -254,6 +255,7 @@
       <w>endtime</w>
       <w>entrypoint</w>
       <w>envcfg</w>
+      <w>envs</w>
       <w>envval</w>
       <w>ericf</w>
       <w>ericsson</w>
@@ -474,6 +476,8 @@
       <w>linearsize</w>
       <w>listobj</w>
       <w>llock</w>
+      <w>lockstr</w>
+      <w>locktype</w>
       <w>logmsg</w>
       <w>logpath</w>
       <w>logprefix</w>
@@ -487,6 +491,7 @@
       <w>lscope</w>
       <w>lstr</w>
       <w>lsync</w>
+      <w>ltypes</w>
       <w>lvec</w>
       <w>lvoid</w>
       <w>macmusicappgetlibrarysource</w>
@@ -717,6 +722,7 @@
       <w>resends</w>
       <w>resetinput</w>
       <w>resync</w>
+      <w>retrysecs</w>
       <w>retval</w>
       <w>rezing</w>
       <w>rgui</w>
@@ -738,6 +744,7 @@
       <w>scenetime</w>
       <w>screenmessage</w>
       <w>scrollwidget</w>
+      <w>sdkcheck</w>
       <w>sdl's</w>
       <w>sdlk</w>
       <w>seqlen</w>
@@ -950,6 +957,7 @@
       <w>wofocj</w>
       <w>wonkiness</w>
       <w>worldspace</w>
+      <w>wsroot</w>
       <w>wunused</w>
       <w>xclamped</w>
       <w>xdiff</w>

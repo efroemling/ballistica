@@ -50,7 +50,8 @@ def build_apple(arch: str, debug: bool = False) -> None:
     run('rm -rf "' + builddir + '"')
     run('mkdir -p build')
     run('git clone '
-        'git@github.com:pybee/Python-Apple-support.git "' + builddir + '"')
+        'https://github.com/beeware/Python-Apple-support.git "' + builddir +
+        '"')
     os.chdir(builddir)
 
     # TEMP: Check out a particular commit while the branch head is broken.
@@ -220,26 +221,28 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     (can be arm, arm64, x86, or x86_64)
     """
     import subprocess
+    import platform
     builddir = 'build/python_android_' + arch + ('_debug' if debug else '')
     run('rm -rf "' + builddir + '"')
     run('mkdir -p build')
     run('git clone '
-        'git@github.com:yan12125/python3-android.git "' + builddir + '"')
+        'https://github.com/yan12125/python3-android.git "' + builddir + '"')
     os.chdir(builddir)
 
     # It seems we now need 'autopoint' as part of this build, but on mac it
     # is not available on the normal path, but only as part of the keg-only
     # gettext homebrew formula.
-    if (subprocess.run('which autopoint', shell=True, check=False).returncode
-            != 0):
-        print('Updating path for mac autopoint...')
-        appath = subprocess.run('brew ls gettext | grep bin/autopoint',
-                                shell=True,
-                                check=True,
-                                capture_output=True)
-        appathout = os.path.dirname(appath.stdout.decode().strip())
-        os.environ['PATH'] += (':' + appathout)
-        print(f'ADDED "{appathout}" TO SYS PATH...')
+    if platform.system() == 'Darwin':
+        if (subprocess.run('which autopoint', shell=True,
+                           check=False).returncode != 0):
+            print('Updating path for mac autopoint...')
+            appath = subprocess.run('brew ls gettext | grep bin/autopoint',
+                                    shell=True,
+                                    check=True,
+                                    capture_output=True)
+            appathout = os.path.dirname(appath.stdout.decode().strip())
+            os.environ['PATH'] += (':' + appathout)
+            print(f'ADDED "{appathout}" TO SYS PATH...')
 
     # Commit from Jan 8, 2020. Right after this, the build system was switched
     # a a completely new minimal one which will take some work to update here.

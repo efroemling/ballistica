@@ -811,7 +811,7 @@ def pycharm(projroot: Path, full: bool, verbose: bool) -> None:
         # Wait a bit and ask it nicely to die.
         # We need to make sure it has enough time to do its cache updating
         # thing even if the system is fully under load.
-        time.sleep(10 * 60)
+        time.sleep(5 * 60)
 
         # Seems killing it via applescript is more likely to leave it
         # in a working state for offline inspections than TERM signal..

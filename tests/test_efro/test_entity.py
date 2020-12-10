@@ -90,17 +90,19 @@ def test_entity_values() -> None:
     ent.fval = 1.0
 
     # Simple value list field.
-    assert not ent.slval
+    assert not ent.slval  # bool operator
     assert len(ent.slval) == 0
     with pytest.raises(TypeError):
         ent.slval.append(1)  # type: ignore
     ent.slval.append('blah')
+    assert ent.slval  # bool operator
     assert len(ent.slval) == 1
     assert list(ent.slval) == ['blah']
     with pytest.raises(TypeError):
         ent.slval = ['foo', 'bar', 1]  # type: ignore
 
     # Simple value dict field.
+    assert not ent.str_int_dict  # bool operator
     assert 'foo' not in ent.str_int_dict
     # Set with incorrect key type should give TypeError.
     with pytest.raises(TypeError):
@@ -109,6 +111,7 @@ def test_entity_values() -> None:
     with pytest.raises(TypeError):
         ent.str_int_dict['foo'] = 'bar'  # type: ignore
     ent.str_int_dict['foo'] = 123
+    assert ent.str_int_dict  # bool operator
     assert static_type_equals(ent.str_int_dict['foo'], int)
     assert ent.str_int_dict['foo'] == 123
 
@@ -144,14 +147,16 @@ def test_entity_values_2() -> None:
     with pytest.raises(TypeError):
         ent.compoundlist[0] = 123  # type: ignore
     assert len(ent.compoundlist) == 0
-    assert not ent.compoundlist
+    assert not ent.compoundlist  # bool operator
     ent.compoundlist.append()
-    assert ent.compoundlist
+    assert ent.compoundlist  # bool operator
     assert len(ent.compoundlist) == 1
     assert static_type_equals(ent.compoundlist[0], CompoundTest)
 
     # Compound dict field.
+    assert not ent.compounddict  # bool operator
     cdval = ent.compounddict.add('foo')
+    assert ent.compounddict  # bool operator
     assert static_type_equals(cdval, CompoundTest)
     # Set with incorrect key type should give TypeError.
     with pytest.raises(TypeError):
@@ -171,8 +176,9 @@ def test_entity_values_2() -> None:
     assert ent.enumval2 is None
 
     # Nested compound values
-    assert not ent.grp.compoundlist
+    assert not ent.grp.compoundlist  # bool operator
     val = ent.grp.compoundlist.append()
+    assert ent.grp.compoundlist  # bool operator
     assert static_type_equals(val, SubCompoundTest)
     assert static_type_equals(ent.grp.compoundlist[0], SubCompoundTest)
     assert static_type_equals(ent.grp.compoundlist[0].subval, bool)

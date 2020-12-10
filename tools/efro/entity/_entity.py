@@ -18,7 +18,7 @@ T = TypeVar('T', bound='EntityMixin')
 
 
 class EntityMixin:
-    """Mixin class to add data-storage to ComplexValue, forming an Entity.
+    """Mixin class to add data-storage to CompoundValue, forming an Entity.
 
     Distinct Entity types should inherit from this first and a CompoundValue
     (sub)type second. This order ensures that constructor arguments for this

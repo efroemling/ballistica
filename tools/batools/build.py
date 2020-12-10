@@ -280,26 +280,34 @@ def gen_fulltest_buildfile_android() -> None:
     if DO_SPARSE_TEST_BUILDS:
         extras = SPARSE_TEST_BUILDS[dayoffset % len(SPARSE_TEST_BUILDS)]
         extras = [e for e in extras if e.startswith('android.')]
+        cspre = 'tools/cloudshell linbeast --env android --'
         for extra in extras:
             if extra == 'android.pylibs.arm':
-                lines.append('tools/pcommand python_build_android arm')
+                lines.append(f'{cspre} tools/pcommand'
+                             f' python_build_android arm')
             elif extra == 'android.pylibs.arm.debug':
-                lines.append('tools/pcommand python_build_android_debug arm')
+                lines.append(f'{cspre} tools/pcommand'
+                             f' python_build_android_debug arm')
             elif extra == 'android.pylibs.arm64':
-                lines.append('tools/pcommand python_build_android arm64')
+                lines.append(f'{cspre} tools/pcommand'
+                             f' python_build_android arm64')
             elif extra == 'android.pylibs.arm64.debug':
-                lines.append('tools/pcommand python_build_android_debug arm64')
+                lines.append(f'{cspre} tools/pcommand'
+                             f' python_build_android_debug arm64')
             elif extra == 'android.pylibs.x86':
-                lines.append('tools/pcommand python_build_android x86')
+                lines.append(f'{cspre}tools/pcommand'
+                             f' python_build_android x86')
             elif extra == 'android.pylibs.x86.debug':
-                lines.append('tools/pcommand python_build_android_debug x86')
+                lines.append(f'{cspre} tools/pcommand'
+                             f' python_build_android_debug x86')
             elif extra == 'android.pylibs.x86_64':
-                lines.append('tools/pcommand python_build_android x86_64')
+                lines.append(f'{cspre} tools/pcommand'
+                             f' python_build_android x86_64')
             elif extra == 'android.pylibs.x86_64.debug':
-                lines.append(
-                    'tools/pcommand python_build_android_debug x86_64')
+                lines.append(f'{cspre} tools/pcommand'
+                             f' python_build_android_debug x86_64')
             elif extra == 'android.package':
-                lines.append('make android-package')
+                lines.append('make android-cloud-package')
             else:
                 raise RuntimeError(f'Unknown extra: {extra}')
 
@@ -588,7 +596,7 @@ def update_makebob() -> None:
         check=True,
     )
     print('Building linux_x86_64...', flush=True)
-    subprocess.run(['make', 'linux-build'], check=True, env=env)
+    subprocess.run(['make', 'linux-vm-build'], check=True, env=env)
     subprocess.run(
         [
             'cp', '-v', 'build/linux-release/make_bob',

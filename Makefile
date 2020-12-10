@@ -26,6 +26,10 @@ endif
 # Cloudshell hosts used to build various platforms/architectures.
 CLOUDSHELL_HOST_MAC_X86_64 ?= homebook-fro
 CLOUDSHELL_HOST_MAC_ARM64 ?= fromini
+CLOUDSHELL_HOST_LINUX_X86_64 ?= linbeast
+CLOUDSHELL_HOST_ANDROID ?= linbeast
+# FIXME use rpi4 when its back
+CLOUDSHELL_HOST_RPI ?= rpi3
 
 # List targets in this Makefile and basic descriptions for them.
 help:
@@ -655,14 +659,20 @@ test: prereqs
 # Run tests with any caching disabled.
 test-full: test
 
-# Iterate on individual tests with extra debug output enabled.
+# Individual test with extra output enabled.
 test-assetmanager:
 	@tools/pcommand pytest -o log_cli=true -o log_cli_level=debug -s -v \
       tests/test_ba/test_assetmanager.py::test_assetmanager
 
+# Individual test with extra output enabled.
 test-dataclasses:
 	@tools/pcommand pytest -o log_cli=true -o log_cli_level=debug -s -v \
       tests/test_efro/test_dataclasses.py
+
+# Individual test with extra output enabled.
+test-entity:
+	@tools/pcommand pytest -o log_cli=true -o log_cli_level=debug -s -v \
+      tests/test_efro/test_entity.py
 
 # Tell make which of these targets don't represent files.
 .PHONY: test test-full test-assetmanager
