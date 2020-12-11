@@ -7,7 +7,7 @@
 
 namespace ballistica {
 
-ImageWidget::ImageWidget() { birth_time_ = g_game->master_time(); }
+ImageWidget::ImageWidget() : birth_time_{g_game->master_time()} {}
 
 ImageWidget::~ImageWidget() = default;
 

@@ -50,7 +50,7 @@ UI::UI() {
     g_app_globals->ui_scale = UIScale::kLarge;
   } else {
     // Use automatic val.
-    if (g_buildconfig.iircade_build()) {
+    if (g_buildconfig.iircade_build()) {  // NOLINT(bugprone-branch-clone)
       g_app_globals->ui_scale = UIScale::kMedium;
     } else if (IsVRMode() || g_platform->IsRunningOnTV()) {
       // VR and tv builds always use medium.

@@ -189,11 +189,11 @@ class Vector3f {
   static auto Angle(const Vector3f& v1, const Vector3f& v2) -> float;
 };
 
-const Vector3f kVector3fX{1.0f, 0.0f, 0.0f};
-const Vector3f kVector3fY{0.0f, 1.0f, 0.0f};
-const Vector3f kVector3fZ{0.0f, 0.0f, 1.0f};
-const Vector3f kVector3f0{0.0f, 0.0f, 0.0f};
-const Vector3f kVector3f1{1.0f, 1.0f, 1.0f};
+const Vector3f kVector3fX{1.0f, 0.0f, 0.0f};  // NOLINT(cert-err58-cpp)
+const Vector3f kVector3fY{0.0f, 1.0f, 0.0f};  // NOLINT(cert-err58-cpp)
+const Vector3f kVector3fZ{0.0f, 0.0f, 1.0f};  // NOLINT(cert-err58-cpp)
+const Vector3f kVector3f0{0.0f, 0.0f, 0.0f};  // NOLINT(cert-err58-cpp)
+const Vector3f kVector3f1{1.0f, 1.0f, 1.0f};  // NOLINT(cert-err58-cpp)
 
 }  // namespace ballistica
 

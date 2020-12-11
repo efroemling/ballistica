@@ -740,6 +740,7 @@ auto Input::GetLocalActiveInputDeviceCount() -> int {
 
 auto Input::HaveControllerWithPlayer() -> bool {
   assert(InGameThread());
+  // NOLINTNEXTLINE(readability-use-anyofallof)
   for (auto& input_device : input_devices_) {
     if (input_device.exists() && (*input_device).IsController()
         && (*input_device).attached_to_player()) {
@@ -751,6 +752,7 @@ auto Input::HaveControllerWithPlayer() -> bool {
 
 auto Input::HaveRemoteAppController() -> bool {
   assert(InGameThread());
+  // NOLINTNEXTLINE(readability-use-anyofallof)
   for (auto& input_device : input_devices_) {
     if (input_device.exists() && (*input_device).IsRemoteApp()) {
       return true;

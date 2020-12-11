@@ -26,7 +26,7 @@ class Vector4f {
   };
 };
 
-const Vector4f kVector4f0{0.0f, 0.0f, 0.0f, 0.0f};
+const Vector4f kVector4f0{0.0f, 0.0f, 0.0f, 0.0f};  // NOLINT(cert-err58-cpp)
 
 }  // namespace ballistica
 

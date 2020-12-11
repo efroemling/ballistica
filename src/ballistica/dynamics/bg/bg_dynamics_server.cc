@@ -109,12 +109,8 @@ class BGDynamicsServer::Terrain {
 
 class BGDynamicsServer::Field {
  public:
-  Field(BGDynamicsServer* t, const Vector3f& pos, float mag) : pos_(pos) {
-    rad_ = 5;
-    mag_ = mag;
-    birth_time_ = t->time();
-    lifespan_ = 500;
-  }
+  Field(BGDynamicsServer* t, const Vector3f& pos, float mag)
+      : pos_(pos), rad_(5), mag_(mag), birth_time_(t->time()), lifespan_(500) {}
   ~Field() = default;
 
   auto rad() const -> dReal { return rad_; }
@@ -231,24 +227,25 @@ class BGDynamicsServer::Tendril {
   };
 
   explicit Tendril(BGDynamicsServer* t)
-      : has_updated_(false), controller_(nullptr), emitting_(true) {
-    emit_rate_ = 0.8f + 0.4f * RandomFloat();
-    birth_time_ = t->time();
-    radius_ = 0.1f + RandomFloat() * 0.1f;
-    tex_coord_ = RandomFloat();
-    start_erode_ = 0.1f;
-    start_spread_ = 4.0f;
-    side_spread_rate_ = 1.0f;
-    point_rand_scale_ = 1.0f;
-    slice_rand_scale_ = 1.0f;
-    tex_change_rate_ = 1.0f;
-    emit_rate_falloff_rate_ = 1.0f;
-    start_brightness_max_ = 0.9f;
-    start_brightness_min_ = 0.3f;
-    brightness_rand_ = 0.5f;
-    start_fade_scale_ = 1.0f;
-    glow_scale_ = 1.0f;
-  }
+      : has_updated_{false},
+        controller_{nullptr},
+        emitting_{true},
+        emit_rate_{0.8f + 0.4f * RandomFloat()},
+        birth_time_{t->time()},
+        radius_{0.1f + RandomFloat() * 0.1f},
+        tex_coord_{RandomFloat()},
+        start_erode_{0.1f},
+        start_spread_{4.0f},
+        side_spread_rate_{1.0f},
+        point_rand_scale_{1.0f},
+        slice_rand_scale_{1.0f},
+        tex_change_rate_{1.0f},
+        emit_rate_falloff_rate_{1.0f},
+        start_brightness_max_{0.9f},
+        start_brightness_min_{0.3f},
+        brightness_rand_{0.5f},
+        start_fade_scale_{1.0f},
+        glow_scale_{1.0f} {}
   void SetController(TendrilController* tc) {
     assert((controller_ == nullptr) ^ (tc == nullptr));
     controller_ = tc;
@@ -360,8 +357,7 @@ class BGDynamicsServer::Tendril {
 
 class BGDynamicsServer::TendrilController {
  public:
-  explicit TendrilController(Tendril* t) {
-    tendril_ = t;
+  explicit TendrilController(Tendril* t) : tendril_{t} {
     tendril_->SetController(this);
   }
   ~TendrilController() {
@@ -392,11 +388,12 @@ class BGDynamicsServer::Chunk {
         type_(event.chunk_type),
         dynamic_(dynamic),
         can_die_(can_die),
-        tendril_controller_(nullptr) {
-    birth_time_ = t->time();
-    flicker_ = 1.0f;
-    flicker_scale_ = RandomFloat();
-    flicker_scale_ = 1.0f - (flicker_scale_ * flicker_scale_);
+        tendril_controller_(nullptr),
+        birth_time_{t->time()},
+        flicker_{1.0f},
+        flicker_scale_{1.0f} {
+    flicker_scale_ = RandomFloat();                             // NOLINT
+    flicker_scale_ = 1.0f - (flicker_scale_ * flicker_scale_);  // NOLINT
     if (type_ != BGDynamicsChunkType::kFlagStand) {
       if (type_ == BGDynamicsChunkType::kSplinter) {
         size_[0] = event.scale * 0.15f * (0.4f + 0.6f * RandomFloat());
@@ -675,6 +672,7 @@ BGDynamicsServer::BGDynamicsServer(Thread* thread)
   BA_PRECONDITION(g_bg_dynamics_server == nullptr);
   g_bg_dynamics_server = this;
 
+  // NOLINTNEXTLINE(cppcoreguidelines-prefer-member-initializer)
   ode_world_ = dWorldCreate();
   assert(ode_world_);
   dWorldSetGravity(ode_world_, 0.0f, -20.0f, 0.0f);

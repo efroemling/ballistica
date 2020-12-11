@@ -947,7 +947,7 @@ void Python::Reset(bool do_init) {
 
     const char* ver = Py_GetVersion();
 
-    if (strncmp(ver, "3.8", 3)) {
+    if (strncmp(ver, "3.8", 3) != 0) {
       throw Exception("We require Python 3.8.x; instead found "
                       + std::string(ver));
     }

@@ -351,6 +351,7 @@ auto RigidBody::AddCallback(CollideCallbackFunc callbackIn, void* data_in)
 
 auto RigidBody::CallCollideCallbacks(dContact* contacts, int count,
                                      RigidBody* opposingbody) -> bool {
+  // NOLINTNEXTLINE(readability-use-anyofallof)
   for (auto&& i : collide_callbacks_) {
     if (!i.callback(contacts, count, this, opposingbody, i.data)) {
       return false;

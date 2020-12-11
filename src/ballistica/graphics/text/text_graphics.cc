@@ -941,6 +941,7 @@ void TextGraphics::GetFontPagesForText(const std::string& text,
 
 auto TextGraphics::HaveBigChars(const std::string& text) -> bool {
   std::vector<uint32_t> unicode = Utils::UnicodeFromUTF8(text, "fnc93rh");
+  // NOLINTNEXTLINE(readability-use-anyofallof)
   for (unsigned int val : unicode) {
     if (GetBigGlyphIndex(val) == -1) {
       // Don't count misses for newlines, spaces, etc.
@@ -961,6 +962,7 @@ auto TextGraphics::HaveChars(const std::string& text) -> bool {
     return true;
   } else {
     std::vector<uint32_t> unicode = Utils::UnicodeFromUTF8(text, "c957fj");
+    // NOLINTNEXTLINE(readability-use-anyofallof)
     for (auto&& val : unicode) {
       // There's a few special chars we have.
       if (val >= kGlyphCount && !IsSpecialChar(val)) {

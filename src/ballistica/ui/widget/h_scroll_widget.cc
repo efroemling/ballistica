@@ -31,7 +31,7 @@ void HScrollWidget::HandleRealTimerExpired(RealTimer<HScrollWidget>* t) {
     if (!touch_is_scrolling_ && !touch_down_sent_) {
       ContainerWidget::HandleMessage(
           WidgetMessage(WidgetMessage::Type::kMouseDown, nullptr, touch_x_,
-                        touch_y_, touch_held_click_count_));
+                        touch_y_, static_cast<float>(touch_held_click_count_)));
       touch_down_sent_ = true;
     } else {
     }

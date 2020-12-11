@@ -1935,6 +1935,7 @@ auto Game::IsPlayerBanned(const PlayerSpec& spec) -> bool {
          && banned_players_.front().first < current_time) {
     banned_players_.pop_front();
   }
+  // NOLINTNEXTLINE(readability-use-anyofallof)
   for (auto&& test_spec : banned_players_) {
     if (test_spec.second == spec) {
       return true;

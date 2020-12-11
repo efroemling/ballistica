@@ -148,6 +148,7 @@ class Matrix44f {
   }
 };
 
+// NOLINTNEXTLINE(cert-err58-cpp)
 const Matrix44f kMatrix44fIdentity{1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
                                    0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
                                    0.0f, 0.0f, 0.0f, 1.0f};

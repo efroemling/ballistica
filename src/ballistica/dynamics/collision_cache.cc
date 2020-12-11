@@ -12,7 +12,7 @@
 
 namespace ballistica {
 
-CollisionCache::CollisionCache() { test_box_ = dCreateBox(nullptr, 1, 1, 1); }
+CollisionCache::CollisionCache() : test_box_{dCreateBox(nullptr, 1, 1, 1)} {}
 
 CollisionCache::~CollisionCache() {
   if (shadow_ray_) {

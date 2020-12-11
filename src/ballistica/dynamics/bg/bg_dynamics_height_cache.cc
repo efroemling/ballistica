@@ -16,10 +16,9 @@ BGDynamicsHeightCache::BGDynamicsHeightCache()
       y_min_(-1.0f),
       y_max_(1.0f),
       z_min_(-1.0f),
-      z_max_(1.0f) {
-  grid_width_ = 1;
-  grid_height_ = 1;
-}
+      z_max_(1.0f),
+      grid_width_(1),
+      grid_height_(1) {}
 
 BGDynamicsHeightCache::~BGDynamicsHeightCache() {
   if (shadow_ray_) {

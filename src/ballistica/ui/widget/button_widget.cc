@@ -18,14 +18,13 @@
 
 namespace ballistica {
 
-ButtonWidget::ButtonWidget() {
+ButtonWidget::ButtonWidget() : birth_time_{g_game->master_time()} {
   text_ = Object::New<TextWidget>();
   SetText("Button");
   text_->set_valign(TextWidget::VAlign::kCenter);
   text_->set_halign(TextWidget::HAlign::kCenter);
   text_->SetWidth(0.0f);
   text_->SetHeight(0.0f);
-  birth_time_ = g_game->master_time();
 }
 
 ButtonWidget::~ButtonWidget() = default;

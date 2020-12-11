@@ -20,6 +20,7 @@ class Vector2f {
   };
 };
 
+// NOLINTNEXTLINE(cert-err58-cpp)
 const Vector2f kVector2f0{0.0f, 0.0f};
 
 }  // namespace ballistica

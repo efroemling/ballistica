@@ -328,6 +328,7 @@ class Utils {
   /// Return whether a sequence of some type pointer has nullptr members.
   template <typename T>
   static auto HasNullMembers(const T& sequence) -> bool {
+    // NOLINTNEXTLINE(readability-use-anyofallof)
     for (auto&& i : sequence) {
       if (i == nullptr) {
         return true;
