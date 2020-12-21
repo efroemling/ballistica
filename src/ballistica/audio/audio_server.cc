@@ -327,7 +327,10 @@ void AudioServer::PushSetListenerOrientationCall(const Vector3f& forward,
 }
 
 AudioServer::AudioServer(Thread* thread)
-    : Module("audio", thread), impl_{std::make_unique<AudioServer::Impl>()} {
+    : Module("audio", thread),
+      impl_{new AudioServer::Impl()}
+// impl_{std::make_unique<AudioServer::Impl>()}
+{
   // we're a singleton..
   assert(g_audio_server == nullptr);
   g_audio_server = this;
@@ -420,6 +423,7 @@ AudioServer::AudioServer(Thread* thread)
 }
 
 AudioServer::~AudioServer() {
+  delete impl_;
 #if BA_ENABLE_AUDIO
   sound_source_refs_.clear();
 

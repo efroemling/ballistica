@@ -5,7 +5,6 @@
 
 #include <list>
 #include <map>
-#include <memory>
 #include <optional>
 #include <set>
 #include <string>
@@ -51,7 +50,10 @@ class Python {
 
    private:
     class Impl;
-    std::unique_ptr<Impl> impl_{};
+    // Note: should use unique_ptr for this, but build fails on raspberry pi
+    // (gcc 8.3.0). Works on Ubuntu 9.3 so should try again later.
+    // std::unique_ptr<Impl> impl_{};
+    Impl* impl_{};
   };
 
   /// Return whether the current thread holds the global-interpreter-lock.

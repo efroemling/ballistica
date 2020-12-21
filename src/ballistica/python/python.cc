@@ -2610,9 +2610,11 @@ class Python::ScopedInterpreterLock::Impl {
 };
 
 Python::ScopedInterpreterLock::ScopedInterpreterLock()
-    : impl_(std::make_unique<Python::ScopedInterpreterLock::Impl>()) {}
+    : impl_{new Python::ScopedInterpreterLock::Impl()}
+// impl_{std::make_unique<Python::ScopedInterpreterLock::Impl>()}
+{}
 
-Python::ScopedInterpreterLock::~ScopedInterpreterLock() {}
+Python::ScopedInterpreterLock::~ScopedInterpreterLock() { delete impl_; }
 
 template <typename T>
 auto IsPyEnum(Python::ObjID enum_class_id, PyObject* obj) -> bool {

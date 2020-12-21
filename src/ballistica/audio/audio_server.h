@@ -4,7 +4,6 @@
 #define BALLISTICA_AUDIO_AUDIO_SERVER_H_
 
 #include <map>
-#include <memory>
 #include <vector>
 
 #include "ballistica/core/module.h"
@@ -100,7 +99,11 @@ class AudioServer : public Module {
   // this function.
   void AddSoundRefDelete(const Object::Ref<SoundData>* c);
 
-  std::unique_ptr<Impl> impl_{};
+  // Note: should use unique_ptr for this, but build fails on raspberry pi
+  // (gcc 8.3.0). Works on Ubuntu 9.3 so should try again later.
+  // std::unique_ptr<Impl> impl_{};
+  Impl* impl_{};
+
   Timer* process_timer_{};
   bool have_pending_loads_{};
   bool paused_{};
