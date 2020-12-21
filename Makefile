@@ -23,15 +23,6 @@ endif
 #                                                                              #
 ################################################################################
 
-# Cloudshell hosts used to build various platforms/architectures.
-CLOUDSHELL_HOST_MAC_X86_64 ?= homebook-fro
-CLOUDSHELL_HOST_MAC_ARM64 ?= fromini
-CLOUDSHELL_HOST_LINUX_X86_64 ?= linbeast
-CLOUDSHELL_HOST_ANDROID ?= linbeast
-# FIXME use rpi4 when its back
-CLOUDSHELL_HOST_RPI ?= rpi4
-CLOUDSHELL_HOST_WINDOWS ?= winbeast
-
 # List targets in this Makefile and basic descriptions for them.
 help:
 	@tools/pcommand makefile_target_list Makefile
@@ -168,6 +159,7 @@ prefab-clean:
 
 # Specific platform prefab targets:
 
+# (what visual studio calls their x86 target platform)
 WINPLAT_X86 = Win32
 
 # Mac debug:
