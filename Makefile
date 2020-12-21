@@ -30,6 +30,7 @@ CLOUDSHELL_HOST_LINUX_X86_64 ?= linbeast
 CLOUDSHELL_HOST_ANDROID ?= linbeast
 # FIXME use rpi4 when its back
 CLOUDSHELL_HOST_RPI ?= rpi4
+CLOUDSHELL_HOST_WINDOWS ?= winbeast
 
 # List targets in this Makefile and basic descriptions for them.
 help:
