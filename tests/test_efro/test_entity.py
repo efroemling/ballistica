@@ -67,7 +67,6 @@ class EntityTest(entity.Entity):
     fval2 = entity.Field('f2', entity.Float3Value())
 
 
-# noinspection PyTypeHints
 def test_entity_values() -> None:
     """Test various entity assigns for value and type correctness."""
     ent = EntityTest()
@@ -124,7 +123,6 @@ def test_entity_values() -> None:
     assert dict(ent.str_int_dict.items()) == {'foo': 123}
 
 
-# noinspection PyTypeHints
 def test_entity_values_2() -> None:
     """Test various entity assigns for value and type correctness."""
 
@@ -184,7 +182,6 @@ def test_entity_values_2() -> None:
     assert static_type_equals(ent.grp.compoundlist[0].subval, bool)
 
 
-# noinspection PyTypeHints
 def test_field_copies() -> None:
     """Test copying various values between fields."""
     ent1 = EntityTest()

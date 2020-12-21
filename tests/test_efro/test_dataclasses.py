@@ -141,7 +141,6 @@ def test_assign() -> None:
         dataclass_assign(tclass, {'lfval': [1]})
 
 
-# noinspection PyTypeHints
 def test_validate() -> None:
     """Testing validation."""
 

@@ -21,7 +21,7 @@
 namespace ballistica {
 
 // These are set automatically via script; don't change here.
-const int kAppBuildNumber = 20259;
+const int kAppBuildNumber = 20260;
 const char* kAppVersion = "1.5.29";
 
 // Our standalone globals.
@@ -212,8 +212,8 @@ auto GetUniqueSessionIdentifier() -> const std::string& {
   static bool have_session_id = false;
   if (!have_session_id) {
     srand(static_cast<unsigned int>(
-        Platform::GetCurrentMilliseconds()));       // NOLINT
-    uint32_t tval = static_cast<uint32_t>(rand());  // NOLINT
+        Platform::GetCurrentMilliseconds()));   // NOLINT
+    auto tval = static_cast<uint32_t>(rand());  // NOLINT
     assert(g_platform);
     session_id = g_platform->GetUniqueDeviceIdentifier() + std::to_string(tval);
     have_session_id = true;

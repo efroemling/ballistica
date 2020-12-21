@@ -103,7 +103,6 @@ class EntityMixin:
         self.d_data = target.d_data
 
         # Make sure target blows up if someone tries to use it.
-        # noinspection PyTypeHints
         target.d_data = None  # type: ignore
 
     def pruned_data(self) -> Dict[str, Any]:
@@ -214,5 +213,6 @@ class Entity(EntityMixin, CompoundValue):
     to accomplish the same. The latter allows sharing CompoundValue
     layouts between different concrete Entity types. For example, a
     'Weapon' CompoundValue could be embedded as part of a 'Character'
-    Entity but also exist as a distinct Entity in an armory database.
+    Entity but also exist as a distinct 'WeaponEntity' in an armory
+    database.
     """

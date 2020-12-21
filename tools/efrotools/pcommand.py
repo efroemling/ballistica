@@ -377,6 +377,7 @@ def _filter_tool_config(cfg: str) -> str:
 
     # Try to be as strict as we can about using types everywhere.
     warn_unused_ignores = True
+    warn_no_return = True
     warn_return_any = True
     warn_redundant_casts = True
     warn_unreachable = True

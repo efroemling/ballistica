@@ -36,6 +36,7 @@ PIP_REQUIREMENTS = [
     PipRequirement(modulename='pytest', minversion=[6, 1, 2]),
     PipRequirement(modulename='typing_extensions'),
     PipRequirement(modulename='pytz'),
+    PipRequirement(modulename='ansiwrap'),
     PipRequirement(modulename='yaml', pipname='PyYAML'),
     PipRequirement(modulename='requests'),
 ]
@@ -53,9 +54,9 @@ SPARSE_TEST_BUILDS: List[List[str]] = [
     ['ios.pylibs', 'android.pylibs.arm64.debug'],
     ['linux.package.server'],
     ['android.pylibs.x86.debug', 'mac.package'],
-    ['mac.package.server', 'android.pylibs.x86_64'],
+    ['mac.package.server.arm64', 'android.pylibs.x86_64'],
     ['windows.package.oculus'],
-    ['android.pylibs.x86_64.debug'],
+    ['mac.package.server.x86_64', 'android.pylibs.x86_64.debug'],
     ['mac.pylibs.debug', 'android.package'],
 ]
 
@@ -295,7 +296,7 @@ def gen_fulltest_buildfile_android() -> None:
                 lines.append(f'{cspre} tools/pcommand'
                              f' python_build_android_debug arm64')
             elif extra == 'android.pylibs.x86':
-                lines.append(f'{cspre}tools/pcommand'
+                lines.append(f'{cspre} tools/pcommand'
                              f' python_build_android x86')
             elif extra == 'android.pylibs.x86.debug':
                 lines.append(f'{cspre} tools/pcommand'
@@ -413,8 +414,10 @@ def gen_fulltest_buildfile_apple() -> None:
         for extra in extras:
             if extra == 'mac.package':
                 lines.append('make mac-package')
-            elif extra == 'mac.package.server':
-                lines.append('make mac-cloud-server-package')
+            elif extra == 'mac.package.server.x86_64':
+                lines.append('make mac-cloud-server-package-x86-64')
+            elif extra == 'mac.package.server.arm64':
+                lines.append('make mac-cloud-server-package-arm64')
             elif extra == 'mac.pylibs':
                 lines.append('tools/pcommand python_build_apple mac')
             elif extra == 'mac.pylibs.debug':
@@ -528,6 +531,8 @@ def checkenv() -> None:
             f'pip (for {PYTHON_BIN}) is required; please install it.')
 
     # Check for some required python modules.
+    # FIXME: since all of these come from pip now, we should just use
+    # pip --list to check versions on everything instead of doing it ad-hoc.
     for req in PIP_REQUIREMENTS:
         modname = req.modulename
         minver = req.minversion

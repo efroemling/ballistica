@@ -2,11 +2,23 @@
 #
 """Entity functionality.
 
-A system for defining complex data-containing types, supporting both static
-and run-time type safety, serialization, efficient/sparse storage, per-field
-value limits, etc. These are heavy-weight in comparison to things such as
+A system for defining structured data, supporting both static and runtime
+type safety, serialization, efficient/sparse storage, per-field value
+limits, etc. These are heavy-weight in comparison to things such as
 dataclasses, but the increased features can make the overhead worth it for
 certain use cases.
+
+Advantages compared to nested dataclasses:
+- Can wrap and preserve unmapped data (so fields can be added to new versions
+  of something without breaking old versions' ability to read the data)
+- Incorrectly typed data is caught at runtime (for dataclasses we rely on
+  type-checking and explicit validation calls)
+
+Disadvantages compared to nested dataclasses:
+- More complex to use
+- Significantly more heavyweight (roughly 10 times slower in quick tests)
+- Can't currently be initialized in constructors (this would probably require
+  a Mypy plugin to do in a type-safe way)
 """
 # pylint: disable=unused-import
 

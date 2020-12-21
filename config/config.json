@@ -29,7 +29,8 @@
     "yaml",
     "requests",
     "typing_extensions",
-    "cpplint"
+    "cpplint",
+    "ansiwrap"
   ],
   "python_paths": [
     "assets/src/ba_data/python",

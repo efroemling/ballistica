@@ -116,7 +116,7 @@ def compound_eq(obj1: Union[BoundCompoundValue, CompoundValue],
 
     # Criteria for comparison: both need to be a compound value
     # and both must have data (which implies they are either a entity
-    # or bound to a subfield in a entity).
+    # or bound to a subfield in an entity).
     value1, data1 = get_compound_value_and_data(obj1)
     if data1 is None:
         return NotImplemented
