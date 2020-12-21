@@ -15,9 +15,6 @@
 // Predeclare a few global namespace things
 // (just enough to pass some pointers around without
 // requiring system-ish headers).
-#if BA_ENABLE_AUDIO
-typedef struct ALCcontext_struct ALCcontext;
-#endif
 typedef struct _object PyObject;
 typedef struct _ts PyThreadState;
 typedef struct PyMethodDef PyMethodDef;

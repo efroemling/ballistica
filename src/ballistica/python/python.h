@@ -5,6 +5,7 @@
 
 #include <list>
 #include <map>
+#include <memory>
 #include <optional>
 #include <set>
 #include <string>
@@ -50,7 +51,7 @@ class Python {
 
    private:
     class Impl;
-    Impl* impl_ = nullptr;
+    std::unique_ptr<Impl> impl_{};
   };
 
   /// Return whether the current thread holds the global-interpreter-lock.

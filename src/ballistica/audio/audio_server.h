@@ -47,10 +47,6 @@ class AudioServer : public Module {
 
   auto paused() const -> bool { return paused_; }
 
- private:
-  class ThreadSource;
-  ~AudioServer() override;
-
   // Client sources use these to pass settings to the server.
   void PushSourceSetIsMusicCall(uint32_t play_id, bool val);
   void PushSourceSetPositionalCall(uint32_t play_id, bool val);
@@ -62,14 +58,21 @@ class AudioServer : public Module {
   void PushSourceStopCall(uint32_t play_id);
   void PushSourceEndCall(uint32_t play_id);
 
-  void SetPaused(bool paused);
-
   // Fade a playing sound out over the given time.  If it is already
   // fading or does not exist, does nothing.
   void FadeSoundOut(uint32_t play_id, uint32_t time);
 
   // Stop a sound from playing if it exists.
   void StopSound(uint32_t play_id);
+
+ private:
+  class ThreadSource;
+  struct Impl;
+
+  ~AudioServer() override;
+
+  void SetPaused(bool paused);
+
   void SetMusicVolume(float volume);
   void SetSoundVolume(float volume);
   void SetSoundPitch(float pitch);
@@ -97,14 +100,11 @@ class AudioServer : public Module {
   // this function.
   void AddSoundRefDelete(const Object::Ref<SoundData>* c);
 
+  std::unique_ptr<Impl> impl_{};
   Timer* process_timer_{};
   bool have_pending_loads_{};
   bool paused_{};
   millisecs_t last_sound_fade_process_time_{};
-
-#if BA_ENABLE_AUDIO
-  ALCcontext* alc_context_;
-#endif
 
   float sound_volume_{1.0f};
   float sound_pitch_{1.0f};
@@ -134,10 +134,6 @@ class AudioServer : public Module {
   millisecs_t last_sanity_check_time_{};
 
   static int al_source_count_;
-
-  // FIXME: Try to kill these.
-  friend class AudioSource;
-  friend class Audio;
 };
 
 }  // namespace ballistica

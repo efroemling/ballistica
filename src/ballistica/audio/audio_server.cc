@@ -42,6 +42,15 @@ const bool kShowInUseSounds = false;
 
 int AudioServer::al_source_count_ = 0;
 
+struct AudioServer::Impl {
+  Impl() {}
+  ~Impl() {}
+
+#if BA_ENABLE_AUDIO
+  ALCcontext* alc_context_{};
+#endif
+};
+
 /// Location for sound emission (server version).
 class AudioServer::ThreadSource : public Object {
  public:
@@ -167,7 +176,7 @@ void AudioServer::SetPaused(bool pause) {
       // Conceptual/AudioSessionProgrammingGuide/Cookbook/
       // Cookbook.html#//apple_ref/doc/uid/TP40007875-CH6-SW38
 #if BA_ENABLE_AUDIO
-      alcMakeContextCurrent(alc_context_);  // hmm is this necessary?..
+      alcMakeContextCurrent(impl_->alc_context_);  // hmm is this necessary?..
 #endif
 #endif
 // On android lets tell openal-soft to stop processing.
@@ -317,7 +326,8 @@ void AudioServer::PushSetListenerOrientationCall(const Vector3f& forward,
   });
 }
 
-AudioServer::AudioServer(Thread* thread) : Module("audio", thread) {
+AudioServer::AudioServer(Thread* thread)
+    : Module("audio", thread), impl_{std::make_unique<AudioServer::Impl>()} {
   // we're a singleton..
   assert(g_audio_server == nullptr);
   g_audio_server = this;
@@ -370,9 +380,9 @@ AudioServer::AudioServer(Thread* thread) : Module("audio", thread) {
     ALCdevice* device;
     device = alcOpenDevice(alDeviceName);
     BA_PRECONDITION(device);
-    alc_context_ = alcCreateContext(device, nullptr);
-    BA_PRECONDITION(alc_context_);
-    BA_PRECONDITION(alcMakeContextCurrent(alc_context_));
+    impl_->alc_context_ = alcCreateContext(device, nullptr);
+    BA_PRECONDITION(impl_->alc_context_);
+    BA_PRECONDITION(alcMakeContextCurrent(impl_->alc_context_));
     CHECK_AL_ERROR;
   }
 
@@ -417,8 +427,8 @@ AudioServer::~AudioServer() {
   {
     ALCdevice* device;
     BA_PRECONDITION_LOG(alcMakeContextCurrent(nullptr));
-    device = alcGetContextsDevice(alc_context_);
-    alcDestroyContext(alc_context_);
+    device = alcGetContextsDevice(impl_->alc_context_);
+    alcDestroyContext(impl_->alc_context_);
     assert(alcGetError(device) == ALC_NO_ERROR);
     alcCloseDevice(device);
   }
