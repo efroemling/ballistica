@@ -199,17 +199,17 @@ def check_clean_safety() -> None:
 
 
 def formatcode() -> None:
-    """Run clang-format on all of our source code (multithreaded)."""
+    """Format all of our C/C++/etc. code."""
     import efrotools.code
     full = '-full' in sys.argv
-    efrotools.code.formatcode(PROJROOT, full)
+    efrotools.code.format_clang_format(PROJROOT, full)
 
 
 def formatscripts() -> None:
-    """Run yapf on all our scripts (multithreaded)."""
+    """Format all of our Python/etc. code."""
     import efrotools.code
     full = '-full' in sys.argv
-    efrotools.code.formatscripts(PROJROOT, full)
+    efrotools.code.format_yapf(PROJROOT, full)
 
 
 def formatmakefile() -> None:
@@ -230,7 +230,7 @@ def cpplint() -> None:
     """Run lint-checking on all code deemed lint-able."""
     import efrotools.code
     full = '-full' in sys.argv
-    efrotools.code.cpplint(PROJROOT, full)
+    efrotools.code.check_cpplint(PROJROOT, full)
 
 
 def scriptfiles() -> None:
@@ -300,7 +300,7 @@ def pycharm() -> None:
     import efrotools.code
     full = '-full' in sys.argv
     verbose = '-v' in sys.argv
-    efrotools.code.pycharm(PROJROOT, full, verbose)
+    efrotools.code.check_pycharm(PROJROOT, full, verbose)
 
 
 def clioncode() -> None:
@@ -308,7 +308,7 @@ def clioncode() -> None:
     import efrotools.code
     full = '-full' in sys.argv
     verbose = '-v' in sys.argv
-    efrotools.code.clioncode(PROJROOT, full, verbose)
+    efrotools.code.check_clioncode(PROJROOT, full, verbose)
 
 
 def androidstudiocode() -> None:
@@ -316,7 +316,7 @@ def androidstudiocode() -> None:
     import efrotools.code
     full = '-full' in sys.argv
     verbose = '-v' in sys.argv
-    efrotools.code.androidstudiocode(PROJROOT, full, verbose)
+    efrotools.code.check_android_studio(PROJROOT, full, verbose)
 
 
 def tool_config_install() -> None:

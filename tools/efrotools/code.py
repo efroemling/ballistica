@@ -16,14 +16,14 @@ if TYPE_CHECKING:
     from typing import Set, List, Dict, Any, Union, Optional
 
 
-def formatcode(projroot: Path, full: bool) -> None:
+def format_clang_format(projroot: Path, full: bool) -> None:
     """Run clang-format on all of our source code (multithreaded)."""
     import time
     import concurrent.futures
     from multiprocessing import cpu_count
     from efrotools import get_files_hash
     os.chdir(projroot)
-    cachepath = Path(projroot, 'config/.cache-formatcode')
+    cachepath = Path(projroot, '.cache/format_clang_format')
     if full and cachepath.exists():
         cachepath.unlink()
     cache = FileCache(cachepath)
@@ -62,8 +62,8 @@ def formatcode(projroot: Path, full: bool) -> None:
           flush=True)
 
 
-def cpplint(projroot: Path, full: bool) -> None:
-    """Run lint-checking on all code deemed lint-able."""
+def check_cpplint(projroot: Path, full: bool) -> None:
+    """Run cpplint on all our applicable code."""
     # pylint: disable=too-many-locals, too-many-statements
     import tempfile
     from concurrent.futures import ThreadPoolExecutor
@@ -86,7 +86,7 @@ def cpplint(projroot: Path, full: bool) -> None:
     filenames = [f for f in filenames if f not in code_blacklist]
     filenames = [f for f in filenames if not f.endswith('.mm')]
 
-    cachepath = Path(projroot, 'config/.cache-lintcode')
+    cachepath = Path(projroot, '.cache/check_cpplint')
     if full and cachepath.exists():
         cachepath.unlink()
 
@@ -182,14 +182,14 @@ def get_code_filenames(projroot: Path) -> List[str]:
     return codefilenames
 
 
-def formatscripts(projroot: Path, full: bool) -> None:
-    """Runs yapf on all our scripts (multithreaded)."""
+def format_yapf(projroot: Path, full: bool) -> None:
+    """Runs yapf on all of our Python code."""
     import time
     from concurrent.futures import ThreadPoolExecutor
     from multiprocessing import cpu_count
     from efrotools import get_files_hash, PYVER
     os.chdir(projroot)
-    cachepath = Path(projroot, 'config/.cache-formatscripts')
+    cachepath = Path(projroot, '.cache/format_yapf')
     if full and cachepath.exists():
         cachepath.unlink()
 
@@ -295,8 +295,8 @@ def pylint(projroot: Path, full: bool, fast: bool) -> None:
     script_blacklist: List[str] = []
     filenames = [f for f in filenames if f not in script_blacklist]
 
-    cachebasename = '.cache-lintscriptsfast' if fast else '.cache-lintscripts'
-    cachepath = Path(projroot, 'config', cachebasename)
+    cachebasename = 'check_pylint_fast' if fast else 'check_pylint'
+    cachepath = Path(projroot, '.cache', cachebasename)
     if full and cachepath.exists():
         cachepath.unlink()
     cache = FileCache(cachepath)
@@ -774,6 +774,7 @@ def _run_idea_inspections_cached(cachepath: Path,
                               inspect=inspect,
                               verbose=verbose,
                               inspectdir=inspectdir)
+        cachepath.parent.mkdir(parents=True, exist_ok=True)
         with open(cachepath, 'w') as outfile:
             outfile.write(json.dumps({'hash': current_hash}))
     print(
@@ -782,13 +783,13 @@ def _run_idea_inspections_cached(cachepath: Path,
         flush=True)
 
 
-def pycharm(projroot: Path, full: bool, verbose: bool) -> None:
+def check_pycharm(projroot: Path, full: bool, verbose: bool) -> None:
     """Run pycharm inspections on all our scripts."""
 
     import time
 
     # FIXME: Generalize this to work with at least linux, possibly windows.
-    cachepath = Path('config/.cache-pycharm')
+    cachepath = Path('.cache/check_pycharm')
     filenames = get_script_filenames(projroot)
     pycharmroot = Path('/Applications/PyCharm CE.app')
     pycharmbin = Path(pycharmroot, 'Contents/MacOS/pycharm')
@@ -832,11 +833,11 @@ def pycharm(projroot: Path, full: bool, verbose: bool) -> None:
                                  verbose=verbose)
 
 
-def clioncode(projroot: Path, full: bool, verbose: bool) -> None:
+def check_clioncode(projroot: Path, full: bool, verbose: bool) -> None:
     """Run clion inspections on all our code."""
     import time
 
-    cachepath = Path('config/.cache-clioncode')
+    cachepath = Path('.cache/check_clioncode')
     filenames = get_code_filenames(projroot)
     clionroot = Path('/Applications/CLion.app')
     clionbin = Path(clionroot, 'Contents/MacOS/clion')
@@ -886,11 +887,11 @@ def clioncode(projroot: Path, full: bool, verbose: bool) -> None:
         verbose=verbose)
 
 
-def androidstudiocode(projroot: Path, full: bool, verbose: bool) -> None:
+def check_android_studio(projroot: Path, full: bool, verbose: bool) -> None:
     """Run Android Studio inspections on all our code."""
     # import time
 
-    cachepath = Path('config/.cache-androidstudiocode')
+    cachepath = Path('.cache/check_android_studio')
     filenames = get_code_filenames(projroot)
     clionroot = Path('/Applications/Android Studio.app')
     # clionbin = Path(clionroot, 'Contents/MacOS/studio')

@@ -91,5 +91,6 @@ class FileCache:
                       f' "{fname}"; cache not updated.{Clr.RST}')
                 return
         out = json.dumps(self.entries)
-        with open(self._path, 'w') as outfile:
+        self._path.parent.mkdir(parents=True, exist_ok=True)
+        with self._path.open('w') as outfile:
             outfile.write(out)
