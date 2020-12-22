@@ -1,3 +1,6 @@
+### 1.5.30 (20263)
+- Meta subsytem now enables new plugin by default in headless builds
+
 ### 1.5.29 (20246)
 - Exposed ba method/class initing in public C++ layer.
 - The 'restart' and 'shutdown' commands in the server script now default to immediate=True
