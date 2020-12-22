@@ -99,7 +99,16 @@ class MetadataSubsystem:
                                 class_path=class_path,
                                 available=True))
             if class_path not in plugstates:
-                plugstates[class_path] = {'enabled': False}
+                if _ba.app.headless_mode:
+                    # If we running in headless mode, enable plugin by default
+                    # to allow server admins to get their modified build
+                    # working 'out-of-the-box', without manually updating the
+                    # config.
+                    plugstates[class_path] = {'enabled': True}
+                else:
+                    # If we running in normal mode, disable plugin by default
+                    # (user can enable it later).
+                    plugstates[class_path] = {'enabled': False}
                 config_changed = True
                 found_new = True
 
