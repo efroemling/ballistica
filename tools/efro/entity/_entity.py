@@ -103,6 +103,7 @@ class EntityMixin:
         self.d_data = target.d_data
 
         # Make sure target blows up if someone tries to use it.
+        # noinspection PyTypeHints
         target.d_data = None  # type: ignore
 
     def pruned_data(self) -> Dict[str, Any]:

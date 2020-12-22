@@ -73,6 +73,7 @@ def test_entity_values() -> None:
 
     # Simple int field.
     with pytest.raises(TypeError):
+        # noinspection PyTypeHints
         ent.ival = 'strval'  # type: ignore
     assert static_type_equals(ent.ival, int)
     assert isinstance(ent.ival, int)
@@ -82,6 +83,7 @@ def test_entity_values() -> None:
 
     # Simple float field.
     with pytest.raises(TypeError):
+        # noinspection PyTypeHints
         ent.fval = 'foo'  # type: ignore
     assert static_type_equals(ent.fval, float)
     ent.fval = 2
@@ -98,6 +100,7 @@ def test_entity_values() -> None:
     assert len(ent.slval) == 1
     assert list(ent.slval) == ['blah']
     with pytest.raises(TypeError):
+        # noinspection PyTypeHints
         ent.slval = ['foo', 'bar', 1]  # type: ignore
 
     # Simple value dict field.
@@ -133,6 +136,7 @@ def test_entity_values_2() -> None:
     assert static_type_equals(ent.grp.isubval, int)
     assert isinstance(ent.grp.isubval, int)
     with pytest.raises(TypeError):
+        # noinspection PyTypeHints
         ent.grp.isubval = 'blah'  # type: ignore
 
     # Compound value inheritance.
@@ -166,6 +170,7 @@ def test_entity_values_2() -> None:
 
     # Enum value
     with pytest.raises(ValueError):
+        # noinspection PyTypeHints
         ent.enumval = None  # type: ignore
     assert ent.enumval == EnumTest.FIRST
 
@@ -231,6 +236,7 @@ def test_field_copies() -> None:
     # And not if they don't...
     # (in this case mypy errors too but that may not always be the case)
     with pytest.raises(ValueError):
+        # noinspection PyTypeHints
         ent1.compoundlist3 = ent1.compoundlist  # type: ignore
 
     # Copying a CompoundDict
@@ -249,6 +255,7 @@ def test_field_copies() -> None:
     # two CompoundValues have the same type but different layouts based
     # on their __init__ args or whatnot)
     with pytest.raises(ValueError):
+        # noinspection PyTypeHints
         ent1.compounddict3 = ent1.compounddict  # type: ignore
     # Make sure invalid key types get caught when setting a full dict:
     with pytest.raises(TypeError):
