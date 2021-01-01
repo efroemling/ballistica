@@ -640,6 +640,75 @@ pycharm-full: prereqs
 
 ################################################################################
 #                                                                              #
+#                             Checking (Internal)                              #
+#                                                                              #
+################################################################################
+
+# Run all project checks in the cloud.
+check-cloud:
+	@tools/cloudshell ${CLOUDSHELL_HOST_CHECK} --env ${CLOUDSHELL_ENV_CHECK} -- \
+      make check
+
+# Cloud version of check-full
+check-cloud-full:
+	@tools/cloudshell ${CLOUDSHELL_HOST_CHECK} --env ${CLOUDSHELL_ENV_CHECK} -- \
+      make check-full
+
+# Cloud version of check2
+check2-cloud:
+	@tools/cloudshell ${CLOUDSHELL_HOST_CHECK} --env ${CLOUDSHELL_ENV_CHECK} \
+      --lock pycharm -- \
+      EFROTOOLS_FULL_PYCHARM_RECACHE=${EFROTOOLS_FULL_PYCHARM_RECACHE} \
+      make check2
+
+# Cloud version of check2-full
+check2-cloud-full:
+	@tools/cloudshell ${CLOUDSHELL_HOST_CHECK} --env ${CLOUDSHELL_ENV_CHECK} \
+      --lock pycharm -- \
+      EFROTOOLS_FULL_PYCHARM_RECACHE=${EFROTOOLS_FULL_PYCHARM_RECACHE} \
+      make check2-full
+
+# Cloud version of pylint check
+pylint-cloud:
+	@tools/cloudshell ${CLOUDSHELL_HOST_CHECK} --env ${CLOUDSHELL_ENV_CHECK} -- \
+      make pylint
+
+# Cloud version of pylint-full
+pylint-cloud-full:
+	@tools/cloudshell ${CLOUDSHELL_HOST_CHECK} --env ${CLOUDSHELL_ENV_CHECK} -- \
+      make pylint-full
+
+# Cloud version of mypy check
+mypy-cloud:
+	@tools/cloudshell ${CLOUDSHELL_HOST_CHECK} --env ${CLOUDSHELL_ENV_CHECK} -- \
+      make mypy
+
+# Cloud version of mypy-full check
+mypy-cloud-full:
+	@tools/cloudshell ${CLOUDSHELL_HOST_CHECK} --env ${CLOUDSHELL_ENV_CHECK} -- \
+      make mypy-full
+
+# Cloud version of pycharm check
+pycharm-cloud:
+	@tools/cloudshell ${CLOUDSHELL_HOST_CHECK} --env ${CLOUDSHELL_ENV_CHECK} \
+      --lock pycharm -- \
+      EFROTOOLS_FULL_PYCHARM_RECACHE=${EFROTOOLS_FULL_PYCHARM_RECACHE} \
+      make pycharm
+
+# Cloud version of pycharm-full
+pycharm-cloud-full:
+	@tools/cloudshell ${CLOUDSHELL_HOST_CHECK} --env ${CLOUDSHELL_ENV_CHECK} \
+      --lock pycharm -- \
+      EFROTOOLS_FULL_PYCHARM_RECACHE=${EFROTOOLS_FULL_PYCHARM_RECACHE} \
+      make pycharm-full
+
+# Tell make which of these targets don't represent files.
+.PHONY: check-cloud check-cloud-full check2-cloud-full pylint-cloud \
+  pylint-cloud-full mypy-cloud mypy-cloud-full pycharm-cloud pycharm-cloud-full
+
+
+################################################################################
+#                                                                              #
 #                                   Testing                                    #
 #                                                                              #
 ################################################################################
@@ -669,6 +738,26 @@ test-entity:
 
 # Tell make which of these targets don't represent files.
 .PHONY: test test-full test-assetmanager
+
+
+################################################################################
+#                                                                              #
+#                              Testing (Internal)                              #
+#                                                                              #
+################################################################################
+
+# Cloud version of test
+test-cloud:
+	@tools/cloudshell ${CLOUDSHELL_HOST_TEST} --env ${CLOUDSHELL_ENV_CHECK} -- \
+      make test
+
+# Cloud version of test-full
+test-cloud-full:
+	@tools/cloudshell ${CLOUDSHELL_HOST_TEST} --env ${CLOUDSHELL_ENV_CHECK} -- \
+      make test-full
+
+# Tell make which of these targets don't represent files.
+.PHONY: test-cloud test-cloud-full
 
 
 ################################################################################
@@ -707,6 +796,56 @@ preflight2-full:
 
 # Tell make which of these targets don't represent files.
 .PHONY: preflight preflight-full preflight2 preflight2-full
+
+
+################################################################################
+#                                                                              #
+#                           Preflighting (Internal)                            #
+#                                                                              #
+################################################################################
+
+# TODO: If we add the ability to sync an entire env back, we could
+# simply run preflight targets in their entirety in cloudshell instead
+# of splitting them up like this.
+
+# Run preflight in the cloud.
+preflight-cloud:
+	@${MAKE} format
+	@${MAKE} update
+	@tools/cloudshell ${CLOUDSHELL_HOST_CHECK} --env ${CLOUDSHELL_ENV_CHECK} -- \
+      make -j4 cpplint pylint mypy test
+	@tools/pcommand echo SGRN BLD PREFLIGHT SUCCESSFUL!
+
+# Run preflight-full in the cloud.
+preflight-cloud-full:
+	@${MAKE} format-full
+	@${MAKE} update
+	@tools/cloudshell ${CLOUDSHELL_HOST_CHECK} --env ${CLOUDSHELL_ENV_CHECK} \
+      -- \
+      make -j4 cpplint-full pylint-full mypy-full test-full
+	@tools/pcommand echo SGRN BLD PREFLIGHT SUCCESSFUL!
+
+# Run preflight2 in the cloud.
+preflight2-cloud:
+	@${MAKE} format
+	@${MAKE} update
+	@tools/cloudshell ${CLOUDSHELL_HOST_CHECK} --env ${CLOUDSHELL_ENV_CHECK} \
+      --lock pycharm -- \
+      make -j5 cpplint pylint mypy pycharm test
+	@tools/pcommand echo SGRN BLD PREFLIGHT SUCCESSFUL!
+
+# Run preflight2-full in the cloud.
+preflight2-cloud-full:
+	@${MAKE} format-full
+	@${MAKE} update
+	@tools/cloudshell ${CLOUDSHELL_HOST_CHECK} --env ${CLOUDSHELL_ENV_CHECK} \
+      --lock pycharm -- \
+      make -j5 cpplint-full pylint-full mypy-full pycharm-full test-full
+	@tools/pcommand echo SGRN BLD PREFLIGHT SUCCESSFUL!
+
+# Tell make which of these targets don't represent files.
+.PHONY: preflight-cloud preflight-cloud-full preflight2-cloud \
+  preflight2-cloud-full
 
 
 ################################################################################

@@ -798,31 +798,41 @@ def check_pycharm(projroot: Path, full: bool, verbose: bool) -> None:
     # In full mode, clear out pycharm's caches first.
     # It seems we need to spin up the GUI and give it a bit to
     # re-cache system python for this to work...
+
     # UPDATE: This really slows things down, so we now only do it in
     # very specific cases where time isn't important.
     # (such as our daily full-test-runs)
+
+    # UPDATE 2: Looks like we might no longer need to do the GUI spin-up bit.
+    # If we can be certain of this, we can go back to simply blowing away
+    # the cache for 'full' mode checks without the env var.
     if full and os.environ.get('EFROTOOLS_FULL_PYCHARM_RECACHE') == '1':
         print('Clearing PyCharm caches...', flush=True)
-        subprocess.run('rm -rf ~/Library/Caches/PyCharmCE*',
+        subprocess.run('rm -rf ~/Library/Caches/JetBrains/PyCharmCE*',
                        shell=True,
                        check=True)
-        print('Launching GUI PyCharm to rebuild caches...', flush=True)
-        process = subprocess.Popen(str(pycharmbin))
 
-        # Wait a bit and ask it nicely to die.
-        # We need to make sure it has enough time to do its cache updating
-        # thing even if the system is fully under load.
-        time.sleep(5 * 60)
+        # Hoping this isn't necessary anymore. Need to rework this if it is,
+        # since it now gets run through ssh and gui stuff doesn't seem to
+        # work that way.
+        if bool(False):
+            print('Launching GUI PyCharm to rebuild caches...', flush=True)
+            process = subprocess.Popen(str(pycharmbin))
 
-        # Seems killing it via applescript is more likely to leave it
-        # in a working state for offline inspections than TERM signal..
-        subprocess.run(
-            "osascript -e 'tell application \"PyCharm CE\" to quit'",
-            shell=True,
-            check=False)
-        # process.terminate()
-        print('Waiting for GUI PyCharm to quit...', flush=True)
-        process.wait()
+            # Wait a bit and ask it nicely to die.
+            # We need to make sure it has enough time to do its cache updating
+            # thing even if the system is fully under load.
+            time.sleep(5 * 60)
+
+            # Seems killing it via applescript is more likely to leave it
+            # in a working state for offline inspections than TERM signal..
+            subprocess.run(
+                "osascript -e 'tell application \"PyCharm CE\" to quit'",
+                shell=True,
+                check=False)
+            # process.terminate()
+            print('Waiting for GUI PyCharm to quit...', flush=True)
+            process.wait()
 
     _run_idea_inspections_cached(cachepath=cachepath,
                                  filenames=filenames,

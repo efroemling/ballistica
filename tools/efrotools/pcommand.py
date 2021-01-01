@@ -136,8 +136,14 @@ def _spelling(words: List[str]) -> None:
         with open(fname, 'w') as outfile:
             # Sort lines in the words section.
             assert all(l.startswith('      <w>') for l in lines[3:-3])
-            outfile.write('\n'.join(lines[:3] + sorted(lines[3:-3]) +
-                                    lines[-3:]))
+
+            # Note: need to pull the </w> off the end of the line when sorting
+            # or it messes with the order and we get different results than
+            # Jetbrains stuff.
+            outfile.write('\n'.join(
+                lines[:3] +
+                sorted(lines[3:-3], key=lambda x: x.replace('</w>', '')) +
+                lines[-3:]))
         print(f'Added {added_count} words to {fname}.')
 
 
