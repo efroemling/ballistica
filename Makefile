@@ -575,22 +575,22 @@ format-makefile: prereqs
 # Run all project checks. (static analysis)
 check: update-check
 	@${MAKE} -j3 cpplint pylint mypy
-	@tools/pcommand echo GRN ALL CHECKS PASSED!
+	@tools/pcommand echo SGRN BLD ALL CHECKS PASSED!
 
 # Same as check but no caching (all files are checked).
 check-full: update-check
 	@${MAKE} -j3 cpplint-full pylint-full mypy-full
-	@tools/pcommand echo GRN ALL CHECKS PASSED!
+	@tools/pcommand echo SGRN BLD ALL CHECKS PASSED!
 
 # Same as 'check' plus optional/slow extra checks.
 check2: update-check
 	@${MAKE} -j4 cpplint pylint mypy pycharm
-	@tools/pcommand echo GRN ALL CHECKS PASSED!
+	@tools/pcommand echo SGRN BLD ALL CHECKS PASSED!
 
 # Same as check2 but no caching (all files are checked).
 check2-full: update-check
 	@${MAKE} -j4 cpplint-full pylint-full mypy-full pycharm-full
-	@tools/pcommand echo GRN ALL CHECKS PASSED!
+	@tools/pcommand echo SGRN BLD ALL CHECKS PASSED!
 
 # Run Cpplint checks on all C/C++ code.
 cpplint: prereqs

@@ -315,7 +315,6 @@ auto ContainerWidget::HandleMessage(const WidgetMessage& m) -> bool {
         w->HandleMessage(m);
       }
       return true;
-      break;
     }
 
     case WidgetMessage::Type::kStart: {
@@ -1142,7 +1141,9 @@ void ContainerWidget::SetTransition(TransitionType t) {
 
   bg_dirty_ = glow_dirty_ = true;
   ContainerWidget* parent = parent_widget();
-  if (parent == nullptr) return;
+  if (parent == nullptr) {
+    return;
+  }
   parent->CheckLayout();
   millisecs_t net_time = g_game->master_time();
   transition_type_ = t;

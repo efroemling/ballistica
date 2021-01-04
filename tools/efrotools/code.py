@@ -862,28 +862,30 @@ def check_clioncode(projroot: Path, full: bool, verbose: bool) -> None:
     print('Clearing CLion caches...', flush=True)
     subprocess.run('rm -rf ~/Library/Caches/CLion*', shell=True, check=True)
 
+    # UPDATE: seems this is unnecessary now; should double check.
     # Note: I'm assuming this project needs to be open when the GUI
     # comes up. Currently just have one project so can rely on auto-open
     # but may need to get fancier later if that changes.
-    print('Launching GUI CLion to rebuild caches...', flush=True)
-    process = subprocess.Popen(str(clionbin))
+    if bool(False):
+        print('Launching GUI CLion to rebuild caches...', flush=True)
+        process = subprocess.Popen(str(clionbin))
 
-    # Wait a moment and ask it nicely to die.
-    waittime = 120
-    while waittime > 0:
-        print(f'Waiting for {waittime} more seconds.')
-        time.sleep(10)
-        waittime -= 10
+        # Wait a moment and ask it nicely to die.
+        waittime = 120
+        while waittime > 0:
+            print(f'Waiting for {waittime} more seconds.')
+            time.sleep(10)
+            waittime -= 10
 
-    # Seems killing it via applescript is more likely to leave it
-    # in a working state for offline inspections than TERM signal..
-    subprocess.run("osascript -e 'tell application \"CLion\" to quit'",
-                   shell=True,
-                   check=False)
+        # Seems killing it via applescript is more likely to leave it
+        # in a working state for offline inspections than TERM signal..
+        subprocess.run("osascript -e 'tell application \"CLion\" to quit'",
+                       shell=True,
+                       check=False)
 
-    # process.terminate()
-    print('Waiting for GUI CLion to quit...', flush=True)
-    process.wait(timeout=60)
+        # process.terminate()
+        print('Waiting for GUI CLion to quit...', flush=True)
+        process.wait(timeout=60)
 
     print('Launching Offline CLion to run inspections...', flush=True)
     _run_idea_inspections_cached(
