@@ -1109,10 +1109,8 @@ void SpazNode::SetJumpPressed(bool val) {
       }
       last_jump_time_ = scene()->time();
     }
-    jump_pressed_ = true;
   } else {
     // Release.
-    jump_pressed_ = false;
   }
 }
 
