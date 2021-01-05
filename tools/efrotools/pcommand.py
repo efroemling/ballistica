@@ -116,6 +116,7 @@ def _trim_docstring(docstring: str) -> str:
 
 def _spelling(words: List[str]) -> None:
     import os
+    num_modded_dictionaries = 0
     for fname in [
             '.idea/dictionaries/ericf.xml',
             'ballisticacore-cmake/.idea/dictionaries/ericf.xml'
@@ -145,6 +146,8 @@ def _spelling(words: List[str]) -> None:
                 sorted(lines[3:-3], key=lambda x: x.replace('</w>', '')) +
                 lines[-3:]))
         print(f'Added {added_count} words to {fname}.')
+        num_modded_dictionaries += 1
+    print(f'Modified {num_modded_dictionaries} dictionaries.')
 
 
 def spelling_all() -> None:
@@ -347,7 +350,7 @@ def tool_config_install() -> None:
         comment = ';;'
     elif dst.name in [
             '.mypy.ini', '.pycheckers', '.pylintrc', '.style.yapf',
-            '.clang-format'
+            '.clang-format', '.editorconfig'
     ]:
         comment = '#'
     if comment is not None:

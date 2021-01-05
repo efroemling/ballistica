@@ -62,6 +62,7 @@
       <excludePattern pattern=".asset_manifest_*.json" />
       <excludePattern pattern=".efrocachemap" />
       <excludePattern pattern=".pytest_cache" />
+      <excludePattern pattern=".editorconfig" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
