@@ -100,7 +100,7 @@ float Utils::precalc_rands_3[kPrecalcRandsCount] = {
     0.376926f,   0.508574f,  0.809908f,   0.862359f,  0.863431f,  0.884588f,
     0.895885f,   0.391311f,  0.976098f,   0.473118f,  0.286659f,  0.0946781f,
     0.402437f,   0.347471f};
-#else  // USE_BAKED_RANDS
+#else   // USE_BAKED_RANDS
 float Utils::precalc_rands_1[kPrecalcRandsCount];
 float Utils::precalc_rands_2[kPrecalcRandsCount];
 float Utils::precalc_rands_3[kPrecalcRandsCount];

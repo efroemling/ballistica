@@ -178,7 +178,7 @@ class GLContext {
     assert(surface_);
     return surface_;
   }
-#endif  // BA_SDL2_BUILD
+#endif              // BA_SDL2_BUILD
 
  private:
 #if BA_SDL2_BUILD

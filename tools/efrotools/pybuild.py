@@ -220,6 +220,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
 
     (can be arm, arm64, x86, or x86_64)
     """
+    # pylint: disable=too-many-statements
     import subprocess
     import platform
     builddir = 'build/python_android_' + arch + ('_debug' if debug else '')
@@ -246,7 +247,8 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
 
     # Commit from Jan 8, 2020. Right after this, the build system was switched
     # a a completely new minimal one which will take some work to update here.
-    # Punting on that for now...
+    # Punting on that for now... (tentative plan is to try and adopt the new
+    # one when we update for Python 3.10 in a year or two).
     if True:  # pylint: disable=using-constant-test
         run('git checkout 9adbcfaca37f40b7a86381f83f0f6af4187233ae')
     ftxt = readfile('pybuild/env.py')
@@ -302,27 +304,37 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
 
     writefile('pybuild/packages/python.py', ftxt)
 
-    # Set this to a particular cpython commit to target exact releases from git
-    # commit = 'd7c567b08f9d7d6aef21b881340a2b72731129db'  # 3.7.7 release
-    # commit = '4b47a5b6ba66b02df9392feb97b8ead916f8c1fa'  # 3.7.8 release
-    commit = '580fbb018fd0844806119614d752b41fc69660f9'  # 3.8.5
+    # Set these to particular releases to use those.
+    # py_commit = '580fbb018fd0844806119614d752b41fc69660f9'  # 3.8.5
+    py_commit = '6503f05dd59e26a9986bdea097b3da9b3546f45b'  # 3.8.7
 
-    if commit is not None:
-        ftxt = readfile('pybuild/source.py')
+    # cpython-source-deps stuff started failing for OpenSSL on Jan 8 2021.
+    # Pinning it to an older one for now.
+    py_ssl_commit = '7f34c3085feb4692bbbb6c8b19d053ebc5049dad'  # From 6/12/20
 
-        # Check out a particular commit right after the clone.
-        ftxt = replace_one(
-            ftxt, "'git', 'clone', '--single-branch', '-b',"
-            ' self.branch, self.source_url, self.dest])',
-            "'git', 'clone', '-b',"
-            ' self.branch, self.source_url, self.dest])\n'
-            '        # efro: hack to get the python we want.\n'
-            "        print('DOING URL', self.source_url)\n"
-            '        if self.source_url == '
-            "'https://github.com/python/cpython/':\n"
-            "            run_in_dir(['git', 'checkout', '" + commit +
-            "'], self.source_dir)")
-        writefile('pybuild/source.py', ftxt)
+    commit_lines = ''
+    if py_commit is not None:
+        commit_lines += ('        if self.source_url == '
+                         "'https://github.com/python/cpython/':\n"
+                         "            run_in_dir(['git', 'checkout', '" +
+                         py_commit + "'], self.source_dir)\n")
+    if py_ssl_commit is not None:
+        commit_lines += ('        if self.source_url == '
+                         "'https://github.com/python/cpython-source-deps'"
+                         " and self.branch == 'openssl-1.1.1':\n"
+                         "            run_in_dir(['git', 'checkout', '" +
+                         py_ssl_commit + "'], self.source_dir)\n")
+
+    ftxt = readfile('pybuild/source.py')
+
+    # Check out a particular commit right after the clone.
+    ftxt = replace_one(
+        ftxt, "'git', 'clone', '--single-branch', '-b',"
+        ' self.branch, self.source_url, self.dest])', "'git', 'clone', '-b',"
+        ' self.branch, self.source_url, self.dest])\n'
+        '        # efro: hack to get exact commits we want.\n'
+        "        print('DOING URL', self.source_url)\n" + commit_lines)
+    writefile('pybuild/source.py', ftxt)
     ftxt = readfile('pybuild/util.py')
 
     # Still don't wanna bother with gpg signing stuff.

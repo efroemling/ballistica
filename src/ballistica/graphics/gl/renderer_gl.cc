@@ -408,7 +408,7 @@ void RendererGL::CheckGLExtensions() {
     supports_depth_textures_ = true;
 #if BA_CARDBOARD_BUILD
     g_graphics->SetSupportsHighQualityGraphics(false);
-#else  // BA_CARDBOARD_BUILD
+#else   // BA_CARDBOARD_BUILD
     g_graphics->SetSupportsHighQualityGraphics(true);
 #endif  // BA_CARDBOARD_BUILD
   } else {
@@ -2476,7 +2476,7 @@ class RendererGL::PostProcessProgramGL : public RendererGL::ProgramGL {
     return s;
   }
 
-#else  // msaa bug test
+#else   // msaa bug test
 
   auto GetVertexCode(int flags) -> std::string {
     std::string s;
@@ -5879,7 +5879,7 @@ auto RendererGL::GetAutoTextureQuality() -> TextureQuality {
       // high
 #if BA_OUYA_BUILD
       qual = TextureQuality::kHigh;
-#else  // BA_OUYA_BUILD
+#else   // BA_OUYA_BUILD
       // on android we default to high quality mode if we support ETC2;
       // otherwise go with medium
       if (g_graphics_server->SupportsTextureCompressionType(
@@ -5900,7 +5900,7 @@ auto RendererGL::GetAutoTextureQuality() -> TextureQuality {
       qual = TextureQuality::kHigh;
     }
   }
-#else  // BA_OSTYPE_ANDROID
+#else   // BA_OSTYPE_ANDROID
   {
     // On other platforms (mac,pc,etc) just default to high.
     qual = TextureQuality::kHigh;

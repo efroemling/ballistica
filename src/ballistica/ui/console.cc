@@ -127,7 +127,7 @@ auto Console::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
 #if BA_SDL2_BUILD || BA_MINSDL_BUILD
       // (in SDL2/Non-SDL we dont' get chars from keypress events;
       // they come through as text edit events)
-#else  // BA_SDL2_BUILD
+#else   // BA_SDL2_BUILD
       if (keysym->unicode < 0x80 && keysym->unicode > 0) {
         std::vector<uint32_t> unichars =
             Utils::UnicodeFromUTF8(input_string_, "cjofrh0");

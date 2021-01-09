@@ -200,7 +200,7 @@ void SDLApp::HandleSDLEvent(const SDL_Event& event) {
         case SDL_WINDOWEVENT_SIZE_CHANGED: {
 #if BA_OSTYPE_IOS_TVOS
           // Do nothing here currently.
-#else  // Generic SDL:
+#else   // Generic SDL:
           int pixels_x, pixels_y;
           SDL_GL_GetDrawableSize(g_graphics_server->gl_context()->sdl_window(),
                                  &pixels_x, &pixels_y);
@@ -220,7 +220,7 @@ void SDLApp::HandleSDLEvent(const SDL_Event& event) {
       default:
         break;
     }
-#else  // BA_SDL2_BUILD
+#else   // BA_SDL2_BUILD
     case SDL_VIDEORESIZE: {
       screen_dimensions_ = Vector2f(event.resize.w, event.resize.h);
       SetScreenResolution(event.resize.w, event.resize.h);

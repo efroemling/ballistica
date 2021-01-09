@@ -93,7 +93,7 @@ Joystick::Joystick(int sdl_joystick_id, const std::string& custom_device_name,
       is_mac_ps3_controller_ = true;
     }
 
-#else  // BA_ENABLE_SDL_JOYSTICKS
+#else   // BA_ENABLE_SDL_JOYSTICKS
     throw Exception();  // Shouldn't happen.
 #endif  // BA_ENABLE_SDL_JOYSTICKS
 

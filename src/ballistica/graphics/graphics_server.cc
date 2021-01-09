@@ -539,7 +539,7 @@ void GraphicsServer::HandleFullscreenToggling(bool do_set_existing_fs,
 #if BA_OSTYPE_IOS_TVOS
       set_fullscreen_enabled(true);
 
-#else  // BA_OSTYPE_IOS_TVOS
+#else   // BA_OSTYPE_IOS_TVOS
       uint32_t fullscreen_flag = SDL_WINDOW_FULLSCREEN_DESKTOP;
       SDL_SetWindowFullscreen(gl_context_->sdl_window(),
                               fullscreen ? fullscreen_flag : 0);

@@ -185,7 +185,7 @@ class ClrBase:
     SBWHT: ClassVar[str]
 
 
-class Clr1(ClrBase):
+class ClrAlways(ClrBase):
     """Convenience class for color terminal output.
 
     This version has colors always enabled. Generally you should use Clr which
@@ -240,7 +240,7 @@ class Clr1(ClrBase):
     SBWHT = TerminalColor.STRONG_BG_WHITE.value
 
 
-class Clr0(ClrBase):
+class ClrNever(ClrBase):
     """Convenience class for color terminal output.
 
     This version has colors disabled. Generally you should use Clr which
@@ -300,6 +300,6 @@ _color_enabled: bool = (True if _envval == '1' else
                         False if _envval == '0' else _default_color_enabled())
 Clr: Type[ClrBase]
 if _color_enabled:
-    Clr = Clr1
+    Clr = ClrAlways
 else:
-    Clr = Clr0
+    Clr = ClrNever

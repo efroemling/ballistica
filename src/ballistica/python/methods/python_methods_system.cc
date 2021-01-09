@@ -688,7 +688,7 @@ auto PyAndroidGetExternalStoragePath(PyObject* self, PyObject* args,
     assert(Utils::IsValidUTF8(path));
     return PyUnicode_FromString(path.c_str());
   }
-#else  // BA_OSTYPE_ANDROID
+#else   // BA_OSTYPE_ANDROID
   throw Exception("Only valid on android.");
 #endif  // BA_OSTYPE_ANDROID
   Py_RETURN_NONE;
