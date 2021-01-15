@@ -500,6 +500,8 @@ def _vstr(nums: Sequence[int]) -> str:
 
 def checkenv() -> None:
     """Check for tools necessary to build and run the app."""
+    # pylint: disable=too-many-branches
+
     from efrotools import PYTHON_BIN
     print(f'{Clr.BLD}Checking environment...{Clr.RST}', flush=True)
 
@@ -507,6 +509,12 @@ def checkenv() -> None:
     if subprocess.run(['which', 'curl'], check=False,
                       capture_output=True).returncode != 0:
         raise CleanError('curl is required; please install it via apt,'
+                         ' brew, etc.')
+
+    # Make sure they've got rsync.
+    if subprocess.run(['which', 'rsync'], check=False,
+                      capture_output=True).returncode != 0:
+        raise CleanError('rsync is required; please install it via apt,'
                          ' brew, etc.')
 
     # Make sure they've got our target python version.
