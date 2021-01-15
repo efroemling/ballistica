@@ -16,6 +16,7 @@
       <w>aclass</w>
       <w>aclass's</w>
       <w>activityplayer</w>
+      <w>addcall</w>
       <w>addrs</w>
       <w>adjoint</w>
       <w>adminset</w>
@@ -905,6 +906,7 @@
       <w>trilinear</w>
       <w>trimesh</w>
       <w>trimeshes</w>
+      <w>tself</w>
       <w>tval</w>
       <w>tvos</w>
       <w>tweakage</w>
@@ -940,6 +942,7 @@
       <w>valobj</w>
       <w>vals</w>
       <w>valtab</w>
+      <w>valuedispatchmethod</w>
       <w>valuedouble</w>
       <w>valueint</w>
       <w>valuestring</w>

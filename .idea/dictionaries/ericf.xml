@@ -44,6 +44,7 @@
       <w>actorclass</w>
       <w>adbcfaca</w>
       <w>adbpath</w>
+      <w>addcall</w>
       <w>addgame</w>
       <w>addlevel</w>
       <w>addr</w>
@@ -2191,6 +2192,7 @@
       <w>trsock</w>
       <w>tscale</w>
       <w>tscl</w>
+      <w>tself</w>
       <w>tspc</w>
       <w>tstr</w>
       <w>turtledemo</w>
@@ -2275,6 +2277,7 @@
       <w>valnew</w>
       <w>vals</w>
       <w>valuedispatch</w>
+      <w>valuedispatchmethod</w>
       <w>valueerror</w>
       <w>valuetext</w>
       <w>valuetype</w>

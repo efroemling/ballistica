@@ -18,6 +18,7 @@ if TYPE_CHECKING:
 T = TypeVar('T')
 TVAL = TypeVar('TVAL')
 TARG = TypeVar('TARG')
+TSELF = TypeVar('TSELF')
 TRET = TypeVar('TRET')
 TENUM = TypeVar('TENUM', bound=Enum)
 
@@ -93,56 +94,6 @@ def data_size_str(bytecount: int) -> str:
     if round(gbytecount, 1) < 10.0:
         return f'{mbytecount:.1f} GB'
     return f'{gbytecount:.0f} GB'
-
-
-class DispatchMethodWrapper(Generic[TARG, TRET]):
-    """Type-aware standin for the dispatch func returned by dispatchmethod."""
-
-    def __call__(self, arg: TARG) -> TRET:
-        pass
-
-    @staticmethod
-    def register(func: Callable[[Any, Any], TRET]) -> Callable:
-        """Register a new dispatch handler for this dispatch-method."""
-
-    registry: Dict[Any, Callable]
-
-
-# noinspection PyProtectedMember,PyTypeHints
-def dispatchmethod(
-        func: Callable[[Any, TARG],
-                       TRET]) -> DispatchMethodWrapper[TARG, TRET]:
-    """A variation of functools.singledispatch for methods."""
-    from functools import singledispatch, update_wrapper
-    origwrapper: Any = singledispatch(func)
-
-    # Pull this out so hopefully origwrapper can die,
-    # otherwise we reference origwrapper in our wrapper.
-    dispatch = origwrapper.dispatch
-
-    # All we do here is recreate the end of functools.singledispatch
-    # where it returns a wrapper except instead of the wrapper using the
-    # first arg to the function ours uses the second (to skip 'self').
-    # This was made against Python 3.7; we should probably check up on
-    # this in later versions in case anything has changed.
-    # (or hopefully they'll add this functionality to their version)
-    # NOTE: sounds like we can use functools singledispatchmethod in 3.8
-    def wrapper(*args: Any, **kw: Any) -> Any:
-        if not args or len(args) < 2:
-            raise TypeError(f'{funcname} requires at least '
-                            '2 positional arguments')
-
-        return dispatch(args[1].__class__)(*args, **kw)
-
-    funcname = getattr(func, '__name__', 'dispatchmethod method')
-    wrapper.register = origwrapper.register  # type: ignore
-    wrapper.dispatch = dispatch  # type: ignore
-    wrapper.registry = origwrapper.registry  # type: ignore
-    # pylint: disable=protected-access
-    wrapper._clear_cache = origwrapper._clear_cache  # type: ignore
-    update_wrapper(wrapper, func)
-    # pylint: enable=protected-access
-    return cast(DispatchMethodWrapper, wrapper)
 
 
 class DirtyBit:
@@ -242,9 +193,66 @@ class DirtyBit:
         return False
 
 
+class DispatchMethodWrapper(Generic[TARG, TRET]):
+    """Type-aware standin for the dispatch func returned by dispatchmethod."""
+
+    def __call__(self, arg: TARG) -> TRET:
+        pass
+
+    @staticmethod
+    def register(func: Callable[[Any, Any], TRET]) -> Callable:
+        """Register a new dispatch handler for this dispatch-method."""
+
+    registry: Dict[Any, Callable]
+
+
+# noinspection PyProtectedMember,PyTypeHints
+def dispatchmethod(
+        func: Callable[[Any, TARG],
+                       TRET]) -> DispatchMethodWrapper[TARG, TRET]:
+    """A variation of functools.singledispatch for methods.
+
+    Note: as of Python 3.9 there is now functools.singledispatchmethod,
+    but it currently (as of Jan 2021) is not type-aware (at least in mypy),
+    which gives us a reason to keep this one around for now.
+    """
+    from functools import singledispatch, update_wrapper
+    origwrapper: Any = singledispatch(func)
+
+    # Pull this out so hopefully origwrapper can die,
+    # otherwise we reference origwrapper in our wrapper.
+    dispatch = origwrapper.dispatch
+
+    # All we do here is recreate the end of functools.singledispatch
+    # where it returns a wrapper except instead of the wrapper using the
+    # first arg to the function ours uses the second (to skip 'self').
+    # This was made against Python 3.7; we should probably check up on
+    # this in later versions in case anything has changed.
+    # (or hopefully they'll add this functionality to their version)
+    # NOTE: sounds like we can use functools singledispatchmethod in 3.8
+    def wrapper(*args: Any, **kw: Any) -> Any:
+        if not args or len(args) < 2:
+            raise TypeError(f'{funcname} requires at least '
+                            '2 positional arguments')
+
+        return dispatch(args[1].__class__)(*args, **kw)
+
+    funcname = getattr(func, '__name__', 'dispatchmethod method')
+    wrapper.register = origwrapper.register  # type: ignore
+    wrapper.dispatch = dispatch  # type: ignore
+    wrapper.registry = origwrapper.registry  # type: ignore
+    # pylint: disable=protected-access
+    wrapper._clear_cache = origwrapper._clear_cache  # type: ignore
+    update_wrapper(wrapper, func)
+    # pylint: enable=protected-access
+    return cast(DispatchMethodWrapper, wrapper)
+
+
 def valuedispatch(call: Callable[[TVAL], TRET]) -> ValueDispatcher[TVAL, TRET]:
     """Decorator for functions to allow dispatching based on a value.
 
+    This differs from functools.singledispatch in that it dispatches based
+    on the value of an argument, not based on its type.
     The 'register' method of a value-dispatch function can be used
     to assign new functions to handle particular values.
     Unhandled values wind up in the original dispatch function."""
@@ -305,6 +313,61 @@ class ValueDispatcher1Arg(Generic[TVAL, TARG, TRET]):
         """Add a handler to the dispatcher."""
         from functools import partial
         return partial(self._add_handler, value)
+
+
+if TYPE_CHECKING:
+
+    class ValueDispatcherMethod(Generic[TVAL, TRET]):
+        """Used by the valuedispatchmethod decorator."""
+
+        def __call__(self, value: TVAL) -> TRET:
+            ...
+
+        def register(self,
+                     value: TVAL) -> Callable[[Callable[[TSELF], TRET]], None]:
+            """Add a handler to the dispatcher."""
+            ...
+
+
+def valuedispatchmethod(
+        call: Callable[[TSELF, TVAL],
+                       TRET]) -> ValueDispatcherMethod[TVAL, TRET]:
+    """Like valuedispatch but works with methods instead of functions."""
+
+    # NOTE: It seems that to wrap a method with a decorator and have self
+    # dispatching do the right thing, we must return a function and not
+    # an executable object. So for this version we store our data here
+    # in the function call dict and simply return a call.
+
+    _base_call = call
+    _handlers: Dict[TVAL, Callable[[TSELF], TRET]] = {}
+
+    def _add_handler(value: TVAL, addcall: Callable[[TSELF], TRET]) -> None:
+        if value in _handlers:
+            raise RuntimeError(f'Duplicate handlers added for {value}')
+        _handlers[value] = addcall
+
+    def _register(value: TVAL) -> Callable[[Callable[[TSELF], TRET]], None]:
+        from functools import partial
+        return partial(_add_handler, value)
+
+    def _call_wrapper(self: TSELF, value: TVAL) -> TRET:
+        handler = _handlers.get(value)
+        if handler is not None:
+            return handler(self)
+        return _base_call(self, value)
+
+    # We still want to use our returned object to register handlers, but we're
+    # actually just returning a function. So manually stuff the call onto it.
+    setattr(_call_wrapper, 'register', _register)
+
+    # To the type checker's eyes we return a ValueDispatchMethod instance;
+    # this lets it know about our register func and type-check its usage.
+    # In reality we just return a raw function call (for reasons listed above).
+    if TYPE_CHECKING:  # pylint: disable=no-else-return
+        return ValueDispatcherMethod[TVAL, TRET]()
+    else:
+        return _call_wrapper
 
 
 def make_hash(obj: Any) -> int:
