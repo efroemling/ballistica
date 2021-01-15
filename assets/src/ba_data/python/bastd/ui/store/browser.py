@@ -1018,6 +1018,7 @@ class StoreBrowserWindow(ba.Window):
             ba.print_exception(f'Error saving state for {self}.')
 
     def _restore_state(self) -> None:
+        from efro.util import enum_by_value
         try:
             sel: Optional[ba.Widget]
             sel_name = ba.app.ui.window_states.get(self.__class__.__name__,
@@ -1025,8 +1026,8 @@ class StoreBrowserWindow(ba.Window):
             assert isinstance(sel_name, (str, type(None)))
 
             try:
-                current_tab = ba.enum_by_value(self.TabID,
-                                               ba.app.config.get('Store Tab'))
+                current_tab = enum_by_value(self.TabID,
+                                            ba.app.config.get('Store Tab'))
             except ValueError:
                 current_tab = self.TabID.CHARACTERS
 
@@ -1040,8 +1041,8 @@ class StoreBrowserWindow(ba.Window):
                 sel = self._scrollwidget
             elif isinstance(sel_name, str) and sel_name.startswith('Tab:'):
                 try:
-                    sel_tab_id = ba.enum_by_value(self.TabID,
-                                                  sel_name.split(':')[-1])
+                    sel_tab_id = enum_by_value(self.TabID,
+                                               sel_name.split(':')[-1])
                 except ValueError:
                     sel_tab_id = self.TabID.CHARACTERS
                 sel = self._tab_row.tabs[sel_tab_id].button

@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2021-01-08 for Ballistica version 1.5.30 build 20266</em></h4>
+<h4><em>last updated on 2021-01-14 for Ballistica version 1.5.30 build 20267</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -86,7 +86,6 @@
 <ul>
    <li><a href="#function_ba_charstr">ba.charstr()</a></li>
    <li><a href="#function_ba_do_once">ba.do_once()</a></li>
-   <li><a href="#function_ba_enum_by_value">ba.enum_by_value()</a></li>
    <li><a href="#function_ba_garbage_collect">ba.garbage_collect()</a></li>
    <li><a href="#function_ba_getclass">ba.getclass()</a></li>
    <li><a href="#function_ba_is_browser_likely_available">ba.is_browser_likely_available()</a></li>
@@ -6578,22 +6577,6 @@ for i in range(10):
 the background and just looks pretty; it does not affect gameplay.
 Note that the actual amount emitted may vary depending on graphics
 settings, exiting element counts, or other factors.</p>
-
-<hr>
-<h2><strong><a name="function_ba_enum_by_value">ba.enum_by_value()</a></strong></h3>
-<p><span>enum_by_value(cls: Type[ET], value: Any) -&gt; ET</span></p>
-
-<p>Create an enum from a value.</p>
-
-<p>Category: <a href="#function_category_General_Utility_Functions">General Utility Functions</a></p>
-
-<p>This is basically the same as doing 'obj = EnumType(value)' except
-that it works around an issue where a reference loop is created
-if an exception is thrown due to an invalid value. Since we disable
-the cyclic garbage collector for most of the time, such loops can lead
-to our objects sticking around longer than we want.
-This issue has been submitted to Python as a bug so hopefully we can
-remove this eventually if it gets fixed: https://bugs.python.org/issue42248</p>
 
 <hr>
 <h2><strong><a name="function_ba_existing">ba.existing()</a></strong></h3>

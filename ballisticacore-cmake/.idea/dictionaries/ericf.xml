@@ -70,6 +70,7 @@
       <w>bbbbbb</w>
       <w>bbbbbbb</w>
       <w>bcfn</w>
+      <w>bdea</w>
       <w>bezanson</w>
       <w>bgra</w>
       <w>bigendian</w>
@@ -142,6 +143,7 @@
       <w>charstr</w>
       <w>chatmessage</w>
       <w>checkboxwidget</w>
+      <w>checkchisel</w>
       <w>chrono</w>
       <w>chunksize</w>
       <w>cjief</w>
@@ -246,6 +248,7 @@
       <w>echidna</w>
       <w>edef</w>
       <w>efro</w>
+      <w>efrohack</w>
       <w>efrohome</w>
       <w>elems</w>
       <w>elevenbase</w>
@@ -258,6 +261,8 @@
       <w>endline</w>
       <w>endtime</w>
       <w>entrypoint</w>
+      <w>enumvalue</w>
+      <w>enval</w>
       <w>envcfg</w>
       <w>envs</w>
       <w>envval</w>
@@ -297,6 +302,8 @@
       <w>fffffff</w>
       <w>fffffffffifff</w>
       <w>fgets</w>
+      <w>fieldname</w>
+      <w>fieldpath</w>
       <w>fifteenbits</w>
       <w>filterval</w>
       <w>finishedptr</w>
@@ -427,6 +434,7 @@
       <w>initguid</w>
       <w>inittab</w>
       <w>inputdevice</w>
+      <w>inputter</w>
       <w>insta</w>
       <w>intercollide</w>
       <w>internalformat</w>
@@ -473,6 +481,7 @@
       <w>lastvalid</w>
       <w>leaderboard</w>
       <w>leaderboards</w>
+      <w>lenval</w>
       <w>lgui</w>
       <w>lhalf</w>
       <w>libutf</w>
@@ -593,6 +602,7 @@
       <w>numc</w>
       <w>numentries</w>
       <w>numlock</w>
+      <w>nval</w>
       <w>nvidia</w>
       <w>nyffenegger</w>
       <w>objexists</w>
@@ -600,6 +610,7 @@
       <w>obstack</w>
       <w>obvs</w>
       <w>oculus</w>
+      <w>oenval</w>
       <w>oiffsss</w>
       <w>oldname</w>
       <w>oooo</w>
@@ -630,7 +641,9 @@
       <w>ostype</w>
       <w>ourself</w>
       <w>ourstanding</w>
+      <w>outputter</w>
       <w>outval</w>
+      <w>outvalue</w>
       <w>ouya</w>
       <w>parameteriv</w>
       <w>passcode</w>
@@ -752,6 +765,8 @@
       <w>sdl's</w>
       <w>sdlk</w>
       <w>seqlen</w>
+      <w>seqtype</w>
+      <w>seqtypestr</w>
       <w>serv</w>
       <w>serverget</w>
       <w>serverput</w>
@@ -780,6 +795,7 @@
       <w>shufflable</w>
       <w>signsubscale</w>
       <w>simd</w>
+      <w>simpletype</w>
       <w>sisssssssss</w>
       <w>sixteenbits</w>
       <w>smoothering</w>
@@ -810,6 +826,7 @@
       <w>sssssssd</w>
       <w>sssssssi</w>
       <w>ssssssssssss</w>
+      <w>ssval</w>
       <w>standin</w>
       <w>startedptr</w>
       <w>startpos</w>
@@ -832,11 +849,13 @@
       <w>subargs</w>
       <w>subclsssing</w>
       <w>subentities</w>
+      <w>subfieldpath</w>
       <w>subitems</w>
       <w>subpaths</w>
       <w>subplatform</w>
       <w>subscale</w>
       <w>subscr</w>
+      <w>subtypestr</w>
       <w>sval</w>
       <w>symbolification</w>
       <w>syscalls</w>
@@ -849,6 +868,7 @@
       <w>teleported</w>
       <w>teleporting</w>
       <w>tempvec</w>
+      <w>tenum</w>
       <w>testint</w>
       <w>testnode</w>
       <w>texel</w>

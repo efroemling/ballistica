@@ -503,14 +503,15 @@ class WatchWindow(ba.Window):
             ba.print_exception(f'Error saving state for {self}.')
 
     def _restore_state(self) -> None:
+        from efro.util import enum_by_value
         try:
             sel: Optional[ba.Widget]
             sel_name = ba.app.ui.window_states.get(self.__class__.__name__,
                                                    {}).get('sel_name')
             assert isinstance(sel_name, (str, type(None)))
             try:
-                current_tab = ba.enum_by_value(self.TabID,
-                                               ba.app.config.get('Watch Tab'))
+                current_tab = enum_by_value(self.TabID,
+                                            ba.app.config.get('Watch Tab'))
             except ValueError:
                 current_tab = self.TabID.MY_REPLAYS
             self._set_tab(current_tab)
@@ -521,8 +522,8 @@ class WatchWindow(ba.Window):
                 sel = self._tab_container
             elif isinstance(sel_name, str) and sel_name.startswith('Tab:'):
                 try:
-                    sel_tab_id = ba.enum_by_value(self.TabID,
-                                                  sel_name.split(':')[-1])
+                    sel_tab_id = enum_by_value(self.TabID,
+                                               sel_name.split(':')[-1])
                 except ValueError:
                     sel_tab_id = self.TabID.MY_REPLAYS
                 sel = self._tab_row.tabs[sel_tab_id].button

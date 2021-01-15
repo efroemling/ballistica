@@ -654,17 +654,17 @@ test-full: test
 
 # Individual test with extra output enabled.
 test-assetmanager:
-	@tools/pcommand pytest -o log_cli=true -o log_cli_level=debug -s -v \
+	@tools/pcommand pytest -o log_cli=true -o log_cli_level=debug -s -vv \
       tests/test_ba/test_assetmanager.py::test_assetmanager
 
 # Individual test with extra output enabled.
 test-dataclasses:
-	@tools/pcommand pytest -o log_cli=true -o log_cli_level=debug -s -v \
+	@tools/pcommand pytest -o log_cli=true -o log_cli_level=debug -s -vv \
       tests/test_efro/test_dataclasses.py
 
 # Individual test with extra output enabled.
 test-entity:
-	@tools/pcommand pytest -o log_cli=true -o log_cli_level=debug -s -v \
+	@tools/pcommand pytest -o log_cli=true -o log_cli_level=debug -s -vv \
       tests/test_efro/test_entity.py
 
 # Tell make which of these targets don't represent files.

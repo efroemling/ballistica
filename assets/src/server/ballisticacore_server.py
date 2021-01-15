@@ -23,7 +23,7 @@ sys.path += [
 ]
 
 from bacommon.servermanager import ServerConfig, StartServerModeCommand
-from efro.dataclasses import dataclass_assign, dataclass_validate
+from efro.dataclasses import dataclass_from_dict, dataclass_validate
 from efro.error import CleanError
 from efro.terminal import Clr
 
@@ -32,9 +32,11 @@ if TYPE_CHECKING:
     from types import FrameType
     from bacommon.servermanager import ServerCommand
 
-VERSION_STR = '1.1.0'
+VERSION_STR = '1.1.1'
 
 # Version history:
+# 1.1.1:
+#  Switched config reading to use efro.dataclasses.dataclass_from_dict()
 # 1.1.0:
 #  Added shutdown command
 #  Changed restart to default to immediate=True
@@ -274,19 +276,17 @@ class ServerManagerApp:
     def _load_config(self) -> ServerConfig:
         user_config_path = 'config.yaml'
 
-        # Start with a default config, and if there is a config.yaml,
-        # assign whatever is contained within.
-        config = ServerConfig()
         if os.path.exists(user_config_path):
             import yaml
             with open(user_config_path) as infile:
-                user_config = yaml.safe_load(infile.read())
+                user_config_raw = yaml.safe_load(infile.read())
 
             # An empty config file will yield None, and that's ok.
-            if user_config is not None:
-                dataclass_assign(config, user_config)
+            if user_config_raw is not None:
+                return dataclass_from_dict(ServerConfig, user_config_raw)
 
-        return config
+        # Go with defaults if we weren't able to load anything.
+        return ServerConfig()
 
     def _enable_tab_completion(self, locs: Dict) -> None:
         """Enable tab-completion on platforms where available (linux/mac)."""

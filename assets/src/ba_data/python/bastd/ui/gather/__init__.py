@@ -241,6 +241,7 @@ class GatherWindow(ba.Window):
             ba.print_exception(f'Error saving state for {self}.')
 
     def _restore_state(self) -> None:
+        from efro.util import enum_by_value
         try:
             for tab in self._tabs.values():
                 tab.restore_state()
@@ -252,7 +253,7 @@ class GatherWindow(ba.Window):
             current_tab = self.TabID.ABOUT
             gather_tab_val = ba.app.config.get('Gather Tab')
             try:
-                stored_tab = ba.enum_by_value(self.TabID, gather_tab_val)
+                stored_tab = enum_by_value(self.TabID, gather_tab_val)
                 if stored_tab in self._tab_row.tabs:
                     current_tab = stored_tab
             except ValueError:
@@ -264,8 +265,8 @@ class GatherWindow(ba.Window):
                 sel = self._tab_container
             elif isinstance(sel_name, str) and sel_name.startswith('Tab:'):
                 try:
-                    sel_tab_id = ba.enum_by_value(self.TabID,
-                                                  sel_name.split(':')[-1])
+                    sel_tab_id = enum_by_value(self.TabID,
+                                               sel_name.split(':')[-1])
                 except ValueError:
                     sel_tab_id = self.TabID.ABOUT
                 sel = self._tab_row.tabs[sel_tab_id].button

@@ -174,12 +174,14 @@
       <w>basew</w>
       <w>bastd</w>
       <w>batools</w>
+      <w>bbbb</w>
       <w>bblk</w>
       <w>bblu</w>
       <w>bbot</w>
       <w>bbtn</w>
       <w>bcppcompiler</w>
       <w>bcyn</w>
+      <w>bdea</w>
       <w>bdfl</w>
       <w>bdir</w>
       <w>belarussian</w>
@@ -314,6 +316,7 @@
       <w>cheadersline</w>
       <w>checkarg</w>
       <w>checkboxwidget</w>
+      <w>checkchisel</w>
       <w>checkenv</w>
       <w>checkfast</w>
       <w>checkfull</w>
@@ -592,6 +595,7 @@
       <w>efrocachemap</w>
       <w>efroemling</w>
       <w>efrogradle</w>
+      <w>efrohack</w>
       <w>efrohome</w>
       <w>efrosync</w>
       <w>efrotool</w>
@@ -623,6 +627,8 @@
       <w>entrytypeselect</w>
       <w>enumtype</w>
       <w>enumval</w>
+      <w>enumvalue</w>
+      <w>enval</w>
       <w>envcfg</w>
       <w>envhash</w>
       <w>envname</w>
@@ -697,6 +703,8 @@
       <w>fhashes</w>
       <w>fhdr</w>
       <w>fieldattr</w>
+      <w>fieldname</w>
+      <w>fieldpath</w>
       <w>fieldsdict</w>
       <w>fieldtype</w>
       <w>fieldtypes</w>
@@ -1021,6 +1029,7 @@
       <w>inputfiles</w>
       <w>inputhash</w>
       <w>inputnode</w>
+      <w>inputter</w>
       <w>inputtype</w>
       <w>inpututils</w>
       <w>inspectdir</w>
@@ -1117,6 +1126,7 @@
       <w>leaderboards</w>
       <w>leady</w>
       <w>lenglishvalues</w>
+      <w>lenval</w>
       <w>levelgametype</w>
       <w>levelmodule</w>
       <w>levelname</w>
@@ -1413,6 +1423,7 @@
       <w>numedit</w>
       <w>numsound</w>
       <w>numstr</w>
+      <w>nval</w>
       <w>nvcompress</w>
       <w>nvidia</w>
       <w>nyko</w>
@@ -1424,6 +1435,7 @@
       <w>obval</w>
       <w>occurrances</w>
       <w>oculus</w>
+      <w>oenval</w>
       <w>offsanchor</w>
       <w>ofval</w>
       <w>oggenc</w>
@@ -1465,6 +1477,8 @@
       <w>outhashpath</w>
       <w>outname</w>
       <w>outpath</w>
+      <w>outputter</w>
+      <w>outvalue</w>
       <w>ouya</w>
       <w>overloadsigs</w>
       <w>packagedir</w>
@@ -1829,6 +1843,8 @@
       <w>sdtk</w>
       <w>selectmodule</w>
       <w>senze</w>
+      <w>seqtype</w>
+      <w>seqtypestr</w>
       <w>serverbuild</w>
       <w>servercallthread</w>
       <w>servercallthreadtype</w>
@@ -1882,6 +1898,7 @@
       <w>shroom</w>
       <w>shutil</w>
       <w>simplesubclasses</w>
+      <w>simpletype</w>
       <w>sincelaunch</w>
       <w>singledispatch</w>
       <w>singledispatchmethod</w>
@@ -1951,6 +1968,7 @@
       <w>sred</w>
       <w>sshd</w>
       <w>sslproto</w>
+      <w>ssval</w>
       <w>stackstr</w>
       <w>standin</w>
       <w>starscale</w>
@@ -1995,6 +2013,7 @@
       <w>subdep</w>
       <w>subdeps</w>
       <w>subdirs</w>
+      <w>subfieldpath</w>
       <w>subfolders</w>
       <w>subname</w>
       <w>subpath</w>
@@ -2005,6 +2024,7 @@
       <w>subprocesses</w>
       <w>subrepos</w>
       <w>subsel</w>
+      <w>subtypestr</w>
       <w>subval</w>
       <w>subvalue</w>
       <w>subvaluetype</w>
@@ -2074,6 +2094,7 @@
       <w>tempfile</w>
       <w>tempfilepath</w>
       <w>templatecb</w>
+      <w>tenum</w>
       <w>termcolors</w>
       <w>termios</w>
       <w>testbuffer</w>
