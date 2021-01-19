@@ -7,13 +7,16 @@ from __future__ import annotations
 import threading
 from typing import TYPE_CHECKING, cast
 
-import _ba
-import ba
+from enum import Enum
+from dataclasses import dataclass
 from bastd.ui.gather.bases import GatherTab
 
+import _ba
+import ba
 if TYPE_CHECKING:
-    from typing import Callable, Optional, Any, Union, Dict
+    from typing import Any, Optional, Dict, List, Tuple, Type, Union, Callable
     from bastd.ui.gather import GatherWindow
+    from bastd.ui.confirm import ConfirmWindow
 
 
 def _safe_set_text(txt: Optional[ba.Widget],
@@ -46,6 +49,18 @@ class _HostLookupThread(threading.Thread):
                     from_other_thread=True)
 
 
+class SubTabType(Enum):
+    """Available sub-tabs."""
+    NEW = 'new'
+    SAVED = 'saved'
+
+
+@dataclass
+class State:
+    """State saved/restored only while the app is running."""
+    sub_tab: SubTabType = SubTabType.NEW
+
+
 class ManualGatherTab(GatherTab):
     """The manual tab in the gather UI"""
 
@@ -54,12 +69,26 @@ class ManualGatherTab(GatherTab):
         self._check_button: Optional[ba.Widget] = None
         self._doing_access_check: Optional[bool] = None
         self._access_check_count: Optional[int] = None
+        self._sub_tab: SubTabType = SubTabType.NEW
         self._t_addr: Optional[ba.Widget] = None
         self._t_accessible: Optional[ba.Widget] = None
         self._t_accessible_extra: Optional[ba.Widget] = None
         self._access_check_timer: Optional[ba.Timer] = None
         self._checking_state_text: Optional[ba.Widget] = None
         self._container: Optional[ba.Widget] = None
+        self._join_new_party_text: Optional[ba.Widget] = None
+        self._join_saved_party_text: Optional[ba.Widget] = None
+        self._width: Optional[int] = None
+        self._height: Optional[int] = None
+        self._scroll_width: Optional[int] = None
+        self._scroll_height: Optional[int] = None
+        self._my_parties_scroll_width: Optional[int] = None
+        self._my_saved_party_connect_button: Optional[ba.Widget] = None
+        self._scrollwidget: Optional[ba.Widget] = None
+        self._columnwidget: Optional[ba.Widget] = None
+        self._my_saved_party_selected: Optional[str] = None
+        self._my_saved_party_rename_window: Optional[ba.Widget] = None
+        self._my_party_rename_text: Optional[ba.Widget] = None
 
     def on_activate(
         self,
@@ -72,8 +101,7 @@ class ManualGatherTab(GatherTab):
     ) -> ba.Widget:
 
         c_width = region_width
-        c_height = 380
-        last_addr = ba.app.config.get('Last Manual Party Connect Address', '')
+        c_height = region_height - 20
 
         self._container = ba.containerwidget(
             parent=parent_widget,
@@ -83,17 +111,105 @@ class ManualGatherTab(GatherTab):
             background=False,
             selection_loops_to_parent=True)
         v = c_height - 30
-        ba.textwidget(parent=self._container,
-                      position=(c_width * 0.5, v),
-                      color=(0.6, 1.0, 0.6),
-                      scale=1.3,
-                      size=(0, 0),
-                      maxwidth=c_width * 0.9,
-                      h_align='center',
-                      v_align='center',
-                      text=ba.Lstr(resource='gatherWindow.'
-                                   'manualDescriptionText'))
-        v -= 30
+        self._join_new_party_text = ba.textwidget(
+            parent=self._container,
+            position=(c_width * 0.5 - 245, v - 13),
+            color=(0.6, 1.0, 0.6),
+            scale=1.3,
+            size=(200, 30),
+            maxwidth=250,
+            h_align='left',
+            v_align='center',
+            click_activate=True,
+            selectable=True,
+            autoselect=True,
+            on_activate_call=lambda: self._set_sub_tab(
+                SubTabType.NEW,
+                region_width,
+                region_height,
+                playsound=True,
+            ),
+            text='Join By Address')
+        self._join_saved_party_text = ba.textwidget(
+            parent=self._container,
+            position=(c_width * 0.5 + 45, v - 13),
+            color=(0.6, 1.0, 0.6),
+            scale=1.3,
+            size=(200, 30),
+            maxwidth=250,
+            h_align='left',
+            v_align='center',
+            click_activate=True,
+            selectable=True,
+            autoselect=True,
+            on_activate_call=lambda: self._set_sub_tab(
+                SubTabType.SAVED,
+                region_width,
+                region_height,
+                playsound=True,
+            ),
+            text='Join Saved Party')
+        ba.widget(edit=self._join_new_party_text, up_widget=tab_button)
+        ba.widget(edit=self._join_saved_party_text,
+                  left_widget=self._join_new_party_text,
+                  up_widget=tab_button)
+        ba.widget(edit=tab_button, down_widget=self._join_saved_party_text)
+        ba.widget(edit=self._join_new_party_text,
+                  right_widget=self._join_saved_party_text)
+        self._set_sub_tab(self._sub_tab, region_width, region_height)
+
+        return self._container
+
+    def save_state(self) -> None:
+        ba.app.ui.window_states[self.__class__.__name__] = State(
+            sub_tab=self._sub_tab)
+
+    def restore_state(self) -> None:
+        state = ba.app.ui.window_states.get(self.__class__.__name__)
+        if state is None:
+            state = State()
+        assert isinstance(state, State)
+        self._sub_tab = state.sub_tab
+
+    def _set_sub_tab(self,
+                     value: SubTabType,
+                     region_width: float,
+                     region_height: float,
+                     playsound: bool = False) -> None:
+        assert self._container
+        if playsound:
+            ba.playsound(ba.getsound('click01'))
+
+        self._sub_tab = value
+        active_color = (0.6, 1.0, 0.6)
+        inactive_color = (0.5, 0.4, 0.5)
+        ba.textwidget(
+            edit=self._join_new_party_text,
+            color=active_color if value is SubTabType.NEW else inactive_color)
+        ba.textwidget(edit=self._join_saved_party_text,
+                      color=active_color
+                      if value is SubTabType.SAVED else inactive_color)
+
+        # Clear anything existing in the old sub-tab.
+        for widget in self._container.get_children():
+            if widget and widget not in {
+                    self._join_saved_party_text, self._join_new_party_text
+            }:
+                widget.delete()
+
+        if value is SubTabType.NEW:
+            self._build_new_party_tab(region_width, region_height)
+
+        if value is SubTabType.SAVED:
+            self._build_saved_party_tab(region_height)
+
+    # The old manual tab
+    def _build_new_party_tab(self, region_width: float,
+                             region_height: float) -> None:
+        c_width = region_width
+        c_height = region_height - 20
+        last_addr = ba.app.config.get('Last Manual Party Connect Address', '')
+        v = c_height - 70
         v -= 70
         ba.textwidget(parent=self._container,
                       position=(c_width * 0.5 - 260 - 50, v),
@@ -115,6 +231,8 @@ class ManualGatherTab(GatherTab):
                             v_align='center',
                             scale=1.0,
                             size=(420, 60))
+        ba.widget(edit=self._join_new_party_text, down_widget=txt)
+        ba.widget(edit=self._join_saved_party_text, down_widget=txt)
         ba.textwidget(parent=self._container,
                       position=(c_width * 0.5 - 260 + 490, v),
                       color=(0.6, 1.0, 0.6),
@@ -143,11 +261,19 @@ class ManualGatherTab(GatherTab):
                               size=(300, 70),
                               label=ba.Lstr(resource='gatherWindow.'
                                             'manualConnectText'),
-                              position=(c_width * 0.5 - 150, v),
+                              position=(c_width * 0.5 - 300, v),
                               autoselect=True,
                               on_activate_call=ba.Call(self._connect, txt,
                                                        txt2))
-        ba.widget(edit=txt, up_widget=tab_button)
+        savebutton = ba.buttonwidget(
+            parent=self._container,
+            size=(300, 70),
+            label='Save',
+            position=(c_width * 0.5 - 240 + 490 - 200, v),
+            autoselect=True,
+            on_activate_call=ba.Call(self._save_server, txt, txt2))
+        ba.widget(edit=btn, right_widget=savebutton)
+        ba.widget(edit=savebutton, left_widget=btn, up_widget=txt2)
         ba.textwidget(edit=txt, on_return_press_call=btn.activate)
         ba.textwidget(edit=txt2, on_return_press_call=btn.activate)
         v -= 45
@@ -167,7 +293,255 @@ class ManualGatherTab(GatherTab):
             selectable=True,
             on_activate_call=ba.Call(self._on_show_my_address_button_press, v,
                                      self._container, c_width))
-        return self._container
+        ba.widget(edit=self._check_button, up_widget=btn)
+
+    # Tab containing saved parties
+    def _build_saved_party_tab(self, region_height: float) -> None:
+
+        c_height = region_height - 20
+        v = c_height - 35 - 25 - 30
+
+        uiscale = ba.app.ui.uiscale
+        self._width = 1240 if uiscale is ba.UIScale.SMALL else 1040
+        x_inset = 100 if uiscale is ba.UIScale.SMALL else 0
+        self._height = (578 if uiscale is ba.UIScale.SMALL else
+                        670 if uiscale is ba.UIScale.MEDIUM else 800)
+
+        self._scroll_width = self._width - 130 + 2 * x_inset
+        self._scroll_height = self._height - 180
+        x_inset = 100 if uiscale is ba.UIScale.SMALL else 0
+
+        c_height = self._scroll_height - 20
+        sub_scroll_height = c_height - 63
+        self._my_parties_scroll_width = sub_scroll_width = (
+            680 if uiscale is ba.UIScale.SMALL else 640)
+
+        v = c_height - 30
+
+        b_width = 140 if uiscale is ba.UIScale.SMALL else 178
+        b_height = (107 if uiscale is ba.UIScale.SMALL else
+                    142 if uiscale is ba.UIScale.MEDIUM else 190)
+        b_space_extra = (0 if uiscale is ba.UIScale.SMALL else
+                         -2 if uiscale is ba.UIScale.MEDIUM else -5)
+
+        btnv = (c_height - (48 if uiscale is ba.UIScale.SMALL else
+                            45 if uiscale is ba.UIScale.MEDIUM else 40) -
+                b_height)
+
+        self._my_saved_party_connect_button = btn1 = ba.buttonwidget(
+            parent=self._container,
+            size=(b_width, b_height),
+            position=(40 if uiscale is ba.UIScale.SMALL else 40, btnv),
+            button_type='square',
+            color=(0.6, 0.53, 0.63),
+            textcolor=(0.75, 0.7, 0.8),
+            on_activate_call=self._on_my_saved_party_press,
+            text_scale=1.0 if uiscale is ba.UIScale.SMALL else 1.2,
+            label='Connect',
+            autoselect=True)
+        if uiscale is ba.UIScale.SMALL and ba.app.ui.use_toolbars:
+            ba.widget(edit=btn1,
+                      left_widget=_ba.get_special_widget('back_button'))
+        btnv -= b_height + b_space_extra
+        ba.buttonwidget(parent=self._container,
+                        size=(b_width, b_height),
+                        position=(40 if uiscale is ba.UIScale.SMALL else 40,
+                                  btnv),
+                        button_type='square',
+                        color=(0.6, 0.53, 0.63),
+                        textcolor=(0.75, 0.7, 0.8),
+                        on_activate_call=self._on_my_saved_party_rename_press,
+                        text_scale=1.0 if uiscale is ba.UIScale.SMALL else 1.2,
+                        label='Rename',
+                        autoselect=True)
+        btnv -= b_height + b_space_extra
+        ba.buttonwidget(parent=self._container,
+                        size=(b_width, b_height),
+                        position=(40 if uiscale is ba.UIScale.SMALL else 40,
+                                  btnv),
+                        button_type='square',
+                        color=(0.6, 0.53, 0.63),
+                        textcolor=(0.75, 0.7, 0.8),
+                        on_activate_call=self._on_my_saved_party_delete_press,
+                        text_scale=1.0 if uiscale is ba.UIScale.SMALL else 1.2,
+                        label='Delete',
+                        autoselect=True)
+
+        v -= sub_scroll_height + 23
+        self._scrollwidget = scrlw = ba.scrollwidget(
+            parent=self._container,
+            position=(190 if uiscale is ba.UIScale.SMALL else 225, v),
+            size=(sub_scroll_width, sub_scroll_height),
+            claims_left_right=True)
+        ba.widget(edit=self._my_saved_party_connect_button,
+                  right_widget=self._scrollwidget)
+        ba.containerwidget(edit=self._container, selected_child=scrlw)
+        self._columnwidget = ba.columnwidget(parent=scrlw,
+                                             left_border=10,
+                                             border=2,
+                                             margin=0,
+                                             claims_left_right=True)
+
+        self._my_saved_party_selected = None
+        self._refresh_my_saved_parties()
+
+    def _no_saved_party_selected_error(self) -> None:
+        ba.screenmessage(ba.Lstr(resource='nothingIsSelectedErrorText'),
+                         color=(1, 0, 0))
+        ba.playsound(ba.getsound('error'))
+
+    def _on_my_saved_party_press(self) -> None:
+        if self._my_saved_party_selected is None:
+            self._no_saved_party_selected_error()
+
+        else:
+            config = ba.app.config['Saved Servers'][
+                self._my_saved_party_selected]
+            _HostLookupThread(name=config['addr'],
+                              port=config['port'],
+                              call=ba.WeakCall(
+                                  self._host_lookup_result)).start()
+
+    def _on_my_saved_party_rename_press(self) -> None:
+        if self._my_saved_party_selected is None:
+            self._no_saved_party_selected_error()
+            return
+
+        c_width = 600
+        c_height = 250
+        uiscale = ba.app.ui.uiscale
+        self._my_saved_party_rename_window = cnt = ba.containerwidget(
+            scale=(1.8 if uiscale is ba.UIScale.SMALL else
+                   1.55 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            size=(c_width, c_height),
+            transition='in_scale')
+
+        ba.textwidget(parent=cnt,
+                      size=(0, 0),
+                      h_align='center',
+                      v_align='center',
+                      text='Enter Name of Party',
+                      maxwidth=c_width * 0.8,
+                      position=(c_width * 0.5, c_height - 60))
+        self._my_party_rename_text = txt = ba.textwidget(
+            parent=cnt,
+            size=(c_width * 0.8, 40),
+            h_align='left',
+            v_align='center',
+            text=ba.app.config['Saved Servers'][
+                self._my_saved_party_selected]['name'],
+            editable=True,
+            description='Server name text',
+            position=(c_width * 0.1, c_height - 140),
+            autoselect=True,
+            maxwidth=c_width * 0.7,
+            max_chars=200)
+        cbtn = ba.buttonwidget(
+            parent=cnt,
+            label=ba.Lstr(resource='cancelText'),
+            on_activate_call=ba.Call(
+                lambda c: ba.containerwidget(edit=c, transition='out_scale'),
+                cnt),
+            size=(180, 60),
+            position=(30, 30),
+            autoselect=True)
+        okb = ba.buttonwidget(parent=cnt,
+                              label='Rename',
+                              size=(180, 60),
+                              position=(c_width - 230, 30),
+                              on_activate_call=ba.Call(
+                                  self._rename_saved_party),
+                              autoselect=True)
+        ba.widget(edit=cbtn, right_widget=okb)
+        ba.widget(edit=okb, left_widget=cbtn)
+        ba.textwidget(edit=txt, on_return_press_call=okb.activate)
+        ba.containerwidget(edit=cnt, cancel_button=cbtn, start_button=okb)
+
+    def _rename_saved_party(self) -> None:
+
+        server = self._my_saved_party_selected
+        if self._my_saved_party_selected is None:
+            self._no_saved_party_selected_error()
+            return
+        if not self._my_party_rename_text:
+            return
+        new_name_raw = cast(str,
+                            ba.textwidget(query=self._my_party_rename_text))
+        ba.app.config['Saved Servers'][server]['name'] = new_name_raw
+        ba.app.config.commit()
+        ba.screenmessage('Renamed Successfully', color=(0, 1, 0))
+        ba.playsound(ba.getsound('gunCocking'))
+        self._refresh_my_saved_parties()
+
+        ba.containerwidget(edit=self._my_saved_party_rename_window,
+                           transition='out_scale')
+
+    def _on_my_saved_party_delete_press(self) -> None:
+        from bastd.ui import confirm
+        if self._my_saved_party_selected is None:
+            self._no_saved_party_selected_error()
+            return
+        confirm.ConfirmWindow(
+            ba.Lstr(resource='gameListWindow.deleteConfirmText',
+                    subs=[('${LIST}', ba.app.config['Saved Servers'][
+                        self._my_saved_party_selected]['name'])]),
+            self._delete_saved_party, 450, 150)
+
+    def _delete_saved_party(self) -> None:
+        if self._my_saved_party_selected is None:
+            self._no_saved_party_selected_error()
+            return
+        config = ba.app.config['Saved Servers']
+        del config[self._my_saved_party_selected]
+        self._my_saved_party_selected = None
+        ba.app.config.commit()
+        ba.playsound(ba.getsound('shieldDown'))
+        self._refresh_my_saved_parties()
+
+    def _on_my_saved_party_select(self, server: str) -> None:
+        self._my_saved_party_selected = server
+
+    def _refresh_my_saved_parties(self) -> None:
+        assert self._columnwidget is not None
+        for child in self._columnwidget.get_children():
+            child.delete()
+        t_scale = 1.6
+
+        config = ba.app.config
+        if 'Saved Servers' in config:
+            servers = config['Saved Servers']
+
+        else:
+            servers = []
+
+        assert self._my_parties_scroll_width is not None
+        assert self._my_saved_party_connect_button is not None
+        for i, server in enumerate(servers):
+            txt = ba.textwidget(
+                parent=self._columnwidget,
+                size=(self._my_parties_scroll_width / t_scale, 30),
+                selectable=True,
+                color=(1.0, 1, 0.4),
+                always_highlight=True,
+                on_select_call=ba.Call(self._on_my_saved_party_select, server),
+                on_activate_call=self._my_saved_party_connect_button.activate,
+                text=(config['Saved Servers'][server]['name']
+                      if config['Saved Servers'][server]['name'] != '' else
+                      config['Saved Servers'][server]['addr'] + ' ' +
+                      str(config['Saved Servers'][server]['port'])),
+                h_align='left',
+                v_align='center',
+                corner_scale=t_scale,
+                maxwidth=(self._my_parties_scroll_width / t_scale) * 0.93)
+            if i == 0:
+                ba.widget(edit=txt, up_widget=self._join_saved_party_text)
+            ba.widget(edit=txt,
+                      left_widget=self._my_saved_party_connect_button,
+                      right_widget=txt)
+
+        # If there's no servers, allow selecting out of the scroll area
+        ba.containerwidget(edit=self._scrollwidget,
+                           claims_left_right=bool(servers))
 
     def on_deactivate(self) -> None:
         self._access_check_timer = None
@@ -194,6 +568,41 @@ class ManualGatherTab(GatherTab):
         _HostLookupThread(name=addr,
                           port=port,
                           call=ba.WeakCall(self._host_lookup_result)).start()
+
+    def _save_server(self, textwidget: ba.Widget,
+                     port_textwidget: ba.Widget) -> None:
+        addr = cast(str, ba.textwidget(query=textwidget))
+        if addr == '':
+            ba.screenmessage(
+                ba.Lstr(resource='internal.invalidAddressErrorText'),
+                color=(1, 0, 0))
+            ba.playsound(ba.getsound('error'))
+            return
+        try:
+            port = int(cast(str, ba.textwidget(query=port_textwidget)))
+        except ValueError:
+            port = -1
+        if port > 65535 or port < 0:
+            ba.screenmessage(ba.Lstr(resource='internal.invalidPortErrorText'),
+                             color=(1, 0, 0))
+            ba.playsound(ba.getsound('error'))
+            return
+        config = ba.app.config
+
+        if addr:
+            if not isinstance(config.get('Saved Servers'), dict):
+                config['Saved Servers'] = {}
+            config['Saved Servers'][f'{addr}@{port}'] = {
+                'addr': addr,
+                'port': port,
+                'name': addr
+            }
+            config.commit()
+            ba.screenmessage('Saved Successfully', color=(0, 1, 0))
+            ba.playsound(ba.getsound('gunCocking'))
+        else:
+            ba.screenmessage('Invalid Address', color=(1, 0, 0))
+            ba.playsound(ba.getsound('error'))
 
     def _host_lookup_result(self, resolved_address: Optional[str],
                             port: int) -> None:
