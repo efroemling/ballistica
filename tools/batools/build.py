@@ -487,7 +487,7 @@ def get_current_prefab_platform(wsl_gives_windows: bool = True) -> str:
 
         if machine == 'x86_64':
             return 'linux_x86_64'
-        if machine == 'arm64':
+        if machine == 'aarch64':
             return 'linux_arm64'
         raise RuntimeError(f'make_prefab: unsupported linux machine type:'
                            f' {machine}.')
