@@ -34,6 +34,9 @@
 #elif __arm__
 #define BA_PLATFORM_STRING "arm_linux"
 #define BA_OSTYPE_LINUX 1
+#elif __aarch64__
+#define BA_PLATFORM_STRING "arm64_linux"
+#define BA_OSTYPE_LINUX 1
 
 #else
 #error unknown linux variant
