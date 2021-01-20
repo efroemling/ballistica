@@ -116,12 +116,12 @@ class GatherWindow(ba.Window):
         ]
         if _ba.get_account_misc_read_val('enablePublicParties', True):
             tabdefs.append((self.TabID.INTERNET,
-                            ba.Lstr(resource=self._r + '.internetText')))
+                            ba.Lstr(resource=self._r + '.publicText')))
         if platform == 'android' and subplatform == 'google':
             tabdefs.append((self.TabID.GOOGLE_PLAY,
                             ba.Lstr(resource=self._r + '.googlePlayText')))
         tabdefs.append((self.TabID.LOCAL_NETWORK,
-                        ba.Lstr(resource=self._r + '.localNetworkText')))
+                        ba.Lstr(resource=self._r + '.nearbyText')))
         tabdefs.append(
             (self.TabID.MANUAL, ba.Lstr(resource=self._r + '.manualText')))
 

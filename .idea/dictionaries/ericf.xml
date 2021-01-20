@@ -1108,6 +1108,7 @@
       <w>langs</w>
       <w>langtarget</w>
       <w>langval</w>
+      <w>larmbeast</w>
       <w>lasthash</w>
       <w>lastline</w>
       <w>lastplayer</w>
@@ -1912,6 +1913,7 @@
       <w>smag</w>
       <w>smallscale</w>
       <w>smlh</w>
+      <w>smoothy</w>
       <w>smtpd</w>
       <w>smtplib</w>
       <w>smush</w>
