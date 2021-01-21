@@ -1,6 +1,7 @@
 ### 1.5.30 (20263)
 - The meta subsystem now enables new plugins by default in headless builds.
 - Added option to save party in Manual tab
+- Slight tidying on the tourney entry popup
 
 ### 1.5.29 (20246)
 - Exposed ba method/class initing in public C++ layer.

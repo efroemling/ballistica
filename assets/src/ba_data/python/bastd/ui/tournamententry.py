@@ -27,7 +27,6 @@ class TournamentEntryWindow(popup.PopupWindow):
                  on_close_call: Callable[[], Any] = None):
         # Needs some tidying.
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
 
         ba.set_analytics_screen('Tournament Entry Window')
@@ -70,7 +69,7 @@ class TournamentEntryWindow(popup.PopupWindow):
         self._tournament_activity = tournament_activity
 
         self._width = 340
-        self._height = 220
+        self._height = 225
 
         bg_color = (0.5, 0.4, 0.6)
 
@@ -94,8 +93,8 @@ class TournamentEntryWindow(popup.PopupWindow):
         x_offs = 0 if self._do_ad_btn else 85
 
         self._cancel_button = ba.buttonwidget(parent=self.root_widget,
-                                              position=(20, self._height - 30),
-                                              size=(50, 50),
+                                              position=(20, self._height - 34),
+                                              size=(60, 60),
                                               scale=0.5,
                                               label='',
                                               color=bg_color,
@@ -112,7 +111,7 @@ class TournamentEntryWindow(popup.PopupWindow):
             v_align='center',
             scale=0.6,
             text=ba.Lstr(resource='tournamentEntryText'),
-            maxwidth=200,
+            maxwidth=180,
             color=(1, 1, 1, 0.4))
 
         btn = self._pay_with_tickets_button = ba.buttonwidget(
@@ -221,18 +220,19 @@ class TournamentEntryWindow(popup.PopupWindow):
             if ba.app.allow_ticket_purchases:
                 self._get_tickets_button = ba.buttonwidget(
                     parent=self.root_widget,
-                    position=(self._width - 190 + 110, 15),
+                    position=(self._width - 190 + 125, self._height - 34),
                     autoselect=True,
-                    scale=0.6,
+                    scale=0.5,
                     size=(120, 60),
                     textcolor=(0.2, 1, 0.2),
                     label=ba.charstr(ba.SpecialChar.TICKET),
-                    color=(0.6, 0.4, 0.7),
+                    color=(0.65, 0.5, 0.8),
                     on_activate_call=self._on_get_tickets_press)
             else:
                 self._ticket_count_text = ba.textwidget(
                     parent=self.root_widget,
-                    position=(self._width - 190 + 110, 15),
+                    scale=0.5,
+                    position=(self._width - 190 + 125, self._height - 34),
                     color=(0.2, 1, 0.2),
                     h_align='center',
                     v_align='center')
@@ -245,20 +245,22 @@ class TournamentEntryWindow(popup.PopupWindow):
         # Let's also ask the server for info about this tournament
         # (time remaining, etc) so we can show the user time remaining,
         # disallow entry if time has run out, etc.
-        xoffs = 104 if ba.app.ui.use_toolbars else 0
-        self._time_remaining_text = ba.textwidget(parent=self.root_widget,
-                                                  position=(70 + xoffs, 23),
-                                                  size=(0, 0),
-                                                  h_align='center',
-                                                  v_align='center',
-                                                  text='-',
-                                                  scale=0.65,
-                                                  maxwidth=100,
-                                                  flatness=1.0,
-                                                  color=(0.7, 0.7, 0.7))
+        # xoffs = 104 if ba.app.ui.use_toolbars else 0
+        self._time_remaining_text = ba.textwidget(
+            parent=self.root_widget,
+            position=(self._width / 2, 28),
+            size=(0, 0),
+            h_align='center',
+            v_align='center',
+            text='-',
+            scale=0.65,
+            maxwidth=100,
+            flatness=1.0,
+            color=(0.7, 0.7, 0.7),
+        )
         self._time_remaining_label_text = ba.textwidget(
             parent=self.root_widget,
-            position=(70 + xoffs, 40),
+            position=(self._width / 2, 45),
             size=(0, 0),
             h_align='center',
             v_align='center',
