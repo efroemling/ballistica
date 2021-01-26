@@ -626,16 +626,14 @@ class AdvancedSettingsWindow(ba.Window):
                 sel_name = 'Back'
             else:
                 raise ValueError(f'unrecognized selection \'{sel}\'')
-            ba.app.ui.window_states[self.__class__.__name__] = {
-                'sel_name': sel_name
-            }
+            ba.app.ui.window_states[type(self)] = {'sel_name': sel_name}
         except Exception:
             ba.print_exception(f'Error saving state for {self.__class__}')
 
     def _restore_state(self) -> None:
         # pylint: disable=too-many-branches
         try:
-            sel_name = ba.app.ui.window_states.get(self.__class__.__name__,
+            sel_name = ba.app.ui.window_states.get(type(self),
                                                    {}).get('sel_name')
             if sel_name == 'Back':
                 sel = self._back_button

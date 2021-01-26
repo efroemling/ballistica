@@ -1,7 +1,14 @@
-### 1.5.30 (20263)
+### 1.6.0 (20268)
+- Added private parties functionality (cloud hosted parties with associated codes making it easier to play with friends)
 - The meta subsystem now enables new plugins by default in headless builds.
 - Added option to save party in Manual tab
 - Slight tidying on the tourney entry popup
+- Env var to override UI scale is now BA_UI_SCALE instead of BA_FORCE_UI_SCALE.
+- Fixed an issue where ba.storagename() could prevent objects on the stack from getting released cleanly
+- Improvements to documentation generation such as link to some external base types.
+- Added ba.clipboard_* functions for copying and pasting text on supported platforms.
+- Implemented clipboard functionality on SDL based builds (such as prefab)
+- Fixed an issue where click locations on scaled text fields could be incorrectly calculated.
 
 ### 1.5.29 (20246)
 - Exposed ba method/class initing in public C++ layer.

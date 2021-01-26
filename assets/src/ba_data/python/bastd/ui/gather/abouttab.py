@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 import ba
 import _ba
-from bastd.ui.gather.bases import GatherTab
+from bastd.ui.gather import GatherTab
 
 if TYPE_CHECKING:
     from typing import Optional

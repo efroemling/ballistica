@@ -263,9 +263,6 @@ class Graphics {
     internal_components_inited_ = val;
   }
   auto set_gyro_vals(const Vector3f& vals) -> void { gyro_vals_ = vals; }
-  // auto draw_overlay_bounds() const -> bool { return draw_overlay_bounds_; }
-  // auto set_draw_overlay_bounds(bool val) -> void { draw_overlay_bounds_ =
-  // val; }
   auto show_net_info() const -> bool { return show_net_info_; }
   auto set_show_net_info(bool val) -> void { show_net_info_ = val; }
   auto debug_graph_1() const -> NetGraph* { return debug_graph_1_.get(); }

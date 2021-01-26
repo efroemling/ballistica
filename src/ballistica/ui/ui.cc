@@ -29,7 +29,7 @@ UI::UI() {
   assert(g_platform);
 
   // Allow overriding via an environment variable.
-  auto* ui_override = getenv("BA_FORCE_UI_SCALE");
+  auto* ui_override = getenv("BA_UI_SCALE");
   bool force_test_small{};
   bool force_test_medium{};
   bool force_test_large{};

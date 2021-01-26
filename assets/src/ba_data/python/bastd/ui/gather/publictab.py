@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, cast
 
 import _ba
 import ba
-from bastd.ui.gather.bases import GatherTab
+from bastd.ui.gather import GatherTab
 
 if TYPE_CHECKING:
     from typing import Callable, Any, Optional, Dict, Union, Tuple, List
@@ -448,7 +448,7 @@ class PublicGatherTab(GatherTab):
         # display these immediately when our UI comes back up which should
         # be enough to make things feel nice and crisp while we do a full
         # server re-query or whatnot.
-        ba.app.ui.window_states[self.__class__.__name__] = State(
+        ba.app.ui.window_states[type(self)] = State(
             sub_tab=self._sub_tab,
             parties=[(i, copy.copy(p)) for i, p in self._parties_sorted[:40]],
             next_entry_index=self._next_entry_index,
@@ -457,7 +457,7 @@ class PublicGatherTab(GatherTab):
             have_valid_server_list=self._have_valid_server_list)
 
     def restore_state(self) -> None:
-        state = ba.app.ui.window_states.get(self.__class__.__name__)
+        state = ba.app.ui.window_states.get(type(self))
         if state is None:
             state = State()
         assert isinstance(state, State)
@@ -544,9 +544,8 @@ class PublicGatherTab(GatherTab):
                       position=(270, v + 13),
                       maxwidth=150,
                       scale=0.8,
-                      color=(0.5, 0.5, 0.5),
+                      color=(0.5, 0.46, 0.5),
                       flatness=1.0,
-                      shadow=0.0,
                       h_align='right',
                       v_align='center')
 
@@ -556,9 +555,8 @@ class PublicGatherTab(GatherTab):
                       position=(90, v - 8),
                       maxwidth=60,
                       scale=0.6,
-                      color=(0.5, 0.5, 0.5),
+                      color=(0.5, 0.46, 0.5),
                       flatness=1.0,
-                      shadow=0.0,
                       h_align='center',
                       v_align='center')
         ba.textwidget(text=ba.Lstr(resource='gatherWindow.partySizeText'),
@@ -567,9 +565,8 @@ class PublicGatherTab(GatherTab):
                       position=(755, v - 8),
                       maxwidth=60,
                       scale=0.6,
-                      color=(0.5, 0.5, 0.5),
+                      color=(0.5, 0.46, 0.5),
                       flatness=1.0,
-                      shadow=0.0,
                       h_align='center',
                       v_align='center')
         ba.textwidget(text=ba.Lstr(resource='gatherWindow.pingText'),
@@ -578,9 +575,8 @@ class PublicGatherTab(GatherTab):
                       position=(825, v - 8),
                       maxwidth=60,
                       scale=0.6,
-                      color=(0.5, 0.5, 0.5),
+                      color=(0.5, 0.46, 0.5),
                       flatness=1.0,
-                      shadow=0.0,
                       h_align='center',
                       v_align='center')
         v -= sub_scroll_height + 23
@@ -617,6 +613,20 @@ class PublicGatherTab(GatherTab):
         v -= 25
         is_public_enabled = _ba.get_public_party_enabled()
         v -= 30
+
+        ba.textwidget(
+            parent=self._container,
+            size=(0, 0),
+            h_align='center',
+            v_align='center',
+            maxwidth=c_width * 0.9,
+            scale=0.7,
+            flatness=1.0,
+            color=(0.5, 0.46, 0.5),
+            position=(region_width * 0.5, v + 10),
+            text=ba.Lstr(resource='gatherWindow.publicHostRouterConfigText'))
+        v -= 30
+
         party_name_text = ba.Lstr(
             resource='gatherWindow.partyNameText',
             fallback_resource='editGameListWindow.nameText')
@@ -710,11 +720,10 @@ class PublicGatherTab(GatherTab):
             size=(0, 0),
             scale=0.7,
             flatness=1.0,
-            shadow=0.0,
             h_align='center',
             v_align='top',
-            maxwidth=c_width,
-            color=(0.6, 0.6, 0.6),
+            maxwidth=c_width * 0.9,
+            color=(0.6, 0.56, 0.6),
             position=(c_width * 0.5, v))
         v -= 90
         ba.textwidget(
@@ -723,11 +732,10 @@ class PublicGatherTab(GatherTab):
             size=(0, 0),
             scale=0.7,
             flatness=1.0,
-            shadow=0.0,
             h_align='center',
             v_align='center',
             maxwidth=c_width * 0.9,
-            color=ba.app.ui.infotextcolor,
+            color=(0.5, 0.46, 0.5),
             position=(c_width * 0.5, v))
 
         # If public sharing is already on,
@@ -749,8 +757,6 @@ class PublicGatherTab(GatherTab):
 
         self._have_valid_server_list = True
         parties_in = result['l']
-
-        # parties_in.reverse()
 
         assert isinstance(parties_in, list)
         self._pending_party_infos += parties_in
@@ -1060,7 +1066,6 @@ class PublicGatherTab(GatherTab):
                     callback=ba.WeakCall(self._on_public_party_query_result))
                 _ba.run_transactions()
             else:
-                # This will kick us over to a 'not signed in' message.
                 self._on_public_party_query_result(None)
 
     def _ping_parties_periodically(self) -> None:

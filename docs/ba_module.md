@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2021-01-15 for Ballistica version 1.5.30 build 20267</em></h4>
+<h4><em>last updated on 2021-01-26 for Ballistica version 1.6.0 build 20278</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -85,6 +85,10 @@
 <h4><a name="function_category_General_Utility_Functions">General Utility Functions</a></h4>
 <ul>
    <li><a href="#function_ba_charstr">ba.charstr()</a></li>
+   <li><a href="#function_ba_clipboard_get_text">ba.clipboard_get_text()</a></li>
+   <li><a href="#function_ba_clipboard_has_text">ba.clipboard_has_text()</a></li>
+   <li><a href="#function_ba_clipboard_is_supported">ba.clipboard_is_supported()</a></li>
+   <li><a href="#function_ba_clipboard_set_text">ba.clipboard_set_text()</a></li>
    <li><a href="#function_ba_do_once">ba.do_once()</a></li>
    <li><a href="#function_ba_garbage_collect">ba.garbage_collect()</a></li>
    <li><a href="#function_ba_getclass">ba.getclass()</a></li>
@@ -395,7 +399,7 @@ actually award achievements.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_Activity">ba.Activity</a></strong></h3>
-<p>Inherits from: <a href="#class_ba_DependencyComponent">ba.DependencyComponent</a>, <a href="#class_typing_Generic">typing.Generic</a></p>
+<p>Inherits from: <a href="#class_ba_DependencyComponent">ba.DependencyComponent</a>, <a href="https://docs.python.org/3/library/typing.html#typing.Generic">typing.Generic</a></p>
 <p>Units of execution wrangled by a <a href="#class_ba_Session">ba.Session</a>.</p>
 
 <p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a></p>
@@ -659,7 +663,7 @@ is a convenient way to access this same functionality.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_ActivityNotFoundError">ba.ActivityNotFoundError</a></strong></h3>
-<p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, Exception, BaseException</p>
+<p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, <a href="https://docs.python.org/3/library/exceptions.html#Exception">Exception</a>, <a href="https://docs.python.org/3/library/exceptions.html#BaseException">BaseException</a></p>
 <p>Exception raised when an expected <a href="#class_ba_Activity">ba.Activity</a> does not exist.</p>
 
 <p>Category: <a href="#class_category_Exception_Classes">Exception Classes</a>
@@ -784,7 +788,7 @@ even if myactor is set to None.</p>
 <p>Return the <a href="#class_ba_Activity">ba.Activity</a> this Actor is associated with.</p>
 
 <p>If the Activity no longer exists, raises a <a href="#class_ba_ActivityNotFoundError">ba.ActivityNotFoundError</a>
-or returns None depending on whether 'doraise' is set.</p>
+or returns None depending on whether 'doraise' is True.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Actor__handlemessage">handlemessage()</a></dt></h4><dd>
@@ -823,7 +827,7 @@ likely result in errors.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_ActorNotFoundError">ba.ActorNotFoundError</a></strong></h3>
-<p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, Exception, BaseException</p>
+<p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, <a href="https://docs.python.org/3/library/exceptions.html#Exception">Exception</a>, <a href="https://docs.python.org/3/library/exceptions.html#BaseException">BaseException</a></p>
 <p>Exception raised when an expected <a href="#class_ba_Actor">ba.Actor</a> does not exist.</p>
 
 <p>Category: <a href="#class_category_Exception_Classes">Exception Classes</a>
@@ -1010,7 +1014,7 @@ to resume.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_AppConfig">ba.AppConfig</a></strong></h3>
-<p>Inherits from: dict</p>
+<p>Inherits from: builtins.dict</p>
 <p>A special dict that holds the game's persistent configuration values.</p>
 
 <p>Category: <a href="#class_category_App_Classes">App Classes</a></p>
@@ -1023,7 +1027,7 @@ to resume.</p>
 
 <p>    AppConfig data is stored as json on disk on so make sure to only place
     json-friendly values in it (dict, list, str, float, int, bool).
-    Be aware that tuples will be quietly converted to lists.
+    Be aware that tuples will be quietly converted to lists when stored.
 </p>
 
 <h3>Methods Defined or Overridden:</h3>
@@ -1596,7 +1600,7 @@ start_long_action(callback_when_done=<a href="#class_ba_ContextCall">ba.ContextC
 
 <hr>
 <h2><strong><a name="class_ba_ContextError">ba.ContextError</a></strong></h3>
-<p>Inherits from: Exception, BaseException</p>
+<p>Inherits from: <a href="https://docs.python.org/3/library/exceptions.html#Exception">Exception</a>, <a href="https://docs.python.org/3/library/exceptions.html#BaseException">BaseException</a></p>
 <p>Exception raised when a call is made in an invalid context.</p>
 
 <p>Category: <a href="#class_category_Exception_Classes">Exception Classes</a></p>
@@ -1606,10 +1610,10 @@ start_long_action(callback_when_done=<a href="#class_ba_ContextCall">ba.ContextC
 </p>
 
 <h3>Methods:</h3>
-<p>&lt;all methods inherited from <a href="#class_builtins_Exception">builtins.Exception</a>&gt;</p>
+<p>&lt;all methods inherited from <a href="https://docs.python.org/3/library/exceptions.html#Exception">Exception</a>&gt;</p>
 <hr>
 <h2><strong><a name="class_ba_CoopGameActivity">ba.CoopGameActivity</a></strong></h3>
-<p>Inherits from: <a href="#class_ba_GameActivity">ba.GameActivity</a>, <a href="#class_ba_Activity">ba.Activity</a>, <a href="#class_ba_DependencyComponent">ba.DependencyComponent</a>, <a href="#class_typing_Generic">typing.Generic</a></p>
+<p>Inherits from: <a href="#class_ba_GameActivity">ba.GameActivity</a>, <a href="#class_ba_Activity">ba.Activity</a>, <a href="#class_ba_DependencyComponent">ba.DependencyComponent</a>, <a href="https://docs.python.org/3/library/typing.html#typing.Generic">typing.Generic</a></p>
 <p>Base class for cooperative-mode games.</p>
 
 <p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a>
@@ -1841,7 +1845,7 @@ the data object is requested and when it's value is accessed.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_DeathType">ba.DeathType</a></strong></h3>
-<p>Inherits from: enum.Enum</p>
+<p>Inherits from: <a href="https://docs.python.org/3/library/enum.html#enum.Enum">enum.Enum</a></p>
 <p>A reason for a death.</p>
 
 <p>Category: <a href="#class_category_Enums">Enums</a>
@@ -1858,7 +1862,7 @@ the data object is requested and when it's value is accessed.</p>
 </ul>
 <hr>
 <h2><strong><a name="class_ba_DelegateNotFoundError">ba.DelegateNotFoundError</a></strong></h3>
-<p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, Exception, BaseException</p>
+<p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, <a href="https://docs.python.org/3/library/exceptions.html#Exception">Exception</a>, <a href="https://docs.python.org/3/library/exceptions.html#BaseException">BaseException</a></p>
 <p>Exception raised when an expected delegate object does not exist.</p>
 
 <p>Category: <a href="#class_category_Exception_Classes">Exception Classes</a>
@@ -1868,7 +1872,7 @@ the data object is requested and when it's value is accessed.</p>
 <p>&lt;all methods inherited from <a href="#class_ba_NotFoundError">ba.NotFoundError</a>&gt;</p>
 <hr>
 <h2><strong><a name="class_ba_Dependency">ba.Dependency</a></strong></h3>
-<p>Inherits from: <a href="#class_typing_Generic">typing.Generic</a></p>
+<p>Inherits from: <a href="https://docs.python.org/3/library/typing.html#typing.Generic">typing.Generic</a></p>
 <p>A dependency on a DependencyComponent (with an optional config).</p>
 
 <p>Category: <a href="#class_category_Dependency_Classes">Dependency Classes</a></p>
@@ -1941,7 +1945,7 @@ on the dep config value. (for instance a map required by a game type)</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_DependencyError">ba.DependencyError</a></strong></h3>
-<p>Inherits from: Exception, BaseException</p>
+<p>Inherits from: <a href="https://docs.python.org/3/library/exceptions.html#Exception">Exception</a>, <a href="https://docs.python.org/3/library/exceptions.html#BaseException">BaseException</a></p>
 <p>Exception raised when one or more <a href="#class_ba_Dependency">ba.Dependency</a> items are missing.</p>
 
 <p>Category: <a href="#class_category_Exception_Classes">Exception Classes</a></p>
@@ -1968,7 +1972,7 @@ on the dep config value. (for instance a map required by a game type)</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_DependencySet">ba.DependencySet</a></strong></h3>
-<p>Inherits from: <a href="#class_typing_Generic">typing.Generic</a></p>
+<p>Inherits from: <a href="https://docs.python.org/3/library/typing.html#typing.Generic">typing.Generic</a></p>
 <p>Set of resolved dependencies and their associated data.</p>
 
 <p>Category: <a href="#class_category_Dependency_Classes">Dependency Classes</a></p>
@@ -2129,13 +2133,13 @@ its time with lingering corpses, sound effects, etc.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_EmptyPlayer">ba.EmptyPlayer</a></strong></h3>
-<p>Inherits from: <a href="#class_ba_Player">ba.Player</a>, <a href="#class_typing_Generic">typing.Generic</a></p>
+<p>Inherits from: <a href="#class_ba_Player">ba.Player</a>, <a href="https://docs.python.org/3/library/typing.html#typing.Generic">typing.Generic</a></p>
 <p>An empty player for use by Activities that don't need to define one.</p>
 
 <p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a></p>
 
-<p>    <a href="#class_ba_Player">ba.Player</a> and <a href="#class_ba_Team">ba.Team</a> are 'Generic' types, and so passing them as
-    type arguments when defining a <a href="#class_ba_Activity">ba.Activity</a> reduces type safety.
+<p>    <a href="#class_ba_Player">ba.Player</a> and <a href="#class_ba_Team">ba.Team</a> are 'Generic' types, and so passing those top level
+    classes as type arguments when defining a <a href="#class_ba_Activity">ba.Activity</a> reduces type safety.
     For example, activity.teams[0].player will have type 'Any' in that case.
     For that reason, it is better to pass EmptyPlayer and EmptyTeam when
     defining a <a href="#class_ba_Activity">ba.Activity</a> that does not need custom types of its own.</p>
@@ -2192,13 +2196,13 @@ its time with lingering corpses, sound effects, etc.</p>
 <p>&lt;all methods inherited from <a href="#class_ba_Player">ba.Player</a>&gt;</p>
 <hr>
 <h2><strong><a name="class_ba_EmptyTeam">ba.EmptyTeam</a></strong></h3>
-<p>Inherits from: <a href="#class_ba_Team">ba.Team</a>, <a href="#class_typing_Generic">typing.Generic</a></p>
+<p>Inherits from: <a href="#class_ba_Team">ba.Team</a>, <a href="https://docs.python.org/3/library/typing.html#typing.Generic">typing.Generic</a></p>
 <p>An empty player for use by Activities that don't need to define one.</p>
 
 <p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a></p>
 
-<p>    <a href="#class_ba_Player">ba.Player</a> and <a href="#class_ba_Team">ba.Team</a> are 'Generic' types, and so passing them as
-    type arguments when defining a <a href="#class_ba_Activity">ba.Activity</a> reduces type safety.
+<p>    <a href="#class_ba_Player">ba.Player</a> and <a href="#class_ba_Team">ba.Team</a> are 'Generic' types, and so passing those top level
+    classes as type arguments when defining a <a href="#class_ba_Activity">ba.Activity</a> reduces type safety.
     For example, activity.teams[0].player will have type 'Any' in that case.
     For that reason, it is better to pass EmptyPlayer and EmptyTeam when
     defining a <a href="#class_ba_Activity">ba.Activity</a> that does not need custom types of its own.</p>
@@ -2234,7 +2238,7 @@ its time with lingering corpses, sound effects, etc.</p>
 <p>&lt;all methods inherited from <a href="#class_ba_Team">ba.Team</a>&gt;</p>
 <hr>
 <h2><strong><a name="class_ba_Existable">ba.Existable</a></strong></h3>
-<p>Inherits from: <a href="#class_typing_Protocol">typing.Protocol</a>, <a href="#class_typing_Generic">typing.Generic</a></p>
+<p>Inherits from: <a href="https://docs.python.org/3/library/typing.html#typing.Protocol">typing.Protocol</a>, <a href="https://docs.python.org/3/library/typing.html#typing.Generic">typing.Generic</a></p>
 <p>A Protocol for objects supporting an exists() method.</p>
 
 <p>Category: <a href="#class_category_Protocols">Protocols</a>
@@ -2337,8 +2341,8 @@ its time with lingering corpses, sound effects, etc.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_GameActivity">ba.GameActivity</a></strong></h3>
-<p>Inherits from: <a href="#class_ba_Activity">ba.Activity</a>, <a href="#class_ba_DependencyComponent">ba.DependencyComponent</a>, <a href="#class_typing_Generic">typing.Generic</a></p>
-<p>Common base class for all game ba.Activities.</p>
+<p>Inherits from: <a href="#class_ba_Activity">ba.Activity</a>, <a href="#class_ba_DependencyComponent">ba.DependencyComponent</a>, <a href="https://docs.python.org/3/library/typing.html#typing.Generic">typing.Generic</a></p>
+<p>Common base class for all game <a href="#class_ba_Activity">ba.Activities</a>.</p>
 
 <p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a>
 </p>
@@ -2990,7 +2994,7 @@ prefs, etc.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_InputDeviceNotFoundError">ba.InputDeviceNotFoundError</a></strong></h3>
-<p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, Exception, BaseException</p>
+<p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, <a href="https://docs.python.org/3/library/exceptions.html#Exception">Exception</a>, <a href="https://docs.python.org/3/library/exceptions.html#BaseException">BaseException</a></p>
 <p>Exception raised when an expected <a href="#class_ba_InputDevice">ba.InputDevice</a> does not exist.</p>
 
 <p>Category: <a href="#class_category_Exception_Classes">Exception Classes</a>
@@ -3000,7 +3004,7 @@ prefs, etc.</p>
 <p>&lt;all methods inherited from <a href="#class_ba_NotFoundError">ba.NotFoundError</a>&gt;</p>
 <hr>
 <h2><strong><a name="class_ba_InputType">ba.InputType</a></strong></h3>
-<p>Inherits from: enum.Enum</p>
+<p>Inherits from: <a href="https://docs.python.org/3/library/enum.html#enum.Enum">enum.Enum</a></p>
 <p>Types of input a controller can send to the game.</p>
 
 <p>Category: <a href="#class_category_Enums">Enums</a></p>
@@ -4053,7 +4057,7 @@ signify that the default soundtrack should be used..</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_MusicPlayMode">ba.MusicPlayMode</a></strong></h3>
-<p>Inherits from: enum.Enum</p>
+<p>Inherits from: <a href="https://docs.python.org/3/library/enum.html#enum.Enum">enum.Enum</a></p>
 <p>Influences behavior when playing music.</p>
 
 <p>Category: <a href="#class_category_Enums">Enums</a>
@@ -4156,7 +4160,7 @@ account what is supported locally.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_MusicType">ba.MusicType</a></strong></h3>
-<p>Inherits from: enum.Enum</p>
+<p>Inherits from: <a href="https://docs.python.org/3/library/enum.html#enum.Enum">enum.Enum</a></p>
 <p>Types of music available to play in-game.</p>
 
 <p>Category: <a href="#class_category_Enums">Enums</a></p>
@@ -4368,7 +4372,7 @@ even if myactor is set to None.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_NodeNotFoundError">ba.NodeNotFoundError</a></strong></h3>
-<p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, Exception, BaseException</p>
+<p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, <a href="https://docs.python.org/3/library/exceptions.html#Exception">Exception</a>, <a href="https://docs.python.org/3/library/exceptions.html#BaseException">BaseException</a></p>
 <p>Exception raised when an expected <a href="#class_ba_Node">ba.Node</a> does not exist.</p>
 
 <p>Category: <a href="#class_category_Exception_Classes">Exception Classes</a>
@@ -4378,14 +4382,14 @@ even if myactor is set to None.</p>
 <p>&lt;all methods inherited from <a href="#class_ba_NotFoundError">ba.NotFoundError</a>&gt;</p>
 <hr>
 <h2><strong><a name="class_ba_NotFoundError">ba.NotFoundError</a></strong></h3>
-<p>Inherits from: Exception, BaseException</p>
+<p>Inherits from: <a href="https://docs.python.org/3/library/exceptions.html#Exception">Exception</a>, <a href="https://docs.python.org/3/library/exceptions.html#BaseException">BaseException</a></p>
 <p>Exception raised when a referenced object does not exist.</p>
 
 <p>Category: <a href="#class_category_Exception_Classes">Exception Classes</a>
 </p>
 
 <h3>Methods:</h3>
-<p>&lt;all methods inherited from <a href="#class_builtins_Exception">builtins.Exception</a>&gt;</p>
+<p>&lt;all methods inherited from <a href="https://docs.python.org/3/library/exceptions.html#Exception">Exception</a>&gt;</p>
 <hr>
 <h2><strong><a name="class_ba_OutOfBoundsMessage">ba.OutOfBoundsMessage</a></strong></h3>
 <p><em>&lt;top level class&gt;</em>
@@ -4404,7 +4408,7 @@ even if myactor is set to None.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_Permission">ba.Permission</a></strong></h3>
-<p>Inherits from: enum.Enum</p>
+<p>Inherits from: <a href="https://docs.python.org/3/library/enum.html#enum.Enum">enum.Enum</a></p>
 <p>Permissions that can be requested from the OS.</p>
 
 <p>Category: <a href="#class_category_Enums">Enums</a>
@@ -4462,7 +4466,7 @@ even if myactor is set to None.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_Player">ba.Player</a></strong></h3>
-<p>Inherits from: <a href="#class_typing_Generic">typing.Generic</a></p>
+<p>Inherits from: <a href="https://docs.python.org/3/library/typing.html#typing.Generic">typing.Generic</a></p>
 <p>A player in a specific <a href="#class_ba_Activity">ba.Activity</a>.</p>
 
 <p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a></p>
@@ -4657,7 +4661,7 @@ the type-checker properly identifies the returned value as one.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_PlayerNotFoundError">ba.PlayerNotFoundError</a></strong></h3>
-<p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, Exception, BaseException</p>
+<p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, <a href="https://docs.python.org/3/library/exceptions.html#Exception">Exception</a>, <a href="https://docs.python.org/3/library/exceptions.html#BaseException">BaseException</a></p>
 <p>Exception raised when an expected <a href="#class_ba_Player">ba.Player</a> does not exist.</p>
 
 <p>Category: <a href="#class_category_Exception_Classes">Exception Classes</a>
@@ -4944,7 +4948,7 @@ change this. Defaults to an empty string.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_ScoreType">ba.ScoreType</a></strong></h3>
-<p>Inherits from: enum.Enum</p>
+<p>Inherits from: <a href="https://docs.python.org/3/library/enum.html#enum.Enum">enum.Enum</a></p>
 <p>Type of scores.</p>
 
 <p>Category: <a href="#class_category_Enums">Enums</a>
@@ -5010,7 +5014,7 @@ Pass 0 or a negative number for no ban time.</p>
 <h2><strong><a name="class_ba_Session">ba.Session</a></strong></h3>
 <p><em>&lt;top level class&gt;</em>
 </p>
-<p>Defines a high level series of activities with a common purpose.</p>
+<p>Defines a high level series of <a href="#class_ba_Activity">ba.Activities</a> with a common purpose.</p>
 
 <p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a></p>
 
@@ -5201,7 +5205,7 @@ session.setactivity(foo) and then <a href="#function_ba_newnode">ba.newnode</a>(
 </dl>
 <hr>
 <h2><strong><a name="class_ba_SessionNotFoundError">ba.SessionNotFoundError</a></strong></h3>
-<p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, Exception, BaseException</p>
+<p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, <a href="https://docs.python.org/3/library/exceptions.html#Exception">Exception</a>, <a href="https://docs.python.org/3/library/exceptions.html#BaseException">BaseException</a></p>
 <p>Exception raised when an expected <a href="#class_ba_Session">ba.Session</a> does not exist.</p>
 
 <p>Category: <a href="#class_category_Exception_Classes">Exception Classes</a>
@@ -5345,7 +5349,7 @@ other players.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_SessionPlayerNotFoundError">ba.SessionPlayerNotFoundError</a></strong></h3>
-<p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, Exception, BaseException</p>
+<p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, <a href="https://docs.python.org/3/library/exceptions.html#Exception">Exception</a>, <a href="https://docs.python.org/3/library/exceptions.html#BaseException">BaseException</a></p>
 <p>Exception raised when an expected <a href="#class_ba_SessionPlayer">ba.SessionPlayer</a> does not exist.</p>
 
 <p>Category: <a href="#class_category_Exception_Classes">Exception Classes</a>
@@ -5411,7 +5415,7 @@ of the session.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_SessionTeamNotFoundError">ba.SessionTeamNotFoundError</a></strong></h3>
-<p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, Exception, BaseException</p>
+<p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, <a href="https://docs.python.org/3/library/exceptions.html#Exception">Exception</a>, <a href="https://docs.python.org/3/library/exceptions.html#BaseException">BaseException</a></p>
 <p>Exception raised when an expected <a href="#class_ba_SessionTeam">ba.SessionTeam</a> does not exist.</p>
 
 <p>Category: <a href="#class_category_Exception_Classes">Exception Classes</a>
@@ -5463,7 +5467,7 @@ of the session.</p>
 
 <hr>
 <h2><strong><a name="class_ba_SpecialChar">ba.SpecialChar</a></strong></h3>
-<p>Inherits from: enum.Enum</p>
+<p>Inherits from: <a href="https://docs.python.org/3/library/enum.html#enum.Enum">enum.Enum</a></p>
 <p>Special characters the game can print.</p>
 
 <p>Category: <a href="#class_category_Enums">Enums</a>
@@ -5680,7 +5684,7 @@ of the session.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_Team">ba.Team</a></strong></h3>
-<p>Inherits from: <a href="#class_typing_Generic">typing.Generic</a></p>
+<p>Inherits from: <a href="https://docs.python.org/3/library/typing.html#typing.Generic">typing.Generic</a></p>
 <p>A team in a specific <a href="#class_ba_Activity">ba.Activity</a>.</p>
 
 <p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a></p>
@@ -5729,7 +5733,7 @@ of the session.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_TeamGameActivity">ba.TeamGameActivity</a></strong></h3>
-<p>Inherits from: <a href="#class_ba_GameActivity">ba.GameActivity</a>, <a href="#class_ba_Activity">ba.Activity</a>, <a href="#class_ba_DependencyComponent">ba.DependencyComponent</a>, <a href="#class_typing_Generic">typing.Generic</a></p>
+<p>Inherits from: <a href="#class_ba_GameActivity">ba.GameActivity</a>, <a href="#class_ba_Activity">ba.Activity</a>, <a href="#class_ba_DependencyComponent">ba.DependencyComponent</a>, <a href="https://docs.python.org/3/library/typing.html#typing.Generic">typing.Generic</a></p>
 <p>Base class for teams and free-for-all mode games.</p>
 
 <p>Category: <a href="#class_category_Gameplay_Classes">Gameplay Classes</a></p>
@@ -5859,7 +5863,7 @@ False otherwise.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_TeamNotFoundError">ba.TeamNotFoundError</a></strong></h3>
-<p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, Exception, BaseException</p>
+<p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, <a href="https://docs.python.org/3/library/exceptions.html#Exception">Exception</a>, <a href="https://docs.python.org/3/library/exceptions.html#BaseException">BaseException</a></p>
 <p>Exception raised when an expected <a href="#class_ba_Team">ba.Team</a> does not exist.</p>
 
 <p>Category: <a href="#class_category_Exception_Classes">Exception Classes</a>
@@ -5895,7 +5899,7 @@ False otherwise.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_TimeFormat">ba.TimeFormat</a></strong></h3>
-<p>Inherits from: enum.Enum</p>
+<p>Inherits from: <a href="https://docs.python.org/3/library/enum.html#enum.Enum">enum.Enum</a></p>
 <p>Specifies the format time values are provided in.</p>
 
 <p>Category: <a href="#class_category_Enums">Enums</a>
@@ -5927,7 +5931,7 @@ you should use the <a href="#function_ba_timer">ba.timer</a>() function instead.
 
 <p>time: length of time (in seconds by default) that the timer will wait
 before firing. Note that the actual delay experienced may vary
- depending on the timetype. (see below)</p>
+depending on the timetype. (see below)</p>
 
 <p>call: A callable Python object. Note that the timer will retain a
 strong reference to the callable for as long as it exists, so you
@@ -5937,28 +5941,11 @@ desired.</p>
 <p>repeat: if True, the timer will fire repeatedly, with each successive
 firing having the same delay as the first.</p>
 
-<p>timetype can be either 'sim', 'base', or 'real'. It defaults to
-'sim'. Types are explained below:</p>
+<p>timetype: A <a href="#class_ba_TimeType">ba.TimeType</a> value determining which timeline the timer is
+placed onto.</p>
 
-<p>'sim' time maps to local simulation time in <a href="#class_ba_Activity">ba.Activity</a> or <a href="#class_ba_Session">ba.Session</a>
-Contexts. This means that it may progress slower in slow-motion play
-modes, stop when the game is paused, etc.  This time type is not
-available in UI contexts.</p>
-
-<p>'base' time is also linked to gameplay in <a href="#class_ba_Activity">ba.Activity</a> or <a href="#class_ba_Session">ba.Session</a>
-Contexts, but it progresses at a constant rate regardless of
- slow-motion states or pausing.  It can, however, slow down or stop
-in certain cases such as network outages or game slowdowns due to
-cpu load. Like 'sim' time, this is unavailable in UI contexts.</p>
-
-<p>'real' time always maps to actual clock time with a bit of filtering
-added, regardless of Context.  (the filtering prevents it from going
-backwards or jumping forward by large amounts due to the app being
-backgrounded, system time changing, etc.)
-Real time timers are currently only available in the UI context.</p>
-
-<p>the 'timeformat' arg defaults to SECONDS but can also be MILLISECONDS
-if you want to pass time as milliseconds.</p>
+<p>timeformat: A <a href="#class_ba_TimeFormat">ba.TimeFormat</a> value determining how the passed time is
+interpreted.</p>
 
 <pre><span><em><small># Example: use a Timer object to print repeatedly for a few seconds:</small></em></span>
 def say_it():
@@ -5966,14 +5953,14 @@ def say_it():
 def stop_saying_it():
     self.t = None
     <a href="#function_ba_screenmessage">ba.screenmessage</a>('MUSHROOM MUSHROOM!')
-<span><em><small># create our timer; it will run as long as we hold self.t</small></em></span>
+<span><em><small># Create our timer; it will run as long as we have the self.t ref.</small></em></span>
 self.t = <a href="#class_ba_Timer">ba.Timer</a>(0.3, say_it, repeat=True)
-<span><em><small># now fire off a one-shot timer to kill it</small></em></span>
+<span><em><small># Now fire off a one-shot timer to kill it.</small></em></span>
 <a href="#function_ba_timer">ba.timer</a>(3.89, stop_saying_it)</pre>
 
 <hr>
 <h2><strong><a name="class_ba_TimeType">ba.TimeType</a></strong></h3>
-<p>Inherits from: enum.Enum</p>
+<p>Inherits from: <a href="https://docs.python.org/3/library/enum.html#enum.Enum">enum.Enum</a></p>
 <p>Specifies the type of time for various operations to target/use.</p>
 
 <p>Category: <a href="#class_category_Enums">Enums</a></p>
@@ -6001,7 +5988,7 @@ self.t = <a href="#class_ba_Timer">ba.Timer</a>(0.3, say_it, repeat=True)
 <h2><strong><a name="class_ba_UIController">ba.UIController</a></strong></h3>
 <p><em>&lt;top level class&gt;</em>
 </p>
-<p>Wrangles UILocations.</p>
+<p>Wrangles ba.UILocations.</p>
 
 <p>Category: <a href="#class_category_User_Interface_Classes">User Interface Classes</a>
 </p>
@@ -6022,7 +6009,7 @@ self.t = <a href="#class_ba_Timer">ba.Timer</a>(0.3, say_it, repeat=True)
 </dl>
 <hr>
 <h2><strong><a name="class_ba_UIScale">ba.UIScale</a></strong></h3>
-<p>Inherits from: enum.Enum</p>
+<p>Inherits from: <a href="https://docs.python.org/3/library/enum.html#enum.Enum">enum.Enum</a></p>
 <p>The overall scale the UI is being rendered for. Note that this is
     independent of pixel resolution. For example, a phone and a desktop PC
     might render the game at similar pixel resolutions but the size they
@@ -6306,7 +6293,7 @@ widgets.</p>
 </dl>
 <hr>
 <h2><strong><a name="class_ba_WidgetNotFoundError">ba.WidgetNotFoundError</a></strong></h3>
-<p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, Exception, BaseException</p>
+<p>Inherits from: <a href="#class_ba_NotFoundError">ba.NotFoundError</a>, <a href="https://docs.python.org/3/library/exceptions.html#Exception">Exception</a>, <a href="https://docs.python.org/3/library/exceptions.html#BaseException">BaseException</a></p>
 <p>Exception raised when an expected <a href="#class_ba_Widget">ba.Widget</a> does not exist.</p>
 
 <p>Category: <a href="#class_category_Exception_Classes">Exception Classes</a>
@@ -6474,6 +6461,50 @@ a new one is created and returned. Arguments that are not set to None
 are applied to the Widget.</p>
 
 <hr>
+<h2><strong><a name="function_ba_clipboard_get_text">ba.clipboard_get_text()</a></strong></h3>
+<p><span>clipboard_get_text() -&gt; str</span></p>
+
+<p>Return text currently on the system clipboard.</p>
+
+<p>Category: <a href="#function_category_General_Utility_Functions">General Utility Functions</a></p>
+
+<p>Ensure that <a href="#function_ba_clipboard_has_text">ba.clipboard_has_text</a>() returns True before calling
+ this function.</p>
+
+<hr>
+<h2><strong><a name="function_ba_clipboard_has_text">ba.clipboard_has_text()</a></strong></h3>
+<p><span>clipboard_has_text() -&gt; bool</span></p>
+
+<p>Return whether there is currently text on the clipboard.</p>
+
+<p>Category: <a href="#function_category_General_Utility_Functions">General Utility Functions</a></p>
+
+<p>This will return False if no system clipboard is available; no need
+ to call ba.clipboard_available() separately.</p>
+
+<hr>
+<h2><strong><a name="function_ba_clipboard_is_supported">ba.clipboard_is_supported()</a></strong></h3>
+<p><span>clipboard_is_supported() -&gt; bool</span></p>
+
+<p>Return whether this platform supports clipboard operations at all.</p>
+
+<p>Category: <a href="#function_category_General_Utility_Functions">General Utility Functions</a></p>
+
+<p>If this returns False, UIs should not show 'copy to clipboard'
+buttons, etc.</p>
+
+<hr>
+<h2><strong><a name="function_ba_clipboard_set_text">ba.clipboard_set_text()</a></strong></h3>
+<p><span>clipboard_set_text(value: str) -&gt; None</span></p>
+
+<p>Copy a string to the system clipboard.</p>
+
+<p>Category: <a href="#function_category_General_Utility_Functions">General Utility Functions</a></p>
+
+<p>Ensure that ba.clipboard_available() returns True before adding
+ buttons/etc. that make use of this functionality.</p>
+
+<hr>
 <h2><strong><a name="function_ba_columnwidget">ba.columnwidget()</a></strong></h3>
 <p><span>columnwidget(edit: <a href="#class_ba_Widget">ba.Widget</a> = None,
   parent: <a href="#class_ba_Widget">ba.Widget</a> = None,
@@ -6582,17 +6613,19 @@ settings, exiting element counts, or other factors.</p>
 <h2><strong><a name="function_ba_existing">ba.existing()</a></strong></h3>
 <p><span>existing(obj: Optional[ExistableType]) -&gt; Optional[ExistableType]</span></p>
 
-<p>Convert invalid references to None for any <a href="#class_ba_Existable">ba.Existable</a> type.</p>
+<p>Convert invalid references to None for any <a href="#class_ba_Existable">ba.Existable</a> object.</p>
 
 <p>Category: <a href="#function_category_Gameplay_Functions">Gameplay Functions</a></p>
 
 <p>To best support type checking, it is important that invalid references
 not be passed around and instead get converted to values of None.
 That way the type checker can properly flag attempts to pass dead
-objects into functions expecting only live ones, etc.
-This call can be used on any 'existable' object (one with an exists()
-method) and will convert it to a None value if it does not exist.
-For more info, see notes on 'existables' here:
+objects (Optional[FooType]) into functions expecting only live ones
+(FooType), etc. This call can be used on any 'existable' object
+(one with an exists() method) and will convert it to a None value
+if it does not exist.</p>
+
+<p>For more info, see notes on 'existables' here:
 https://ballistica.net/wiki/Coding-Style-Guide</p>
 
 <hr>
@@ -6989,14 +7022,14 @@ app running.</p>
 
 <hr>
 <h2><strong><a name="function_ba_rowwidget">ba.rowwidget()</a></strong></h3>
-<p><span>rowwidget(edit: Widget = None, parent: Widget = None,
+<p><span>rowwidget(edit: <a href="#class_ba_Widget">ba.Widget</a> = None, parent: <a href="#class_ba_Widget">ba.Widget</a> = None,
   size: Sequence[float] = None,
   position: Sequence[float] = None,
-  background: bool = None, selected_child: Widget = None,
-  visible_child: Widget = None,
+  background: bool = None, selected_child: <a href="#class_ba_Widget">ba.Widget</a> = None,
+  visible_child: <a href="#class_ba_Widget">ba.Widget</a> = None,
   claims_left_right: bool = None,
   claims_tab: bool = None,
-  selection_loops_to_parent: bool = None) -&gt; Widget</span></p>
+  selection_loops_to_parent: bool = None) -&gt; <a href="#class_ba_Widget">ba.Widget</a></span></p>
 
 <p>Create or edit a row widget.</p>
 
@@ -7076,9 +7109,9 @@ are applied to the Widget.</p>
 
 <hr>
 <h2><strong><a name="function_ba_setmusic">ba.setmusic()</a></strong></h3>
-<p><span>setmusic(musictype: Optional[MusicType], continuous: bool = False) -&gt; None</span></p>
+<p><span>setmusic(musictype: Optional[<a href="#class_ba_MusicType">ba.MusicType</a>], continuous: bool = False) -&gt; None</span></p>
 
-<p>Tell the game to play (or stop playing) a certain type of music.</p>
+<p>Set the app to play (or stop playing) a certain type of music.</p>
 
 <p>Category: <a href="#function_category_Gameplay_Functions">Gameplay Functions</a></p>
 
@@ -7103,15 +7136,17 @@ playing, the playing track will not be restarted.</p>
 <h2><strong><a name="function_ba_storagename">ba.storagename()</a></strong></h3>
 <p><span>storagename(suffix: str = None) -&gt; str</span></p>
 
-<p>Generate a (hopefully) unique name for storing things in public places.</p>
+<p>Generate a unique name for storing class data in shared places.</p>
 
 <p>Category: <a href="#function_category_General_Utility_Functions">General Utility Functions</a></p>
 
 <p>This consists of a leading underscore, the module path at the
-call site with dots replaced by underscores, the class name, and
-the provided suffix. When storing data in public places such as
-'customdata' dicts, this minimizes the chance of collisions if a
-module or class is duplicated or renamed.</p>
+call site with dots replaced by underscores, the containing class's
+qualified name, and the provided suffix. When storing data in public
+places such as 'customdata' dicts, this minimizes the chance of
+collisions with other similarly named classes.</p>
+
+<p>Note that this will function even if called in the class definition.</p>
 
 <pre><span><em><small># Example: generate a unique name for storage purposes:</small></em></span>
 class MyThingie:</pre>
@@ -7119,22 +7154,22 @@ class MyThingie:</pre>
 <pre><span><em><small>    # This will give something like '_mymodule_submodule_mythingie_data'.</small></em></span>
     _STORENAME = <a href="#function_ba_storagename">ba.storagename</a>('data')</pre>
 
-<p>    def __init__(self, activity):
-        # Store some data in the Activity we were passed
-        activity.customdata[self._STORENAME] = {}</p>
+<pre><span><em><small>    # Use that name to store some data in the Activity we were passed.</small></em></span>
+    def __init__(self, activity):
+        activity.customdata[self._STORENAME] = {}</pre>
 
 <hr>
 <h2><strong><a name="function_ba_textwidget">ba.textwidget()</a></strong></h3>
-<p><span>textwidget(edit: Widget = None, parent: Widget = None,
+<p><span>textwidget(edit: <a href="#class_ba_Widget">ba.Widget</a> = None, parent: <a href="#class_ba_Widget">ba.Widget</a> = None,
   size: Sequence[float] = None, position: Sequence[float] = None,
   text: Union[str, <a href="#class_ba_Lstr">ba.Lstr</a>] = None, v_align: str = None,
   h_align: str = None, editable: bool = None, padding: float = None,
   on_return_press_call: Callable[[], None] = None,
   on_activate_call: Callable[[], None] = None,
-  selectable: bool = None, query: Widget = None, max_chars: int = None,
+  selectable: bool = None, query: <a href="#class_ba_Widget">ba.Widget</a> = None, max_chars: int = None,
   color: Sequence[float] = None, click_activate: bool = None,
   on_select_call: Callable[[], None] = None,
-  always_highlight: bool = None, draw_controller: Widget = None,
+  always_highlight: bool = None, draw_controller: <a href="#class_ba_Widget">ba.Widget</a> = None,
   scale: float = None, corner_scale: float = None,
   description: Union[str, <a href="#class_ba_Lstr">ba.Lstr</a>] = None,
   transition_delay: float = None, maxwidth: float = None,

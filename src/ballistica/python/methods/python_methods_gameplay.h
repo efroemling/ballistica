@@ -16,4 +16,5 @@ class PythonMethodsGameplay {
 };
 
 }  // namespace ballistica
+
 #endif  // BALLISTICA_PYTHON_METHODS_PYTHON_METHODS_GAMEPLAY_H_

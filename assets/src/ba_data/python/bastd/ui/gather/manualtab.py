@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, cast
 
 from enum import Enum
 from dataclasses import dataclass
-from bastd.ui.gather.bases import GatherTab
+from bastd.ui.gather import GatherTab
 
 import _ba
 import ba
@@ -161,11 +161,10 @@ class ManualGatherTab(GatherTab):
         return self._container
 
     def save_state(self) -> None:
-        ba.app.ui.window_states[self.__class__.__name__] = State(
-            sub_tab=self._sub_tab)
+        ba.app.ui.window_states[type(self)] = State(sub_tab=self._sub_tab)
 
     def restore_state(self) -> None:
-        state = ba.app.ui.window_states.get(self.__class__.__name__)
+        state = ba.app.ui.window_states.get(type(self))
         if state is None:
             state = State()
         assert isinstance(state, State)

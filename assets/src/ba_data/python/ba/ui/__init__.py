@@ -118,7 +118,7 @@ class UIEntry:
 
 
 class UIController:
-    """Wrangles UILocations.
+    """Wrangles ba.UILocations.
 
     Category: User Interface Classes
     """

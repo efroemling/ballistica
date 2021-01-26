@@ -16,4 +16,5 @@ class PythonMethodsApp {
 };
 
 }  // namespace ballistica
+
 #endif  // BALLISTICA_PYTHON_METHODS_PYTHON_METHODS_APP_H_

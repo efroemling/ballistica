@@ -103,7 +103,25 @@ class Platform {
   virtual auto GetCWD() -> std::string;
 
   // Unlink a file.
-  virtual void Unlink(const char* path);
+  virtual auto Unlink(const char* path) -> void;
+
+#pragma mark CLIPBOARD ---------------------------------------------------------
+
+  /// Return whether clipboard operations are supported at all.
+  /// This gets called when determining whether to display clipboard related
+  /// UI elements/etc.
+  auto ClipboardIsSupported() -> bool;
+
+  /// Return whether there is currently text on the clipboard.
+  auto ClipboardHasText() -> bool;
+
+  /// Set current clipboard text. Raises an Exception if clipboard is
+  /// unsupported.
+  auto ClipboardSetText(const std::string& text) -> void;
+
+  /// Return current text from the clipboard. Raises an Exception if
+  /// clipboard is unsupported or if there's no text on the clipboard.
+  auto ClipboardGetText() -> std::string;
 
 #pragma mark PRINTING/LOGGING --------------------------------------------------
 
@@ -493,6 +511,11 @@ class Platform {
   // Generate a random UUID string.
   virtual auto GenerateUUID() -> std::string;
 
+  virtual auto DoClipboardIsSupported() -> bool;
+  virtual auto DoClipboardHasText() -> bool;
+  virtual auto DoClipboardSetText(const std::string& text) -> void;
+  virtual auto DoClipboardGetText() -> std::string;
+
  private:
   int py_call_num_{};
   bool using_custom_app_python_dir_{};
@@ -500,6 +523,8 @@ class Platform {
   bool have_has_touchscreen_value_{};
   bool have_touchscreen_{};
   bool is_tegra_k1_{};
+  bool have_clipboard_is_supported_{};
+  bool clipboard_is_supported_{};
   millisecs_t starttime_{};
   std::string device_uuid_;
   bool have_device_uuid_{};

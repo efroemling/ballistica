@@ -496,9 +496,7 @@ class WatchWindow(ba.Window):
                 sel_name = 'TabContainer'
             else:
                 raise ValueError(f'unrecognized selection {sel}')
-            ba.app.ui.window_states[self.__class__.__name__] = {
-                'sel_name': sel_name
-            }
+            ba.app.ui.window_states[type(self)] = {'sel_name': sel_name}
         except Exception:
             ba.print_exception(f'Error saving state for {self}.')
 
@@ -506,7 +504,7 @@ class WatchWindow(ba.Window):
         from efro.util import enum_by_value
         try:
             sel: Optional[ba.Widget]
-            sel_name = ba.app.ui.window_states.get(self.__class__.__name__,
+            sel_name = ba.app.ui.window_states.get(type(self),
                                                    {}).get('sel_name')
             assert isinstance(sel_name, (str, type(None)))
             try:

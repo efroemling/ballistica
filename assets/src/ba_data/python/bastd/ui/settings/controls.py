@@ -457,10 +457,10 @@ class ControlsSettingsWindow(ba.Window):
             sel_name = 'Wiimotes'
         else:
             sel_name = 'Back'
-        ba.app.ui.window_states[self.__class__.__name__] = sel_name
+        ba.app.ui.window_states[type(self)] = sel_name
 
     def _restore_state(self) -> None:
-        sel_name = ba.app.ui.window_states.get(self.__class__.__name__)
+        sel_name = ba.app.ui.window_states.get(type(self))
         if sel_name == 'GamePads':
             sel = self._gamepads_button
         elif sel_name == 'Touch':

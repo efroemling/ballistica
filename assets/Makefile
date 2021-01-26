@@ -296,10 +296,9 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/bastd/ui/fileselector.py \
   build/ba_data/python/bastd/ui/gather/__init__.py \
   build/ba_data/python/bastd/ui/gather/abouttab.py \
-  build/ba_data/python/bastd/ui/gather/bases.py \
-  build/ba_data/python/bastd/ui/gather/googleplaytab.py \
   build/ba_data/python/bastd/ui/gather/manualtab.py \
   build/ba_data/python/bastd/ui/gather/nearbytab.py \
+  build/ba_data/python/bastd/ui/gather/privatetab.py \
   build/ba_data/python/bastd/ui/gather/publictab.py \
   build/ba_data/python/bastd/ui/getcurrency.py \
   build/ba_data/python/bastd/ui/getremote.py \
@@ -541,10 +540,9 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/bastd/ui/__pycache__/fileselector.cpython-38.opt-1.pyc \
   build/ba_data/python/bastd/ui/gather/__pycache__/__init__.cpython-38.opt-1.pyc \
   build/ba_data/python/bastd/ui/gather/__pycache__/abouttab.cpython-38.opt-1.pyc \
-  build/ba_data/python/bastd/ui/gather/__pycache__/bases.cpython-38.opt-1.pyc \
-  build/ba_data/python/bastd/ui/gather/__pycache__/googleplaytab.cpython-38.opt-1.pyc \
   build/ba_data/python/bastd/ui/gather/__pycache__/manualtab.cpython-38.opt-1.pyc \
   build/ba_data/python/bastd/ui/gather/__pycache__/nearbytab.cpython-38.opt-1.pyc \
+  build/ba_data/python/bastd/ui/gather/__pycache__/privatetab.cpython-38.opt-1.pyc \
   build/ba_data/python/bastd/ui/gather/__pycache__/publictab.cpython-38.opt-1.pyc \
   build/ba_data/python/bastd/ui/__pycache__/getcurrency.cpython-38.opt-1.pyc \
   build/ba_data/python/bastd/ui/__pycache__/getremote.cpython-38.opt-1.pyc \

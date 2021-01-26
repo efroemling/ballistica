@@ -12,6 +12,7 @@ import _ba
 
 if TYPE_CHECKING:
     from typing import Callable, Any, Optional, Dict, Union, Type
+    import ba
 
 
 class MusicType(Enum):
@@ -469,8 +470,9 @@ class MusicPlayer:
                 self._actually_playing = False
 
 
-def setmusic(musictype: Optional[MusicType], continuous: bool = False) -> None:
-    """Tell the game to play (or stop playing) a certain type of music.
+def setmusic(musictype: Optional[ba.MusicType],
+             continuous: bool = False) -> None:
+    """Set the app to play (or stop playing) a certain type of music.
 
     category: Gameplay Functions
 

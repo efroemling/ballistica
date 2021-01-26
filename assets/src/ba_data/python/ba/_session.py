@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 
 class Session:
-    """Defines a high level series of activities with a common purpose.
+    """Defines a high level series of ba.Activities with a common purpose.
 
     category: Gameplay Classes
 

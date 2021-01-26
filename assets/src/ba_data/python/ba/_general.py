@@ -38,16 +38,18 @@ T = TypeVar('T')
 
 
 def existing(obj: Optional[ExistableType]) -> Optional[ExistableType]:
-    """Convert invalid references to None for any ba.Existable type.
+    """Convert invalid references to None for any ba.Existable object.
 
     Category: Gameplay Functions
 
     To best support type checking, it is important that invalid references
     not be passed around and instead get converted to values of None.
     That way the type checker can properly flag attempts to pass dead
-    objects into functions expecting only live ones, etc.
-    This call can be used on any 'existable' object (one with an exists()
-    method) and will convert it to a None value if it does not exist.
+    objects (Optional[FooType]) into functions expecting only live ones
+    (FooType), etc. This call can be used on any 'existable' object
+    (one with an exists() method) and will convert it to a None value
+    if it does not exist.
+
     For more info, see notes on 'existables' here:
     https://ballistica.net/wiki/Coding-Style-Guide
     """
@@ -358,15 +360,17 @@ def _verify_object_death(wref: ReferenceType) -> None:
 
 
 def storagename(suffix: str = None) -> str:
-    """Generate a (hopefully) unique name for storing things in public places.
+    """Generate a unique name for storing class data in shared places.
 
     Category: General Utility Functions
 
     This consists of a leading underscore, the module path at the
-    call site with dots replaced by underscores, the class name, and
-    the provided suffix. When storing data in public places such as
-    'customdata' dicts, this minimizes the chance of collisions if a
-    module or class is duplicated or renamed.
+    call site with dots replaced by underscores, the containing class's
+    qualified name, and the provided suffix. When storing data in public
+    places such as 'customdata' dicts, this minimizes the chance of
+    collisions with other similarly named classes.
+
+    Note that this will function even if called in the class definition.
 
     # Example: generate a unique name for storage purposes:
     class MyThingie:
@@ -374,14 +378,21 @@ def storagename(suffix: str = None) -> str:
         # This will give something like '_mymodule_submodule_mythingie_data'.
         _STORENAME = ba.storagename('data')
 
+        # Use that name to store some data in the Activity we were passed.
         def __init__(self, activity):
-            # Store some data in the Activity we were passed
             activity.customdata[self._STORENAME] = {}
     """
     frame = inspect.currentframe()
     if frame is None:
         raise RuntimeError('Cannot get current stack frame.')
     fback = frame.f_back
+
+    # Note: We need to explicitly clear frame here to avoid a ref-loop
+    # that keeps all function-dicts in the stack alive until the next
+    # full GC cycle (the stack frame refers to this function's dict,
+    # which refers to the stack frame).
+    del frame
+
     if fback is None:
         raise RuntimeError('Cannot get parent stack frame.')
     modulepath = fback.f_globals.get('__name__')

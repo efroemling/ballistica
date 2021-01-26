@@ -17,6 +17,7 @@
       <w>aclass's</w>
       <w>activityplayer</w>
       <w>addcall</w>
+      <w>addchars</w>
       <w>addrs</w>
       <w>adjoint</w>
       <w>adminset</w>
@@ -47,6 +48,7 @@
       <w>appname</w>
       <w>appnameupper</w>
       <w>appstate</w>
+      <w>argsjoined</w>
       <w>asci</w>
       <w>assigninput</w>
       <w>athome</w>
@@ -54,6 +56,7 @@
       <w>audiocache</w>
       <w>automagically</w>
       <w>autoselect</w>
+      <w>availmins</w>
       <w>avel</w>
       <w>avels</w>
       <w>axismotion</w>
@@ -114,6 +117,7 @@
       <w>bsstd</w>
       <w>bstat</w>
       <w>bsuuid</w>
+      <w>btnlabel</w>
       <w>bufs</w>
       <w>buildconfig</w>
       <w>buildnumber</w>
@@ -131,8 +135,10 @@
       <w>camalign</w>
       <w>camelback</w>
       <w>camerashake</w>
+      <w>cancelbtn</w>
       <w>capitan</w>
       <w>cargs</w>
+      <w>cbtnoffs</w>
       <w>ccdd</w>
       <w>ccontext</w>
       <w>ccylinder</w>
@@ -177,6 +183,7 @@
       <w>cpuid</w>
       <w>crashenv</w>
       <w>crashlytics</w>
+      <w>cresult</w>
       <w>crom</w>
       <w>crosswire</w>
       <w>crvel</w>
@@ -329,6 +336,7 @@
       <w>fread</w>
       <w>freeform</w>
       <w>freeifaddrs</w>
+      <w>freemins</w>
       <w>freqs</w>
       <w>froemling</w>
       <w>fromini</w>
@@ -411,6 +419,7 @@
       <w>hostactivity</w>
       <w>hostcmd</w>
       <w>hostinfo</w>
+      <w>hostingstate</w>
       <w>hotkeys</w>
       <w>hotplug</w>
       <w>hscrollwidget</w>
@@ -491,6 +500,7 @@
       <w>linearsize</w>
       <w>listobj</w>
       <w>llock</w>
+      <w>lockpath</w>
       <w>lockstr</w>
       <w>locktype</w>
       <w>logmsg</w>
@@ -596,6 +606,7 @@
       <w>nonlint</w>
       <w>noone</w>
       <w>nothin</w>
+      <w>nowtickets</w>
       <w>nptr</w>
       <w>nsize</w>
       <w>ntoa</w>
@@ -613,6 +624,8 @@
       <w>obvs</w>
       <w>oculus</w>
       <w>oenval</w>
+      <w>offsx</w>
+      <w>offsy</w>
       <w>oiffsss</w>
       <w>oldname</w>
       <w>oooo</w>
@@ -668,6 +681,7 @@
       <w>positivez</w>
       <w>postinit</w>
       <w>powerup</w>
+      <w>pptabcom</w>
       <w>precalc</w>
       <w>predeclare</w>
       <w>prefs</w>
@@ -679,9 +693,11 @@
       <w>printnodes</w>
       <w>printobjects</w>
       <w>priv</w>
+      <w>privatetab</w>
       <w>profilers</w>
       <w>prog</w>
       <w>proj</w>
+      <w>projdir</w>
       <w>prolly</w>
       <w>psmx</w>
       <w>pspec</w>
@@ -739,6 +755,7 @@
       <w>reprfunc</w>
       <w>rerase</w>
       <w>resends</w>
+      <w>resetbtn</w>
       <w>resetinput</w>
       <w>resync</w>
       <w>retrysecs</w>
@@ -759,6 +776,7 @@
       <w>safecolor</w>
       <w>samsung</w>
       <w>sapspace</w>
+      <w>savebtn</w>
       <w>savebutton</w>
       <w>scancode</w>
       <w>scenetime</w>
@@ -767,6 +785,10 @@
       <w>sdkcheck</w>
       <w>sdl's</w>
       <w>sdlk</w>
+      <w>selchild</w>
+      <w>selindex</w>
+      <w>selwidget</w>
+      <w>selwidgets</w>
       <w>seqlen</w>
       <w>seqtype</w>
       <w>seqtypestr</w>
@@ -884,6 +906,7 @@
       <w>theres</w>
       <w>threadname</w>
       <w>threadtype</w>
+      <w>ticon</w>
       <w>tiltage</w>
       <w>timedisplay</w>
       <w>timeformat</w>

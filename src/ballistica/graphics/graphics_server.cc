@@ -286,8 +286,8 @@ void GraphicsServer::SetScreen(bool fullscreen, int width, int height,
     // we request fullscreen-windows for full-screen situations and that's it.
     // (otherwise we may wind up with huge windows due to passing in desktop
     // resolutions and retina wonkiness)
-    width = 800;
-    height = 600;
+    width = static_cast<int>(kBaseVirtualResX * 0.8f);
+    height = static_cast<int>(kBaseVirtualResY * 0.8f);
 
     // We should never have to recreate the context after the initial time on
     // our modern builds.

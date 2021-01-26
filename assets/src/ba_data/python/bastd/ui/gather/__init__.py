@@ -4,22 +4,56 @@
 
 from __future__ import annotations
 
+import weakref
 from enum import Enum
 from typing import TYPE_CHECKING
 
 import _ba
 import ba
-from bastd.ui.gather.abouttab import AboutGatherTab
-from bastd.ui.gather.manualtab import ManualGatherTab
-from bastd.ui.gather.googleplaytab import GooglePlayGatherTab
-from bastd.ui.gather.publictab import PublicGatherTab
-from bastd.ui.gather.nearbytab import NearbyGatherTab
 from bastd.ui.tabs import TabRow
 
 if TYPE_CHECKING:
     from typing import (Any, Optional, Tuple, Dict, List, Union, Callable,
                         Type)
-    from bastd.ui.gather.bases import GatherTab
+
+
+class GatherTab:
+    """Defines a tab for use in the gather UI."""
+
+    def __init__(self, window: GatherWindow) -> None:
+        self._window = weakref.ref(window)
+
+    @property
+    def window(self) -> GatherWindow:
+        """The GatherWindow that this tab belongs to."""
+        window = self._window()
+        if window is None:
+            raise ba.NotFoundError("GatherTab's window no longer exists.")
+        return window
+
+    def on_activate(
+        self,
+        parent_widget: ba.Widget,
+        tab_button: ba.Widget,
+        region_width: float,
+        region_height: float,
+        region_left: float,
+        region_bottom: float,
+    ) -> ba.Widget:
+        """Called when the tab becomes the active one.
+
+        The tab should create and return a container widget covering the
+        specified region.
+        """
+
+    def on_deactivate(self) -> None:
+        """Called when the tab will no longer be the active one."""
+
+    def save_state(self) -> None:
+        """Called when the parent window is saving state."""
+
+    def restore_state(self) -> None:
+        """Called when the parent window is restoring state."""
 
 
 class GatherWindow(ba.Window):
@@ -29,8 +63,8 @@ class GatherWindow(ba.Window):
         """Our available tab types."""
         ABOUT = 'about'
         INTERNET = 'internet'
-        GOOGLE_PLAY = 'google_play'
-        LOCAL_NETWORK = 'local_network'
+        PRIVATE = 'private'
+        NEARBY = 'nearby'
         MANUAL = 'manual'
 
     def __init__(self,
@@ -38,6 +72,13 @@ class GatherWindow(ba.Window):
                  origin_widget: ba.Widget = None):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
+        # pylint: disable=cyclic-import
+        from bastd.ui.gather.abouttab import AboutGatherTab
+        from bastd.ui.gather.manualtab import ManualGatherTab
+        from bastd.ui.gather.privatetab import PrivateGatherTab
+        from bastd.ui.gather.publictab import PublicGatherTab
+        from bastd.ui.gather.nearbytab import NearbyGatherTab
+
         ba.set_analytics_screen('Gather Window')
         scale_origin: Optional[Tuple[float, float]]
         if origin_widget is not None:
@@ -104,9 +145,6 @@ class GatherWindow(ba.Window):
                       text=ba.Lstr(resource=self._r + '.titleText'),
                       maxwidth=550)
 
-        platform = ba.app.platform
-        subplatform = ba.app.subplatform
-
         scroll_buffer_h = 130 + 2 * x_offs
         tab_buffer_h = ((320 if condensed else 250) + 2 * x_offs)
 
@@ -117,11 +155,10 @@ class GatherWindow(ba.Window):
         if _ba.get_account_misc_read_val('enablePublicParties', True):
             tabdefs.append((self.TabID.INTERNET,
                             ba.Lstr(resource=self._r + '.publicText')))
-        if platform == 'android' and subplatform == 'google':
-            tabdefs.append((self.TabID.GOOGLE_PLAY,
-                            ba.Lstr(resource=self._r + '.googlePlayText')))
-        tabdefs.append((self.TabID.LOCAL_NETWORK,
-                        ba.Lstr(resource=self._r + '.nearbyText')))
+        tabdefs.append(
+            (self.TabID.PRIVATE, ba.Lstr(resource=self._r + '.privateText')))
+        tabdefs.append(
+            (self.TabID.NEARBY, ba.Lstr(resource=self._r + '.nearbyText')))
         tabdefs.append(
             (self.TabID.MANUAL, ba.Lstr(resource=self._r + '.manualText')))
 
@@ -139,9 +176,9 @@ class GatherWindow(ba.Window):
         tabtypes: Dict[GatherWindow.TabID, Type[GatherTab]] = {
             self.TabID.ABOUT: AboutGatherTab,
             self.TabID.MANUAL: ManualGatherTab,
-            self.TabID.GOOGLE_PLAY: GooglePlayGatherTab,
+            self.TabID.PRIVATE: PrivateGatherTab,
             self.TabID.INTERNET: PublicGatherTab,
-            self.TabID.LOCAL_NETWORK: NearbyGatherTab
+            self.TabID.NEARBY: NearbyGatherTab
         }
         self._tabs: Dict[GatherWindow.TabID, GatherTab] = {}
         for tab_id in self._tab_row.tabs:
@@ -234,7 +271,7 @@ class GatherWindow(ba.Window):
                 sel_name = 'TabContainer'
             else:
                 raise ValueError(f'unrecognized selection: \'{sel}\'')
-            ba.app.ui.window_states[self.__class__.__name__] = {
+            ba.app.ui.window_states[type(self)] = {
                 'sel_name': sel_name,
             }
         except Exception:
@@ -247,7 +284,7 @@ class GatherWindow(ba.Window):
                 tab.restore_state()
 
             sel: Optional[ba.Widget]
-            winstate = ba.app.ui.window_states.get(self.__class__.__name__, {})
+            winstate = ba.app.ui.window_states.get(type(self), {})
             sel_name = winstate.get('sel_name', None)
             assert isinstance(sel_name, (str, type(None)))
             current_tab = self.TabID.ABOUT

@@ -10,7 +10,7 @@ import _ba
 from ba._enums import UIScale
 
 if TYPE_CHECKING:
-    from typing import Optional, Dict, Any, Callable, List
+    from typing import Optional, Dict, Any, Callable, List, Type
     from ba.ui import UICleanupCheck
     import ba
 
@@ -43,7 +43,7 @@ class UISubsystem:
         else:
             raise RuntimeError(f'Invalid UIScale value: {interfacetype}')
 
-        self.window_states: Dict = {}  # FIXME: Kill this.
+        self.window_states: Dict[Type, Any] = {}  # FIXME: Kill this.
         self.main_menu_selection: Optional[str] = None  # FIXME: Kill this.
         self.have_party_queue_window = False
         self.quit_window: Any = None
@@ -76,7 +76,7 @@ class UISubsystem:
         # this holds true at all aspect ratios.
 
         # UPDATE: A better way to test this is now by setting the environment
-        # variable BA_FORCE_UI_SCALE to "small", "medium", or "large".
+        # variable BA_UI_SCALE to "small", "medium", or "large".
         # This will affect system UIs not covered by the values below such
         # as screen-messages. The below values remain functional, however,
         # for cases such as Android where environment variables can't be set

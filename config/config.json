@@ -30,7 +30,8 @@
     "requests",
     "typing_extensions",
     "cpplint",
-    "ansiwrap"
+    "ansiwrap",
+    "filelock"
   ],
   "python_paths": [
     "assets/src/ba_data/python",

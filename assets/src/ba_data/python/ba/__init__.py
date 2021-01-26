@@ -9,16 +9,16 @@ In some specific cases you may need to pull in individual submodules instead.
 # pylint: disable=unused-import
 # pylint: disable=redefined-builtin
 
-from _ba import (CollideModel, Context, ContextCall, Data, InputDevice,
-                 Material, Model, Node, SessionPlayer, Sound, Texture, Timer,
-                 Vec3, Widget, buttonwidget, camerashake, checkboxwidget,
-                 columnwidget, containerwidget, do_once, emitfx, getactivity,
-                 getcollidemodel, getmodel, getnodes, getsession, getsound,
-                 gettexture, hscrollwidget, imagewidget, log, newactivity,
-                 newnode, playsound, printnodes, printobjects, pushcall, quit,
-                 rowwidget, safecolor, screenmessage, scrollwidget,
-                 set_analytics_screen, charstr, textwidget, time, timer,
-                 open_url, widget)
+from _ba import (
+    CollideModel, Context, ContextCall, Data, InputDevice, Material, Model,
+    Node, SessionPlayer, Sound, Texture, Timer, Vec3, Widget, buttonwidget,
+    camerashake, checkboxwidget, columnwidget, containerwidget, do_once,
+    emitfx, getactivity, getcollidemodel, getmodel, getnodes, getsession,
+    getsound, gettexture, hscrollwidget, imagewidget, log, newactivity,
+    newnode, playsound, printnodes, printobjects, pushcall, quit, rowwidget,
+    safecolor, screenmessage, scrollwidget, set_analytics_screen, charstr,
+    textwidget, time, timer, open_url, widget, clipboard_is_supported,
+    clipboard_has_text, clipboard_get_text, clipboard_set_text)
 from ba._activity import Activity
 from ba._plugin import PotentialPlugin, Plugin, PluginSubsystem
 from ba._actor import Actor

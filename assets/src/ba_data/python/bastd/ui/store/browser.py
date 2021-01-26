@@ -1011,7 +1011,7 @@ class StoreBrowserWindow(ba.Window):
                 sel_name = f'Tab:{selected_tab_ids[0].value}'
             else:
                 raise ValueError(f'unrecognized selection \'{sel}\'')
-            ba.app.ui.window_states[self.__class__.__name__] = {
+            ba.app.ui.window_states[type(self)] = {
                 'sel_name': sel_name,
             }
         except Exception:
@@ -1021,7 +1021,7 @@ class StoreBrowserWindow(ba.Window):
         from efro.util import enum_by_value
         try:
             sel: Optional[ba.Widget]
-            sel_name = ba.app.ui.window_states.get(self.__class__.__name__,
+            sel_name = ba.app.ui.window_states.get(type(self),
                                                    {}).get('sel_name')
             assert isinstance(sel_name, (str, type(None)))
 

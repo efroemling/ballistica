@@ -45,6 +45,7 @@
       <w>adbcfaca</w>
       <w>adbpath</w>
       <w>addcall</w>
+      <w>addchars</w>
       <w>addgame</w>
       <w>addlevel</w>
       <w>addr</w>
@@ -98,6 +99,7 @@
       <w>archs</w>
       <w>argh</w>
       <w>argparse</w>
+      <w>argsjoined</w>
       <w>argtypes</w>
       <w>argval</w>
       <w>armeabi</w>
@@ -146,6 +148,7 @@
       <w>autoretain</w>
       <w>autoselect</w>
       <w>autotools</w>
+      <w>availmins</w>
       <w>availplug</w>
       <w>aval</w>
       <w>axismotion</w>
@@ -244,6 +247,7 @@
       <w>bsuffix</w>
       <w>bsui</w>
       <w>btnh</w>
+      <w>btnlabel</w>
       <w>btnv</w>
       <w>btnx</w>
       <w>btype</w>
@@ -279,6 +283,7 @@
       <w>cameraflash</w>
       <w>camerashake</w>
       <w>campaignname</w>
+      <w>cancelbtn</w>
       <w>capb</w>
       <w>capturetheflag</w>
       <w>carentity</w>
@@ -286,6 +291,7 @@
       <w>cbits</w>
       <w>cbot</w>
       <w>cbtn</w>
+      <w>cbtnoffs</w>
       <w>ccfgs</w>
       <w>ccode</w>
       <w>ccompiler</w>
@@ -433,6 +439,7 @@
       <w>crashlytics</w>
       <w>creationflags</w>
       <w>creditslist</w>
+      <w>cresult</w>
       <w>cryptmodule</w>
       <w>cspbd</w>
       <w>cspnf</w>
@@ -782,6 +789,7 @@
       <w>freeforallendscreen</w>
       <w>freeforallsession</w>
       <w>freeforallvictory</w>
+      <w>freemins</w>
       <w>freepik</w>
       <w>freesound</w>
       <w>froemling</w>
@@ -966,6 +974,7 @@
       <w>homebrew</w>
       <w>hometest</w>
       <w>hostconfig</w>
+      <w>hostingstate</w>
       <w>hostuser</w>
       <w>hout</w>
       <w>howtoplay</w>
@@ -1201,6 +1210,7 @@
       <w>locationlist</w>
       <w>locationsingles</w>
       <w>locationval</w>
+      <w>lockpath</w>
       <w>lockstr</w>
       <w>locktype</w>
       <w>locs</w>
@@ -1417,6 +1427,7 @@
       <w>nosynctool</w>
       <w>nosynctools</w>
       <w>notdir</w>
+      <w>nowtickets</w>
       <w>npos</w>
       <w>nprocessors</w>
       <w>ntpath</w>
@@ -1439,6 +1450,8 @@
       <w>oculus</w>
       <w>oenval</w>
       <w>offsanchor</w>
+      <w>offsx</w>
+      <w>offsy</w>
       <w>ofval</w>
       <w>oggenc</w>
       <w>oghash</w>
@@ -1591,6 +1604,7 @@
       <w>powervr</w>
       <w>ppos</w>
       <w>pproxy</w>
+      <w>pptabcom</w>
       <w>pragmas</w>
       <w>prch</w>
       <w>prec</w>
@@ -1619,6 +1633,7 @@
       <w>printobjects</w>
       <w>printpaths</w>
       <w>priv</w>
+      <w>privatetab</w>
       <w>proactor</w>
       <w>proc</w>
       <w>procs</w>
@@ -1628,6 +1643,7 @@
       <w>profilenames</w>
       <w>proj</w>
       <w>projconfig</w>
+      <w>projdir</w>
       <w>projectpath</w>
       <w>projectroot</w>
       <w>projroot</w>
@@ -1751,6 +1767,7 @@
       <w>reqtype</w>
       <w>reqtypes</w>
       <w>resample</w>
+      <w>resetbtn</w>
       <w>resetinput</w>
       <w>resourcetypeinfo</w>
       <w>respawn</w>
@@ -1802,6 +1819,7 @@
       <w>samsung</w>
       <w>sandboxing</w>
       <w>sandyrb</w>
+      <w>savebtn</w>
       <w>savebutton</w>
       <w>saxutils</w>
       <w>sbblk</w>
@@ -1844,7 +1862,11 @@
       <w>sdkcheck</w>
       <w>sdkutils</w>
       <w>sdtk</w>
+      <w>selchild</w>
       <w>selectmodule</w>
+      <w>selindex</w>
+      <w>selwidget</w>
+      <w>selwidgets</w>
       <w>senze</w>
       <w>seqtype</w>
       <w>seqtypestr</w>
@@ -2145,6 +2167,7 @@
       <w>this'll</w>
       <w>threadtype</w>
       <w>throwiness</w>
+      <w>ticon</w>
       <w>timedisplay</w>
       <w>timeformat</w>
       <w>timemax</w>

@@ -24,7 +24,7 @@ class AppConfig(dict):
 
     AppConfig data is stored as json on disk on so make sure to only place
     json-friendly values in it (dict, list, str, float, int, bool).
-    Be aware that tuples will be quietly converted to lists.
+    Be aware that tuples will be quietly converted to lists when stored.
     """
 
     def resolve(self, key: str) -> Any:

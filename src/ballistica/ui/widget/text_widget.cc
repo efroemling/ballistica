@@ -116,8 +116,8 @@ void TextWidget::Draw(RenderPass* pass, bool draw_transparent) {
 
   // Center-scale.
   {
-    // We should really be scaling our bounds and things, but for now lets just
-    // do a hacky overall scale.
+    // We should really be scaling our bounds and things,
+    // but for now lets just do a hacky overall scale.
     EmptyComponent c(pass);
     c.SetTransparent(true);
     c.PushTransform();
@@ -178,6 +178,7 @@ void TextWidget::Draw(RenderPass* pass, bool draw_transparent) {
         highlight_center_y_ = b2 - b_border + highlight_height_ * 0.5f;
         highlight_dirty_ = false;
       }
+
       SimpleComponent c(pass);
       c.SetTransparent(true);
       c.SetPremultiplied(true);
@@ -596,6 +597,16 @@ auto TextWidget::HandleMessage(const WidgetMessage& m) -> bool {
     bottom_overlap = 3.0f * extra_touch_border_scale_;
   }
 
+  // If we're doing inline editing, handle clipboard paste.
+  if (editable() && !ShouldUseStringEditDialog()
+      && m.type == WidgetMessage::Type::kPaste) {
+    if (g_platform->ClipboardIsSupported()) {
+      if (g_platform->ClipboardHasText()) {
+        // Just enter it char by char as if we had typed it...
+        AddCharsToText(g_platform->ClipboardGetText());
+      }
+    }
+  }
   // If we're doing inline editing, handle some key events.
   if (m.has_keysym && !ShouldUseStringEditDialog()) {
     last_carat_change_time_ = g_game->master_time();
@@ -769,22 +780,7 @@ auto TextWidget::HandleMessage(const WidgetMessage& m) -> bool {
       } else {
         // Otherwise apply the text directly.
         if (editable() && m.sval != nullptr) {
-          std::vector<uint32_t> unichars =
-              Utils::UnicodeFromUTF8(text_raw_, "jcjwf8f");
-          int len = static_cast<int>(unichars.size());
-          std::vector<uint32_t> sval =
-              Utils::UnicodeFromUTF8(*m.sval, "j4958fbv");
-          for (unsigned int i : sval) {
-            if (len < max_chars_) {
-              text_group_dirty_ = true;
-              if (carat_position_ > len) carat_position_ = len;
-              unichars.insert(unichars.begin() + carat_position_, i);
-              len++;
-              carat_position_++;
-            }
-          }
-          text_raw_ = Utils::UTF8FromUnicode(unichars);
-          text_translation_dirty_ = true;
+          AddCharsToText(*m.sval);
           return true;
         }
       }
@@ -794,8 +790,8 @@ auto TextWidget::HandleMessage(const WidgetMessage& m) -> bool {
       if (!IsSelectable()) {
         return false;
       }
-      float x = m.fval1;
-      float y = m.fval2;
+      float x{ScaleAdjustedX(m.fval1)};
+      float y{ScaleAdjustedY(m.fval2)};
       bool claimed = (m.fval3 > 0.0f);
       if (claimed) {
         mouse_over_ = clear_mouse_over_ = false;
@@ -813,8 +809,9 @@ auto TextWidget::HandleMessage(const WidgetMessage& m) -> bool {
       if (!IsSelectable()) {
         return false;
       }
-      float x = m.fval1;
-      float y = m.fval2;
+      float x{ScaleAdjustedX(m.fval1)};
+      float y{ScaleAdjustedY(m.fval2)};
+
       auto click_count = static_cast<int>(m.fval3);
 
       // See if a click is in our clear button.
@@ -856,8 +853,8 @@ auto TextWidget::HandleMessage(const WidgetMessage& m) -> bool {
       }
     }
     case WidgetMessage::Type::kMouseUp: {
-      float x = m.fval1;
-      float y = m.fval2;
+      float x{ScaleAdjustedX(m.fval1)};
+      float y{ScaleAdjustedY(m.fval2)};
       bool claimed = (m.fval3 > 0.0f);
 
       if (clear_pressed_ && !claimed && editable()
@@ -901,6 +898,38 @@ auto TextWidget::HandleMessage(const WidgetMessage& m) -> bool {
       break;
   }
   return false;
+}
+
+auto TextWidget::ScaleAdjustedX(float x) -> float {
+  // Account for our center_scale_ value.
+  float offsx = x - width_ * 0.5f;
+  return width_ * 0.5f + offsx / center_scale_;
+}
+
+auto TextWidget::ScaleAdjustedY(float y) -> float {
+  // Account for our center_scale_ value.
+  float offsy = y - height_ * 0.5f;
+  return height_ * 0.5f + offsy / center_scale_;
+}
+
+auto TextWidget::AddCharsToText(const std::string& addchars) -> void {
+  assert(editable());
+  std::vector<uint32_t> unichars = Utils::UnicodeFromUTF8(text_raw_, "jcjwf8f");
+  int len = static_cast<int>(unichars.size());
+  std::vector<uint32_t> sval = Utils::UnicodeFromUTF8(addchars, "j4958fbv");
+  for (unsigned int i : sval) {
+    if (len < max_chars_) {
+      text_group_dirty_ = true;
+      if (carat_position_ > len) {
+        carat_position_ = len;
+      }
+      unichars.insert(unichars.begin() + carat_position_, i);
+      len++;
+      carat_position_++;
+    }
+  }
+  text_raw_ = Utils::UTF8FromUnicode(unichars);
+  text_translation_dirty_ = true;
 }
 
 void TextWidget::UpdateTranslation() {

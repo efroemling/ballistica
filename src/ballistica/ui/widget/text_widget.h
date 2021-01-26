@@ -89,6 +89,9 @@ class TextWidget : public Widget {
   }
 
  private:
+  auto ScaleAdjustedX(float x) -> float;
+  auto ScaleAdjustedY(float y) -> float;
+  auto AddCharsToText(const std::string& addchars) -> void;
   auto ShouldUseStringEditDialog() const -> bool;
   void BringUpEditDialog();
   void UpdateTranslation();

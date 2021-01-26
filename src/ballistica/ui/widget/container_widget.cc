@@ -296,6 +296,7 @@ auto ContainerWidget::HandleMessage(const WidgetMessage& m) -> bool {
   switch (m.type) {
     case WidgetMessage::Type::kTextInput:
     case WidgetMessage::Type::kKey:
+    case WidgetMessage::Type::kPaste:
       if (selected_widget_) {
         bool val = selected_widget_->HandleMessage(m);
         if (val != 0) {
@@ -1218,8 +1219,7 @@ void ContainerWidget::SetTransition(TransitionType t) {
   // stack, update the toolbar for the new topmost input-accepting window
   // *immediately* (otherwise we'd have to wait for our transition to complete
   // before the toolbar switches).
-  if (transitioning_ && transitioning_out_ && parent != nullptr
-      && parent->is_main_window_stack_) {
+  if (transitioning_ && transitioning_out_ && parent->is_main_window_stack_) {
     g_ui->root_widget()->UpdateForFocusedWindow();
   }
 }

@@ -996,7 +996,7 @@ class Timer:
 
     time: length of time (in seconds by default) that the timer will wait
     before firing. Note that the actual delay experienced may vary
-     depending on the timetype. (see below)
+    depending on the timetype. (see below)
 
     call: A callable Python object. Note that the timer will retain a
     strong reference to the callable for as long as it exists, so you
@@ -1006,28 +1006,11 @@ class Timer:
     repeat: if True, the timer will fire repeatedly, with each successive
     firing having the same delay as the first.
 
-    timetype can be either 'sim', 'base', or 'real'. It defaults to
-    'sim'. Types are explained below:
+    timetype: A ba.TimeType value determining which timeline the timer is
+    placed onto.
 
-    'sim' time maps to local simulation time in ba.Activity or ba.Session
-    Contexts. This means that it may progress slower in slow-motion play
-    modes, stop when the game is paused, etc.  This time type is not
-    available in UI contexts.
-
-    'base' time is also linked to gameplay in ba.Activity or ba.Session
-    Contexts, but it progresses at a constant rate regardless of
-     slow-motion states or pausing.  It can, however, slow down or stop
-    in certain cases such as network outages or game slowdowns due to
-    cpu load. Like 'sim' time, this is unavailable in UI contexts.
-
-    'real' time always maps to actual clock time with a bit of filtering
-    added, regardless of Context.  (the filtering prevents it from going
-    backwards or jumping forward by large amounts due to the app being
-    backgrounded, system time changing, etc.)
-    Real time timers are currently only available in the UI context.
-
-    the 'timeformat' arg defaults to SECONDS but can also be MILLISECONDS
-    if you want to pass time as milliseconds.
+    timeformat: A ba.TimeFormat value determining how the passed time is
+    interpreted.
 
     # Example: use a Timer object to print repeatedly for a few seconds:
     def say_it():
@@ -1035,9 +1018,9 @@ class Timer:
     def stop_saying_it():
         self.t = None
         ba.screenmessage('MUSHROOM MUSHROOM!')
-    # create our timer; it will run as long as we hold self.t
+    # Create our timer; it will run as long as we have the self.t ref.
     self.t = ba.Timer(0.3, say_it, repeat=True)
-    # now fire off a one-shot timer to kill it
+    # Now fire off a one-shot timer to kill it.
     ba.timer(3.89, stop_saying_it)
     """
 
@@ -1575,6 +1558,58 @@ def client_info_query_response(token: str, response: Any) -> None:
     """client_info_query_response(token: str, response: Any) -> None
 
     (internal)
+    """
+    return None
+
+
+def clipboard_get_text() -> str:
+    """clipboard_get_text() -> str
+
+    Return text currently on the system clipboard.
+
+    Category: General Utility Functions
+
+    Ensure that ba.clipboard_has_text() returns True before calling
+     this function.
+    """
+    return str()
+
+
+def clipboard_has_text() -> bool:
+    """clipboard_has_text() -> bool
+
+    Return whether there is currently text on the clipboard.
+
+    Category: General Utility Functions
+
+    This will return False if no system clipboard is available; no need
+     to call ba.clipboard_available() separately.
+    """
+    return bool()
+
+
+def clipboard_is_supported() -> bool:
+    """clipboard_is_supported() -> bool
+
+    Return whether this platform supports clipboard operations at all.
+
+    Category: General Utility Functions
+
+    If this returns False, UIs should not show 'copy to clipboard'
+    buttons, etc.
+    """
+    return bool()
+
+
+def clipboard_set_text(value: str) -> None:
+    """clipboard_set_text(value: str) -> None
+
+    Copy a string to the system clipboard.
+
+    Category: General Utility Functions
+
+    Ensure that ba.clipboard_available() returns True before adding
+     buttons/etc. that make use of this functionality.
     """
     return None
 
@@ -3293,24 +3328,24 @@ def restore_purchases() -> None:
     return None
 
 
-def rowwidget(edit: Widget = None,
-              parent: Widget = None,
+def rowwidget(edit: ba.Widget = None,
+              parent: ba.Widget = None,
               size: Sequence[float] = None,
               position: Sequence[float] = None,
               background: bool = None,
-              selected_child: Widget = None,
-              visible_child: Widget = None,
+              selected_child: ba.Widget = None,
+              visible_child: ba.Widget = None,
               claims_left_right: bool = None,
               claims_tab: bool = None,
-              selection_loops_to_parent: bool = None) -> Widget:
-    """rowwidget(edit: Widget = None, parent: Widget = None,
+              selection_loops_to_parent: bool = None) -> ba.Widget:
+    """rowwidget(edit: ba.Widget = None, parent: ba.Widget = None,
       size: Sequence[float] = None,
       position: Sequence[float] = None,
-      background: bool = None, selected_child: Widget = None,
-      visible_child: Widget = None,
+      background: bool = None, selected_child: ba.Widget = None,
+      visible_child: ba.Widget = None,
       claims_left_right: bool = None,
       claims_tab: bool = None,
-      selection_loops_to_parent: bool = None) -> Widget
+      selection_loops_to_parent: bool = None) -> ba.Widget
 
     Create or edit a row widget.
 
@@ -3320,7 +3355,8 @@ def rowwidget(edit: Widget = None,
     a new one is created and returned. Arguments that are not set to None
     are applied to the Widget.
     """
-    return Widget()
+    import ba  # pylint: disable=cyclic-import
+    return ba.Widget()
 
 
 def run_transactions() -> None:
@@ -3775,8 +3811,8 @@ def submit_score(game: str,
     return None
 
 
-def textwidget(edit: Widget = None,
-               parent: Widget = None,
+def textwidget(edit: ba.Widget = None,
+               parent: ba.Widget = None,
                size: Sequence[float] = None,
                position: Sequence[float] = None,
                text: Union[str, ba.Lstr] = None,
@@ -3787,13 +3823,13 @@ def textwidget(edit: Widget = None,
                on_return_press_call: Callable[[], None] = None,
                on_activate_call: Callable[[], None] = None,
                selectable: bool = None,
-               query: Widget = None,
+               query: ba.Widget = None,
                max_chars: int = None,
                color: Sequence[float] = None,
                click_activate: bool = None,
                on_select_call: Callable[[], None] = None,
                always_highlight: bool = None,
-               draw_controller: Widget = None,
+               draw_controller: ba.Widget = None,
                scale: float = None,
                corner_scale: float = None,
                description: Union[str, ba.Lstr] = None,
@@ -3810,16 +3846,16 @@ def textwidget(edit: Widget = None,
                big: bool = None,
                extra_touch_border_scale: float = None,
                res_scale: float = None) -> Widget:
-    """textwidget(edit: Widget = None, parent: Widget = None,
+    """textwidget(edit: ba.Widget = None, parent: ba.Widget = None,
       size: Sequence[float] = None, position: Sequence[float] = None,
       text: Union[str, ba.Lstr] = None, v_align: str = None,
       h_align: str = None, editable: bool = None, padding: float = None,
       on_return_press_call: Callable[[], None] = None,
       on_activate_call: Callable[[], None] = None,
-      selectable: bool = None, query: Widget = None, max_chars: int = None,
+      selectable: bool = None, query: ba.Widget = None, max_chars: int = None,
       color: Sequence[float] = None, click_activate: bool = None,
       on_select_call: Callable[[], None] = None,
-      always_highlight: bool = None, draw_controller: Widget = None,
+      always_highlight: bool = None, draw_controller: ba.Widget = None,
       scale: float = None, corner_scale: float = None,
       description: Union[str, ba.Lstr] = None,
       transition_delay: float = None, maxwidth: float = None,

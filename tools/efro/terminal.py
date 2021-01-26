@@ -112,7 +112,7 @@ def _windows_enable_color() -> bool:
         # open CONOUT$ instead
         fdout = os.open('CONOUT$', os.O_RDWR)
         try:
-            hout = msvcrt.get_osfhandle(fdout)
+            hout = msvcrt.get_osfhandle(fdout)  # type: ignore
             old_mode = wintypes.DWORD()
             kernel32.GetConsoleMode(hout, ctypes.byref(old_mode))
             mode = (new_mode & mask) | (old_mode.value & ~mask)

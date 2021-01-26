@@ -32,6 +32,46 @@ namespace ballistica {
 #pragma ide diagnostic ignored "hicpp-signed-bitwise"
 #pragma ide diagnostic ignored "RedundantCast"
 
+auto PyClipboardIsSupported(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  if (g_platform->ClipboardIsSupported()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+auto PyClipboardHasText(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  if (g_platform->ClipboardHasText()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+auto PyClipboardSetText(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  Platform::SetLastPyCall("clipboard_set_text");
+  const char* value;
+  static const char* kwlist[] = {"value", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &value)) {
+    return nullptr;
+  }
+  g_platform->ClipboardSetText(value);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+auto PyClipboardGetText(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  return PyUnicode_FromString(g_platform->ClipboardGetText().c_str());
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
 auto PyIsRunningOnOuya(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
   Platform::SetLastPyCall("is_running_on_ouya");
@@ -743,6 +783,44 @@ auto PyApp(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
 
 auto PythonMethodsSystem::GetMethods() -> std::vector<PyMethodDef> {
   return {
+      {"clipboard_is_supported", (PyCFunction)PyClipboardIsSupported,
+       METH_NOARGS,
+       "clipboard_is_supported() -> bool\n"
+       "\n"
+       "Return whether this platform supports clipboard operations at all.\n"
+       "\n"
+       "Category: General Utility Functions\n"
+       "\n"
+       "If this returns False, UIs should not show 'copy to clipboard'\n"
+       "buttons, etc."},
+      {"clipboard_has_text", (PyCFunction)PyClipboardHasText, METH_NOARGS,
+       "clipboard_has_text() -> bool\n"
+       "\n"
+       "Return whether there is currently text on the clipboard.\n"
+       "\n"
+       "Category: General Utility Functions\n"
+       "\n"
+       "This will return False if no system clipboard is available; no need\n"
+       " to call ba.clipboard_available() separately."},
+      {"clipboard_set_text", (PyCFunction)PyClipboardSetText,
+       METH_VARARGS | METH_KEYWORDS,
+       "clipboard_set_text(value: str) -> None\n"
+       "\n"
+       "Copy a string to the system clipboard.\n"
+       "\n"
+       "Category: General Utility Functions\n"
+       "\n"
+       "Ensure that ba.clipboard_available() returns True before adding\n"
+       " buttons/etc. that make use of this functionality."},
+      {"clipboard_get_text", (PyCFunction)PyClipboardGetText, METH_NOARGS,
+       "clipboard_get_text() -> str\n"
+       "\n"
+       "Return text currently on the system clipboard.\n"
+       "\n"
+       "Category: General Utility Functions\n"
+       "\n"
+       "Ensure that ba.clipboard_has_text() returns True before calling\n"
+       " this function."},
       {"printobjects", (PyCFunction)PyPrintObjects,
        METH_VARARGS | METH_KEYWORDS,
        "printobjects() -> None\n"

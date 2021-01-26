@@ -35,6 +35,7 @@ class TeamNamesColorsWindow(popup.PopupWindow):
         appconfig = ba.app.config
         self._names = list(
             appconfig.get('Custom Team Names', DEFAULT_TEAM_NAMES))
+
         # We need to flatten the translation since it will be an
         # editable string.
         self._names = [
@@ -46,7 +47,7 @@ class TeamNamesColorsWindow(popup.PopupWindow):
         self._color_buttons: List[ba.Widget] = []
         self._color_text_fields: List[ba.Widget] = []
 
-        ba.buttonwidget(
+        resetbtn = ba.buttonwidget(
             parent=self.root_widget,
             label=ba.Lstr(resource='settingsWindowAdvanced.resetText'),
             autoselect=True,
@@ -77,20 +78,27 @@ class TeamNamesColorsWindow(popup.PopupWindow):
                               description=ba.Lstr(resource='nameText'),
                               editable=True,
                               padding=4))
-        ba.buttonwidget(parent=self.root_widget,
-                        label=ba.Lstr(resource='cancelText'),
-                        autoselect=True,
-                        on_activate_call=self._on_cancel_press,
-                        size=(150, 50),
-                        position=(self._width * 0.5 - 200, 20))
-        ba.buttonwidget(parent=self.root_widget,
-                        label=ba.Lstr(resource='saveText'),
-                        autoselect=True,
-                        on_activate_call=self._save,
-                        size=(150, 50),
-                        position=(self._width * 0.5 + 50, 20))
+        ba.widget(edit=self._color_text_fields[0],
+                  down_widget=self._color_text_fields[1])
+        ba.widget(edit=self._color_text_fields[1],
+                  up_widget=self._color_text_fields[0])
+        ba.widget(edit=self._color_text_fields[0], up_widget=resetbtn)
+
+        cancelbtn = ba.buttonwidget(parent=self.root_widget,
+                                    label=ba.Lstr(resource='cancelText'),
+                                    autoselect=True,
+                                    on_activate_call=self._on_cancel_press,
+                                    size=(150, 50),
+                                    position=(self._width * 0.5 - 200, 20))
+        savebtn = ba.buttonwidget(parent=self.root_widget,
+                                  label=ba.Lstr(resource='saveText'),
+                                  autoselect=True,
+                                  on_activate_call=self._save,
+                                  size=(150, 50),
+                                  position=(self._width * 0.5 + 50, 20))
         ba.containerwidget(edit=self.root_widget,
                            selected_child=self._color_buttons[0])
+        ba.widget(edit=savebtn, left_widget=cancelbtn)
         self._update()
 
     def _color_click(self, i: int) -> None:

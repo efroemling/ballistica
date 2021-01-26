@@ -2636,14 +2636,14 @@ auto PythonMethodsUI::GetMethods() -> std::vector<PyMethodDef> {
        "are applied to the Widget."},
 
       {"rowwidget", (PyCFunction)PyRowWidget, METH_VARARGS | METH_KEYWORDS,
-       "rowwidget(edit: Widget = None, parent: Widget = None,\n"
+       "rowwidget(edit: ba.Widget = None, parent: ba.Widget = None,\n"
        "  size: Sequence[float] = None,\n"
        "  position: Sequence[float] = None,\n"
-       "  background: bool = None, selected_child: Widget = None,\n"
-       "  visible_child: Widget = None,\n"
+       "  background: bool = None, selected_child: ba.Widget = None,\n"
+       "  visible_child: ba.Widget = None,\n"
        "  claims_left_right: bool = None,\n"
        "  claims_tab: bool = None,\n"
-       "  selection_loops_to_parent: bool = None) -> Widget\n"
+       "  selection_loops_to_parent: bool = None) -> ba.Widget\n"
        "\n"
        "Create or edit a row widget.\n"
        "\n"
@@ -2699,17 +2699,17 @@ auto PythonMethodsUI::GetMethods() -> std::vector<PyMethodDef> {
        "are applied to the Widget."},
 
       {"textwidget", (PyCFunction)PyTextWidget, METH_VARARGS | METH_KEYWORDS,
-       "textwidget(edit: Widget = None, parent: Widget = None,\n"
+       "textwidget(edit: ba.Widget = None, parent: ba.Widget = None,\n"
        "  size: Sequence[float] = None, position: Sequence[float] = None,\n"
        "  text: Union[str, ba.Lstr] = None, v_align: str = None,\n"
        "  h_align: str = None, editable: bool = None, padding: float = None,\n"
        "  on_return_press_call: Callable[[], None] = None,\n"
        "  on_activate_call: Callable[[], None] = None,\n"
-       "  selectable: bool = None, query: Widget = None, max_chars: int = "
+       "  selectable: bool = None, query: ba.Widget = None, max_chars: int = "
        "None,\n"
        "  color: Sequence[float] = None, click_activate: bool = None,\n"
        "  on_select_call: Callable[[], None] = None,\n"
-       "  always_highlight: bool = None, draw_controller: Widget = None,\n"
+       "  always_highlight: bool = None, draw_controller: ba.Widget = None,\n"
        "  scale: float = None, corner_scale: float = None,\n"
        "  description: Union[str, ba.Lstr] = None,\n"
        "  transition_delay: float = None, maxwidth: float = None,\n"

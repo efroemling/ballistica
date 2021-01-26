@@ -1361,4 +1361,88 @@ auto Platform::GetCurrentSeconds() -> int64_t {
       .count();
 }
 
+auto Platform::ClipboardIsSupported() -> bool {
+  // We only call our actual virtual function once.
+  if (!have_clipboard_is_supported_) {
+    clipboard_is_supported_ = DoClipboardIsSupported();
+    have_clipboard_is_supported_ = true;
+  }
+  return clipboard_is_supported_;
+}
+
+auto Platform::ClipboardHasText() -> bool {
+  // If subplatform says they don't support clipboards, don't even ask.
+  if (!ClipboardIsSupported()) {
+    return false;
+  }
+  return DoClipboardHasText();
+}
+
+auto Platform::ClipboardSetText(const std::string& text) -> void {
+  // If subplatform says they don't support clipboards, this is an error.
+  if (!ClipboardIsSupported()) {
+    throw Exception("ClipboardSetText called with no clipboard support.",
+                    PyExcType::kRuntime);
+  }
+  DoClipboardSetText(text);
+}
+
+auto Platform::ClipboardGetText() -> std::string {
+  // If subplatform says they don't support clipboards, this is an error.
+  if (!ClipboardIsSupported()) {
+    throw Exception("ClipboardGetText called with no clipboard support.",
+                    PyExcType::kRuntime);
+  }
+  return DoClipboardGetText();
+}
+
+auto Platform::DoClipboardIsSupported() -> bool {
+  // Go through SDL functionality on SDL based platforms;
+  // otherwise default to no clipboard.
+#if BA_SDL2_BUILD && !BA_OSTYPE_IOS_TVOS
+  return true;
+#else
+  return false;
+#endif
+}
+
+auto Platform::DoClipboardHasText() -> bool {
+  // Go through SDL functionality on SDL based platforms;
+  // otherwise default to no clipboard.
+#if BA_SDL2_BUILD && !BA_OSTYPE_IOS_TVOS
+  return SDL_HasClipboardText();
+#else
+  // Shouldn't get here since we default to no clipboard support.
+  FatalError("Shouldn't get here.");
+  return false;
+#endif
+}
+
+auto Platform::DoClipboardSetText(const std::string& text) -> void {
+  // Go through SDL functionality on SDL based platforms;
+  // otherwise default to no clipboard.
+#if BA_SDL2_BUILD && !BA_OSTYPE_IOS_TVOS
+  SDL_SetClipboardText(text.c_str());
+#else
+  // Shouldn't get here since we default to no clipboard support.
+  FatalError("Shouldn't get here.");
+#endif
+}
+
+auto Platform::DoClipboardGetText() -> std::string {
+  // Go through SDL functionality on SDL based platforms;
+  // otherwise default to no clipboard.
+#if BA_SDL2_BUILD && !BA_OSTYPE_IOS_TVOS
+  char* out = SDL_GetClipboardText();
+  if (out == nullptr) {
+    throw Exception("Error fetching clipboard contents.", PyExcType::kRuntime);
+  }
+  return out;
+#else
+  // Shouldn't get here since we default to no clipboard support.
+  FatalError("Shouldn't get here.");
+  return "";
+#endif
+}
+
 }  // namespace ballistica

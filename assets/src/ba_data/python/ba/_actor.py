@@ -192,7 +192,7 @@ class Actor:
         """Return the ba.Activity this Actor is associated with.
 
         If the Activity no longer exists, raises a ba.ActivityNotFoundError
-        or returns None depending on whether 'doraise' is set.
+        or returns None depending on whether 'doraise' is True.
         """
         activity = self._activity()
         if activity is None and doraise:

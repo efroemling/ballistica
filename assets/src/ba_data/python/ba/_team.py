@@ -200,8 +200,8 @@ class EmptyTeam(Team['ba.EmptyPlayer']):
 
     Category: Gameplay Classes
 
-    ba.Player and ba.Team are 'Generic' types, and so passing them as
-    type arguments when defining a ba.Activity reduces type safety.
+    ba.Player and ba.Team are 'Generic' types, and so passing those top level
+    classes as type arguments when defining a ba.Activity reduces type safety.
     For example, activity.teams[0].player will have type 'Any' in that case.
     For that reason, it is better to pass EmptyPlayer and EmptyTeam when
     defining a ba.Activity that does not need custom types of its own.

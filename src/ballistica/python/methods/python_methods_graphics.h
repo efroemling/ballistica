@@ -16,4 +16,5 @@ class PythonMethodsGraphics {
 };
 
 }  // namespace ballistica
+
 #endif  // BALLISTICA_PYTHON_METHODS_PYTHON_METHODS_GRAPHICS_H_

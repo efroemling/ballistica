@@ -628,13 +628,13 @@ class PlaylistBrowserWindow(ba.Window):
                     sel_name = 'Scroll'
             else:
                 raise Exception('unrecognized selected widget')
-            ba.app.ui.window_states[self.__class__.__name__] = sel_name
+            ba.app.ui.window_states[type(self)] = sel_name
         except Exception:
             ba.print_exception(f'Error saving state for {self}.')
 
     def _restore_state(self) -> None:
         try:
-            sel_name = ba.app.ui.window_states.get(self.__class__.__name__)
+            sel_name = ba.app.ui.window_states.get(type(self))
             if sel_name == 'Back':
                 sel = self._back_button
             elif sel_name == 'Scroll':

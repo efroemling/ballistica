@@ -1209,10 +1209,21 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
     if (!repeat_press && keysym->sym == SDLK_q
         && ((keysym->mod & KMOD_CTRL) || (keysym->mod & KMOD_GUI))) {  // NOLINT
       g_game->PushConfirmQuitCall();
+      return;
     }
   }
+
+  // Let the console intercept stuff if it wants at this point.
   if (g_app_globals->console != nullptr
       && g_app_globals->console->HandleKeyPress(keysym)) {
+    return;
+  }
+
+  // Ctrl-V or Cmd-V sends paste commands to any interested text fields.
+  // Command-Q or Control-Q quits.
+  if (!repeat_press && keysym->sym == SDLK_v
+      && ((keysym->mod & KMOD_CTRL) || (keysym->mod & KMOD_GUI))) {  // NOLINT
+    g_ui->SendWidgetMessage(WidgetMessage(WidgetMessage::Type::kPaste));
     return;
   }
 

@@ -37,7 +37,8 @@ struct WidgetMessage {
     kMouseWheelVelocityH,
     kMouseMove,
     kScrollMouseDown,
-    kTextInput
+    kTextInput,
+    kPaste
   };
 
   Type type{};
