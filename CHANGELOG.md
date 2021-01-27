@@ -1,4 +1,4 @@
-### 1.6.0 (20268)
+### 1.6.0 (20279)
 - Added private parties functionality (cloud hosted parties with associated codes making it easier to play with friends)
 - The meta subsystem now enables new plugins by default in headless builds.
 - Added option to save party in Manual tab
