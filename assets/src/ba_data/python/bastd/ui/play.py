@@ -90,13 +90,13 @@ class PlayWindow(ba.Window):
         if ba.app.ui.use_toolbars and uiscale is ba.UIScale.SMALL:
             ba.textwidget(edit=txt, text='')
 
-        v = height - (110 if self._is_main_menu else 60)
+        v = height - (110 if self._is_main_menu else 90)
         v -= 100
         clr = (0.6, 0.7, 0.6, 1.0)
         v -= 280 if self._is_main_menu else 180
         v += (30
               if ba.app.ui.use_toolbars and uiscale is ba.UIScale.SMALL else 0)
-        hoffs = x_offs + 80 if self._is_main_menu else 0
+        hoffs = x_offs + 80 if self._is_main_menu else x_offs - 100
         scl = 1.13 if self._is_main_menu else 0.68
 
         self._lineup_tex = ba.gettexture('playerLineup')
@@ -113,6 +113,7 @@ class PlayWindow(ba.Window):
         self._eyes_model = ba.getmodel('plasticEyesTransparent')
 
         self._coop_button: Optional[ba.Widget] = None
+
         # Only show coop button in main-menu variant.
         if self._is_main_menu:
             self._coop_button = btn = ba.buttonwidget(
