@@ -83,8 +83,8 @@ class PrivateGatherTab(GatherTab):
         self._c_width: float = 0.0
         self._c_height: float = 0.0
         self._last_hosting_state_query_time: Optional[float] = None
-        self._initial_waiting_for_hosting_state = True
-        self._waiting_for_hosting_state = True
+        self._waiting_for_initial_state = True
+        self._waiting_for_start_stop_response = True
         self._host_playlist_button: Optional[ba.Widget] = None
         self._host_copy_button: Optional[ba.Widget] = None
         self._host_connect_button: Optional[ba.Widget] = None
@@ -166,11 +166,12 @@ class PrivateGatherTab(GatherTab):
                                       repeat=True,
                                       timetype=ba.TimeType.REAL)
 
-        # Get a new state query kicked off immediately and show nothing
-        # until it is back.
-        self._initial_waiting_for_hosting_state = True
+        # Prevent taking any action until we've updated our state.
+        self._waiting_for_initial_state = True
+
+        # This will get a state query sent out immediately.
+        self._last_action_send_time = None  # Ensure we don't ignore response.
         self._last_hosting_state_query_time = None
-        self._last_action_send_time = None  # So we don't ignore response.
         self._update()
 
         self._set_sub_tab(self._state.sub_tab)
@@ -290,6 +291,12 @@ class PrivateGatherTab(GatherTab):
 
     def _hosting_state_response(self, result: Optional[Dict[str,
                                                             Any]]) -> None:
+
+        # Its possible for this to come back to us after our UI is dead;
+        # ignore in that case.
+        if not self._container:
+            return
+
         state: Optional[HostingState] = None
         if result is not None:
             self._debug_server_comm('got private party state response')
@@ -305,8 +312,8 @@ class PrivateGatherTab(GatherTab):
         if result is None or state is None:
             return
 
-        self._initial_waiting_for_hosting_state = False
-        self._waiting_for_hosting_state = False
+        self._waiting_for_initial_state = False
+        self._waiting_for_start_stop_response = False
         self._hostingstate = state
         self._refresh_sub_tab()
 
@@ -317,8 +324,11 @@ class PrivateGatherTab(GatherTab):
 
         # If switching from join to host, do a fresh state query.
         if self._state.sub_tab is SubTabType.JOIN and value is SubTabType.HOST:
+            # Prevent taking any action until we've gotten a fresh state.
+            self._waiting_for_initial_state = True
+
+            # This will get a state query sent out immediately.
             self._last_hosting_state_query_time = None
-            self._initial_waiting_for_hosting_state = True
             self._last_action_send_time = None  # So we don't ignore response.
             self._update()
 
@@ -418,7 +428,7 @@ class PrivateGatherTab(GatherTab):
 
     def _on_get_tickets_press(self) -> None:
 
-        if self._waiting_for_hosting_state:
+        if self._waiting_for_start_stop_response:
             return
 
         # Bring up get-tickets window and then kill ourself (we're on the
@@ -445,7 +455,12 @@ class PrivateGatherTab(GatherTab):
         self._showing_not_signed_in_screen = False
 
         # At first we don't want to show anything until we've gotten a state.
-        if self._initial_waiting_for_hosting_state:
+        # Update: In this situation we now simply show our existing state
+        # but give the start/stop button a loading message and disallow its
+        # use. This keeps things a lot less jumpy looking and allows selecting
+        # playlists/etc without having to wait for the server each time
+        # back to the ui.
+        if self._waiting_for_initial_state and bool(False):
             ba.textwidget(
                 parent=self._container,
                 size=(0, 0),
@@ -464,7 +479,8 @@ class PrivateGatherTab(GatherTab):
 
         # If we're not currently hosting and hosting requires tickets,
         # Show our count (possibly with a link to purchase more).
-        if (self._hostingstate.party_code is None
+        if (not self._waiting_for_initial_state
+                and self._hostingstate.party_code is None
                 and self._hostingstate.tickets_to_host_now != 0):
             if not ba.app.ui.use_toolbars:
                 if ba.app.allow_ticket_purchases:
@@ -593,8 +609,11 @@ class PrivateGatherTab(GatherTab):
 
         # Line above the main action button:
 
-        # If hosting is unavailable, show the associated reason.
-        if self._hostingstate.unavailable_error is not None:
+        # If we don't want to show anything until we get a state:
+        if self._waiting_for_initial_state:
+            pass
+        elif self._hostingstate.unavailable_error is not None:
+            # If hosting is unavailable, show the associated reason.
             ba.textwidget(
                 parent=self._container,
                 size=(0, 0),
@@ -679,7 +698,8 @@ class PrivateGatherTab(GatherTab):
 
         v -= 100
 
-        if self._waiting_for_hosting_state:
+        if (self._waiting_for_start_stop_response
+                or self._waiting_for_initial_state):
             btnlabel = ba.Lstr(resource='oneMomentText')
         else:
             if self._hostingstate.unavailable_error is not None:
@@ -698,19 +718,19 @@ class PrivateGatherTab(GatherTab):
             else:
                 btnlabel = ba.Lstr(resource='gatherWindow.stopHostingText')
 
+        disabled = (self._hostingstate.unavailable_error is not None
+                    or self._waiting_for_initial_state)
+        waiting = self._waiting_for_start_stop_response
         self._host_start_stop_button = ba.buttonwidget(
             parent=self._container,
             size=(400, 80),
-            color=((0.6, 0.6, 0.6)
-                   if self._hostingstate.unavailable_error is not None else
-                   (0.5, 1.0,
-                    0.5) if self._waiting_for_hosting_state else None),
+            color=((0.6, 0.6, 0.6) if disabled else
+                   (0.5, 1.0, 0.5) if waiting else None),
             enable_sound=False,
             label=btnlabel,
-            textcolor=((0.7, 0.7, 0.7)
-                       if self._hostingstate.unavailable_error else None),
+            textcolor=((0.7, 0.7, 0.7) if disabled else None),
             position=(self._c_width * 0.5 - 200, v),
-            on_activate_call=self._host_button_press,
+            on_activate_call=self._start_stop_button_press,
             autoselect=True)
 
     def _playlist_press(self) -> None:
@@ -753,8 +773,9 @@ class PrivateGatherTab(GatherTab):
         )
         _ba.run_transactions()
 
-    def _host_button_press(self) -> None:
-        if self._waiting_for_hosting_state:
+    def _start_stop_button_press(self) -> None:
+        if (self._waiting_for_start_stop_response
+                or self._waiting_for_initial_state):
             return
 
         if _ba.get_account_state() != 'signed_in':
@@ -800,7 +821,7 @@ class PrivateGatherTab(GatherTab):
             _ba.run_transactions()
         ba.playsound(ba.getsound('click01'))
 
-        self._waiting_for_hosting_state = True
+        self._waiting_for_start_stop_response = True
         self._refresh_sub_tab()
 
     def _join_connect_press(self) -> None:
