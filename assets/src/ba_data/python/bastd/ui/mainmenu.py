@@ -1027,6 +1027,8 @@ class MainMenuWindow(ba.Window):
         from bastd.ui.play import PlayWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
+
+        ba.app.ui.selecting_private_party_playlist = False
         ba.app.ui.set_main_menu_window(
             PlayWindow(origin_widget=self._start_button).get_root_widget())
 

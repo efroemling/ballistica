@@ -974,6 +974,7 @@
       <w>homebrew</w>
       <w>hometest</w>
       <w>hostconfig</w>
+      <w>hostingconfig</w>
       <w>hostingstate</w>
       <w>hostuser</w>
       <w>hout</w>
@@ -1458,6 +1459,7 @@
       <w>oghashes</w>
       <w>ogval</w>
       <w>oival</w>
+      <w>okbtn</w>
       <w>oldlady</w>
       <w>onln</w>
       <w>onscreencountdown</w>
@@ -1893,6 +1895,7 @@
       <w>sessionteam's</w>
       <w>sessionteams</w>
       <w>sessiontype</w>
+      <w>sessiontypestr</w>
       <w>setactivity</w>
       <w>setalpha</w>
       <w>setbuild</w>

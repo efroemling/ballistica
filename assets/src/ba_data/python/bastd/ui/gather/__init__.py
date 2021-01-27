@@ -217,6 +217,15 @@ class GatherWindow(ba.Window):
     def __del__(self) -> None:
         _ba.set_party_icon_always_visible(False)
 
+    def playlist_select(self, origin_widget: ba.Widget) -> None:
+        """Called by the private-hosting tab to select a playlist."""
+        from bastd.ui.play import PlayWindow
+        self._save_state()
+        ba.containerwidget(edit=self._root_widget, transition='out_left')
+        ba.app.ui.selecting_private_party_playlist = True
+        ba.app.ui.set_main_menu_window(
+            PlayWindow(origin_widget=origin_widget).get_root_widget())
+
     def _set_tab(self, tab_id: TabID) -> None:
         if self._current_tab is tab_id:
             return

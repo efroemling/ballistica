@@ -53,6 +53,91 @@ class PlaylistBrowserWindow(ba.Window):
         self._sub_width: Optional[float] = None
         self._sub_height: Optional[float] = None
 
+        self._ensure_standard_playlists_exist()
+
+        # Get the current selection (if any).
+        self._selected_playlist = ba.app.config.get(self._pvars.config_name +
+                                                    ' Playlist Selection')
+
+        uiscale = ba.app.ui.uiscale
+        self._width = 900 if uiscale is ba.UIScale.SMALL else 800
+        x_inset = 50 if uiscale is ba.UIScale.SMALL else 0
+        self._height = (480 if uiscale is ba.UIScale.SMALL else
+                        510 if uiscale is ba.UIScale.MEDIUM else 580)
+
+        top_extra = 20 if uiscale is ba.UIScale.SMALL else 0
+
+        super().__init__(root_widget=ba.containerwidget(
+            size=(self._width, self._height + top_extra),
+            transition=transition,
+            toolbar_visibility='menu_full',
+            scale_origin_stack_offset=scale_origin,
+            scale=(1.69 if uiscale is ba.UIScale.SMALL else
+                   1.05 if uiscale is ba.UIScale.MEDIUM else 0.9),
+            stack_offset=(0, -26) if uiscale is ba.UIScale.SMALL else (0, 0)))
+
+        self._back_button: Optional[ba.Widget] = ba.buttonwidget(
+            parent=self._root_widget,
+            position=(59 + x_inset, self._height - 70),
+            size=(120, 60),
+            scale=1.0,
+            on_activate_call=self._on_back_press,
+            autoselect=True,
+            label=ba.Lstr(resource='backText'),
+            button_type='back')
+        ba.containerwidget(edit=self._root_widget,
+                           cancel_button=self._back_button)
+        txt = self._title_text = ba.textwidget(
+            parent=self._root_widget,
+            position=(self._width * 0.5, self._height - 41),
+            size=(0, 0),
+            text=self._pvars.window_title_name,
+            scale=1.3,
+            res_scale=1.5,
+            color=ba.app.ui.heading_color,
+            h_align='center',
+            v_align='center')
+        if uiscale is ba.UIScale.SMALL and ba.app.ui.use_toolbars:
+            ba.textwidget(edit=txt, text='')
+
+        ba.buttonwidget(edit=self._back_button,
+                        button_type='backSmall',
+                        size=(60, 54),
+                        position=(59 + x_inset, self._height - 67),
+                        label=ba.charstr(ba.SpecialChar.BACK))
+
+        if uiscale is ba.UIScale.SMALL and ba.app.ui.use_toolbars:
+            self._back_button.delete()
+            self._back_button = None
+            ba.containerwidget(edit=self._root_widget,
+                               on_cancel_call=self._on_back_press)
+            scroll_offs = 33
+        else:
+            scroll_offs = 0
+        self._scroll_width = self._width - (100 + 2 * x_inset)
+        self._scroll_height = (self._height -
+                               (146 if uiscale is ba.UIScale.SMALL
+                                and ba.app.ui.use_toolbars else 136))
+        self._scrollwidget = ba.scrollwidget(
+            parent=self._root_widget,
+            highlight=False,
+            size=(self._scroll_width, self._scroll_height),
+            position=((self._width - self._scroll_width) * 0.5,
+                      65 + scroll_offs))
+        ba.containerwidget(edit=self._scrollwidget, claims_left_right=True)
+        self._subcontainer: Optional[ba.Widget] = None
+        self._config_name_full = self._pvars.config_name + ' Playlists'
+        self._last_config = None
+
+        # Update now and once per second.
+        # (this should do our initial refresh)
+        self._update()
+        self._update_timer = ba.Timer(1.0,
+                                      ba.WeakCall(self._update),
+                                      timetype=ba.TimeType.REAL,
+                                      repeat=True)
+
+    def _ensure_standard_playlists_exist(self) -> None:
         # On new installations, go ahead and create a few playlists
         # besides the hard-coded default one:
         if not _ba.get_account_misc_val('madeStandardPlaylists', False):
@@ -196,88 +281,6 @@ class PlaylistBrowserWindow(ba.Window):
             })
             _ba.run_transactions()
 
-        # Get the current selection (if any).
-        self._selected_playlist = ba.app.config.get(self._pvars.config_name +
-                                                    ' Playlist Selection')
-
-        uiscale = ba.app.ui.uiscale
-        self._width = 900 if uiscale is ba.UIScale.SMALL else 800
-        x_inset = 50 if uiscale is ba.UIScale.SMALL else 0
-        self._height = (480 if uiscale is ba.UIScale.SMALL else
-                        510 if uiscale is ba.UIScale.MEDIUM else 580)
-
-        top_extra = 20 if uiscale is ba.UIScale.SMALL else 0
-
-        super().__init__(root_widget=ba.containerwidget(
-            size=(self._width, self._height + top_extra),
-            transition=transition,
-            toolbar_visibility='menu_full',
-            scale_origin_stack_offset=scale_origin,
-            scale=(1.69 if uiscale is ba.UIScale.SMALL else
-                   1.05 if uiscale is ba.UIScale.MEDIUM else 0.9),
-            stack_offset=(0, -26) if uiscale is ba.UIScale.SMALL else (0, 0)))
-
-        self._back_button: Optional[ba.Widget] = ba.buttonwidget(
-            parent=self._root_widget,
-            position=(59 + x_inset, self._height - 70),
-            size=(120, 60),
-            scale=1.0,
-            on_activate_call=self._on_back_press,
-            autoselect=True,
-            label=ba.Lstr(resource='backText'),
-            button_type='back')
-        ba.containerwidget(edit=self._root_widget,
-                           cancel_button=self._back_button)
-        txt = self._title_text = ba.textwidget(
-            parent=self._root_widget,
-            position=(self._width * 0.5, self._height - 41),
-            size=(0, 0),
-            text=self._pvars.window_title_name,
-            scale=1.3,
-            res_scale=1.5,
-            color=ba.app.ui.heading_color,
-            h_align='center',
-            v_align='center')
-        if uiscale is ba.UIScale.SMALL and ba.app.ui.use_toolbars:
-            ba.textwidget(edit=txt, text='')
-
-        ba.buttonwidget(edit=self._back_button,
-                        button_type='backSmall',
-                        size=(60, 54),
-                        position=(59 + x_inset, self._height - 67),
-                        label=ba.charstr(ba.SpecialChar.BACK))
-
-        if uiscale is ba.UIScale.SMALL and ba.app.ui.use_toolbars:
-            self._back_button.delete()
-            self._back_button = None
-            ba.containerwidget(edit=self._root_widget,
-                               on_cancel_call=self._on_back_press)
-            scroll_offs = 33
-        else:
-            scroll_offs = 0
-        self._scroll_width = self._width - (100 + 2 * x_inset)
-        self._scroll_height = (self._height -
-                               (146 if uiscale is ba.UIScale.SMALL
-                                and ba.app.ui.use_toolbars else 136))
-        self._scrollwidget = ba.scrollwidget(
-            parent=self._root_widget,
-            highlight=False,
-            size=(self._scroll_width, self._scroll_height),
-            position=((self._width - self._scroll_width) * 0.5,
-                      65 + scroll_offs))
-        ba.containerwidget(edit=self._scrollwidget, claims_left_right=True)
-        self._subcontainer: Optional[ba.Widget] = None
-        self._config_name_full = self._pvars.config_name + ' Playlists'
-        self._last_config = None
-
-        # Update now and once per second.
-        # (this should do our initial refresh)
-        self._update()
-        self._update_timer = ba.Timer(1.0,
-                                      ba.WeakCall(self._update),
-                                      timetype=ba.TimeType.REAL,
-                                      repeat=True)
-
     def _refresh(self) -> None:
         # FIXME: Should tidy this up.
         # pylint: disable=too-many-statements
@@ -285,9 +288,7 @@ class PlaylistBrowserWindow(ba.Window):
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-nested-blocks
         from efro.util import asserttype
-        from ba.internal import (get_map_class,
-                                 get_default_free_for_all_playlist,
-                                 get_default_teams_playlist, filter_playlist)
+        from ba.internal import get_map_class, filter_playlist
         if not self._root_widget:
             return
         if self._subcontainer is not None:
@@ -415,13 +416,7 @@ class PlaylistBrowserWindow(ba.Window):
                     map_textures = []
                     map_texture_entries = []
                     if name == '__default__':
-                        if self._sessiontype is ba.FreeForAllSession:
-                            playlist = (get_default_free_for_all_playlist())
-                        elif self._sessiontype is ba.DualTeamSession:
-                            playlist = get_default_teams_playlist()
-                        else:
-                            raise Exception('unrecognized session-type: ' +
-                                            str(self._sessiontype))
+                        playlist = self._pvars.get_default_list_call()
                     else:
                         if name not in appconfig[self._pvars.config_name +
                                                  ' Playlists']:

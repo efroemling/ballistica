@@ -8,7 +8,7 @@ import os
 import copy
 import time
 from enum import Enum
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from typing import TYPE_CHECKING, cast
 
 import ba
@@ -18,7 +18,7 @@ from bastd.ui.gather import GatherTab
 from bastd.ui import getcurrency
 
 if TYPE_CHECKING:
-    from typing import Optional, Dict, Any, List
+    from typing import Optional, Dict, Any, List, Type
     from bastd.ui.gather import GatherWindow
 
 # Print a bit of info about queries, etc.
@@ -56,6 +56,18 @@ class HostingState:
     free_host_minutes_remaining: Optional[float] = None
 
 
+@dataclass
+class HostingConfig:
+    """Config we provide when hosting."""
+    session_type: str = 'ffa'
+    playlist_name: str = 'Unknown'
+    randomize: bool = False
+    tutorial: bool = False
+    custom_team_names: Optional[List[str]] = None
+    custom_team_colors: Optional[List[List[float]]] = None
+    playlist: Optional[List[Dict[str, Any]]] = None
+
+
 class PrivateGatherTab(GatherTab):
     """The private tab in the gather UI"""
 
@@ -82,6 +94,12 @@ class PrivateGatherTab(GatherTab):
         self._showing_not_signed_in_screen = False
         self._create_time = time.time()
         self._last_action_send_time: Optional[float] = None
+        self._connect_press_time: Optional[float] = None
+        try:
+            self._hostingconfig = self._build_hosting_config()
+        except Exception:
+            ba.print_exception('Error building hosting config')
+            self._hostingconfig = HostingConfig()
 
     def on_activate(
         self,
@@ -158,6 +176,55 @@ class PrivateGatherTab(GatherTab):
         self._set_sub_tab(self._state.sub_tab)
 
         return self._container
+
+    def _build_hosting_config(self) -> HostingConfig:
+        from bastd.ui.playlist import PlaylistTypeVars
+        from ba.internal import filter_playlist
+        hcfg = HostingConfig()
+        cfg = ba.app.config
+        sessiontypestr = cfg.get('Private Party Host Session Type')
+        if not isinstance(sessiontypestr, str):
+            raise RuntimeError(f'Invalid sessiontype {sessiontypestr}')
+        hcfg.session_type = sessiontypestr
+
+        sessiontype: Type[ba.Session]
+        if hcfg.session_type == 'ffa':
+            sessiontype = ba.FreeForAllSession
+        elif hcfg.session_type == 'teams':
+            sessiontype = ba.DualTeamSession
+        else:
+            raise RuntimeError('fInvalid sessiontype: {hcfg.session_type}')
+        pvars = PlaylistTypeVars(sessiontype)
+
+        playlist_name = ba.app.config.get(
+            f'{pvars.config_name} Playlist Selection')
+        if not isinstance(playlist_name, str):
+            playlist_name = '__default__'
+        hcfg.playlist_name = (pvars.default_list_name.evaluate()
+                              if playlist_name == '__default__' else
+                              playlist_name)
+
+        if playlist_name == '__default__':
+            playlist = pvars.get_default_list_call()
+        else:
+            playlist = cfg[f'{pvars.config_name} Playlists'][playlist_name]
+        hcfg.playlist = filter_playlist(playlist, sessiontype)
+
+        randomize = cfg.get(f'{pvars.config_name} Playlist Randomize')
+        if not isinstance(randomize, bool):
+            randomize = False
+        hcfg.randomize = randomize
+
+        tutorial = cfg.get('Show Tutorial')
+        if not isinstance(tutorial, bool):
+            tutorial = False
+        hcfg.tutorial = tutorial
+
+        if hcfg.session_type == 'teams':
+            hcfg.custom_team_names = copy.copy(cfg.get('Custom Team Names'))
+            hcfg.custom_team_colors = copy.copy(cfg.get('Custom Team Colors'))
+
+        return hcfg
 
     def on_deactivate(self) -> None:
         self._update_timer = None
@@ -344,7 +411,7 @@ class PrivateGatherTab(GatherTab):
                                             'manualConnectText'),
                               position=(self._c_width * 0.5 - 150,
                                         self._c_height - 350),
-                              on_activate_call=self._connect_press,
+                              on_activate_call=self._join_connect_press,
                               autoselect=True)
         ba.textwidget(edit=self._join_party_code_text,
                       on_return_press_call=btn.activate)
@@ -358,7 +425,6 @@ class PrivateGatherTab(GatherTab):
         # overlay layer so we'd show up above it).
         getcurrency.GetCurrencyWindow(modal=True,
                                       origin_widget=self._get_tickets_button)
-        # self._transition_out()
 
     def _build_host_tab(self) -> None:
         # pylint: disable=too-many-branches
@@ -457,12 +523,18 @@ class PrivateGatherTab(GatherTab):
                 size=(400, 70),
                 color=(0.6, 0.5, 0.6),
                 textcolor=(0.8, 0.75, 0.8),
-                label='Default Free-For-All Playlist',
-                on_activate_call=lambda: ba.screenmessage(
-                    'TODO: WIRE UP PLAYLIST SELECTION'),
+                label=self._hostingconfig.playlist_name,
+                on_activate_call=self._playlist_press,
                 position=(self._c_width * 0.5 - 200, v - 35),
                 up_widget=self._host_sub_tab_text,
                 autoselect=True)
+
+            # If it appears we're coming back from playlist selection,
+            # re-select our playlist button.
+            if ba.app.ui.selecting_private_party_playlist:
+                ba.containerwidget(edit=self._container,
+                                   selected_child=self._host_playlist_button)
+                ba.app.ui.selecting_private_party_playlist = False
         else:
             # We've got a current party; show its info.
             ba.textwidget(
@@ -641,6 +713,10 @@ class PrivateGatherTab(GatherTab):
             on_activate_call=self._host_button_press,
             autoselect=True)
 
+    def _playlist_press(self) -> None:
+        assert self._host_playlist_button is not None
+        self.window.playlist_select(origin_widget=self._host_playlist_button)
+
     def _host_copy_press(self) -> None:
         assert self._hostingstate.party_code is not None
         ba.clipboard_set_text(self._hostingstate.party_code)
@@ -656,6 +732,17 @@ class PrivateGatherTab(GatherTab):
                   f'{time.time()-self._create_time:.2f}')
 
     def _connect_to_party_code(self, code: str) -> None:
+
+        # Ignore attempted followup sends for a few seconds.
+        # (this will reset if we get a response)
+        now = time.time()
+        if (self._connect_press_time is not None
+                and now - self._connect_press_time < 5.0):
+            self._debug_server_comm(
+                'not sending private party connect (too soon)')
+            return
+        self._connect_press_time = now
+
         self._debug_server_comm('sending private party connect')
         _ba.add_transaction(
             {
@@ -697,9 +784,12 @@ class PrivateGatherTab(GatherTab):
                     ba.playsound(ba.getsound('error'))
                     return
             self._last_action_send_time = time.time()
-            _ba.add_transaction({'type': 'PRIVATE_PARTY_START'},
-                                callback=ba.WeakCall(
-                                    self._hosting_state_response))
+            _ba.add_transaction(
+                {
+                    'type': 'PRIVATE_PARTY_START',
+                    'config': asdict(self._hostingconfig)
+                },
+                callback=ba.WeakCall(self._hosting_state_response))
             _ba.run_transactions()
 
         else:
@@ -713,7 +803,9 @@ class PrivateGatherTab(GatherTab):
         self._waiting_for_hosting_state = True
         self._refresh_sub_tab()
 
-    def _connect_press(self) -> None:
+    def _join_connect_press(self) -> None:
+
+        # Error immediately if its an empty code.
         code: Optional[str] = None
         if self._join_party_code_text:
             code = cast(str, ba.textwidget(query=self._join_party_code_text))
@@ -723,10 +815,12 @@ class PrivateGatherTab(GatherTab):
                 color=(1, 0, 0))
             ba.playsound(ba.getsound('error'))
             return
+
         self._connect_to_party_code(code)
 
     def _connect_response(self, result: Optional[Dict[str, Any]]) -> None:
         try:
+            self._connect_press_time = None
             if result is None:
                 raise RuntimeError()
             cresult = dataclass_from_dict(ConnectResult, result)

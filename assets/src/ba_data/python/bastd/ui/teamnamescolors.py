@@ -90,15 +90,15 @@ class TeamNamesColorsWindow(popup.PopupWindow):
                                     on_activate_call=self._on_cancel_press,
                                     size=(150, 50),
                                     position=(self._width * 0.5 - 200, 20))
-        savebtn = ba.buttonwidget(parent=self.root_widget,
-                                  label=ba.Lstr(resource='saveText'),
-                                  autoselect=True,
-                                  on_activate_call=self._save,
-                                  size=(150, 50),
-                                  position=(self._width * 0.5 + 50, 20))
+        okbtn = ba.buttonwidget(parent=self.root_widget,
+                                label=ba.Lstr(resource='okText'),
+                                autoselect=True,
+                                on_activate_call=self._ok,
+                                size=(150, 50),
+                                position=(self._width * 0.5 + 50, 20))
         ba.containerwidget(edit=self.root_widget,
                            selected_child=self._color_buttons[0])
-        ba.widget(edit=savebtn, left_widget=cancelbtn)
+        ba.widget(edit=okbtn, left_widget=cancelbtn)
         self._update()
 
     def _color_click(self, i: int) -> None:
@@ -136,7 +136,7 @@ class TeamNamesColorsWindow(popup.PopupWindow):
             ba.textwidget(edit=self._color_text_fields[i],
                           color=self._colors[i])
 
-    def _save(self) -> None:
+    def _ok(self) -> None:
         from ba.internal import DEFAULT_TEAM_COLORS, DEFAULT_TEAM_NAMES
         cfg = ba.app.config
 
@@ -171,11 +171,10 @@ class TeamNamesColorsWindow(popup.PopupWindow):
                 if key in cfg:
                     del cfg[key]
         else:
-            cfg['Custom Team Names'] = tuple(new_names)
-            cfg['Custom Team Colors'] = tuple(self._colors)
+            cfg['Custom Team Names'] = list(new_names)
+            cfg['Custom Team Colors'] = list(self._colors)
 
         cfg.commit()
-        ba.playsound(ba.getsound('gunCocking'))
         self._transition_out()
 
     def _transition_out(self, transition: str = 'out_scale') -> None:

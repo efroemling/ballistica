@@ -27,11 +27,14 @@ class PlayWindow(ba.Window):
         # have a visual hitch when the user taps them.
         threading.Thread(target=self._preload_modules).start()
 
-        new_style = True
+        # We can currently be used either for main menu duty or for selecting
+        # playlists (should make this more elegant/general).
+        self._is_main_menu = not ba.app.ui.selecting_private_party_playlist
+
         uiscale = ba.app.ui.uiscale
         width = 1000 if uiscale is ba.UIScale.SMALL else 800
         x_offs = 100 if uiscale is ba.UIScale.SMALL else 0
-        height = 550 if new_style else 400
+        height = 550
         button_width = 400
 
         scale_origin: Optional[Tuple[float, float]]
@@ -50,14 +53,12 @@ class PlayWindow(ba.Window):
             transition=transition,
             toolbar_visibility='menu_full',
             scale_origin_stack_offset=scale_origin,
-            scale=((1.6 if new_style else 1.52) if uiscale is ba.UIScale.SMALL
-                   else 0.9 if uiscale is ba.UIScale.MEDIUM else 0.8),
-            stack_offset=((0, 0) if new_style else (
-                10, 7)) if uiscale is ba.UIScale.SMALL else (0, 0)))
+            scale=(1.6 if uiscale is ba.UIScale.SMALL else
+                   0.9 if uiscale is ba.UIScale.MEDIUM else 0.8),
+            stack_offset=(0, 0) if uiscale is ba.UIScale.SMALL else (0, 0)))
         self._back_button = back_button = btn = ba.buttonwidget(
             parent=self._root_widget,
-            position=(55 + x_offs, height - 132) if new_style else
-            (55, height - 92),
+            position=(55 + x_offs, height - 132),
             size=(120, 60),
             scale=1.1,
             text_res_scale=1.5,
@@ -66,17 +67,21 @@ class PlayWindow(ba.Window):
             label=ba.Lstr(resource='backText'),
             button_type='back')
 
-        txt = ba.textwidget(parent=self._root_widget,
-                            position=(width * 0.5,
-                                      height - (101 if new_style else 61)),
-                            size=(0, 0),
-                            text=ba.Lstr(resource=self._r + '.titleText'),
-                            scale=1.7,
-                            res_scale=2.0,
-                            maxwidth=400,
-                            color=ba.app.ui.heading_color,
-                            h_align='center',
-                            v_align='center')
+        txt = ba.textwidget(
+            parent=self._root_widget,
+            position=(width * 0.5, height - 101),
+            # position=(width * 0.5, height -
+            #           (101 if main_menu else 61)),
+            size=(0, 0),
+            text=ba.Lstr(resource=(
+                self._r +
+                '.titleText') if self._is_main_menu else 'playlistsText'),
+            scale=1.7,
+            res_scale=2.0,
+            maxwidth=400,
+            color=ba.app.ui.heading_color,
+            h_align='center',
+            v_align='center')
 
         ba.buttonwidget(edit=btn,
                         button_type='backSmall',
@@ -85,14 +90,14 @@ class PlayWindow(ba.Window):
         if ba.app.ui.use_toolbars and uiscale is ba.UIScale.SMALL:
             ba.textwidget(edit=txt, text='')
 
-        v = height - (110 if new_style else 60)
+        v = height - (110 if self._is_main_menu else 60)
         v -= 100
         clr = (0.6, 0.7, 0.6, 1.0)
-        v -= 280 if new_style else 180
+        v -= 280 if self._is_main_menu else 180
         v += (30
               if ba.app.ui.use_toolbars and uiscale is ba.UIScale.SMALL else 0)
-        hoffs = x_offs + 80 if new_style else 0
-        scl = 1.13 if new_style else 0.68
+        hoffs = x_offs + 80 if self._is_main_menu else 0
+        scl = 1.13 if self._is_main_menu else 0.68
 
         self._lineup_tex = ba.gettexture('playerLineup')
         angry_computer_transparent_model = ba.getmodel(
@@ -107,93 +112,101 @@ class PlayWindow(ba.Window):
             'playerLineup4Transparent')
         self._eyes_model = ba.getmodel('plasticEyesTransparent')
 
-        self._coop_button = btn = ba.buttonwidget(
-            parent=self._root_widget,
-            position=(hoffs, v + (scl * 15 if new_style else 0)),
-            size=(scl * button_width, scl * (300 if new_style else 360)),
-            extra_touch_border_scale=0.1,
-            autoselect=True,
-            label='',
-            button_type='square',
-            text_scale=1.13,
-            on_activate_call=self._coop)
+        self._coop_button: Optional[ba.Widget] = None
+        # Only show coop button in main-menu variant.
+        if self._is_main_menu:
+            self._coop_button = btn = ba.buttonwidget(
+                parent=self._root_widget,
+                position=(hoffs, v + (scl * 15 if self._is_main_menu else 0)),
+                size=(scl * button_width,
+                      scl * (300 if self._is_main_menu else 360)),
+                extra_touch_border_scale=0.1,
+                autoselect=True,
+                label='',
+                button_type='square',
+                text_scale=1.13,
+                on_activate_call=self._coop)
 
-        if ba.app.ui.use_toolbars and uiscale is ba.UIScale.SMALL:
-            ba.widget(edit=btn,
-                      left_widget=_ba.get_special_widget('back_button'))
-            ba.widget(edit=btn,
-                      up_widget=_ba.get_special_widget('account_button'))
-            ba.widget(edit=btn,
-                      down_widget=_ba.get_special_widget('settings_button'))
+            if ba.app.ui.use_toolbars and uiscale is ba.UIScale.SMALL:
+                ba.widget(edit=btn,
+                          left_widget=_ba.get_special_widget('back_button'))
+                ba.widget(edit=btn,
+                          up_widget=_ba.get_special_widget('account_button'))
+                ba.widget(
+                    edit=btn,
+                    down_widget=_ba.get_special_widget('settings_button'))
 
-        self._draw_dude(0,
-                        btn,
-                        hoffs,
-                        v,
-                        scl,
-                        position=(140, 30),
-                        color=(0.72, 0.4, 1.0))
-        self._draw_dude(1,
-                        btn,
-                        hoffs,
-                        v,
-                        scl,
-                        position=(185, 53),
-                        color=(0.71, 0.5, 1.0))
-        self._draw_dude(2,
-                        btn,
-                        hoffs,
-                        v,
-                        scl,
-                        position=(220, 27),
-                        color=(0.67, 0.44, 1.0))
-        self._draw_dude(3,
-                        btn,
-                        hoffs,
-                        v,
-                        scl,
-                        position=(255, 57),
-                        color=(0.7, 0.3, 1.0))
-        ba.imagewidget(parent=self._root_widget,
-                       draw_controller=btn,
-                       position=(hoffs + scl * 230, v + scl * 153),
-                       size=(scl * 115, scl * 115),
-                       texture=self._lineup_tex,
-                       model_transparent=angry_computer_transparent_model)
+            self._draw_dude(0,
+                            btn,
+                            hoffs,
+                            v,
+                            scl,
+                            position=(140, 30),
+                            color=(0.72, 0.4, 1.0))
+            self._draw_dude(1,
+                            btn,
+                            hoffs,
+                            v,
+                            scl,
+                            position=(185, 53),
+                            color=(0.71, 0.5, 1.0))
+            self._draw_dude(2,
+                            btn,
+                            hoffs,
+                            v,
+                            scl,
+                            position=(220, 27),
+                            color=(0.67, 0.44, 1.0))
+            self._draw_dude(3,
+                            btn,
+                            hoffs,
+                            v,
+                            scl,
+                            position=(255, 57),
+                            color=(0.7, 0.3, 1.0))
+            ba.imagewidget(parent=self._root_widget,
+                           draw_controller=btn,
+                           position=(hoffs + scl * 230, v + scl * 153),
+                           size=(scl * 115, scl * 115),
+                           texture=self._lineup_tex,
+                           model_transparent=angry_computer_transparent_model)
 
-        ba.textwidget(parent=self._root_widget,
-                      draw_controller=btn,
-                      position=(hoffs + scl * (-10), v + scl * 95),
-                      size=(scl * button_width, scl * 50),
-                      text=ba.Lstr(resource='playModes.singlePlayerCoopText',
-                                   fallback_resource='playModes.coopText'),
-                      maxwidth=scl * button_width * 0.7,
-                      res_scale=1.5,
-                      h_align='center',
-                      v_align='center',
-                      color=(0.7, 0.9, 0.7, 1.0),
-                      scale=scl * 2.3)
+            ba.textwidget(parent=self._root_widget,
+                          draw_controller=btn,
+                          position=(hoffs + scl * (-10), v + scl * 95),
+                          size=(scl * button_width, scl * 50),
+                          text=ba.Lstr(
+                              resource='playModes.singlePlayerCoopText',
+                              fallback_resource='playModes.coopText'),
+                          maxwidth=scl * button_width * 0.7,
+                          res_scale=1.5,
+                          h_align='center',
+                          v_align='center',
+                          color=(0.7, 0.9, 0.7, 1.0),
+                          scale=scl * 2.3)
 
-        ba.textwidget(parent=self._root_widget,
-                      draw_controller=btn,
-                      position=(hoffs + scl * (-10), v + (scl * 54)),
-                      size=(scl * button_width, scl * 30),
-                      text=ba.Lstr(resource=self._r + '.oneToFourPlayersText'),
-                      h_align='center',
-                      v_align='center',
-                      scale=0.83 * scl,
-                      flatness=1.0,
-                      maxwidth=scl * button_width * 0.7,
-                      color=clr)
+            ba.textwidget(parent=self._root_widget,
+                          draw_controller=btn,
+                          position=(hoffs + scl * (-10), v + (scl * 54)),
+                          size=(scl * button_width, scl * 30),
+                          text=ba.Lstr(resource=self._r +
+                                       '.oneToFourPlayersText'),
+                          h_align='center',
+                          v_align='center',
+                          scale=0.83 * scl,
+                          flatness=1.0,
+                          maxwidth=scl * button_width * 0.7,
+                          color=clr)
 
-        scl = 0.5 if new_style else 0.68
-        hoffs += 440 if new_style else 260
-        v += 180 if new_style else 0
+        scl = 0.5 if self._is_main_menu else 0.68
+        hoffs += 440 if self._is_main_menu else 216
+        v += 180 if self._is_main_menu else -68
 
         self._teams_button = btn = ba.buttonwidget(
             parent=self._root_widget,
-            position=(hoffs, v + (scl * 15 if new_style else 0)),
-            size=(scl * button_width, scl * (300 if new_style else 360)),
+            position=(hoffs, v + (scl * 15 if self._is_main_menu else 0)),
+            size=(scl * button_width,
+                  scl * (300 if self._is_main_menu else 360)),
             extra_touch_border_scale=0.1,
             autoselect=True,
             label='',
@@ -292,12 +305,13 @@ class PlayWindow(ba.Window):
                       maxwidth=scl * button_width * 0.7,
                       color=clr)
 
-        hoffs += 0 if new_style else 260
-        v -= 155 if new_style else 0
+        hoffs += 0 if self._is_main_menu else 300
+        v -= 155 if self._is_main_menu else 0
         self._free_for_all_button = btn = ba.buttonwidget(
             parent=self._root_widget,
-            position=(hoffs, v + (scl * 15 if new_style else 0)),
-            size=(scl * button_width, scl * (300 if new_style else 360)),
+            position=(hoffs, v + (scl * 15 if self._is_main_menu else 0)),
+            size=(scl * button_width,
+                  scl * (300 if self._is_main_menu else 360)),
             extra_touch_border_scale=0.1,
             autoselect=True,
             label='',
@@ -391,12 +405,14 @@ class PlayWindow(ba.Window):
             back_button.delete()
             ba.containerwidget(edit=self._root_widget,
                                on_cancel_call=self._back,
-                               selected_child=self._coop_button)
+                               selected_child=self._coop_button
+                               if self._is_main_menu else self._teams_button)
         else:
             ba.buttonwidget(edit=back_button, on_activate_call=self._back)
             ba.containerwidget(edit=self._root_widget,
                                cancel_button=back_button,
-                               selected_child=self._coop_button)
+                               selected_child=self._coop_button
+                               if self._is_main_menu else self._teams_button)
 
         self._restore_state()
 
@@ -410,12 +426,20 @@ class PlayWindow(ba.Window):
 
     def _back(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.mainmenu import MainMenuWindow
-        self._save_state()
-        ba.app.ui.set_main_menu_window(
-            MainMenuWindow(transition='in_left').get_root_widget())
-        ba.containerwidget(edit=self._root_widget,
-                           transition=self._transition_out)
+        if self._is_main_menu:
+            from bastd.ui.mainmenu import MainMenuWindow
+            self._save_state()
+            ba.app.ui.set_main_menu_window(
+                MainMenuWindow(transition='in_left').get_root_widget())
+            ba.containerwidget(edit=self._root_widget,
+                               transition=self._transition_out)
+        else:
+            from bastd.ui.gather import GatherWindow
+            self._save_state()
+            ba.app.ui.set_main_menu_window(
+                GatherWindow(transition='in_left').get_root_widget())
+            ba.containerwidget(edit=self._root_widget,
+                               transition=self._transition_out)
 
     def _coop(self) -> None:
         # pylint: disable=cyclic-import
@@ -532,7 +556,7 @@ class PlayWindow(ba.Window):
             sel = self._root_widget.get_selected_child()
             if sel == self._teams_button:
                 sel_name = 'Team Games'
-            elif sel == self._coop_button:
+            elif self._coop_button is not None and sel == self._coop_button:
                 sel_name = 'Co-op Games'
             elif sel == self._free_for_all_button:
                 sel_name = 'Free-for-All Games'
@@ -549,14 +573,15 @@ class PlayWindow(ba.Window):
             sel_name = ba.app.ui.window_states.get(type(self))
             if sel_name == 'Team Games':
                 sel = self._teams_button
-            elif sel_name == 'Co-op Games':
+            elif sel_name == 'Co-op Games' and self._coop_button is not None:
                 sel = self._coop_button
             elif sel_name == 'Free-for-All Games':
                 sel = self._free_for_all_button
             elif sel_name == 'Back':
                 sel = self._back_button
             else:
-                sel = self._coop_button
+                sel = (self._coop_button if self._coop_button is not None else
+                       self._teams_button)
             ba.containerwidget(edit=self._root_widget, selected_child=sel)
         except Exception:
             ba.print_exception(f'Error restoring state for {self}.')

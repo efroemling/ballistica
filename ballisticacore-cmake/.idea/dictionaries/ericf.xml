@@ -419,6 +419,7 @@
       <w>hostactivity</w>
       <w>hostcmd</w>
       <w>hostinfo</w>
+      <w>hostingconfig</w>
       <w>hostingstate</w>
       <w>hotkeys</w>
       <w>hotplug</w>
@@ -627,6 +628,7 @@
       <w>offsx</w>
       <w>offsy</w>
       <w>oiffsss</w>
+      <w>okbtn</w>
       <w>oldname</w>
       <w>oooo</w>
       <w>ooooooo</w>
@@ -800,6 +802,7 @@
       <w>sessionplayer</w>
       <w>sessionteam</w>
       <w>sessiontype</w>
+      <w>sessiontypestr</w>
       <w>setactivity</w>
       <w>setattro</w>
       <w>setattrofunc</w>

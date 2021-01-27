@@ -57,6 +57,11 @@ class UISubsystem:
         self.heading_color = (0.72, 0.7, 0.75)
         self.infotextcolor = (0.7, 0.9, 0.7)
 
+        # Switch our overall game selection UI flow between Play and
+        # Private-party playlist selection modes; should do this in
+        # a more elegant way once we revamp high level UI stuff a bit.
+        self.selecting_private_party_playlist: bool = False
+
     @property
     def uiscale(self) -> ba.UIScale:
         """Current ui scale for the app."""

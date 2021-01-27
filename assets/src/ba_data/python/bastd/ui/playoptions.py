@@ -26,16 +26,17 @@ class PlayOptionsWindow(popup.PopupWindow):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
-        from ba.internal import (getclass, get_default_teams_playlist,
-                                 get_default_free_for_all_playlist,
-                                 filter_playlist)
-        from ba.internal import get_map_class
+        from ba.internal import get_map_class, getclass, filter_playlist
         from bastd.ui.playlist import PlaylistTypeVars
 
         self._r = 'gameListWindow'
         self._delegate = delegate
         self._pvars = PlaylistTypeVars(sessiontype)
         self._transitioning_out = False
+
+        # We behave differently if we're being used for playlist selection
+        # vs starting a game directly (should make this more elegant).
+        self._selecting_mode = ba.app.ui.selecting_private_party_playlist
 
         self._do_randomize_val = (ba.app.config.get(
             self._pvars.config_name + ' Playlist Randomize', 0))
@@ -69,13 +70,7 @@ class PlayOptionsWindow(popup.PopupWindow):
             max_columns = 5
             name = playlist
             if name == '__default__':
-                if self._sessiontype is ba.FreeForAllSession:
-                    plst = get_default_free_for_all_playlist()
-                elif self._sessiontype is ba.DualTeamSession:
-                    plst = get_default_teams_playlist()
-                else:
-                    raise TypeError('unrecognized session-type: ' +
-                                    str(self._sessiontype))
+                plst = self._pvars.get_default_list_call()
             else:
                 try:
                     plst = ba.app.config[self._pvars.config_name +
@@ -323,23 +318,24 @@ class PlayOptionsWindow(popup.PopupWindow):
                 ba.widget(edit=self._show_tutorial_check_box,
                           up_widget=self._custom_colors_names_button)
 
-        self._play_button = ba.buttonwidget(
+        self._ok_button = ba.buttonwidget(
             parent=self.root_widget,
             position=(70, 44),
             size=(200, 45),
             scale=1.8,
             text_res_scale=1.5,
-            on_activate_call=self._on_play_press,
+            on_activate_call=self._on_ok_press,
             autoselect=True,
-            label=ba.Lstr(resource='playText'))
+            label=ba.Lstr(
+                resource='okText' if self._selecting_mode else 'playText'))
 
-        ba.widget(edit=self._play_button,
+        ba.widget(edit=self._ok_button,
                   up_widget=self._show_tutorial_check_box)
 
         ba.containerwidget(edit=self.root_widget,
-                           start_button=self._play_button,
+                           start_button=self._ok_button,
                            cancel_button=self._cancel_button,
-                           selected_child=self._play_button)
+                           selected_child=self._ok_button)
 
         # Update now and once per second.
         self._update_timer = ba.Timer(1.0,
@@ -387,7 +383,7 @@ class PlayOptionsWindow(popup.PopupWindow):
     def _on_cancel_press(self) -> None:
         self._transition_out()
 
-    def _on_play_press(self) -> None:
+    def _on_ok_press(self) -> None:
 
         # Disallow if our playlist has disappeared.
         if not self._does_target_playlist_exist():
@@ -402,12 +398,32 @@ class PlayOptionsWindow(popup.PopupWindow):
 
         cfg = ba.app.config
         cfg[self._pvars.config_name + ' Playlist Selection'] = self._playlist
+
+        # Head back to the gather window in playlist-select mode
+        # or start the game in regular mode.
+        if self._selecting_mode:
+            from bastd.ui.gather import GatherWindow
+            if self._sessiontype is ba.FreeForAllSession:
+                typename = 'ffa'
+            elif self._sessiontype is ba.DualTeamSession:
+                typename = 'teams'
+            else:
+                raise RuntimeError('Only teams and ffa currently supported')
+            cfg['Private Party Host Session Type'] = typename
+            ba.playsound(ba.getsound('gunCocking'))
+            ba.app.ui.set_main_menu_window(
+                GatherWindow(transition='in_right').get_root_widget())
+            self._transition_out(transition='out_left')
+            if self._delegate is not None:
+                self._delegate.on_play_options_window_run_game()
+        else:
+            _ba.fade_screen(False, endcall=self._run_selected_playlist)
+            _ba.lock_all_input()
+            self._transition_out(transition='out_left')
+            if self._delegate is not None:
+                self._delegate.on_play_options_window_run_game()
+
         cfg.commit()
-        _ba.fade_screen(False, endcall=self._run_selected_playlist)
-        _ba.lock_all_input()
-        self._transition_out(transition='out_left')
-        if self._delegate is not None:
-            self._delegate.on_play_options_window_run_game()
 
     def _run_selected_playlist(self) -> None:
         _ba.unlock_all_input()
