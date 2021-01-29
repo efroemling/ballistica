@@ -7,7 +7,7 @@
 - Fixed an issue where ba.storagename() could prevent objects on the stack from getting released cleanly
 - Improvements to documentation generation such as link to some external base types.
 - Added ba.clipboard_* functions for copying and pasting text on supported platforms.
-- Implemented clipboard functionality on SDL based builds (such as prefab)
+- Implemented clipboard functionality on SDL based builds (such as prefab).
 - Fixed an issue where click locations on scaled text fields could be incorrectly calculated.
 
 ### 1.5.29 (20246)
