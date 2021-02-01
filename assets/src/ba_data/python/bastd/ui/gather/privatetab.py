@@ -183,7 +183,7 @@ class PrivateGatherTab(GatherTab):
         from ba.internal import filter_playlist
         hcfg = HostingConfig()
         cfg = ba.app.config
-        sessiontypestr = cfg.get('Private Party Host Session Type')
+        sessiontypestr = cfg.get('Private Party Host Session Type', 'ffa')
         if not isinstance(sessiontypestr, str):
             raise RuntimeError(f'Invalid sessiontype {sessiontypestr}')
         hcfg.session_type = sessiontypestr
