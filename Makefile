@@ -85,6 +85,9 @@ resources-clean:
 	@rm -f ${LAZYBUILDDIR}/resources
 
 # Build our generated code.
+# TODO: should perhaps make this a more standard component, including it
+# in other standard targets such as checks and tests (at least once we're
+# generating things that can affect the outcome of said checks/tests).
 code: prereqs
 	@tools/pcommand lazybuild code_gen_src ${LAZYBUILDDIR}/code \
  cd src/generated_src \&\& ${MAKE} -j${CPUS} generated_code
