@@ -392,8 +392,11 @@ class BoundCompoundDictField(Generic[TKey, TCompound]):
     # would not be able to make sense of)
     if TYPE_CHECKING:
 
+        def get(self, key: TKey) -> Optional[TCompound]:
+            """Return a value if present; otherwise None."""
+
         def __getitem__(self, key: TKey) -> TCompound:
-            pass
+            ...
 
         def values(self) -> List[TCompound]:
             """Return a list of our values."""
@@ -407,6 +410,13 @@ class BoundCompoundDictField(Generic[TKey, TCompound]):
             Any existing value is replaced."""
 
     else:
+
+        def get(self, key):
+            """return a value if present; otherwise None."""
+            data = self.d_data.get(key)
+            if data is not None:
+                return BoundCompoundValue(self.d_field.d_value, data)
+            return None
 
         def __getitem__(self, key):
             return BoundCompoundValue(self.d_field.d_value, self.d_data[key])

@@ -315,14 +315,6 @@ void Game::InitialScreenCreated() {
 
 void Game::Prune() { g_media->Prune(); }
 
-void Game::PushAwardAdTicketsCall() {
-  PushCall([] { AppInternalAwardAdTickets(); });
-}
-
-void Game::PushAwardAdTournamentEntryCall() {
-  PushCall([] { AppInternalAwardAdTournamentEntry(); });
-}
-
 // Launch into main menu or whatever else.
 void Game::RunAppLaunchCommands() {
   assert(!ran_app_launch_commands_);

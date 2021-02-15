@@ -158,8 +158,8 @@ auto AppInternalInitPythonModule() -> void;
 auto AppInternalPythonPostInit() -> void;
 auto AppInternalHasBlessingHash() -> bool;
 auto AppInternalPutLog(bool fatal) -> bool;
-auto AppInternalAwardAdTickets() -> void;
-auto AppInternalAwardAdTournamentEntry() -> void;
+auto AppInternalAAT() -> void;
+auto AppInternalAATE() -> void;
 auto AppInternalSetAdCompletionCall(PyObject* obj, bool pass_actually_showed)
     -> void;
 auto AppInternalPushAdViewComplete(const std::string& purpose,

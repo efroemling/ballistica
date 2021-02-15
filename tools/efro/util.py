@@ -449,3 +449,22 @@ def check_non_optional(obj: Optional[T]) -> T:
     if obj is None:
         raise TypeError('Got None value in check_non_optional.')
     return obj
+
+
+def smoothstep(edge0: float, edge1: float, x: float) -> float:
+    """A smooth transition function.
+
+    Returns a value that smoothly moves from 0 to 1 as we go between edges.
+    Values outside of the range return 0 or 1.
+    """
+    y = min(1.0, max(0.0, (x - edge0) / (edge1 - edge0)))
+    return y * y * (3.0 - 2.0 * y)
+
+
+def linearstep(edge0: float, edge1: float, x: float) -> float:
+    """A linear transition function.
+
+    Returns a value that linearly moves from 0 to 1 as we go between edges.
+    Values outside of the range return 0 or 1.
+    """
+    return max(0.0, min(1.0, (x - edge0) / (edge1 - edge0)))

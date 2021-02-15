@@ -37,8 +37,6 @@ class Game : public Module {
                           const std::string& account_id) -> void;
   auto PushSetAccountTokenCall(const std::string& account_id,
                                const std::string& token) -> void;
-  auto PushAwardAdTicketsCall() -> void;
-  auto PushAwardAdTournamentEntryCall() -> void;
   auto PushPartyInviteCall(const std::string& name,
                            const std::string& invite_id) -> void;
   auto PushPartyInviteRevokeCall(const std::string& invite_id) -> void;
