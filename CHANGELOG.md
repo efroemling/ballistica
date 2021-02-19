@@ -3,36 +3,36 @@
 - The meta subsystem now enables new plugins by default in headless builds.
 - Added option to save party in Manual tab
 - Slight tidying on the tourney entry popup
-- Env var to override UI scale is now BA_UI_SCALE instead of BA_FORCE_UI_SCALE.
+- Env var to override UI scale is now BA\_UI\_SCALE instead of BA\_FORCE\_UI\_SCALE.
 - Fixed an issue where ba.storagename() could prevent objects on the stack from getting released cleanly
 - Improvements to documentation generation such as link to some external base types.
-- Added ba.clipboard_* functions for copying and pasting text on supported platforms.
+- Added ba.clipboard\_\* functions for copying and pasting text on supported platforms.
 - Implemented clipboard functionality on SDL based builds (such as prefab).
 - Fixed an issue where click locations on scaled text fields could be incorrectly calculated.
 
 ### 1.5.29 (20246)
 - Exposed ba method/class initing in public C++ layer.
 - The 'restart' and 'shutdown' commands in the server script now default to immediate=True
-- Wired up 'clean_exit_minutes', 'unclean_exit_minutes', and 'idle_exit_minutes' options in the server config
+- Wired up 'clean\_exit\_minutes', 'unclean\_exit\_minutes', and 'idle\_exit\_minutes' options in the server config
 - Removed remains of the google-real-time-multiplayer stuff from the android/java layer.
 
 ### 1.5.28 (20239)
-- Simplified ba.enum_by_value()
+- Simplified ba.enum\_by\_value()
 - Updated Google Play version to hopefully show friend high scores again on score screens (at least for levels that have an associated Google Play leaderboard).
 - Public-party-list now properly shows an error instead of 'loading...' when not signed in.
 - Heavily reworked public party list display code to be more efficient and avoid hitches even with large numbers of servers.
 
 ### 1.5.27 (20238)
 - Language functionality has been consolidated into a LanguageSubsystem object at ba.app.lang
-- ba.get_valid_languages() is now an attr: ba.app.lang.available_languages
+- ba.get\_valid\_languages() is now an attr: ba.app.lang.available\_languages
 - Achievement functionality has been consolidated into an AchievementSubsystem object at ba.app.ach
 - Plugin functionality has been consolidated into a PluginSubsystem obj at ba.app.plugins
 - Ditto with AccountSubsystem and ba.app.accounts
 - Ditto with MetadataSubsystem and ba.app.meta
 - Ditto with AdsSubsystem and ba.app.ads
 - Revamped tab-button functionality into a cleaner type-safe class (bastd.ui.tabs.TabRow)
-- Split Gather-Window tabs out into individual classes for future improvements (bastd.ui.gather.*)
-- Added the ability to disable ticket-purchasing UIs for builds (ba.app.allow_ticket_purchases)
+- Split Gather-Window tabs out into individual classes for future improvements (bastd.ui.gather.\*)
+- Added the ability to disable ticket-purchasing UIs for builds (ba.app.allow\_ticket\_purchases)
 - Reworked the public party gather section to perform better; it should no longer have to rebuild the list from scratch each time the UI is visited.
 - Added a filter option to the public party list (sorry it has taken so long).
 
@@ -50,22 +50,22 @@
 - Upgraded Python from version 3.7 to 3.8. This is a substantial change (though nothing like the previous update from 2.7 to 3.7) so please holler if anything is broken. These updates will happen once every year or two now..
 - Windows debug builds now use Python debug libraries. This should hopefully catch more errors that would otherwise go undetected and potentially cause crashes.
 - Switched windows builds to use 'fast' mode math instead of 'strict'. This should make the game run more efficiently (similar modes are already in use on other platforms) but holler if any odd breakage happens such as things falling through floors (more often than the occasional random fluke-y case that happens now).
-- Added _ba.can_display_full_unicode() for any code that wants to avoid printing things that won't show up locally.
-- Now pulling some classes such as Literal and Protocol from typing instead of typing_extensions (they were officially added to Python in 3.8)
+- Added \_ba.can\_display\_full\_unicode() for any code that wants to avoid printing things that won't show up locally.
+- Now pulling some classes such as Literal and Protocol from typing instead of typing\_extensions (they were officially added to Python in 3.8)
 - Double taps/clicks now work properly on widgets nested under a scroll-widget on mobile (so, for example, replays can now be double-clicked to view them)
 
 ### 1.5.23 (20146)
 - Fixed the shebang line in `bombsquad_server` file by using `-S` flag for `/usr/bin/env`.
 - Fixed a bug with hardware keyboards emitting extra characters in the in-game console (~ or F2)
-- Added support for 'plugin' mods and user controls to configure them in settings->advanced->plugins.
-- Renamed selection_loop_to_parent to selection_loops_to_parent in widget calls.
-- Added 'selection_loops_to_parent', 'border', 'margin', 'claims_left_right', and 'claims_tab' args to ba.columnwidget().
+- Added support for 'plugin' mods and user controls to configure them in settings-\>advanced-\>plugins.
+- Renamed selection\_loop\_to\_parent to selection\_loops\_to\_parent in widget calls.
+- Added 'selection\_loops\_to\_parent', 'border', 'margin', 'claims\_left\_right', and 'claims\_tab' args to ba.columnwidget().
 - Column-widget now has a default 'border' of 0 (explicitly pass 2 to get the old look).
 - Column-widget now has a default 'margin' of 10 (explicitly pass 0 to get the old look).
-- Added 'selection_loops_to_parent', 'claims_left_right', and 'claims_tab' args to ba.scrollwidget.
-- Added 'selection_loops_to_parent', 'claims_left_right', and 'claims_tab' args to ba.rowwidget.
-- Added 'claims_left_right' and 'claims_tab' to ba.hscrollwidget().
-- Default widget 'show_buffer' is now 20 instead of 0 (causes scrolling to stay slightly ahead of widget selection). This can be overridden with the ba.widget() call if anything breaks.
+- Added 'selection\_loops\_to\_parent', 'claims\_left\_right', and 'claims\_tab' args to ba.scrollwidget.
+- Added 'selection\_loops\_to\_parent', 'claims\_left\_right', and 'claims\_tab' args to ba.rowwidget.
+- Added 'claims\_left\_right' and 'claims\_tab' to ba.hscrollwidget().
+- Default widget 'show\_buffer' is now 20 instead of 0 (causes scrolling to stay slightly ahead of widget selection). This can be overridden with the ba.widget() call if anything breaks.
 - Relocated ba.app.uiscale to ba.app.ui.uiscale.
 - Top level settings window now properly saves/restores its state again.
 - Added Emojis to the Internal Game Keyboard.
@@ -84,10 +84,10 @@
 - Updated mac prefab builds to point at homebrew's python@3.7 package now that 3.8 has been made the default.
 - Fixed an issue where adding/deleting UI widgets within certain callbacks could cause a crash.
 - Fixed a case where an early fatal error could lead to a hung app and no error dialog.
-- Added environment variables which can override UI scale for testing. Set BA_FORCE_UI_SCALE to small, medium or large.
-- Added a ba.UIScale enum. The value at ba.app.uiscale replaces the old ba.app.interface_type, ba.app.small_ui, and ba.app.med_ui values.
+- Added environment variables which can override UI scale for testing. Set BA\_FORCE\_UI\_SCALE to small, medium or large.
+- Added a ba.UIScale enum. The value at ba.app.uiscale replaces the old ba.app.interface\_type, ba.app.small\_ui, and ba.app.med\_ui values.
 - Emoji no longer display in-game with a washed-out appearance. If there are any places in-game where bright colored emoji become distracting, please holler.
-- _ba.get_game_roster() now includes 'account_id' which is the validated account id of all clients (will be None until completes). Also a few keys are renamed: specString->spec_string and displayString->display_string.
+- \_ba.get\_game\_roster() now includes 'account\_id' which is the validated account id of all clients (will be None until completes). Also a few keys are renamed: specString-\>spec\_string and displayString-\>display\_string.
 
 ### 1.5.19 (20123)
 - Cleaned up some bomb logic to avoid weird corner-cases such as land-mine explosions behaving like punches when set off by punches or bombs potentially resulting in multiple explosions when triggered by multiple other bombs simultaneously. Holler if anything explosion-related seems off now.
@@ -129,7 +129,7 @@
 ### 1.5.9 (20082)
 - Reduced some hitches when clicking on certain buttons in the UI
 - Fixed an issue where very early keyboard/controller connects/disconnects could get lost on android.
-- ba._modutils is now ba.modutils since it is intended to be publicly accessible.
+- ba.\_modutils is now ba.modutils since it is intended to be publicly accessible.
 - drop-down console is now properly accessible again via android hardware keyboards (` key)
 - Other minor bug fixes..
 
