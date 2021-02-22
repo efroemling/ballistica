@@ -253,10 +253,9 @@ class CoopBrowserWindow(ba.Window):
         # starting point.
         if (app.accounts.account_tournament_list is not None
                 and app.accounts.account_tournament_list[0]
-                == _ba.get_account_state_num() and all([
-                    t_id in app.accounts.tournament_info
-                    for t_id in app.accounts.account_tournament_list[1]
-                ])):
+                == _ba.get_account_state_num()
+                and all(t_id in app.accounts.tournament_info
+                        for t_id in app.accounts.account_tournament_list[1])):
             tourney_data = [
                 app.accounts.tournament_info[t_id]
                 for t_id in app.accounts.account_tournament_list[1]

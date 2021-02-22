@@ -384,7 +384,7 @@ def make_hash(obj: Any) -> int:
     import copy
 
     if isinstance(obj, (set, tuple, list)):
-        return hash(tuple([make_hash(e) for e in obj]))
+        return hash(tuple(make_hash(e) for e in obj))
     if not isinstance(obj, dict):
         return hash(obj)
 
