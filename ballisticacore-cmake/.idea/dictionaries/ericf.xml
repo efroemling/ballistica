@@ -68,6 +68,7 @@
       <w>barebones</w>
       <w>basetype</w>
       <w>basicsize</w>
+      <w>basn</w>
       <w>bastd</w>
       <w>bbbb</w>
       <w>bbbbb</w>
@@ -149,6 +150,7 @@
       <w>charnum</w>
       <w>charstr</w>
       <w>chatmessage</w>
+      <w>chdir</w>
       <w>checkboxwidget</w>
       <w>checkchisel</w>
       <w>chrono</w>
@@ -577,6 +579,7 @@
       <w>mynode</w>
       <w>mystatspage</w>
       <w>mywidget</w>
+      <w>nameval</w>
       <w>ndebug</w>
       <w>nearbytab</w>
       <w>nearval</w>

@@ -176,6 +176,7 @@
       <w>baseurl</w>
       <w>baseval</w>
       <w>basew</w>
+      <w>basn</w>
       <w>bastd</w>
       <w>batools</w>
       <w>bbbb</w>
@@ -320,6 +321,7 @@
       <w>charname</w>
       <w>charstr</w>
       <w>chatmessage</w>
+      <w>chdir</w>
       <w>cheadersline</w>
       <w>checkarg</w>
       <w>checkboxwidget</w>
@@ -1381,6 +1383,7 @@
       <w>mywidget</w>
       <w>namedarg</w>
       <w>nametext</w>
+      <w>nameval</w>
       <w>nboxes</w>
       <w>ncpu</w>
       <w>ndbm</w>

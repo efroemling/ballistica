@@ -445,8 +445,10 @@ def android_patch() -> None:
     # change it back to that for now.
     fname = 'src/cpython/Modules/makesetup'
     txt = readfile(fname)
-    txt = replace_one(txt, '		*=*)	DEFS="$line$NL$DEFS"; continue;;',
-                      '		[A-Z]*=*)	DEFS="$line$NL$DEFS"; continue;;')
+    txt = replace_one(txt, '		*=*)'
+                      '	DEFS="$line$NL$DEFS"; continue;;',
+                      '		[A-Z]*=*)	DEFS="$line$NL$DEFS";'
+                      ' continue;;')
     writefile(fname, txt)
 
     # Add custom callbacks to Python's PyParser_ParseFileObject

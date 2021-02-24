@@ -32,9 +32,11 @@ if TYPE_CHECKING:
     from types import FrameType
     from bacommon.servermanager import ServerCommand
 
-VERSION_STR = '1.1.1'
+VERSION_STR = '1.1.2'
 
 # Version history:
+# 1.1.2:
+#  Now accepts config path as sole optional argument.
 # 1.1.1:
 #  Switched config reading to use efro.dataclasses.dataclass_from_dict()
 # 1.1.0:
@@ -56,7 +58,8 @@ class ServerManagerApp:
     managing BallisticaCore operating in server mode.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, config_path: Optional[str] = None) -> None:
+        self._config_path = config_path
         try:
             self._config = self._load_config()
         except Exception as exc:
@@ -274,7 +277,8 @@ class ServerManagerApp:
                                                 IMMEDIATE_SHUTDOWN_TIME_LIMIT)
 
     def _load_config(self) -> ServerConfig:
-        user_config_path = 'config.yaml'
+        user_config_path = (self._config_path if self._config_path is not None
+                            else 'config.yaml')
 
         if os.path.exists(user_config_path):
             import yaml
@@ -284,6 +288,12 @@ class ServerManagerApp:
             # An empty config file will yield None, and that's ok.
             if user_config_raw is not None:
                 return dataclass_from_dict(ServerConfig, user_config_raw)
+        else:
+            print(
+                f"Warning: config file not found at '{user_config_path}'"
+                f'; will use default config.',
+                file=sys.stderr,
+                flush=True)
 
         # Go with defaults if we weren't able to load anything.
         return ServerConfig()
@@ -518,16 +528,36 @@ class ServerManagerApp:
         print(f'{Clr.CYN}Subprocess stopped.{Clr.RST}')
 
 
+def _parse_args() -> Optional[str]:
+    """Parse command line args; return optional config path."""
+    if len(sys.argv) > 2:
+        raise CleanError('Expected no more than 1 arg (config path)')
+    if len(sys.argv) > 1:
+        configpath = sys.argv[1]
+        if not os.path.exists(configpath):
+            raise CleanError(
+                f"Supplied config path does not exist: '{configpath}'.")
+
+        # Note that we chdir before running the app so we need an abs path
+        # to this to be safe.
+        return os.path.abspath(configpath)
+    return None
+
+
 def main() -> None:
     """Run a BallisticaCore server manager in interactive mode."""
     try:
+        # User can optionally supply a config path.
+        # (need to get this before we chdir).
+        config_path = _parse_args()
+
         # ServerManager expects cwd to be the server dir (containing
         # dist/, config.yaml, etc.)
         # Let's change our working directory to the location of this file
         # so we can run this script from anywhere and it'll work.
         os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
-        ServerManagerApp().run_interactive()
+        ServerManagerApp(config_path=config_path).run_interactive()
     except CleanError as exc:
         # For clean errors, do a simple print and fail; no tracebacks/etc.
         exc.pretty_print()
