@@ -10,6 +10,7 @@ import signal
 import subprocess
 import sys
 import time
+from dataclasses import dataclass
 from pathlib import Path
 from threading import Lock, Thread, current_thread
 from typing import TYPE_CHECKING
@@ -36,7 +37,7 @@ VERSION_STR = '1.1.2'
 
 # Version history:
 # 1.1.2:
-#  Now accepts config path as sole optional argument.
+#  Added args for setting config path and ba_root path
 # 1.1.1:
 #  Switched config reading to use efro.dataclasses.dataclass_from_dict()
 # 1.1.0:
@@ -58,8 +59,10 @@ class ServerManagerApp:
     managing BallisticaCore operating in server mode.
     """
 
-    def __init__(self, config_path: Optional[str] = None) -> None:
-        self._config_path = config_path
+    def __init__(self, args: Args) -> None:
+        self._config_path = args.config_path
+        self._ba_root_path = (args.ba_root_path if args.ba_root_path
+                              is not None else os.path.abspath('dist/ba_root'))
         try:
             self._config = self._load_config()
         except Exception as exc:
@@ -336,8 +339,9 @@ class ServerManagerApp:
         print(f'{Clr.CYN}Launching server subprocess...{Clr.RST}')
         binary_name = ('ballisticacore_headless.exe'
                        if os.name == 'nt' else './ballisticacore_headless')
+        assert self._ba_root_path is not None
         self._subprocess = subprocess.Popen(
-            [binary_name, '-cfgdir', 'ba_root'],
+            [binary_name, '-cfgdir', self._ba_root_path],
             stdin=subprocess.PIPE,
             cwd='dist')
 
@@ -363,9 +367,12 @@ class ServerManagerApp:
 
     def _prep_subprocess_environment(self) -> None:
         """Write files that must exist at process launch."""
-        os.makedirs('dist/ba_root', exist_ok=True)
-        if os.path.exists('dist/ba_root/config.json'):
-            with open('dist/ba_root/config.json') as infile:
+
+        assert self._ba_root_path is not None
+        os.makedirs(self._ba_root_path, exist_ok=True)
+        cfgpath = os.path.join(self._ba_root_path, 'config.json')
+        if os.path.exists(cfgpath):
+            with open(cfgpath) as infile:
                 bincfg = json.loads(infile.read())
         else:
             bincfg = {}
@@ -376,7 +383,7 @@ class ServerManagerApp:
         bincfg['Auto Balance Teams'] = self._config.auto_balance_teams
         bincfg['Show Tutorial'] = False
         bincfg['Idle Exit Minutes'] = self._config.idle_exit_minutes
-        with open('dist/ba_root/config.json', 'w') as outfile:
+        with open(cfgpath, 'w') as outfile:
             outfile.write(json.dumps(bincfg))
 
     def _enqueue_server_command(self, command: ServerCommand) -> None:
@@ -544,22 +551,61 @@ def _parse_args() -> Optional[str]:
     return None
 
 
+@dataclass
+class Args:
+    """Wraps arguments that can be passed from the command line."""
+    config_path: Optional[str] = None
+    ba_root_path: Optional[str] = None
+
+    @classmethod
+    def from_command_line(cls) -> Args:
+        """Parse command line args and fill ourself out."""
+        args = Args()
+
+        i = 1
+        argc = len(sys.argv)
+        while i < argc:
+            arg = sys.argv[i]
+            if arg == '--config':
+                if i + 1 >= argc:
+                    raise CleanError('Expected a config path as next arg.')
+                path = sys.argv[i + 1]
+                if not os.path.exists(path):
+                    raise CleanError(
+                        f"Supplied path does not exist: '{path}'.")
+                args.config_path = os.path.abspath(path)
+                i += 2
+            elif arg == '--root':
+                if i + 1 >= argc:
+                    raise CleanError('Expected a path as next arg.')
+                path = sys.argv[i + 1]
+                # Note: this one doesn't have to exist.
+                args.ba_root_path = os.path.abspath(path)
+                i += 2
+            else:
+                raise CleanError(f"Invalid arg: '{arg}'.")
+
+        return args
+
+
 def main() -> None:
     """Run a BallisticaCore server manager in interactive mode."""
     try:
-        # User can optionally supply a config path.
-        # (need to get this before we chdir).
-        config_path = _parse_args()
+        # Note: we need to parse args before we chdir since we might be
+        # dealing with relative paths.
+        args = Args.from_command_line()
 
         # ServerManager expects cwd to be the server dir (containing
-        # dist/, config.yaml, etc.)
-        # Let's change our working directory to the location of this file
-        # so we can run this script from anywhere and it'll work.
+        # dist/, config.yaml, etc.) Let's change our working directory to
+        # the location of this file so we can run this script from anywhere
+        # and it'll work.
         os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
-        ServerManagerApp(config_path=config_path).run_interactive()
+        ServerManagerApp(args).run_interactive()
+
     except CleanError as exc:
         # For clean errors, do a simple print and fail; no tracebacks/etc.
+        # Any others will bubble up and give us the usual mess.
         exc.pretty_print()
         sys.exit(1)
 

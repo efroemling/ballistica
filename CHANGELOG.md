@@ -9,6 +9,8 @@
 - Added ba.clipboard_* functions for copying and pasting text on supported platforms.
 - Implemented clipboard functionality on SDL based builds (such as prefab).
 - Fixed an issue where click locations on scaled text fields could be incorrectly calculated.
+- Server-wrapper improvements allowing config path and ba_root path to be passed explicitly.
+- Binary -cfgdir option now properly allows any path, not just './ba_root'.
 
 ### 1.5.29 (20246)
 - Exposed ba method/class initing in public C++ layer.

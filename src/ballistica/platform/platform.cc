@@ -572,25 +572,22 @@ static void HandleArgs(int argc, char** argv) {
       if (i + 1 < argc) {
         g_app_globals->user_config_dir = argv[i + 1];
 
-        // Need to remove this limitation!!!
-        // Don't remember why it's here; something about not being able to
-        // create nested directories properly in windows. But perhaps we
-        // can just error if a dir is provided that's invalid.
-        if (g_app_globals->user_config_dir != "ba_root") {
-          printf("%s", "ERROR: -cfgdir currently has to be 'ba_root'\n");
-          fflush(stdout);
-          exit(-1);
-        }
-
         // Need to convert this to an abs path since we chdir soon.
-        std::string buffer = g_platform->GetCWD();
-        if (buffer.empty()) {
-          printf("%s", "ERROR: unable to get cwd for cfgdir setup\n");
+        bool success =
+            g_platform->AbsPath(argv[i + 1], &g_app_globals->user_config_dir);
+        if (!success) {
+          // This can fail if the path doesn't exist.
+          if (!g_platform->FilePathExists(argv[i + 1])) {
+            printf("ERROR: provided config dir does not exist: '%s'\n",
+                   argv[i + 1]);
+          } else {
+            printf(
+                "ERROR: unable to determine absolute path of config dir '%s'\n",
+                argv[i + 1]);
+          }
           fflush(stdout);
           exit(-1);
         }
-        g_app_globals->user_config_dir =
-            std::string(buffer) + BA_DIRSLASH + g_app_globals->user_config_dir;
       } else {
         Log("ERROR: expected arg after -cfgdir");
         exit(-1);
@@ -1147,6 +1144,30 @@ void Platform::Unlink(const char* path) {
   throw Exception();
 #else
   unlink(path);
+#endif
+}
+
+auto Platform::AbsPath(const std::string& path, std::string* outpath) -> bool {
+  // Ensure all implementations fail if the file does not exist.
+  if (!FilePathExists(path)) {
+    return false;
+  }
+  return DoAbsPath(path, outpath);
+}
+
+auto Platform::DoAbsPath(const std::string& path, std::string* outpath)
+    -> bool {
+  // This covers all but windows.
+#if BA_OSTYPE_WINDOWS
+  throw Exception();
+#else
+  char buffer[PATH_MAX + 1];
+  char* ptr = realpath(path.c_str(), buffer);
+  if (ptr) {
+    *outpath = ptr;
+    return true;
+  }
+  return false;
 #endif
 }
 

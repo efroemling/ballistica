@@ -105,6 +105,10 @@ class Platform {
   // Unlink a file.
   virtual auto Unlink(const char* path) -> void;
 
+  /// Return the absolute path for the provided path. Note that this requires
+  /// the path to already exist.
+  auto AbsPath(const std::string& path, std::string* outpath) -> bool;
+
 #pragma mark CLIPBOARD ---------------------------------------------------------
 
   /// Return whether clipboard operations are supported at all.
@@ -493,6 +497,10 @@ class Platform {
   // Attempt to actually create a directory.
   // Should not except if it already exists or if quiet is true.
   virtual void DoMakeDir(const std::string& dir, bool quiet);
+
+  // Attempt to actually get an abs path. This will only be called if
+  // the path is valid and exists.
+  virtual auto DoAbsPath(const std::string& path, std::string* outpath) -> bool;
 
   // Calc the user scripts dir path for this platform.
   // This will be called once and the path cached.
