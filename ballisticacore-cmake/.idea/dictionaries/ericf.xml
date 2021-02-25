@@ -145,6 +145,7 @@
       <w>ccylinder</w>
       <w>centiseconds</w>
       <w>cfgdir</w>
+      <w>cfgpath</w>
       <w>changeme</w>
       <w>charn</w>
       <w>charnum</w>
@@ -206,6 +207,7 @@
       <w>datas</w>
       <w>datav</w>
       <w>datavec</w>
+      <w>dbgstr</w>
       <w>dbias</w>
       <w>dcol</w>
       <w>ddcaps</w>
@@ -452,6 +454,7 @@
       <w>intercollide</w>
       <w>internalformat</w>
       <w>interuptions</w>
+      <w>intstr</w>
       <w>invote</w>
       <w>iobj</w>
       <w>iserverget</w>
@@ -608,6 +611,8 @@
       <w>nointhash</w>
       <w>nominmax</w>
       <w>noninfringement</w>
+      <w>noninteractive</w>
+      <w>noninteractively</w>
       <w>nonlint</w>
       <w>noone</w>
       <w>nothin</w>
@@ -686,6 +691,7 @@
       <w>positivey</w>
       <w>positivez</w>
       <w>postinit</w>
+      <w>postrun</w>
       <w>powerup</w>
       <w>pptabcom</w>
       <w>precalc</w>
@@ -695,6 +701,7 @@
       <w>preloads</w>
       <w>premult</w>
       <w>prereq</w>
+      <w>prerun</w>
       <w>printf</w>
       <w>printnodes</w>
       <w>printobjects</w>

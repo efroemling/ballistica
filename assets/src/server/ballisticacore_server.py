@@ -10,7 +10,6 @@ import signal
 import subprocess
 import sys
 import time
-from dataclasses import dataclass
 from pathlib import Path
 from threading import Lock, Thread, current_thread
 from typing import TYPE_CHECKING
@@ -33,11 +32,13 @@ if TYPE_CHECKING:
     from types import FrameType
     from bacommon.servermanager import ServerCommand
 
-VERSION_STR = '1.1.2'
+VERSION_STR = '1.2'
 
 # Version history:
-# 1.1.2:
-#  Added args for setting config path and ba_root path
+# 1.2:
+#  Added optional --help arg
+#  Added --config arg for setting config path and --root for ba_root path
+#  Added noninteractive mode and --interactive/--noninteractive to select
 # 1.1.1:
 #  Switched config reading to use efro.dataclasses.dataclass_from_dict()
 # 1.1.0:
@@ -47,10 +48,6 @@ VERSION_STR = '1.1.2'
 # 1.0.0:
 #  Initial release
 
-# How many seconds we wait after asking our subprocess to do an immediate
-# shutdown before bringing down the hammer.
-IMMEDIATE_SHUTDOWN_TIME_LIMIT = 5.0
-
 
 class ServerManagerApp:
     """An app which manages BallisticaCore server execution.
@@ -59,10 +56,18 @@ class ServerManagerApp:
     managing BallisticaCore operating in server mode.
     """
 
-    def __init__(self, args: Args) -> None:
-        self._config_path = args.config_path
-        self._ba_root_path = (args.ba_root_path if args.ba_root_path
-                              is not None else os.path.abspath('dist/ba_root'))
+    # How many seconds we wait after asking our subprocess to do an immediate
+    # shutdown before bringing down the hammer.
+    IMMEDIATE_SHUTDOWN_TIME_LIMIT = 5.0
+
+    def __init__(self) -> None:
+        self._config_path = 'config.yaml'
+        self._ba_root_path = os.path.abspath('dist/ba_root')
+        self._interactive = sys.stdin.isatty()
+
+        # This may override the above defaults.
+        self._parse_command_line_args()
+
         try:
             self._config = self._load_config()
         except Exception as exc:
@@ -73,7 +78,7 @@ class ServerManagerApp:
         self._subprocess_commands_lock = Lock()
         self._subprocess_force_kill_time: Optional[float] = None
         self._restart_minutes: Optional[float] = None
-        self._running_interactive = False
+        self._running = False
         self._subprocess: Optional[subprocess.Popen[bytes]] = None
         self._launch_time = time.time()
         self._subprocess_launch_time: Optional[float] = None
@@ -109,26 +114,18 @@ class ServerManagerApp:
         """
         return self._restart_minutes
 
-    def run_interactive(self) -> None:
-        """Run the app loop to completion."""
-        import code
+    def _prerun(self) -> None:
+        """Common code at the start of any run."""
 
-        if self._running_interactive:
-            raise RuntimeError('Already running interactively.')
-        self._running_interactive = True
+        # Make sure we don't call run multiple times.
+        if self._running:
+            raise RuntimeError('Already running.')
+        self._running = True
 
-        # Print basic usage info in interactive mode.
-        if sys.stdin.isatty():
-            if __debug__:
-                modestr = '(debug mode)'
-            else:
-                modestr = '(opt mode)'
-            print(f'{Clr.CYN}{Clr.BLD}BallisticaCore server'
-                  f' manager {VERSION_STR}'
-                  f' starting up {modestr}...{Clr.RST}\n'
-                  f'{Clr.CYN}Use the "mgr" object to make'
-                  f' live server adjustments.\n'
-                  f'Type "help(mgr)" for more information.{Clr.RST}')
+        dbgstr = 'debug' if __debug__ else 'opt'
+        intstr = 'interactive' if self._interactive else 'noninteractive'
+        print(f'{Clr.CYN}{Clr.BLD}BallisticaCore server manager {VERSION_STR}'
+              f' starting up ({dbgstr}/{intstr} mode)...{Clr.RST}')
 
         # Python will handle SIGINT for us (as KeyboardInterrupt) but we
         # need to register a SIGTERM handler so we have a chance to clean
@@ -140,6 +137,56 @@ class ServerManagerApp:
         self._subprocess_thread = Thread(target=self._bg_thread_main)
         self._subprocess_thread.start()
 
+        # During a run, we make the assumption that cwd is the dir
+        # containing this script, so make that so. Up until now that may
+        # not be the case (we support being called from any location).
+        os.chdir(os.path.abspath(os.path.dirname(__file__)))
+
+    def _postrun(self) -> None:
+        """Common code at the end of any run."""
+        print(f'{Clr.CYN}Server manager shutting down...{Clr.RST}')
+
+        assert self._subprocess_thread is not None
+        if self._subprocess_thread.is_alive():
+            print(f'{Clr.CYN}Waiting for subprocess exit...{Clr.RST}')
+
+        # Mark ourselves as shutting down and wait for the process to wrap up.
+        self._done = True
+        self._subprocess_thread.join()
+
+    def run(self) -> None:
+        """Do the thing."""
+        if self._interactive:
+            self._run_interactive()
+        else:
+            self._run_noninteractive()
+
+    def _run_noninteractive(self) -> None:
+        """Run the app loop to completion noninteractively."""
+        self._prerun()
+        try:
+            while True:
+                time.sleep(1.234)
+        except KeyboardInterrupt:
+            # Gracefully bow out if we kill ourself via keyboard.
+            pass
+        except SystemExit:
+            # We get this from the builtin quit(), our signal handler, etc.
+            # Need to catch this so we can clean up, otherwise we'll be
+            # left in limbo with our process thread still running.
+            pass
+        self._postrun()
+
+    def _run_interactive(self) -> None:
+        """Run the app loop to completion interactively."""
+        import code
+
+        self._prerun()
+
+        # Print basic usage info for interactive mode.
+        print(f'{Clr.CYN}Use the "mgr" object to interact with the server.\n'
+              f'Type "help(mgr)" for more information.{Clr.RST}')
+
         context = {'__name__': '__console__', '__doc__': None, 'mgr': self}
 
         # Enable tab-completion if possible.
@@ -150,7 +197,7 @@ class ServerManagerApp:
         try:
             code.interact(local=context, banner='', exitmsg='')
         except SystemExit:
-            # We get this from the builtin quit(), etc.
+            # We get this from the builtin quit(), our signal handler, etc.
             # Need to catch this so we can clean up, otherwise we'll be
             # left in limbo with our process thread still running.
             pass
@@ -158,14 +205,7 @@ class ServerManagerApp:
             print(f'{Clr.SRED}Unexpected interpreter exception:'
                   f' {exc} ({type(exc)}){Clr.RST}')
 
-        print(f'{Clr.CYN}Server manager shutting down...{Clr.RST}')
-
-        if self._subprocess_thread.is_alive():
-            print(f'{Clr.CYN}Waiting for subprocess exit...{Clr.RST}')
-
-        # Mark ourselves as shutting down and wait for the process to wrap up.
-        self._done = True
-        self._subprocess_thread.join()
+        self._postrun()
 
     def cmd(self, statement: str) -> None:
         """Exec a Python command on the current running server subprocess.
@@ -255,8 +295,8 @@ class ServerManagerApp:
         # If we're asking for an immediate restart but don't get one within
         # the grace period, bring down the hammer.
         if immediate:
-            self._subprocess_force_kill_time = (time.time() +
-                                                IMMEDIATE_SHUTDOWN_TIME_LIMIT)
+            self._subprocess_force_kill_time = (
+                time.time() + self.IMMEDIATE_SHUTDOWN_TIME_LIMIT)
 
     def shutdown(self, immediate: bool = True) -> None:
         """Shut down the server subprocess and exit the wrapper
@@ -276,16 +316,106 @@ class ServerManagerApp:
         # If we're asking for an immediate shutdown but don't get one within
         # the grace period, bring down the hammer.
         if immediate:
-            self._subprocess_force_kill_time = (time.time() +
-                                                IMMEDIATE_SHUTDOWN_TIME_LIMIT)
+            self._subprocess_force_kill_time = (
+                time.time() + self.IMMEDIATE_SHUTDOWN_TIME_LIMIT)
+
+    def _parse_command_line_args(self) -> None:
+        """Parse command line args."""
+
+        i = 1
+        argc = len(sys.argv)
+        did_set_interactive = False
+        while i < argc:
+            arg = sys.argv[i]
+            if arg == '--help':
+                self.print_help()
+                sys.exit(0)
+            elif arg == '--config':
+                if i + 1 >= argc:
+                    raise CleanError('Expected a config path as next arg.')
+                path = sys.argv[i + 1]
+                if not os.path.exists(path):
+                    raise CleanError(
+                        f"Supplied path does not exist: '{path}'.")
+                # We need an abs path because we may be in a different
+                # cwd currently than we will be during the run.
+                self._config_path = os.path.abspath(path)
+                i += 2
+            elif arg == '--root':
+                if i + 1 >= argc:
+                    raise CleanError('Expected a path as next arg.')
+                path = sys.argv[i + 1]
+                # Unlike config_path, this one doesn't have to exist now.
+                # We do however need an abs path because we may be in a
+                # different cwd currently than we will be during the run.
+                self._ba_root_path = os.path.abspath(path)
+                i += 2
+            elif arg == '--interactive':
+                if did_set_interactive:
+                    raise CleanError('interactive/noninteractive can only'
+                                     ' be specified once.')
+                self._interactive = True
+                did_set_interactive = True
+                i += 1
+            elif arg == '--noninteractive':
+                if did_set_interactive:
+                    raise CleanError('interactive/noninteractive can only'
+                                     ' be specified once.')
+                self._interactive = False
+                did_set_interactive = True
+                i += 1
+            else:
+                raise CleanError(f"Invalid arg: '{arg}'.")
+
+    @classmethod
+    def _par(cls, txt: str) -> str:
+        import textwrap
+        ind = ' ' * 2
+        out = textwrap.fill(txt, 80, initial_indent=ind, subsequent_indent=ind)
+        return f'{out}\n'
+
+    @classmethod
+    def print_help(cls) -> None:
+        """Print app help."""
+        filename = os.path.basename(__file__)
+        out = (
+            f'{Clr.BLD}{filename} usage:{Clr.RST}\n' + cls._par(
+                'This script handles configuring, launching, re-launching,'
+                ' and otherwise managing BallisticaCore operating'
+                ' in server mode. It can be run with no arguments, but'
+                ' accepts the following optional ones:') + f'\n'
+            f'{Clr.BLD}--help:{Clr.RST}\n'
+            f'  Show this help.\n'
+            f'\n'
+            f'{Clr.BLD}--config [path]{Clr.RST}\n' + cls._par(
+                'Set the config file read by the server script. This should'
+                ' be in yaml format. Note that yaml is backwards compatible'
+                ' with json so you can just write json if you want to. If'
+                ' not specified, the script will look for a file named'
+                ' \'config.yaml\' in the same directory as the script.') + '\n'
+            f'{Clr.BLD}--root [path]{Clr.RST}\n' + cls._par(
+                'Set the ballistica root directory. This is where the game'
+                ' will read and write its caches, state files, downloaded'
+                ' assets, etc. It needs to be a writable directory. If not'
+                ' specified, the script will use the \'dist/ba_root\''
+                ' directory relative to itself.') + '\n'
+            f'{Clr.BLD}--interactive{Clr.RST}\n'
+            f'{Clr.BLD}--noninteractive{Clr.RST}\n' + cls._par(
+                'Specify whether the script should run interactively.'
+                ' In interactive mode, the script creates a Python interpreter'
+                ' and reads commands from stdin, allowing for live interaction'
+                ' with the server. The server script will then exit when '
+                'end-of-file is reached in stdin. Noninteractive mode creates'
+                ' no interpreter and is more suited to being run in automated'
+                ' scenarios. By default, interactive mode will be used if'
+                ' a terminal is detected and noninteractive mode otherwise.'))
+        print(out)
 
     def _load_config(self) -> ServerConfig:
-        user_config_path = (self._config_path if self._config_path is not None
-                            else 'config.yaml')
 
-        if os.path.exists(user_config_path):
+        if os.path.exists(self._config_path):
             import yaml
-            with open(user_config_path) as infile:
+            with open(self._config_path) as infile:
                 user_config_raw = yaml.safe_load(infile.read())
 
             # An empty config file will yield None, and that's ok.
@@ -293,7 +423,7 @@ class ServerManagerApp:
                 return dataclass_from_dict(ServerConfig, user_config_raw)
         else:
             print(
-                f"Warning: config file not found at '{user_config_path}'"
+                f"Warning: config file not found at '{self._config_path}'"
                 f'; will use default config.',
                 file=sys.stderr,
                 flush=True)
@@ -535,74 +665,10 @@ class ServerManagerApp:
         print(f'{Clr.CYN}Subprocess stopped.{Clr.RST}')
 
 
-def _parse_args() -> Optional[str]:
-    """Parse command line args; return optional config path."""
-    if len(sys.argv) > 2:
-        raise CleanError('Expected no more than 1 arg (config path)')
-    if len(sys.argv) > 1:
-        configpath = sys.argv[1]
-        if not os.path.exists(configpath):
-            raise CleanError(
-                f"Supplied config path does not exist: '{configpath}'.")
-
-        # Note that we chdir before running the app so we need an abs path
-        # to this to be safe.
-        return os.path.abspath(configpath)
-    return None
-
-
-@dataclass
-class Args:
-    """Wraps arguments that can be passed from the command line."""
-    config_path: Optional[str] = None
-    ba_root_path: Optional[str] = None
-
-    @classmethod
-    def from_command_line(cls) -> Args:
-        """Parse command line args and fill ourself out."""
-        args = Args()
-
-        i = 1
-        argc = len(sys.argv)
-        while i < argc:
-            arg = sys.argv[i]
-            if arg == '--config':
-                if i + 1 >= argc:
-                    raise CleanError('Expected a config path as next arg.')
-                path = sys.argv[i + 1]
-                if not os.path.exists(path):
-                    raise CleanError(
-                        f"Supplied path does not exist: '{path}'.")
-                args.config_path = os.path.abspath(path)
-                i += 2
-            elif arg == '--root':
-                if i + 1 >= argc:
-                    raise CleanError('Expected a path as next arg.')
-                path = sys.argv[i + 1]
-                # Note: this one doesn't have to exist.
-                args.ba_root_path = os.path.abspath(path)
-                i += 2
-            else:
-                raise CleanError(f"Invalid arg: '{arg}'.")
-
-        return args
-
-
 def main() -> None:
-    """Run a BallisticaCore server manager in interactive mode."""
+    """Run the BallisticaCore server manager."""
     try:
-        # Note: we need to parse args before we chdir since we might be
-        # dealing with relative paths.
-        args = Args.from_command_line()
-
-        # ServerManager expects cwd to be the server dir (containing
-        # dist/, config.yaml, etc.) Let's change our working directory to
-        # the location of this file so we can run this script from anywhere
-        # and it'll work.
-        os.chdir(os.path.abspath(os.path.dirname(__file__)))
-
-        ServerManagerApp(args).run_interactive()
-
+        ServerManagerApp().run()
     except CleanError as exc:
         # For clean errors, do a simple print and fail; no tracebacks/etc.
         # Any others will bubble up and give us the usual mess.

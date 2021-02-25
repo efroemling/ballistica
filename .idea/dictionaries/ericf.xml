@@ -306,6 +306,7 @@
       <w>cfgdir</w>
       <w>cfgkey</w>
       <w>cfgkeys</w>
+      <w>cfgpath</w>
       <w>cfgs</w>
       <w>cfgui</w>
       <w>cflags</w>
@@ -483,6 +484,7 @@
       <w>dbapi</w>
       <w>dbase</w>
       <w>dbgsfx</w>
+      <w>dbgstr</w>
       <w>dbpath</w>
       <w>dcls</w>
       <w>dcmake</w>
@@ -1055,6 +1057,7 @@
       <w>intex</w>
       <w>intp</w>
       <w>introspectable</w>
+      <w>intstr</w>
       <w>iobj</w>
       <w>ipaddress</w>
       <w>ipos</w>
@@ -1418,6 +1421,8 @@
       <w>noinspect</w>
       <w>nondeterministic</w>
       <w>noninfringement</w>
+      <w>noninteractive</w>
+      <w>noninteractively</w>
       <w>nonmultipart</w>
       <w>noone</w>
       <w>norun</w>
@@ -1599,6 +1604,7 @@
       <w>posixsubprocess</w>
       <w>postinit</w>
       <w>postinited</w>
+      <w>postrun</w>
       <w>poststr</w>
       <w>powerdown</w>
       <w>powersgiven</w>
@@ -1631,6 +1637,7 @@
       <w>preprocessing</w>
       <w>prereq</w>
       <w>prereqs</w>
+      <w>prerun</w>
       <w>prevstate</w>
       <w>priceraw</w>
       <w>printcolors</w>
