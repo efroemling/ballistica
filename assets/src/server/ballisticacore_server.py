@@ -68,6 +68,7 @@ class ServerManagerApp:
 
     def __init__(self) -> None:
         self._config_path = 'config.yaml'
+        self._user_provided_config_path = False
         self._config = ServerConfig()
         self._ba_root_path = os.path.abspath('dist/ba_root')
         self._interactive = sys.stdin.isatty()
@@ -337,6 +338,7 @@ class ServerManagerApp:
                 # We need an abs path because we may be in a different
                 # cwd currently than we will be during the run.
                 self._config_path = os.path.abspath(path)
+                self._user_provided_config_path = True
                 i += 2
             elif arg == '--root':
                 if i + 1 >= argc:
@@ -472,6 +474,21 @@ class ServerManagerApp:
         out: Optional[ServerConfig] = None
 
         if not os.path.exists(self._config_path):
+
+            # Special case:
+            # If the user didn't specify a particular config file, allow
+            # gracefully falling back to defaults if the default one is
+            # missing.
+            if not self._user_provided_config_path:
+                if print_confirmation:
+                    print(f'{Clr.CYN}Default config file not found'
+                          f' (\'{self._config_path}\'); using default'
+                          f' settings.{Clr.RST}')
+                self._config_mtime = None
+                self._last_config_mtime_check_time = time.time()
+                return ServerConfig()
+
+            # Don't be so lenient if the user pointed us at one though.
             raise RuntimeError(
                 f"Config file not found: '{self._config_path}'.")
 
