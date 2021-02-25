@@ -116,9 +116,8 @@ class ServerManagerApp:
         self._running = True
 
         dbgstr = 'debug' if __debug__ else 'opt'
-        intstr = 'interactive' if self._interactive else 'noninteractive'
         print(f'{Clr.CYN}{Clr.BLD}BallisticaCore server manager {VERSION_STR}'
-              f' starting up ({dbgstr}/{intstr} mode)...{Clr.RST}')
+              f' starting up ({dbgstr} mode)...{Clr.RST}')
 
         # Python will handle SIGINT for us (as KeyboardInterrupt) but we
         # need to register a SIGTERM handler so we have a chance to clean
@@ -182,8 +181,9 @@ class ServerManagerApp:
         self._prerun()
 
         # Print basic usage info for interactive mode.
-        print(f'{Clr.CYN}Use the "mgr" object to interact with the server.\n'
-              f'Type "help(mgr)" for more information.{Clr.RST}')
+        print(f"{Clr.CYN}Interactive mode enabled; use the 'mgr' object"
+              f' to interact with the server.\n'
+              f"Type 'help(mgr)' for more information.{Clr.RST}")
 
         context = {'__name__': '__console__', '__doc__': None, 'mgr': self}
 
@@ -481,7 +481,7 @@ class ServerManagerApp:
             # missing.
             if not self._user_provided_config_path:
                 if print_confirmation:
-                    print(f'{Clr.CYN}Default config file not found'
+                    print(f'{Clr.YLW}Default config file not found'
                           f' (\'{self._config_path}\'); using default'
                           f' settings.{Clr.RST}')
                 self._config_mtime = None
