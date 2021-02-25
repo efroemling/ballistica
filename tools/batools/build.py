@@ -650,8 +650,11 @@ def _get_server_config_template_yaml(projroot: str) -> str:
     import yaml
     lines_in = _get_server_config_raw_contents(projroot).splitlines()
     lines_out: List[str] = []
+    ignore_vars = {'stress_test_players'}
     for line in lines_in:
-        if line != '' and not line.startswith('#'):
+        if (line != '' and not line.startswith('#')
+                and not any(line.startswith(f'{var}:')
+                            for var in ignore_vars)):
             vname, _vtype, veq, vval_raw = line.split()
             assert vname.endswith(':')
             vname = vname[:-1]
@@ -685,7 +688,8 @@ def _get_server_config_template_yaml(projroot: str) -> str:
         else:
             # Convert comments referring to python bools to yaml bools.
             line = line.replace('True', 'true').replace('False', 'false')
-            lines_out.append(line)
+            if '(internal)' not in line:
+                lines_out.append(line)
     return '\n'.join(lines_out)
 
 

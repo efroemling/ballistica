@@ -111,6 +111,9 @@ class ServerConfig:
     # auto-restart is enabled (the default).
     idle_exit_minutes: Optional[float] = None
 
+    # (internal) stress-testing mode.
+    stress_test_players: Optional[int] = None
+
 
 # NOTE: as much as possible, communication from the server-manager to the
 # child-process should go through these and not ad-hoc Python string commands

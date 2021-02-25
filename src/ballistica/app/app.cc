@@ -128,11 +128,8 @@ void App::ShutdownComplete() {
 }
 
 void App::RunEvents() {
-  if (!HeadlessMode()) {
-    // there's probably a better place for this...
-    // UpdateStressTesting();
-    stress_test_->Update();
-  }
+  // there's probably a better place for this...
+  stress_test_->Update();
 
   // Give platforms a chance to pump/handle their own events.
   // FIXME: now that we have app class overrides, platform should really

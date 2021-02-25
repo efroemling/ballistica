@@ -335,8 +335,16 @@ class ServerController:
         _ba.set_public_party_stats_url(self._config.stats_url)
         _ba.set_public_party_enabled(self._config.party_is_public)
 
-        # And here we go.
-        _ba.new_host_session(sessiontype)
+        # And here.. we.. go.
+        if self._config.stress_test_players is not None:
+            # Special case: run a stress test.
+            from ba.internal import run_stress_test
+            run_stress_test(playlist_type='Random',
+                            playlist_name='__default__',
+                            player_count=self._config.stress_test_players,
+                            round_duration=30)
+        else:
+            _ba.new_host_session(sessiontype)
 
         # Run an access check if we're trying to make a public party.
         if not self._ran_access_check and self._config.party_is_public:
