@@ -1275,6 +1275,7 @@
       <w>mathutils</w>
       <w>maxdepth</w>
       <w>maxlinks</w>
+      <w>maxtries</w>
       <w>maxval</w>
       <w>maxw</w>
       <w>maxwidth</w>
@@ -2231,6 +2232,7 @@
       <w>tret</w>
       <w>trophystr</w>
       <w>trsock</w>
+      <w>trynum</w>
       <w>tscale</w>
       <w>tscl</w>
       <w>tself</w>

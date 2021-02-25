@@ -542,6 +542,7 @@
       <w>maskhigh</w>
       <w>maskuv</w>
       <w>maximus</w>
+      <w>maxtries</w>
       <w>maxwidth</w>
       <w>mediump</w>
       <w>memalign</w>
@@ -946,6 +947,7 @@
       <w>trilinear</w>
       <w>trimesh</w>
       <w>trimeshes</w>
+      <w>trynum</w>
       <w>tself</w>
       <w>tval</w>
       <w>tvos</w>

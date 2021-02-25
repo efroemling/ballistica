@@ -175,12 +175,12 @@ class ServerController:
             _ba.screenmessage(Lstr(resource='internal.serverRestartingText'),
                               color=(1, 0.5, 0.0))
             print(f'{Clr.SBLU}Exiting for server-restart'
-                  f' at {timestrval}{Clr.RST}')
+                  f' at {timestrval}.{Clr.RST}')
         else:
             _ba.screenmessage(Lstr(resource='internal.serverShuttingDownText'),
                               color=(1, 0.5, 0.0))
             print(f'{Clr.SBLU}Exiting for server-shutdown'
-                  f' at {timestrval}{Clr.RST}')
+                  f' at {timestrval}.{Clr.RST}')
         with _ba.Context('ui'):
             _ba.timer(2.0, _ba.quit, timetype=TimeType.REAL)
 

@@ -508,9 +508,9 @@ void Game::HandleQuitOnIdle() {
       PushCall([this, idle_seconds] {
         assert(InGameThread());
 
-        // Special exit value the wrapper script looks for to know we
-        // idled out.
-        g_app_globals->return_value = 154;
+        // Special exit value the wrapper script looks for to know we idled out.
+        // UPDATE: no longer need this.
+        // g_app_globals->return_value = 154;
 
         // Just go through _ba.quit()
         // FIXME: Shouldn't need to go out to the python layer here...
