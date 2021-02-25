@@ -81,12 +81,9 @@ class ServerManagerApp:
         self._config_mtime: Optional[float] = None
         self._last_config_mtime_check_time: Optional[float] = None
         self._should_report_subprocess_error = False
-        self._periodic_restart_minutes = 360.0
         self._running = False
         self._subprocess: Optional[subprocess.Popen[bytes]] = None
-        self._launch_time = time.time()
         self._subprocess_launch_time: Optional[float] = None
-        self._subprocess_sent_periodic_restart = False
         self._subprocess_sent_config_auto_restart = False
         self._subprocess_sent_clean_exit = False
         self._subprocess_sent_unclean_exit = False
@@ -108,15 +105,6 @@ class ServerManagerApp:
     def config(self, value: ServerConfig) -> None:
         dataclass_validate(value)
         self._config = value
-
-    @property
-    def periodic_restart_minutes(self) -> Optional[float]:
-        """The time between server restarts when running indefinitely.
-
-        Restarting the server periodically can minimize the effect of
-        memory leaks or other built-up cruft.
-        """
-        return self._periodic_restart_minutes
 
     def _prerun(self) -> None:
         """Common code at the start of any run."""
@@ -690,18 +678,7 @@ class ServerManagerApp:
         assert current_thread() is self._subprocess_thread
         assert self._subprocess_launch_time is not None
         now = time.time()
-        sincelaunch = now - self._subprocess_launch_time
-
-        # If we're doing auto-restarts, restart periodically to freshen up.
-        if (self._auto_restart and sincelaunch >
-            (self._periodic_restart_minutes * 60.0)
-                and not self._subprocess_sent_periodic_restart):
-            print(f'{Clr.CYN}periodic_restart_minutes'
-                  f' ({self._periodic_restart_minutes})'
-                  f' elapsed; requesting soft'
-                  f' restart.{Clr.RST}')
-            self.restart(immediate=False)
-            self._subprocess_sent_periodic_restart = True
+        minutes_since_launch = (now - self._subprocess_launch_time) / 60.0
 
         # If we're doing auto-restart with config changes, handle that.
         if (self._auto_restart and self._config_auto_restart
@@ -721,14 +698,18 @@ class ServerManagerApp:
                     self._subprocess_sent_config_auto_restart = True
 
         # Attempt clean exit if our clean-exit-time passes.
+        # (and enforce a 6 hour max if not provided)
+        clean_exit_minutes = 360.0
         if self._config.clean_exit_minutes is not None:
-            elapsed = (time.time() - self._launch_time) / 60.0
-            if (elapsed > self._config.clean_exit_minutes
+            clean_exit_minutes = min(clean_exit_minutes,
+                                     self._config.clean_exit_minutes)
+        if clean_exit_minutes is not None:
+            if (minutes_since_launch > clean_exit_minutes
                     and not self._subprocess_sent_clean_exit):
                 opname = 'restart' if self._auto_restart else 'shutdown'
                 print(f'{Clr.CYN}clean_exit_minutes'
-                      f' ({self._config.clean_exit_minutes})'
-                      f' elapsed; requesting immediate'
+                      f' ({clean_exit_minutes})'
+                      f' elapsed; requesting soft'
                       f' {opname}.{Clr.RST}')
                 if self._auto_restart:
                     self.restart(immediate=False)
@@ -737,13 +718,17 @@ class ServerManagerApp:
                 self._subprocess_sent_clean_exit = True
 
         # Attempt unclean exit if our unclean-exit-time passes.
+        # (and enforce a 7 hour max if not provided)
+        unclean_exit_minutes = 420.0
         if self._config.unclean_exit_minutes is not None:
-            elapsed = (time.time() - self._launch_time) / 60.0
-            if (elapsed > self._config.unclean_exit_minutes
+            unclean_exit_minutes = min(unclean_exit_minutes,
+                                       self._config.unclean_exit_minutes)
+        if unclean_exit_minutes is not None:
+            if (minutes_since_launch > unclean_exit_minutes
                     and not self._subprocess_sent_unclean_exit):
                 opname = 'restart' if self._auto_restart else 'shutdown'
                 print(f'{Clr.CYN}unclean_exit_minutes'
-                      f' ({self._config.unclean_exit_minutes})'
+                      f' ({unclean_exit_minutes})'
                       f' elapsed; requesting immediate'
                       f' {opname}.{Clr.RST}')
                 if self._auto_restart:
@@ -755,7 +740,6 @@ class ServerManagerApp:
     def _reset_subprocess_vars(self) -> None:
         self._subprocess = None
         self._subprocess_launch_time = None
-        self._subprocess_sent_periodic_restart = False
         self._subprocess_sent_config_auto_restart = False
         self._subprocess_sent_clean_exit = False
         self._subprocess_sent_unclean_exit = False

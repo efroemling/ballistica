@@ -1,4 +1,4 @@
-### 1.6.0 (20279)
+### 1.6.0 (20308)
 - Added private parties functionality (cloud hosted parties with associated codes making it easier to play with friends)
 - The meta subsystem now enables new plugins by default in headless builds.
 - Added option to save party in Manual tab
@@ -11,6 +11,7 @@
 - Fixed an issue where click locations on scaled text fields could be incorrectly calculated.
 - Server-wrapper improvements allowing config path and ba_root path to be passed explicitly.
 - Binary -cfgdir option now properly allows any path, not just './ba_root'.
+- Additional server-wrapper options such as disabling auto-restart and automatic restarts on config file changes.
 
 ### 1.5.29 (20246)
 - Exposed ba method/class initing in public C++ layer.

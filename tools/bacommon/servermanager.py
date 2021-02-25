@@ -91,26 +91,24 @@ class ServerConfig:
     # http://bombsquadgame.com/accountquery?id=ACCOUNT_ID_HERE
     stats_url: Optional[str] = None
 
-    # If present, the server manager will attempt to gracefully exit after
+    # If present, the server subprocess will attempt to gracefully exit after
     # this amount of time. A graceful exit can occur at the end of a series
-    # or other opportune time.
-    # Servers with no exit conditions set will run indefinitely, though the
-    # server binary will be restarted periodically to clear any memory
-    # leaks or other bad state.
+    # or other opportune time. Server-managers set to auto-restart (the
+    # default) will then spin up a fresh subprocess. This mechanism can be
+    # useful to clear out any memory leaks or other accumulated bad state
+    # in the server subprocess.
     clean_exit_minutes: Optional[float] = None
 
-    # If present, the server manager will shut down immediately after this
+    # If present, the server subprocess will shut down immediately after this
     # amount of time. This can be useful as a fallback for clean_exit_time.
-    # Servers with no exit conditions set will run indefinitely, though the
-    # server binary will be restarted periodically to clear any memory
-    # leaks or other bad state.
+    # The server manager will then spin up a fresh server subprocess if
+    # auto-restart is enabled (the default).
     unclean_exit_minutes: Optional[float] = None
 
-    # If present, the server will shut down immediately if this amount of
-    # time passes with no activity from any players.
-    # Servers with no exit conditions set will run indefinitely, though the
-    # server binary will be restarted periodically to clear any memory
-    # leaks or other bad state.
+    # If present, the server subprocess will shut down immediately if this
+    # amount of time passes with no activity from any players. The server
+    # manager will then spin up a fresh server subprocess if
+    # auto-restart is enabled (the default).
     idle_exit_minutes: Optional[float] = None
 
 
