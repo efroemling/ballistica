@@ -133,7 +133,7 @@
 - Reduced some hitches when clicking on certain buttons in the UI
 - Fixed an issue where very early keyboard/controller connects/disconnects could get lost on android.
 - `ba._modutils` is now ba.modutils since it is intended to be publicly accessible.
-- drop-down console is now properly accessible again via android hardware keyboards (` key)
+- drop-down console is now properly accessible again via android hardware keyboards (\` key)
 - Other minor bug fixes..
 
 ### 1.5.8 (20079)
