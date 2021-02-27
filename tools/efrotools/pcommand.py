@@ -183,6 +183,34 @@ def pyver() -> None:
     print(PYVER, end='')
 
 
+def try_repeat() -> None:
+    """Run a command with repeat attempts on failure.
+
+    First arg is the number of retries; remaining args are the command.
+    """
+    import subprocess
+    from efro.error import CleanError
+    # We require one number arg and at least one command arg.
+    if len(sys.argv) < 4:
+        raise CleanError(
+            'Expected a retry-count arg and at least one command arg')
+    try:
+        repeats = int(sys.argv[2])
+    except Exception:
+        raise CleanError('Expected int as first arg') from None
+    if repeats < 0:
+        raise CleanError('Retries must be >= 0')
+    cmd = sys.argv[3:]
+    for i in range(repeats + 1):
+        result = subprocess.run(cmd, check=False)
+        if result.returncode == 0:
+            return
+        print(f'try_repeat attempt {i + 1} of {repeats + 1} failed for {cmd}.',
+              file=sys.stderr,
+              flush=True)
+    raise CleanError(f'Command failed {repeats + 1} time(s): {cmd}')
+
+
 def check_clean_safety() -> None:
     """Ensure all files are are added to git or in gitignore.
 
