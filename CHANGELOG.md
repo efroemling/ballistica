@@ -3,10 +3,10 @@
 - The meta subsystem now enables new plugins by default in headless builds.
 - Added option to save party in Manual tab
 - Slight tidying on the tourney entry popup
-- Env var to override UI scale is now BA\_UI\_SCALE instead of BA\_FORCE\_UI\_SCALE.
+- Env var to override UI scale is now `BA_UI_SCALE` instead of `BA_FORCE_UI_SCALE`.
 - Fixed an issue where ba.storagename() could prevent objects on the stack from getting released cleanly
 - Improvements to documentation generation such as link to some external base types.
-- Added ba.clipboard\_\* functions for copying and pasting text on supported platforms.
+- Added `ba.clipboard_*` functions for copying and pasting text on supported platforms.
 - Implemented clipboard functionality on SDL based builds (such as prefab).
 - Fixed an issue where click locations on scaled text fields could be incorrectly calculated.
 - Server-wrapper improvements allowing config path and ba_root path to be passed explicitly.
@@ -16,18 +16,18 @@
 ### 1.5.29 (20246)
 - Exposed ba method/class initing in public C++ layer.
 - The 'restart' and 'shutdown' commands in the server script now default to immediate=True
-- Wired up 'clean\_exit\_minutes', 'unclean\_exit\_minutes', and 'idle\_exit\_minutes' options in the server config
+- Wired up `clean_exit_minutes`, `unclean_exit_minutes`, and `idle_exit_minutes` options in the server config
 - Removed remains of the google-real-time-multiplayer stuff from the android/java layer.
 
 ### 1.5.28 (20239)
-- Simplified ba.enum\_by\_value()
+- Simplified `ba.enum_by_value()`
 - Updated Google Play version to hopefully show friend high scores again on score screens (at least for levels that have an associated Google Play leaderboard).
 - Public-party-list now properly shows an error instead of 'loading...' when not signed in.
 - Heavily reworked public party list display code to be more efficient and avoid hitches even with large numbers of servers.
 
 ### 1.5.27 (20238)
 - Language functionality has been consolidated into a LanguageSubsystem object at ba.app.lang
-- ba.get\_valid\_languages() is now an attr: ba.app.lang.available\_languages
+- `ba.get_valid_languages()` is now an attr: `ba.app.lang.available_languages`
 - Achievement functionality has been consolidated into an AchievementSubsystem object at ba.app.ach
 - Plugin functionality has been consolidated into a PluginSubsystem obj at ba.app.plugins
 - Ditto with AccountSubsystem and ba.app.accounts
@@ -35,7 +35,7 @@
 - Ditto with AdsSubsystem and ba.app.ads
 - Revamped tab-button functionality into a cleaner type-safe class (bastd.ui.tabs.TabRow)
 - Split Gather-Window tabs out into individual classes for future improvements (bastd.ui.gather.\*)
-- Added the ability to disable ticket-purchasing UIs for builds (ba.app.allow\_ticket\_purchases)
+- Added the ability to disable ticket-purchasing UIs for builds (`ba.app.allow_ticket_purchases`)
 - Reworked the public party gather section to perform better; it should no longer have to rebuild the list from scratch each time the UI is visited.
 - Added a filter option to the public party list (sorry it has taken so long).
 
@@ -53,22 +53,22 @@
 - Upgraded Python from version 3.7 to 3.8. This is a substantial change (though nothing like the previous update from 2.7 to 3.7) so please holler if anything is broken. These updates will happen once every year or two now..
 - Windows debug builds now use Python debug libraries. This should hopefully catch more errors that would otherwise go undetected and potentially cause crashes.
 - Switched windows builds to use 'fast' mode math instead of 'strict'. This should make the game run more efficiently (similar modes are already in use on other platforms) but holler if any odd breakage happens such as things falling through floors (more often than the occasional random fluke-y case that happens now).
-- Added \_ba.can\_display\_full\_unicode() for any code that wants to avoid printing things that won't show up locally.
-- Now pulling some classes such as Literal and Protocol from typing instead of typing\_extensions (they were officially added to Python in 3.8)
+- Added `_ba.can_display_full_unicode()` for any code that wants to avoid printing things that won't show up locally.
+- Now pulling some classes such as Literal and Protocol from typing instead of `typing_extensions` (they were officially added to Python in 3.8)
 - Double taps/clicks now work properly on widgets nested under a scroll-widget on mobile (so, for example, replays can now be double-clicked to view them)
 
 ### 1.5.23 (20146)
 - Fixed the shebang line in `bombsquad_server` file by using `-S` flag for `/usr/bin/env`.
 - Fixed a bug with hardware keyboards emitting extra characters in the in-game console (~ or F2)
 - Added support for 'plugin' mods and user controls to configure them in settings-\>advanced-\>plugins.
-- Renamed selection\_loop\_to\_parent to selection\_loops\_to\_parent in widget calls.
-- Added 'selection\_loops\_to\_parent', 'border', 'margin', 'claims\_left\_right', and 'claims\_tab' args to ba.columnwidget().
-- Column-widget now has a default 'border' of 0 (explicitly pass 2 to get the old look).
-- Column-widget now has a default 'margin' of 10 (explicitly pass 0 to get the old look).
-- Added 'selection\_loops\_to\_parent', 'claims\_left\_right', and 'claims\_tab' args to ba.scrollwidget.
-- Added 'selection\_loops\_to\_parent', 'claims\_left\_right', and 'claims\_tab' args to ba.rowwidget.
-- Added 'claims\_left\_right' and 'claims\_tab' to ba.hscrollwidget().
-- Default widget 'show\_buffer' is now 20 instead of 0 (causes scrolling to stay slightly ahead of widget selection). This can be overridden with the ba.widget() call if anything breaks.
+- Renamed `selection_loop_to_parent` to `selection_loops_to_parent` in widget calls.
+- Added `selection_loops_to_parent`, `border`, `margin`, `claims_left_right`, and `claims_tab` args to ba.columnwidget().
+- Column-widget now has a default `border` of 0 (explicitly pass 2 to get the old look).
+- Column-widget now has a default `margin` of 10 (explicitly pass 0 to get the old look).
+- Added `selection_loops_to_parent`, `claims_left_right`, and `claims_tab` args to ba.scrollwidget.
+- Added `selection_loops_to_parent`, `claims_left_right`, and `claims_tab` args to ba.rowwidget.
+- Added `claims_left_right` and `claims_tab` to ba.hscrollwidget().
+- Default widget `show_buffer` is now 20 instead of 0 (causes scrolling to stay slightly ahead of widget selection). This can be overridden with the ba.widget() call if anything breaks.
 - Relocated ba.app.uiscale to ba.app.ui.uiscale.
 - Top level settings window now properly saves/restores its state again.
 - Added Emojis to the Internal Game Keyboard.
@@ -87,10 +87,10 @@
 - Updated mac prefab builds to point at homebrew's python@3.7 package now that 3.8 has been made the default.
 - Fixed an issue where adding/deleting UI widgets within certain callbacks could cause a crash.
 - Fixed a case where an early fatal error could lead to a hung app and no error dialog.
-- Added environment variables which can override UI scale for testing. Set BA\_FORCE\_UI\_SCALE to small, medium or large.
-- Added a ba.UIScale enum. The value at ba.app.uiscale replaces the old ba.app.interface\_type, ba.app.small\_ui, and ba.app.med\_ui values.
+- Added environment variables which can override UI scale for testing. Set `BA_FORCE_UI_SCALE` to small, medium or large.
+- Added a ba.UIScale enum. The value at ba.app.uiscale replaces the old `ba.app.interface_type`, `ba.app.small_ui`, and `ba.app.med_ui` values.
 - Emoji no longer display in-game with a washed-out appearance. If there are any places in-game where bright colored emoji become distracting, please holler.
-- \_ba.get\_game\_roster() now includes 'account\_id' which is the validated account id of all clients (will be None until completes). Also a few keys are renamed: specString-\>spec\_string and displayString-\>display\_string.
+- `_ba.get_game_roster()` now includes `account_id` which is the validated account id of all clients (will be None until completes). Also a few keys are renamed: `specString->spec_string` and `displayString->display_string`.
 
 ### 1.5.19 (20123)
 - Cleaned up some bomb logic to avoid weird corner-cases such as land-mine explosions behaving like punches when set off by punches or bombs potentially resulting in multiple explosions when triggered by multiple other bombs simultaneously. Holler if anything explosion-related seems off now.
@@ -132,7 +132,7 @@
 ### 1.5.9 (20082)
 - Reduced some hitches when clicking on certain buttons in the UI
 - Fixed an issue where very early keyboard/controller connects/disconnects could get lost on android.
-- ba.\_modutils is now ba.modutils since it is intended to be publicly accessible.
+- `ba._modutils` is now ba.modutils since it is intended to be publicly accessible.
 - drop-down console is now properly accessible again via android hardware keyboards (` key)
 - Other minor bug fixes..
 
@@ -180,13 +180,13 @@
 ### 1.5.0 (20001)
 - This build contains about 2 years worth of MAJOR internal refactoring to prepare for the future of BombSquad. As a player this should not (yet) look different from 1.4, but for modders there is a lot new. See the rest of these change entries or visit [ballistica.net](https://ballistica.net) for more info.
 - Ported the entire scripting layer from Python 2 to to Python 3 (currently at 3.7, and I intend to keep this updated to the latest widely-available release). There's some significant changes going from python 2 to 3 (new print statement, string behavior, etc), but these are well documented online, so please read up as needed.  This should provide us some nice benefits and future-proofs everything. (my janky 2.7 custom Python builds were getting a little long in the tooth).
-- Refactored all script code to be PEP8 compliant (Python coding standards).  Basically, this means that stuff that was camel-case (fooBar) is now a single word or underscores (foobar / foo\_bar).  There are a few minor exceptions such as existing resource and media filenames, but in general old code can be ported by taking a pass through and killing the camel-case.  I know this is a bit of a pain in the ass, but it'll let us use things like Pylint and just be more consistent with the rest of the Python world.
+- Refactored all script code to be PEP8 compliant (Python coding standards).  Basically, this means that stuff that was camel-case (fooBar) is now a single word or underscores (`foobar` / `foo_bar`).  There are a few minor exceptions such as existing resource and media filenames, but in general old code can be ported by taking a pass through and killing the camel-case.  I know this is a bit of a pain in the ass, but it'll let us use things like Pylint and just be more consistent with the rest of the Python world.
 - On a related note, I'm now using 'yapf' to keep my Python code formatted nicely (using pep8 style); I'd recommend checking it out if you're doing a lot of scripting as its a great time-saver.
 - On another related note, I'm trying to confirm to Google's recommendations for Python code (search 'Google Python Style Guide'). There are some good bits of wisdom in there so I recommend at least skimming through it.
 - And as one last related note, I'm now running Pylint on all my own Python code. Highly recommended if you are doing serious scripting, as it can make Python almost feel as type-safe as C++.
 - The minimum required android version will now be 5.0 (a requirement of the Python 3 builds I'm using)
 - Minimum required macOS version is now 10.13 (for similar reasons)
-- 'bsInternal' module is now '\_ba' (better lines up with standard Python practices)
+- 'bsInternal' module is now `_ba` (better lines up with standard Python practices)
 - bs.writeConfig() and bs.applySettings() are no more. There is now ba.app.config which is basically a fancy dict class with some methods added such as commit() and apply()
 - bs.getEnvironment() is no more; the values there are now available through ba.app (see notes down further)
 - Fixed the mac build so command line input works again when launched from a terminal
@@ -196,7 +196,7 @@
 - Various other minor name changes (bs.getUIBounds() -> ba.app.uibounds, etc).  I'm keeping old and new Python API docs around for now so you can compare as needed.
 - Renamed bot classes based on their actions instead of their appearances (ie: PirateBot -> ExplodeyBot)
 - bs.getSharedObject() is now ba.stdobj()
-- Removed bs.uni(), bs.utf8(), bs.uni\_to\_ints(), and bs.uni\_from\_ints() which are no longer needed due to Python 3's better string handling.
+- Removed bs.uni(), bs.utf8(), `bs.uni_to_ints()`, and `bs.uni_from_ints()` which are no longer needed due to Python 3's better string handling.
 - Removed bs.SecureInt since it didn't do much to slow down hackers and hurts code readability.
 - Renamed 'finalize' to 'expire' for actors and activities. 'Finalize' sounds too much like a destructor, which is not really what that is.
 - bs.getMapsSupportingPlayType() is now simply ba.getmaps(). I might want to add more filter options to it besides just play-type, hence the rename.
@@ -204,9 +204,9 @@
 - I'm converting all scripting functions to operate on floating-point seconds by default instead of integer milliseconds. This will let us support more accurate simulations later and is just cleaner I feel. To keep existing calls working you should be able to add timeformat='ms' and you'll get the old behavior (or multiply your time values by 0.001). Specific notes listed below.
 - ba.Timer now takes its 'time' arg as seconds instead of milliseconds. To port old calls, add: timeformat='ms' to each call (or multiply your input by 0.001)
 - ba.animate() now takes times in seconds and its 'driver' arg is now 'timetype' for consistency with other time functions. To port existing code you can pass timeformat='ms' to keep the old milliseconds based behavior.
-- ditto for ba.animate\_array()
+- ditto for `ba.animate_array()`
 - ba.Activity.end() now takes seconds instead of milliseconds as its delay arg.
-- TNTSpawner now also takes seconds instead of milliseconds for respawn\_time.
+- TNTSpawner now also takes seconds instead of milliseconds for `respawn_time`.
 - There is a new ba.timer() function which is used for all one-off timer creation. It has the same args as the ba.Timer() class constructor.
 - bs.gameTimer() is no more. Pass timeformat='ms' to ba.timer() if you need to recreate its behavior.
 - bs.netTimer() is no more. Pass timetype='base' and timeformat='ms' to ba.timer() if you need to recreate its behavior.
@@ -216,13 +216,13 @@
 - bs.getNetTime() is no more. Pass timetype='base' and timeformat='ms' to ba.time() if you need to recreate its behavior.
 - bs.getRealTime() is no more. Pass timetype='real' and timeformat='ms' to ba.time() if you need to recreate its behavior.
 - bs.getTimeString() is now just ba.timestring(), and accepts seconds by default (pass timeformat='ms' to keep old calls working).
-- bs.callInGameThread() has been replaced by an optional 'from\_other\_thread' arg for ba.pushcall()
+- bs.callInGameThread() has been replaced by an optional `from_other_thread` arg for ba.pushcall()
 - There is now a special ba.UNHANDLED value that handlemessage() calls should return any time they don't handle a passed message.  This will allow fallback message types and other nice things in the future.
 - Wired the boolean operator up to ba.Actor's exists() method, so now a simple "if mynode" will do the right thing for both Actors and None values instead of having to explicitly check for both.
 - Ditto for ba.Node; you can now just do 'if mynode' which will do the right thing for both a dead Node or None.
 - Ditto for ba.InputDevice, ba.Widget, ba.Player
 - Added a bs.App class accessible via ba.app; will be migrating global app values there instead of littering python modules with globals. The only remaining module globals should be all-caps public 'constants'
-- 'Internal' methods and classes living in \_ba and elsewhere no longer start with underscores.  They are now simply marked with '(internal)' in their docstrings.  'Internal' bits are likely to have janky interfaces and can change without warning, so be wary of using them.  If you find yourself depending on some internal thing often, please let me know and I can try to clean it up and make it 'public'.
+- 'Internal' methods and classes living in `_ba` and elsewhere no longer start with underscores.  They are now simply marked with '(internal)' in their docstrings.  'Internal' bits are likely to have janky interfaces and can change without warning, so be wary of using them.  If you find yourself depending on some internal thing often, please let me know and I can try to clean it up and make it 'public'.
 - bs.getLanguage() is no more; that value is now accessible via ba.app.language
 - bs.Actor now accepts an optional 'node' arg which it will store as self.node if passed.  Its default DieMessage() and exists() handlers will use self.node if it exists.  This removes the need for a separate NodeActor() for simple cases.
 - bs.NodeActor is no more (it can simply be replaced with ba.Actor())
@@ -239,8 +239,8 @@
 ### 1.4.150 (14369)
 - Telnet port can now be specified in the config
 - Telnet socket no longer opens on headless build when telnet access is off (reduces DoS attack potential)
-- Added a filter\_chat\_message() call which can be used by servers to intercept/modify/block all chat messages.
-- bsInternal.\_disconnectClient() now takes an optional banTime arg (in seconds, defaults to old value of 300).
+- Added a `filter_chat_message()` call which can be used by servers to intercept/modify/block all chat messages.
+- `bsInternal._disconnectClient()` now takes an optional banTime arg (in seconds, defaults to old value of 300).
 
 ### 1.4.148 (14365)
 - Added a password option for telnet access on server builds
@@ -278,7 +278,7 @@
 - Removed the language column from the server browser.  This was more relevant back when all clients saw the game in the server's language, and is nowadays largely just hijacked for silly purposes.  Holler if you miss it.
 - Server list now re-pings servers less often and averages ping results to reduce the amount of jumping around in the list.  Please holler if this feels off.
 - Added some slick new client-verification tech.  Going forward it should be pretty much impossible to fool a server into thinking you are using a different account than you really are.
-- Added a 'get\_account\_id()' method to the bs.Player class.  This will return a player's signed-in account-id (when it can be verified for certain)
+- Added a `get_account_id()` method to the bs.Player class.  This will return a player's signed-in account-id (when it can be verified for certain)
 
 ### 1.4.138 (14336)
 - Removed SDL library from the server builds, so that's one less dependency that needs to be installed when setting up a linux server
@@ -398,10 +398,10 @@
 - fixed a bug that could cause the windows version to freeze randomly after a while
 
 ### 1.4.95 (14233)
-- ballisticacore (both bs\_headless and regular) now reads commands from standard input, making it easier to run commands via scripts or the terminal
+- ballisticacore (both `bs_headless` and regular) now reads commands from standard input, making it easier to run commands via scripts or the terminal
 - server now runs using a 'server' account-type instead of the local 'device' account. (avoids daily-ticket-reward messages and other stuff that's not relevant to servers)
 - the server script now passes args to the game as a json file instead of individual args; this should keep things cleaner and more expandable
-- the ballisticacore\_server script also now reads commands from stdin, allowing reconfiguring server settings on the fly
+- the `ballisticacore_server` script also now reads commands from stdin, allowing reconfiguring server settings on the fly
 - added more options such as the ability to set game series lengths and to host a non-public party
 
 ### 1.4.94
