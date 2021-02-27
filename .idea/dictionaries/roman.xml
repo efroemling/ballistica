@@ -2,6 +2,7 @@
   <dictionary name="roman">
     <words>
       <w>maxlen</w>
+      <w>pagename</w>
     </words>
   </dictionary>
 </component>

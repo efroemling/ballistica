@@ -280,10 +280,22 @@ class OnScreenKeyboardWindow(ba.Window):
 
         for i, btn in enumerate(self._char_keys):
             assert chars is not None
+            have_char = True
+            if i >= len(chars):
+                # No such char.
+                have_char = False
+                pagename = self._mode
+                ba.print_error(
+                    f'Size of page "{pagename}" of keyboard'
+                    f' "{self._keyboard.name}" is incorrect:'
+                    f' {len(chars)} != {len(self._chars)}'
+                    f' (size of default "normal" page)',
+                    once=True)
             ba.buttonwidget(edit=btn,
-                            label=chars[i],
-                            on_activate_call=ba.Call(self._type_char,
-                                                     chars[i]))
+                            label=chars[i] if have_char else ' ',
+                            on_activate_call=ba.Call(
+                                self._type_char,
+                                chars[i] if have_char else ' '))
 
     def _null_press(self) -> None:
         ba.playsound(self._click_sound)
