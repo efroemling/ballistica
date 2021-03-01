@@ -583,17 +583,24 @@ class ServerManagerApp:
         binary_name = ('ballisticacore_headless.exe'
                        if os.name == 'nt' else './ballisticacore_headless')
         assert self._ba_root_path is not None
-        self._subprocess = subprocess.Popen(
-            [binary_name, '-cfgdir', self._ba_root_path],
-            stdin=subprocess.PIPE,
-            cwd='dist')
+        self._subprocess = None
+        try:
+            self._subprocess = subprocess.Popen(
+                [binary_name, '-cfgdir', self._ba_root_path],
+                stdin=subprocess.PIPE,
+                cwd='dist')
+        except Exception as exc:
+            print(f'Error launching server subprocess: {exc}',
+                  file=sys.stderr,
+                  flush=True)
 
         # Do the thing.
         # No matter how this ends up, make sure the process is dead after.
-        try:
-            self._run_subprocess_until_exit()
-        finally:
-            self._kill_subprocess()
+        if self._subprocess is not None:
+            try:
+                self._run_subprocess_until_exit()
+            finally:
+                self._kill_subprocess()
 
         # If we want to die completely after this subprocess has ended,
         # tell the main thread to die.
