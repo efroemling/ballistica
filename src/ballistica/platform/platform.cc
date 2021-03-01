@@ -1340,8 +1340,10 @@ static void HandleSIGINT(int s) {
 #endif
 
 void Platform::SetupInterruptHandling() {
-  // For non-windows platforms, set up a handler for Ctrl-C.
-#if !BA_OSTYPE_WINDOWS
+  // For non-windows platforms, set up posix-y SIGINT handling.
+#if BA_OSTYPE_WINDOWS
+  throw Exception();
+#else
   struct sigaction handler {};
   handler.sa_handler = HandleSIGINT;
   sigemptyset(&handler.sa_mask);

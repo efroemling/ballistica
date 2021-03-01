@@ -83,7 +83,7 @@ auto PySetUpSigInt(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
   Platform::SetLastPyCall("set_up_sig_int");
   if (g_app) {
-    g_app->PushInterruptSignalSetupCall();
+    g_platform->SetupInterruptHandling();
   } else {
     Log("SigInt handler called before g_app exists.");
   }

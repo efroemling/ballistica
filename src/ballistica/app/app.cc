@@ -46,10 +46,6 @@ auto App::UsesEventLoop() const -> bool {
   return !g_platform->IsEventPushMode();
 }
 
-void App::PushInterruptSignalSetupCall() {
-  g_platform->SetupInterruptHandling();
-}
-
 void App::RunRenderUpkeepCycle() {
   // This should only be used in cases where the OS is handling the event loop.
   assert(!UsesEventLoop());

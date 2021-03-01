@@ -124,7 +124,6 @@ class App : public Module {
   auto PushNetworkSetupCall(int port, int telnet_port, bool enable_telnet,
                             const std::string& telnet_password) -> void;
   auto PushShutdownCompleteCall() -> void;
-  auto PushInterruptSignalSetupCall() -> void;
 
  private:
   auto UpdatePauseResume() -> void;

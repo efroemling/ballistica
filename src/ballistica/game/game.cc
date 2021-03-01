@@ -973,7 +973,7 @@ void Game::PushInterruptSignalCall() {
     }
 
     // Just go through _ba.quit()
-    // FIXME: Shouldn't need to go out to the python layer here...
+    // FIXME: Shouldn't need to go out to the Python layer here...
     g_python->obj(Python::ObjID::kQuitCall).Call();
   });
 }
