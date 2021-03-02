@@ -83,13 +83,14 @@ class ServerManagerApp:
         self._last_config_mtime_check_time: Optional[float] = None
         self._should_report_subprocess_error = False
         self._running = False
+        self._interpreter_start_time: Optional[float] = None
         self._subprocess: Optional[subprocess.Popen[bytes]] = None
         self._subprocess_launch_time: Optional[float] = None
         self._subprocess_sent_config_auto_restart = False
         self._subprocess_sent_clean_exit = False
         self._subprocess_sent_unclean_exit = False
         self._subprocess_thread: Optional[Thread] = None
-        self._subprocess_exited_cleanly: bool = False
+        self._subprocess_exited_cleanly: Optional[bool] = None
 
         # This may override the above defaults.
         self._parse_command_line_args()
@@ -185,7 +186,6 @@ class ServerManagerApp:
     def _run_interactive(self) -> None:
         """Run the app loop to completion interactively."""
         import code
-
         self._prerun()
 
         # Print basic usage info for interactive mode.
@@ -204,6 +204,7 @@ class ServerManagerApp:
         # Now just sit in an interpreter.
         # TODO: make it possible to use IPython if the user has it available.
         try:
+            self._interpreter_start_time = time.time()
             code.interact(local=context, banner='', exitmsg='')
         except SystemExit:
             # We get this from the builtin quit(), our signal handler, etc.
@@ -436,9 +437,9 @@ class ServerManagerApp:
             cls._par('Auto-restart is enabled by default, which means the'
                      ' server manager will restart the server binary whenever'
                      ' it exits (even when uncleanly). Disabling auto-restart'
-                     ' will instead cause the server manager to exit after a'
-                     ' single run, returning an error code if the binary'
-                     ' did so.') + '\n'
+                     ' will cause the server manager to instead exit after a'
+                     ' single run and also to return error codes if the'
+                     ' server binary did so.') + '\n'
             f'{Clr.BLD}--no-config-auto-restart{Clr.RST}\n' + cls._par(
                 'By default, when auto-restart is enabled, the server binary'
                 ' will be automatically restarted if changes to the server'
@@ -481,8 +482,6 @@ class ServerManagerApp:
                     f' {maxtries-1}).{Clr.RST}',
                     file=sys.stderr,
                     flush=True)
-
-                time.sleep(1)
 
                 for _j in range(retry_seconds):
                     # If the app is trying to die, drop what we're doing.
@@ -557,7 +556,7 @@ class ServerManagerApp:
     def _handle_term_signal(self, sig: int, frame: FrameType) -> None:
         """Handle signals (will always run in the main thread)."""
         del sig, frame  # Unused.
-        raise SystemExit()
+        sys.exit(1 if self._should_report_subprocess_error else 0)
 
     def _run_server_cycle(self) -> None:
         """Spin up the server subprocess and run it until exit."""
@@ -588,11 +587,14 @@ class ServerManagerApp:
 
         # Launch!
         try:
+            # if bool(True):
+            #     raise RuntimeError('test')
             self._subprocess = subprocess.Popen(
                 [binary_name, '-cfgdir', self._ba_root_path],
                 stdin=subprocess.PIPE,
                 cwd='dist')
         except Exception as exc:
+            self._subprocess_exited_cleanly = False
             print(
                 f'{Clr.RED}Error launching server subprocess: {exc}{Clr.RST}',
                 file=sys.stderr,
@@ -607,6 +609,16 @@ class ServerManagerApp:
                   flush=True)
 
         self._kill_subprocess()
+
+        assert self._subprocess_exited_cleanly is not None
+
+        # EW: it seems that if we die before the main thread has fully started
+        # up the interpreter, its possible that it will not break out of its
+        # loop via the usual SystemExit that gets sent when we die.
+        if self._interactive:
+            while (self._interpreter_start_time is None
+                   or time.time() - self._interpreter_start_time < 0.5):
+                time.sleep(0.1)
 
         # Avoid super fast death loops.
         if (not self._subprocess_exited_cleanly and self._auto_restart
@@ -819,7 +831,7 @@ class ServerManagerApp:
         self._subprocess_sent_clean_exit = False
         self._subprocess_sent_unclean_exit = False
         self._subprocess_force_kill_time = None
-        self._subprocess_exited_cleanly = False
+        self._subprocess_exited_cleanly = None
 
     def _kill_subprocess(self) -> None:
         """End the server subprocess if it still exists."""
@@ -836,7 +848,10 @@ class ServerManagerApp:
         self._subprocess.terminate()
         try:
             self._subprocess.wait(timeout=10)
+            self._subprocess_exited_cleanly = (
+                self._subprocess.returncode == 0)
         except subprocess.TimeoutExpired:
+            self._subprocess_exited_cleanly = False
             self._subprocess.kill()
         print(f'{Clr.CYN}Subprocess stopped.{Clr.RST}',
               file=sys.stderr,
