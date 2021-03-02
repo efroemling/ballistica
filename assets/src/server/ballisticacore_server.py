@@ -89,6 +89,7 @@ class ServerManagerApp:
         self._subprocess_sent_clean_exit = False
         self._subprocess_sent_unclean_exit = False
         self._subprocess_thread: Optional[Thread] = None
+        self._subprocess_exited_cleanly: bool = False
 
         # This may override the above defaults.
         self._parse_command_line_args()
@@ -584,23 +585,42 @@ class ServerManagerApp:
                        if os.name == 'nt' else './ballisticacore_headless')
         assert self._ba_root_path is not None
         self._subprocess = None
+
+        # Launch!
         try:
             self._subprocess = subprocess.Popen(
                 [binary_name, '-cfgdir', self._ba_root_path],
                 stdin=subprocess.PIPE,
                 cwd='dist')
         except Exception as exc:
-            print(f'Error launching server subprocess: {exc}',
+            print(
+                f'{Clr.RED}Error launching server subprocess: {exc}{Clr.RST}',
+                file=sys.stderr,
+                flush=True)
+
+        # Do the thing.
+        try:
+            self._run_subprocess_until_exit()
+        except Exception as exc:
+            print(f'{Clr.RED}Error running server subprocess: {exc}{Clr.RST}',
                   file=sys.stderr,
                   flush=True)
 
-        # Do the thing.
-        # No matter how this ends up, make sure the process is dead after.
-        if self._subprocess is not None:
-            try:
-                self._run_subprocess_until_exit()
-            finally:
-                self._kill_subprocess()
+        self._kill_subprocess()
+
+        # Avoid super fast death loops.
+        if (not self._subprocess_exited_cleanly and self._auto_restart
+                and not self._done):
+            time.sleep(5.0)
+
+        # If they don't want auto-restart, we'll exit the whole wrapper.
+        # (and with an error code if things ended badly).
+        if not self._auto_restart:
+            self._wrapper_shutdown_desired = True
+            if not self._subprocess_exited_cleanly:
+                self._should_report_subprocess_error = True
+
+        self._reset_subprocess_vars()
 
         # If we want to die completely after this subprocess has ended,
         # tell the main thread to die.
@@ -662,8 +682,10 @@ class ServerManagerApp:
         self._subprocess.stdin.flush()
 
     def _run_subprocess_until_exit(self) -> None:
+        if self._subprocess is None:
+            return
+
         assert current_thread() is self._subprocess_thread
-        assert self._subprocess is not None
         assert self._subprocess.stdin is not None
 
         # Send the initial server config which should kick things off.
@@ -706,25 +728,13 @@ class ServerManagerApp:
             code: Optional[int] = self._subprocess.poll()
             if code is not None:
 
-                # If they don't want auto-restart, exit the whole wrapper.
-                # (and make sure to exit with an error code if things ended
-                # badly here).
-                if not self._auto_restart:
-                    self._wrapper_shutdown_desired = True
-                    if code != 0:
-                        self._should_report_subprocess_error = True
-
                 clr = Clr.CYN if code == 0 else Clr.RED
                 print(
                     f'{clr}Server subprocess exited'
                     f' with code {code}.{Clr.RST}',
                     file=sys.stderr,
                     flush=True)
-                self._reset_subprocess_vars()
-
-                # Avoid super fast death loops.
-                if code != 0 and self._auto_restart:
-                    time.sleep(5.0)
+                self._subprocess_exited_cleanly = (code == 0)
                 break
 
             time.sleep(0.25)
@@ -809,6 +819,7 @@ class ServerManagerApp:
         self._subprocess_sent_clean_exit = False
         self._subprocess_sent_unclean_exit = False
         self._subprocess_force_kill_time = None
+        self._subprocess_exited_cleanly = False
 
     def _kill_subprocess(self) -> None:
         """End the server subprocess if it still exists."""
@@ -827,7 +838,6 @@ class ServerManagerApp:
             self._subprocess.wait(timeout=10)
         except subprocess.TimeoutExpired:
             self._subprocess.kill()
-        self._reset_subprocess_vars()
         print(f'{Clr.CYN}Subprocess stopped.{Clr.RST}',
               file=sys.stderr,
               flush=True)
