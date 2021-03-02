@@ -130,14 +130,14 @@ class ServerManagerApp:
         # zombie processes)
         signal.signal(signal.SIGTERM, self._handle_term_signal)
 
-        # Fire off a background thread to wrangle our server binaries.
-        self._subprocess_thread = Thread(target=self._bg_thread_main)
-        self._subprocess_thread.start()
-
         # During a run, we make the assumption that cwd is the dir
         # containing this script, so make that so. Up until now that may
         # not be the case (we support being called from any location).
         os.chdir(os.path.abspath(os.path.dirname(__file__)))
+
+        # Fire off a background thread to wrangle our server binaries.
+        self._subprocess_thread = Thread(target=self._bg_thread_main)
+        self._subprocess_thread.start()
 
     def _postrun(self) -> None:
         """Common code at the end of any run."""
@@ -587,8 +587,6 @@ class ServerManagerApp:
 
         # Launch!
         try:
-            # if bool(True):
-            #     raise RuntimeError('test')
             self._subprocess = subprocess.Popen(
                 [binary_name, '-cfgdir', self._ba_root_path],
                 stdin=subprocess.PIPE,
