@@ -121,7 +121,6 @@ class ServerManagerApp:
         print(
             f'{Clr.CYN}{Clr.BLD}BallisticaCore server manager {VERSION_STR}'
             f' starting up ({dbgstr} mode)...{Clr.RST}',
-            file=sys.stderr,
             flush=True)
 
         # Python will handle SIGINT for us (as KeyboardInterrupt) but we
@@ -141,14 +140,11 @@ class ServerManagerApp:
 
     def _postrun(self) -> None:
         """Common code at the end of any run."""
-        print(f'{Clr.CYN}Server manager shutting down...{Clr.RST}',
-              file=sys.stderr,
-              flush=True)
+        print(f'{Clr.CYN}Server manager shutting down...{Clr.RST}', flush=True)
 
         assert self._subprocess_thread is not None
         if self._subprocess_thread.is_alive():
             print(f'{Clr.CYN}Waiting for subprocess exit...{Clr.RST}',
-                  file=sys.stderr,
                   flush=True)
 
         # Mark ourselves as shutting down and wait for the process to wrap up.
@@ -193,7 +189,6 @@ class ServerManagerApp:
             f"{Clr.CYN}Interactive mode enabled; use the 'mgr' object"
             f' to interact with the server.\n'
             f"Type 'help(mgr)' for more information.{Clr.RST}",
-            file=sys.stderr,
             flush=True)
 
         context = {'__name__': '__console__', '__doc__': None, 'mgr': self}
@@ -215,7 +210,6 @@ class ServerManagerApp:
             print(
                 f'{Clr.SRED}Unexpected interpreter exception:'
                 f' {exc} ({type(exc)}){Clr.RST}',
-                file=sys.stderr,
                 flush=True)
 
         self._postrun()
@@ -466,13 +460,11 @@ class ServerManagerApp:
                     raise CleanError(
                         f'Error loading config file:\n{exc}') from exc
                 print(f'{Clr.RED}Error loading config file:\n{exc}.{Clr.RST}',
-                      file=sys.stderr,
                       flush=True)
                 if trynum == maxtries - 1:
                     print(
                         f'{Clr.RED}Max-tries reached; giving up.'
                         f' Existing config values will be used.{Clr.RST}',
-                        file=sys.stderr,
                         flush=True)
                     break
                 print(
@@ -480,7 +472,6 @@ class ServerManagerApp:
                     f' Will re-attempt load in {retry_seconds}'
                     f' seconds. (attempt {trynum+1} of'
                     f' {maxtries-1}).{Clr.RST}',
-                    file=sys.stderr,
                     flush=True)
 
                 for _j in range(retry_seconds):
@@ -505,7 +496,6 @@ class ServerManagerApp:
                         f'{Clr.YLW}Default config file not found'
                         f' (\'{self._config_path}\'); using default'
                         f' settings.{Clr.RST}',
-                        file=sys.stderr,
                         flush=True)
                 self._config_mtime = None
                 self._last_config_mtime_check_time = time.time()
@@ -533,7 +523,6 @@ class ServerManagerApp:
 
         if print_confirmation:
             print(f'{Clr.CYN}Valid server config file loaded.{Clr.RST}',
-                  file=sys.stderr,
                   flush=True)
         return out
 
@@ -577,9 +566,7 @@ class ServerManagerApp:
         # slight behavior tweaks. Hmm; should this be an argument instead?
         os.environ['BA_SERVER_WRAPPER_MANAGED'] = '1'
 
-        print(f'{Clr.CYN}Launching server subprocess...{Clr.RST}',
-              file=sys.stderr,
-              flush=True)
+        print(f'{Clr.CYN}Launching server subprocess...{Clr.RST}', flush=True)
         binary_name = ('ballisticacore_headless.exe'
                        if os.name == 'nt' else './ballisticacore_headless')
         assert self._ba_root_path is not None
@@ -595,7 +582,6 @@ class ServerManagerApp:
             self._subprocess_exited_cleanly = False
             print(
                 f'{Clr.RED}Error launching server subprocess: {exc}{Clr.RST}',
-                file=sys.stderr,
                 flush=True)
 
         # Do the thing.
@@ -603,7 +589,6 @@ class ServerManagerApp:
             self._run_subprocess_until_exit()
         except Exception as exc:
             print(f'{Clr.RED}Error running server subprocess: {exc}{Clr.RST}',
-                  file=sys.stderr,
                   flush=True)
 
         self._kill_subprocess()
@@ -730,7 +715,6 @@ class ServerManagerApp:
             if (self._subprocess_force_kill_time is not None
                     and time.time() > self._subprocess_force_kill_time):
                 print(f'{Clr.CYN}Force-killing subprocess...{Clr.RST}',
-                      file=sys.stderr,
                       flush=True)
                 break
 
@@ -742,7 +726,6 @@ class ServerManagerApp:
                 print(
                     f'{clr}Server subprocess exited'
                     f' with code {code}.{Clr.RST}',
-                    file=sys.stderr,
                     flush=True)
                 self._subprocess_exited_cleanly = (code == 0)
                 break
@@ -771,7 +754,6 @@ class ServerManagerApp:
                     print(
                         f'{Clr.CYN}Config-file change detected;'
                         f' requesting immediate restart.{Clr.RST}',
-                        file=sys.stderr,
                         flush=True)
                     self.restart(immediate=True)
                     self._subprocess_sent_config_auto_restart = True
@@ -791,7 +773,6 @@ class ServerManagerApp:
                     f' ({clean_exit_minutes})'
                     f' elapsed; requesting soft'
                     f' {opname}.{Clr.RST}',
-                    file=sys.stderr,
                     flush=True)
                 if self._auto_restart:
                     self.restart(immediate=False)
@@ -814,7 +795,6 @@ class ServerManagerApp:
                     f' ({unclean_exit_minutes})'
                     f' elapsed; requesting immediate'
                     f' {opname}.{Clr.RST}',
-                    file=sys.stderr,
                     flush=True)
                 if self._auto_restart:
                     self.restart(immediate=True)
@@ -837,9 +817,7 @@ class ServerManagerApp:
         if self._subprocess is None:
             return
 
-        print(f'{Clr.CYN}Stopping subprocess...{Clr.RST}',
-              file=sys.stderr,
-              flush=True)
+        print(f'{Clr.CYN}Stopping subprocess...{Clr.RST}', flush=True)
 
         # First, ask it nicely to die and give it a moment.
         # If that doesn't work, bring down the hammer.
@@ -851,9 +829,7 @@ class ServerManagerApp:
         except subprocess.TimeoutExpired:
             self._subprocess_exited_cleanly = False
             self._subprocess.kill()
-        print(f'{Clr.CYN}Subprocess stopped.{Clr.RST}',
-              file=sys.stderr,
-              flush=True)
+        print(f'{Clr.CYN}Subprocess stopped.{Clr.RST}', flush=True)
 
 
 def main() -> None:
