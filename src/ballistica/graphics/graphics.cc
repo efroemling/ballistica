@@ -431,7 +431,7 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
       // during gameplay.
       float start_v = g_graphics->screen_virtual_height() * 0.05f;
       float scale;
-      switch (GetInterfaceType()) {
+      switch (GetUIScale()) {
         case UIScale::kSmall:
           scale = 1.5f;
           break;

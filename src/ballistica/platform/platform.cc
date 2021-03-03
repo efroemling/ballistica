@@ -105,6 +105,7 @@ namespace ballistica {
 
 auto Platform::Create() -> Platform* {
   auto platform = new BA_PLATFORM_CLASS();
+  platform->PostInit();
   return platform;
 }
 
@@ -562,7 +563,7 @@ static void HandleArgs(int argc, char** argv) {
       g_app_globals->vr_mode = false;
     } else if (!strcmp(argv[i], "-exec")) {
       if (i + 1 < argc) {
-        g_app_globals->game_commands = argv[i + 1];
+        g_app_globals->exec_command = argv[i + 1];
       } else {
         printf("%s", "Error: expected arg after -exec\n");
         fflush(stdout);
@@ -597,13 +598,13 @@ static void HandleArgs(int argc, char** argv) {
 
   // In Android's case we have to pull our exec arg from the java/kotlin layer.
   if (g_buildconfig.ostype_android()) {
-    g_app_globals->game_commands = g_platform->GetAndroidExecArg();
+    g_app_globals->exec_command = g_platform->GetAndroidExecArg();
   }
 
   // TEMP/HACK: hard code launch args.
   if (explicit_bool(false)) {
     if (g_buildconfig.ostype_android()) {
-      g_app_globals->game_commands =
+      g_app_globals->exec_command =
           "import ba.internal; ba.internal.run_stress_test()";
     }
   }
@@ -685,7 +686,7 @@ void Platform::CreateAuxiliaryModules() {
 
 void Platform::WillExitMain(bool errored) {}
 
-auto Platform::GetInterfaceType() -> UIScale {
+auto Platform::GetUIScale() -> UIScale {
   // Handles mac/pc/linux cases.
   return UIScale::kLarge;
 }

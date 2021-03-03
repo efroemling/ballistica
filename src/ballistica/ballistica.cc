@@ -21,7 +21,7 @@
 namespace ballistica {
 
 // These are set automatically via script; don't change here.
-const int kAppBuildNumber = 20319;
+const int kAppBuildNumber = 20321;
 const char* kAppVersion = "1.6.0";
 
 // Our standalone globals.
@@ -87,7 +87,6 @@ auto BallisticaMain(int argc, char** argv) -> int {
     g_app_globals = new AppGlobals(argc, argv);
     g_app_internal = CreateAppInternal();
     g_platform = Platform::Create();
-    g_platform->PostInit();
     g_account = new Account();
     g_utils = new Utils();
     Scene::Init();
@@ -126,14 +125,14 @@ auto BallisticaMain(int argc, char** argv) -> int {
     // Phase 2: Set things in motion.
     // -------------------------------------------------------------------------
 
-    // Ok; now that we're bootstrapped, tell the game thread to read and apply
-    // the config which should kick off the real action.
-    g_game->PushApplyConfigCall();
-
     // Let the app and platform do whatever else it wants here such as adding
     // initial input devices/etc.
     g_app->OnBootstrapComplete();
     g_platform->OnBootstrapComplete();
+
+    // Ok; now that we're bootstrapped, tell the game thread to read and apply
+    // the config which should kick off the real action.
+    g_game->PushApplyConfigCall();
 
     // -------------------------------------------------------------------------
     // Phase 3/4: Create a screen and/or kick off game (in other threads).
@@ -258,7 +257,7 @@ auto InNetworkWriteThread() -> bool {
           && g_network_write_module->thread()->IsCurrent());
 }
 
-auto GetInterfaceType() -> UIScale { return g_app_globals->ui_scale; }
+auto GetUIScale() -> UIScale { return g_app_globals->ui_scale; }
 
 void Log(const std::string& msg, bool to_stdout, bool to_server) {
   Logging::Log(msg, to_stdout, to_server);

@@ -108,6 +108,7 @@ void App::PushShutdownCompleteCall() {
 }
 
 void App::ShutdownComplete() {
+  assert(InMainThread());
   assert(g_platform);
 
   // Need to call our cleanup stuff that would otherwise get called in main.

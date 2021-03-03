@@ -5833,7 +5833,7 @@ std::string RendererGL::GetAutoAndroidRes() {
   if (strstr(renderer, "Adreno (TM) 4") || strstr(renderer, "Adreno (TM) 5")) {
     // for phones lets go with 1080p (phones most likely have 1920x1080-ish
     // aspect ratios)
-    if (GetInterfaceType() == UIScale::kSmall) {
+    if (GetUIScale() == UIScale::kSmall) {
       return "1080p";
     } else {
       // tablets are more likely to have 1920x1200 so lets inch a bit higher
@@ -5845,7 +5845,7 @@ std::string RendererGL::GetAutoAndroidRes() {
   if (is_extra_speedy_android_device_) {
     // for phones lets go with 1080p (phones most likely have 1920x1080-ish
     // aspect ratios)
-    if (GetInterfaceType() == UIScale::kSmall) {
+    if (GetUIScale() == UIScale::kSmall) {
       return "1080p";
     } else {
       // tablets are more likely to have 1920x1200 so lets inch a bit higher

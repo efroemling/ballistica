@@ -742,7 +742,7 @@ auto PyEnv(PyObject* self) -> PyObject* {
     bool iircade_mode{g_buildconfig.arcade_build()};
 
     const char* ui_scale;
-    switch (GetInterfaceType()) {
+    switch (GetUIScale()) {
       case UIScale::kLarge:
         ui_scale = "large";
         break;

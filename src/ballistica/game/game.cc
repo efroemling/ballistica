@@ -317,6 +317,7 @@ void Game::Prune() { g_media->Prune(); }
 
 // Launch into main menu or whatever else.
 void Game::RunAppLaunchCommands() {
+  assert(InGameThread());
   assert(!ran_app_launch_commands_);
 
   // First off, run our python app-launch call.
@@ -325,10 +326,11 @@ void Game::RunAppLaunchCommands() {
     ScopedSetContext cp(GetUIContext());
     g_python->obj(Python::ObjID::kOnAppLaunchCall).Call();
   }
+  ran_app_launch_commands_ = true;
 
   // If we were passed launch command args, run them.
-  if (!g_app_globals->game_commands.empty()) {
-    bool success = PythonCommand(g_app_globals->game_commands, BA_BCFN).Run();
+  if (!g_app_globals->exec_command.empty()) {
+    bool success = PythonCommand(g_app_globals->exec_command, BA_BCFN).Run();
     if (!success) {
       exit(1);
     }
@@ -340,8 +342,6 @@ void Game::RunAppLaunchCommands() {
   }
 
   UpdateProcessTimer();
-
-  ran_app_launch_commands_ = true;
 }
 
 Game::~Game() = default;
@@ -353,7 +353,9 @@ void Game::UpdateProcessTimer() {
   // This might get called before we set up our timer in some cases. (such as
   // very early) should be safe to ignore since we update the interval
   // explicitly after creating the timers.
-  if (!process_timer_) return;
+  if (!process_timer_) {
+    return;
+  }
 
   // If there's loading to do, keep at it rather vigorously.
   if (have_pending_loads_) {
@@ -883,18 +885,17 @@ void Game::LaunchHostSession(PyObject* session_type_obj,
 }
 
 void Game::RunMainMenu() {
-  PushCall([this] {
-    if (g_app_globals->shutting_down) {
-      return;
-    }
-    assert(g_python);
-    assert(InGameThread());
-    PythonRef result =
-        g_python->obj(Python::ObjID::kLaunchMainMenuSessionCall).Call();
-    if (!result.exists()) {
-      throw Exception("error running main menu");
-    }
-  });
+  assert(InGameThread());
+  if (g_app_globals->shutting_down) {
+    return;
+  }
+  assert(g_python);
+  assert(InGameThread());
+  PythonRef result =
+      g_python->obj(Python::ObjID::kLaunchMainMenuSessionCall).Call();
+  if (!result.exists()) {
+    throw Exception("error running main menu");
+  }
 }
 
 // Commands run via the in-game console. These are a bit more 'casual' and run

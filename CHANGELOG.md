@@ -12,6 +12,7 @@
 - Server-wrapper improvements allowing config path and ba_root path to be passed explicitly.
 - Binary -cfgdir option now properly allows any path, not just './ba_root'.
 - Additional server-wrapper options such as disabling auto-restart and automatic restarts on config file changes.
+- Running a `_ba.connect_to_party` command via the -exec arg should now do the right thing.
 
 ### 1.5.29 (20246)
 - Exposed ba method/class initing in public C++ layer.

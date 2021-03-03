@@ -220,7 +220,7 @@ auto GetCurrentThreadName() -> std::string;
 auto Log(const std::string& msg, bool to_stdout = true, bool to_server = true)
     -> void;
 
-auto GetInterfaceType() -> UIScale;
+auto GetUIScale() -> UIScale;
 
 /// Return true if stdin seems to be coming from a terminal
 /// (so we know to print prompts, etc).

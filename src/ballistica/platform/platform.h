@@ -148,7 +148,7 @@ class Platform {
   virtual auto IsEventPushMode() -> bool;
 
   // Return the interface type based on the environment (phone, tablet, etc).
-  virtual auto GetInterfaceType() -> UIScale;
+  virtual auto GetUIScale() -> UIScale;
 
   // Return a string *reasonably* likely to be unique and consistent for this
   // device. Do not assume this is globally unique and *do not* assume that it

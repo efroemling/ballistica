@@ -56,7 +56,7 @@ UI::UI() {
       // VR and tv builds always use medium.
       g_app_globals->ui_scale = UIScale::kMedium;
     } else {
-      g_app_globals->ui_scale = g_platform->GetInterfaceType();
+      g_app_globals->ui_scale = g_platform->GetUIScale();
     }
   }
 

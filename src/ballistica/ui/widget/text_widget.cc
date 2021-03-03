@@ -230,7 +230,7 @@ void TextWidget::Draw(RenderPass* pass, bool draw_transparent) {
       c.SetTexture(g_media->GetTexture(SystemTextureID::kTextClearButton));
       c.PushTransform();
       c.Translate(r - 20, b * 0.5f + t * 0.5f, 0.1f);
-      if (GetInterfaceType() == UIScale::kSmall) {
+      if (GetUIScale() == UIScale::kSmall) {
         c.Scale(30, 30);
       } else {
         c.Scale(25, 25);

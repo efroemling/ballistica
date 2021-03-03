@@ -23,7 +23,7 @@ class PlatformApple : public Platform {
   auto GetLocale() -> std::string override;
   auto DoGetDeviceName() -> std::string override;
   auto DoHasTouchScreen() -> bool override;
-  auto GetInterfaceType() -> UIScale override;
+  auto GetUIScale() -> UIScale override;
   auto IsRunningOnDesktop() -> bool override;
   void HandleLog(const std::string& msg) override;
   void SetupDataDirectory() override;

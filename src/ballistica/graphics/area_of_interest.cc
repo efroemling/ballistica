@@ -12,7 +12,7 @@ AreaOfInterest::~AreaOfInterest() = default;
 
 void AreaOfInterest::SetRadius(float r_in) {
   // We slightly scale this for phone situations.
-  float extrascale = (GetInterfaceType() == UIScale::kSmall) ? 0.85f : 1.0f;
+  float extrascale = (GetUIScale() == UIScale::kSmall) ? 0.85f : 1.0f;
   radius_ = r_in * extrascale;
 }
 
