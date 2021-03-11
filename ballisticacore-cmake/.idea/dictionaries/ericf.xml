@@ -479,6 +479,7 @@
       <w>jmessage</w>
       <w>keepalives</w>
       <w>keycode</w>
+      <w>keyfilt</w>
       <w>keysyms</w>
       <w>keywds</w>
       <w>khronos</w>

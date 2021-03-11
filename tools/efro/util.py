@@ -7,11 +7,13 @@ from __future__ import annotations
 import datetime
 import time
 import weakref
+import functools
 from enum import Enum
 from typing import TYPE_CHECKING, cast, TypeVar, Generic
 
 if TYPE_CHECKING:
     import asyncio
+    from efro.call import Call as Call  # 'as Call' so we re-export.
     from weakref import ReferenceType
     from typing import Any, Dict, Callable, Optional, Type
 
@@ -25,6 +27,12 @@ TENUM = TypeVar('TENUM', bound=Enum)
 
 class _EmptyObj:
     pass
+
+
+if TYPE_CHECKING:
+    Call = Call
+else:
+    Call = functools.partial
 
 
 def enum_by_value(cls: Type[TENUM], value: Any) -> TENUM:

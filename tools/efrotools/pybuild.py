@@ -79,7 +79,7 @@ def build_apple(arch: str, debug: bool = False) -> None:
     # txt = replace_one(txt, '_lzma _', '#_lzma _')
 
     # Turn off bzip2 module.
-    txt = replace_one(txt, '_bz2 _b', '#_bz2 _b')
+    # txt = replace_one(txt, '_bz2 _b', '#_bz2 _b')
 
     # Turn off openssl module (only if not doing openssl).
     if not ENABLE_OPENSSL:
@@ -150,11 +150,14 @@ def build_apple(arch: str, debug: bool = False) -> None:
     # libs we're not using.
     srctxt = '$$(PYTHON_DIR-$1)/dist/lib/libpython$(PYTHON_VER).a: '
     if PY38:
-        txt = replace_one(
-            txt, srctxt,
-            '$$(PYTHON_DIR-$1)/dist/lib/libpython$(PYTHON_VER).a: ' +
-            ('build/$2/Support/OpenSSL ' if ENABLE_OPENSSL else '') +
-            'build/$2/Support/XZ $$(PYTHON_DIR-$1)/Makefile\n#' + srctxt)
+        # Note: now just keeping everything on.
+        assert ENABLE_OPENSSL
+        if bool(False):
+            txt = replace_one(
+                txt, srctxt,
+                '$$(PYTHON_DIR-$1)/dist/lib/libpython$(PYTHON_VER).a: ' +
+                ('build/$2/Support/OpenSSL ' if ENABLE_OPENSSL else '') +
+                'build/$2/Support/XZ $$(PYTHON_DIR-$1)/Makefile\n#' + srctxt)
     else:
         txt = replace_one(
             txt, srctxt,

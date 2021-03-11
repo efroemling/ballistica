@@ -264,3 +264,5 @@ if TYPE_CHECKING:
     # noinspection PyPep8Naming
     def Call(*_args: Any, **_keywds: Any) -> Any:
         ...
+
+    Call = Call

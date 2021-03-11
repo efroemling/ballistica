@@ -4,10 +4,28 @@
 
 from __future__ import annotations
 
+from enum import Enum
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, Type
+
+
+def dict_key_to_raw(key: Any, keytype: Type) -> Any:
+    """Given a key value from the world, filter to stored key."""
+    if not isinstance(key, keytype):
+        raise TypeError(
+            f'Invalid key type; expected {keytype}, got {type(key)}.')
+    if issubclass(keytype, Enum):
+        return key.value
+    return key
+
+
+def dict_key_from_raw(key: Any, keytype: Type) -> Any:
+    """Given internal key, filter to world visible type."""
+    if issubclass(keytype, Enum):
+        return keytype(key)
+    return key
 
 
 class DataHandler:

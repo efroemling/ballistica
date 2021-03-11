@@ -28,6 +28,13 @@ class EnumTest(Enum):
     SECOND = 1
 
 
+@unique
+class EnumTest2(Enum):
+    """Testing..."""
+    FIRST = 0
+    SECOND = 1
+
+
 class SubCompoundTest(entity.CompoundValue):
     """Testing..."""
     subval = entity.Field('b', entity.BoolValue())
@@ -58,12 +65,14 @@ class EntityTest(entity.Entity):
     slval = entity.ListField('sl', entity.StringValue())
     tval2 = entity.Field('t2', entity.DateTimeValue())
     str_int_dict = entity.DictField('sd', str, entity.IntValue())
+    enum_int_dict = entity.DictField('ed', EnumTest, entity.IntValue())
     compoundlist = entity.CompoundListField('l', CompoundTest())
     compoundlist2 = entity.CompoundListField('l2', CompoundTest())
     compoundlist3 = entity.CompoundListField('l3', CompoundTest2())
     compounddict = entity.CompoundDictField('td', str, CompoundTest())
     compounddict2 = entity.CompoundDictField('td2', str, CompoundTest())
     compounddict3 = entity.CompoundDictField('td3', str, CompoundTest2())
+    compounddict4 = entity.CompoundDictField('td4', EnumTest, CompoundTest())
     fval2 = entity.Field('f2', entity.Float3Value())
 
 
@@ -117,6 +126,27 @@ def test_entity_values() -> None:
     assert static_type_equals(ent.str_int_dict['foo'], int)
     assert ent.str_int_dict['foo'] == 123
 
+    # Simple dict with enum key.
+    ent.enum_int_dict[EnumTest.FIRST] = 234
+    assert ent.enum_int_dict[EnumTest.FIRST] == 234
+    # Set with incorrect key type should give TypeError.
+    with pytest.raises(TypeError):
+        ent.enum_int_dict[0] = 123  # type: ignore
+    with pytest.raises(TypeError):
+        ent.enum_int_dict[EnumTest2.FIRST] = 123  # type: ignore
+    # And set with incorrect value type should do same.
+    with pytest.raises(TypeError):
+        ent.enum_int_dict[EnumTest.FIRST] = 'bar'  # type: ignore
+    # Make sure is stored as underlying type.
+    assert ent.d_data['ed'] == {0: 234}
+
+    # Make sure invalid raw enum values are caught.
+    ent2 = EntityTest()
+    ent2.set_data({})
+    ent2.set_data({'ed': {0: 111}})
+    with pytest.raises(ValueError):
+        ent2.set_data({'ed': {5: 111}})
+
     # Waaah; this works at runtime, but it seems that we'd need
     # to have BoundDictField inherit from Mapping for mypy to accept this.
     # (which seems to get a bit ugly, but may be worth revisiting)
@@ -164,7 +194,7 @@ def test_entity_values_2() -> None:
     with pytest.raises(TypeError):
         _cdval2 = ent.compounddict.add(1)  # type: ignore
     # Hmm; should this throw a TypeError and not a KeyError?..
-    with pytest.raises(KeyError):
+    with pytest.raises(TypeError):
         _cdval3 = ent.compounddict[1]  # type: ignore
     assert static_type_equals(ent.compounddict['foo'], CompoundTest)
 
@@ -172,7 +202,19 @@ def test_entity_values_2() -> None:
     with pytest.raises(ValueError):
         # noinspection PyTypeHints
         ent.enumval = None  # type: ignore
-    assert ent.enumval == EnumTest.FIRST
+    assert ent.enumval is EnumTest.FIRST
+
+    # Compound dict with enum key.
+    assert not ent.compounddict4  # bool operator
+    _cd4val = ent.compounddict4.add(EnumTest.FIRST)
+    assert ent.compounddict4  # bool operator
+    ent.compounddict4[EnumTest.FIRST].isubval = 222
+    assert ent.compounddict4[EnumTest.FIRST].isubval == 222
+    with pytest.raises(TypeError):
+        ent.compounddict4[0].isubval = 222  # type: ignore
+    assert static_type_equals(ent.compounddict4[EnumTest.FIRST], CompoundTest)
+    # Make sure enum keys are stored as underlying type.
+    assert ent.d_data['td4'] == {0: {'i': 222, 'l': []}}
 
     # Optional Enum value
     ent.enumval2 = None
@@ -185,6 +227,9 @@ def test_entity_values_2() -> None:
     assert static_type_equals(val, SubCompoundTest)
     assert static_type_equals(ent.grp.compoundlist[0], SubCompoundTest)
     assert static_type_equals(ent.grp.compoundlist[0].subval, bool)
+
+    # Make sure we can digest the same data we spit out.
+    ent.set_data(ent.d_data)
 
 
 def test_field_copies() -> None:

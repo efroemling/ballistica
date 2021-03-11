@@ -6,8 +6,10 @@ from __future__ import annotations
 
 import copy
 import logging
+from enum import Enum
 from typing import TYPE_CHECKING, Generic, TypeVar, overload
 
+from efro.util import enum_by_value
 from efro.entity._base import BaseField
 from efro.entity._support import (BoundCompoundValue, BoundListField,
                                   BoundDictField, BoundCompoundListField,
@@ -186,7 +188,6 @@ class ListField(BaseField, Generic[T]):
     # When accessed on a FieldInspector we return a sub-field FieldInspector.
     # When accessed on an instance we return a BoundListField.
 
-    # noinspection DuplicatedCode
     if TYPE_CHECKING:
 
         # Access via type gives our field; via an instance gives a bound field.
@@ -233,7 +234,6 @@ class DictField(BaseField, Generic[TK, T]):
     def get_default_data(self) -> dict:
         return {}
 
-    # noinspection DuplicatedCode
     def filter_input(self, data: Any, error: bool) -> Any:
 
         # If we were passed a BoundDictField, operate on its raw values
@@ -247,12 +247,29 @@ class DictField(BaseField, Generic[TK, T]):
             data = {}
         data_out = {}
         for key, val in data.items():
-            if not isinstance(key, self._keytype):
+
+            # For enum keys, make sure its a valid enum.
+            if issubclass(self._keytype, Enum):
+                try:
+                    _enumval = enum_by_value(self._keytype, key)
+                except Exception as exc:
+                    if error:
+                        raise ValueError(f'No enum of type {self._keytype}'
+                                         f' exists with value {key}') from exc
+                    logging.error('Ignoring invalid key type for %s: %s', self,
+                                  data)
+                    continue
+
+            # For all other keys we can check for exact types.
+            elif not isinstance(key, self._keytype):
                 if error:
-                    raise TypeError('invalid key type')
+                    raise TypeError(
+                        f'Invalid key type; expected {self._keytype},'
+                        f' got {type(key)}.')
                 logging.error('Ignoring invalid key type for %s: %s', self,
                               data)
                 continue
+
             data_out[key] = self.d_value.filter_input(val, error=error)
         return data_out
 
@@ -261,7 +278,6 @@ class DictField(BaseField, Generic[TK, T]):
         # change the dict, but we can prune completely if empty (and allowed)
         return not data and not self._store_default
 
-    # noinspection DuplicatedCode
     if TYPE_CHECKING:
 
         # Return our field if accessed via type and bound-dict-field
@@ -339,7 +355,6 @@ class CompoundListField(BaseField, Generic[TC]):
         # We can also optionally prune the whole list if empty and allowed.
         return not data and not self._store_default
 
-    # noinspection DuplicatedCode
     if TYPE_CHECKING:
 
         @overload
@@ -436,10 +451,10 @@ class CompoundDictField(BaseField, Generic[TK, TC]):
         # This doesnt actually exist for us, but want the type-checker
         # to think it does (see TYPE_CHECKING note below).
         self.d_data: Any
+
         self.d_keytype = keytype
         self._store_default = store_default
 
-    # noinspection DuplicatedCode
     def filter_input(self, data: Any, error: bool) -> dict:
         if not isinstance(data, dict):
             if error:
@@ -448,12 +463,29 @@ class CompoundDictField(BaseField, Generic[TK, TC]):
             data = {}
         data_out = {}
         for key, val in data.items():
-            if not isinstance(key, self.d_keytype):
+
+            # For enum keys, make sure its a valid enum.
+            if issubclass(self.d_keytype, Enum):
+                try:
+                    _enumval = enum_by_value(self.d_keytype, key)
+                except Exception as exc:
+                    if error:
+                        raise ValueError(f'No enum of type {self.d_keytype}'
+                                         f' exists with value {key}') from exc
+                    logging.error('Ignoring invalid key type for %s: %s', self,
+                                  data)
+                    continue
+
+            # For all other keys we can check for exact types.
+            elif not isinstance(key, self.d_keytype):
                 if error:
-                    raise TypeError('invalid key type')
+                    raise TypeError(
+                        f'Invalid key type; expected {self.d_keytype},'
+                        f' got {type(key)}.')
                 logging.error('Ignoring invalid key type for %s: %s', self,
                               data)
                 continue
+
             data_out[key] = self.d_value.filter_input(val, error=error)
         return data_out
 
@@ -472,7 +504,6 @@ class CompoundDictField(BaseField, Generic[TK, TC]):
 
     # ONLY overriding these in type-checker land to clarify types.
     # (see note in BaseField)
-    # noinspection DuplicatedCode
     if TYPE_CHECKING:
 
         @overload
