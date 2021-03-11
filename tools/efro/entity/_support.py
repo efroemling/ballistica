@@ -241,10 +241,12 @@ class BoundDictField(Generic[TKey, T]):
                                                                  error=True)
 
     def __contains__(self, key: TKey) -> bool:
-        return key in self.d_data
+        keyfilt = dict_key_to_raw(key, self._keytype)
+        return keyfilt in self.d_data
 
     def __delitem__(self, key: TKey) -> None:
-        del self.d_data[key]
+        keyfilt = dict_key_to_raw(key, self._keytype)
+        del self.d_data[keyfilt]
 
     def keys(self) -> List[TKey]:
         """Return a list of our keys."""
@@ -451,10 +453,12 @@ class BoundCompoundDictField(Generic[TKey, TCompound]):
         return len(self.d_data)
 
     def __contains__(self, key: TKey) -> bool:
-        return key in self.d_data
+        keyfilt = dict_key_to_raw(key, self.d_field.d_keytype)
+        return keyfilt in self.d_data
 
     def __delitem__(self, key: TKey) -> None:
-        del self.d_data[key]
+        keyfilt = dict_key_to_raw(key, self.d_field.d_keytype)
+        del self.d_data[keyfilt]
 
     def keys(self) -> List[TKey]:
         """Return a list of our keys."""
