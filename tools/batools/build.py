@@ -647,14 +647,15 @@ def _get_server_config_raw_contents(projroot: str) -> str:
 
 
 def _get_server_config_template_yaml(projroot: str) -> str:
+    # pylint: disable=too-many-branches
     import yaml
     lines_in = _get_server_config_raw_contents(projroot).splitlines()
     lines_out: List[str] = []
     ignore_vars = {'stress_test_players'}
     for line in lines_in:
-        if (line != '' and not line.startswith('#')
-                and not any(line.startswith(f'{var}:')
-                            for var in ignore_vars)):
+        if any(line.startswith(f'{var}:') for var in ignore_vars):
+            pass
+        elif line != '' and not line.startswith('#'):
             vname, _vtype, veq, vval_raw = line.split()
             assert vname.endswith(':')
             vname = vname[:-1]
