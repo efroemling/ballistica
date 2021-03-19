@@ -54,7 +54,7 @@ class NetClientSession : public ClientSession {
   float current_delay_{};
 
   int delay_sample_counter_{};
-  int adjust_counter_{};
+  // int adjust_counter_{};
 };
 
 }  // namespace ballistica
