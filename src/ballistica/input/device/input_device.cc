@@ -248,10 +248,11 @@ void InputDevice::ShipBufferIfFull() {
 
   // Ship the buffer once it gets big enough or once enough time has passed.
   millisecs_t real_time = GetRealTime();
+
   size_t size = remote_input_commands_buffer_.size();
   if (size > 2
       && (static_cast<int>(real_time - last_remote_input_commands_send_time_)
-              > g_app_globals->buffer_time
+              >= g_app_globals->buffer_time
           || size > 400)) {
     last_remote_input_commands_send_time_ = real_time;
     hc->SendReliableMessage(remote_input_commands_buffer_);

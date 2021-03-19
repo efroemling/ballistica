@@ -871,6 +871,7 @@
       <w>getcurrency</w>
       <w>getcwd</w>
       <w>getdata</w>
+      <w>gethostbyname</w>
       <w>getinputdevice</w>
       <w>getkillerplayer</w>
       <w>getlevel</w>

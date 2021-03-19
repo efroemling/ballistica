@@ -4,6 +4,7 @@
 #define BALLISTICA_GRAPHICS_NET_GRAPH_H_
 
 #include <memory>
+#include <string>
 
 #include "ballistica/core/object.h"
 
@@ -13,9 +14,13 @@ class NetGraph : public Object {
  public:
   NetGraph();
   ~NetGraph() override;
-  void AddSample(double time, double value);
-  void Draw(RenderPass* pass, double time, double x, double y, double w,
-            double h);
+  auto AddSample(double time, double value) -> void;
+  auto SetLabel(const std::string& label) -> void;
+  auto SetLastUsedTime(millisecs_t real_time) -> void;
+  auto LastUsedTime() -> millisecs_t;
+  auto SetSmoothed(bool smoothed) -> void;
+  auto Draw(RenderPass* pass, double time, double x, double y, double w,
+            double h) -> void;
 
  private:
   class Impl;

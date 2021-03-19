@@ -372,6 +372,7 @@
       <w>getbitshigh</w>
       <w>getcollidemodel</w>
       <w>getdata</w>
+      <w>gethostbyname</w>
       <w>getifaddrs</w>
       <w>getinputdevice</w>
       <w>getline</w>

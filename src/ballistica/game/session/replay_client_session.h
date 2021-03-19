@@ -17,25 +17,24 @@ class ReplayClientSession : public ClientSession,
  public:
   explicit ReplayClientSession(std::string filename);
   ~ReplayClientSession() override;
-  void OnReset(bool rewind) override;
+  auto OnReset(bool rewind) -> void override;
 
   // Our ClientControllerInterface implementation.
   auto GetActualTimeAdvance(int advance_in) -> int override;
-  void OnClientConnected(ConnectionToClient* c) override;
-  void OnClientDisconnected(ConnectionToClient* c) override;
-  void DumpFullState(GameStream* out) override;
+  auto OnClientConnected(ConnectionToClient* c) -> void override;
+  auto OnClientDisconnected(ConnectionToClient* c) -> void override;
+  auto OnCommandBufferUnderrun() -> void override;
 
- protected:
-  void Error(const std::string& description) override;
-  void FetchMessages() override;
+  auto Error(const std::string& description) -> void override;
+  auto FetchMessages() -> void override;
 
  private:
-  uint32_t message_fetch_num_;
-  bool have_sent_client_message_;
+  uint32_t message_fetch_num_{};
+  bool have_sent_client_message_{};
   std::vector<ConnectionToClient*> connections_to_clients_;
   std::vector<ConnectionToClient*> connections_to_clients_ignored_;
   std::string file_name_;
-  FILE* file_;
+  FILE* file_{};
 };
 
 }  // namespace ballistica

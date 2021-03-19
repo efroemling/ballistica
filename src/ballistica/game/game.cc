@@ -1117,7 +1117,7 @@ void Game::PushToggleManualCameraCall() {
 }
 
 void Game::PushToggleDebugInfoDisplayCall() {
-  PushCall([] { g_graphics->ToggleDebugInfoDisplay(); });
+  PushCall([] { g_graphics->ToggleNetworkDebugDisplay(); });
 }
 
 void Game::PushToggleCollisionGeometryDisplayCall() {

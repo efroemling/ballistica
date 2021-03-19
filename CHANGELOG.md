@@ -1,4 +1,6 @@
 ### 1.6.0 (20308)
+- Revamped netcode significantly. We still don't have client-prediction, but things should (hopefully) feel much lower latency now.
+- Added network debug graphs accessible by hitting F8.
 - Added private parties functionality (cloud hosted parties with associated codes making it easier to play with friends)
 - The meta subsystem now enables new plugins by default in headless builds.
 - Added option to save party in Manual tab

@@ -386,16 +386,22 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
     }
   }
 
-  // Draw debug graphs.
-  if (explicit_bool(false)) {
-    if (!debug_graph_1_.exists()) {
-      debug_graph_1_ = Object::New<NetGraph>();
+  // Draw any debug graphs.
+  {
+    float debug_graph_y = 50.0;
+    auto now = GetRealTime();
+    for (auto it = debug_graphs_.begin(); it != debug_graphs_.end();) {
+      assert(it->second.exists());
+      if (now - it->second->LastUsedTime() > 1000) {
+        it = debug_graphs_.erase(it);
+      } else {
+        it->second->Draw(pass, GetRealTime(), 50.0f, debug_graph_y, 500.0f,
+                         100.0f);
+        debug_graph_y += 110.0f;
+
+        ++it;
+      }
     }
-    debug_graph_1_->Draw(pass, GetRealTime(), 50.0f, 50.0f, 500.0f, 100.0f);
-    if (!debug_graph_2_.exists()) {
-      debug_graph_2_ = Object::New<NetGraph>();
-    }
-    debug_graph_2_->Draw(pass, GetRealTime(), 50.0f, 160.0f, 500.0f, 100.0f);
   }
 
   // Screen messages (bottom).
@@ -734,6 +740,18 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
       c.Submit();
     }
   }
+}
+
+auto Graphics::GetDebugGraph(const std::string& name, bool smoothed)
+    -> NetGraph* {
+  auto out = debug_graphs_.find(name);
+  if (out == debug_graphs_.end()) {
+    debug_graphs_[name] = Object::New<NetGraph>();
+    debug_graphs_[name]->SetLabel(name);
+    debug_graphs_[name]->SetSmoothed(smoothed);
+  }
+  debug_graphs_[name]->SetLastUsedTime(GetRealTime());
+  return debug_graphs_[name].get();
 }
 
 void Graphics::GetSafeColor(float* red, float* green, float* blue,
@@ -1462,13 +1480,13 @@ void Graphics::LocalCameraShake(float mag) {
   }
 }
 
-void Graphics::ToggleDebugInfoDisplay() {
+void Graphics::ToggleNetworkDebugDisplay() {
   assert(InGameThread());
-  debug_info_display_ = !debug_info_display_;
-  if (debug_info_display_) {
-    ScreenMessage("debug info on\n");
+  network_debug_display_enabled_ = !network_debug_display_enabled_;
+  if (network_debug_display_enabled_) {
+    ScreenMessage("Network Debug Display Enabled");
   } else {
-    ScreenMessage("debug info off\n");
+    ScreenMessage("Network Debug Display Disabled");
   }
 }
 

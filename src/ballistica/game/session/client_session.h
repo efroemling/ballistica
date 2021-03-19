@@ -21,20 +21,22 @@ class ClientSession : public Session {
   virtual auto GetActualTimeAdvance(int advance_in) -> int {
     return advance_in;
   }
-  void Update(int time_advance) override;
-  void Draw(FrameDef* f) override;
-  virtual void HandleSessionMessage(const std::vector<uint8_t>& buffer);
-  void Reset(bool rewind);
+  auto Update(int time_advance) -> void override;
+  auto Draw(FrameDef* f) -> void override;
+  virtual auto HandleSessionMessage(const std::vector<uint8_t>& buffer) -> void;
+  auto Reset(bool rewind) -> void;
   auto GetForegroundContext() -> Context override;
   auto DoesFillScreen() const -> bool override;
-  void ScreenSizeChanged() override;
-  void LanguageChanged() override;
-  auto shutting_down() const -> bool { return shutting_down_; }
-  void GetCorrectionMessages(bool blend,
-                             std::vector<std::vector<uint8_t> >* messages);
+  auto ScreenSizeChanged() -> void override;
+  auto LanguageChanged() -> void override;
+  auto GetCorrectionMessages(bool blend,
+                             std::vector<std::vector<uint8_t> >* messages)
+      -> void;
 
-  // Called when attempting to step without input data available.
-  virtual void OnCommandBufferUnderrun() {}
+  /// Called when attempting to step without input data available.
+  virtual auto OnCommandBufferUnderrun() -> void {}
+
+  virtual auto OnBaseTimeStepAdded(int step) -> void {}
 
   // Returns existing objects; throws exceptions if not available.
   auto GetScene(int id) const -> Scene*;
@@ -45,46 +47,83 @@ class ClientSession : public Session {
   auto GetMaterial(int id) const -> Material*;
   auto GetSound(int id) const -> Sound*;
 
- protected:
-  virtual void OnReset(bool rewind);
-  virtual void FetchMessages() {}
-  int steps_on_list_;
-  std::list<std::vector<uint8_t> > commands_;  // ready-to-go commands
+  auto base_time_buffered() const { return base_time_buffered_; }
+  auto consume_rate() const { return consume_rate_; }
+  auto set_consume_rate(float val) { consume_rate_ = val; }
+  auto target_base_time() const { return target_base_time_; }
+  auto base_time() const { return base_time_; }
+  auto shutting_down() const { return shutting_down_; }
+
+  auto scenes() const -> const std::vector<Object::Ref<Scene> >& {
+    return scenes_;
+  }
+  auto nodes() const -> const std::vector<Object::WeakRef<Node> >& {
+    return nodes_;
+  }
+  auto textures() const -> const std::vector<Object::Ref<Texture> >& {
+    return textures_;
+  }
+  auto models() const -> const std::vector<Object::Ref<Model> >& {
+    return models_;
+  }
+  auto sounds() const -> const std::vector<Object::Ref<Sound> >& {
+    return sounds_;
+  }
+  auto collide_models() const
+      -> const std::vector<Object::Ref<CollideModel> >& {
+    return collide_models_;
+  }
+  auto materials() const -> const std::vector<Object::Ref<Material> >& {
+    return materials_;
+  }
+  auto commands() const -> const std::list<std::vector<uint8_t> >& {
+    return commands_;
+  }
+  auto add_end_of_file_command() {
+    commands_.emplace_back(1, static_cast<uint8_t>(SessionCommand::kEndOfFile));
+  }
+  virtual auto OnReset(bool rewind) -> void;
+  virtual auto FetchMessages() -> void {}
   virtual void Error(const std::string& description);
   void End();
-  millisecs_t base_time_;
-  double target_base_time_ = 0.0f;
-  bool shutting_down_;
-  std::vector<int> least_buffered_count_list_;  // move this to net-client?..
-  std::vector<int> most_buffered_count_list_;
-  int buffer_count_list_index_;
-  int adjust_counter_;
-  float correction_ = 1.0f;
-  float largest_spike_smoothed_ = 0.0f;
-  float low_pass_smoothed_ = 0.0f;
+  void DumpFullState(GameStream* out) override;
+
+  /// Reset target base time to equal current. This can be used during command
+  /// buffer underruns to cause playback to pause momentarily instead of
+  /// skipping ahead to catch up. Generally desired for replays but not for
+  /// net-play.
+  auto ResetTargetBaseTime() -> void { target_base_time_ = base_time_; }
 
  private:
   void ClearSessionObjs();
   void AddCommand(const std::vector<uint8_t>& command);
 
-  // commands being built up for the next time step
-  // (we want to be able to run *everything* for a given timestep at once
-  // to avoid drawing things in half-changed states, etc)
-  std::list<std::vector<uint8_t> > commands_pending_;  // commands for the next
-  std::vector<uint8_t> current_cmd_;
-  uint8_t* current_cmd_ptr_;
   auto ReadByte() -> uint8_t;
   auto ReadInt32() -> int32_t;
-  void ReadInt32_2(int32_t* vals);
-  void ReadInt32_3(int32_t* vals);
-  void ReadInt32_4(int32_t* vals);
+  auto ReadInt32_2(int32_t* vals) -> void;
+  auto ReadInt32_3(int32_t* vals) -> void;
+  auto ReadInt32_4(int32_t* vals) -> void;
   auto ReadString() -> std::string;
   auto ReadFloat() -> float;
-  void ReadFloats(int count, float* vals);
-  void ReadInt32s(int count, int32_t* vals);
-  void ReadChars(int count, char* vals);
+  auto ReadFloats(int count, float* vals) -> void;
+  auto ReadInt32s(int count, int32_t* vals) -> void;
+  auto ReadChars(int count, char* vals) -> void;
 
- protected:
+  // Ready-to-go commands.
+  std::list<std::vector<uint8_t> > commands_;
+
+  // Commands being built up for the next time step (we need to ship timesteps
+  // as a whole).
+  std::list<std::vector<uint8_t> > commands_pending_;
+  std::vector<uint8_t> current_cmd_;
+  uint8_t* current_cmd_ptr_{};
+  int base_time_buffered_{};
+  bool shutting_down_{};
+
+  millisecs_t base_time_{};
+  double target_base_time_{};
+  float consume_rate_{1.0f};
+
   std::vector<Object::Ref<Scene> > scenes_;
   std::vector<Object::WeakRef<Node> > nodes_;
   std::vector<Object::Ref<Texture> > textures_;

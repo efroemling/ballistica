@@ -129,8 +129,10 @@ class Graphics {
   auto ToggleManualCamera() -> void;
   auto LocalCameraShake(float intensity) -> void;
   auto ToggleDebugDraw() -> void;
-  auto debug_info_display() const -> bool { return debug_info_display_; }
-  auto ToggleDebugInfoDisplay() -> void;
+  auto network_debug_info_display_enabled() const -> bool {
+    return network_debug_display_enabled_;
+  }
+  auto ToggleNetworkDebugDisplay() -> void;
   auto SetGyroEnabled(bool enable) -> void;
   auto floor_reflection() const -> bool {
     assert(InGameThread());
@@ -265,8 +267,7 @@ class Graphics {
   auto set_gyro_vals(const Vector3f& vals) -> void { gyro_vals_ = vals; }
   auto show_net_info() const -> bool { return show_net_info_; }
   auto set_show_net_info(bool val) -> void { show_net_info_ = val; }
-  auto debug_graph_1() const -> NetGraph* { return debug_graph_1_.get(); }
-  auto debug_graph_2() const -> NetGraph* { return debug_graph_2_.get(); }
+  auto GetDebugGraph(const std::string& name, bool smoothed) -> NetGraph*;
 
   // Used by meshes.
   auto AddMeshDataCreate(MeshData* d) -> void;
@@ -372,12 +373,11 @@ class Graphics {
   bool show_net_info_{};
   bool tv_border_{};
   bool floor_reflection_{};
-  Object::Ref<NetGraph> debug_graph_1_;
-  Object::Ref<NetGraph> debug_graph_2_;
+  std::map<std::string, Object::Ref<NetGraph> > debug_graphs_;
   std::mutex frame_def_delete_list_mutex_;
   std::vector<FrameDef*> frame_def_delete_list_;
   bool debug_draw_{};
-  bool debug_info_display_{};
+  bool network_debug_display_enabled_{};
   Object::Ref<Camera> camera_;
   millisecs_t next_stat_update_time_{};
   int last_total_frames_rendered_{};

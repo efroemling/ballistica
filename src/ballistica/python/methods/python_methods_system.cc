@@ -281,13 +281,14 @@ auto PyValueTest(PyObject* self, PyObject* args, PyObject* keywds)
     return_val = g_app_globals->buffer_time;
   } else if (!strcmp(arg, "delaySampling")) {
     if (have_change) {
-      g_app_globals->delay_samples += static_cast<int>(change);
+      g_app_globals->delay_bucket_samples += static_cast<int>(change);
     }
     if (have_absolute) {
       g_app_globals->buffer_time = static_cast<int>(absolute);
     }
-    g_app_globals->delay_samples = std::max(1, g_app_globals->delay_samples);
-    return_val = g_app_globals->delay_samples;
+    g_app_globals->delay_bucket_samples =
+        std::max(1, g_app_globals->delay_bucket_samples);
+    return_val = g_app_globals->delay_bucket_samples;
   } else if (!strcmp(arg, "dynamicsSyncTime")) {
     if (have_change) {
       g_app_globals->dynamics_sync_time += static_cast<int>(change);

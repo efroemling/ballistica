@@ -66,14 +66,15 @@ class AppGlobals {
   std::string user_config_dir;
   bool started_suicide{};
 
-  // Netplay testing.
-  int buffer_time{1000 / 30};
+  // Maximum time in milliseconds to buffer game input/output before sending
+  // it over the network.
+  int buffer_time{0};
 
-  // How often we send dynamics sync packets.
+  // How often we send dynamics resync messages.
   int dynamics_sync_time{500};
 
   // How many steps we sample for each bucket.
-  int delay_samples{20};
+  int delay_bucket_samples{60};
 
   bool vr_mode{g_buildconfig.vr_build()};
   // Temp dirty way to do some shutdown stuff (FIXME: move to an App method).

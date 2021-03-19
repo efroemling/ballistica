@@ -14,16 +14,30 @@ class NetGraph::Impl {
   std::list<std::pair<double, float>> samples;
   double duration = 2000.0;
   double v_max_smoothed = 1.0;
+  double v_smoothed = 0.0;
+  bool smoothed = false;
+  std::string label;
   ImageMesh bg_mesh;
   MeshIndexedSimpleFull value_mesh;
   TextGroup max_vel_text;
+  millisecs_t last_used_time{};
 };
 
 NetGraph::NetGraph() : impl_(new NetGraph::Impl()) {}
 
 NetGraph::~NetGraph() = default;
 
-void NetGraph::AddSample(double time, double value) {
+auto NetGraph::SetLabel(const std::string& label) -> void {
+  impl_->label = label;
+}
+auto NetGraph::SetSmoothed(bool val) -> void { impl_->smoothed = val; }
+
+auto NetGraph::SetLastUsedTime(millisecs_t real_time) -> void {
+  impl_->last_used_time = real_time;
+}
+auto NetGraph::LastUsedTime() -> millisecs_t { return impl_->last_used_time; }
+
+auto NetGraph::AddSample(double time, double value) -> void {
   impl_->samples.emplace_back(time, value);
   double cutoffTime = time - impl_->duration;
 
@@ -49,6 +63,8 @@ void NetGraph::Draw(RenderPass* pass, double time, double x, double y, double w,
 
   int num_samples = static_cast<int>(impl_->samples.size());
 
+  double val = 0.0;
+
   // Draw values (provided we have at least 2 samples)
   bool draw_values = (num_samples >= 2);
   if (draw_values) {
@@ -66,8 +82,10 @@ void NetGraph::Draw(RenderPass* pass, double time, double x, double y, double w,
       }
     }
     double smoothing = 0.95;
+    val = impl_->samples.back().second;
     impl_->v_max_smoothed =
         smoothing * impl_->v_max_smoothed + (1.0 - smoothing) * v_max * 1.1;
+    impl_->v_smoothed = smoothing * impl_->v_smoothed + (1.0 - smoothing) * val;
 
     double v_top = impl_->v_max_smoothed;
     double v_height = v_top - v_bottom;
@@ -129,7 +147,14 @@ void NetGraph::Draw(RenderPass* pass, double time, double x, double y, double w,
   c.Submit();
 
   char val_str[32];
-  snprintf(val_str, sizeof(val_str), "%.2f", impl_->v_max_smoothed);
+  if (!impl_->label.empty()) {
+    snprintf(val_str, sizeof(val_str), "%s %.3f", impl_->label.c_str(),
+             impl_->smoothed ? impl_->v_smoothed : val);
+
+  } else {
+    snprintf(val_str, sizeof(val_str), "%.3f",
+             impl_->smoothed ? impl_->v_smoothed : val);
+  }
   impl_->max_vel_text.SetText(val_str, TextMesh::HAlign::kLeft,
                               TextMesh::VAlign::kTop);
 
