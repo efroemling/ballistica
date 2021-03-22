@@ -337,11 +337,23 @@ class Utils {
     return false;
   }
 
-  /// Simple lists of pre-calculated random values between 0 and 1
-  /// (with no particular distribution)
-  static float precalc_rands_1[];
-  static float precalc_rands_2[];
-  static float precalc_rands_3[];
+  // Simple lists of pre-calculated random values between 0 and 1
+  // (with no particular distribution)
+  static float precalc_rand_1(int index) {
+    assert(index >= 0);
+    assert(index < kPrecalcRandsCount);
+    return precalc_rands_1_[index];
+  }
+  static float precalc_rand_2(int index) {
+    assert(index >= 0);
+    assert(index < kPrecalcRandsCount);
+    return precalc_rands_2_[index];
+  }
+  static float precalc_rand_3(int index) {
+    assert(index >= 0);
+    assert(index < kPrecalcRandsCount);
+    return precalc_rands_3_[index];
+  }
   auto huffman() -> Huffman* { return huffman_.get(); }
 
   // FIXME - move to a nice math-y place
@@ -358,6 +370,9 @@ class Utils {
   }
 
  private:
+  static float precalc_rands_1_[];
+  static float precalc_rands_2_[];
+  static float precalc_rands_3_[];
   std::unique_ptr<Huffman> huffman_;
 };
 

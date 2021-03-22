@@ -96,9 +96,9 @@ void NetGraph::Draw(RenderPass* pass, double time, double x, double y, double w,
     VertexSimpleFull* v = vertex_buffer->elements.data();
     for (auto&& s : impl_->samples) {
       double t = s.first;
-      double val = s.second;
+      double sval = s.second;
       double vx = x + w * ((t - t_left) / t_width);
-      double vy = y + h * ((val - v_bottom) / v_height);
+      double vy = y + h * ((sval - v_bottom) / v_height);
       v->position[0] = static_cast<float>(vx);
       v->position[1] = static_cast<float>(y);
       v->position[2] = 0.0f;

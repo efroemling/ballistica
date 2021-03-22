@@ -616,13 +616,13 @@ void FlagNode::UpdateFlagMesh() {
       if (explicit_bool(do_wind)) {
         flag_velocities_[top_right].x +=
             wind_vec.x * kWindStrength
-            * (Utils::precalc_rands_1[wind_rand_ % kPrecalcRandsCount] - 0.3f);
+            * (Utils::precalc_rand_1(wind_rand_ % kPrecalcRandsCount) - 0.3f);
         flag_velocities_[top_right].y +=
             wind_vec.y * kWindStrength
-            * (Utils::precalc_rands_2[wind_rand_ % kPrecalcRandsCount] - 0.3f);
+            * (Utils::precalc_rand_2(wind_rand_ % kPrecalcRandsCount) - 0.3f);
         flag_velocities_[top_right].z +=
             wind_vec.z * kWindStrength
-            * (Utils::precalc_rands_3[wind_rand_ % kPrecalcRandsCount] - 0.3f);
+            * (Utils::precalc_rand_3(wind_rand_ % kPrecalcRandsCount) - 0.3f);
       }
       UpdateSpringPoint(top_left, top_right, kFlagCanvasScaleX);
       UpdateSpringPoint(bot_left, bot_right, kFlagCanvasScaleX);

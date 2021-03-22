@@ -3057,8 +3057,8 @@ void SpazNode::Step() {
             //                    0,1,0,
             //                    std::max(-0.5f,std::min(0.5f,a_vel_y_smoothed_more_*-0.07f)));
           } else if (gti % 30 == 0
-                     && Utils::precalc_rands_1[(gti + stream_id() * 3 + 143)
-                                               % kPrecalcRandsCount]
+                     && Utils::precalc_rand_1((gti + stream_id() * 3 + 143)
+                                              % kPrecalcRandsCount)
                             > 0.9f) {
             // otherwise, look around occasionally..
             // else if (getScene()->stepnum()%30 == 0 and
@@ -3069,17 +3069,17 @@ void SpazNode::Step() {
             head_turning = true;
             dQFromAxisAndAngle(
                 neck_joint_->qrel,
-                Utils::precalc_rands_1[(stream_id() - gti)
-                                       % (kPrecalcRandsCount - 3)]
+                Utils::precalc_rand_1((stream_id() + gti)
+                                      % (kPrecalcRandsCount - 3))
                     * 0.05f,
-                Utils::precalc_rands_2[(stream_id() + 42 * gti)
-                                       % kPrecalcRandsCount],
-                Utils::precalc_rands_3[(stream_id() + 3 * gti)
-                                       % (kPrecalcRandsCount - 1)]
+                Utils::precalc_rand_2((stream_id() + 42 * gti)
+                                      % kPrecalcRandsCount),
+                Utils::precalc_rand_3((stream_id() + 3 * gti)
+                                      % (kPrecalcRandsCount - 1))
                     * 0.05f,
                 1.5f
-                    * (Utils::precalc_rands_2[(stream_id() + gti)
-                                              % kPrecalcRandsCount]
+                    * (Utils::precalc_rand_2((stream_id() + gti)
+                                             % kPrecalcRandsCount)
                        - 0.5f));
             // dQFromAxisAndAngle(neck_joint_->qrel,
             //                    RandomFloat()*0.05f,
@@ -6190,7 +6190,7 @@ void SpazNode::SetShattered(int val) {
       shatter_lower = 0.6f;
     } else if (last_hit_was_punch_) {
       // Punches mostly take heads off or break torsos in half.
-      if (Utils::precalc_rands_2[(stream_id() * 31 + 112) % kPrecalcRandsCount]
+      if (Utils::precalc_rand_2((stream_id() * 31 + 112) % kPrecalcRandsCount)
           > 0.3f) {
         shatter_neck = 0.9f;
         shatter_pelvis = 0.1f;
@@ -6210,24 +6210,24 @@ void SpazNode::SetShattered(int val) {
     // in kid-friendly mode, don't shatter anything..
     if (explicit_bool(true)) {
       float rand1 =
-          Utils::precalc_rands_1[(stream_id() * 3 + 1) % kPrecalcRandsCount];
+          Utils::precalc_rand_1((stream_id() * 3 + 1) % kPrecalcRandsCount);
       float rand2 =
-          Utils::precalc_rands_2[(stream_id() * 2 + 111) % kPrecalcRandsCount];
+          Utils::precalc_rand_2((stream_id() * 2 + 111) % kPrecalcRandsCount);
       float rand3 =
-          Utils::precalc_rands_3[(stream_id() * 4 + 7) % kPrecalcRandsCount];
+          Utils::precalc_rand_3((stream_id() * 4 + 7) % kPrecalcRandsCount);
       float rand4 =
-          Utils::precalc_rands_1[(stream_id() * 7 + 78) % kPrecalcRandsCount];
-      float rand5 = Utils::precalc_rands_3[(stream_id()) % kPrecalcRandsCount];
+          Utils::precalc_rand_1((stream_id() * 7 + 78) % kPrecalcRandsCount);
+      float rand5 = Utils::precalc_rand_3((stream_id()) % kPrecalcRandsCount);
       float rand6 =
-          Utils::precalc_rands_2[(stream_id() / 2 + 17) % kPrecalcRandsCount];
+          Utils::precalc_rand_2((stream_id() / 2 + 17) % kPrecalcRandsCount);
       float rand7 =
-          Utils::precalc_rands_1[(stream_id() * 10) % kPrecalcRandsCount];
+          Utils::precalc_rand_1((stream_id() * 10) % kPrecalcRandsCount);
       float rand8 =
-          Utils::precalc_rands_3[(stream_id() * 17 + 2) % kPrecalcRandsCount];
+          Utils::precalc_rand_3((stream_id() * 17 + 2) % kPrecalcRandsCount);
       float rand9 =
-          Utils::precalc_rands_2[(stream_id() * 13 + 22) % kPrecalcRandsCount];
+          Utils::precalc_rand_2((stream_id() * 13 + 22) % kPrecalcRandsCount);
       float rand10 =
-          Utils::precalc_rands_2[(stream_id() + 19) % kPrecalcRandsCount];
+          Utils::precalc_rand_2((stream_id() + 19) % kPrecalcRandsCount);
 
       // Head/mid-torso are most common losses.
       if (rand1 < shatter_neck) shatter_damage_ |= kNeckJointBroken;

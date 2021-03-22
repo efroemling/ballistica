@@ -243,12 +243,12 @@ void ShieldNode::Draw(FrameDef* frame_def) {
     c.MultMatrix((om * m).m);
     float s = radius_ * 0.53f;
     c.Scale(s, s, s);
-    c.Rotate(Utils::precalc_rands_1[rot_count_ % kPrecalcRandsCount] * 360, 0,
-             1, 0);
+    c.Rotate(Utils::precalc_rand_1(rot_count_ % kPrecalcRandsCount) * 360, 0, 1,
+             0);
     float r2 =
         r_scale_
         * (0.97f
-           + 0.05f * Utils::precalc_rands_2[rot_count_ % kPrecalcRandsCount]);
+           + 0.05f * Utils::precalc_rand_2(rot_count_ % kPrecalcRandsCount));
     c.Scale(r2, r2, r2);
     c.DrawModel(g_media->GetModel(SystemModelID::kShield),
                 kModelDrawFlagNoReflection);
@@ -261,8 +261,8 @@ void ShieldNode::Draw(FrameDef* frame_def) {
       c2.PushTransform();
       c2.MultMatrix((om * m).m);
       c2.Scale(s, s, s);
-      c2.Rotate(Utils::precalc_rands_1[rot_count_ % kPrecalcRandsCount] * 360,
-                0, 1, 0);
+      c2.Rotate(Utils::precalc_rand_1(rot_count_ % kPrecalcRandsCount) * 360, 0,
+                1, 0);
       c2.Scale(r2, r2, r2);
       c2.DrawModel(g_media->GetModel(SystemModelID::kShield));
       c2.PopTransform();
@@ -274,8 +274,8 @@ void ShieldNode::Draw(FrameDef* frame_def) {
       c2.PushTransform();
       c2.MultMatrix((om * m).m);
       c2.Scale(s, s, s);
-      c2.Rotate(Utils::precalc_rands_1[rot_count_ % kPrecalcRandsCount] * 360,
-                0, 1, 0);
+      c2.Rotate(Utils::precalc_rand_1(rot_count_ % kPrecalcRandsCount) * 360, 0,
+                1, 0);
       float sc = r2 * 1.1f;
       c2.Scale(sc, sc, sc);
       c2.DrawModel(g_media->GetModel(SystemModelID::kShield));

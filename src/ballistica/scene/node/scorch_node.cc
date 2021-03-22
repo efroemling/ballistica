@@ -75,7 +75,7 @@ void ScorchNode::Draw(FrameDef* frame_def) {
   c.Translate(position_[0], position_[1], position_[2]);
   c.Scale(o * size_ * rand_size_[0], o * size_ * rand_size_[1],
           o * size_ * rand_size_[2]);
-  c.Rotate(Utils::precalc_rands_1[id() % kPrecalcRandsCount] * 360.0f, 0, 1, 0);
+  c.Rotate(Utils::precalc_rand_1(id() % kPrecalcRandsCount) * 360.0f, 0, 1, 0);
   c.DrawModel(g_media->GetModel(SystemModelID::kScorch));
   c.PopTransform();
   c.Submit();

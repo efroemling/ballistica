@@ -650,16 +650,16 @@ void Camera::Update(millisecs_t elapsed) {
   if (!IsVRMode()) {
     smooth_speed_.x += elapsed * rand_component
                        * (-0.5f
-                          + Utils::precalc_rands_1[(real_time / rand_incr_1)
-                                                   % kPrecalcRandsCount]);
+                          + Utils::precalc_rand_1((real_time / rand_incr_1)
+                                                  % kPrecalcRandsCount));
     smooth_speed_.y += elapsed * rand_component
                        * (-0.5f
-                          + Utils::precalc_rands_2[(real_time / rand_incr_2)
-                                                   % kPrecalcRandsCount]);
+                          + Utils::precalc_rand_2((real_time / rand_incr_2)
+                                                  % kPrecalcRandsCount));
     smooth_speed_.z += elapsed * rand_component
                        * (-0.5f
-                          + Utils::precalc_rands_3[(real_time / rand_incr_3)
-                                                   % kPrecalcRandsCount]);
+                          + Utils::precalc_rand_3((real_time / rand_incr_3)
+                                                  % kPrecalcRandsCount));
   }
 
   if (RandomFloat() < 0.1f && !IsVRMode()) {
@@ -706,18 +706,18 @@ void Camera::Update(millisecs_t elapsed) {
     // Jostle the camera occasionally if we're shaking.
     if (i % iterations == 0 && shake_amount_ > 0.0001f) {
       shake_amount_ *= 0.97f;
-      shake_vel_.x += 0.05f * shake_amount_
-                      * (0.5f
-                         - Utils::precalc_rands_1[real_time % 122 * i
-                                                  % kPrecalcRandsCount]);
-      shake_vel_.y += 0.05f * shake_amount_
-                      * (0.5f
-                         - Utils::precalc_rands_2[real_time % 323 * i
-                                                  % kPrecalcRandsCount]);
+      shake_vel_.x +=
+          0.05f * shake_amount_
+          * (0.5f
+             - Utils::precalc_rand_1(real_time % 122 * i % kPrecalcRandsCount));
+      shake_vel_.y +=
+          0.05f * shake_amount_
+          * (0.5f
+             - Utils::precalc_rand_2(real_time % 323 * i % kPrecalcRandsCount));
       shake_vel_.z +=
           0.05f * shake_amount_
           * (0.5f
-             - Utils::precalc_rands_3[real_time % 76 * i % kPrecalcRandsCount]);
+             - Utils::precalc_rand_3(real_time % 76 * i % kPrecalcRandsCount));
     }
 
     for (int j = 0; j < iterations; j++) {

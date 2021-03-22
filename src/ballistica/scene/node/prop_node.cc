@@ -314,8 +314,8 @@ void PropNode::SetBody(const std::string& val) {
     int64_t gti = scene()->stepnum();
     dQFromAxisAndAngle(
         iq, 0.05f, 1, 0,
-        Utils::precalc_rands_1[(stream_id() + gti) % kPrecalcRandsCount]
-            * 360.0f * (kPi / 180.0f));
+        Utils::precalc_rand_1((stream_id() + gti) % kPrecalcRandsCount) * 360.0f
+            * (kPi / 180.0f));
     dBodySetQuaternion(body_->body(), iq);
   }
 }

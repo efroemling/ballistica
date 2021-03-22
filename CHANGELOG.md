@@ -1,4 +1,4 @@
-### 1.6.0 (20308)
+### 1.6.0 (20326)
 - Revamped netcode significantly. We still don't have client-prediction, but things should (hopefully) feel much lower latency now.
 - Added network debug graphs accessible by hitting F8.
 - Added private parties functionality (cloud hosted parties with associated codes making it easier to play with friends)
@@ -15,6 +15,7 @@
 - Binary -cfgdir option now properly allows any path, not just './ba_root'.
 - Additional server-wrapper options such as disabling auto-restart and automatic restarts on config file changes.
 - Running a `_ba.connect_to_party` command via the -exec arg should now do the right thing.
+- Fixed possible crash due to buffer under/overruns in `Utils::precalc_rands_*`.
 
 ### 1.5.29 (20246)
 - Exposed ba method/class initing in public C++ layer.

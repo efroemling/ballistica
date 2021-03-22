@@ -31,7 +31,7 @@ namespace ballistica {
 #endif
 
 #if USE_BAKED_RANDS
-float Utils::precalc_rands_1[kPrecalcRandsCount] = {
+float Utils::precalc_rands_1_[kPrecalcRandsCount] = {
     0.00424972f, 0.0470216f,   0.545227f,  0.538243f,  0.214183f,  0.627205f,
     0.194698f,   0.917583f,    0.468622f,  0.0779965f, 0.304211f,  0.773231f,
     0.522742f,   0.378898f,    0.404598f,  0.468434f,  0.081512f,  0.408348f,
@@ -54,7 +54,7 @@ float Utils::precalc_rands_1[kPrecalcRandsCount] = {
     0.0674501f,  0.000782927f, 0.607129f,  0.116035f,  0.67095f,   0.692934f,
     0.276618f,   0.137535f,    0.771033f,  0.278625f,  0.686023f,  0.873823f,
     0.254666f,   0.75378f};
-float Utils::precalc_rands_2[kPrecalcRandsCount] = {
+float Utils::precalc_rands_2_[kPrecalcRandsCount] = {
     0.425019f,   0.29261f,   0.623541f,  0.241628f,  0.772656f, 0.434116f,
     0.295335f,   0.814317f,  0.122326f,  0.887651f,  0.873536f, 0.692463f,
     0.730894f,   0.142115f,  0.0722184f, 0.977652f,  0.971393f, 0.111517f,
@@ -77,7 +77,7 @@ float Utils::precalc_rands_2[kPrecalcRandsCount] = {
     0.634341f,   0.158655f,  0.0157559f, 0.195268f,  0.663882f, 0.148622f,
     0.118159f,   0.552174f,  0.757064f,  0.854851f,  0.991449f, 0.349681f,
     0.17858f,    0.774876f};
-float Utils::precalc_rands_3[kPrecalcRandsCount] = {
+float Utils::precalc_rands_3_[kPrecalcRandsCount] = {
     0.29369f,    0.894838f,  0.857948f,   0.04309f,   0.0296678f, 0.180115f,
     0.694884f,   0.227017f,  0.936936f,   0.746493f,  0.511976f,  0.231185f,
     0.1333f,     0.524805f,  0.774586f,   0.395971f,  0.206664f,  0.274414f,
@@ -101,9 +101,9 @@ float Utils::precalc_rands_3[kPrecalcRandsCount] = {
     0.895885f,   0.391311f,  0.976098f,   0.473118f,  0.286659f,  0.0946781f,
     0.402437f,   0.347471f};
 #else   // USE_BAKED_RANDS
-float Utils::precalc_rands_1[kPrecalcRandsCount];
-float Utils::precalc_rands_2[kPrecalcRandsCount];
-float Utils::precalc_rands_3[kPrecalcRandsCount];
+float Utils::precalc_rands_1_[kPrecalcRandsCount];
+float Utils::precalc_rands_2_[kPrecalcRandsCount];
+float Utils::precalc_rands_3_[kPrecalcRandsCount];
 #endif  // USE_BAKED_RANDS
 
 Utils::Utils() {
@@ -149,9 +149,9 @@ Utils::Utils() {
 #else
   // set up our precalculated rand vals
   for (int i = 0; i < kPrecalcRandsCount; i++) {
-    precalc_rands_1[i] = static_cast<float>(rand()) / RAND_MAX;  // NOLINT
-    precalc_rands_2[i] = static_cast<float>(rand()) / RAND_MAX;  // NOLINT
-    precalc_rands_3[i] = static_cast<float>(rand()) / RAND_MAX;  // NOLINT
+    precalc_rands_1_[i] = static_cast<float>(rand()) / RAND_MAX;  // NOLINT
+    precalc_rands_2_[i] = static_cast<float>(rand()) / RAND_MAX;  // NOLINT
+    precalc_rands_3_[i] = static_cast<float>(rand()) / RAND_MAX;  // NOLINT
   }
 #endif
   huffman_ = std::make_unique<Huffman>();
