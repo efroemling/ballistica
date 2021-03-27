@@ -252,6 +252,7 @@
       <w>btnv</w>
       <w>btnx</w>
       <w>btype</w>
+      <w>bucketnum</w>
       <w>buildblessing</w>
       <w>buildblessingcheck</w>
       <w>builddir</w>
@@ -2050,6 +2051,7 @@
       <w>strippable</w>
       <w>strobing</w>
       <w>strptime</w>
+      <w>strs</w>
       <w>strt</w>
       <w>strval</w>
       <w>subargs</w>

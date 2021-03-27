@@ -9,8 +9,8 @@ import logging
 from enum import Enum
 from typing import TYPE_CHECKING, Generic, TypeVar, overload
 
-from efro.util import enum_by_value
-from efro.entity._base import BaseField
+# from efro.util import enum_by_value
+from efro.entity._base import BaseField, dict_key_to_raw, dict_key_from_raw
 from efro.entity._support import (BoundCompoundValue, BoundListField,
                                   BoundDictField, BoundCompoundListField,
                                   BoundCompoundDictField)
@@ -250,15 +250,22 @@ class DictField(BaseField, Generic[TK, T]):
 
             # For enum keys, make sure its a valid enum.
             if issubclass(self._keytype, Enum):
-                try:
-                    _enumval = enum_by_value(self._keytype, key)
-                except Exception as exc:
-                    if error:
-                        raise ValueError(f'No enum of type {self._keytype}'
-                                         f' exists with value {key}') from exc
-                    logging.error('Ignoring invalid key type for %s: %s', self,
-                                  data)
-                    continue
+                # Our input data can either be an enum or the underlying type.
+                if isinstance(key, self._keytype):
+                    key = dict_key_to_raw(key, self._keytype)
+                #     key = key.value
+                else:
+                    try:
+                        _enumval = dict_key_from_raw(key, self._keytype)
+                        # _enumval = enum_by_value(self._keytype, key)
+                    except Exception as exc:
+                        if error:
+                            raise ValueError(
+                                f'No enum of type {self._keytype}'
+                                f' exists with value {key}') from exc
+                        logging.error('Ignoring invalid key type for %s: %s',
+                                      self, data)
+                        continue
 
             # For all other keys we can check for exact types.
             elif not isinstance(key, self._keytype):
@@ -466,15 +473,22 @@ class CompoundDictField(BaseField, Generic[TK, TC]):
 
             # For enum keys, make sure its a valid enum.
             if issubclass(self.d_keytype, Enum):
-                try:
-                    _enumval = enum_by_value(self.d_keytype, key)
-                except Exception as exc:
-                    if error:
-                        raise ValueError(f'No enum of type {self.d_keytype}'
-                                         f' exists with value {key}') from exc
-                    logging.error('Ignoring invalid key type for %s: %s', self,
-                                  data)
-                    continue
+                # Our input data can either be an enum or the underlying type.
+                if isinstance(key, self.d_keytype):
+                    key = dict_key_to_raw(key, self.d_keytype)
+                    # key = key.value
+                else:
+                    try:
+                        _enumval = dict_key_from_raw(key, self.d_keytype)
+                        # _enumval = enum_by_value(self.d_keytype, key)
+                    except Exception as exc:
+                        if error:
+                            raise ValueError(
+                                f'No enum of type {self.d_keytype}'
+                                f' exists with value {key}') from exc
+                        logging.error('Ignoring invalid key type for %s: %s',
+                                      self, data)
+                        continue
 
             # For all other keys we can check for exact types.
             elif not isinstance(key, self.d_keytype):

@@ -141,8 +141,11 @@ def test_entity_values() -> None:
     # And set with incorrect value type should do same.
     with pytest.raises(TypeError):
         ent.enum_int_dict[EnumTest.FIRST] = 'bar'  # type: ignore
-    # Make sure is stored as underlying type.
-    assert ent.d_data['ed'] == {0: 234}
+    # Make sure is stored as underlying type (though we convert ints to strs).
+    assert ent.d_data['ed'] == {'0': 234}
+    # Make sure assignment as dict works correctly with enum keys.
+    ent.enum_int_dict = {EnumTest.FIRST: 235}
+    assert ent.enum_int_dict[EnumTest.FIRST] == 235
 
     # Make sure invalid raw enum values are caught.
     ent2 = EntityTest()
@@ -221,7 +224,11 @@ def test_entity_values_2() -> None:
         ent.compounddict4[0].isubval = 222  # type: ignore
     assert static_type_equals(ent.compounddict4[EnumTest.FIRST], CompoundTest)
     # Make sure enum keys are stored as underlying type.
-    assert ent.d_data['td4'] == {0: {'i': 222, 'l': []}}
+    # (though with ints converted to strs)
+    assert ent.d_data['td4'] == {'0': {'i': 222, 'l': []}}
+    # Make sure assignment as dict works correctly with enum keys.
+    ent.compounddict4 = {EnumTest.SECOND: ent.compounddict4[EnumTest.FIRST]}
+    assert ent.compounddict4[EnumTest.SECOND].isubval == 222
 
     # Optional Enum value
     ent.enumval2 = None

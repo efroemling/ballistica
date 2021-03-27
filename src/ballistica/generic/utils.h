@@ -339,17 +339,17 @@ class Utils {
 
   // Simple lists of pre-calculated random values between 0 and 1
   // (with no particular distribution)
-  static float precalc_rand_1(int index) {
+  static float precalc_rand_1(int64_t index) {
     assert(index >= 0);
     assert(index < kPrecalcRandsCount);
     return precalc_rands_1_[index];
   }
-  static float precalc_rand_2(int index) {
+  static float precalc_rand_2(int64_t index) {
     assert(index >= 0);
     assert(index < kPrecalcRandsCount);
     return precalc_rands_2_[index];
   }
-  static float precalc_rand_3(int index) {
+  static float precalc_rand_3(int64_t index) {
     assert(index >= 0);
     assert(index < kPrecalcRandsCount);
     return precalc_rands_3_[index];

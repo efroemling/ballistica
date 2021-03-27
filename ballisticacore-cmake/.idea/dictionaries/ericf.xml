@@ -119,6 +119,7 @@
       <w>bstat</w>
       <w>bsuuid</w>
       <w>btnlabel</w>
+      <w>bucketnum</w>
       <w>bufs</w>
       <w>buildconfig</w>
       <w>buildnumber</w>
@@ -892,6 +893,7 @@
       <w>strdup</w>
       <w>stringi</w>
       <w>strlen</w>
+      <w>strs</w>
       <w>strtof</w>
       <w>subargs</w>
       <w>subclsssing</w>

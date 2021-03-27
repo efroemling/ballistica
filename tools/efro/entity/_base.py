@@ -7,6 +7,8 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING
 
+from efro.util import enum_by_value
+
 if TYPE_CHECKING:
     from typing import Any, Type
 
@@ -17,14 +19,24 @@ def dict_key_to_raw(key: Any, keytype: Type) -> Any:
         raise TypeError(
             f'Invalid key type; expected {keytype}, got {type(key)}.')
     if issubclass(keytype, Enum):
-        return key.value
+        val = key.value
+        # We convert int enums to string since that is what firestore supports.
+        if isinstance(val, int):
+            val = str(val)
+        return val
     return key
 
 
 def dict_key_from_raw(key: Any, keytype: Type) -> Any:
     """Given internal key, filter to world visible type."""
     if issubclass(keytype, Enum):
-        return keytype(key)
+        # We store all enum keys as strings; if the enum uses
+        # int keys, convert back.
+        for enumval in keytype:
+            if isinstance(enumval.value, int):
+                return enum_by_value(keytype, int(key))
+            break
+        return enum_by_value(keytype, key)
     return key
 
 
