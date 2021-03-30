@@ -251,6 +251,9 @@ class Map(Actor):
                              or [(0, 0, 0, 0, 0, 0)])
         self.ffa_spawn_points = (self.get_def_points('ffa_spawn')
                                  or [(0, 0, 0, 0, 0, 0)])
+        # Let's shuffle our spawn points,
+        # so that no one is offended by the constant spawn on the edge.
+        random.shuffle(self.ffa_spawn_points)
         self.spawn_by_flag_points = (self.get_def_points('spawn_by_flag')
                                      or [(0, 0, 0, 0, 0, 0)])
         self.flag_points = self.get_def_points('flag') or [(0, 0, 0)]
