@@ -636,6 +636,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   build/ba_data/python/bacommon/__init__.py \
   build/ba_data/python/bacommon/assets.py \
   build/ba_data/python/bacommon/err.py \
+  build/ba_data/python/bacommon/net.py \
   build/ba_data/python/bacommon/servermanager.py \
   build/ba_data/python/efro/__init__.py \
   build/ba_data/python/efro/call.py \
@@ -656,6 +657,7 @@ SCRIPT_TARGETS_PYC_PUBLIC_TOOLS = \
   build/ba_data/python/bacommon/__pycache__/__init__.cpython-38.opt-1.pyc \
   build/ba_data/python/bacommon/__pycache__/assets.cpython-38.opt-1.pyc \
   build/ba_data/python/bacommon/__pycache__/err.cpython-38.opt-1.pyc \
+  build/ba_data/python/bacommon/__pycache__/net.cpython-38.opt-1.pyc \
   build/ba_data/python/bacommon/__pycache__/servermanager.cpython-38.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/__init__.cpython-38.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/call.cpython-38.opt-1.pyc \

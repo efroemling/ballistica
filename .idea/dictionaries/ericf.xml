@@ -1400,6 +1400,7 @@
       <w>nearbytab</w>
       <w>neededsettings</w>
       <w>ness</w>
+      <w>netcode</w>
       <w>netlink</w>
       <w>netplay</w>
       <w>nettest</w>
@@ -1901,6 +1902,7 @@
       <w>serverget</w>
       <w>servermanager</w>
       <w>servermode</w>
+      <w>servernodes</w>
       <w>serverput</w>
       <w>serverutils</w>
       <w>sessionclass</w>

@@ -599,6 +599,7 @@
       <w>nemanja</w>
       <w>ness</w>
       <w>netclient</w>
+      <w>netcode</w>
       <w>netplay</w>
       <w>nettest</w>
       <w>newactivity</w>
@@ -815,6 +816,7 @@
       <w>seqtypestr</w>
       <w>serv</w>
       <w>serverget</w>
+      <w>servernodes</w>
       <w>serverput</w>
       <w>sessiondata</w>
       <w>sessionglobals</w>
