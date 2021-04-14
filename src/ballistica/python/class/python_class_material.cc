@@ -2,9 +2,6 @@
 
 #include "ballistica/python/class/python_class_material.h"
 
-#include <string>
-#include <vector>
-
 #include "ballistica/dynamics/material/impact_sound_material_action.h"
 #include "ballistica/dynamics/material/material.h"
 #include "ballistica/dynamics/material/material_component.h"

@@ -2,11 +2,7 @@
 
 #include "ballistica/python/class/python_class_timer.h"
 
-#include <string>
-
 #include "ballistica/game/game.h"
-#include "ballistica/game/host_activity.h"
-#include "ballistica/game/session/host_session.h"
 #include "ballistica/python/python_context_call_runnable.h"
 
 namespace ballistica {

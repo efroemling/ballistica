@@ -2,8 +2,9 @@
 
 #include "ballistica/media/data/texture_preload_data.h"
 
-#include <algorithm>
+#if BA_OSTYPE_LINUX
 #include <cstring>
+#endif
 
 #include "ballistica/graphics/texture/ktx.h"
 #include "ballistica/media/component/texture.h"

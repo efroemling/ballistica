@@ -2,11 +2,8 @@
 
 #include "ballistica/scene/node/text_node.h"
 
-#include <algorithm>
-
 #include "ballistica/generic/utils.h"
 #include "ballistica/graphics/component/simple_component.h"
-#include "ballistica/graphics/graphics.h"
 #include "ballistica/graphics/text/text_graphics.h"
 #include "ballistica/python/python.h"
 #include "ballistica/scene/node/node_attribute.h"

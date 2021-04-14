@@ -2,9 +2,6 @@
 
 #include "ballistica/python/methods/python_methods_ui.h"
 
-#include <string>
-#include <vector>
-
 #include "ballistica/app/app.h"
 #include "ballistica/app/app_globals.h"
 #include "ballistica/game/account.h"
@@ -18,13 +15,11 @@
 #include "ballistica/ui/widget/button_widget.h"
 #include "ballistica/ui/widget/check_box_widget.h"
 #include "ballistica/ui/widget/column_widget.h"
-#include "ballistica/ui/widget/container_widget.h"
 #include "ballistica/ui/widget/h_scroll_widget.h"
 #include "ballistica/ui/widget/image_widget.h"
 #include "ballistica/ui/widget/root_widget.h"
 #include "ballistica/ui/widget/row_widget.h"
 #include "ballistica/ui/widget/scroll_widget.h"
-#include "ballistica/ui/widget/text_widget.h"
 
 #if !BA_HEADLESS_BUILD
 extern "C" void SDL_ericf_focus();

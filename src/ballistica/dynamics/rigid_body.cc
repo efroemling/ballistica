@@ -2,8 +2,6 @@
 
 #include "ballistica/dynamics/rigid_body.h"
 
-#include <cmath>
-
 #include "ballistica/dynamics/dynamics.h"
 #include "ballistica/dynamics/part.h"
 #include "ballistica/generic/utils.h"

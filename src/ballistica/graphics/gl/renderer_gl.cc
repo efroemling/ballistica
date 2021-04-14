@@ -3,19 +3,9 @@
 #if BA_ENABLE_OPENGL
 #include "ballistica/graphics/gl/renderer_gl.h"
 
-#include <algorithm>
-#include <ctime>
-#include <list>
-#include <memory>
-#include <utility>
-
 #include "ballistica/graphics/component/special_component.h"
-#include "ballistica/graphics/graphics.h"
 #include "ballistica/graphics/graphics_server.h"
 #include "ballistica/graphics/mesh/mesh_renderer_data.h"
-#include "ballistica/math/matrix44f.h"
-#include "ballistica/media/data/model_data.h"
-#include "ballistica/media/data/model_renderer_data.h"
 #include "ballistica/media/data/texture_preload_data.h"
 #include "ballistica/media/data/texture_renderer_data.h"
 

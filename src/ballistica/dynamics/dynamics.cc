@@ -2,9 +2,6 @@
 
 #include "ballistica/dynamics/dynamics.h"
 
-#include <cmath>
-#include <utility>
-
 #include "ballistica/audio/audio.h"
 #include "ballistica/audio/audio_source.h"
 #include "ballistica/dynamics/collision.h"

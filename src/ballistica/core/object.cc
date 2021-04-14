@@ -2,15 +2,11 @@
 
 #include "ballistica/core/object.h"
 
-#include <algorithm>
 #include <mutex>
-#include <string>
 #include <unordered_map>
-#include <utility>
 
 #include "ballistica/app/app_globals.h"
 #include "ballistica/generic/utils.h"
-#include "ballistica/platform/min_sdl.h"
 #include "ballistica/platform/platform.h"
 
 namespace ballistica {

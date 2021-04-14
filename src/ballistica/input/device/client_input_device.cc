@@ -2,9 +2,6 @@
 
 #include "ballistica/input/device/client_input_device.h"
 
-#include <string>
-#include <vector>
-
 #include "ballistica/game/connection/connection_to_client.h"
 #include "ballistica/game/player.h"
 #include "ballistica/networking/networking.h"

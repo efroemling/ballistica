@@ -2,8 +2,6 @@
 
 #include "ballistica/audio/audio_source.h"
 
-#include <cmath>
-
 #include "ballistica/audio/audio.h"
 #include "ballistica/audio/audio_server.h"
 #include "ballistica/math/vector3f.h"

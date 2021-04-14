@@ -2,9 +2,6 @@
 
 #include "ballistica/input/device/touch_input.h"
 
-#include <algorithm>
-#include <vector>
-
 #include "ballistica/app/app_config.h"
 #include "ballistica/app/app_globals.h"
 #include "ballistica/game/host_activity.h"
@@ -12,7 +9,6 @@
 #include "ballistica/graphics/camera.h"
 #include "ballistica/graphics/component/simple_component.h"
 #include "ballistica/python/python.h"
-#include "ballistica/python/python_command.h"
 #include "ballistica/scene/node/player_node.h"
 #include "ballistica/ui/ui.h"
 

@@ -3,7 +3,6 @@
 #include "ballistica/python/methods/python_methods_gameplay.h"
 
 #include <list>
-#include <string>
 
 #include "ballistica/app/app.h"
 #include "ballistica/dynamics/bg/bg_dynamics.h"
@@ -14,7 +13,6 @@
 #include "ballistica/game/connection/connection_to_client.h"
 #include "ballistica/game/game_stream.h"
 #include "ballistica/game/host_activity.h"
-#include "ballistica/game/player_spec.h"
 #include "ballistica/generic/json.h"
 #include "ballistica/graphics/graphics.h"
 #include "ballistica/input/device/input_device.h"

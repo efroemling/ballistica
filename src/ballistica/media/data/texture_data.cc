@@ -2,11 +2,6 @@
 
 #include "ballistica/media/data/texture_data.h"
 
-#include <algorithm>
-#include <list>
-#include <string>
-#include <vector>
-
 #include "ballistica/graphics/graphics.h"
 #include "ballistica/graphics/graphics_server.h"
 #include "ballistica/graphics/renderer.h"
@@ -16,7 +11,6 @@
 #include "ballistica/graphics/texture/pvr.h"
 #include "ballistica/media/data/texture_preload_data.h"
 #include "ballistica/media/data/texture_renderer_data.h"
-#include "ballistica/media/media.h"
 #include "external/qr_code_generator/QrCode.hpp"
 
 namespace ballistica {

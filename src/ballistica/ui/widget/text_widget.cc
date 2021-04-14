@@ -2,21 +2,15 @@
 
 #include "ballistica/ui/widget/text_widget.h"
 
-#include <algorithm>
-#include <vector>
-
 #include "ballistica/app/app.h"
 #include "ballistica/audio/audio.h"
 #include "ballistica/game/game.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/graphics/component/empty_component.h"
 #include "ballistica/graphics/component/simple_component.h"
-#include "ballistica/graphics/graphics.h"
-#include "ballistica/graphics/renderer.h"
 #include "ballistica/graphics/text/text_graphics.h"
 #include "ballistica/input/device/keyboard_input.h"
 #include "ballistica/input/input.h"
-#include "ballistica/platform/platform.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_context_call.h"
 #include "ballistica/ui/ui.h"

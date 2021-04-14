@@ -2,9 +2,6 @@
 
 #include "ballistica/python/methods/python_methods_input.h"
 
-#include <string>
-#include <vector>
-
 #include "ballistica/app/app_globals.h"
 #include "ballistica/game/game.h"
 #include "ballistica/input/device/input_device.h"

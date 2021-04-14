@@ -2,18 +2,13 @@
 
 #include "ballistica/scene/node/prop_node.h"
 
-#include <algorithm>
-
 #include "ballistica/dynamics/dynamics.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/graphics/area_of_interest.h"
 #include "ballistica/graphics/camera.h"
 #include "ballistica/graphics/component/object_component.h"
 #include "ballistica/graphics/component/simple_component.h"
-#include "ballistica/graphics/graphics.h"
-#include "ballistica/graphics/renderer.h"
 #include "ballistica/scene/scene.h"
-#include "ode/ode_joint.h"
 
 namespace ballistica {
 

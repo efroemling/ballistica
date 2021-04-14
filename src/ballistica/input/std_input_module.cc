@@ -2,8 +2,9 @@
 
 #include "ballistica/input/std_input_module.h"
 
-#include <cstdio>
+#if BA_OSTYPE_LINUX
 #include <cstring>
+#endif
 
 #include "ballistica/app/app_globals.h"
 #include "ballistica/game/game.h"

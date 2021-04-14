@@ -2,10 +2,6 @@
 
 #include "ballistica/graphics/text/text_graphics.h"
 
-#include <cstdio>
-#include <utility>
-
-#include "ballistica/ballistica.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/graphics/text/font_page_map_data.h"
 #include "ballistica/platform/platform.h"

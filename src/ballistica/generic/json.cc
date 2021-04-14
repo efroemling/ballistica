@@ -28,13 +28,12 @@
 
 #include "ballistica/generic/json.h"
 
-#include <cctype>
 #include <cfloat>
+
+#if BA_OSTYPE_LINUX
 #include <climits>
-#include <cmath>
-#include <cstdio>
-#include <cstdlib>
 #include <cstring>
+#endif
 
 namespace ballistica {
 

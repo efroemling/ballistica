@@ -42,7 +42,7 @@ int dCollideTPL(dxGeom* gmesh, dxGeom* gplane, int Flags, dContactGeom* Contacts
 	if(!pTriMeshBody)
 		return ret;
 
-	PlanesCollider &planeCollider =  pTriMesh->_PlanesCollider;
+  PlanesCollider &planeCollider{*pTriMesh->_PlanesCollider};
 
 	dGeomPlaneGetParams(gplane, planeEq);
 

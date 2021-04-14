@@ -2,17 +2,12 @@
 
 #include "ballistica/scene/node/shield_node.h"
 
-#include <algorithm>
-#include <vector>
-
 #include "ballistica/generic/utils.h"
 #include "ballistica/graphics/camera.h"
 #include "ballistica/graphics/component/object_component.h"
 #include "ballistica/graphics/component/post_process_component.h"
 #include "ballistica/graphics/component/shield_component.h"
 #include "ballistica/graphics/component/simple_component.h"
-#include "ballistica/graphics/renderer.h"
-#include "ballistica/math/matrix44f.h"
 #include "ballistica/scene/node/node_attribute.h"
 #include "ballistica/scene/node/node_type.h"
 #include "ballistica/scene/scene.h"

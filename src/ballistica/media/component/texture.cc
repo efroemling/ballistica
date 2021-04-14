@@ -2,8 +2,6 @@
 
 #include "ballistica/media/component/texture.h"
 
-#include <string>
-
 #include "ballistica/game/game_stream.h"
 #include "ballistica/graphics/renderer.h"
 #include "ballistica/python/class/python_class_texture.h"

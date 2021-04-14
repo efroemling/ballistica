@@ -4,7 +4,6 @@
 
 #include "ballistica/dynamics/dynamics.h"
 #include "ballistica/dynamics/material/material_context.h"
-#include "ballistica/media/component/sound.h"
 #include "ballistica/scene/scene.h"
 
 namespace ballistica {

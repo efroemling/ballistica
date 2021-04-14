@@ -2,9 +2,6 @@
 
 #include "ballistica/python/class/python_class_session_player.h"
 
-#include <string>
-#include <vector>
-
 #include "ballistica/game/host_activity.h"
 #include "ballistica/game/player.h"
 #include "ballistica/game/session/host_session.h"

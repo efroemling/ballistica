@@ -5,7 +5,6 @@
 #include "ballistica/core/context.h"
 #include "ballistica/dynamics/dynamics.h"
 #include "ballistica/dynamics/material/material_context.h"
-#include "ballistica/media/component/sound.h"
 #include "ballistica/scene/node/node.h"
 #include "ballistica/scene/scene.h"
 

@@ -14,19 +14,12 @@
 #include <execinfo.h>
 #endif
 #include <cxxabi.h>
-#include <pthread.h>
-#include <sys/stat.h>
 #include <unistd.h>
 #endif
 
-#include <cerrno>
 #include <csignal>
-#include <cstdio>
-#include <cstring>
 
 #include "ballistica/app/app.h"
-#include "ballistica/app/headless_app.h"
-#include "ballistica/app/vr_app.h"
 #include "ballistica/core/thread.h"
 #include "ballistica/dynamics/bg/bg_dynamics_server.h"
 #include "ballistica/game/friend_score_set.h"
@@ -42,6 +35,14 @@
 #include "ballistica/networking/networking_sys.h"
 #include "ballistica/platform/sdl/sdl_app.h"
 #include "ballistica/python/python.h"
+
+#if BA_HEADLESS_BUILD
+#include "ballistica/app/headless_app.h"
+#endif
+
+#if BA_VR_BUILD
+#include "ballistica/app/vr_app.h"
+#endif
 
 // ------------------------- PLATFORM SELECTION --------------------------------
 
@@ -569,6 +570,15 @@ static void HandleArgs(int argc, char** argv) {
         fflush(stdout);
         exit(-1);
       }
+    } else if (!strcmp(argv[i], "--crash")) {
+      int dummyval{};
+      int* invalid_ptr{&dummyval};
+
+      // A bit of obfuscation to try and keep linters quiet.
+      if (explicit_bool(true)) {
+        invalid_ptr = nullptr;
+      }
+      *invalid_ptr = 1;
     } else if (!strcmp(argv[i], "-cfgdir")) {
       if (i + 1 < argc) {
         g_app_globals->user_config_dir = argv[i + 1];

@@ -9,7 +9,6 @@
 #include "ballistica/python/python_context_call.h"
 #include "ballistica/scene/node/node_attribute.h"
 #include "ballistica/scene/node/node_attribute_connection.h"
-#include "ballistica/scene/node/node_type.h"
 #include "ballistica/scene/scene.h"
 
 namespace ballistica {

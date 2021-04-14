@@ -3,7 +3,6 @@
 #include "ballistica/graphics/component/render_component.h"
 
 #include "ballistica/dynamics/rigid_body.h"
-#include "ballistica/graphics/graphics_server.h"
 
 namespace ballistica {
 

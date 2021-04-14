@@ -2,9 +2,6 @@
 
 #include "ballistica/ui/widget/widget.h"
 
-#include <cmath>
-#include <vector>
-
 #include "ballistica/game/game.h"
 #include "ballistica/python/class/python_class_widget.h"
 #include "ballistica/python/python_context_call.h"

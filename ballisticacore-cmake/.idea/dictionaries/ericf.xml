@@ -194,6 +194,7 @@
       <w>csize</w>
       <w>cspr</w>
       <w>cspre</w>
+      <w>csspbt</w>
       <w>cstdint</w>
       <w>cstdlib</w>
       <w>cstring</w>
@@ -255,6 +256,7 @@
       <w>dstpath</w>
       <w>dstr</w>
       <w>dtest</w>
+      <w>dummyval</w>
       <w>dummyvalid</w>
       <w>dxgi</w>
       <w>dynamicdata</w>
@@ -319,6 +321,7 @@
       <w>fieldname</w>
       <w>fieldpath</w>
       <w>fifteenbits</w>
+      <w>filterstr</w>
       <w>filterval</w>
       <w>finishedptr</w>
       <w>firstpartykey</w>

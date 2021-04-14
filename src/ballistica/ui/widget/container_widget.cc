@@ -2,13 +2,10 @@
 
 #include "ballistica/ui/widget/container_widget.h"
 
-#include <algorithm>
-
 #include "ballistica/audio/audio.h"
 #include "ballistica/game/game.h"
 #include "ballistica/graphics/component/empty_component.h"
 #include "ballistica/graphics/component/simple_component.h"
-#include "ballistica/graphics/renderer.h"
 #include "ballistica/input/input.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_context_call.h"
@@ -16,7 +13,6 @@
 #include "ballistica/ui/widget/button_widget.h"
 #include "ballistica/ui/widget/root_widget.h"
 #include "ballistica/ui/widget/stack_widget.h"
-#include "ballistica/ui/widget/text_widget.h"
 
 namespace ballistica {
 

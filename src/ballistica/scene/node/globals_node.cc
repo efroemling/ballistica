@@ -7,11 +7,15 @@
 #include "ballistica/game/host_activity.h"
 #include "ballistica/graphics/camera.h"
 #include "ballistica/graphics/graphics.h"
-#include "ballistica/graphics/vr_graphics.h"
 #include "ballistica/python/python.h"
 #include "ballistica/scene/node/node_attribute.h"
 #include "ballistica/scene/node/node_type.h"
 #include "ballistica/scene/scene.h"
+
+// FIXME: should not need this here.
+#if BA_VR_BUILD
+#include "ballistica/graphics/vr_graphics.h"
+#endif
 
 namespace ballistica {
 
@@ -133,37 +137,11 @@ GlobalsNode::~GlobalsNode() {
 // values to the global state (since there can be multiple scenes in
 // existence, there has to be a single "foreground" globals node in control).
 void GlobalsNode::SetAsForeground() {
-#if !BA_HEADLESS_BUILD
-  g_bg_dynamics->SetDebrisFriction(debris_friction_);
-  g_bg_dynamics->SetDebrisKillHeight(debris_kill_height_);
-#endif
-  g_graphics->set_floor_reflection(floor_reflection_);
-  g_graphics->camera()->SetMode(camera_mode_);
-  g_graphics->camera()->set_vr_offset(Vector3f(vr_camera_offset_));
-  g_graphics->camera()->set_happy_thoughts_mode(happy_thoughts_mode_);
-  g_graphics->set_shadow_scale(shadow_scale_[0], shadow_scale_[1]);
-  g_graphics->camera()->set_area_of_interest_bounds(
-      area_of_interest_bounds_[0], area_of_interest_bounds_[1],
-      area_of_interest_bounds_[2], area_of_interest_bounds_[3],
-      area_of_interest_bounds_[4], area_of_interest_bounds_[5]);
-  g_graphics->SetShadowRange(shadow_range_[0], shadow_range_[1],
-                             shadow_range_[2], shadow_range_[3]);
-  g_graphics->set_shadow_offset(Vector3f(shadow_offset_));
-  g_graphics->set_shadow_ortho(shadow_ortho_);
-  g_graphics->set_tint(Vector3f(tint_));
-
-#if BA_VR_BUILD
-  if (IsVRMode()) {
-    auto* vrgraphics = VRGraphics::get();
-    vrgraphics->set_vr_near_clip(vr_near_clip_);
-    vrgraphics->set_vr_overlay_center(Vector3f(vr_overlay_center_));
-    vrgraphics->set_vr_overlay_center_enabled(vr_overlay_center_enabled_);
+  if (g_bg_dynamics != nullptr) {
+    g_bg_dynamics->SetDebrisFriction(debris_friction_);
+    g_bg_dynamics->SetDebrisKillHeight(debris_kill_height_);
   }
-#endif
-
-  g_graphics->set_ambient_color(Vector3f(ambient_color_));
-  g_graphics->set_vignette_outer(Vector3f(vignette_outer_));
-  g_graphics->set_vignette_inner(Vector3f(vignette_inner_));
+  g_graphics->ApplyGlobals(this);
 
   g_audio->SetSoundPitch(slow_motion_ ? 0.4f : 1.0f);
 
@@ -191,9 +169,9 @@ auto GlobalsNode::GetStep() -> int64_t { return scene()->stepnum(); }
 void GlobalsNode::SetDebrisFriction(float val) {
   debris_friction_ = val;
   if (IsCurrentGlobals()) {
-#if !BA_HEADLESS_BUILD
-    g_bg_dynamics->SetDebrisFriction(debris_friction_);
-#endif  // !BA_HEADLESS_BUILD
+    if (g_bg_dynamics != nullptr) {
+      g_bg_dynamics->SetDebrisFriction(debris_friction_);
+    }
   }
 }
 
@@ -218,9 +196,9 @@ void GlobalsNode::SetFloorReflection(bool val) {
 void GlobalsNode::SetDebrisKillHeight(float val) {
   debris_kill_height_ = val;
   if (IsCurrentGlobals()) {
-#if !BA_HEADLESS_BUILD
-    g_bg_dynamics->SetDebrisKillHeight(debris_kill_height_);
-#endif  // !BA_HEADLESS_BUILD
+    if (g_bg_dynamics != nullptr) {
+      g_bg_dynamics->SetDebrisKillHeight(debris_kill_height_);
+    }
   }
 }
 

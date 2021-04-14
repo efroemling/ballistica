@@ -2,7 +2,6 @@
 
 #include "ballistica/scene/node/null_node.h"
 
-#include "ballistica/game/game.h"
 #include "ballistica/scene/node/node_type.h"
 
 namespace ballistica {

@@ -2,9 +2,6 @@
 
 #include "ballistica/scene/node/combine_node.h"
 
-#include <algorithm>
-#include <vector>
-
 #include "ballistica/scene/node/node_attribute.h"
 #include "ballistica/scene/node/node_type.h"
 

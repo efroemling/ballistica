@@ -2,12 +2,8 @@
 
 #include "ballistica/media/data/model_data.h"
 
-#include <string>
-#include <vector>
-
 #include "ballistica/graphics/graphics_server.h"
 #include "ballistica/graphics/renderer.h"
-#include "ballistica/media/media.h"
 
 namespace ballistica {
 

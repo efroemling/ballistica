@@ -2,9 +2,6 @@
 
 #include "ballistica/graphics/render_pass.h"
 
-#include <memory>
-#include <vector>
-
 #include "ballistica/graphics/graphics_server.h"
 #include "ballistica/graphics/renderer.h"
 

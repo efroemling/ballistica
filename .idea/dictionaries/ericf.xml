@@ -449,6 +449,7 @@
       <w>cspnf</w>
       <w>cspre</w>
       <w>cssclass</w>
+      <w>csspbt</w>
       <w>cstr</w>
       <w>csum</w>
       <w>ctest</w>
@@ -737,6 +738,7 @@
       <w>filterlines</w>
       <w>filterpath</w>
       <w>filterpaths</w>
+      <w>filterstr</w>
       <w>filterval</w>
       <w>finalhash</w>
       <w>finalmaterials</w>

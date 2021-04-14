@@ -2,14 +2,10 @@
 
 #include "ballistica/ui/root_ui.h"
 
-#include <algorithm>
-#include <string>
-
 #include "ballistica/game/connection/connection_set.h"
 #include "ballistica/game/game.h"
 #include "ballistica/game/session/host_session.h"
 #include "ballistica/graphics/component/simple_component.h"
-#include "ballistica/graphics/graphics.h"
 #include "ballistica/input/device/keyboard_input.h"
 #include "ballistica/input/device/touch_input.h"
 #include "ballistica/input/input.h"

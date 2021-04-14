@@ -2,8 +2,6 @@
 
 #include "ballistica/ui/console.h"
 
-#include <vector>
-
 #include "ballistica/app/app_globals.h"
 #include "ballistica/audio/audio.h"
 #include "ballistica/game/game.h"

@@ -64,8 +64,7 @@ def format_clang_format(projroot: Path, full: bool) -> None:
 
 def check_cpplint(projroot: Path, full: bool) -> None:
     """Run cpplint on all our applicable code."""
-    # pylint: disable=too-many-locals, too-many-statements
-    import tempfile
+    # pylint: disable=too-many-locals
     from concurrent.futures import ThreadPoolExecutor
     from multiprocessing import cpu_count
     from efrotools import getconfig, PYVER
@@ -100,62 +99,26 @@ def check_cpplint(projroot: Path, full: bool) -> None:
         print(f'{Clr.BLU}CppLint checking'
               f' {len(dirtyfiles)} file(s)...{Clr.RST}')
 
-    # We want to do a few custom modifications to the cpplint module...
-    try:
-        import cpplint as cpplintmodule
-    except Exception as exc:
-        raise CleanError('Unable to import cpplint.') from exc
-    with open(cpplintmodule.__file__) as infile:
-        codelines = infile.read().splitlines()
-    cheadersline = codelines.index('_C_HEADERS = frozenset([')
-
-    # Extra headers we consider as valid C system headers.
-    c_headers = [
-        'malloc.h', 'tchar.h', 'jni.h', 'android/log.h', 'EGL/egl.h',
-        'libgen.h', 'linux/netlink.h', 'linux/rtnetlink.h', 'android/bitmap.h',
-        'android/log.h', 'uuid/uuid.h', 'cxxabi.h', 'direct.h', 'shellapi.h',
-        'rpc.h', 'io.h'
+    disabled_filters: List[str] = [
+        'build/include_what_you_use',
+        'build/c++11',
+        'readability/nolint',
+        'legal/copyright',
     ]
-    codelines.insert(cheadersline + 1, ''.join(f"'{h}'," for h in c_headers))
-
-    # Skip unapproved C++ headers check (it flags <mutex>, <thread>, etc.)
-    headercheckline = codelines.index(
-        "  if include and include.group(1) in ('cfenv',")
-    codelines[headercheckline] = (
-        "  if False and include and include.group(1) in ('cfenv',")
-
-    # Skip copyright line check (our public repo code is MIT licensed
-    # so not crucial to keep track of who wrote exactly what)
-    copyrightline = codelines.index(
-        '  """Logs an error if no Copyright'
-        ' message appears at the top of the file."""')
-    codelines[copyrightline] = '  return'
-
-    # Don't complain about unknown NOLINT categories.
-    # (we use them for clang-tidy)
-    unknownlintline = codelines.index(
-        '        elif category not in _LEGACY_ERROR_CATEGORIES:')
-    codelines[unknownlintline] = '        elif False:'
+    filterstr = ','.join(f'-{x}' for x in disabled_filters)
 
     def lint_file(filename: str) -> None:
-        result = subprocess.call(
-            [f'python{PYVER}', '-m', 'cpplint', '--root=src', filename],
-            env=env)
+        result = subprocess.call([
+            f'python{PYVER}', '-m', 'cpplint', '--root=src',
+            f'--filter={filterstr}', filename
+        ])
         if result != 0:
             raise CleanError(
                 f'{Clr.RED}Cpplint failed for {filename}.{Clr.RST}')
 
-    with tempfile.TemporaryDirectory() as tmpdir:
-
-        # Write our replacement module, make it discoverable, then run.
-        with open(tmpdir + '/cpplint.py', 'w') as outfile:
-            outfile.write('\n'.join(codelines))
-        env = os.environ.copy()
-        env['PYTHONPATH'] = tmpdir
-
-        with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
-            # Converting this to a list will propagate any errors.
-            list(executor.map(lint_file, dirtyfiles))
+    with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
+        # Converting this to a list will propagate any errors.
+        list(executor.map(lint_file, dirtyfiles))
 
     if dirtyfiles:
         cache.mark_clean(filenames)

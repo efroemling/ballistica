@@ -2,10 +2,6 @@
 
 #include "ballistica/graphics/mesh/text_mesh.h"
 
-#include <algorithm>
-#include <string>
-#include <vector>
-
 #include "ballistica/generic/utils.h"
 #include "ballistica/graphics/graphics.h"
 #include "ballistica/graphics/text/text_graphics.h"

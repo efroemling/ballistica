@@ -2,8 +2,6 @@
 
 #include "ballistica/core/module.h"
 
-#include <utility>
-
 #include "ballistica/core/thread.h"
 
 namespace ballistica {

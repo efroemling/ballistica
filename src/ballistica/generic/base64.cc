@@ -29,8 +29,6 @@
 */
 #include "ballistica/generic/base64.h"
 
-#include <cctype>
-
 namespace ballistica {
 
 // NOLINTNEXTLINE(cert-err58-cpp)

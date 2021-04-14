@@ -173,7 +173,7 @@ target_include_directories(ode PRIVATE ${ODE_SRC_ROOT})
 
 # EWWW; GCC gives us bad mesh collisions with -O3 (and maybe -O2?)
 # need to finally get to the bottom of this but limiting to -01 for now.
-# (-O2 might be safe??... or what about -Os?  Should test again.)
+# (-O2 might be safe??... or what about -Os? ..or arm? Should test again.)
 if (CMAKE_BUILD_TYPE MATCHES Release)
   if (CMAKE_CXX_COMPILER_ID MATCHES GNU)
     target_compile_options(ode PRIVATE -O1)

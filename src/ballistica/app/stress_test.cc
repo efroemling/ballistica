@@ -2,11 +2,9 @@
 
 #include "ballistica/app/stress_test.h"
 
-#include "ballistica/ballistica.h"
 #include "ballistica/graphics/graphics_server.h"
 #include "ballistica/graphics/renderer.h"
 #include "ballistica/input/input.h"
-#include "ballistica/platform/platform.h"
 
 namespace ballistica {
 

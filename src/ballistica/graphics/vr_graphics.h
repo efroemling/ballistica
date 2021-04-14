@@ -3,8 +3,6 @@
 #ifndef BALLISTICA_GRAPHICS_VR_GRAPHICS_H_
 #define BALLISTICA_GRAPHICS_VR_GRAPHICS_H_
 
-#if BA_VR_BUILD
-
 #include <string>
 
 #include "ballistica/graphics/graphics.h"
@@ -15,6 +13,8 @@ const float kDefaultVRHeadScale = 18.0f;
 const float kVRFixedOverlayOffsetY = -7.0f;
 const float kVRFixedOverlayOffsetZ = -22.0f;
 
+#if BA_VR_BUILD
+
 class VRGraphics : public Graphics {
  public:
   /// Return g_graphics as a VRGraphics. (assumes it actually is one).
@@ -24,7 +24,9 @@ class VRGraphics : public Graphics {
            == static_cast<VRGraphics*>(g_graphics));
     return static_cast<VRGraphics*>(g_graphics);
   }
-  void ApplyCamera(FrameDef* frame_def) override;
+  auto ApplyCamera(FrameDef* frame_def) -> void override;
+  auto ApplyGlobals(GlobalsNode* globals) -> void override;
+
   void DrawWorld(Session* session, FrameDef* frame_def) override;
   void DrawUI(FrameDef* frame_def) override;
 
@@ -78,9 +80,8 @@ class VRGraphics : public Graphics {
   bool draw_overlay_bounds_{};
   float vr_test_head_scale_{kDefaultVRHeadScale};
 };
+#endif  // BA_VR_BUILD
 
 }  // namespace ballistica
-
-#endif  // BA_VR_BUILD
 
 #endif  // BALLISTICA_GRAPHICS_VR_GRAPHICS_H_

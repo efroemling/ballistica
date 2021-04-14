@@ -2,11 +2,8 @@
 
 #include "ballistica/core/thread.h"
 
-#include <unordered_map>
-
 #include "ballistica/app/app.h"
 #include "ballistica/core/fatal_error.h"
-#include "ballistica/core/module.h"
 #include "ballistica/platform/platform.h"
 #include "ballistica/python/python.h"
 

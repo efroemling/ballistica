@@ -2,10 +2,6 @@
 
 #include "ballistica/graphics/text/text_group.h"
 
-#include <set>
-#include <utility>
-#include <vector>
-
 #include "ballistica/generic/utils.h"
 #include "ballistica/graphics/graphics.h"
 #include "ballistica/graphics/text/text_graphics.h"

@@ -64,6 +64,7 @@ class Graphics {
   auto BuildAndPushFrameDef() -> void;
 
   virtual auto ApplyCamera(FrameDef* frame_def) -> void;
+  virtual auto ApplyGlobals(GlobalsNode* globals) -> void;
 
   // Called when the GraphicsServer's screen configuration changes.
   auto ScreenResize(float virtual_width, float virtual_height,

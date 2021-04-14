@@ -2,8 +2,6 @@
 
 #include "ballistica/ui/widget/row_widget.h"
 
-#include <string>
-
 #include "ballistica/ui/ui.h"
 
 namespace ballistica {

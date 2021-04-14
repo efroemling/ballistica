@@ -2,8 +2,6 @@
 
 #include "ballistica/graphics/camera.h"
 
-#include <algorithm>
-
 #include "ballistica/audio/audio.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/graphics/area_of_interest.h"
@@ -489,23 +487,24 @@ void Camera::UpdatePosition() {
             // In vr mode we want or default area-of-interest to line up so that
             // our fixed-overlay matrix and our regular overlay matrix come out
             // the same.
-#if BA_VR_BUILD
-            if (IsVRMode()) {
-              // Only apply map's X offset if camera is locked.
-              x_min = x_max = position_.x
-                              + (kCameraOffsetX
-                                 + (lock_panning_ ? vr_offset_smooth_.x : 0.0f)
-                                 + vr_extra_offset_.x);
-              y_min = y_max =
-                  position_.y
-                  + (kCameraOffsetY + vr_offset_smooth_.y + vr_extra_offset_.y)
-                  + kVRFixedOverlayOffsetY;
-              z_min = z_max =
-                  position_.z
-                  + (kCameraOffsetZ + vr_offset_smooth_.z + vr_extra_offset_.z)
-                  + kVRFixedOverlayOffsetZ;
+            if (g_buildconfig.vr_build()) {
+              if (IsVRMode()) {
+                // Only apply map's X offset if camera is locked.
+                x_min = x_max =
+                    position_.x
+                    + (kCameraOffsetX
+                       + (lock_panning_ ? vr_offset_smooth_.x : 0.0f)
+                       + vr_extra_offset_.x);
+                y_min = y_max = position_.y
+                                + (kCameraOffsetY + vr_offset_smooth_.y
+                                   + vr_extra_offset_.y)
+                                + kVRFixedOverlayOffsetY;
+                z_min = z_max = position_.z
+                                + (kCameraOffsetZ + vr_offset_smooth_.z
+                                   + vr_extra_offset_.z)
+                                + kVRFixedOverlayOffsetZ;
+              }
             }
-#endif
           }
           field_of_view_x_ = 45.0f;
           field_of_view_y_ = 30.0f;
@@ -895,9 +894,9 @@ void Camera::ApplyToFrameDef(FrameDef* frame_def) {
   frame_def->set_camera_mode(mode_);
 
   // FIXME - we should have some sort of support
-  // for multiple cameras each with their own pass...
-  // for now, though, there's just a single beauty pass
-  // which is us
+  //   for multiple cameras each with their own pass.
+  //   for now, though, there's just a single beauty pass
+  //   which is us.
 
   RenderPass* passes[] = {
     frame_def->beauty_pass(),
@@ -978,6 +977,7 @@ void Camera::ApplyToFrameDef(FrameDef* frame_def) {
                                        position_.z + extra_pos_2_.z));
 
   // If we're vr, apply current vr offsets.
+  // FIXME: should create a VRCamera subclass or whatnot.
   if (IsVRMode()) {
     if (mode_ == CameraMode::kFollow) {
       Vector3f cam_original = frame_def->cam_original();

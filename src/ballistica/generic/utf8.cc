@@ -16,14 +16,12 @@
 */
 #include "ballistica/generic/utf8.h"
 
-#include <cstdarg>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
 #if _WIN32 || _WIN64
 #include <malloc.h>
-#else
-#include <alloca.h>
+#endif
+
+#if BA_OSTYPE_LINUX
+#include <cstring>
 #endif
 
 namespace ballistica {

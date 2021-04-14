@@ -45,7 +45,7 @@ int dCollideRTL(dxGeom* g1, dxGeom* RayGeom, int Flags, dContactGeom* Contacts, 
 	const dVector3& TLPosition = *(const dVector3*)dGeomGetPosition(TriMesh);
 	const dMatrix3& TLRotation = *(const dMatrix3*)dGeomGetRotation(TriMesh);
 
-	RayCollider& Collider = TriMesh->_RayCollider;
+  RayCollider& Collider{*TriMesh->_RayCollider};
 
 	dReal Length = dGeomRayGetLength(RayGeom);
 
@@ -74,14 +74,14 @@ int dCollideRTL(dxGeom* g1, dxGeom* RayGeom, int Flags, dContactGeom* Contacts, 
 	Matrix4x4 amatrix;
         int TriCount = 0;
         if (Collider.Collide(WorldRay, TriMesh->Data->BVTree, &MakeMatrix(TLPosition, TLRotation, amatrix))) {
-                TriCount = TriMesh->Faces.GetNbFaces();
+                TriCount = TriMesh->Faces->GetNbFaces();
         }
 
         if (TriCount == 0) {
                 return 0;
         }
 
-	const CollisionFace* Faces = TriMesh->Faces.GetFaces();
+	const CollisionFace* Faces = TriMesh->Faces->GetFaces();
 
 	int OutTriCount = 0;
 	for (int i = 0; i < TriCount; i++) {

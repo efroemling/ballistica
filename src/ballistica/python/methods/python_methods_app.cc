@@ -2,8 +2,6 @@
 
 #include "ballistica/python/methods/python_methods_app.h"
 
-#include <string>
-
 #include "ballistica/app/app.h"
 #include "ballistica/app/app_globals.h"
 #include "ballistica/core/logging.h"
@@ -18,7 +16,6 @@
 #include "ballistica/python/class/python_class_session_data.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_context_call_runnable.h"
-#include "ballistica/python/python_sys.h"
 #include "ballistica/scene/scene.h"
 
 namespace ballistica {

@@ -31,8 +31,7 @@ class MaterialContext {
   struct SoundEntry {
     Object::Ref<Sound> sound;
     float volume;
-    SoundEntry(Sound* sound_in, float volume_in)
-        : sound(sound_in), volume(volume_in) {}
+    SoundEntry(Sound* sound_in, float volume_in);
   };
   class ImpactSoundEntry {
    public:
@@ -41,11 +40,7 @@ class MaterialContext {
     float volume;
     float target_impulse;
     ImpactSoundEntry(MaterialContext* context, Sound* sound_in,
-                     float target_impulse_in, float volume_in)
-        : context(context),
-          sound(sound_in),
-          target_impulse(target_impulse_in),
-          volume(volume_in) {}
+                     float target_impulse_in, float volume_in);
   };
   class SkidSoundEntry {
    public:

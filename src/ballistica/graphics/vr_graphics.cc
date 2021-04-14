@@ -11,6 +11,7 @@
 #include "ballistica/graphics/component/special_component.h"
 #include "ballistica/graphics/frame_def.h"
 #include "ballistica/graphics/render_pass.h"
+#include "ballistica/scene/node/globals_node.h"
 
 namespace ballistica {
 
@@ -328,6 +329,16 @@ void VRGraphics::DrawVRControllers(FrameDef* frame_def) {
     }
     default:
       break;
+  }
+}
+
+auto VRGraphics::ApplyGlobals(GlobalsNode* globals) -> void {
+  Graphics::ApplyGlobals(globals);
+
+  if (IsVRMode()) {
+    set_vr_near_clip(globals->vr_near_clip());
+    set_vr_overlay_center(Vector3f(globals->vr_overlay_center()));
+    set_vr_overlay_center_enabled(globals->vr_overlay_center_enabled());
   }
 }
 

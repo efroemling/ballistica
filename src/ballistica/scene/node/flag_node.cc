@@ -2,8 +2,6 @@
 
 #include "ballistica/scene/node/flag_node.h"
 
-#include <algorithm>
-
 #include "ballistica/dynamics/bg/bg_dynamics_shadow.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/graphics/area_of_interest.h"

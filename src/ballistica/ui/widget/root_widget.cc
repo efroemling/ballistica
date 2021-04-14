@@ -2,8 +2,6 @@
 
 #include "ballistica/ui/widget/root_widget.h"
 
-#include <algorithm>
-
 #include "ballistica/game/game.h"
 #include "ballistica/game/session/host_session.h"
 #include "ballistica/graphics/renderer.h"
@@ -11,7 +9,6 @@
 #include "ballistica/python/python.h"
 #include "ballistica/ui/ui.h"
 #include "ballistica/ui/widget/button_widget.h"
-#include "ballistica/ui/widget/image_widget.h"
 #include "ballistica/ui/widget/stack_widget.h"
 
 namespace ballistica {

@@ -2,11 +2,6 @@
 
 #include "ballistica/python/python.h"
 
-#include <algorithm>
-#include <map>
-#include <utility>
-#include <vector>
-
 #include "ballistica/app/app_globals.h"
 #include "ballistica/audio/audio.h"
 #include "ballistica/dynamics/material/material.h"
@@ -21,6 +16,7 @@
 #include "ballistica/input/device/keyboard_input.h"
 #include "ballistica/media/component/collide_model.h"
 #include "ballistica/media/component/model.h"
+#include "ballistica/media/component/sound.h"
 #include "ballistica/media/component/texture.h"
 #include "ballistica/python/class/python_class_activity_data.h"
 #include "ballistica/python/class/python_class_collide_model.h"
@@ -48,7 +44,6 @@
 #include "ballistica/python/python_command.h"
 #include "ballistica/python/python_context_call_runnable.h"
 #include "ballistica/scene/node/node_attribute.h"
-#include "ballistica/scene/scene.h"
 #include "ballistica/ui/ui.h"
 #include "ballistica/ui/widget/text_widget.h"
 

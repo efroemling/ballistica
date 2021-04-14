@@ -33,10 +33,11 @@ class MaterialComponent : public Object {
 
   // Apply the component to a context.
   void Apply(MaterialContext* c, const Part* src_part, const Part* dst_part);
-  MaterialComponent() = default;
-  MaterialComponent(const Object::Ref<MaterialConditionNode>& conditions_in,
-                    std::vector<Object::Ref<MaterialAction> > actions_in)
-      : conditions(conditions_in), actions(std::move(actions_in)) {}
+  MaterialComponent();
+  MaterialComponent(
+      const Object::Ref<MaterialConditionNode>& conditions_in,
+      const std::vector<Object::Ref<MaterialAction> >& actions_in);
+  ~MaterialComponent();
 };
 
 }  // namespace ballistica

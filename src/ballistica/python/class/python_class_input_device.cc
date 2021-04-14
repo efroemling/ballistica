@@ -2,11 +2,8 @@
 
 #include "ballistica/python/class/python_class_input_device.h"
 
-#include <string>
-
 #include "ballistica/game/player.h"
 #include "ballistica/input/device/input_device.h"
-#include "ballistica/input/device/keyboard_input.h"
 #include "ballistica/python/python.h"
 
 namespace ballistica {

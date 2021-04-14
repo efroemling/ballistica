@@ -2,35 +2,26 @@
 
 #include "ballistica/scene/node/spaz_node.h"
 
-#include <algorithm>
-#include <utility>
-
 #include "ballistica/audio/audio.h"
 #include "ballistica/audio/audio_source.h"
 #include "ballistica/dynamics/bg/bg_dynamics_shadow.h"
 #include "ballistica/dynamics/collision.h"
 #include "ballistica/dynamics/dynamics.h"
 #include "ballistica/dynamics/material/material_action.h"
-#include "ballistica/game/player.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/graphics/area_of_interest.h"
 #include "ballistica/graphics/camera.h"
 #include "ballistica/graphics/component/object_component.h"
 #include "ballistica/graphics/component/post_process_component.h"
 #include "ballistica/graphics/component/simple_component.h"
-#include "ballistica/graphics/graphics.h"
 #include "ballistica/graphics/graphics_server.h"
 #include "ballistica/graphics/text/text_graphics.h"
 #include "ballistica/input/device/input_device.h"
-#include "ballistica/math/matrix44f.h"
-#include "ballistica/media/component/model.h"
 #include "ballistica/media/component/sound.h"
 #include "ballistica/python/python.h"
 #include "ballistica/scene/node/node_attribute.h"
 #include "ballistica/scene/node/node_type.h"
-#include "ballistica/scene/scene.h"
 #include "ode/ode_collision_util.h"
-#include "ode/ode_joint.h"
 
 namespace ballistica {
 

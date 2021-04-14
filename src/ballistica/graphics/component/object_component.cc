@@ -2,8 +2,6 @@
 
 #include "ballistica/graphics/component/object_component.h"
 
-#include "ballistica/graphics/renderer.h"
-
 namespace ballistica {
 
 void ObjectComponent::WriteConfig() {

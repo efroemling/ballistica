@@ -81,8 +81,8 @@ struct dxTriMesh : public dxGeom{
 
 
 	// Colliders
-	static PlanesCollider _PlanesCollider;
-	static SphereCollider _SphereCollider;
+	static PlanesCollider* _PlanesCollider;
+	static SphereCollider* _SphereCollider;
 
 
     // ericf change.. keep one of these per mesh now for multithreading
@@ -91,19 +91,19 @@ struct dxTriMesh : public dxGeom{
     OBBCollider _OBBCollider;
 
 
-	static RayCollider _RayCollider;
-	static AABBTreeCollider _AABBTreeCollider;
-	static LSSCollider _LSSCollider;
+	static RayCollider* _RayCollider;
+	static AABBTreeCollider* _AABBTreeCollider;
+	static LSSCollider* _LSSCollider;
 
 	// Some constants
-	static CollisionFaces Faces;
+	static CollisionFaces* Faces;
 
 	// Temporal coherence
 	struct SphereTC : public SphereCache{
 		dxGeom* Geom;
 	};
 	dArray<SphereTC> SphereTCCache;
-	static SphereCache defaultSphereCache;
+	static SphereCache* defaultSphereCache;
 
 	struct BoxTC : public OBBCache{
 		dxGeom* Geom;
@@ -119,7 +119,7 @@ struct dxTriMesh : public dxGeom{
 		dxGeom* Geom;
 	};
 	dArray<CCylinderTC> CCylinderTCCache;
-	static LSSCache defaultCCylinderCache;
+	static LSSCache* defaultCCylinderCache;
 
 	bool doSphereTC;
 	bool doBoxTC;

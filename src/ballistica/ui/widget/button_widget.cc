@@ -2,9 +2,6 @@
 
 #include "ballistica/ui/widget/button_widget.h"
 
-#include <algorithm>
-#include <string>
-
 #include "ballistica/audio/audio.h"
 #include "ballistica/generic/real_timer.h"
 #include "ballistica/generic/utils.h"
@@ -12,7 +9,6 @@
 #include "ballistica/graphics/component/simple_component.h"
 #include "ballistica/input/device/input_device.h"
 #include "ballistica/input/input.h"
-#include "ballistica/media/component/model.h"
 #include "ballistica/python/python_context_call.h"
 #include "ballistica/ui/ui.h"
 
@@ -171,7 +167,7 @@ void ButtonWidget::Draw(RenderPass* pass, bool draw_transparent) {
   }
 
   // Simple transition.
-  float transition = (birth_time_ + transition_delay_) - current_time;
+  millisecs_t transition = (birth_time_ + transition_delay_) - current_time;
   if (transition > 0) {
     extra_offs_x -= transition * 4.0f;
   }

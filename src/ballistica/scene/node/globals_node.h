@@ -96,7 +96,9 @@ class GlobalsNode : public Node {
   auto music_count() const -> int { return music_count_; }
   void SetMusicCount(int val);
 
- protected:
+  auto camera_mode() const { return camera_mode_; }
+
+ private:
   CameraMode camera_mode_{CameraMode::kFollow};
   float vr_near_clip_{4.0f};
   float debris_friction_{1.0f};

@@ -2,9 +2,7 @@
 
 #include "ballistica/python/methods/python_methods_system.h"
 
-#include <algorithm>
 #include <list>
-#include <string>
 #include <unordered_map>
 
 #include "ballistica/app/app.h"
@@ -19,7 +17,6 @@
 #include "ballistica/input/input.h"
 #include "ballistica/media/component/texture.h"
 #include "ballistica/media/media.h"
-#include "ballistica/platform/platform.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_context_call_runnable.h"
 #include "ballistica/python/python_sys.h"

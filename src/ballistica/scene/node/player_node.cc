@@ -2,8 +2,6 @@
 
 #include "ballistica/scene/node/player_node.h"
 
-#include <vector>
-
 #include "ballistica/scene/node/node_attribute.h"
 #include "ballistica/scene/node/node_type.h"
 #include "ballistica/scene/scene.h"

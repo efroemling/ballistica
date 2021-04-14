@@ -6,9 +6,6 @@
 #include <sys/stat.h>
 #endif
 
-#include <set>
-#include <vector>
-
 #include "ballistica/audio/audio_server.h"
 #include "ballistica/game/game.h"
 #include "ballistica/generic/timer.h"
@@ -18,7 +15,6 @@
 #include "ballistica/media/component/data.h"
 #include "ballistica/media/component/model.h"
 #include "ballistica/media/component/texture.h"
-#include "ballistica/media/data/data_data.h"
 #include "ballistica/media/data/sound_data.h"
 #include "ballistica/media/media_server.h"
 #include "ballistica/python/python_sys.h"

@@ -4,21 +4,27 @@
 
 #include "ballistica/dynamics/material/impact_sound_material_action.h"
 #include "ballistica/dynamics/material/material.h"
-#include "ballistica/dynamics/material/material_action.h"
 #include "ballistica/dynamics/material/material_condition_node.h"
 #include "ballistica/dynamics/material/material_context.h"
 #include "ballistica/dynamics/material/node_message_material_action.h"
 #include "ballistica/dynamics/material/node_mod_material_action.h"
 #include "ballistica/dynamics/material/part_mod_material_action.h"
-#include "ballistica/dynamics/material/python_call_material_action.h"
 #include "ballistica/dynamics/material/roll_sound_material_action.h"
 #include "ballistica/dynamics/material/skid_sound_material_action.h"
 #include "ballistica/dynamics/material/sound_material_action.h"
 #include "ballistica/dynamics/part.h"
-#include "ballistica/generic/utils.h"
 #include "ballistica/scene/node/node.h"
 
 namespace ballistica {
+
+MaterialComponent::MaterialComponent() {}
+
+MaterialComponent::MaterialComponent(
+    const Object::Ref<MaterialConditionNode>& conditions_in,
+    const std::vector<Object::Ref<MaterialAction> >& actions_in)
+    : conditions(conditions_in), actions(actions_in) {}
+
+MaterialComponent::~MaterialComponent() {}
 
 auto MaterialComponent::eval_conditions(
     const Object::Ref<MaterialConditionNode>& condition, const Material& c,

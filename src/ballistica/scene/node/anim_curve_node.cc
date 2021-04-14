@@ -2,10 +2,6 @@
 
 #include "ballistica/scene/node/anim_curve_node.h"
 
-#include <algorithm>
-#include <cmath>
-#include <vector>
-
 #include "ballistica/scene/node/node_attribute.h"
 #include "ballistica/scene/node/node_type.h"
 

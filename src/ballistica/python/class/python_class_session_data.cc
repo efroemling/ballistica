@@ -2,8 +2,6 @@
 
 #include "ballistica/python/class/python_class_session_data.h"
 
-#include <string>
-
 #include "ballistica/game/game.h"
 #include "ballistica/game/session/session.h"
 #include "ballistica/generic/utils.h"

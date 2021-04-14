@@ -3,7 +3,6 @@
 #include "ballistica/python/class/python_class_node.h"
 
 #include <list>
-#include <string>
 
 #include "ballistica/game/game_stream.h"
 #include "ballistica/python/python.h"

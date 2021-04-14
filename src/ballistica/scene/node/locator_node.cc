@@ -3,7 +3,6 @@
 #include "ballistica/scene/node/locator_node.h"
 
 #include "ballistica/graphics/component/simple_component.h"
-#include "ballistica/graphics/renderer.h"
 #include "ballistica/scene/node/node_attribute.h"
 #include "ballistica/scene/node/node_type.h"
 

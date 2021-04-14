@@ -2,9 +2,6 @@
 
 #include "ballistica/media/component/media_component.h"
 
-#include <string>
-#include <utility>
-
 #include "ballistica/python/python_sys.h"
 #include "ballistica/scene/scene.h"
 

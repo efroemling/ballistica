@@ -2,13 +2,10 @@
 
 #include "ballistica/python/class/python_class_widget.h"
 
-#include <string>
-
 #include "ballistica/game/game.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/graphics/graphics.h"
 #include "ballistica/ui/widget/container_widget.h"
-#include "ballistica/ui/widget/widget.h"
 
 namespace ballistica {
 

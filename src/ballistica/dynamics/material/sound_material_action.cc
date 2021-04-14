@@ -6,7 +6,6 @@
 #include "ballistica/game/game_stream.h"
 #include "ballistica/game/session/client_session.h"
 #include "ballistica/generic/utils.h"
-#include "ballistica/media/component/sound.h"
 
 namespace ballistica {
 

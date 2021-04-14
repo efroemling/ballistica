@@ -2,10 +2,6 @@
 
 #include "ballistica/graphics/graphics.h"
 
-#include <algorithm>
-#include <utility>
-#include <vector>
-
 #include "ballistica/app/app.h"
 #include "ballistica/app/app_globals.h"
 #include "ballistica/dynamics/bg/bg_dynamics.h"
@@ -26,9 +22,9 @@
 #include "ballistica/graphics/net_graph.h"
 #include "ballistica/graphics/text/text_graphics.h"
 #include "ballistica/input/input.h"
-#include "ballistica/platform/platform.h"
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_context_call.h"
+#include "ballistica/scene/node/globals_node.h"
 #include "ballistica/scene/scene.h"
 #include "ballistica/ui/console.h"
 #include "ballistica/ui/root_ui.h"
@@ -37,12 +33,12 @@
 
 namespace ballistica {
 
-const float kScreenMessageZDepth = -0.06f;
-const float kScreenMeshZDepth = -0.05f;
-const float kProgressBarZDepth = 0.0f;
-const int kProgressBarFadeTime = 500;
-const float kDebugImgZDepth = -0.04f;
-const float kCursorZDepth = -0.1f;
+const float kScreenMessageZDepth{-0.06f};
+const float kScreenMeshZDepth{-0.05f};
+const float kProgressBarZDepth{0.0f};
+const int kProgressBarFadeTime{500};
+const float kDebugImgZDepth{-0.04f};
+const float kCursorZDepth{-0.1f};
 
 auto Graphics::IsShaderTransparent(ShadingType c) -> bool {
   switch (c) {
@@ -1883,6 +1879,29 @@ auto Graphics::ReflectionTypeFromString(const std::string& s)
     throw Exception("invalid reflection type: '" + s + "'");
   }
   return r;
+}
+
+auto Graphics::ApplyGlobals(GlobalsNode* globals) -> void {
+  set_floor_reflection(globals->floor_reflection());
+  camera()->SetMode(globals->camera_mode());
+  camera()->set_vr_offset(Vector3f(globals->vr_camera_offset()));
+  camera()->set_happy_thoughts_mode(globals->happy_thoughts_mode());
+  set_shadow_scale(globals->shadow_scale()[0], globals->shadow_scale()[1]);
+  auto&& area_of_interest_bounds{globals->area_of_interest_bounds()};
+  camera()->set_area_of_interest_bounds(
+      area_of_interest_bounds[0], area_of_interest_bounds[1],
+      area_of_interest_bounds[2], area_of_interest_bounds[3],
+      area_of_interest_bounds[4], area_of_interest_bounds[5]);
+  auto&& shadow_range{globals->shadow_range()};
+  SetShadowRange(shadow_range[0], shadow_range[1], shadow_range[2],
+                 shadow_range[3]);
+  set_shadow_offset(Vector3f(globals->shadow_offset()));
+  set_shadow_ortho(globals->shadow_ortho());
+  set_tint(Vector3f(globals->tint()));
+
+  set_ambient_color(Vector3f(globals->ambient_color()));
+  set_vignette_outer(Vector3f(globals->vignette_outer()));
+  set_vignette_inner(Vector3f(globals->vignette_inner()));
 }
 
 }  // namespace ballistica

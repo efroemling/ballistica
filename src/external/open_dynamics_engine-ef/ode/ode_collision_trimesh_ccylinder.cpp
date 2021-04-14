@@ -913,7 +913,7 @@ int dCollideCCTL(dxGeom *o1, dxGeom *o2, int flags, dContactGeom *contact, int s
 	vNormal[2] = REAL(0.0);
 
 	// Will it better to use LSS here? -> confirm Pierre.
-	 OBBCollider& Collider = TriMesh->_OBBCollider;
+  OBBCollider& Collider{TriMesh->_OBBCollider};
 
 	 Point cCenter((float) vCapsulePosition[0],(float) vCapsulePosition[1],(float) vCapsulePosition[2]);
 	 Point cExtents((float) vCapsuleRadius,(float) vCapsuleRadius,(float) fCapsuleSize/2);

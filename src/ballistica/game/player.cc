@@ -2,8 +2,6 @@
 
 #include "ballistica/game/player.h"
 
-#include <algorithm>
-
 #include "ballistica/game/host_activity.h"
 #include "ballistica/game/session/host_session.h"
 #include "ballistica/generic/utils.h"

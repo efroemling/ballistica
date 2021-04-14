@@ -6,18 +6,10 @@
 #include <ws2tcpip.h>
 #pragma comment(lib, "ws2_32.lib")
 #else
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <unistd.h>
 
-#include <cstring>
 #endif
 
-#include <cstdio>
-#include <string>
-
 #include "ballistica/app/app_globals.h"
-#include "ballistica/ballistica.h"
 #include "ballistica/game/game.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/input/input.h"

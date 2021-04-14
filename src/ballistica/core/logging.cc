@@ -5,9 +5,7 @@
 #include <map>
 
 #include "ballistica/app/app_globals.h"
-#include "ballistica/ballistica.h"
 #include "ballistica/game/game.h"
-#include "ballistica/networking/networking.h"
 #include "ballistica/networking/telnet_server.h"
 #include "ballistica/platform/platform.h"
 #include "ballistica/python/python.h"

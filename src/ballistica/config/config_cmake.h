@@ -77,6 +77,10 @@
 #endif
 #endif  // !BA_DEBUG_BUILD
 
+// Include some stuff here for once we get precompiling going.
+#ifdef __cplusplus
+#endif  // __cplusplus
+
 // This must always be last.
 #include "ballistica/config/config_common.h"
 

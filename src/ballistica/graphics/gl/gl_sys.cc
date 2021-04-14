@@ -3,9 +3,6 @@
 #if BA_ENABLE_OPENGL
 #include "ballistica/graphics/gl/gl_sys.h"
 
-#include <string>
-
-#include "ballistica/ballistica.h"
 #include "ballistica/platform/sdl/sdl_app.h"
 
 #if BA_OSTYPE_ANDROID

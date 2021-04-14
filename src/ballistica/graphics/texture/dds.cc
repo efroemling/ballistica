@@ -2,9 +2,6 @@
 
 #include "ballistica/graphics/texture/dds.h"
 
-#include <algorithm>
-
-#include "ballistica/ballistica.h"
 #include "ballistica/platform/platform.h"
 
 #if BA_ENABLE_OPENGL

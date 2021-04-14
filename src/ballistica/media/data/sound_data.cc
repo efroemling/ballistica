@@ -2,10 +2,6 @@
 
 #include "ballistica/media/data/sound_data.h"
 
-#include <sys/stat.h>
-
-#include <cstring>
-
 #if BA_ENABLE_AUDIO
 #if BA_USE_TREMOR_VORBIS
 #include "ivorbisfile.h"  // NOLINT
@@ -14,12 +10,8 @@
 #endif
 #endif  // BA_ENABLE_AUDIO
 
-#include <string>
-#include <vector>
-
 #include "ballistica/audio/audio_server.h"
 #include "ballistica/media/media.h"
-#include "ballistica/platform/platform.h"
 #include "ballistica/python/python.h"
 
 // Need to move away from OpenAL on Apple stuff.

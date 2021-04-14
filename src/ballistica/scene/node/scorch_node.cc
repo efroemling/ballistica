@@ -2,11 +2,8 @@
 
 #include "ballistica/scene/node/scorch_node.h"
 
-#include <vector>
-
 #include "ballistica/generic/utils.h"
 #include "ballistica/graphics/component/simple_component.h"
-#include "ballistica/graphics/renderer.h"
 #include "ballistica/scene/node/node_attribute.h"
 #include "ballistica/scene/node/node_type.h"
 

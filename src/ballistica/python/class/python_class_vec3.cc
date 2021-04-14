@@ -2,9 +2,6 @@
 
 #include "ballistica/python/class/python_class_vec3.h"
 
-#include <string>
-
-#include "ballistica/ballistica.h"
 #include "ballistica/python/python.h"
 
 // FIXME:

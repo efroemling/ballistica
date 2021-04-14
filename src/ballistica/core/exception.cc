@@ -2,8 +2,6 @@
 
 #include "ballistica/core/exception.h"
 
-#include <utility>
-
 #include "ballistica/ballistica.h"
 #include "ballistica/platform/platform.h"
 

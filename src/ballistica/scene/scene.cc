@@ -2,9 +2,6 @@
 
 #include "ballistica/scene/scene.h"
 
-#include <cmath>
-#include <utility>
-
 #include "ballistica/app/app_globals.h"
 #include "ballistica/audio/audio.h"
 #include "ballistica/dynamics/bg/bg_dynamics.h"
@@ -29,12 +26,9 @@
 #include "ballistica/scene/node/light_node.h"
 #include "ballistica/scene/node/locator_node.h"
 #include "ballistica/scene/node/math_node.h"
-#include "ballistica/scene/node/node_attribute.h"
 #include "ballistica/scene/node/node_attribute_connection.h"
-#include "ballistica/scene/node/node_type.h"
 #include "ballistica/scene/node/null_node.h"
 #include "ballistica/scene/node/player_node.h"
-#include "ballistica/scene/node/prop_node.h"
 #include "ballistica/scene/node/region_node.h"
 #include "ballistica/scene/node/scorch_node.h"
 #include "ballistica/scene/node/session_globals_node.h"

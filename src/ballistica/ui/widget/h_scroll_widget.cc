@@ -2,14 +2,9 @@
 
 #include "ballistica/ui/widget/h_scroll_widget.h"
 
-#include <algorithm>
-
 #include "ballistica/generic/real_timer.h"
 #include "ballistica/graphics/component/empty_component.h"
 #include "ballistica/graphics/component/simple_component.h"
-#include "ballistica/graphics/graphics.h"
-#include "ballistica/graphics/renderer.h"
-#include "ballistica/platform/platform.h"
 #include "ballistica/ui/ui.h"
 
 namespace ballistica {

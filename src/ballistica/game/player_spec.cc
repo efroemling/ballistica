@@ -2,8 +2,6 @@
 
 #include "ballistica/game/player_spec.h"
 
-#include <cstdlib>
-
 #include "ballistica/app/app_globals.h"
 #include "ballistica/game/account.h"
 #include "ballistica/generic/json.h"

@@ -253,45 +253,49 @@ void dGeomTriMeshDataBuildSimple(dTriMeshDataID g,
                                  (const int*)NULL);
 }
 
+// ERICF TWEAK: These were being allocated statically and thus could crash us
+// if collision processing while we were tearing down. Ideally we should allocate these
+// completely dynamically somewhere but for now at least switching to new() so that
+// they won't get deleted from under us.
 
 // Trimesh
-PlanesCollider dxTriMesh::_PlanesCollider;
-SphereCollider dxTriMesh::_SphereCollider;
+PlanesCollider* dxTriMesh::_PlanesCollider = new PlanesCollider();
+SphereCollider* dxTriMesh::_SphereCollider = new SphereCollider();
 //OBBCollider dxTriMesh::_OBBCollider;
-RayCollider dxTriMesh::_RayCollider;
-AABBTreeCollider dxTriMesh::_AABBTreeCollider;
-LSSCollider dxTriMesh::_LSSCollider;
+RayCollider* dxTriMesh::_RayCollider = new RayCollider();
+AABBTreeCollider* dxTriMesh::_AABBTreeCollider = new AABBTreeCollider();
+LSSCollider* dxTriMesh::_LSSCollider = new LSSCollider();
 
-SphereCache dxTriMesh::defaultSphereCache;
+SphereCache* dxTriMesh::defaultSphereCache = new SphereCache;
 //OBBCache dxTriMesh::defaultBoxCache;
-LSSCache dxTriMesh::defaultCCylinderCache;
+LSSCache* dxTriMesh::defaultCCylinderCache = new LSSCache();
 
-CollisionFaces dxTriMesh::Faces;
+CollisionFaces* dxTriMesh::Faces = new CollisionFaces();
 
 dxTriMesh::dxTriMesh(dSpaceID Space, dTriMeshDataID Data) : dxGeom(Space, 1){
 	type = dTriMeshClass;
 
 	this->Data = Data;
 
-	_RayCollider.SetDestination(&Faces);
+	_RayCollider->SetDestination(Faces);
 
-	_PlanesCollider.SetTemporalCoherence(true);
+	_PlanesCollider->SetTemporalCoherence(true);
 
-	_SphereCollider.SetTemporalCoherence(true);
-        _SphereCollider.SetPrimitiveTests(false);
+	_SphereCollider->SetTemporalCoherence(true);
+        _SphereCollider->SetPrimitiveTests(false);
 
 
 	_OBBCollider.SetTemporalCoherence(true);
 
     // no first-contact test (i.e. return full contact info)
-	_AABBTreeCollider.SetFirstContact( false );
+	_AABBTreeCollider->SetFirstContact( false );
     // temporal coherence only works with "first conact" tests
-    _AABBTreeCollider.SetTemporalCoherence(false);
+    _AABBTreeCollider->SetTemporalCoherence(false);
     // Perform full BV-BV tests (true) or SAT-lite tests (false)
-	_AABBTreeCollider.SetFullBoxBoxTest( true );
+	_AABBTreeCollider->SetFullBoxBoxTest( true );
     // Perform full Primitive-BV tests (true) or SAT-lite tests (false)
-	_AABBTreeCollider.SetFullPrimBoxTest( true );
-	_LSSCollider.SetTemporalCoherence(false);
+	_AABBTreeCollider->SetFullPrimBoxTest( true );
+	_LSSCollider->SetTemporalCoherence(false);
 
 	/* TC has speed/space 'issues' that don't make it a clear
 	   win by default on spheres/boxes. */
@@ -303,10 +307,10 @@ dxTriMesh::dxTriMesh(dSpaceID Space, dTriMeshDataID Data) : dxGeom(Space, 1){
 	this->forceNormalMode = false;
 
     const char* msg;
-    if ((msg =_AABBTreeCollider.ValidateSettings()))
+    if ((msg =_AABBTreeCollider->ValidateSettings()))
         dDebug (d_ERR_UASSERT, msg, " (%s:%d)", __FILE__,__LINE__);
-	_LSSCollider.SetPrimitiveTests(false);
-	_LSSCollider.SetFirstContact(false);
+	_LSSCollider->SetPrimitiveTests(false);
+	_LSSCollider->SetFirstContact(false);
 }
 
 dxTriMesh::~dxTriMesh(){

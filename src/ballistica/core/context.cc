@@ -2,8 +2,6 @@
 
 #include "ballistica/core/context.h"
 
-#include <string>
-
 #include "ballistica/game/host_activity.h"
 #include "ballistica/generic/runnable.h"
 #include "ballistica/ui/ui.h"

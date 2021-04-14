@@ -2,14 +2,8 @@
 
 #include "ballistica/graphics/graphics_server.h"
 
-#include <list>
-#include <memory>
-
 #include "ballistica/core/thread.h"
-#include "ballistica/generic/lambda_runnable.h"
 #include "ballistica/graphics/gl/renderer_gl.h"
-#include "ballistica/graphics/renderer.h"
-#include "ballistica/platform/platform.h"
 #include "ballistica/scene/scene.h"
 
 // FIXME: clear out this conditional stuff.
@@ -17,6 +11,11 @@
 #include "ballistica/platform/sdl/sdl_app.h"
 #else
 #include "ballistica/app/app.h"
+#include "ballistica/graphics/frame_def.h"
+#include "ballistica/graphics/mesh/mesh_data.h"
+#include "ballistica/graphics/renderer.h"
+#include "ballistica/media/media.h"
+#include "ballistica/platform/platform.h"
 #endif
 
 namespace ballistica {

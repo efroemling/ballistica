@@ -84,7 +84,7 @@ class UI : public ContextTarget {
   // if a joystick of some form is present.
   auto ShouldShowButtonShortcuts() const -> bool;
 
-  void DrawExtras(FrameDef* frame_def);
+  // void DrawExtras(FrameDef* frame_def);
 
   // Used to ensure widgets are not created or destroyed at certain times
   // (while traversing widget hierarchy, etc).

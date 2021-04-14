@@ -2,8 +2,6 @@
 
 #include "ballistica/dynamics/bg/bg_dynamics_height_cache.h"
 
-#include <algorithm>
-
 namespace ballistica {
 
 const int kBGDynamicsHeightCacheMaxContacts = 20;

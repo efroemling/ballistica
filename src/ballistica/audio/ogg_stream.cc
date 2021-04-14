@@ -2,8 +2,6 @@
 
 #include "ballistica/audio/ogg_stream.h"
 
-#include <cstdio>
-
 #include "ballistica/platform/platform.h"
 
 namespace ballistica {

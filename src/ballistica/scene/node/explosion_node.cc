@@ -2,12 +2,9 @@
 
 #include "ballistica/scene/node/explosion_node.h"
 
-#include "ballistica/dynamics/dynamics.h"
 #include "ballistica/graphics/camera.h"
 #include "ballistica/graphics/component/object_component.h"
 #include "ballistica/graphics/component/post_process_component.h"
-#include "ballistica/graphics/graphics.h"
-#include "ballistica/graphics/renderer.h"
 #include "ballistica/scene/node/node_attribute.h"
 #include "ballistica/scene/node/node_type.h"
 #include "ballistica/scene/scene.h"

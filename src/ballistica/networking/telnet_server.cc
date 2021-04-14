@@ -2,10 +2,7 @@
 
 #include "ballistica/networking/telnet_server.h"
 
-#include <string>
-
 #include "ballistica/app/app_globals.h"
-#include "ballistica/ballistica.h"
 #include "ballistica/core/context.h"
 #include "ballistica/game/game.h"
 #include "ballistica/networking/networking.h"

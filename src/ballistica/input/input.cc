@@ -2,8 +2,6 @@
 
 #include "ballistica/input/input.h"
 
-#include <algorithm>
-
 #include "ballistica/app/app_config.h"
 #include "ballistica/app/app_globals.h"
 #include "ballistica/audio/audio.h"

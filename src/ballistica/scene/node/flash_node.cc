@@ -2,10 +2,7 @@
 
 #include "ballistica/scene/node/flash_node.h"
 
-#include <vector>
-
 #include "ballistica/graphics/component/object_component.h"
-#include "ballistica/graphics/renderer.h"
 #include "ballistica/scene/node/node_attribute.h"
 #include "ballistica/scene/node/node_type.h"
 

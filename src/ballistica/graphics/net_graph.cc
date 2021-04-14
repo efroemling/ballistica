@@ -3,7 +3,6 @@
 #include "ballistica/graphics/net_graph.h"
 
 #include <list>
-#include <utility>
 
 #include "ballistica/graphics/component/simple_component.h"
 

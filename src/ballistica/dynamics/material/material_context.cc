@@ -22,6 +22,18 @@ MaterialContext::MaterialContext(Scene* scene)
       physical(true),
       complex_sound(false) {}
 
+MaterialContext::SoundEntry::SoundEntry(Sound* sound_in, float volume_in)
+    : sound(sound_in), volume(volume_in) {}
+
+MaterialContext::ImpactSoundEntry::ImpactSoundEntry(MaterialContext* context,
+                                                    Sound* sound_in,
+                                                    float target_impulse_in,
+                                                    float volume_in)
+    : context(context),
+      sound(sound_in),
+      target_impulse(target_impulse_in),
+      volume(volume_in) {}
+
 MaterialContext::SkidSoundEntry::SkidSoundEntry(
     const MaterialContext::SkidSoundEntry& other) {
   *this = other;

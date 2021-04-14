@@ -2,8 +2,6 @@
 
 #include "ballistica/app/app_config.h"
 
-#include <utility>
-
 #include "ballistica/ballistica.h"
 #include "ballistica/platform/platform.h"
 #include "ballistica/python/python.h"

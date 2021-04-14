@@ -68,7 +68,7 @@ class ButtonWidget : public Widget {
   void set_enable_sound(bool enable) { sound_enabled_ = enable; }
   void SetModelTransparent(Model* val);
   void SetModelOpaque(Model* val);
-  void set_transition_delay(float val) { transition_delay_ = val; }
+  void set_transition_delay(millisecs_t val) { transition_delay_ = val; }
   void HandleRealTimerExpired(RealTimer<ButtonWidget>* t);
   void set_extra_touch_border_scale(float scale) {
     extra_touch_border_scale_ = scale;
@@ -118,22 +118,22 @@ class ButtonWidget : public Widget {
   Object::Ref<Texture> mask_texture_;
   Object::Ref<Model> model_transparent_;
   Object::Ref<Model> model_opaque_;
-  float icon_scale_ = 1.0f;
-  millisecs_t last_activate_time_ = 0;
-  millisecs_t birth_time_ = 0;
-  float transition_delay_ = 0.0f;
-  float opacity_ = 1.0f;
-  float text_flatness_ = 0.5f;
-  float text_color_r_ = 0.75f;
-  float text_color_g_ = 1.0f;
-  float text_color_b_ = 0.7f;
-  float text_color_a_ = 1.0f;
-  float tint_color_red_ = 1.0f;
-  float tint_color_green_ = 1.0f;
-  float tint_color_blue_ = 1.0f;
-  float tint2_color_red_ = 1.0f;
-  float tint2_color_green_ = 1.0f;
-  float tint2_color_blue_ = 1.0f;
+  float icon_scale_{1.0f};
+  millisecs_t last_activate_time_{};
+  millisecs_t birth_time_{};
+  millisecs_t transition_delay_{};
+  float opacity_{1.0f};
+  float text_flatness_{0.5f};
+  float text_color_r_{0.75f};
+  float text_color_g_{1.0f};
+  float text_color_b_{0.7f};
+  float text_color_a_{1.0f};
+  float tint_color_red_{1.0f};
+  float tint_color_green_{1.0f};
+  float tint_color_blue_{1.0f};
+  float tint2_color_red_{1.0f};
+  float tint2_color_green_{1.0f};
+  float tint2_color_blue_{1.0f};
 
   // Keep these at the bottom so they're torn down first.
   Object::Ref<TextWidget> text_;

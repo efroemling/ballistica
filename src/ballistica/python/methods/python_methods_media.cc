@@ -8,7 +8,6 @@
 #endif
 
 #include "ballistica/game/host_activity.h"
-#include "ballistica/game/session/host_session.h"
 #include "ballistica/graphics/graphics_server.h"
 #include "ballistica/media/component/collide_model.h"
 #include "ballistica/media/component/data.h"

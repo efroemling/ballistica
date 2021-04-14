@@ -8,7 +8,6 @@
 #include "ballistica/game/session/client_session.h"
 #include "ballistica/generic/utils.h"
 #include "ballistica/graphics/graphics_server.h"
-#include "ballistica/media/component/sound.h"
 
 namespace ballistica {
 

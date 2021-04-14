@@ -4,8 +4,6 @@
 
 #include "ballistica/platform/sdl/sdl_app.h"
 
-#include <string>
-
 #include "ballistica/core/thread.h"
 #include "ballistica/dynamics/bg/bg_dynamics.h"
 #include "ballistica/game/game.h"

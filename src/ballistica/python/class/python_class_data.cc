@@ -2,8 +2,6 @@
 
 #include "ballistica/python/class/python_class_data.h"
 
-#include <string>
-
 #include "ballistica/game/game.h"
 #include "ballistica/media/component/data.h"
 

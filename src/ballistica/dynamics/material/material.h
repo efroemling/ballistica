@@ -6,8 +6,7 @@
 #include <string>
 #include <vector>
 
-#include "ballistica/media/component/sound.h"
-#include "ballistica/python/python_ref.h"
+#include "ballistica/core/object.h"
 
 namespace ballistica {
 
@@ -27,7 +26,6 @@ class Material : public Object {
   /// Apply the material to a context.
   void Apply(MaterialContext* s, const Part* src_part, const Part* dst_part);
   auto label() const -> const std::string& { return label_; }
-  auto hasPyObject() const -> bool { return (py_object_ != nullptr); }
   auto NewPyRef() -> PyObject* { return GetPyRef(true); }
   auto BorrowPyRef() -> PyObject* { return GetPyRef(false); }
   void MarkDead();
@@ -43,13 +41,14 @@ class Material : public Object {
     stream_id_ = -1;
   }
   void set_py_object(PyObject* obj) { py_object_ = obj; }
+  auto has_py_object() const -> bool { return (py_object_ != nullptr); }
   auto py_object() const -> PyObject* { return py_object_; }
 
  private:
-  bool dead_ = false;
-  int64_t stream_id_ = -1;
+  bool dead_{};
+  int64_t stream_id_{-1};
   Object::WeakRef<Scene> scene_;
-  PyObject* py_object_ = nullptr;
+  PyObject* py_object_{};
   auto GetPyRef(bool new_ref = true) -> PyObject*;
   std::string label_;
   std::vector<Object::Ref<MaterialComponent> > components_;

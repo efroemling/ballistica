@@ -2,12 +2,7 @@
 
 #include "ballistica/graphics/renderer.h"
 
-#include <algorithm>
-#include <vector>
-
 #include "ballistica/graphics/graphics_server.h"
-#include "ballistica/graphics/text/text_packer.h"
-#include "ballistica/graphics/vr_graphics.h"
 
 // FIXME: Clear out conditional stuff.
 #if BA_OSTYPE_MACOS && BA_SDL_BUILD && !BA_SDL2_BUILD
@@ -16,6 +11,7 @@
 
 #if BA_VR_BUILD
 #include "ballistica/app/app_globals.h"
+#include "ballistica/graphics/vr_graphics.h"
 #endif
 
 namespace ballistica {

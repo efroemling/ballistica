@@ -2,8 +2,6 @@
 
 #include "ballistica/python/methods/python_methods_graphics.h"
 
-#include <string>
-
 #include "ballistica/game/game.h"
 #include "ballistica/graphics/graphics.h"
 #include "ballistica/graphics/text/text_graphics.h"

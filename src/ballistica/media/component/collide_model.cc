@@ -2,8 +2,6 @@
 
 #include "ballistica/media/component/collide_model.h"
 
-#include <string>
-
 #include "ballistica/game/game_stream.h"
 #include "ballistica/python/class/python_class_collide_model.h"
 #include "ballistica/scene/scene.h"

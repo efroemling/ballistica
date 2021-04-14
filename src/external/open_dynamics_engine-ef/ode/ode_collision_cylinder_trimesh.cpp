@@ -942,7 +942,7 @@ int dCollideCylinderTrimesh(dxGeom *o1, dxGeom *o2, int flags, dContactGeom *con
 
 	_InitCylinderTrimeshData(cData);
 
-	OBBCollider& Collider = cData.gTrimesh->_OBBCollider;
+  OBBCollider& Collider{cData.gTrimesh->_OBBCollider};
 
 	Point cCenter(cData.vCylinderPos[0],cData.vCylinderPos[1],cData.vCylinderPos[2]);
 

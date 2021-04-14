@@ -2,10 +2,6 @@
 
 #include "ballistica/game/game.h"
 
-#include <algorithm>
-#include <memory>
-#include <utility>
-
 #include "ballistica/app/app.h"
 #include "ballistica/app/app_config.h"
 #include "ballistica/audio/audio.h"
@@ -31,9 +27,7 @@
 #include "ballistica/input/device/client_input_device.h"
 #include "ballistica/input/device/keyboard_input.h"
 #include "ballistica/input/device/touch_input.h"
-#include "ballistica/math/vector3f.h"
 #include "ballistica/networking/network_write_module.h"
-#include "ballistica/networking/networking.h"
 #include "ballistica/networking/sockaddr.h"
 #include "ballistica/networking/telnet_server.h"
 #include "ballistica/python/python.h"

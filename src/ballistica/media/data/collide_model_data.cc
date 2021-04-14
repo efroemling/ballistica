@@ -2,8 +2,6 @@
 
 #include "ballistica/media/data/collide_model_data.h"
 
-#include <string>
-
 #include "ballistica/media/media.h"
 
 namespace ballistica {

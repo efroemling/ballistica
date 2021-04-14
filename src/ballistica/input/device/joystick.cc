@@ -2,9 +2,6 @@
 
 #include "ballistica/input/device/joystick.h"
 
-#include <algorithm>
-#include <string>
-
 #include "ballistica/app/app.h"
 #include "ballistica/app/app_globals.h"
 #include "ballistica/audio/audio.h"

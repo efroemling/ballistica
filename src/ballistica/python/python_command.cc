@@ -2,8 +2,6 @@
 
 #include "ballistica/python/python_command.h"
 
-#include <utility>
-
 #include "ballistica/python/python.h"
 #include "ballistica/python/python_sys.h"
 

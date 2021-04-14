@@ -2,8 +2,6 @@
 
 #include "ballistica/scene/node/light_node.h"
 
-#include <algorithm>
-
 #include "ballistica/dynamics/bg/bg_dynamics_volume_light.h"
 #include "ballistica/graphics/graphics.h"
 #include "ballistica/scene/node/node_attribute.h"

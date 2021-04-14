@@ -2,11 +2,6 @@
 
 #include "ballistica/dynamics/bg/bg_dynamics_server.h"
 
-#include <algorithm>
-#include <list>
-#include <memory>
-#include <vector>
-
 #include "ballistica/dynamics/bg/bg_dynamics_draw_snapshot.h"
 #include "ballistica/dynamics/bg/bg_dynamics_fuse_data.h"
 #include "ballistica/dynamics/bg/bg_dynamics_height_cache.h"
@@ -17,7 +12,6 @@
 #include "ballistica/generic/utils.h"
 #include "ballistica/graphics/graphics_server.h"
 #include "ballistica/media/component/collide_model.h"
-#include "ballistica/platform/platform.h"
 
 namespace ballistica {
 

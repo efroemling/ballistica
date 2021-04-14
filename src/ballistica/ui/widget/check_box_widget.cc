@@ -6,8 +6,6 @@
 #include "ballistica/game/game.h"
 #include "ballistica/graphics/component/empty_component.h"
 #include "ballistica/graphics/component/simple_component.h"
-#include "ballistica/graphics/graphics.h"
-#include "ballistica/platform/platform.h"
 #include "ballistica/python/python_context_call.h"
 #include "ballistica/python/python_sys.h"
 #include "ballistica/ui/ui.h"

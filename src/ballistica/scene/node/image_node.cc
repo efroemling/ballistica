@@ -2,13 +2,7 @@
 
 #include "ballistica/scene/node/image_node.h"
 
-#include <string>
-#include <vector>
-
 #include "ballistica/graphics/component/simple_component.h"
-#include "ballistica/graphics/graphics.h"
-#include "ballistica/graphics/renderer.h"
-#include "ballistica/media/component/model.h"
 #include "ballistica/scene/node/node_attribute.h"
 #include "ballistica/scene/node/node_type.h"
 #include "ballistica/scene/scene.h"

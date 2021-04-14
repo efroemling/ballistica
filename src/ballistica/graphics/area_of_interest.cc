@@ -2,8 +2,6 @@
 
 #include "ballistica/graphics/area_of_interest.h"
 
-#include "ballistica/ballistica.h"
-
 namespace ballistica {
 
 AreaOfInterest::AreaOfInterest(bool in_focus) : in_focus_(in_focus) {}

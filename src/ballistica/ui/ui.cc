@@ -4,15 +4,11 @@
 
 #include "ballistica/app/app_globals.h"
 #include "ballistica/audio/audio.h"
-#include "ballistica/generic/lambda_runnable.h"
 #include "ballistica/graphics/component/empty_component.h"
-#include "ballistica/graphics/graphics.h"
 #include "ballistica/input/device/input_device.h"
 #include "ballistica/input/input.h"
 #include "ballistica/media/component/data.h"
-#include "ballistica/media/component/model.h"
 #include "ballistica/media/component/sound.h"
-#include "ballistica/media/component/texture.h"
 #include "ballistica/python/python.h"
 #include "ballistica/scene/scene.h"
 #include "ballistica/ui/root_ui.h"
@@ -448,6 +444,10 @@ auto UI::Draw(FrameDef* frame_def) -> void {
   }
 }
 
-void UI::DrawExtras(FrameDef* frame_def) { root_ui_->Draw(frame_def); }
+// void UI::DrawExtras(FrameDef* frame_def) {
+//   assert(frame_def != nullptr);
+//   assert(root_ui_ != nullptr);
+//   root_ui_->Draw(frame_def);
+// }
 
 }  // namespace ballistica

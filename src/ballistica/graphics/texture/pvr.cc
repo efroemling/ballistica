@@ -2,11 +2,6 @@
 
 #include "ballistica/graphics/texture/pvr.h"
 
-#include <algorithm>
-#include <cassert>
-#include <cstdio>
-
-#include "ballistica/ballistica.h"
 #include "ballistica/platform/platform.h"
 
 namespace ballistica {

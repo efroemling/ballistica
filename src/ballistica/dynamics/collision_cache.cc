@@ -2,13 +2,9 @@
 
 #include "ballistica/dynamics/collision_cache.h"
 
-#include <algorithm>
-
 #include "ballistica/graphics/component/simple_component.h"
 #include "ode/ode_collision_kernel.h"
 #include "ode/ode_collision_space_internal.h"
-#include "ode/ode_collision_util.h"
-#include "ode/ode_objects_private.h"
 
 namespace ballistica {
 
