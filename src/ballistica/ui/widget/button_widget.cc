@@ -169,7 +169,7 @@ void ButtonWidget::Draw(RenderPass* pass, bool draw_transparent) {
   // Simple transition.
   millisecs_t transition = (birth_time_ + transition_delay_) - current_time;
   if (transition > 0) {
-    extra_offs_x -= transition * 4.0f;
+    extra_offs_x -= static_cast<float>(transition) * 4.0f;
   }
 
   if (text_width_dirty_) {

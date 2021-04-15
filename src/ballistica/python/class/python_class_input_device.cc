@@ -244,6 +244,10 @@ auto PythonClassInputDevice::tp_getattro(PythonClassInputDevice* self,
   BA_PYTHON_CATCH;
 }
 
+// Yes Clion, we always return -1 here.
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "ConstantFunctionResult"
+
 auto PythonClassInputDevice::tp_setattro(PythonClassInputDevice* self,
                                          PyObject* attr, PyObject* val) -> int {
   BA_PYTHON_TRY;
@@ -254,6 +258,8 @@ auto PythonClassInputDevice::tp_setattro(PythonClassInputDevice* self,
   // val);
   BA_PYTHON_INT_CATCH;
 }
+
+#pragma clang diagnostic pop
 
 auto PythonClassInputDevice::RemoveRemotePlayerFromGame(
     PythonClassInputDevice* self) -> PyObject* {

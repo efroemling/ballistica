@@ -53,9 +53,6 @@ auto LocatorNode::getShape() const -> std::string {
       return "circleOutline";
     case Shape::kLocator:
       return "locator";
-    default:
-      throw Exception("Invalid shape val: "
-                      + std::to_string(static_cast<int>(shape_)));
   }
 }
 
@@ -125,13 +122,16 @@ void LocatorNode::Draw(FrameDef* frame_def) {
   }
 
   bool transparent = false;
-  if (shape_ == Shape::kCircle || shape_ == Shape::kCircleOutline)
+  if (shape_ == Shape::kCircle || shape_ == Shape::kCircleOutline) {
     transparent = true;
+  }
 
   // beauty
   if (draw_beauty_) {
     SimpleComponent c(frame_def->beauty_pass());
-    if (transparent) c.SetTransparent(true);
+    if (transparent) {
+      c.SetTransparent(true);
+    }
     c.SetColor(color_[0], color_[1], color_[2], opacity_);
     c.SetTexture(g_media->GetTexture(texture));
     c.PushTransform();
@@ -146,11 +146,10 @@ void LocatorNode::Draw(FrameDef* frame_def) {
     // colored shadow for circle
     if (shape_ == Shape::kCircle || shape_ == Shape::kCircleOutline) {
       SimpleComponent c(frame_def->light_shadow_pass());
-      if (transparent) {
-        c.SetTransparent(true);
-        if (additive_) {
-          c.SetPremultiplied(true);
-        }
+      assert(transparent);
+      c.SetTransparent(true);
+      if (additive_) {
+        c.SetPremultiplied(true);
       }
       if (additive_) {
         c.SetColor(color_[0] * opacity_, color_[1] * opacity_,

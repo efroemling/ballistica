@@ -37,8 +37,8 @@ const bool kShowInUseSounds = false;
 int AudioServer::al_source_count_ = 0;
 
 struct AudioServer::Impl {
-  Impl() {}
-  ~Impl() {}
+  Impl() = default;
+  ~Impl() = default;
 
 #if BA_ENABLE_AUDIO
   ALCcontext* alc_context_{};
@@ -417,7 +417,6 @@ AudioServer::AudioServer(Thread* thread)
 }
 
 AudioServer::~AudioServer() {
-  delete impl_;
 #if BA_ENABLE_AUDIO
   sound_source_refs_.clear();
 
@@ -434,6 +433,7 @@ AudioServer::~AudioServer() {
   assert(al_source_count_ == 0);
 
 #endif  // BA_ENABLE_AUDIO
+  delete impl_;
 }
 
 void AudioServer::UpdateAvailableSources() {

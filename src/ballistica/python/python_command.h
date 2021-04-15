@@ -49,7 +49,7 @@ class PythonCommand {
   /// Run thecommand and return the result as a new Python reference.
   /// Only works for eval-able commands.
   /// Returns nullptr on errors, but Python error state will be cleared.
-  auto RunReturnObj(bool print_errors = false) -> PyObject*;
+  auto RunReturnObj(bool print_errors, PyObject* context) -> PyObject*;
 
   void LogContext();
 

@@ -425,8 +425,6 @@ auto RigidBody::SetDimensions(float d1, float d2, float d3, float m1, float m2,
       case Shape::kTrimesh:  // NOLINT(bugprone-branch-clone)
         // Trimesh bodies not supported yet.
         throw Exception();
-      default:
-        throw Exception();
     }
 
     // Need to handle groups here.

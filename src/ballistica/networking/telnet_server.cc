@@ -53,6 +53,9 @@ void TelnetServer::Resume() {
   paused_cv_.notify_all();
 }
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "ConstantFunctionResult"
+
 auto TelnetServer::RunThread() -> int {
   // Do this whole thing in a loop.
   // If we get put to sleep we just start over.
@@ -66,14 +69,16 @@ auto TelnetServer::RunThread() -> int {
     sd_ = socket(AF_INET, SOCK_STREAM, 0);
     if (sd_ < 0) {
       Log("Error: Unable to open host socket; errno " + std::to_string(errno));
-      return 0;
+      return 1;
     }
 
     // Make it reusable.
     int on = 1;
     int status =
         setsockopt(sd_, SOL_SOCKET, SO_REUSEADDR, (const char*)&on, sizeof(on));
-    if (-1 == status) Log("Error setting SO_REUSEADDR on telnet server");
+    if (-1 == status) {
+      Log("Error setting SO_REUSEADDR on telnet server");
+    }
 
     // Bind to local server port.
     struct sockaddr_in serv_addr {};
@@ -83,7 +88,7 @@ auto TelnetServer::RunThread() -> int {
     serv_addr.sin_port = htons(port_);  // NOLINT
     result = ::bind(sd_, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
     if (result != 0) {
-      return 0;
+      return 1;
     }
     char buffer[10000];
     const char* prompt = "ballisticacore> ";
@@ -176,6 +181,8 @@ auto TelnetServer::RunThread() -> int {
   }
 }
 
+#pragma clang diagnostic pop
+
 void TelnetServer::PushTelnetScriptCommand(const std::string& command) {
   assert(g_game);
   if (g_game == nullptr) {
@@ -189,7 +196,7 @@ void TelnetServer::PushTelnetScriptCommand(const std::string& command) {
     }
     PythonCommand cmd(command, "<telnet>");
     if (cmd.CanEval()) {
-      PyObject* obj = cmd.RunReturnObj(true);
+      PyObject* obj = cmd.RunReturnObj(true, nullptr);
       if (obj && obj != Py_None) {
         PyObject* s = PyObject_Repr(obj);
         if (s) {

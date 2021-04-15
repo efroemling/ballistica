@@ -865,6 +865,9 @@ auto cJSON_DetachItemFromArray(cJSON* array, int which) -> cJSON* {
 void cJSON_DeleteItemFromArray(cJSON* array, int which) {
   cJSON_Delete(cJSON_DetachItemFromArray(array, which));
 }
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "ConstantFunctionResult"
+
 auto cJSON_DetachItemFromObject(cJSON* object, const char* string) -> cJSON* {
   int i = 0;
   cJSON* c = object->child;
@@ -875,6 +878,9 @@ auto cJSON_DetachItemFromObject(cJSON* object, const char* string) -> cJSON* {
   if (c) return cJSON_DetachItemFromArray(object, i);
   return nullptr;
 }
+
+#pragma clang diagnostic pop
+
 void cJSON_DeleteItemFromObject(cJSON* object, const char* string) {
   cJSON_Delete(cJSON_DetachItemFromObject(object, string));
 }

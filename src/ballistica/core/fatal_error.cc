@@ -21,9 +21,9 @@ auto FatalError::ReportFatalError(const std::string& message,
   // blessed build. If we are, our main goal is to communicate as much info
   // about the error to the master server, and communicating to the user is
   // a stretch goal.
-  // If we are unblessed or modified, the main goals are communicating the error
-  // to the user and exiting the app cleanly (so we don't pollute our crash
-  // records with results of user tinkering).
+  // If we are unblessed or modified, the main goals are communicating the
+  // error to the user and exiting the app cleanly (so we don't pollute our
+  // crash records with results of user tinkering).
 
   // Try to avoid crash reports if we're not a clean blessed build.
   // bool exit_cleanly = !IsUnmodifiedBlessedBuild();

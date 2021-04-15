@@ -81,7 +81,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES GNU)
     "${CMAKE_CXX_FLAGS} -Wno-psabi")
 endif()
 
-set(BA_SRC_ROOT src)
+set(BA_SRC_ROOT ../src)
 include_directories(${BA_SRC_ROOT})
 add_compile_options(-include ballistica/config/config_cmake.h)
 
@@ -642,7 +642,7 @@ target_include_directories(ballisticacore PRIVATE
 
 target_link_libraries(ballisticacore PRIVATE
   ${CMAKE_CURRENT_BINARY_DIR}/prefablib/libballisticacore_internal.a ode pthread ${Python_LIBRARIES}
-  ${SDL2_LIBRARIES} ${EXTRA_LIBRARIES} dl)
+  ${SDL2_LIBRARIES} ${EXTRA_LIBRARIES} dl z)
 
 # Hack for building on rpi (might be due to my manually built Python 3.8)
 # Hopefully can remove later...

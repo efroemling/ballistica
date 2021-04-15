@@ -87,7 +87,8 @@ void NodeAttributeUnbound::DisconnectIncoming(Node* node) {
     Object::WeakRef<NodeAttributeConnection> test_ref(a);
 #endif
 
-    assert(a && a->src_node.exists());
+    assert(a != nullptr);
+    assert(a->src_node.exists());
 
     // Remove from src node's outgoing list.
     a->src_node->attribute_connections_.erase(a->src_iterator);

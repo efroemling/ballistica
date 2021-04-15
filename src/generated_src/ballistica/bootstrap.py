@@ -141,7 +141,7 @@ def _ballistica_bootstrap() -> object:
     return app
 
 
-_app_state = _ballistica_bootstrap()
+app_state = _ballistica_bootstrap()
 
 # This code runs in the main namespace, so clean up after ourself.
 del _ballistica_bootstrap, TYPE_CHECKING

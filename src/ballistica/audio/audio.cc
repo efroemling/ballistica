@@ -87,7 +87,7 @@ auto Audio::IsSoundPlaying(uint32_t play_id) -> bool {
   return result;
 }
 
-auto Audio::SourceBeginExisting(uint32_t play_id, uint32_t debug_id)
+auto Audio::SourceBeginExisting(uint32_t play_id, int debug_id)
     -> AudioSource* {
   BA_DEBUG_FUNCTION_TIMER_BEGIN();
   uint32_t source_id = AudioServer::source_id_from_play_id(play_id);

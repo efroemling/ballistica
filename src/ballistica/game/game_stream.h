@@ -15,7 +15,7 @@ namespace ballistica {
 // stream of messages that can be saved to file or sent over the network.
 class GameStream : public Object, public ClientControllerInterface {
  public:
-  GameStream(HostSession* host_session, bool saveReplay);
+  GameStream(HostSession* host_session, bool save_replay);
   ~GameStream() override;
   auto SetTime(millisecs_t t) -> void;
   auto AddScene(Scene* s) -> void;

@@ -243,7 +243,7 @@ auto Utils::GetValidUTF8(const char* str, const char* loc) -> std::string {
     for (i = 0; i < f_size; i++) {
       c = (unsigned char)(str)[i];
       if (c < 127) {  // normal ASCII
-        to.append(1, c);
+        to.append(1, static_cast<char>(c));
       }
     }
 
@@ -268,19 +268,19 @@ auto Utils::GetValidUTF8(const char* str, const char* loc) -> std::string {
       c = (unsigned char)(str)[i];
       if (c < 32) {                          // control char
         if (c == 9 || c == 10 || c == 13) {  // allow only \t \n \r
-          to.append(1, c);
+          to.append(1, static_cast<char>(c));
         }
         continue;
       } else if (c < 127) {  // normal ASCII
-        to.append(1, c);
+        to.append(1, static_cast<char>(c));
         continue;
       } else if (c < 160) {
         // control char (nothing should be defined here either
         // ASCI, ISO_8859-1 or UTF8, so skipping)
         if (c2 == 128) {  // fix microsoft mess, add euro
-          to.append(1, (unsigned char)(226));
-          to.append(1, (unsigned char)(130));
-          to.append(1, (unsigned char)(172));
+          to.append(1, static_cast<char>((unsigned char)(226)));
+          to.append(1, static_cast<char>((unsigned char)(130)));
+          to.append(1, static_cast<char>((unsigned char)(172)));
         }
         if (c2 == 133) {  // fix IBM mess, add NEL = \n\r
           to.append(1, 10);
@@ -288,11 +288,11 @@ auto Utils::GetValidUTF8(const char* str, const char* loc) -> std::string {
         }
         continue;
       } else if (c < 192) {  // invalid for UTF8, converting ASCII
-        to.append(1, (unsigned char)194);
-        to.append(1, c);
+        to.append(1, static_cast<char>((unsigned char)194));
+        to.append(1, static_cast<char>(c));
         continue;
       } else if (c < 194) {  // invalid for UTF8, converting ASCII
-        to.append(1, (unsigned char)195);
+        to.append(1, static_cast<char>((unsigned char)195));
         to.append(1, c - 64);
         continue;
       } else if (c < 224 && i + 1 < f_size) {  // possibly 2byte UTF8
@@ -300,8 +300,8 @@ auto Utils::GetValidUTF8(const char* str, const char* loc) -> std::string {
         if (c2 > 127 && c2 < 192) {    // valid 2byte UTF8
           if (c == 194 && c2 < 160) {  // control char, skipping
           } else {
-            to.append(1, c);
-            to.append(1, c2);
+            to.append(1, static_cast<char>(c));
+            to.append(1, static_cast<char>(c2));
           }
           i++;
           continue;
@@ -310,9 +310,9 @@ auto Utils::GetValidUTF8(const char* str, const char* loc) -> std::string {
         c2 = (unsigned char)(str)[i + 1];
         c3 = (unsigned char)(str)[i + 2];
         if (c2 > 127 && c2 < 192 && c3 > 127 && c3 < 192) {  // valid 3byte UTF8
-          to.append(1, c);
-          to.append(1, c2);
-          to.append(1, c3);
+          to.append(1, static_cast<char>(c));
+          to.append(1, static_cast<char>(c2));
+          to.append(1, static_cast<char>(c3));
           i += 2;
           continue;
         }
@@ -323,17 +323,17 @@ auto Utils::GetValidUTF8(const char* str, const char* loc) -> std::string {
         if (c2 > 127 && c2 < 192 && c3 > 127 && c3 < 192 && c4 > 127
             && c4 < 192) {
           // valid 4byte UTF8
-          to.append(1, c);
-          to.append(1, c2);
-          to.append(1, c3);
-          to.append(1, c4);
+          to.append(1, static_cast<char>(c));
+          to.append(1, static_cast<char>(c2));
+          to.append(1, static_cast<char>(c3));
+          to.append(1, static_cast<char>(c4));
           i += 3;
           continue;
         }
       }
       // invalid UTF8, converting ASCII
       // (c>245 || string too short for multi-byte))
-      to.append(1, (unsigned char)195);
+      to.append(1, static_cast<char>((unsigned char)195));
       to.append(1, c - 64);
     }
   }
@@ -424,11 +424,16 @@ static std::list<std::string>* g_random_names_list = nullptr;
 
 auto Utils::GetRandomNameList() -> const std::list<std::string>& {
   assert(InGameThread());
-  if (!g_random_names_list) {
-    // this will init the list with our default english names
+  if (g_random_names_list == nullptr) {
+    // This will init the list with our default english names.
     SetRandomNameList(std::list<std::string>(1, "DEFAULT_NAMES"));
   }
+
+  // Clion incorrectly thinks this might be null.
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "NullDereferences"
   return *g_random_names_list;
+#pragma clang diagnostic pop
 }
 
 void Utils::SetRandomNameList(const std::list<std::string>& custom_names) {

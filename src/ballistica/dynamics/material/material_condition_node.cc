@@ -75,8 +75,13 @@ void MaterialConditionNode::Restore(const char** buffer, ClientSession* cs) {
         val1 = Utils::ExtractInt32NBO(buffer);
         val2 = Utils::ExtractInt32NBO(buffer);
         break;
+
+// Currently not reachable, but guarding in case GetValueCount changes.
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnreachableCode"
       default:
         throw Exception();
+#pragma clang diagnostic pop
     }
   } else {
     // not a leaf node - make ourself some children

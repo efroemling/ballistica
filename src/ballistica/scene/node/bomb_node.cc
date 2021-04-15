@@ -53,10 +53,9 @@ void BombNode::Step() {
     dVector3 fuse_tip_pos;
     dGeomGetRelPointPos(body_->geom(), 0, (fuse_length_ + kFuseOffset), 0,
                         fuse_tip_pos);
-    light_translate_ = fuse_tip_pos;
-    light_translate_.x += body_->blend_offset().x;
-    light_translate_.y += body_->blend_offset().y;
-    light_translate_.z += body_->blend_offset().z;
+    light_translate_.x = fuse_tip_pos[0] + body_->blend_offset().x;
+    light_translate_.y = fuse_tip_pos[1] + body_->blend_offset().y;
+    light_translate_.z = fuse_tip_pos[2] + body_->blend_offset().z;
 #if !BA_HEADLESS_BUILD
     fuse_.SetTransform(Matrix44fTranslate(0, kFuseOffset * model_scale_, 0)
                        * body_->GetTransform());

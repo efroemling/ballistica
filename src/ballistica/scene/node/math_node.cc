@@ -46,9 +46,6 @@ auto MathNode::GetOperation() const -> std::string {
       return "divide";
     case Operation::kSin:
       return "sin";
-    default:
-      throw Exception("invalid operation: "
-                      + std::to_string(static_cast<int>(operation_)));
   }
 }
 
@@ -102,10 +99,6 @@ auto MathNode::GetOutput() -> std::vector<float> {
       }
       break;
     }
-    default:
-      BA_LOG_ONCE("Error: invalid math op in getOutput(): "
-                  + std::to_string(static_cast<int>(operation_)));
-      break;
   }
   return outputs;
 }

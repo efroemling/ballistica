@@ -89,6 +89,9 @@ auto PythonClassNode::tp_new(PyTypeObject* type, PyObject* args,
           + " objects must only be created in the game thread (current is ("
           + GetCurrentThreadName() + ").");
     }
+    // Clion incorrectly things s_create_empty will always be false.
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "ConstantConditionsOC"
     if (!s_create_empty_) {
       if (!PyTuple_Check(args) || (PyTuple_GET_SIZE(args) != 1)
           || (keywds != nullptr) || (PyTuple_GET_ITEM(args, 0) != Py_None)) {
@@ -99,6 +102,7 @@ auto PythonClassNode::tp_new(PyTypeObject* type, PyObject* args,
     }
     self->node_ = new Object::WeakRef<Node>();
     BA_PYTHON_NEW_CATCH;
+#pragma clang diagnostic pop
   }
   return reinterpret_cast<PyObject*>(self);
 }

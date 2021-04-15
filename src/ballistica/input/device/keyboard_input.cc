@@ -10,9 +10,9 @@
 
 namespace ballistica {
 
-KeyboardInput::KeyboardInput(KeyboardInput* parentKeyboardInputIn) {
-  if (parentKeyboardInputIn) {
-    parent_keyboard_input_ = parentKeyboardInputIn;
+KeyboardInput::KeyboardInput(KeyboardInput* parent_keyboard_input_in) {
+  if (parent_keyboard_input_in) {
+    parent_keyboard_input_ = parent_keyboard_input_in;
     assert(parent_keyboard_input_->child_keyboard_input_ == nullptr);
 
     // Currently we assume only 2 keyboard inputs.
@@ -115,6 +115,9 @@ auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool repeat, bool down)
               pass = true;
             }
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "ConstantConditionsOC"
+
             // if we're keyboard 1 we always send at least a key press event
             // along..
             if (!parent_keyboard_input_ && !pass) {
@@ -122,6 +125,8 @@ auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool repeat, bool down)
               pass = true;
             }
             break;
+
+#pragma clang diagnostic pop
         }
       }
       if (pass) {
@@ -138,12 +143,19 @@ auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool repeat, bool down)
     return true;
   }
 
+// Clion seems to think child_keyboard_input_ will never be set here (it will).
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnreachableCode"
+#pragma ide diagnostic ignored "ConstantConditionsOC"
+
   // At this point, if we have a child input, let it try to handle things.
   if (child_keyboard_input_ && enable_child_) {
     if (child_keyboard_input_->HandleKey(keysym, repeat, down)) {
       return true;
     }
   }
+
+#pragma clang diagnostic pop
 
   if (!attached_to_player()) {
     if (down

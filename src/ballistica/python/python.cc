@@ -964,10 +964,10 @@ void Python::Reset(bool do_init) {
       throw std::logic_error(
           "Error in ba Python bootstrapping. See log for details.");
     }
-    PyObject* appstate =
-        PythonCommand("_app_state", "<AppStateFetch>").RunReturnObj();
+    PyObject* appstate = PythonCommand("app_state", "<AppStateFetch>")
+                             .RunReturnObj(false, nullptr);
     if (appstate == nullptr) {
-      throw Exception("Unable to get value: '" + std::string("_app_state")
+      throw Exception("Unable to get value: '" + std::string("app_state")
                       + "'.");
     }
     SetObj(ObjID::kApp, appstate);
@@ -2375,16 +2375,18 @@ void Python::SetObjCallable(ObjID id, PyObject* pyobj, bool incref) {
   BA_PRECONDITION(obj(id).CallableCheck());
 }
 
-void Python::SetObj(ObjID id, const char* expr) {
-  PyObject* obj = PythonCommand(expr, "<PyObj Set>").RunReturnObj();
+void Python::SetObj(ObjID id, const char* expr, PyObject* context) {
+  PyObject* obj =
+      PythonCommand(expr, "<PyObj Set>").RunReturnObj(false, context);
   if (obj == nullptr) {
     throw Exception("Unable to get value: '" + std::string(expr) + "'.");
   }
   SetObj(id, obj);
 }
 
-void Python::SetObjCallable(ObjID id, const char* expr) {
-  PyObject* obj = PythonCommand(expr, "<PyObj Set>").RunReturnObj();
+void Python::SetObjCallable(ObjID id, const char* expr, PyObject* context) {
+  PyObject* obj =
+      PythonCommand(expr, "<PyObj Set>").RunReturnObj(false, context);
   if (obj == nullptr) {
     throw Exception("Unable to get value: '" + std::string(expr) + "'.");
   }

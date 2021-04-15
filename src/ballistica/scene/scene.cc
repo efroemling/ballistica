@@ -261,12 +261,17 @@ void Scene::Step() {
 void Scene::DeleteNode(Node* node) {
   assert(node);
 
+  // Clion incorrectly things in_step_ will always be false.
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnreachableCode"
+#pragma ide diagnostic ignored "ConstantConditionsOC"
   if (in_step_) {
     throw Exception(
         "Cannot delete nodes within a sim step."
         " Consider a deferred call or timer. Node="
         + node->GetObjectDescription());
   }
+#pragma clang diagnostic pop
 
   // Copy refs to its death-actions and dependent-nodes; we'll deal with these
   // after the node is dead so we're sure they don't muck with the node.
@@ -341,11 +346,16 @@ auto Scene::NewNode(const std::string& type_string, const std::string& name,
                     PyObject* delegate) -> Node* {
   assert(InGameThread());
 
+  // Clion incorrectly things in_step_ will always be false.
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnreachableCode"
+#pragma ide diagnostic ignored "ConstantConditionsOC"
   if (in_step_) {
     throw Exception(
         "Cannot create nodes within a sim step."
         " Consider a deferred call or timer.");
   }
+#pragma clang diagnostic pop
 
   // Should never change the scene while we're stepping it.
   assert(!in_step_);

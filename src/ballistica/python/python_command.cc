@@ -136,10 +136,16 @@ auto PythonCommand::CanEval() -> bool {
   return true;
 }
 
-auto PythonCommand::RunReturnObj(bool print_errors) -> PyObject* {
+auto PythonCommand::RunReturnObj(bool print_errors, PyObject* context)
+    -> PyObject* {
   assert(Python::HaveGIL());
   assert(g_python);
   assert(!dead_);
+  if (context == nullptr) {
+    context = g_python->main_dict();
+  }
+  assert(PyDict_Check(context));
+
   if (!eval_code_obj_.get()) {
     CompileForEval(print_errors);
     assert(!dead_);
@@ -164,8 +170,7 @@ auto PythonCommand::RunReturnObj(bool print_errors) -> PyObject* {
     return nullptr;
   }
   PUSH_PYCOMMAND(this);
-  PyObject* v = PyEval_EvalCode(eval_code_obj_.get(), g_python->main_dict(),
-                                g_python->main_dict());
+  PyObject* v = PyEval_EvalCode(eval_code_obj_.get(), context, context);
   POP_PYCOMMAND();
   assert(!dead_);
   if (v == nullptr) {

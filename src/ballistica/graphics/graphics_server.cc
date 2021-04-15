@@ -351,6 +351,10 @@ void GraphicsServer::SetScreen(bool fullscreen, int width, int height,
   }
 }
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "ConstantConditionsOC"
+#pragma ide diagnostic ignored "ConstantParameter"
+
 void GraphicsServer::HandleFullContextScreenRebuild(
     bool need_full_context_rebuild, bool fullscreen, int width, int height,
     GraphicsQuality graphics_quality_requested,
@@ -457,6 +461,8 @@ void GraphicsServer::HandleFullContextScreenRebuild(
   });
 }
 
+#pragma clang diagnostic pop
+
 // Given physical res, calculate virtual res.
 void GraphicsServer::CalcVirtualRes(float* x, float* y) {
   float x_in = (*x);
@@ -523,6 +529,10 @@ void GraphicsServer::HandlePushAndroidRes(const std::string& android_res) {
   }
 }
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "ConstantConditionsOC"
+#pragma ide diagnostic ignored "ConstantParameter"
+
 void GraphicsServer::HandleFullscreenToggling(bool do_set_existing_fs,
                                               bool do_toggle_fs,
                                               bool fullscreen) {
@@ -560,6 +570,7 @@ void GraphicsServer::HandleFullscreenToggling(bool do_set_existing_fs,
 #endif  // macos && xcode_build
   }
 }
+#pragma clang diagnostic pop
 
 void GraphicsServer::SetTextureCompressionTypes(
     const std::list<TextureCompressionType>& types) {
@@ -645,6 +656,9 @@ void GraphicsServer::SetCamera(const Vector3f& eye, const Vector3f& target,
   cam_orient_matrix_dirty_ = true;
 }
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "ConstantConditionsOC"
+
 void GraphicsServer::UpdateCamOrientMatrix() {
   assert(InGraphicsThread());
   if (cam_orient_matrix_dirty_) {
@@ -671,6 +685,8 @@ void GraphicsServer::UpdateCamOrientMatrix() {
     cam_orient_matrix_state_++;
   }
 }
+
+#pragma clang diagnostic pop
 
 #pragma mark PushCalls
 

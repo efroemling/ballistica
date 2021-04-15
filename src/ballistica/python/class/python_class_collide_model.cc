@@ -66,6 +66,11 @@ auto PythonClassCollideModel::tp_new(PyTypeObject* type, PyObject* args,
           + " objects must only be created in the game thread (current is ("
           + GetCurrentThreadName() + ").");
     }
+
+// Clion incorrectly things s_create_empty will always be false.
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnreachableCode"
+#pragma ide diagnostic ignored "ConstantConditionsOC"
     if (!s_create_empty_) {
       throw Exception(
           "Can't instantiate CollideModels directly; use "
@@ -73,6 +78,7 @@ auto PythonClassCollideModel::tp_new(PyTypeObject* type, PyObject* args,
     }
     self->collide_model_ = new Object::Ref<CollideModel>();
     BA_PYTHON_NEW_CATCH;
+#pragma clang diagnostic pop
   }
   return reinterpret_cast<PyObject*>(self);
 }
@@ -81,7 +87,7 @@ void PythonClassCollideModel::Delete(Object::Ref<CollideModel>* ref) {
   assert(InGameThread());
   // if we're the py-object for a collide_model, clear them out
   // (FIXME - we should pass the old pointer in here to sanity-test that we
-  // were their ref)
+  //   were their ref)
   if (ref->exists()) {
     (*ref)->ClearPyObject();
   }

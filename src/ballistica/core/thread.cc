@@ -287,16 +287,6 @@ void Thread::GetThreadMessages(std::list<ThreadMessage>* messages) {
   }
 }
 
-void Thread::WriteToOwner(const void* data, uint32_t size) {
-  assert(std::this_thread::get_id() == thread_id());
-  {
-    std::unique_lock<std::mutex> lock(data_to_client_mutex_);
-    data_to_client_.emplace_back(size);
-    memcpy(&(data_to_client_.back()[0]), data, size);
-  }
-  data_to_client_cv_.notify_all();
-}
-
 Thread::Thread(ThreadIdentifier identifier_in, ThreadType type_in)
     : type_(type_in), identifier_(identifier_in) {
   switch (type_) {
@@ -419,6 +409,11 @@ auto Thread::ThreadMain() -> int {
         throw;
       }
     }
+
+    // Silence some lint complaints about always returning 0.
+    if (explicit_bool(false)) {
+      return 1;
+    }
     return 0;
   }
 }
@@ -437,6 +432,9 @@ void Thread::Quit() {
 }
 
 Thread::~Thread() = default;
+
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "ConstantConditionsOC"
 
 void Thread::LogThreadMessageTally() {
   // Prevent recursion.
@@ -498,6 +496,7 @@ void Thread::LogThreadMessageTally() {
     writing_tally_ = false;
   }
 }
+#pragma clang diagnostic pop
 
 void Thread::PushThreadMessage(const ThreadMessage& t) {
   {
@@ -555,6 +554,19 @@ void Thread::PushThreadMessage(const ThreadMessage& t) {
   thread_message_cv_.notify_all();
 }
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "ConstantParameter"
+
+void Thread::WriteToOwner(const void* data, uint32_t size) {
+  assert(std::this_thread::get_id() == thread_id());
+  {
+    std::unique_lock<std::mutex> lock(data_to_client_mutex_);
+    data_to_client_.emplace_back(size);
+    memcpy(&(data_to_client_.back()[0]), data, size);
+  }
+  data_to_client_cv_.notify_all();
+}
+
 void Thread::ReadFromThread(std::unique_lock<std::mutex>* lock, void* buffer,
                             uint32_t size) {
   // Threads cant read from themselves.. could load to lock-deadlock.
@@ -571,6 +583,8 @@ void Thread::ReadFromThread(std::unique_lock<std::mutex>* lock, void* buffer,
   memcpy(buffer, &(data_to_client_.front()[0]), size);
   data_to_client_.pop_front();
 }
+
+#pragma clang diagnostic pop
 
 void Thread::SetThreadsPaused(bool paused) {
   threads_paused_ = paused;

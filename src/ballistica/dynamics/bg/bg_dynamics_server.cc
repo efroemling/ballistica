@@ -1689,7 +1689,8 @@ auto BGDynamicsServer::CreateDrawSnapshot() -> BGDynamicsDrawSnapshot* {
     float flicker = i->flicker_;
     float shadow_dist = i->shadow_dist_;
     float life = std::min(
-        1.0f, (static_cast<float>(time_) - i->birth_time_) / i->lifespan_);
+        1.0f, (static_cast<float>(time_) - static_cast<float>(i->birth_time_))
+                  / i->lifespan_);
 
     // Shrink our matrix down over time.
     switch (type) {
@@ -2218,7 +2219,8 @@ void BGDynamicsServer::PushTooSlowCall() {
     if (chunk_count_ > 0 || tendril_count_thick_ > 0
         || tendril_count_thin_ > 0) {
       // Ok lets kill a small percentage of our oldest chunks.
-      int killcount = static_cast<int>(0.1f * chunks_.size());
+      int killcount =
+          static_cast<int>(0.1f * static_cast<float>(chunks_.size()));
       int killed = 0;
       auto i = chunks_.begin();
       while (i != chunks_.end()) {
@@ -2236,7 +2238,7 @@ void BGDynamicsServer::PushTooSlowCall() {
         i = i_next;
       }
       // ...and tendrils.
-      killcount = static_cast<int>(0.2f * tendrils_.size());
+      killcount = static_cast<int>(0.2f * static_cast<float>(tendrils_.size()));
       for (int j = 0; j < killcount; j++) {
         Tendril* t = *tendrils_.begin();
         if (t->type_ == BGDynamicsTendrilType::kThinSmoke) {

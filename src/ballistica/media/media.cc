@@ -617,6 +617,10 @@ void Media::MarkComponentForLoad(MediaComponentData* c) {
   g_media_server->PushRunnable(Object::NewDeferred<PreloadRunnable>(media_ptr));
 }
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnreachableCode"
+#pragma ide diagnostic ignored "ConstantFunctionResult"
+
 auto Media::GetModelPendingLoadCount() -> int {
   if (!have_pending_loads_[static_cast<int>(MediaType::kModel)]) {
     return 0;
@@ -685,6 +689,8 @@ auto Media::GetCollideModelPendingLoadCount() -> int {
   }
   return total;
 }
+
+#pragma clang diagnostic pop
 
 auto Media::GetGraphicalPendingLoadCount() -> int {
   // Each of these calls lock the media-lists so we don't.

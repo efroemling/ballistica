@@ -51,10 +51,10 @@ auto AnimCurveNode::GetOut() -> float {
     }
     for (size_t i = 0; i < num; i++) {
       if (i == 0) {
-        input_start_ = times_[i];
+        input_start_ = static_cast<float>(times_[i]);
       }
       if (i == (num - 1)) {
-        input_end_ = times_[i];
+        input_end_ = static_cast<float>(times_[i]);
       }
       keyframes_.emplace_back(times_[i], values_[i]);
     }
@@ -73,7 +73,9 @@ auto AnimCurveNode::GetOut() -> float {
         bool got;
         if (loop_) {
           in_val = fmodf(in_val, (input_end_ - input_start_));
-          if (in_val < 0) in_val += (input_end_ - input_start_);
+          if (in_val < 0) {
+            in_val += (input_end_ - input_start_);
+          }
           got = false;
         } else {
           if (in_val >= input_end_) {
@@ -97,7 +99,7 @@ auto AnimCurveNode::GetOut() -> float {
             if (i == keyframes_.end()) {
               break;
             }
-            if (i->time < in_val) {
+            if (static_cast<float>(i->time) < in_val) {
               i++;
               i1 = i2;
               i2 = i;
@@ -109,7 +111,7 @@ auto AnimCurveNode::GetOut() -> float {
             out_ = i1->value;
           } else {
             out_ = i1->value
-                   + ((in_val - i1->time)
+                   + ((in_val - static_cast<float>(i1->time))
                       / static_cast<float>(i2->time - i1->time))
                          * (i2->value - i1->value);
           }

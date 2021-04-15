@@ -402,11 +402,12 @@ class Python {
   void SetObjCallable(ObjID id, PyObject* pyobj, bool incref = false);
 
   /// Set the value for a named object to the result of a Python expression.
-  void SetObj(ObjID id, const char* expression);
+  void SetObj(ObjID id, const char* expression, PyObject* context = nullptr);
 
   /// Set the value for a named object to the result of a Python expression
   /// and verify that it is callable.
-  void SetObjCallable(ObjID id, const char* expression);
+  void SetObjCallable(ObjID id, const char* expression,
+                      PyObject* context = nullptr);
 
   std::set<std::string> do_once_locations_;
   PythonRef objs_[static_cast<int>(ObjID::kLast)];

@@ -93,9 +93,6 @@ auto ImageNode::GetAttach() const -> std::string {
       return "bottomLeft";
     case Attach::CENTER_LEFT:
       return "centerLeft";
-    default:
-      throw Exception("Invalid attach val in ImageNode "
-                      + std::to_string(static_cast<int>(attach_)));
   }
 }
 

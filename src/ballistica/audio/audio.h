@@ -34,7 +34,7 @@ class Audio {
 
   // If a sound play id is playing, locks and returns its sound source.
   // on success, you must unlock the source once done with it.
-  auto SourceBeginExisting(uint32_t play_id, uint32_t debug_id) -> AudioSource*;
+  auto SourceBeginExisting(uint32_t play_id, int debug_id) -> AudioSource*;
 
   // Return true if the sound id is currently valid.  This is not guaranteed
   // to be super accurate, but can be used to determine if a sound is still

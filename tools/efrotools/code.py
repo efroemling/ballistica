@@ -811,7 +811,7 @@ def check_clioncode(projroot: Path, full: bool, verbose: bool) -> None:
     cachepath = Path('.cache/check_clioncode')
     filenames = get_code_filenames(projroot)
     clionroot = Path('/Applications/CLion.app')
-    clionbin = Path(clionroot, 'Contents/MacOS/clion')
+    # clionbin = Path(clionroot, 'Contents/MacOS/clion')
     inspect = Path(clionroot, 'Contents/bin/inspect.sh')
 
     # At the moment offline clion inspections seem a bit flaky.
@@ -821,43 +821,59 @@ def check_clioncode(projroot: Path, full: bool, verbose: bool) -> None:
     # So for now let's try blowing away caches, launching the gui
     # temporarily, and then kicking off inspections after that. Sigh.
     print('Clearing CLion caches...', flush=True)
-    subprocess.run('rm -rf ~/Library/Caches/CLion*', shell=True, check=True)
+    caches_root = os.environ['HOME'] + '/Library/Caches/JetBrains'
+    if not os.path.exists(caches_root):
+        raise RuntimeError(f'CLion caches root not found: {caches_root}')
+    subprocess.run('rm -rf ~/Library/Caches/JetBrains/CLion*',
+                   shell=True,
+                   check=True)
 
     # UPDATE: seems this is unnecessary now; should double check.
     # Note: I'm assuming this project needs to be open when the GUI
     # comes up. Currently just have one project so can rely on auto-open
     # but may need to get fancier later if that changes.
-    if bool(False):
+    if bool(True):
         print('Launching GUI CLion to rebuild caches...', flush=True)
-        process = subprocess.Popen(str(clionbin))
+        # process = subprocess.Popen(str(clionbin))
+        subprocess.run(
+            ['open', '-a', clionroot,
+             Path(projroot, 'ballisticacore-cmake')],
+            check=True)
 
         # Wait a moment and ask it nicely to die.
-        waittime = 120
+        waittime = 60
         while waittime > 0:
-            print(f'Waiting for {waittime} more seconds.')
+            print(f'Waiting for {waittime} more seconds.', flush=True)
             time.sleep(10)
             waittime -= 10
 
-        # Seems killing it via applescript is more likely to leave it
-        # in a working state for offline inspections than TERM signal..
-        subprocess.run("osascript -e 'tell application \"CLion\" to quit'",
-                       shell=True,
-                       check=False)
+        # For some reason this is giving a return-code 1 although
+        # it appears to be working.
+        print('Waiting for GUI CLion to quit...', flush=True)
+        subprocess.run(
+            [
+                'osascript', '-e', 'tell application "CLion" to quit\n'
+                'repeat until application "CLion" is not running\n'
+                '    delay 1\n'
+                'end repeat'
+            ],
+            check=False,
+        )
+        time.sleep(5)
 
         # process.terminate()
-        print('Waiting for GUI CLion to quit...', flush=True)
-        process.wait(timeout=60)
+        # process.wait(timeout=60)
 
     print('Launching Offline CLion to run inspections...', flush=True)
-    _run_idea_inspections_cached(
-        cachepath=cachepath,
-        filenames=filenames,
-        full=full,
-        projroot=Path(projroot, 'ballisticacore-cmake'),
-        inspectdir=Path(projroot, 'ballisticacore-cmake/src/ballistica'),
-        displayname='CLion',
-        inspect=inspect,
-        verbose=verbose)
+    _run_idea_inspections_cached(cachepath=cachepath,
+                                 filenames=filenames,
+                                 full=full,
+                                 projroot=Path(projroot,
+                                               'ballisticacore-cmake'),
+                                 inspectdir=Path(projroot, 'src/ballistica'),
+                                 displayname='CLion',
+                                 inspect=inspect,
+                                 verbose=verbose)
 
 
 def check_android_studio(projroot: Path, full: bool, verbose: bool) -> None:

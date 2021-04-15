@@ -605,6 +605,9 @@ auto PyQuit(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
 
   // A few types get handled specially on android.
   if (g_buildconfig.ostype_android()) {
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "ConstantConditionsOC"
+
     if (!handled && back) {
       // Back-quit simply synthesizes a back press.
       // Note to self: I remember this behaved slightly differently than
@@ -612,6 +615,9 @@ auto PyQuit(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
       g_platform->AndroidSynthesizeBackPress();
       handled = true;
     }
+
+#pragma clang diagnostic pop
+
     if (!handled && soft) {
       // Soft-quit just kills our activity but doesn't run app shutdown.
       // Thus we'll be able to spin back up (reset to the main menu)
@@ -735,8 +741,6 @@ auto PyEnv(PyObject* self) -> PyObject* {
     is_test_build_obj = Py_False;
 #endif
     bool demo_mode{g_buildconfig.demo_build()};
-    bool arcade_mode{g_buildconfig.arcade_build()};
-    bool iircade_mode{g_buildconfig.arcade_build()};
 
     const char* ui_scale;
     switch (GetUIScale()) {

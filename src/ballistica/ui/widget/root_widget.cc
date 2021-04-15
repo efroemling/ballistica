@@ -72,7 +72,7 @@ struct RootWidget::Button {
   float height{30.0f};
   float scale{1.0f};
   bool selectable{true};
-  int visibility_mask{};
+  uint32_t visibility_mask{};
 };
 
 // for adding text label decorations to buttons
@@ -134,7 +134,7 @@ auto RootWidget::AddCover(float h_align, VAlign v_align, float x, float y,
   bd.call = Python::ObjID::kEmptyCall;
 
   bd.visibility_mask =
-      static_cast<int>(Widget::ToolbarVisibility::kMenuFullRoot);
+      static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot);
   // when the user specifies no backing it means they intend to cover the screen
   // with a flat-ish window texture.. however this only applies to phone-size;
   // for other sizes we always draw a backing.
@@ -146,6 +146,9 @@ auto RootWidget::AddCover(float h_align, VAlign v_align, float x, float y,
   Button* b = AddButton(bd);
   return b;
 }
+
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "ConstantParameter"
 
 void RootWidget::AddMeter(float h_align, float x, int type, float r, float g,
                           float b, bool plus, const std::string& s) {
@@ -231,8 +234,12 @@ void RootWidget::AddMeter(float h_align, float x, int type, float r, float g,
         bd.img = "tickets";
         bd.call = Python::ObjID::kTicketIconPressCall;
         break;
+
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnreachableCode"
       default:
         break;
+#pragma clang diagnostic pop
     }
     bd.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
@@ -306,8 +313,12 @@ void RootWidget::AddMeter(float h_align, float x, int type, float r, float g,
   }
 }
 
+#pragma clang diagnostic pop
+
 void RootWidget::Setup() {
-#if BA_TOOLBAR_TEST
+  if (!explicit_bool(BA_TOOLBAR_TEST)) {
+    return;
+  }
 
   // back button
   {
@@ -324,8 +335,8 @@ void RootWidget::Setup() {
     bd.img = "nub";
     bd.call = Python::ObjID::kBackButtonPressCall;
     bd.visibility_mask =
-        (static_cast<int>(Widget::ToolbarVisibility::kMenuMinimal)
-         | static_cast<int>(Widget::ToolbarVisibility::kMenuFull));
+        (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuMinimal)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull));
     Button* b = back_button_ = AddButton(bd);
 
     // clan
@@ -353,11 +364,11 @@ void RootWidget::Setup() {
   // }
   // if (c) {
   //   c->visibility_mask |=
-  //   static_cast<int>(Widget::ToolbarVisibility::kMenuCurrency);
+  //   static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuCurrency);
   // }
 
   // top bar backing (currency only)
-  if (false) {
+  if (explicit_bool(false)) {
     ButtonDef bd;
     bd.h_align = 0.5f;
     bd.v_align = VAlign::kTop;
@@ -392,16 +403,16 @@ void RootWidget::Setup() {
     bd.call = Python::ObjID::kEmptyCall;
 
     // bd.visibility_mask =
-    // static_cast<int>(Widget::ToolbarVisibility::kMenuFullRoot);
+    // static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot);
     // bd.visibility_mask |=
-    // static_cast<int>(Widget::ToolbarVisibility::kMenuFull);
+    // static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull);
     bd.visibility_mask |=
-        static_cast<int>(Widget::ToolbarVisibility::kMenuCurrency);
+        static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuCurrency);
     AddButton(bd);
   }
 
   // top bar backing
-  if (false) {
+  if (explicit_bool(false)) {
     ButtonDef bd;
     bd.h_align = 0.5f;
     bd.v_align = VAlign::kTop;
@@ -413,11 +424,7 @@ void RootWidget::Setup() {
     bd.x = 0.0f;
     bd.y = -20.0f;
     bd.img = "uiAtlas2";
-    if (GetUIScale() != UIScale::kSmall) {
-      bd.model_transparent = "toolbarBackingTop2";
-    } else {
-      bd.model_transparent = "toolbarBackingTop2";
-    }
+    bd.model_transparent = "toolbarBackingTop2";
     bd.selectable = false;
     bd.color_r = 0.44f;
     bd.color_g = 0.41f;
@@ -435,11 +442,11 @@ void RootWidget::Setup() {
     // bd.call = "";
     bd.call = Python::ObjID::kEmptyCall;
     bd.visibility_mask =
-        static_cast<int>(Widget::ToolbarVisibility::kMenuFullRoot);
+        static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot);
     bd.visibility_mask |=
-        static_cast<int>(Widget::ToolbarVisibility::kMenuFull);
+        static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull);
     // bd.visibility_mask |=
-    // static_cast<int>(Widget::ToolbarVisibility::kMenuCurrency);
+    // static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuCurrency);
     AddButton(bd);
   }
 
@@ -466,8 +473,8 @@ void RootWidget::Setup() {
     // bd.call = "";
     bd.call = Python::ObjID::kEmptyCall;
     bd.visibility_mask =
-        (static_cast<int>(Widget::ToolbarVisibility::kMenuFull)
-         | static_cast<int>(Widget::ToolbarVisibility::kMenuFullRoot));
+        (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
 
     // on desktop, stick this in the top left corner
     // if (GetUIScale() == UIScale::kLarge) {
@@ -527,12 +534,12 @@ void RootWidget::Setup() {
     b.img = "usersButton";
     b.call = Python::ObjID::kFriendsButtonPressCall;
     b.visibility_mask =
-        (static_cast<int>(Widget::ToolbarVisibility::kInGame)
-         | static_cast<int>(Widget::ToolbarVisibility::kMenuMinimal)
-         | static_cast<int>(Widget::ToolbarVisibility::kMenuMinimalNoBack)
-         | static_cast<int>(Widget::ToolbarVisibility::kMenuCurrency)
-         | static_cast<int>(Widget::ToolbarVisibility::kMenuFull)
-         | static_cast<int>(Widget::ToolbarVisibility::kMenuFullRoot));
+        (static_cast<uint32_t>(Widget::ToolbarVisibility::kInGame)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuMinimal)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuMinimalNoBack)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuCurrency)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
     party_button_ = AddButton(b);
   }
 
@@ -551,12 +558,12 @@ void RootWidget::Setup() {
     b.color_g = 0.5f;
     b.color_b = 0.2f;
     b.visibility_mask =
-        (static_cast<int>(Widget::ToolbarVisibility::kInGame)
-         | static_cast<int>(Widget::ToolbarVisibility::kMenuMinimal)
-         | static_cast<int>(Widget::ToolbarVisibility::kMenuMinimalNoBack)
-         | static_cast<int>(Widget::ToolbarVisibility::kMenuCurrency)
-         | static_cast<int>(Widget::ToolbarVisibility::kMenuFull)
-         | static_cast<int>(Widget::ToolbarVisibility::kMenuFullRoot));
+        (static_cast<uint32_t>(Widget::ToolbarVisibility::kInGame)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuMinimal)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuMinimalNoBack)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuCurrency)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
     menu_button_ = AddButton(b);
   }
 
@@ -578,8 +585,8 @@ void RootWidget::Setup() {
     b.color_b = BOT_LEFT_COLOR_B;
     b.img = "logIcon";
     b.visibility_mask =
-        (static_cast<int>(Widget::ToolbarVisibility::kMenuFull)
-         | static_cast<int>(Widget::ToolbarVisibility::kMenuFullRoot));
+        (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
     AddButton(b);
   }
 
@@ -598,8 +605,8 @@ void RootWidget::Setup() {
     b.color_b = BOT_LEFT_COLOR_B;
     b.img = "achievementsIcon";
     b.visibility_mask =
-        (static_cast<int>(Widget::ToolbarVisibility::kMenuFull)
-         | static_cast<int>(Widget::ToolbarVisibility::kMenuFullRoot));
+        (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
     AddButton(b);
   }
 
@@ -618,8 +625,8 @@ void RootWidget::Setup() {
     b.color_b = BOT_LEFT_COLOR_B;
     b.img = "leaderboardsIcon";
     b.visibility_mask =
-        (static_cast<int>(Widget::ToolbarVisibility::kMenuFull)
-         | static_cast<int>(Widget::ToolbarVisibility::kMenuFullRoot));
+        (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
     AddButton(b);
   }
 
@@ -638,8 +645,8 @@ void RootWidget::Setup() {
     b.color_b = BOT_LEFT_COLOR_B;
     b.img = "settingsIcon";
     b.visibility_mask =
-        (static_cast<int>(Widget::ToolbarVisibility::kMenuFull)
-         | static_cast<int>(Widget::ToolbarVisibility::kMenuFullRoot));
+        (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
     settings_button_ = AddButton(b);
   }
 
@@ -682,11 +689,7 @@ void RootWidget::Setup() {
       bd.x = 0.0f;
       bd.y = 41.0f;
       bd.img = "uiAtlas2";
-      if (GetUIScale() != UIScale::kSmall) {
-        bd.model_transparent = "toolbarBackingBottom2";
-      } else {
-        bd.model_transparent = "toolbarBackingBottom2";
-      }
+      bd.model_transparent = "toolbarBackingBottom2";
       bd.selectable = false;
       bd.color_r = backingR;
       bd.color_g = backingG;
@@ -697,9 +700,9 @@ void RootWidget::Setup() {
       // bd.call = "";
       bd.call = Python::ObjID::kEmptyCall;
       bd.visibility_mask =
-          static_cast<int>(Widget::ToolbarVisibility::kMenuFullRoot);
+          static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot);
       bd.visibility_mask |=
-          static_cast<int>(Widget::ToolbarVisibility::kMenuFull);
+          static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull);
 
       AddButton(bd);
     }
@@ -713,8 +716,8 @@ void RootWidget::Setup() {
     b.img = "chestIcon";
     b.depth_min = 0.3f;
     b.visibility_mask =
-        (static_cast<int>(Widget::ToolbarVisibility::kMenuFull)
-         | static_cast<int>(Widget::ToolbarVisibility::kMenuFullRoot));
+        (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
     float spacing = 110.0f;
     b.x = -2.0f * spacing;
     AddButton(b);
@@ -756,7 +759,7 @@ void RootWidget::Setup() {
   //   b.y = b.height * 0.5f + 10;
   //   b.img = "settingsIcon";
   //   b.visibility_mask =
-  //   (static_cast<int>(Widget::ToolbarVisibility::kMenuFull)
+  //   (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
   //                       |
   //                       static_cast<int>(Widget::ToolbarVisibility::kMenuFullRoot));
   //   AddButton(b);
@@ -772,8 +775,8 @@ void RootWidget::Setup() {
     b.y = b.height * 0.5f;
     b.img = "storeIcon";
     b.visibility_mask =
-        (static_cast<int>(Widget::ToolbarVisibility::kMenuFull)
-         | static_cast<int>(Widget::ToolbarVisibility::kMenuFullRoot));
+        (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
     AddButton(b);
   }
 
@@ -787,12 +790,10 @@ void RootWidget::Setup() {
     b.y = b.height * 0.45f;
     b.img = "inventoryIcon";
     b.visibility_mask =
-        (static_cast<int>(Widget::ToolbarVisibility::kMenuFull)
-         | static_cast<int>(Widget::ToolbarVisibility::kMenuFullRoot));
+        (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
     AddButton(b);
   }
-
-#endif  // BA_TOOLBAR_TEST
 
   UpdateForFocusedWindow(nullptr);
 }
@@ -802,8 +803,9 @@ void RootWidget::Draw(RenderPass* pass, bool transparent) {
   // motion.
   if (!transparent) {
     millisecs_t current_time = pass->frame_def()->base_time();
-    float time_diff = std::min(millisecs_t{100}, current_time - update_time_);
-    StepPositions(time_diff);
+    millisecs_t time_diff =
+        std::min(millisecs_t{100}, current_time - update_time_);
+    StepPositions(static_cast<float>(time_diff));
     update_time_ = current_time;
   }
   ContainerWidget::Draw(pass, transparent);
@@ -1099,9 +1101,9 @@ void RootWidget::SetScreenWidget(StackWidget* w) {
 
 void RootWidget::SetOverlayWidget(StackWidget* w) {
   // this needs to happen after our buttons and things get added..
-#if BA_TOOLBAR_TEST
-  assert(!buttons_.empty());
-#endif  // BA_TOOLBAR_TEST
+  if (explicit_bool(BA_TOOLBAR_TEST)) {
+    assert(!buttons_.empty());
+  }
   AddWidget(w);
   overlay_stack_widget_ = w;
 }

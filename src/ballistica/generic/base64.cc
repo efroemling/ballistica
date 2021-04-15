@@ -120,8 +120,8 @@ auto base64_decode(const std::string& encoded_string, bool urlsafe)
     in_++;
     if (i == 4) {
       for (i = 0; i < 4; i++) {
-        char_array_4[i] =
-            static_cast<unsigned char>(base64_chars.find(char_array_4[i]));
+        char_array_4[i] = static_cast<unsigned char>(
+            base64_chars.find(static_cast<char>(char_array_4[i])));
       }
 
       char_array_3[0] = static_cast<unsigned char>(
@@ -131,7 +131,7 @@ auto base64_decode(const std::string& encoded_string, bool urlsafe)
       char_array_3[2] = static_cast<unsigned char>(
           ((char_array_4[2] & 0x3u) << 6u) + char_array_4[3]);
 
-      for (i = 0; (i < 3); i++) ret += char_array_3[i];
+      for (i = 0; (i < 3); i++) ret += static_cast<char>(char_array_3[i]);
       i = 0;
     }
   }
@@ -140,8 +140,8 @@ auto base64_decode(const std::string& encoded_string, bool urlsafe)
       char_array_4[j] = 0;
     }
     for (int j = 0; j < 4; j++) {  // NOLINT(modernize-loop-convert)
-      char_array_4[j] =
-          static_cast<unsigned char>(base64_chars.find(char_array_4[j]));
+      char_array_4[j] = static_cast<unsigned char>(
+          base64_chars.find(static_cast<char>(char_array_4[j])));
     }
     char_array_3[0] = static_cast<unsigned char>(
         (char_array_4[0] << 2u) + ((char_array_4[1] & 0x30u) >> 4u));
@@ -150,7 +150,7 @@ auto base64_decode(const std::string& encoded_string, bool urlsafe)
     char_array_3[2] = static_cast<unsigned char>(
         ((char_array_4[2] & 0x3u) << 6u) + char_array_4[3]);
     for (int j = 0; (j < i - 1); j++) {
-      ret += char_array_3[j];
+      ret += static_cast<char>(char_array_3[j]);
     }
   }
   return ret;

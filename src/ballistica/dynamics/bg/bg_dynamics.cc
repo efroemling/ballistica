@@ -362,8 +362,6 @@ void BGDynamics::DrawChunks(FrameDef* frame_def,
       c.SetColor(0.9f, 0.6f, 0.3f, 1.0f);
       break;
     }
-    default:
-      throw Exception();
   }
   c.DrawModelInstanced(model, *draw_snapshot, kModelDrawFlagNoReflection);
   c.Submit();

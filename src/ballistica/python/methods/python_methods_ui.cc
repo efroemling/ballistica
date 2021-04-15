@@ -316,7 +316,8 @@ auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
 #if BA_TEST_BUILD
     g_python->TimeFormatCheck(TimeFormat::kSeconds, transition_delay_obj);
 #endif
-    b->set_transition_delay(1000.0f * Python::GetPyFloat(transition_delay_obj));
+    b->set_transition_delay(static_cast<millisecs_t>(
+        1000.0f * Python::GetPyFloat(transition_delay_obj)));
   }
   if (text_res_scale_obj != Py_None) {
     b->SetTextResScale(Python::GetPyFloat(text_res_scale_obj));

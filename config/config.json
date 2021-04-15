@@ -21,6 +21,7 @@
   "name": "BallisticaCore",
   "public": true,
   "pylint_ignored_untracked_deps": [
+    "__main__",
     "astroid.modutils",
     "astroid",
     "pylint.lint",

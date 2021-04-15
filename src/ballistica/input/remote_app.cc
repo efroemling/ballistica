@@ -241,11 +241,13 @@ void RemoteAppServer::HandleData(int socket, uint8_t* buffer, size_t amt,
           uint32_t h_raw_last = (last_state >> 8u) & 0xFFu;
           uint32_t v_raw_last = (last_state >> 16u) & 0xFFu;
           float dpad_h, dpad_v;
-          dpad_h = -1.0f + 2.0f * (h_raw / 255.0f);
-          dpad_v = -1.0f + 2.0f * (v_raw / 255.0f);
+          dpad_h = -1.0f + 2.0f * (static_cast<float>(h_raw) / 255.0f);
+          dpad_v = -1.0f + 2.0f * (static_cast<float>(v_raw) / 255.0f);
           float last_dpad_h, last_dpad_v;
-          last_dpad_h = -1.0f + 2.0f * (h_raw_last / 255.0f);
-          last_dpad_v = -1.0f + 2.0f * (v_raw_last / 255.0f);
+          last_dpad_h =
+              -1.0f + 2.0f * (static_cast<float>(h_raw_last) / 255.0f);
+          last_dpad_v =
+              -1.0f + 2.0f * (static_cast<float>(v_raw_last) / 255.0f);
 
           // Process this first since it can affect how other events are
           // handled.
@@ -434,11 +436,12 @@ auto RemoteAppServer::GetClient(int request_id, struct sockaddr* addr,
 
 void RemoteAppServer::HandleRemoteEvent(RemoteAppClient* client,
                                         RemoteEventType b) {
+  bool send{true};
+
   // Ok we got some data from the remote.
   // All we have to do is translate it into an SDL event and feed it to our
   // manual joystick we made.
   SDL_Event e{};
-  bool send = true;
   switch (b) {
     case RemoteEventType::kBombPress:
       e.type = SDL_JOYBUTTONDOWN;
@@ -501,6 +504,9 @@ void RemoteAppServer::HandleRemoteEvent(RemoteAppClient* client,
       e.jbutton.button = 64;
       break;
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnreachableCode"
+#pragma ide diagnostic ignored "ConstantConditionsOC"
     default:
       send = false;
       break;
@@ -509,6 +515,7 @@ void RemoteAppServer::HandleRemoteEvent(RemoteAppClient* client,
     assert(g_game);
     g_input->PushJoystickEvent(e, client->joystick_);
   }
+#pragma clang diagnostic pop
 }
 
 void RemoteAppServer::HandleRemoteFloatEvent(RemoteAppClient* client,
@@ -526,6 +533,10 @@ void RemoteAppServer::HandleRemoteFloatEvent(RemoteAppClient* client,
       e.jaxis.axis = 1;
       e.jaxis.value = static_cast<int16_t>(32767 * val);
       break;
+
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnreachableCode"
+#pragma ide diagnostic ignored "ConstantConditionsOC"
     default:
       send = false;
       break;
@@ -534,6 +545,7 @@ void RemoteAppServer::HandleRemoteFloatEvent(RemoteAppClient* client,
     assert(g_game);
     g_input->PushJoystickEvent(e, client->joystick_);
   }
+#pragma clang diagnostic pop
 }
 
 }  // namespace ballistica

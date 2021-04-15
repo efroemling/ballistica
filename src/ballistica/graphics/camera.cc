@@ -606,6 +606,7 @@ void Camera::Update(millisecs_t elapsed) {
 
   // Prevent camera "explosions" if we've been unable to update for a while.
   elapsed = std::min(millisecs_t{100}, elapsed);
+  auto elapsedf{static_cast<float>(elapsed)};
 
   // In normal mode we orbit; in vr mode we don't.
   if (IsVRMode()) {
@@ -626,36 +627,36 @@ void Camera::Update(millisecs_t elapsed) {
   }
 
   target_radius_smoothed_ +=
-      elapsed * (target_radius_ - target_radius_smoothed_) * zoom_speed;
+      elapsedf * (target_radius_ - target_radius_smoothed_) * zoom_speed;
 
   float diff = field_of_view_x_ - field_of_view_x_smoothed_;
   field_of_view_x_smoothed_ +=
-      elapsed * diff * (diff > 0.0f ? fov_speed_out : fov_speed_in);
+      elapsedf * diff * (diff > 0.0f ? fov_speed_out : fov_speed_in);
 
   diff = field_of_view_y_ - field_of_view_y_smoothed_;
   field_of_view_y_smoothed_ +=
-      elapsed * diff * (diff > 0.0f ? fov_speed_out : fov_speed_in);
+      elapsedf * diff * (diff > 0.0f ? fov_speed_out : fov_speed_in);
 
   if (x_constrained_) {
     xy_constrain_blend_ +=
-        elapsed * (1.0f - xy_constrain_blend_) * xy_blend_speed;
+        elapsedf * (1.0f - xy_constrain_blend_) * xy_blend_speed;
     xy_constrain_blend_ = std::min(1.0f, xy_constrain_blend_);
   } else {
     xy_constrain_blend_ +=
-        elapsed * (0.0f - xy_constrain_blend_) * xy_blend_speed * elapsed;
+        elapsedf * (0.0f - xy_constrain_blend_) * xy_blend_speed * elapsedf;
     xy_constrain_blend_ = std::max(0.0f, xy_constrain_blend_);
   }
 
   if (!IsVRMode()) {
-    smooth_speed_.x += elapsed * rand_component
+    smooth_speed_.x += elapsedf * rand_component
                        * (-0.5f
                           + Utils::precalc_rand_1((real_time / rand_incr_1)
                                                   % kPrecalcRandsCount));
-    smooth_speed_.y += elapsed * rand_component
+    smooth_speed_.y += elapsedf * rand_component
                        * (-0.5f
                           + Utils::precalc_rand_2((real_time / rand_incr_2)
                                                   % kPrecalcRandsCount));
-    smooth_speed_.z += elapsed * rand_component
+    smooth_speed_.z += elapsedf * rand_component
                        * (-0.5f
                           + Utils::precalc_rand_3((real_time / rand_incr_3)
                                                   % kPrecalcRandsCount));
@@ -663,11 +664,11 @@ void Camera::Update(millisecs_t elapsed) {
 
   if (RandomFloat() < 0.1f && !IsVRMode()) {
     smooth_speed_2_.x +=
-        elapsed * rand_component * 4.0f * (-0.5f + RandomFloat());
+        elapsedf * rand_component * 4.0f * (-0.5f + RandomFloat());
     smooth_speed_2_.y +=
-        elapsed * rand_component * 4.0f * (-0.5f + RandomFloat());
+        elapsedf * rand_component * 4.0f * (-0.5f + RandomFloat());
     smooth_speed_2_.z +=
-        elapsed * rand_component * 4.0f * (-0.5f + RandomFloat());
+        elapsedf * rand_component * 4.0f * (-0.5f + RandomFloat());
   }
 
   // If we have no important areas of interest, keep our camera from moving too

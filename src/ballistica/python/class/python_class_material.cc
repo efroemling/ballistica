@@ -97,6 +97,11 @@ auto PythonClassMaterial::tp_new(PyTypeObject* type, PyObject* args,
     PyObject* name_obj = Py_None;
     std::string name;
     Object::Ref<Material> m;
+
+    // Clion incorrectly things s_create_empty will always be false.
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "ConstantConditionsOC"
+
     if (!s_create_empty_) {
       static const char* kwlist[] = {"label", nullptr};
       if (!PyArg_ParseTupleAndKeywords(args, keywds, "|O",
@@ -119,6 +124,7 @@ auto PythonClassMaterial::tp_new(PyTypeObject* type, PyObject* args,
     }
     self->material_ = new Object::Ref<Material>(m);
     BA_PYTHON_NEW_CATCH;
+#pragma clang diagnostic pop
   }
   return reinterpret_cast<PyObject*>(self);
 }
@@ -181,6 +187,10 @@ auto PythonClassMaterial::tp_getattro(PythonClassMaterial* self, PyObject* attr)
   BA_PYTHON_CATCH;
 }
 
+// Yes Clion, we always return -1 here.
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "ConstantFunctionResult"
+
 auto PythonClassMaterial::tp_setattro(PythonClassMaterial* self, PyObject* attr,
                                       PyObject* val) -> int {
   BA_PYTHON_TRY;
@@ -194,6 +204,8 @@ auto PythonClassMaterial::tp_setattro(PythonClassMaterial* self, PyObject* attr,
   // val);
   BA_PYTHON_INT_CATCH;
 }
+
+#pragma clang diagnostic pop
 
 auto PythonClassMaterial::Dir(PythonClassMaterial* self) -> PyObject* {
   BA_PYTHON_TRY;

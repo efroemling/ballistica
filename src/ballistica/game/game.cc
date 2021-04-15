@@ -904,7 +904,7 @@ void Game::PushInGameConsoleScriptCommand(const std::string& command) {
       g_app_globals->user_ran_commands = true;
     }
     if (cmd.CanEval()) {
-      PyObject* obj = cmd.RunReturnObj(true);
+      PyObject* obj = cmd.RunReturnObj(true, nullptr);
       if (obj && obj != Py_None) {
         PyObject* s = PyObject_Repr(obj);
         if (s) {
@@ -935,7 +935,7 @@ void Game::PushStdinScriptCommand(const std::string& command) {
 
     // Eval this if possible (so we can possibly print return value).
     if (cmd.CanEval()) {
-      if (PyObject* obj = cmd.RunReturnObj(true)) {
+      if (PyObject* obj = cmd.RunReturnObj(true, nullptr)) {
         // Print the value if we're running directly from a terminal
         // (or being run under the server-manager)
         if ((IsStdinATerminal() || g_app->server_wrapper_managed())

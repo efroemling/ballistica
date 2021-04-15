@@ -135,16 +135,13 @@ void TextNode::SetBig(bool val) {
 }
 
 auto TextNode::GetHAlign() const -> std::string {
-  if (h_align_ == HAlign::kLeft) {
-    return "left";
-  } else if (h_align_ == HAlign::kRight) {
-    return "right";
-  } else if (h_align_ == HAlign::kCenter) {
-    return "center";
-  } else {
-    BA_LOG_ONCE("Error: Invalid h_align value in text-node: "
-                + std::to_string(static_cast<int>(h_align_)));
-    return "<invalid>";
+  switch (h_align_) {
+    case HAlign::kLeft:
+      return "left";
+    case HAlign::kRight:
+      return "right";
+    case HAlign::kCenter:
+      return "center";
   }
 }
 
@@ -162,18 +159,15 @@ void TextNode::SetHAlign(const std::string& val) {
 }
 
 auto TextNode::GetVAlign() const -> std::string {
-  if (v_align_ == VAlign::kTop) {
-    return "top";
-  } else if (v_align_ == VAlign::kBottom) {
-    return "bottom";
-  } else if (v_align_ == VAlign::kCenter) {
-    return "center";
-  } else if (v_align_ == VAlign::kNone) {
-    return "none";
-  } else {
-    BA_LOG_ONCE("Error: Invalid v_align value in text-node: "
-                + std::to_string(static_cast<int>(v_align_)));
-    return "<invalid>";
+  switch (v_align_) {
+    case VAlign::kTop:
+      return "top";
+    case VAlign::kBottom:
+      return "bottom";
+    case VAlign::kCenter:
+      return "center";
+    case VAlign::kNone:
+      return "none";
   }
 }
 
@@ -193,16 +187,13 @@ void TextNode::SetVAlign(const std::string& val) {
 }
 
 auto TextNode::GetHAttach() const -> std::string {
-  if (h_attach_ == HAttach::kLeft) {
-    return "left";
-  } else if (h_attach_ == HAttach::kRight) {
-    return "right";
-  } else if (h_attach_ == HAttach::kCenter) {
-    return "center";
-  } else {
-    BA_LOG_ONCE("Error: Invalid h_attach value in text-node: "
-                + std::to_string(static_cast<int>(h_attach_)));
-    return "<invalid>";
+  switch (h_attach_) {
+    case HAttach::kLeft:
+      return "left";
+    case HAttach::kRight:
+      return "right";
+    case HAttach::kCenter:
+      return "center";
   }
 }
 
@@ -220,16 +211,13 @@ void TextNode::SetHAttach(const std::string& val) {
 }
 
 auto TextNode::GetVAttach() const -> std::string {
-  if (v_attach_ == VAttach::kTop) {
-    return "top";
-  } else if (v_attach_ == VAttach::kBottom) {
-    return "bottom";
-  } else if (v_attach_ == VAttach::kCenter) {
-    return "center";
-  } else {
-    BA_LOG_ONCE("Error: Invalid v_attach value in text-node: "
-                + std::to_string(static_cast<int>(v_attach_)));
-    return "<invalid>";
+  switch (v_attach_) {
+    case VAttach::kTop:
+      return "top";
+    case VAttach::kBottom:
+      return "bottom";
+    case VAttach::kCenter:
+      return "center";
   }
 }
 
@@ -288,23 +276,27 @@ void TextNode::Update() {
       offset_v = 0.0f;
     } else {
       // Screen space; apply alignment and stuff.
-      if (h_attach_ == HAttach::kLeft) {
-        offset_h = 0;
-      } else if (h_attach_ == HAttach::kRight) {
-        offset_h = g_graphics->screen_virtual_width();
-      } else if (h_attach_ == HAttach::kCenter) {
-        offset_h = g_graphics->screen_virtual_width() / 2;
-      } else {
-        throw Exception("invalid h_attach");
+      switch (h_attach_) {
+        case HAttach::kLeft:
+          offset_h = 0;
+          break;
+        case HAttach::kRight:
+          offset_h = g_graphics->screen_virtual_width();
+          break;
+        case HAttach::kCenter:
+          offset_h = g_graphics->screen_virtual_width() / 2;
+          break;
       }
-      if (v_attach_ == VAttach::kTop) {
-        offset_v = g_graphics->screen_virtual_height();
-      } else if (v_attach_ == VAttach::kBottom) {
-        offset_v = 0;
-      } else if (v_attach_ == VAttach::kCenter) {
-        offset_v = g_graphics->screen_virtual_height() / 2;
-      } else {
-        throw Exception("invalid v_attach");
+      switch (v_attach_) {
+        case VAttach::kTop:
+          offset_v = g_graphics->screen_virtual_height();
+          break;
+        case VAttach::kBottom:
+          offset_v = 0;
+          break;
+        case VAttach::kCenter:
+          offset_v = g_graphics->screen_virtual_height() / 2;
+          break;
       }
     }
     position_final_ = position_;
@@ -377,8 +369,6 @@ void TextNode::Draw(FrameDef* frame_def) {
         case HAlign::kCenter:
           h_align = TextMesh::HAlign::kCenter;
           break;
-        default:
-          throw Exception();
       }
 
       TextMesh::VAlign v_align;
@@ -395,8 +385,6 @@ void TextNode::Draw(FrameDef* frame_def) {
         case VAlign::kBottom:
           v_align = TextMesh::VAlign::kBottom;
           break;
-        default:
-          throw Exception();
       }
 
       // update if need be
@@ -552,8 +540,6 @@ void TextNode::Draw(FrameDef* frame_def) {
         case HAlign::kCenter:
           h_align = TextMesh::HAlign::kCenter;
           break;
-        default:
-          throw Exception();
       }
 
       TextMesh::VAlign v_align;
@@ -570,8 +556,6 @@ void TextNode::Draw(FrameDef* frame_def) {
         case VAlign::kBottom:
           v_align = TextMesh::VAlign::kBottom;
           break;
-        default:
-          throw Exception();
       }
 
       // Update if need be.

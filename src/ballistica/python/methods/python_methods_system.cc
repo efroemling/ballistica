@@ -709,6 +709,9 @@ auto PyAndroidMediaScanFile(PyObject* self, PyObject* args, PyObject* keywds)
   BA_PYTHON_CATCH;
 }
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "ConstantFunctionResult"
+
 auto PyAndroidGetExternalStoragePath(PyObject* self, PyObject* args,
                                      PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
@@ -732,6 +735,7 @@ auto PyAndroidGetExternalStoragePath(PyObject* self, PyObject* args,
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
+#pragma clang diagnostic pop
 
 auto PyAndroidShowWifiSettings(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {

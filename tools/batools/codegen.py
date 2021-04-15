@@ -80,7 +80,7 @@ def gen_binding_code(projroot: str, in_path: str, out_path: str) -> None:
     # Then it grabs the function that was defined and runs it.
     ccode += ('PyObject* bindvals = PythonCommand("get_binding_values()",'
               ' "<get_binding_values>")'
-              '.RunReturnObj(true);\n'
+              '.RunReturnObj(true, nullptr);\n'
               'if (bindvals == nullptr) {\n'
               '  // Use a standard error to avoid a useless stack trace.\n'
               '  throw std::logic_error("Error binding required Python'

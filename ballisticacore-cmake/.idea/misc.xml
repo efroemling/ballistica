@@ -1,8 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="CMakeWorkspace" PROJECT_DIR="$PROJECT_DIR$" />
+  <component name="CMakeWorkspace" PROJECT_DIR="$PROJECT_DIR$">
+    <contentRoot DIR="$PROJECT_DIR$/.." />
+  </component>
   <component name="CidrRootsConfiguration">
     <excludeRoots>
+      <file path="$PROJECT_DIR$/../.assetcache" />
+      <file path="$PROJECT_DIR$/../.cache" />
+      <file path="$PROJECT_DIR$/../.mypy_cache" />
+      <file path="$PROJECT_DIR$/../.pytest_cache" />
+      <file path="$PROJECT_DIR$/../assets" />
+      <file path="$PROJECT_DIR$/../ballisticacore-android" />
       <file path="$PROJECT_DIR$/.idea" />
       <file path="$PROJECT_DIR$/build" />
       <file path="$PROJECT_DIR$/build-server" />
@@ -22,6 +30,16 @@
       <file path="$PROJECT_DIR$/src/external/windows" />
       <file path="$PROJECT_DIR$/src/generated" />
       <file path="$PROJECT_DIR$/src/generated_src" />
+      <file path="$PROJECT_DIR$/../ballisticacore-ios.xcodeproj" />
+      <file path="$PROJECT_DIR$/../ballisticacore-mac.xcodeproj" />
+      <file path="$PROJECT_DIR$/../ballisticacore-windows" />
+      <file path="$PROJECT_DIR$/../ballisticacore-xcode" />
+      <file path="$PROJECT_DIR$/../build" />
+      <file path="$PROJECT_DIR$/../config" />
+      <file path="$PROJECT_DIR$/../docs" />
+      <file path="$PROJECT_DIR$/../resources" />
+      <file path="$PROJECT_DIR$/../tests" />
+      <file path="$PROJECT_DIR$/../tools" />
     </excludeRoots>
   </component>
   <component name="JavaScriptSettings">

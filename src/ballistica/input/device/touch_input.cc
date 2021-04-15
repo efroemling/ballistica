@@ -431,13 +431,13 @@ void TouchInput::Draw(FrameDef* frame_def) {
       if (movement_control_type_ == MovementControlType::kSwipe) {
         c.SetTexture(g_media->GetTexture(SystemTextureID::kTouchArrows));
         if (editing_) {
-          float val = 1.5f + sinf(real_time * 0.02f);
+          float val = 1.5f + sinf(static_cast<float>(real_time) * 0.02f);
           c.SetColor(val, val, 1.0f, 1.0f);
         }
       } else {
         float val;
         if (editing_) {
-          val = 0.35f + 0.15f * sinf(real_time * 0.02f);
+          val = 0.35f + 0.15f * sinf(static_cast<float>(real_time) * 0.02f);
         } else {
           val = 0.35f;
         }
@@ -459,7 +459,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
       if (movement_control_type_ == MovementControlType::kJoystick) {
         float val;
         if (editing_) {
-          val = 0.35f + 0.15f * sinf(real_time * 0.02f);
+          val = 0.35f + 0.15f * sinf(static_cast<float>(real_time) * 0.02f);
         } else {
           val = 0.35f;
         }
@@ -474,11 +474,10 @@ void TouchInput::Draw(FrameDef* frame_def) {
 
     if (!buttons_touch_ && action_control_type_ == ActionControlType::kSwipe
         && !swipe_controls_hidden_) {
-      float sc2 = sc_actions;
-      if (action_control_type_ == ActionControlType::kSwipe) sc2 *= 0.6f;
+      float sc2{sc_actions * 0.6f};
       c.SetTexture(g_media->GetTexture(SystemTextureID::kTouchArrowsActions));
       if (editing_) {
-        float val = 1.5f + sinf(real_time * 0.02f);
+        float val = 1.5f + sinf(static_cast<float>(real_time) * 0.02f);
         c.SetColor(val, val, 1.0f, 1.0f);
       } else {
         c.SetColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -496,10 +495,10 @@ void TouchInput::Draw(FrameDef* frame_def) {
     c.Submit();
   }
 
-  bool have_player_position = false;
+  bool have_player_position{false};
   std::vector<float> player_position(3);
   if (attached_to_player()) {
-    PlayerNode* player_node = nullptr;
+    PlayerNode* player_node{};
 
     // Try to come up with whichever scene is in the foreground, and try
     // to pull a node for the player we're attached to.
@@ -523,7 +522,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
   SimpleComponent c(frame_def->GetOverlayFlatPass());
   c.SetTransparent(true);
 
-  uint32_t residual_time = 130;
+  uint32_t residual_time{130};
 
   // Draw buttons.
   bool do_draw;
@@ -561,7 +560,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
       }
     }
 
-    float s = 0.5f;
+    float s{0.5f};
 
     // In buttons mode we draw based on our UI size. Otherwise we draw in the
     // world at a constant scale.
@@ -576,10 +575,10 @@ void TouchInput::Draw(FrameDef* frame_def) {
       }
     }
 
-    float b_width = 50.0f * s;
-    float half_b_width = 0.0f;
+    float b_width{50.0f * s};
+    float half_b_width{0.0f};
 
-    float button_spread_s = 0.0f * s;
+    float button_spread_s{0.0f * s};
 
     if (action_control_type_ == ActionControlType::kSwipe) {
       button_spread_s *= 2.0f;
@@ -587,7 +586,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
 
     bool was_held;
     float pop;
-    float pop_time = 100.0f;
+    float pop_time{100.0f};
 
     c.PushTransform();
 
@@ -604,11 +603,12 @@ void TouchInput::Draw(FrameDef* frame_def) {
       }
     }
 
-    float squash = 1.3f;
-    float stretch = 1.3f;
+    float squash{1.3f};
+    float stretch{1.3f};
 
-    float s_extra = 1.0f;
-    if (editing_) s_extra = 0.7f + 0.3f * sinf(real_time * 0.02f);
+    float s_extra{1.0f};
+    if (editing_)
+      s_extra = 0.7f + 0.3f * sinf(static_cast<float>(real_time) * 0.02f);
 
     // Bomb.
     was_held =

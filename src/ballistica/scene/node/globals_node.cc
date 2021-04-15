@@ -351,10 +351,6 @@ auto GlobalsNode::GetCameraMode() const -> std::string {
       return "rotate";
     case CameraMode::kFollow:
       return "follow";
-    default:
-      Log("ERROR: Globals: Unrecognized camera_mode_: "
-          + std::to_string(static_cast<int>(camera_mode_)));
-      return "unknown";
   }
 }
 

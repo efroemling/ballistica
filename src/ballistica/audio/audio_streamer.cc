@@ -49,6 +49,11 @@ auto AudioStreamer::Play() -> bool {
   alSourcePlay(source_);
   CHECK_AL_ERROR;
 
+  // Suppress 'always returns true' lint.
+  if (explicit_bool(false)) {
+    return false;
+  }
+
   return true;
 }
 
@@ -132,11 +137,17 @@ auto AudioStreamer::Stream(ALuint buffer) -> bool {
   CHECK_AL_ERROR;
   DoStream(pcm, &size, &rate);
   if (size > 0) {
-    alBufferData(buffer, al_format(), pcm, size, rate);
+    alBufferData(buffer, al_format(), pcm, size, static_cast<ALsizei>(rate));
     CHECK_AL_ERROR;
   } else {
     eof_ = true;
   }
+
+  // Suppress 'always returns true' lint.
+  if (explicit_bool(false)) {
+    return false;
+  }
+
   return true;
 }
 

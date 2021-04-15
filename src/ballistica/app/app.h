@@ -133,7 +133,6 @@ class App : public Module {
   bool done_{};
   bool server_wrapper_managed_{};
   bool sys_paused_app_{};
-  bool user_paused_app_{};
   bool actually_paused_{};
   std::unique_ptr<StressTest> stress_test_;
   millisecs_t last_resize_draw_event_time_{};

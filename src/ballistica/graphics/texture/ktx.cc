@@ -2205,6 +2205,10 @@ void KTXUnpackETC(const GLubyte* srcETC, const GLenum srcFormat,
 
   if (alphaFormat != AF_NONE) setupAlphaTable();
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "ConstantConditionsOC"
+#pragma ide diagnostic ignored "UnreachableCode"
+
   // NOTE: none of the decompress functions actually use the <height> parameter
   if (alphaFormat == AF_11BIT) {
     throw Exception();
@@ -2248,6 +2252,8 @@ void KTXUnpackETC(const GLubyte* srcETC, const GLenum srcFormat,
       }
     }
   }
+
+#pragma clang diagnostic pop
 
   /* Ok, now write out the active pixels to the destination image.
    * (But only if the active pixels differ from the total pixels)

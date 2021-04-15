@@ -137,13 +137,13 @@ void App::RunEvents() {
 void App::UpdatePauseResume() {
   if (actually_paused_) {
     // Unpause if no one wants pause.
-    if (!sys_paused_app_ && !user_paused_app_) {
+    if (!sys_paused_app_) {
       OnResume();
       actually_paused_ = false;
     }
   } else {
     // Pause if anyone wants.
-    if (sys_paused_app_ || user_paused_app_) {
+    if (sys_paused_app_) {
       OnPause();
       actually_paused_ = true;
     }
@@ -264,7 +264,7 @@ void App::PrimeEventPump() {
 void App::PushShowOnlineScoreUICall(const std::string& show,
                                     const std::string& game,
                                     const std::string& game_version) {
-  PushCall([this, show, game, game_version] {
+  PushCall([show, game, game_version] {
     assert(InMainThread());
     g_platform->ShowOnlineScoreUI(show, game, game_version);
   });
@@ -272,7 +272,7 @@ void App::PushShowOnlineScoreUICall(const std::string& show,
 
 void App::PushNetworkSetupCall(int port, int telnet_port, bool enable_telnet,
                                const std::string& telnet_password) {
-  PushCall([this, port, telnet_port, enable_telnet, telnet_password] {
+  PushCall([port, telnet_port, enable_telnet, telnet_password] {
     assert(InMainThread());
     // Kick these off if they don't exist.
     // (do we want to support changing ports on existing ones?)
@@ -293,59 +293,58 @@ void App::PushNetworkSetupCall(int port, int telnet_port, bool enable_telnet,
 
 void App::PushPurchaseAckCall(const std::string& purchase,
                               const std::string& order_id) {
-  PushCall([this, purchase, order_id] {
-    g_platform->PurchaseAck(purchase, order_id);
-  });
+  PushCall(
+      [purchase, order_id] { g_platform->PurchaseAck(purchase, order_id); });
 }
 
 void App::PushGetScoresToBeatCall(const std::string& level,
                                   const std::string& config,
                                   void* py_callback) {
-  PushCall([this, level, config, py_callback] {
+  PushCall([level, config, py_callback] {
     assert(InMainThread());
     g_platform->GetScoresToBeat(level, config, py_callback);
   });
 }
 
 void App::PushPurchaseCall(const std::string& item) {
-  PushCall([this, item] {
+  PushCall([item] {
     assert(InMainThread());
     g_platform->Purchase(item);
   });
 }
 
 void App::PushRestorePurchasesCall() {
-  PushCall([this] {
+  PushCall([] {
     assert(InMainThread());
     g_platform->RestorePurchases();
   });
 }
 
 void App::PushOpenURLCall(const std::string& url) {
-  PushCall([this, url] { g_platform->OpenURL(url); });
+  PushCall([url] { g_platform->OpenURL(url); });
 }
 
 void App::PushGetFriendScoresCall(const std::string& game,
                                   const std::string& game_version, void* data) {
-  PushCall([this, game, game_version, data] {
+  PushCall([game, game_version, data] {
     g_platform->GetFriendScores(game, game_version, data);
   });
 }
 
 void App::PushSubmitScoreCall(const std::string& game,
                               const std::string& game_version, int64_t score) {
-  PushCall([this, game, game_version, score] {
+  PushCall([game, game_version, score] {
     g_platform->SubmitScore(game, game_version, score);
   });
 }
 
 void App::PushAchievementReportCall(const std::string& achievement) {
-  PushCall([this, achievement] { g_platform->ReportAchievement(achievement); });
+  PushCall([achievement] { g_platform->ReportAchievement(achievement); });
 }
 
 void App::PushStringEditCall(const std::string& name, const std::string& value,
                              int max_chars) {
-  PushCall([this, name, value, max_chars] {
+  PushCall([name, value, max_chars] {
     static millisecs_t last_edit_time = 0;
     millisecs_t t = GetRealTime();
 
@@ -367,7 +366,7 @@ void App::PushSetStressTestingCall(bool enable, int player_count) {
 }
 
 void App::PushResetAchievementsCall() {
-  PushCall([this] { g_platform->ResetAchievements(); });
+  PushCall([] { g_platform->ResetAchievements(); });
 }
 
 void App::OnBootstrapComplete() {
@@ -390,7 +389,7 @@ void App::OnBootstrapComplete() {
 }
 
 void App::PushCursorUpdate(bool vis) {
-  PushCall([this, vis] {
+  PushCall([vis] {
     assert(InMainThread());
     g_platform->SetHardwareCursorVisible(vis);
   });

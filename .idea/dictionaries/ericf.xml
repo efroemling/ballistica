@@ -617,6 +617,7 @@
       <w>eftools</w>
       <w>efxjtp</w>
       <w>eids</w>
+      <w>elapsedf</w>
       <w>elementtree</w>
       <w>elim</w>
       <w>emitfx</w>
@@ -1977,6 +1978,7 @@
       <w>sourceimages</w>
       <w>sourcelines</w>
       <w>sourcenode</w>
+      <w>spacecount</w>
       <w>spacelen</w>
       <w>spacingstr</w>
       <w>spammers</w>
