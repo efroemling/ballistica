@@ -96,7 +96,7 @@ def _lazybuild_check_paths(inpaths: List[str], category: SourceCategory,
     def _testpath(path: str) -> bool:
         # Now see this path is newer than our target..
         if mtime is None or os.path.getmtime(path) >= mtime:
-            print(f'{Clr.SMAG}Build of {tnamepretty} triggered by'
+            print(f'{Clr.SMAG}Build of {tnamepretty} triggered by change in'
                   f" '{path}'{Clr.RST}")
             return True
         return False

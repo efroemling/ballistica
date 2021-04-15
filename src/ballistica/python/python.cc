@@ -947,7 +947,9 @@ void Python::Reset(bool do_init) {
                       + std::string(ver));
     }
 
-    StoreObj(ObjID::kEmptyTuple, PyTuple_New(0));
+    // Create a dict for execing our bootstrap code in so
+    // we don't pollute the __main__ namespace.
+    auto bootstrap_context{PythonRef(PyDict_New(), PythonRef::kSteal)};
 
     // Get the app up and running.
     // Run a few core bootstrappy things first:
@@ -956,21 +958,17 @@ void Python::Reset(bool do_init) {
     // - import and instantiate our app-state class
 
 #include "generated/ballistica/bootstrap.inc"
-    int result = PyRun_SimpleString(bootstrap_code);
-    if (result != 0) {
+    PyObject* result =
+        PyRun_String(bootstrap_code, Py_file_input, bootstrap_context.get(),
+                     bootstrap_context.get());
+    if (result == nullptr) {
       PyErr_PrintEx(0);
 
       // Throw a simple exception so we don't get a stack trace.
       throw std::logic_error(
           "Error in ba Python bootstrapping. See log for details.");
     }
-    PyObject* appstate = PythonCommand("app_state", "<AppStateFetch>")
-                             .RunReturnObj(false, nullptr);
-    if (appstate == nullptr) {
-      throw Exception("Unable to get value: '" + std::string("app_state")
-                      + "'.");
-    }
-    StoreObj(ObjID::kApp, appstate);
+    Py_DECREF(result);
 
     // Import and grab all the Python stuff we use.
 #include "generated/ballistica/binding.inc"

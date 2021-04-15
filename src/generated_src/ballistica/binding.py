@@ -4,25 +4,36 @@
 # Run make update to update the project after editing this..
 # pylint: disable=missing-module-docstring, missing-function-docstring
 # pylint: disable=line-too-long
-def get_binding_values() -> object:
-    from ba import _hooks
-    import _ba
-    import json
-    import copy
-    import ba
-    from ba import _language
-    from ba import _music
-    from ba import _input
-    from ba import _apputils
-    from ba import _account
-    from ba import _dependency
-    from ba import _enums
-    from ba import _player
-    # FIXME: There should be no bastd in here;
-    #  should pull in bases from ba which get overridden by bastd (or other).
-    from bastd.ui.onscreenkeyboard import OnScreenKeyboardWindow
-    from bastd.ui import party
+from __future__ import annotations
+
+import json
+import copy
+from typing import TYPE_CHECKING
+
+import ba
+from ba import _language
+from ba import _music
+from ba import _input
+from ba import _apputils
+from ba import _dependency
+from ba import _enums
+from ba import _player
+from ba import _hooks
+import _ba
+
+# FIXME: There should be no bastd in here;
+#  should pull in bases from ba which get overridden by bastd (or other).
+from bastd.ui.onscreenkeyboard import OnScreenKeyboardWindow
+from bastd.ui import party
+
+if TYPE_CHECKING:
+    from typing import Tuple, Any
+
+
+def get_binding_values() -> Tuple[Any, ...]:
     return (
+        ba.app,  # kApp
+        tuple(),  # kEmptyTuple
         _ba.client_info_query_response,  # kClientInfoQueryResponseCall
         _hooks.reset_to_main_menu,  # kResetToMainMenuCall
         _hooks.set_config_fullscreen_on,  # kSetConfigFullscreenOnCall

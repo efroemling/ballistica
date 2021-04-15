@@ -69,8 +69,9 @@ def gen_binding_code(projroot: str, in_path: str, out_path: str) -> None:
 
     # Our C++ code first execs our input as a string.
     ccode = ('{const char* bindcode = ' + repr(pycode).replace("'", '"') + ';')
-    ccode += ('\nint result = PyRun_SimpleString(bindcode);\n'
-              'if (result != 0) {\n'
+    ccode += ('\nPyObject* result = PyRun_String(bindcode, Py_file_input,'
+              ' bootstrap_context.get(), bootstrap_context.get());\n'
+              'if (result == nullptr) {\n'
               '  PyErr_PrintEx(0);\n'
               '  // Use a standard error to avoid a useless stack trace.\n'
               '  throw std::logic_error("Error fetching required Python'
@@ -80,7 +81,7 @@ def gen_binding_code(projroot: str, in_path: str, out_path: str) -> None:
     # Then it grabs the function that was defined and runs it.
     ccode += ('PyObject* bindvals = PythonCommand("get_binding_values()",'
               ' "<get_binding_values>")'
-              '.RunReturnObj(true, nullptr);\n'
+              '.RunReturnObj(true, bootstrap_context.get());\n'
               'if (bindvals == nullptr) {\n'
               '  // Use a standard error to avoid a useless stack trace.\n'
               '  throw std::logic_error("Error binding required Python'
@@ -89,18 +90,12 @@ def gen_binding_code(projroot: str, in_path: str, out_path: str) -> None:
 
     # Then it pulls the individual values out of the returned tuple.
     for i, line in enumerate(lines):
-        ccode += ('StoreObjCallable(ObjID::' + line[1] +
-                  ', PyTuple_GET_ITEM(bindvals, ' + str(i) + '), true);\n')
+        storecmd = ('StoreObjCallable' if line[1].endswith('Class')
+                    or line[1].endswith('Call') else 'StoreObj')
+        ccode += (f'{storecmd}(ObjID::{line[1]},'
+                  f' PyTuple_GET_ITEM(bindvals, {i}), true);\n')
 
-    # Lastly it cleans up after itself.
-    ccode += ('result = PyRun_SimpleString("del get_binding_values");\n'
-              'if (result != 0) {\n'
-              '  PyErr_PrintEx(0);\n'
-              '  // Use a standard error to avoid a useless stack trace.\n'
-              '  throw std::logic_error("Error cleaning up after Python'
-              ' binding.");\n'
-              '}\n'
-              '}\n')
+    ccode += 'Py_DECREF(bindvals);\n}\n'
     pretty_path = os.path.abspath(out_path)
     if pretty_path.startswith(projroot + '/'):
         pretty_path = pretty_path[len(projroot) + 1:]
