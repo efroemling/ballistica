@@ -396,18 +396,18 @@ class Python {
   void SetupPythonHome();
 
   /// Set the value for a named object.
-  void SetObj(ObjID id, PyObject* pyobj, bool incref = false);
+  void StoreObj(ObjID id, PyObject* pyobj, bool incref = false);
 
   /// Set the value for a named object and verify that it is a callable.
-  void SetObjCallable(ObjID id, PyObject* pyobj, bool incref = false);
+  void StoreObjCallable(ObjID id, PyObject* pyobj, bool incref = false);
 
   /// Set the value for a named object to the result of a Python expression.
-  void SetObj(ObjID id, const char* expression, PyObject* context = nullptr);
+  void StoreObj(ObjID id, const char* expression, PyObject* context = nullptr);
 
   /// Set the value for a named object to the result of a Python expression
   /// and verify that it is callable.
-  void SetObjCallable(ObjID id, const char* expression,
-                      PyObject* context = nullptr);
+  void StoreObjCallable(ObjID id, const char* expression,
+                        PyObject* context = nullptr);
 
   std::set<std::string> do_once_locations_;
   PythonRef objs_[static_cast<int>(ObjID::kLast)];

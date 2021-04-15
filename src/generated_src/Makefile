@@ -10,9 +10,9 @@ generated_code: ../generated/ballistica/binding.inc \
 clean:
 	@rm -rf ../generated
 
-../generated/ballistica/bootstrap.inc : ballistica/bootstrap.py
+../generated/ballistica/bootstrap.inc : ballistica/bootstrap.py ../../tools/batools/codegen.py
 	@../../tools/pcommand gen_flat_data_code $< $@ bootstrap_code
 
-../generated/ballistica/binding.inc : ballistica/binding.py
+../generated/ballistica/binding.inc : ballistica/binding.py ../../tools/batools/codegen.py
 	@../../tools/pcommand gen_binding_code $< $@
 

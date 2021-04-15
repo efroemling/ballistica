@@ -947,7 +947,7 @@ void Python::Reset(bool do_init) {
                       + std::string(ver));
     }
 
-    SetObj(ObjID::kEmptyTuple, PyTuple_New(0));
+    StoreObj(ObjID::kEmptyTuple, PyTuple_New(0));
 
     // Get the app up and running.
     // Run a few core bootstrappy things first:
@@ -970,7 +970,7 @@ void Python::Reset(bool do_init) {
       throw Exception("Unable to get value: '" + std::string("app_state")
                       + "'.");
     }
-    SetObj(ObjID::kApp, appstate);
+    StoreObj(ObjID::kApp, appstate);
 
     // Import and grab all the Python stuff we use.
 #include "generated/ballistica/binding.inc"
@@ -985,7 +985,7 @@ void Python::Reset(bool do_init) {
 
     // Read the config file and store the config dict for easy access.
     obj(ObjID::kReadConfigCall).Call();
-    SetObj(ObjID::kConfig, obj(ObjID::kApp).GetAttr("config").get());
+    StoreObj(ObjID::kConfig, obj(ObjID::kApp).GetAttr("config").get());
     assert(PyDict_Check(obj(ObjID::kConfig).get()));
 
     // Turn off fancy-pants cyclic garbage-collection.
@@ -2345,21 +2345,21 @@ void Python::PartyInviteRevoke(const std::string& invite_id) {
   obj(ObjID::kHandlePartyInviteRevokeCall).Call(args);
 }
 
-void Python::SetObj(ObjID id, PyObject* pyobj, bool incref) {
+void Python::StoreObj(ObjID id, PyObject* pyobj, bool incref) {
   assert(id < ObjID::kLast);
   assert(pyobj);
   if (g_buildconfig.debug_build()) {
     // Assuming we're setting everything once
     // (make sure we don't accidentally overwrite things we don't intend to).
     if (objs_[static_cast<int>(id)].exists()) {
-      throw Exception("Python::SetObj() called twice for val '"
+      throw Exception("Python::StoreObj() called twice for val '"
                       + std::to_string(static_cast<int>(id)) + "'.");
     }
 
     // Also make sure we're not storing an object that's already been stored.
     for (auto&& i : objs_) {
       if (i.get() != nullptr && i.get() == pyobj) {
-        throw Exception("Python::SetObj() called twice for same ptr; id="
+        throw Exception("Python::StoreObj() called twice for same ptr; id="
                         + std::to_string(static_cast<int>(id)) + ".");
       }
     }
@@ -2370,27 +2370,27 @@ void Python::SetObj(ObjID id, PyObject* pyobj, bool incref) {
   objs_[static_cast<int>(id)].Steal(pyobj);
 }
 
-void Python::SetObjCallable(ObjID id, PyObject* pyobj, bool incref) {
-  SetObj(id, pyobj, incref);
+void Python::StoreObjCallable(ObjID id, PyObject* pyobj, bool incref) {
+  StoreObj(id, pyobj, incref);
   BA_PRECONDITION(obj(id).CallableCheck());
 }
 
-void Python::SetObj(ObjID id, const char* expr, PyObject* context) {
+void Python::StoreObj(ObjID id, const char* expr, PyObject* context) {
   PyObject* obj =
       PythonCommand(expr, "<PyObj Set>").RunReturnObj(false, context);
   if (obj == nullptr) {
     throw Exception("Unable to get value: '" + std::string(expr) + "'.");
   }
-  SetObj(id, obj);
+  StoreObj(id, obj);
 }
 
-void Python::SetObjCallable(ObjID id, const char* expr, PyObject* context) {
+void Python::StoreObjCallable(ObjID id, const char* expr, PyObject* context) {
   PyObject* obj =
       PythonCommand(expr, "<PyObj Set>").RunReturnObj(false, context);
   if (obj == nullptr) {
     throw Exception("Unable to get value: '" + std::string(expr) + "'.");
   }
-  SetObjCallable(id, obj);
+  StoreObjCallable(id, obj);
 }
 
 void Python::SetRawConfigValue(const char* name, float value) {

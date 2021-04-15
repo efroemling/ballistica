@@ -57,7 +57,7 @@ def gen_binding_code(projroot: str, in_path: str, out_path: str) -> None:
     with open(in_path) as infile:
         pycode = infile.read()
 
-    # Double quotes causes errors.
+    # Double quotes cause errors.
     if '"' in pycode:
         raise Exception('bindings file can\'t contain double quotes.')
     lines = [
@@ -89,7 +89,7 @@ def gen_binding_code(projroot: str, in_path: str, out_path: str) -> None:
 
     # Then it pulls the individual values out of the returned tuple.
     for i, line in enumerate(lines):
-        ccode += ('SetObjCallable(ObjID::' + line[1] +
+        ccode += ('StoreObjCallable(ObjID::' + line[1] +
                   ', PyTuple_GET_ITEM(bindvals, ' + str(i) + '), true);\n')
 
     # Lastly it cleans up after itself.

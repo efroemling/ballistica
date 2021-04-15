@@ -168,7 +168,10 @@ def lazybuild(target: str, category: SourceCategory, command: str) -> None:
 
     # Everything possibly affecting generated code.
     if category is SourceCategory.CODE_GEN:
-        paths = ['Makefile', 'tools/generate_code', 'src/generated_src']
+        paths = [
+            'Makefile', 'tools/generate_code', 'tools/batools/codegen.py',
+            'src/generated_src'
+        ]
 
     # Everything possibly affecting asset builds.
     elif category is SourceCategory.ASSETS:
