@@ -144,7 +144,11 @@ auto PythonCommand::RunReturnObj(bool print_errors, PyObject* context)
   if (context == nullptr) {
     context = g_python->main_dict();
   }
+
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "RedundantCast"
   assert(PyDict_Check(context));
+#pragma clang diagnostic pop
 
   if (!eval_code_obj_.get()) {
     CompileForEval(print_errors);

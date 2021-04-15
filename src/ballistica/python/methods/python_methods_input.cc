@@ -60,42 +60,6 @@ auto PyStopListeningForWiiRemotes(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_CATCH;
 }
 
-auto PySetDeviceAccount(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-  Platform::SetLastPyCall("set_device_account");
-  std::string name;
-  PyObject* name_obj;
-  static const char* kwlist[] = {"name", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
-                                   const_cast<char**>(kwlist), &name_obj)) {
-    return nullptr;
-  }
-  name = Python::GetPyString(name_obj);
-  AccountType account_type;
-
-  // on headless builds we keep these distinct from regular
-  // device accounts (so we get a 'ServerXXX' name, etc)
-#if BA_HEADLESS_BUILD
-  account_type = AccountType::kServer;
-#else
-  account_type = AccountType::kDevice;
-#endif
-  g_game->PushSetAccountCall(account_type, AccountState::kSignedIn, name,
-                             g_platform->GetDeviceAccountID());
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-auto PyGetDeviceLoginID(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-  Platform::SetLastPyCall("get_device_login_id");
-  assert(Utils::IsValidUTF8(g_platform->GetDeviceAccountID()));
-  return PyUnicode_FromString(g_platform->GetDeviceAccountID().c_str());
-  BA_PYTHON_CATCH;
-}
-
 auto PySetTouchscreenEditing(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
   Platform::SetLastPyCall("set_touchscreen_editing");
@@ -349,12 +313,6 @@ auto PythonMethodsInput::GetMethods() -> std::vector<PyMethodDef> {
        "set_touchscreen_editing(editing: bool) -> None\n"
        "\n"
        "(internal)"},
-
-      {"get_device_login_id", (PyCFunction)PyGetDeviceLoginID,
-       METH_VARARGS | METH_KEYWORDS, "internal"},
-
-      {"set_device_account", (PyCFunction)PySetDeviceAccount,
-       METH_VARARGS | METH_KEYWORDS, "internal"},
 
       {"stop_listening_for_wii_remotes", PyStopListeningForWiiRemotes,
        METH_VARARGS,
