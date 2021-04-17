@@ -171,14 +171,22 @@ add_library(ode
   )
 target_include_directories(ode PRIVATE ${ODE_SRC_ROOT})
 
-# EWWW; GCC gives us bad mesh collisions with -O3 (and maybe -O2?)
-# need to finally get to the bottom of this but limiting to -01 for now.
-# (-O2 might be safe??... or what about -Os? ..or arm? Should test again.)
-if (CMAKE_BUILD_TYPE MATCHES Release)
-  if (CMAKE_CXX_COMPILER_ID MATCHES GNU)
-    target_compile_options(ode PRIVATE -O1)
-  endif()
-endif ()
+# NOTE: There used to be an issue with optimized GCC builds where mesh
+# collisions would fail randomly, leading to characters falling through
+# floors somewhat regularly. For this reason I was limiting optimization to
+# -O1 for the rigid body library. However, as of April 2021, all seems
+# well when testing on arm64 and x86-64 linux builds. (I think)
+# The last time I remember seeing this bug was around 2016 I believe, but I
+# haven't looked for it since. Perhaps GCC was fixed or perhaps the error
+# was limited to 32 bit x86 builds; in either case we should be good, as
+# we're no longer building any 32 bit x86 builds using GCC.
+# Keeping this in here commented out just in case it rears its ugly head
+# again though.
+# if (CMAKE_BUILD_TYPE MATCHES Release)
+#   if (CMAKE_CXX_COMPILER_ID MATCHES GNU)
+#     target_compile_options(ode PRIVATE -O1)
+#   endif()
+# endif ()
 
 # BallisticaCore binary.
 add_executable(ballisticacore
