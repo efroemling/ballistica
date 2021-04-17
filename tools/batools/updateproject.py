@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 
 def get_legal_notice_private() -> str:
     """Return the one line legal notice we expect private files to have."""
-    return 'Copyright (c) 2011-2020 Eric Froemling'
+    return 'Copyright (c) 2011-2021 Eric Froemling'
 
 
 @dataclass

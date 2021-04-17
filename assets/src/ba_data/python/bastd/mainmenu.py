@@ -60,7 +60,7 @@ class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
                                'scale': scale,
                                'position': (0, 10),
                                'vr_depth': -10,
-                               'text': '\xa9 2011-2020 Eric Froemling'
+                               'text': '\xa9 2011-2021 Eric Froemling'
                            }))
 
         # Throw up some text that only clients can see so they know that the
