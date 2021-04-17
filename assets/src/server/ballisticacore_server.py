@@ -714,8 +714,11 @@ class ServerManagerApp:
             # alive.
             if (self._subprocess_force_kill_time is not None
                     and time.time() > self._subprocess_force_kill_time):
-                print(f'{Clr.CYN}Force-killing subprocess...{Clr.RST}',
-                      flush=True)
+                print(
+                    f'{Clr.CYN}Immediate shutdown time limit'
+                    f' ({self.IMMEDIATE_SHUTDOWN_TIME_LIMIT:.1f} seconds)'
+                    f' expired; force-killing subprocess...{Clr.RST}',
+                    flush=True)
                 break
 
             # Watch for the server process exiting..
