@@ -19,13 +19,13 @@ class PythonRef {
     kSteal,
     /// Steal the provided object reference or set as unreferenced if it is
     /// nullptr.
-    kStealWeak,
+    kStealSoft,
     /// Acquire a new reference to the provided object (and throw an Exception
     /// if it is nullptr).
     kAcquire,
     /// Acquire a new reference to the provided object or set as unreferenced if
     /// it is nullptr.
-    kAcquireWeak
+    kAcquireSoft
   };
 
   /// Creates in an unreferenced state.

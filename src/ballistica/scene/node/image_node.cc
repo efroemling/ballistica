@@ -94,6 +94,13 @@ auto ImageNode::GetAttach() const -> std::string {
     case Attach::CENTER_LEFT:
       return "centerLeft";
   }
+
+    // This should be unreachable, but most compilers complain about
+    // control reaching the end of non-void function without it.
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnreachableCode"
+  throw Exception();
+#pragma clang diagnostic pop
 }
 
 void ImageNode::SetAttach(const std::string& val) {

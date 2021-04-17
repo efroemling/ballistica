@@ -352,6 +352,13 @@ auto GlobalsNode::GetCameraMode() const -> std::string {
     case CameraMode::kFollow:
       return "follow";
   }
+
+    // This should be unreachable, but most compilers complain about
+    // control reaching the end of non-void function without it.
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnreachableCode"
+  throw Exception();
+#pragma clang diagnostic pop
 }
 
 void GlobalsNode::SetCameraMode(const std::string& val) {

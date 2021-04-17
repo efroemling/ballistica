@@ -47,6 +47,13 @@ auto MathNode::GetOperation() const -> std::string {
     case Operation::kSin:
       return "sin";
   }
+
+    // This should be unreachable, but most compilers complain about
+    // control reaching the end of non-void function without it.
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnreachableCode"
+  throw Exception();
+#pragma clang diagnostic pop
 }
 
 void MathNode::SetOperation(const std::string& val) {

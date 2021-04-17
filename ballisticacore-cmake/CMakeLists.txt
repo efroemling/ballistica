@@ -87,6 +87,12 @@ add_compile_options(-include ballistica/config/config_cmake.h)
 
 if (CMAKE_BUILD_TYPE MATCHES Debug)
   add_definitions(-DBA_DEBUG_BUILD=1)
+else ()
+  # It seems that cmake can choose -O2 sometimes and -O3 sometimes
+  # for release builds (depending on Release vs RelWithDebInfo, etc).
+  # Let's keep all our non-debug builds consistent at -O3 for now; can
+  # revisit if it causes problems.
+  add_definitions(-O3)
 endif ()
 
 set(ODE_SRC_ROOT ${BA_SRC_ROOT}/external/open_dynamics_engine-ef)

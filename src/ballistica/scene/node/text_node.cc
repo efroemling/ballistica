@@ -143,6 +143,13 @@ auto TextNode::GetHAlign() const -> std::string {
     case HAlign::kCenter:
       return "center";
   }
+
+    // This should be unreachable, but most compilers complain about
+    // control reaching the end of non-void function without it.
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnreachableCode"
+  throw Exception();
+#pragma clang diagnostic pop
 }
 
 void TextNode::SetHAlign(const std::string& val) {
@@ -169,6 +176,13 @@ auto TextNode::GetVAlign() const -> std::string {
     case VAlign::kNone:
       return "none";
   }
+
+    // This should be unreachable, but most compilers complain about
+    // control reaching the end of non-void function without it.
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnreachableCode"
+  throw Exception();
+#pragma clang diagnostic pop
 }
 
 void TextNode::SetVAlign(const std::string& val) {
@@ -195,6 +209,13 @@ auto TextNode::GetHAttach() const -> std::string {
     case HAttach::kCenter:
       return "center";
   }
+
+    // This should be unreachable, but most compilers complain about
+    // control reaching the end of non-void function without it.
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnreachableCode"
+  throw Exception();
+#pragma clang diagnostic pop
 }
 
 void TextNode::SetHAttach(const std::string& val) {
@@ -219,6 +240,13 @@ auto TextNode::GetVAttach() const -> std::string {
     case VAttach::kCenter:
       return "center";
   }
+
+    // This should be unreachable, but most compilers complain about
+    // control reaching the end of non-void function without it.
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnreachableCode"
+  throw Exception();
+#pragma clang diagnostic pop
 }
 
 void TextNode::SetVAttach(const std::string& val) {
@@ -326,7 +354,7 @@ void TextNode::Draw(FrameDef* frame_def) {
     text_width_dirty_ = true;
   }
 
-  if (text_translated_.size() <= 0.0f) {
+  if (text_translated_.empty()) {
     return;
   }
 

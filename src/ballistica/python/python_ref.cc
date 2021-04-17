@@ -19,7 +19,7 @@ PythonRef::PythonRef(PyObject* obj_in, ReferenceBehavior b) {
     case kSteal:
       Steal(obj_in);
       break;
-    case kStealWeak:
+    case kStealSoft:
       if (obj_in) {
         Steal(obj_in);
       }
@@ -27,7 +27,7 @@ PythonRef::PythonRef(PyObject* obj_in, ReferenceBehavior b) {
     case kAcquire:
       Acquire(obj_in);
       break;
-    case kAcquireWeak:
+    case kAcquireSoft:
       if (obj_in) {
         Acquire(obj_in);
         break;

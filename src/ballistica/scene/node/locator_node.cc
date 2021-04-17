@@ -54,6 +54,13 @@ auto LocatorNode::getShape() const -> std::string {
     case Shape::kLocator:
       return "locator";
   }
+
+    // This should be unreachable, but most compilers complain about
+    // control reaching the end of non-void function without it.
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnreachableCode"
+  throw Exception();
+#pragma clang diagnostic pop
 }
 
 void LocatorNode::SetShape(const std::string& val) {
