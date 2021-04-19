@@ -38,6 +38,7 @@ class PluginSubsystem:
                 _error.print_exception('Error in plugin on_app_launch()')
 
     def on_app_pause(self) -> None:
+        """Called when the app goes to a suspended state."""
         for plugin in self.active_plugins.values():
             try:
                 plugin.on_app_pause()
@@ -46,6 +47,7 @@ class PluginSubsystem:
                 _error.print_exception('Error in plugin on_app_pause()')
 
     def on_app_resume(self) -> None:
+        """Run when the app resumes from a suspended state."""
         for plugin in self.active_plugins.values():
             try:
                 plugin.on_app_resume()
@@ -54,6 +56,7 @@ class PluginSubsystem:
                 _error.print_exception('Error in plugin on_app_resume()')
 
     def on_app_shutdown(self) -> None:
+        """Called when the app is being closed."""
         for plugin in self.active_plugins.values():
             try:
                 plugin.on_app_shutdown()
