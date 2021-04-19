@@ -484,6 +484,7 @@ class App:
 
     def on_app_pause(self) -> None:
         """Called when the app goes to a suspended state."""
+        self.plugins.on_app_pause()
 
     def on_app_resume(self) -> None:
         """Run when the app resumes from a suspended state."""
@@ -491,6 +492,7 @@ class App:
         self.fg_state += 1
         self.accounts.on_app_resume()
         self.music.on_app_resume()
+        self.plugins.on_app_resume()
 
     def launch_coop_game(self,
                          game: str,
@@ -543,6 +545,7 @@ class App:
     def on_app_shutdown(self) -> None:
         """(internal)"""
         self.music.on_app_shutdown()
+        self.plugins.on_app_shutdown()
 
     def handle_deep_link(self, url: str) -> None:
         """Handle a deep link URL."""

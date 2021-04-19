@@ -6,6 +6,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from dataclasses import dataclass
+
+from ba import print_exception
 import _ba
 
 if TYPE_CHECKING:
@@ -33,8 +35,28 @@ class PluginSubsystem:
             try:
                 plugin.on_app_launch()
             except Exception:
-                from ba import _error
-                _error.print_exception('Error in plugin on_app_launch()')
+                print_exception('Error in plugin on_app_launch()')
+
+    def on_app_pause(self) -> None:
+        for plugin in self.active_plugins.values():
+            try:
+                plugin.on_app_pause()
+            except Exception:
+                print_exception('Error in plugin on_app_pause()')
+
+    def on_app_resume(self) -> None:
+        for plugin in self.active_plugins.values():
+            try:
+                plugin.on_app_resume()
+            except Exception:
+                print_exception('Error in plugin on_app_resume()')
+
+    def on_app_shutdown(self) -> None:
+        for plugin in self.active_plugins.values():
+            try:
+                plugin.on_app_shutdown()
+            except Exception:
+                print_exception('Error in plugin on_app_shutdown()')
 
     def load_plugins(self) -> None:
         """(internal)"""
@@ -61,8 +83,7 @@ class PluginSubsystem:
                 assert plugkey not in self.active_plugins
                 self.active_plugins[plugkey] = plugin
             except Exception:
-                from ba import _error
-                _error.print_exception(f'Error loading plugin: {plugkey}')
+                print_exception(f'Error loading plugin: {plugkey}')
 
 
 @dataclass
@@ -94,3 +115,12 @@ class Plugin:
 
     def on_app_launch(self) -> None:
         """Called when the app is being launched."""
+
+    def on_app_pause(self) -> None:
+        """Сalled after pausing game activity."""
+
+    def on_app_resume(self) -> None:
+        """Called after the game continues."""
+
+    def on_app_shutdown(self) -> None:
+        """Called before closing the application."""
