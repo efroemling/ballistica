@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Settings UI functionality related to gamepads."""
 
 from __future__ import annotations
@@ -39,15 +21,14 @@ class GamepadSettingsWindow(ba.Window):
                  is_main_menu: bool = True,
                  transition: str = 'in_right',
                  transition_out: str = 'out_right',
-                 settings: Dict[str, Any] = None):
+                 settings: dict = None):
         self._input = gamepad
 
-        # If this fails, our input device went away or something;
-        # just return an empty zombie then.
-        try:
-            self._name = self._input.name
-        except Exception:
+        # If our input-device went away, just return an empty zombie.
+        if not self._input:
             return
+
+        self._name = self._input.name
 
         self._r = 'configGamepadWindow'
         self._settings = settings
@@ -61,11 +42,12 @@ class GamepadSettingsWindow(ba.Window):
         self._width = 700 if self._is_secondary else 730
         self._height = 440 if self._is_secondary else 450
         self._spacing = 40
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
-            scale=(
-                1.63 if ba.app.small_ui else 1.35 if ba.app.med_ui else 1.0),
-            stack_offset=(-20, -16) if ba.app.small_ui else (0, 0),
+            scale=(1.63 if uiscale is ba.UIScale.SMALL else
+                   1.35 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(-20, -16) if uiscale is ba.UIScale.SMALL else (0, 0),
             transition=transition))
 
         # Don't ask to config joysticks while we're in here.
@@ -188,7 +170,7 @@ class GamepadSettingsWindow(ba.Window):
                 size=((160 if self._is_secondary else 180), 60),
                 autoselect=True,
                 label=ba.Lstr(resource='doneText')
-                if self._is_secondary else ba.Lstr(resource='makeItSoText'),
+                if self._is_secondary else ba.Lstr(resource='saveText'),
                 scale=0.9,
                 on_activate_call=self._save)
             ba.containerwidget(edit=self._root_widget,
@@ -202,7 +184,7 @@ class GamepadSettingsWindow(ba.Window):
                           position=(0, v + 5),
                           size=(self._width, 25),
                           text=ba.Lstr(resource=self._r + '.titleText'),
-                          color=ba.app.title_color,
+                          color=ba.app.ui.title_color,
                           maxwidth=310,
                           h_align='center',
                           v_align='center')
@@ -212,7 +194,7 @@ class GamepadSettingsWindow(ba.Window):
                           position=(0, v + 3),
                           size=(self._width, 25),
                           text=self._name,
-                          color=ba.app.infotextcolor,
+                          color=ba.app.ui.infotextcolor,
                           maxwidth=self._width * 0.9,
                           h_align='center',
                           v_align='center')
@@ -235,7 +217,7 @@ class GamepadSettingsWindow(ba.Window):
                           position=(0, v + 5),
                           size=(self._width, 25),
                           text=ba.Lstr(resource=self._r + '.secondaryText'),
-                          color=ba.app.title_color,
+                          color=ba.app.ui.title_color,
                           maxwidth=300,
                           h_align='center',
                           v_align='center')
@@ -352,7 +334,7 @@ class GamepadSettingsWindow(ba.Window):
                 ba.widget(edit=cancel_button, right_widget=save_button)
                 ba.widget(edit=save_button, left_widget=cancel_button)
         except Exception:
-            ba.print_exception('error wiring gamepad config window')
+            ba.print_exception('Error wiring up gamepad config window.')
 
     def get_r(self) -> str:
         """(internal)"""
@@ -710,15 +692,15 @@ class GamepadSettingsWindow(ba.Window):
         return btn
 
     def _cancel(self) -> None:
-        from bastd.ui.settings import controls
+        from bastd.ui.settings.controls import ControlsSettingsWindow
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
         if self._is_main_menu:
-            ba.app.main_menu_window = (controls.ControlsSettingsWindow(
-                transition='in_left').get_root_widget())
+            ba.app.ui.set_main_menu_window(
+                ControlsSettingsWindow(transition='in_left').get_root_widget())
 
     def _save(self) -> None:
-        from ba.internal import (serverput, get_input_device_config,
+        from ba.internal import (master_server_post, get_input_device_config,
                                  get_input_map_hash, should_submit_debug_info)
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
@@ -743,7 +725,7 @@ class GamepadSettingsWindow(ba.Window):
             # generate more defaults in the future.
             inputhash = get_input_map_hash(self._input)
             if should_submit_debug_info():
-                serverput(
+                master_server_post(
                     'controllerConfig', {
                         'ua': ba.app.user_agent_string,
                         'b': ba.app.build_number,
@@ -758,9 +740,9 @@ class GamepadSettingsWindow(ba.Window):
             ba.playsound(ba.getsound('error'))
 
         if self._is_main_menu:
-            from bastd.ui.settings import controls
-            ba.app.main_menu_window = (controls.ControlsSettingsWindow(
-                transition='in_left').get_root_widget())
+            from bastd.ui.settings.controls import ControlsSettingsWindow
+            ba.app.ui.set_main_menu_window(
+                ControlsSettingsWindow(transition='in_left').get_root_widget())
 
 
 class AwaitGamepadInputWindow(ba.Window):
@@ -776,17 +758,19 @@ class AwaitGamepadInputWindow(ba.Window):
             message2: ba.Lstr = None):
         if message is None:
             print('AwaitGamepadInputWindow message is None!')
-            message = ba.Lstr(
-                value='Press any button...')  # Shouldn't get here.
+            # Shouldn't get here.
+            message = ba.Lstr(value='Press any button...')
         self._callback = callback
         self._input = gamepad
         self._capture_button = button
         width = 400
         height = 150
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
-            scale=2.0 if ba.app.small_ui else 1.9 if ba.app.med_ui else 1.0,
+            scale=(2.0 if uiscale is ba.UIScale.SMALL else
+                   1.9 if uiscale is ba.UIScale.MEDIUM else 1.0),
             size=(width, height),
-            transition='in_scale'))
+            transition='in_scale'), )
         ba.textwidget(parent=self._root_widget,
                       position=(0, (height - 60) if message2 is None else
                                 (height - 50)),
@@ -836,7 +820,8 @@ class AwaitGamepadInputWindow(ba.Window):
         assert isinstance(input_device, ba.InputDevice)
 
         # Update - we now allow *any* input device of this type.
-        if input_device.exists and input_device.name == self._input.name:
+        if (self._input and input_device
+                and input_device.name == self._input.name):
             self._callback(self._capture_button, event, self)
 
     def _decrement(self) -> None:

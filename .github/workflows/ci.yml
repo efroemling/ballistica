@@ -11,36 +11,49 @@ on:
         
 jobs:
 
-  # We run most of our testing on linux but it should apply to mac too;
-  # we can always add an explicit mac job if it seems worthwhile.
-  ci_unix:
-    runs-on: ubuntu-18.04
+  # We run most of our testing only on linux but it should apply to mac too;
+  # we can always add an explicit mac job later if it seems worthwhile.
+  check_linux:
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v1
     - name: Set up Python
       uses: actions/setup-python@v1
       with:
-        python-version: 3.7
+        python-version: 3.8
     - name: Install dependencies
-      run: tools/snippets install_pip_reqs
+      run: tools/pcommand install_pip_reqs
     - name: Run checks and tests
       run: make -j2 check test
 
+  # Compile just a server binary but don't run asset builds/etc.
+  # (to spare my asset file server)
+  compile_linux:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.8
+    - name: Compile binary
+      run: make _cmake-simple-ci-server-build
+      
   # Most of our toolset doesn't work on raw windows (outside of WSL).
   # However, it's nice to at least run unit tests there since some behavior
-  # (filesystem, etc) can vary significantly.
-  ci_windows:
+  # (filesystem, etc) can vary significantly between windows and linux/apple.
+  check_windows:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v1
     - name: Set up Python
       uses: actions/setup-python@v1
       with:
-        python-version: 3.7
+        python-version: 3.8
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pytest
+        pip install pytest typing_extensions
     - name: Run tests
-      run: python tools/snippets pytest -v tests
+      run: python tools/pcommand pytest -v tests
         

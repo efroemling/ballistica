@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Functionality related to the co-op join screen."""
 
 from __future__ import annotations
@@ -35,17 +17,21 @@ if TYPE_CHECKING:
 class CoopJoinActivity(JoinActivity):
     """Join-screen for co-op mode."""
 
-    def __init__(self, settings: Dict[str, Any]):
+    # We can assume our session is a CoopSession.
+    session: ba.CoopSession
+
+    def __init__(self, settings: dict):
         super().__init__(settings)
-        session = ba.getsession()
+        session = self.session
+        assert isinstance(session, ba.CoopSession)
 
         # Let's show a list of scores-to-beat for 1 player at least.
         assert session.campaign is not None
         level_name_full = (session.campaign.name + ':' +
-                           session.campaign_state['level'])
-        config_str = (
-            '1p' + session.campaign.get_level(session.campaign_state['level']).
-            get_score_version_string().replace(' ', '_'))
+                           session.campaign_level_name)
+        config_str = ('1p' + session.campaign.getlevel(
+            session.campaign_level_name).get_score_version_string().replace(
+                ' ', '_'))
         _ba.get_scores_to_beat(level_name_full, config_str,
                                ba.WeakCall(self._on_got_scores_to_beat))
 
@@ -53,9 +39,10 @@ class CoopJoinActivity(JoinActivity):
         from bastd.actor.controlsguide import ControlsGuide
         from bastd.actor.text import Text
         super().on_transition_in()
+        assert isinstance(self.session, ba.CoopSession)
         assert self.session.campaign
-        Text(self.session.campaign.get_level(
-            self.session.campaign_state['level']).displayname,
+        Text(self.session.campaign.getlevel(
+            self.session.campaign_level_name).displayname,
              scale=1.3,
              h_attach=Text.HAttach.CENTER,
              h_align=Text.HAlign.CENTER,
@@ -70,12 +57,13 @@ class CoopJoinActivity(JoinActivity):
                                scores: Optional[List[Dict[str, Any]]]) -> None:
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
+        from efro.util import asserttype
         from bastd.actor.text import Text
-        from ba.internal import get_achievements_for_coop_level
 
         # Sort by originating date so that the most recent is first.
         if scores is not None:
-            scores.sort(reverse=True, key=lambda score: score['time'])
+            scores.sort(reverse=True,
+                        key=lambda score: asserttype(score['time'], int))
 
         # We only show achievements and challenges for CoopGameActivities.
         session = self.session
@@ -163,13 +151,15 @@ class CoopJoinActivity(JoinActivity):
 
             # Now list our remaining achievements for this level.
             assert self.session.campaign is not None
+            assert isinstance(self.session, ba.CoopSession)
             levelname = (self.session.campaign.name + ':' +
-                         self.session.campaign_state['level'])
+                         self.session.campaign_level_name)
             ts_h_offs = 60
 
-            if not ba.app.kiosk_mode:
+            if not (ba.app.demo_mode or ba.app.arcade_mode):
                 achievements = [
-                    a for a in get_achievements_for_coop_level(levelname)
+                    a
+                    for a in ba.app.ach.achievements_for_coop_level(levelname)
                     if not a.complete
                 ]
                 have_achievements = bool(achievements)

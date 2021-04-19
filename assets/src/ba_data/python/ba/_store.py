@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Store related functionality for classic mode."""
 
 from __future__ import annotations
@@ -39,15 +21,16 @@ def get_store_item(item: str) -> Dict[str, Any]:
 def get_store_item_name_translated(item_name: str) -> ba.Lstr:
     """Return a ba.Lstr for a store item name."""
     # pylint: disable=cyclic-import
-    from ba import _lang
+    from ba import _language
     from ba import _map
     item_info = get_store_item(item_name)
     if item_name.startswith('characters.'):
-        return _lang.Lstr(translate=('characterNames', item_info['character']))
+        return _language.Lstr(translate=('characterNames',
+                                         item_info['character']))
     if item_name in ['upgrades.pro', 'pro']:
-        return _lang.Lstr(resource='store.bombSquadProNameText',
-                          subs=[('${APP_NAME}',
-                                 _lang.Lstr(resource='titleText'))])
+        return _language.Lstr(resource='store.bombSquadProNameText',
+                              subs=[('${APP_NAME}',
+                                     _language.Lstr(resource='titleText'))])
     if item_name.startswith('maps.'):
         map_type: Type[ba.Map] = item_info['map_type']
         return _map.get_map_display_string(map_type.name)
@@ -55,8 +38,8 @@ def get_store_item_name_translated(item_name: str) -> ba.Lstr:
         gametype: Type[ba.GameActivity] = item_info['gametype']
         return gametype.get_display_string()
     if item_name.startswith('icons.'):
-        return _lang.Lstr(resource='editProfileWindow.iconText')
-    raise Exception('unrecognized item: ' + item_name)
+        return _language.Lstr(resource='editProfileWindow.iconText')
+    raise ValueError('unrecognized item: ' + item_name)
 
 
 def get_store_item_display_size(item_name: str) -> Tuple[float, float]:
@@ -457,7 +440,6 @@ def get_available_sale_time(tab: str) -> Optional[int]:
     # pylint: disable=too-many-locals
     try:
         import datetime
-        from ba._account import have_pro
         from ba._enums import TimeType, TimeFormat
         app = _ba.app
         sale_times: List[Optional[int]] = []
@@ -465,7 +447,7 @@ def get_available_sale_time(tab: str) -> Optional[int]:
         # Calc time for our pro sale (old special case).
         if tab == 'extras':
             config = app.config
-            if have_pro():
+            if app.accounts.have_pro():
                 return None
 
             # If we haven't calced/loaded start times yet.
@@ -494,7 +476,7 @@ def get_available_sale_time(tab: str) -> Optional[int]:
             assert app.pro_sale_start_val is not None
             val: Optional[int] = max(
                 0, app.pro_sale_start_val -
-                (int(_ba.time(TimeType.REAL, TimeFormat.MILLISECONDS)) -
+                (_ba.time(TimeType.REAL, TimeFormat.MILLISECONDS) -
                  app.pro_sale_start_time))
 
             # Keep the value in the config up to date. I suppose we should
@@ -518,8 +500,9 @@ def get_available_sale_time(tab: str) -> Optional[int]:
                         if to_end > 0:
                             sale_times.append(int(to_end * 1000))
 
-        # Return the smallest time i guess?
-        return min(sale_times) if sale_times else None
+        # Return the smallest time I guess?
+        sale_times_int = [t for t in sale_times if isinstance(t, int)]
+        return min(sale_times_int) if sale_times_int else None
 
     except Exception:
         from ba import _error

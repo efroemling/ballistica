@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """UI functionality for unlinking accounts."""
 
 from __future__ import annotations
@@ -50,14 +32,15 @@ class AccountUnlinkWindow(ba.Window):
         self._height = 350
         self._scroll_width = 400
         self._scroll_height = 200
-        base_scale = (2.0
-                      if ba.app.small_ui else 1.6 if ba.app.med_ui else 1.1)
+        uiscale = ba.app.ui.uiscale
+        base_scale = (2.0 if uiscale is ba.UIScale.SMALL else
+                      1.6 if uiscale is ba.UIScale.MEDIUM else 1.1)
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             transition=transition,
             scale=base_scale,
             scale_origin_stack_offset=scale_origin,
-            stack_offset=(0, -10) if ba.app.small_ui else (0, 0)))
+            stack_offset=(0, -10) if uiscale is ba.UIScale.SMALL else (0, 0)))
         self._cancel_button = ba.buttonwidget(parent=self._root_widget,
                                               position=(30, self._height - 50),
                                               size=(50, 50),
@@ -76,7 +59,7 @@ class AccountUnlinkWindow(ba.Window):
                 resource='accountSettingsWindow.unlinkAccountsInstructionsText'
             ),
             maxwidth=self._width * 0.7,
-            color=ba.app.infotextcolor,
+            color=ba.app.ui.infotextcolor,
             h_align='center',
             v_align='center')
         ba.containerwidget(edit=self._root_widget,
@@ -90,6 +73,8 @@ class AccountUnlinkWindow(ba.Window):
             size=(self._scroll_width, self._scroll_height))
         ba.containerwidget(edit=self._scrollwidget, claims_left_right=True)
         self._columnwidget = ba.columnwidget(parent=self._scrollwidget,
+                                             border=2,
+                                             margin=0,
                                              left_border=10)
 
         our_login_id = _ba.get_public_login_id()

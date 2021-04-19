@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides audio settings UI."""
 
 from __future__ import annotations
@@ -74,8 +56,9 @@ class AudioSettingsWindow(ba.Window):
             show_soundtracks = True
             height += spacing * 2.0
 
-        base_scale = (2.05
-                      if ba.app.small_ui else 1.6 if ba.app.med_ui else 1.0)
+        uiscale = ba.app.ui.uiscale
+        base_scale = (2.05 if uiscale is ba.UIScale.SMALL else
+                      1.6 if uiscale is ba.UIScale.MEDIUM else 1.0)
         popup_menu_scale = base_scale * 1.2
 
         super().__init__(root_widget=ba.containerwidget(
@@ -83,7 +66,7 @@ class AudioSettingsWindow(ba.Window):
             transition=transition,
             scale=base_scale,
             scale_origin_stack_offset=scale_origin,
-            stack_offset=(0, -20) if ba.app.small_ui else (0, 0)))
+            stack_offset=(0, -20) if uiscale is ba.UIScale.SMALL else (0, 0)))
 
         self._back_button = back_button = btn = ba.buttonwidget(
             parent=self._root_widget,
@@ -102,7 +85,7 @@ class AudioSettingsWindow(ba.Window):
                       position=(width * 0.5, height - 32),
                       size=(0, 0),
                       text=ba.Lstr(resource=self._r + '.titleText'),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       maxwidth=180,
                       h_align='center',
                       v_align='center')
@@ -121,7 +104,7 @@ class AudioSettingsWindow(ba.Window):
             minval=0.0,
             maxval=1.0,
             increment=0.1)
-        if ba.app.toolbars:
+        if ba.app.ui.use_toolbars:
             ba.widget(edit=svne.plusbutton,
                       right_widget=_ba.get_special_widget('party_button'))
         v -= spacing
@@ -206,11 +189,11 @@ class AudioSettingsWindow(ba.Window):
         else:
             self._soundtrack_button = None
 
-        # tweak a few navigation bits
+        # Tweak a few navigation bits.
         try:
             ba.widget(edit=back_button, down_widget=svne.minusbutton)
         except Exception:
-            ba.print_exception('error wiring AudioSettingsWindow')
+            ba.print_exception('Error wiring AudioSettingsWindow.')
 
         self._restore_state()
 
@@ -236,8 +219,9 @@ class AudioSettingsWindow(ba.Window):
 
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (stb.SoundtrackBrowserWindow(
-            origin_widget=self._soundtrack_button).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            stb.SoundtrackBrowserWindow(
+                origin_widget=self._soundtrack_button).get_root_widget())
 
     def _back(self) -> None:
         # pylint: disable=cyclic-import
@@ -245,8 +229,9 @@ class AudioSettingsWindow(ba.Window):
         self._save_state()
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
-        ba.app.main_menu_window = (allsettings.AllSettingsWindow(
-            transition='in_left').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            allsettings.AllSettingsWindow(
+                transition='in_left').get_root_widget())
 
     def _save_state(self) -> None:
         try:
@@ -266,17 +251,14 @@ class AudioSettingsWindow(ba.Window):
             elif sel == self._vr_head_relative_audio_button:
                 sel_name = 'VRHeadRelative'
             else:
-                raise Exception('unrecognized selected widget')
-            ba.app.window_states[self.__class__.__name__] = sel_name
+                raise ValueError(f'unrecognized selection \'{sel}\'')
+            ba.app.ui.window_states[type(self)] = sel_name
         except Exception:
-            ba.print_exception('error saving state for', self.__class__)
+            ba.print_exception(f'Error saving state for {self.__class__}.')
 
     def _restore_state(self) -> None:
         try:
-            try:
-                sel_name = ba.app.window_states[self.__class__.__name__]
-            except Exception:
-                sel_name = None
+            sel_name = ba.app.ui.window_states.get(type(self))
             sel: Optional[ba.Widget]
             if sel_name == 'SoundMinus':
                 sel = self._sound_volume_numedit.minusbutton
@@ -297,4 +279,4 @@ class AudioSettingsWindow(ba.Window):
             if sel:
                 ba.containerwidget(edit=self._root_widget, selected_child=sel)
         except Exception:
-            ba.print_exception('error restoring state for', self.__class__)
+            ba.print_exception(f'Error restoring state for {self.__class__}.')

@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Functionality related to game results."""
 from __future__ import annotations
 
@@ -26,9 +8,12 @@ import weakref
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from efro.util import asserttype
+from ba._team import Team, SessionTeam
+
 if TYPE_CHECKING:
     from weakref import ReferenceType
-    from typing import Sequence, Tuple, Any, Optional, Dict, List
+    from typing import Sequence, Tuple, Any, Optional, Dict, List, Union
     import ba
 
 
@@ -36,12 +21,12 @@ if TYPE_CHECKING:
 class WinnerGroup:
     """Entry for a winning team or teams calculated by game-results."""
     score: Optional[int]
-    teams: Sequence[ba.Team]
+    teams: Sequence[ba.SessionTeam]
 
 
-class TeamGameResults:
+class GameResults:
     """
-    Results for a completed ba.TeamGameActivity.
+    Results for a completed game.
 
     Category: Gameplay Classes
 
@@ -50,135 +35,147 @@ class TeamGameResults:
     """
 
     def __init__(self) -> None:
-        """Instantiate a results instance."""
         self._game_set = False
-        self._scores: Dict[int, Tuple[ReferenceType[ba.Team],
+        self._scores: Dict[int, Tuple[ReferenceType[ba.SessionTeam],
                                       Optional[int]]] = {}
-        self._teams: Optional[List[ReferenceType[ba.Team]]] = None
-        self._player_info: Optional[List[Dict[str, Any]]] = None
+        self._sessionteams: Optional[List[ReferenceType[
+            ba.SessionTeam]]] = None
+        self._playerinfos: Optional[List[ba.PlayerInfo]] = None
         self._lower_is_better: Optional[bool] = None
-        self._score_name: Optional[str] = None
+        self._score_label: Optional[str] = None
         self._none_is_winner: Optional[bool] = None
-        self._score_type: Optional[str] = None
+        self._scoretype: Optional[ba.ScoreType] = None
 
     def set_game(self, game: ba.GameActivity) -> None:
         """Set the game instance these results are applying to."""
         if self._game_set:
-            raise RuntimeError('Game set twice for TeamGameResults.')
+            raise RuntimeError('Game set twice for GameResults.')
         self._game_set = True
-        self._teams = [weakref.ref(team) for team in game.teams]
-        score_info = game.get_resolved_score_info()
-        self._player_info = copy.deepcopy(game.initial_player_info)
-        self._lower_is_better = score_info['lower_is_better']
-        self._score_name = score_info['score_name']
-        self._none_is_winner = score_info['none_is_winner']
-        self._score_type = score_info['score_type']
+        self._sessionteams = [
+            weakref.ref(team.sessionteam) for team in game.teams
+        ]
+        scoreconfig = game.getscoreconfig()
+        self._playerinfos = copy.deepcopy(game.initialplayerinfos)
+        self._lower_is_better = scoreconfig.lower_is_better
+        self._score_label = scoreconfig.label
+        self._none_is_winner = scoreconfig.none_is_winner
+        self._scoretype = scoreconfig.scoretype
 
-    def set_team_score(self, team: ba.Team, score: int) -> None:
-        """Set the score for a given ba.Team.
+    def set_team_score(self, team: ba.Team, score: Optional[int]) -> None:
+        """Set the score for a given team.
 
         This can be a number or None.
         (see the none_is_winner arg in the constructor)
         """
-        self._scores[team.get_id()] = (weakref.ref(team), score)
+        assert isinstance(team, Team)
+        sessionteam = team.sessionteam
+        self._scores[sessionteam.id] = (weakref.ref(sessionteam), score)
 
-    def get_team_score(self, team: ba.Team) -> Optional[int]:
-        """Return the score for a given team."""
+    def get_sessionteam_score(self,
+                              sessionteam: ba.SessionTeam) -> Optional[int]:
+        """Return the score for a given ba.SessionTeam."""
+        assert isinstance(sessionteam, SessionTeam)
         for score in list(self._scores.values()):
-            if score[0]() is team:
+            if score[0]() is sessionteam:
                 return score[1]
 
         # If we have no score value, assume None.
         return None
 
-    def get_teams(self) -> List[ba.Team]:
-        """Return all ba.Teams in the results."""
+    @property
+    def sessionteams(self) -> List[ba.SessionTeam]:
+        """Return all ba.SessionTeams in the results."""
         if not self._game_set:
             raise RuntimeError("Can't get teams until game is set.")
         teams = []
-        assert self._teams is not None
-        for team_ref in self._teams:
+        assert self._sessionteams is not None
+        for team_ref in self._sessionteams:
             team = team_ref()
             if team is not None:
                 teams.append(team)
         return teams
 
-    def has_score_for_team(self, team: ba.Team) -> bool:
-        """Return whether there is a score for a given team."""
-        for score in list(self._scores.values()):
-            if score[0]() is team:
-                return True
-        return False
+    def has_score_for_sessionteam(self, sessionteam: ba.SessionTeam) -> bool:
+        """Return whether there is a score for a given session-team."""
+        return any(s[0]() is sessionteam for s in self._scores.values())
 
-    def get_team_score_str(self, team: ba.Team) -> ba.Lstr:
-        """Return the score for the given ba.Team as an Lstr.
+    def get_sessionteam_score_str(self,
+                                  sessionteam: ba.SessionTeam) -> ba.Lstr:
+        """Return the score for the given session-team as an Lstr.
 
         (properly formatted for the score type.)
         """
         from ba._gameutils import timestring
-        from ba._lang import Lstr
+        from ba._language import Lstr
         from ba._enums import TimeFormat
+        from ba._score import ScoreType
         if not self._game_set:
             raise RuntimeError("Can't get team-score-str until game is set.")
         for score in list(self._scores.values()):
-            if score[0]() is team:
+            if score[0]() is sessionteam:
                 if score[1] is None:
                     return Lstr(value='-')
-                if self._score_type == 'seconds':
+                if self._scoretype is ScoreType.SECONDS:
                     return timestring(score[1] * 1000,
                                       centi=False,
                                       timeformat=TimeFormat.MILLISECONDS)
-                if self._score_type == 'milliseconds':
+                if self._scoretype is ScoreType.MILLISECONDS:
                     return timestring(score[1],
                                       centi=True,
                                       timeformat=TimeFormat.MILLISECONDS)
                 return Lstr(value=str(score[1]))
         return Lstr(value='-')
 
-    def get_player_info(self) -> List[Dict[str, Any]]:
+    @property
+    def playerinfos(self) -> List[ba.PlayerInfo]:
         """Get info about the players represented by the results."""
         if not self._game_set:
             raise RuntimeError("Can't get player-info until game is set.")
-        assert self._player_info is not None
-        return self._player_info
+        assert self._playerinfos is not None
+        return self._playerinfos
 
-    def get_score_type(self) -> str:
-        """Get the type of score."""
+    @property
+    def scoretype(self) -> ba.ScoreType:
+        """The type of score."""
         if not self._game_set:
             raise RuntimeError("Can't get score-type until game is set.")
-        assert self._score_type is not None
-        return self._score_type
+        assert self._scoretype is not None
+        return self._scoretype
 
-    def get_score_name(self) -> str:
-        """Get the name associated with scores ('points', etc)."""
+    @property
+    def score_label(self) -> str:
+        """The label associated with scores ('points', etc)."""
         if not self._game_set:
-            raise RuntimeError("Can't get score-name until game is set.")
-        assert self._score_name is not None
-        return self._score_name
+            raise RuntimeError("Can't get score-label until game is set.")
+        assert self._score_label is not None
+        return self._score_label
 
-    def get_lower_is_better(self) -> bool:
-        """Return whether lower scores are better."""
+    @property
+    def lower_is_better(self) -> bool:
+        """Whether lower scores are better."""
         if not self._game_set:
             raise RuntimeError("Can't get lower-is-better until game is set.")
         assert self._lower_is_better is not None
         return self._lower_is_better
 
-    def get_winning_team(self) -> Optional[ba.Team]:
-        """Get the winning ba.Team if there is exactly one; None otherwise."""
+    @property
+    def winning_sessionteam(self) -> Optional[ba.SessionTeam]:
+        """The winning ba.SessionTeam if there is exactly one, or else None."""
         if not self._game_set:
             raise RuntimeError("Can't get winners until game is set.")
-        winners = self.get_winners()
+        winners = self.winnergroups
         if winners and len(winners[0].teams) == 1:
             return winners[0].teams[0]
         return None
 
-    def get_winners(self) -> List[WinnerGroup]:
+    @property
+    def winnergroups(self) -> List[WinnerGroup]:
         """Get an ordered list of winner groups."""
         if not self._game_set:
             raise RuntimeError("Can't get winners until game is set.")
 
         # Group by best scoring teams.
-        winners: Dict[int, List[ba.Team]] = {}
+        winners: Dict[int, List[ba.SessionTeam]] = {}
         scores = [
             score for score in self._scores.values()
             if score[0]() is not None and score[1] is not None
@@ -190,21 +187,23 @@ class TeamGameResults:
             assert team is not None
             sval.append(team)
         results: List[Tuple[Optional[int],
-                            List[ba.Team]]] = list(winners.items())
-        results.sort(reverse=not self._lower_is_better, key=lambda x: x[0])
+                            List[ba.SessionTeam]]] = list(winners.items())
+        results.sort(reverse=not self._lower_is_better,
+                     key=lambda x: asserttype(x[0], int))
 
         # Also group the 'None' scores.
-        none_teams: List[ba.Team] = []
+        none_sessionteams: List[ba.SessionTeam] = []
         for score in self._scores.values():
             scoreteam = score[0]()
             if scoreteam is not None and score[1] is None:
-                none_teams.append(scoreteam)
+                none_sessionteams.append(scoreteam)
 
         # Add the Nones to the list (either as winners or losers
         # depending on the rules).
-        if none_teams:
-            nones: List[Tuple[Optional[int],
-                              List[ba.Team]]] = [(None, none_teams)]
+        if none_sessionteams:
+            nones: List[Tuple[Optional[int], List[ba.SessionTeam]]] = [
+                (None, none_sessionteams)
+            ]
             if self._none_is_winner:
                 results = nones + results
             else:

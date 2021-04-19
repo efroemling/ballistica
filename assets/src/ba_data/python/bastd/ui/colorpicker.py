@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides popup windows for choosing colors."""
 
 from __future__ import annotations
@@ -25,13 +7,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import ba
-from bastd.ui import popup
+from bastd.ui.popup import PopupWindow
 
 if TYPE_CHECKING:
     from typing import Any, Tuple, Sequence, List, Optional
 
 
-class ColorPicker(popup.PopupWindow):
+class ColorPicker(PopupWindow):
     """A popup UI to select from a set of colors.
 
     Passes the color to the delegate's color_picker_selected_color() method.
@@ -46,16 +28,16 @@ class ColorPicker(popup.PopupWindow):
                  offset: Tuple[float, float] = (0.0, 0.0),
                  tag: Any = ''):
         # pylint: disable=too-many-locals
-        from ba.internal import have_pro, get_player_colors
+        from ba.internal import get_player_colors
 
         c_raw = get_player_colors()
-        if len(c_raw) != 16:
-            raise Exception('expected 16 player colors')
+        assert len(c_raw) == 16
         self.colors = [c_raw[0:4], c_raw[4:8], c_raw[8:12], c_raw[12:16]]
 
+        uiscale = ba.app.ui.uiscale
         if scale is None:
-            scale = (2.3
-                     if ba.app.small_ui else 1.65 if ba.app.med_ui else 1.23)
+            scale = (2.3 if uiscale is ba.UIScale.SMALL else
+                     1.65 if uiscale is ba.UIScale.MEDIUM else 1.23)
         self._parent = parent
         self._position = position
         self._scale = scale
@@ -66,14 +48,14 @@ class ColorPicker(popup.PopupWindow):
         self._initial_color = initial_color
 
         # Create our _root_widget.
-        popup.PopupWindow.__init__(self,
-                                   position=position,
-                                   size=(210, 240),
-                                   scale=scale,
-                                   focus_position=(10, 10),
-                                   focus_size=(190, 220),
-                                   bg_color=(0.5, 0.5, 0.5),
-                                   offset=offset)
+        PopupWindow.__init__(self,
+                             position=position,
+                             size=(210, 240),
+                             scale=scale,
+                             focus_position=(10, 10),
+                             focus_size=(190, 220),
+                             bg_color=(0.5, 0.5, 0.5),
+                             offset=offset)
         rows: List[List[ba.Widget]] = []
         closest_dist = 9999.0
         closest = (0, 0)
@@ -112,7 +94,7 @@ class ColorPicker(popup.PopupWindow):
             on_activate_call=ba.WeakCall(self._select_other))
 
         # Custom colors are limited to pro currently.
-        if not have_pro():
+        if not ba.app.accounts.have_pro():
             ba.imagewidget(parent=self.root_widget,
                            position=(50, 12),
                            size=(30, 30),
@@ -134,10 +116,9 @@ class ColorPicker(popup.PopupWindow):
 
     def _select_other(self) -> None:
         from bastd.ui import purchase
-        from ba.internal import have_pro
 
         # Requires pro.
-        if not have_pro():
+        if not ba.app.accounts.have_pro():
             purchase.PurchaseWindow(items=['pro'])
             self._transition_out()
             return
@@ -172,7 +153,7 @@ class ColorPicker(popup.PopupWindow):
         self._transition_out()
 
 
-class ColorPickerExact(popup.PopupWindow):
+class ColorPickerExact(PopupWindow):
     """ pops up a ui to select from a set of colors.
     passes the color to the delegate's color_picker_selected_color() method """
 
@@ -185,16 +166,16 @@ class ColorPickerExact(popup.PopupWindow):
                  offset: Tuple[float, float] = (0.0, 0.0),
                  tag: Any = ''):
         # pylint: disable=too-many-locals
-        del parent  # unused var
+        del parent  # Unused var.
         from ba.internal import get_player_colors
         c_raw = get_player_colors()
-        if len(c_raw) != 16:
-            raise Exception('expected 16 player colors')
+        assert len(c_raw) == 16
         self.colors = [c_raw[0:4], c_raw[4:8], c_raw[8:12], c_raw[12:16]]
 
+        uiscale = ba.app.ui.uiscale
         if scale is None:
-            scale = (2.3
-                     if ba.app.small_ui else 1.65 if ba.app.med_ui else 1.23)
+            scale = (2.3 if uiscale is ba.UIScale.SMALL else
+                     1.65 if uiscale is ba.UIScale.MEDIUM else 1.23)
         self._delegate = delegate
         self._transitioning_out = False
         self._tag = tag
@@ -207,15 +188,15 @@ class ColorPickerExact(popup.PopupWindow):
         width = 180.0
         height = 240.0
 
-        # creates our _root_widget
-        popup.PopupWindow.__init__(self,
-                                   position=position,
-                                   size=(width, height),
-                                   scale=scale,
-                                   focus_position=(10, 10),
-                                   focus_size=(width - 20, height - 20),
-                                   bg_color=(0.5, 0.5, 0.5),
-                                   offset=offset)
+        # Creates our _root_widget.
+        PopupWindow.__init__(self,
+                             position=position,
+                             size=(width, height),
+                             scale=scale,
+                             focus_position=(10, 10),
+                             focus_size=(width - 20, height - 20),
+                             bg_color=(0.5, 0.5, 0.5),
+                             offset=offset)
         self._swatch = ba.imagewidget(parent=self.root_widget,
                                       position=(width * 0.5 - 50, height - 70),
                                       size=(100, 70),
@@ -264,15 +245,15 @@ class ColorPickerExact(popup.PopupWindow):
                               autoselect=True)
         ba.containerwidget(edit=self.root_widget, start_button=btn)
 
-        # unlike the swatch picker, we stay open and constantly push our
-        # color to the delegate, so start doing that...
+        # Unlike the swatch picker, we stay open and constantly push our
+        # color to the delegate, so start doing that.
         self._update_for_color()
 
-    # noinspection PyUnresolvedReferences
     def _update_for_color(self) -> None:
         if not self.root_widget:
             return
         ba.imagewidget(edit=self._swatch, color=self._color)
+
         # We generate these procedurally, so pylint misses them.
         # FIXME: create static attrs instead.
         ba.textwidget(edit=self._label_r, text='%.2f' % self._color[0])

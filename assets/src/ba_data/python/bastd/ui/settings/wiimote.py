@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Settings UI functionality related to wiimote support."""
 from __future__ import annotations
 
@@ -52,7 +34,7 @@ class WiimoteSettingsWindow(ba.Window):
                       size=(0, 0),
                       text=ba.Lstr(resource=self._r + '.titleText'),
                       maxwidth=270,
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       h_align='center',
                       v_align='center')
 
@@ -108,8 +90,9 @@ class WiimoteSettingsWindow(ba.Window):
     def _back(self) -> None:
         from bastd.ui.settings import controls
         ba.containerwidget(edit=self._root_widget, transition='out_right')
-        ba.app.main_menu_window = (controls.ControlsSettingsWindow(
-            transition='in_left').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            controls.ControlsSettingsWindow(
+                transition='in_left').get_root_widget())
 
 
 class WiimoteListenWindow(ba.Window):
@@ -131,12 +114,12 @@ class WiimoteListenWindow(ba.Window):
         ba.containerwidget(edit=self._root_widget, cancel_button=btn)
         _ba.start_listening_for_wii_remotes()
         self._wiimote_connect_counter = 15
-        ba.app.dismiss_wii_remotes_window_call = ba.WeakCall(self._dismiss)
+        ba.app.ui.dismiss_wii_remotes_window_call = ba.WeakCall(self._dismiss)
         ba.textwidget(parent=self._root_widget,
                       position=(15, height - 55),
                       size=(width - 30, 30),
                       text=ba.Lstr(resource=self._r + '.listeningText'),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       maxwidth=320,
                       h_align='center',
                       v_align='center')
@@ -204,7 +187,7 @@ class WiimoteLicenseWindow(ba.Window):
                       size=(width, 30),
                       text=ba.Lstr(resource=self._r + '.titleText'),
                       h_align='center',
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       v_align='center')
         license_text = (
             'Copyright (c) 2007, DarwiinRemote Team\n'

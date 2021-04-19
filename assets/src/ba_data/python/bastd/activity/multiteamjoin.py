@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Functionality related to the join screen for multi-team sessions."""
 
 from __future__ import annotations
@@ -35,7 +17,7 @@ if TYPE_CHECKING:
 class MultiTeamJoinActivity(JoinActivity):
     """Join screen for teams sessions."""
 
-    def __init__(self, settings: Dict[str, Any]):
+    def __init__(self, settings: dict):
         super().__init__(settings)
         self._next_up_text: Optional[Text] = None
 
@@ -66,9 +48,10 @@ class MultiTeamJoinActivity(JoinActivity):
         # In teams mode, show our two team names.
         # FIXME: Lobby should handle this.
         if isinstance(ba.getsession(), DualTeamSession):
-            team_names = [team.name for team in ba.getsession().teams]
+            team_names = [team.name for team in ba.getsession().sessionteams]
             team_colors = [
-                tuple(team.color) + (0.5, ) for team in ba.getsession().teams
+                tuple(team.color) + (0.5, )
+                for team in ba.getsession().sessionteams
             ]
             if len(team_names) == 2:
                 for i in range(2):

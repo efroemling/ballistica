@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides ConfirmWindow base class and commonly used derivatives."""
 
 from __future__ import annotations
@@ -68,12 +50,14 @@ class ConfirmWindow:
             scale_origin = None
             transition = 'in_right'
 
+        uiscale = ba.app.ui.uiscale
         self.root_widget = ba.containerwidget(
             size=(width, height),
             transition=transition,
             toolbar_visibility='menu_minimal_no_back',
             parent=_ba.get_special_widget('overlay_stack'),
-            scale=2.1 if ba.app.small_ui else 1.5 if ba.app.med_ui else 1.0,
+            scale=(2.1 if uiscale is ba.UIScale.SMALL else
+                   1.5 if uiscale is ba.UIScale.MEDIUM else 1.0),
             scale_origin_stack_offset=scale_origin)
 
         ba.textwidget(parent=self.root_widget,
@@ -145,18 +129,19 @@ class QuitWindow:
                  swish: bool = False,
                  back: bool = False,
                  origin_widget: ba.Widget = None):
+        ui = ba.app.ui
         app = ba.app
         self._back = back
 
         # If there's already one of us up somewhere, kill it.
-        if app.quit_window is not None:
-            app.quit_window.delete()
-            app.quit_window = None
+        if ui.quit_window is not None:
+            ui.quit_window.delete()
+            ui.quit_window = None
         if swish:
             ba.playsound(ba.getsound('swish'))
         quit_resource = ('quitGameText'
                          if app.platform == 'mac' else 'exitGameText')
-        self._root_widget = app.quit_window = (ConfirmWindow(
+        self._root_widget = ui.quit_window = (ConfirmWindow(
             ba.Lstr(resource=quit_resource,
                     subs=[('${APP_NAME}', ba.Lstr(resource='titleText'))]),
             self._fade_and_quit,

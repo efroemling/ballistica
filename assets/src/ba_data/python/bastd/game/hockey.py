@@ -1,42 +1,26 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Hockey game and support classes."""
 
 # ba_meta require api 6
-# (see https://github.com/efroemling/ballistica/wiki/Meta-Tags)
+# (see https://ballistica.net/wiki/meta-tag-system)
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 import ba
-from bastd.actor import playerspaz
+from bastd.actor.playerspaz import PlayerSpaz
+from bastd.actor.scoreboard import Scoreboard
+from bastd.actor.powerupbox import PowerupBoxFactory
+from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
-    from typing import (Any, Sequence, Dict, Type, List, Tuple, Optional,
-                        Union)
+    from typing import Any, Sequence, Dict, Type, List, Optional, Union
 
 
-class PuckDeathMessage:
-    """Inform an object that a puck has died."""
+class PuckDiedMessage:
+    """Inform something that a puck has died."""
 
     def __init__(self, puck: Puck):
         self.puck = puck
@@ -47,15 +31,16 @@ class Puck(ba.Actor):
 
     def __init__(self, position: Sequence[float] = (0.0, 1.0, 0.0)):
         super().__init__()
+        shared = SharedObjects.get()
         activity = self.getactivity()
 
         # Spawn just above the provided point.
         self._spawn_pos = (position[0], position[1] + 1.0, position[2])
-        self.last_players_to_touch: Dict[int, ba.Player] = {}
+        self.last_players_to_touch: Dict[int, Player] = {}
         self.scored = False
         assert activity is not None
         assert isinstance(activity, HockeyGame)
-        pmats = [ba.sharedobj('object_material'), activity.puck_material]
+        pmats = [shared.object_material, activity.puck_material]
         self.node = ba.newnode('prop',
                                delegate=self,
                                attrs={
@@ -77,7 +62,7 @@ class Puck(ba.Actor):
             self.node.delete()
             activity = self._activity()
             if activity and not msg.immediate:
-                activity.handlemessage(PuckDeathMessage(self))
+                activity.handlemessage(PuckDiedMessage(self))
 
         # If we go out of bounds, move back to where we started.
         elif isinstance(msg, ba.OutOfBoundsMessage):
@@ -95,28 +80,65 @@ class Puck(ba.Actor):
                 msg.force_direction[2])
 
             # If this hit came from a player, log them as the last to touch us.
-            if msg.source_player is not None:
+            s_player = msg.get_source_player(Player)
+            if s_player is not None:
                 activity = self._activity()
                 if activity:
-                    if msg.source_player in activity.players:
-                        self.last_players_to_touch[
-                            msg.source_player.team.get_id(
-                            )] = msg.source_player
+                    if s_player in activity.players:
+                        self.last_players_to_touch[s_player.team.id] = s_player
         else:
             super().handlemessage(msg)
 
 
+class Player(ba.Player['Team']):
+    """Our player type for this game."""
+
+
+class Team(ba.Team[Player]):
+    """Our team type for this game."""
+
+    def __init__(self) -> None:
+        self.score = 0
+
+
 # ba_meta export game
-class HockeyGame(ba.TeamGameActivity):
+class HockeyGame(ba.TeamGameActivity[Player, Team]):
     """Ice hockey game."""
 
-    @classmethod
-    def get_name(cls) -> str:
-        return 'Hockey'
-
-    @classmethod
-    def get_description(cls, sessiontype: Type[ba.Session]) -> str:
-        return 'Score some goals.'
+    name = 'Hockey'
+    description = 'Score some goals.'
+    available_settings = [
+        ba.IntSetting(
+            'Score to Win',
+            min_value=1,
+            default=1,
+            increment=1,
+        ),
+        ba.IntChoiceSetting(
+            'Time Limit',
+            choices=[
+                ('None', 0),
+                ('1 Minute', 60),
+                ('2 Minutes', 120),
+                ('5 Minutes', 300),
+                ('10 Minutes', 600),
+                ('20 Minutes', 1200),
+            ],
+            default=0,
+        ),
+        ba.FloatChoiceSetting(
+            'Respawn Times',
+            choices=[
+                ('Shorter', 0.25),
+                ('Short', 0.5),
+                ('Normal', 1.0),
+                ('Long', 2.0),
+                ('Longer', 4.0),
+            ],
+            default=1.0,
+        ),
+    ]
+    default_music = ba.MusicType.HOCKEY
 
     @classmethod
     def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
@@ -126,30 +148,9 @@ class HockeyGame(ba.TeamGameActivity):
     def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
         return ba.getmaps('hockey')
 
-    @classmethod
-    def get_settings(
-            cls,
-            sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
-        return [
-            ('Score to Win', {
-                'min_value': 1, 'default': 1, 'increment': 1
-            }),
-            ('Time Limit', {
-                'choices': [('None', 0), ('1 Minute', 60),
-                            ('2 Minutes', 120), ('5 Minutes', 300),
-                            ('10 Minutes', 600), ('20 Minutes', 1200)],
-                'default': 0
-            }),
-            ('Respawn Times', {
-                'choices': [('Shorter', 0.25), ('Short', 0.5), ('Normal', 1.0),
-                            ('Long', 2.0), ('Longer', 4.0)],
-                'default': 1.0
-            })]  # yapf: disable
-
-    def __init__(self, settings: Dict[str, Any]):
-        from bastd.actor.scoreboard import Scoreboard
-        from bastd.actor import powerupbox
+    def __init__(self, settings: dict):
         super().__init__(settings)
+        shared = SharedObjects.get()
         self._scoreboard = Scoreboard()
         self._cheer_sound = ba.getsound('cheer')
         self._chant_sound = ba.getsound('crowdChant')
@@ -162,29 +163,33 @@ class HockeyGame(ba.TeamGameActivity):
         self.puck_material = ba.Material()
         self.puck_material.add_actions(actions=(('modify_part_collision',
                                                  'friction', 0.5)))
+        self.puck_material.add_actions(conditions=('they_have_material',
+                                                   shared.pickup_material),
+                                       actions=('modify_part_collision',
+                                                'collide', False))
         self.puck_material.add_actions(
-            conditions=('they_have_material', ba.sharedobj('pickup_material')),
-            actions=('modify_part_collision', 'collide', False))
-        self.puck_material.add_actions(
-            conditions=(('we_are_younger_than', 100),
-                        'and', ('they_have_material',
-                                ba.sharedobj('object_material'))),
-            actions=('modify_node_collision', 'collide', False))
-        self.puck_material.add_actions(
-            conditions=('they_have_material',
-                        ba.sharedobj('footing_material')),
-            actions=('impact_sound', self._puck_sound, 0.2, 5))
+            conditions=(
+                ('we_are_younger_than', 100),
+                'and',
+                ('they_have_material', shared.object_material),
+            ),
+            actions=('modify_node_collision', 'collide', False),
+        )
+        self.puck_material.add_actions(conditions=('they_have_material',
+                                                   shared.footing_material),
+                                       actions=('impact_sound',
+                                                self._puck_sound, 0.2, 5))
 
         # Keep track of which player last touched the puck
         self.puck_material.add_actions(
-            conditions=('they_have_material', ba.sharedobj('player_material')),
+            conditions=('they_have_material', shared.player_material),
             actions=(('call', 'at_connect',
                       self._handle_puck_player_collide), ))
 
         # We want the puck to kill powerups; not get stopped by them
         self.puck_material.add_actions(
             conditions=('they_have_material',
-                        powerupbox.get_factory().powerup_material),
+                        PowerupBoxFactory.get().powerup_material),
             actions=(('modify_part_collision', 'physical', False),
                      ('message', 'their_node', 'at_connect', ba.DieMessage())))
         self._score_region_material = ba.Material()
@@ -196,30 +201,28 @@ class HockeyGame(ba.TeamGameActivity):
         self._puck_spawn_pos: Optional[Sequence[float]] = None
         self._score_regions: Optional[List[ba.NodeActor]] = None
         self._puck: Optional[Puck] = None
+        self._score_to_win = int(settings['Score to Win'])
+        self._time_limit = float(settings['Time Limit'])
 
     def get_instance_description(self) -> Union[str, Sequence]:
-        if self.settings['Score to Win'] == 1:
+        if self._score_to_win == 1:
             return 'Score a goal.'
-        return 'Score ${ARG1} goals.', self.settings['Score to Win']
+        return 'Score ${ARG1} goals.', self._score_to_win
 
-    def get_instance_scoreboard_description(self) -> Union[str, Sequence]:
-        if self.settings['Score to Win'] == 1:
+    def get_instance_description_short(self) -> Union[str, Sequence]:
+        if self._score_to_win == 1:
             return 'score a goal'
-        return 'score ${ARG1} goals', self.settings['Score to Win']
-
-    def on_transition_in(self) -> None:
-        self.default_music = ba.MusicType.HOCKEY
-        super().on_transition_in()
+        return 'score ${ARG1} goals', self._score_to_win
 
     def on_begin(self) -> None:
         super().on_begin()
 
-        self.setup_standard_time_limit(self.settings['Time Limit'])
+        self.setup_standard_time_limit(self._time_limit)
         self.setup_standard_powerup_drops()
         self._puck_spawn_pos = self.map.get_flag_position(None)
         self._spawn_puck()
 
-        # set up the two score regions
+        # Set up the two score regions.
         defs = self.map.defs
         self._score_regions = []
         self._score_regions.append(
@@ -243,20 +246,20 @@ class HockeyGame(ba.TeamGameActivity):
         self._update_scoreboard()
         ba.playsound(self._chant_sound)
 
-    def on_team_join(self, team: ba.Team) -> None:
-        team.gamedata['score'] = 0
+    def on_team_join(self, team: Team) -> None:
         self._update_scoreboard()
 
     def _handle_puck_player_collide(self) -> None:
+        collision = ba.getcollision()
         try:
-            pucknode, playernode = ba.get_collision_info(
-                'source_node', 'opposing_node')
-            puck = pucknode.getdelegate()
-            player = playernode.getdelegate().getplayer()
-        except Exception:
-            player = puck = None
-        if player and puck:
-            puck.last_players_to_touch[player.team.get_id()] = player
+            puck = collision.sourcenode.getdelegate(Puck, True)
+            player = collision.opposingnode.getdelegate(PlayerSpaz,
+                                                        True).getplayer(
+                                                            Player, True)
+        except ba.NotFoundError:
+            return
+
+        puck.last_players_to_touch[player.team.id] = player
 
     def _kill_puck(self) -> None:
         self._puck = None
@@ -272,16 +275,16 @@ class HockeyGame(ba.TeamGameActivity):
         if self._puck.scored:
             return
 
-        region = ba.get_collision_info('source_node')
+        region = ba.getcollision().sourcenode
         index = 0
         for index in range(len(self._score_regions)):
             if region == self._score_regions[index].node:
                 break
 
         for team in self.teams:
-            if team.get_id() == index:
+            if team.id == index:
                 scoring_team = team
-                team.gamedata['score'] += 1
+                team.score += 1
 
                 # Tell all players to celebrate.
                 for player in team.players:
@@ -290,16 +293,15 @@ class HockeyGame(ba.TeamGameActivity):
 
                 # If we've got the player from the scoring team that last
                 # touched us, give them points.
-                if (scoring_team.get_id() in self._puck.last_players_to_touch
-                        and self._puck.last_players_to_touch[
-                            scoring_team.get_id()]):
-                    self.stats.player_scored(self._puck.last_players_to_touch[
-                        scoring_team.get_id()],
-                                             100,
-                                             big_message=True)
+                if (scoring_team.id in self._puck.last_players_to_touch
+                        and self._puck.last_players_to_touch[scoring_team.id]):
+                    self.stats.player_scored(
+                        self._puck.last_players_to_touch[scoring_team.id],
+                        100,
+                        big_message=True)
 
                 # End game if we won.
-                if team.gamedata['score'] >= self.settings['Score to Win']:
+                if team.score >= self._score_to_win:
                     self.end_game()
 
         ba.playsound(self._foghorn_sound)
@@ -312,7 +314,7 @@ class HockeyGame(ba.TeamGameActivity):
 
         light = ba.newnode('light',
                            attrs={
-                               'position': ba.get_collision_info('position'),
+                               'position': ba.getcollision().position,
                                'height_attenuated': False,
                                'color': (1, 0, 0)
                            })
@@ -323,28 +325,26 @@ class HockeyGame(ba.TeamGameActivity):
         self._update_scoreboard()
 
     def end_game(self) -> None:
-        results = ba.TeamGameResults()
+        results = ba.GameResults()
         for team in self.teams:
-            results.set_team_score(team, team.gamedata['score'])
+            results.set_team_score(team, team.score)
         self.end(results=results)
 
     def _update_scoreboard(self) -> None:
-        """ update scoreboard and check for winners """
-        winscore = self.settings['Score to Win']
+        winscore = self._score_to_win
         for team in self.teams:
-            self._scoreboard.set_team_value(team, team.gamedata['score'],
-                                            winscore)
+            self._scoreboard.set_team_value(team, team.score, winscore)
 
     def handlemessage(self, msg: Any) -> Any:
 
         # Respawn dead players if they're still in the game.
-        if isinstance(msg, playerspaz.PlayerSpazDeathMessage):
+        if isinstance(msg, ba.PlayerDiedMessage):
             # Augment standard behavior...
             super().handlemessage(msg)
-            self.respawn_player(msg.spaz.player)
+            self.respawn_player(msg.getplayer(Player))
 
         # Respawn dead pucks.
-        elif isinstance(msg, PuckDeathMessage):
+        elif isinstance(msg, PuckDiedMessage):
             if not self.has_ended():
                 ba.timer(3.0, self._spawn_puck)
         else:

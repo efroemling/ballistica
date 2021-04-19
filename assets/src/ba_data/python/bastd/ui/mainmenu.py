@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Implements the main menu window."""
 # pylint: disable=too-many-lines
 
@@ -37,12 +19,17 @@ class MainMenuWindow(ba.Window):
 
     def __init__(self, transition: Optional[str] = 'in_right'):
         # pylint: disable=cyclic-import
-        from bastd import mainmenu
+        import threading
+        from bastd.mainmenu import MainMenuSession
         self._in_game = not isinstance(_ba.get_foreground_host_session(),
-                                       mainmenu.MainMenuSession)
+                                       MainMenuSession)
+
+        # Preload some modules we use in a background thread so we won't
+        # have a visual hitch when the user taps them.
+        threading.Thread(target=self._preload_modules).start()
+
         if not self._in_game:
             ba.set_analytics_screen('Main Menu')
-
             self._show_remote_app_info_on_first_launch()
 
         # Make a vanilla container; we'll modify it to our needs in refresh.
@@ -51,7 +38,11 @@ class MainMenuWindow(ba.Window):
             toolbar_visibility='menu_minimal_no_back' if self.
             _in_game else 'menu_minimal_no_back'))
 
-        self._is_kiosk = ba.app.kiosk_mode
+        # Grab this stuff in case it changes.
+        self._is_demo = ba.app.demo_mode
+        self._is_arcade = ba.app.arcade_mode
+        self._is_iircade = ba.app.iircade_mode
+
         self._tdelay = 0.0
         self._t_delay_inc = 0.02
         self._t_delay_play = 1.7
@@ -68,6 +59,7 @@ class MainMenuWindow(ba.Window):
         self._gc_button: Optional[ba.Widget] = None
         self._how_to_play_button: Optional[ba.Widget] = None
         self._credits_button: Optional[ba.Widget] = None
+        self._settings_button: Optional[ba.Widget] = None
 
         self._store_char_tex = self._get_store_char_tex()
 
@@ -84,6 +76,22 @@ class MainMenuWindow(ba.Window):
                                        repeat=True,
                                        timetype=ba.TimeType.REAL)
 
+    @staticmethod
+    def _preload_modules() -> None:
+        """Preload modules we use (called in bg thread)."""
+        import bastd.ui.getremote as _unused
+        import bastd.ui.confirm as _unused2
+        import bastd.ui.store.button as _unused3
+        import bastd.ui.kiosk as _unused4
+        import bastd.ui.account.settings as _unused5
+        import bastd.ui.store.browser as _unused6
+        import bastd.ui.creditslist as _unused7
+        import bastd.ui.helpui as _unused8
+        import bastd.ui.settings.allsettings as _unused9
+        import bastd.ui.gather as _unused10
+        import bastd.ui.watch as _unused11
+        import bastd.ui.play as _unused12
+
     def _show_remote_app_info_on_first_launch(self) -> None:
         # The first time the non-in-game menu pops up, we might wanna show
         # a 'get-remote-app' dialog in front of it.
@@ -99,18 +107,18 @@ class MainMenuWindow(ba.Window):
 
                     def _check_show_bs_remote_window() -> None:
                         try:
-                            from bastd.ui import getremote
+                            from bastd.ui.getremote import GetBSRemoteWindow
                             ba.playsound(ba.getsound('swish'))
-                            getremote.GetBSRemoteWindow()
+                            GetBSRemoteWindow()
                         except Exception:
                             ba.print_exception(
-                                'error showing ba-remote window')
+                                'Error showing get-remote window.')
 
                     ba.timer(2.5,
                              _check_show_bs_remote_window,
                              timetype=ba.TimeType.REAL)
-            except Exception as exc:
-                print('EXC bs_remote_show', exc)
+            except Exception:
+                ba.print_exception('Error showing get-remote-app info')
 
     def _get_store_char_tex(self) -> str:
         return ('storeCharacterXmas' if _ba.get_account_misc_read_val(
@@ -125,7 +133,7 @@ class MainMenuWindow(ba.Window):
         # Don't refresh for the first few seconds the game is up so we don't
         # interrupt the transition in.
         ba.app.main_menu_window_refresh_check_count += 1
-        if ba.app.main_menu_window_refresh_check_count < 3:
+        if ba.app.main_menu_window_refresh_check_count < 4:
             return
 
         store_char_tex = self._get_store_char_tex()
@@ -149,7 +157,7 @@ class MainMenuWindow(ba.Window):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
-        from bastd.ui import confirm
+        from bastd.ui.confirm import QuitWindow
         from bastd.ui.store.button import StoreButton
 
         # Clear everything that was there.
@@ -166,15 +174,15 @@ class MainMenuWindow(ba.Window):
         self._r = 'mainMenu'
 
         app = ba.app
-        self._have_quit_button = (app.interface_type == 'large'
+        self._have_quit_button = (app.ui.uiscale is ba.UIScale.LARGE
                                   or (app.platform == 'windows'
                                       and app.subplatform == 'oculus'))
 
         self._have_store_button = not self._in_game
 
-        self._have_settings_button = ((not self._in_game
-                                       or not app.toolbar_test)
-                                      and not self._is_kiosk)
+        self._have_settings_button = (
+            (not self._in_game or not app.toolbar_test)
+            and not (self._is_demo or self._is_arcade or self._is_iircade))
 
         self._input_device = input_device = _ba.get_ui_input_device()
         self._input_player = input_device.player if input_device else None
@@ -267,8 +275,9 @@ class MainMenuWindow(ba.Window):
                 sale_scale=1.3,
                 transition_delay=self._tdelay)
             self._store_button = store_button = sbtn.get_button()
-            icon_size = (55
-                         if ba.app.small_ui else 55 if ba.app.med_ui else 70)
+            uiscale = ba.app.ui.uiscale
+            icon_size = (55 if uiscale is ba.UIScale.SMALL else
+                         55 if uiscale is ba.UIScale.MEDIUM else 70)
             ba.imagewidget(
                 parent=self._root_widget,
                 position=(h - icon_size * 0.5,
@@ -323,7 +332,7 @@ class MainMenuWindow(ba.Window):
                     and ba.app.platform == 'android'):
 
                 def _do_quit() -> None:
-                    confirm.QuitWindow(swish=True, back=True)
+                    QuitWindow(swish=True, back=True)
 
                 ba.containerwidget(edit=self._root_widget,
                                    on_cancel_call=_do_quit)
@@ -335,12 +344,13 @@ class MainMenuWindow(ba.Window):
             b_size = 50.0
             b_buffer = 10.0
             t_scale = 0.75
-            if ba.app.small_ui:
+            uiscale = ba.app.ui.uiscale
+            if uiscale is ba.UIScale.SMALL:
                 b_size *= 0.6
                 b_buffer *= 1.0
                 v_offs = -40
                 t_scale = 0.5
-            elif ba.app.med_ui:
+            elif uiscale is ba.UIScale.MEDIUM:
                 v_offs = -70
             else:
                 v_offs = -100
@@ -429,14 +439,17 @@ class MainMenuWindow(ba.Window):
         account_type_icon_color = (1.0, 1.0, 1.0)
         account_type_call = self._show_account_window
         account_type_enable_button_sound = True
-        b_count = 4  # play, help, credits, settings
+        b_count = 3  # play, help, credits
+        if self._have_settings_button:
+            b_count += 1
         if enable_account_button:
             b_count += 1
         if self._have_quit_button:
             b_count += 1
         if self._have_store_button:
             b_count += 1
-        if ba.app.small_ui:
+        uiscale = ba.app.ui.uiscale
+        if uiscale is ba.UIScale.SMALL:
             root_widget_scale = 1.6
             play_button_width = self._button_width * 0.65
             play_button_height = self._button_height * 1.1
@@ -445,7 +458,7 @@ class MainMenuWindow(ba.Window):
             button_y_offs2 = -60.0
             self._button_height *= 1.3
             button_spacing = 1.04
-        elif ba.app.med_ui:
+        elif uiscale is ba.UIScale.MEDIUM:
             root_widget_scale = 1.3
             play_button_width = self._button_width * 0.65
             play_button_height = self._button_height * 1.1
@@ -476,7 +489,7 @@ class MainMenuWindow(ba.Window):
                 (x_offs + spc * i - 1.0, button_y_offs + button_y_offs2,
                  small_button_scale))
         # In kiosk mode, provide a button to get back to the kiosk menu.
-        if ba.app.kiosk_mode:
+        if ba.app.demo_mode or ba.app.arcade_mode:
             h, v, scale = positions[self._p_index]
             this_b_width = self._button_width * 0.4 * scale
             demo_menu_delay = 0.0 if self._t_delay_play == 0.0 else max(
@@ -488,12 +501,15 @@ class MainMenuWindow(ba.Window):
                 autoselect=True,
                 color=(0.45, 0.55, 0.45),
                 textcolor=(0.7, 0.8, 0.7),
-                label=ba.Lstr(resource=self._r + '.demoMenuText'),
+                label=ba.Lstr(resource='modeArcadeText' if ba.app.
+                              arcade_mode else 'modeDemoText'),
                 transition_delay=demo_menu_delay,
                 on_activate_call=self._demo_menu_press)
         else:
             self._demo_menu_button = None
-        foof = (-1 if ba.app.small_ui else 1 if ba.app.med_ui else 3)
+        uiscale = ba.app.ui.uiscale
+        foof = (-1 if uiscale is ba.UIScale.SMALL else
+                1 if uiscale is ba.UIScale.MEDIUM else 3)
         h, v, scale = positions[self._p_index]
         v = v + foof
         gather_delay = 0.0 if self._t_delay_play == 0.0 else max(
@@ -673,15 +689,15 @@ class MainMenuWindow(ba.Window):
                     if (not isinstance(cme, dict) or 'label' not in cme
                             or not isinstance(cme['label'], (str, ba.Lstr))
                             or 'call' not in cme or not callable(cme['call'])):
-                        raise Exception('invalid custom menu entry: ' +
-                                        str(cme))
+                        raise ValueError('invalid custom menu entry: ' +
+                                         str(cme))
             except Exception:
                 custom_menu_entries = []
-                ba.print_exception('exception getting custom menu entries for',
-                                   session)
+                ba.print_exception(
+                    f'Error getting custom menu entries for {session}')
         self._width = 250.0
         self._height = 250.0 if self._input_player else 180.0
-        if self._is_kiosk and self._input_player:
+        if (self._is_demo or self._is_arcade) and self._input_player:
             self._height -= 40
         if not self._have_settings_button:
             self._height -= 50
@@ -689,10 +705,12 @@ class MainMenuWindow(ba.Window):
             # In this case we have a leave *and* a disconnect button.
             self._height += 50
         self._height += 50 * (len(custom_menu_entries))
+        uiscale = ba.app.ui.uiscale
         ba.containerwidget(
             edit=self._root_widget,
             size=(self._width, self._height),
-            scale=2.15 if ba.app.small_ui else 1.6 if ba.app.med_ui else 1.0)
+            scale=(2.15 if uiscale is ba.UIScale.SMALL else
+                   1.6 if uiscale is ba.UIScale.MEDIUM else 1.0))
         h = 125.0
         v = (self._height - 80.0 if self._input_player else self._height - 60)
         h_offset = 0
@@ -708,7 +726,7 @@ class MainMenuWindow(ba.Window):
 
         # Player name if applicable.
         if self._input_player:
-            player_name = self._input_player.get_name()
+            player_name = self._input_player.getname()
             h, v, scale = positions[self._p_index]
             v += 35
             ba.textwidget(parent=self._root_widget,
@@ -738,10 +756,7 @@ class MainMenuWindow(ba.Window):
 
             # Ask the entry whether we should resume when we call
             # it (defaults to true).
-            try:
-                resume = entry['resume_on_call']
-            except Exception:
-                resume = True
+            resume = bool(entry.get('resume_on_call', True))
 
             if resume:
                 call = ba.Call(self._resume_and_call, entry['call'])
@@ -757,7 +772,7 @@ class MainMenuWindow(ba.Window):
                             autoselect=self._use_autoselect)
         # Add a 'leave' button if the menu-owner has a player.
         if ((self._input_player or self._connected_to_remote_player)
-                and not self._is_kiosk):
+                and not (self._is_demo or self._is_arcade)):
             h, v, scale = positions[self._p_index]
             self._p_index += 1
             btn = ba.buttonwidget(parent=self._root_widget,
@@ -799,6 +814,10 @@ class MainMenuWindow(ba.Window):
         return h, v, scale
 
     def _change_replay_speed(self, offs: int) -> None:
+        if not self._replay_speed_text:
+            if ba.do_once():
+                print('_change_replay_speed called without widget')
+            return
         _ba.set_replay_speed_exponent(_ba.get_replay_speed_exponent() + offs)
         actual_speed = pow(2.0, _ba.get_replay_speed_exponent())
         ba.textwidget(edit=self._replay_speed_text,
@@ -807,68 +826,69 @@ class MainMenuWindow(ba.Window):
 
     def _quit(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui import confirm
-        confirm.QuitWindow(origin_widget=self._quit_button)
+        from bastd.ui.confirm import QuitWindow
+        QuitWindow(origin_widget=self._quit_button)
 
     def _demo_menu_press(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui import kiosk
+        from bastd.ui.kiosk import KioskWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_right')
-        ba.app.main_menu_window = (kiosk.KioskWindow(
-            transition='in_left').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            KioskWindow(transition='in_left').get_root_widget())
 
     def _show_account_window(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.account import settings
+        from bastd.ui.account.settings import AccountSettingsWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (settings.AccountSettingsWindow(
-            origin_widget=self._gc_button).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            AccountSettingsWindow(
+                origin_widget=self._gc_button).get_root_widget())
 
     def _on_store_pressed(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.store import browser
-        from bastd.ui import account
+        from bastd.ui.store.browser import StoreBrowserWindow
+        from bastd.ui.account import show_sign_in_prompt
         if _ba.get_account_state() != 'signed_in':
-            account.show_sign_in_prompt()
+            show_sign_in_prompt()
             return
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (browser.StoreBrowserWindow(
-            origin_widget=self._store_button).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            StoreBrowserWindow(
+                origin_widget=self._store_button).get_root_widget())
 
     def _confirm_end_game(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui import confirm
+        from bastd.ui.confirm import ConfirmWindow
         # FIXME: Currently we crash calling this on client-sessions.
 
         # Select cancel by default; this occasionally gets called by accident
         # in a fit of button mashing and this will help reduce damage.
-        confirm.ConfirmWindow(ba.Lstr(resource=self._r + '.exitToMenuText'),
-                              self._end_game,
-                              cancel_is_selected=True)
+        ConfirmWindow(ba.Lstr(resource=self._r + '.exitToMenuText'),
+                      self._end_game,
+                      cancel_is_selected=True)
 
     def _confirm_end_replay(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui import confirm
+        from bastd.ui.confirm import ConfirmWindow
 
         # Select cancel by default; this occasionally gets called by accident
         # in a fit of button mashing and this will help reduce damage.
-        confirm.ConfirmWindow(ba.Lstr(resource=self._r + '.exitToMenuText'),
-                              self._end_game,
-                              cancel_is_selected=True)
+        ConfirmWindow(ba.Lstr(resource=self._r + '.exitToMenuText'),
+                      self._end_game,
+                      cancel_is_selected=True)
 
     def _confirm_leave_party(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui import confirm
+        from bastd.ui.confirm import ConfirmWindow
 
         # Select cancel by default; this occasionally gets called by accident
         # in a fit of button mashing and this will help reduce damage.
-        confirm.ConfirmWindow(ba.Lstr(resource=self._r +
-                                      '.leavePartyConfirmText'),
-                              self._leave_party,
-                              cancel_is_selected=True)
+        ConfirmWindow(ba.Lstr(resource=self._r + '.leavePartyConfirmText'),
+                      self._leave_party,
+                      cancel_is_selected=True)
 
     def _leave_party(self) -> None:
         _ba.disconnect_from_host()
@@ -877,7 +897,7 @@ class MainMenuWindow(ba.Window):
         if not self._root_widget:
             return
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.return_to_main_menu_session_gracefully()
+        ba.app.return_to_main_menu_session_gracefully(reset_ui=False)
 
     def _leave(self) -> None:
         if self._input_player:
@@ -889,28 +909,31 @@ class MainMenuWindow(ba.Window):
 
     def _credits(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui import creditslist
+        from bastd.ui.creditslist import CreditsListWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (creditslist.CreditsListWindow(
-            origin_widget=self._credits_button).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            CreditsListWindow(
+                origin_widget=self._credits_button).get_root_widget())
 
     def _howtoplay(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui import helpui
+        from bastd.ui.helpui import HelpWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (helpui.HelpWindow(
-            main_menu=True,
-            origin_widget=self._how_to_play_button).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            HelpWindow(
+                main_menu=True,
+                origin_widget=self._how_to_play_button).get_root_widget())
 
     def _settings(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.settings import allsettings
+        from bastd.ui.settings.allsettings import AllSettingsWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (allsettings.AllSettingsWindow(
-            origin_widget=self._settings_button).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            AllSettingsWindow(
+                origin_widget=self._settings_button).get_root_widget())
 
     def _resume_and_call(self, call: Callable[[], Any]) -> None:
         self._resume()
@@ -927,28 +950,28 @@ class MainMenuWindow(ba.Window):
             return
         sel = self._root_widget.get_selected_child()
         if sel == self._start_button:
-            ba.app.main_menu_selection = 'Start'
+            ba.app.ui.main_menu_selection = 'Start'
         elif sel == self._gather_button:
-            ba.app.main_menu_selection = 'Gather'
+            ba.app.ui.main_menu_selection = 'Gather'
         elif sel == self._watch_button:
-            ba.app.main_menu_selection = 'Watch'
+            ba.app.ui.main_menu_selection = 'Watch'
         elif sel == self._how_to_play_button:
-            ba.app.main_menu_selection = 'HowToPlay'
+            ba.app.ui.main_menu_selection = 'HowToPlay'
         elif sel == self._credits_button:
-            ba.app.main_menu_selection = 'Credits'
+            ba.app.ui.main_menu_selection = 'Credits'
         elif sel == self._settings_button:
-            ba.app.main_menu_selection = 'Settings'
+            ba.app.ui.main_menu_selection = 'Settings'
         elif sel == self._gc_button:
-            ba.app.main_menu_selection = 'GameService'
+            ba.app.ui.main_menu_selection = 'GameService'
         elif sel == self._store_button:
-            ba.app.main_menu_selection = 'Store'
+            ba.app.ui.main_menu_selection = 'Store'
         elif sel == self._quit_button:
-            ba.app.main_menu_selection = 'Quit'
+            ba.app.ui.main_menu_selection = 'Quit'
         elif sel == self._demo_menu_button:
-            ba.app.main_menu_selection = 'DemoMenu'
+            ba.app.ui.main_menu_selection = 'DemoMenu'
         else:
             print('unknown widget in main menu store selection:', sel)
-            ba.app.main_menu_selection = 'Start'
+            ba.app.ui.main_menu_selection = 'Start'
 
     def _restore_state(self) -> None:
         # pylint: disable=too-many-branches
@@ -956,7 +979,7 @@ class MainMenuWindow(ba.Window):
         # Don't do this for the in-game menu.
         if self._in_game:
             return
-        sel_name = ba.app.main_menu_selection
+        sel_name = ba.app.ui.main_menu_selection
         sel: Optional[ba.Widget]
         if sel_name is None:
             sel_name = 'Start'
@@ -988,30 +1011,32 @@ class MainMenuWindow(ba.Window):
         from bastd.ui.gather import GatherWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (GatherWindow(
-            origin_widget=self._gather_button).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            GatherWindow(origin_widget=self._gather_button).get_root_widget())
 
     def _watch_press(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.watch import WatchWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (WatchWindow(
-            origin_widget=self._watch_button).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            WatchWindow(origin_widget=self._watch_button).get_root_widget())
 
     def _play_press(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.ui.play import PlayWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (PlayWindow(
-            origin_widget=self._start_button).get_root_widget())
+
+        ba.app.ui.selecting_private_party_playlist = False
+        ba.app.ui.set_main_menu_window(
+            PlayWindow(origin_widget=self._start_button).get_root_widget())
 
     def _resume(self) -> None:
         ba.app.resume()
         if self._root_widget:
             ba.containerwidget(edit=self._root_widget, transition='out_right')
-        ba.app.main_menu_window = None
+        ba.app.ui.clear_main_menu_window()
 
         # If there's callbacks waiting for this window to go away, call them.
         for call in ba.app.main_menu_resume_callbacks:

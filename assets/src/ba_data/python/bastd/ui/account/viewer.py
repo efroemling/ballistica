@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides a popup for displaying info about any account."""
 
 from __future__ import annotations
@@ -41,18 +23,20 @@ class AccountViewerWindow(popup.PopupWindow):
                  position: Tuple[float, float] = (0.0, 0.0),
                  scale: float = None,
                  offset: Tuple[float, float] = (0.0, 0.0)):
-        from ba.internal import is_browser_likely_available, serverget
+        from ba.internal import is_browser_likely_available, master_server_get
 
         self._account_id = account_id
         self._profile_id = profile_id
 
+        uiscale = ba.app.ui.uiscale
         if scale is None:
-            scale = (2.6 if ba.app.small_ui else 1.8 if ba.app.med_ui else 1.4)
+            scale = (2.6 if uiscale is ba.UIScale.SMALL else
+                     1.8 if uiscale is ba.UIScale.MEDIUM else 1.4)
         self._transitioning_out = False
 
         self._width = 400
-        self._height = (300
-                        if ba.app.small_ui else 400 if ba.app.med_ui else 450)
+        self._height = (300 if uiscale is ba.UIScale.SMALL else
+                        400 if uiscale is ba.UIScale.MEDIUM else 450)
         self._subcontainer: Optional[ba.Widget] = None
 
         bg_color = (0.5, 0.4, 0.6)
@@ -124,12 +108,12 @@ class AccountViewerWindow(popup.PopupWindow):
         ba.containerwidget(edit=self.root_widget,
                            cancel_button=self._cancel_button)
 
-        serverget('bsAccountInfo', {
+        master_server_get('bsAccountInfo', {
             'buildNumber': ba.app.build_number,
             'accountID': self._account_id,
             'profileID': self._profile_id
         },
-                  callback=ba.WeakCall(self._on_query_response))
+                          callback=ba.WeakCall(self._on_query_response))
 
     def popup_menu_selected_choice(self, window: popup.PopupMenu,
                                    choice: str) -> None:
@@ -159,9 +143,11 @@ class AccountViewerWindow(popup.PopupWindow):
             choices.append('ban')
             choices_display.append(ba.Lstr(resource='banThisPlayerText'))
 
+        uiscale = ba.app.ui.uiscale
         popup.PopupMenuWindow(
             position=self._extras_menu_button.get_screen_space_center(),
-            scale=2.3 if ba.app.small_ui else 1.65 if ba.app.med_ui else 1.23,
+            scale=(2.3 if uiscale is ba.UIScale.SMALL else
+                   1.65 if uiscale is ba.UIScale.MEDIUM else 1.23),
             choices=choices,
             choices_display=choices_display,
             current_choice='more',
@@ -208,7 +194,7 @@ class AccountViewerWindow(popup.PopupWindow):
                     if trophystr == '':
                         trophystr = '-'
                 except Exception:
-                    ba.print_exception('Error displaying trophies')
+                    ba.print_exception('Error displaying trophies.')
                 account_name_spacing = 15
                 tscale = 0.65
                 ts_height = _ba.get_string_height(trophystr,
@@ -255,7 +241,7 @@ class AccountViewerWindow(popup.PopupWindow):
                                     tint2_color=tint2_color)
                                 v -= 95
                     except Exception:
-                        ba.print_exception('Error displaying character')
+                        ba.print_exception('Error displaying character.')
                     ba.textwidget(
                         parent=self._subcontainer,
                         size=(0, 0),
@@ -288,7 +274,7 @@ class AccountViewerWindow(popup.PopupWindow):
                               h_align='center',
                               v_align='center',
                               scale=title_scale,
-                              color=ba.app.infotextcolor,
+                              color=ba.app.ui.infotextcolor,
                               text=account_title,
                               maxwidth=sub_width * maxwidth_scale)
                 draw_small = (showing_character
@@ -315,7 +301,7 @@ class AccountViewerWindow(popup.PopupWindow):
                               h_align='center',
                               v_align='center',
                               scale=title_scale,
-                              color=ba.app.infotextcolor,
+                              color=ba.app.ui.infotextcolor,
                               text=ba.Lstr(resource='rankText'),
                               maxwidth=sub_width * maxwidth_scale)
                 v -= 14
@@ -429,7 +415,7 @@ class AccountViewerWindow(popup.PopupWindow):
                               h_align='center',
                               v_align='center',
                               scale=title_scale,
-                              color=ba.app.infotextcolor,
+                              color=ba.app.ui.infotextcolor,
                               text=ba.Lstr(resource='achievementsText'),
                               maxwidth=sub_width * maxwidth_scale)
                 v -= 14
@@ -440,7 +426,7 @@ class AccountViewerWindow(popup.PopupWindow):
                               v_align='center',
                               scale=0.55,
                               text=str(data['achievementsCompleted']) + ' / ' +
-                              str(len(ba.app.achievements)),
+                              str(len(ba.app.ach.achievements)),
                               maxwidth=sub_width * maxwidth_scale)
                 v -= 25
 
@@ -458,7 +444,7 @@ class AccountViewerWindow(popup.PopupWindow):
                               h_align='center',
                               v_align='center',
                               scale=title_scale,
-                              color=ba.app.infotextcolor,
+                              color=ba.app.ui.infotextcolor,
                               flatness=1.0,
                               text=ba.Lstr(resource='trophiesThisSeasonText',
                                            fallback_resource='trophiesText'),
@@ -474,7 +460,7 @@ class AccountViewerWindow(popup.PopupWindow):
                               text=trophystr)
 
             except Exception:
-                ba.print_exception('Error displaying account info')
+                ba.print_exception('Error displaying account info.')
 
     def _on_cancel_press(self) -> None:
         self._transition_out()

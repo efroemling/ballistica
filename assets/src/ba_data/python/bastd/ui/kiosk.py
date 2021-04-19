@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """UI functionality for running the game in kiosk mode."""
 
 from __future__ import annotations
@@ -36,12 +18,12 @@ class KioskWindow(ba.Window):
 
     def __init__(self, transition: str = 'in_right'):
         # pylint: disable=too-many-locals, too-many-statements
-        from bastd.ui import confirm
+        from bastd.ui.confirm import QuitWindow
         self._width = 720.0
         self._height = 340.0
 
         def _do_cancel() -> None:
-            confirm.QuitWindow(swish=True, back=True)
+            QuitWindow(swish=True, back=True)
 
         super().__init__(
             root_widget=ba.containerwidget(size=(self._width, self._height),
@@ -99,8 +81,9 @@ class KioskWindow(ba.Window):
                 size=(0, 0),
                 position=(self._width * 0.5, self._height + y_extra - 34),
                 transition_delay=tdelay,
-                text=ba.Lstr(resource='demoText',
-                             fallback_resource='mainMenu.demoMenuText'),
+                text=(ba.Lstr(resource='demoText',
+                              fallback_resource='mainMenu.demoMenuText')
+                      if ba.app.demo_mode else 'ARCADE'),
                 flatness=1.0,
                 scale=1.2,
                 h_align='center',
@@ -311,7 +294,7 @@ class KioskWindow(ba.Window):
             self._b4 = self._b5 = self._b6 = None
 
         self._b7: Optional[ba.Widget]
-        if bool(False):
+        if ba.app.arcade_mode:
             self._b7 = ba.buttonwidget(
                 parent=self._root_widget,
                 autoselect=True,
@@ -319,10 +302,7 @@ class KioskWindow(ba.Window):
                 color=(0.45, 0.55, 0.45),
                 textcolor=(0.7, 0.8, 0.7),
                 scale=0.5,
-                position=((self._width * 0.5 - 37.5,
-                           y_extra + 120) if not self._show_multiplayer else
-                          (self._width + 100,
-                           y_extra + (140 if ba.app.small_ui else 120))),
+                position=(self._width * 0.5 - 60.0, b_v - 70.0),
                 transition_delay=tdelay,
                 label=ba.Lstr(resource=self._r + '.fullMenuText'),
                 on_activate_call=self._do_full_menu)
@@ -336,10 +316,7 @@ class KioskWindow(ba.Window):
                                       repeat=True)
 
     def _restore_state(self) -> None:
-        try:
-            sel_name = ba.app.window_states[self.__class__.__name__]
-        except Exception:
-            sel_name = None
+        sel_name = ba.app.ui.window_states.get(type(self))
         sel: Optional[ba.Widget]
         if sel_name == 'b1':
             sel = self._b1
@@ -378,7 +355,7 @@ class KioskWindow(ba.Window):
             sel_name = 'b7'
         else:
             sel_name = 'b1'
-        ba.app.window_states[self.__class__.__name__] = sel_name
+        ba.app.ui.window_states[type(self)] = sel_name
 
     def _update(self) -> None:
         # Kiosk-mode is designed to be used signed-out... try for force
@@ -389,20 +366,20 @@ class KioskWindow(ba.Window):
             pass
         else:
             # Also make sure there's no player profiles.
-            bs_config = ba.app.config
-            bs_config['Player Profiles'] = {}
+            appconfig = ba.app.config
+            appconfig['Player Profiles'] = {}
 
     def _do_game(self, mode: str) -> None:
         self._save_state()
         if mode in ['epic', 'ctf', 'hockey']:
-            bs_config = ba.app.config
-            if 'Team Tournament Playlists' not in bs_config:
-                bs_config['Team Tournament Playlists'] = {}
-            if 'Free-for-All Playlists' not in bs_config:
-                bs_config['Free-for-All Playlists'] = {}
-            bs_config['Show Tutorial'] = False
+            appconfig = ba.app.config
+            if 'Team Tournament Playlists' not in appconfig:
+                appconfig['Team Tournament Playlists'] = {}
+            if 'Free-for-All Playlists' not in appconfig:
+                appconfig['Free-for-All Playlists'] = {}
+            appconfig['Show Tutorial'] = False
             if mode == 'epic':
-                bs_config['Free-for-All Playlists']['Just Epic Elim'] = [{
+                appconfig['Free-for-All Playlists']['Just Epic Elim'] = [{
                     'settings': {
                         'Epic Mode': 1,
                         'Lives Per Player': 1,
@@ -412,7 +389,7 @@ class KioskWindow(ba.Window):
                     },
                     'type': 'bs_elimination.EliminationGame'
                 }]
-                bs_config['Free-for-All Playlist Selection'] = 'Just Epic Elim'
+                appconfig['Free-for-All Playlist Selection'] = 'Just Epic Elim'
                 _ba.fade_screen(False,
                                 endcall=ba.Call(
                                     ba.pushcall,
@@ -420,7 +397,7 @@ class KioskWindow(ba.Window):
                                             ba.FreeForAllSession)))
             else:
                 if mode == 'ctf':
-                    bs_config['Team Tournament Playlists']['Just CTF'] = [{
+                    appconfig['Team Tournament Playlists']['Just CTF'] = [{
                         'settings': {
                             'Epic Mode': False,
                             'Flag Idle Return Time': 30,
@@ -432,10 +409,10 @@ class KioskWindow(ba.Window):
                         },
                         'type': 'bs_capture_the_flag.CTFGame'
                     }]
-                    bs_config[
+                    appconfig[
                         'Team Tournament Playlist Selection'] = 'Just CTF'
                 else:
-                    bs_config['Team Tournament Playlists']['Just Hockey'] = [{
+                    appconfig['Team Tournament Playlists']['Just Hockey'] = [{
                         'settings': {
                             'Respawn Times': 1.0,
                             'Score to Win': 1,
@@ -444,8 +421,8 @@ class KioskWindow(ba.Window):
                         },
                         'type': 'bs_hockey.HockeyGame'
                     }]
-                    bs_config['Team Tournament Playlist Selection'] = \
-                        'Just Hockey'
+                    appconfig['Team Tournament Playlist Selection'] = (
+                        'Just Hockey')
                 _ba.fade_screen(False,
                                 endcall=ba.Call(
                                     ba.pushcall,
@@ -468,4 +445,4 @@ class KioskWindow(ba.Window):
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         ba.app.did_menu_intro = True  # prevent delayed transition-in
-        ba.app.main_menu_window = (MainMenuWindow().get_root_widget())
+        ba.app.ui.set_main_menu_window(MainMenuWindow().get_root_widget())

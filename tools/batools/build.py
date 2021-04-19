@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """General functionality related to running builds."""
 from __future__ import annotations
 
@@ -30,10 +12,11 @@ import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from efro.error import CleanError
 from efro.terminal import Clr
 
 if TYPE_CHECKING:
-    from typing import List, Sequence, Optional
+    from typing import List, Sequence, Optional, Any, Dict
 
 
 # Python pip packages we require for this project.
@@ -46,14 +29,16 @@ class PipRequirement:
 
 
 PIP_REQUIREMENTS = [
-    PipRequirement(modulename='pylint', minversion=[2, 5, 2]),
-    PipRequirement(modulename='mypy', minversion=[0, 770]),
+    PipRequirement(modulename='pylint', minversion=[2, 7, 0]),
+    PipRequirement(modulename='mypy', minversion=[0, 812]),
     PipRequirement(modulename='yapf', minversion=[0, 30, 0]),
+    PipRequirement(modulename='cpplint', minversion=[1, 5, 4]),
+    PipRequirement(modulename='pytest', minversion=[6, 2, 2]),
     PipRequirement(modulename='typing_extensions'),
     PipRequirement(modulename='pytz'),
+    PipRequirement(modulename='ansiwrap'),
     PipRequirement(modulename='yaml', pipname='PyYAML'),
     PipRequirement(modulename='requests'),
-    PipRequirement(modulename='pytest'),
 ]
 
 # Parts of full-tests suite we only run on particular days.
@@ -69,9 +54,9 @@ SPARSE_TEST_BUILDS: List[List[str]] = [
     ['ios.pylibs', 'android.pylibs.arm64.debug'],
     ['linux.package.server'],
     ['android.pylibs.x86.debug', 'mac.package'],
-    ['mac.package.server', 'android.pylibs.x86_64'],
+    ['mac.package.server.arm64', 'android.pylibs.x86_64'],
     ['windows.package.oculus'],
-    ['android.pylibs.x86_64.debug'],
+    ['mac.package.server.x86_64', 'android.pylibs.x86_64.debug'],
     ['mac.pylibs.debug', 'android.package'],
 ]
 
@@ -111,8 +96,8 @@ def _lazybuild_check_paths(inpaths: List[str], category: SourceCategory,
     def _testpath(path: str) -> bool:
         # Now see this path is newer than our target..
         if mtime is None or os.path.getmtime(path) >= mtime:
-            print(f'{Clr.SMAG}Build of {tnamepretty} triggered by'
-                  f' {path}{Clr.RST}')
+            print(f'{Clr.SMAG}Build of {tnamepretty} triggered by change in'
+                  f" '{path}'{Clr.RST}")
             return True
         return False
 
@@ -157,7 +142,7 @@ def _lazybuild_check_paths(inpaths: List[str], category: SourceCategory,
                 if _testpath(fpath):
                     return True
                 unchanged_count += 1
-    print(f'{Clr.SBLU}Lazybuild: skipping "{tnamepretty}"'
+    print(f'{Clr.BLU}Lazybuild: skipping "{tnamepretty}"'
           f' ({unchanged_count} inputs unchanged).{Clr.RST}')
     return False
 
@@ -183,7 +168,10 @@ def lazybuild(target: str, category: SourceCategory, command: str) -> None:
 
     # Everything possibly affecting generated code.
     if category is SourceCategory.CODE_GEN:
-        paths = ['Makefile', 'tools/generate_code', 'src/generated_src']
+        paths = [
+            'Makefile', 'tools/generate_code', 'tools/batools/codegen.py',
+            'src/generated_src'
+        ]
 
     # Everything possibly affecting asset builds.
     elif category is SourceCategory.ASSETS:
@@ -200,7 +188,7 @@ def lazybuild(target: str, category: SourceCategory, command: str) -> None:
     # Everything possibly affecting resource builds.
     elif category is SourceCategory.RESOURCES:
         paths = [
-            'Makefile', 'tools/snippets', 'resources/src', 'resources/Makefile'
+            'Makefile', 'tools/pcommand', 'resources/src', 'resources/Makefile'
         ]
     else:
         raise ValueError(f'Invalid source category: {category}')
@@ -241,7 +229,7 @@ def archive_old_builds(ssh_server: str, builds_dir: str,
         for old_file in [f for f in files if f.startswith(prefix)][1:]:
             files_to_archive.add(old_file)
 
-    # Would be faster to package this into a single command but
+    # Would be more efficient to package this into a single command but
     # this works.
     for fname in sorted(files_to_archive):
         print('Archiving ' + fname, file=sys.stderr)
@@ -268,39 +256,62 @@ def gen_fulltest_buildfile_android() -> None:
     modes += modes
     modes.append('prod')
 
+    # By default we cycle through build architectures for each flavor.
+    # However, for minor flavor with low risk of platform-dependent breakage
+    # we stick to a single one to keep disk space costs lower. (build files
+    # amount to several gigs per mode per flavor)
+    # UPDATE: Now that we have CPU time to spare, we simply always do 'arm64'
+    # or 'prod' depending on build type; this results in 1 or 4 architectures
+    # worth of build files per flavor instead of 8 (prod + 4 singles) and
+    # keeps our daily runs identical.
+    lightweight_flavors = {'template', 'arcade', 'demo', 'iircade'}
+
     lines = []
-    for i, flavor in enumerate(
+    for _i, flavor in enumerate(
             sorted(os.listdir('ballisticacore-android/BallisticaCore/src'))):
         if flavor == 'main' or flavor.startswith('.'):
             continue
-        mode = modes[(dayoffset + i) % len(modes)]
+
+        if flavor in lightweight_flavors:
+            mode = 'arm64'
+        else:
+            # mode = modes[(dayoffset + i) % len(modes)]
+            mode = 'prod'
         lines.append('ANDROID_PLATFORM=' + flavor + ' ANDROID_MODE=' + mode +
-                     ' nice -n 15 make android-build')
+                     ' make android-cloud-build')
 
     # Now add sparse tests that land on today.
     if DO_SPARSE_TEST_BUILDS:
         extras = SPARSE_TEST_BUILDS[dayoffset % len(SPARSE_TEST_BUILDS)]
         extras = [e for e in extras if e.startswith('android.')]
+        cspre = 'tools/cloudshell linbeast --env android --'
         for extra in extras:
             if extra == 'android.pylibs.arm':
-                lines.append('tools/snippets python_build_android arm')
+                lines.append(f'{cspre} tools/pcommand'
+                             f' python_build_android arm')
             elif extra == 'android.pylibs.arm.debug':
-                lines.append('tools/snippets python_build_android_debug arm')
+                lines.append(f'{cspre} tools/pcommand'
+                             f' python_build_android_debug arm')
             elif extra == 'android.pylibs.arm64':
-                lines.append('tools/snippets python_build_android arm64')
+                lines.append(f'{cspre} tools/pcommand'
+                             f' python_build_android arm64')
             elif extra == 'android.pylibs.arm64.debug':
-                lines.append('tools/snippets python_build_android_debug arm64')
+                lines.append(f'{cspre} tools/pcommand'
+                             f' python_build_android_debug arm64')
             elif extra == 'android.pylibs.x86':
-                lines.append('tools/snippets python_build_android x86')
+                lines.append(f'{cspre} tools/pcommand'
+                             f' python_build_android x86')
             elif extra == 'android.pylibs.x86.debug':
-                lines.append('tools/snippets python_build_android_debug x86')
+                lines.append(f'{cspre} tools/pcommand'
+                             f' python_build_android_debug x86')
             elif extra == 'android.pylibs.x86_64':
-                lines.append('tools/snippets python_build_android x86_64')
+                lines.append(f'{cspre} tools/pcommand'
+                             f' python_build_android x86_64')
             elif extra == 'android.pylibs.x86_64.debug':
-                lines.append(
-                    'tools/snippets python_build_android_debug x86_64')
+                lines.append(f'{cspre} tools/pcommand'
+                             f' python_build_android_debug x86_64')
             elif extra == 'android.package':
-                lines.append('make android-package')
+                lines.append('make android-cloud-package')
             else:
                 raise RuntimeError(f'Unknown extra: {extra}')
 
@@ -330,11 +341,11 @@ def gen_fulltest_buildfile_windows() -> None:
     cfg3 = 'Release' if (dayoffset + 2) % 7 == 0 else 'Debug'
 
     lines.append(f'WINDOWS_PROJECT= WINDOWS_PLATFORM={pval1} '
-                 f'WINDOWS_CONFIGURATION={cfg1} make windows-build')
+                 f'WINDOWS_CONFIGURATION={cfg1} make windows-cloud-build')
     lines.append(f'WINDOWS_PROJECT=Headless WINDOWS_PLATFORM={pval2} '
-                 f'WINDOWS_CONFIGURATION={cfg2} make windows-build')
+                 f'WINDOWS_CONFIGURATION={cfg2} make windows-cloud-build')
     lines.append(f'WINDOWS_PROJECT=Oculus WINDOWS_PLATFORM={pval3} '
-                 f'WINDOWS_CONFIGURATION={cfg3} make windows-build')
+                 f'WINDOWS_CONFIGURATION={cfg3} make windows-cloud-build')
 
     # Now add sparse tests that land on today.
     if DO_SPARSE_TEST_BUILDS:
@@ -367,51 +378,53 @@ def gen_fulltest_buildfile_apple() -> None:
     lines = []
 
     # iOS stuff
-    lines.append('nice -n 18 make ios-build')
-    lines.append('nice -n 18 make ios-new-build')
+    lines.append('make ios-build')
+    lines.append('make ios-new-build')
     if DO_SPARSE_TEST_BUILDS:
         extras = SPARSE_TEST_BUILDS[dayoffset % len(SPARSE_TEST_BUILDS)]
         extras = [e for e in extras if e.startswith('ios.')]
         for extra in extras:
             if extra == 'ios.pylibs':
-                lines.append('tools/snippets python_build_apple ios')
+                lines.append('tools/pcommand python_build_apple ios')
             elif extra == 'ios.pylibs.debug':
-                lines.append('tools/snippets python_build_apple_debug ios')
+                lines.append('tools/pcommand python_build_apple_debug ios')
             else:
                 raise RuntimeError(f'Unknown extra: {extra}')
 
     # tvOS stuff
-    lines.append('nice -n 18 make tvos-build')
+    lines.append('make tvos-build')
     if DO_SPARSE_TEST_BUILDS:
         extras = SPARSE_TEST_BUILDS[dayoffset % len(SPARSE_TEST_BUILDS)]
         extras = [e for e in extras if e.startswith('tvos.')]
         for extra in extras:
             if extra == 'tvos.pylibs':
-                lines.append('tools/snippets python_build_apple tvos')
+                lines.append('tools/pcommand python_build_apple tvos')
             elif extra == 'tvos.pylibs.debug':
-                lines.append('tools/snippets python_build_apple_debug tvos')
+                lines.append('tools/pcommand python_build_apple_debug tvos')
             else:
                 raise RuntimeError(f'Unknown extra: {extra}')
 
     # macOS stuff
-    lines.append('nice -n 18 make mac-build')
+    lines.append('make mac-build')
     # (throw release build in the mix to hopefully catch opt-mode-only errors).
-    lines.append('nice -n 18 make mac-appstore-release-build')
-    lines.append('nice -n 18 make mac-new-build')
-    lines.append('nice -n 18 make mac-server-build')
-    lines.append('nice -n 18 make cmake-build')
+    lines.append('make mac-appstore-release-build')
+    lines.append('make mac-new-build')
+    lines.append('make cmake-server-build')
+    lines.append('make cmake-build')
     if DO_SPARSE_TEST_BUILDS:
         extras = SPARSE_TEST_BUILDS[dayoffset % len(SPARSE_TEST_BUILDS)]
         extras = [e for e in extras if e.startswith('mac.')]
         for extra in extras:
             if extra == 'mac.package':
                 lines.append('make mac-package')
-            elif extra == 'mac.package.server':
-                lines.append('make mac-server-package')
+            elif extra == 'mac.package.server.x86_64':
+                lines.append('make mac-cloud-server-package-x86-64')
+            elif extra == 'mac.package.server.arm64':
+                lines.append('make mac-cloud-server-package-arm64')
             elif extra == 'mac.pylibs':
-                lines.append('tools/snippets python_build_apple mac')
+                lines.append('tools/pcommand python_build_apple mac')
             elif extra == 'mac.pylibs.debug':
-                lines.append('tools/snippets python_build_apple_debug mac')
+                lines.append('tools/pcommand python_build_apple_debug mac')
             else:
                 raise RuntimeError(f'Unknown extra: {extra}')
 
@@ -428,19 +441,18 @@ def gen_fulltest_buildfile_linux() -> None:
     dayoffset = datetime.datetime.now().timetuple().tm_yday
 
     targets = ['build', 'server-build']
-    linflav = 'LINUX_FLAVOR=u18s'
     lines = []
     for target in targets:
-        lines.append(f'{linflav} make linux-{target}')
+        lines.append(f'make cmake-cloud-{target}')
 
     if DO_SPARSE_TEST_BUILDS:
         extras = SPARSE_TEST_BUILDS[dayoffset % len(SPARSE_TEST_BUILDS)]
         extras = [e for e in extras if e.startswith('linux.')]
         for extra in extras:
             if extra == 'linux.package':
-                lines.append(f'{linflav} make linux-package')
+                lines.append('make linux-package')
             elif extra == 'linux.package.server':
-                lines.append(f'{linflav} make linux-server-package')
+                lines.append('make linux-server-package')
             else:
                 raise RuntimeError(f'Unknown extra: {extra}')
 
@@ -448,7 +460,7 @@ def gen_fulltest_buildfile_linux() -> None:
         outfile.write('\n'.join(lines))
 
 
-def get_current_prefab_platform() -> str:
+def get_current_prefab_platform(wsl_gives_windows: bool = True) -> str:
     """Get the name of the running platform.
 
     Throws a RuntimeError on unsupported platforms.
@@ -457,19 +469,29 @@ def get_current_prefab_platform() -> str:
     system = platform.system()
     machine = platform.machine()
     if system == 'Darwin':
-        # Currently there's just x86_64 on mac;
-        # will need to revisit when arm
-        # cpus happen.
-        return 'mac'
+        if machine == 'x86_64':
+            return 'mac_x86_64'
+        if machine == 'arm64':
+            return 'mac_arm64'
+        # TODO: add support for arm macs.
+        raise RuntimeError(f'make_prefab: unsupported mac machine type:'
+                           f' {machine}.')
     if system == 'Linux':
         # If it looks like we're in Windows Subsystem for Linux,
-        # go with the Windows version.
-        if 'microsoft' in platform.uname()[3].lower():
-            return 'windows'
+        # we may want to operate on Windows versions.
+        if wsl_gives_windows:
+            if 'microsoft' in platform.uname().release.lower():
+                # TODO: add support for arm windows
+                if machine == 'x86_64':
+                    return 'windows_x86'
+                raise RuntimeError(
+                    f'make_prefab: unsupported win machine type:'
+                    f' {machine}.')
 
-        # We currently only support x86_64 linux.
         if machine == 'x86_64':
-            return 'linux'
+            return 'linux_x86_64'
+        if machine == 'aarch64':
+            return 'linux_arm64'
         raise RuntimeError(f'make_prefab: unsupported linux machine type:'
                            f' {machine}.')
     raise RuntimeError(f'make_prefab: unrecognized platform:'
@@ -482,28 +504,47 @@ def _vstr(nums: Sequence[int]) -> str:
 
 def checkenv() -> None:
     """Check for tools necessary to build and run the app."""
+    # pylint: disable=too-many-branches
+
     from efrotools import PYTHON_BIN
-    print('Checking environment...', flush=True)
+    print(f'{Clr.BLD}Checking environment...{Clr.RST}', flush=True)
 
     # Make sure they've got curl.
     if subprocess.run(['which', 'curl'], check=False,
                       capture_output=True).returncode != 0:
-        raise RuntimeError('curl is required; please install it.')
+        raise CleanError('curl is required; please install it via apt,'
+                         ' brew, etc.')
+
+    # Make sure they've got rsync.
+    if subprocess.run(['which', 'rsync'], check=False,
+                      capture_output=True).returncode != 0:
+        raise CleanError('rsync is required; please install it via apt,'
+                         ' brew, etc.')
 
     # Make sure they've got our target python version.
     if subprocess.run(['which', PYTHON_BIN], check=False,
                       capture_output=True).returncode != 0:
-        raise RuntimeError(f'{PYTHON_BIN} is required; please install it.')
+        raise CleanError(f'{PYTHON_BIN} is required; please install it'
+                         'via apt, brew, etc.')
+
+    # Make sure they've got clang-format.
+    if subprocess.run(['which', 'clang-format'],
+                      check=False,
+                      capture_output=True).returncode != 0:
+        raise CleanError('clang-format is required; please install '
+                         'it via apt, brew, etc.')
 
     # Make sure they've got pip for that python version.
     if subprocess.run(f'{PYTHON_BIN} -m pip --version',
                       shell=True,
                       check=False,
                       capture_output=True).returncode != 0:
-        raise RuntimeError(
-            'pip (for {PYTHON_BIN}) is required; please install it.')
+        raise CleanError(
+            f'pip (for {PYTHON_BIN}) is required; please install it.')
 
     # Check for some required python modules.
+    # FIXME: since all of these come from pip now, we should just use
+    # pip --list to check versions on everything instead of doing it ad-hoc.
     for req in PIP_REQUIREMENTS:
         modname = req.modulename
         minver = req.minversion
@@ -521,25 +562,31 @@ def checkenv() -> None:
                                      check=False,
                                      capture_output=True)
         if results.returncode != 0:
-            raise RuntimeError(
-                f'{packagename} (for {PYTHON_BIN}) is required.\n'
-                f'To install it, try: "{PYTHON_BIN}'
-                f' -m pip install {packagename}"')
+            raise CleanError(f'{packagename} (for {PYTHON_BIN}) is required.\n'
+                             f'To install it, try: "{PYTHON_BIN}'
+                             f' -m pip install {packagename}"\n'
+                             f'Alternately, "tools/pcommand install_pip_reqs"'
+                             f' will update all pip requirements.')
         if minver is not None:
-            ver_line = results.stdout.decode().splitlines()[0]
+            # Note: some modules such as pytest print their version to stderr,
+            # so grab both.
+            verlines = (results.stdout + results.stderr).decode().splitlines()
+            if verlines[0].startswith('Cpplint fork'):
+                verlines = verlines[1:]
+            ver_line = verlines[0]
             assert modname in ver_line
             vnums = [int(x) for x in ver_line.split()[-1].split('.')]
             assert len(vnums) == len(minver)
             if vnums < minver:
-                raise RuntimeError(
+                raise CleanError(
                     f'{packagename} ver. {_vstr(minver)} or newer is required;'
                     f' found {_vstr(vnums)}.\n'
                     f'To upgrade it, try: "{PYTHON_BIN}'
                     f' -m pip install --upgrade {packagename}".\n'
-                    'Alternately, "tools/snippets install_pip_reqs"'
+                    'Alternately, "tools/pcommand install_pip_reqs"'
                     ' will update all pip requirements.')
 
-    print('Environment ok.', flush=True)
+    print(f'{Clr.BLD}Environment ok.{Clr.RST}', flush=True)
 
 
 def get_pip_reqs() -> List[str]:
@@ -560,13 +607,13 @@ def update_makebob() -> None:
     subprocess.run(['make', 'cmake-build'], check=True, env=env)
     subprocess.run(
         [
-            'cp', '-v', 'ballisticacore-cmake/build/release/make_bob',
+            'cp', '-v', 'build/cmake/release/make_bob',
             'tools/make_bob/mac_x86_64/'
         ],
         check=True,
     )
     print('Building linux_x86_64...', flush=True)
-    subprocess.run(['make', 'linux-build'], check=True, env=env)
+    subprocess.run(['make', 'linux-vm-build'], check=True, env=env)
     subprocess.run(
         [
             'cp', '-v', 'build/linux-release/make_bob',
@@ -603,41 +650,59 @@ def _get_server_config_raw_contents(projroot: str) -> str:
 
 
 def _get_server_config_template_yaml(projroot: str) -> str:
+    # pylint: disable=too-many-branches
     import yaml
     lines_in = _get_server_config_raw_contents(projroot).splitlines()
     lines_out: List[str] = []
+    ignore_vars = {'stress_test_players'}
     for line in lines_in:
-        if line != '' and not line.startswith('#'):
+        if any(line.startswith(f'{var}:') for var in ignore_vars):
+            pass
+        elif line != '' and not line.startswith('#'):
             vname, _vtype, veq, vval_raw = line.split()
             assert vname.endswith(':')
             vname = vname[:-1]
             assert veq == '='
-            vval = eval(vval_raw)  # pylint: disable=eval-used
+            vval: Any
+            if vval_raw == 'field(default_factory=list)':
+                vval = []
+            else:
+                vval = eval(vval_raw)  # pylint: disable=eval-used
 
             # Filter/override a few things.
             if vname == 'playlist_code':
                 # User wouldn't want to pass the default of None here.
                 vval = 12345
+            elif vname == 'clean_exit_minutes':
+                vval = 60
+            elif vname == 'unclean_exit_minutes':
+                vval = 90
+            elif vname == 'idle_exit_minutes':
+                vval = 20
             elif vname == 'stats_url':
                 vval = ('https://mystatssite.com/'
                         'showstats?player=${ACCOUNT}')
-            lines_out.append('#' + yaml.dump({vname: vval}).strip())
+            elif vname == 'admins':
+                vval = ['pb-yOuRAccOuNtIdHErE', 'pb-aNdMayBeAnotherHeRE']
+            lines_out += [
+                '#' + l for l in yaml.dump({
+                    vname: vval
+                }).strip().splitlines()
+            ]
         else:
             # Convert comments referring to python bools to yaml bools.
             line = line.replace('True', 'true').replace('False', 'false')
-            lines_out.append(line)
+            if '(internal)' not in line:
+                lines_out.append(line)
     return '\n'.join(lines_out)
 
 
-def filter_server_config(projroot: str, infilepath: str,
-                         outfilepath: str) -> None:
+def filter_server_config(projroot: str, infilepath: str) -> str:
     """Add commented-out config options to a server config."""
     with open(infilepath) as infile:
         cfg = infile.read()
-    cfg = cfg.replace('#__CONFIG_TEMPLATE_VALUES__',
-                      _get_server_config_template_yaml(projroot))
-    with open(outfilepath, 'w') as outfile:
-        outfile.write(cfg)
+    return cfg.replace('#__CONFIG_TEMPLATE_VALUES__',
+                       _get_server_config_template_yaml(projroot))
 
 
 def update_docs_md(check: bool) -> None:
@@ -667,6 +732,7 @@ def update_docs_md(check: bool) -> None:
             for fname in files:
                 if any(fname.endswith(ext) for ext in exts):
                     pysources.append(os.path.join(root, fname))
+    pysources.sort()
     curhash = get_files_hash(pysources)
 
     # Extract the current embedded hash.
@@ -691,3 +757,110 @@ def update_docs_md(check: bool) -> None:
         with open(docs_hash_path, 'w') as outfile:
             outfile.write(curhash)
     print(f'{docs_path} is up to date.')
+
+
+def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
+    """Create a dir, recreating it when cmake/python/etc. version changes.
+
+    Useful to prevent builds from breaking when cmake or other components
+    are updated.
+    """
+    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-statements
+    import json
+    from efrotools import PYVER
+    verfilename = os.path.join(dirname, '.ba_cmake_env')
+    title = 'cmake_prep_dir'
+
+    versions: Dict[str, str]
+    if os.path.isfile(verfilename):
+        with open(verfilename) as infile:
+            versions = json.loads(infile.read())
+            assert isinstance(versions, dict)
+    else:
+        versions = {}
+
+    # Start fresh if cmake version changes.
+    cmake_ver_output = subprocess.run(['cmake', '--version'],
+                                      check=True,
+                                      capture_output=True).stdout.decode()
+    cmake_ver = cmake_ver_output.splitlines()[0].split('cmake version ')[1]
+    cmake_ver_existing = versions.get('cmake_version')
+    assert isinstance(cmake_ver_existing, (str, type(None)))
+    if verbose:
+        print(f'{Clr.BLD}{title}:{Clr.RST} {cmake_ver=} {cmake_ver_existing=}')
+
+    # ...or if the actual location of cmake on disk changes.
+    cmake_path = os.path.realpath(
+        subprocess.run(['which', 'cmake'], check=True,
+                       capture_output=True).stdout.decode().strip())
+    cmake_path_existing = versions.get('cmake_path')
+    assert isinstance(cmake_path_existing, (str, type(None)))
+    if verbose:
+        print(f'{Clr.BLD}{title}:{Clr.RST}'
+              f' {cmake_path=} {cmake_path_existing=}')
+
+    # ...or if python's version changes.
+    python_ver_output = subprocess.run(
+        [f'python{PYVER}', '--version'], check=True,
+        capture_output=True).stdout.decode().strip()
+    python_ver = python_ver_output.splitlines()[0].split('Python ')[1]
+    python_ver_existing = versions.get('python_version')
+    assert isinstance(python_ver_existing, (str, type(None)))
+    if verbose:
+        print(f'{Clr.BLD}{title}:{Clr.RST}'
+              f' {python_ver=} {python_ver_existing=}')
+
+    # ...or if the actual location of python on disk changes.
+    python_path = os.path.realpath(
+        subprocess.run(['which', f'python{PYVER}'],
+                       check=True,
+                       capture_output=True).stdout.decode())
+    python_path_existing = versions.get('python_path')
+    assert isinstance(python_path_existing, (str, type(None)))
+    if verbose:
+        print(f'{Clr.BLD}{title}:{Clr.RST}'
+              f' {python_path=} {python_path_existing=}')
+
+    # Blow away and start from scratch if any vals differ from existing.
+    if (cmake_ver_existing == cmake_ver and cmake_path == cmake_path_existing
+            and python_ver_existing == python_ver
+            and python_path == python_path_existing):
+        if verbose:
+            print(f'{Clr.BLD}{title}:{Clr.RST} Keeping existing build dir.')
+    else:
+        if verbose:
+            print(
+                f'{Clr.BLD}{title}:{Clr.RST} Blowing away existing build dir.')
+
+        if (cmake_ver_existing is not None
+                and cmake_ver_existing != cmake_ver):
+            print(f'{Clr.BLU}CMake version changed from {cmake_ver_existing}'
+                  f' to {cmake_ver}; clearing existing build at'
+                  f' "{dirname}".{Clr.RST}')
+        if (cmake_path_existing is not None
+                and cmake_path_existing != cmake_path):
+            print(f'{Clr.BLU}CMake path changed from {cmake_path_existing}'
+                  f' to {cmake_path}; clearing existing build at'
+                  f' "{dirname}".{Clr.RST}')
+        if (python_ver_existing is not None
+                and python_ver_existing != python_ver):
+            print(f'{Clr.BLU}Python version changed from {python_ver_existing}'
+                  f' to {python_ver}; clearing existing build at'
+                  f' "{dirname}".{Clr.RST}')
+        if (python_path_existing is not None
+                and python_path_existing != python_path):
+            print(f'{Clr.BLU}Python path changed from {python_path_existing}'
+                  f' to {python_path}; clearing existing build at'
+                  f' "{dirname}".{Clr.RST}')
+        subprocess.run(['rm', '-rf', dirname], check=True)
+        os.makedirs(dirname, exist_ok=True)
+        with open(verfilename, 'w') as outfile:
+            outfile.write(
+                json.dumps({
+                    'cmake_version': cmake_ver,
+                    'cmake_path': cmake_path,
+                    'python_version': python_ver,
+                    'python_path': python_path
+                }))

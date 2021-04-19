@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides a window to customize team names and colors."""
 
 from __future__ import annotations
@@ -43,26 +25,29 @@ class TeamNamesColorsWindow(popup.PopupWindow):
         self._max_name_length = 16
 
         # Creates our _root_widget.
-        scale = (1.69 if ba.app.small_ui else 1.1 if ba.app.med_ui else 0.85)
+        uiscale = ba.app.ui.uiscale
+        scale = (1.69 if uiscale is ba.UIScale.SMALL else
+                 1.1 if uiscale is ba.UIScale.MEDIUM else 0.85)
         super().__init__(position=scale_origin,
                          size=(self._width, self._height),
                          scale=scale)
 
-        bs_config = ba.app.config
+        appconfig = ba.app.config
         self._names = list(
-            bs_config.get('Custom Team Names', DEFAULT_TEAM_NAMES))
+            appconfig.get('Custom Team Names', DEFAULT_TEAM_NAMES))
+
         # We need to flatten the translation since it will be an
         # editable string.
         self._names = [
             ba.Lstr(translate=('teamNames', n)).evaluate() for n in self._names
         ]
         self._colors = list(
-            bs_config.get('Custom Team Colors', DEFAULT_TEAM_COLORS))
+            appconfig.get('Custom Team Colors', DEFAULT_TEAM_COLORS))
 
         self._color_buttons: List[ba.Widget] = []
         self._color_text_fields: List[ba.Widget] = []
 
-        ba.buttonwidget(
+        resetbtn = ba.buttonwidget(
             parent=self.root_widget,
             label=ba.Lstr(resource='settingsWindowAdvanced.resetText'),
             autoselect=True,
@@ -93,20 +78,27 @@ class TeamNamesColorsWindow(popup.PopupWindow):
                               description=ba.Lstr(resource='nameText'),
                               editable=True,
                               padding=4))
-        ba.buttonwidget(parent=self.root_widget,
-                        label=ba.Lstr(resource='cancelText'),
-                        autoselect=True,
-                        on_activate_call=self._on_cancel_press,
-                        size=(150, 50),
-                        position=(self._width * 0.5 - 200, 20))
-        ba.buttonwidget(parent=self.root_widget,
-                        label=ba.Lstr(resource='saveText'),
-                        autoselect=True,
-                        on_activate_call=self._save,
-                        size=(150, 50),
-                        position=(self._width * 0.5 + 50, 20))
+        ba.widget(edit=self._color_text_fields[0],
+                  down_widget=self._color_text_fields[1])
+        ba.widget(edit=self._color_text_fields[1],
+                  up_widget=self._color_text_fields[0])
+        ba.widget(edit=self._color_text_fields[0], up_widget=resetbtn)
+
+        cancelbtn = ba.buttonwidget(parent=self.root_widget,
+                                    label=ba.Lstr(resource='cancelText'),
+                                    autoselect=True,
+                                    on_activate_call=self._on_cancel_press,
+                                    size=(150, 50),
+                                    position=(self._width * 0.5 - 200, 20))
+        okbtn = ba.buttonwidget(parent=self.root_widget,
+                                label=ba.Lstr(resource='okText'),
+                                autoselect=True,
+                                on_activate_call=self._ok,
+                                size=(150, 50),
+                                position=(self._width * 0.5 + 50, 20))
         ba.containerwidget(edit=self.root_widget,
                            selected_child=self._color_buttons[0])
+        ba.widget(edit=okbtn, left_widget=cancelbtn)
         self._update()
 
     def _color_click(self, i: int) -> None:
@@ -144,7 +136,7 @@ class TeamNamesColorsWindow(popup.PopupWindow):
             ba.textwidget(edit=self._color_text_fields[i],
                           color=self._colors[i])
 
-    def _save(self) -> None:
+    def _ok(self) -> None:
         from ba.internal import DEFAULT_TEAM_COLORS, DEFAULT_TEAM_NAMES
         cfg = ba.app.config
 
@@ -179,11 +171,10 @@ class TeamNamesColorsWindow(popup.PopupWindow):
                 if key in cfg:
                     del cfg[key]
         else:
-            cfg['Custom Team Names'] = tuple(new_names)
-            cfg['Custom Team Colors'] = tuple(self._colors)
+            cfg['Custom Team Names'] = list(new_names)
+            cfg['Custom Team Colors'] = list(self._colors)
 
         cfg.commit()
-        ba.playsound(ba.getsound('gunCocking'))
         self._transition_out()
 
     def _transition_out(self, transition: str = 'out_scale') -> None:

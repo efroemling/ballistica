@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Exposed functionality not intended for full public use.
 
 Classes and functions contained here, while technically 'public', may change
@@ -34,27 +16,17 @@ from ba._appconfig import commit_app_config
 from ba._input import (get_device_value, get_input_map_hash,
                        get_input_device_config)
 from ba._general import getclass, json_prep, get_type_name
-from ba._account import (on_account_state_changed,
-                         handle_account_gained_tickets, have_pro_options,
-                         have_pro, cache_tournament_info,
-                         ensure_have_account_player_profile,
-                         get_purchased_icons, get_cached_league_rank_data,
-                         get_league_rank_points, cache_league_rank_data)
 from ba._activitytypes import JoinActivity, ScoreScreenActivity
-from ba._achievement import (get_achievement, set_completed_achievements,
-                             display_achievement_banner,
-                             get_achievements_for_coop_level)
 from ba._apputils import (is_browser_likely_available, get_remote_app_name,
-                          should_submit_debug_info, show_ad, show_ad_2)
+                          should_submit_debug_info)
 from ba._benchmark import (run_gpu_benchmark, run_cpu_benchmark,
                            run_media_reload_benchmark, run_stress_test)
-from ba._campaign import get_campaign
+from ba._campaign import getcampaign
 from ba._messages import PlayerProfilesChangedMessage
-from ba._meta import get_game_types
-from ba._modutils import show_user_scripts
 from ba._multiteamsession import DEFAULT_TEAM_COLORS, DEFAULT_TEAM_NAMES
 from ba._music import do_play_music
-from ba._netutils import serverget, serverput, get_ip_address_type
+from ba._netutils import (master_server_get, master_server_post,
+                          get_ip_address_type)
 from ba._powerup import get_default_powerup_distribution
 from ba._profile import (get_player_profile_colors, get_player_profile_icon,
                          get_player_colors)

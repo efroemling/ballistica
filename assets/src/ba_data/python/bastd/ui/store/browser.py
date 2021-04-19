@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """UI for browsing the store."""
 # pylint: disable=too-many-lines
 from __future__ import annotations
@@ -25,6 +7,7 @@ from __future__ import annotations
 import copy
 import math
 import weakref
+from enum import Enum
 from typing import TYPE_CHECKING
 
 import _ba
@@ -38,27 +21,28 @@ if TYPE_CHECKING:
 class StoreBrowserWindow(ba.Window):
     """Window for browsing the store."""
 
-    def _update_get_tickets_button_pos(self) -> None:
-        if self._get_tickets_button:
-            pos = (self._width - 252 -
-                   (self._x_inset + (47 if ba.app.small_ui
-                                     and _ba.is_party_icon_visible() else 0)),
-                   self._height - 70)
-            ba.buttonwidget(edit=self._get_tickets_button, position=pos)
+    class TabID(Enum):
+        """Our available tab types."""
+        EXTRAS = 'extras'
+        MAPS = 'maps'
+        MINIGAMES = 'minigames'
+        CHARACTERS = 'characters'
+        ICONS = 'icons'
 
     def __init__(self,
                  transition: str = 'in_right',
                  modal: bool = False,
-                 show_tab: str = None,
+                 show_tab: StoreBrowserWindow.TabID = None,
                  on_close_call: Callable[[], Any] = None,
                  back_location: str = None,
                  origin_widget: ba.Widget = None):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
-        from bastd.ui import tabs
+        from bastd.ui.tabs import TabRow
         from ba import SpecialChar
 
         app = ba.app
+        uiscale = app.ui.uiscale
 
         ba.set_analytics_screen('Store Window')
 
@@ -81,11 +65,12 @@ class StoreBrowserWindow(ba.Window):
         self._on_close_call = on_close_call
         self._show_tab = show_tab
         self._modal = modal
-        self._width = 1240 if app.small_ui else 1040
-        self._x_inset = x_inset = 100 if app.small_ui else 0
-        self._height = (578 if app.small_ui else 645 if app.med_ui else 800)
-        self._current_tab: Optional[str] = None
-        extra_top = 30 if app.small_ui else 0
+        self._width = 1240 if uiscale is ba.UIScale.SMALL else 1040
+        self._x_inset = x_inset = 100 if uiscale is ba.UIScale.SMALL else 0
+        self._height = (578 if uiscale is ba.UIScale.SMALL else
+                        645 if uiscale is ba.UIScale.MEDIUM else 800)
+        self._current_tab: Optional[StoreBrowserWindow.TabID] = None
+        extra_top = 30 if uiscale is ba.UIScale.SMALL else 0
 
         self._request: Any = None
         self._r = 'store'
@@ -95,12 +80,11 @@ class StoreBrowserWindow(ba.Window):
             size=(self._width, self._height + extra_top),
             transition=transition,
             toolbar_visibility='menu_full',
-            scale=1.3 if app.small_ui else 0.9 if app.med_ui else 0.8,
+            scale=(1.3 if uiscale is ba.UIScale.SMALL else
+                   0.9 if uiscale is ba.UIScale.MEDIUM else 0.8),
             scale_origin_stack_offset=scale_origin,
-            stack_offset=(0,
-                          -5) if app.small_ui else (0,
-                                                    0) if app.med_ui else (0,
-                                                                           0)))
+            stack_offset=((0, -5) if uiscale is ba.UIScale.SMALL else (
+                0, 0) if uiscale is ba.UIScale.MEDIUM else (0, 0))))
 
         self._back_button = btn = ba.buttonwidget(
             parent=self._root_widget,
@@ -113,17 +97,27 @@ class StoreBrowserWindow(ba.Window):
             on_activate_call=self._back)
         ba.containerwidget(edit=self._root_widget, cancel_button=btn)
 
-        self._get_tickets_button = ba.buttonwidget(
-            parent=self._root_widget,
-            size=(210, 65),
-            on_activate_call=self._on_get_more_tickets_press,
-            autoselect=True,
-            scale=0.9,
-            text_scale=1.4,
-            left_widget=self._back_button,
-            color=(0.7, 0.5, 0.85),
-            textcolor=(0.2, 1.0, 0.2),
-            label=ba.Lstr(resource='getTicketsWindow.titleText'))
+        self._ticket_count_text: Optional[ba.Widget] = None
+        self._get_tickets_button: Optional[ba.Widget] = None
+
+        if ba.app.allow_ticket_purchases:
+            self._get_tickets_button = ba.buttonwidget(
+                parent=self._root_widget,
+                size=(210, 65),
+                on_activate_call=self._on_get_more_tickets_press,
+                autoselect=True,
+                scale=0.9,
+                text_scale=1.4,
+                left_widget=self._back_button,
+                color=(0.7, 0.5, 0.85),
+                textcolor=(0.2, 1.0, 0.2),
+                label=ba.Lstr(resource='getTicketsWindow.titleText'))
+        else:
+            self._ticket_count_text = ba.textwidget(parent=self._root_widget,
+                                                    size=(210, 64),
+                                                    color=(0.2, 1.0, 0.2),
+                                                    h_align='center',
+                                                    v_align='center')
 
         # Move this dynamically to keep it out of the way of the party icon.
         self._update_get_tickets_button_pos()
@@ -132,8 +126,9 @@ class StoreBrowserWindow(ba.Window):
             ba.WeakCall(self._update_get_tickets_button_pos),
             repeat=True,
             timetype=ba.TimeType.REAL)
-        ba.widget(edit=self._back_button,
-                  right_widget=self._get_tickets_button)
+        if self._get_tickets_button:
+            ba.widget(edit=self._back_button,
+                      right_widget=self._get_tickets_button)
         self._ticket_text_update_timer = ba.Timer(
             1.0,
             ba.WeakCall(self._update_tickets_text),
@@ -158,7 +153,7 @@ class StoreBrowserWindow(ba.Window):
         ba.textwidget(parent=self._root_widget,
                       position=(self._width * 0.5, self._height - 44),
                       size=(0, 0),
-                      color=app.title_color,
+                      color=app.ui.title_color,
                       scale=1.5,
                       h_align='center',
                       v_align='center',
@@ -175,29 +170,29 @@ class StoreBrowserWindow(ba.Window):
         tab_buffer_h = 250 + 2 * x_inset
 
         tabs_def = [
-            ('extras', ba.Lstr(resource=self._r + '.extrasText')),
-            ('maps', ba.Lstr(resource=self._r + '.mapsText')),
-            ('minigames', ba.Lstr(resource=self._r + '.miniGamesText')),
-            ('characters', ba.Lstr(resource=self._r + '.charactersText')),
-            ('icons', ba.Lstr(resource=self._r + '.iconsText')),
+            (self.TabID.EXTRAS, ba.Lstr(resource=self._r + '.extrasText')),
+            (self.TabID.MAPS, ba.Lstr(resource=self._r + '.mapsText')),
+            (self.TabID.MINIGAMES,
+             ba.Lstr(resource=self._r + '.miniGamesText')),
+            (self.TabID.CHARACTERS,
+             ba.Lstr(resource=self._r + '.charactersText')),
+            (self.TabID.ICONS, ba.Lstr(resource=self._r + '.iconsText')),
         ]
 
-        tab_results = tabs.create_tab_buttons(self._root_widget,
-                                              tabs_def,
-                                              pos=(tab_buffer_h * 0.5,
-                                                   self._height - 130),
-                                              size=(self._width - tab_buffer_h,
-                                                    50),
-                                              on_select_call=self._set_tab,
-                                              return_extra_info=True)
+        self._tab_row = TabRow(self._root_widget,
+                               tabs_def,
+                               pos=(tab_buffer_h * 0.5, self._height - 130),
+                               size=(self._width - tab_buffer_h, 50),
+                               on_select_call=self._set_tab)
 
-        self._purchasable_count_widgets: Dict[str, Dict[str, Any]] = {}
+        self._purchasable_count_widgets: Dict[StoreBrowserWindow.TabID,
+                                              Dict[str, Any]] = {}
 
         # Create our purchasable-items tags and have them update over time.
-        for i, tab in enumerate(tabs_def):
-            pos = tab_results['positions'][i]
-            size = tab_results['sizes'][i]
-            button = tab_results['buttons_indexed'][i]
+        for tab_id, tab in self._tab_row.tabs.items():
+            pos = tab.position
+            size = tab.size
+            button = tab.button
             rad = 10
             center = (pos[0] + 0.1 * size[0], pos[1] + 0.9 * size[1])
             img = ba.imagewidget(parent=self._root_widget,
@@ -247,7 +242,7 @@ class StoreBrowserWindow(ba.Window):
                                            shadow=0.0,
                                            flatness=1.0,
                                            color=(0, 1, 0))
-            self._purchasable_count_widgets[tab[0]] = {
+            self._purchasable_count_widgets[tab_id] = {
                 'img': img,
                 'text': txt,
                 'sale_img': sale_img,
@@ -260,10 +255,8 @@ class StoreBrowserWindow(ba.Window):
                                           repeat=True)
         self._update_tabs()
 
-        self._tab_buttons = tab_results['buttons']
-
-        if self._get_tickets_button is not None:
-            last_tab_button = self._tab_buttons[tabs_def[-1][0]]
+        if self._get_tickets_button:
+            last_tab_button = self._tab_row.tabs[tabs_def[-1][0]].button
             ba.widget(edit=self._get_tickets_button,
                       down_widget=last_tab_button)
             ba.widget(edit=last_tab_button,
@@ -277,6 +270,17 @@ class StoreBrowserWindow(ba.Window):
         self._status_textwidget: Optional[ba.Widget] = None
         self._restore_state()
 
+    def _update_get_tickets_button_pos(self) -> None:
+        uiscale = ba.app.ui.uiscale
+        pos = (self._width - 252 - (self._x_inset +
+                                    (47 if uiscale is ba.UIScale.SMALL
+                                     and _ba.is_party_icon_visible() else 0)),
+               self._height - 70)
+        if self._get_tickets_button:
+            ba.buttonwidget(edit=self._get_tickets_button, position=pos)
+        if self._ticket_count_text:
+            ba.textwidget(edit=self._ticket_count_text, position=pos)
+
     def _restore_purchases(self) -> None:
         from bastd.ui import account
         if _ba.get_account_state() != 'signed_in':
@@ -289,9 +293,8 @@ class StoreBrowserWindow(ba.Window):
                                  get_available_purchase_count)
         if not self._root_widget:
             return
-        for tab_name, tab_data in list(
-                self._purchasable_count_widgets.items()):
-            sale_time = get_available_sale_time(tab_name)
+        for tab_id, tab_data in list(self._purchasable_count_widgets.items()):
+            sale_time = get_available_sale_time(tab_id.value)
 
             if sale_time is not None:
                 ba.textwidget(edit=tab_data['sale_title_text'],
@@ -307,7 +310,7 @@ class StoreBrowserWindow(ba.Window):
                 ba.textwidget(edit=tab_data['sale_title_text'], text='')
                 ba.textwidget(edit=tab_data['sale_time_text'], text='')
                 ba.imagewidget(edit=tab_data['sale_img'], opacity=0.0)
-                count = get_available_purchase_count(tab_name)
+                count = get_available_purchase_count(tab_id.value)
 
             if count > 0:
                 ba.textwidget(edit=tab_data['text'], text=str(count))
@@ -326,21 +329,23 @@ class StoreBrowserWindow(ba.Window):
                 _ba.get_account_ticket_count())
         else:
             sval = ba.Lstr(resource='getTicketsWindow.titleText')
-        ba.buttonwidget(edit=self._get_tickets_button, label=sval)
+        if self._get_tickets_button:
+            ba.buttonwidget(edit=self._get_tickets_button, label=sval)
+        if self._ticket_count_text:
+            ba.textwidget(edit=self._ticket_count_text, text=sval)
 
-    def _set_tab(self, tab: str) -> None:
-        from bastd.ui import tabs
-        if self._current_tab == tab:
+    def _set_tab(self, tab_id: TabID) -> None:
+        if self._current_tab is tab_id:
             return
-        self._current_tab = tab
+        self._current_tab = tab_id
 
         # We wanna preserve our current tab between runs.
         cfg = ba.app.config
-        cfg['Store Tab'] = tab
+        cfg['Store Tab'] = tab_id.value
         cfg.commit()
 
         # Update tab colors based on which is selected.
-        tabs.update_tab_button_colors(self._tab_buttons, tab)
+        self._tab_row.update_appearance(tab_id)
 
         # (Re)create scroll widget.
         if self._scrollwidget:
@@ -351,18 +356,15 @@ class StoreBrowserWindow(ba.Window):
             highlight=False,
             position=((self._width - self._scroll_width) * 0.5,
                       self._height - self._scroll_height - 79 - 48),
-            size=(self._scroll_width, self._scroll_height))
+            size=(self._scroll_width, self._scroll_height),
+            claims_left_right=True,
+            claims_tab=True,
+            selection_loops_to_parent=True)
 
         # NOTE: this stuff is modified by the _Store class.
         # Should maybe clean that up.
         self.button_infos = {}
         self.update_buttons_timer = None
-
-        # So we can still select root level widgets with controllers.
-        ba.containerwidget(edit=self._scrollwidget,
-                           claims_left_right=True,
-                           claims_tab=True,
-                           selection_loop_to_parent=True)
 
         # Show status over top.
         if self._status_textwidget:
@@ -381,7 +383,7 @@ class StoreBrowserWindow(ba.Window):
 
             def __init__(self, window: StoreBrowserWindow):
                 self._window = weakref.ref(window)
-                data = {'tab': tab}
+                data = {'tab': tab_id.value}
                 ba.timer(0.1,
                          ba.WeakCall(self._on_response, data),
                          timetype=ba.TimeType.REAL)
@@ -449,13 +451,13 @@ class StoreBrowserWindow(ba.Window):
     def _do_purchase_check(self,
                            item: str,
                            is_ticket_purchase: bool = False) -> None:
-        from ba.internal import serverget
+        from ba.internal import master_server_get
 
         # Here we ping the server to ask if it's valid for us to
         # purchase this. Better to fail now than after we've
         # paid locally.
         app = ba.app
-        serverget(
+        master_server_get(
             'bsAccountPurchaseCheck',
             {
                 'item': item,
@@ -534,7 +536,7 @@ class StoreBrowserWindow(ba.Window):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
-        from ba.internal import have_pro, get_available_sale_time
+        from ba.internal import get_available_sale_time
         from ba import SpecialChar
         if not self._root_widget:
             return
@@ -558,7 +560,7 @@ class StoreBrowserWindow(ba.Window):
         for b_type, b_info in self.button_infos.items():
 
             if b_type in ['upgrades.pro', 'pro']:
-                purchased = have_pro()
+                purchased = _ba.app.accounts.have_pro()
             else:
                 purchased = _ba.get_purchased(b_type)
 
@@ -718,6 +720,8 @@ class StoreBrowserWindow(ba.Window):
                     self._sections = copy.deepcopy(store_data[sdata['tab']])
                     self._height: Optional[float] = None
 
+                    uiscale = ba.app.ui.uiscale
+
                     # Pre-calc a few things and add them to store-data.
                     for section in self._sections:
                         if self._tab == 'characters':
@@ -739,8 +743,9 @@ class StoreBrowserWindow(ba.Window):
                         section['x_offs'] = (130 if self._tab == 'extras' else
                                              270 if self._tab == 'maps' else 0)
                         section['y_offs'] = (
-                            55 if (self._tab == 'extras' and ba.app.small_ui)
-                            else -20 if self._tab == 'icons' else 0)
+                            55 if (self._tab == 'extras'
+                                   and uiscale is ba.UIScale.SMALL) else
+                            -20 if self._tab == 'icons' else 0)
 
                 def instantiate(self, scrollwidget: ba.Widget,
                                 tab_button: ba.Widget) -> None:
@@ -776,11 +781,10 @@ class StoreBrowserWindow(ba.Window):
                     cnt2 = ba.containerwidget(parent=scrollwidget,
                                               scale=1.0,
                                               size=(self._width, self._height),
-                                              background=False)
-                    ba.containerwidget(edit=cnt2,
-                                       claims_left_right=True,
-                                       claims_tab=True,
-                                       selection_loop_to_parent=True)
+                                              background=False,
+                                              claims_left_right=True,
+                                              claims_tab=True,
+                                              selection_loops_to_parent=True)
                     v = self._height - 20
 
                     if self._tab == 'characters':
@@ -959,23 +963,23 @@ class StoreBrowserWindow(ba.Window):
                     # Also update them immediately.
                     self._store_window.update_buttons()
 
-            if self._current_tab in ('extras', 'minigames', 'characters',
-                                     'maps', 'icons'):
+            if self._current_tab in (self.TabID.EXTRAS, self.TabID.MINIGAMES,
+                                     self.TabID.CHARACTERS, self.TabID.MAPS,
+                                     self.TabID.ICONS):
                 store = _Store(self, data, self._scroll_width)
                 assert self._scrollwidget is not None
                 store.instantiate(
                     scrollwidget=self._scrollwidget,
-                    tab_button=self._tab_buttons[self._current_tab])
+                    tab_button=self._tab_row.tabs[self._current_tab].button)
             else:
                 cnt = ba.containerwidget(parent=self._scrollwidget,
                                          scale=1.0,
                                          size=(self._scroll_width,
                                                self._scroll_height * 0.95),
-                                         background=False)
-                ba.containerwidget(edit=cnt,
-                                   claims_left_right=True,
-                                   claims_tab=True,
-                                   selection_loop_to_parent=True)
+                                         background=False,
+                                         claims_left_right=True,
+                                         claims_tab=True,
+                                         selection_loops_to_parent=True)
                 self._status_textwidget = ba.textwidget(
                     parent=cnt,
                     position=(self._scroll_width * 0.5,
@@ -992,88 +996,97 @@ class StoreBrowserWindow(ba.Window):
     def _save_state(self) -> None:
         try:
             sel = self._root_widget.get_selected_child()
+            selected_tab_ids = [
+                tab_id for tab_id, tab in self._tab_row.tabs.items()
+                if sel == tab.button
+            ]
             if sel == self._get_tickets_button:
                 sel_name = 'GetTickets'
             elif sel == self._scrollwidget:
                 sel_name = 'Scroll'
             elif sel == self._back_button:
                 sel_name = 'Back'
-            elif sel in list(self._tab_buttons.values()):
-                sel_name = 'Tab:' + list(self._tab_buttons.keys())[list(
-                    self._tab_buttons.values()).index(sel)]
+            elif selected_tab_ids:
+                assert len(selected_tab_ids) == 1
+                sel_name = f'Tab:{selected_tab_ids[0].value}'
             else:
-                raise Exception('unrecognized selection')
-            ba.app.window_states[self.__class__.__name__] = {
+                raise ValueError(f'unrecognized selection \'{sel}\'')
+            ba.app.ui.window_states[type(self)] = {
                 'sel_name': sel_name,
-                'tab': self._current_tab
             }
         except Exception:
-            ba.print_exception('error saving state for', self.__class__)
+            ba.print_exception(f'Error saving state for {self}.')
 
     def _restore_state(self) -> None:
+        from efro.util import enum_by_value
         try:
             sel: Optional[ba.Widget]
+            sel_name = ba.app.ui.window_states.get(type(self),
+                                                   {}).get('sel_name')
+            assert isinstance(sel_name, (str, type(None)))
+
             try:
-                sel_name = (
-                    ba.app.window_states[self.__class__.__name__]['sel_name'])
-            except Exception:
-                sel_name = None
-            try:
-                current_tab = ba.app.config['Store Tab']
-            except Exception:
-                current_tab = None
+                current_tab = enum_by_value(self.TabID,
+                                            ba.app.config.get('Store Tab'))
+            except ValueError:
+                current_tab = self.TabID.CHARACTERS
+
             if self._show_tab is not None:
                 current_tab = self._show_tab
-            if current_tab is None or current_tab not in self._tab_buttons:
-                current_tab = 'characters'
-            if sel_name == 'GetTickets':
+            if sel_name == 'GetTickets' and self._get_tickets_button:
                 sel = self._get_tickets_button
             elif sel_name == 'Back':
                 sel = self._back_button
             elif sel_name == 'Scroll':
                 sel = self._scrollwidget
             elif isinstance(sel_name, str) and sel_name.startswith('Tab:'):
-                sel = self._tab_buttons[sel_name.split(':')[-1]]
+                try:
+                    sel_tab_id = enum_by_value(self.TabID,
+                                               sel_name.split(':')[-1])
+                except ValueError:
+                    sel_tab_id = self.TabID.CHARACTERS
+                sel = self._tab_row.tabs[sel_tab_id].button
             else:
-                sel = self._tab_buttons[current_tab]
-            # if we were requested to show a tab, select it too..
+                sel = self._tab_row.tabs[current_tab].button
+
+            # If we were requested to show a tab, select it too..
             if (self._show_tab is not None
-                    and self._show_tab in self._tab_buttons):
-                sel = self._tab_buttons[self._show_tab]
+                    and self._show_tab in self._tab_row.tabs):
+                sel = self._tab_row.tabs[self._show_tab].button
             self._set_tab(current_tab)
             if sel is not None:
                 ba.containerwidget(edit=self._root_widget, selected_child=sel)
         except Exception:
-            ba.print_exception('error restoring state for', self.__class__)
+            ba.print_exception(f'Error restoring state for {self}.')
 
     def _on_get_more_tickets_press(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui import account
-        from bastd.ui import getcurrency
+        from bastd.ui.account import show_sign_in_prompt
+        from bastd.ui.getcurrency import GetCurrencyWindow
         if _ba.get_account_state() != 'signed_in':
-            account.show_sign_in_prompt()
+            show_sign_in_prompt()
             return
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        window = getcurrency.GetCurrencyWindow(
+        window = GetCurrencyWindow(
             from_modal_store=self._modal,
             store_back_location=self._back_location).get_root_widget()
         if not self._modal:
-            ba.app.main_menu_window = window
+            ba.app.ui.set_main_menu_window(window)
 
     def _back(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.coop import browser
-        from bastd.ui import mainmenu
+        from bastd.ui.coop.browser import CoopBrowserWindow
+        from bastd.ui.mainmenu import MainMenuWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
         if not self._modal:
             if self._back_location == 'CoopBrowserWindow':
-                ba.app.main_menu_window = (browser.CoopBrowserWindow(
-                    transition='in_left').get_root_widget())
+                ba.app.ui.set_main_menu_window(
+                    CoopBrowserWindow(transition='in_left').get_root_widget())
             else:
-                ba.app.main_menu_window = (mainmenu.MainMenuWindow(
-                    transition='in_left').get_root_widget())
+                ba.app.ui.set_main_menu_window(
+                    MainMenuWindow(transition='in_left').get_root_widget())
         if self._on_close_call is not None:
             self._on_close_call()

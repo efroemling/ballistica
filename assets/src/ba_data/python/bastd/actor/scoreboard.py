@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Defines ScoreBoard Actor and related functionality."""
 
 from __future__ import annotations
@@ -30,14 +12,12 @@ import ba
 if TYPE_CHECKING:
     from typing import Any, Optional, Sequence, Dict, Union
 
-# This could use some tidying up when I get a chance..
-# pylint: disable=too-many-statements
-
 
 class _Entry:
 
     def __init__(self, scoreboard: Scoreboard, team: ba.Team, do_cover: bool,
                  scale: float, label: Optional[ba.Lstr], flash_length: float):
+        # pylint: disable=too-many-statements
         self._scoreboard = weakref.ref(scoreboard)
         self._do_cover = do_cover
         self._scale = scale
@@ -53,12 +33,12 @@ class _Entry:
         self._flash_timer: Optional[ba.Timer] = None
         self._flash_counter: Optional[int] = None
         self._flash_colors: Optional[bool] = None
-        self._score: Optional[int] = None
+        self._score: Optional[float] = None
 
         safe_team_color = ba.safecolor(team.color, target_intensity=1.0)
 
         # FIXME: Should not do things conditionally for vr-mode, as there may
-        #  be non-vr clients connected.
+        #  be non-vr clients connected which will also get these value.
         vrmode = ba.app.vr_mode
 
         if self._do_cover:
@@ -152,11 +132,11 @@ class _Entry:
         else:
             team_name_label = team.name
 
-            # we do our own clipping here; should probably try to tap into some
-            # existing functionality
+            # We do our own clipping here; should probably try to tap into some
+            # existing functionality.
             if isinstance(team_name_label, ba.Lstr):
 
-                # hmmm; if the team-name is a non-translatable value lets go
+                # Hmmm; if the team-name is a non-translatable value lets go
                 # ahead and clip it otherwise we leave it as-is so
                 # translation can occur..
                 if team_name_label.is_flat_value():
@@ -200,9 +180,11 @@ class _Entry:
 
     def set_position(self, position: Sequence[float]) -> None:
         """Set the entry's position."""
-        # abort if we've been killed
+
+        # Abort if we've been killed
         if not self._backing.node:
             return
+
         self._pos = tuple(position)
         self._backing.node.position = (position[0] + self._width / 2,
                                        position[1] - self._height / 2)
@@ -225,29 +207,29 @@ class _Entry:
     def _set_flash_colors(self, flash: bool) -> None:
         self._flash_colors = flash
 
-        def _safesetattr(node: Optional[ba.Node], attr: str, val: Any) -> None:
+        def _safesetcolor(node: Optional[ba.Node], val: Any) -> None:
             if node:
-                setattr(node, attr, val)
+                node.color = val
 
         if flash:
             scale = 2.0
-            _safesetattr(
-                self._backing.node, 'color',
+            _safesetcolor(
+                self._backing.node,
                 (self._backing_color[0] * scale, self._backing_color[1] *
                  scale, self._backing_color[2] * scale))
-            _safesetattr(self._bar.node, 'color',
-                         (self._barcolor[0] * scale, self._barcolor[1] * scale,
-                          self._barcolor[2] * scale))
+            _safesetcolor(self._bar.node,
+                          (self._barcolor[0] * scale, self._barcolor[1] *
+                           scale, self._barcolor[2] * scale))
             if self._do_cover:
-                _safesetattr(
-                    self._cover.node, 'color',
+                _safesetcolor(
+                    self._cover.node,
                     (self._cover_color[0] * scale, self._cover_color[1] *
                      scale, self._cover_color[2] * scale))
         else:
-            _safesetattr(self._backing.node, 'color', self._backing_color)
-            _safesetattr(self._bar.node, 'color', self._barcolor)
+            _safesetcolor(self._backing.node, self._backing_color)
+            _safesetcolor(self._bar.node, self._barcolor)
             if self._do_cover:
-                _safesetattr(self._cover.node, 'color', self._cover_color)
+                _safesetcolor(self._cover.node, self._cover_color)
 
     def _do_flash(self) -> None:
         assert self._flash_counter is not None
@@ -258,15 +240,15 @@ class _Entry:
             self._set_flash_colors(not self._flash_colors)
 
     def set_value(self,
-                  score: int,
-                  max_score: int = None,
+                  score: float,
+                  max_score: float = None,
                   countdown: bool = False,
                   flash: bool = True,
                   show_value: bool = True) -> None:
         """Set the value for the scoreboard entry."""
 
-        # if we have no score yet, just set it.. otherwise compare
-        # and see if we should flash
+        # If we have no score yet, just set it.. otherwise compare
+        # and see if we should flash.
         if self._score is None:
             self._score = score
         else:
@@ -315,15 +297,26 @@ class _EntryProxy:
 
     def __init__(self, scoreboard: Scoreboard, team: ba.Team):
         self._scoreboard = weakref.ref(scoreboard)
-        # have to store ID here instead of a weak-ref since the team will be
-        # dead when we die and need to remove it
-        self._team_id = team.get_id()
+
+        # Have to store ID here instead of a weak-ref since the team will be
+        # dead when we die and need to remove it.
+        self._team_id = team.id
 
     def __del__(self) -> None:
         scoreboard = self._scoreboard()
-        # remove our team from the scoreboard if its still around
-        if scoreboard is not None:
-            scoreboard.remove_team(self._team_id)
+
+        # Remove our team from the scoreboard if its still around.
+        # (but deferred, in case we die in a sim step or something where
+        # its illegal to modify nodes)
+        if scoreboard is None:
+            return
+
+        try:
+            ba.pushcall(ba.Call(scoreboard.remove_team, self._team_id))
+        except ba.ContextError:
+            # This happens if we fire after the activity expires.
+            # In that case we don't need to do anything.
+            pass
 
 
 class Scoreboard:
@@ -332,8 +325,10 @@ class Scoreboard:
     category: Gameplay Classes
     """
 
+    _ENTRYSTORENAME = ba.storagename('entry')
+
     def __init__(self, label: ba.Lstr = None, score_split: float = 0.7):
-        """Instantiate a score-board.
+        """Instantiate a scoreboard.
 
         Label can be something like 'points' and will
         show up on boards if provided.
@@ -343,7 +338,7 @@ class Scoreboard:
         self._label = label
         self.score_split = score_split
 
-        # for free-for-all we go simpler since we have one per player
+        # For free-for-all we go simpler since we have one per player.
         self._pos: Sequence[float]
         if isinstance(ba.getsession(), ba.FreeForAllSession):
             self._do_cover = False
@@ -360,35 +355,36 @@ class Scoreboard:
 
     def set_team_value(self,
                        team: ba.Team,
-                       score: int,
-                       max_score: int = None,
+                       score: float,
+                       max_score: float = None,
                        countdown: bool = False,
                        flash: bool = True,
                        show_value: bool = True) -> None:
         """Update the score-board display for the given ba.Team."""
-        if not team.get_id() in self._entries:
+        if team.id not in self._entries:
             self._add_team(team)
-            # create a proxy in the team which will kill
+
+            # Create a proxy in the team which will kill
             # our entry when it dies (for convenience)
-            if '_scoreboard_entry' in team.gamedata:
-                raise Exception('existing _EntryProxy found')
-            team.gamedata['_scoreboard_entry'] = _EntryProxy(self, team)
-        # now set the entry..
-        self._entries[team.get_id()].set_value(score=score,
-                                               max_score=max_score,
-                                               countdown=countdown,
-                                               flash=flash,
-                                               show_value=show_value)
+            assert self._ENTRYSTORENAME not in team.customdata
+            team.customdata[self._ENTRYSTORENAME] = _EntryProxy(self, team)
+
+        # Now set the entry.
+        self._entries[team.id].set_value(score=score,
+                                         max_score=max_score,
+                                         countdown=countdown,
+                                         flash=flash,
+                                         show_value=show_value)
 
     def _add_team(self, team: ba.Team) -> None:
-        if team.get_id() in self._entries:
-            raise Exception('Duplicate team add')
-        self._entries[team.get_id()] = _Entry(self,
-                                              team,
-                                              do_cover=self._do_cover,
-                                              scale=self._scale,
-                                              label=self._label,
-                                              flash_length=self._flash_length)
+        if team.id in self._entries:
+            raise RuntimeError('Duplicate team add')
+        self._entries[team.id] = _Entry(self,
+                                        team,
+                                        do_cover=self._do_cover,
+                                        scale=self._scale,
+                                        label=self._label,
+                                        flash_length=self._flash_length)
         self._update_teams()
 
     def remove_team(self, team_id: int) -> None:

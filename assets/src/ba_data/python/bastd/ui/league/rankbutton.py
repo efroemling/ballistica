@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides a button showing league rank."""
 
 from __future__ import annotations
@@ -44,7 +26,6 @@ class LeagueRankButton:
                  color: Tuple[float, float, float] = None,
                  textcolor: Tuple[float, float, float] = None,
                  smooth_update_delay: float = None):
-        from ba.internal import get_cached_league_rank_data
         if on_activate_call is None:
             on_activate_call = ba.WeakCall(self._default_on_activate_call)
         self._on_activate_call = on_activate_call
@@ -125,7 +106,7 @@ class LeagueRankButton:
         self._update()
 
         # If we've got cached power-ranking data already, apply it.
-        data = get_cached_league_rank_data()
+        data = ba.app.accounts.get_cached_league_rank_data()
         if data is not None:
             self._update_for_league_rank_data(data)
 
@@ -227,14 +208,13 @@ class LeagueRankButton:
             ba.buttonwidget(edit=self._button, color=color_used)
 
         except Exception:
-            ba.print_exception('error doing smooth update')
+            ba.print_exception('Error doing smooth update.')
             self._smooth_update_timer = None
 
     def _update_for_league_rank_data(self, data: Optional[Dict[str,
                                                                Any]]) -> None:
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
-        from ba.internal import get_league_rank_points
 
         # If our button has died, ignore.
         if not self._button:
@@ -268,7 +248,7 @@ class LeagueRankButton:
                     self._percent = self._rank = None
                     status_text = '-'
                 else:
-                    our_points = get_league_rank_points(data)
+                    our_points = ba.app.accounts.get_league_rank_points(data)
                     progress = float(our_points) / data['scores'][-1][1]
                     self._percent = int(progress * 100.0)
                     self._rank = None
@@ -285,7 +265,7 @@ class LeagueRankButton:
                     status_text = str(int(self._smooth_percent)) + '%'
 
             except Exception:
-                ba.print_exception('error updating power ranking')
+                ba.print_exception('Error updating power ranking.')
                 self._percent = self._rank = None
                 status_text = '-'
 
@@ -326,24 +306,28 @@ class LeagueRankButton:
         else:
             try:
                 assert data is not None
-                txt = ba.Lstr(resource='league.leagueFullText',
-                              subs=[('${NAME}',
-                                     ba.Lstr(translate=('leagueNames',
-                                                        data['l']['n'])))])
+                txt = ba.Lstr(
+                    resource='league.leagueFullText',
+                    subs=[
+                        (
+                            '${NAME}',
+                            ba.Lstr(translate=('leagueNames', data['l']['n'])),
+                        ),
+                    ],
+                )
                 t_color = data['l']['c']
             except Exception:
                 txt = ba.Lstr(
                     resource='league.leagueRankText',
                     fallback_resource='coopSelectWindow.powerRankingText')
-                t_color = ba.app.title_color
+                t_color = ba.app.ui.title_color
             ba.textwidget(edit=self._title_text, text=txt, color=t_color)
         ba.textwidget(edit=self._value_text, text=status_text)
 
     def _on_power_ranking_query_response(
             self, data: Optional[Dict[str, Any]]) -> None:
-        from ba.internal import cache_league_rank_data
         self._doing_power_ranking_query = False
-        cache_league_rank_data(data)
+        ba.app.accounts.cache_league_rank_data(data)
         self._update_for_league_rank_data(data)
 
     def _update(self) -> None:
@@ -369,8 +353,9 @@ class LeagueRankButton:
                 callback=ba.WeakCall(self._on_power_ranking_query_response))
 
     def _default_on_activate_call(self) -> None:
-        from bastd.ui.league import rankwindow
-        rankwindow.LeagueRankWindow(modal=True, origin_widget=self._button)
+        # pylint: disable=cyclic-import
+        from bastd.ui.league.rankwindow import LeagueRankWindow
+        LeagueRankWindow(modal=True, origin_widget=self._button)
 
     def set_position(self, position: Tuple[float, float]) -> None:
         """Set the button's position."""

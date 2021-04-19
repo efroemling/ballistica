@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides UI for viewing/creating/editing playlists."""
 
 from __future__ import annotations
@@ -59,18 +41,20 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
         self._pvars = playlist.PlaylistTypeVars(sessiontype)
         self._max_playlists = 30
         self._r = 'gameListWindow'
-        self._width = 750.0 if ba.app.small_ui else 650.0
-        x_inset = 50.0 if ba.app.small_ui else 0.0
-        self._height = (380.0 if ba.app.small_ui else
-                        420.0 if ba.app.med_ui else 500.0)
-        top_extra = 20.0 if ba.app.small_ui else 0.0
+        uiscale = ba.app.ui.uiscale
+        self._width = 750.0 if uiscale is ba.UIScale.SMALL else 650.0
+        x_inset = 50.0 if uiscale is ba.UIScale.SMALL else 0.0
+        self._height = (380.0 if uiscale is ba.UIScale.SMALL else
+                        420.0 if uiscale is ba.UIScale.MEDIUM else 500.0)
+        top_extra = 20.0 if uiscale is ba.UIScale.SMALL else 0.0
 
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height + top_extra),
             transition=transition,
             scale_origin_stack_offset=scale_origin,
-            scale=(2.05 if ba.app.small_ui else 1.5 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -10) if ba.app.small_ui else (0, 0)))
+            scale=(2.05 if uiscale is ba.UIScale.SMALL else
+                   1.5 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -10) if uiscale is ba.UIScale.SMALL else (0, 0)))
 
         self._back_button = back_button = btn = ba.buttonwidget(
             parent=self._root_widget,
@@ -88,7 +72,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
                       text=ba.Lstr(resource=self._r + '.titleText',
                                    subs=[('${TYPE}',
                                           self._pvars.window_title_name)]),
-                      color=ba.app.heading_color,
+                      color=ba.app.ui.heading_color,
                       maxwidth=290,
                       h_align='center',
                       v_align='center')
@@ -105,7 +89,8 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
         self._lock_images: List[ba.Widget] = []
         lock_tex = ba.gettexture('lock')
 
-        scl = (1.1 if ba.app.small_ui else 1.27 if ba.app.med_ui else 1.57)
+        scl = (1.1 if uiscale is ba.UIScale.SMALL else
+               1.27 if uiscale is ba.UIScale.MEDIUM else 1.57)
         scl *= 0.63
         v -= 65.0 * scl
         new_button = btn = ba.buttonwidget(
@@ -225,15 +210,14 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
                                              self._scroll_height + 10),
                                        highlight=False)
         ba.widget(edit=back_button, right_widget=scrollwidget)
-        self._columnwidget = ba.columnwidget(parent=scrollwidget)
+        self._columnwidget = ba.columnwidget(parent=scrollwidget,
+                                             border=2,
+                                             margin=0)
 
         h = 145
 
-        try:
-            self._do_randomize_val = ba.app.config[self._pvars.config_name +
-                                                   ' Playlist Randomize']
-        except Exception:
-            self._do_randomize_val = 0
+        self._do_randomize_val = ba.app.config.get(
+            self._pvars.config_name + ' Playlist Randomize', 0)
 
         h += 210
 
@@ -242,7 +226,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
         ba.widget(edit=scrollwidget,
                   left_widget=new_button,
                   right_widget=_ba.get_special_widget('party_button')
-                  if ba.app.toolbars else None)
+                  if ba.app.ui.use_toolbars else None)
 
         # make sure config exists
         self._config_name_full = self._pvars.config_name + ' Playlists'
@@ -269,8 +253,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
         self._update()
 
     def _update(self) -> None:
-        from ba.internal import have_pro_options
-        have = have_pro_options()
+        have = ba.app.accounts.have_pro_options()
         for lock in self._lock_images:
             ba.imagewidget(edit=lock, opacity=0.0 if have else 1.0)
 
@@ -285,9 +268,10 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
 
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
-        ba.app.main_menu_window = (browser.PlaylistBrowserWindow(
-            transition='in_left',
-            sessiontype=self._sessiontype).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            browser.PlaylistBrowserWindow(
+                transition='in_left',
+                sessiontype=self._sessiontype).get_root_widget())
 
     def _select(self, name: str, index: int) -> None:
         self._selected_playlist_name = name
@@ -300,7 +284,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
             _ba.new_host_session(self._sessiontype)
         except Exception:
             from bastd import mainmenu
-            ba.print_exception('exception running session', self._sessiontype)
+            ba.print_exception(f'Error running session {self._sessiontype}.')
 
             # Drop back into a main menu session.
             _ba.new_host_session(mainmenu.MainMenuSession)
@@ -314,15 +298,13 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
         _ba.lock_all_input()
 
     def _refresh(self, select_playlist: str = None) -> None:
+        from efro.util import asserttype
         old_selection = self._selected_playlist_name
 
         # If there was no prev selection, look in prefs.
         if old_selection is None:
-            try:
-                old_selection = ba.app.config[self._pvars.config_name +
-                                              ' Playlist Selection']
-            except Exception:
-                pass
+            old_selection = ba.app.config.get(self._pvars.config_name +
+                                              ' Playlist Selection')
 
         old_selection_index = self._selected_playlist_index
 
@@ -336,7 +318,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
         items = [(i[0].decode(), i[1]) if not isinstance(i[0], str) else i
                  for i in items]
 
-        items.sort(key=lambda x: x[0].lower())
+        items.sort(key=lambda x: asserttype(x[0], str).lower())
 
         items = [['__default__', None]] + items  # Default is always first.
         index = 0
@@ -399,11 +381,10 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
 
     def _new_playlist(self) -> None:
         # pylint: disable=cyclic-import
-        from ba.internal import have_pro_options
-        from bastd.ui.playlist import editcontroller
-        from bastd.ui import purchase
-        if not have_pro_options():
-            purchase.PurchaseWindow(items=['pro'])
+        from bastd.ui.playlist.editcontroller import PlaylistEditController
+        from bastd.ui.purchase import PurchaseWindow
+        if not ba.app.accounts.have_pro_options():
+            PurchaseWindow(items=['pro'])
             return
 
         # Clamp at our max playlist number.
@@ -419,16 +400,15 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
         self._save_playlist_selection()
 
         # Kick off the edit UI.
-        editcontroller.PlaylistEditController(sessiontype=self._sessiontype)
+        PlaylistEditController(sessiontype=self._sessiontype)
         ba.containerwidget(edit=self._root_widget, transition='out_left')
 
     def _edit_playlist(self) -> None:
         # pylint: disable=cyclic-import
-        from ba.internal import have_pro_options
-        from bastd.ui.playlist import editcontroller
-        from bastd.ui import purchase
-        if not have_pro_options():
-            purchase.PurchaseWindow(items=['pro'])
+        from bastd.ui.playlist.editcontroller import PlaylistEditController
+        from bastd.ui.purchase import PurchaseWindow
+        if not ba.app.accounts.have_pro_options():
+            PurchaseWindow(items=['pro'])
             return
         if self._selected_playlist_name is None:
             return
@@ -438,7 +418,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
                                      '.cantEditDefaultText'))
             return
         self._save_playlist_selection()
-        editcontroller.PlaylistEditController(
+        PlaylistEditController(
             existing_playlist_name=self._selected_playlist_name,
             sessiontype=self._sessiontype)
         ba.containerwidget(edit=self._root_widget, transition='out_left')
@@ -491,10 +471,9 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
 
     def _share_playlist(self) -> None:
         # pylint: disable=cyclic-import
-        from ba.internal import have_pro_options
-        from bastd.ui import purchase
-        if not have_pro_options():
-            purchase.PurchaseWindow(items=['pro'])
+        from bastd.ui.purchase import PurchaseWindow
+        if not ba.app.accounts.have_pro_options():
+            PurchaseWindow(items=['pro'])
             return
 
         # Gotta be signed in for this to work.
@@ -527,11 +506,10 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
 
     def _delete_playlist(self) -> None:
         # pylint: disable=cyclic-import
-        from ba.internal import have_pro_options
-        from bastd.ui import purchase
-        from bastd.ui import confirm
-        if not have_pro_options():
-            purchase.PurchaseWindow(items=['pro'])
+        from bastd.ui.purchase import PurchaseWindow
+        from bastd.ui.confirm import ConfirmWindow
+        if not ba.app.accounts.have_pro_options():
+            PurchaseWindow(items=['pro'])
             return
 
         if self._selected_playlist_name is None:
@@ -541,7 +519,7 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
             ba.screenmessage(
                 ba.Lstr(resource=self._r + '.cantDeleteDefaultText'))
         else:
-            confirm.ConfirmWindow(
+            ConfirmWindow(
                 ba.Lstr(resource=self._r + '.deleteConfirmText',
                         subs=[('${LIST}', self._selected_playlist_name)]),
                 self._do_delete_playlist, 450, 150)
@@ -555,10 +533,9 @@ class PlaylistCustomizeBrowserWindow(ba.Window):
     def _duplicate_playlist(self) -> None:
         # pylint: disable=too-many-branches
         # pylint: disable=cyclic-import
-        from ba.internal import have_pro_options
-        from bastd.ui import purchase
-        if not have_pro_options():
-            purchase.PurchaseWindow(items=['pro'])
+        from bastd.ui.purchase import PurchaseWindow
+        if not ba.app.accounts.have_pro_options():
+            PurchaseWindow(items=['pro'])
             return
         if self._selected_playlist_name is None:
             return

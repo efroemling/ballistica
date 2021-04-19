@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides UI for editing a soundtrack."""
 
 from __future__ import annotations
@@ -39,20 +21,22 @@ class SoundtrackEditWindow(ba.Window):
                  existing_soundtrack: Optional[Union[str, Dict[str, Any]]],
                  transition: str = 'in_right'):
         # pylint: disable=too-many-statements
-        bs_config = ba.app.config
+        appconfig = ba.app.config
         self._r = 'editSoundtrackWindow'
         self._folder_tex = ba.gettexture('folder')
         self._file_tex = ba.gettexture('file')
-        self._width = 848 if ba.app.small_ui else 648
-        x_inset = 100 if ba.app.small_ui else 0
-        self._height = (395
-                        if ba.app.small_ui else 450 if ba.app.med_ui else 560)
+        uiscale = ba.app.ui.uiscale
+        self._width = 848 if uiscale is ba.UIScale.SMALL else 648
+        x_inset = 100 if uiscale is ba.UIScale.SMALL else 0
+        self._height = (395 if uiscale is ba.UIScale.SMALL else
+                        450 if uiscale is ba.UIScale.MEDIUM else 560)
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             transition=transition,
-            scale=(2.08 if ba.app.small_ui else 1.5 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -48) if ba.app.small_ui else (
-                0, 15) if ba.app.med_ui else (0, 0)))
+            scale=(2.08 if uiscale is ba.UIScale.SMALL else
+                   1.5 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -48) if uiscale is ba.UIScale.SMALL else (
+                0, 15) if uiscale is ba.UIScale.MEDIUM else (0, 0)))
         cancel_button = ba.buttonwidget(parent=self._root_widget,
                                         position=(38 + x_inset,
                                                   self._height - 60),
@@ -76,13 +60,13 @@ class SoundtrackEditWindow(ba.Window):
             text=ba.Lstr(resource=self._r +
                          ('.editSoundtrackText' if existing_soundtrack
                           is not None else '.newSoundtrackText')),
-            color=ba.app.title_color,
+            color=ba.app.ui.title_color,
             h_align='center',
             v_align='center',
             maxwidth=280)
         v = self._height - 110
-        if 'Soundtracks' not in bs_config:
-            bs_config['Soundtracks'] = {}
+        if 'Soundtracks' not in appconfig:
+            appconfig['Soundtracks'] = {}
 
         self._soundtrack_name: Optional[str]
         self._existing_soundtrack_name: Optional[str]
@@ -90,7 +74,7 @@ class SoundtrackEditWindow(ba.Window):
             # if they passed just a name, pull info from that soundtrack
             if isinstance(existing_soundtrack, str):
                 self._soundtrack = copy.deepcopy(
-                    bs_config['Soundtracks'][existing_soundtrack])
+                    appconfig['Soundtracks'][existing_soundtrack])
                 self._soundtrack_name = existing_soundtrack
                 self._existing_soundtrack_name = existing_soundtrack
                 self._last_edited_song_type = None
@@ -129,7 +113,7 @@ class SoundtrackEditWindow(ba.Window):
             while True:
                 self._soundtrack_name = st_name_text.replace(
                     '${COUNT}', str(i))
-                if self._soundtrack_name not in bs_config['Soundtracks']:
+                if self._soundtrack_name not in appconfig['Soundtracks']:
                     break
                 i += 1
 
@@ -153,18 +137,15 @@ class SoundtrackEditWindow(ba.Window):
             highlight=False,
             position=(40 + x_inset, v - (scroll_height + 10)),
             size=(self._width - (80 + 2 * x_inset), scroll_height),
-            simple_culling_v=10)
+            simple_culling_v=10,
+            claims_left_right=True,
+            claims_tab=True,
+            selection_loops_to_parent=True)
         ba.widget(edit=self._text_field, down_widget=self._scrollwidget)
-        self._col = ba.columnwidget(parent=scrollwidget)
-
-        ba.containerwidget(edit=self._scrollwidget,
-                           claims_left_right=True,
-                           claims_tab=True,
-                           selection_loop_to_parent=True)
-        ba.containerwidget(edit=self._col,
-                           claims_left_right=True,
-                           claims_tab=True,
-                           selection_loop_to_parent=True)
+        self._col = ba.columnwidget(parent=scrollwidget,
+                                    claims_left_right=True,
+                                    claims_tab=True,
+                                    selection_loops_to_parent=True)
 
         self._song_type_buttons: Dict[str, ba.Widget] = {}
         self._refresh()
@@ -176,7 +157,6 @@ class SoundtrackEditWindow(ba.Window):
         ba.widget(edit=cancel_button, down_widget=self._text_field)
 
     def _refresh(self) -> None:
-        from ba.deprecated import get_resource
         for widget in self._col.get_children():
             widget.delete()
 
@@ -202,21 +182,19 @@ class SoundtrackEditWindow(ba.Window):
             'Scores',
             'Victory',
         ]
+
         # FIXME: We should probably convert this to use translations.
-        type_names_translated = get_resource('soundtrackTypeNames')
+        type_names_translated = ba.app.lang.get_resource('soundtrackTypeNames')
         prev_type_button: Optional[ba.Widget] = None
         prev_test_button: Optional[ba.Widget] = None
 
         for index, song_type in enumerate(types):
-            row = ba.rowwidget(parent=self._col, size=(self._width - 40, 40))
-            ba.containerwidget(edit=row,
+            row = ba.rowwidget(parent=self._col,
+                               size=(self._width - 40, 40),
                                claims_left_right=True,
                                claims_tab=True,
-                               selection_loop_to_parent=True)
-            try:
-                type_name = type_names_translated[song_type]
-            except Exception:
-                type_name = song_type
+                               selection_loops_to_parent=True)
+            type_name = type_names_translated.get(song_type, song_type)
             ba.textwidget(parent=row,
                           size=(230, 25),
                           always_highlight=True,
@@ -232,7 +210,7 @@ class SoundtrackEditWindow(ba.Window):
                 entry = None
 
             if entry is not None:
-                # make sure they don't muck with this after it gets to us
+                # Make sure they don't muck with this after it gets to us.
                 entry = copy.deepcopy(entry)
 
             icon_type = self._get_entry_button_display_icon_type(entry)
@@ -311,8 +289,8 @@ class SoundtrackEditWindow(ba.Window):
         else:
             soundtrack[musictype] = entry
 
-        ba.app.main_menu_window = (cls(state,
-                                       transition='in_left').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            cls(state, transition='in_left').get_root_widget())
 
     def _get_entry(self, song_type: str, entry: Any,
                    selection_target_name: str) -> None:
@@ -326,7 +304,7 @@ class SoundtrackEditWindow(ba.Window):
             'last_edited_song_type': song_type
         }
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (music.get_music_player().select_entry(
+        ba.app.ui.set_main_menu_window(music.get_music_player().select_entry(
             ba.Call(self._restore_editor, state, song_type), entry,
             selection_target_name).get_root_widget())
 
@@ -373,8 +351,9 @@ class SoundtrackEditWindow(ba.Window):
         # Resets music back to normal.
         music.set_music_play_mode(ba.MusicPlayMode.REGULAR)
         ba.containerwidget(edit=self._root_widget, transition='out_right')
-        ba.app.main_menu_window = (stb.SoundtrackBrowserWindow(
-            transition='in_left').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            stb.SoundtrackBrowserWindow(
+                transition='in_left').get_root_widget())
 
     def _do_it(self) -> None:
         from bastd.ui.soundtrack import browser as stb
@@ -415,8 +394,9 @@ class SoundtrackEditWindow(ba.Window):
         # Resets music back to normal.
         music.set_music_play_mode(ba.MusicPlayMode.REGULAR, force_restart=True)
 
-        ba.app.main_menu_window = (stb.SoundtrackBrowserWindow(
-            transition='in_left').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            stb.SoundtrackBrowserWindow(
+                transition='in_left').get_root_widget())
 
     def _do_it_with_sound(self) -> None:
         ba.playsound(ba.getsound('swish'))

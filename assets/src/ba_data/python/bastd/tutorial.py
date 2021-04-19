@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Wrangles the game tutorial sequence."""
 
 # Not too concerned with keeping this old module pretty;
@@ -28,8 +10,8 @@
 # pylint: disable=missing-function-docstring, missing-class-docstring
 # pylint: disable=invalid-name
 # pylint: disable=too-many-locals
-# pylint: disable=unused-variable
 # pylint: disable=unused-argument
+# pylint: disable=unused-variable
 
 from __future__ import annotations
 
@@ -181,9 +163,23 @@ class ButtonRelease:
                      timeformat=ba.TimeFormat.MILLISECONDS)
 
 
-class TutorialActivity(ba.Activity):
+class Player(ba.Player['Team']):
+    """Our player type for this game."""
 
-    def __init__(self, settings: Dict[str, Any] = None):
+    def __init__(self) -> None:
+        self.pressed = False
+
+
+class Team(ba.Team[Player]):
+    """Our team type for this game."""
+
+    def __init__(self) -> None:
+        pass
+
+
+class TutorialActivity(ba.Activity[Player, Team]):
+
+    def __init__(self, settings: dict = None):
         from bastd.maps import Rampage
         if settings is None:
             settings = {}
@@ -225,7 +221,6 @@ class TutorialActivity(ba.Activity):
         self.bomb_image_color = (1.0, 1.0, 1.0)
         self.pickup_image_color = (1.0, 1.0, 1.0)
         self.control_ui_nodes: List[ba.Node] = []
-        self._test_file = ''
         self.spazzes: Dict[int, basespaz.Spaz] = {}
         self.jump_image_color = (1.0, 1.0, 1.0)
         self._entries: List[Any] = []
@@ -386,9 +381,6 @@ class TutorialActivity(ba.Activity):
         ]
         for n in self.control_ui_nodes:
             n.opacity = 0.0
-        self._test_file = ('/Users/ericf/Library/Containers/'
-                           'net.froemling.ballisticacore/Data/'
-                           'Library/Application Support/Ballisticacore/foo.py')
         self._read_entries()
 
     def set_stick_image_position(self, x: float, y: float) -> None:
@@ -462,6 +454,7 @@ class TutorialActivity(ba.Activity):
                         n.opacity = 0.0
                     a.set_stick_image_position(0, 0)
 
+            # Can be used for debugging.
             class SetSpeed:
 
                 def __init__(self, speed: int):
@@ -829,7 +822,7 @@ class TutorialActivity(ba.Activity):
                     ba.Lstr(resource=self._r + '.phrase02Text',
                             subs=[
                                 ('${APP_NAME}', ba.Lstr(resource='titleText'))
-                            ])),  # welcome to ballisticacore
+                            ])),  # welcome to <appname>
                 DelayOld(80),
                 Run(release=False),
                 Jump(release=False),
@@ -2294,8 +2287,7 @@ class TutorialActivity(ba.Activity):
             ]
 
         except Exception:
-            import traceback
-            traceback.print_exc()
+            ba.print_exception()
 
         # If we read some, exec them.
         if self._entries:
@@ -2313,8 +2305,7 @@ class TutorialActivity(ba.Activity):
                 result = entry.run(self)
             except Exception:
                 result = None
-                import traceback
-                traceback.print_exc()
+                ba.print_exception()
 
             # If the entry returns an int value, set a timer;
             # otherwise just keep going.
@@ -2330,7 +2321,7 @@ class TutorialActivity(ba.Activity):
                                             ba.WeakCall(self._read_entries))
 
     def _update_skip_votes(self) -> None:
-        count = sum(1 for player in self.players if player.gamedata['pressed'])
+        count = sum(1 for player in self.players if player.pressed)
         assert self._skip_count_text
         self._skip_count_text.text = ba.Lstr(
             resource=self._r + '.skipVoteCountText',
@@ -2349,7 +2340,7 @@ class TutorialActivity(ba.Activity):
             self._skip_text.text = ''
             self.end()
 
-    def _player_pressed_button(self, player: ba.Player) -> None:
+    def _player_pressed_button(self, player: Player) -> None:
 
         # Special case: if there's only one player, we give them a
         # warning on their first press (some players were thinking the
@@ -2363,7 +2354,7 @@ class TutorialActivity(ba.Activity):
             self._skip_text.scale = 1.3
             incr = 50
             t = incr
-            for i in range(6):
+            for _i in range(6):
                 ba.timer(t,
                          ba.Call(setattr, self._skip_text, 'color',
                                  (1, 0.5, 0.1)),
@@ -2376,7 +2367,7 @@ class TutorialActivity(ba.Activity):
             ba.timer(6.0, ba.WeakCall(self._revert_confirm))
             return
 
-        player.gamedata['pressed'] = True
+        player.pressed = True
 
         # test...
         if not all(self.players):
@@ -2393,15 +2384,16 @@ class TutorialActivity(ba.Activity):
         self._skip_text.color = (1, 1, 1)
         self._issued_warning = False
 
-    def on_player_join(self, player: ba.Player) -> None:
+    def on_player_join(self, player: Player) -> None:
         super().on_player_join(player)
-        player.gamedata['pressed'] = False
-        # we just wanna know if this player presses anything..
-        player.assign_input_call(
-            ('jumpPress', 'punchPress', 'bombPress', 'pickUpPress'),
+
+        # We just wanna know if this player presses anything.
+        player.assigninput(
+            (ba.InputType.JUMP_PRESS, ba.InputType.PUNCH_PRESS,
+             ba.InputType.BOMB_PRESS, ba.InputType.PICK_UP_PRESS),
             ba.Call(self._player_pressed_button, player))
 
-    def on_player_leave(self, player: ba.Player) -> None:
+    def on_player_leave(self, player: Player) -> None:
         if not all(self.players):
             ba.print_error('Nonexistent player in on_player_leave: ' +
                            str([str(p) for p in self.players]) + ': we are ' +

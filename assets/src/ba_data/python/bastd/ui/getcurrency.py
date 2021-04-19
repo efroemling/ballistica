@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """UI functionality for purchasing/acquiring currency."""
 
 from __future__ import annotations
@@ -65,23 +47,25 @@ class GetCurrencyWindow(ba.Window):
             self._transition_out = 'out_right'
             scale_origin = None
 
-        self._width = 1000.0 if ba.app.small_ui else 800.0
-        x_inset = 100.0 if ba.app.small_ui else 0.0
+        uiscale = ba.app.ui.uiscale
+        self._width = 1000.0 if uiscale is ba.UIScale.SMALL else 800.0
+        x_inset = 100.0 if uiscale is ba.UIScale.SMALL else 0.0
         self._height = 480.0
 
         self._modal = modal
         self._from_modal_store = from_modal_store
         self._r = 'getTicketsWindow'
 
-        top_extra = 20 if ba.app.small_ui else 0
+        top_extra = 20 if uiscale is ba.UIScale.SMALL else 0
 
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height + top_extra),
             transition=transition,
             scale_origin_stack_offset=scale_origin,
             color=(0.4, 0.37, 0.55),
-            scale=(1.63 if ba.app.small_ui else 1.2 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -3) if ba.app.small_ui else (0, 0)))
+            scale=(1.63 if uiscale is ba.UIScale.SMALL else
+                   1.2 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -3) if uiscale is ba.UIScale.SMALL else (0, 0)))
 
         btn = ba.buttonwidget(
             parent=self._root_widget,
@@ -98,7 +82,7 @@ class GetCurrencyWindow(ba.Window):
         ba.textwidget(parent=self._root_widget,
                       position=(self._width * 0.5, self._height - 55),
                       size=(0, 0),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       scale=1.2,
                       h_align='center',
                       v_align='center',
@@ -523,7 +507,7 @@ class GetCurrencyWindow(ba.Window):
     def _purchase(self, item: str) -> None:
         from bastd.ui import account
         from bastd.ui import appinvite
-        from ba.internal import serverget
+        from ba.internal import master_server_get
         if item == 'app_invite':
             if _ba.get_account_state() != 'signed_in':
                 account.show_sign_in_prompt()
@@ -533,14 +517,15 @@ class GetCurrencyWindow(ba.Window):
         # here we ping the server to ask if it's valid for us to
         # purchase this.. (better to fail now than after we've paid locally)
         app = ba.app
-        serverget('bsAccountPurchaseCheck', {
+        master_server_get('bsAccountPurchaseCheck', {
             'item': item,
             'platform': app.platform,
             'subplatform': app.subplatform,
             'version': app.version,
             'buildNumber': app.build_number
         },
-                  callback=ba.WeakCall(self._purchase_check_result, item))
+                          callback=ba.WeakCall(self._purchase_check_result,
+                                               item))
 
     def _purchase_check_result(self, item: str,
                                result: Optional[Dict[str, Any]]) -> None:
@@ -566,7 +551,6 @@ class GetCurrencyWindow(ba.Window):
 
     # actually start the purchase locally..
     def _do_purchase(self, item: str) -> None:
-        from ba.internal import show_ad
         if item == 'ad':
             import datetime
             # if ads are disabled until some time, error..
@@ -583,7 +567,7 @@ class GetCurrencyWindow(ba.Window):
                     resource='getTicketsWindow.unavailableTemporarilyText'),
                                  color=(1, 0, 0))
             elif self._enable_ad_button:
-                show_ad('tickets')
+                _ba.app.ads.show_ad('tickets')
         else:
             _ba.purchase(item)
 
@@ -599,17 +583,29 @@ class GetCurrencyWindow(ba.Window):
                 modal=self._from_modal_store,
                 back_location=self._store_back_location).get_root_widget()
             if not self._from_modal_store:
-                ba.app.main_menu_window = window
+                ba.app.ui.set_main_menu_window(window)
         self._transitioning_out = True
 
 
 def show_get_tickets_prompt() -> None:
-    """Show a prompt to get more currency."""
-    from bastd.ui import confirm
-    confirm.ConfirmWindow(
-        ba.Lstr(translate=('serverResponses',
-                           'You don\'t have enough tickets for this!')),
-        lambda: GetCurrencyWindow(modal=True),
-        ok_text=ba.Lstr(resource='getTicketsWindow.titleText'),
-        width=460,
-        height=130)
+    """Show a 'not enough tickets' prompt with an option to purchase more.
+
+    Note that the purchase option may not always be available
+    depending on the build of the game.
+    """
+    from bastd.ui.confirm import ConfirmWindow
+    if ba.app.allow_ticket_purchases:
+        ConfirmWindow(
+            ba.Lstr(translate=('serverResponses',
+                               'You don\'t have enough tickets for this!')),
+            lambda: GetCurrencyWindow(modal=True),
+            ok_text=ba.Lstr(resource='getTicketsWindow.titleText'),
+            width=460,
+            height=130)
+    else:
+        ConfirmWindow(
+            ba.Lstr(translate=('serverResponses',
+                               'You don\'t have enough tickets for this!')),
+            cancel_button=False,
+            width=460,
+            height=130)

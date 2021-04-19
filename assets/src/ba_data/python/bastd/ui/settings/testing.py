@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides UI for test settings."""
 
 from __future__ import annotations
@@ -39,14 +21,16 @@ class TestingWindow(ba.Window):
                  title: ba.Lstr,
                  entries: List[Dict[str, Any]],
                  transition: str = 'in_right'):
+        uiscale = ba.app.ui.uiscale
         self._width = 600
-        self._height = 324 if ba.app.small_ui else 400
+        self._height = 324 if uiscale is ba.UIScale.SMALL else 400
         self._entries = copy.deepcopy(entries)
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             transition=transition,
-            scale=(2.5 if ba.app.small_ui else 1.2 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -28) if ba.app.small_ui else (0, 0)))
+            scale=(2.5 if uiscale is ba.UIScale.SMALL else
+                   1.2 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -28) if uiscale is ba.UIScale.SMALL else (0, 0)))
         self._back_button = btn = ba.buttonwidget(
             parent=self._root_widget,
             autoselect=True,
@@ -60,7 +44,7 @@ class TestingWindow(ba.Window):
         ba.textwidget(parent=self._root_widget,
                       position=(self._width * 0.5, self._height - 35),
                       size=(0, 0),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       h_align='center',
                       v_align='center',
                       maxwidth=245,
@@ -75,7 +59,7 @@ class TestingWindow(ba.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 75),
             size=(0, 0),
-            color=ba.app.infotextcolor,
+            color=ba.app.ui.infotextcolor,
             h_align='center',
             v_align='center',
             maxwidth=self._width * 0.75,
@@ -106,7 +90,7 @@ class TestingWindow(ba.Window):
 
             entry_name = entry['name']
 
-            # if we haven't yet, record the default value for this name so
+            # If we haven't yet, record the default value for this name so
             # we can reset if we want..
             if entry_name not in ba.app.value_test_defaults:
                 ba.app.value_test_defaults[entry_name] = (
@@ -131,15 +115,14 @@ class TestingWindow(ba.Window):
                                       self._on_minus_press, entry['name']))
             if i == 0:
                 ba.widget(edit=btn, up_widget=self._back_button)
-            ba.widget(edit=btn, show_buffer_top=20, show_buffer_bottom=20)
-            entry['widget'] = ba.textwidget(
-                parent=self._subcontainer,
-                position=(h + 100, v),
-                size=(0, 0),
-                h_align='center',
-                v_align='center',
-                maxwidth=60,
-                text=str(round(_ba.value_test(entry_name), 4)))
+            entry['widget'] = ba.textwidget(parent=self._subcontainer,
+                                            position=(h + 100, v),
+                                            size=(0, 0),
+                                            h_align='center',
+                                            v_align='center',
+                                            maxwidth=60,
+                                            text='%.4g' %
+                                            _ba.value_test(entry_name))
             btn = ba.buttonwidget(parent=self._subcontainer,
                                   position=(h + 140, v - 19),
                                   size=(40, 40),
@@ -153,7 +136,7 @@ class TestingWindow(ba.Window):
                 ba.widget(edit=btn, up_widget=self._back_button)
             v -= self._spacing
         v -= 35
-        b_reset = ba.buttonwidget(
+        ba.buttonwidget(
             parent=self._subcontainer,
             autoselect=True,
             size=(200, 50),
@@ -161,37 +144,36 @@ class TestingWindow(ba.Window):
             label=ba.Lstr(resource='settingsWindowAdvanced.resetText'),
             right_widget=btn,
             on_activate_call=self._on_reset_press)
-        ba.widget(edit=b_reset, show_buffer_top=20, show_buffer_bottom=20)
 
     def _get_entry(self, name: str) -> Dict[str, Any]:
         for entry in self._entries:
             if entry['name'] == name:
                 return entry
-        raise Exception(f'Entry not found: {name}')
+        raise ba.NotFoundError(f'Entry not found: {name}')
 
     def _on_reset_press(self) -> None:
         for entry in self._entries:
             _ba.value_test(entry['name'],
                            absolute=ba.app.value_test_defaults[entry['name']])
             ba.textwidget(edit=entry['widget'],
-                          text=str(round(_ba.value_test(entry['name']), 4)))
+                          text='%.4g' % _ba.value_test(entry['name']))
 
     def _on_minus_press(self, entry_name: str) -> None:
         entry = self._get_entry(entry_name)
         _ba.value_test(entry['name'], change=-entry['increment'])
         ba.textwidget(edit=entry['widget'],
-                      text=str(round(_ba.value_test(entry['name']), 4)))
+                      text='%.4g' % _ba.value_test(entry['name']))
 
     def _on_plus_press(self, entry_name: str) -> None:
         entry = self._get_entry(entry_name)
         _ba.value_test(entry['name'], change=entry['increment'])
         ba.textwidget(edit=entry['widget'],
-                      text=str(round(_ba.value_test(entry['name']), 4)))
+                      text='%.4g' % _ba.value_test(entry['name']))
 
     def _do_back(self) -> None:
         # pylint: disable=cyclic-import
         import bastd.ui.settings.advanced
         ba.containerwidget(edit=self._root_widget, transition='out_right')
-        ba.app.main_menu_window = (
+        ba.app.ui.set_main_menu_window(
             bastd.ui.settings.advanced.AdvancedSettingsWindow(
                 transition='in_left').get_root_widget())

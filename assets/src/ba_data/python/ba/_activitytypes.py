@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Some handy base class and special purpose Activity types."""
 from __future__ import annotations
 
@@ -26,6 +8,10 @@ from typing import TYPE_CHECKING
 import _ba
 from ba._activity import Activity
 from ba._music import setmusic, MusicType
+from ba._enums import InputType, UIScale
+# False-positive from pylint due to our class-generics-filter.
+from ba._player import EmptyPlayer  # pylint: disable=W0611
+from ba._team import EmptyTeam  # pylint: disable=W0611
 
 if TYPE_CHECKING:
     from typing import Any, Dict, Optional
@@ -33,17 +19,17 @@ if TYPE_CHECKING:
     from ba._lobby import JoinInfo
 
 
-class EndSessionActivity(Activity):
+class EndSessionActivity(Activity[EmptyPlayer, EmptyTeam]):
     """Special ba.Activity to fade out and end the current ba.Session."""
 
-    def __init__(self, settings: Dict[str, Any]):
+    def __init__(self, settings: dict):
         super().__init__(settings)
 
         # Keeps prev activity alive while we fade out.
         self.transition_time = 0.25
         self.inherits_tint = True
         self.inherits_slow_motion = True
-        self.inherits_camera_vr_offset = True
+        self.inherits_vr_camera_offset = True
         self.inherits_vr_overlay_center = True
 
     def on_transition_in(self) -> None:
@@ -54,20 +40,19 @@ class EndSessionActivity(Activity):
     def on_begin(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.mainmenu import MainMenuSession
-        from ba._apputils import call_after_ad
         from ba._general import Call
         super().on_begin()
         _ba.unlock_all_input()
-        call_after_ad(Call(_ba.new_host_session, MainMenuSession))
+        _ba.app.ads.call_after_ad(Call(_ba.new_host_session, MainMenuSession))
 
 
-class JoinActivity(Activity):
+class JoinActivity(Activity[EmptyPlayer, EmptyTeam]):
     """Standard activity for waiting for players to join.
 
     It shows tips and other info and waits for all players to check ready.
     """
 
-    def __init__(self, settings: Dict[str, Any]):
+    def __init__(self, settings: dict):
         super().__init__(settings)
 
         # This activity is a special 'joiner' activity.
@@ -98,22 +83,22 @@ class JoinActivity(Activity):
         _ba.set_analytics_screen('Joining Screen')
 
 
-class TransitionActivity(Activity):
-    """A simple overlay fade out/in.
+class TransitionActivity(Activity[EmptyPlayer, EmptyTeam]):
+    """A simple overlay to fade out/in.
 
     Useful as a bare minimum transition between two level based activities.
     """
 
-    def __init__(self, settings: Dict[str, Any]):
-        super().__init__(settings)
+    # Keep prev activity alive while we fade in.
+    transition_time = 0.5
+    inherits_slow_motion = True  # Don't change.
+    inherits_tint = True  # Don't change.
+    inherits_vr_camera_offset = True  # Don't change.
+    inherits_vr_overlay_center = True
+    use_fixed_vr_overlay = True
 
-        # Keep prev activity alive while we fade in.
-        self.transition_time = 0.5
-        self.inherits_slow_motion = True  # Don't change.
-        self.inherits_tint = True  # Don't change.
-        self.inherits_camera_vr_offset = True  # Don't change.
-        self.inherits_vr_overlay_center = True
-        self.use_fixed_vr_overlay = True
+    def __init__(self, settings: dict):
+        super().__init__(settings)
         self._background: Optional[ba.Actor] = None
 
     def on_transition_in(self) -> None:
@@ -131,19 +116,21 @@ class TransitionActivity(Activity):
         _ba.timer(0.1, self.end)
 
 
-class ScoreScreenActivity(Activity):
+class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
     """A standard score screen that fades in and shows stuff for a while.
 
     After a specified delay, player input is assigned to end the activity.
     """
 
-    def __init__(self, settings: Dict[str, Any]):
+    transition_time = 0.5
+    inherits_tint = True
+    inherits_vr_camera_offset = True
+    use_fixed_vr_overlay = True
+
+    default_music: Optional[MusicType] = MusicType.SCORES
+
+    def __init__(self, settings: dict):
         super().__init__(settings)
-        self.transition_time = 0.5
-        self.inherits_tint = True
-        self.inherits_camera_vr_offset = True
-        self.use_fixed_vr_overlay = True
-        self.default_music: Optional[MusicType] = MusicType.SCORES
         self._birth_time = _ba.time()
         self._min_view_time = 5.0
         self._allow_server_transition = False
@@ -155,16 +142,15 @@ class ScoreScreenActivity(Activity):
         self._custom_continue_message: Optional[ba.Lstr] = None
         self._server_transitioning: Optional[bool] = None
 
-    def on_player_join(self, player: ba.Player) -> None:
-        from ba import _general
+    def on_player_join(self, player: EmptyPlayer) -> None:
+        from ba._general import WeakCall
         super().on_player_join(player)
         time_till_assign = max(
             0, self._birth_time + self._min_view_time - _ba.time())
 
         # If we're still kicking at the end of our assign-delay, assign this
         # guy's input to trigger us.
-        _ba.timer(time_till_assign, _general.WeakCall(self._safe_assign,
-                                                      player))
+        _ba.timer(time_till_assign, WeakCall(self._safe_assign, player))
 
     def on_transition_in(self) -> None:
         from bastd.actor.tipstext import TipsText
@@ -180,18 +166,18 @@ class ScoreScreenActivity(Activity):
     def on_begin(self) -> None:
         # pylint: disable=cyclic-import
         from bastd.actor.text import Text
-        from ba import _lang
+        from ba import _language
         super().on_begin()
 
         # Pop up a 'press any button to continue' statement after our
         # min-view-time show a 'press any button to continue..'
         # thing after a bit.
-        if _ba.app.interface_type == 'large':
+        if _ba.app.ui.uiscale is UIScale.LARGE:
             # FIXME: Need a better way to determine whether we've probably
             #  got a keyboard.
-            sval = _lang.Lstr(resource='pressAnyKeyButtonText')
+            sval = _language.Lstr(resource='pressAnyKeyButtonText')
         else:
-            sval = _lang.Lstr(resource='pressAnyButtonText')
+            sval = _language.Lstr(resource='pressAnyButtonText')
 
         Text(self._custom_continue_message
              if self._custom_continue_message is not None else sval,
@@ -221,11 +207,11 @@ class ScoreScreenActivity(Activity):
         # Otherwise end the activity normally.
         self.end()
 
-    def _safe_assign(self, player: ba.Player) -> None:
+    def _safe_assign(self, player: EmptyPlayer) -> None:
 
         # Just to be extra careful, don't assign if we're transitioning out.
-        # (though theoretically that would be ok).
+        # (though theoretically that should be ok).
         if not self.is_transitioning_out() and player:
-            player.assign_input_call(
-                ('jumpPress', 'punchPress', 'bombPress', 'pickUpPress'),
-                self._player_press)
+            player.assigninput((InputType.JUMP_PRESS, InputType.PUNCH_PRESS,
+                                InputType.BOMB_PRESS, InputType.PICK_UP_PRESS),
+                               self._player_press)

@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Functionality related to running the game in server-mode."""
 from __future__ import annotations
 
@@ -26,14 +8,14 @@ import time
 from typing import TYPE_CHECKING
 
 from efro.terminal import Clr
-from ba._enums import TimeType
-from ba._freeforallsession import FreeForAllSession
-from ba._dualteamsession import DualTeamSession
 from bacommon.servermanager import (ServerCommand, StartServerModeCommand,
                                     ShutdownCommand, ShutdownReason,
                                     ChatMessageCommand, ScreenMessageCommand,
                                     ClientListCommand, KickCommand)
 import _ba
+from ba._enums import TimeType
+from ba._freeforallsession import FreeForAllSession
+from ba._dualteamsession import DualTeamSession
 
 if TYPE_CHECKING:
     from typing import Optional, Dict, Any, Type
@@ -65,6 +47,7 @@ def _cmd(command_data: bytes) -> None:
 
     if isinstance(command, ScreenMessageCommand):
         assert _ba.app.server is not None
+
         # Note: we have to do transient messages if
         # clients is specified, so they won't show up
         # in replays.
@@ -137,7 +120,7 @@ class ServerController:
         for client in roster:
             if client['client_id'] == -1:
                 continue
-            spec = json.loads(client['specString'])
+            spec = json.loads(client['spec_string'])
             name = spec['n']
             players = ', '.join(n['name'] for n in client['players'])
             clientid = client['client_id']
@@ -183,7 +166,7 @@ class ServerController:
         return False
 
     def _execute_shutdown(self) -> None:
-        from ba._lang import Lstr
+        from ba._language import Lstr
         if self._executing_shutdown:
             return
         self._executing_shutdown = True
@@ -192,19 +175,19 @@ class ServerController:
             _ba.screenmessage(Lstr(resource='internal.serverRestartingText'),
                               color=(1, 0.5, 0.0))
             print(f'{Clr.SBLU}Exiting for server-restart'
-                  f' at {timestrval}{Clr.RST}')
+                  f' at {timestrval}.{Clr.RST}')
         else:
             _ba.screenmessage(Lstr(resource='internal.serverShuttingDownText'),
                               color=(1, 0.5, 0.0))
             print(f'{Clr.SBLU}Exiting for server-shutdown'
-                  f' at {timestrval}{Clr.RST}')
+                  f' at {timestrval}.{Clr.RST}')
         with _ba.Context('ui'):
             _ba.timer(2.0, _ba.quit, timetype=TimeType.REAL)
 
     def _run_access_check(self) -> None:
         """Check with the master server to see if we're likely joinable."""
-        from ba._netutils import serverget
-        serverget(
+        from ba._netutils import master_server_get
+        master_server_get(
             'bsAccessCheck',
             {
                 'port': _ba.get_game_port(),
@@ -241,6 +224,7 @@ class ServerController:
                       f' joinable from the internet.{poststr}{Clr.RST}')
 
     def _prepare_to_serve(self) -> None:
+        """Run in a timer to do prep before beginning to serve."""
         signed_in = _ba.get_account_state() == 'signed_in'
         if not signed_in:
 
@@ -319,9 +303,11 @@ class ServerController:
 
         if self._first_run:
             curtimestr = time.strftime('%c')
-            print(f'{Clr.BLD}{Clr.BLU}BallisticaCore {app.version}'
-                  f' ({app.build_number})'
-                  f' entering server-mode {curtimestr}{Clr.RST}')
+            _ba.log(
+                f'{Clr.BLD}{Clr.BLU}{_ba.appnameupper()} {app.version}'
+                f' ({app.build_number})'
+                f' entering server-mode {curtimestr}{Clr.RST}',
+                to_server=False)
 
         if sessiontype is FreeForAllSession:
             appcfg['Free-for-All Playlist Selection'] = self._playlist_name
@@ -339,15 +325,28 @@ class ServerController:
 
         _ba.set_authenticate_clients(self._config.authenticate_clients)
 
+        _ba.set_enable_default_kick_voting(
+            self._config.enable_default_kick_voting)
+        _ba.set_admins(self._config.admins)
+
         # Call set-enabled last (will push state to the cloud).
         _ba.set_public_party_max_size(self._config.max_party_size)
         _ba.set_public_party_name(self._config.party_name)
         _ba.set_public_party_stats_url(self._config.stats_url)
         _ba.set_public_party_enabled(self._config.party_is_public)
 
-        # And here we go.
-        _ba.new_host_session(sessiontype)
+        # And here.. we.. go.
+        if self._config.stress_test_players is not None:
+            # Special case: run a stress test.
+            from ba.internal import run_stress_test
+            run_stress_test(playlist_type='Random',
+                            playlist_name='__default__',
+                            player_count=self._config.stress_test_players,
+                            round_duration=30)
+        else:
+            _ba.new_host_session(sessiontype)
 
-        if not self._ran_access_check:
+        # Run an access check if we're trying to make a public party.
+        if not self._ran_access_check and self._config.party_is_public:
             self._run_access_check()
             self._ran_access_check = True

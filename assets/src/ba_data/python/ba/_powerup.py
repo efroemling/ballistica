@@ -1,24 +1,7 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Powerup related functionality."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -31,7 +14,6 @@ if TYPE_CHECKING:
 
 @dataclass
 class PowerupMessage:
-    # noinspection PyUnresolvedReferences
     """A message telling an object to accept a powerup.
 
     Category: Message Classes
@@ -44,14 +26,14 @@ class PowerupMessage:
           The type of powerup to be granted (a string).
           See ba.Powerup.poweruptype for available type values.
 
-       source_node
+       sourcenode
           The node the powerup game from, or None otherwise.
           If a powerup is accepted, a ba.PowerupAcceptMessage should be sent
-          back to the source_node to inform it of the fact. This will generally
+          back to the sourcenode to inform it of the fact. This will generally
           cause the powerup box to make a sound and disappear or whatnot.
     """
     poweruptype: str
-    source_node: Optional[ba.Node] = None
+    sourcenode: Optional[ba.Node] = None
 
 
 @dataclass

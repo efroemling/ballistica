@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Session and Activity for displaying the main menu bg."""
 
 from __future__ import annotations
@@ -27,9 +9,8 @@ import time
 import weakref
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
-from bastd.actor import spaz
+import _ba
 
 if TYPE_CHECKING:
     from typing import Any, List, Optional
@@ -43,7 +24,7 @@ if TYPE_CHECKING:
 # noinspection PyAttributeOutsideInit
 
 
-class MainMenuActivity(ba.Activity):
+class MainMenuActivity(ba.Activity[ba.Player, ba.Team]):
     """Activity showing the rotating main menu bg stuff."""
 
     _stdassets = ba.Dependency(ba.AssetPackage, 'stdassets@1')
@@ -64,9 +45,10 @@ class MainMenuActivity(ba.Activity):
 
         if not ba.app.toolbar_test:
             color = ((1.0, 1.0, 1.0, 1.0) if vr_mode else (0.5, 0.6, 0.5, 0.6))
+
             # FIXME: Need a node attr for vr-specific-scale.
             scale = (0.9 if
-                     (app.interface_type == 'small' or vr_mode) else 0.7)
+                     (app.ui.uiscale is ba.UIScale.SMALL or vr_mode) else 0.7)
             self.my_name = ba.NodeActor(
                 ba.newnode('text',
                            attrs={
@@ -78,7 +60,7 @@ class MainMenuActivity(ba.Activity):
                                'scale': scale,
                                'position': (0, 10),
                                'vr_depth': -10,
-                               'text': '\xa9 2011-2020 Eric Froemling'
+                               'text': '\xa9 2011-2021 Eric Froemling'
                            }))
 
         # Throw up some text that only clients can see so they know that the
@@ -105,7 +87,7 @@ class MainMenuActivity(ba.Activity):
         #  Any differences need to happen at the engine level so everyone sees
         #  things in their own optimal way.
         vr_mode = app.vr_mode
-        interface_type = app.interface_type
+        uiscale = app.ui.uiscale
 
         # In cases where we're doing lots of dev work lets always show the
         # build number.
@@ -128,7 +110,7 @@ class MainMenuActivity(ba.Activity):
                                    ])
             else:
                 text = ba.Lstr(value='${V}', subs=[('${V}', app.version)])
-            scale = 0.9 if (interface_type == 'small' or vr_mode) else 0.7
+            scale = 0.9 if (uiscale is ba.UIScale.SMALL or vr_mode) else 0.7
             color = (1, 1, 1, 1) if vr_mode else (0.5, 0.6, 0.5, 0.7)
             self.version = ba.NodeActor(
                 ba.newnode(
@@ -149,10 +131,29 @@ class MainMenuActivity(ba.Activity):
                 assert self.version.node
                 ba.animate(self.version.node, 'opacity', {2.3: 0, 3.0: 1.0})
 
+        # Show the iircade logo on our iircade build.
+        if app.iircade_mode:
+            img = ba.NodeActor(
+                ba.newnode('image',
+                           attrs={
+                               'texture': ba.gettexture('iircadeLogo'),
+                               'attach': 'center',
+                               'scale': (250, 250),
+                               'position': (0, 0),
+                               'tilt_translate': 0.21,
+                               'absolute_scale': True
+                           })).autoretain()
+            imgdelay = 0.0 if app.main_menu_did_initial_transition else 1.0
+            ba.animate(img.node, 'opacity', {
+                imgdelay + 1.5: 0.0,
+                imgdelay + 2.5: 1.0
+            })
+
         # Throw in test build info.
         self.beta_info = self.beta_info_2 = None
-        if app.test_build and not app.kiosk_mode:
-            pos = (230, 125) if app.kiosk_mode else (230, 35)
+        if app.test_build and not (app.demo_mode or app.arcade_mode):
+            pos = ((230, 125) if (app.demo_mode or app.arcade_mode) else
+                   (230, 35))
             self.beta_info = ba.NodeActor(
                 ba.newnode('text',
                            attrs={
@@ -182,7 +183,7 @@ class MainMenuActivity(ba.Activity):
         vr_bottom_fill_model = ba.getmodel('thePadVRFillBottom')
         vr_top_fill_model = ba.getmodel('thePadVRFillTop')
 
-        gnode = ba.sharedobj('globals')
+        gnode = self.globalsnode
         gnode.camera_mode = 'rotate'
 
         tint = (1.14, 1.1, 1.0)
@@ -319,7 +320,8 @@ class MainMenuActivity(ba.Activity):
                                  transition_out_delay=self._message_duration
                                  ).autoretain()
                             achs = [
-                                a for a in app.achievements if not a.complete
+                                a for a in app.ach.achievements
+                                if not a.complete
                             ]
                             if achs:
                                 ach = achs.pop(
@@ -358,7 +360,7 @@ class MainMenuActivity(ba.Activity):
                 # need to make nodes and stuff.. should fix the serverget
                 # call so it.
                 activity = self._activity()
-                if activity is None or activity.is_expired():
+                if activity is None or activity.expired:
                     return
                 with ba.Context(activity):
 
@@ -374,7 +376,7 @@ class MainMenuActivity(ba.Activity):
                         ba.WeakCall(self._change_phrase),
                         repeat=True)
 
-                    scl = 1.2 if (ba.app.interface_type == 'small'
+                    scl = 1.2 if (ba.app.ui.uiscale is ba.UIScale.SMALL
                                   or ba.app.vr_mode) else 0.8
 
                     color2 = ((1, 1, 1, 1) if ba.app.vr_mode else
@@ -397,62 +399,65 @@ class MainMenuActivity(ba.Activity):
                                    }))
                     self._change_phrase()
 
-        if not app.kiosk_mode and not app.toolbar_test:
+        if not (app.demo_mode or app.arcade_mode) and not app.toolbar_test:
             self._news = News(self)
 
         # Bring up the last place we were, or start at the main menu otherwise.
         with ba.Context('ui'):
             from bastd.ui import specialoffer
             if bool(False):
-                uicontroller = ba.app.uicontroller
+                uicontroller = ba.app.ui.controller
                 assert uicontroller is not None
                 uicontroller.show_main_menu()
             else:
-                main_window = ba.app.main_window
+                main_menu_location = ba.app.ui.get_main_menu_location()
 
                 # When coming back from a kiosk-mode game, jump to
                 # the kiosk start screen.
-                if ba.app.kiosk_mode:
+                if ba.app.demo_mode or ba.app.arcade_mode:
                     # pylint: disable=cyclic-import
                     from bastd.ui.kiosk import KioskWindow
-                    ba.app.main_menu_window = KioskWindow().get_root_widget()
+                    ba.app.ui.set_main_menu_window(
+                        KioskWindow().get_root_widget())
                 # ..or in normal cases go back to the main menu
                 else:
-                    main_window = ba.app.main_window
-                    if main_window == 'Gather':
+                    if main_menu_location == 'Gather':
                         # pylint: disable=cyclic-import
                         from bastd.ui.gather import GatherWindow
-                        ba.app.main_menu_window = (GatherWindow(
-                            transition=None).get_root_widget())
-                    elif main_window == 'Watch':
+                        ba.app.ui.set_main_menu_window(
+                            GatherWindow(transition=None).get_root_widget())
+                    elif main_menu_location == 'Watch':
                         # pylint: disable=cyclic-import
                         from bastd.ui.watch import WatchWindow
-                        ba.app.main_menu_window = WatchWindow(
-                            transition=None).get_root_widget()
-                    elif main_window == 'Team Game Select':
+                        ba.app.ui.set_main_menu_window(
+                            WatchWindow(transition=None).get_root_widget())
+                    elif main_menu_location == 'Team Game Select':
                         # pylint: disable=cyclic-import
                         from bastd.ui.playlist.browser import (
                             PlaylistBrowserWindow)
-                        ba.app.main_menu_window = PlaylistBrowserWindow(
-                            sessiontype=ba.DualTeamSession,
-                            transition=None).get_root_widget()
-                    elif main_window == 'Free-for-All Game Select':
+                        ba.app.ui.set_main_menu_window(
+                            PlaylistBrowserWindow(
+                                sessiontype=ba.DualTeamSession,
+                                transition=None).get_root_widget())
+                    elif main_menu_location == 'Free-for-All Game Select':
                         # pylint: disable=cyclic-import
                         from bastd.ui.playlist.browser import (
                             PlaylistBrowserWindow)
-                        ba.app.main_menu_window = PlaylistBrowserWindow(
-                            sessiontype=ba.FreeForAllSession,
-                            transition=None).get_root_widget()
-                    elif main_window == 'Coop Select':
+                        ba.app.ui.set_main_menu_window(
+                            PlaylistBrowserWindow(
+                                sessiontype=ba.FreeForAllSession,
+                                transition=None).get_root_widget())
+                    elif main_menu_location == 'Coop Select':
                         # pylint: disable=cyclic-import
                         from bastd.ui.coop.browser import CoopBrowserWindow
-                        ba.app.main_menu_window = CoopBrowserWindow(
-                            transition=None).get_root_widget()
+                        ba.app.ui.set_main_menu_window(
+                            CoopBrowserWindow(
+                                transition=None).get_root_widget())
                     else:
                         # pylint: disable=cyclic-import
                         from bastd.ui.mainmenu import MainMenuWindow
-                        ba.app.main_menu_window = MainMenuWindow(
-                            transition=None).get_root_widget()
+                        ba.app.ui.set_main_menu_window(
+                            MainMenuWindow(transition=None).get_root_widget())
 
                 # attempt to show any pending offers immediately.
                 # If that doesn't work, try again in a few seconds
@@ -489,7 +494,7 @@ class MainMenuActivity(ba.Activity):
                     ba.getmodel('logoTransparent'))
 
         # If language has changed, recreate our logo text/graphics.
-        lang = app.language
+        lang = app.lang.language
         if lang != self._language:
             self._language = lang
             y = 20
@@ -508,11 +513,11 @@ class MainMenuActivity(ba.Activity):
             # We draw higher in kiosk mode (make sure to test this
             # when making adjustments) for now we're hard-coded for
             # a few languages.. should maybe look into generalizing this?..
-            if app.language == 'Chinese':
+            if app.lang.language == 'Chinese':
                 base_x = -270.0
                 x = base_x - 20.0
                 spacing = 85.0 * base_scale
-                y_extra = 0.0 if app.kiosk_mode else 0.0
+                y_extra = 0.0 if (app.demo_mode or app.arcade_mode) else 0.0
                 self._make_logo(x - 110 + 50,
                                 113 + y + 1.2 * y_extra,
                                 0.34 * base_scale,
@@ -565,7 +570,7 @@ class MainMenuActivity(ba.Activity):
                 base_x = -170
                 x = base_x - 20
                 spacing = 55 * base_scale
-                y_extra = 0 if app.kiosk_mode else 0
+                y_extra = 0 if (app.demo_mode or app.arcade_mode) else 0
                 xv1 = x
                 delay1 = delay
                 for shadow in (True, False):
@@ -830,7 +835,7 @@ class MainMenuActivity(ba.Activity):
     def _start_preloads(self) -> None:
         # FIXME: The func that calls us back doesn't save/restore state
         #  or check for a dead activity so we have to do that ourself.
-        if self.is_expired():
+        if self.expired:
             return
         with ba.Context(self):
             _preload1()
@@ -858,8 +863,8 @@ def _preload1() -> None:
     ]:
         ba.gettexture(tex)
     ba.gettexture('bg')
-    from bastd.actor import powerupbox
-    powerupbox.get_factory()
+    from bastd.actor.powerupbox import PowerupBoxFactory
+    PowerupBoxFactory.get()
     ba.timer(0.1, _preload2)
 
 
@@ -880,12 +885,13 @@ def _preload2() -> None:
             'dripity', 'spawn', 'gong'
     ]:
         ba.getsound(sname)
-    from bastd.actor import bomb
-    bomb.get_factory()
+    from bastd.actor.bomb import BombFactory
+    BombFactory.get()
     ba.timer(0.1, _preload3)
 
 
 def _preload3() -> None:
+    from bastd.actor.spazfactory import SpazFactory
     for mname in ['bomb', 'bombSticky', 'impactBomb']:
         ba.getmodel(mname)
     for tname in [
@@ -895,7 +901,7 @@ def _preload3() -> None:
         ba.gettexture(tname)
     for sname in ['freeze', 'fuse01', 'activateBeep', 'warnBeep']:
         ba.getsound(sname)
-    spaz.get_factory()
+    SpazFactory.get()
     ba.timer(0.2, _preload4)
 
 
@@ -906,8 +912,8 @@ def _preload4() -> None:
         ba.getmodel(mname)
     for sname in ['metalHit', 'metalSkid', 'refWhistle', 'achievement']:
         ba.getsound(sname)
-    from bastd.actor.flag import get_factory
-    get_factory()
+    from bastd.actor.flag import FlagFactory
+    FlagFactory.get()
 
 
 class MainMenuSession(ba.Session):
@@ -920,15 +926,15 @@ class MainMenuSession(ba.Session):
 
         super().__init__([self._activity_deps])
         self._locked = False
-        self.set_activity(ba.new_activity(MainMenuActivity))
+        self.setactivity(ba.newactivity(MainMenuActivity))
 
     def on_activity_end(self, activity: ba.Activity, results: Any) -> None:
         if self._locked:
             _ba.unlock_all_input()
 
         # Any ending activity leads us into the main menu one.
-        self.set_activity(ba.new_activity(MainMenuActivity))
+        self.setactivity(ba.newactivity(MainMenuActivity))
 
-    def on_player_request(self, player: ba.Player) -> bool:
+    def on_player_request(self, player: ba.SessionPlayer) -> bool:
         # Reject all player requests.
         return False

@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Benchmark/Stress-Test related functionality."""
 from __future__ import annotations
 
@@ -42,7 +24,7 @@ def run_cpu_benchmark() -> None:
 
         def __init__(self) -> None:
 
-            print('FIXME: BENCHMARK SESSION WOULD CALC DEPS.')
+            # print('FIXME: BENCHMARK SESSION WOULD CALC DEPS.')
             depsets: Sequence[ba.DependencySet] = []
 
             super().__init__(depsets)
@@ -53,7 +35,7 @@ def run_cpu_benchmark() -> None:
             cfg['Graphics Quality'] = 'Low'
             cfg.apply()
             self.benchmark_type = 'cpu'
-            self.set_activity(_ba.new_activity(tutorial.TutorialActivity))
+            self.setactivity(_ba.newactivity(tutorial.TutorialActivity))
 
         def __del__(self) -> None:
 
@@ -62,7 +44,7 @@ def run_cpu_benchmark() -> None:
             cfg['Graphics Quality'] = self._old_quality
             cfg.apply()
 
-        def on_player_request(self, player: ba.Player) -> bool:
+        def on_player_request(self, player: ba.SessionPlayer) -> bool:
             return False
 
     _ba.new_host_session(BenchmarkSession, benchmark_type='cpu')
@@ -73,12 +55,12 @@ def run_stress_test(playlist_type: str = 'Random',
                     player_count: int = 8,
                     round_duration: int = 30) -> None:
     """Run a stress test."""
-    from ba import _modutils
+    from ba import modutils
     from ba._general import Call
     from ba._enums import TimeType
     _ba.screenmessage(
         'Beginning stress test.. use '
-        '\'End Game\' to stop testing.',
+        "'End Game' to stop testing.",
         color=(1, 1, 0))
     with _ba.Context('ui'):
         start_stress_test({
@@ -90,8 +72,8 @@ def run_stress_test(playlist_type: str = 'Random',
         _ba.timer(7.0,
                   Call(_ba.screenmessage,
                        ('stats will be written to ' +
-                        _modutils.get_human_readable_user_scripts_path() +
-                        '/stressTestStats.csv')),
+                        modutils.get_human_readable_user_scripts_path() +
+                        '/stress_test_stats.csv')),
                   timetype=TimeType.REAL)
 
 
@@ -112,7 +94,7 @@ def start_stress_test(args: Dict[str, Any]) -> None:
     from ba._dualteamsession import DualTeamSession
     from ba._freeforallsession import FreeForAllSession
     from ba._enums import TimeType, TimeFormat
-    bs_config = _ba.app.config
+    appconfig = _ba.app.config
     playlist_type = args['playlist_type']
     if playlist_type == 'Random':
         if random.random() < 0.5:
@@ -122,15 +104,15 @@ def start_stress_test(args: Dict[str, Any]) -> None:
     _ba.screenmessage('Running Stress Test (listType="' + playlist_type +
                       '", listName="' + args['playlist_name'] + '")...')
     if playlist_type == 'Teams':
-        bs_config['Team Tournament Playlist Selection'] = args['playlist_name']
-        bs_config['Team Tournament Playlist Randomize'] = 1
+        appconfig['Team Tournament Playlist Selection'] = args['playlist_name']
+        appconfig['Team Tournament Playlist Randomize'] = 1
         _ba.timer(1.0,
                   Call(_ba.pushcall, Call(_ba.new_host_session,
                                           DualTeamSession)),
                   timetype=TimeType.REAL)
     else:
-        bs_config['Free-for-All Playlist Selection'] = args['playlist_name']
-        bs_config['Free-for-All Playlist Randomize'] = 1
+        appconfig['Free-for-All Playlist Selection'] = args['playlist_name']
+        appconfig['Free-for-All Playlist Randomize'] = 1
         _ba.timer(1.0,
                   Call(_ba.pushcall,
                        Call(_ba.new_host_session, FreeForAllSession)),
@@ -169,13 +151,14 @@ def run_media_reload_benchmark() -> None:
     def delay_add(start_time: float) -> None:
 
         def doit(start_time_2: float) -> None:
-            from ba import _lang
             _ba.screenmessage(
-                _lang.get_resource('debugWindow.totalReloadTimeText').replace(
-                    '${TIME}', str(_ba.time(TimeType.REAL) - start_time_2)))
+                _ba.app.lang.get_resource(
+                    'debugWindow.totalReloadTimeText').replace(
+                        '${TIME}',
+                        str(_ba.time(TimeType.REAL) - start_time_2)))
             _ba.print_load_info()
             if _ba.app.config.resolve('Texture Quality') != 'High':
-                _ba.screenmessage(_lang.get_resource(
+                _ba.screenmessage(_ba.app.lang.get_resource(
                     'debugWindow.reloadBenchmarkBestResultsText'),
                                   color=(1, 1, 0))
 

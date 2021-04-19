@@ -1,27 +1,9 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Implements Target Practice game."""
 
 # ba_meta require api 6
-# (see https://github.com/efroemling/ballistica/wiki/Meta-Tags)
+# (see https://ballistica.net/wiki/meta-tag-system)
 
 from __future__ import annotations
 
@@ -29,25 +11,42 @@ import random
 from typing import TYPE_CHECKING
 
 import ba
-from bastd.actor import playerspaz
+from bastd.actor.scoreboard import Scoreboard
+from bastd.actor.onscreencountdown import OnScreenCountdown
+from bastd.actor.bomb import Bomb
+from bastd.actor.popuptext import PopupText
 
 if TYPE_CHECKING:
-    from typing import Any, Type, List, Dict, Optional, Tuple, Sequence
-    from bastd.actor.onscreencountdown import OnScreenCountdown
-    from bastd.actor.bomb import Bomb, Blast
+    from typing import Any, Type, List, Dict, Optional, Sequence
+    from bastd.actor.bomb import Blast
+
+
+class Player(ba.Player['Team']):
+    """Our player type for this game."""
+
+    def __init__(self) -> None:
+        self.streak = 0
+
+
+class Team(ba.Team[Player]):
+    """Our team type for this game."""
+
+    def __init__(self) -> None:
+        self.score = 0
 
 
 # ba_meta export game
-class TargetPracticeGame(ba.TeamGameActivity):
+class TargetPracticeGame(ba.TeamGameActivity[Player, Team]):
     """Game where players try to hit targets with bombs."""
 
-    @classmethod
-    def get_name(cls) -> str:
-        return 'Target Practice'
-
-    @classmethod
-    def get_description(cls, sessiontype: Type[ba.Session]) -> str:
-        return 'Bomb as many targets as you can.'
+    name = 'Target Practice'
+    description = 'Bomb as many targets as you can.'
+    available_settings = [
+        ba.IntSetting('Target Count', min_value=1, default=3),
+        ba.BoolSetting('Enable Impact Bombs', default=True),
+        ba.BoolSetting('Enable Triple Bombs', default=True)
+    ]
+    default_music = ba.MusicType.FORWARD_MARCH
 
     @classmethod
     def get_supported_maps(cls, sessiontype: Type[ba.Session]) -> List[str]:
@@ -59,64 +58,46 @@ class TargetPracticeGame(ba.TeamGameActivity):
         return (issubclass(sessiontype, ba.CoopSession)
                 or issubclass(sessiontype, ba.MultiTeamSession))
 
-    @classmethod
-    def get_settings(
-            cls,
-            sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
-        return [('Target Count', {
-            'min_value': 1,
-            'default': 3
-        }), ('Enable Impact Bombs', {
-            'default': True
-        }), ('Enable Triple Bombs', {
-            'default': True
-        })]
-
-    def __init__(self, settings: Dict[str, Any]):
-        from bastd.actor.scoreboard import Scoreboard
+    def __init__(self, settings: dict):
         super().__init__(settings)
         self._scoreboard = Scoreboard()
         self._targets: List[Target] = []
         self._update_timer: Optional[ba.Timer] = None
         self._countdown: Optional[OnScreenCountdown] = None
+        self._target_count = int(settings['Target Count'])
+        self._enable_impact_bombs = bool(settings['Enable Impact Bombs'])
+        self._enable_triple_bombs = bool(settings['Enable Triple Bombs'])
 
-    def on_transition_in(self) -> None:
-        self.default_music = ba.MusicType.FORWARD_MARCH
-        super().on_transition_in()
-
-    def on_team_join(self, team: ba.Team) -> None:
-        team.gamedata['score'] = 0
+    def on_team_join(self, team: Team) -> None:
         if self.has_begun():
             self.update_scoreboard()
 
     def on_begin(self) -> None:
-        from bastd.actor.onscreencountdown import OnScreenCountdown
         super().on_begin()
         self.update_scoreboard()
 
         # Number of targets is based on player count.
-        num_targets = self.settings['Target Count']
-        for i in range(num_targets):
+        for i in range(self._target_count):
             ba.timer(5.0 + i * 1.0, self._spawn_target)
 
         self._update_timer = ba.Timer(1.0, self._update, repeat=True)
         self._countdown = OnScreenCountdown(60, endcall=self.end_game)
         ba.timer(4.0, self._countdown.start)
 
-    def spawn_player(self, player: ba.Player) -> ba.Actor:
+    def spawn_player(self, player: Player) -> ba.Actor:
         spawn_center = (0, 3, -5)
         pos = (spawn_center[0] + random.uniform(-1.5, 1.5), spawn_center[1],
                spawn_center[2] + random.uniform(-1.5, 1.5))
 
         # Reset their streak.
-        player.gamedata['streak'] = 0
+        player.streak = 0
         spaz = self.spawn_player_spaz(player, position=pos)
 
         # Give players permanent triple impact bombs and wire them up
         # to tell us when they drop a bomb.
-        if self.settings['Enable Impact Bombs']:
+        if self._enable_impact_bombs:
             spaz.bomb_type = 'impact'
-        if self.settings['Enable Triple Bombs']:
+        if self._enable_triple_bombs:
             spaz.set_bomb_count(3)
         spaz.add_dropped_bomb_callback(self._on_spaz_dropped_bomb)
         return spaz
@@ -134,9 +115,9 @@ class TargetPracticeGame(ba.TeamGameActivity):
                 ypos = random.uniform(-1.0, 1.0)
                 if xpos * xpos + ypos * ypos < 1.0:
                     break
-            points.append((8.0 * xpos, 2.2, -3.5 + 5.0 * ypos))
+            points.append(ba.Vec3(8.0 * xpos, 2.2, -3.5 + 5.0 * ypos))
 
-        def get_min_dist_from_target(pnt: Sequence[float]) -> float:
+        def get_min_dist_from_target(pnt: ba.Vec3) -> float:
             return min((t.get_dist_from_point(pnt) for t in self._targets))
 
         # If we have existing targets, use the point with the highest
@@ -150,7 +131,6 @@ class TargetPracticeGame(ba.TeamGameActivity):
 
     def _on_spaz_dropped_bomb(self, spaz: ba.Actor, bomb: ba.Actor) -> None:
         del spaz  # Unused.
-        from bastd.actor.bomb import Bomb
 
         # Wire up this bomb to inform us when it blows up.
         assert isinstance(bomb, Bomb)
@@ -166,17 +146,18 @@ class TargetPracticeGame(ba.TeamGameActivity):
         # Feed the explosion point to all our targets and get points in return.
         # Note: we operate on a copy of self._targets since the list may change
         # under us if we hit stuff (don't wanna get points for new targets).
-        player = bomb.get_source_player()
+        player = bomb.get_source_player(Player)
         if not player:
-            return  # could happen if they leave after throwing a bomb..
+            # It's possible the player left after throwing the bomb.
+            return
 
         bullseye = any(
             target.do_hit_at_position(pos, player)
             for target in list(self._targets))
         if bullseye:
-            player.gamedata['streak'] += 1
+            player.streak += 1
         else:
-            player.gamedata['streak'] = 0
+            player.streak = 0
 
     def _update(self) -> None:
         """Misc. periodic updating."""
@@ -185,9 +166,9 @@ class TargetPracticeGame(ba.TeamGameActivity):
 
     def handlemessage(self, msg: Any) -> Any:
         # When players die, respawn them.
-        if isinstance(msg, playerspaz.PlayerSpazDeathMessage):
+        if isinstance(msg, ba.PlayerDiedMessage):
             super().handlemessage(msg)  # Do standard stuff.
-            player = msg.spaz.getplayer()
+            player = msg.getplayer(Player)
             assert player is not None
             self.respawn_player(player)  # Kick off a respawn.
         elif isinstance(msg, Target.TargetHitMessage):
@@ -200,12 +181,12 @@ class TargetPracticeGame(ba.TeamGameActivity):
     def update_scoreboard(self) -> None:
         """Update the game scoreboard with current team values."""
         for team in self.teams:
-            self._scoreboard.set_team_value(team, team.gamedata['score'])
+            self._scoreboard.set_team_value(team, team.score)
 
     def end_game(self) -> None:
-        results = ba.TeamGameResults()
+        results = ba.GameResults()
         for team in self.teams:
-            results.set_team_score(team, team.gamedata['score'])
+            results.set_team_score(team, team.score)
         self.end(results)
 
 
@@ -274,15 +255,13 @@ class Target(ba.Actor):
         else:
             super().handlemessage(msg)
 
-    def get_dist_from_point(self, pos: Sequence[float]) -> float:
+    def get_dist_from_point(self, pos: ba.Vec3) -> float:
         """Given a point, returns distance squared from it."""
-        return (ba.Vec3(pos) - self._position).length()
+        return (pos - self._position).length()
 
-    def do_hit_at_position(self, pos: Sequence[float],
-                           player: ba.Player) -> bool:
+    def do_hit_at_position(self, pos: Sequence[float], player: Player) -> bool:
         """Handle a bomb hit at the given position."""
         # pylint: disable=too-many-statements
-        from bastd.actor import popuptext
         activity = self.activity
 
         # Ignore hits if the game is over or if we've already been hit
@@ -316,7 +295,7 @@ class Target(ba.Actor):
                 ba.animate_array(self._nodes[0], 'color', 3, keys, loop=True)
                 popupscale = 1.8
                 popupcolor = (1, 1, 0, 1)
-                streak = player.gamedata['streak']
+                streak = player.streak
                 points = 10 + min(20, streak * 2)
                 ba.playsound(ba.getsound('bellHigh'))
                 if streak > 0:
@@ -350,14 +329,14 @@ class Target(ba.Actor):
             # names and colors so they know who got the hit.
             if len(activity.players) > 1:
                 popupcolor = ba.safecolor(player.color, target_intensity=0.75)
-                popupstr += ' ' + player.get_name()
-            popuptext.PopupText(popupstr,
-                                position=self._position,
-                                color=popupcolor,
-                                scale=popupscale).autoretain()
+                popupstr += ' ' + player.getname()
+            PopupText(popupstr,
+                      position=self._position,
+                      color=popupcolor,
+                      scale=popupscale).autoretain()
 
             # Give this player's team points and update the score-board.
-            player.team.gamedata['score'] += points
+            player.team.score += points
             assert isinstance(activity, TargetPracticeGame)
             activity.update_scoreboard()
 

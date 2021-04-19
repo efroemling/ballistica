@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Functionality related to coop-mode sessions."""
 from __future__ import annotations
 
@@ -30,8 +12,8 @@ if TYPE_CHECKING:
     from typing import Any, List, Dict, Optional, Callable, Sequence
     import ba
 
-TEAM_COLORS = ((0.2, 0.4, 1.6), )
-TEAM_NAMES = ('Good Guys', )
+TEAM_COLORS = [(0.2, 0.4, 1.6)]
+TEAM_NAMES = ['Good Guys']
 
 
 class CoopSession(Session):
@@ -42,16 +24,28 @@ class CoopSession(Session):
     These generally consist of 1-4 players against
     the computer and include functionality such as
     high score lists.
+
+    Attributes:
+
+        campaign
+            The ba.Campaign instance this Session represents, or None if
+            there is no associated Campaign.
     """
+    use_teams = True
+    use_team_colors = False
+    allow_mid_activity_joins = False
+
+    # Note: even though these are instance vars, we annotate them at the
+    # class level so that docs generation can access their types.
+    campaign: Optional[ba.Campaign]
 
     def __init__(self) -> None:
         """Instantiate a co-op mode session."""
         # pylint: disable=cyclic-import
-        from ba._campaign import get_campaign
+        from ba._campaign import getcampaign
         from bastd.activity.coopjoin import CoopJoinActivity
 
         _ba.increment_analytics_count('Co-op session start')
-
         app = _ba.app
 
         # If they passed in explicit min/max, honor that.
@@ -63,14 +57,7 @@ class CoopSession(Session):
         if 'max_players' in app.coop_session_args:
             max_players = app.coop_session_args['max_players']
         else:
-            try:
-                max_players = app.config['Coop Game Max Players']
-            except Exception:
-                # Old pref value.
-                try:
-                    max_players = app.config['Challenge Game Max Players']
-                except Exception:
-                    max_players = 4
+            max_players = app.config.get('Coop Game Max Players', 4)
 
         # print('FIXME: COOP SESSION WOULD CALC DEPS.')
         depsets: Sequence[ba.DependencySet] = []
@@ -78,32 +65,25 @@ class CoopSession(Session):
         super().__init__(depsets,
                          team_names=TEAM_NAMES,
                          team_colors=TEAM_COLORS,
-                         use_team_colors=False,
                          min_players=min_players,
-                         max_players=max_players,
-                         allow_mid_activity_joins=False)
+                         max_players=max_players)
 
         # Tournament-ID if we correspond to a co-op tournament (otherwise None)
-        self.tournament_id = (app.coop_session_args['tournament_id']
-                              if 'tournament_id' in app.coop_session_args else
-                              None)
+        self.tournament_id: Optional[str] = (
+            app.coop_session_args.get('tournament_id'))
 
-        # FIXME: Could be nice to pass this in as actual args.
-        self.campaign_state = {
-            'campaign': (app.coop_session_args['campaign']),
-            'level': app.coop_session_args['level']
-        }
-        self.campaign = get_campaign(self.campaign_state['campaign'])
+        self.campaign = getcampaign(app.coop_session_args['campaign'])
+        self.campaign_level_name: str = app.coop_session_args['level']
 
         self._ran_tutorial_activity = False
         self._tutorial_activity: Optional[ba.Activity] = None
         self._custom_menu_ui: List[Dict[str, Any]] = []
 
         # Start our joining screen.
-        self.set_activity(_ba.new_activity(CoopJoinActivity))
+        self.setactivity(_ba.newactivity(CoopJoinActivity))
 
         self._next_game_instance: Optional[ba.GameActivity] = None
-        self._next_game_name: Optional[str] = None
+        self._next_game_level_name: Optional[str] = None
         self._update_on_deck_game_instances()
 
     def get_current_game_instance(self) -> ba.GameActivity:
@@ -114,28 +94,27 @@ class CoopSession(Session):
         # pylint: disable=cyclic-import
         from ba._gameactivity import GameActivity
 
-        # Instantiates levels we might be running soon
-        # so they have time to load.
+        # Instantiate levels we may be running soon to let them load in the bg.
 
         # Build an instance for the current level.
         assert self.campaign is not None
-        level = self.campaign.get_level(self.campaign_state['level'])
+        level = self.campaign.getlevel(self.campaign_level_name)
         gametype = level.gametype
         settings = level.get_settings()
 
         # Make sure all settings the game expects are present.
-        neededsettings = gametype.get_settings(type(self))
-        for settingname, setting in neededsettings:
-            if settingname not in settings:
-                settings[settingname] = setting['default']
+        neededsettings = gametype.get_available_settings(type(self))
+        for setting in neededsettings:
+            if setting.name not in settings:
+                settings[setting.name] = setting.default
 
-        newactivity = _ba.new_activity(gametype, settings)
+        newactivity = _ba.newactivity(gametype, settings)
         assert isinstance(newactivity, GameActivity)
         self._current_game_instance: GameActivity = newactivity
 
         # Find the next level and build an instance for it too.
-        levels = self.campaign.get_levels()
-        level = self.campaign.get_level(self.campaign_state['level'])
+        levels = self.campaign.levels
+        level = self.campaign.getlevel(self.campaign_level_name)
 
         nextlevel: Optional[ba.Level]
         if level.index < len(levels) - 1:
@@ -147,35 +126,35 @@ class CoopSession(Session):
             settings = nextlevel.get_settings()
 
             # Make sure all settings the game expects are present.
-            neededsettings = gametype.get_settings(type(self))
-            for settingname, setting in neededsettings:
-                if settingname not in settings:
-                    settings[settingname] = setting['default']
+            neededsettings = gametype.get_available_settings(type(self))
+            for setting in neededsettings:
+                if setting.name not in settings:
+                    settings[setting.name] = setting.default
 
             # We wanna be in the activity's context while taking it down.
-            newactivity = _ba.new_activity(gametype, settings)
+            newactivity = _ba.newactivity(gametype, settings)
             assert isinstance(newactivity, GameActivity)
             self._next_game_instance = newactivity
-            self._next_game_name = nextlevel.name
+            self._next_game_level_name = nextlevel.name
         else:
             self._next_game_instance = None
-            self._next_game_name = None
+            self._next_game_level_name = None
 
         # Special case:
         # If our current level is 'onslaught training', instantiate
         # our tutorial so its ready to go. (if we haven't run it yet).
-        if (self.campaign_state['level'] == 'Onslaught Training'
+        if (self.campaign_level_name == 'Onslaught Training'
                 and self._tutorial_activity is None
                 and not self._ran_tutorial_activity):
             from bastd.tutorial import TutorialActivity
-            self._tutorial_activity = _ba.new_activity(TutorialActivity)
+            self._tutorial_activity = _ba.newactivity(TutorialActivity)
 
     def get_custom_menu_entries(self) -> List[Dict[str, Any]]:
         return self._custom_menu_ui
 
-    def on_player_leave(self, player: ba.Player) -> None:
+    def on_player_leave(self, sessionplayer: ba.SessionPlayer) -> None:
         from ba._general import WeakCall
-        super().on_player_leave(player)
+        super().on_player_leave(sessionplayer)
 
         # If all our players leave we wanna quit out of the session.
         _ba.timer(2.0, WeakCall(self._end_session_if_empty))
@@ -192,7 +171,7 @@ class CoopSession(Session):
         # If there's *no* players left in the current activity but there *is*
         # in the session, restart the activity to pull them into the game
         # (or quit if they're just in the lobby).
-        if not activity.players and self.players:
+        if not activity.players and self.sessionplayers:
 
             # Special exception for tourney games; don't auto-restart these.
             if self.tournament_id is not None:
@@ -213,7 +192,7 @@ class CoopSession(Session):
         from bastd.ui.tournamententry import TournamentEntryWindow
         from ba._gameactivity import GameActivity
         activity = self.getactivity()
-        if activity is not None and not activity.is_expired():
+        if activity is not None and not activity.expired:
             assert self.tournament_id is not None
             assert isinstance(activity, GameActivity)
             TournamentEntryWindow(tournament_id=self.tournament_id,
@@ -229,13 +208,13 @@ class CoopSession(Session):
 
         # Make an exception if there's no players left. Otherwise this
         # can override the default session end that occurs in that case.
-        if not self.players:
+        if not self.sessionplayers:
             return
 
         # This method may get called from the UI context so make sure we
         # explicitly run in the activity's context.
         activity = self.getactivity()
-        if activity is not None and not activity.is_expired():
+        if activity is not None and not activity.expired:
             activity.can_show_ad_on_death = True
             with _ba.Context(activity):
                 activity.end(results={'outcome': 'restart'}, force=True)
@@ -250,29 +229,28 @@ class CoopSession(Session):
         # pylint: disable=too-many-statements
         # pylint: disable=cyclic-import
         from ba._activitytypes import JoinActivity, TransitionActivity
-        from ba._lang import Lstr
+        from ba._language import Lstr
         from ba._general import WeakCall
         from ba._coopgame import CoopGameActivity
-        from ba._gameresults import TeamGameResults
+        from ba._gameresults import GameResults
+        from ba._score import ScoreType
+        from ba._player import PlayerInfo
         from bastd.tutorial import TutorialActivity
         from bastd.activity.coopscore import CoopScoreScreen
 
         app = _ba.app
 
-        # If we're running a TeamGameActivity we'll have a TeamGameResults
+        # If we're running a TeamGameActivity we'll have a GameResults
         # as results. Otherwise its an old CoopGameActivity so its giving
         # us a dict of random stuff.
-        if isinstance(results, TeamGameResults):
+        if isinstance(results, GameResults):
             outcome = 'defeat'  # This can't be 'beaten'.
         else:
-            try:
-                outcome = results['outcome']
-            except Exception:
-                outcome = ''
+            outcome = '' if results is None else results.get('outcome', '')
 
         # If at any point we have no in-game players, quit out of the session
         # (this can happen if someone leaves in the tutorial for instance).
-        active_players = [p for p in self.players if p.in_game]
+        active_players = [p for p in self.sessionplayers if p.in_game]
         if not active_players:
             self.end()
             return
@@ -284,9 +262,9 @@ class CoopSession(Session):
 
             if outcome == 'next_level':
                 if self._next_game_instance is None:
-                    raise Exception()
-                assert self._next_game_name is not None
-                self.campaign_state['level'] = self._next_game_name
+                    raise RuntimeError()
+                assert self._next_game_level_name is not None
+                self.campaign_level_name = self._next_game_level_name
                 next_game = self._next_game_instance
             else:
                 next_game = self._current_game_instance
@@ -295,11 +273,11 @@ class CoopSession(Session):
             # and will be going into onslaught-training, show the
             # tutorial first.
             if (isinstance(activity, JoinActivity)
-                    and self.campaign_state['level'] == 'Onslaught Training'
-                    and not app.kiosk_mode):
+                    and self.campaign_level_name == 'Onslaught Training'
+                    and not (app.demo_mode or app.arcade_mode)):
                 if self._tutorial_activity is None:
-                    raise Exception('tutorial not preloaded properly')
-                self.set_activity(self._tutorial_activity)
+                    raise RuntimeError('Tutorial not preloaded properly.')
+                self.setactivity(self._tutorial_activity)
                 self._tutorial_activity = None
                 self._ran_tutorial_activity = True
                 self._custom_menu_ui = []
@@ -309,17 +287,17 @@ class CoopSession(Session):
 
                 # Reset stats for the new activity.
                 self.stats.reset()
-                for player in self.players:
+                for player in self.sessionplayers:
 
                     # Skip players that are still choosing a team.
                     if player.in_game:
-                        self.stats.register_player(player)
-                self.stats.set_activity(next_game)
+                        self.stats.register_sessionplayer(player)
+                self.stats.setactivity(next_game)
 
-                # Now flip the current activity.
-                self.set_activity(next_game)
+                # Now flip the current activity..
+                self.setactivity(next_game)
 
-                if not app.kiosk_mode:
+                if not (app.demo_mode or app.arcade_mode):
                     if self.tournament_id is not None:
                         self._custom_menu_ui = [{
                             'label':
@@ -339,34 +317,38 @@ class CoopSession(Session):
         # If we were in a tutorial, just pop a transition to get to the
         # actual round.
         elif isinstance(activity, TutorialActivity):
-            self.set_activity(_ba.new_activity(TransitionActivity))
+            self.setactivity(_ba.newactivity(TransitionActivity))
         else:
 
-            # Generic team games.
-            if isinstance(results, TeamGameResults):
-                player_info = results.get_player_info()
-                score = results.get_team_score(results.get_teams()[0])
-                fail_message = None
-                score_order = ('decreasing' if results.get_lower_is_better()
-                               else 'increasing')
-                if results.get_score_type() in ('seconds', 'milliseconds',
-                                                'time'):
-                    score_type = 'time'
+            playerinfos: List[ba.PlayerInfo]
 
-                    # Results contains milliseconds; ScoreScreen wants
-                    # hundredths; need to fix :-/
+            # Generic team games.
+            if isinstance(results, GameResults):
+                playerinfos = results.playerinfos
+                score = results.get_sessionteam_score(results.sessionteams[0])
+                fail_message = None
+                score_order = ('decreasing'
+                               if results.lower_is_better else 'increasing')
+                if results.scoretype in (ScoreType.SECONDS,
+                                         ScoreType.MILLISECONDS):
+                    scoretype = 'time'
+
+                    # ScoreScreen wants hundredths of a second.
                     if score is not None:
-                        score //= 10
+                        if results.scoretype is ScoreType.SECONDS:
+                            score *= 100
+                        elif results.scoretype is ScoreType.MILLISECONDS:
+                            score //= 10
+                        else:
+                            raise RuntimeError('FIXME')
                 else:
-                    if results.get_score_type() != 'points':
-                        print(("Unknown score type: '" +
-                               results.get_score_type() + "'"))
-                    score_type = 'points'
+                    if results.scoretype is not ScoreType.POINTS:
+                        print(f'Unknown ScoreType:' f' "{results.scoretype}"')
+                    scoretype = 'points'
 
             # Old coop-game-specific results; should migrate away from these.
             else:
-                player_info = (results['player_info']
-                               if 'player_info' in results else None)
+                playerinfos = results.get('playerinfos')
                 score = results['score'] if 'score' in results else None
                 fail_message = (results['fail_message']
                                 if 'fail_message' in results else None)
@@ -375,26 +357,31 @@ class CoopSession(Session):
                 activity_score_type = (activity.get_score_type() if isinstance(
                     activity, CoopGameActivity) else None)
                 assert activity_score_type is not None
-                score_type = activity_score_type
+                scoretype = activity_score_type
+
+            # Validate types.
+            if playerinfos is not None:
+                assert isinstance(playerinfos, list)
+                assert (isinstance(i, PlayerInfo) for i in playerinfos)
 
             # Looks like we were in a round - check the outcome and
             # go from there.
             if outcome == 'restart':
 
                 # This will pop up back in the same round.
-                self.set_activity(_ba.new_activity(TransitionActivity))
+                self.setactivity(_ba.newactivity(TransitionActivity))
             else:
-                self.set_activity(
-                    _ba.new_activity(
+                self.setactivity(
+                    _ba.newactivity(
                         CoopScoreScreen, {
-                            'player_info': player_info,
+                            'playerinfos': playerinfos,
                             'score': score,
                             'fail_message': fail_message,
                             'score_order': score_order,
-                            'score_type': score_type,
+                            'score_type': scoretype,
                             'outcome': outcome,
                             'campaign': self.campaign,
-                            'level': self.campaign_state['level']
+                            'level': self.campaign_level_name
                         }))
 
         # No matter what, get the next 2 levels ready to go.

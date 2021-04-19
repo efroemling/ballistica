@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Defines a controller for wrangling playlist edit UIs."""
 
 from __future__ import annotations
@@ -41,10 +23,10 @@ class PlaylistEditController:
                  playlist: List[Dict[str, Any]] = None,
                  playlist_name: str = None):
         from ba.internal import preload_map_preview_media, filter_playlist
-        from bastd.ui import playlist as playlistui
-        from bastd.ui.playlist import edit as peditui
+        from bastd.ui.playlist import PlaylistTypeVars
+        from bastd.ui.playlist.edit import PlaylistEditWindow
 
-        bs_config = ba.app.config
+        appconfig = ba.app.config
 
         # Since we may be showing our map list momentarily,
         # lets go ahead and preload all map preview textures.
@@ -53,13 +35,13 @@ class PlaylistEditController:
 
         self._editing_game = False
         self._editing_game_type: Optional[Type[ba.GameActivity]] = None
-        self._pvars = playlistui.PlaylistTypeVars(sessiontype)
+        self._pvars = PlaylistTypeVars(sessiontype)
         self._existing_playlist_name = existing_playlist_name
         self._config_name_full = self._pvars.config_name + ' Playlists'
 
         # Make sure config exists.
-        if self._config_name_full not in bs_config:
-            bs_config[self._config_name_full] = {}
+        if self._config_name_full not in appconfig:
+            appconfig[self._config_name_full] = {}
 
         self._selected_index = 0
         if existing_playlist_name:
@@ -67,7 +49,7 @@ class PlaylistEditController:
 
             # Filter out invalid games.
             self._playlist = filter_playlist(
-                bs_config[self._pvars.config_name +
+                appconfig[self._pvars.config_name +
                           ' Playlists'][existing_playlist_name],
                 sessiontype=sessiontype,
                 remove_unowned=False)
@@ -87,7 +69,7 @@ class PlaylistEditController:
                     self._name = (
                         self._pvars.default_new_list_name.evaluate() +
                         ((' ' + str(i)) if i > 1 else ''))
-                    if self._name not in bs_config[self._pvars.config_name +
+                    if self._name not in appconfig[self._pvars.config_name +
                                                    ' Playlists']:
                         break
                     i += 1
@@ -96,8 +78,9 @@ class PlaylistEditController:
             # and that's all they can do.
             self._edit_ui_selection = 'add_button'
 
-        ba.app.main_menu_window = (peditui.PlaylistEditWindow(
-            editcontroller=self, transition=transition).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            PlaylistEditWindow(editcontroller=self,
+                               transition=transition).get_root_widget())
 
     def get_config_name(self) -> str:
         """(internal)"""
@@ -115,11 +98,11 @@ class PlaylistEditController:
         """(internal)"""
         self._edit_ui_selection = selection
 
-    def get_name(self) -> str:
+    def getname(self) -> str:
         """(internal)"""
         return self._name
 
-    def set_name(self, name: str) -> None:
+    def setname(self, name: str) -> None:
         """(internal)"""
         self._name = name
 
@@ -149,10 +132,10 @@ class PlaylistEditController:
 
     def add_game_pressed(self) -> None:
         """(internal)"""
-        from bastd.ui.playlist import addgame
-        ba.containerwidget(edit=ba.app.main_menu_window, transition='out_left')
-        ba.app.main_menu_window = (addgame.PlaylistAddGameWindow(
-            editcontroller=self).get_root_widget())
+        from bastd.ui.playlist.addgame import PlaylistAddGameWindow
+        ba.app.ui.clear_main_menu_window(transition='out_left')
+        ba.app.ui.set_main_menu_window(
+            PlaylistAddGameWindow(editcontroller=self).get_root_widget())
 
     def edit_game_pressed(self) -> None:
         """Should be called by supplemental UIs when a game is to be edited."""
@@ -162,49 +145,48 @@ class PlaylistEditController:
         self._show_edit_ui(gametype=getclass(
             self._playlist[self._selected_index]['type'],
             subclassof=ba.GameActivity),
-                           config=self._playlist[self._selected_index])
+                           settings=self._playlist[self._selected_index])
 
     def add_game_cancelled(self) -> None:
         """(internal)"""
-        from bastd.ui.playlist import edit as pedit
-        ba.containerwidget(edit=ba.app.main_menu_window,
-                           transition='out_right')
-        ba.app.main_menu_window = (pedit.PlaylistEditWindow(
-            editcontroller=self, transition='in_left').get_root_widget())
+        from bastd.ui.playlist.edit import PlaylistEditWindow
+        ba.app.ui.clear_main_menu_window(transition='out_right')
+        ba.app.ui.set_main_menu_window(
+            PlaylistEditWindow(editcontroller=self,
+                               transition='in_left').get_root_widget())
 
     def _show_edit_ui(self, gametype: Type[ba.GameActivity],
-                      config: Optional[Dict[str, Any]]) -> None:
-        self._editing_game = (config is not None)
+                      settings: Optional[Dict[str, Any]]) -> None:
+        self._editing_game = (settings is not None)
         self._editing_game_type = gametype
         assert self._sessiontype is not None
-        gametype.create_config_ui(self._sessiontype, copy.deepcopy(config),
-                                  self._edit_game_done)
+        gametype.create_settings_ui(self._sessiontype, copy.deepcopy(settings),
+                                    self._edit_game_done)
 
     def add_game_type_selected(self, gametype: Type[ba.GameActivity]) -> None:
         """(internal)"""
-        self._show_edit_ui(gametype=gametype, config=None)
+        self._show_edit_ui(gametype=gametype, settings=None)
 
     def _edit_game_done(self, config: Optional[Dict[str, Any]]) -> None:
-        from bastd.ui.playlist import edit as pedit
-        from bastd.ui.playlist import addgame
+        from bastd.ui.playlist.edit import PlaylistEditWindow
+        from bastd.ui.playlist.addgame import PlaylistAddGameWindow
         from ba.internal import get_type_name
         if config is None:
             # If we were editing, go back to our list.
             if self._editing_game:
                 ba.playsound(ba.getsound('powerdown01'))
-                ba.containerwidget(edit=ba.app.main_menu_window,
-                                   transition='out_right')
-                ba.app.main_menu_window = (pedit.PlaylistEditWindow(
-                    editcontroller=self,
-                    transition='in_left').get_root_widget())
+                ba.app.ui.clear_main_menu_window(transition='out_right')
+                ba.app.ui.set_main_menu_window(
+                    PlaylistEditWindow(editcontroller=self,
+                                       transition='in_left').get_root_widget())
 
             # Otherwise we were adding; go back to the add type choice list.
             else:
-                ba.containerwidget(edit=ba.app.main_menu_window,
-                                   transition='out_right')
-                ba.app.main_menu_window = (addgame.PlaylistAddGameWindow(
-                    editcontroller=self,
-                    transition='in_left').get_root_widget())
+                ba.app.ui.clear_main_menu_window(transition='out_right')
+                ba.app.ui.set_main_menu_window(
+                    PlaylistAddGameWindow(
+                        editcontroller=self,
+                        transition='in_left').get_root_widget())
         else:
             # Make sure type is in there.
             assert self._editing_game_type is not None
@@ -220,7 +202,7 @@ class PlaylistEditController:
                 self._selected_index = insert_index
 
             ba.playsound(ba.getsound('gunCocking'))
-            ba.containerwidget(edit=ba.app.main_menu_window,
-                               transition='out_right')
-            ba.app.main_menu_window = (pedit.PlaylistEditWindow(
-                editcontroller=self, transition='in_left').get_root_widget())
+            ba.app.ui.clear_main_menu_window(transition='out_right')
+            ba.app.ui.set_main_menu_window(
+                PlaylistEditWindow(editcontroller=self,
+                                   transition='in_left').get_root_widget())

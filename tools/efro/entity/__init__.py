@@ -1,30 +1,26 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Entity functionality.
 
-A system for defining complex data-containing types, supporting both static
-and run-time type safety, serialization, efficient/sparse storage, per-field
-value limits, etc. These are heavy-weight in comparison to things such as
+A system for defining structured data, supporting both static and runtime
+type safety, serialization, efficient/sparse storage, per-field value
+limits, etc. This is a heavyweight option in comparison to things such as
 dataclasses, but the increased features can make the overhead worth it for
 certain use cases.
+
+Advantages compared to nested dataclasses:
+- Field names separated from their data representation so can get more
+  concise json data, change variable names while preserving back-compat, etc.
+- Can wrap and preserve unmapped data (so fields can be added to new versions
+  of something without breaking old versions' ability to read the data)
+- Incorrectly typed data is caught at runtime (for dataclasses we rely on
+  type-checking and explicit validation calls)
+
+Disadvantages compared to nested dataclasses:
+- More complex to use
+- Significantly more heavyweight (roughly 10 times slower in quick tests)
+- Can't currently be initialized in constructors (this would probably require
+  a Mypy plugin to do in a type-safe way)
 """
 # pylint: disable=unused-import
 

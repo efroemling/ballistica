@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """UI functionality related to URLs."""
 
 from __future__ import annotations
@@ -34,14 +16,15 @@ class ShowURLWindow(ba.Window):
         # in some cases we might want to show it as a qr code
         # (for long URLs especially)
         app = ba.app
+        uiscale = app.ui.uiscale
         if app.platform == 'android' and app.subplatform == 'alibaba':
             self._width = 500
             self._height = 500
             super().__init__(root_widget=ba.containerwidget(
                 size=(self._width, self._height),
                 transition='in_right',
-                scale=(1.25 if ba.app.small_ui else 1.25 if ba.app.
-                       med_ui else 1.25)))
+                scale=(1.25 if uiscale is ba.UIScale.SMALL else
+                       1.25 if uiscale is ba.UIScale.MEDIUM else 1.25)))
             self._cancel_button = ba.buttonwidget(
                 parent=self._root_widget,
                 position=(50, self._height - 30),
@@ -68,12 +51,12 @@ class ShowURLWindow(ba.Window):
             self._root_widget = ba.containerwidget(
                 size=(self._width, self._height + 40),
                 transition='in_right',
-                scale=1.25
-                if ba.app.small_ui else 1.25 if ba.app.med_ui else 1.25)
+                scale=(1.25 if uiscale is ba.UIScale.SMALL else
+                       1.25 if uiscale is ba.UIScale.MEDIUM else 1.25))
             ba.textwidget(parent=self._root_widget,
                           position=(self._width * 0.5, self._height - 10),
                           size=(0, 0),
-                          color=ba.app.title_color,
+                          color=ba.app.ui.title_color,
                           h_align='center',
                           v_align='center',
                           text=ba.Lstr(resource='directBrowserToURLText'),
@@ -83,7 +66,7 @@ class ShowURLWindow(ba.Window):
                                     self._height * 0.5 + 29),
                           size=(0, 0),
                           scale=1.3,
-                          color=ba.app.infotextcolor,
+                          color=ba.app.ui.infotextcolor,
                           h_align='center',
                           v_align='center',
                           text=address,

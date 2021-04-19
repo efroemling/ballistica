@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Error related functionality."""
 
 from __future__ import annotations
@@ -29,16 +11,6 @@ import _ba
 if TYPE_CHECKING:
     from typing import Any, List
     import ba
-
-
-class _UnhandledType:
-    pass
-
-
-# A special value that should be returned from handlemessage()
-# functions for unhandled message types.  This may result
-# in fallback message types being attempted/etc.
-UNHANDLED = _UnhandledType()
 
 
 class DependencyError(Exception):
@@ -59,6 +31,16 @@ class DependencyError(Exception):
         return self._deps
 
 
+class ContextError(Exception):
+    """Exception raised when a call is made in an invalid context.
+
+    category: Exception Classes
+
+    Examples of this include calling UI functions within an Activity context
+    or calling scene manipulation functions outside of a game context.
+    """
+
+
 class NotFoundError(Exception):
     """Exception raised when a referenced object does not exist.
 
@@ -73,8 +55,29 @@ class PlayerNotFoundError(NotFoundError):
     """
 
 
+class SessionPlayerNotFoundError(NotFoundError):
+    """Exception raised when an expected ba.SessionPlayer does not exist.
+
+    category: Exception Classes
+    """
+
+
 class TeamNotFoundError(NotFoundError):
     """Exception raised when an expected ba.Team does not exist.
+
+    category: Exception Classes
+    """
+
+
+class DelegateNotFoundError(NotFoundError):
+    """Exception raised when an expected delegate object does not exist.
+
+    category: Exception Classes
+    """
+
+
+class SessionTeamNotFoundError(NotFoundError):
+    """Exception raised when an expected ba.SessionTeam does not exist.
 
     category: Exception Classes
     """
@@ -136,7 +139,7 @@ def print_exception(*args: Any, **keywds: Any) -> None:
     if keywds:
         allowed_keywds = ['once']
         if any(keywd not in allowed_keywds for keywd in keywds):
-            raise Exception('invalid keyword(s)')
+            raise TypeError('invalid keyword(s)')
     try:
         # If we're only printing once and already have, bail.
         if keywds.get('once', False):

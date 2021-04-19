@@ -1,38 +1,63 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Small handy bits of functionality."""
 
 from __future__ import annotations
 
 import datetime
 import time
+import weakref
+import functools
+from enum import Enum
 from typing import TYPE_CHECKING, cast, TypeVar, Generic
 
 if TYPE_CHECKING:
     import asyncio
-    from typing import Any, Dict, Callable, Optional
+    from efro.call import Call as Call  # 'as Call' so we re-export.
+    from weakref import ReferenceType
+    from typing import Any, Dict, Callable, Optional, Type
 
+T = TypeVar('T')
 TVAL = TypeVar('TVAL')
 TARG = TypeVar('TARG')
+TSELF = TypeVar('TSELF')
 TRET = TypeVar('TRET')
+TENUM = TypeVar('TENUM', bound=Enum)
+
+
+class _EmptyObj:
+    pass
+
+
+if TYPE_CHECKING:
+    Call = Call
+else:
+    Call = functools.partial
+
+
+def enum_by_value(cls: Type[TENUM], value: Any) -> TENUM:
+    """Create an enum from a value.
+
+    This is basically the same as doing 'obj = EnumType(value)' except
+    that it works around an issue where a reference loop is created
+    if an exception is thrown due to an invalid value. Since we disable
+    the cyclic garbage collector for most of the time, such loops can lead
+    to our objects sticking around longer than we want.
+    This issue has been submitted to Python as a bug so hopefully we can
+    remove this eventually if it gets fixed: https://bugs.python.org/issue42248
+    """
+
+    # Note: we don't recreate *ALL* the functionality of the Enum constructor
+    # such as the _missing_ hook; but this should cover our basic needs.
+    value2member_map = getattr(cls, '_value2member_map_')
+    assert value2member_map is not None
+    try:
+        out = value2member_map[value]
+        assert isinstance(out, cls)
+        return out
+    except KeyError:
+        raise ValueError('%r is not a valid %s' %
+                         (value, cls.__name__)) from None
 
 
 def utc_now() -> datetime.datetime:
@@ -44,6 +69,15 @@ def utc_now() -> datetime.datetime:
     which makes it less safe to use)
     """
     return datetime.datetime.now(datetime.timezone.utc)
+
+
+def empty_weakref(objtype: Type[T]) -> ReferenceType[T]:
+    """Return an invalidated weak-reference for the specified type."""
+    # At runtime, all weakrefs are the same; our type arg is just
+    # for the static type checker.
+    del objtype  # Unused.
+    # Just create an object and let it die. Is there a cleaner way to do this?
+    return weakref.ref(_EmptyObj())  # type: ignore
 
 
 def data_size_str(bytecount: int) -> str:
@@ -68,55 +102,6 @@ def data_size_str(bytecount: int) -> str:
     if round(gbytecount, 1) < 10.0:
         return f'{mbytecount:.1f} GB'
     return f'{gbytecount:.0f} GB'
-
-
-class DispatchMethodWrapper(Generic[TARG, TRET]):
-    """Type-aware standin for the dispatch func returned by dispatchmethod."""
-
-    def __call__(self, arg: TARG) -> TRET:
-        pass
-
-    @staticmethod
-    def register(func: Callable[[Any, Any], TRET]) -> Callable:
-        """Register a new dispatch handler for this dispatch-method."""
-
-    registry: Dict[Any, Callable]
-
-
-# noinspection PyTypeHints, PyProtectedMember
-def dispatchmethod(
-        func: Callable[[Any, TARG],
-                       TRET]) -> DispatchMethodWrapper[TARG, TRET]:
-    """A variation of functools.singledispatch for methods."""
-    from functools import singledispatch, update_wrapper
-    origwrapper: Any = singledispatch(func)
-
-    # Pull this out so hopefully origwrapper can die,
-    # otherwise we reference origwrapper in our wrapper.
-    dispatch = origwrapper.dispatch
-
-    # All we do here is recreate the end of functools.singledispatch
-    # where it returns a wrapper except instead of the wrapper using the
-    # first arg to the function ours uses the second (to skip 'self').
-    # This was made with Python 3.7; we should probably check up on
-    # this in later versions in case anything has changed.
-    # (or hopefully they'll add this functionality to their version)
-    def wrapper(*args: Any, **kw: Any) -> Any:
-        if not args or len(args) < 2:
-            raise TypeError(f'{funcname} requires at least '
-                            '2 positional arguments')
-
-        return dispatch(args[1].__class__)(*args, **kw)
-
-    funcname = getattr(func, '__name__', 'dispatchmethod method')
-    wrapper.register = origwrapper.register  # type: ignore
-    wrapper.dispatch = dispatch  # type: ignore
-    wrapper.registry = origwrapper.registry  # type: ignore
-    # pylint: disable=protected-access
-    wrapper._clear_cache = origwrapper._clear_cache  # type: ignore
-    update_wrapper(wrapper, func)
-    # pylint: enable=protected-access
-    return cast(DispatchMethodWrapper, wrapper)
 
 
 class DirtyBit:
@@ -216,9 +201,66 @@ class DirtyBit:
         return False
 
 
+class DispatchMethodWrapper(Generic[TARG, TRET]):
+    """Type-aware standin for the dispatch func returned by dispatchmethod."""
+
+    def __call__(self, arg: TARG) -> TRET:
+        pass
+
+    @staticmethod
+    def register(func: Callable[[Any, Any], TRET]) -> Callable:
+        """Register a new dispatch handler for this dispatch-method."""
+
+    registry: Dict[Any, Callable]
+
+
+# noinspection PyProtectedMember,PyTypeHints
+def dispatchmethod(
+        func: Callable[[Any, TARG],
+                       TRET]) -> DispatchMethodWrapper[TARG, TRET]:
+    """A variation of functools.singledispatch for methods.
+
+    Note: as of Python 3.9 there is now functools.singledispatchmethod,
+    but it currently (as of Jan 2021) is not type-aware (at least in mypy),
+    which gives us a reason to keep this one around for now.
+    """
+    from functools import singledispatch, update_wrapper
+    origwrapper: Any = singledispatch(func)
+
+    # Pull this out so hopefully origwrapper can die,
+    # otherwise we reference origwrapper in our wrapper.
+    dispatch = origwrapper.dispatch
+
+    # All we do here is recreate the end of functools.singledispatch
+    # where it returns a wrapper except instead of the wrapper using the
+    # first arg to the function ours uses the second (to skip 'self').
+    # This was made against Python 3.7; we should probably check up on
+    # this in later versions in case anything has changed.
+    # (or hopefully they'll add this functionality to their version)
+    # NOTE: sounds like we can use functools singledispatchmethod in 3.8
+    def wrapper(*args: Any, **kw: Any) -> Any:
+        if not args or len(args) < 2:
+            raise TypeError(f'{funcname} requires at least '
+                            '2 positional arguments')
+
+        return dispatch(args[1].__class__)(*args, **kw)
+
+    funcname = getattr(func, '__name__', 'dispatchmethod method')
+    wrapper.register = origwrapper.register  # type: ignore
+    wrapper.dispatch = dispatch  # type: ignore
+    wrapper.registry = origwrapper.registry  # type: ignore
+    # pylint: disable=protected-access
+    wrapper._clear_cache = origwrapper._clear_cache  # type: ignore
+    update_wrapper(wrapper, func)
+    # pylint: enable=protected-access
+    return cast(DispatchMethodWrapper, wrapper)
+
+
 def valuedispatch(call: Callable[[TVAL], TRET]) -> ValueDispatcher[TVAL, TRET]:
     """Decorator for functions to allow dispatching based on a value.
 
+    This differs from functools.singledispatch in that it dispatches based
+    on the value of an argument, not based on its type.
     The 'register' method of a value-dispatch function can be used
     to assign new functions to handle particular values.
     Unhandled values wind up in the original dispatch function."""
@@ -281,6 +323,61 @@ class ValueDispatcher1Arg(Generic[TVAL, TARG, TRET]):
         return partial(self._add_handler, value)
 
 
+if TYPE_CHECKING:
+
+    class ValueDispatcherMethod(Generic[TVAL, TRET]):
+        """Used by the valuedispatchmethod decorator."""
+
+        def __call__(self, value: TVAL) -> TRET:
+            ...
+
+        def register(self,
+                     value: TVAL) -> Callable[[Callable[[TSELF], TRET]], None]:
+            """Add a handler to the dispatcher."""
+            ...
+
+
+def valuedispatchmethod(
+        call: Callable[[TSELF, TVAL],
+                       TRET]) -> ValueDispatcherMethod[TVAL, TRET]:
+    """Like valuedispatch but works with methods instead of functions."""
+
+    # NOTE: It seems that to wrap a method with a decorator and have self
+    # dispatching do the right thing, we must return a function and not
+    # an executable object. So for this version we store our data here
+    # in the function call dict and simply return a call.
+
+    _base_call = call
+    _handlers: Dict[TVAL, Callable[[TSELF], TRET]] = {}
+
+    def _add_handler(value: TVAL, addcall: Callable[[TSELF], TRET]) -> None:
+        if value in _handlers:
+            raise RuntimeError(f'Duplicate handlers added for {value}')
+        _handlers[value] = addcall
+
+    def _register(value: TVAL) -> Callable[[Callable[[TSELF], TRET]], None]:
+        from functools import partial
+        return partial(_add_handler, value)
+
+    def _call_wrapper(self: TSELF, value: TVAL) -> TRET:
+        handler = _handlers.get(value)
+        if handler is not None:
+            return handler(self)
+        return _base_call(self, value)
+
+    # We still want to use our returned object to register handlers, but we're
+    # actually just returning a function. So manually stuff the call onto it.
+    setattr(_call_wrapper, 'register', _register)
+
+    # To the type checker's eyes we return a ValueDispatchMethod instance;
+    # this lets it know about our register func and type-check its usage.
+    # In reality we just return a raw function call (for reasons listed above).
+    if TYPE_CHECKING:  # pylint: disable=no-else-return
+        return ValueDispatcherMethod[TVAL, TRET]()
+    else:
+        return _call_wrapper
+
+
 def make_hash(obj: Any) -> int:
     """Makes a hash from a dictionary, list, tuple or set to any level,
     that contains only other hashable types (including any lists, tuples,
@@ -295,7 +392,7 @@ def make_hash(obj: Any) -> int:
     import copy
 
     if isinstance(obj, (set, tuple, list)):
-        return hash(tuple([make_hash(e) for e in obj]))
+        return hash(tuple(make_hash(e) for e in obj))
     if not isinstance(obj, dict):
         return hash(obj)
 
@@ -306,3 +403,76 @@ def make_hash(obj: Any) -> int:
     # NOTE: there is sorted works correctly because it compares only
     # unique first values (i.e. dict keys)
     return hash(tuple(frozenset(sorted(new_obj.items()))))
+
+
+def asserttype(obj: Any, typ: Type[T]) -> T:
+    """Return an object typed as a given type.
+
+    Assert is used to check its actual type, so only use this when
+    failures are not expected. Otherwise use checktype.
+    """
+    assert isinstance(obj, typ)
+    return obj
+
+
+def checktype(obj: Any, typ: Type[T]) -> T:
+    """Return an object typed as a given type.
+
+    Always checks the type at runtime with isinstance and throws a TypeError
+    on failure. Use asserttype for more efficient (but less safe) equivalent.
+    """
+    if not isinstance(obj, typ):
+        raise TypeError(f'Expected a {typ}; got a {type(obj)}.')
+    return obj
+
+
+def warntype(obj: Any, typ: Type[T]) -> T:
+    """Return an object typed as a given type.
+
+    Always checks the type at runtime and simply logs a warning if it is
+    not what is expected.
+    """
+    if not isinstance(obj, typ):
+        import logging
+        logging.warning('warntype: expected a %s, got a %s', typ, type(obj))
+    return obj  # type: ignore
+
+
+def assert_non_optional(obj: Optional[T]) -> T:
+    """Return an object with Optional typing removed.
+
+    Assert is used to check its actual type, so only use this when
+    failures are not expected. Use check_non_optional otherwise.
+    """
+    assert obj is not None
+    return obj
+
+
+def check_non_optional(obj: Optional[T]) -> T:
+    """Return an object with Optional typing removed.
+
+    Always checks the actual type and throws a TypeError on failure.
+    Use assert_non_optional for a more efficient (but less safe) equivalent.
+    """
+    if obj is None:
+        raise TypeError('Got None value in check_non_optional.')
+    return obj
+
+
+def smoothstep(edge0: float, edge1: float, x: float) -> float:
+    """A smooth transition function.
+
+    Returns a value that smoothly moves from 0 to 1 as we go between edges.
+    Values outside of the range return 0 or 1.
+    """
+    y = min(1.0, max(0.0, (x - edge0) / (edge1 - edge0)))
+    return y * y * (3.0 - 2.0 * y)
+
+
+def linearstep(edge0: float, edge1: float, x: float) -> float:
+    """A linear transition function.
+
+    Returns a value that linearly moves from 0 to 1 as we go between edges.
+    Values outside of the range return 0 or 1.
+    """
+    return max(0.0, min(1.0, (x - edge0) / (edge1 - edge0)))

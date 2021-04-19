@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """UI functionality related to advanced gamepad configuring."""
 
 from __future__ import annotations
@@ -41,34 +23,35 @@ class GamepadAdvancedSettingsWindow(ba.Window):
         app = ba.app
 
         self._r = parent_window.get_r()
-        self._width = 900 if ba.app.small_ui else 700
-        self._x_inset = x_inset = 100 if ba.app.small_ui else 0
-        self._height = 402 if ba.app.small_ui else 512
+        uiscale = ba.app.ui.uiscale
+        self._width = 900 if uiscale is ba.UIScale.SMALL else 700
+        self._x_inset = x_inset = 100 if uiscale is ba.UIScale.SMALL else 0
+        self._height = 402 if uiscale is ba.UIScale.SMALL else 512
         self._textwidgets: Dict[str, ba.Widget] = {}
         super().__init__(root_widget=ba.containerwidget(
             transition='in_scale',
             size=(self._width, self._height),
-            scale=1.06 *
-            (1.85 if ba.app.small_ui else 1.35 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -25) if ba.app.small_ui else (0, 0),
+            scale=1.06 * (1.85 if uiscale is ba.UIScale.SMALL else
+                          1.35 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -25) if uiscale is ba.UIScale.SMALL else (0, 0),
             scale_origin_stack_offset=(parent_window.get_advanced_button().
                                        get_screen_space_center())))
 
         ba.textwidget(parent=self._root_widget,
                       position=(self._width * 0.5, self._height -
-                                (40 if ba.app.small_ui else 34)),
+                                (40 if uiscale is ba.UIScale.SMALL else 34)),
                       size=(0, 0),
                       text=ba.Lstr(resource=self._r + '.advancedTitleText'),
                       maxwidth=320,
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       h_align='center',
                       v_align='center')
 
         back_button = btn = ba.buttonwidget(
             parent=self._root_widget,
             autoselect=True,
-            position=(self._width - (176 + x_inset),
-                      self._height - (60 if ba.app.small_ui else 55)),
+            position=(self._width - (176 + x_inset), self._height -
+                      (60 if uiscale is ba.UIScale.SMALL else 55)),
             size=(120, 48),
             text_scale=0.8,
             label=ba.Lstr(resource='doneText'),
@@ -88,19 +71,17 @@ class GamepadAdvancedSettingsWindow(ba.Window):
             parent=self._root_widget,
             position=((self._width - self._scroll_width) * 0.5,
                       self._height - 65 - self._scroll_height),
-            size=(self._scroll_width, self._scroll_height))
+            size=(self._scroll_width, self._scroll_height),
+            claims_left_right=True,
+            claims_tab=True,
+            selection_loops_to_parent=True)
         self._subcontainer = ba.containerwidget(parent=self._scrollwidget,
                                                 size=(self._sub_width,
                                                       self._sub_height),
-                                                background=False)
-        ba.containerwidget(edit=self._scrollwidget,
-                           claims_left_right=True,
-                           claims_tab=True,
-                           selection_loop_to_parent=True)
-        ba.containerwidget(edit=self._subcontainer,
-                           claims_left_right=True,
-                           claims_tab=True,
-                           selection_loop_to_parent=True)
+                                                background=False,
+                                                claims_left_right=True,
+                                                claims_tab=True,
+                                                selection_loops_to_parent=True)
         ba.containerwidget(edit=self._root_widget,
                            selected_child=self._scrollwidget)
 
@@ -403,10 +384,7 @@ class GamepadAdvancedSettingsWindow(ba.Window):
 
     def _inc(self, control: str, min_val: float, max_val: float,
              inc: float) -> None:
-        try:
-            val = self._parent_window.get_settings()[control]
-        except Exception:
-            val = 1.0
+        val = self._parent_window.get_settings().get(control, 1.0)
         val = min(max_val, max(min_val, val + inc))
         if abs(1.0 - val) < 0.001:
             if control in self._parent_window.get_settings():

@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Functionality related to teams sessions."""
 from __future__ import annotations
 
@@ -27,6 +9,7 @@ from typing import TYPE_CHECKING
 
 import _ba
 from ba._session import Session
+from ba._error import NotFoundError, print_error
 
 if TYPE_CHECKING:
     from typing import Optional, Any, Dict, List, Type, Sequence
@@ -58,7 +41,7 @@ class MultiTeamSession(Session):
         app = _ba.app
         cfg = app.config
 
-        if self._use_teams:
+        if self.use_teams:
             team_names = cfg.get('Custom Team Names', DEFAULT_TEAM_NAMES)
             team_colors = cfg.get('Custom Team Colors', DEFAULT_TEAM_COLORS)
         else:
@@ -71,7 +54,6 @@ class MultiTeamSession(Session):
         super().__init__(depsets,
                          team_names=team_names,
                          team_colors=team_colors,
-                         use_team_colors=self._use_teams,
                          min_players=1,
                          max_players=self.get_max_players())
 
@@ -85,7 +67,7 @@ class MultiTeamSession(Session):
             from bastd.tutorial import TutorialActivity
 
             # Get this loading.
-            self._tutorial_activity_instance = _ba.new_activity(
+            self._tutorial_activity_instance = _ba.newactivity(
                 TutorialActivity)
         else:
             self._tutorial_activity_instance = None
@@ -106,7 +88,7 @@ class MultiTeamSession(Session):
             # got it and we don't want that to affect our config.
             playlist = copy.deepcopy(playlists[self._playlist_name])
         else:
-            if self._use_teams:
+            if self.use_teams:
                 playlist = _playlist.get_default_teams_playlist()
             else:
                 playlist = _playlist.get_default_free_for_all_playlist()
@@ -133,7 +115,7 @@ class MultiTeamSession(Session):
         self._instantiate_next_game()
 
         # Start in our custom join screen.
-        self.set_activity(_ba.new_activity(MultiTeamJoinActivity))
+        self.setactivity(_ba.newactivity(MultiTeamJoinActivity))
 
     def get_ffa_series_length(self) -> int:
         """Return free-for-all series length."""
@@ -149,60 +131,58 @@ class MultiTeamSession(Session):
         from ba._gameactivity import GameActivity
         gametype: Type[GameActivity] = self._next_game_spec['resolved_type']
         assert issubclass(gametype, GameActivity)
-        return gametype.get_config_display_string(self._next_game_spec)
+        return gametype.get_settings_display_string(self._next_game_spec)
 
     def get_game_number(self) -> int:
         """Returns which game in the series is currently being played."""
         return self._game_number
 
-    def on_team_join(self, team: ba.Team) -> None:
-        team.sessiondata['previous_score'] = team.sessiondata['score'] = 0
+    def on_team_join(self, team: ba.SessionTeam) -> None:
+        team.customdata['previous_score'] = team.customdata['score'] = 0
 
     def get_max_players(self) -> int:
         """Return max number of ba.Players allowed to join the game at once."""
-        if self._use_teams:
+        if self.use_teams:
             return _ba.app.config.get('Team Game Max Players', 8)
         return _ba.app.config.get('Free-for-All Max Players', 8)
 
     def _instantiate_next_game(self) -> None:
-        self._next_game_instance = _ba.new_activity(
+        self._next_game_instance = _ba.newactivity(
             self._next_game_spec['resolved_type'],
             self._next_game_spec['settings'])
 
     def on_activity_end(self, activity: ba.Activity, results: Any) -> None:
         # pylint: disable=cyclic-import
-        from ba import _error
         from bastd.tutorial import TutorialActivity
         from bastd.activity.multiteamvictory import (
             TeamSeriesVictoryScoreScreenActivity)
-        from ba import _activitytypes
+        from ba._activitytypes import (TransitionActivity, JoinActivity,
+                                       ScoreScreenActivity)
 
         # If we have a tutorial to show, that's the first thing we do no
         # matter what.
         if self._tutorial_activity_instance is not None:
-            self.set_activity(self._tutorial_activity_instance)
+            self.setactivity(self._tutorial_activity_instance)
             self._tutorial_activity_instance = None
 
         # If we're leaving the tutorial activity, pop a transition activity
         # to transition us into a round gracefully (otherwise we'd snap from
         # one terrain to another instantly).
         elif isinstance(activity, TutorialActivity):
-            self.set_activity(
-                _ba.new_activity(_activitytypes.TransitionActivity))
+            self.setactivity(_ba.newactivity(TransitionActivity))
 
         # If we're in a between-round activity or a restart-activity, hop
         # into a round.
         elif isinstance(
                 activity,
-            (_activitytypes.JoinActivity, _activitytypes.TransitionActivity,
-             _activitytypes.ScoreScreenActivity)):
+            (JoinActivity, TransitionActivity, ScoreScreenActivity)):
 
             # If we're coming from a series-end activity, reset scores.
             if isinstance(activity, TeamSeriesVictoryScoreScreenActivity):
                 self.stats.reset()
                 self._game_number = 0
-                for team in self.teams:
-                    team.sessiondata['score'] = 0
+                for team in self.sessionteams:
+                    team.customdata['score'] = 0
 
             # Otherwise just set accum (per-game) scores.
             else:
@@ -218,19 +198,19 @@ class MultiTeamSession(Session):
             self._instantiate_next_game()
 
             # (Re)register all players and wire stats to our next activity.
-            for player in self.players:
+            for player in self.sessionplayers:
                 # ..but only ones who have been placed on a team
                 # (ie: no longer sitting in the lobby).
                 try:
-                    has_team = (player.team is not None)
-                except _error.TeamNotFoundError:
+                    has_team = (player.sessionteam is not None)
+                except NotFoundError:
                     has_team = False
                 if has_team:
-                    self.stats.register_player(player)
-            self.stats.set_activity(next_game)
+                    self.stats.register_sessionplayer(player)
+            self.stats.setactivity(next_game)
 
             # Now flip the current activity.
-            self.set_activity(next_game)
+            self.setactivity(next_game)
 
         # If we're leaving a round, go to the score screen.
         else:
@@ -238,13 +218,12 @@ class MultiTeamSession(Session):
 
     def _switch_to_score_screen(self, results: Any) -> None:
         """Switch to a score screen after leaving a round."""
-        from ba import _error
         del results  # Unused arg.
-        _error.print_error('this should be overridden')
+        print_error('this should be overridden')
 
     def announce_game_results(self,
                               activity: ba.GameActivity,
-                              results: ba.TeamGameResults,
+                              results: ba.GameResults,
                               delay: float,
                               announce_winning_team: bool = True) -> None:
         """Show basic game result at the end of a game.
@@ -256,20 +235,21 @@ class MultiTeamSession(Session):
         """
         # pylint: disable=cyclic-import
         # pylint: disable=too-many-locals
-        from ba import _math
-        from ba import _general
+        from ba._math import normalized_color
+        from ba._general import Call
         from ba._gameutils import cameraflash
-        from ba import _lang
+        from ba._language import Lstr
         from ba._freeforallsession import FreeForAllSession
         from ba._messages import CelebrateMessage
-        _ba.timer(delay,
-                  _general.Call(_ba.playsound, _ba.getsound('boxingBell')))
+        _ba.timer(delay, Call(_ba.playsound, _ba.getsound('boxingBell')))
+
         if announce_winning_team:
-            winning_team = results.get_winning_team()
-            if winning_team is not None:
+            winning_sessionteam = results.winning_sessionteam
+            if winning_sessionteam is not None:
                 # Have all players celebrate.
                 celebrate_msg = CelebrateMessage(duration=10.0)
-                for player in winning_team.players:
+                assert winning_sessionteam.activityteam is not None
+                for player in winning_sessionteam.activityteam.players:
                     if player.actor:
                         player.actor.handlemessage(celebrate_msg)
                 cameraflash()
@@ -279,12 +259,13 @@ class MultiTeamSession(Session):
                     wins_resource = 'winsPlayerText'
                 else:
                     wins_resource = 'winsTeamText'
-                wins_text = _lang.Lstr(resource=wins_resource,
-                                       subs=[('${NAME}', winning_team.name)])
-                activity.show_zoom_message(wins_text,
-                                           scale=0.85,
-                                           color=_math.normalized_color(
-                                               winning_team.color))
+                wins_text = Lstr(resource=wins_resource,
+                                 subs=[('${NAME}', winning_sessionteam.name)])
+                activity.show_zoom_message(
+                    wins_text,
+                    scale=0.85,
+                    color=normalized_color(winning_sessionteam.color),
+                )
 
 
 class ShuffleList:

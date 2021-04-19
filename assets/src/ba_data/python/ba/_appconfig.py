@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides the AppConfig class."""
 from __future__ import annotations
 
@@ -42,7 +24,7 @@ class AppConfig(dict):
 
     AppConfig data is stored as json on disk on so make sure to only place
     json-friendly values in it (dict, list, str, float, int, bool).
-    Be aware that tuples will be quietly converted to lists.
+    Be aware that tuples will be quietly converted to lists when stored.
     """
 
     def resolve(self, key: str) -> Any:
@@ -149,7 +131,7 @@ def read_config() -> Tuple[AppConfig, bool]:
         try:
             _ba.log('broken config contents:\n' +
                     config_contents.replace('\000', '<NULL_BYTE>'),
-                    to_console=False)
+                    to_stdout=False)
         except Exception as exc:
             print('EXC logging broken config contents:', exc)
         config = AppConfig()

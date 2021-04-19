@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Implements a flag used for marking bases, capture-the-flag games, etc."""
 
 from __future__ import annotations
@@ -26,6 +8,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import ba
+from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
     from typing import Any, Sequence, Optional
@@ -58,66 +41,82 @@ class FlagFactory:
           The ba.Texture for flags.
     """
 
+    _STORENAME = ba.storagename()
+
     def __init__(self) -> None:
         """Instantiate a FlagFactory.
 
         You shouldn't need to do this; call bastd.actor.flag.get_factory() to
         get a shared instance.
         """
-
+        shared = SharedObjects.get()
         self.flagmaterial = ba.Material()
         self.flagmaterial.add_actions(
-            conditions=(('we_are_younger_than', 100),
-                        'and', ('they_have_material',
-                                ba.sharedobj('object_material'))),
-            actions=('modify_node_collision', 'collide', False))
+            conditions=(
+                ('we_are_younger_than', 100),
+                'and',
+                ('they_have_material', shared.object_material),
+            ),
+            actions=('modify_node_collision', 'collide', False),
+        )
 
         self.flagmaterial.add_actions(
-            conditions=('they_have_material',
-                        ba.sharedobj('footing_material')),
-            actions=(('message', 'our_node', 'at_connect', 'footing', 1),
-                     ('message', 'our_node', 'at_disconnect', 'footing', -1)))
+            conditions=(
+                'they_have_material',
+                shared.footing_material,
+            ),
+            actions=(
+                ('message', 'our_node', 'at_connect', 'footing', 1),
+                ('message', 'our_node', 'at_disconnect', 'footing', -1),
+            ),
+        )
 
         self.impact_sound = ba.getsound('metalHit')
         self.skid_sound = ba.getsound('metalSkid')
         self.flagmaterial.add_actions(
-            conditions=('they_have_material',
-                        ba.sharedobj('footing_material')),
-            actions=(('impact_sound', self.impact_sound, 2, 5),
-                     ('skid_sound', self.skid_sound, 2, 5)))
+            conditions=(
+                'they_have_material',
+                shared.footing_material,
+            ),
+            actions=(
+                ('impact_sound', self.impact_sound, 2, 5),
+                ('skid_sound', self.skid_sound, 2, 5),
+            ),
+        )
 
         self.no_hit_material = ba.Material()
         self.no_hit_material.add_actions(
-            conditions=(('they_have_material',
-                         ba.sharedobj('pickup_material')),
-                        'or', ('they_have_material',
-                               ba.sharedobj('attack_material'))),
-            actions=('modify_part_collision', 'collide', False))
+            conditions=(
+                ('they_have_material', shared.pickup_material),
+                'or',
+                ('they_have_material', shared.attack_material),
+            ),
+            actions=('modify_part_collision', 'collide', False),
+        )
 
         # We also don't want anything moving it.
         self.no_hit_material.add_actions(
-            conditions=(('they_have_material',
-                         ba.sharedobj('object_material')), 'or',
-                        ('they_dont_have_material',
-                         ba.sharedobj('footing_material'))),
+            conditions=(
+                ('they_have_material', shared.object_material),
+                'or',
+                ('they_dont_have_material', shared.footing_material),
+            ),
             actions=(('modify_part_collision', 'collide', False),
-                     ('modify_part_collision', 'physical', False)))
+                     ('modify_part_collision', 'physical', False)),
+        )
 
         self.flag_texture = ba.gettexture('flagColor')
 
-
-# noinspection PyTypeHints
-def get_factory() -> FlagFactory:
-    """Get/create a shared bastd.actor.flag.FlagFactory object."""
-    activity = ba.getactivity()
-    factory: FlagFactory
-    try:
-        # FIXME: Find elegant way to handle shared data like this.
-        factory = activity.shared_flag_factory  # type: ignore
-    except Exception:
-        factory = activity.shared_flag_factory = FlagFactory()  # type: ignore
-    assert isinstance(factory, FlagFactory)
-    return factory
+    @classmethod
+    def get(cls) -> FlagFactory:
+        """Get/create a shared FlagFactory instance."""
+        activity = ba.getactivity()
+        factory = activity.customdata.get(cls._STORENAME)
+        if factory is None:
+            factory = FlagFactory()
+            activity.customdata[cls._STORENAME] = factory
+        assert isinstance(factory, FlagFactory)
+        return factory
 
 
 @dataclass
@@ -126,7 +125,7 @@ class FlagPickedUpMessage:
 
         category: Message Classes
 
-        Attrs:
+        Attributes:
 
            flag
               The ba.Flag that has been picked up.
@@ -139,12 +138,12 @@ class FlagPickedUpMessage:
 
 
 @dataclass
-class FlagDeathMessage:
+class FlagDiedMessage:
     """A message saying a ba.Flag has died.
 
     category: Message Classes
 
-    Attrs:
+    Attributes:
 
        flag
           The ba.Flag that died.
@@ -158,7 +157,7 @@ class FlagDroppedMessage:
 
     category: Message Classes
 
-    Attrs:
+    Attributes:
 
        flag
           The ba.Flag that was dropped.
@@ -201,7 +200,8 @@ class Flag(ba.Actor):
 
         self._initial_position: Optional[Sequence[float]] = None
         self._has_moved = False
-        factory = get_factory()
+        shared = SharedObjects.get()
+        factory = FlagFactory.get()
 
         if materials is None:
             materials = []
@@ -211,9 +211,8 @@ class Flag(ba.Actor):
         if not touchable:
             materials = [factory.no_hit_material] + materials
 
-        finalmaterials = (
-            [ba.sharedobj('object_material'), factory.flagmaterial] +
-            materials)
+        finalmaterials = ([shared.object_material, factory.flagmaterial] +
+                          materials)
         self.node = ba.newnode('flag',
                                attrs={
                                    'position':
@@ -328,14 +327,12 @@ class Flag(ba.Actor):
             1.0, ba.WeakCall(self._hide_score_text))
 
     def handlemessage(self, msg: Any) -> Any:
-        # pylint: disable=too-many-branches
-        if __debug__:
-            self._handlemessage_sanity_check()
+        assert not self.expired
         if isinstance(msg, ba.DieMessage):
             if self.node:
                 self.node.delete()
                 if not msg.immediate:
-                    self.activity.handlemessage(FlagDeathMessage(self))
+                    self.activity.handlemessage(FlagDiedMessage(self))
         elif isinstance(msg, ba.HitMessage):
             assert self.node
             assert msg.force_direction is not None
@@ -344,24 +341,26 @@ class Flag(ba.Actor):
                 msg.velocity[1], msg.velocity[2], msg.magnitude,
                 msg.velocity_magnitude, msg.radius, 0, msg.force_direction[0],
                 msg.force_direction[1], msg.force_direction[2])
-        elif isinstance(msg, ba.OutOfBoundsMessage):
-            # We just kill ourselves when out-of-bounds.. would we ever not
-            # want this?..
-            self.handlemessage(ba.DieMessage(how=ba.DeathType.FALL))
         elif isinstance(msg, ba.PickedUpMessage):
             self._held_count += 1
             if self._held_count == 1 and self._counter is not None:
                 self._counter.text = ''
-            activity = self.getactivity()
-            if activity is not None:
-                activity.handlemessage(FlagPickedUpMessage(self, msg.node))
+            self.activity.handlemessage(FlagPickedUpMessage(self, msg.node))
         elif isinstance(msg, ba.DroppedMessage):
             self._held_count -= 1
             if self._held_count < 0:
-                print('Flag held count < 0')
+                print('Flag held count < 0.')
                 self._held_count = 0
-            activity = self.getactivity()
-            if activity is not None:
-                activity.handlemessage(FlagDroppedMessage(self, msg.node))
+            self.activity.handlemessage(FlagDroppedMessage(self, msg.node))
         else:
             super().handlemessage(msg)
+
+    @staticmethod
+    def project_stand(pos: Sequence[float]) -> None:
+        """Project a flag-stand onto the ground at the given position.
+
+        Useful for games such as capture-the-flag to show where a
+        movable flag originated from.
+        """
+        assert len(pos) == 3
+        ba.emitfx(position=pos, emit_type='flag_stand')

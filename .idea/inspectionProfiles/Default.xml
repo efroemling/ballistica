@@ -2,6 +2,8 @@
   <profile version="1.0">
     <option name="myName" value="Default" />
     <inspection_tool class="DuplicatedCode" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
+    <inspection_tool class="GrazieInspection" enabled="false" level="TYPO" enabled_by_default="false" />
+    <inspection_tool class="HttpUrlsUsage" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
     <inspection_tool class="InconsistentLineSeparators" enabled="true" level="WARNING" enabled_by_default="true">
       <scope name="NonPython" level="WARNING" enabled="false" />
     </inspection_tool>
@@ -42,6 +44,7 @@
     </inspection_tool>
     <inspection_tool class="PyRedundantParenthesesInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
       <scope name="UncheckedPython" level="WEAK WARNING" enabled="false" />
+      <option name="myIgnoreTupleInReturn" value="true" />
     </inspection_tool>
     <inspection_tool class="PyShadowingBuiltinsInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
       <scope name="UncheckedPython" level="WEAK WARNING" enabled="false" />
@@ -50,8 +53,9 @@
       <scope name="UncheckedPython" level="WEAK WARNING" enabled="false" />
     </inspection_tool>
     <inspection_tool class="PyTypeCheckerInspection" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="PyTypeHintsInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="PyUnreachableCodeInspection" enabled="false" level="WARNING" enabled_by_default="false" />
-    <inspection_tool class="PyUnresolvedReferencesInspection" enabled="true" level="WARNING" enabled_by_default="true">
+    <inspection_tool class="PyUnresolvedReferencesInspection" enabled="true" level="WARNING" enabled_by_default="false">
       <scope name="PyIgnoreUnresolved" level="WARNING" enabled="false">
         <option name="ignoredIdentifiers">
           <list>

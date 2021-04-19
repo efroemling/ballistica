@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """UIs for debugging purposes."""
 
 from __future__ import annotations
@@ -38,9 +20,10 @@ class DebugWindow(ba.Window):
         # pylint: disable=cyclic-import
         from bastd.ui import popup
 
+        uiscale = ba.app.ui.uiscale
         self._width = width = 580
-        self._height = height = (350 if ba.app.small_ui else
-                                 420 if ba.app.med_ui else 520)
+        self._height = height = (350 if uiscale is ba.UIScale.SMALL else
+                                 420 if uiscale is ba.UIScale.MEDIUM else 520)
 
         self._scroll_width = self._width - 100
         self._scroll_height = self._height - 120
@@ -54,12 +37,13 @@ class DebugWindow(ba.Window):
         self._stress_test_round_duration = 30
 
         self._r = 'debugWindow'
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(width, height),
             transition=transition,
-            scale=(
-                2.35 if ba.app.small_ui else 1.55 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -30) if ba.app.small_ui else (0, 0)))
+            scale=(2.35 if uiscale is ba.UIScale.SMALL else
+                   1.55 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -30) if uiscale is ba.UIScale.SMALL else (0, 0)))
 
         self._done_button = btn = ba.buttonwidget(
             parent=self._root_widget,
@@ -75,7 +59,7 @@ class DebugWindow(ba.Window):
                       size=(width, 30),
                       text=ba.Lstr(resource=self._r + '.titleText'),
                       h_align='center',
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       v_align='center',
                       maxwidth=260)
 
@@ -128,7 +112,7 @@ class DebugWindow(ba.Window):
                       size=(0, 0),
                       text=ba.Lstr(resource=self._r + '.stressTestTitleText'),
                       maxwidth=200,
-                      color=ba.app.heading_color,
+                      color=ba.app.ui.heading_color,
                       scale=0.85,
                       h_align='center',
                       v_align='center')
@@ -141,7 +125,7 @@ class DebugWindow(ba.Window):
                       text=ba.Lstr(resource=self._r +
                                    '.stressTestPlaylistTypeText'),
                       maxwidth=130,
-                      color=ba.app.heading_color,
+                      color=ba.app.ui.heading_color,
                       scale=0.65,
                       h_align='right',
                       v_align='center')
@@ -167,7 +151,7 @@ class DebugWindow(ba.Window):
                       text=ba.Lstr(resource=self._r +
                                    '.stressTestPlaylistNameText'),
                       maxwidth=130,
-                      color=ba.app.heading_color,
+                      color=ba.app.ui.heading_color,
                       scale=0.65,
                       h_align='right',
                       v_align='center')
@@ -331,5 +315,5 @@ class DebugWindow(ba.Window):
         # pylint: disable=cyclic-import
         from bastd.ui.settings.advanced import AdvancedSettingsWindow
         ba.containerwidget(edit=self._root_widget, transition='out_right')
-        ba.app.main_menu_window = (AdvancedSettingsWindow(
-            transition='in_left').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            AdvancedSettingsWindow(transition='in_left').get_root_widget())

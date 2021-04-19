@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """UI functionality related to using the macOS Music app for soundtracks."""
 
 from __future__ import annotations
@@ -52,31 +34,26 @@ class MacMusicAppPlaylistSelectWindow(ba.Window):
                               position=(35, self._height - 65),
                               size=(130, 50),
                               label=ba.Lstr(resource='cancelText'),
-                              on_activate_call=self._back)
+                              on_activate_call=self._back,
+                              autoselect=True)
         ba.containerwidget(edit=self._root_widget, cancel_button=btn)
         ba.textwidget(parent=self._root_widget,
                       position=(20, self._height - 54),
                       size=(self._width, 25),
                       text=ba.Lstr(resource=self._r + '.selectAPlaylistText'),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       h_align='center',
                       v_align='center',
                       maxwidth=200)
         self._scrollwidget = ba.scrollwidget(parent=self._root_widget,
                                              position=(40, v - 340),
-                                             size=(self._width - 80, 400))
-        self._column = ba.columnwidget(parent=self._scrollwidget)
-
-        # So selection loops through everything and doesn't get stuck
-        # in sub-containers.
-        ba.containerwidget(edit=self._scrollwidget,
-                           claims_left_right=True,
-                           claims_tab=True,
-                           selection_loop_to_parent=True)
-        ba.containerwidget(edit=self._column,
-                           claims_left_right=True,
-                           claims_tab=True,
-                           selection_loop_to_parent=True)
+                                             size=(self._width - 80, 400),
+                                             claims_tab=True,
+                                             selection_loops_to_parent=True)
+        ba.widget(edit=self._scrollwidget, right_widget=self._scrollwidget)
+        self._column = ba.columnwidget(parent=self._scrollwidget,
+                                       claims_tab=True,
+                                       selection_loops_to_parent=True)
 
         ba.textwidget(parent=self._column,
                       size=(self._width - 80, 22),
@@ -93,7 +70,7 @@ class MacMusicAppPlaylistSelectWindow(ba.Window):
         if self._column:
             for widget in self._column.get_children():
                 widget.delete()
-            for playlist in playlists:
+            for i, playlist in enumerate(playlists):
                 txt = ba.textwidget(parent=self._column,
                                     size=(self._width - 80, 30),
                                     text=playlist,
@@ -103,10 +80,13 @@ class MacMusicAppPlaylistSelectWindow(ba.Window):
                                     on_activate_call=ba.Call(
                                         self._sel, playlist),
                                     click_activate=True)
+                ba.widget(edit=txt, show_buffer_top=40, show_buffer_bottom=40)
                 if playlist == self._existing_playlist:
                     ba.columnwidget(edit=self._column,
                                     selected_child=txt,
                                     visible_child=txt)
+                if i == len(playlists) - 1:
+                    ba.widget(edit=txt, down_widget=txt)
 
     def _sel(self, selection: str) -> None:
         if self._root_widget:

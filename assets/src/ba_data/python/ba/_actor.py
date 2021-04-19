@@ -1,37 +1,18 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Defines base Actor class."""
 
 from __future__ import annotations
 
 import weakref
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, TypeVar, overload
 
-from ba._messages import DieMessage, DeathType, OutOfBoundsMessage
-from ba import _error
+from ba._messages import DieMessage, DeathType, OutOfBoundsMessage, UNHANDLED
+from ba._error import print_exception, ActivityNotFoundError
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
-
+    from typing import Any, Optional, Literal
     import ba
 
 T = TypeVar('T', bound='Actor')
@@ -45,7 +26,8 @@ class Actor:
     Actors act as controllers, combining some number of ba.Nodes,
     ba.Textures, ba.Sounds, etc. into a high-level cohesive unit.
 
-    Some example actors include Bomb, Flag, and Spaz classes in bastd.
+    Some example actors include the Bomb, Flag, and Spaz classes that
+    live in the bastd.actor.* modules.
 
     One key feature of Actors is that they generally 'die'
     (killing off or transitioning out their nodes) when the last Python
@@ -94,24 +76,23 @@ class Actor:
 
     def __del__(self) -> None:
         try:
-            # Non-expired Actors send themselves a DieMessage when going down.
+            # Unexpired Actors send themselves a DieMessage when going down.
             # That way we can treat DieMessage handling as the single
             # point-of-action for death.
-            if not self.is_expired():
+            if not self.expired:
                 self.handlemessage(DieMessage())
         except Exception:
-            _error.print_exception('exception in ba.Actor.__del__() for', self)
+            print_exception('exception in ba.Actor.__del__() for', self)
 
     def handlemessage(self, msg: Any) -> Any:
         """General message handling; can be passed any message object."""
-        if __debug__:
-            self._handlemessage_sanity_check()
+        assert not self.expired
 
         # By default, actors going out-of-bounds simply kill themselves.
         if isinstance(msg, OutOfBoundsMessage):
             return self.handlemessage(DieMessage(how=DeathType.OUT_OF_BOUNDS))
 
-        return _error.UNHANDLED
+        return UNHANDLED
 
     def autoretain(self: T) -> T:
         """Keep this Actor alive without needing to hold a reference to it.
@@ -126,16 +107,16 @@ class Actor:
         """
         activity = self._activity()
         if activity is None:
-            raise _error.ActivityNotFoundError()
+            raise ActivityNotFoundError()
         activity.retain_actor(self)
         return self
 
     def on_expire(self) -> None:
         """Called for remaining ba.Actors when their ba.Activity shuts down.
 
-        Actors can use this opportunity to clear callbacks
-        or other references which have the potential of keeping the
-        ba.Activity alive inadvertently (Activities can not exit cleanly while
+        Actors can use this opportunity to clear callbacks or other
+        references which have the potential of keeping the ba.Activity
+        alive inadvertently (Activities can not exit cleanly while
         any Python references to them remain.)
 
         Once an actor is expired (see ba.Actor.is_expired()) it should no
@@ -144,13 +125,14 @@ class Actor:
         likely result in errors.
         """
 
-    def is_expired(self) -> bool:
-        """Returns whether the Actor is expired.
+    @property
+    def expired(self) -> bool:
+        """Whether the Actor is expired.
 
         (see ba.Actor.on_expire())
         """
         activity = self.getactivity(doraise=False)
-        return True if activity is None else activity.is_expired()
+        return True if activity is None else activity.expired
 
     def exists(self) -> bool:
         """Returns whether the Actor is still present in a meaningful way.
@@ -169,7 +151,6 @@ class Actor:
         so a simple "if myactor" test will conveniently do the right thing
         even if myactor is set to None.
         """
-
         return True
 
     def __bool__(self) -> bool:
@@ -186,23 +167,6 @@ class Actor:
         """
         return True
 
-    def _handlemessage_sanity_check(self) -> None:
-        """Make sure things are kosher in handlemessage().
-
-        Place this in an 'if __debug__:' clause at the top of handlemessage()
-        overrides. This will will complain if anything is sending the Actor
-        messages after the activity has ended, which should be explicitly
-        avoided.
-        """
-        if not __debug__:
-            _error.print_error('This should only be called in __debug__ mode.',
-                               once=True)
-        if not getattr(self, '_root_actor_init_called', False):
-            _error.print_error('Root Actor __init__() not called.')
-        if self.is_expired():
-            _error.print_error(
-                f'handlemessage() called on expired actor: {self}')
-
     @property
     def activity(self) -> ba.Activity:
         """The Activity this Actor was created in.
@@ -211,16 +175,26 @@ class Actor:
         """
         activity = self._activity()
         if activity is None:
-            raise _error.ActivityNotFoundError()
+            raise ActivityNotFoundError()
         return activity
+
+    # Overloads to convey our exact return type depending on 'doraise' value.
+
+    @overload
+    def getactivity(self, doraise: Literal[True] = True) -> ba.Activity:
+        ...
+
+    @overload
+    def getactivity(self, doraise: Literal[False]) -> Optional[ba.Activity]:
+        ...
 
     def getactivity(self, doraise: bool = True) -> Optional[ba.Activity]:
         """Return the ba.Activity this Actor is associated with.
 
         If the Activity no longer exists, raises a ba.ActivityNotFoundError
-        or returns None depending on whether 'doraise' is set.
+        or returns None depending on whether 'doraise' is True.
         """
         activity = self._activity()
         if activity is None and doraise:
-            raise _error.ActivityNotFoundError()
+            raise ActivityNotFoundError()
         return activity

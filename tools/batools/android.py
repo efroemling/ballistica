@@ -1,24 +1,6 @@
-#!/usr/bin/env python3.7
-# Copyright (c) 2011-2020 Eric Froemling
+#!/usr/bin/env python3.8
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Functionality related to android builds."""
 from __future__ import annotations
 
@@ -30,7 +12,7 @@ from typing import TYPE_CHECKING
 import efrotools
 
 if TYPE_CHECKING:
-    pass
+    from typing import List, Optional, Set
 
 
 def androidaddr(archive_dir: str, arch: str, addr: str) -> None:
@@ -74,9 +56,13 @@ def androidaddr(archive_dir: str, arch: str, addr: str) -> None:
         ['find',
          os.path.join(ndkpath, 'toolchains'), '-name',
          '*addr2line']).decode().strip().splitlines()
-    lines = [line for line in lines if archs[arch]['prefix'] in line]
+    # print('RAW LINES', lines)
+    lines = [
+        line for line in lines
+        if archs[arch]['prefix'] in line and '/llvm/' in line
+    ]
     if len(lines) != 1:
-        print("ERROR: couldn't find addr2line binary")
+        print(f"ERROR: can't find addr2line binary ({len(lines)} options).")
         sys.exit(255)
     addr2line = lines[0]
     efrotools.run('mkdir -p "' + os.path.join(rootdir, 'android_addr_tmp') +

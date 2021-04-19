@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Defines Actor(s)."""
 
 from __future__ import annotations
@@ -26,6 +8,7 @@ import random
 from typing import TYPE_CHECKING
 
 import ba
+from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
     from typing import List, Any, Optional, Sequence
@@ -97,6 +80,8 @@ class PowerupBoxFactory:
           that has this ba.Material applied.
     """
 
+    _STORENAME = ba.storagename()
+
     def __init__(self) -> None:
         """Instantiate a PowerupBoxFactory.
 
@@ -104,6 +89,7 @@ class PowerupBoxFactory:
         to get a shared instance.
         """
         from ba.internal import get_default_powerup_distribution
+        shared = SharedObjects.get()
         self._lastpoweruptype: Optional[str] = None
         self.model = ba.getmodel('powerup')
         self.model_simple = ba.getmodel('powerupSimple')
@@ -130,19 +116,22 @@ class PowerupBoxFactory:
         # Pass a powerup-touched message to applicable stuff.
         self.powerup_material.add_actions(
             conditions=('they_have_material', self.powerup_accept_material),
-            actions=(('modify_part_collision', 'collide',
-                      True), ('modify_part_collision', 'physical', False),
-                     ('message', 'our_node', 'at_connect', _TouchedMessage())))
+            actions=(
+                ('modify_part_collision', 'collide', True),
+                ('modify_part_collision', 'physical', False),
+                ('message', 'our_node', 'at_connect', _TouchedMessage()),
+            ))
 
         # We don't wanna be picked up.
         self.powerup_material.add_actions(
-            conditions=('they_have_material', ba.sharedobj('pickup_material')),
-            actions=('modify_part_collision', 'collide', False))
+            conditions=('they_have_material', shared.pickup_material),
+            actions=('modify_part_collision', 'collide', False),
+        )
 
         self.powerup_material.add_actions(
-            conditions=('they_have_material',
-                        ba.sharedobj('footing_material')),
-            actions=('impact_sound', self.drop_sound, 0.5, 0.1))
+            conditions=('they_have_material', shared.footing_material),
+            actions=('impact_sound', self.drop_sound, 0.5, 0.1),
+        )
 
         self._powerupdist: List[str] = []
         for powerup, freq in get_default_powerup_distribution():
@@ -182,20 +171,16 @@ class PowerupBoxFactory:
         self._lastpoweruptype = ptype
         return ptype
 
-
-def get_factory() -> PowerupBoxFactory:
-    """Return a shared ba.PowerupBoxFactory object, creating if necessary."""
-    activity = ba.getactivity()
-    if activity is None:
-        raise Exception('no current activity')
-    try:
-        # FIXME: et better way to store stuff with activity
-        # pylint: disable=protected-access
-        # noinspection PyProtectedMember
-        return activity._shared_powerup_factory  # type: ignore
-    except Exception:
-        factory = activity._shared_powerup_factory = (  # type: ignore
-            PowerupBoxFactory())
+    @classmethod
+    def get(cls) -> PowerupBoxFactory:
+        """Return a shared ba.PowerupBoxFactory object, creating if needed."""
+        activity = ba.getactivity()
+        if activity is None:
+            raise ba.ContextError('No current activity.')
+        factory = activity.customdata.get(cls._STORENAME)
+        if factory is None:
+            factory = activity.customdata[cls._STORENAME] = PowerupBoxFactory()
+        assert isinstance(factory, PowerupBoxFactory)
         return factory
 
 
@@ -228,8 +213,8 @@ class PowerupBox(ba.Actor):
         """
 
         super().__init__()
-
-        factory = get_factory()
+        shared = SharedObjects.get()
+        factory = PowerupBoxFactory.get()
         self.poweruptype = poweruptype
         self._powersgiven = False
 
@@ -252,10 +237,10 @@ class PowerupBox(ba.Actor):
         elif poweruptype == 'curse':
             tex = factory.tex_curse
         else:
-            raise Exception('invalid poweruptype: ' + str(poweruptype))
+            raise ValueError('invalid poweruptype: ' + str(poweruptype))
 
         if len(position) != 3:
-            raise Exception('expected 3 floats for position')
+            raise ValueError('expected 3 floats for position')
 
         self.node = ba.newnode(
             'prop',
@@ -270,7 +255,7 @@ class PowerupBox(ba.Actor):
                 'reflection': 'powerup',
                 'reflection_scale': [1.0],
                 'materials': (factory.powerup_material,
-                              ba.sharedobj('object_material'))
+                              shared.object_material)
             })  # yapf: disable
 
         # Animate in.
@@ -288,12 +273,10 @@ class PowerupBox(ba.Actor):
             self.node.flashing = True
 
     def handlemessage(self, msg: Any) -> Any:
-        # pylint: disable=too-many-branches
-        if __debug__:
-            self._handlemessage_sanity_check()
+        assert not self.expired
 
         if isinstance(msg, ba.PowerupAcceptMessage):
-            factory = get_factory()
+            factory = PowerupBoxFactory.get()
             assert self.node
             if self.poweruptype == 'health':
                 ba.playsound(factory.health_powerup_sound,
@@ -305,11 +288,9 @@ class PowerupBox(ba.Actor):
 
         elif isinstance(msg, _TouchedMessage):
             if not self._powersgiven:
-                node = ba.get_collision_info('opposing_node')
-                if node:
-                    node.handlemessage(
-                        ba.PowerupMessage(self.poweruptype,
-                                          source_node=self.node))
+                node = ba.getcollision().opposingnode
+                node.handlemessage(
+                    ba.PowerupMessage(self.poweruptype, sourcenode=self.node))
 
         elif isinstance(msg, ba.DieMessage):
             if self.node:
@@ -327,4 +308,5 @@ class PowerupBox(ba.Actor):
             if msg.hit_type != 'punch':
                 self.handlemessage(ba.DieMessage())
         else:
-            super().handlemessage(msg)
+            return super().handlemessage(msg)
+        return None

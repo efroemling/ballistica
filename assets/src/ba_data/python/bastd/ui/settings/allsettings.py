@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """UI for top level settings categories."""
 
 from __future__ import annotations
@@ -39,6 +21,12 @@ class AllSettingsWindow(ba.Window):
                  origin_widget: ba.Widget = None):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
+        import threading
+
+        # Preload some modules we use in a background thread so we won't
+        # have a visual hitch when the user taps them.
+        threading.Thread(target=self._preload_modules).start()
+
         ba.set_analytics_screen('Settings Window')
         scale_origin: Optional[Tuple[float, float]]
         if origin_widget is not None:
@@ -48,23 +36,24 @@ class AllSettingsWindow(ba.Window):
         else:
             self._transition_out = 'out_right'
             scale_origin = None
-        width = 900 if ba.app.small_ui else 580
-        x_inset = 75 if ba.app.small_ui else 0
+        uiscale = ba.app.ui.uiscale
+        width = 900 if uiscale is ba.UIScale.SMALL else 580
+        x_inset = 75 if uiscale is ba.UIScale.SMALL else 0
         height = 435
-        # button_height = 42
         self._r = 'settingsWindow'
-        top_extra = 20 if ba.app.small_ui else 0
+        top_extra = 20 if uiscale is ba.UIScale.SMALL else 0
 
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(width, height + top_extra),
             transition=transition,
             toolbar_visibility='menu_minimal',
             scale_origin_stack_offset=scale_origin,
-            scale=(
-                1.75 if ba.app.small_ui else 1.35 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -8) if ba.app.small_ui else (0, 0)))
+            scale=(1.75 if uiscale is ba.UIScale.SMALL else
+                   1.35 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -8) if uiscale is ba.UIScale.SMALL else (0, 0)))
 
-        if ba.app.toolbars and ba.app.small_ui:
+        if ba.app.ui.use_toolbars and uiscale is ba.UIScale.SMALL:
             self._back_button = None
             ba.containerwidget(edit=self._root_widget,
                                on_cancel_call=self._do_back)
@@ -85,7 +74,7 @@ class AllSettingsWindow(ba.Window):
                       position=(0, height - 44),
                       size=(width, 25),
                       text=ba.Lstr(resource=self._r + '.titleText'),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       h_align='center',
                       v_align='center',
                       maxwidth=130)
@@ -99,10 +88,10 @@ class AllSettingsWindow(ba.Window):
         v = height - 80
         v -= 145
 
-        basew = 280 if ba.app.small_ui else 230
+        basew = 280 if uiscale is ba.UIScale.SMALL else 230
         baseh = 170
-        x_offs = x_inset + (105
-                            if ba.app.small_ui else 72) - basew  # now unused
+        x_offs = x_inset + (105 if uiscale is ba.UIScale.SMALL else
+                            72) - basew  # now unused
         x_offs2 = x_offs + basew - 7
         x_offs3 = x_offs + 2 * (basew - 7)
         x_offs4 = x_offs2
@@ -128,7 +117,7 @@ class AllSettingsWindow(ba.Window):
             button_type='square',
             label='',
             on_activate_call=self._do_controllers)
-        if ba.app.toolbars and self._back_button is None:
+        if ba.app.ui.use_toolbars and self._back_button is None:
             bbtn = _ba.get_special_widget('back_button')
             ba.widget(edit=ctb, left_widget=bbtn)
         _b_title(x_offs2, v, ctb,
@@ -148,7 +137,7 @@ class AllSettingsWindow(ba.Window):
             button_type='square',
             label='',
             on_activate_call=self._do_graphics)
-        if ba.app.toolbars:
+        if ba.app.ui.use_toolbars:
             pbtn = _ba.get_special_widget('party_button')
             ba.widget(edit=gfxb, up_widget=pbtn, right_widget=pbtn)
         _b_title(x_offs3, v, gfxb, ba.Lstr(resource=self._r + '.graphicsText'))
@@ -196,47 +185,61 @@ class AllSettingsWindow(ba.Window):
                        color=(0.8, 0.95, 1),
                        texture=ba.gettexture('advancedIcon'),
                        draw_controller=avb)
+        self._restore_state()
+
+    @staticmethod
+    def _preload_modules() -> None:
+        """Preload modules we use (called in bg thread)."""
+        import bastd.ui.mainmenu as _unused1
+        import bastd.ui.settings.controls as _unused2
+        import bastd.ui.settings.graphics as _unused3
+        import bastd.ui.settings.audio as _unused4
+        import bastd.ui.settings.advanced as _unused5
 
     def _do_back(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui import mainmenu
+        from bastd.ui.mainmenu import MainMenuWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
-        ba.app.main_menu_window = (mainmenu.MainMenuWindow(
-            transition='in_left').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            MainMenuWindow(transition='in_left').get_root_widget())
 
     def _do_controllers(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.settings import controls
+        from bastd.ui.settings.controls import ControlsSettingsWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (controls.ControlsSettingsWindow(
-            origin_widget=self._controllers_button).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            ControlsSettingsWindow(
+                origin_widget=self._controllers_button).get_root_widget())
 
     def _do_graphics(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.settings import graphics
+        from bastd.ui.settings.graphics import GraphicsSettingsWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (graphics.GraphicsSettingsWindow(
-            origin_widget=self._graphics_button).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            GraphicsSettingsWindow(
+                origin_widget=self._graphics_button).get_root_widget())
 
     def _do_audio(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.settings import audio
+        from bastd.ui.settings.audio import AudioSettingsWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (audio.AudioSettingsWindow(
-            origin_widget=self._audio_button).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            AudioSettingsWindow(
+                origin_widget=self._audio_button).get_root_widget())
 
     def _do_advanced(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.settings import advanced
+        from bastd.ui.settings.advanced import AdvancedSettingsWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (advanced.AdvancedSettingsWindow(
-            origin_widget=self._advanced_button).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            AdvancedSettingsWindow(
+                origin_widget=self._advanced_button).get_root_widget())
 
     def _save_state(self) -> None:
         try:
@@ -252,20 +255,15 @@ class AllSettingsWindow(ba.Window):
             elif sel == self._back_button:
                 sel_name = 'Back'
             else:
-                raise Exception('unrecognized selection')
-            ba.app.window_states[self.__class__.__name__] = {
-                'sel_name': sel_name
-            }
+                raise ValueError(f'unrecognized selection \'{sel}\'')
+            ba.app.ui.window_states[type(self)] = {'sel_name': sel_name}
         except Exception:
-            ba.print_exception('error saving state for', self.__class__)
+            ba.print_exception(f'Error saving state for {self}.')
 
     def _restore_state(self) -> None:
         try:
-            try:
-                sel_name = ba.app.window_states[
-                    self.__class__.__name__]['sel_name']
-            except Exception:
-                sel_name = None
+            sel_name = ba.app.ui.window_states.get(type(self),
+                                                   {}).get('sel_name')
             sel: Optional[ba.Widget]
             if sel_name == 'Controllers':
                 sel = self._controllers_button
@@ -282,4 +280,4 @@ class AllSettingsWindow(ba.Window):
             if sel is not None:
                 ba.containerwidget(edit=self._root_widget, selected_child=sel)
         except Exception:
-            ba.print_exception('error restoring state for', self.__class__)
+            ba.print_exception(f'Error restoring state for {self}.')

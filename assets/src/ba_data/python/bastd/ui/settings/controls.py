@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides a top level control settings window."""
 
 from __future__ import annotations
@@ -59,17 +41,17 @@ class ControlsSettingsWindow(ba.Window):
         self._r = 'configControllersWindow'
         app = ba.app
 
-        is_fire_tv = _ba.is_running_on_fire_tv()
+        # is_fire_tv = _ba.is_running_on_fire_tv()
 
         spacing = 50.0
         button_width = 350.0
         width = 460.0
-        height = 135.0
+        height = 130.0
 
         space_height = spacing * 0.3
 
         # FIXME: should create vis settings in platform for these,
-        #  not hard code them here..
+        #  not hard code them here.
 
         show_gamepads = False
         platform = app.platform
@@ -91,9 +73,9 @@ class ControlsSettingsWindow(ba.Window):
             height += space_height
 
         show_keyboard = False
-        if _ba.get_input_device('Keyboard', '#1', doraise=False) is not None:
+        if _ba.getinputdevice('Keyboard', '#1', doraise=False) is not None:
             show_keyboard = True
-            height += spacing * 2
+            height += spacing
         show_keyboard_p2 = False if app.vr_mode else show_keyboard
         if show_keyboard_p2:
             height += spacing
@@ -110,46 +92,48 @@ class ControlsSettingsWindow(ba.Window):
             show_remote = False
 
         show_ps3 = False
-        if platform == 'mac':
-            show_ps3 = True
-            height += spacing
+        # if platform == 'mac':
+        #     show_ps3 = True
+        #     height += spacing
 
         show360 = False
-        if platform == 'mac' or is_fire_tv:
-            show360 = True
-            height += spacing
+        # if platform == 'mac' or is_fire_tv:
+        #     show360 = True
+        #     height += spacing
 
         show_mac_wiimote = False
-        if platform == 'mac':
-            show_mac_wiimote = True
-            height += spacing
+        # if platform == 'mac' and _ba.is_xcode_build():
+        #     show_mac_wiimote = True
+        #     height += spacing
 
-        # on non-oculus-vr windows, show an option to disable xinput
+        # On windows (outside of oculus/vr), show an option to disable xinput.
         show_xinput_toggle = False
-        if platform == 'windows' and (subplatform != 'oculus'
-                                      or not app.vr_mode):
+        if platform == 'windows' and not app.vr_mode:
             show_xinput_toggle = True
 
-        # on mac builds, show an option to switch between generic and
+        # On mac builds, show an option to switch between generic and
         # made-for-iOS/Mac systems
         # (we can run into problems where devices register as one of each
         # type otherwise)..
         show_mac_controller_subsystem = False
-        if platform == 'mac':
+        if platform == 'mac' and _ba.is_xcode_build():
             show_mac_controller_subsystem = True
 
         if show_mac_controller_subsystem:
-            height += spacing
+            height += spacing * 1.5
 
         if show_xinput_toggle:
             height += spacing
 
+        uiscale = ba.app.ui.uiscale
+        smallscale = (1.7 if show_keyboard else 2.2)
         super().__init__(root_widget=ba.containerwidget(
             size=(width, height),
             transition=transition,
             scale_origin_stack_offset=scale_origin,
-            scale=(1.7 if show_keyboard else 2.2
-                   ) if ba.app.small_ui else 1.5 if ba.app.med_ui else 1.0))
+            stack_offset=((0, -10) if uiscale is ba.UIScale.SMALL else (0, 0)),
+            scale=(smallscale if uiscale is ba.UIScale.SMALL else
+                   1.5 if uiscale is ba.UIScale.MEDIUM else 1.0)))
         self._back_button = btn = ba.buttonwidget(
             parent=self._root_widget,
             position=(35, height - 60),
@@ -162,7 +146,7 @@ class ControlsSettingsWindow(ba.Window):
             on_activate_call=self._back)
         ba.containerwidget(edit=self._root_widget, cancel_button=btn)
 
-        # need these vars to exist even if the buttons don't
+        # We need these vars to exist even if the buttons don't.
         self._gamepads_button: Optional[ba.Widget] = None
         self._touch_button: Optional[ba.Widget] = None
         self._keyboard_button: Optional[ba.Widget] = None
@@ -176,7 +160,7 @@ class ControlsSettingsWindow(ba.Window):
                       position=(0, height - 49),
                       size=(width, 25),
                       text=ba.Lstr(resource=self._r + '.titleText'),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       h_align='center',
                       v_align='top')
         ba.buttonwidget(edit=btn,
@@ -195,7 +179,7 @@ class ControlsSettingsWindow(ba.Window):
                 autoselect=True,
                 label=ba.Lstr(resource=self._r + '.configureTouchText'),
                 on_activate_call=self._do_touchscreen)
-            if ba.app.toolbars:
+            if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
                           right_widget=_ba.get_special_widget('party_button'))
             if not self._have_selected_child:
@@ -214,7 +198,7 @@ class ControlsSettingsWindow(ba.Window):
                 autoselect=True,
                 label=ba.Lstr(resource=self._r + '.configureControllersText'),
                 on_activate_call=self._do_gamepads)
-            if ba.app.toolbars:
+            if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
                           right_widget=_ba.get_special_widget('party_button'))
             if not self._have_selected_child:
@@ -238,7 +222,7 @@ class ControlsSettingsWindow(ba.Window):
                 autoselect=True,
                 label=ba.Lstr(resource=self._r + '.configureKeyboardText'),
                 on_activate_call=self._config_keyboard)
-            if ba.app.toolbars:
+            if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
                           right_widget=_ba.get_special_widget('party_button'))
             if not self._have_selected_child:
@@ -267,7 +251,7 @@ class ControlsSettingsWindow(ba.Window):
                 autoselect=True,
                 label=ba.Lstr(resource=self._r + '.configureMobileText'),
                 on_activate_call=self._do_mobile_devices)
-            if ba.app.toolbars:
+            if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
                           right_widget=_ba.get_special_widget('party_button'))
             if not self._have_selected_child:
@@ -285,7 +269,7 @@ class ControlsSettingsWindow(ba.Window):
                 autoselect=True,
                 label=ba.Lstr(resource=self._r + '.ps3Text'),
                 on_activate_call=self._do_ps3_controllers)
-            if ba.app.toolbars:
+            if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
                           right_widget=_ba.get_special_widget('party_button'))
             v -= spacing
@@ -297,7 +281,7 @@ class ControlsSettingsWindow(ba.Window):
                 autoselect=True,
                 label=ba.Lstr(resource=self._r + '.xbox360Text'),
                 on_activate_call=self._do_360_controllers)
-            if ba.app.toolbars:
+            if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
                           right_widget=_ba.get_special_widget('party_button'))
             v -= spacing
@@ -309,7 +293,7 @@ class ControlsSettingsWindow(ba.Window):
                 autoselect=True,
                 label=ba.Lstr(resource=self._r + '.wiimotesText'),
                 on_activate_call=self._do_wiimotes)
-            if ba.app.toolbars:
+            if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
                           right_widget=_ba.get_special_widget('party_button'))
             v -= spacing
@@ -340,7 +324,7 @@ class ControlsSettingsWindow(ba.Window):
                 scale=0.5,
                 h_align='center',
                 v_align='center',
-                color=ba.app.infotextcolor,
+                color=ba.app.ui.infotextcolor,
                 maxwidth=width * 0.8)
             v -= spacing
         if show_mac_controller_subsystem:
@@ -367,7 +351,7 @@ class ControlsSettingsWindow(ba.Window):
                 scale=1.0,
                 h_align='right',
                 v_align='center',
-                color=ba.app.infotextcolor,
+                color=ba.app.ui.infotextcolor,
                 maxwidth=180)
             ba.textwidget(
                 parent=self._root_widget,
@@ -377,9 +361,9 @@ class ControlsSettingsWindow(ba.Window):
                 scale=0.5,
                 h_align='center',
                 v_align='center',
-                color=ba.app.infotextcolor,
+                color=ba.app.ui.infotextcolor,
                 maxwidth=width * 0.8)
-            v -= spacing
+            v -= spacing * 1.5
         self._restore_state()
 
     def _set_mac_controller_subsystem(self, val: str) -> None:
@@ -389,67 +373,69 @@ class ControlsSettingsWindow(ba.Window):
 
     def _config_keyboard(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.settings import keyboard
+        from bastd.ui.settings.keyboard import ConfigKeyboardWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (keyboard.ConfigKeyboardWindow(
-            _ba.get_input_device('Keyboard', '#1')).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            ConfigKeyboardWindow(_ba.getinputdevice('Keyboard',
+                                                    '#1')).get_root_widget())
 
     def _config_keyboard2(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.settings import keyboard
+        from bastd.ui.settings.keyboard import ConfigKeyboardWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (keyboard.ConfigKeyboardWindow(
-            _ba.get_input_device('Keyboard', '#2')).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            ConfigKeyboardWindow(_ba.getinputdevice('Keyboard',
+                                                    '#2')).get_root_widget())
 
     def _do_mobile_devices(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.settings import remoteapp
+        from bastd.ui.settings.remoteapp import RemoteAppSettingsWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (
-            remoteapp.RemoteAppSettingsWindow().get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            RemoteAppSettingsWindow().get_root_widget())
 
     def _do_ps3_controllers(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.settings import ps3controller
+        from bastd.ui.settings.ps3controller import PS3ControllerSettingsWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (
-            ps3controller.PS3ControllerSettingsWindow().get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            PS3ControllerSettingsWindow().get_root_widget())
 
     def _do_360_controllers(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.settings import xbox360controller as xbox
+        from bastd.ui.settings.xbox360controller import (
+            XBox360ControllerSettingsWindow)
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (
-            xbox.XBox360ControllerSettingsWindow().get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            XBox360ControllerSettingsWindow().get_root_widget())
 
     def _do_wiimotes(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.settings import wiimote
+        from bastd.ui.settings.wiimote import WiimoteSettingsWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (
-            wiimote.WiimoteSettingsWindow().get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            WiimoteSettingsWindow().get_root_widget())
 
     def _do_gamepads(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.settings import gamepadselect
+        from bastd.ui.settings.gamepadselect import GamepadSelectWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (
-            gamepadselect.GamepadSelectWindow().get_root_widget())
+        ba.app.ui.set_main_menu_window(GamepadSelectWindow().get_root_widget())
 
     def _do_touchscreen(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.settings import touchscreen
+        from bastd.ui.settings.touchscreen import TouchscreenSettingsWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (
-            touchscreen.TouchscreenSettingsWindow().get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            TouchscreenSettingsWindow().get_root_widget())
 
     def _save_state(self) -> None:
         sel = self._root_widget.get_selected_child()
@@ -471,13 +457,10 @@ class ControlsSettingsWindow(ba.Window):
             sel_name = 'Wiimotes'
         else:
             sel_name = 'Back'
-        ba.app.window_states[self.__class__.__name__] = sel_name
+        ba.app.ui.window_states[type(self)] = sel_name
 
     def _restore_state(self) -> None:
-        try:
-            sel_name = ba.app.window_states[self.__class__.__name__]
-        except Exception:
-            sel_name = None
+        sel_name = ba.app.ui.window_states.get(type(self))
         if sel_name == 'GamePads':
             sel = self._gamepads_button
         elif sel_name == 'Touch':
@@ -503,9 +486,9 @@ class ControlsSettingsWindow(ba.Window):
 
     def _back(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.settings import allsettings
+        from bastd.ui.settings.allsettings import AllSettingsWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
-        ba.app.main_menu_window = allsettings.AllSettingsWindow(
-            transition='in_left').get_root_widget()
+        ba.app.ui.set_main_menu_window(
+            AllSettingsWindow(transition='in_left').get_root_widget())

@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides a window to display game credits."""
 
 from __future__ import annotations
@@ -51,9 +33,10 @@ class CreditsListWindow(ba.Window):
             scale_origin = None
             transition = 'in_right'
 
-        width = 870 if ba.app.small_ui else 670
-        x_inset = 100 if ba.app.small_ui else 0
-        height = 398 if ba.app.small_ui else 500
+        uiscale = ba.app.ui.uiscale
+        width = 870 if uiscale is ba.UIScale.SMALL else 670
+        x_inset = 100 if uiscale is ba.UIScale.SMALL else 0
+        height = 398 if uiscale is ba.UIScale.SMALL else 500
 
         self._r = 'creditsWindow'
         super().__init__(root_widget=ba.containerwidget(
@@ -61,39 +44,43 @@ class CreditsListWindow(ba.Window):
             transition=transition,
             toolbar_visibility='menu_minimal',
             scale_origin_stack_offset=scale_origin,
-            scale=(2.0 if ba.app.small_ui else 1.3 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -8) if ba.app.small_ui else (0, 0)))
+            scale=(2.0 if uiscale is ba.UIScale.SMALL else
+                   1.3 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -8) if uiscale is ba.UIScale.SMALL else (0, 0)))
 
-        if ba.app.toolbars and ba.app.small_ui:
+        if ba.app.ui.use_toolbars and uiscale is ba.UIScale.SMALL:
             ba.containerwidget(edit=self._root_widget,
                                on_cancel_call=self._back)
         else:
-            btn = ba.buttonwidget(parent=self._root_widget,
-                                  position=(40 + x_inset, height -
-                                            (68 if ba.app.small_ui else 62)),
-                                  size=(140, 60),
-                                  scale=0.8,
-                                  label=ba.Lstr(resource='backText'),
-                                  button_type='back',
-                                  on_activate_call=self._back,
-                                  autoselect=True)
+            btn = ba.buttonwidget(
+                parent=self._root_widget,
+                position=(40 + x_inset, height -
+                          (68 if uiscale is ba.UIScale.SMALL else 62)),
+                size=(140, 60),
+                scale=0.8,
+                label=ba.Lstr(resource='backText'),
+                button_type='back',
+                on_activate_call=self._back,
+                autoselect=True)
             ba.containerwidget(edit=self._root_widget, cancel_button=btn)
 
-            ba.buttonwidget(edit=btn,
-                            button_type='backSmall',
-                            position=(40 + x_inset, height -
-                                      (68 if ba.app.small_ui else 62) + 5),
-                            size=(60, 48),
-                            label=ba.charstr(ba.SpecialChar.BACK))
+            ba.buttonwidget(
+                edit=btn,
+                button_type='backSmall',
+                position=(40 + x_inset, height -
+                          (68 if uiscale is ba.UIScale.SMALL else 62) + 5),
+                size=(60, 48),
+                label=ba.charstr(ba.SpecialChar.BACK))
 
         ba.textwidget(parent=self._root_widget,
-                      position=(0, height - (59 if ba.app.small_ui else 54)),
+                      position=(0, height -
+                                (59 if uiscale is ba.UIScale.SMALL else 54)),
                       size=(width, 30),
                       text=ba.Lstr(resource=self._r + '.titleText',
                                    subs=[('${APP_NAME}',
                                           ba.Lstr(resource='titleText'))]),
                       h_align='center',
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       maxwidth=330,
                       v_align='center')
 
@@ -103,10 +90,10 @@ class CreditsListWindow(ba.Window):
                                        height - 100),
                                  capture_arrows=True)
 
-        if ba.app.toolbars:
+        if ba.app.ui.use_toolbars:
             ba.widget(edit=scroll,
                       right_widget=_ba.get_special_widget('party_button'))
-            if ba.app.small_ui:
+            if uiscale is ba.UIScale.SMALL:
                 ba.widget(edit=scroll,
                           left_widget=_ba.get_special_widget('back_button'))
 
@@ -173,7 +160,7 @@ class CreditsListWindow(ba.Window):
                 translation_contributors = (json.loads(
                     infile.read())['translation_contributors'])
         except Exception:
-            ba.print_exception('error reading translation contributors')
+            ba.print_exception('Error reading translation contributors.')
             translation_contributors = []
 
         translation_names = _format_names(translation_contributors, 60)
@@ -275,8 +262,8 @@ class CreditsListWindow(ba.Window):
             voffs -= line_height
 
     def _back(self) -> None:
-        from bastd.ui import mainmenu
+        from bastd.ui.mainmenu import MainMenuWindow
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
-        ba.app.main_menu_window = mainmenu.MainMenuWindow(
-            transition='in_left').get_root_widget()
+        ba.app.ui.set_main_menu_window(
+            MainMenuWindow(transition='in_left').get_root_widget())

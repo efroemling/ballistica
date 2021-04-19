@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Music related functionality."""
 from __future__ import annotations
 
@@ -30,6 +12,7 @@ import _ba
 
 if TYPE_CHECKING:
     from typing import Callable, Any, Optional, Dict, Union, Type
+    import ba
 
 
 class MusicType(Enum):
@@ -134,10 +117,12 @@ ASSET_SOUNDTRACK_ENTRIES: Dict[MusicType, AssetSoundtrackEntry] = {
 }
 
 
-class MusicController:
-    """Controller for overall music playback in the app.
+class MusicSubsystem:
+    """Subsystem for music playback in the app.
 
     Category: App Classes
+
+    Access the single shared instance of this class at 'ba.app.music'.
     """
 
     def __init__(self) -> None:
@@ -191,7 +176,7 @@ class MusicController:
         """Returns the system music player, instantiating if necessary."""
         if self._music_player is None:
             if self._music_player_type is None:
-                raise Exception('no music player type set')
+                raise TypeError('no music player type set')
             self._music_player = self._music_player_type()
         return self._music_player
 
@@ -248,20 +233,21 @@ class MusicController:
                   and isinstance(entry['name'], str)):
                 entry_type = entry['type']
             else:
-                raise Exception('invalid soundtrack entry: ' + str(entry) +
+                raise TypeError('invalid soundtrack entry: ' + str(entry) +
                                 ' (type ' + str(type(entry)) + ')')
             if self.supports_soundtrack_entry_type(entry_type):
                 return entry_type
-            raise Exception('invalid soundtrack entry:' + str(entry))
-        except Exception as exc:
-            print('EXC on get_soundtrack_entry_type', exc)
+            raise ValueError('invalid soundtrack entry:' + str(entry))
+        except Exception:
+            from ba import _error
+            _error.print_exception()
             return 'default'
 
     def get_soundtrack_entry_name(self, entry: Any) -> str:
         """Given a soundtrack entry, returns its name."""
         try:
             if entry is None:
-                raise Exception('entry is None')
+                raise TypeError('entry is None')
 
             # Simple string denotes an iTunesPlaylist name (legacy entry).
             if isinstance(entry, str):
@@ -272,7 +258,7 @@ class MusicController:
                     and isinstance(entry['type'], str) and 'name' in entry
                     and isinstance(entry['name'], str)):
                 return entry['name']
-            raise Exception('invalid soundtrack entry:' + str(entry))
+            raise ValueError('invalid soundtrack entry:' + str(entry))
         except Exception:
             from ba import _error
             _error.print_exception()
@@ -484,8 +470,9 @@ class MusicPlayer:
                 self._actually_playing = False
 
 
-def setmusic(musictype: Optional[MusicType], continuous: bool = False) -> None:
-    """Tell the game to play (or stop playing) a certain type of music.
+def setmusic(musictype: Optional[ba.MusicType],
+             continuous: bool = False) -> None:
+    """Set the app to play (or stop playing) a certain type of music.
 
     category: Gameplay Functions
 
@@ -505,7 +492,7 @@ def setmusic(musictype: Optional[MusicType], continuous: bool = False) -> None:
     # the do_play_music call in our music controller. This way we can
     # seamlessly support custom soundtracks in replays/etc since we're being
     # driven purely by node data.
-    gnode = _gameutils.sharedobj('globals')
+    gnode = _ba.getactivity().globalsnode
     gnode.music_continuous = continuous
     gnode.music = '' if musictype is None else musictype.value
     gnode.music_count += 1

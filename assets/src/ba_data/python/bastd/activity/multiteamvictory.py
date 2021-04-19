@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Functionality related to the final screen in multi-teams sessions."""
 
 from __future__ import annotations
@@ -34,18 +16,16 @@ if TYPE_CHECKING:
 class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
     """Final score screen for a team series."""
 
-    def __init__(self, settings: Dict[str, Any]):
+    # Dont' play music by default; (we do manually after a delay).
+    default_music = None
+
+    def __init__(self, settings: dict):
         super().__init__(settings=settings)
         self._min_view_time = 15.0
         self._is_ffa = isinstance(self.session, ba.FreeForAllSession)
         self._allow_server_transition = True
         self._tips_text = None
-
-    def on_transition_in(self) -> None:
-        # We don't yet want music and whatnot...
-        self.default_music = None
         self._default_show_tips = False
-        super().on_transition_in()
 
     def on_begin(self) -> None:
         # pylint: disable=too-many-branches
@@ -53,21 +33,21 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         # pylint: disable=too-many-statements
         from bastd.actor.text import Text
         from bastd.actor.image import Image
-        from ba.deprecated import get_resource
         ba.set_analytics_screen('FreeForAll Series Victory Screen' if self.
                                 _is_ffa else 'Teams Series Victory Screen')
-        if ba.app.interface_type == 'large':
+        if ba.app.ui.uiscale is ba.UIScale.LARGE:
             sval = ba.Lstr(resource='pressAnyKeyButtonPlayAgainText')
         else:
             sval = ba.Lstr(resource='pressAnyButtonPlayAgainText')
         self._show_up_next = False
         self._custom_continue_message = sval
         super().on_begin()
-        winning_team = self.settings['winner']
+        winning_sessionteam = self.settings_raw['winner']
 
         # Pause a moment before playing victory music.
         ba.timer(0.6, ba.WeakCall(self._play_victory_music))
-        ba.timer(4.4, ba.WeakCall(self._show_winner, self.settings['winner']))
+        ba.timer(4.4,
+                 ba.WeakCall(self._show_winner, self.settings_raw['winner']))
         ba.timer(4.6, ba.Call(ba.playsound, self._score_display_sound))
 
         # Score / Name / Player-record.
@@ -78,8 +58,8 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             for _pkey, prec in self.stats.get_records().items():
                 if prec.player.in_game:
                     player_entries.append(
-                        (prec.player.team.sessiondata['score'],
-                         prec.get_name(full=True), prec))
+                        (prec.player.sessionteam.customdata['score'],
+                         prec.getname(full=True), prec))
             player_entries.sort(reverse=True, key=lambda x: x[0])
         else:
             for _pkey, prec in self.stats.get_records().items():
@@ -91,7 +71,8 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         tval = 6.4
         t_incr = 0.12
 
-        always_use_first_to = get_resource('bestOfUseFirstToInstead')
+        always_use_first_to = ba.app.lang.get_resource(
+            'bestOfUseFirstToInstead')
 
         session = self.session
         if self._is_ffa:
@@ -141,11 +122,11 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
              h_align=Text.HAlign.CENTER,
              transition_delay=t_incr * 4).autoretain()
 
-        win_score = (session.get_series_length() - 1) / 2 + 1
+        win_score = (session.get_series_length() - 1) // 2 + 1
         lose_score = 0
         for team in self.teams:
-            if team.sessiondata['score'] != win_score:
-                lose_score = team.sessiondata['score']
+            if team.sessionteam.customdata['score'] != win_score:
+                lose_score = team.sessionteam.customdata['score']
 
         if not self._is_ffa:
             Text(ba.Lstr(resource='gamesToText',
@@ -172,7 +153,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         if not self._is_ffa:
             mvp, mvp_name = None, None
             for entry in player_entries:
-                if entry[2].team == winning_team:
+                if entry[2].team == winning_sessionteam:
                     mvp = entry[2]
                     mvp_name = entry[1]
                     break
@@ -308,7 +289,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         for _score, name, prec in player_entries:
             tdelay -= 4 * t_incr
             v_offs -= 40
-            Text(str(prec.team.sessiondata['score'])
+            Text(str(prec.team.customdata['score'])
                  if self._is_ffa else str(prec.score),
                  color=(0.5, 0.5, 0.5, 1.0),
                  position=(ts_h_offs + 230, ts_height / 2 + v_offs),
@@ -343,7 +324,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         if not self.is_transitioning_out():
             ba.setmusic(ba.MusicType.VICTORY)
 
-    def _show_winner(self, team: ba.Team) -> None:
+    def _show_winner(self, team: ba.SessionTeam) -> None:
         from bastd.actor.image import Image
         from bastd.actor.zoomtext import ZoomText
         if not self._is_ffa:
@@ -363,7 +344,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 assert i.node
                 ba.animate(i.node, 'opacity', {0.0: 0.0, 0.25: 1.0})
                 ZoomText(ba.Lstr(
-                    value=team.players[0].get_name(full=True, icon=False)),
+                    value=team.players[0].getname(full=True, icon=False)),
                          position=(0, 97 + offs_v),
                          color=team.color,
                          scale=1.15,

@@ -1,31 +1,13 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides a window for editing individual game playlists."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-import _ba
 import ba
+import _ba
 
 if TYPE_CHECKING:
     from typing import Optional, List
@@ -45,17 +27,19 @@ class PlaylistEditWindow(ba.Window):
         self._r = 'editGameListWindow'
         prev_selection = self._editcontroller.get_edit_ui_selection()
 
-        self._width = 770 if ba.app.small_ui else 670
-        x_inset = 50 if ba.app.small_ui else 0
-        self._height = (400
-                        if ba.app.small_ui else 470 if ba.app.med_ui else 540)
+        uiscale = ba.app.ui.uiscale
+        self._width = 770 if uiscale is ba.UIScale.SMALL else 670
+        x_inset = 50 if uiscale is ba.UIScale.SMALL else 0
+        self._height = (400 if uiscale is ba.UIScale.SMALL else
+                        470 if uiscale is ba.UIScale.MEDIUM else 540)
 
-        top_extra = 20 if ba.app.small_ui else 0
+        top_extra = 20 if uiscale is ba.UIScale.SMALL else 0
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height + top_extra),
             transition=transition,
-            scale=(2.0 if ba.app.small_ui else 1.3 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -16) if ba.app.small_ui else (0, 0)))
+            scale=(2.0 if uiscale is ba.UIScale.SMALL else
+                   1.3 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -16) if uiscale is ba.UIScale.SMALL else (0, 0)))
         cancel_button = ba.buttonwidget(parent=self._root_widget,
                                         position=(35 + x_inset,
                                                   self._height - 60),
@@ -74,7 +58,7 @@ class PlaylistEditWindow(ba.Window):
             label=ba.Lstr(resource='saveText'),
             text_scale=1.2)
 
-        if ba.app.toolbars:
+        if ba.app.ui.use_toolbars:
             ba.widget(edit=btn,
                       right_widget=_ba.get_special_widget('party_button'))
 
@@ -86,7 +70,7 @@ class PlaylistEditWindow(ba.Window):
                       position=(-10, self._height - 50),
                       size=(self._width, 25),
                       text=ba.Lstr(resource=self._r + '.titleText'),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       scale=1.05,
                       h_align='center',
                       v_align='center',
@@ -110,7 +94,7 @@ class PlaylistEditWindow(ba.Window):
             parent=self._root_widget,
             position=(210 + x_inset, v + 7),
             size=(self._scroll_width - 53, 43),
-            text=self._editcontroller.get_name(),
+            text=self._editcontroller.getname(),
             h_align='left',
             v_align='center',
             max_chars=40,
@@ -133,7 +117,8 @@ class PlaylistEditWindow(ba.Window):
         v -= 2.0
         v += 63
 
-        scl = (1.03 if ba.app.small_ui else 1.36 if ba.app.med_ui else 1.74)
+        scl = (1.03 if uiscale is ba.UIScale.SMALL else
+               1.36 if uiscale is ba.UIScale.MEDIUM else 1.74)
         v -= 63.0 * scl
 
         add_game_button = ba.buttonwidget(
@@ -211,7 +196,9 @@ class PlaylistEditWindow(ba.Window):
         ba.widget(edit=scrollwidget,
                   left_widget=add_game_button,
                   right_widget=scrollwidget)
-        self._columnwidget = ba.columnwidget(parent=scrollwidget)
+        self._columnwidget = ba.columnwidget(parent=scrollwidget,
+                                             border=2,
+                                             margin=0)
         ba.widget(edit=self._columnwidget, up_widget=self._text_field)
 
         for button in [add_game_button, edit_game_button, remove_game_button]:
@@ -243,29 +230,32 @@ class PlaylistEditWindow(ba.Window):
         self._editcontroller.set_edit_ui_selection(selection)
 
     def _cancel(self) -> None:
-        from bastd.ui.playlist import customizebrowser as cb
+        from bastd.ui.playlist.customizebrowser import (
+            PlaylistCustomizeBrowserWindow)
         ba.playsound(ba.getsound('powerdown01'))
         ba.containerwidget(edit=self._root_widget, transition='out_right')
-        ba.app.main_menu_window = (cb.PlaylistCustomizeBrowserWindow(
-            transition='in_left',
-            sessiontype=self._editcontroller.get_session_type(),
-            select_playlist=self._editcontroller.get_existing_playlist_name()).
-                                   get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            PlaylistCustomizeBrowserWindow(
+                transition='in_left',
+                sessiontype=self._editcontroller.get_session_type(),
+                select_playlist=self._editcontroller.
+                get_existing_playlist_name()).get_root_widget())
 
     def _add(self) -> None:
-        # store list name then tell the session to perform an add
-        self._editcontroller.set_name(
+        # Store list name then tell the session to perform an add.
+        self._editcontroller.setname(
             cast(str, ba.textwidget(query=self._text_field)))
         self._editcontroller.add_game_pressed()
 
     def _edit(self) -> None:
-        # store list name then tell the session to perform an add
-        self._editcontroller.set_name(
+        # Store list name then tell the session to perform an add.
+        self._editcontroller.setname(
             cast(str, ba.textwidget(query=self._text_field)))
         self._editcontroller.edit_game_pressed()
 
     def _save_press(self) -> None:
-        from bastd.ui.playlist import customizebrowser as cb
+        from bastd.ui.playlist.customizebrowser import (
+            PlaylistCustomizeBrowserWindow)
         new_name = cast(str, ba.textwidget(query=self._text_field))
         if (new_name != self._editcontroller.get_existing_playlist_name()
                 and new_name
@@ -283,6 +273,7 @@ class PlaylistEditWindow(ba.Window):
                 ba.Lstr(resource=self._r + '.cantSaveEmptyListText'))
             ba.playsound(ba.getsound('error'))
             return
+
         # We couldn't actually replace the default list anyway, but disallow
         # using its exact name to avoid confusion.
         if new_name == self._editcontroller.get_default_list_name().evaluate():
@@ -291,7 +282,7 @@ class PlaylistEditWindow(ba.Window):
             ba.playsound(ba.getsound('error'))
             return
 
-        # if we had an old one, delete it
+        # If we had an old one, delete it.
         if self._editcontroller.get_existing_playlist_name() is not None:
             _ba.add_transaction({
                 'type':
@@ -312,10 +303,11 @@ class PlaylistEditWindow(ba.Window):
 
         ba.containerwidget(edit=self._root_widget, transition='out_right')
         ba.playsound(ba.getsound('gunCocking'))
-        ba.app.main_menu_window = (cb.PlaylistCustomizeBrowserWindow(
-            transition='in_left',
-            sessiontype=self._editcontroller.get_session_type(),
-            select_playlist=new_name).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            PlaylistCustomizeBrowserWindow(
+                transition='in_left',
+                sessiontype=self._editcontroller.get_session_type(),
+                select_playlist=new_name).get_root_widget())
 
     def _save_press_with_sound(self) -> None:
         ba.playsound(ba.getsound('swish'))
@@ -326,6 +318,7 @@ class PlaylistEditWindow(ba.Window):
 
     def _refresh(self) -> None:
         from ba.internal import getclass
+
         # Need to grab this here as rebuilding the list will
         # change it otherwise.
         old_selection_index = self._editcontroller.get_selected_index()
@@ -336,7 +329,7 @@ class PlaylistEditWindow(ba.Window):
 
             try:
                 cls = getclass(pentry['type'], subclassof=ba.GameActivity)
-                desc = cls.get_config_display_string(pentry)
+                desc = cls.get_settings_display_string(pentry)
             except Exception:
                 ba.print_exception()
                 desc = "(invalid: '" + pentry['type'] + "')"
@@ -353,7 +346,8 @@ class PlaylistEditWindow(ba.Window):
                                  v_align='center',
                                  selectable=True)
             ba.widget(edit=txtw, show_buffer_top=50, show_buffer_bottom=50)
-            # wanna be able to jump up to the text field from the top one
+
+            # Wanna be able to jump up to the text field from the top one.
             if index == 0:
                 ba.widget(edit=txtw, up_widget=self._text_field)
             self._list_widgets.append(txtw)

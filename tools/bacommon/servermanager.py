@@ -1,28 +1,10 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Functionality related to the server manager script."""
 from __future__ import annotations
 
 from enum import Enum
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -31,7 +13,7 @@ if TYPE_CHECKING:
 
 @dataclass
 class ServerConfig:
-    """Configuration for the server manager app (ballisticacore_server)."""
+    """Configuration for the server manager app (<appname>_server)."""
 
     # Name of our server in the public parties list.
     party_name: str = 'FFA'
@@ -44,6 +26,14 @@ class ServerConfig:
     # server to screen for fake account info. Generally this should always
     # be enabled unless you are hosting on a LAN with no internet connection.
     authenticate_clients: bool = True
+
+    # IDs of server admins. Server admins are not kickable through the default
+    # kick vote system and they are able to kick players without a vote. To get
+    # your account id, enter 'getaccountid' in settings->advanced->enter-code.
+    admins: List[str] = field(default_factory=list)
+
+    # Whether the default kick-voting system is enabled.
+    enable_default_kick_voting: bool = True
 
     # UDP port to host on. Change this to work around firewalls or run multiple
     # servers on one machine.
@@ -79,7 +69,7 @@ class ServerConfig:
     # Whether to enable telnet access.
     # IMPORTANT: This option is no longer available, as it was being used
     # for exploits. Live access to the running server is still possible through
-    # the mgr.cmd() function in ballisticacore_server. Run your server through
+    # the mgr.cmd() function in the server script. Run your server through
     # tools such as 'screen' or 'tmux' and you can reconnect to it remotely
     # over a secure ssh connection.
     enable_telnet: bool = False
@@ -100,6 +90,29 @@ class ServerConfig:
     # your backend server can use the following url:
     # http://bombsquadgame.com/accountquery?id=ACCOUNT_ID_HERE
     stats_url: Optional[str] = None
+
+    # If present, the server subprocess will attempt to gracefully exit after
+    # this amount of time. A graceful exit can occur at the end of a series
+    # or other opportune time. Server-managers set to auto-restart (the
+    # default) will then spin up a fresh subprocess. This mechanism can be
+    # useful to clear out any memory leaks or other accumulated bad state
+    # in the server subprocess.
+    clean_exit_minutes: Optional[float] = None
+
+    # If present, the server subprocess will shut down immediately after this
+    # amount of time. This can be useful as a fallback for clean_exit_time.
+    # The server manager will then spin up a fresh server subprocess if
+    # auto-restart is enabled (the default).
+    unclean_exit_minutes: Optional[float] = None
+
+    # If present, the server subprocess will shut down immediately if this
+    # amount of time passes with no activity from any players. The server
+    # manager will then spin up a fresh server subprocess if
+    # auto-restart is enabled (the default).
+    idle_exit_minutes: Optional[float] = None
+
+    # (internal) stress-testing mode.
+    stress_test_players: Optional[int] = None
 
 
 # NOTE: as much as possible, communication from the server-manager to the

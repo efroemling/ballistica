@@ -1,218 +1,267 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Account related functionality."""
 
 from __future__ import annotations
 
 import copy
+import time
 from typing import TYPE_CHECKING
 
 import _ba
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Dict, List
+    from typing import Any, Optional, Dict, List, Tuple
+    import ba
 
 
-def handle_account_gained_tickets(count: int) -> None:
-    """Called when the current account has been awarded tickets.
+class AccountSubsystem:
+    """Subsystem for account handling in the app.
 
-    (internal)
+    Category: App Classes
+
+    Access the single shared instance of this class at 'ba.app.plugins'.
     """
-    from ba._lang import Lstr
-    _ba.screenmessage(Lstr(resource='getTicketsWindow.receivedTicketsText',
-                           subs=[('${COUNT}', str(count))]),
-                      color=(0, 1, 0))
-    _ba.playsound(_ba.getsound('cashRegister'))
 
+    def __init__(self) -> None:
+        self.account_tournament_list: Optional[Tuple[int, List[str]]] = None
 
-def cache_league_rank_data(data: Any) -> None:
-    """(internal)"""
-    _ba.app.league_rank_cache['info'] = copy.deepcopy(data)
+        # FIXME: should abstract/structure these.
+        self.tournament_info: Dict = {}
+        self.league_rank_cache: Dict = {}
+        self.last_post_purchase_message_time: Optional[float] = None
 
+        # If we try to run promo-codes due to launch-args/etc we might
+        # not be signed in yet; go ahead and queue them up in that case.
+        self.pending_promo_codes: List[str] = []
 
-def get_cached_league_rank_data() -> Any:
-    """(internal)"""
-    return _ba.app.league_rank_cache.get('info', None)
+    def on_app_launch(self) -> None:
+        """Called when the app is done bootstrapping."""
 
+        # Auto-sign-in to a local account in a moment if we're set to.
+        def do_auto_sign_in() -> None:
+            if _ba.app.headless_mode or _ba.app.config.get(
+                    'Auto Account State') == 'Local':
+                _ba.sign_in('Local')
 
-def get_league_rank_points(data: Optional[Dict[str, Any]],
-                           subset: str = None) -> int:
-    """(internal)"""
-    if data is None:
-        return 0
+        _ba.pushcall(do_auto_sign_in)
 
-    # If the data contains an achievement total, use that. otherwise calc
-    # locally.
-    if data['at'] is not None:
-        total_ach_value = data['at']
-    else:
-        total_ach_value = 0
-        for ach in _ba.app.achievements:
-            if ach.complete:
-                total_ach_value += ach.power_ranking_value
+    def on_app_resume(self) -> None:
+        """Should be called when the app is resumed."""
 
-    trophies_total: int = (data['t0a'] * data['t0am'] +
-                           data['t0b'] * data['t0bm'] +
-                           data['t1'] * data['t1m'] +
-                           data['t2'] * data['t2m'] +
-                           data['t3'] * data['t3m'] + data['t4'] * data['t4m'])
-    if subset == 'trophyCount':
-        val: int = (data['t0a'] + data['t0b'] + data['t1'] + data['t2'] +
-                    data['t3'] + data['t4'])
-        assert isinstance(val, int)
-        return val
-    if subset == 'trophies':
-        assert isinstance(trophies_total, int)
-        return trophies_total
-    if subset is not None:
-        raise Exception('invalid subset value: ' + str(subset))
+        # Mark our cached tourneys as invalid so anyone using them knows
+        # they might be out of date.
+        for entry in list(self.tournament_info.values()):
+            entry['valid'] = False
 
-    if data['p']:
-        pro_mult = 1.0 + float(
-            _ba.get_account_misc_read_val('proPowerRankingBoost', 0.0)) * 0.01
-    else:
-        pro_mult = 1.0
+    def handle_account_gained_tickets(self, count: int) -> None:
+        """Called when the current account has been awarded tickets.
 
-    # For final value, apply our pro mult and activeness-mult.
-    return int((total_ach_value + trophies_total) *
-               (data['act'] if data['act'] is not None else 1.0) * pro_mult)
+        (internal)
+        """
+        from ba._language import Lstr
+        _ba.screenmessage(Lstr(resource='getTicketsWindow.receivedTicketsText',
+                               subs=[('${COUNT}', str(count))]),
+                          color=(0, 1, 0))
+        _ba.playsound(_ba.getsound('cashRegister'))
 
+    def cache_league_rank_data(self, data: Any) -> None:
+        """(internal)"""
+        self.league_rank_cache['info'] = copy.deepcopy(data)
 
-def cache_tournament_info(info: Any) -> None:
-    """(internal)"""
-    from ba._enums import TimeType, TimeFormat
-    for entry in info:
-        cache_entry = _ba.app.tournament_info[entry['tournamentID']] = (
-            copy.deepcopy(entry))
+    def get_cached_league_rank_data(self) -> Any:
+        """(internal)"""
+        return self.league_rank_cache.get('info', None)
 
-        # Also store the time we received this, so we can adjust
-        # time-remaining values/etc.
-        cache_entry['timeReceived'] = _ba.time(TimeType.REAL,
-                                               TimeFormat.MILLISECONDS)
-        cache_entry['valid'] = True
+    def get_league_rank_points(self,
+                               data: Optional[Dict[str, Any]],
+                               subset: str = None) -> int:
+        """(internal)"""
+        if data is None:
+            return 0
 
+        # If the data contains an achievement total, use that. otherwise calc
+        # locally.
+        if data['at'] is not None:
+            total_ach_value = data['at']
+        else:
+            total_ach_value = 0
+            for ach in _ba.app.ach.achievements:
+                if ach.complete:
+                    total_ach_value += ach.power_ranking_value
 
-def get_purchased_icons() -> List[str]:
-    """(internal)"""
-    # pylint: disable=cyclic-import
-    from ba import _store
-    if _ba.get_account_state() != 'signed_in':
-        return []
-    icons = []
-    store_items = _store.get_store_items()
-    for item_name, item in list(store_items.items()):
-        if item_name.startswith('icons.') and _ba.get_purchased(item_name):
-            icons.append(item['icon'])
-    return icons
+        trophies_total: int = (data['t0a'] * data['t0am'] +
+                               data['t0b'] * data['t0bm'] +
+                               data['t1'] * data['t1m'] +
+                               data['t2'] * data['t2m'] +
+                               data['t3'] * data['t3m'] +
+                               data['t4'] * data['t4m'])
+        if subset == 'trophyCount':
+            val: int = (data['t0a'] + data['t0b'] + data['t1'] + data['t2'] +
+                        data['t3'] + data['t4'])
+            assert isinstance(val, int)
+            return val
+        if subset == 'trophies':
+            assert isinstance(trophies_total, int)
+            return trophies_total
+        if subset is not None:
+            raise ValueError('invalid subset value: ' + str(subset))
 
+        if data['p']:
+            pro_mult = 1.0 + float(
+                _ba.get_account_misc_read_val('proPowerRankingBoost',
+                                              0.0)) * 0.01
+        else:
+            pro_mult = 1.0
 
-def ensure_have_account_player_profile() -> None:
-    """
-    Ensure the standard account-named player profile exists;
-    creating if needed.
-    """
-    # This only applies when we're signed in.
-    if _ba.get_account_state() != 'signed_in':
-        return
+        # For final value, apply our pro mult and activeness-mult.
+        return int(
+            (total_ach_value + trophies_total) *
+            (data['act'] if data['act'] is not None else 1.0) * pro_mult)
 
-    # If the short version of our account name currently cant be
-    # displayed by the game, cancel.
-    if not _ba.have_chars(_ba.get_account_display_string(full=False)):
-        return
+    def cache_tournament_info(self, info: Any) -> None:
+        """(internal)"""
+        from ba._enums import TimeType, TimeFormat
+        for entry in info:
+            cache_entry = self.tournament_info[entry['tournamentID']] = (
+                copy.deepcopy(entry))
 
-    config = _ba.app.config
-    if ('Player Profiles' not in config
-            or '__account__' not in config['Player Profiles']):
+            # Also store the time we received this, so we can adjust
+            # time-remaining values/etc.
+            cache_entry['timeReceived'] = _ba.time(TimeType.REAL,
+                                                   TimeFormat.MILLISECONDS)
+            cache_entry['valid'] = True
 
-        # Create a spaz with a nice default purply color.
+    def get_purchased_icons(self) -> List[str]:
+        """(internal)"""
+        # pylint: disable=cyclic-import
+        from ba import _store
+        if _ba.get_account_state() != 'signed_in':
+            return []
+        icons = []
+        store_items = _store.get_store_items()
+        for item_name, item in list(store_items.items()):
+            if item_name.startswith('icons.') and _ba.get_purchased(item_name):
+                icons.append(item['icon'])
+        return icons
+
+    def ensure_have_account_player_profile(self) -> None:
+        """
+        Ensure the standard account-named player profile exists;
+        creating if needed.
+
+        (internal)
+        """
+        # This only applies when we're signed in.
+        if _ba.get_account_state() != 'signed_in':
+            return
+
+        # If the short version of our account name currently cant be
+        # displayed by the game, cancel.
+        if not _ba.have_chars(_ba.get_account_display_string(full=False)):
+            return
+
+        config = _ba.app.config
+        if ('Player Profiles' not in config
+                or '__account__' not in config['Player Profiles']):
+
+            # Create a spaz with a nice default purply color.
+            _ba.add_transaction({
+                'type': 'ADD_PLAYER_PROFILE',
+                'name': '__account__',
+                'profile': {
+                    'character': 'Spaz',
+                    'color': [0.5, 0.25, 1.0],
+                    'highlight': [0.5, 0.25, 1.0]
+                }
+            })
+            _ba.run_transactions()
+
+    def have_pro(self) -> bool:
+        """Return whether pro is currently unlocked."""
+
+        # Check our tickets-based pro upgrade and our two real-IAP based
+        # upgrades. Also unlock this stuff in ballistica-core builds.
+        return bool(
+            _ba.get_purchased('upgrades.pro')
+            or _ba.get_purchased('static.pro')
+            or _ba.get_purchased('static.pro_sale')
+            or 'ballistica' + 'core' == _ba.appname())
+
+    def have_pro_options(self) -> bool:
+        """Return whether pro-options are present.
+
+        This is True for owners of Pro or old installs
+        before Pro was a requirement for these.
+        """
+
+        # We expose pro options if the server tells us to
+        # (which is generally just when we own pro),
+        # or also if we've been grandfathered in or are using ballistica-core
+        # builds.
+        return self.have_pro() or bool(
+            _ba.get_account_misc_read_val_2('proOptionsUnlocked', False)
+            or _ba.app.config.get('lc14292', 0) > 1)
+
+    def show_post_purchase_message(self) -> None:
+        """(internal)"""
+        from ba._language import Lstr
+        from ba._enums import TimeType
+        cur_time = _ba.time(TimeType.REAL)
+        if (self.last_post_purchase_message_time is None
+                or cur_time - self.last_post_purchase_message_time > 3.0):
+            self.last_post_purchase_message_time = cur_time
+            with _ba.Context('ui'):
+                _ba.screenmessage(Lstr(resource='updatingAccountText',
+                                       fallback_resource='purchasingText'),
+                                  color=(0, 1, 0))
+                _ba.playsound(_ba.getsound('click01'))
+
+    def on_account_state_changed(self) -> None:
+        """(internal)"""
+        from ba._language import Lstr
+
+        # Run any pending promo codes we had queued up while not signed in.
+        if _ba.get_account_state() == 'signed_in' and self.pending_promo_codes:
+            for code in self.pending_promo_codes:
+                _ba.screenmessage(Lstr(resource='submittingPromoCodeText'),
+                                  color=(0, 1, 0))
+                _ba.add_transaction({
+                    'type': 'PROMO_CODE',
+                    'expire_time': time.time() + 5,
+                    'code': code
+                })
+            _ba.run_transactions()
+            self.pending_promo_codes = []
+
+    def add_pending_promo_code(self, code: str) -> None:
+        """(internal)"""
+        from ba._language import Lstr
+        from ba._enums import TimeType
+
+        # If we're not signed in, queue up the code to run the next time we
+        # are and issue a warning if we haven't signed in within the next
+        # few seconds.
+        if _ba.get_account_state() != 'signed_in':
+
+            def check_pending_codes() -> None:
+                """(internal)"""
+
+                # If we're still not signed in and have pending codes,
+                # inform the user that they need to sign in to use them.
+                if self.pending_promo_codes:
+                    _ba.screenmessage(Lstr(resource='signInForPromoCodeText'),
+                                      color=(1, 0, 0))
+                    _ba.playsound(_ba.getsound('error'))
+
+            self.pending_promo_codes.append(code)
+            _ba.timer(6.0, check_pending_codes, timetype=TimeType.REAL)
+            return
+        _ba.screenmessage(Lstr(resource='submittingPromoCodeText'),
+                          color=(0, 1, 0))
         _ba.add_transaction({
-            'type': 'ADD_PLAYER_PROFILE',
-            'name': '__account__',
-            'profile': {
-                'character': 'Spaz',
-                'color': [0.5, 0.25, 1.0],
-                'highlight': [0.5, 0.25, 1.0]
-            }
+            'type': 'PROMO_CODE',
+            'expire_time': time.time() + 5,
+            'code': code
         })
         _ba.run_transactions()
-
-
-def have_pro() -> bool:
-    """Return whether pro is currently unlocked."""
-
-    # Check our tickets-based pro upgrade and our two real-IAP based upgrades.
-    # Also unlock this stuff in ballistica-core builds.
-    return bool(
-        _ba.get_purchased('upgrades.pro') or _ba.get_purchased('static.pro')
-        or _ba.get_purchased('static.pro_sale')
-        or 'ballistica' + 'core' == 'ballisticacore')
-
-
-def have_pro_options() -> bool:
-    """Return whether pro-options are present.
-
-    This is True for owners of Pro or old installs
-    before Pro was a requirement for these.
-    """
-
-    # We expose pro options if the server tells us to
-    # (which is generally just when we own pro),
-    # or also if we've been grandfathered in or are using ballistica-core
-    # builds.
-    return have_pro() or bool(
-        _ba.get_account_misc_read_val_2('proOptionsUnlocked', False)
-        or _ba.app.config.get('lc14292', 0) > 1)
-
-
-def show_post_purchase_message() -> None:
-    """(internal)"""
-    from ba._lang import Lstr
-    from ba._enums import TimeType
-    app = _ba.app
-    cur_time = _ba.time(TimeType.REAL)
-    if (app.last_post_purchase_message_time is None
-            or cur_time - app.last_post_purchase_message_time > 3.0):
-        app.last_post_purchase_message_time = cur_time
-        with _ba.Context('ui'):
-            _ba.screenmessage(Lstr(resource='updatingAccountText',
-                                   fallback_resource='purchasingText'),
-                              color=(0, 1, 0))
-            _ba.playsound(_ba.getsound('click01'))
-
-
-def on_account_state_changed() -> None:
-    """(internal)"""
-    import time
-    from ba import _lang
-    app = _ba.app
-
-    # Run any pending promo codes we had queued up while not signed in.
-    if _ba.get_account_state() == 'signed_in' and app.pending_promo_codes:
-        for code in app.pending_promo_codes:
-            _ba.screenmessage(_lang.Lstr(resource='submittingPromoCodeText'),
-                              color=(0, 1, 0))
-            _ba.add_transaction({
-                'type': 'PROMO_CODE',
-                'expire_time': time.time() + 5,
-                'code': code
-            })
-        _ba.run_transactions()
-        app.pending_promo_codes = []

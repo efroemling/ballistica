@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides party related UI."""
 
 from __future__ import annotations
@@ -47,8 +29,9 @@ class PartyWindow(ba.Window):
         self._popup_party_member_client_id: Optional[int] = None
         self._popup_party_member_is_host: Optional[bool] = None
         self._width = 500
-        self._height = (365
-                        if ba.app.small_ui else 480 if ba.app.med_ui else 600)
+        uiscale = ba.app.ui.uiscale
+        self._height = (365 if uiscale is ba.UIScale.SMALL else
+                        480 if uiscale is ba.UIScale.MEDIUM else 600)
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             transition='in_scale',
@@ -56,9 +39,10 @@ class PartyWindow(ba.Window):
             parent=_ba.get_special_widget('overlay_stack'),
             on_outside_click_call=self.close_with_sound,
             scale_origin_stack_offset=origin,
-            scale=(2.0 if ba.app.small_ui else 1.35 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -10) if ba.app.small_ui else (
-                240, 0) if ba.app.med_ui else (330, 20)))
+            scale=(2.0 if uiscale is ba.UIScale.SMALL else
+                   1.35 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -10) if uiscale is ba.UIScale.SMALL else (
+                240, 0) if uiscale is ba.UIScale.MEDIUM else (330, 20)))
 
         self._cancel_button = ba.buttonwidget(parent=self._root_widget,
                                               scale=0.7,
@@ -87,7 +71,7 @@ class PartyWindow(ba.Window):
 
         info = _ba.get_connection_to_host_info()
         if info.get('name', '') != '':
-            title = info['name']
+            title = ba.Lstr(value=info['name'])
         else:
             title = ba.Lstr(resource=self._r + '.titleText')
 
@@ -117,7 +101,9 @@ class PartyWindow(ba.Window):
                                                    self._height - 200),
                                              position=(30, 80),
                                              color=(0.4, 0.6, 0.3))
-        self._columnwidget = ba.columnwidget(parent=self._scrollwidget)
+        self._columnwidget = ba.columnwidget(parent=self._scrollwidget,
+                                             border=2,
+                                             margin=0)
         ba.widget(edit=self._menu_button, down_widget=self._columnwidget)
 
         self._muted_text = ba.textwidget(
@@ -198,9 +184,11 @@ class PartyWindow(ba.Window):
 
     def _on_menu_button_press(self) -> None:
         is_muted = ba.app.config.resolve('Chat Muted')
+        uiscale = ba.app.ui.uiscale
         popup.PopupMenuWindow(
             position=self._menu_button.get_screen_space_center(),
-            scale=2.3 if ba.app.small_ui else 1.65 if ba.app.med_ui else 1.23,
+            scale=(2.3 if uiscale is ba.UIScale.SMALL else
+                   1.65 if uiscale is ba.UIScale.MEDIUM else 1.23),
             choices=['unmute' if is_muted else 'mute'],
             choices_display=[
                 ba.Lstr(
@@ -281,10 +269,10 @@ class PartyWindow(ba.Window):
                                             p_str = p_str[:25] + '...'
                                 else:
                                     p_str = self._roster[index][
-                                        'displayString']
+                                        'display_string']
                             except Exception:
                                 ba.print_exception(
-                                    'error calcing client name str')
+                                    'Error calcing client name str.')
                                 p_str = '???'
 
                             widget = ba.textwidget(parent=self._root_widget,
@@ -400,9 +388,11 @@ class PartyWindow(ba.Window):
                     14248):
                 return
             kick_str = ba.Lstr(resource='kickVoteText')
+        uiscale = ba.app.ui.uiscale
         popup.PopupMenuWindow(
             position=widget.get_screen_space_center(),
-            scale=2.3 if ba.app.small_ui else 1.65 if ba.app.med_ui else 1.23,
+            scale=(2.3 if uiscale is ba.UIScale.SMALL else
+                   1.65 if uiscale is ba.UIScale.MEDIUM else 1.23),
             choices=['kick'],
             choices_display=[kick_str],
             current_choice='kick',
@@ -464,7 +454,6 @@ def handle_party_invite(name: str, invite_id: str) -> None:
         # FIXME: Ugly.
         # Let's store the invite-id away on the confirm window so we know if
         # we need to kill it later.
-        # noinspection PyTypeHints
         conf.party_invite_id = invite_id  # type: ignore
 
         # store a weak-ref so we can get at this later

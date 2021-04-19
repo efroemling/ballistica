@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Networking related functionality."""
 from __future__ import annotations
 
@@ -56,7 +38,7 @@ def get_ip_address_type(addr: str) -> socket.AddressFamily:
         except OSError:
             pass
     if socket_type is None:
-        raise Exception('addr seems to be neither v4 or v6: ' + str(addr))
+        raise ValueError(f'addr seems to be neither v4 or v6: {addr}')
     return socket_type
 
 
@@ -76,14 +58,14 @@ class ServerCallThread(threading.Thread):
         self._request = request
         self._request_type = request_type
         if not isinstance(response_type, ServerResponseType):
-            raise Exception(f'Invalid response type: {response_type}')
+            raise TypeError(f'Invalid response type: {response_type}')
         self._response_type = response_type
         self._data = {} if data is None else copy.deepcopy(data)
         self._callback: Optional[ServerCallbackType] = callback
         self._context = _ba.Context('current')
 
         # Save and restore the context we were created from.
-        activity: Optional[ba.Activity] = _ba.getactivity(doraise=False)
+        activity = _ba.getactivity(doraise=False)
         self._activity = weakref.ref(
             activity) if activity is not None else None
 
@@ -94,7 +76,7 @@ class ServerCallThread(threading.Thread):
         # this check manually?
         if self._activity is not None:
             activity = self._activity()
-            if activity is None or activity.is_expired():
+            if activity is None or activity.expired:
                 return
 
         # Technically we could do the same check for session contexts,
@@ -105,16 +87,15 @@ class ServerCallThread(threading.Thread):
             self._callback(arg)
 
     def run(self) -> None:
+        # pylint: disable=too-many-branches
         import urllib.request
         import urllib.error
         import json
+        import http.client
         from ba import _general
         try:
             self._data = _general.utf8_all(self._data)
             _ba.set_thread_name('BA_ServerCallThread')
-
-            # Seems pycharm doesn't know about urllib.parse.
-            # noinspection PyUnresolvedReferences
             parse = urllib.parse
             if self._request_type == 'get':
                 response = urllib.request.urlopen(
@@ -129,7 +110,7 @@ class ServerCallThread(threading.Thread):
                         parse.urlencode(self._data).encode(),
                         {'User-Agent': _ba.app.user_agent_string}))
             else:
-                raise Exception('Invalid request_type: ' + self._request_type)
+                raise TypeError('Invalid request_type: ' + self._request_type)
 
             # If html request failed.
             if response.getcode() != 200:
@@ -145,23 +126,49 @@ class ServerCallThread(threading.Thread):
                     raw_data_s = raw_data.decode()
                     response_data = json.loads(raw_data_s)
             else:
-                raise Exception(f'invalid responsetype: {self._response_type}')
-        except (urllib.error.URLError, ConnectionError):
-            # Server rejected us, broken pipe, etc.  It happens. Ignoring.
-            response_data = None
+                raise TypeError(f'invalid responsetype: {self._response_type}')
+
         except Exception as exc:
-            # Any other error here is unexpected, so let's make a note of it.
-            print('Exc in ServerCallThread:', exc)
-            import traceback
-            traceback.print_exc()
+            import errno
+            do_print = False
             response_data = None
+
+            # Ignore common network errors; note unexpected ones.
+            if isinstance(
+                    exc,
+                (urllib.error.URLError, ConnectionError,
+                 http.client.IncompleteRead, http.client.BadStatusLine)):
+                pass
+            elif isinstance(exc, OSError):
+                if exc.errno == 10051:  # Windows unreachable network error.
+                    pass
+                elif exc.errno in [
+                        errno.ETIMEDOUT, errno.EHOSTUNREACH, errno.ENETUNREACH
+                ]:
+                    pass
+                else:
+                    do_print = True
+            elif (self._response_type == ServerResponseType.JSON
+                  and isinstance(exc, json.decoder.JSONDecodeError)):
+                pass
+            else:
+                do_print = True
+
+            if do_print:
+                # Any other error here is unexpected,
+                # so let's make a note of it,
+                print(f'Error in ServerCallThread'
+                      f' (response-type={self._response_type},'
+                      f' response-data={response_data}):')
+                import traceback
+                traceback.print_exc()
 
         if self._callback is not None:
             _ba.pushcall(_general.Call(self._run_callback, response_data),
                          from_other_thread=True)
 
 
-def serverget(
+def master_server_get(
         request: str,
         data: Dict[str, Any],
         callback: Optional[ServerCallbackType] = None,
@@ -170,7 +177,7 @@ def serverget(
     ServerCallThread(request, 'get', data, callback, response_type).start()
 
 
-def serverput(
+def master_server_post(
         request: str,
         data: Dict[str, Any],
         callback: Optional[ServerCallbackType] = None,

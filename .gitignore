@@ -23,7 +23,6 @@ local.properties
 .flycheck-dir-locals.el
 .pylintrc
 .projectile
-.editorconfig
 .clang-format
 .style.yapf
 .irony
@@ -74,7 +73,9 @@ libs/
 !vc_redist.x86.exe
 !vc_redist.x64.exe
 !python.exe
+!python_d.exe
 !pythonw.exe
+!pythonw_d.exe
 !**/OculusSDK/Tools/**/*.exe
 
 # Note: specifying exact Debug/Release dirs for now; we wind up ignoring

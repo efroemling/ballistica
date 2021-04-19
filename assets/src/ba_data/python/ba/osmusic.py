@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Music playback using OS functionality exposed through the C++ layer."""
 from __future__ import annotations
 
@@ -71,7 +53,7 @@ class OSMusicPlayer(MusicPlayer):
         elif entry_type == 'musicFolder':
 
             # Launch a thread to scan this folder and give us a random
-            # valid file within.
+            # valid file within it.
             self._want_to_play = True
             self._actually_playing = False
             _PickFolderSongThread(name, self.get_valid_music_file_extensions(),
@@ -80,9 +62,9 @@ class OSMusicPlayer(MusicPlayer):
     def _on_play_folder_cb(self,
                            result: Union[str, List[str]],
                            error: Optional[str] = None) -> None:
-        from ba import _lang
+        from ba import _language
         if error is not None:
-            rstr = (_lang.Lstr(
+            rstr = (_language.Lstr(
                 resource='internal.errorPlayingMusicText').evaluate())
             if isinstance(result, str):
                 err_str = (rstr.replace('${MUSIC}', os.path.basename(result)) +
@@ -121,8 +103,9 @@ class _PickFolderSongThread(threading.Thread):
         self._path = path
 
     def run(self) -> None:
-        from ba import _lang
+        from ba import _language
         from ba._general import Call
+        do_print_error = True
         try:
             _ba.set_thread_name('BA_PickFolderSongThread')
             all_files: List[str] = []
@@ -134,14 +117,16 @@ class _PickFolderSongThread(threading.Thread):
                         all_files.insert(random.randrange(len(all_files) + 1),
                                          root + '/' + fname)
             if not all_files:
-                raise Exception(
-                    _lang.Lstr(resource='internal.noMusicFilesInFolderText').
-                    evaluate())
+                do_print_error = False
+                raise RuntimeError(
+                    _language.Lstr(resource='internal.noMusicFilesInFolderText'
+                                   ).evaluate())
             _ba.pushcall(Call(self._callback, all_files, None),
                          from_other_thread=True)
         except Exception as exc:
             from ba import _error
-            _error.print_exception()
+            if do_print_error:
+                _error.print_exception()
             try:
                 err_str = str(exc)
             except Exception:

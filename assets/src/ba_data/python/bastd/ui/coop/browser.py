@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """UI for browsing available co-op levels/games/etc."""
 # FIXME: Break this up.
 # pylint: disable=too-many-lines
@@ -29,6 +11,9 @@ from typing import TYPE_CHECKING
 
 import _ba
 import ba
+from bastd.ui.store.button import StoreButton
+from bastd.ui.league.rankbutton import LeagueRankButton
+from bastd.ui.store.browser import StoreBrowserWindow
 
 if TYPE_CHECKING:
     from typing import Any, Optional, Tuple, Dict, List, Union
@@ -38,28 +23,43 @@ class CoopBrowserWindow(ba.Window):
     """Window for browsing co-op levels/games/etc."""
 
     def _update_corner_button_positions(self) -> None:
-        offs = (-55 if ba.app.small_ui and _ba.is_party_icon_visible() else 0)
+        uiscale = ba.app.ui.uiscale
+        offs = (-55 if uiscale is ba.UIScale.SMALL
+                and _ba.is_party_icon_visible() else 0)
         if self._league_rank_button is not None:
             self._league_rank_button.set_position(
-                (self._width - 282 + offs - self._x_inset,
-                 self._height - 85 - (4 if ba.app.small_ui else 0)))
+                (self._width - 282 + offs - self._x_inset, self._height - 85 -
+                 (4 if uiscale is ba.UIScale.SMALL else 0)))
         if self._store_button is not None:
             self._store_button.set_position(
-                (self._width - 170 + offs - self._x_inset,
-                 self._height - 85 - (4 if ba.app.small_ui else 0)))
+                (self._width - 170 + offs - self._x_inset, self._height - 85 -
+                 (4 if uiscale is ba.UIScale.SMALL else 0)))
 
     def __init__(self,
                  transition: Optional[str] = 'in_right',
                  origin_widget: ba.Widget = None):
-        # pylint: disable=cyclic-import
         # pylint: disable=too-many-statements
         # pylint: disable=cyclic-import
-        from bastd.ui.store.button import StoreButton
-        from bastd.ui.league.rankbutton import LeagueRankButton
+        import threading
+
+        # Preload some modules we use in a background thread so we won't
+        # have a visual hitch when the user taps them.
+        threading.Thread(target=self._preload_modules).start()
+
         ba.set_analytics_screen('Coop Window')
 
         app = ba.app
         cfg = app.config
+
+        # Quick note to players that tourneys won't work in ballistica
+        # core builds. (need to split the word so it won't get subbed out)
+        if 'ballistica' + 'core' == _ba.appname():
+            ba.timer(1.0,
+                     lambda: ba.screenmessage(
+                         ba.Lstr(resource='noTournamentsInTestBuildText'),
+                         color=(1, 1, 0),
+                     ),
+                     timetype=ba.TimeType.REAL)
 
         # If they provided an origin-widget, scale up from that.
         scale_origin: Optional[Tuple[float, float]]
@@ -73,22 +73,22 @@ class CoopBrowserWindow(ba.Window):
 
         # Try to recreate the same number of buttons we had last time so our
         # re-selection code works.
-        try:
-            self._tournament_button_count = app.config['Tournament Rows']
-        except Exception:
-            self._tournament_button_count = 0
+        self._tournament_button_count = app.config.get('Tournament Rows', 0)
+        assert isinstance(self._tournament_button_count, int)
 
         self._easy_button: Optional[ba.Widget] = None
         self._hard_button: Optional[ba.Widget] = None
         self._hard_button_lock_image: Optional[ba.Widget] = None
         self._campaign_percent_text: Optional[ba.Widget] = None
 
-        self._width = 1320 if app.small_ui else 1120
-        self._x_inset = x_inset = 100 if app.small_ui else 0
-        self._height = (657 if app.small_ui else 730 if app.med_ui else 800)
-        app.main_window = 'Coop Select'
+        uiscale = ba.app.ui.uiscale
+        self._width = 1320 if uiscale is ba.UIScale.SMALL else 1120
+        self._x_inset = x_inset = 100 if uiscale is ba.UIScale.SMALL else 0
+        self._height = (657 if uiscale is ba.UIScale.SMALL else
+                        730 if uiscale is ba.UIScale.MEDIUM else 800)
+        app.ui.set_main_menu_location('Coop Select')
         self._r = 'coopSelectWindow'
-        top_extra = 20 if app.small_ui else 0
+        top_extra = 20 if uiscale is ba.UIScale.SMALL else 0
 
         self._tourney_data_up_to_date = False
 
@@ -99,20 +99,19 @@ class CoopBrowserWindow(ba.Window):
             size=(self._width, self._height + top_extra),
             toolbar_visibility='menu_full',
             scale_origin_stack_offset=scale_origin,
-            stack_offset=(0,
-                          -15) if app.small_ui else (0,
-                                                     0) if app.med_ui else (0,
-                                                                            0),
+            stack_offset=((0, -15) if uiscale is ba.UIScale.SMALL else (
+                0, 0) if uiscale is ba.UIScale.MEDIUM else (0, 0)),
             transition=transition,
-            scale=1.2 if app.small_ui else 0.8 if app.med_ui else 0.75))
+            scale=(1.2 if uiscale is ba.UIScale.SMALL else
+                   0.8 if uiscale is ba.UIScale.MEDIUM else 0.75)))
 
-        if app.toolbars and app.small_ui:
+        if app.ui.use_toolbars and uiscale is ba.UIScale.SMALL:
             self._back_button = None
         else:
             self._back_button = ba.buttonwidget(
                 parent=self._root_widget,
-                position=(75 + x_inset,
-                          self._height - 87 - (4 if app.small_ui else 0)),
+                position=(75 + x_inset, self._height - 87 -
+                          (4 if uiscale is ba.UIScale.SMALL else 0)),
                 size=(120, 60),
                 scale=1.2,
                 autoselect=True,
@@ -124,11 +123,11 @@ class CoopBrowserWindow(ba.Window):
         self._store_button_widget: Optional[ba.Widget]
         self._league_rank_button_widget: Optional[ba.Widget]
 
-        if not app.toolbars:
+        if not app.ui.use_toolbars:
             prb = self._league_rank_button = LeagueRankButton(
                 parent=self._root_widget,
-                position=(self._width - (282 + x_inset),
-                          self._height - 85 - (4 if app.small_ui else 0)),
+                position=(self._width - (282 + x_inset), self._height - 85 -
+                          (4 if uiscale is ba.UIScale.SMALL else 0)),
                 size=(100, 60),
                 color=(0.4, 0.4, 0.9),
                 textcolor=(0.9, 0.9, 2.0),
@@ -138,8 +137,8 @@ class CoopBrowserWindow(ba.Window):
 
             sbtn = self._store_button = StoreButton(
                 parent=self._root_widget,
-                position=(self._width - (170 + x_inset),
-                          self._height - 85 - (4 if app.small_ui else 0)),
+                position=(self._width - (170 + x_inset), self._height - 85 -
+                          (4 if uiscale is ba.UIScale.SMALL else 0)),
                 size=(100, 60),
                 color=(0.6, 0.4, 0.7),
                 show_tickets=True,
@@ -184,26 +183,28 @@ class CoopBrowserWindow(ba.Window):
         v = self._height - 95
         txt = ba.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, v + 40 - (0 if app.small_ui else 0)),
+            position=(self._width * 0.5,
+                      v + 40 - (0 if uiscale is ba.UIScale.SMALL else 0)),
             size=(0, 0),
             text=ba.Lstr(resource='playModes.singlePlayerCoopText',
                          fallback_resource='playModes.coopText'),
             h_align='center',
-            color=app.title_color,
+            color=app.ui.title_color,
             scale=1.5,
             maxwidth=500,
             v_align='center')
 
-        if app.toolbars and app.small_ui:
+        if app.ui.use_toolbars and uiscale is ba.UIScale.SMALL:
             ba.textwidget(edit=txt, text='')
 
         if self._back_button is not None:
-            ba.buttonwidget(edit=self._back_button,
-                            button_type='backSmall',
-                            size=(60, 50),
-                            position=(75 + x_inset, self._height - 87 -
-                                      (4 if app.small_ui else 0) + 6),
-                            label=ba.charstr(ba.SpecialChar.BACK))
+            ba.buttonwidget(
+                edit=self._back_button,
+                button_type='backSmall',
+                size=(60, 50),
+                position=(75 + x_inset, self._height - 87 -
+                          (4 if uiscale is ba.UIScale.SMALL else 0) + 6),
+                label=ba.charstr(ba.SpecialChar.BACK))
 
         self._selected_row = cfg.get('Selected Coop Row', None)
 
@@ -214,8 +215,9 @@ class CoopBrowserWindow(ba.Window):
         self.a_outline_model = ba.getmodel('achievementOutline')
 
         self._scroll_width = self._width - (130 + 2 * x_inset)
-        self._scroll_height = self._height - (190 if app.small_ui
-                                              and app.toolbars else 160)
+        self._scroll_height = (self._height -
+                               (190 if uiscale is ba.UIScale.SMALL
+                                and app.ui.use_toolbars else 160))
 
         self._subcontainerwidth = 800.0
         self._subcontainerheight = 1400.0
@@ -223,10 +225,13 @@ class CoopBrowserWindow(ba.Window):
         self._scrollwidget = ba.scrollwidget(
             parent=self._root_widget,
             highlight=False,
-            position=(65 + x_inset, 120) if app.small_ui and app.toolbars else
-            (65 + x_inset, 70),
+            position=(65 + x_inset, 120) if uiscale is ba.UIScale.SMALL
+            and app.ui.use_toolbars else (65 + x_inset, 70),
             size=(self._scroll_width, self._scroll_height),
-            simple_culling_v=10.0)
+            simple_culling_v=10.0,
+            claims_left_right=True,
+            claims_tab=True,
+            selection_loops_to_parent=True)
         self._subcontainer: Optional[ba.Widget] = None
 
         # Take note of our account state; we'll refresh later if this changes.
@@ -246,15 +251,14 @@ class CoopBrowserWindow(ba.Window):
         # If we've got a cached tournament list for our account and info for
         # each one of those tournaments, go ahead and display it as a
         # starting point.
-        if (app.account_tournament_list is not None and
-                app.account_tournament_list[0] == _ba.get_account_state_num()
-                and all([
-                    t_id in app.tournament_info
-                    for t_id in app.account_tournament_list[1]
-                ])):
+        if (app.accounts.account_tournament_list is not None
+                and app.accounts.account_tournament_list[0]
+                == _ba.get_account_state_num()
+                and all(t_id in app.accounts.tournament_info
+                        for t_id in app.accounts.account_tournament_list[1])):
             tourney_data = [
-                app.tournament_info[t_id]
-                for t_id in app.account_tournament_list[1]
+                app.accounts.tournament_info[t_id]
+                for t_id in app.accounts.account_tournament_list[1]
             ]
             self._update_for_data(tourney_data)
 
@@ -265,7 +269,25 @@ class CoopBrowserWindow(ba.Window):
                                       repeat=True)
         self._update()
 
+    @staticmethod
+    def _preload_modules() -> None:
+        """Preload modules we use (called in bg thread)."""
+        import bastd.ui.purchase as _unused1
+        import bastd.ui.coop.gamebutton as _unused2
+        import bastd.ui.confirm as _unused3
+        import bastd.ui.account as _unused4
+        import bastd.ui.league.rankwindow as _unused5
+        import bastd.ui.store.browser as _unused6
+        import bastd.ui.account.viewer as _unused7
+        import bastd.ui.tournamentscores as _unused8
+        import bastd.ui.tournamententry as _unused9
+        import bastd.ui.play as _unused10
+
     def _update(self) -> None:
+        # Do nothing if we've somehow outlived our actual UI.
+        if not self._root_widget:
+            return
+
         cur_time = ba.time(ba.TimeType.REAL)
 
         # If its been a while since we got a tournament update, consider the
@@ -332,18 +354,18 @@ class CoopBrowserWindow(ba.Window):
         self._update_hard_mode_lock_image()
 
     def _update_hard_mode_lock_image(self) -> None:
-        from ba.internal import have_pro_options
         try:
-            ba.imagewidget(edit=self._hard_button_lock_image,
-                           opacity=0.0 if have_pro_options() else 1.0)
+            ba.imagewidget(
+                edit=self._hard_button_lock_image,
+                opacity=0.0 if ba.app.accounts.have_pro_options() else 1.0)
         except Exception:
-            ba.print_exception('error updating campaign lock')
+            ba.print_exception('Error updating campaign lock.')
 
     def _update_for_data(self, data: Optional[List[Dict[str, Any]]]) -> None:
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
-        from ba.internal import get_campaign, get_tournament_prize_strings
+        from ba.internal import getcampaign, get_tournament_prize_strings
 
         # If the number of tournaments or challenges in the data differs from
         # our current arrangement, refresh with the new number.
@@ -457,7 +479,8 @@ class CoopBrowserWindow(ba.Window):
             tbtn['required_league'] = (None if 'requiredLeague' not in entry
                                        else entry['requiredLeague'])
 
-            game = ba.app.tournament_info[tbtn['tournament_id']]['game']
+            game = ba.app.accounts.tournament_info[
+                tbtn['tournament_id']]['game']
 
             if game is None:
                 ba.textwidget(edit=tbtn['button_text'], text='-')
@@ -466,20 +489,20 @@ class CoopBrowserWindow(ba.Window):
                                opacity=0.2)
             else:
                 campaignname, levelname = game.split(':')
-                campaign = get_campaign(campaignname)
-                max_players = ba.app.tournament_info[
+                campaign = getcampaign(campaignname)
+                max_players = ba.app.accounts.tournament_info[
                     tbtn['tournament_id']]['maxPlayers']
                 txt = ba.Lstr(
                     value='${A} ${B}',
-                    subs=[('${A}', campaign.get_level(levelname).displayname),
+                    subs=[('${A}', campaign.getlevel(levelname).displayname),
                           ('${B}',
                            ba.Lstr(resource='playerCountAbbreviatedText',
                                    subs=[('${COUNT}', str(max_players))]))])
                 ba.textwidget(edit=tbtn['button_text'], text=txt)
-                ba.imagewidget(edit=tbtn['image'],
-                               texture=campaign.get_level(
-                                   levelname).get_preview_texture(),
-                               opacity=1.0 if enabled else 0.5)
+                ba.imagewidget(
+                    edit=tbtn['image'],
+                    texture=campaign.getlevel(levelname).get_preview_texture(),
+                    opacity=1.0 if enabled else 0.5)
 
             fee = entry['fee']
 
@@ -516,9 +539,9 @@ class CoopBrowserWindow(ba.Window):
                         ba.charstr(ba.SpecialChar.TICKET_BACKING) +
                         str(final_fee))
 
-            ad_tries_remaining = ba.app.tournament_info[
+            ad_tries_remaining = ba.app.accounts.tournament_info[
                 tbtn['tournament_id']]['adTriesRemaining']
-            free_tries_remaining = ba.app.tournament_info[
+            free_tries_remaining = ba.app.accounts.tournament_info[
                 tbtn['tournament_id']]['freeTriesRemaining']
 
             # Now, if this fee allows ads and we support video ads, show
@@ -568,8 +591,7 @@ class CoopBrowserWindow(ba.Window):
 
     def _on_tournament_query_response(self, data: Optional[Dict[str,
                                                                 Any]]) -> None:
-        from ba.internal import cache_tournament_info
-        app = ba.app
+        accounts = ba.app.accounts
         if data is not None:
             tournament_data = data['t']  # This used to be the whole payload.
             self._last_tournament_query_response_time = ba.time(
@@ -580,10 +602,10 @@ class CoopBrowserWindow(ba.Window):
         # Keep our cached tourney info up to date.
         if data is not None:
             self._tourney_data_up_to_date = True
-            cache_tournament_info(tournament_data)
+            accounts.cache_tournament_info(tournament_data)
 
             # Also cache the current tourney list/order for this account.
-            app.account_tournament_list = (_ba.get_account_state_num(), [
+            accounts.account_tournament_list = (_ba.get_account_state_num(), [
                 e['tournamentID'] for e in tournament_data
             ])
 
@@ -592,10 +614,9 @@ class CoopBrowserWindow(ba.Window):
 
     def _set_campaign_difficulty(self, difficulty: str) -> None:
         # pylint: disable=cyclic-import
-        from ba.internal import have_pro_options
         from bastd.ui.purchase import PurchaseWindow
         if difficulty != self._campaign_difficulty:
-            if difficulty == 'hard' and not have_pro_options():
+            if difficulty == 'hard' and not ba.app.accounts.have_pro_options():
                 PurchaseWindow(items=['pro'])
                 return
             ba.playsound(ba.getsound('gunCocking'))
@@ -615,7 +636,7 @@ class CoopBrowserWindow(ba.Window):
     def _refresh_campaign_row(self) -> None:
         # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
-        from ba.internal import get_campaign
+        from ba.internal import getcampaign
         from bastd.ui.coop.gamebutton import GameButton
         parent_widget = self._campaign_sub_container
 
@@ -716,8 +737,8 @@ class CoopBrowserWindow(ba.Window):
                           down_widget=next_widget_down)
 
         # Update our existing percent-complete text.
-        campaign = get_campaign(campaignname)
-        levels = campaign.get_levels()
+        campaign = getcampaign(campaignname)
+        levels = campaign.levels
         levels_complete = sum((1 if l.complete else 0) for l in levels)
 
         # Last level cant be completed; hence the -1.
@@ -733,13 +754,13 @@ class CoopBrowserWindow(ba.Window):
 
     def _on_tournament_info_press(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui import confirm
+        from bastd.ui.confirm import ConfirmWindow
         txt = ba.Lstr(resource=self._r + '.tournamentInfoText')
-        confirm.ConfirmWindow(txt,
-                              cancel_button=False,
-                              width=550,
-                              height=260,
-                              origin_widget=self._tournament_info_button)
+        ConfirmWindow(txt,
+                      cancel_button=False,
+                      width=550,
+                      height=260,
+                      origin_widget=self._tournament_info_button)
 
     def _refresh(self) -> None:
         # pylint: disable=too-many-statements
@@ -759,17 +780,11 @@ class CoopBrowserWindow(ba.Window):
         self._subcontainer = ba.containerwidget(
             parent=self._scrollwidget,
             size=(self._subcontainerwidth, self._subcontainerheight),
-            background=False)
+            background=False,
+            claims_left_right=True,
+            claims_tab=True,
+            selection_loops_to_parent=True)
 
-        # So we can still select root level widgets with controllers.
-        ba.containerwidget(edit=self._scrollwidget,
-                           claims_left_right=True,
-                           claims_tab=True,
-                           selection_loop_to_parent=True)
-        ba.containerwidget(edit=self._subcontainer,
-                           claims_left_right=True,
-                           claims_tab=True,
-                           selection_loop_to_parent=True)
         ba.containerwidget(edit=self._root_widget,
                            selected_child=self._scrollwidget)
         if self._back_button is not None:
@@ -781,15 +796,15 @@ class CoopBrowserWindow(ba.Window):
 
         v = self._subcontainerheight - 73
 
-        self._campaign_percent_text = ba.textwidget(parent=w_parent,
-                                                    position=(h_base + 27,
-                                                              v + 30),
-                                                    size=(0, 0),
-                                                    text='',
-                                                    h_align='left',
-                                                    v_align='center',
-                                                    color=ba.app.title_color,
-                                                    scale=1.1)
+        self._campaign_percent_text = ba.textwidget(
+            parent=w_parent,
+            position=(h_base + 27, v + 30),
+            size=(0, 0),
+            text='',
+            h_align='left',
+            v_align='center',
+            color=ba.app.ui.title_color,
+            scale=1.1)
 
         row_v_show_buffer = 100
         v -= 198
@@ -833,7 +848,7 @@ class CoopBrowserWindow(ba.Window):
                       text=txt,
                       h_align='left',
                       v_align='center',
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       scale=1.1)
         self._tournament_info_button = ba.buttonwidget(
             parent=w_parent,
@@ -867,7 +882,7 @@ class CoopBrowserWindow(ba.Window):
                           text=unavailable_text,
                           h_align='left',
                           v_align='center',
-                          color=ba.app.title_color,
+                          color=ba.app.ui.title_color,
                           scale=0.9)
             v -= 40
         v -= 198
@@ -913,7 +928,7 @@ class CoopBrowserWindow(ba.Window):
                           fallback_resource='coopSelectWindow.customText'),
                       h_align='left',
                       v_align='center',
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       scale=1.1)
 
         items = [
@@ -935,8 +950,8 @@ class CoopBrowserWindow(ba.Window):
 
         # add all custom user levels here..
         # items += [
-        #     'User:' + l.get_name()
-        #     for l in get_campaign('User').get_levels()
+        #     'User:' + l.getname()
+        #     for l in getcampaign('User').getlevels()
         # ]
 
         self._custom_h_scroll = custom_h_scroll = h_scroll = ba.hscrollwidget(
@@ -998,7 +1013,7 @@ class CoopBrowserWindow(ba.Window):
                     up_widget=tournament_h_scroll if self._tournament_buttons
                     else self._tournament_info_button)
             except Exception:
-                ba.print_exception('Error wiring up custom buttons')
+                ba.print_exception('Error wiring up custom buttons.')
 
         if self._back_button is not None:
             ba.buttonwidget(edit=self._back_button,
@@ -1329,36 +1344,40 @@ class CoopBrowserWindow(ba.Window):
 
     def _switch_to_league_rankings(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui import account
+        from bastd.ui.account import show_sign_in_prompt
         from bastd.ui.league.rankwindow import LeagueRankWindow
         if _ba.get_account_state() != 'signed_in':
-            account.show_sign_in_prompt()
+            show_sign_in_prompt()
             return
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         assert self._league_rank_button is not None
-        ba.app.main_menu_window = (LeagueRankWindow(
-            origin_widget=self._league_rank_button.get_button()).
-                                   get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            LeagueRankWindow(origin_widget=self._league_rank_button.get_button(
+            )).get_root_widget())
 
-    def _switch_to_score(self, show_tab: Optional[str] = 'extras') -> None:
+    def _switch_to_score(
+        self,
+        show_tab: Optional[
+            StoreBrowserWindow.TabID] = StoreBrowserWindow.TabID.EXTRAS
+    ) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui import account
-        from bastd.ui.store import browser
+        from bastd.ui.account import show_sign_in_prompt
         if _ba.get_account_state() != 'signed_in':
-            account.show_sign_in_prompt()
+            show_sign_in_prompt()
             return
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         assert self._store_button is not None
-        ba.app.main_menu_window = (browser.StoreBrowserWindow(
-            origin_widget=self._store_button.get_button(),
-            show_tab=show_tab,
-            back_location='CoopBrowserWindow').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            StoreBrowserWindow(
+                origin_widget=self._store_button.get_button(),
+                show_tab=show_tab,
+                back_location='CoopBrowserWindow').get_root_widget())
 
     def _show_leader(self, tournament_button: Dict[str, Any]) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.account import viewer
+        from bastd.ui.account.viewer import AccountViewerWindow
         tournament_id = tournament_button['tournament_id']
 
         # FIXME: This assumes a single player entry in leader; should expand
@@ -1368,7 +1387,7 @@ class CoopBrowserWindow(ba.Window):
             ba.playsound(ba.getsound('error'))
             return
         ba.playsound(ba.getsound('swish'))
-        viewer.AccountViewerWindow(
+        AccountViewerWindow(
             account_id=tournament_button['leader'][2][0].get('a', None),
             profile_id=tournament_button['leader'][2][0].get('p', None),
             position=tournament_button['current_leader_name_text'].
@@ -1376,13 +1395,13 @@ class CoopBrowserWindow(ba.Window):
 
     def _show_scores(self, tournament_button: Dict[str, Any]) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui import tournamentscores
+        from bastd.ui.tournamentscores import TournamentScoresWindow
         tournament_id = tournament_button['tournament_id']
         if tournament_id is None:
             ba.playsound(ba.getsound('error'))
             return
 
-        tournamentscores.TournamentScoresWindow(
+        TournamentScoresWindow(
             tournament_id=tournament_id,
             position=tournament_button['more_scores_button'].
             get_screen_space_center())
@@ -1399,9 +1418,8 @@ class CoopBrowserWindow(ba.Window):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-return-statements
         # pylint: disable=cyclic-import
-        from ba.internal import have_pro
-        from bastd.ui import confirm
-        from bastd.ui import tournamententry
+        from bastd.ui.confirm import ConfirmWindow
+        from bastd.ui.tournamententry import TournamentEntryWindow
         from bastd.ui.purchase import PurchaseWindow
         from bastd.ui.account import show_sign_in_prompt
         args: Dict[str, Any] = {}
@@ -1447,23 +1465,23 @@ class CoopBrowserWindow(ba.Window):
                 return
 
             # Game is whatever the tournament tells us it is.
-            game = ba.app.tournament_info[
+            game = ba.app.accounts.tournament_info[
                 tournament_button['tournament_id']]['game']
 
         if tournament_button is None and game == 'Easy:The Last Stand':
-            confirm.ConfirmWindow(ba.Lstr(
-                resource='difficultyHardUnlockOnlyText',
-                fallback_resource='difficultyHardOnlyText'),
-                                  cancel_button=False,
-                                  width=460,
-                                  height=130)
+            ConfirmWindow(ba.Lstr(resource='difficultyHardUnlockOnlyText',
+                                  fallback_resource='difficultyHardOnlyText'),
+                          cancel_button=False,
+                          width=460,
+                          height=130)
             return
 
         # Infinite onslaught/runaround require pro; bring up a store link if
         # need be.
         if tournament_button is None and game in (
                 'Challenges:Infinite Runaround',
-                'Challenges:Infinite Onslaught') and not have_pro():
+                'Challenges:Infinite Onslaught'
+        ) and not ba.app.accounts.have_pro():
             if _ba.get_account_state() != 'signed_in':
                 show_sign_in_prompt()
             else:
@@ -1500,7 +1518,7 @@ class CoopBrowserWindow(ba.Window):
 
         # For tournaments, we pop up the entry window.
         if tournament_button is not None:
-            tournamententry.TournamentEntryWindow(
+            TournamentEntryWindow(
                 tournament_id=tournament_button['tournament_id'],
                 position=tournament_button['button'].get_screen_space_center())
         else:
@@ -1518,16 +1536,13 @@ class CoopBrowserWindow(ba.Window):
         self._save_state()
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
-        ba.app.main_menu_window = (PlayWindow(
-            transition='in_left').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            PlayWindow(transition='in_left').get_root_widget())
 
     def _restore_state(self) -> None:
         try:
-            try:
-                sel_name = ba.app.window_states[
-                    self.__class__.__name__]['sel_name']
-            except Exception:
-                sel_name = None
+            sel_name = ba.app.ui.window_states.get(type(self),
+                                                   {}).get('sel_name')
             if sel_name == 'Back':
                 sel = self._back_button
             elif sel_name == 'Scroll':
@@ -1540,7 +1555,7 @@ class CoopBrowserWindow(ba.Window):
                 sel = self._scrollwidget
             ba.containerwidget(edit=self._root_widget, selected_child=sel)
         except Exception:
-            ba.print_exception('error restoring state for', self.__class__)
+            ba.print_exception(f'Error restoring state for {self}.')
 
     def _save_state(self) -> None:
         cfg = ba.app.config
@@ -1555,12 +1570,10 @@ class CoopBrowserWindow(ba.Window):
             elif sel == self._scrollwidget:
                 sel_name = 'Scroll'
             else:
-                raise Exception('unrecognized selection')
-            ba.app.window_states[self.__class__.__name__] = {
-                'sel_name': sel_name
-            }
+                raise ValueError('unrecognized selection')
+            ba.app.ui.window_states[type(self)] = {'sel_name': sel_name}
         except Exception:
-            ba.print_exception('error saving state for', self.__class__)
+            ba.print_exception(f'Error saving state for {self}.')
 
         cfg['Selected Coop Row'] = self._selected_row
         cfg['Selected Coop Custom Level'] = self._selected_custom_level

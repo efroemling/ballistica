@@ -1,30 +1,12 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Various support classes for accessing data and info on fields and values."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeVar, Generic, overload
 
-from efro.entity._base import BaseField
+from efro.entity._base import (BaseField, dict_key_to_raw, dict_key_from_raw)
 
 if TYPE_CHECKING:
     from typing import (Optional, Tuple, Type, Any, Dict, List, Union)
@@ -233,45 +215,44 @@ class BoundDictField(Generic[TKey, T]):
 
     def __repr__(self) -> str:
         return '{' + ', '.join(
-            repr(key) + ': ' + repr(self.d_field.d_value.filter_output(val))
+            repr(dict_key_from_raw(key, self._keytype)) + ': ' +
+            repr(self.d_field.d_value.filter_output(val))
             for key, val in self.d_data.items()) + '}'
 
     def __len__(self) -> int:
         return len(self.d_data)
 
     def __getitem__(self, key: TKey) -> T:
-        if not isinstance(key, self._keytype):
-            raise TypeError(
-                f'Invalid key type {type(key)}; expected {self._keytype}')
-        assert isinstance(key, self._keytype)
-        typedval: T = self.d_field.d_value.filter_output(self.d_data[key])
+        keyfilt = dict_key_to_raw(key, self._keytype)
+        typedval: T = self.d_field.d_value.filter_output(self.d_data[keyfilt])
         return typedval
 
     def get(self, key: TKey, default: Optional[T] = None) -> Optional[T]:
         """Get a value if present, or a default otherwise."""
-        if not isinstance(key, self._keytype):
-            raise TypeError(
-                f'Invalid key type {type(key)}; expected {self._keytype}')
-        assert isinstance(key, self._keytype)
-        if key not in self.d_data:
+        keyfilt = dict_key_to_raw(key, self._keytype)
+        if keyfilt not in self.d_data:
             return default
-        typedval: T = self.d_field.d_value.filter_output(self.d_data[key])
+        typedval: T = self.d_field.d_value.filter_output(self.d_data[keyfilt])
         return typedval
 
     def __setitem__(self, key: TKey, value: T) -> None:
-        if not isinstance(key, self._keytype):
-            raise TypeError('Expected str index.')
-        self.d_data[key] = self.d_field.d_value.filter_input(value, error=True)
+        keyfilt = dict_key_to_raw(key, self._keytype)
+        self.d_data[keyfilt] = self.d_field.d_value.filter_input(value,
+                                                                 error=True)
 
     def __contains__(self, key: TKey) -> bool:
-        return key in self.d_data
+        keyfilt = dict_key_to_raw(key, self._keytype)
+        return keyfilt in self.d_data
 
     def __delitem__(self, key: TKey) -> None:
-        del self.d_data[key]
+        keyfilt = dict_key_to_raw(key, self._keytype)
+        del self.d_data[keyfilt]
 
     def keys(self) -> List[TKey]:
         """Return a list of our keys."""
-        return list(self.d_data.keys())
+        return [
+            dict_key_from_raw(k, self._keytype) for k in self.d_data.keys()
+        ]
 
     def values(self) -> List[T]:
         """Return a list of our values."""
@@ -282,7 +263,8 @@ class BoundDictField(Generic[TKey, T]):
 
     def items(self) -> List[Tuple[TKey, T]]:
         """Return a list of item/value pairs."""
-        return [(key, self.d_field.d_value.filter_output(value))
+        return [(dict_key_from_raw(key, self._keytype),
+                 self.d_field.d_value.filter_output(value))
                 for key, value in self.d_data.items()]
 
 
@@ -410,8 +392,11 @@ class BoundCompoundDictField(Generic[TKey, TCompound]):
     # would not be able to make sense of)
     if TYPE_CHECKING:
 
+        def get(self, key: TKey) -> Optional[TCompound]:
+            """Return a value if present; otherwise None."""
+
         def __getitem__(self, key: TKey) -> TCompound:
-            pass
+            ...
 
         def values(self) -> List[TCompound]:
             """Return a list of our values."""
@@ -426,8 +411,18 @@ class BoundCompoundDictField(Generic[TKey, TCompound]):
 
     else:
 
+        def get(self, key):
+            """return a value if present; otherwise None."""
+            keyfilt = dict_key_to_raw(key, self.d_field.d_keytype)
+            data = self.d_data.get(keyfilt)
+            if data is not None:
+                return BoundCompoundValue(self.d_field.d_value, data)
+            return None
+
         def __getitem__(self, key):
-            return BoundCompoundValue(self.d_field.d_value, self.d_data[key])
+            keyfilt = dict_key_to_raw(key, self.d_field.d_keytype)
+            return BoundCompoundValue(self.d_field.d_value,
+                                      self.d_data[keyfilt])
 
         def values(self):
             """Return a list of our values."""
@@ -437,31 +432,37 @@ class BoundCompoundDictField(Generic[TKey, TCompound]):
 
         def items(self):
             """Return key/value pairs for all dict entries."""
-            return [(key, BoundCompoundValue(self.d_field.d_value, value))
+            return [(dict_key_from_raw(key, self.d_field.d_keytype),
+                     BoundCompoundValue(self.d_field.d_value, value))
                     for key, value in self.d_data.items()]
 
         def add(self, key: TKey) -> TCompound:
             """Add an entry into the dict, returning it.
 
             Any existing value is replaced."""
-            if not isinstance(key, self.d_field.d_keytype):
-                raise TypeError(f'expected key type {self.d_field.d_keytype};'
-                                f' got {type(key)}')
+            keyfilt = dict_key_to_raw(key, self.d_field.d_keytype)
+
             # Push the entity default into data and then let it fill in
             # any children/etc.
-            self.d_data[key] = (self.d_field.d_value.filter_input(
+            self.d_data[keyfilt] = (self.d_field.d_value.filter_input(
                 self.d_field.d_value.get_default_data(), error=True))
-            return BoundCompoundValue(self.d_field.d_value, self.d_data[key])
+            return BoundCompoundValue(self.d_field.d_value,
+                                      self.d_data[keyfilt])
 
     def __len__(self) -> int:
         return len(self.d_data)
 
     def __contains__(self, key: TKey) -> bool:
-        return key in self.d_data
+        keyfilt = dict_key_to_raw(key, self.d_field.d_keytype)
+        return keyfilt in self.d_data
 
     def __delitem__(self, key: TKey) -> None:
-        del self.d_data[key]
+        keyfilt = dict_key_to_raw(key, self.d_field.d_keytype)
+        del self.d_data[keyfilt]
 
     def keys(self) -> List[TKey]:
         """Return a list of our keys."""
-        return list(self.d_data.keys())
+        return [
+            dict_key_from_raw(k, self.d_field.d_keytype)
+            for k in self.d_data.keys()
+        ]

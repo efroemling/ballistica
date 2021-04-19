@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """UI for presenting sales/etc."""
 
 from __future__ import annotations
@@ -56,11 +38,15 @@ class SpecialOfferWindow(ba.Window):
             real_price = _ba.get_price('pro' if offer['item'] ==
                                        'pro_fullprice' else 'pro_sale')
             if real_price is None and ba.app.debug_build:
-                print('TEMP FAKING REAL PRICE')
+                print('NOTE: Faking prices for debug build.')
                 real_price = '$1.23'
             zombie = real_price is None
-        elif isinstance(offer['price'], str):  # a string price implies IAP id
+        elif isinstance(offer['price'], str):
+            # (a string price implies IAP id)
             real_price = _ba.get_price(offer['price'])
+            if real_price is None and ba.app.debug_build:
+                print('NOTE: Faking price for debug build.')
+                real_price = '$1.23'
             zombie = real_price is None
         else:
             real_price = None
@@ -87,11 +73,13 @@ class SpecialOfferWindow(ba.Window):
         self._offer = copy.deepcopy(offer)
         self._width = 580
         self._height = 590
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             transition=transition,
-            scale=(1.2 if ba.app.small_ui else 1.15 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -15) if ba.app.small_ui else (0, 0)))
+            scale=(1.2 if uiscale is ba.UIScale.SMALL else
+                   1.15 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -15) if uiscale is ba.UIScale.SMALL else (0, 0)))
         self._is_bundle_sale = False
         try:
             if offer['item'] in ['pro', 'pro_fullprice']:
@@ -109,16 +97,26 @@ class SpecialOfferWindow(ba.Window):
                     self._is_bundle_sale = True
                 original_price = _ba.get_account_misc_read_val(
                     'price.' + self._offer_item, 9999)
-                new_price = offer['price']
-                tchar = ba.charstr(SpecialChar.TICKET)
-                original_price_str = tchar + str(original_price)
-                new_price_str = tchar + str(new_price)
-                percent_off = int(
-                    round(100.0 - (float(new_price) / original_price) * 100.0))
-                percent_off_text = ' ' + ba.Lstr(
-                    resource='store.salePercentText').evaluate().replace(
-                        '${PERCENT}', str(percent_off))
+
+                # For pure ticket prices we can show a percent-off.
+                if isinstance(offer['price'], int):
+                    new_price = offer['price']
+                    tchar = ba.charstr(SpecialChar.TICKET)
+                    original_price_str = tchar + str(original_price)
+                    new_price_str = tchar + str(new_price)
+                    percent_off = int(
+                        round(100.0 -
+                              (float(new_price) / original_price) * 100.0))
+                    percent_off_text = ' ' + ba.Lstr(
+                        resource='store.salePercentText').evaluate().replace(
+                            '${PERCENT}', str(percent_off))
+                else:
+                    original_price_str = new_price_str = '?'
+                    percent_off_text = ''
+
         except Exception:
+            print(f'Offer: {offer}')
+            ba.print_exception('Error setting up special-offer')
             original_price_str = new_price_str = '?'
             percent_off_text = ''
 
@@ -210,8 +208,8 @@ class SpecialOfferWindow(ba.Window):
             total_worth_item = offer.get('valueItem', None)
             if total_worth_item is not None:
                 price = _ba.get_price(total_worth_item)
-                assert price is not None
-                total_worth_price = get_clean_price(price)
+                total_worth_price = (get_clean_price(price)
+                                     if price is not None else None)
                 if total_worth_price is not None:
                     total_worth_text = ba.Lstr(resource='store.totalWorthText',
                                                subs=[('${TOTAL_WORTH}',
@@ -245,7 +243,7 @@ class SpecialOfferWindow(ba.Window):
                           text=new_price_str)
 
         # Add ticket button only if this is ticket-purchasable.
-        if offer['price'] is not None and isinstance(offer['price'], int):
+        if isinstance(offer.get('price'), int):
             self._get_tickets_button = ba.buttonwidget(
                 parent=self._root_widget,
                 position=(self._width - 125, self._height - 68),
@@ -333,7 +331,6 @@ class SpecialOfferWindow(ba.Window):
             text=str(self._cancel_delay) if self._cancel_delay > 0 else '')
 
     def _update(self) -> None:
-        from ba.internal import have_pro
 
         # If we've got seconds left on our countdown, update it.
         if self._cancel_delay > 0:
@@ -344,7 +341,7 @@ class SpecialOfferWindow(ba.Window):
 
         # We go away if we see that our target item is owned.
         if self._offer_item == 'pro':
-            if have_pro():
+            if _ba.app.accounts.have_pro():
                 can_die = True
         else:
             if _ba.get_purchased(self._offer_item):
@@ -437,8 +434,9 @@ def show_offer() -> bool:
         # Space things out a bit so we don't hit the poor user with an ad and
         # then an in-game offer.
         has_been_long_enough_since_ad = True
-        if (app.last_ad_completion_time is not None and
-            (ba.time(ba.TimeType.REAL) - app.last_ad_completion_time < 30.0)):
+        if (app.ads.last_ad_completion_time is not None and
+            (ba.time(ba.TimeType.REAL) - app.ads.last_ad_completion_time <
+             30.0)):
             has_been_long_enough_since_ad = False
 
         if app.special_offer is not None and has_been_long_enough_since_ad:
@@ -462,6 +460,6 @@ def show_offer() -> bool:
             app.special_offer = None
             return True
     except Exception:
-        ba.print_exception('Error showing offer')
+        ba.print_exception('Error showing offer.')
 
     return False

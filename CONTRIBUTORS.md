@@ -9,9 +9,14 @@
 - Fixed some game modes
 
 ### Roman Trapeznikov
-###### Ballistica
-- Bug fixes
-###### beyond the project code
-- Game servers developer
-- Modder
+- Bug fixes and code cleanup
 
+### Benefit-Zebra
+- Unofficial BombSquad Bug Finder
+- Code Cleanup
+
+### Ali Borhani
+- Bug fixes
+
+### Mr.Smoothy
+- Modder

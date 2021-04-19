@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """UI functionality for entering promo codes."""
 
 from __future__ import annotations
@@ -53,12 +35,14 @@ class PromoCodeWindow(ba.Window):
         self._modal = modal
         self._r = 'promoCodeWindow'
 
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(width, height),
             transition=transition,
             toolbar_visibility='menu_minimal_no_back',
             scale_origin_stack_offset=scale_origin,
-            scale=(2.0 if ba.app.small_ui else 1.5 if ba.app.med_ui else 1.0)))
+            scale=(2.0 if uiscale is ba.UIScale.SMALL else
+                   1.5 if uiscale is ba.UIScale.MEDIUM else 1.0)))
 
         btn = ba.buttonwidget(parent=self._root_widget,
                               scale=0.5,
@@ -108,24 +92,24 @@ class PromoCodeWindow(ba.Window):
 
     def _do_back(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.settings import advanced
+        from bastd.ui.settings.advanced import AdvancedSettingsWindow
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
         if not self._modal:
-            ba.app.main_menu_window = (advanced.AdvancedSettingsWindow(
-                transition='in_left').get_root_widget())
+            ba.app.ui.set_main_menu_window(
+                AdvancedSettingsWindow(transition='in_left').get_root_widget())
 
     def _activate_enter_button(self) -> None:
         self._enter_button.activate()
 
     def _do_enter(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.settings import advanced
+        from bastd.ui.settings.advanced import AdvancedSettingsWindow
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
         if not self._modal:
-            ba.app.main_menu_window = (advanced.AdvancedSettingsWindow(
-                transition='in_left').get_root_widget())
+            ba.app.ui.set_main_menu_window(
+                AdvancedSettingsWindow(transition='in_left').get_root_widget())
         _ba.add_transaction({
             'type': 'PROMO_CODE',
             'expire_time': time.time() + 5,

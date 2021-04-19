@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides a picker for icons."""
 
 from __future__ import annotations
@@ -46,18 +28,19 @@ class IconPicker(popup.PopupWindow):
                  tint2_color: Sequence[float] = (1.0, 1.0, 1.0),
                  selected_icon: str = None):
         # pylint: disable=too-many-locals
-        from ba.internal import get_purchased_icons
         del parent  # unused here
         del tint_color  # unused_here
         del tint2_color  # unused here
+        uiscale = ba.app.ui.uiscale
         if scale is None:
-            scale = (1.85
-                     if ba.app.small_ui else 1.65 if ba.app.med_ui else 1.23)
+            scale = (1.85 if uiscale is ba.UIScale.SMALL else
+                     1.65 if uiscale is ba.UIScale.MEDIUM else 1.23)
 
         self._delegate = delegate
         self._transitioning_out = False
 
-        self._icons = [ba.charstr(ba.SpecialChar.LOGO)] + get_purchased_icons()
+        self._icons = [ba.charstr(ba.SpecialChar.LOGO)
+                       ] + ba.app.accounts.get_purchased_icons()
         count = len(self._icons)
         columns = 4
         rows = int(math.ceil(float(count) / columns))
@@ -69,7 +52,8 @@ class IconPicker(popup.PopupWindow):
 
         self._width = (10 + columns * (button_width + 2 * button_buffer_h) *
                        (1.0 / 0.95) * (1.0 / 0.8))
-        self._height = self._width * (0.8 if ba.app.small_ui else 1.06)
+        self._height = (self._width *
+                        (0.8 if uiscale is ba.UIScale.SMALL else 1.06))
 
         self._scroll_width = self._width * 0.8
         self._scroll_height = self._height * 0.8
@@ -151,15 +135,15 @@ class IconPicker(popup.PopupWindow):
         ba.widget(edit=btn, show_buffer_top=30, show_buffer_bottom=30)
 
     def _on_store_press(self) -> None:
-        from bastd.ui import account
-        from bastd.ui.store import browser
+        from bastd.ui.account import show_sign_in_prompt
+        from bastd.ui.store.browser import StoreBrowserWindow
         if _ba.get_account_state() != 'signed_in':
-            account.show_sign_in_prompt()
+            show_sign_in_prompt()
             return
         self._transition_out()
-        browser.StoreBrowserWindow(modal=True,
-                                   show_tab='icons',
-                                   origin_widget=self._get_more_icons_button)
+        StoreBrowserWindow(modal=True,
+                           show_tab=StoreBrowserWindow.TabID.ICONS,
+                           origin_widget=self._get_more_icons_button)
 
     def _select_icon(self, icon: str) -> None:
         if self._delegate is not None:

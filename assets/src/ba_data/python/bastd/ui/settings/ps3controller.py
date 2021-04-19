@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Settings UI related to PS3 controllers."""
 
 from __future__ import annotations
@@ -34,10 +16,12 @@ class PS3ControllerSettingsWindow(ba.Window):
         height = 330 if _ba.is_running_on_fire_tv() else 540
         spacing = 40
         self._r = 'ps3ControllersWindow'
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(width, height),
             transition='in_right',
-            scale=1.35 if ba.app.small_ui else 1.3 if ba.app.med_ui else 1.0))
+            scale=(1.35 if uiscale is ba.UIScale.SMALL else
+                   1.3 if uiscale is ba.UIScale.MEDIUM else 1.0)))
 
         btn = ba.buttonwidget(parent=self._root_widget,
                               position=(37, height - 73),
@@ -56,7 +40,7 @@ class PS3ControllerSettingsWindow(ba.Window):
                       text=ba.Lstr(resource=self._r + '.titleText',
                                    subs=[('${APP_NAME}',
                                           ba.Lstr(resource='titleText'))]),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       h_align='center',
                       v_align='center')
 
@@ -118,5 +102,6 @@ class PS3ControllerSettingsWindow(ba.Window):
     def _back(self) -> None:
         from bastd.ui.settings import controls
         ba.containerwidget(edit=self._root_widget, transition='out_right')
-        ba.app.main_menu_window = (controls.ControlsSettingsWindow(
-            transition='in_left').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            controls.ControlsSettingsWindow(
+                transition='in_left').get_root_widget())

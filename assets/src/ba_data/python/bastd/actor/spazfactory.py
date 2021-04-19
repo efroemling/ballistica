@@ -1,32 +1,14 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides a factory object from creating Spazzes."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _ba
 import ba
-from bastd.actor import spaz as basespaz
+from bastd.gameutils import SharedObjects
+import _ba
 
 if TYPE_CHECKING:
     from typing import Any, Dict
@@ -95,12 +77,21 @@ class SpazFactory:
           A ba.Material applied to a cursed ba.Spaz that triggers an explosion.
     """
 
+    _STORENAME = ba.storagename()
+
     def _preload(self, character: str) -> None:
         """Preload media needed for a given character."""
         self.get_media(character)
 
     def __init__(self) -> None:
         """Instantiate a factory object."""
+        # pylint: disable=cyclic-import
+        # FIXME: should probably put these somewhere common so we don't
+        # have to import them from a module that imports us.
+        from bastd.actor.spaz import (PickupMessage, PunchHitMessage,
+                                      CurseExplodeMessage)
+
+        shared = SharedObjects.get()
         self.impact_sounds_medium = (ba.getsound('impactMedium'),
                                      ba.getsound('impactMedium2'))
         self.impact_sounds_hard = (ba.getsound('impactHard'),
@@ -123,14 +114,14 @@ class SpazFactory:
         self.pickup_material = ba.Material()
         self.curse_material = ba.Material()
 
-        footing_material = ba.sharedobj('footing_material')
-        object_material = ba.sharedobj('object_material')
-        player_material = ba.sharedobj('player_material')
-        region_material = ba.sharedobj('region_material')
+        footing_material = shared.footing_material
+        object_material = shared.object_material
+        player_material = shared.player_material
+        region_material = shared.region_material
 
-        # send footing messages to spazzes so they know when they're on solid
-        # ground.
-        # eww this should really just be built into the spaz node
+        # Send footing messages to spazzes so they know when they're on
+        # solid ground.
+        # Eww; this probably should just be built into the spaz node.
         self.roller_material.add_actions(
             conditions=('they_have_material', footing_material),
             actions=(('message', 'our_node', 'at_connect', 'footing', 1),
@@ -140,27 +131,36 @@ class SpazFactory:
             conditions=('they_have_material', footing_material),
             actions=(('message', 'our_node', 'at_connect', 'footing', 1),
                      ('message', 'our_node', 'at_disconnect', 'footing', -1)))
-        # punches
+
+        # Punches.
         self.punch_material.add_actions(
             conditions=('they_are_different_node_than_us', ),
-            actions=(('modify_part_collision', 'collide',
-                      True), ('modify_part_collision', 'physical', False),
-                     ('message', 'our_node', 'at_connect',
-                      basespaz.PunchHitMessage())))
-        # pickups
+            actions=(
+                ('modify_part_collision', 'collide', True),
+                ('modify_part_collision', 'physical', False),
+                ('message', 'our_node', 'at_connect', PunchHitMessage()),
+            ))
+
+        # Pickups.
         self.pickup_material.add_actions(
             conditions=(('they_are_different_node_than_us', ), 'and',
                         ('they_have_material', object_material)),
-            actions=(('modify_part_collision', 'collide',
-                      True), ('modify_part_collision', 'physical', False),
-                     ('message', 'our_node', 'at_connect',
-                      basespaz.PickupMessage())))
-        # curse
+            actions=(
+                ('modify_part_collision', 'collide', True),
+                ('modify_part_collision', 'physical', False),
+                ('message', 'our_node', 'at_connect', PickupMessage()),
+            ))
+
+        # Curse.
         self.curse_material.add_actions(
-            conditions=(('they_are_different_node_than_us', ), 'and',
-                        ('they_have_material', player_material)),
+            conditions=(
+                ('they_are_different_node_than_us', ),
+                'and',
+                ('they_have_material', player_material),
+            ),
             actions=('message', 'our_node', 'at_connect',
-                     basespaz.CurseExplodeMessage()))
+                     CurseExplodeMessage()),
+        )
 
         self.foot_impact_sounds = (ba.getsound('footImpact01'),
                                    ba.getsound('footImpact02'),
@@ -171,34 +171,45 @@ class SpazFactory:
 
         self.roller_material.add_actions(
             conditions=('they_have_material', footing_material),
-            actions=(('impact_sound', self.foot_impact_sounds, 1,
-                      0.2), ('skid_sound', self.foot_skid_sound, 20, 0.3),
-                     ('roll_sound', self.foot_roll_sound, 20, 3.0)))
+            actions=(
+                ('impact_sound', self.foot_impact_sounds, 1, 0.2),
+                ('skid_sound', self.foot_skid_sound, 20, 0.3),
+                ('roll_sound', self.foot_roll_sound, 20, 3.0),
+            ))
 
         self.skid_sound = ba.getsound('gravelSkid')
 
         self.spaz_material.add_actions(
             conditions=('they_have_material', footing_material),
-            actions=(('impact_sound', self.foot_impact_sounds, 20,
-                      6), ('skid_sound', self.skid_sound, 2.0, 1),
-                     ('roll_sound', self.skid_sound, 2.0, 1)))
+            actions=(
+                ('impact_sound', self.foot_impact_sounds, 20, 6),
+                ('skid_sound', self.skid_sound, 2.0, 1),
+                ('roll_sound', self.skid_sound, 2.0, 1),
+            ))
 
         self.shield_up_sound = ba.getsound('shieldUp')
         self.shield_down_sound = ba.getsound('shieldDown')
         self.shield_hit_sound = ba.getsound('shieldHit')
 
-        # we don't want to collide with stuff we're initially overlapping
-        # (unless its marked with a special region material)
+        # We don't want to collide with stuff we're initially overlapping
+        # (unless its marked with a special region material).
         self.spaz_material.add_actions(
-            conditions=((('we_are_younger_than', 51), 'and',
-                         ('they_are_different_node_than_us', )), 'and',
-                        ('they_dont_have_material', region_material)),
-            actions=('modify_node_collision', 'collide', False))
+            conditions=(
+                (
+                    ('we_are_younger_than', 51),
+                    'and',
+                    ('they_are_different_node_than_us', ),
+                ),
+                'and',
+                ('they_dont_have_material', region_material),
+            ),
+            actions=('modify_node_collision', 'collide', False),
+        )
 
         self.spaz_media: Dict[str, Any] = {}
 
-        # lets load some basic rules (allows them to be tweaked from the
-        # master server)
+        # Lets load some basic rules.
+        # (allows them to be tweaked from the master server)
         self.shield_decay_rate = _ba.get_account_misc_read_val('rsdr', 10.0)
         self.punch_cooldown = _ba.get_account_misc_read_val('rpc', 400)
         self.punch_cooldown_gloves = (_ba.get_account_misc_read_val(
@@ -242,3 +253,14 @@ class SpazFactory:
         else:
             media = self.spaz_media[character]
         return media
+
+    @classmethod
+    def get(cls) -> SpazFactory:
+        """Return the shared ba.SpazFactory, creating it if necessary."""
+        # pylint: disable=cyclic-import
+        activity = ba.getactivity()
+        factory = activity.customdata.get(cls._STORENAME)
+        if factory is None:
+            factory = activity.customdata[cls._STORENAME] = SpazFactory()
+        assert isinstance(factory, SpazFactory)
+        return factory

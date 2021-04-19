@@ -1,2 +1,3 @@
-:: All this does is run the ballisticacore_server script with the included python interpreter
+:: Simply run the ballisticacore_server.py script with the bundled
+:: Python interpreter.
 dist\\python.exe ballisticacore_server.py

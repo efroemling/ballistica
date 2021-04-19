@@ -1,49 +1,38 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Functionality related to co-op games."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
 import _ba
 from ba._gameactivity import GameActivity
+from ba._general import WeakCall
 
 if TYPE_CHECKING:
     from typing import Type, Dict, Any, Set, List, Sequence, Optional
     from bastd.actor.playerspaz import PlayerSpaz
     import ba
 
+PlayerType = TypeVar('PlayerType', bound='ba.Player')
+TeamType = TypeVar('TeamType', bound='ba.Team')
 
-class CoopGameActivity(GameActivity):
+
+class CoopGameActivity(GameActivity[PlayerType, TeamType]):
     """Base class for cooperative-mode games.
 
     Category: Gameplay Classes
     """
 
+    # We can assume our session is a CoopSession.
+    session: ba.CoopSession
+
     @classmethod
     def supports_session_type(cls, sessiontype: Type[ba.Session]) -> bool:
-        from ba import _coopsession
-        return issubclass(sessiontype, _coopsession.CoopSession)
+        from ba._coopsession import CoopSession
+        return issubclass(sessiontype, CoopSession)
 
-    def __init__(self, settings: Dict[str, Any]):
+    def __init__(self, settings: dict):
         super().__init__(settings)
 
         # Cache these for efficiency.
@@ -54,32 +43,31 @@ class CoopGameActivity(GameActivity):
         self._warn_beeps_sound = _ba.getsound('warnBeeps')
 
     def on_begin(self) -> None:
-        from ba import _general
         super().on_begin()
 
         # Show achievements remaining.
-        if not _ba.app.kiosk_mode:
-            _ba.timer(3.8,
-                      _general.WeakCall(self._show_remaining_achievements))
+        if not (_ba.app.demo_mode or _ba.app.arcade_mode):
+            _ba.timer(3.8, WeakCall(self._show_remaining_achievements))
 
         # Preload achievement images in case we get some.
-        _ba.timer(2.0, _general.WeakCall(self._preload_achievements))
+        _ba.timer(2.0, WeakCall(self._preload_achievements))
 
         # Let's ask the server for a 'time-to-beat' value.
         levelname = self._get_coop_level_name()
         campaign = self.session.campaign
         assert campaign is not None
-        config_str = (str(len(self.players)) + 'p' + campaign.get_level(
-            self.settings['name']).get_score_version_string().replace(
+        config_str = (str(len(self.players)) + 'p' + campaign.getlevel(
+            self.settings_raw['name']).get_score_version_string().replace(
                 ' ', '_'))
         _ba.get_scores_to_beat(levelname, config_str,
-                               _general.WeakCall(self._on_got_scores_to_beat))
+                               WeakCall(self._on_got_scores_to_beat))
 
     def _on_got_scores_to_beat(self, scores: List[Dict[str, Any]]) -> None:
         pass
 
     def _show_standard_scores_to_beat_ui(self,
                                          scores: List[Dict[str, Any]]) -> None:
+        from efro.util import asserttype
         from ba._gameutils import timestring, animate
         from ba._nodeactor import NodeActor
         from ba._enums import TimeFormat
@@ -87,7 +75,7 @@ class CoopGameActivity(GameActivity):
         if scores is not None:
 
             # Sort by originating date so that the most recent is first.
-            scores.sort(reverse=True, key=lambda s: s['time'])
+            scores.sort(reverse=True, key=lambda s: asserttype(s['time'], int))
 
             # Now make a display for the most recent challenge.
             for score in scores:
@@ -116,7 +104,7 @@ class CoopGameActivity(GameActivity):
                     animate(txt.node, 'scale', {1.0: 0.0, 1.1: 0.7, 1.2: 0.6})
                     break
 
-    # FIXME: this is now redundant with activityutils.get_score_info();
+    # FIXME: this is now redundant with activityutils.getscoreconfig();
     #  need to kill this.
     def get_score_type(self) -> str:
         """
@@ -126,7 +114,8 @@ class CoopGameActivity(GameActivity):
 
     def _get_coop_level_name(self) -> str:
         assert self.session.campaign is not None
-        return self.session.campaign.name + ':' + str(self.settings['name'])
+        return self.session.campaign.name + ':' + str(
+            self.settings_raw['name'])
 
     def celebrate(self, duration: float) -> None:
         """Tells all existing player-controlled characters to celebrate.
@@ -141,26 +130,24 @@ class CoopGameActivity(GameActivity):
                 player.actor.handlemessage(CelebrateMessage(duration))
 
     def _preload_achievements(self) -> None:
-        from ba import _achievement
-        achievements = _achievement.get_achievements_for_coop_level(
+        achievements = _ba.app.ach.achievements_for_coop_level(
             self._get_coop_level_name())
         for ach in achievements:
             ach.get_icon_texture(True)
 
     def _show_remaining_achievements(self) -> None:
         # pylint: disable=cyclic-import
-        from ba import _achievement
-        from ba import _lang
+        from ba._language import Lstr
         from bastd.actor.text import Text
         ts_h_offs = 30
         v_offs = -200
         achievements = [
-            a for a in _achievement.get_achievements_for_coop_level(
+            a for a in _ba.app.ach.achievements_for_coop_level(
                 self._get_coop_level_name()) if not a.complete
         ]
         vrmode = _ba.app.vr_mode
         if achievements:
-            Text(_lang.Lstr(resource='achievementsRemainingText'),
+            Text(Lstr(resource='achievementsRemainingText'),
                  host_only=True,
                  position=(ts_h_offs - 10 + 40, v_offs - 10),
                  transition=Text.Transition.FADE_IN,
@@ -186,7 +173,7 @@ class CoopGameActivity(GameActivity):
                 vval -= 55
 
     def spawn_player_spaz(self,
-                          player: ba.Player,
+                          player: PlayerType,
                           position: Sequence[float] = (0.0, 0.0, 0.0),
                           angle: float = None) -> PlayerSpaz:
         """Spawn and wire up a standard player spaz."""
@@ -204,12 +191,11 @@ class CoopGameActivity(GameActivity):
         Returns True if a banner will be shown;
         False otherwise
         """
-        from ba import _achievement
 
         if achievement_name in self._achievements_awarded:
             return
 
-        ach = _achievement.get_achievement(achievement_name)
+        ach = _ba.app.ach.get_achievement(achievement_name)
 
         # If we're in the easy campaign and this achievement is hard-mode-only,
         # ignore it.
@@ -219,8 +205,8 @@ class CoopGameActivity(GameActivity):
             if ach.hard_mode_only and campaign.name == 'Easy':
                 return
         except Exception:
-            from ba import _error
-            _error.print_exception()
+            from ba._error import print_exception
+            print_exception()
 
         # If we haven't awarded this one, check to see if we've got it.
         # If not, set it through the game service *and* add a transaction
@@ -243,7 +229,7 @@ class CoopGameActivity(GameActivity):
     def fade_to_red(self) -> None:
         """Fade the screen to red; (such as when the good guys have lost)."""
         from ba import _gameutils
-        c_existing = _gameutils.sharedobj('globals').tint
+        c_existing = self.globalsnode.tint
         cnode = _ba.newnode('combine',
                             attrs={
                                 'input0': c_existing[0],
@@ -253,14 +239,13 @@ class CoopGameActivity(GameActivity):
                             })
         _gameutils.animate(cnode, 'input1', {0: c_existing[1], 2.0: 0})
         _gameutils.animate(cnode, 'input2', {0: c_existing[2], 2.0: 0})
-        cnode.connectattr('output', _gameutils.sharedobj('globals'), 'tint')
+        cnode.connectattr('output', self.globalsnode, 'tint')
 
     def setup_low_life_warning_sound(self) -> None:
         """Set up a beeping noise to play when any players are near death."""
-        from ba import _general
         self._life_warning_beep = None
         self._life_warning_beep_timer = _ba.Timer(
-            1.0, _general.WeakCall(self._update_life_warning), repeat=True)
+            1.0, WeakCall(self._update_life_warning), repeat=True)
 
     def _update_life_warning(self) -> None:
         # Beep continuously if anyone is close to death.

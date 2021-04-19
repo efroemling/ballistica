@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides UI for account functionality."""
 # pylint: disable=too-many-lines
 
@@ -77,11 +59,12 @@ class AccountSettingsWindow(ba.Window):
         self._can_reset_achievements = (account_type == 'Game Center')
 
         app = ba.app
+        uiscale = app.ui.uiscale
 
-        self._width = 760 if ba.app.small_ui else 660
-        x_offs = 50 if ba.app.small_ui else 0
-        self._height = (390
-                        if ba.app.small_ui else 430 if ba.app.med_ui else 490)
+        self._width = 760 if uiscale is ba.UIScale.SMALL else 660
+        x_offs = 50 if uiscale is ba.UIScale.SMALL else 0
+        self._height = (390 if uiscale is ba.UIScale.SMALL else
+                        430 if uiscale is ba.UIScale.MEDIUM else 490)
 
         self._sign_in_button = None
         self._sign_in_text = None
@@ -103,15 +86,16 @@ class AccountSettingsWindow(ba.Window):
         # exceptions.
         self._show_sign_in_buttons.append('Local')
 
-        top_extra = 15 if ba.app.small_ui else 0
+        top_extra = 15 if uiscale is ba.UIScale.SMALL else 0
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height + top_extra),
             transition=transition,
             toolbar_visibility='menu_minimal',
             scale_origin_stack_offset=scale_origin,
-            scale=(2.09 if ba.app.small_ui else 1.4 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -19) if ba.app.small_ui else (0, 0)))
-        if ba.app.small_ui and ba.app.toolbars:
+            scale=(2.09 if uiscale is ba.UIScale.SMALL else
+                   1.4 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -19) if uiscale is ba.UIScale.SMALL else (0, 0)))
+        if uiscale is ba.UIScale.SMALL and ba.app.ui.use_toolbars:
             self._back_button = None
             ba.containerwidget(edit=self._root_widget,
                                on_cancel_call=self._back)
@@ -138,7 +122,7 @@ class AccountSettingsWindow(ba.Window):
                       position=(self._width * 0.5, self._height - 41),
                       size=(0, 0),
                       text=ba.Lstr(resource=self._r + '.titleText'),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       maxwidth=self._width - 340,
                       h_align='center',
                       v_align='center')
@@ -148,7 +132,10 @@ class AccountSettingsWindow(ba.Window):
             highlight=False,
             position=((self._width - self._scroll_width) * 0.5,
                       self._height - 65 - self._scroll_height),
-            size=(self._scroll_width, self._scroll_height))
+            size=(self._scroll_width, self._scroll_height),
+            claims_left_right=True,
+            claims_tab=True,
+            selection_loops_to_parent=True)
         self._subcontainer: Optional[ba.Widget] = None
         self._refresh()
         self._restore_state()
@@ -320,15 +307,10 @@ class AccountSettingsWindow(ba.Window):
         self._subcontainer = ba.containerwidget(parent=self._scrollwidget,
                                                 size=(self._sub_width,
                                                       self._sub_height),
-                                                background=False)
-        ba.containerwidget(edit=self._scrollwidget,
-                           claims_left_right=True,
-                           claims_tab=True,
-                           selection_loop_to_parent=True)
-        ba.containerwidget(edit=self._subcontainer,
-                           claims_left_right=True,
-                           claims_tab=True,
-                           selection_loop_to_parent=True)
+                                                background=False,
+                                                claims_left_right=True,
+                                                claims_tab=True,
+                                                selection_loops_to_parent=True)
 
         first_selectable = None
         v = self._sub_height - 10.0
@@ -361,7 +343,7 @@ class AccountSettingsWindow(ba.Window):
                           size=(0, 0),
                           text=txt,
                           scale=0.9,
-                          color=ba.app.title_color,
+                          color=ba.app.ui.title_color,
                           maxwidth=self._sub_width * 0.9,
                           h_align='center',
                           v_align='center')
@@ -448,7 +430,7 @@ class AccountSettingsWindow(ba.Window):
                 on_activate_call=lambda: self._sign_in_press('Google Play'))
             if first_selectable is None:
                 first_selectable = btn
-            if ba.app.toolbars:
+            if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
                           right_widget=_ba.get_special_widget('party_button'))
             ba.widget(edit=btn, left_widget=bbtn)
@@ -473,7 +455,7 @@ class AccountSettingsWindow(ba.Window):
                 on_activate_call=lambda: self._sign_in_press('Game Circle'))
             if first_selectable is None:
                 first_selectable = btn
-            if ba.app.toolbars:
+            if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
                           right_widget=_ba.get_special_widget('party_button'))
             ba.widget(edit=btn, left_widget=bbtn)
@@ -497,7 +479,7 @@ class AccountSettingsWindow(ba.Window):
                 on_activate_call=lambda: self._sign_in_press('Ali'))
             if first_selectable is None:
                 first_selectable = btn
-            if ba.app.toolbars:
+            if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
                           right_widget=_ba.get_special_widget('party_button'))
             ba.widget(edit=btn, left_widget=bbtn)
@@ -543,7 +525,7 @@ class AccountSettingsWindow(ba.Window):
                           color=(0.55, 0.8, 0.5))
             if first_selectable is None:
                 first_selectable = btn
-            if ba.app.toolbars:
+            if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
                           right_widget=_ba.get_special_widget('party_button'))
             ba.widget(edit=btn, left_widget=bbtn)
@@ -590,7 +572,7 @@ class AccountSettingsWindow(ba.Window):
                           color=(0.55, 0.8, 0.5))
             if first_selectable is None:
                 first_selectable = btn
-            if ba.app.toolbars:
+            if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
                           right_widget=_ba.get_special_widget('party_button'))
             ba.widget(edit=btn, left_widget=bbtn)
@@ -612,7 +594,7 @@ class AccountSettingsWindow(ba.Window):
                 on_activate_call=self._player_profiles_press)
             if first_selectable is None:
                 first_selectable = btn
-            if ba.app.toolbars:
+            if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
                           right_widget=_ba.get_special_widget('party_button'))
             ba.widget(edit=btn, left_widget=bbtn, show_buffer_bottom=0)
@@ -627,8 +609,8 @@ class AccountSettingsWindow(ba.Window):
             elif account_type == 'Game Circle':
                 account_type_name = ba.Lstr(resource='gameCircleText')
             else:
-                raise Exception("unknown account type: '" + str(account_type) +
-                                "'")
+                raise ValueError("unknown account type: '" +
+                                 str(account_type) + "'")
             self._game_service_button = btn = ba.buttonwidget(
                 parent=self._subcontainer,
                 position=((self._sub_width - button_width) * 0.5, v),
@@ -640,7 +622,7 @@ class AccountSettingsWindow(ba.Window):
                 label=account_type_name)
             if first_selectable is None:
                 first_selectable = btn
-            if ba.app.toolbars:
+            if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
                           right_widget=_ba.get_special_widget('party_button'))
             ba.widget(edit=btn, left_widget=bbtn)
@@ -682,7 +664,7 @@ class AccountSettingsWindow(ba.Window):
                 label='')
             if first_selectable is None:
                 first_selectable = btn
-            if ba.app.toolbars:
+            if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
                           right_widget=_ba.get_special_widget('party_button'))
             ba.widget(edit=btn, left_widget=bbtn)
@@ -710,7 +692,7 @@ class AccountSettingsWindow(ba.Window):
                 label=ba.Lstr(resource='leaderboardsText'))
             if first_selectable is None:
                 first_selectable = btn
-            if ba.app.toolbars:
+            if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
                           right_widget=_ba.get_special_widget('party_button'))
             ba.widget(edit=btn, left_widget=bbtn)
@@ -780,7 +762,7 @@ class AccountSettingsWindow(ba.Window):
                     action=self._reset_progress))
             if first_selectable is None:
                 first_selectable = btn
-            if ba.app.toolbars:
+            if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
                           right_widget=_ba.get_special_widget('party_button'))
             ba.widget(edit=btn, left_widget=bbtn)
@@ -835,7 +817,7 @@ class AccountSettingsWindow(ba.Window):
                           color=(0.75, 0.7, 0.8))
             if first_selectable is None:
                 first_selectable = btn
-            if ba.app.toolbars:
+            if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
                           right_widget=_ba.get_special_widget('party_button'))
             ba.widget(edit=btn, left_widget=bbtn, show_buffer_bottom=50)
@@ -863,7 +845,7 @@ class AccountSettingsWindow(ba.Window):
                 color=(0.75, 0.7, 0.8))
             if first_selectable is None:
                 first_selectable = btn
-            if ba.app.toolbars:
+            if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
                           right_widget=_ba.get_special_widget('party_button'))
             ba.widget(edit=btn, left_widget=bbtn, show_buffer_bottom=50)
@@ -884,7 +866,7 @@ class AccountSettingsWindow(ba.Window):
                 on_activate_call=self._sign_out_press)
             if first_selectable is None:
                 first_selectable = btn
-            if ba.app.toolbars:
+            if ba.app.ui.use_toolbars:
                 ba.widget(edit=btn,
                           right_widget=_ba.get_special_widget('party_button'))
             ba.widget(edit=btn, left_widget=bbtn, show_buffer_bottom=15)
@@ -968,13 +950,13 @@ class AccountSettingsWindow(ba.Window):
                                          ('${A}', accounts_str)]))
 
     def _refresh_campaign_progress_text(self) -> None:
-        from ba.internal import get_campaign
+        from ba.internal import getcampaign
         if self._campaign_progress_text is None:
             return
         p_str: Union[str, ba.Lstr]
         try:
-            campaign = get_campaign('Default')
-            levels = campaign.get_levels()
+            campaign = getcampaign('Default')
+            levels = campaign.levels
             levels_complete = sum((1 if l.complete else 0) for l in levels)
 
             # Last level cant be completed; hence the -1;
@@ -984,7 +966,7 @@ class AccountSettingsWindow(ba.Window):
                                    str(int(progress * 100.0)) + '%')])
         except Exception:
             p_str = '?'
-            ba.print_exception('error calculating co-op campaign progress')
+            ba.print_exception('Error calculating co-op campaign progress.')
         ba.textwidget(edit=self._campaign_progress_text, text=p_str)
 
     def _refresh_tickets_text(self) -> None:
@@ -1013,8 +995,8 @@ class AccountSettingsWindow(ba.Window):
         if (self._achievements_text is None
                 and self._achievements_button is None):
             return
-        complete = sum(1 if a.complete else 0 for a in ba.app.achievements)
-        total = len(ba.app.achievements)
+        complete = sum(1 if a.complete else 0 for a in ba.app.ach.achievements)
+        total = len(ba.app.ach.achievements)
         txt_final = ba.Lstr(resource=self._r + '.achievementProgressText',
                             subs=[('${COUNT}', str(complete)),
                                   ('${TOTAL}', str(total))])
@@ -1071,31 +1053,31 @@ class AccountSettingsWindow(ba.Window):
 
     def _reset_progress(self) -> None:
         try:
-            from ba.internal import get_campaign
+            from ba.internal import getcampaign
             # FIXME: This would need to happen server-side these days.
             if self._can_reset_achievements:
                 ba.app.config['Achievements'] = {}
                 _ba.reset_achievements()
-            campaign = get_campaign('Default')
+            campaign = getcampaign('Default')
             campaign.reset()  # also writes the config..
-            campaign = get_campaign('Challenges')
+            campaign = getcampaign('Challenges')
             campaign.reset()  # also writes the config..
         except Exception:
-            ba.print_exception('exception resetting co-op campaign progress')
+            ba.print_exception('Error resetting co-op campaign progress.')
 
         ba.playsound(ba.getsound('shieldDown'))
         self._refresh()
 
     def _back(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui import mainmenu
+        from bastd.ui.mainmenu import MainMenuWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
 
         if not self._modal:
-            ba.app.main_menu_window = (mainmenu.MainMenuWindow(
-                transition='in_left').get_root_widget())
+            ba.app.ui.set_main_menu_window(
+                MainMenuWindow(transition='in_left').get_root_widget())
 
     def _save_state(self) -> None:
         try:
@@ -1105,17 +1087,14 @@ class AccountSettingsWindow(ba.Window):
             elif sel == self._scrollwidget:
                 sel_name = 'Scroll'
             else:
-                raise Exception('unrecognized selection')
-            ba.app.window_states[self.__class__.__name__] = sel_name
+                raise ValueError('unrecognized selection')
+            ba.app.ui.window_states[type(self)] = sel_name
         except Exception:
-            ba.print_exception('exception saving state for', self.__class__)
+            ba.print_exception(f'Error saving state for {self}.')
 
     def _restore_state(self) -> None:
         try:
-            try:
-                sel_name = ba.app.window_states[self.__class__.__name__]
-            except Exception:
-                sel_name = None
+            sel_name = ba.app.ui.window_states.get(type(self))
             if sel_name == 'Back':
                 sel = self._back_button
             elif sel_name == 'Scroll':
@@ -1124,4 +1103,4 @@ class AccountSettingsWindow(ba.Window):
                 sel = self._back_button
             ba.containerwidget(edit=self._root_widget, selected_child=sel)
         except Exception:
-            ba.print_exception('error restoring state for', self.__class__)
+            ba.print_exception(f'Error restoring state for {self}.')

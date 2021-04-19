@@ -1,27 +1,9 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides an easter egg hunt game."""
 
 # ba_meta require api 6
-# (see https://github.com/efroemling/ballistica/wiki/Meta-Tags)
+# (see https://ballistica.net/wiki/meta-tag-system)
 
 from __future__ import annotations
 
@@ -29,30 +11,41 @@ import random
 from typing import TYPE_CHECKING
 
 import ba
-from bastd.actor import bomb
-from bastd.actor import playerspaz
-from bastd.actor import spazbot
+from bastd.actor.bomb import Bomb
+from bastd.actor.playerspaz import PlayerSpaz
+from bastd.actor.spazbot import SpazBotSet, BouncyBot, SpazBotDiedMessage
 from bastd.actor.onscreencountdown import OnScreenCountdown
+from bastd.actor.scoreboard import Scoreboard
+from bastd.actor.respawnicon import RespawnIcon
+from bastd.gameutils import SharedObjects
 
 if TYPE_CHECKING:
     from typing import Any, Type, Dict, List, Tuple, Optional
 
 
+class Player(ba.Player['Team']):
+    """Our player type for this game."""
+
+    def __init__(self) -> None:
+        self.respawn_timer: Optional[ba.Timer] = None
+        self.respawn_icon: Optional[RespawnIcon] = None
+
+
+class Team(ba.Team[Player]):
+    """Our team type for this game."""
+
+    def __init__(self) -> None:
+        self.score = 0
+
+
 # ba_meta export game
-class EasterEggHuntGame(ba.TeamGameActivity):
+class EasterEggHuntGame(ba.TeamGameActivity[Player, Team]):
     """A game where score is based on collecting eggs."""
 
-    @classmethod
-    def get_name(cls) -> str:
-        return 'Easter Egg Hunt'
-
-    @classmethod
-    def get_score_info(cls) -> Dict[str, Any]:
-        return {'score_name': 'Score', 'score_type': 'points'}
-
-    @classmethod
-    def get_description(cls, sessiontype: Type[ba.Session]) -> str:
-        return 'Gather eggs!'
+    name = 'Easter Egg Hunt'
+    description = 'Gather eggs!'
+    available_settings = [ba.BoolSetting('Pro Mode', default=False)]
+    scoreconfig = ba.ScoreConfig(label='Score', scoretype=ba.ScoreType.POINTS)
 
     # We're currently hard-coded for one map.
     @classmethod
@@ -66,15 +59,9 @@ class EasterEggHuntGame(ba.TeamGameActivity):
                 or issubclass(sessiontype, ba.DualTeamSession)
                 or issubclass(sessiontype, ba.FreeForAllSession))
 
-    @classmethod
-    def get_settings(
-            cls,
-            sessiontype: Type[ba.Session]) -> List[Tuple[str, Dict[str, Any]]]:
-        return [('Pro Mode', {'default': False})]
-
-    def __init__(self, settings: Dict[str, Any]):
-        from bastd.actor.scoreboard import Scoreboard
+    def __init__(self, settings: dict):
         super().__init__(settings)
+        shared = SharedObjects.get()
         self._last_player_death_time = None
         self._scoreboard = Scoreboard()
         self.egg_model = ba.getmodel('egg')
@@ -86,22 +73,17 @@ class EasterEggHuntGame(ba.TeamGameActivity):
         self._max_eggs = 1.0
         self.egg_material = ba.Material()
         self.egg_material.add_actions(
-            conditions=('they_have_material', ba.sharedobj('player_material')),
+            conditions=('they_have_material', shared.player_material),
             actions=(('call', 'at_connect', self._on_egg_player_collide), ))
         self._eggs: List[Egg] = []
         self._update_timer: Optional[ba.Timer] = None
         self._countdown: Optional[OnScreenCountdown] = None
-        self._bots: Optional[spazbot.BotSet] = None
+        self._bots: Optional[SpazBotSet] = None
 
-    # Called when our game is transitioning in but not ready to start.
-    # ..we can go ahead and set our music and whatnot.
-
-    def on_transition_in(self) -> None:
+        # Base class overrides
         self.default_music = ba.MusicType.FORWARD_MARCH
-        super().on_transition_in()
 
-    def on_team_join(self, team: ba.Team) -> None:
-        team.gamedata['score'] = 0
+    def on_team_join(self, team: Team) -> None:
         if self.has_begun():
             self._update_scoreboard()
 
@@ -119,69 +101,62 @@ class EasterEggHuntGame(ba.TeamGameActivity):
         self._update_timer = ba.Timer(0.25, self._update, repeat=True)
         self._countdown = OnScreenCountdown(60, endcall=self.end_game)
         ba.timer(4.0, self._countdown.start)
-        self._bots = spazbot.BotSet()
+        self._bots = SpazBotSet()
 
         # Spawn evil bunny in co-op only.
         if isinstance(self.session, ba.CoopSession) and self._pro_mode:
             self._spawn_evil_bunny()
 
     # Overriding the default character spawning.
-    def spawn_player(self, player: ba.Player) -> ba.Actor:
+    def spawn_player(self, player: Player) -> ba.Actor:
         spaz = self.spawn_player_spaz(player)
         spaz.connect_controls_to_player()
         return spaz
 
     def _spawn_evil_bunny(self) -> None:
         assert self._bots is not None
-        self._bots.spawn_bot(spazbot.BouncyBot,
-                             pos=(6, 4, -7.8),
-                             spawn_time=10.0)
+        self._bots.spawn_bot(BouncyBot, pos=(6, 4, -7.8), spawn_time=10.0)
 
     def _on_egg_player_collide(self) -> None:
-        if not self.has_ended():
-            egg_node, playernode = ba.get_collision_info(
-                'source_node', 'opposing_node')
-            if egg_node is not None and playernode is not None:
-                egg = egg_node.getdelegate()
-                assert isinstance(egg, Egg)
-                spaz = playernode.getdelegate()
-                assert isinstance(spaz, playerspaz.PlayerSpaz)
-                player = (spaz.getplayer()
-                          if hasattr(spaz, 'getplayer') else None)
-                if player and egg:
-                    player.team.gamedata['score'] += 1
+        if self.has_ended():
+            return
+        collision = ba.getcollision()
 
-                    # Displays a +1 (and adds to individual player score in
-                    # teams mode).
-                    self.stats.player_scored(player, 1, screenmessage=False)
-                    if self._max_eggs < 5:
-                        self._max_eggs += 1.0
-                    elif self._max_eggs < 10:
-                        self._max_eggs += 0.5
-                    elif self._max_eggs < 30:
-                        self._max_eggs += 0.3
-                    self._update_scoreboard()
-                    ba.playsound(self._collect_sound,
-                                 0.5,
-                                 position=egg.node.position)
+        # Be defensive here; we could be hitting the corpse of a player
+        # who just left/etc.
+        try:
+            egg = collision.sourcenode.getdelegate(Egg, True)
+            player = collision.opposingnode.getdelegate(PlayerSpaz,
+                                                        True).getplayer(
+                                                            Player, True)
+        except ba.NotFoundError:
+            return
 
-                    # Create a flash.
-                    light = ba.newnode('light',
-                                       attrs={
-                                           'position': egg_node.position,
-                                           'height_attenuated': False,
-                                           'radius': 0.1,
-                                           'color': (1, 1, 0)
-                                       })
-                    ba.animate(light,
-                               'intensity', {
-                                   0: 0,
-                                   0.1: 1.0,
-                                   0.2: 0
-                               },
-                               loop=False)
-                    ba.timer(0.200, light.delete)
-                    egg.handlemessage(ba.DieMessage())
+        player.team.score += 1
+
+        # Displays a +1 (and adds to individual player score in
+        # teams mode).
+        self.stats.player_scored(player, 1, screenmessage=False)
+        if self._max_eggs < 5:
+            self._max_eggs += 1.0
+        elif self._max_eggs < 10:
+            self._max_eggs += 0.5
+        elif self._max_eggs < 30:
+            self._max_eggs += 0.3
+        self._update_scoreboard()
+        ba.playsound(self._collect_sound, 0.5, position=egg.node.position)
+
+        # Create a flash.
+        light = ba.newnode('light',
+                           attrs={
+                               'position': egg.node.position,
+                               'height_attenuated': False,
+                               'radius': 0.1,
+                               'color': (1, 1, 0)
+                           })
+        ba.animate(light, 'intensity', {0: 0, 0.1: 1.0, 0.2: 0}, loop=False)
+        ba.timer(0.200, light.delete)
+        egg.handlemessage(ba.DieMessage())
 
     def _update(self) -> None:
         # Misc. periodic updating.
@@ -197,8 +172,8 @@ class EasterEggHuntGame(ba.TeamGameActivity):
 
             # Occasionally spawn a land-mine in addition.
             if self._pro_mode and random.random() < 0.25:
-                mine = bomb.Bomb(position=(xpos, ypos, zpos),
-                                 bomb_type='land_mine').autoretain()
+                mine = Bomb(position=(xpos, ypos, zpos),
+                            bomb_type='land_mine').autoretain()
                 mine.arm()
             else:
                 self._eggs.append(Egg(position=(xpos, ypos, zpos)))
@@ -207,29 +182,23 @@ class EasterEggHuntGame(ba.TeamGameActivity):
     def handlemessage(self, msg: Any) -> Any:
 
         # Respawn dead players.
-        if isinstance(msg, playerspaz.PlayerSpazDeathMessage):
-            from bastd.actor import respawnicon
-
+        if isinstance(msg, ba.PlayerDiedMessage):
             # Augment standard behavior.
             super().handlemessage(msg)
-            player = msg.spaz.getplayer()
-            if not player:
-                return
-            self.stats.player_was_killed(player)
 
             # Respawn them shortly.
-            assert self.initial_player_info is not None
-            respawn_time = 2.0 + len(self.initial_player_info) * 1.0
-            player.gamedata['respawn_timer'] = ba.Timer(
+            player = msg.getplayer(Player)
+            assert self.initialplayerinfos is not None
+            respawn_time = 2.0 + len(self.initialplayerinfos) * 1.0
+            player.respawn_timer = ba.Timer(
                 respawn_time, ba.Call(self.spawn_player_if_exists, player))
-            player.gamedata['respawn_icon'] = respawnicon.RespawnIcon(
-                player, respawn_time)
+            player.respawn_icon = RespawnIcon(player, respawn_time)
 
         # Whenever our evil bunny dies, respawn him and spew some eggs.
-        elif isinstance(msg, spazbot.SpazBotDeathMessage):
+        elif isinstance(msg, SpazBotDiedMessage):
             self._spawn_evil_bunny()
-            assert msg.badguy.node
-            pos = msg.badguy.node.position
+            assert msg.spazbot.node
+            pos = msg.spazbot.node.position
             for _i in range(6):
                 spread = 0.4
                 self._eggs.append(
@@ -238,16 +207,17 @@ class EasterEggHuntGame(ba.TeamGameActivity):
                                   pos[2] + random.uniform(-spread, spread))))
         else:
             # Default handler.
-            super().handlemessage(msg)
+            return super().handlemessage(msg)
+        return None
 
     def _update_scoreboard(self) -> None:
         for team in self.teams:
-            self._scoreboard.set_team_value(team, team.gamedata['score'])
+            self._scoreboard.set_team_value(team, team.score)
 
     def end_game(self) -> None:
-        results = ba.TeamGameResults()
+        results = ba.GameResults()
         for team in self.teams:
-            results.set_team_score(team, team.gamedata['score'])
+            results.set_team_score(team, team.score)
         self.end(results)
 
 
@@ -258,12 +228,13 @@ class Egg(ba.Actor):
         super().__init__()
         activity = self.activity
         assert isinstance(activity, EasterEggHuntGame)
+        shared = SharedObjects.get()
 
         # Spawn just above the provided point.
         self._spawn_pos = (position[0], position[1] + 1.0, position[2])
         ctex = (activity.egg_tex_1, activity.egg_tex_2,
                 activity.egg_tex_3)[random.randrange(3)]
-        mats = [ba.sharedobj('object_material'), activity.egg_material]
+        mats = [shared.object_material, activity.egg_material]
         self.node = ba.newnode('prop',
                                delegate=self,
                                attrs={
@@ -272,7 +243,7 @@ class Egg(ba.Actor):
                                    'body': 'capsule',
                                    'reflection': 'soft',
                                    'model_scale': 0.5,
-                                   'bodyScale': 0.6,
+                                   'body_scale': 0.6,
                                    'density': 4.0,
                                    'reflection_scale': [0.15],
                                    'shadow_size': 0.6,

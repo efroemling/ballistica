@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides UI for selecting soundtrack entry types."""
 from __future__ import annotations
 
@@ -64,10 +46,19 @@ class SoundtrackEntryTypeSelectWindow(ba.Window):
         if do_music_folder:
             self._height += spacing
 
+        uiscale = ba.app.ui.uiscale
+
+        # NOTE: When something is selected, we close our UI and kick off
+        # another window which then calls us back when its done, so the
+        # standard UI-cleanup-check complains that something is holding on
+        # to our instance after its ui is gone. Should restructure in a
+        # cleaner way, but just disabling that check for now.
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             transition=transition,
-            scale=1.7 if ba.app.small_ui else 1.4 if ba.app.med_ui else 1.0))
+            scale=(1.7 if uiscale is ba.UIScale.SMALL else
+                   1.4 if uiscale is ba.UIScale.MEDIUM else 1.0)),
+                         cleanupcheck=False)
         btn = ba.buttonwidget(parent=self._root_widget,
                               position=(35, self._height - 65),
                               size=(160, 60),
@@ -80,7 +71,7 @@ class SoundtrackEntryTypeSelectWindow(ba.Window):
                       position=(self._width * 0.5, self._height - 32),
                       size=(0, 0),
                       text=ba.Lstr(resource=self._r + '.selectASourceText'),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       maxwidth=230,
                       h_align='center',
                       v_align='center')
@@ -89,7 +80,7 @@ class SoundtrackEntryTypeSelectWindow(ba.Window):
                       position=(self._width * 0.5, self._height - 56),
                       size=(0, 0),
                       text=selection_target_name,
-                      color=ba.app.infotextcolor,
+                      color=ba.app.ui.infotextcolor,
                       scale=0.7,
                       maxwidth=230,
                       h_align='center',
@@ -149,7 +140,8 @@ class SoundtrackEntryTypeSelectWindow(ba.Window):
 
     def _on_mac_music_app_playlist_press(self) -> None:
         music = ba.app.music
-        from bastd.ui.soundtrack import macmusicapp
+        from bastd.ui.soundtrack.macmusicapp import (
+            MacMusicAppPlaylistSelectWindow)
         ba.containerwidget(edit=self._root_widget, transition='out_left')
 
         current_playlist_entry: Optional[str]
@@ -159,33 +151,35 @@ class SoundtrackEntryTypeSelectWindow(ba.Window):
                 self._current_entry)
         else:
             current_playlist_entry = None
-        ba.app.main_menu_window = (macmusicapp.MacMusicAppPlaylistSelectWindow(
-            self._callback, current_playlist_entry,
-            self._current_entry).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            MacMusicAppPlaylistSelectWindow(
+                self._callback, current_playlist_entry,
+                self._current_entry).get_root_widget())
 
     def _on_music_file_press(self) -> None:
         from ba.osmusic import OSMusicPlayer
-        from bastd.ui import fileselector
+        from bastd.ui.fileselector import FileSelectorWindow
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         base_path = _ba.android_get_external_storage_path()
-        ba.app.main_menu_window = (fileselector.FileSelectorWindow(
-            base_path,
-            callback=self._music_file_selector_cb,
-            show_base_path=False,
-            valid_file_extensions=(
-                OSMusicPlayer.get_valid_music_file_extensions()),
-            allow_folders=False).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            FileSelectorWindow(
+                base_path,
+                callback=self._music_file_selector_cb,
+                show_base_path=False,
+                valid_file_extensions=(
+                    OSMusicPlayer.get_valid_music_file_extensions()),
+                allow_folders=False).get_root_widget())
 
     def _on_music_folder_press(self) -> None:
-        from bastd.ui import fileselector
+        from bastd.ui.fileselector import FileSelectorWindow
         ba.containerwidget(edit=self._root_widget, transition='out_left')
         base_path = _ba.android_get_external_storage_path()
-        ba.app.main_menu_window = (fileselector.FileSelectorWindow(
-            base_path,
-            callback=self._music_folder_selector_cb,
-            show_base_path=False,
-            valid_file_extensions=[],
-            allow_folders=True).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            FileSelectorWindow(base_path,
+                               callback=self._music_folder_selector_cb,
+                               show_base_path=False,
+                               valid_file_extensions=[],
+                               allow_folders=True).get_root_widget())
 
     def _music_file_selector_cb(self, result: Optional[str]) -> None:
         if result is None:

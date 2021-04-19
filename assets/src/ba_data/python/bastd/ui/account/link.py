@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """UI functionality for linking accounts."""
 
 from __future__ import annotations
@@ -49,14 +31,15 @@ class AccountLinkWindow(ba.Window):
         bg_color = (0.4, 0.4, 0.5)
         self._width = 560
         self._height = 420
-        base_scale = (1.65
-                      if ba.app.small_ui else 1.5 if ba.app.med_ui else 1.1)
+        uiscale = ba.app.ui.uiscale
+        base_scale = (1.65 if uiscale is ba.UIScale.SMALL else
+                      1.5 if uiscale is ba.UIScale.MEDIUM else 1.1)
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             transition=transition,
             scale=base_scale,
             scale_origin_stack_offset=scale_origin,
-            stack_offset=(0, -10) if ba.app.small_ui else (0, 0)))
+            stack_offset=(0, -10) if uiscale is ba.UIScale.SMALL else (0, 0)))
         self._cancel_button = ba.buttonwidget(parent=self._root_widget,
                                               position=(40, self._height - 45),
                                               size=(50, 50),
@@ -76,7 +59,7 @@ class AccountLinkWindow(ba.Window):
                 'accountSettingsWindow.linkAccountsInstructionsNewText'),
                          subs=[('${COUNT}', str(maxlinks))]),
             maxwidth=self._width * 0.9,
-            color=ba.app.infotextcolor,
+            color=ba.app.ui.infotextcolor,
             max_height=self._height * 0.6,
             h_align='center',
             v_align='center')
@@ -131,11 +114,13 @@ class AccountLinkCodeWindow(ba.Window):
     def __init__(self, data: Dict[str, Any]):
         self._width = 350
         self._height = 200
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             color=(0.45, 0.63, 0.15),
             transition='in_scale',
-            scale=1.8 if ba.app.small_ui else 1.35 if ba.app.med_ui else 1.0))
+            scale=(1.8 if uiscale is ba.UIScale.SMALL else
+                   1.35 if uiscale is ba.UIScale.MEDIUM else 1.0)))
         self._data = copy.deepcopy(data)
         ba.playsound(ba.getsound('cashRegister'))
         ba.playsound(ba.getsound('swish'))

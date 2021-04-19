@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides help related ui."""
 
 from __future__ import annotations
@@ -40,7 +22,6 @@ class HelpWindow(ba.Window):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
         from ba.internal import get_remote_app_name
-        from ba.deprecated import get_resource
         ba.set_analytics_screen('Help Window')
 
         # If they provided an origin-widget, scale up from that.
@@ -56,40 +37,45 @@ class HelpWindow(ba.Window):
 
         self._r = 'helpWindow'
 
+        getres = ba.app.lang.get_resource
+
         self._main_menu = main_menu
-        width = 950 if ba.app.small_ui else 750
-        x_offs = 100 if ba.app.small_ui else 0
-        height = 460 if ba.app.small_ui else 530 if ba.app.med_ui else 600
+        uiscale = ba.app.ui.uiscale
+        width = 950 if uiscale is ba.UIScale.SMALL else 750
+        x_offs = 100 if uiscale is ba.UIScale.SMALL else 0
+        height = (460 if uiscale is ba.UIScale.SMALL else
+                  530 if uiscale is ba.UIScale.MEDIUM else 600)
 
         super().__init__(root_widget=ba.containerwidget(
             size=(width, height),
             transition=transition,
             toolbar_visibility='menu_minimal',
             scale_origin_stack_offset=scale_origin,
-            scale=(
-                1.77 if ba.app.small_ui else 1.25 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -30) if ba.app.small_ui else (
-                0, 15) if ba.app.med_ui else (0, 0)))
+            scale=(1.77 if uiscale is ba.UIScale.SMALL else
+                   1.25 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -30) if uiscale is ba.UIScale.SMALL else (
+                0, 15) if uiscale is ba.UIScale.MEDIUM else (0, 0)))
 
         ba.textwidget(parent=self._root_widget,
-                      position=(0, height - (50 if ba.app.small_ui else 45)),
+                      position=(0, height -
+                                (50 if uiscale is ba.UIScale.SMALL else 45)),
                       size=(width, 25),
                       text=ba.Lstr(resource=self._r + '.titleText',
                                    subs=[('${APP_NAME}',
                                           ba.Lstr(resource='titleText'))]),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       h_align='center',
                       v_align='top')
 
         self._scrollwidget = ba.scrollwidget(
             parent=self._root_widget,
-            position=(44 + x_offs, 55 if ba.app.small_ui else 55),
+            position=(44 + x_offs, 55 if uiscale is ba.UIScale.SMALL else 55),
             simple_culling_v=100.0,
             size=(width - (88 + 2 * x_offs),
-                  height - 120 + (5 if ba.app.small_ui else 0)),
+                  height - 120 + (5 if uiscale is ba.UIScale.SMALL else 0)),
             capture_arrows=True)
 
-        if ba.app.toolbars:
+        if ba.app.ui.use_toolbars:
             ba.widget(edit=self._scrollwidget,
                       right_widget=_ba.get_special_widget('party_button'))
         ba.containerwidget(edit=self._root_widget,
@@ -97,7 +83,7 @@ class HelpWindow(ba.Window):
 
         # ugly: create this last so it gets first dibs at touch events (since
         # we have it close to the scroll widget)
-        if ba.app.small_ui and ba.app.toolbars:
+        if uiscale is ba.UIScale.SMALL and ba.app.ui.use_toolbars:
             ba.containerwidget(edit=self._root_widget,
                                on_cancel_call=self._close)
             ba.widget(edit=self._scrollwidget,
@@ -105,10 +91,12 @@ class HelpWindow(ba.Window):
         else:
             btn = ba.buttonwidget(
                 parent=self._root_widget,
-                position=(x_offs + (40 + 0 if ba.app.small_ui else 70),
-                          height - (59 if ba.app.small_ui else 50)),
+                position=(x_offs +
+                          (40 + 0 if uiscale is ba.UIScale.SMALL else 70),
+                          height -
+                          (59 if uiscale is ba.UIScale.SMALL else 50)),
                 size=(140, 60),
-                scale=0.7 if ba.app.small_ui else 0.8,
+                scale=0.7 if uiscale is ba.UIScale.SMALL else 0.8,
                 label=ba.Lstr(
                     resource='backText') if self._main_menu else 'Close',
                 button_type='back' if self._main_menu else None,
@@ -123,11 +111,9 @@ class HelpWindow(ba.Window):
                                 size=(60, 55),
                                 label=ba.charstr(ba.SpecialChar.BACK))
 
-        # interface_type = ba.app.interface_type
-
         self._sub_width = 660
-        self._sub_height = 1590 + get_resource(
-            self._r + '.someDaysExtraSpace') + get_resource(
+        self._sub_height = 1590 + ba.app.lang.get_resource(
+            self._r + '.someDaysExtraSpace') + ba.app.lang.get_resource(
                 self._r + '.orPunchingSomethingExtraSpace')
 
         self._subcontainer = ba.containerwidget(parent=self._scrollwidget,
@@ -227,8 +213,7 @@ class HelpWindow(ba.Window):
                           color=paragraph,
                           v_align='center',
                           flatness=1.0)
-            v -= (spacing * 25.0 +
-                  get_resource(self._r + '.someDaysExtraSpace'))
+            v -= (spacing * 25.0 + getres(self._r + '.someDaysExtraSpace'))
             txt_scale = 0.66
             txt = ba.Lstr(resource=self._r +
                           '.orPunchingSomethingText').evaluate()
@@ -243,7 +228,7 @@ class HelpWindow(ba.Window):
                           v_align='center',
                           flatness=1.0)
             v -= (spacing * 27.0 +
-                  get_resource(self._r + '.orPunchingSomethingExtraSpace'))
+                  getres(self._r + '.orPunchingSomethingExtraSpace'))
             txt_scale = 1.0
             txt = ba.Lstr(resource=self._r + '.canHelpText',
                           subs=[('${APP_NAME}', ba.Lstr(resource='titleText'))
@@ -402,7 +387,7 @@ class HelpWindow(ba.Window):
                        texture=ba.gettexture('buttonPunch'),
                        color=(1, 0.7, 0.3))
 
-        txt_scale = get_resource(self._r + '.punchInfoTextScale')
+        txt_scale = getres(self._r + '.punchInfoTextScale')
         txt = ba.Lstr(resource=self._r + '.punchInfoText').evaluate()
         ba.textwidget(parent=self._subcontainer,
                       position=(h - sep - 185 + 70, v + 120),
@@ -424,7 +409,7 @@ class HelpWindow(ba.Window):
                        color=(1, 0.3, 0.3))
 
         txt = ba.Lstr(resource=self._r + '.bombInfoText').evaluate()
-        txt_scale = get_resource(self._r + '.bombInfoTextScale')
+        txt_scale = getres(self._r + '.bombInfoTextScale')
         ba.textwidget(parent=self._subcontainer,
                       position=(h + sep + 50 + 60, v - 35),
                       size=(0, 0),
@@ -446,7 +431,7 @@ class HelpWindow(ba.Window):
                        color=(0.5, 0.5, 1))
 
         txtl = ba.Lstr(resource=self._r + '.pickUpInfoText')
-        txt_scale = get_resource(self._r + '.pickUpInfoTextScale')
+        txt_scale = getres(self._r + '.pickUpInfoTextScale')
         ba.textwidget(parent=self._subcontainer,
                       position=(h + 60 + 120, v + sep + 50),
                       size=(0, 0),
@@ -467,7 +452,7 @@ class HelpWindow(ba.Window):
                        color=(0.4, 1, 0.4))
 
         txt = ba.Lstr(resource=self._r + '.jumpInfoText').evaluate()
-        txt_scale = get_resource(self._r + '.jumpInfoTextScale')
+        txt_scale = getres(self._r + '.jumpInfoTextScale')
         ba.textwidget(parent=self._subcontainer,
                       position=(h - 250 + 75, v - sep - 15 + 30),
                       size=(0, 0),
@@ -479,7 +464,7 @@ class HelpWindow(ba.Window):
                       v_align='top')
 
         txt = ba.Lstr(resource=self._r + '.runInfoText').evaluate()
-        txt_scale = get_resource(self._r + '.runInfoTextScale')
+        txt_scale = getres(self._r + '.runInfoTextScale')
         ba.textwidget(parent=self._subcontainer,
                       position=(h, v - sep - 100),
                       size=(0, 0),
@@ -518,7 +503,7 @@ class HelpWindow(ba.Window):
                        texture=logo_tex)
 
         v -= spacing * 50.0
-        txt_scale = get_resource(self._r + '.powerupsSubtitleTextScale')
+        txt_scale = getres(self._r + '.powerupsSubtitleTextScale')
         txt = ba.Lstr(resource=self._r + '.powerupsSubtitleText').evaluate()
         ba.textwidget(parent=self._subcontainer,
                       position=(h, v),
@@ -597,9 +582,9 @@ class HelpWindow(ba.Window):
 
     def _close(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui import mainmenu
+        from bastd.ui.mainmenu import MainMenuWindow
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
         if self._main_menu:
-            ba.app.main_menu_window = (mainmenu.MainMenuWindow(
-                transition='in_left').get_root_widget())
+            ba.app.ui.set_main_menu_window(
+                MainMenuWindow(transition='in_left').get_root_widget())

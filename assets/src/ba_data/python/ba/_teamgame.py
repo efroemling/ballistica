@@ -1,33 +1,15 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Functionality related to team games."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
 import _ba
 from ba._freeforallsession import FreeForAllSession
 from ba._gameactivity import GameActivity
-from ba._gameresults import TeamGameResults
+from ba._gameresults import GameResults
 from ba._dualteamsession import DualTeamSession
 
 if TYPE_CHECKING:
@@ -35,8 +17,11 @@ if TYPE_CHECKING:
     from bastd.actor.playerspaz import PlayerSpaz
     import ba
 
+PlayerType = TypeVar('PlayerType', bound='ba.Player')
+TeamType = TypeVar('TeamType', bound='ba.Team')
 
-class TeamGameActivity(GameActivity):
+
+class TeamGameActivity(GameActivity[PlayerType, TeamType]):
     """Base class for teams and free-for-all mode games.
 
     Category: Gameplay Classes
@@ -55,14 +40,14 @@ class TeamGameActivity(GameActivity):
         return (issubclass(sessiontype, DualTeamSession)
                 or issubclass(sessiontype, FreeForAllSession))
 
-    def __init__(self, settings: Dict[str, Any]):
+    def __init__(self, settings: dict):
         super().__init__(settings)
 
-        # By default we don't show kill-points in free-for-all.
+        # By default we don't show kill-points in free-for-all sessions.
         # (there's usually some activity-specific score and we don't
         # wanna confuse things)
-        if isinstance(_ba.getsession(), FreeForAllSession):
-            self._show_kill_points = False
+        if isinstance(self.session, FreeForAllSession):
+            self.show_kill_points = False
 
     def on_transition_in(self) -> None:
         # pylint: disable=cyclic-import
@@ -74,8 +59,8 @@ class TeamGameActivity(GameActivity):
         # (unless we're being run in co-op mode, in which case we leave
         # it up to them)
         if not isinstance(self.session, CoopSession):
-            # FIXME: Need an elegant way to store on session.
-            if not self.session.have_shown_controls_help_overlay:
+            attrname = '_have_shown_ctrl_help_overlay'
+            if not getattr(self.session, attrname, False):
                 delay = 4.0
                 lifespan = 10.0
                 if self.slow_motion:
@@ -85,7 +70,7 @@ class TeamGameActivity(GameActivity):
                               scale=0.8,
                               position=(380, 200),
                               bright=True).autoretain()
-                self.session.have_shown_controls_help_overlay = True
+                setattr(self.session, attrname, True)
 
     def on_begin(self) -> None:
         super().on_begin()
@@ -93,18 +78,17 @@ class TeamGameActivity(GameActivity):
             # Award a few achievements.
             if isinstance(self.session, FreeForAllSession):
                 if len(self.players) >= 2:
-                    from ba import _achievement
-                    _achievement.award_local_achievement('Free Loader')
+                    _ba.app.ach.award_local_achievement('Free Loader')
             elif isinstance(self.session, DualTeamSession):
                 if len(self.players) >= 4:
                     from ba import _achievement
-                    _achievement.award_local_achievement('Team Player')
+                    _ba.app.ach.award_local_achievement('Team Player')
         except Exception:
             from ba import _error
             _error.print_exception()
 
     def spawn_player_spaz(self,
-                          player: ba.Player,
+                          player: PlayerType,
                           position: Sequence[float] = None,
                           angle: float = None) -> PlayerSpaz:
         """
@@ -117,13 +101,14 @@ class TeamGameActivity(GameActivity):
         if position is None:
             # In teams-mode get our team-start-location.
             if isinstance(self.session, DualTeamSession):
-                position = (self.map.get_start_position(player.team.get_id()))
+                position = (self.map.get_start_position(player.team.id))
             else:
                 # Otherwise do free-for-all spawn locations.
                 position = self.map.get_ffa_start_position(self.players)
 
         return super().spawn_player_spaz(player, position, angle)
 
+    # FIXME: need to unify these arguments with GameActivity.end()
     def end(  # type: ignore
             self,
             results: Any = None,
@@ -146,8 +131,9 @@ class TeamGameActivity(GameActivity):
         if not isinstance(session, CoopSession):
             do_announce = not self.has_ended()
             super().end(results, delay=2.0 + announce_delay, force=force)
+
             # Need to do this *after* end end call so that results is valid.
-            assert isinstance(results, TeamGameResults)
+            assert isinstance(results, GameResults)
             if do_announce and isinstance(session, MultiTeamSession):
                 session.announce_game_results(
                     self,

@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Functionality for syncing specific directories between different projects.
 
 This can be preferable vs using shared git subrepos for certain use cases.
@@ -54,7 +36,8 @@ def _valid_filename(fname: str) -> bool:
         raise ValueError(f'{fname} is not a simple filename.')
     if fname in [
             'requirements.txt', 'pylintrc', 'clang-format', 'pycheckers',
-            'style.yapf', 'test_task_bin', '.editorconfig'
+            'style.yapf', 'test_task_bin', '.editorconfig', 'cloudshell',
+            'vmshell', 'editorconfig'
     ]:
         return True
     return (any(fname.endswith(ext) for ext in ('.py', '.pyi'))
@@ -76,8 +59,8 @@ def run_standard_syncs(projectroot: Path, mode: Mode,
     Syncitems should be a list of tuples consisting of a src project name,
     a src subpath, and optionally a dst subpath (src will be used by default).
     """
-    from efrotools import get_localconfig
-    localconfig = get_localconfig(projectroot)
+    from efrotools import getlocalconfig
+    localconfig = getlocalconfig(projectroot)
     for syncitem in syncitems:
         assert isinstance(syncitem, SyncItem)
         src_project = syncitem.src_project_id
@@ -273,13 +256,20 @@ def add_marker(src_proj: str, srcdata: str) -> str:
 
     lines = srcdata.splitlines()
 
+    # Normally we add our hash as the first line in the file, but if there's
+    # a shebang, we put it under that.
+    firstline = 0
+    if len(lines) > 0 and lines[0].startswith('#!'):
+        firstline = 1
+
     # Make sure we're not operating on an already-synced file; that's just
     # asking for trouble.
-    if len(lines) > 1 and 'EFRO_SYNC_HASH=' in lines[1]:
+    if (len(lines) > (firstline + 1)
+            and ('EFRO_SYNC_HASH=' in lines[firstline + 1])):
         raise RuntimeError('Attempting to sync a file that is itself synced.')
 
     hashstr = string_hash(srcdata)
-    lines.insert(0,
+    lines.insert(firstline,
                  f'# Synced from {src_proj}.\n# EFRO_SYNC_HASH={hashstr}\n#')
     return '\n'.join(lines) + '\n'
 
@@ -302,11 +292,24 @@ def get_dst_file_info(dstfile: Path) -> Tuple[str, str, str]:
     dstlines = dstdata.splitlines()
     if not dstlines:
         raise ValueError(f'no lines found in {dstfile}')
-    if 'EFRO_SYNC_HASH' not in dstlines[1]:
+    found = False
+    offs: Optional[int] = None
+    marker_hash: Optional[str] = None
+    for offs in range(2):
+        checkline = 1 + offs
+        if 'EFRO_SYNC_HASH' in dstlines[checkline]:
+            marker_hash = dstlines[checkline].split('EFRO_SYNC_HASH=')[1]
+            found = True
+            break
+    if not found:
         raise ValueError(f'no EFRO_SYNC_HASH found in {dstfile}')
-    marker_hash = dstlines[1].split('EFRO_SYNC_HASH=')[1]
+    assert offs is not None
+    assert marker_hash is not None
 
-    # Return data minus the hash line.
-    dstdata = '\n'.join(dstlines[3:]) + '\n'
+    # Return data minus the 3 hash lines:
+    dstlines.pop(offs)
+    dstlines.pop(offs)
+    dstlines.pop(offs)
+    dstdata = '\n'.join(dstlines) + '\n'
     dst_hash = string_hash(dstdata)
     return marker_hash, dst_hash, dstdata

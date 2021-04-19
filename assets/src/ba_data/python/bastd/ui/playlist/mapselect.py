@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides UI for selecting maps in playlists."""
 
 from __future__ import annotations
@@ -36,14 +18,14 @@ class PlaylistMapSelectWindow(ba.Window):
     """Window to select a map."""
 
     def __init__(self,
-                 gameclass: Type[ba.GameActivity],
+                 gametype: Type[ba.GameActivity],
                  sessiontype: Type[ba.Session],
                  config: Dict[str, Any],
                  edit_info: Dict[str, Any],
                  completion_call: Callable[[Optional[Dict[str, Any]]], Any],
                  transition: str = 'in_right'):
         from ba.internal import get_filtered_map_name
-        self._gameclass = gameclass
+        self._gametype = gametype
         self._sessiontype = sessiontype
         self._config = config
         self._completion_call = completion_call
@@ -55,16 +37,19 @@ class PlaylistMapSelectWindow(ba.Window):
         except Exception:
             self._previous_map = ''
 
-        width = 715 if ba.app.small_ui else 615
-        x_inset = 50 if ba.app.small_ui else 0
-        height = (400 if ba.app.small_ui else 480 if ba.app.med_ui else 600)
+        uiscale = ba.app.ui.uiscale
+        width = 715 if uiscale is ba.UIScale.SMALL else 615
+        x_inset = 50 if uiscale is ba.UIScale.SMALL else 0
+        height = (400 if uiscale is ba.UIScale.SMALL else
+                  480 if uiscale is ba.UIScale.MEDIUM else 600)
 
-        top_extra = 20 if ba.app.small_ui else 0
+        top_extra = 20 if uiscale is ba.UIScale.SMALL else 0
         super().__init__(root_widget=ba.containerwidget(
             size=(width, height + top_extra),
             transition=transition,
-            scale=(2.17 if ba.app.small_ui else 1.3 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -27) if ba.app.small_ui else (0, 0)))
+            scale=(2.17 if uiscale is ba.UIScale.SMALL else
+                   1.3 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -27) if uiscale is ba.UIScale.SMALL else (0, 0)))
 
         self._cancel_button = btn = ba.buttonwidget(
             parent=self._root_widget,
@@ -84,9 +69,9 @@ class PlaylistMapSelectWindow(ba.Window):
                       scale=1.1,
                       text=ba.Lstr(resource='mapSelectTitleText',
                                    subs=[('${GAME}',
-                                          self._gameclass.get_display_string())
+                                          self._gametype.get_display_string())
                                          ]),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       h_align='center',
                       v_align='center')
         v = height - 70
@@ -119,7 +104,7 @@ class PlaylistMapSelectWindow(ba.Window):
         model_transparent = ba.getmodel('level_select_button_transparent')
 
         self._maps = []
-        map_list = self._gameclass.get_supported_maps(self._sessiontype)
+        map_list = self._gametype.get_supported_maps(self._sessiontype)
         map_list_sorted = list(map_list)
         map_list_sorted.sort()
         unowned_maps = get_unowned_maps()
@@ -135,8 +120,7 @@ class PlaylistMapSelectWindow(ba.Window):
                     map_tex = ba.gettexture(map_tex_name)
                     self._maps.append((mapname, map_tex))
                 except Exception:
-                    print('invalid map preview texture: "' + map_tex_name +
-                          '"')
+                    print(f'Invalid map preview texture: "{map_tex_name}".')
             else:
                 print('Error: no map preview texture for map:', mapname)
 
@@ -180,7 +164,7 @@ class PlaylistMapSelectWindow(ba.Window):
                     ba.widget(edit=btn, left_widget=self._cancel_button)
                 if y == 0:
                     ba.widget(edit=btn, up_widget=self._cancel_button)
-                if x == columns - 1 and ba.app.toolbars:
+                if x == columns - 1 and ba.app.ui.use_toolbars:
                     ba.widget(
                         edit=btn,
                         right_widget=_ba.get_special_widget('party_button'))
@@ -225,30 +209,31 @@ class PlaylistMapSelectWindow(ba.Window):
 
     def _on_store_press(self) -> None:
         from bastd.ui import account
-        from bastd.ui.store import browser
+        from bastd.ui.store.browser import StoreBrowserWindow
         if _ba.get_account_state() != 'signed_in':
             account.show_sign_in_prompt()
             return
-        browser.StoreBrowserWindow(modal=True,
-                                   show_tab='maps',
-                                   on_close_call=self._on_store_close,
-                                   origin_widget=self._get_more_maps_button)
+        StoreBrowserWindow(modal=True,
+                           show_tab=StoreBrowserWindow.TabID.MAPS,
+                           on_close_call=self._on_store_close,
+                           origin_widget=self._get_more_maps_button)
 
     def _on_store_close(self) -> None:
         self._refresh(select_get_more_maps_button=True)
 
     def _select(self, map_name: str) -> None:
-        from bastd.ui.playlist import editgame
+        from bastd.ui.playlist.editgame import PlaylistEditGameWindow
         self._config['settings']['map'] = map_name
         ba.containerwidget(edit=self._root_widget, transition='out_right')
-        ba.app.main_menu_window = (editgame.PlaylistEditGameWindow(
-            self._gameclass,
-            self._sessiontype,
-            self._config,
-            self._completion_call,
-            default_selection='map',
-            transition='in_left',
-            edit_info=self._edit_info).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            PlaylistEditGameWindow(
+                self._gametype,
+                self._sessiontype,
+                self._config,
+                self._completion_call,
+                default_selection='map',
+                transition='in_left',
+                edit_info=self._edit_info).get_root_widget())
 
     def _select_with_delay(self, map_name: str) -> None:
         _ba.lock_all_input()
@@ -258,13 +243,14 @@ class PlaylistMapSelectWindow(ba.Window):
                  timetype=ba.TimeType.REAL)
 
     def _cancel(self) -> None:
-        from bastd.ui.playlist import editgame
+        from bastd.ui.playlist.editgame import PlaylistEditGameWindow
         ba.containerwidget(edit=self._root_widget, transition='out_right')
-        ba.app.main_menu_window = (editgame.PlaylistEditGameWindow(
-            self._gameclass,
-            self._sessiontype,
-            self._config,
-            self._completion_call,
-            default_selection='map',
-            transition='in_left',
-            edit_info=self._edit_info).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            PlaylistEditGameWindow(
+                self._gametype,
+                self._sessiontype,
+                self._config,
+                self._completion_call,
+                default_selection='map',
+                transition='in_left',
+                edit_info=self._edit_info).get_root_widget())

@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """UI functionality for a button leading to the store."""
 from __future__ import annotations
 
@@ -212,12 +194,13 @@ class StoreButton:
                                 self._sale_circle_rad * 0.3))
 
     def _default_on_activate_call(self) -> None:
-        from bastd.ui import account
-        from bastd.ui.store import browser
+        # pylint: disable=cyclic-import
+        from bastd.ui.account import show_sign_in_prompt
+        from bastd.ui.store.browser import StoreBrowserWindow
         if _ba.get_account_state() != 'signed_in':
-            account.show_sign_in_prompt()
+            show_sign_in_prompt()
             return
-        browser.StoreBrowserWindow(modal=True, origin_widget=self._button)
+        StoreBrowserWindow(modal=True, origin_widget=self._button)
 
     def get_button(self) -> ba.Widget:
         """Return the underlying button widget."""
@@ -225,6 +208,7 @@ class StoreButton:
 
     def _update(self) -> None:
         # pylint: disable=too-many-branches
+        # pylint: disable=cyclic-import
         from ba import SpecialChar, TimeFormat
         from ba.internal import (get_available_sale_time,
                                  get_available_purchase_count)
@@ -259,7 +243,7 @@ class StoreButton:
                         if to_end > 0:
                             sale_times.append(to_end)
             except Exception:
-                ba.print_exception('Error parsing sales')
+                ba.print_exception('Error parsing sales.')
             if sale_times:
                 sale_time = int(min(sale_times) * 1000)
 

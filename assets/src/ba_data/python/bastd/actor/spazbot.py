@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Bot versions of Spaz."""
 # pylint: disable=too-many-lines
 
@@ -28,7 +10,7 @@ import weakref
 from typing import TYPE_CHECKING
 
 import ba
-from bastd.actor import spaz as basespaz
+from bastd.actor.spaz import Spaz
 
 if TYPE_CHECKING:
     from typing import Any, Optional, List, Tuple, Sequence, Type, Callable
@@ -49,27 +31,27 @@ class SpazBotPunchedMessage:
 
     Attributes:
 
-       badguy
+       spazbot
           The ba.SpazBot that got punched.
 
        damage
           How much damage was done to the ba.SpazBot.
     """
 
-    def __init__(self, badguy: SpazBot, damage: int):
+    def __init__(self, spazbot: SpazBot, damage: int):
         """Instantiate a message with the given values."""
-        self.badguy = badguy
+        self.spazbot = spazbot
         self.damage = damage
 
 
-class SpazBotDeathMessage:
+class SpazBotDiedMessage:
     """A message saying a ba.SpazBot has died.
 
     category: Message Classes
 
     Attributes:
 
-       badguy
+       spazbot
           The ba.SpazBot that was killed.
 
        killerplayer
@@ -79,15 +61,15 @@ class SpazBotDeathMessage:
           The particular type of death.
     """
 
-    def __init__(self, badguy: SpazBot, killerplayer: Optional[ba.Player],
+    def __init__(self, spazbot: SpazBot, killerplayer: Optional[ba.Player],
                  how: ba.DeathType):
         """Instantiate with given values."""
-        self.badguy = badguy
+        self.spazbot = spazbot
         self.killerplayer = killerplayer
         self.how = how
 
 
-class SpazBot(basespaz.Spaz):
+class SpazBot(Spaz):
     """A really dumb AI version of ba.Spaz.
 
     category: Bot Classes
@@ -98,7 +80,7 @@ class SpazBot(basespaz.Spaz):
     navigate obstacles and so should only be used
     on wide-open maps.
 
-    When a SpazBot is killed, it delivers a ba.SpazBotDeathMessage
+    When a SpazBot is killed, it delivers a ba.SpazBotDiedMessage
     to the current activity.
 
     When a SpazBot is punched, it delivers a ba.SpazBotPunchedMessage
@@ -127,13 +109,12 @@ class SpazBot(basespaz.Spaz):
 
     def __init__(self) -> None:
         """Instantiate a spaz-bot."""
-        basespaz.Spaz.__init__(self,
-                               color=self.color,
-                               highlight=self.highlight,
-                               character=self.character,
-                               source_player=None,
-                               start_invincible=False,
-                               can_accept_powerups=False)
+        super().__init__(color=self.color,
+                         highlight=self.highlight,
+                         character=self.character,
+                         source_player=None,
+                         start_invincible=False,
+                         can_accept_powerups=False)
 
         # If you need to add custom behavior to a bot, set this to a callable
         # which takes one arg (the bot) and returns False if the bot's normal
@@ -236,11 +217,7 @@ class SpazBot(basespaz.Spaz):
         # towards the flag and try to pick it up.
         if self.target_flag:
             if self.node.hold_node:
-                try:
-                    holding_flag = (
-                        self.node.hold_node.getnodetype() == 'flag')
-                except Exception:
-                    holding_flag = False
+                holding_flag = (self.node.hold_node.getnodetype() == 'flag')
             else:
                 holding_flag = False
 
@@ -281,11 +258,8 @@ class SpazBot(basespaz.Spaz):
 
         # Not a flag-bearer. If we're holding anything but a bomb, drop it.
         if self.node.hold_node:
-            try:
-                holding_bomb = (self.node.hold_node.getnodetype()
-                                in ['bomb', 'prop'])
-            except Exception:
-                holding_bomb = False
+            holding_bomb = (self.node.hold_node.getnodetype()
+                            in ['bomb', 'prop'])
             if not holding_bomb:
                 self.node.pickup_pressed = True
                 self.node.pickup_pressed = False
@@ -503,7 +477,7 @@ class SpazBot(basespaz.Spaz):
         ba.getactivity().handlemessage(SpazBotPunchedMessage(self, damage))
 
     def on_expire(self) -> None:
-        basespaz.Spaz.on_expire(self)
+        super().on_expire()
 
         # We're being torn down; release our callback(s) so there's
         # no chance of them keeping activities or other things alive.
@@ -511,8 +485,7 @@ class SpazBot(basespaz.Spaz):
 
     def handlemessage(self, msg: Any) -> Any:
         # pylint: disable=too-many-branches
-        if __debug__:
-            self._handlemessage_sanity_check()
+        assert not self.expired
 
         # Keep track of if we're being held and by who most recently.
         if isinstance(msg, ba.PickedUpMessage):
@@ -534,8 +507,8 @@ class SpazBot(basespaz.Spaz):
                     picked_up_by = msg.node.source_player
                 else:
                     picked_up_by = None
-            except Exception as exc:
-                print('EXC on SpazBot DroppedMessage:', exc)
+            except Exception:
+                ba.print_exception('Error on SpazBot DroppedMessage.')
                 picked_up_by = None
 
             if picked_up_by:
@@ -570,13 +543,14 @@ class SpazBot(basespaz.Spaz):
                     killerplayer = None
                 if activity is not None:
                     activity.handlemessage(
-                        SpazBotDeathMessage(self, killerplayer, msg.how))
+                        SpazBotDiedMessage(self, killerplayer, msg.how))
             super().handlemessage(msg)  # Augment standard behavior.
 
         # Keep track of the player who last hit us for point rewarding.
         elif isinstance(msg, ba.HitMessage):
-            if msg.source_player:
-                self.last_player_attacked_by = msg.source_player
+            source_player = msg.get_source_player(ba.Player)
+            if source_player:
+                self.last_player_attacked_by = source_player
                 self.last_attacked_time = ba.time()
                 self.last_attacked_type = (msg.hit_type, msg.hit_subtype)
             super().handlemessage(msg)
@@ -894,7 +868,7 @@ class ExplodeyBotShielded(ExplodeyBot):
     points_mult = 5
 
 
-class BotSet:
+class SpazBotSet:
     """A container/controller for one or more ba.SpazBots.
 
     category: Bot Classes
@@ -963,16 +937,14 @@ class BotSet:
     def _update(self) -> None:
 
         # Update one of our bot lists each time through.
-        # First off, remove dead bots from the list. Note that we check
-        # exists() here via the bool operator instead of dead; we want to
-        # keep them around even if they're just a corpse.
+        # First off, remove no-longer-existing bots from the list.
         try:
             bot_list = self._bot_lists[self._bot_update_list] = ([
                 b for b in self._bot_lists[self._bot_update_list] if b
             ])
         except Exception:
             bot_list = []
-            ba.print_exception('error updating bot list: ' +
+            ba.print_exception('Error updating bot list: ' +
                                str(self._bot_lists[self._bot_update_list]))
         self._bot_update_list = (self._bot_update_list +
                                  1) % self._bot_list_count
@@ -980,14 +952,18 @@ class BotSet:
         # Update our list of player points for the bots to use.
         player_pts = []
         for player in ba.getactivity().players:
+            assert isinstance(player, ba.Player)
             try:
+                # TODO: could use abstracted player.position here so we
+                # don't have to assume their actor type, but we have no
+                # abstracted velocity as of yet.
                 if player.is_alive():
-                    assert isinstance(player.actor, basespaz.Spaz)
+                    assert isinstance(player.actor, Spaz)
                     assert player.actor.node
                     player_pts.append((ba.Vec3(player.actor.node.position),
                                        ba.Vec3(player.actor.node.velocity)))
             except Exception:
-                ba.print_exception('error on bot-set _update')
+                ba.print_exception('Error on bot-set _update.')
 
         for bot in bot_list:
             bot.set_player_points(player_pts)
@@ -997,8 +973,8 @@ class BotSet:
         """Immediately clear out any bots in the set."""
 
         # Don't do this if the activity is shutting down or dead.
-        activity: Optional[ba.Activity] = ba.getactivity(doraise=False)
-        if activity is None or activity.is_expired():
+        activity = ba.getactivity(doraise=False)
+        if activity is None or activity.expired:
             return
 
         for i in range(len(self._bot_lists)):

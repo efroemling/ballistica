@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides a window for selecting a game type to add to a playlist."""
 
 from __future__ import annotations
@@ -40,18 +22,20 @@ class PlaylistAddGameWindow(ba.Window):
                  transition: str = 'in_right'):
         self._editcontroller = editcontroller
         self._r = 'addGameWindow'
-        self._width = 750 if ba.app.small_ui else 650
-        x_inset = 50 if ba.app.small_ui else 0
-        self._height = (346
-                        if ba.app.small_ui else 380 if ba.app.med_ui else 440)
-        top_extra = 30 if ba.app.small_ui else 20
+        uiscale = ba.app.ui.uiscale
+        self._width = 750 if uiscale is ba.UIScale.SMALL else 650
+        x_inset = 50 if uiscale is ba.UIScale.SMALL else 0
+        self._height = (346 if uiscale is ba.UIScale.SMALL else
+                        380 if uiscale is ba.UIScale.MEDIUM else 440)
+        top_extra = 30 if uiscale is ba.UIScale.SMALL else 20
         self._scroll_width = 210
 
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height + top_extra),
             transition=transition,
-            scale=(2.17 if ba.app.small_ui else 1.5 if ba.app.med_ui else 1.0),
-            stack_offset=(0, 1) if ba.app.small_ui else (0, 0)))
+            scale=(2.17 if uiscale is ba.UIScale.SMALL else
+                   1.5 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, 1) if uiscale is ba.UIScale.SMALL else (0, 0)))
 
         self._back_button = ba.buttonwidget(parent=self._root_widget,
                                             position=(58 + x_inset,
@@ -73,7 +57,7 @@ class PlaylistAddGameWindow(ba.Window):
             label=ba.Lstr(resource='selectText'),
             on_activate_call=self._add)
 
-        if ba.app.toolbars:
+        if ba.app.ui.use_toolbars:
             ba.widget(edit=select_button,
                       right_widget=_ba.get_special_widget('party_button'))
 
@@ -83,7 +67,7 @@ class PlaylistAddGameWindow(ba.Window):
                       scale=1.0,
                       text=ba.Lstr(resource=self._r + '.titleText'),
                       h_align='center',
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       maxwidth=250,
                       v_align='center')
         v = self._height - 64
@@ -136,16 +120,17 @@ class PlaylistAddGameWindow(ba.Window):
         self._refresh()
 
     def _refresh(self, select_get_more_games_button: bool = False) -> None:
-        from ba.internal import get_game_types
 
         if self._column is not None:
             self._column.delete()
 
-        self._column = ba.columnwidget(parent=self._scrollwidget)
+        self._column = ba.columnwidget(parent=self._scrollwidget,
+                                       border=2,
+                                       margin=0)
 
         gametypes = [
-            gt for gt in get_game_types() if gt.supports_session_type(
-                self._editcontroller.get_session_type())
+            gt for gt in ba.app.meta.get_game_types() if
+            gt.supports_session_type(self._editcontroller.get_session_type())
         ]
 
         # Sort in the current language.
@@ -189,15 +174,15 @@ class PlaylistAddGameWindow(ba.Window):
                                visible_child=self._get_more_games_button)
 
     def _on_get_more_games_press(self) -> None:
-        from bastd.ui import account
-        from bastd.ui.store import browser
+        from bastd.ui.account import show_sign_in_prompt
+        from bastd.ui.store.browser import StoreBrowserWindow
         if _ba.get_account_state() != 'signed_in':
-            account.show_sign_in_prompt()
+            show_sign_in_prompt()
             return
-        browser.StoreBrowserWindow(modal=True,
-                                   show_tab='minigames',
-                                   on_close_call=self._on_store_close,
-                                   origin_widget=self._get_more_games_button)
+        StoreBrowserWindow(modal=True,
+                           show_tab=StoreBrowserWindow.TabID.MINIGAMES,
+                           on_close_call=self._on_store_close,
+                           origin_widget=self._get_more_games_button)
 
     def _on_store_close(self) -> None:
         self._refresh(select_get_more_games_button=True)

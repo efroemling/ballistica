@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Popup window/menu related functionality."""
 
 from __future__ import annotations
@@ -153,7 +135,7 @@ class PopupMenuWindow(PopupWindow):
         self._choices_disabled = list(choices_disabled)
         self._done_building = False
         if not choices:
-            raise Exception('Must pass at least one choice')
+            raise TypeError('Must pass at least one choice')
         self._width = width
         self._scale = scale
         if len(choices) > 8:
@@ -199,14 +181,18 @@ class PopupMenuWindow(PopupWindow):
                                                  color=(0.35, 0.55, 0.15),
                                                  size=(self._width - 40,
                                                        self._height - 40))
-            self._columnwidget = ba.columnwidget(parent=self._scrollwidget)
+            self._columnwidget = ba.columnwidget(parent=self._scrollwidget,
+                                                 border=2,
+                                                 margin=0)
         else:
             self._offset_widget = ba.containerwidget(parent=self.root_widget,
                                                      position=(30, 15),
                                                      size=(self._width - 40,
                                                            self._height),
                                                      background=False)
-            self._columnwidget = ba.columnwidget(parent=self._offset_widget)
+            self._columnwidget = ba.columnwidget(parent=self._offset_widget,
+                                                 border=2,
+                                                 margin=0)
         for index, choice in enumerate(choices):
             if len(choices_display_fin) == len(choices):
                 choice_display_name = choices_display_fin[index]
@@ -291,18 +277,20 @@ class PopupMenu:
                  choices_display: Sequence[ba.Lstr] = None,
                  button_size: Tuple[float, float] = (160.0, 50.0),
                  autoselect: bool = True):
+        # pylint: disable=too-many-locals
         if choices_disabled is None:
             choices_disabled = []
         if choices_display is None:
             choices_display = []
+        uiscale = ba.app.ui.uiscale
         if scale is None:
-            scale = (2.3
-                     if ba.app.small_ui else 1.65 if ba.app.med_ui else 1.23)
+            scale = (2.3 if uiscale is ba.UIScale.SMALL else
+                     1.65 if uiscale is ba.UIScale.MEDIUM else 1.23)
         if current_choice not in choices:
             current_choice = None
         self._choices = list(choices)
         if not choices:
-            raise Exception('no choices given')
+            raise TypeError('no choices given')
         self._choices_display = list(choices_display)
         self._choices_disabled = list(choices_disabled)
         self._width = width
@@ -313,7 +301,7 @@ class PopupMenu:
         self._position = position
         self._parent = parent
         if not choices:
-            raise Exception('Must pass at least one choice')
+            raise TypeError('Must pass at least one choice')
         self._parent = parent
         self._button_size = button_size
 

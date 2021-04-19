@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Functionality related to free-for-all sessions."""
 
 from __future__ import annotations
@@ -37,7 +19,8 @@ class FreeForAllSession(MultiTeamSession):
 
     Category: Gameplay Classes
     """
-    _use_teams = False
+    use_teams = False
+    use_team_colors = False
     _playlist_selection_var = 'Free-for-All Playlist Selection'
     _playlist_randomize_var = 'Free-for-All Playlist Randomize'
     _playlists_var = 'Free-for-All Playlists'
@@ -48,17 +31,17 @@ class FreeForAllSession(MultiTeamSession):
         This is based on the current number of players.
         """
         point_awards: Dict[int, int]
-        if len(self.players) == 1:
+        if len(self.sessionplayers) == 1:
             point_awards = {}
-        elif len(self.players) == 2:
+        elif len(self.sessionplayers) == 2:
             point_awards = {0: 6}
-        elif len(self.players) == 3:
+        elif len(self.sessionplayers) == 3:
             point_awards = {0: 6, 1: 3}
-        elif len(self.players) == 4:
+        elif len(self.sessionplayers) == 4:
             point_awards = {0: 8, 1: 4, 2: 2}
-        elif len(self.players) == 5:
+        elif len(self.sessionplayers) == 5:
             point_awards = {0: 8, 1: 4, 2: 2}
-        elif len(self.players) == 6:
+        elif len(self.sessionplayers) == 6:
             point_awards = {0: 8, 1: 4, 2: 2}
         else:
             point_awards = {0: 8, 1: 4, 2: 2, 3: 1}
@@ -68,21 +51,21 @@ class FreeForAllSession(MultiTeamSession):
         _ba.increment_analytics_count('Free-for-all session start')
         super().__init__()
 
-    def _switch_to_score_screen(self, results: ba.TeamGameResults) -> None:
+    def _switch_to_score_screen(self, results: ba.GameResults) -> None:
         # pylint: disable=cyclic-import
+        from efro.util import asserttype
         from bastd.activity.drawscore import DrawScoreScreenActivity
         from bastd.activity.multiteamvictory import (
             TeamSeriesVictoryScoreScreenActivity)
         from bastd.activity.freeforallvictory import (
             FreeForAllVictoryScoreScreenActivity)
-        winners = results.get_winners()
+        winners = results.winnergroups
 
         # If there's multiple players and everyone has the same score,
         # call it a draw.
-        if len(self.players) > 1 and len(winners) < 2:
-            self.set_activity(
-                _ba.new_activity(DrawScoreScreenActivity,
-                                 {'results': results}))
+        if len(self.sessionplayers) > 1 and len(winners) < 2:
+            self.setactivity(
+                _ba.newactivity(DrawScoreScreenActivity, {'results': results}))
         else:
             # Award different point amounts based on number of players.
             point_awards = self.get_ffa_point_awards()
@@ -90,24 +73,25 @@ class FreeForAllSession(MultiTeamSession):
             for i, winner in enumerate(winners):
                 for team in winner.teams:
                     points = (point_awards[i] if i in point_awards else 0)
-                    team.sessiondata['previous_score'] = (
-                        team.sessiondata['score'])
-                    team.sessiondata['score'] += points
+                    team.customdata['previous_score'] = (
+                        team.customdata['score'])
+                    team.customdata['score'] += points
 
             series_winners = [
-                team for team in self.teams
-                if team.sessiondata['score'] >= self._ffa_series_length
+                team for team in self.sessionteams
+                if team.customdata['score'] >= self._ffa_series_length
             ]
-            series_winners.sort(reverse=True,
-                                key=lambda tm: (tm.sessiondata['score']))
+            series_winners.sort(
+                reverse=True,
+                key=lambda t: asserttype(t.customdata['score'], int))
             if (len(series_winners) == 1
                     or (len(series_winners) > 1
-                        and series_winners[0].sessiondata['score'] !=
-                        series_winners[1].sessiondata['score'])):
-                self.set_activity(
-                    _ba.new_activity(TeamSeriesVictoryScoreScreenActivity,
-                                     {'winner': series_winners[0]}))
+                        and series_winners[0].customdata['score'] !=
+                        series_winners[1].customdata['score'])):
+                self.setactivity(
+                    _ba.newactivity(TeamSeriesVictoryScoreScreenActivity,
+                                    {'winner': series_winners[0]}))
             else:
-                self.set_activity(
-                    _ba.new_activity(FreeForAllVictoryScoreScreenActivity,
-                                     {'results': results}))
+                self.setactivity(
+                    _ba.newactivity(FreeForAllVictoryScoreScreenActivity,
+                                    {'results': results}))

@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides a popup window to view achievements."""
 
 from __future__ import annotations
@@ -36,13 +18,14 @@ class AchievementsWindow(popup.PopupWindow):
 
     def __init__(self, position: Tuple[float, float], scale: float = None):
         # pylint: disable=too-many-locals
+        uiscale = ba.app.ui.uiscale
         if scale is None:
-            scale = (2.3
-                     if ba.app.small_ui else 1.65 if ba.app.med_ui else 1.23)
+            scale = (2.3 if uiscale is ba.UIScale.SMALL else
+                     1.65 if uiscale is ba.UIScale.MEDIUM else 1.23)
         self._transitioning_out = False
         self._width = 450
-        self._height = (300
-                        if ba.app.small_ui else 370 if ba.app.med_ui else 450)
+        self._height = (300 if uiscale is ba.UIScale.SMALL else
+                        370 if uiscale is ba.UIScale.MEDIUM else 450)
         bg_color = (0.5, 0.4, 0.6)
 
         # creates our _root_widget
@@ -64,7 +47,7 @@ class AchievementsWindow(popup.PopupWindow):
             icon=ba.gettexture('crossOut'),
             iconscale=1.2)
 
-        achievements = ba.app.achievements
+        achievements = ba.app.ach.achievements
         num_complete = len([a for a in achievements if a.complete])
 
         txt_final = ba.Lstr(

@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """UI functionality for selecting files."""
 
 from __future__ import annotations
@@ -45,9 +27,10 @@ class FileSelectorWindow(ba.Window):
                  allow_folders: bool = False):
         if valid_file_extensions is None:
             valid_file_extensions = []
-        self._width = 700 if ba.app.small_ui else 600
-        self._x_inset = x_inset = 50 if ba.app.small_ui else 0
-        self._height = 365 if ba.app.small_ui else 418
+        uiscale = ba.app.ui.uiscale
+        self._width = 700 if uiscale is ba.UIScale.SMALL else 600
+        self._x_inset = x_inset = 50 if uiscale is ba.UIScale.SMALL else 0
+        self._height = 365 if uiscale is ba.UIScale.SMALL else 418
         self._callback = callback
         self._base_path = path
         self._path: Optional[str] = None
@@ -65,13 +48,14 @@ class FileSelectorWindow(ba.Window):
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             transition='in_right',
-            scale=(2.23 if ba.app.small_ui else 1.4 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -35) if ba.app.small_ui else (0, 0)))
+            scale=(2.23 if uiscale is ba.UIScale.SMALL else
+                   1.4 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -35) if uiscale is ba.UIScale.SMALL else (0, 0)))
         ba.textwidget(
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 42),
             size=(0, 0),
-            color=ba.app.title_color,
+            color=ba.app.ui.title_color,
             h_align='center',
             v_align='center',
             text=ba.Lstr(resource=self._r + '.titleFolderText') if
@@ -119,7 +103,7 @@ class FileSelectorWindow(ba.Window):
                                         position=(self._folder_center,
                                                   self._height - 98),
                                         size=(0, 0),
-                                        color=ba.app.title_color,
+                                        color=ba.app.ui.title_color,
                                         h_align='center',
                                         v_align='center',
                                         text=self._path,
@@ -181,7 +165,7 @@ class FileSelectorWindow(ba.Window):
                            test_path))
         except Exception:
             ba.print_exception(
-                'error on FileSelectorWindow._on_entry_activated')
+                'Error in FileSelectorWindow._on_entry_activated().')
 
         if new_path is not None:
             self._set_path(new_path)

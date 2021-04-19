@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides UI for browsing soundtracks."""
 
 from __future__ import annotations
@@ -38,6 +20,7 @@ class SoundtrackBrowserWindow(ba.Window):
     def __init__(self,
                  transition: str = 'in_right',
                  origin_widget: ba.Widget = None):
+        # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
 
         # If they provided an origin-widget, scale up from that.
@@ -51,10 +34,11 @@ class SoundtrackBrowserWindow(ba.Window):
             scale_origin = None
 
         self._r = 'editSoundtrackWindow'
-        self._width = 800 if ba.app.small_ui else 600
-        x_inset = 100 if ba.app.small_ui else 0
-        self._height = (340
-                        if ba.app.small_ui else 370 if ba.app.med_ui else 440)
+        uiscale = ba.app.ui.uiscale
+        self._width = 800 if uiscale is ba.UIScale.SMALL else 600
+        x_inset = 100 if uiscale is ba.UIScale.SMALL else 0
+        self._height = (340 if uiscale is ba.UIScale.SMALL else
+                        370 if uiscale is ba.UIScale.MEDIUM else 440)
         spacing = 40.0
         v = self._height - 40.0
         v -= spacing * 1.0
@@ -64,10 +48,11 @@ class SoundtrackBrowserWindow(ba.Window):
             transition=transition,
             toolbar_visibility='menu_minimal',
             scale_origin_stack_offset=scale_origin,
-            scale=(2.3 if ba.app.small_ui else 1.6 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -18) if ba.app.small_ui else (0, 0)))
+            scale=(2.3 if uiscale is ba.UIScale.SMALL else
+                   1.6 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -18) if uiscale is ba.UIScale.SMALL else (0, 0)))
 
-        if ba.app.toolbars and ba.app.small_ui:
+        if ba.app.ui.use_toolbars and uiscale is ba.UIScale.SMALL:
             self._back_button = None
         else:
             self._back_button = ba.buttonwidget(
@@ -87,7 +72,7 @@ class SoundtrackBrowserWindow(ba.Window):
                       size=(0, 0),
                       maxwidth=300,
                       text=ba.Lstr(resource=self._r + '.titleText'),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       h_align='center',
                       v_align='center')
 
@@ -98,7 +83,8 @@ class SoundtrackBrowserWindow(ba.Window):
         lock_tex = ba.gettexture('lock')
         self._lock_images: List[ba.Widget] = []
 
-        scl = (1.0 if ba.app.small_ui else 1.13 if ba.app.med_ui else 1.4)
+        scl = (1.0 if uiscale is ba.UIScale.SMALL else
+               1.13 if uiscale is ba.UIScale.MEDIUM else 1.4)
         v -= 60.0 * scl
         self._new_button = btn = ba.buttonwidget(
             parent=self._root_widget,
@@ -206,8 +192,8 @@ class SoundtrackBrowserWindow(ba.Window):
         ba.widget(edit=self._scrollwidget,
                   left_widget=self._new_button,
                   right_widget=_ba.get_special_widget('party_button')
-                  if ba.app.toolbars else self._scrollwidget)
-        self._col = ba.columnwidget(parent=scrollwidget)
+                  if ba.app.ui.use_toolbars else self._scrollwidget)
+        self._col = ba.columnwidget(parent=scrollwidget, border=2, margin=0)
 
         self._soundtracks: Optional[Dict[str, Any]] = None
         self._selected_soundtrack: Optional[str] = None
@@ -225,8 +211,7 @@ class SoundtrackBrowserWindow(ba.Window):
                                on_cancel_call=self._back)
 
     def _update(self) -> None:
-        from ba.internal import have_pro_options
-        have = have_pro_options()
+        have = ba.app.accounts.have_pro_options()
         for lock in self._lock_images:
             ba.imagewidget(edit=lock, opacity=0.0 if have else 1.0)
 
@@ -245,11 +230,10 @@ class SoundtrackBrowserWindow(ba.Window):
 
     def _delete_soundtrack(self) -> None:
         # pylint: disable=cyclic-import
-        from ba.internal import have_pro_options
-        from bastd.ui import purchase
-        from bastd.ui import confirm
-        if not have_pro_options():
-            purchase.PurchaseWindow(items=['pro'])
+        from bastd.ui.purchase import PurchaseWindow
+        from bastd.ui.confirm import ConfirmWindow
+        if not ba.app.accounts.have_pro_options():
+            PurchaseWindow(items=['pro'])
             return
         if self._selected_soundtrack is None:
             return
@@ -259,17 +243,16 @@ class SoundtrackBrowserWindow(ba.Window):
                                      '.cantDeleteDefaultText'),
                              color=(1, 0, 0))
         else:
-            confirm.ConfirmWindow(
+            ConfirmWindow(
                 ba.Lstr(resource=self._r + '.deleteConfirmText',
                         subs=[('${NAME}', self._selected_soundtrack)]),
                 self._do_delete_soundtrack, 450, 150)
 
     def _duplicate_soundtrack(self) -> None:
         # pylint: disable=cyclic-import
-        from ba.internal import have_pro_options
-        from bastd.ui import purchase
-        if not have_pro_options():
-            purchase.PurchaseWindow(items=['pro'])
+        from bastd.ui.purchase import PurchaseWindow
+        if not ba.app.accounts.have_pro_options():
+            PurchaseWindow(items=['pro'])
             return
         cfg = ba.app.config
         cfg.setdefault('Soundtracks', {})
@@ -333,26 +316,24 @@ class SoundtrackBrowserWindow(ba.Window):
         self._save_state()
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
-        ba.app.main_menu_window = (audio.AudioSettingsWindow(
-            transition='in_left').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            audio.AudioSettingsWindow(transition='in_left').get_root_widget())
 
     def _edit_soundtrack_with_sound(self) -> None:
         # pylint: disable=cyclic-import
-        from ba.internal import have_pro_options
-        from bastd.ui import purchase
-        if not have_pro_options():
-            purchase.PurchaseWindow(items=['pro'])
+        from bastd.ui.purchase import PurchaseWindow
+        if not ba.app.accounts.have_pro_options():
+            PurchaseWindow(items=['pro'])
             return
         ba.playsound(ba.getsound('swish'))
         self._edit_soundtrack()
 
     def _edit_soundtrack(self) -> None:
         # pylint: disable=cyclic-import
-        from ba.internal import have_pro_options
-        from bastd.ui import purchase
-        from bastd.ui.soundtrack import edit as stedit
-        if not have_pro_options():
-            purchase.PurchaseWindow(items=['pro'])
+        from bastd.ui.purchase import PurchaseWindow
+        from bastd.ui.soundtrack.edit import SoundtrackEditWindow
+        if not ba.app.accounts.have_pro_options():
+            PurchaseWindow(items=['pro'])
             return
         if self._selected_soundtrack is None:
             return
@@ -365,8 +346,9 @@ class SoundtrackBrowserWindow(ba.Window):
 
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (stedit.SoundtrackEditWindow(
-            existing_soundtrack=self._selected_soundtrack).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            SoundtrackEditWindow(existing_soundtrack=self._selected_soundtrack
+                                 ).get_root_widget())
 
     def _get_soundtrack_display_name(self, soundtrack: str) -> ba.Lstr:
         if soundtrack == '__default__':
@@ -374,27 +356,23 @@ class SoundtrackBrowserWindow(ba.Window):
         return ba.Lstr(value=soundtrack)
 
     def _refresh(self, select_soundtrack: str = None) -> None:
+        from efro.util import asserttype
         self._allow_changing_soundtracks = False
         old_selection = self._selected_soundtrack
 
         # If there was no prev selection, look in prefs.
         if old_selection is None:
-            try:
-                old_selection = ba.app.config['Soundtrack']
-            except Exception:
-                pass
+            old_selection = ba.app.config.get('Soundtrack')
         old_selection_index = self._selected_soundtrack_index
 
         # Delete old.
         while self._soundtrack_widgets:
             self._soundtrack_widgets.pop().delete()
-        try:
-            self._soundtracks = ba.app.config['Soundtracks']
-        except Exception:
-            self._soundtracks = {}
+
+        self._soundtracks = ba.app.config.get('Soundtracks', {})
         assert self._soundtracks is not None
         items = list(self._soundtracks.items())
-        items.sort(key=lambda x: x[0].lower())
+        items.sort(key=lambda x: asserttype(x[0], str).lower())
         items = [('__default__', None)] + items  # default is always first
         index = 0
         for pname, _pval in items:
@@ -454,15 +432,14 @@ class SoundtrackBrowserWindow(ba.Window):
 
     def _new_soundtrack(self) -> None:
         # pylint: disable=cyclic-import
-        from ba.internal import have_pro_options
-        from bastd.ui import purchase
-        from bastd.ui.soundtrack import edit as stedit
-        if not have_pro_options():
-            purchase.PurchaseWindow(items=['pro'])
+        from bastd.ui.purchase import PurchaseWindow
+        from bastd.ui.soundtrack.edit import SoundtrackEditWindow
+        if not ba.app.accounts.have_pro_options():
+            PurchaseWindow(items=['pro'])
             return
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        stedit.SoundtrackEditWindow(existing_soundtrack=None)
+        SoundtrackEditWindow(existing_soundtrack=None)
 
     def _create_done(self, new_soundtrack: str) -> None:
         if new_soundtrack is not None:
@@ -485,17 +462,14 @@ class SoundtrackBrowserWindow(ba.Window):
             elif sel == self._back_button:
                 sel_name = 'Back'
             else:
-                raise Exception('unrecognized selection')
-            ba.app.window_states[self.__class__.__name__] = sel_name
+                raise ValueError(f'unrecognized selection \'{sel}\'')
+            ba.app.ui.window_states[type(self)] = sel_name
         except Exception:
-            ba.print_exception('error saving state for', self.__class__)
+            ba.print_exception(f'Error saving state for {self}.')
 
     def _restore_state(self) -> None:
         try:
-            try:
-                sel_name = ba.app.window_states[self.__class__.__name__]
-            except Exception:
-                sel_name = None
+            sel_name = ba.app.ui.window_states.get(type(self))
             if sel_name == 'Scroll':
                 sel = self._scrollwidget
             elif sel_name == 'New':
@@ -510,4 +484,4 @@ class SoundtrackBrowserWindow(ba.Window):
                 sel = self._scrollwidget
             ba.containerwidget(edit=self._root_widget, selected_child=sel)
         except Exception:
-            ba.print_exception('error restoring state for', self.__class__)
+            ba.print_exception(f'Error restoring state for {self}.')

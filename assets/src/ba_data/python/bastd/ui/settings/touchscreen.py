@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """UI settings functionality related to touchscreens."""
 from __future__ import annotations
 
@@ -45,10 +27,12 @@ class TouchscreenSettingsWindow(ba.Window):
 
         _ba.set_touchscreen_editing(True)
 
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             transition='in_right',
-            scale=1.9 if ba.app.small_ui else 1.55 if ba.app.med_ui else 1.2))
+            scale=(1.9 if uiscale is ba.UIScale.SMALL else
+                   1.55 if uiscale is ba.UIScale.MEDIUM else 1.2)))
 
         btn = ba.buttonwidget(parent=self._root_widget,
                               position=(55, self._height - 60),
@@ -63,7 +47,7 @@ class TouchscreenSettingsWindow(ba.Window):
                       position=(25, self._height - 50),
                       size=(self._width, 25),
                       text=ba.Lstr(resource=self._r + '.titleText'),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       maxwidth=280,
                       h_align='center',
                       v_align='center')
@@ -82,26 +66,24 @@ class TouchscreenSettingsWindow(ba.Window):
             parent=self._root_widget,
             position=((self._width - self._scroll_width) * 0.5,
                       self._height - 65 - self._scroll_height),
-            size=(self._scroll_width, self._scroll_height))
+            size=(self._scroll_width, self._scroll_height),
+            claims_left_right=True,
+            claims_tab=True,
+            selection_loops_to_parent=True)
         self._subcontainer = ba.containerwidget(parent=self._scrollwidget,
                                                 size=(self._sub_width,
                                                       self._sub_height),
-                                                background=False)
-        ba.containerwidget(edit=self._scrollwidget,
-                           claims_left_right=True,
-                           claims_tab=True,
-                           selection_loop_to_parent=True)
-        ba.containerwidget(edit=self._subcontainer,
-                           claims_left_right=True,
-                           claims_tab=True,
-                           selection_loop_to_parent=True)
-
+                                                background=False,
+                                                claims_left_right=True,
+                                                claims_tab=True,
+                                                selection_loops_to_parent=True)
         self._build_gui()
 
     def _build_gui(self) -> None:
-        from bastd.ui import config as cfgui
-        from bastd.ui import radiogroup
-        # clear anything already there
+        from bastd.ui.config import ConfigNumberEdit, ConfigCheckBox
+        from bastd.ui.radiogroup import make_radio_group
+
+        # Clear anything already there.
         children = self._subcontainer.get_children()
         for child in children:
             child.delete()
@@ -143,20 +125,19 @@ class TouchscreenSettingsWindow(ba.Window):
                                 textcolor=clr2,
                                 value=False,
                                 scale=0.9)
-        radiogroup.make_radio_group((cb1, cb2), ('joystick', 'swipe'), cur_val,
-                                    self._movement_changed)
+        make_radio_group((cb1, cb2), ('joystick', 'swipe'), cur_val,
+                         self._movement_changed)
         v -= 50
-        cfgui.ConfigNumberEdit(
-            parent=self._subcontainer,
-            position=(h, v),
-            xoffset=65,
-            configkey='Touch Controls Scale Movement',
-            displayname=ba.Lstr(resource=self._r +
-                                '.movementControlScaleText'),
-            changesound=False,
-            minval=0.1,
-            maxval=4.0,
-            increment=0.1)
+        ConfigNumberEdit(parent=self._subcontainer,
+                         position=(h, v),
+                         xoffset=65,
+                         configkey='Touch Controls Scale Movement',
+                         displayname=ba.Lstr(resource=self._r +
+                                             '.movementControlScaleText'),
+                         changesound=False,
+                         minval=0.1,
+                         maxval=4.0,
+                         increment=0.1)
         v -= 50
         cur_val = ba.app.config.get('Touch Action Control Type', 'buttons')
         ba.textwidget(parent=self._subcontainer,
@@ -181,28 +162,28 @@ class TouchscreenSettingsWindow(ba.Window):
                                 maxwidth=100,
                                 textcolor=clr2,
                                 scale=0.9)
-        radiogroup.make_radio_group((cb1, cb2), ('buttons', 'swipe'), cur_val,
-                                    self._actions_changed)
+        make_radio_group((cb1, cb2), ('buttons', 'swipe'), cur_val,
+                         self._actions_changed)
         v -= 50
-        cfgui.ConfigNumberEdit(parent=self._subcontainer,
-                               position=(h, v),
-                               xoffset=65,
-                               configkey='Touch Controls Scale Actions',
-                               displayname=ba.Lstr(resource=self._r +
-                                                   '.actionControlScaleText'),
-                               changesound=False,
-                               minval=0.1,
-                               maxval=4.0,
-                               increment=0.1)
+        ConfigNumberEdit(parent=self._subcontainer,
+                         position=(h, v),
+                         xoffset=65,
+                         configkey='Touch Controls Scale Actions',
+                         displayname=ba.Lstr(resource=self._r +
+                                             '.actionControlScaleText'),
+                         changesound=False,
+                         minval=0.1,
+                         maxval=4.0,
+                         increment=0.1)
 
         v -= 50
-        cfgui.ConfigCheckBox(parent=self._subcontainer,
-                             position=(h, v),
-                             size=(400, 30),
-                             maxwidth=400,
-                             configkey='Touch Controls Swipe Hidden',
-                             displayname=ba.Lstr(resource=self._r +
-                                                 '.swipeControlsHiddenText'))
+        ConfigCheckBox(parent=self._subcontainer,
+                       position=(h, v),
+                       size=(400, 30),
+                       maxwidth=400,
+                       configkey='Touch Controls Swipe Hidden',
+                       displayname=ba.Lstr(resource=self._r +
+                                           '.swipeControlsHiddenText'))
         v -= 65
 
         ba.buttonwidget(parent=self._subcontainer,
@@ -249,6 +230,7 @@ class TouchscreenSettingsWindow(ba.Window):
     def _back(self) -> None:
         from bastd.ui.settings import controls
         ba.containerwidget(edit=self._root_widget, transition='out_right')
-        ba.app.main_menu_window = (controls.ControlsSettingsWindow(
-            transition='in_left').get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            controls.ControlsSettingsWindow(
+                transition='in_left').get_root_widget())
         _ba.set_touchscreen_editing(False)

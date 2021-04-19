@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """UI for player profile upgrades."""
 
 from __future__ import annotations
@@ -40,24 +22,25 @@ class ProfileUpgradeWindow(ba.Window):
     def __init__(self,
                  edit_profile_window: EditProfileWindow,
                  transition: str = 'in_right'):
-        from ba.internal import serverget
+        from ba.internal import master_server_get
         self._r = 'editProfileWindow'
 
         self._width = 680
         self._height = 350
-        self._base_scale = (2.05 if ba.app.small_ui else
-                            1.5 if ba.app.med_ui else 1.2)
+        uiscale = ba.app.ui.uiscale
+        self._base_scale = (2.05 if uiscale is ba.UIScale.SMALL else
+                            1.5 if uiscale is ba.UIScale.MEDIUM else 1.2)
         self._upgrade_start_time: Optional[float] = None
-        self._name = edit_profile_window.get_name()
+        self._name = edit_profile_window.getname()
         self._edit_profile_window = weakref.ref(edit_profile_window)
 
-        top_extra = 15 if ba.app.small_ui else 15
+        top_extra = 15 if uiscale is ba.UIScale.SMALL else 15
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height + top_extra),
             toolbar_visibility='menu_currency',
             transition=transition,
             scale=self._base_scale,
-            stack_offset=(0, 15) if ba.app.small_ui else (0, 0)))
+            stack_offset=(0, 15) if uiscale is ba.UIScale.SMALL else (0, 0)))
         cancel_button = ba.buttonwidget(parent=self._root_widget,
                                         position=(52, 30),
                                         size=(155, 60),
@@ -83,7 +66,7 @@ class ProfileUpgradeWindow(ba.Window):
                       size=(0, 0),
                       text=ba.Lstr(resource=self._r +
                                    '.upgradeToGlobalProfileText'),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       maxwidth=self._width * 0.45,
                       scale=1.0,
                       h_align='center',
@@ -94,7 +77,7 @@ class ProfileUpgradeWindow(ba.Window):
                       size=(0, 0),
                       text=ba.Lstr(resource=self._r +
                                    '.upgradeProfileInfoText'),
-                      color=ba.app.infotextcolor,
+                      color=ba.app.ui.infotextcolor,
                       maxwidth=self._width * 0.8,
                       scale=0.7,
                       h_align='center',
@@ -124,7 +107,7 @@ class ProfileUpgradeWindow(ba.Window):
                                          v_align='center')
 
         self._tickets_text: Optional[ba.Widget]
-        if not ba.app.toolbars:
+        if not ba.app.ui.use_toolbars:
             self._tickets_text = ba.textwidget(
                 parent=self._root_widget,
                 position=(self._width * 0.9 - 5, self._height - 30),
@@ -138,11 +121,11 @@ class ProfileUpgradeWindow(ba.Window):
         else:
             self._tickets_text = None
 
-        serverget('bsGlobalProfileCheck', {
+        master_server_get('bsGlobalProfileCheck', {
             'name': self._name,
             'b': ba.app.build_number
         },
-                  callback=ba.WeakCall(self._profile_check_result))
+                          callback=ba.WeakCall(self._profile_check_result))
         self._cost = _ba.get_account_misc_read_val('price.global_profile', 500)
         self._status: Optional[str] = 'waiting'
         self._update_timer = ba.Timer(1.0,

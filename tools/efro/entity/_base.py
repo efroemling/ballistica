@@ -1,31 +1,43 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Base classes for the entity system."""
 
 from __future__ import annotations
 
+from enum import Enum
 from typing import TYPE_CHECKING
 
+from efro.util import enum_by_value
+
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, Type
+
+
+def dict_key_to_raw(key: Any, keytype: Type) -> Any:
+    """Given a key value from the world, filter to stored key."""
+    if not isinstance(key, keytype):
+        raise TypeError(
+            f'Invalid key type; expected {keytype}, got {type(key)}.')
+    if issubclass(keytype, Enum):
+        val = key.value
+        # We convert int enums to string since that is what firestore supports.
+        if isinstance(val, int):
+            val = str(val)
+        return val
+    return key
+
+
+def dict_key_from_raw(key: Any, keytype: Type) -> Any:
+    """Given internal key, filter to world visible type."""
+    if issubclass(keytype, Enum):
+        # We store all enum keys as strings; if the enum uses
+        # int keys, convert back.
+        for enumval in keytype:
+            if isinstance(enumval.value, int):
+                return enum_by_value(keytype, int(key))
+            break
+        return enum_by_value(keytype, key)
+    return key
 
 
 class DataHandler:

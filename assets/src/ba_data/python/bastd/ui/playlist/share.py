@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """UI functionality for importing shared playlists."""
 
 from __future__ import annotations
@@ -89,11 +71,13 @@ class SharePlaylistResultsWindow(ba.Window):
         del origin  # unused arg
         self._width = 450
         self._height = 300
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             color=(0.45, 0.63, 0.15),
             transition='in_scale',
-            scale=1.8 if ba.app.small_ui else 1.35 if ba.app.med_ui else 1.0))
+            scale=(1.8 if uiscale is ba.UIScale.SMALL else
+                   1.35 if uiscale is ba.UIScale.MEDIUM else 1.0)))
         ba.playsound(ba.getsound('cashRegister'))
         ba.playsound(ba.getsound('swish'))
 
@@ -113,7 +97,7 @@ class SharePlaylistResultsWindow(ba.Window):
         ba.textwidget(parent=self._root_widget,
                       position=(self._width * 0.5, self._height * 0.745),
                       size=(0, 0),
-                      color=ba.app.infotextcolor,
+                      color=ba.app.ui.infotextcolor,
                       scale=1.0,
                       flatness=1.0,
                       h_align='center',
@@ -126,7 +110,7 @@ class SharePlaylistResultsWindow(ba.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height * 0.645),
             size=(0, 0),
-            color=ba.app.infotextcolor,
+            color=ba.app.ui.infotextcolor,
             scale=0.6,
             flatness=1.0,
             h_align='center',

@@ -1,64 +1,19 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Functionality related to player-controlled Spazzes."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar, overload
 
 import ba
 from bastd.actor.spaz import Spaz
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Sequence, Tuple
+    from typing import Any, Sequence, Tuple, Optional, Type, Literal
 
-
-class PlayerSpazDeathMessage:
-    """A message saying a ba.PlayerSpaz has died.
-
-    category: Message Classes
-
-    Attributes:
-
-       spaz
-          The ba.PlayerSpaz that died.
-
-       killed
-          If True, the spaz was killed;
-          If False, they left the game or the round ended.
-
-       killerplayer
-          The ba.Player that did the killing, or None.
-
-       how
-          The particular type of death.
-    """
-
-    def __init__(self, spaz: PlayerSpaz, was_killed: bool,
-                 killerplayer: Optional[ba.Player], how: ba.DeathType):
-        """Instantiate a message with the given values."""
-        self.spaz = spaz
-        self.killed = was_killed
-        self.killerplayer = killerplayer
-        self.how = how
+PlayerType = TypeVar('PlayerType', bound=ba.Player)
+TeamType = TypeVar('TeamType', bound=ba.Team)
 
 
 class PlayerSpazHurtMessage:
@@ -82,7 +37,7 @@ class PlayerSpaz(Spaz):
 
     category: Gameplay Classes
 
-    When a PlayerSpaz dies, it delivers a ba.PlayerSpazDeathMessage
+    When a PlayerSpaz dies, it delivers a ba.PlayerDiedMessage
     to the current ba.Activity. (unless the death was the result of the
     player leaving the game, in which case no message is sent)
 
@@ -91,10 +46,10 @@ class PlayerSpaz(Spaz):
     """
 
     def __init__(self,
+                 player: ba.Player,
                  color: Sequence[float] = (1.0, 1.0, 1.0),
                  highlight: Sequence[float] = (0.5, 0.5, 0.5),
                  character: str = 'Spaz',
-                 player: ba.Player = None,
                  powerups_expire: bool = True):
         """Create a spaz for the provided ba.Player.
 
@@ -114,31 +69,35 @@ class PlayerSpaz(Spaz):
         self.held_count = 0
         self.last_player_held_by: Optional[ba.Player] = None
         self._player = player
+        self._drive_player_position()
 
-        # Grab the node for this player and wire it to follow our spaz
-        # (so players' controllers know where to draw their guides, etc).
-        if player:
-            assert self.node
-            assert player.node
-            self.node.connectattr('torso_position', player.node, 'position')
+    # Overloads to tell the type system our return type based on doraise val.
 
-    @property
-    def player(self) -> ba.Player:
-        """The ba.Player associated with this Spaz.
+    @overload
+    def getplayer(self,
+                  playertype: Type[PlayerType],
+                  doraise: Literal[False] = False) -> Optional[PlayerType]:
+        ...
 
-        If the player no longer exists, raises an ba.PlayerNotFoundError.
-        """
-        if not self._player:
-            raise ba.PlayerNotFoundError()
-        return self._player
+    @overload
+    def getplayer(self, playertype: Type[PlayerType],
+                  doraise: Literal[True]) -> PlayerType:
+        ...
 
-    def getplayer(self) -> Optional[ba.Player]:
+    def getplayer(self,
+                  playertype: Type[PlayerType],
+                  doraise: bool = False) -> Optional[PlayerType]:
         """Get the ba.Player associated with this Spaz.
 
-        Note that this may return None if the player has left.
+        By default this will return None if the Player no longer exists.
+        If you are logically certain that the Player still exists, pass
+        doraise=False to get a non-optional return type.
         """
-        # Convert invalid references to None.
-        return self._player if self._player else None
+        player: Any = self._player
+        assert isinstance(player, playertype)
+        if not player.exists() and doraise:
+            raise ba.PlayerNotFoundError()
+        return player if player.exists() else None
 
     def connect_controls_to_player(self,
                                    enable_jump: bool = True,
@@ -153,41 +112,42 @@ class PlayerSpaz(Spaz):
         but can be selectively limited by passing False
         to specific arguments.
         """
-        player = self.getplayer()
+        player = self.getplayer(ba.Player)
         assert player
 
         # Reset any currently connected player and/or the player we're
         # wiring up.
         if self._connected_to_player:
             if player != self._connected_to_player:
-                player.reset_input()
+                player.resetinput()
             self.disconnect_controls_from_player()
         else:
-            player.reset_input()
+            player.resetinput()
 
-        player.assign_input_call('upDown', self.on_move_up_down)
-        player.assign_input_call('leftRight', self.on_move_left_right)
-        player.assign_input_call('holdPositionPress',
-                                 self._on_hold_position_press)
-        player.assign_input_call('holdPositionRelease',
-                                 self._on_hold_position_release)
+        player.assigninput(ba.InputType.UP_DOWN, self.on_move_up_down)
+        player.assigninput(ba.InputType.LEFT_RIGHT, self.on_move_left_right)
+        player.assigninput(ba.InputType.HOLD_POSITION_PRESS,
+                           self.on_hold_position_press)
+        player.assigninput(ba.InputType.HOLD_POSITION_RELEASE,
+                           self.on_hold_position_release)
+        intp = ba.InputType
         if enable_jump:
-            player.assign_input_call('jumpPress', self.on_jump_press)
-            player.assign_input_call('jumpRelease', self.on_jump_release)
+            player.assigninput(intp.JUMP_PRESS, self.on_jump_press)
+            player.assigninput(intp.JUMP_RELEASE, self.on_jump_release)
         if enable_pickup:
-            player.assign_input_call('pickUpPress', self.on_pickup_press)
-            player.assign_input_call('pickUpRelease', self.on_pickup_release)
+            player.assigninput(intp.PICK_UP_PRESS, self.on_pickup_press)
+            player.assigninput(intp.PICK_UP_RELEASE, self.on_pickup_release)
         if enable_punch:
-            player.assign_input_call('punchPress', self.on_punch_press)
-            player.assign_input_call('punchRelease', self.on_punch_release)
+            player.assigninput(intp.PUNCH_PRESS, self.on_punch_press)
+            player.assigninput(intp.PUNCH_RELEASE, self.on_punch_release)
         if enable_bomb:
-            player.assign_input_call('bombPress', self.on_bomb_press)
-            player.assign_input_call('bombRelease', self.on_bomb_release)
+            player.assigninput(intp.BOMB_PRESS, self.on_bomb_press)
+            player.assigninput(intp.BOMB_RELEASE, self.on_bomb_release)
         if enable_run:
-            player.assign_input_call('run', self.on_run)
+            player.assigninput(intp.RUN, self.on_run)
         if enable_fly:
-            player.assign_input_call('flyPress', self.on_fly_press)
-            player.assign_input_call('flyRelease', self.on_fly_release)
+            player.assigninput(intp.FLY_PRESS, self.on_fly_press)
+            player.assigninput(intp.FLY_RELEASE, self.on_fly_release)
 
         self._connected_to_player = player
 
@@ -197,13 +157,13 @@ class PlayerSpaz(Spaz):
         ba.Player from control of this spaz.
         """
         if self._connected_to_player:
-            self._connected_to_player.reset_input()
+            self._connected_to_player.resetinput()
             self._connected_to_player = None
 
             # Send releases for anything in case its held.
             self.on_move_up_down(0)
             self.on_move_left_right(0)
-            self._on_hold_position_release()
+            self.on_hold_position_release()
             self.on_jump_release()
             self.on_pickup_release()
             self.on_punch_release()
@@ -219,31 +179,37 @@ class PlayerSpaz(Spaz):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-nested-blocks
-        if __debug__:
-            self._handlemessage_sanity_check()
+        assert not self.expired
 
         # Keep track of if we're being held and by who most recently.
         if isinstance(msg, ba.PickedUpMessage):
-            super().handlemessage(msg)  # Augment standard behavior.
+            # Augment standard behavior.
+            super().handlemessage(msg)
             self.held_count += 1
             picked_up_by = msg.node.source_player
             if picked_up_by:
                 self.last_player_held_by = picked_up_by
         elif isinstance(msg, ba.DroppedMessage):
-            super().handlemessage(msg)  # Augment standard behavior.
+            # Augment standard behavior.
+            super().handlemessage(msg)
             self.held_count -= 1
             if self.held_count < 0:
                 print('ERROR: spaz held_count < 0')
 
             # Let's count someone dropping us as an attack.
-            try:
-                picked_up_by = msg.node.source_player
-            except Exception:
-                picked_up_by = None
+            picked_up_by = msg.node.source_player
             if picked_up_by:
                 self.last_player_attacked_by = picked_up_by
                 self.last_attacked_time = ba.time()
                 self.last_attacked_type = ('picked_up', 'default')
+        elif isinstance(msg, ba.StandMessage):
+            super().handlemessage(msg)  # Augment standard behavior.
+
+            # Our Spaz was just moved somewhere. Explicitly update
+            # our associated player's position in case it is being used
+            # for logic (otherwise it will be out of date until next step)
+            self._drive_player_position()
+
         elif isinstance(msg, ba.DieMessage):
 
             # Report player deaths to the game.
@@ -255,6 +221,7 @@ class PlayerSpaz(Spaz):
 
                 activity = self._activity()
 
+                player = self.getplayer(ba.Player, False)
                 if not killed:
                     killerplayer = None
                 else:
@@ -277,31 +244,46 @@ class PlayerSpaz(Spaz):
                             # ok, call it a suicide unless we're in co-op
                             if (activity is not None and not isinstance(
                                     activity.session, ba.CoopSession)):
-                                killerplayer = self.getplayer()
+                                killerplayer = player
                             else:
                                 killerplayer = None
 
-                # Convert dead-refs to None.
-                if not killerplayer:
-                    killerplayer = None
+                # We should never wind up with a dead-reference here;
+                # we want to use None in that case.
+                assert killerplayer is None or killerplayer
 
                 # Only report if both the player and the activity still exist.
-                if killed and activity is not None and self.getplayer():
+                if killed and activity is not None and player:
                     activity.handlemessage(
-                        PlayerSpazDeathMessage(self, killed, killerplayer,
-                                               msg.how))
+                        ba.PlayerDiedMessage(player, killed, killerplayer,
+                                             msg.how))
 
             super().handlemessage(msg)  # Augment standard behavior.
 
         # Keep track of the player who last hit us for point rewarding.
         elif isinstance(msg, ba.HitMessage):
-            if msg.source_player:
-                self.last_player_attacked_by = msg.source_player
+            source_player = msg.get_source_player(type(self._player))
+            if source_player:
+                self.last_player_attacked_by = source_player
                 self.last_attacked_time = ba.time()
                 self.last_attacked_type = (msg.hit_type, msg.hit_subtype)
             super().handlemessage(msg)  # Augment standard behavior.
             activity = self._activity()
-            if activity is not None:
+            if activity is not None and self._player.exists():
                 activity.handlemessage(PlayerSpazHurtMessage(self))
         else:
-            super().handlemessage(msg)
+            return super().handlemessage(msg)
+        return None
+
+    def _drive_player_position(self) -> None:
+        """Drive our ba.Player's official position
+
+        If our position is changed explicitly, this should be called again
+        to instantly update the player position (otherwise it would be out
+        of date until the next sim step)
+        """
+        player = self._player
+        if player:
+            assert self.node
+            assert player.node
+            self.node.connectattr('torso_position', player.node, 'position')

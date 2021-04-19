@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Misc utility functionality related to the entity system."""
 
 from __future__ import annotations
@@ -101,10 +83,11 @@ def have_matching_fields(val1: CompoundValue, val2: CompoundValue) -> bool:
 
     Note this just refers to the field configuration; not data.
     """
-    # quick-out: matching types will always have identical fields
+    # Quick-out: matching types will always have identical fields.
     if type(val1) is type(val2):
         return True
-    # otherwise do a full comparision
+
+    # Otherwise do a full comparison.
     return val1.get_fields() == val2.get_fields()
 
 
@@ -133,7 +116,7 @@ def compound_eq(obj1: Union[BoundCompoundValue, CompoundValue],
 
     # Criteria for comparison: both need to be a compound value
     # and both must have data (which implies they are either a entity
-    # or bound to a subfield in a entity).
+    # or bound to a subfield in an entity).
     value1, data1 = get_compound_value_and_data(obj1)
     if data1 is None:
         return NotImplemented

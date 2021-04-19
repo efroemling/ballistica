@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Input related functionality"""
 from __future__ import annotations
 
@@ -45,11 +27,11 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
     useragentstring = app.user_agent_string
     platform = app.platform
     subplatform = app.subplatform
-    bs_config = _ba.app.config
+    appconfig = _ba.app.config
 
     # If there's an entry in our config for this controller, use it.
-    if 'Controllers' in bs_config:
-        ccfgs = bs_config['Controllers']
+    if 'Controllers' in appconfig:
+        ccfgs = appconfig['Controllers']
         if devicename in ccfgs:
             mapping = None
             if unique_id in ccfgs[devicename]:
@@ -562,8 +544,11 @@ def _gen_android_input_hash() -> str:
                     # (since it'll vary a lot across devices)
                     if f_name == 'gpio-keys.kl':
                         continue
-                    with open(dirname + '/' + f_name, 'rb') as infile:
-                        md5.update(infile.read())
+                    try:
+                        with open(f'{dirname}/{f_name}', 'rb') as infile:
+                            md5.update(infile.read())
+                    except PermissionError:
+                        pass
         except Exception:
             from ba import _error
             _error.print_exception(
@@ -621,15 +606,15 @@ def get_last_player_name_from_input_device(device: ba.InputDevice) -> str:
 
     (generally the last one used there)
     """
-    bs_config = _ba.app.config
+    appconfig = _ba.app.config
 
     # Look for a default player profile name for them;
     # otherwise default to their current random name.
     profilename = '_random'
     key_name = device.name + ' ' + device.unique_identifier
-    if ('Default Player Profiles' in bs_config
-            and key_name in bs_config['Default Player Profiles']):
-        profilename = bs_config['Default Player Profiles'][key_name]
+    if ('Default Player Profiles' in appconfig
+            and key_name in appconfig['Default Player Profiles']):
+        profilename = appconfig['Default Player Profiles'][key_name]
     if profilename == '_random':
         profilename = device.get_default_player_name()
     if profilename == '__account__':

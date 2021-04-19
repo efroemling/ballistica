@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """UI functionality related to inviting people to try the game."""
 
 from __future__ import annotations
@@ -42,10 +24,12 @@ class AppInviteWindow(ba.Window):
         self._width = 650
         self._height = 400
 
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             transition='in_scale',
-            scale=1.8 if ba.app.small_ui else 1.35 if ba.app.med_ui else 1.0))
+            scale=(1.8 if uiscale is ba.UIScale.SMALL else
+                   1.35 if uiscale is ba.UIScale.MEDIUM else 1.0)))
 
         self._cancel_button = ba.buttonwidget(parent=self._root_widget,
                                               scale=0.8,
@@ -172,11 +156,13 @@ class ShowFriendCodeWindow(ba.Window):
         ba.set_analytics_screen('Friend Promo Code')
         self._width = 650
         self._height = 400
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             color=(0.45, 0.63, 0.15),
             transition='in_scale',
-            scale=1.7 if ba.app.small_ui else 1.35 if ba.app.med_ui else 1.0))
+            scale=(1.7 if uiscale is ba.UIScale.SMALL else
+                   1.35 if uiscale is ba.UIScale.MEDIUM else 1.0)))
         self._data = copy.deepcopy(data)
         ba.playsound(ba.getsound('cashRegister'))
         ba.playsound(ba.getsound('swish'))
@@ -198,7 +184,7 @@ class ShowFriendCodeWindow(ba.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height * 0.8),
             size=(0, 0),
-            color=ba.app.infotextcolor,
+            color=ba.app.ui.infotextcolor,
             scale=1.0,
             flatness=1.0,
             h_align='center',
@@ -227,7 +213,7 @@ class ShowFriendCodeWindow(ba.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height * 0.37),
             size=(0, 0),
-            color=ba.app.infotextcolor,
+            color=ba.app.ui.infotextcolor,
             scale=1.0,
             flatness=1.0,
             h_align='center',

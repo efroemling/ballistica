@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Functionality for editing config values and applying them to the game."""
 
 from __future__ import annotations
@@ -127,23 +109,23 @@ class ConfigNumberEdit:
                                       text=displayname,
                                       maxwidth=160 + xoffset,
                                       color=(0.8, 0.8, 0.8, 1.0),
-                                      h_align="left",
-                                      v_align="center",
+                                      h_align='left',
+                                      v_align='center',
                                       scale=textscale)
         self.valuetext = ba.textwidget(parent=parent,
                                        position=(246 + xoffset, position[1]),
                                        size=(60, 28),
                                        editable=False,
                                        color=(0.3, 1.0, 0.3, 1.0),
-                                       h_align="right",
-                                       v_align="center",
+                                       h_align='right',
+                                       v_align='center',
                                        text=str(self._value),
                                        padding=2)
         self.minusbutton = ba.buttonwidget(
             parent=parent,
             position=(330 + xoffset, position[1]),
             size=(28, 28),
-            label="-",
+            label='-',
             autoselect=True,
             on_activate_call=ba.Call(self._down),
             repeat=True,
@@ -152,12 +134,12 @@ class ConfigNumberEdit:
                                           position=(380 + xoffset,
                                                     position[1]),
                                           size=(28, 28),
-                                          label="+",
+                                          label='+',
                                           autoselect=True,
                                           on_activate_call=ba.Call(self._up),
                                           repeat=True,
                                           enable_sound=changesound)
-        # complain if we outlive our widgets
+        # Complain if we outlive our widgets.
         ba.uicleanupcheck(self, self.nametext)
         self._update_display()
 
@@ -177,4 +159,4 @@ class ConfigNumberEdit:
         ba.app.config.apply_and_commit()
 
     def _update_display(self) -> None:
-        ba.textwidget(edit=self.valuetext, text=str(round(self._value, 2)))
+        ba.textwidget(edit=self.valuetext, text=f'{self._value:.1f}')

@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides a window for configuring play options."""
 
 from __future__ import annotations
@@ -44,17 +26,17 @@ class PlayOptionsWindow(popup.PopupWindow):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
-        from ba.internal import (getclass, have_pro,
-                                 get_default_teams_playlist,
-                                 get_default_free_for_all_playlist,
-                                 filter_playlist)
-        from ba.internal import get_map_class
+        from ba.internal import get_map_class, getclass, filter_playlist
         from bastd.ui.playlist import PlaylistTypeVars
 
         self._r = 'gameListWindow'
         self._delegate = delegate
         self._pvars = PlaylistTypeVars(sessiontype)
         self._transitioning_out = False
+
+        # We behave differently if we're being used for playlist selection
+        # vs starting a game directly (should make this more elegant).
+        self._selecting_mode = ba.app.ui.selecting_private_party_playlist
 
         self._do_randomize_val = (ba.app.config.get(
             self._pvars.config_name + ' Playlist Randomize', 0))
@@ -88,13 +70,7 @@ class PlayOptionsWindow(popup.PopupWindow):
             max_columns = 5
             name = playlist
             if name == '__default__':
-                if self._sessiontype is ba.FreeForAllSession:
-                    plst = get_default_free_for_all_playlist()
-                elif self._sessiontype is ba.DualTeamSession:
-                    plst = get_default_teams_playlist()
-                else:
-                    raise Exception('unrecognized session-type: ' +
-                                    str(self._sessiontype))
+                plst = self._pvars.get_default_list_call()
             else:
                 try:
                     plst = ba.app.config[self._pvars.config_name +
@@ -117,7 +93,7 @@ class PlayOptionsWindow(popup.PopupWindow):
                 maptype: Optional[Type[ba.Map]]
                 try:
                     maptype = get_map_class(mapname)
-                except Exception:
+                except ba.NotFoundError:
                     maptype = None
                 if maptype is not None:
                     tex_name = maptype.get_preview_texture_name()
@@ -141,7 +117,7 @@ class PlayOptionsWindow(popup.PopupWindow):
                 self._height += self._row_height * rows
 
         except Exception:
-            ba.print_exception('error listing playlist maps')
+            ba.print_exception('Error listing playlist maps.')
 
         show_shuffle_check_box = game_count > 1
 
@@ -149,7 +125,9 @@ class PlayOptionsWindow(popup.PopupWindow):
             self._height += 40
 
         # Creates our _root_widget.
-        scale = (1.69 if ba.app.small_ui else 1.1 if ba.app.med_ui else 0.85)
+        uiscale = ba.app.ui.uiscale
+        scale = (1.69 if uiscale is ba.UIScale.SMALL else
+                 1.1 if uiscale is ba.UIScale.MEDIUM else 0.85)
         super().__init__(position=scale_origin,
                          size=(self._width, self._height),
                          scale=scale)
@@ -204,7 +182,7 @@ class PlayOptionsWindow(popup.PopupWindow):
                     try:
                         desc = getclass(entry['type'],
                                         subclassof=ba.GameActivity
-                                        ).get_config_display_string(entry)
+                                        ).get_settings_display_string(entry)
                         if not owned:
                             desc = ba.Lstr(
                                 value='${DESC}\n${UNLOCK}',
@@ -272,7 +250,7 @@ class PlayOptionsWindow(popup.PopupWindow):
                 autoselect=True,
                 textcolor=(0.8, 0.8, 0.8),
                 label=ba.Lstr(resource='teamNamesColorText'))
-            if not have_pro():
+            if not ba.app.accounts.have_pro():
                 ba.imagewidget(
                     parent=self.root_widget,
                     size=(30, 30),
@@ -304,10 +282,7 @@ class PlayOptionsWindow(popup.PopupWindow):
                 on_value_change_call=_cb_callback)
 
         # Show tutorial.
-        try:
-            show_tutorial = ba.app.config['Show Tutorial']
-        except Exception:
-            show_tutorial = True
+        show_tutorial = bool(ba.app.config.get('Show Tutorial', True))
 
         def _cb_callback_2(val: bool) -> None:
             cfg = ba.app.config
@@ -343,23 +318,24 @@ class PlayOptionsWindow(popup.PopupWindow):
                 ba.widget(edit=self._show_tutorial_check_box,
                           up_widget=self._custom_colors_names_button)
 
-        self._play_button = ba.buttonwidget(
+        self._ok_button = ba.buttonwidget(
             parent=self.root_widget,
             position=(70, 44),
             size=(200, 45),
             scale=1.8,
             text_res_scale=1.5,
-            on_activate_call=self._on_play_press,
+            on_activate_call=self._on_ok_press,
             autoselect=True,
-            label=ba.Lstr(resource='playText'))
+            label=ba.Lstr(
+                resource='okText' if self._selecting_mode else 'playText'))
 
-        ba.widget(edit=self._play_button,
+        ba.widget(edit=self._ok_button,
                   up_widget=self._show_tutorial_check_box)
 
         ba.containerwidget(edit=self.root_widget,
-                           start_button=self._play_button,
+                           start_button=self._ok_button,
                            cancel_button=self._cancel_button,
-                           selected_child=self._play_button)
+                           selected_child=self._ok_button)
 
         # Update now and once per second.
         self._update_timer = ba.Timer(1.0,
@@ -369,29 +345,25 @@ class PlayOptionsWindow(popup.PopupWindow):
         self._update()
 
     def _custom_colors_names_press(self) -> None:
-        from ba.internal import have_pro
-        from bastd.ui import account as accountui
-        from bastd.ui import teamnamescolors
-        from bastd.ui import purchase
-        if not have_pro():
+        from bastd.ui.account import show_sign_in_prompt
+        from bastd.ui.teamnamescolors import TeamNamesColorsWindow
+        from bastd.ui.purchase import PurchaseWindow
+        if not ba.app.accounts.have_pro():
             if _ba.get_account_state() != 'signed_in':
-                accountui.show_sign_in_prompt()
+                show_sign_in_prompt()
             else:
-                purchase.PurchaseWindow(items=['pro'])
+                PurchaseWindow(items=['pro'])
             self._transition_out()
             return
         assert self._custom_colors_names_button
-        teamnamescolors.TeamNamesColorsWindow(
-            scale_origin=self._custom_colors_names_button.
-            get_screen_space_center())
+        TeamNamesColorsWindow(scale_origin=self._custom_colors_names_button.
+                              get_screen_space_center())
 
     def _does_target_playlist_exist(self) -> bool:
         if self._playlist == '__default__':
             return True
-        val: bool = self._playlist in ba.app.config.get(
+        return self._playlist in ba.app.config.get(
             self._pvars.config_name + ' Playlists', {})
-        assert isinstance(val, bool)
-        return val
 
     def _update(self) -> None:
         # All we do here is make sure our targeted playlist still exists,
@@ -411,7 +383,7 @@ class PlayOptionsWindow(popup.PopupWindow):
     def _on_cancel_press(self) -> None:
         self._transition_out()
 
-    def _on_play_press(self) -> None:
+    def _on_ok_press(self) -> None:
 
         # Disallow if our playlist has disappeared.
         if not self._does_target_playlist_exist():
@@ -426,12 +398,32 @@ class PlayOptionsWindow(popup.PopupWindow):
 
         cfg = ba.app.config
         cfg[self._pvars.config_name + ' Playlist Selection'] = self._playlist
+
+        # Head back to the gather window in playlist-select mode
+        # or start the game in regular mode.
+        if self._selecting_mode:
+            from bastd.ui.gather import GatherWindow
+            if self._sessiontype is ba.FreeForAllSession:
+                typename = 'ffa'
+            elif self._sessiontype is ba.DualTeamSession:
+                typename = 'teams'
+            else:
+                raise RuntimeError('Only teams and ffa currently supported')
+            cfg['Private Party Host Session Type'] = typename
+            ba.playsound(ba.getsound('gunCocking'))
+            ba.app.ui.set_main_menu_window(
+                GatherWindow(transition='in_right').get_root_widget())
+            self._transition_out(transition='out_left')
+            if self._delegate is not None:
+                self._delegate.on_play_options_window_run_game()
+        else:
+            _ba.fade_screen(False, endcall=self._run_selected_playlist)
+            _ba.lock_all_input()
+            self._transition_out(transition='out_left')
+            if self._delegate is not None:
+                self._delegate.on_play_options_window_run_game()
+
         cfg.commit()
-        _ba.fade_screen(False, endcall=self._run_selected_playlist)
-        _ba.lock_all_input()
-        self._transition_out(transition='out_left')
-        if self._delegate is not None:
-            self._delegate.on_play_options_window_run_game()
 
     def _run_selected_playlist(self) -> None:
         _ba.unlock_all_input()

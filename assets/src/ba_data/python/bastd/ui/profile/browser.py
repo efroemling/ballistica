@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """UI functionality related to browsing player profiles."""
 
 from __future__ import annotations
@@ -41,16 +23,16 @@ class ProfileBrowserWindow(ba.Window):
                  origin_widget: ba.Widget = None):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
-        from ba.internal import ensure_have_account_player_profile
         self._in_main_menu = in_main_menu
         if self._in_main_menu:
             back_label = ba.Lstr(resource='backText')
         else:
             back_label = ba.Lstr(resource='doneText')
-        self._width = 700.0 if ba.app.small_ui else 600.0
-        x_inset = 50.0 if ba.app.small_ui else 0.0
-        self._height = (360.0 if ba.app.small_ui else
-                        385.0 if ba.app.med_ui else 410.0)
+        uiscale = ba.app.ui.uiscale
+        self._width = 700.0 if uiscale is ba.UIScale.SMALL else 600.0
+        x_inset = 50.0 if uiscale is ba.UIScale.SMALL else 0.0
+        self._height = (360.0 if uiscale is ba.UIScale.SMALL else
+                        385.0 if uiscale is ba.UIScale.MEDIUM else 410.0)
 
         # If we're being called up standalone, handle pause/resume ourself.
         if not self._in_main_menu:
@@ -69,16 +51,17 @@ class ProfileBrowserWindow(ba.Window):
         self._r = 'playerProfilesWindow'
 
         # Ensure we've got an account-profile in cases where we're signed in.
-        ensure_have_account_player_profile()
+        ba.app.accounts.ensure_have_account_player_profile()
 
-        top_extra = 20 if ba.app.small_ui else 0
+        top_extra = 20 if uiscale is ba.UIScale.SMALL else 0
 
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height + top_extra),
             transition=transition,
             scale_origin_stack_offset=scale_origin,
-            scale=(2.2 if ba.app.small_ui else 1.6 if ba.app.med_ui else 1.0),
-            stack_offset=(0, -14) if ba.app.small_ui else (0, 0)))
+            scale=(2.2 if uiscale is ba.UIScale.SMALL else
+                   1.6 if uiscale is ba.UIScale.MEDIUM else 1.0),
+            stack_offset=(0, -14) if uiscale is ba.UIScale.SMALL else (0, 0)))
 
         self._back_button = btn = ba.buttonwidget(
             parent=self._root_widget,
@@ -96,7 +79,7 @@ class ProfileBrowserWindow(ba.Window):
                       size=(0, 0),
                       text=ba.Lstr(resource=self._r + '.titleText'),
                       maxwidth=300,
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       scale=0.9,
                       h_align='center',
                       v_align='center')
@@ -113,7 +96,8 @@ class ProfileBrowserWindow(ba.Window):
         h = 50 + x_inset
         b_color = (0.6, 0.53, 0.63)
 
-        scl = (1.055 if ba.app.small_ui else 1.18 if ba.app.med_ui else 1.3)
+        scl = (1.055 if uiscale is ba.UIScale.SMALL else
+               1.18 if uiscale is ba.UIScale.MEDIUM else 1.3)
         v -= 70.0 * scl
         self._new_button = ba.buttonwidget(parent=self._root_widget,
                                            position=(h, v),
@@ -157,7 +141,7 @@ class ProfileBrowserWindow(ba.Window):
                       position=(self._width * 0.5, self._height - 71),
                       size=(0, 0),
                       text=ba.Lstr(resource=self._r + '.explanationText'),
-                      color=ba.app.infotextcolor,
+                      color=ba.app.ui.infotextcolor,
                       maxwidth=self._width * 0.83,
                       scale=0.6,
                       h_align='center',
@@ -174,7 +158,9 @@ class ProfileBrowserWindow(ba.Window):
                   left_widget=self._new_button)
         ba.containerwidget(edit=self._root_widget,
                            selected_child=self._scrollwidget)
-        self._columnwidget = ba.columnwidget(parent=self._scrollwidget)
+        self._columnwidget = ba.columnwidget(parent=self._scrollwidget,
+                                             border=2,
+                                             margin=0)
         v -= 255
         self._profiles: Optional[Dict[str, Dict[str, Any]]] = None
         self._selected_profile = selected_profile
@@ -184,20 +170,18 @@ class ProfileBrowserWindow(ba.Window):
 
     def _new_profile(self) -> None:
         # pylint: disable=cyclic-import
-        from ba.internal import have_pro_options
-        from bastd.ui.profile import edit as pedit
-        from bastd.ui import purchase
+        from bastd.ui.profile.edit import EditProfileWindow
+        from bastd.ui.purchase import PurchaseWindow
 
         # Limit to a handful profiles if they don't have pro-options.
         max_non_pro_profiles = _ba.get_account_misc_read_val('mnpp', 5)
         assert self._profiles is not None
-        if (not have_pro_options()
+        if (not ba.app.accounts.have_pro_options()
                 and len(self._profiles) >= max_non_pro_profiles):
-            purchase.PurchaseWindow(items=['pro'],
-                                    header_text=ba.Lstr(
-                                        resource='unlockThisProfilesText',
-                                        subs=[('${NUM}',
-                                               str(max_non_pro_profiles))]))
+            PurchaseWindow(items=['pro'],
+                           header_text=ba.Lstr(
+                               resource='unlockThisProfilesText',
+                               subs=[('${NUM}', str(max_non_pro_profiles))]))
             return
 
         # Clamp at 100 profiles (otherwise the server will and that's less
@@ -212,9 +196,10 @@ class ProfileBrowserWindow(ba.Window):
 
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (pedit.EditProfileWindow(
-            existing_profile=None,
-            in_main_menu=self._in_main_menu).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            EditProfileWindow(
+                existing_profile=None,
+                in_main_menu=self._in_main_menu).get_root_widget())
 
     def _delete_profile(self) -> None:
         # pylint: disable=cyclic-import
@@ -250,7 +235,7 @@ class ProfileBrowserWindow(ba.Window):
 
     def _edit_profile(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.profile import edit as pedit
+        from bastd.ui.profile.edit import EditProfileWindow
         if self._selected_profile is None:
             ba.playsound(ba.getsound('error'))
             ba.screenmessage(ba.Lstr(resource='nothingIsSelectedErrorText'),
@@ -258,9 +243,10 @@ class ProfileBrowserWindow(ba.Window):
             return
         self._save_state()
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = (pedit.EditProfileWindow(
-            self._selected_profile,
-            in_main_menu=self._in_main_menu).get_root_widget())
+        ba.app.ui.set_main_menu_window(
+            EditProfileWindow(
+                self._selected_profile,
+                in_main_menu=self._in_main_menu).get_root_widget())
 
     def _select(self, name: str, index: int) -> None:
         del index  # Unused.
@@ -268,13 +254,13 @@ class ProfileBrowserWindow(ba.Window):
 
     def _back(self) -> None:
         # pylint: disable=cyclic-import
-        from bastd.ui.account import settings
+        from bastd.ui.account.settings import AccountSettingsWindow
         self._save_state()
         ba.containerwidget(edit=self._root_widget,
                            transition=self._transition_out)
         if self._in_main_menu:
-            ba.app.main_menu_window = (settings.AccountSettingsWindow(
-                transition='in_left').get_root_widget())
+            ba.app.ui.set_main_menu_window(
+                AccountSettingsWindow(transition='in_left').get_root_widget())
 
         # If we're being called up standalone, handle pause/resume ourself.
         else:
@@ -282,6 +268,7 @@ class ProfileBrowserWindow(ba.Window):
 
     def _refresh(self) -> None:
         # pylint: disable=too-many-locals
+        from efro.util import asserttype
         from ba.internal import (PlayerProfilesChangedMessage,
                                  get_player_profile_colors,
                                  get_player_profile_icon)
@@ -290,13 +277,10 @@ class ProfileBrowserWindow(ba.Window):
         # Delete old.
         while self._profile_widgets:
             self._profile_widgets.pop().delete()
-        try:
-            self._profiles = ba.app.config['Player Profiles']
-        except Exception:
-            self._profiles = {}
+        self._profiles = ba.app.config.get('Player Profiles', {})
         assert self._profiles is not None
         items = list(self._profiles.items())
-        items.sort(key=lambda x: x[0].lower())
+        items.sort(key=lambda x: asserttype(x[0], str).lower())
         index = 0
         account_name: Optional[str]
         if _ba.get_account_state() == 'signed_in':
@@ -363,16 +347,13 @@ class ProfileBrowserWindow(ba.Window):
                 sel_name = 'Scroll'
             else:
                 sel_name = 'Back'
-            ba.app.window_states[self.__class__.__name__] = sel_name
+            ba.app.ui.window_states[type(self)] = sel_name
         except Exception:
-            ba.print_exception('error saving state for', self.__class__)
+            ba.print_exception(f'Error saving state for {self}.')
 
     def _restore_state(self) -> None:
         try:
-            try:
-                sel_name = ba.app.window_states[self.__class__.__name__]
-            except Exception:
-                sel_name = None
+            sel_name = ba.app.ui.window_states.get(type(self))
             if sel_name == 'Scroll':
                 sel = self._scrollwidget
             elif sel_name == 'New':
@@ -392,4 +373,4 @@ class ProfileBrowserWindow(ba.Window):
                     sel = self._scrollwidget
             ba.containerwidget(edit=self._root_widget, selected_child=sel)
         except Exception:
-            ba.print_exception('error restoring state for', self.__class__)
+            ba.print_exception(f'Error restoring state for {self}.')

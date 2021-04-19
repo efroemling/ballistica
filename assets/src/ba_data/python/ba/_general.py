@@ -1,37 +1,60 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Utility snippets applying to generic Python code."""
 from __future__ import annotations
 
+import gc
 import types
 import weakref
-from typing import TYPE_CHECKING, TypeVar
+import random
+import inspect
+from typing import TYPE_CHECKING, TypeVar, Protocol
 
+from efro.terminal import Clr
 import _ba
+from ba._error import print_error, print_exception
+from ba._enums import TimeType
 
 if TYPE_CHECKING:
-    from typing import Any, Type
-    from efro.call import Call
+    from types import FrameType
+    from typing import Any, Type, Optional
+    from efro.call import Call as Call  # 'as Call' so we re-export.
+    from weakref import ReferenceType
 
+
+class Existable(Protocol):
+    """A Protocol for objects supporting an exists() method.
+
+    Category: Protocols
+    """
+
+    def exists(self) -> bool:
+        """Whether this object exists."""
+        ...
+
+
+ExistableType = TypeVar('ExistableType', bound=Existable)
 T = TypeVar('T')
+
+
+def existing(obj: Optional[ExistableType]) -> Optional[ExistableType]:
+    """Convert invalid references to None for any ba.Existable object.
+
+    Category: Gameplay Functions
+
+    To best support type checking, it is important that invalid references
+    not be passed around and instead get converted to values of None.
+    That way the type checker can properly flag attempts to pass dead
+    objects (Optional[FooType]) into functions expecting only live ones
+    (FooType), etc. This call can be used on any 'existable' object
+    (one with an exists() method) and will convert it to a None value
+    if it does not exist.
+
+    For more info, see notes on 'existables' here:
+    https://ballistica.net/wiki/Coding-Style-Guide
+    """
+    assert obj is None or hasattr(obj, 'exists'), f'No "exists" on {obj}'
+    return obj if obj is not None and obj.exists() else None
 
 
 def getclass(name: str, subclassof: Type[T]) -> Type[T]:
@@ -50,7 +73,7 @@ def getclass(name: str, subclassof: Type[T]) -> Type[T]:
     cls: Type = getattr(module, classname)
 
     if not issubclass(cls, subclassof):
-        raise TypeError(name + ' is not a subclass of ' + str(subclassof))
+        raise TypeError(f'{name} is not a subclass of {subclassof}.')
     return cls
 
 
@@ -68,27 +91,23 @@ def json_prep(data: Any) -> Any:
     if isinstance(data, list):
         return [json_prep(element) for element in data]
     if isinstance(data, tuple):
-        from ba import _error
-        _error.print_error('json_prep encountered tuple', once=True)
+        print_error('json_prep encountered tuple', once=True)
         return [json_prep(element) for element in data]
     if isinstance(data, bytes):
         try:
             return data.decode(errors='ignore')
         except Exception:
             from ba import _error
-            _error.print_error('json_prep encountered utf-8 decode error',
-                               once=True)
+            print_error('json_prep encountered utf-8 decode error', once=True)
             return data.decode(errors='ignore')
     if not isinstance(data, (str, float, bool, type(None), int)):
-        from ba import _error
-        _error.print_error('got unsupported type in json_prep:' +
-                           str(type(data)),
-                           once=True)
+        print_error('got unsupported type in json_prep:' + str(type(data)),
+                    once=True)
     return data
 
 
 def utf8_all(data: Any) -> Any:
-    """Convert any unicode data in provided sequence(s)to utf8 bytes."""
+    """Convert any unicode data in provided sequence(s) to utf8 bytes."""
     if isinstance(data, dict):
         return dict((utf8_all(key), utf8_all(value))
                     for key, value in list(data.items()))
@@ -103,7 +122,6 @@ def utf8_all(data: Any) -> Any:
 
 def print_refs(obj: Any) -> None:
     """Print a list of known live references to an object."""
-    import gc
 
     # Hmmm; I just noticed that calling this on an object
     # seems to keep it alive. Should figure out why.
@@ -154,9 +172,10 @@ class _WeakCall:
     """
 
     def __init__(self, *args: Any, **keywds: Any) -> None:
-        """
-        Instantiate a WeakCall; pass a callable as the first
-        arg, followed by any number of arguments or keywords.
+        """Instantiate a WeakCall.
+
+        Pass a callable as the first arg, followed by any number of
+        arguments or keywords.
 
         # Example: wrap a method call with some positional and
         # keyword args:
@@ -206,9 +225,10 @@ class _Call:
     """
 
     def __init__(self, *args: Any, **keywds: Any):
-        """
-        Instantiate a Call; pass a callable as the first
-        arg, followed by any number of arguments or keywords.
+        """Instantiate a Call.
+
+        Pass a callable as the first arg, followed by any number of
+        arguments or keywords.
 
         # Example: wrap a method call with 1 positional and 1 keyword arg:
         mycall = ba.Call(myobj.dostuff, argval1, namedarg=argval2)
@@ -259,3 +279,132 @@ class WeakMethod:
 
     def __str__(self) -> str:
         return '<ba.WeakMethod object; call=' + str(self._func) + '>'
+
+
+def verify_object_death(obj: object) -> None:
+    """Warn if an object does not get freed within a short period.
+
+    Category: General Utility Functions
+
+    This can be handy to detect and prevent memory/resource leaks.
+    """
+    try:
+        ref = weakref.ref(obj)
+    except Exception:
+        print_exception('Unable to create weak-ref in verify_object_death')
+
+    # Use a slight range for our checks so they don't all land at once
+    # if we queue a lot of them.
+    delay = random.uniform(2.0, 5.5)
+    with _ba.Context('ui'):
+        _ba.timer(delay,
+                  lambda: _verify_object_death(ref),
+                  timetype=TimeType.REAL)
+
+
+def print_active_refs(obj: Any) -> None:
+    """Print info about things referencing a given object.
+
+    Category: General Utility Functions
+
+    Useful for tracking down cyclical references and causes for zombie objects.
+    """
+    # pylint: disable=too-many-nested-blocks
+    from types import FrameType, TracebackType
+    refs = list(gc.get_referrers(obj))
+    print(f'{Clr.YLW}Active referrers to {obj}:{Clr.RST}')
+    for i, ref in enumerate(refs):
+        print(f'{Clr.YLW}#{i+1}:{Clr.BLU} {ref}{Clr.RST}')
+
+        # For certain types of objects such as stack frames, show what is
+        # keeping *them* alive too.
+        if isinstance(ref, FrameType):
+            print(f'{Clr.YLW}  Active referrers to #{i+1}:{Clr.RST}')
+            refs2 = list(gc.get_referrers(ref))
+            for j, ref2 in enumerate(refs2):
+                print(f'{Clr.YLW}  #a{j+1}:{Clr.BLU} {ref2}{Clr.RST}')
+
+                # Can go further down the rabbit-hole if needed...
+                if bool(False):
+                    if isinstance(ref2, TracebackType):
+                        print(f'{Clr.YLW}    '
+                              f'Active referrers to #a{j+1}:{Clr.RST}')
+                        refs3 = list(gc.get_referrers(ref2))
+                        for k, ref3 in enumerate(refs3):
+                            print(f'{Clr.YLW}    '
+                                  f'#b{k+1}:{Clr.BLU} {ref3}{Clr.RST}')
+
+                            if isinstance(ref3, BaseException):
+                                print(f'{Clr.YLW}      Active referrers to'
+                                      f' #b{k+1}:{Clr.RST}')
+                                refs4 = list(gc.get_referrers(ref3))
+                                for x, ref4 in enumerate(refs4):
+                                    print(f'{Clr.YLW}      #c{x+1}:{Clr.BLU}'
+                                          f' {ref4}{Clr.RST}')
+
+
+def _verify_object_death(wref: ReferenceType) -> None:
+    obj = wref()
+    if obj is None:
+        return
+
+    try:
+        name = type(obj).__name__
+    except Exception:
+        print(f'Note: unable to get type name for {obj}')
+        name = 'object'
+
+    print(f'{Clr.RED}Error: {name} not dying when expected to:'
+          f' {Clr.BLD}{obj}{Clr.RST}')
+    print_active_refs(obj)
+
+
+def storagename(suffix: str = None) -> str:
+    """Generate a unique name for storing class data in shared places.
+
+    Category: General Utility Functions
+
+    This consists of a leading underscore, the module path at the
+    call site with dots replaced by underscores, the containing class's
+    qualified name, and the provided suffix. When storing data in public
+    places such as 'customdata' dicts, this minimizes the chance of
+    collisions with other similarly named classes.
+
+    Note that this will function even if called in the class definition.
+
+    # Example: generate a unique name for storage purposes:
+    class MyThingie:
+
+        # This will give something like '_mymodule_submodule_mythingie_data'.
+        _STORENAME = ba.storagename('data')
+
+        # Use that name to store some data in the Activity we were passed.
+        def __init__(self, activity):
+            activity.customdata[self._STORENAME] = {}
+    """
+    frame = inspect.currentframe()
+    if frame is None:
+        raise RuntimeError('Cannot get current stack frame.')
+    fback = frame.f_back
+
+    # Note: We need to explicitly clear frame here to avoid a ref-loop
+    # that keeps all function-dicts in the stack alive until the next
+    # full GC cycle (the stack frame refers to this function's dict,
+    # which refers to the stack frame).
+    del frame
+
+    if fback is None:
+        raise RuntimeError('Cannot get parent stack frame.')
+    modulepath = fback.f_globals.get('__name__')
+    if modulepath is None:
+        raise RuntimeError('Cannot get parent stack module path.')
+    assert isinstance(modulepath, str)
+    qualname = fback.f_locals.get('__qualname__')
+    if qualname is not None:
+        assert isinstance(qualname, str)
+        fullpath = f'_{modulepath}_{qualname.lower()}'
+    else:
+        fullpath = f'_{modulepath}'
+    if suffix is not None:
+        fullpath = f'{fullpath}_{suffix}'
+    return fullpath.replace('.', '_')

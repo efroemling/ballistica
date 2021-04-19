@@ -1,31 +1,13 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Snippets of code for use by the internal C++ layer.
 
 History: originally I would dynamically compile/eval bits of Python text
-from within C++ code, but the major downside there was that I would
-never catch code breakage until the code was next run.  By defining all
-snippets I use here and then capturing references to them all at launch
-I can verify everything I'm looking for exists and pylint can do
-its magic on this file.
+from within C++ code, but the major downside there was that none of that was
+type-checked so if names or arguments changed I would never catch code breakage
+until the code was next run.  By defining all snippets I use here and then
+capturing references to them all at launch I can immediately verify everything
+I'm looking for exists and pylint/mypy can do their magic on this file.
 """
 # (most of these are self-explanatory)
 # pylint: disable=missing-function-docstring
@@ -36,7 +18,7 @@ from typing import TYPE_CHECKING
 import _ba
 
 if TYPE_CHECKING:
-    from typing import List, Sequence, Optional
+    from typing import List, Sequence, Optional, Dict, Any
     import ba
 
 
@@ -58,31 +40,31 @@ def set_config_fullscreen_off() -> None:
 
 
 def not_signed_in_screen_message() -> None:
-    from ba._lang import Lstr
+    from ba._language import Lstr
     _ba.screenmessage(Lstr(resource='notSignedInErrorText'))
 
 
 def connecting_to_party_message() -> None:
-    from ba._lang import Lstr
+    from ba._language import Lstr
     _ba.screenmessage(Lstr(resource='internal.connectingToPartyText'),
                       color=(1, 1, 1))
 
 
 def rejecting_invite_already_in_party_message() -> None:
-    from ba._lang import Lstr
+    from ba._language import Lstr
     _ba.screenmessage(
         Lstr(resource='internal.rejectingInviteAlreadyInPartyText'),
         color=(1, 0.5, 0))
 
 
 def connection_failed_message() -> None:
-    from ba._lang import Lstr
+    from ba._language import Lstr
     _ba.screenmessage(Lstr(resource='internal.connectionFailedText'),
                       color=(1, 0.5, 0))
 
 
 def temporarily_unavailable_message() -> None:
-    from ba._lang import Lstr
+    from ba._language import Lstr
     _ba.playsound(_ba.getsound('error'))
     _ba.screenmessage(
         Lstr(resource='getTicketsWindow.unavailableTemporarilyText'),
@@ -90,20 +72,20 @@ def temporarily_unavailable_message() -> None:
 
 
 def in_progress_message() -> None:
-    from ba._lang import Lstr
+    from ba._language import Lstr
     _ba.playsound(_ba.getsound('error'))
     _ba.screenmessage(Lstr(resource='getTicketsWindow.inProgressText'),
                       color=(1, 0, 0))
 
 
 def error_message() -> None:
-    from ba._lang import Lstr
+    from ba._language import Lstr
     _ba.playsound(_ba.getsound('error'))
     _ba.screenmessage(Lstr(resource='errorText'), color=(1, 0, 0))
 
 
 def purchase_not_valid_error() -> None:
-    from ba._lang import Lstr
+    from ba._language import Lstr
     _ba.playsound(_ba.getsound('error'))
     _ba.screenmessage(Lstr(resource='store.purchaseNotValidError',
                            subs=[('${EMAIL}', 'support@froemling.net')]),
@@ -111,28 +93,28 @@ def purchase_not_valid_error() -> None:
 
 
 def purchase_already_in_progress_error() -> None:
-    from ba._lang import Lstr
+    from ba._language import Lstr
     _ba.playsound(_ba.getsound('error'))
     _ba.screenmessage(Lstr(resource='store.purchaseAlreadyInProgressText'),
                       color=(1, 0, 0))
 
 
 def gear_vr_controller_warning() -> None:
-    from ba._lang import Lstr
+    from ba._language import Lstr
     _ba.playsound(_ba.getsound('error'))
     _ba.screenmessage(Lstr(resource='usesExternalControllerText'),
                       color=(1, 0, 0))
 
 
 def orientation_reset_cb_message() -> None:
-    from ba._lang import Lstr
+    from ba._language import Lstr
     _ba.screenmessage(
         Lstr(resource='internal.vrOrientationResetCardboardText'),
         color=(0, 1, 0))
 
 
 def orientation_reset_message() -> None:
-    from ba._lang import Lstr
+    from ba._language import Lstr
     _ba.screenmessage(Lstr(resource='internal.vrOrientationResetText'),
                       color=(0, 1, 0))
 
@@ -151,18 +133,16 @@ def launch_main_menu_session() -> None:
 
 
 def language_test_toggle() -> None:
-    from ba._lang import setlanguage
-    setlanguage('Gibberish' if _ba.app.language == 'English' else 'English')
+    _ba.app.lang.setlanguage('Gibberish' if _ba.app.lang.language ==
+                             'English' else 'English')
 
 
 def award_in_control_achievement() -> None:
-    from ba._achievement import award_local_achievement
-    award_local_achievement('In Control')
+    _ba.app.ach.award_local_achievement('In Control')
 
 
 def award_dual_wielding_achievement() -> None:
-    from ba._achievement import award_local_achievement
-    award_local_achievement('Dual Wielding')
+    _ba.app.ach.award_local_achievement('Dual Wielding')
 
 
 def play_gong_sound() -> None:
@@ -174,19 +154,19 @@ def launch_coop_game(name: str) -> None:
 
 
 def purchases_restored_message() -> None:
-    from ba._lang import Lstr
+    from ba._language import Lstr
     _ba.screenmessage(Lstr(resource='getTicketsWindow.purchasesRestoredText'),
                       color=(0, 1, 0))
 
 
 def dismiss_wii_remotes_window() -> None:
-    call = _ba.app.dismiss_wii_remotes_window_call
+    call = _ba.app.ui.dismiss_wii_remotes_window_call
     if call is not None:
         call()
 
 
 def unavailable_message() -> None:
-    from ba._lang import Lstr
+    from ba._language import Lstr
     _ba.screenmessage(Lstr(resource='getTicketsWindow.unavailableText'),
                       color=(1, 0, 0))
 
@@ -198,12 +178,12 @@ def submit_analytics_counts(sval: str) -> None:
 
 def set_last_ad_network(sval: str) -> None:
     import time
-    _ba.app.last_ad_network = sval
-    _ba.app.last_ad_network_set_time = time.time()
+    _ba.app.ads.last_ad_network = sval
+    _ba.app.ads.last_ad_network_set_time = time.time()
 
 
 def no_game_circle_message() -> None:
-    from ba._lang import Lstr
+    from ba._language import Lstr
     _ba.screenmessage(Lstr(resource='noGameCircleText'), color=(1, 0, 0))
 
 
@@ -256,10 +236,10 @@ def party_icon_activate(origin: Sequence[float]) -> None:
     _ba.playsound(_ba.getsound('swish'))
 
     # If it exists, dismiss it; otherwise make a new one.
-    if app.party_window is not None and app.party_window() is not None:
-        app.party_window().close()
+    if app.ui.party_window is not None and app.ui.party_window() is not None:
+        app.ui.party_window().close()
     else:
-        app.party_window = weakref.ref(PartyWindow(origin=origin))
+        app.ui.party_window = weakref.ref(PartyWindow(origin=origin))
 
 
 def read_config() -> None:
@@ -268,10 +248,13 @@ def read_config() -> None:
 
 def ui_remote_press() -> None:
     """Handle a press by a remote device that is only usable for nav."""
-    from ba._lang import Lstr
-    _ba.screenmessage(Lstr(resource='internal.controllerForMenusOnlyText'),
-                      color=(1, 0, 0))
-    _ba.playsound(_ba.getsound('error'))
+    from ba._language import Lstr
+
+    # Can be called without a context; need a context for getsound.
+    with _ba.Context('ui'):
+        _ba.screenmessage(Lstr(resource='internal.controllerForMenusOnlyText'),
+                          color=(1, 0, 0))
+        _ba.playsound(_ba.getsound('error'))
 
 
 def quit_window() -> None:
@@ -280,7 +263,7 @@ def quit_window() -> None:
 
 
 def remove_in_game_ads_message() -> None:
-    _ba.app.do_remove_in_game_ads_message()
+    _ba.app.ads.do_remove_in_game_ads_message()
 
 
 def telnet_access_request() -> None:
@@ -293,7 +276,7 @@ def do_quit() -> None:
 
 
 def shutdown() -> None:
-    _ba.app.shutdown()
+    _ba.app.on_app_shutdown()
 
 
 def gc_disable() -> None:
@@ -303,11 +286,11 @@ def gc_disable() -> None:
 
 def device_menu_press(device: ba.InputDevice) -> None:
     from bastd.ui.mainmenu import MainMenuWindow
-    in_main_menu = bool(_ba.app.main_menu_window)
+    in_main_menu = _ba.app.ui.has_main_menu_window()
     if not in_main_menu:
         _ba.set_ui_input_device(device)
         _ba.playsound(_ba.getsound('swish'))
-        _ba.app.main_menu_window = (MainMenuWindow().get_root_widget())
+        _ba.app.ui.set_main_menu_window(MainMenuWindow().get_root_widget())
 
 
 def show_url_window(address: str) -> None:
@@ -338,11 +321,16 @@ def filter_chat_message(msg: str, client_id: int) -> Optional[str]:
 
 
 def local_chat_message(msg: str) -> None:
-    if (_ba.app.party_window is not None
-            and _ba.app.party_window() is not None):
-        _ba.app.party_window().on_chat_message(msg)
+    if (_ba.app.ui.party_window is not None
+            and _ba.app.ui.party_window() is not None):
+        _ba.app.ui.party_window().on_chat_message(msg)
 
 
-def handle_remote_achievement_list(completed_achievements: List[str]) -> None:
-    from ba import _achievement
-    _achievement.set_completed_achievements(completed_achievements)
+def get_player_icon(sessionplayer: ba.SessionPlayer) -> Dict[str, Any]:
+    info = sessionplayer.get_icon_info()
+    return {
+        'texture': _ba.gettexture(info['texture']),
+        'tint_texture': _ba.gettexture(info['tint_texture']),
+        'tint_color': info['tint_color'],
+        'tint2_color': info['tint2_color']
+    }

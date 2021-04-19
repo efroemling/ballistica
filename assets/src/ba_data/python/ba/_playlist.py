@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Playlist related functionality."""
 
 from __future__ import annotations
@@ -46,7 +28,7 @@ def filter_playlist(playlist: PlaylistType,
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-statements
-    from ba import _meta
+    import _ba
     from ba import _map
     from ba import _general
     from ba import _gameactivity
@@ -54,7 +36,7 @@ def filter_playlist(playlist: PlaylistType,
     unowned_maps: Sequence[str]
     if remove_unowned or mark_unowned:
         unowned_maps = _map.get_unowned_maps()
-        unowned_game_types = _meta.get_unowned_game_types()
+        unowned_game_types = _ba.app.meta.get_unowned_game_types()
     else:
         unowned_maps = []
         unowned_game_types = set()
@@ -80,7 +62,7 @@ def filter_playlist(playlist: PlaylistType,
         # the actual game class. add successful ones to our initial list
         # to present to the user.
         if not isinstance(entry['type'], str):
-            raise Exception('invalid entry format')
+            raise TypeError('invalid entry format')
         try:
             # Do some type filters for backwards compat.
             if entry['type'] in ('Assault.AssaultGame',
@@ -151,11 +133,10 @@ def filter_playlist(playlist: PlaylistType,
                 entry['is_unowned_game'] = True
 
             # Make sure all settings the game defines are present.
-            neededsettings = gameclass.get_settings(sessiontype)
-            for setting_name, setting in neededsettings:
-                if (setting_name not in entry['settings']
-                        and 'default' in setting):
-                    entry['settings'][setting_name] = setting['default']
+            neededsettings = gameclass.get_available_settings(sessiontype)
+            for setting in neededsettings:
+                if setting.name not in entry['settings']:
+                    entry['settings'][setting.name] = setting.default
             goodlist.append(entry)
         except ImportError as exc:
             print(f'Import failed while scanning playlist: {exc}')

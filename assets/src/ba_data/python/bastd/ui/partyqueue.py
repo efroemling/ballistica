@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """UI related to waiting in line for a party."""
 
 from __future__ import annotations
@@ -187,7 +169,7 @@ class PartyQueueWindow(ba.Window):
             self._boost_brightness += 0.6
 
     def __init__(self, queue_id: str, address: str, port: int):
-        ba.app.have_party_queue_window = True
+        ba.app.ui.have_party_queue_window = True
         self._address = address
         self._port = port
         self._queue_id = queue_id
@@ -223,11 +205,13 @@ class PartyQueueWindow(ba.Window):
         self._line_image: Optional[ba.Widget] = None
         self.eyes_model = ba.getmodel('plasticEyesTransparent')
         self._white_tex = ba.gettexture('white')
+        uiscale = ba.app.ui.uiscale
         super().__init__(root_widget=ba.containerwidget(
             size=(self._width, self._height),
             color=(0.45, 0.63, 0.15),
             transition='in_scale',
-            scale=1.4 if ba.app.small_ui else 1.2 if ba.app.med_ui else 1.0))
+            scale=(1.4 if uiscale is ba.UIScale.SMALL else
+                   1.2 if uiscale is ba.UIScale.MEDIUM else 1.0)))
 
         self._cancel_button = ba.buttonwidget(parent=self._root_widget,
                                               scale=1.0,
@@ -272,14 +256,14 @@ class PartyQueueWindow(ba.Window):
 
     def __del__(self) -> None:
         try:
-            ba.app.have_party_queue_window = False
+            ba.app.ui.have_party_queue_window = False
             _ba.add_transaction({
                 'type': 'PARTY_QUEUE_REMOVE',
                 'q': self._queue_id
             })
             _ba.run_transactions()
         except Exception:
-            ba.print_exception('err removing self from party queue')
+            ba.print_exception('Error removing self from party queue.')
 
     def get_line_left(self) -> float:
         """(internal)"""
@@ -374,8 +358,15 @@ class PartyQueueWindow(ba.Window):
 
     def on_update_response(self, response: Optional[Dict[str, Any]]) -> None:
         """We've received a response from an update to the server."""
+        # pylint: disable=too-many-branches
         if not self._root_widget:
             return
+
+        # Seeing this in logs; debugging...
+        if not self._title_text:
+            print('PartyQueueWindows update: Have root but no title_text.')
+            return
+
         if response is not None:
             should_show_field = (response.get('d') is not None)
             self._smoothing = response['s']

@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Provides UI to edit a player profile."""
 
 from __future__ import annotations
@@ -40,8 +22,9 @@ class EditProfileWindow(ba.Window):
     def reload_window(self) -> None:
         """Transitions out and recreates ourself."""
         ba.containerwidget(edit=self._root_widget, transition='out_left')
-        ba.app.main_menu_window = EditProfileWindow(
-            self.get_name(), self._in_main_menu).get_root_widget()
+        ba.app.ui.set_main_menu_window(
+            EditProfileWindow(self.getname(),
+                              self._in_main_menu).get_root_widget())
 
     def __init__(self,
                  existing_profile: Optional[str],
@@ -62,19 +45,21 @@ class EditProfileWindow(ba.Window):
         # Grab profile colors or pick random ones.
         self._color, self._highlight = get_player_profile_colors(
             existing_profile)
-        self._width = width = 780.0 if ba.app.small_ui else 680.0
-        self._x_inset = x_inset = 50.0 if ba.app.small_ui else 0.0
-        self._height = height = (350.0 if ba.app.small_ui else
-                                 400.0 if ba.app.med_ui else 450.0)
+        uiscale = ba.app.ui.uiscale
+        self._width = width = 780.0 if uiscale is ba.UIScale.SMALL else 680.0
+        self._x_inset = x_inset = 50.0 if uiscale is ba.UIScale.SMALL else 0.0
+        self._height = height = (
+            350.0 if uiscale is ba.UIScale.SMALL else
+            400.0 if uiscale is ba.UIScale.MEDIUM else 450.0)
         spacing = 40
-        self._base_scale = (2.05 if ba.app.small_ui else
-                            1.5 if ba.app.med_ui else 1.0)
-        top_extra = 15 if ba.app.small_ui else 15
+        self._base_scale = (2.05 if uiscale is ba.UIScale.SMALL else
+                            1.5 if uiscale is ba.UIScale.MEDIUM else 1.0)
+        top_extra = 15 if uiscale is ba.UIScale.SMALL else 15
         super().__init__(root_widget=ba.containerwidget(
             size=(width, height + top_extra),
             transition=transition,
             scale=self._base_scale,
-            stack_offset=(0, 15) if ba.app.small_ui else (0, 0)))
+            stack_offset=(0, 15) if uiscale is ba.UIScale.SMALL else (0, 0)))
         cancel_button = btn = ba.buttonwidget(
             parent=self._root_widget,
             position=(52 + x_inset, height - 60),
@@ -100,7 +85,7 @@ class EditProfileWindow(ba.Window):
                       text=(ba.Lstr(resource=self._r + '.titleNewText')
                             if existing_profile is None else ba.Lstr(
                                 resource=self._r + '.titleEditText')),
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       maxwidth=290,
                       scale=1.0,
                       h_align='center',
@@ -209,7 +194,7 @@ class EditProfileWindow(ba.Window):
                           position=(self._width * 0.5, v - 39),
                           size=(0, 0),
                           scale=0.6,
-                          color=ba.app.infotextcolor,
+                          color=ba.app.ui.infotextcolor,
                           text=txtl,
                           maxwidth=270,
                           h_align='center',
@@ -256,7 +241,7 @@ class EditProfileWindow(ba.Window):
                           draw_controller=btn,
                           text=ba.Lstr(resource=self._r + '.iconText'),
                           scale=0.7,
-                          color=ba.app.title_color,
+                          color=ba.app.ui.title_color,
                           maxwidth=120)
 
             self._update_icon()
@@ -279,7 +264,7 @@ class EditProfileWindow(ba.Window):
                           position=(self._width * 0.5, v - 39),
                           size=(0, 0),
                           scale=0.6,
-                          color=ba.app.infotextcolor,
+                          color=ba.app.ui.infotextcolor,
                           text=txtl,
                           maxwidth=240,
                           h_align='center',
@@ -320,7 +305,7 @@ class EditProfileWindow(ba.Window):
                           position=(self._width * 0.5, v - 43),
                           size=(0, 0),
                           scale=0.6,
-                          color=ba.app.infotextcolor,
+                          color=ba.app.ui.infotextcolor,
                           text=txtl,
                           maxwidth=270,
                           h_align='center',
@@ -377,7 +362,7 @@ class EditProfileWindow(ba.Window):
                       draw_controller=btn,
                       text=ba.Lstr(resource=self._r + '.colorText'),
                       scale=0.7,
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       maxwidth=120)
 
         self._character_button = btn = ba.buttonwidget(
@@ -401,7 +386,7 @@ class EditProfileWindow(ba.Window):
                       draw_controller=btn,
                       text=ba.Lstr(resource=self._r + '.characterText'),
                       scale=0.7,
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       maxwidth=130)
 
         self._highlight_button = btn = ba.buttonwidget(
@@ -434,7 +419,7 @@ class EditProfileWindow(ba.Window):
                       draw_controller=btn,
                       text=ba.Lstr(resource=self._r + '.highlightText'),
                       scale=0.7,
-                      color=ba.app.title_color,
+                      color=ba.app.ui.title_color,
                       maxwidth=120)
         self._update_character()
 
@@ -546,7 +531,7 @@ class EditProfileWindow(ba.Window):
         elif picker_type == 'highlight':
             initial_color = self._highlight
         else:
-            raise Exception('invalid picker_type: ' + picker_type)
+            raise ValueError('invalid picker_type: ' + picker_type)
         colorpicker.ColorPicker(
             parent=self._root_widget,
             position=origin,
@@ -557,12 +542,13 @@ class EditProfileWindow(ba.Window):
             tag=picker_type)
 
     def _cancel(self) -> None:
-        from bastd.ui.profile import browser as pbrowser
+        from bastd.ui.profile.browser import ProfileBrowserWindow
         ba.containerwidget(edit=self._root_widget, transition='out_right')
-        ba.app.main_menu_window = pbrowser.ProfileBrowserWindow(
-            'in_left',
-            selected_profile=self._existing_profile,
-            in_main_menu=self._in_main_menu).get_root_widget()
+        ba.app.ui.set_main_menu_window(
+            ProfileBrowserWindow(
+                'in_left',
+                selected_profile=self._existing_profile,
+                in_main_menu=self._in_main_menu).get_root_widget())
 
     def _set_color(self, color: Tuple[float, float, float]) -> None:
         self._color = color
@@ -605,7 +591,7 @@ class EditProfileWindow(ba.Window):
     def _update_clipped_name(self) -> None:
         if not self._clipped_name_text:
             return
-        name = self.get_name()
+        name = self.getname()
         if name == '__account__':
             name = (_ba.get_account_name()
                     if _ba.get_account_state() == 'signed_in' else '???')
@@ -630,7 +616,7 @@ class EditProfileWindow(ba.Window):
         if self._icon_button_label:
             ba.textwidget(edit=self._icon_button_label, text=self._icon)
 
-    def get_name(self) -> str:
+    def getname(self) -> str:
         """Return the current profile name value."""
         if self._is_account_profile:
             new_name = '__account__'
@@ -642,8 +628,8 @@ class EditProfileWindow(ba.Window):
 
     def save(self, transition_out: bool = True) -> bool:
         """Save has been selected."""
-        from bastd.ui.profile import browser as pbrowser
-        new_name = self.get_name().strip()
+        from bastd.ui.profile.browser import ProfileBrowserWindow
+        new_name = self.getname().strip()
 
         if not new_name:
             ba.screenmessage(ba.Lstr(resource='nameNotEmptyText'))
@@ -679,8 +665,9 @@ class EditProfileWindow(ba.Window):
         if transition_out:
             _ba.run_transactions()
             ba.containerwidget(edit=self._root_widget, transition='out_right')
-            ba.app.main_menu_window = (pbrowser.ProfileBrowserWindow(
-                'in_left',
-                selected_profile=new_name,
-                in_main_menu=self._in_main_menu).get_root_widget())
+            ba.app.ui.set_main_menu_window(
+                ProfileBrowserWindow(
+                    'in_left',
+                    selected_profile=new_name,
+                    in_main_menu=self._in_main_menu).get_root_widget())
         return True

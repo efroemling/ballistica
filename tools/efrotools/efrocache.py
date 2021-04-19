@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """A simple cloud caching system for making built binaries/assets available.
 
 The basic idea here is the ballistica-internal project can flag file targets
@@ -43,8 +25,6 @@ if TYPE_CHECKING:
 BASE_URL = 'https://files.ballistica.net/cache/ba1/'
 
 TARGET_TAG = '#__EFROCACHE_TARGET__'
-STRIP_BEGIN_TAG = '#__EFROCACHE_STRIP_BEGIN__'
-STRIP_END_TAG = '#__EFROCACHE_STRIP_END__'
 
 CACHE_DIR_NAME = '.efrocache'
 CACHE_MAP_NAME = '.efrocachemap'
@@ -98,7 +78,7 @@ def get_target(path: str) -> None:
     # download it.
     if not os.path.exists(local_cache_path):
         os.makedirs(os.path.dirname(local_cache_path), exist_ok=True)
-        print(f'Downloading: {Clr.SBLU}{path}{Clr.RST}')
+        print(f'Downloading: {Clr.BLU}{path}{Clr.RST}')
         result = subprocess.run(
             f'curl --fail --silent {url} --output {local_cache_path_dl}',
             shell=True,
@@ -118,8 +98,25 @@ def get_target(path: str) -> None:
 
     # Ok we should have a valid .tar.gz file in our cache dir at this point.
     # Just expand it and it get placed wherever it belongs.
+
+    # Strangely, decompressing lots of these simultaneously leads to occasional
+    # "File does not exist" errors when running on Windows Subsystem for Linux.
+    # There should be no overlap in files getting written, but perhaps
+    # something about how tar rebuilds the directory structure causes clashes.
+    # It seems that just explicitly creating necessary directories first
+    # prevents the problem.
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+
     print(f'Extracting: {path}')
-    run(f'tar -zxf {local_cache_path}')
+    try:
+        subprocess.run(['tar', '-zxf', local_cache_path], check=True)
+    except Exception:
+        # If something goes wrong, try to make sure we don't leave a half
+        # decompressed file lying around or whatnot.
+        print(f"Error expanding cache archive for '{local_cache_path}'.")
+        if os.path.exists(local_cache_path):
+            os.remove(local_cache_path)
+        raise
 
     # The file will wind up with the timestamp it was compressed with,
     # so let's update its timestamp or else it will still be considered
@@ -141,20 +138,7 @@ def filter_makefile(makefile_dir: str, contents: str) -> str:
 
     cachemap = os.path.join(to_proj_root, CACHE_MAP_NAME)
     lines = contents.splitlines()
-    snippets = 'tools/snippets'
-
-    # Strip out parts they don't want.
-    while STRIP_BEGIN_TAG in lines:
-        index = lines.index(STRIP_BEGIN_TAG)
-        endindex = index
-        while lines[endindex] != STRIP_END_TAG:
-            endindex += 1
-
-        # If the line after us is blank, include it too to keep spacing clean.
-        if not lines[endindex + 1].strip():
-            endindex += 1
-
-        del lines[index:endindex + 1]
+    pcommand = 'tools/pcommand'
 
     # Replace cachable targets with cache lookups
     while TARGET_TAG in lines:
@@ -167,7 +151,7 @@ def filter_makefile(makefile_dir: str, contents: str) -> str:
         lines.insert(index, tname + ': ' + cachemap)
         target = (makefile_dir + '/' + '$@') if makefile_dir else '$@'
         pre = f'cd {to_proj_root} && ' if makefile_dir else ''
-        lines.insert(index + 1, f'\t@{pre}{snippets} efrocache_get {target}')
+        lines.insert(index + 1, f'\t@{pre}{pcommand} efrocache_get {target}')
     return '\n'.join(lines) + '\n'
 
 
@@ -272,7 +256,7 @@ def _upload_cache(fnames1: List[str], fnames2: List[str], hashes_str: str,
 
     # Sync all individual cache files to the staging server.
     print(f'{Clr.SBLU}Pushing cache to staging...{Clr.RST}', flush=True)
-    run('rsync --progress --recursive build/efrocache/'
+    run('rsync --progress --recursive --human-readable build/efrocache/'
         ' ubuntu@ballistica.net:files.ballistica.net/cache/ba1/')
 
     # Now generate the starter cache on the server..

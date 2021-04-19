@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Music playback functionality using the Mac Music (formerly iTunes) app."""
 from __future__ import annotations
 
@@ -86,7 +68,7 @@ class _MacMusicAppThread(threading.Thread):
     def run(self) -> None:
         """Run the Music.app thread."""
         from ba._general import Call
-        from ba._lang import Lstr
+        from ba._language import Lstr
         from ba._enums import TimeType
         _ba.set_thread_name('BA_MacMusicAppThread')
         _ba.mac_music_app_init()
@@ -230,7 +212,6 @@ class _MacMusicAppThread(threading.Thread):
 
     def _play_current_playlist(self) -> None:
         try:
-            from ba import _lang
             from ba._general import Call
             assert self._current_playlist is not None
             if _ba.mac_music_app_play_playlist(self._current_playlist):
@@ -238,8 +219,8 @@ class _MacMusicAppThread(threading.Thread):
             else:
                 _ba.pushcall(Call(
                     _ba.screenmessage,
-                    _lang.get_resource('playlistNotFoundText') + ': \'' +
-                    self._current_playlist + '\'', (1, 0, 0)),
+                    _ba.app.lang.get_resource('playlistNotFoundText') +
+                    ': \'' + self._current_playlist + '\'', (1, 0, 0)),
                              from_other_thread=True)
         except Exception:
             from ba import _error

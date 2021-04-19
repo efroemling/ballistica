@@ -1,23 +1,5 @@
-# Copyright (c) 2011-2020 Eric Froemling
+# Released under the MIT License. See LICENSE for details.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# -----------------------------------------------------------------------------
 """Defines Actors related to controls guides."""
 
 from __future__ import annotations
@@ -243,6 +225,13 @@ class ControlsGuide(ba.Actor):
         # Don't do anything until our delay has passed.
         ba.timer(delay, ba.WeakCall(self._start_updating))
 
+    @staticmethod
+    def _meaningful_button_name(device: ba.InputDevice, button: int) -> str:
+        """Return a flattened string button name; empty for non-meaningful."""
+        if not device.has_meaningful_button_names:
+            return ''
+        return device.get_button_name(button).evaluate()
+
     def _start_updating(self) -> None:
 
         # Ok, our delay has passed. Now lets periodically see if we can fade
@@ -264,7 +253,9 @@ class ControlsGuide(ba.Actor):
 
         # If we have a touchscreen, we only fade in if we have a player with
         # an input device that is *not* the touchscreen.
-        touchscreen: Optional[ba.InputDevice] = _ba.get_input_device(
+        # (otherwise it is confusing to see the touchscreen buttons right
+        # next to our display buttons)
+        touchscreen: Optional[ba.InputDevice] = _ba.getinputdevice(
             'TouchScreen', '#1', doraise=False)
 
         if touchscreen is not None:
@@ -272,7 +263,7 @@ class ControlsGuide(ba.Actor):
             # We want to get ones who are still in the process of
             # selecting a character, etc.
             input_devices = [
-                p.get_input_device() for p in ba.getsession().players
+                p.inputdevice for p in ba.getsession().sessionplayers
             ]
             input_devices = [
                 i for i in input_devices if i and i is not touchscreen
@@ -284,8 +275,8 @@ class ControlsGuide(ba.Actor):
                 for device in input_devices:
                     for name in ('buttonPunch', 'buttonJump', 'buttonBomb',
                                  'buttonPickUp'):
-                        if device.get_button_name(
-                                get_device_value(device, name)) != '':
+                        if self._meaningful_button_name(
+                                device, get_device_value(device, name)) != '':
                             fade_in = True
                             break
                     if fade_in:
@@ -325,13 +316,13 @@ class ControlsGuide(ba.Actor):
 
         # We look at the session's players; not the activity's - we want to
         # get ones who are still in the process of selecting a character, etc.
-        input_devices = [p.get_input_device() for p in ba.getsession().players]
+        input_devices = [p.inputdevice for p in ba.getsession().sessionplayers]
         input_devices = [i for i in input_devices if i]
 
         # If there's no players with input devices yet, try to default to
         # showing keyboard controls.
         if not input_devices:
-            kbd = _ba.get_input_device('Keyboard', '#1', doraise=False)
+            kbd = _ba.getinputdevice('Keyboard', '#1', doraise=False)
             if kbd is not None:
                 input_devices.append(kbd)
 
@@ -368,20 +359,20 @@ class ControlsGuide(ba.Actor):
 
             # Ignore empty values; things like the remote app or
             # wiimotes can return these.
-            bname = device.get_button_name(
-                get_device_value(device, 'buttonPunch'))
+            bname = self._meaningful_button_name(
+                device, get_device_value(device, 'buttonPunch'))
             if bname != '':
                 punch_button_names.add(bname)
-            bname = device.get_button_name(
-                get_device_value(device, 'buttonJump'))
+            bname = self._meaningful_button_name(
+                device, get_device_value(device, 'buttonJump'))
             if bname != '':
                 jump_button_names.add(bname)
-            bname = device.get_button_name(
-                get_device_value(device, 'buttonBomb'))
+            bname = self._meaningful_button_name(
+                device, get_device_value(device, 'buttonBomb'))
             if bname != '':
                 bomb_button_names.add(bname)
-            bname = device.get_button_name(
-                get_device_value(device, 'buttonPickUp'))
+            bname = self._meaningful_button_name(
+                device, get_device_value(device, 'buttonPickUp'))
             if bname != '':
                 pickup_button_names.add(bname)
 
@@ -470,8 +461,7 @@ class ControlsGuide(ba.Actor):
         return not self._dead
 
     def handlemessage(self, msg: Any) -> Any:
-        if __debug__:
-            self._handlemessage_sanity_check()
+        assert not self.expired
         if isinstance(msg, ba.DieMessage):
             if msg.immediate:
                 self._die()
