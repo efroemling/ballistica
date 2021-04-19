@@ -251,9 +251,6 @@ class Map(Actor):
                              or [(0, 0, 0, 0, 0, 0)])
         self.ffa_spawn_points = (self.get_def_points('ffa_spawn')
                                  or [(0, 0, 0, 0, 0, 0)])
-        # Let's shuffle our spawn points,
-        # so that no one is offended by the constant spawn on the edge.
-        random.shuffle(self.ffa_spawn_points)
         self.spawn_by_flag_points = (self.get_def_points('spawn_by_flag')
                                      or [(0, 0, 0, 0, 0, 0)])
         self.flag_points = self.get_def_points('flag') or [(0, 0, 0)]
@@ -279,7 +276,10 @@ class Map(Actor):
         self.is_flying = False
 
         # FIXME: this should be part of game; not map.
-        self._next_ffa_start_index = 0
+        # Let's select random index for first spawn point,
+        # so that no one is offended by the constant spawn on the edge.
+        self._next_ffa_start_index = random.randrange(
+            len(self.ffa_spawn_points))
 
     def is_point_near_edge(self,
                            point: ba.Vec3,
