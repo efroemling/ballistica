@@ -276,7 +276,10 @@ class Map(Actor):
         self.is_flying = False
 
         # FIXME: this should be part of game; not map.
-        self._next_ffa_start_index = 0
+        # Let's select random index for first spawn point,
+        # so that no one is offended by the constant spawn on the edge.
+        self._next_ffa_start_index = random.randrange(
+            len(self.ffa_spawn_points))
 
     def is_point_near_edge(self,
                            point: ba.Vec3,
