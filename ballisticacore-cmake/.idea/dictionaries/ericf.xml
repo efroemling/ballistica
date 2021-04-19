@@ -200,6 +200,7 @@
       <w>cstdlib</w>
       <w>cstring</w>
       <w>ctargetref</w>
+      <w>ctracker</w>
       <w>cubemap</w>
       <w>curtime</w>
       <w>cutef</w>

@@ -161,9 +161,10 @@ class Actor:
         """Returns whether the Actor is 'alive'.
 
         What this means is up to the Actor.
-        It is not a requirement for Actors to be
-        able to die; just that they report whether
-        they are Alive or not.
+        It is not a requirement for Actors to be able to die;
+        just that they report whether they consider themselves
+        to be alive or not. In cases where dead/alive is
+        irrelevant, True should be returned.
         """
         return True
 

@@ -1,5 +1,5 @@
 <!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->
-<h4><em>last updated on 2021-04-17 for Ballistica version 1.6.0 build 20343</em></h4>
+<h4><em>last updated on 2021-04-19 for Ballistica version 1.6.0 build 20347</em></h4>
 <p>This page documents the Python classes and functions in the 'ba' module,
  which are the ones most relevant to modding in Ballistica. If you come across something you feel should be included here or could be better explained, please <a href="mailto:support@froemling.net">let me know</a>. Happy modding!</p>
 <hr>
@@ -803,9 +803,10 @@ or returns None depending on whether 'doraise' is True.</p>
 <p>Returns whether the Actor is 'alive'.</p>
 
 <p>What this means is up to the Actor.
-It is not a requirement for Actors to be
-able to die; just that they report whether
-they are Alive or not.</p>
+It is not a requirement for Actors to be able to die;
+just that they report whether they consider themselves
+to be alive or not. In cases where dead/alive is
+irrelevant, True should be returned.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Actor__on_expire">on_expire()</a></dt></h4><dd>
