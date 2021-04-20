@@ -4793,11 +4793,30 @@ the type-checker properly identifies the returned value as one.</p>
 </p>
 
 <h3>Methods:</h3>
+<h5><a href="#method_ba_Plugin__on_app_launch">on_app_launch()</a>, <a href="#method_ba_Plugin__on_app_pause">on_app_pause()</a>, <a href="#method_ba_Plugin__on_app_resume">on_app_resume()</a>, <a href="#method_ba_Plugin__on_app_shutdown">on_app_shutdown()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_Plugin__on_app_launch">on_app_launch()</a></dt></h4><dd>
 <p><span>on_app_launch(self) -&gt; None</span></p>
 
 <p>Called when the app is being launched.</p>
+
+</dd>
+<dt><h4><a name="method_ba_Plugin__on_app_pause">on_app_pause()</a></dt></h4><dd>
+<p><span>on_app_pause(self) -&gt; None</span></p>
+
+<p>Сalled after pausing game activity.</p>
+
+</dd>
+<dt><h4><a name="method_ba_Plugin__on_app_resume">on_app_resume()</a></dt></h4><dd>
+<p><span>on_app_resume(self) -&gt; None</span></p>
+
+<p>Called after the game continues.</p>
+
+</dd>
+<dt><h4><a name="method_ba_Plugin__on_app_shutdown">on_app_shutdown()</a></dt></h4><dd>
+<p><span>on_app_shutdown(self) -&gt; None</span></p>
+
+<p>Called before closing the application.</p>
 
 </dd>
 </dl>
@@ -4813,7 +4832,7 @@ the type-checker properly identifies the returned value as one.</p>
 </p>
 
 <h3>Methods:</h3>
-<h5><a href="#method_ba_PluginSubsystem____init__">&lt;constructor&gt;</a>, <a href="#method_ba_PluginSubsystem__on_app_launch">on_app_launch()</a></h5>
+<h5><a href="#method_ba_PluginSubsystem____init__">&lt;constructor&gt;</a>, <a href="#method_ba_PluginSubsystem__on_app_launch">on_app_launch()</a>, <a href="#method_ba_PluginSubsystem__on_app_pause">on_app_pause()</a>, <a href="#method_ba_PluginSubsystem__on_app_resume">on_app_resume()</a>, <a href="#method_ba_PluginSubsystem__on_app_shutdown">on_app_shutdown()</a></h5>
 <dl>
 <dt><h4><a name="method_ba_PluginSubsystem____init__">&lt;constructor&gt;</a></dt></h4><dd>
 <p><span>ba.PluginSubsystem()</span></p>
@@ -4823,6 +4842,24 @@ the type-checker properly identifies the returned value as one.</p>
 <p><span>on_app_launch(self) -&gt; None</span></p>
 
 <p>Should be called at app launch time.</p>
+
+</dd>
+<dt><h4><a name="method_ba_PluginSubsystem__on_app_pause">on_app_pause()</a></dt></h4><dd>
+<p><span>on_app_pause(self) -&gt; None</span></p>
+
+<p>Called when the app goes to a suspended state.</p>
+
+</dd>
+<dt><h4><a name="method_ba_PluginSubsystem__on_app_resume">on_app_resume()</a></dt></h4><dd>
+<p><span>on_app_resume(self) -&gt; None</span></p>
+
+<p>Run when the app resumes from a suspended state.</p>
+
+</dd>
+<dt><h4><a name="method_ba_PluginSubsystem__on_app_shutdown">on_app_shutdown()</a></dt></h4><dd>
+<p><span>on_app_shutdown(self) -&gt; None</span></p>
+
+<p>Called when the app is being closed.</p>
 
 </dd>
 </dl>
