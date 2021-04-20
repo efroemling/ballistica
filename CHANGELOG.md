@@ -17,6 +17,7 @@
 - Running a `_ba.connect_to_party` command via the -exec arg should now do the right thing.
 - Fixed possible crash due to buffer under/overruns in `Utils::precalc_rands_*`.
 - Fixed a potential crash-on-exit due to statically allocated colliders/caches in `ode_collision_trimesh.cpp` getting torn down while in use
+- Better randomization for player free-for-all starting locations
 
 ### 1.5.29 (20246)
 - Exposed ba method/class initing in public C++ layer.
