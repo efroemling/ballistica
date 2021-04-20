@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from dataclasses import dataclass
+
 import _ba
 
 if TYPE_CHECKING:
@@ -35,6 +36,33 @@ class PluginSubsystem:
             except Exception:
                 from ba import _error
                 _error.print_exception('Error in plugin on_app_launch()')
+
+    def on_app_pause(self) -> None:
+        """Called when the app goes to a suspended state."""
+        for plugin in self.active_plugins.values():
+            try:
+                plugin.on_app_pause()
+            except Exception:
+                from ba import _error
+                _error.print_exception('Error in plugin on_app_pause()')
+
+    def on_app_resume(self) -> None:
+        """Run when the app resumes from a suspended state."""
+        for plugin in self.active_plugins.values():
+            try:
+                plugin.on_app_resume()
+            except Exception:
+                from ba import _error
+                _error.print_exception('Error in plugin on_app_resume()')
+
+    def on_app_shutdown(self) -> None:
+        """Called when the app is being closed."""
+        for plugin in self.active_plugins.values():
+            try:
+                plugin.on_app_shutdown()
+            except Exception:
+                from ba import _error
+                _error.print_exception('Error in plugin on_app_shutdown()')
 
     def load_plugins(self) -> None:
         """(internal)"""
@@ -94,3 +122,12 @@ class Plugin:
 
     def on_app_launch(self) -> None:
         """Called when the app is being launched."""
+
+    def on_app_pause(self) -> None:
+        """Сalled after pausing game activity."""
+
+    def on_app_resume(self) -> None:
+        """Called after the game continues."""
+
+    def on_app_shutdown(self) -> None:
+        """Called before closing the application."""
