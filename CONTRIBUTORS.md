@@ -20,3 +20,6 @@
 
 ### Mr.Smoothy
 - Modder
+
+### Daniil Rakhov
+- Plugin api additions
