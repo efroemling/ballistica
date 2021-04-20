@@ -19,6 +19,7 @@
 - Fixed a potential crash-on-exit due to statically allocated colliders/caches in `ode_collision_trimesh.cpp` getting torn down while in use
 - Better randomization for player free-for-all starting locations
 - Plugins can now register to be called for pause, resume, and shutdown events in addition to launch
+- Added ba.app.state holding the overall state of the app (running, paused, etc)
 
 ### 1.5.29 (20246)
 - Exposed ba method/class initing in public C++ layer.

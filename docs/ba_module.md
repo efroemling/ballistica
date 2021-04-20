@@ -227,6 +227,10 @@
       <li><a href="#class_ba_WidgetNotFoundError">ba.WidgetNotFoundError</a></li>
    </ul>
 </ul>
+<h4><a name="class_category_Misc_Classes">Misc Classes</a></h4>
+<ul>
+   <li><a href="#class_ba_App_State">ba.App.State</a></li>
+</ul>
 <h4><a name="class_category_Protocols">Protocols</a></h4>
 <ul>
    <li><a href="#class_ba_Existable">ba.Existable</a></li>
@@ -1013,6 +1017,18 @@ to resume.</p>
 
 </dd>
 </dl>
+<hr>
+<h2><strong><a name="class_ba_App_State">ba.App.State</a></strong></h3>
+<p>Inherits from: <a href="https://docs.python.org/3/library/enum.html#enum.Enum">enum.Enum</a></p>
+<p>High level state the app can be in.</p>
+
+<h3>Values:</h3>
+<ul>
+<li>LAUNCHING</li>
+<li>RUNNING</li>
+<li>PAUSED</li>
+<li>SHUTTING_DOWN</li>
+</ul>
 <hr>
 <h2><strong><a name="class_ba_AppConfig">ba.AppConfig</a></strong></h3>
 <p>Inherits from: builtins.dict</p>
@@ -4804,7 +4820,7 @@ the type-checker properly identifies the returned value as one.</p>
 <dt><h4><a name="method_ba_Plugin__on_app_pause">on_app_pause()</a></dt></h4><dd>
 <p><span>on_app_pause(self) -&gt; None</span></p>
 
-<p>Сalled after pausing game activity.</p>
+<p>Called after pausing game activity.</p>
 
 </dd>
 <dt><h4><a name="method_ba_Plugin__on_app_resume">on_app_resume()</a></dt></h4><dd>

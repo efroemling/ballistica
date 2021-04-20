@@ -124,7 +124,7 @@ class Plugin:
         """Called when the app is being launched."""
 
     def on_app_pause(self) -> None:
-        """Сalled after pausing game activity."""
+        """Called after pausing game activity."""
 
     def on_app_resume(self) -> None:
         """Called after the game continues."""
