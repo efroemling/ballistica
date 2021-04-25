@@ -2145,8 +2145,8 @@ def get_low_level_config_value(key: str, default_value: int) -> int:
     return int()
 
 
-def get_master_server_address(source: int = -1) -> str:
-    """get_master_server_address(source: int = -1) -> str
+def get_master_server_address(source: int = -1, version: int = 1) -> str:
+    """get_master_server_address(source: int = -1, version: int = 1) -> str
 
     (internal)
 

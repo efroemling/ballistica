@@ -158,6 +158,7 @@ def fetch_url(url: str, filename: Path, asset_gather: AssetGather) -> None:
     """Fetch a given url to a given filename for a given AssetGather.
 
     """
+    # pylint: disable=consider-using-with
 
     import socket
 

@@ -34,8 +34,7 @@ class ConfirmWindow:
         if cancel_text is None:
             cancel_text = ba.Lstr(resource='cancelText')
         height += 40
-        if width < 360:
-            width = 360
+        width = max(width, 360)
         self._action = action
 
         # if they provided an origin-widget, scale up from that

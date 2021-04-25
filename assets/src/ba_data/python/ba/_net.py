@@ -15,7 +15,42 @@ if TYPE_CHECKING:
     from typing import Any, Dict, Union, Callable, Optional
     import socket
     import ba
-    ServerCallbackType = Callable[[Union[None, Dict[str, Any]]], None]
+    MasterServerCallback = Callable[[Union[None, Dict[str, Any]]], None]
+
+# Timeout for standard functions talking to the master-server/etc.
+DEFAULT_REQUEST_TIMEOUT_SECONDS = 60
+
+
+def is_urllib_network_error(exc: BaseException) -> bool:
+    """Is the provided exception a network-related error?
+
+    This should be passed any exception which resulted from opening or
+    reading a urllib Request. It should return True for any errors that
+    could conceivably arise due to unavailable/poor network connections,
+    firewall/connectivity issues, etc. These issues can often be safely
+    ignored or presented to the user as general 'network-unavailable'
+    states.
+    """
+    import urllib.request
+    import urllib.error
+    import http.client
+    import errno
+    import socket
+    if isinstance(
+            exc,
+        (urllib.error.URLError, ConnectionError, http.client.IncompleteRead,
+         http.client.BadStatusLine, socket.timeout)):
+        return True
+    if isinstance(exc, OSError):
+        if exc.errno == 10051:  # Windows unreachable network error.
+            return True
+        if exc.errno in {
+                errno.ETIMEDOUT,
+                errno.EHOSTUNREACH,
+                errno.ENETUNREACH,
+        }:
+            return True
+    return False
 
 
 def get_ip_address_type(addr: str) -> socket.AddressFamily:
@@ -42,26 +77,26 @@ def get_ip_address_type(addr: str) -> socket.AddressFamily:
     return socket_type
 
 
-class ServerResponseType(Enum):
-    """How to interpret responses from the server."""
+class MasterServerResponseType(Enum):
+    """How to interpret responses from the master-server."""
     JSON = 0
 
 
-class ServerCallThread(threading.Thread):
-    """Thread to communicate with the master server."""
+class MasterServerCallThread(threading.Thread):
+    """Thread to communicate with the master-server."""
 
     def __init__(self, request: str, request_type: str,
                  data: Optional[Dict[str, Any]],
-                 callback: Optional[ServerCallbackType],
-                 response_type: ServerResponseType):
+                 callback: Optional[MasterServerCallback],
+                 response_type: MasterServerResponseType):
         super().__init__()
         self._request = request
         self._request_type = request_type
-        if not isinstance(response_type, ServerResponseType):
+        if not isinstance(response_type, MasterServerResponseType):
             raise TypeError(f'Invalid response type: {response_type}')
         self._response_type = response_type
         self._data = {} if data is None else copy.deepcopy(data)
-        self._callback: Optional[ServerCallbackType] = callback
+        self._callback: Optional[MasterServerCallback] = callback
         self._context = _ba.Context('current')
 
         # Save and restore the context we were created from.
@@ -87,11 +122,10 @@ class ServerCallThread(threading.Thread):
             self._callback(arg)
 
     def run(self) -> None:
-        # pylint: disable=too-many-branches
+        # pylint: disable=too-many-branches, consider-using-with
         import urllib.request
         import urllib.error
         import json
-        import http.client
         from ba import _general
         try:
             self._data = _general.utf8_all(self._data)
@@ -102,54 +136,43 @@ class ServerCallThread(threading.Thread):
                     urllib.request.Request(
                         (_ba.get_master_server_address() + '/' +
                          self._request + '?' + parse.urlencode(self._data)),
-                        None, {'User-Agent': _ba.app.user_agent_string}))
+                        None, {'User-Agent': _ba.app.user_agent_string}),
+                    timeout=DEFAULT_REQUEST_TIMEOUT_SECONDS)
             elif self._request_type == 'post':
                 response = urllib.request.urlopen(
                     urllib.request.Request(
                         _ba.get_master_server_address() + '/' + self._request,
                         parse.urlencode(self._data).encode(),
-                        {'User-Agent': _ba.app.user_agent_string}))
+                        {'User-Agent': _ba.app.user_agent_string}),
+                    timeout=DEFAULT_REQUEST_TIMEOUT_SECONDS)
             else:
                 raise TypeError('Invalid request_type: ' + self._request_type)
 
             # If html request failed.
             if response.getcode() != 200:
                 response_data = None
-            elif self._response_type == ServerResponseType.JSON:
+            elif self._response_type == MasterServerResponseType.JSON:
                 raw_data = response.read()
 
                 # Empty string here means something failed server side.
                 if raw_data == b'':
                     response_data = None
                 else:
-                    # Json.loads requires str in python < 3.6.
-                    raw_data_s = raw_data.decode()
-                    response_data = json.loads(raw_data_s)
+                    response_data = json.loads(raw_data)
             else:
                 raise TypeError(f'invalid responsetype: {self._response_type}')
 
         except Exception as exc:
-            import errno
             do_print = False
             response_data = None
 
             # Ignore common network errors; note unexpected ones.
-            if isinstance(
-                    exc,
-                (urllib.error.URLError, ConnectionError,
-                 http.client.IncompleteRead, http.client.BadStatusLine)):
+            if is_urllib_network_error(exc):
                 pass
-            elif isinstance(exc, OSError):
-                if exc.errno == 10051:  # Windows unreachable network error.
-                    pass
-                elif exc.errno in [
-                        errno.ETIMEDOUT, errno.EHOSTUNREACH, errno.ENETUNREACH
-                ]:
-                    pass
-                else:
-                    do_print = True
-            elif (self._response_type == ServerResponseType.JSON
+            elif (self._response_type == MasterServerResponseType.JSON
                   and isinstance(exc, json.decoder.JSONDecodeError)):
+                # FIXME: should handle this better; could mean either the
+                # server sent us bad data or it got corrupted along the way.
                 pass
             else:
                 do_print = True
@@ -157,7 +180,7 @@ class ServerCallThread(threading.Thread):
             if do_print:
                 # Any other error here is unexpected,
                 # so let's make a note of it,
-                print(f'Error in ServerCallThread'
+                print(f'Error in MasterServerCallThread'
                       f' (response-type={self._response_type},'
                       f' response-data={response_data}):')
                 import traceback
@@ -169,18 +192,22 @@ class ServerCallThread(threading.Thread):
 
 
 def master_server_get(
-        request: str,
-        data: Dict[str, Any],
-        callback: Optional[ServerCallbackType] = None,
-        response_type: ServerResponseType = ServerResponseType.JSON) -> None:
+    request: str,
+    data: Dict[str, Any],
+    callback: Optional[MasterServerCallback] = None,
+    response_type: MasterServerResponseType = MasterServerResponseType.JSON
+) -> None:
     """Make a call to the master server via a http GET."""
-    ServerCallThread(request, 'get', data, callback, response_type).start()
+    MasterServerCallThread(request, 'get', data, callback,
+                           response_type).start()
 
 
 def master_server_post(
-        request: str,
-        data: Dict[str, Any],
-        callback: Optional[ServerCallbackType] = None,
-        response_type: ServerResponseType = ServerResponseType.JSON) -> None:
+    request: str,
+    data: Dict[str, Any],
+    callback: Optional[MasterServerCallback] = None,
+    response_type: MasterServerResponseType = MasterServerResponseType.JSON
+) -> None:
     """Make a call to the master server via a http POST."""
-    ServerCallThread(request, 'post', data, callback, response_type).start()
+    MasterServerCallThread(request, 'post', data, callback,
+                           response_type).start()

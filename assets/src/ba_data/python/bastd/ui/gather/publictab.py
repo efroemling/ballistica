@@ -1261,10 +1261,7 @@ class PublicGatherTab(GatherTab):
         self._have_user_selected_row = True
 
     def _on_max_public_party_size_minus_press(self) -> None:
-        val = _ba.get_public_party_max_size()
-        val -= 1
-        if val < 1:
-            val = 1
+        val = max(1, _ba.get_public_party_max_size() - 1)
         _ba.set_public_party_max_size(val)
         ba.textwidget(edit=self._host_max_party_size_value, text=str(val))
 

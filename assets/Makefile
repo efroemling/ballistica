@@ -171,7 +171,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/ba/_meta.py \
   build/ba_data/python/ba/_multiteamsession.py \
   build/ba_data/python/ba/_music.py \
-  build/ba_data/python/ba/_netutils.py \
+  build/ba_data/python/ba/_net.py \
   build/ba_data/python/ba/_nodeactor.py \
   build/ba_data/python/ba/_player.py \
   build/ba_data/python/ba/_playlist.py \
@@ -415,7 +415,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/ba/__pycache__/_meta.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_multiteamsession.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_music.cpython-38.opt-1.pyc \
-  build/ba_data/python/ba/__pycache__/_netutils.cpython-38.opt-1.pyc \
+  build/ba_data/python/ba/__pycache__/_net.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_nodeactor.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_player.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_playlist.cpython-38.opt-1.pyc \

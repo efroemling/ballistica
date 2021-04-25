@@ -29,6 +29,7 @@ class StaticTestFile:
 
     def __init__(self, filename: str):
         # pylint: disable=global-statement, invalid-name
+        # pylint: disable=consider-using-with
         global _tempdir, _nextfilenum
         # pylint: enable=global-statement, invalid-name
 

@@ -10,9 +10,9 @@
 
 // Universal sanity checks.
 #if !BA_DEBUG_BUILD
-#if !NDEBUG
+#ifndef NDEBUG
 #error NDEBUG should be defined for all non-debug builds.
-#endif  // !NDEBUG
+#endif  // NDEBUG
 #endif  // !BA_DEBUG_BUILD
 
 // This header should be included at the very END of each platform config

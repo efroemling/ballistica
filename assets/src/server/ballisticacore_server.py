@@ -549,6 +549,7 @@ class ServerManagerApp:
 
     def _run_server_cycle(self) -> None:
         """Spin up the server subprocess and run it until exit."""
+        # pylint: disable=consider-using-with
 
         # Reload our config, and update our overall behavior based on it.
         # We do non-strict this time to give the user repeated attempts if

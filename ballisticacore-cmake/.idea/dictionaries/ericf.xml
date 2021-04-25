@@ -66,6 +66,7 @@
       <w>backtraces</w>
       <w>ballistica</w>
       <w>ballisticacore</w>
+      <w>bamasteraddr</w>
       <w>barebones</w>
       <w>basetype</w>
       <w>basicsize</w>
@@ -88,6 +89,7 @@
       <w>bitmask</w>
       <w>bitpos</w>
       <w>bitval</w>
+      <w>blarg</w>
       <w>blitters</w>
       <w>blitting</w>
       <w>blockadr</w>
@@ -271,6 +273,7 @@
       <w>elems</w>
       <w>elevenbase</w>
       <w>elevenbits</w>
+      <w>embconnect</w>
       <w>emitfx</w>
       <w>emojis</w>
       <w>enablexinput</w>
@@ -822,6 +825,7 @@
       <w>seqtypestr</w>
       <w>serv</w>
       <w>serverget</w>
+      <w>servernodequery</w>
       <w>servernodes</w>
       <w>serverput</w>
       <w>sessiondata</w>

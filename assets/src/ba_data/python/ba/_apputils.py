@@ -56,7 +56,7 @@ def handle_log() -> None:
     When this happens, we can upload our log to the server
     after a short bit if desired.
     """
-    from ba._netutils import master_server_post
+    from ba._net import master_server_post
     from ba._enums import TimeType
     app = _ba.app
     app.log_have_new = True
@@ -121,7 +121,7 @@ def handle_leftover_log_file() -> None:
     """Handle an un-uploaded log from a previous run."""
     try:
         import json
-        from ba._netutils import master_server_post
+        from ba._net import master_server_post
 
         if os.path.exists(_ba.get_log_file_path()):
             with open(_ba.get_log_file_path()) as infile:

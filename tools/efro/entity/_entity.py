@@ -151,7 +151,7 @@ class EntityMixin:
                           cls=ExtendedJSONEncoder)
 
     @staticmethod
-    def json_loads(s: str) -> Any:
+    def json_loads(s: Union[str, bytes]) -> Any:
         """Load a json string using our special extended decoder.
 
         Note that this simply returns loaded json data; no
@@ -159,7 +159,9 @@ class EntityMixin:
         """
         return json.loads(s, cls=ExtendedJSONDecoder)
 
-    def load_from_json_str(self, s: str, error: bool = True) -> None:
+    def load_from_json_str(self,
+                           s: Union[str, bytes],
+                           error: bool = True) -> None:
         """Set the entity's data in-place from a json string.
 
         The 'error' argument determines whether Exceptions will be raised
@@ -171,7 +173,9 @@ class EntityMixin:
         self.set_data(data, error=error)
 
     @classmethod
-    def from_json_str(cls: Type[T], s: str, error: bool = True) -> T:
+    def from_json_str(cls: Type[T],
+                      s: Union[str, bytes],
+                      error: bool = True) -> T:
         """Instantiate a new instance with provided json string.
 
         The 'error' argument determines whether exceptions will be raised

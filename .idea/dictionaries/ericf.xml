@@ -165,6 +165,7 @@
       <w>ballisticacore</w>
       <w>ballisticacorecb</w>
       <w>bamaster</w>
+      <w>bamasteraddr</w>
       <w>barcolor</w>
       <w>barebones</w>
       <w>baseh</w>
@@ -205,6 +206,7 @@
       <w>bindvals</w>
       <w>bisectmodule</w>
       <w>bitcode</w>
+      <w>blarg</w>
       <w>blas</w>
       <w>blastos</w>
       <w>bldtp</w>
@@ -621,6 +623,7 @@
       <w>elapsedf</w>
       <w>elementtree</w>
       <w>elim</w>
+      <w>embconnect</w>
       <w>emitfx</w>
       <w>emoji</w>
       <w>emojis</w>
@@ -1906,6 +1909,7 @@
       <w>serverget</w>
       <w>servermanager</w>
       <w>servermode</w>
+      <w>servernodequery</w>
       <w>servernodes</w>
       <w>serverput</w>
       <w>serverutils</w>

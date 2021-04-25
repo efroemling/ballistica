@@ -29,11 +29,11 @@ class PipRequirement:
 
 
 PIP_REQUIREMENTS = [
-    PipRequirement(modulename='pylint', minversion=[2, 7, 0]),
+    PipRequirement(modulename='pylint', minversion=[2, 8, 1]),
     PipRequirement(modulename='mypy', minversion=[0, 812]),
-    PipRequirement(modulename='yapf', minversion=[0, 30, 0]),
+    PipRequirement(modulename='yapf', minversion=[0, 31, 0]),
     PipRequirement(modulename='cpplint', minversion=[1, 5, 4]),
-    PipRequirement(modulename='pytest', minversion=[6, 2, 2]),
+    PipRequirement(modulename='pytest', minversion=[6, 2, 3]),
     PipRequirement(modulename='typing_extensions'),
     PipRequirement(modulename='pytz'),
     PipRequirement(modulename='ansiwrap'),

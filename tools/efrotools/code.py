@@ -629,6 +629,7 @@ def _run_idea_inspections(projroot: Path,
     Throw an Exception if anything is found or goes wrong.
     """
     # pylint: disable=too-many-locals
+    # pylint: disable=consider-using-with
     import tempfile
     import time
     import datetime
@@ -778,22 +779,21 @@ def check_pycharm(projroot: Path, full: bool, verbose: bool) -> None:
         # work that way.
         if bool(False):
             print('Launching GUI PyCharm to rebuild caches...', flush=True)
-            process = subprocess.Popen(str(pycharmbin))
+            with subprocess.Popen(str(pycharmbin)) as process:
 
-            # Wait a bit and ask it nicely to die.
-            # We need to make sure it has enough time to do its cache updating
-            # thing even if the system is fully under load.
-            time.sleep(5 * 60)
+                # Wait a bit and ask it nicely to die.
+                # We need to make sure it has enough time to do its
+                # cache updating thing even if the system is fully under load.
+                time.sleep(5 * 60)
 
-            # Seems killing it via applescript is more likely to leave it
-            # in a working state for offline inspections than TERM signal..
-            subprocess.run(
-                "osascript -e 'tell application \"PyCharm CE\" to quit'",
-                shell=True,
-                check=False)
-            # process.terminate()
-            print('Waiting for GUI PyCharm to quit...', flush=True)
-            process.wait()
+                # Seems killing it via applescript is more likely to leave it
+                # in a working state for offline inspections than TERM signal..
+                subprocess.run(
+                    "osascript -e 'tell application \"PyCharm CE\" to quit'",
+                    shell=True,
+                    check=False)
+                print('Waiting for GUI PyCharm to quit...', flush=True)
+                process.wait()
 
     _run_idea_inspections_cached(cachepath=cachepath,
                                  filenames=filenames,
