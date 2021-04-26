@@ -760,16 +760,61 @@ def update_docs_md(check: bool) -> None:
 
 
 def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
-    """Create a dir, recreating it when cmake/python/etc. version changes.
+    """Create a dir, recreating it when cmake/python/etc. versions change.
 
     Useful to prevent builds from breaking when cmake or other components
     are updated.
     """
     # pylint: disable=too-many-locals
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-statements
     import json
+    import platform
     from efrotools import PYVER
+
+    @dataclass
+    class Entry:
+        """Item examined for presence/change."""
+        name: str
+        current_value: str
+
+    entries: List[Entry] = []
+
+    # Start fresh if cmake version changes.
+    cmake_ver_output = subprocess.run(['cmake', '--version'],
+                                      check=True,
+                                      capture_output=True).stdout.decode()
+    cmake_ver = cmake_ver_output.splitlines()[0].split('cmake version ')[1]
+    entries.append(Entry('cmake version', cmake_ver))
+
+    # ...or if the actual location of cmake on disk changes.
+    cmake_path = os.path.realpath(
+        subprocess.run(['which', 'cmake'], check=True,
+                       capture_output=True).stdout.decode().strip())
+    entries.append(Entry('cmake path', cmake_path))
+
+    # ...or if python's version changes.
+    python_ver_output = subprocess.run(
+        [f'python{PYVER}', '--version'], check=True,
+        capture_output=True).stdout.decode().strip()
+    python_ver = python_ver_output.splitlines()[0].split('Python ')[1]
+    entries.append(Entry('python_version', python_ver))
+
+    # ...or if the actual location of python on disk changes.
+    python_path = os.path.realpath(
+        subprocess.run(['which', f'python{PYVER}'],
+                       check=True,
+                       capture_output=True).stdout.decode())
+    entries.append(Entry('python_path', python_path))
+
+    # ...or if mac xcode sdk paths change
+    mac_xcode_sdks = (','.join(
+        sorted(
+            os.listdir('/Applications/Xcode.app/Contents/'
+                       'Developer/Platforms/MacOSX.platform/'
+                       'Developer/SDKs/')))
+                      if platform.system() == 'Darwin' else '')
+    entries.append(Entry('mac_xcode_sdks', mac_xcode_sdks))
+
+    # Ok; do the thing.
     verfilename = os.path.join(dirname, '.ba_cmake_env')
     title = 'cmake_prep_dir'
 
@@ -778,89 +823,31 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
         with open(verfilename) as infile:
             versions = json.loads(infile.read())
             assert isinstance(versions, dict)
+            assert all(isinstance(x, str) for x in versions.keys())
+            assert all(isinstance(x, str) for x in versions.values())
     else:
         versions = {}
+    changed = False
+    for entry in entries:
+        previous_value = versions.get(entry.name)
+        if entry.current_value != previous_value:
+            print(f'{Clr.BLU}{entry.name} changed from {previous_value}'
+                  f' to {entry.current_value}; clearing existing build at'
+                  f' "{dirname}".{Clr.RST}')
+            changed = True
+            break
 
-    # Start fresh if cmake version changes.
-    cmake_ver_output = subprocess.run(['cmake', '--version'],
-                                      check=True,
-                                      capture_output=True).stdout.decode()
-    cmake_ver = cmake_ver_output.splitlines()[0].split('cmake version ')[1]
-    cmake_ver_existing = versions.get('cmake_version')
-    assert isinstance(cmake_ver_existing, (str, type(None)))
-    if verbose:
-        print(f'{Clr.BLD}{title}:{Clr.RST} {cmake_ver=} {cmake_ver_existing=}')
-
-    # ...or if the actual location of cmake on disk changes.
-    cmake_path = os.path.realpath(
-        subprocess.run(['which', 'cmake'], check=True,
-                       capture_output=True).stdout.decode().strip())
-    cmake_path_existing = versions.get('cmake_path')
-    assert isinstance(cmake_path_existing, (str, type(None)))
-    if verbose:
-        print(f'{Clr.BLD}{title}:{Clr.RST}'
-              f' {cmake_path=} {cmake_path_existing=}')
-
-    # ...or if python's version changes.
-    python_ver_output = subprocess.run(
-        [f'python{PYVER}', '--version'], check=True,
-        capture_output=True).stdout.decode().strip()
-    python_ver = python_ver_output.splitlines()[0].split('Python ')[1]
-    python_ver_existing = versions.get('python_version')
-    assert isinstance(python_ver_existing, (str, type(None)))
-    if verbose:
-        print(f'{Clr.BLD}{title}:{Clr.RST}'
-              f' {python_ver=} {python_ver_existing=}')
-
-    # ...or if the actual location of python on disk changes.
-    python_path = os.path.realpath(
-        subprocess.run(['which', f'python{PYVER}'],
-                       check=True,
-                       capture_output=True).stdout.decode())
-    python_path_existing = versions.get('python_path')
-    assert isinstance(python_path_existing, (str, type(None)))
-    if verbose:
-        print(f'{Clr.BLD}{title}:{Clr.RST}'
-              f' {python_path=} {python_path_existing=}')
-
-    # Blow away and start from scratch if any vals differ from existing.
-    if (cmake_ver_existing == cmake_ver and cmake_path == cmake_path_existing
-            and python_ver_existing == python_ver
-            and python_path == python_path_existing):
-        if verbose:
-            print(f'{Clr.BLD}{title}:{Clr.RST} Keeping existing build dir.')
-    else:
+    if changed:
         if verbose:
             print(
                 f'{Clr.BLD}{title}:{Clr.RST} Blowing away existing build dir.')
-
-        if (cmake_ver_existing is not None
-                and cmake_ver_existing != cmake_ver):
-            print(f'{Clr.BLU}CMake version changed from {cmake_ver_existing}'
-                  f' to {cmake_ver}; clearing existing build at'
-                  f' "{dirname}".{Clr.RST}')
-        if (cmake_path_existing is not None
-                and cmake_path_existing != cmake_path):
-            print(f'{Clr.BLU}CMake path changed from {cmake_path_existing}'
-                  f' to {cmake_path}; clearing existing build at'
-                  f' "{dirname}".{Clr.RST}')
-        if (python_ver_existing is not None
-                and python_ver_existing != python_ver):
-            print(f'{Clr.BLU}Python version changed from {python_ver_existing}'
-                  f' to {python_ver}; clearing existing build at'
-                  f' "{dirname}".{Clr.RST}')
-        if (python_path_existing is not None
-                and python_path_existing != python_path):
-            print(f'{Clr.BLU}Python path changed from {python_path_existing}'
-                  f' to {python_path}; clearing existing build at'
-                  f' "{dirname}".{Clr.RST}')
         subprocess.run(['rm', '-rf', dirname], check=True)
         os.makedirs(dirname, exist_ok=True)
         with open(verfilename, 'w') as outfile:
             outfile.write(
-                json.dumps({
-                    'cmake_version': cmake_ver,
-                    'cmake_path': cmake_path,
-                    'python_version': python_ver,
-                    'python_path': python_path
-                }))
+                json.dumps(
+                    {entry.name: entry.current_value
+                     for entry in entries}))
+    else:
+        if verbose:
+            print(f'{Clr.BLD}{title}:{Clr.RST} Keeping existing build dir.')
