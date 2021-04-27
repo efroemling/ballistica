@@ -932,9 +932,8 @@ void Python::Reset(bool do_init) {
     // Set up system paths on our embedded platforms.
     SetupPythonHome();
 
-    AppInternalInitPythonModule();
-
-    Py_Initialize();
+    // Inits our _ba module and runs Py_Initialize().
+    AppInternalPyInitialize();
 
     PyObject* m;
     BA_PRECONDITION(m = PyImport_AddModule("__main__"));

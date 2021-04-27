@@ -128,10 +128,17 @@ if _ba.env()['debug_build']:
     testthread.join()
     del testthread
 
+# Clear out the standard quit/exit messages since they don't work for us.
+# pylint: disable=wrong-import-position
+# pylint: disable=c-extension-no-member
+if not TYPE_CHECKING:
+    import __main__
+    del __main__.__builtins__.quit
+    del __main__.__builtins__.exit
+
 # Now spin up our App instance, store it on both _ba and ba,
 # and return it to the C++ layer.
 # noinspection PyProtectedMember
-# pylint: disable=wrong-import-position
 from ba._app import App
 import ba
 
