@@ -605,6 +605,7 @@
       <w>editcontroller</w>
       <w>editgame</w>
       <w>editorconfig</w>
+      <w>effmult</w>
       <w>efgrd</w>
       <w>efile</w>
       <w>efro</w>
@@ -1822,6 +1823,7 @@
       <w>rlock</w>
       <w>rmats</w>
       <w>rmine</w>
+      <w>rname</w>
       <w>robotparser</w>
       <w>rootc</w>
       <w>rootdata</w>
@@ -1829,6 +1831,7 @@
       <w>rotatingtree</w>
       <w>rowwidget</w>
       <w>rpcg</w>
+      <w>rpings</w>
       <w>rppg</w>
       <w>rscale</w>
       <w>rsdr</w>

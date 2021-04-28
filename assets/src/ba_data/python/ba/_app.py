@@ -16,6 +16,7 @@ from ba._plugin import PluginSubsystem
 from ba._account import AccountSubsystem
 from ba._meta import MetadataSubsystem
 from ba._ads import AdsSubsystem
+from ba._net import NetworkSubsystem
 
 if TYPE_CHECKING:
     import ba
@@ -237,6 +238,7 @@ class App:
         self.ach = AchievementSubsystem()
         self.ui = UISubsystem()
         self.ads = AdsSubsystem()
+        self.net = NetworkSubsystem()
 
         # Lobby.
         self.lobby_random_profile_index: int = 1
@@ -411,8 +413,8 @@ class App:
 
     def read_config(self) -> None:
         """(internal)"""
-        from ba import _appconfig
-        self._config, self.config_file_healthy = _appconfig.read_config()
+        from ba._appconfig import read_config
+        self._config, self.config_file_healthy = read_config()
 
     def pause(self) -> None:
         """Pause the game due to a user request or menu popping up.

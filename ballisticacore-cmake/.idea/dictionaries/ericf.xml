@@ -266,6 +266,7 @@
       <w>dynamicdata</w>
       <w>echidna</w>
       <w>edef</w>
+      <w>effmult</w>
       <w>efro</w>
       <w>efrohack</w>
       <w>efrohome</w>
@@ -796,8 +797,10 @@
       <w>rgui</w>
       <w>richcompare</w>
       <w>rigth</w>
+      <w>rname</w>
       <w>rootwidget</w>
       <w>rowwidget</w>
+      <w>rpings</w>
       <w>rresize</w>
       <w>rresult</w>
       <w>rscode</w>

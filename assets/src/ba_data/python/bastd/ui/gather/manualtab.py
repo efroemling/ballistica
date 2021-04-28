@@ -633,11 +633,8 @@ class ManualGatherTab(GatherTab):
                 from_other_thread=True,
             )
         except Exception as exc:
-            err_str = str(exc)
-
-            # FIXME: Should look at exception types here,
-            #  not strings.
-            if 'Network is unreachable' in err_str:
+            from ba.internal import is_udp_network_error
+            if is_udp_network_error(exc):
                 ba.pushcall(ba.Call(
                     _safe_set_text, self._checking_state_text,
                     ba.Lstr(resource='gatherWindow.'

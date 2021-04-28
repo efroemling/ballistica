@@ -303,7 +303,7 @@ class PrivateGatherTab(GatherTab):
             try:
                 state = dataclass_from_dict(HostingState, result)
             except Exception:
-                pass
+                ba.print_exception('Got invalid HostingState data')
         else:
             self._debug_server_comm('private party state response errored')
 

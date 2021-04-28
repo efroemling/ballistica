@@ -21,10 +21,17 @@ if TYPE_CHECKING:
 DEFAULT_REQUEST_TIMEOUT_SECONDS = 60
 
 
+class NetworkSubsystem:
+    """Network related app subsystem."""
+
+    def __init__(self) -> None:
+        self.region_pings: Dict[str, float] = {}
+
+
 def is_urllib_network_error(exc: BaseException) -> bool:
     """Is the provided exception a network-related error?
 
-    This should be passed any exception which resulted from opening or
+    This should be passed an exception which resulted from opening or
     reading a urllib Request. It should return True for any errors that
     could conceivably arise due to unavailable/poor network connections,
     firewall/connectivity issues, etc. These issues can often be safely
@@ -48,6 +55,40 @@ def is_urllib_network_error(exc: BaseException) -> bool:
                 errno.ETIMEDOUT,
                 errno.EHOSTUNREACH,
                 errno.ENETUNREACH,
+        }:
+            return True
+    return False
+
+
+def is_udp_network_error(exc: BaseException) -> bool:
+    """Is the provided exception a network-related error?
+
+    This should be passed an exception which resulted from creating and
+    using a socket.SOCK_DGRAM type socket. It should return True for any
+    errors that could conceivably arise due to unavailable/poor network
+    connections, firewall/connectivity issues, etc. These issues can often
+    be safely ignored or presented to the user as general
+    'network-unavailable' states.
+    """
+    import errno
+    if isinstance(exc, ConnectionRefusedError):
+        return True
+    if isinstance(exc, OSError):
+        if exc.errno == 10051:  # Windows unreachable network error.
+            return True
+        if exc.errno in {
+                errno.EADDRNOTAVAIL,
+                errno.ETIMEDOUT,
+                errno.EHOSTUNREACH,
+                errno.ENETUNREACH,
+                errno.EINVAL,
+                errno.EPERM,
+                errno.EACCES,
+                # Windows 'invalid argument' error.
+                10022,
+                # Windows 'a socket operation was attempted to'
+                #         'an unreachable network' error.
+                10051,
         }:
             return True
     return False
