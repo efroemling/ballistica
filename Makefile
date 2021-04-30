@@ -663,7 +663,7 @@ test-assetmanager:
 # Individual test with extra output enabled.
 test-dataclasses:
 	@tools/pcommand pytest -o log_cli=true -o log_cli_level=debug -s -vv \
-      tests/test_efro/test_dataclasses.py
+      tests/test_efro/test_dataclassio.py
 
 # Individual test with extra output enabled.
 test-entity:

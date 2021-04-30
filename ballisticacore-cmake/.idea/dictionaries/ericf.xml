@@ -41,8 +41,10 @@
       <w>anchorx</w>
       <w>animcurve</w>
       <w>aniso</w>
+      <w>anntype</w>
       <w>ansiwrap</w>
       <w>anyofallof</w>
+      <w>anyval</w>
       <w>aosp</w>
       <w>apientry</w>
       <w>appconfig</w>
@@ -158,6 +160,10 @@
       <w>chdir</w>
       <w>checkboxwidget</w>
       <w>checkchisel</w>
+      <w>childanntype</w>
+      <w>childanntypes</w>
+      <w>childtype</w>
+      <w>childtypes</w>
       <w>chrono</w>
       <w>chunksize</w>
       <w>cjief</w>
@@ -208,6 +214,7 @@
       <w>cutef</w>
       <w>cvar</w>
       <w>data</w>
+      <w>dataclassio</w>
       <w>datadata</w>
       <w>dataout</w>
       <w>datas</w>
@@ -215,6 +222,8 @@
       <w>datavec</w>
       <w>dbgstr</w>
       <w>dbias</w>
+      <w>dcioexattrs</w>
+      <w>dcioprep</w>
       <w>dcol</w>
       <w>ddcaps</w>
       <w>ddpf</w>
@@ -237,6 +246,7 @@
       <w>dfba</w>
       <w>dfff</w>
       <w>dfmt</w>
+      <w>dictval</w>
       <w>diffbit</w>
       <w>dirslash</w>
       <w>dlfcn</w>
@@ -262,6 +272,7 @@
       <w>dtest</w>
       <w>dummyval</w>
       <w>dummyvalid</w>
+      <w>dval</w>
       <w>dxgi</w>
       <w>dynamicdata</w>
       <w>echidna</w>
@@ -283,6 +294,7 @@
       <w>endline</w>
       <w>endtime</w>
       <w>entrypoint</w>
+      <w>enumvaltype</w>
       <w>enumvalue</w>
       <w>enval</w>
       <w>envcfg</w>
@@ -408,6 +420,7 @@
       <w>gettotalrefcount</w>
       <w>gles</w>
       <w>glext</w>
+      <w>globalns</w>
       <w>googleplaytab</w>
       <w>gpgs</w>
       <w>gqualstr</w>
@@ -491,8 +504,10 @@
       <w>jcjwf</w>
       <w>jmessage</w>
       <w>keepalives</w>
+      <w>keyanntype</w>
       <w>keycode</w>
       <w>keyfilt</w>
+      <w>keyint</w>
       <w>keysyms</w>
       <w>keywds</w>
       <w>khronos</w>
@@ -521,6 +536,7 @@
       <w>linearstep</w>
       <w>listobj</w>
       <w>llock</w>
+      <w>localns</w>
       <w>lockpath</w>
       <w>lockstr</w>
       <w>locktype</w>
@@ -693,6 +709,7 @@
       <w>parameteriv</w>
       <w>passcode</w>
       <w>pausable</w>
+      <w>pdataclass</w>
       <w>pdst</w>
       <w>persp</w>
       <w>pflag</w>
@@ -719,6 +736,7 @@
       <w>preloaded</w>
       <w>preloads</w>
       <w>premult</w>
+      <w>prepdata</w>
       <w>prereq</w>
       <w>prerun</w>
       <w>printf</w>
@@ -1007,12 +1025,15 @@
       <w>userspace</w>
       <w>uther</w>
       <w>uuids</w>
+      <w>uval</w>
       <w>uxxxx</w>
       <w>uxxxxxxxx</w>
+      <w>valanntype</w>
       <w>valign</w>
       <w>valobj</w>
       <w>vals</w>
       <w>valtab</w>
+      <w>valtype</w>
       <w>valuedispatchmethod</w>
       <w>valuedouble</w>
       <w>valueint</w>

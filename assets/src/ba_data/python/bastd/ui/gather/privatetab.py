@@ -13,7 +13,9 @@ from typing import TYPE_CHECKING, cast
 
 import ba
 import _ba
-from efro.dataclasses import dataclass_from_dict
+from efro.dataclassio import dataclass_from_dict
+from bacommon.net import (PrivateHostingState, PrivateHostingConfig,
+                          PrivatePartyConnectResult)
 from bastd.ui.gather import GatherTab
 from bastd.ui import getcurrency
 
@@ -37,37 +39,6 @@ class State:
     sub_tab: SubTabType = SubTabType.JOIN
 
 
-@dataclass
-class ConnectResult:
-    """Info about a server we get back when connecting."""
-    error: Optional[str] = None
-    addr: Optional[str] = None
-    port: Optional[int] = None
-
-
-@dataclass
-class HostingState:
-    """Our combined state of whether we're hosting, whether we can, etc."""
-    unavailable_error: Optional[str] = None
-    party_code: Optional[str] = None
-    able_to_host: bool = False
-    tickets_to_host_now: int = 0
-    minutes_until_free_host: Optional[float] = None
-    free_host_minutes_remaining: Optional[float] = None
-
-
-@dataclass
-class HostingConfig:
-    """Config we provide when hosting."""
-    session_type: str = 'ffa'
-    playlist_name: str = 'Unknown'
-    randomize: bool = False
-    tutorial: bool = False
-    custom_team_names: Optional[List[str]] = None
-    custom_team_colors: Optional[List[List[float]]] = None
-    playlist: Optional[List[Dict[str, Any]]] = None
-
-
 class PrivateGatherTab(GatherTab):
     """The private tab in the gather UI"""
 
@@ -75,7 +46,7 @@ class PrivateGatherTab(GatherTab):
         super().__init__(window)
         self._container: Optional[ba.Widget] = None
         self._state: State = State()
-        self._hostingstate = HostingState()
+        self._hostingstate = PrivateHostingState()
         self._join_sub_tab_text: Optional[ba.Widget] = None
         self._host_sub_tab_text: Optional[ba.Widget] = None
         self._update_timer: Optional[ba.Timer] = None
@@ -99,7 +70,7 @@ class PrivateGatherTab(GatherTab):
             self._hostingconfig = self._build_hosting_config()
         except Exception:
             ba.print_exception('Error building hosting config')
-            self._hostingconfig = HostingConfig()
+            self._hostingconfig = PrivateHostingConfig()
 
     def on_activate(
         self,
@@ -178,10 +149,10 @@ class PrivateGatherTab(GatherTab):
 
         return self._container
 
-    def _build_hosting_config(self) -> HostingConfig:
+    def _build_hosting_config(self) -> PrivateHostingConfig:
         from bastd.ui.playlist import PlaylistTypeVars
         from ba.internal import filter_playlist
-        hcfg = HostingConfig()
+        hcfg = PrivateHostingConfig()
         cfg = ba.app.config
         sessiontypestr = cfg.get('Private Party Host Session Type', 'ffa')
         if not isinstance(sessiontypestr, str):
@@ -205,10 +176,13 @@ class PrivateGatherTab(GatherTab):
                               if playlist_name == '__default__' else
                               playlist_name)
 
-        if playlist_name == '__default__':
+        playlist: Optional[List[Dict[str, Any]]] = None
+        if playlist_name != '__default__':
+            playlist = (cfg.get(f'{pvars.config_name} Playlists',
+                                {}).get(playlist_name))
+        if playlist is None:
             playlist = pvars.get_default_list_call()
-        else:
-            playlist = cfg[f'{pvars.config_name} Playlists'][playlist_name]
+
         hcfg.playlist = filter_playlist(playlist, sessiontype)
 
         randomize = cfg.get(f'{pvars.config_name} Playlist Randomize')
@@ -297,13 +271,15 @@ class PrivateGatherTab(GatherTab):
         if not self._container:
             return
 
-        state: Optional[HostingState] = None
+        state: Optional[PrivateHostingState] = None
         if result is not None:
             self._debug_server_comm('got private party state response')
             try:
-                state = dataclass_from_dict(HostingState, result)
+                state = dataclass_from_dict(PrivateHostingState,
+                                            result,
+                                            discard_unknown_attrs=True)
             except Exception:
-                ba.print_exception('Got invalid HostingState data')
+                ba.print_exception('Got invalid PrivateHostingState data')
         else:
             self._debug_server_comm('private party state response errored')
 
@@ -808,7 +784,8 @@ class PrivateGatherTab(GatherTab):
             _ba.add_transaction(
                 {
                     'type': 'PRIVATE_PARTY_START',
-                    'config': asdict(self._hostingconfig)
+                    'config': asdict(self._hostingconfig),
+                    'region_pings': ba.app.net.region_pings,
                 },
                 callback=ba.WeakCall(self._hosting_state_response))
             _ba.run_transactions()
@@ -844,7 +821,9 @@ class PrivateGatherTab(GatherTab):
             self._connect_press_time = None
             if result is None:
                 raise RuntimeError()
-            cresult = dataclass_from_dict(ConnectResult, result)
+            cresult = dataclass_from_dict(PrivatePartyConnectResult,
+                                          result,
+                                          discard_unknown_attrs=True)
             if cresult.error is not None:
                 self._debug_server_comm('got error connect response')
                 ba.screenmessage(

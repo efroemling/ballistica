@@ -67,11 +67,13 @@
       <w>androidstudiocode</w>
       <w>anim</w>
       <w>animcurve</w>
+      <w>anntype</w>
       <w>anota</w>
       <w>anroid</w>
       <w>ansiwrap</w>
       <w>antigravity</w>
       <w>anyofallof</w>
+      <w>anyval</w>
       <w>aosp</w>
       <w>apichanges</w>
       <w>apis</w>
@@ -338,7 +340,11 @@
       <w>checkroundover</w>
       <w>checksums</w>
       <w>checktype</w>
+      <w>childanntype</w>
+      <w>childanntypes</w>
       <w>childnode</w>
+      <w>childtype</w>
+      <w>childtypes</w>
       <w>chinesetraditional</w>
       <w>chipfork</w>
       <w>chosenone</w>
@@ -478,6 +484,7 @@
       <w>darwiin</w>
       <w>darwiinremote</w>
       <w>datab</w>
+      <w>dataclassio</w>
       <w>dataclassutils</w>
       <w>datamodule</w>
       <w>dataname</w>
@@ -491,6 +498,8 @@
       <w>dbgsfx</w>
       <w>dbgstr</w>
       <w>dbpath</w>
+      <w>dcioexattrs</w>
+      <w>dcioprep</w>
       <w>dcls</w>
       <w>dcmake</w>
       <w>deathmatch</w>
@@ -515,6 +524,7 @@
       <w>dgram</w>
       <w>dhave</w>
       <w>dheadless</w>
+      <w>dictval</w>
       <w>diemessages</w>
       <w>difflib</w>
       <w>dilateerode</w>
@@ -596,6 +606,7 @@
       <w>dummytoken</w>
       <w>dummyval</w>
       <w>dups</w>
+      <w>dval</w>
       <w>dxml</w>
       <w>dynload</w>
       <w>eachother</w>
@@ -647,6 +658,7 @@
       <w>entrytypeselect</w>
       <w>enumtype</w>
       <w>enumval</w>
+      <w>enumvaltype</w>
       <w>enumvalue</w>
       <w>enval</w>
       <w>envcfg</w>
@@ -919,6 +931,7 @@
       <w>gitignores</w>
       <w>gitlog</w>
       <w>gitlogcore</w>
+      <w>globalns</w>
       <w>globalsnode</w>
       <w>gmake</w>
       <w>gname</w>
@@ -1109,7 +1122,9 @@
       <w>keepalives</w>
       <w>keepaway</w>
       <w>keeprefs</w>
+      <w>keyanntype</w>
       <w>keyfilt</w>
+      <w>keyint</w>
       <w>keylayout</w>
       <w>keypresses</w>
       <w>keystr</w>
@@ -1223,6 +1238,7 @@
       <w>loadpackage</w>
       <w>localconfig</w>
       <w>localdir</w>
+      <w>localns</w>
       <w>localuser</w>
       <w>locationgroup</w>
       <w>locationgroups</w>
@@ -1521,6 +1537,7 @@
       <w>outname</w>
       <w>outpath</w>
       <w>outputter</w>
+      <w>outval</w>
       <w>outvalue</w>
       <w>ouya</w>
       <w>overloadsigs</w>
@@ -1556,6 +1573,7 @@
       <w>pchild</w>
       <w>pcommand</w>
       <w>pcstr</w>
+      <w>pdataclass</w>
       <w>pedit</w>
       <w>peditui</w>
       <w>pentry</w>
@@ -1651,6 +1669,7 @@
       <w>premult</w>
       <w>premultiplied</w>
       <w>premultiply</w>
+      <w>prepdata</w>
       <w>preprocessing</w>
       <w>prereq</w>
       <w>prereqs</w>
@@ -2343,9 +2362,12 @@
       <w>userfunctions</w>
       <w>utcnow</w>
       <w>utimensat</w>
+      <w>uval</w>
+      <w>valanntype</w>
       <w>validpgpkeys</w>
       <w>valnew</w>
       <w>vals</w>
+      <w>valtype</w>
       <w>valuedispatch</w>
       <w>valuedispatchmethod</w>
       <w>valueerror</w>

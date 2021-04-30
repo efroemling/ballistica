@@ -5,16 +5,16 @@
 from __future__ import annotations
 
 from enum import Enum
-from dataclasses import dataclass, field
+from dataclasses import field, dataclass
 from typing import TYPE_CHECKING
 
 import pytest
 
-from efro.dataclasses import (dataclass_validate, dataclass_from_dict,
-                              dataclass_to_dict)
+from efro.dataclassio import (dataclass_validate, dataclass_from_dict,
+                              dataclass_to_dict, prepped)
 
 if TYPE_CHECKING:
-    from typing import Optional, List, Set
+    from typing import Optional, List, Set, Any, Dict, Sequence, Union
 
 
 class _EnumTest(Enum):
@@ -22,10 +22,30 @@ class _EnumTest(Enum):
     TEST2 = 'test2'
 
 
+class _GoodEnum(Enum):
+    VAL1 = 'val1'
+    VAL2 = 'val2'
+
+
+class _GoodEnum2(Enum):
+    VAL1 = 1
+    VAL2 = 2
+
+
+class _BadEnum1(Enum):
+    VAL1 = 1.23
+
+
+class _BadEnum2(Enum):
+    VAL1 = 1
+    VAL2 = 'val2'
+
+
 @dataclass
 class _NestedClass:
     ival: int = 0
     sval: str = 'foo'
+    dval: Dict[int, str] = field(default_factory=dict)
 
 
 def test_assign() -> None:
@@ -33,6 +53,7 @@ def test_assign() -> None:
 
     # pylint: disable=too-many-statements
 
+    @prepped
     @dataclass
     class _TestClass:
         ival: int = 0
@@ -52,6 +73,8 @@ def test_assign() -> None:
         lfval: List[float] = field(default_factory=list)
         lenval: List[_EnumTest] = field(default_factory=list)
         ssval: Set[str] = field(default_factory=set)
+        anyval: Any = 1
+        dictval: Dict[int, str] = field(default_factory=dict)
 
     class _TestClass2:
         pass
@@ -66,10 +89,6 @@ def test_assign() -> None:
     with pytest.raises(TypeError):
         dataclass_from_dict(_TestClass, None)  # type: ignore
 
-    # Passing an attr not in the dataclass should fail.
-    with pytest.raises(AttributeError):
-        dataclass_from_dict(_TestClass, {'nonexistent': 'foo'})
-
     # A dict containing *ALL* values should match what we
     # get when creating a dataclass and then converting back
     # to a dict.
@@ -80,7 +99,10 @@ def test_assign() -> None:
         'fval': 2.0,
         'nval': {
             'ival': 1,
-            'sval': 'bar'
+            'sval': 'bar',
+            'dval': {
+                '1': 'foof'
+            },
         },
         'enval': 'test1',
         'oival': 1,
@@ -93,7 +115,19 @@ def test_assign() -> None:
         'lbval': [False],
         'lfval': [1.0],
         'lenval': ['test1', 'test2'],
-        'ssval': ['foo']
+        'ssval': ['foo'],
+        'dval': {
+            'k': 123
+        },
+        'anyval': {
+            'foo': [1, 2, {
+                'bar': 'eep',
+                'rah': 1
+            }]
+        },
+        'dictval': {
+            '1': 'foo'
+        }
     }
     dc1 = dataclass_from_dict(_TestClass, dict1)
     assert dataclass_to_dict(dc1) == dict1
@@ -165,6 +199,20 @@ def test_assign() -> None:
     with pytest.raises(TypeError):
         dataclass_from_dict(_TestClass, {'ssval': set()})
 
+    # Fields with type Any should accept all types which are directly
+    # supported by json, but not ones such as tuples or non-string dict keys
+    # which get implicitly translated by python's json module.
+    dataclass_from_dict(_TestClass, {'anyval': {}})
+    dataclass_from_dict(_TestClass, {'anyval': None})
+    dataclass_from_dict(_TestClass, {'anyval': []})
+    dataclass_from_dict(_TestClass, {'anyval': [True, {'foo': 'bar'}, None]})
+    with pytest.raises(TypeError):
+        dataclass_from_dict(_TestClass, {'anyval': {1: 'foo'}})
+    with pytest.raises(TypeError):
+        dataclass_from_dict(_TestClass, {'anyval': set()})
+    with pytest.raises(TypeError):
+        dataclass_from_dict(_TestClass, {'anyval': (1, 2, 3)})
+
     # More subtle attr/type mismatches that should fail
     # (we currently require EXACT type matches).
     with pytest.raises(TypeError):
@@ -178,10 +226,22 @@ def test_assign() -> None:
     with pytest.raises(TypeError):
         dataclass_from_dict(_TestClass, {'lfval': [1]}, coerce_to_float=False)
 
+    # Coerce-to-float should only work on ints; not bools or other types.
+    dataclass_from_dict(_TestClass, {'fval': 1}, coerce_to_float=True)
+    with pytest.raises(TypeError):
+        dataclass_from_dict(_TestClass, {'fval': 1}, coerce_to_float=False)
+    with pytest.raises(TypeError):
+        dataclass_from_dict(_TestClass, {'fval': True}, coerce_to_float=True)
+    with pytest.raises(TypeError):
+        dataclass_from_dict(_TestClass, {'fval': None}, coerce_to_float=True)
+    with pytest.raises(TypeError):
+        dataclass_from_dict(_TestClass, {'fval': []}, coerce_to_float=True)
+
 
 def test_coerce() -> None:
     """Test value coercion."""
 
+    @prepped
     @dataclass
     class _TestClass:
         ival: int = 0
@@ -216,9 +276,95 @@ def test_coerce() -> None:
         dataclass_from_dict(_TestClass, {'ival': 1.0}, coerce_to_float=False)
 
 
+def test_prep() -> None:
+    """Test the prepping process."""
+
+    # We currently don't support Sequence; can revisit if there is
+    # a strong use case.
+    with pytest.raises(TypeError):
+
+        @prepped
+        @dataclass
+        class _TestClass:
+            ival: Sequence[int]
+
+    # We currently only support Unions with exactly 2 members; one of
+    # which is None. (Optional types get transformed into this by
+    # get_type_hints() so we need to support at least that).
+    with pytest.raises(TypeError):
+
+        @prepped
+        @dataclass
+        class _TestClass2:
+            ival: Union[int, str]
+
+    @prepped
+    @dataclass
+    class _TestClass3:
+        uval: Union[int, None]
+
+    with pytest.raises(TypeError):
+
+        @prepped
+        @dataclass
+        class _TestClass4:
+            ival: Union[int, str]
+
+    # This will get simplified down to simply int by get_type_hints so is ok.
+    @prepped
+    @dataclass
+    class _TestClass5:
+        ival: Union[int]
+
+    # This will get simplified down to a valid 2 member union so is ok
+    @prepped
+    @dataclass
+    class _TestClass6:
+        ival: Union[int, None, int, None]
+
+    # Disallow dict entries with types other than str, int, or enums
+    # having those value types.
+    with pytest.raises(TypeError):
+
+        @prepped
+        @dataclass
+        class _TestClass7:
+            dval: Dict[float, int]
+
+    @prepped
+    @dataclass
+    class _TestClass8:
+        dval: Dict[str, int]
+
+    @prepped
+    @dataclass
+    class _TestClass9:
+        dval: Dict[_GoodEnum, int]
+
+    @prepped
+    @dataclass
+    class _TestClass10:
+        dval: Dict[_GoodEnum2, int]
+
+    with pytest.raises(TypeError):
+
+        @prepped
+        @dataclass
+        class _TestClass11:
+            dval: Dict[_BadEnum1, int]
+
+    with pytest.raises(TypeError):
+
+        @prepped
+        @dataclass
+        class _TestClass12:
+            dval: Dict[_BadEnum2, int]
+
+
 def test_validate() -> None:
     """Testing validation."""
 
+    @prepped
     @dataclass
     class _TestClass:
         ival: int = 0
@@ -248,3 +394,98 @@ def test_validate() -> None:
     tclass.ival = None  # type: ignore
     with pytest.raises(TypeError):
         dataclass_validate(tclass)
+
+
+def test_extra_data() -> None:
+    """Test handling of data that doesn't map to dataclass attrs."""
+
+    @prepped
+    @dataclass
+    class _TestClass:
+        ival: int = 0
+        sval: str = ''
+
+    # Passing an attr not in the dataclass should fail if we ask it to.
+    with pytest.raises(AttributeError):
+        dataclass_from_dict(_TestClass, {'nonexistent': 'foo'},
+                            allow_unknown_attrs=False)
+
+    # But normally it should be preserved and present in re-export.
+    obj = dataclass_from_dict(_TestClass, {'nonexistent': 'foo'})
+    assert isinstance(obj, _TestClass)
+    out = dataclass_to_dict(obj)
+    assert out.get('nonexistent') == 'foo'
+
+    # But not if we ask it to discard unknowns.
+    obj = dataclass_from_dict(_TestClass, {'nonexistent': 'foo'},
+                              discard_unknown_attrs=True)
+    assert isinstance(obj, _TestClass)
+    out = dataclass_to_dict(obj)
+    assert 'nonexistent' not in out
+
+
+def test_dict() -> None:
+    """Test various dict related bits."""
+
+    @prepped
+    @dataclass
+    class _TestClass:
+        dval: dict
+
+    obj = _TestClass(dval={})
+
+    # 'Any' dicts should only support values directly compatible with json.
+    obj.dval['foo'] = 5
+    dataclass_to_dict(obj)
+    with pytest.raises(TypeError):
+        obj.dval[5] = 5
+        dataclass_to_dict(obj)
+    with pytest.raises(TypeError):
+        obj.dval['foo'] = _GoodEnum.VAL1
+        dataclass_to_dict(obj)
+
+    # Int dict-keys should actually be stored as strings internally
+    # (for json compatibility).
+    @prepped
+    @dataclass
+    class _TestClass2:
+        dval: Dict[int, float]
+
+    obj2 = _TestClass2(dval={1: 2.34})
+    out = dataclass_to_dict(obj2)
+    assert '1' in out['dval']
+    assert 1 not in out['dval']
+    out['dval']['1'] = 2.35
+    obj2 = dataclass_from_dict(_TestClass2, out)
+    assert isinstance(obj2, _TestClass2)
+    assert obj2.dval[1] == 2.35
+
+    # Same with enum keys (we support enums with str and int values)
+    @prepped
+    @dataclass
+    class _TestClass3:
+        dval: Dict[_GoodEnum, int]
+
+    obj3 = _TestClass3(dval={_GoodEnum.VAL1: 123})
+    out = dataclass_to_dict(obj3)
+    assert out['dval']['val1'] == 123
+    out['dval']['val1'] = 124
+    obj3 = dataclass_from_dict(_TestClass3, out)
+    assert obj3.dval[_GoodEnum.VAL1] == 124
+
+    @prepped
+    @dataclass
+    class _TestClass4:
+        dval: Dict[_GoodEnum2, int]
+
+    obj4 = _TestClass4(dval={_GoodEnum2.VAL1: 125})
+    out = dataclass_to_dict(obj4)
+    assert out['dval']['1'] == 125
+    out['dval']['1'] = 126
+    obj4 = dataclass_from_dict(_TestClass4, out)
+    assert obj4.dval[_GoodEnum2.VAL1] == 126
+
+    # The wrong enum type as a key should error.
+    obj4.dval = {_GoodEnum.VAL1: 999}  # type: ignore
+    with pytest.raises(TypeError):
+        dataclass_to_dict(obj4)

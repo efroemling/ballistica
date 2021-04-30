@@ -23,7 +23,7 @@ sys.path += [
 ]
 
 from bacommon.servermanager import ServerConfig, StartServerModeCommand
-from efro.dataclasses import dataclass_from_dict, dataclass_validate
+from efro.dataclassio import dataclass_from_dict, dataclass_validate
 from efro.error import CleanError
 from efro.terminal import Clr
 
