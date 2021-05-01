@@ -64,6 +64,18 @@ def dataclass_to_dict(obj: Any, coerce_to_float: bool = True) -> dict:
     return out
 
 
+def dataclass_to_json(obj: Any, coerce_to_float: bool = True) -> str:
+    """Utility function; return a json string from a dataclass instance.
+
+    Basically json.dumps(dataclass_to_dict(...)).
+    """
+    import json
+    return json.dumps(
+        dataclass_to_dict(obj=obj, coerce_to_float=coerce_to_float),
+        separators=(',', ':'),
+    )
+
+
 def dataclass_from_dict(cls: Type[T],
                         values: dict,
                         coerce_to_float: bool = True,
@@ -96,6 +108,23 @@ def dataclass_from_dict(cls: Type[T],
                      coerce_to_float=coerce_to_float,
                      allow_unknown_attrs=allow_unknown_attrs,
                      discard_unknown_attrs=discard_unknown_attrs).run(values)
+
+
+def dataclass_from_json(cls: Type[T],
+                        json_str: str,
+                        coerce_to_float: bool = True,
+                        allow_unknown_attrs: bool = True,
+                        discard_unknown_attrs: bool = False) -> T:
+    """Utility function; return a dataclass instance given a json string.
+
+    Basically dataclass_from_dict(json.loads(...))
+    """
+    import json
+    return dataclass_from_dict(cls=cls,
+                               values=json.loads(json_str),
+                               coerce_to_float=coerce_to_float,
+                               allow_unknown_attrs=allow_unknown_attrs,
+                               discard_unknown_attrs=discard_unknown_attrs)
 
 
 def dataclass_validate(obj: Any, coerce_to_float: bool = True) -> None:

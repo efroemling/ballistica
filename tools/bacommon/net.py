@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from dataclasses import dataclass
 
 from efro import entity
+from efro.dataclassio import prepped
 
 if TYPE_CHECKING:
     from typing import Optional, Any, List, Dict
@@ -32,6 +33,7 @@ class ServerNodeQueryResponse(entity.Entity):
                                        store_default=False)
 
 
+@prepped
 @dataclass
 class PrivateHostingState:
     """Combined state of whether we're hosting, whether we can, etc."""
@@ -43,6 +45,7 @@ class PrivateHostingState:
     free_host_minutes_remaining: Optional[float] = None
 
 
+@prepped
 @dataclass
 class PrivateHostingConfig:
     """Config provided when hosting a private party."""
@@ -55,6 +58,7 @@ class PrivateHostingConfig:
     playlist: Optional[List[Dict[str, Any]]] = None
 
 
+@prepped
 @dataclass
 class PrivatePartyConnectResult:
     """Info about a server we get back when connecting."""
