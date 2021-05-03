@@ -164,6 +164,7 @@
       <w>childanntypes</w>
       <w>childtype</w>
       <w>childtypes</w>
+      <w>childval</w>
       <w>chrono</w>
       <w>chunksize</w>
       <w>cjief</w>
@@ -220,6 +221,7 @@
       <w>datas</w>
       <w>datav</w>
       <w>datavec</w>
+      <w>datetimeval</w>
       <w>dbgstr</w>
       <w>dbias</w>
       <w>dcioexattrs</w>
@@ -995,6 +997,7 @@
       <w>trimeshes</w>
       <w>trynum</w>
       <w>tself</w>
+      <w>tupleval</w>
       <w>tval</w>
       <w>tvos</w>
       <w>tweakage</w>

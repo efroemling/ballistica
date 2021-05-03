@@ -5,16 +5,18 @@
 from __future__ import annotations
 
 from enum import Enum
+import datetime
 from dataclasses import field, dataclass
 from typing import TYPE_CHECKING
 
 import pytest
 
+from efro.util import utc_now
 from efro.dataclassio import (dataclass_validate, dataclass_from_dict,
                               dataclass_to_dict, prepped)
 
 if TYPE_CHECKING:
-    from typing import Optional, List, Set, Any, Dict, Sequence, Union
+    from typing import Optional, List, Set, Any, Dict, Sequence, Union, Tuple
 
 
 class _EnumTest(Enum):
@@ -75,6 +77,8 @@ def test_assign() -> None:
         ssval: Set[str] = field(default_factory=set)
         anyval: Any = 1
         dictval: Dict[int, str] = field(default_factory=dict)
+        tupleval: Tuple[int, str, bool] = (1, 'foo', False)
+        datetimeval: Optional[datetime.datetime] = None
 
     class _TestClass2:
         pass
@@ -89,14 +93,20 @@ def test_assign() -> None:
     with pytest.raises(TypeError):
         dataclass_from_dict(_TestClass, None)  # type: ignore
 
+    now = utc_now()
+
     # A dict containing *ALL* values should match what we
     # get when creating a dataclass and then converting back
     # to a dict.
     dict1 = {
-        'ival': 1,
-        'sval': 'foo',
-        'bval': True,
-        'fval': 2.0,
+        'ival':
+            1,
+        'sval':
+            'foo',
+        'bval':
+            True,
+        'fval':
+            2.0,
         'nval': {
             'ival': 1,
             'sval': 'bar',
@@ -104,12 +114,18 @@ def test_assign() -> None:
                 '1': 'foof'
             },
         },
-        'enval': 'test1',
-        'oival': 1,
-        'osval': 'foo',
-        'obval': True,
-        'ofval': 1.0,
-        'oenval': 'test2',
+        'enval':
+            'test1',
+        'oival':
+            1,
+        'osval':
+            'foo',
+        'obval':
+            True,
+        'ofval':
+            1.0,
+        'oenval':
+            'test2',
         'lsval': ['foo'],
         'lival': [10],
         'lbval': [False],
@@ -127,7 +143,12 @@ def test_assign() -> None:
         },
         'dictval': {
             '1': 'foo'
-        }
+        },
+        'tupleval': [2, 'foof', True],
+        'datetimeval': [
+            now.year, now.month, now.day, now.hour, now.minute, now.second,
+            now.microsecond
+        ],
     }
     dc1 = dataclass_from_dict(_TestClass, dict1)
     assert dataclass_to_dict(dc1) == dict1
@@ -198,6 +219,12 @@ def test_assign() -> None:
         dataclass_from_dict(_TestClass, {'ssval': {}})
     with pytest.raises(TypeError):
         dataclass_from_dict(_TestClass, {'ssval': set()})
+    with pytest.raises(TypeError):
+        dataclass_from_dict(_TestClass, {'tupleval': []})
+    with pytest.raises(TypeError):
+        dataclass_from_dict(_TestClass, {'tupleval': [1, 1, 1]})
+    with pytest.raises(TypeError):
+        dataclass_from_dict(_TestClass, {'tupleval': [2, 'foof', True, True]})
 
     # Fields with type Any should accept all types which are directly
     # supported by json, but not ones such as tuples or non-string dict keys
@@ -236,6 +263,14 @@ def test_assign() -> None:
         dataclass_from_dict(_TestClass, {'fval': None}, coerce_to_float=True)
     with pytest.raises(TypeError):
         dataclass_from_dict(_TestClass, {'fval': []}, coerce_to_float=True)
+
+    # Datetime values should only be allowed with timezone set as utc.
+    dataclass_to_dict(_TestClass(datetimeval=utc_now()))
+    with pytest.raises(ValueError):
+        dataclass_to_dict(_TestClass(datetimeval=datetime.datetime.now()))
+    with pytest.raises(ValueError):
+        # This doesn't actually set timezone on the datetime obj.
+        dataclass_to_dict(_TestClass(datetimeval=datetime.datetime.utcnow()))
 
 
 def test_coerce() -> None:

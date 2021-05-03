@@ -8,6 +8,8 @@ unrecognized attribute data, allowing older clients to interact with newer
 data formats in a nondestructive manner.
 """
 
+# pylint: disable=too-many-lines
+
 # Note: We do lots of comparing of exact types here which is normally
 # frowned upon (stuff like isinstance() is usually encouraged).
 # pylint: disable=unidiomatic-typecheck
@@ -18,12 +20,22 @@ import logging
 from enum import Enum
 import dataclasses
 import typing
+import datetime
 from typing import TYPE_CHECKING, TypeVar, Generic, get_type_hints
 
 from efro.util import enum_by_value
 
+_pytz_utc: Any
+
+# We don't *require* pytz but we want to support it for tzinfos if available.
+try:
+    import pytz
+    _pytz_utc = pytz.utc
+except ModuleNotFoundError:
+    _pytz_utc = None  # pylint: disable=invalid-name
+
 if TYPE_CHECKING:
-    from typing import Any, Dict, Type, Tuple, Optional
+    from typing import Any, Dict, Type, Tuple, Optional, List
 
 T = TypeVar('T')
 
@@ -332,8 +344,33 @@ class PrepSession:
                                recursion_level=recursion_level + 1)
             return
 
+        # For Tuples, simply check individual member types.
+        # (and, for now, explicitly disallow zero member types or usage
+        # of ellipsis)
+        if origin is tuple:
+            childtypes = typing.get_args(anntype)
+            if not childtypes:
+                raise TypeError(
+                    f'Tuple at \'{attrname}\''
+                    f' has no type args; dataclassio requires type args.')
+            if childtypes[-1] is ...:
+                raise TypeError(f'Found ellipsis as part of type for'
+                                f' \'{attrname}\' on {cls}; these are not'
+                                f' supported by dataclassio.')
+            for childtype in childtypes:
+                self.prep_type(cls,
+                               attrname,
+                               childtype,
+                               recursion_level=recursion_level + 1)
+            return
+
         if issubclass(origin, Enum):
             self.prep_enum(origin)
+            return
+
+        # We allow datetime objects (and google's extended subclass of them
+        # used in firestore, which is why we don't look for exact type here).
+        if issubclass(origin, datetime.datetime):
             return
 
         if dataclasses.is_dataclass(origin):
@@ -475,6 +512,7 @@ class _Outputter:
                        value: Any) -> Any:
         # pylint: disable=too-many-return-statements
         # pylint: disable=too-many-branches
+        # pylint: disable=too-many-statements
 
         origin = _get_origin(anntype)
 
@@ -512,6 +550,27 @@ class _Outputter:
                     return float(value) if self._create else None
                 _raise_type_error(fieldpath, type(value), (origin, ))
             return value if self._create else None
+
+        if origin is tuple:
+            if not isinstance(value, tuple):
+                raise TypeError(f'Expected a tuple for {fieldpath};'
+                                f' found a {type(value)}')
+            childanntypes = typing.get_args(anntype)
+
+            # We should have verified this was non-zero at prep-time
+            assert childanntypes
+            if len(value) != len(childanntypes):
+                raise TypeError(f'Tuple at {fieldpath} contains'
+                                f' {len(value)} values; type specifies'
+                                f' {len(childanntypes)}.')
+            if self._create:
+                return [
+                    self._process_value(cls, fieldpath, childanntypes[i], x)
+                    for i, x in enumerate(value)
+                ]
+            for i, x in enumerate(value):
+                self._process_value(cls, fieldpath, childanntypes[i], x)
+            return None
 
         if origin is list:
             if not isinstance(value, list):
@@ -584,6 +643,20 @@ class _Outputter:
             # At prep-time we verified that these enums had valid value
             # types, so we can blindly return it here.
             return value.value if self._create else None
+
+        if issubclass(origin, datetime.datetime):
+            if not isinstance(value, origin):
+                raise TypeError(f'Expected a {origin} for {fieldpath};'
+                                f' found a {type(value)}.')
+            # We only support timezone-aware utc times.
+            if (value.tzinfo is not datetime.timezone.utc
+                    and (_pytz_utc is None or value.tzinfo is not _pytz_utc)):
+                raise ValueError(
+                    'datetime values must have timezone set as timezone.utc')
+            return [
+                value.year, value.month, value.day, value.hour, value.minute,
+                value.second, value.microsecond
+            ] if self._create else None
 
         raise TypeError(
             f"Field '{fieldpath}' of type '{anntype}' is unsupported here.")
@@ -677,6 +750,7 @@ class _Inputter(Generic[T]):
                           value: Any) -> Any:
         """Convert an assigned value to what a dataclass field expects."""
         # pylint: disable=too-many-return-statements
+        # pylint: disable=too-many-branches
 
         origin = _get_origin(anntype)
 
@@ -718,6 +792,9 @@ class _Inputter(Generic[T]):
             return self._sequence_from_input(cls, fieldpath, anntype, value,
                                              origin)
 
+        if origin is tuple:
+            return self._tuple_from_input(cls, fieldpath, anntype, value)
+
         if origin is dict:
             return self._dict_from_input(cls, fieldpath, anntype, value)
 
@@ -726,6 +803,9 @@ class _Inputter(Generic[T]):
 
         if issubclass(origin, Enum):
             return enum_by_value(origin, value)
+
+        if issubclass(origin, datetime.datetime):
+            return self._datetime_from_input(cls, fieldpath, value)
 
         raise TypeError(
             f"Field '{fieldpath}' of type '{anntype}' is unsupported here.")
@@ -901,3 +981,56 @@ class _Inputter(Generic[T]):
         return seqtype(
             self._value_from_input(cls, fieldpath, childanntype, i)
             for i in value)
+
+    def _datetime_from_input(self, cls: Type, fieldpath: str,
+                             value: Any) -> Any:
+
+        # We expect a list of 7 ints.
+        if type(value) is not list:
+            raise TypeError(
+                f'Invalid input value for "{fieldpath}" on "{cls}";'
+                f' expected a list, got a {type(value).__name__}')
+        if len(value) != 7 or not all(isinstance(x, int) for x in value):
+            raise TypeError(
+                f'Invalid input value for "{fieldpath}" on "{cls}";'
+                f' expected a list of 7 ints.')
+        return datetime.datetime(  # type: ignore
+            *value, tzinfo=datetime.timezone.utc)
+
+    def _tuple_from_input(self, cls: Type, fieldpath: str, anntype: Any,
+                          value: Any) -> Any:
+
+        out: List = []
+
+        # Because we are json-centric, we expect a list for all sequences.
+        if type(value) is not list:
+            raise TypeError(f'Invalid input value for "{fieldpath}";'
+                            f' expected a list, got a {type(value).__name__}')
+
+        childanntypes = typing.get_args(anntype)
+
+        # We should have verified this to be non-zero at prep-time.
+        assert childanntypes
+
+        if len(value) != len(childanntypes):
+            raise TypeError(f'Invalid tuple input for "{fieldpath}";'
+                            f' expected {len(childanntypes)} values,'
+                            f' found {len(value)}.')
+
+        for i, childanntype in enumerate(childanntypes):
+            childval = value[i]
+
+            # 'Any' type children; make sure they are valid json values
+            # and then just grab them.
+            if childanntype is typing.Any:
+                if not _is_valid_json(childval):
+                    raise TypeError(f'Item {i} of {fieldpath} contains'
+                                    f' data type(s) not supported by json.')
+                out.append(childval)
+            else:
+                out.append(
+                    self._value_from_input(cls, fieldpath, childanntype,
+                                           childval))
+
+        assert len(out) == len(childanntypes)
+        return tuple(out)

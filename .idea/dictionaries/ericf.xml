@@ -345,6 +345,7 @@
       <w>childnode</w>
       <w>childtype</w>
       <w>childtypes</w>
+      <w>childval</w>
       <w>chinesetraditional</w>
       <w>chipfork</w>
       <w>chosenone</w>
@@ -491,6 +492,7 @@
       <w>dataval</w>
       <w>datetimemodule</w>
       <w>datetimes</w>
+      <w>datetimeval</w>
       <w>daynum</w>
       <w>dayoffset</w>
       <w>dbapi</w>
@@ -2283,6 +2285,7 @@
       <w>tself</w>
       <w>tspc</w>
       <w>tstr</w>
+      <w>tupleval</w>
       <w>turtledemo</w>
       <w>tval</w>
       <w>tvalue</w>

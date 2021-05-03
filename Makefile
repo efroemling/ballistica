@@ -661,7 +661,7 @@ test-assetmanager:
       tests/test_ba/test_assetmanager.py::test_assetmanager
 
 # Individual test with extra output enabled.
-test-dataclasses:
+test-dataclassio:
 	@tools/pcommand pytest -o log_cli=true -o log_cli_level=debug -s -vv \
       tests/test_efro/test_dataclassio.py
 
