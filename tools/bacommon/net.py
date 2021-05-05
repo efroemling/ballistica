@@ -4,14 +4,14 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, List, Dict, Any, Tuple
 from dataclasses import dataclass
 
 from efro import entity
-from efro.dataclassio import prepped
+from efro.dataclassio import ioprepped
 
 if TYPE_CHECKING:
-    from typing import Optional, Any, List, Dict
+    pass
 
 
 class ServerNodeEntry(entity.CompoundValue):
@@ -33,7 +33,7 @@ class ServerNodeQueryResponse(entity.Entity):
                                        store_default=False)
 
 
-@prepped
+@ioprepped
 @dataclass
 class PrivateHostingState:
     """Combined state of whether we're hosting, whether we can, etc."""
@@ -45,7 +45,7 @@ class PrivateHostingState:
     free_host_minutes_remaining: Optional[float] = None
 
 
-@prepped
+@ioprepped
 @dataclass
 class PrivateHostingConfig:
     """Config provided when hosting a private party."""
@@ -53,12 +53,13 @@ class PrivateHostingConfig:
     playlist_name: str = 'Unknown'
     randomize: bool = False
     tutorial: bool = False
-    custom_team_names: Optional[List[str]] = None
-    custom_team_colors: Optional[List[List[float]]] = None
+    custom_team_names: Optional[Tuple[str, str]] = None
+    custom_team_colors: Optional[Tuple[Tuple[float, float, float],
+                                       Tuple[float, float, float]]] = None
     playlist: Optional[List[Dict[str, Any]]] = None
 
 
-@prepped
+@ioprepped
 @dataclass
 class PrivatePartyConnectResult:
     """Info about a server we get back when connecting."""

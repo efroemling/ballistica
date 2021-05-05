@@ -99,6 +99,7 @@ class Session:
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
+        # pylint: disable=too-many-branches
         from ba._lobby import Lobby
         from ba._stats import Stats
         from ba._gameactivity import GameActivity
@@ -172,8 +173,16 @@ class Session:
 
         # Create static teams if we're using them.
         if self.use_teams:
-            assert team_names is not None
-            assert team_colors is not None
+            if team_names is None:
+                raise RuntimeError(
+                    'use_teams is True but team_names not provided.')
+            if team_colors is None:
+                raise RuntimeError(
+                    'use_teams is True but team_colors not provided.')
+            if len(team_colors) != len(team_names):
+                raise RuntimeError(f'Got {len(team_names)} team_names'
+                                   f' and {len(team_colors)} team_colors;'
+                                   f' these numbers must match.')
             for i, color in enumerate(team_colors):
                 team = SessionTeam(team_id=self._next_team_id,
                                    name=GameActivity.get_team_display_string(

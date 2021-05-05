@@ -32,14 +32,19 @@ if TYPE_CHECKING:
     from types import FrameType
     from bacommon.servermanager import ServerCommand
 
-VERSION_STR = '1.2'
+VERSION_STR = '1.3'
 
 # Version history:
+# 1.3:
+#  Added show_tutorial config option
+#  Added team_names config option
+#  Added team_colors config option
+#  Added playlist_inline config option
 # 1.2:
 #  Added optional --help arg
-#  Added --config arg for setting config path and --root for ba_root path
+#  Added --config arg for specifying config file and --root for ba_root path
 #  Added noninteractive mode and --interactive/--noninteractive args to
-#    explicitly specify
+#    explicitly enable/disable it (it is autodetected by default)
 #  Added explicit control for auto-restart: --no-auto-restart
 #  Config file is now reloaded each time server binary is restarted; no more
 #    need to bring down server wrapper to pick up changes
@@ -413,7 +418,7 @@ class ServerManagerApp:
             f'{Clr.BLD}--root [path]{Clr.RST}\n' + cls._par(
                 'Set the ballistica root directory. This is where the server'
                 ' binary will read and write its caches, state files,'
-                ' downloaded assets, etc. It needs to be a writable'
+                ' downloaded assets to, etc. It needs to be a writable'
                 ' directory. If not specified, the script will use the'
                 ' \'dist/ba_root\' directory relative to itself.') + '\n'
             f'{Clr.BLD}--interactive{Clr.RST}\n'
@@ -648,7 +653,18 @@ class ServerManagerApp:
         # ballisticacore config file; the rest we pass at runtime.
         bincfg['Port'] = self._config.port
         bincfg['Auto Balance Teams'] = self._config.auto_balance_teams
-        bincfg['Show Tutorial'] = False
+        bincfg['Show Tutorial'] = self._config.show_tutorial
+
+        if self._config.team_names is not None:
+            bincfg['Custom Team Names'] = self._config.team_names
+        elif 'Custom Team Names' in bincfg:
+            del bincfg['Custom Team Names']
+
+        if self._config.team_colors is not None:
+            bincfg['Custom Team Colors'] = self._config.team_colors
+        elif 'Custom Team Colors' in bincfg:
+            del bincfg['Custom Team Colors']
+
         bincfg['Idle Exit Minutes'] = self._config.idle_exit_minutes
         with open(cfgpath, 'w') as outfile:
             outfile.write(json.dumps(bincfg))

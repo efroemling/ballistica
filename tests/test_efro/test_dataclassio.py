@@ -7,16 +7,17 @@ from __future__ import annotations
 from enum import Enum
 import datetime
 from dataclasses import field, dataclass
-from typing import TYPE_CHECKING
+from typing import (TYPE_CHECKING, Optional, List, Set, Any, Dict, Sequence,
+                    Union, Tuple)
 
 import pytest
 
 from efro.util import utc_now
 from efro.dataclassio import (dataclass_validate, dataclass_from_dict,
-                              dataclass_to_dict, prepped)
+                              dataclass_to_dict, ioprepped)
 
 if TYPE_CHECKING:
-    from typing import Optional, List, Set, Any, Dict, Sequence, Union, Tuple
+    pass
 
 
 class _EnumTest(Enum):
@@ -55,7 +56,7 @@ def test_assign() -> None:
 
     # pylint: disable=too-many-statements
 
-    @prepped
+    @ioprepped
     @dataclass
     class _TestClass:
         ival: int = 0
@@ -276,7 +277,7 @@ def test_assign() -> None:
 def test_coerce() -> None:
     """Test value coercion."""
 
-    @prepped
+    @ioprepped
     @dataclass
     class _TestClass:
         ival: int = 0
@@ -318,7 +319,7 @@ def test_prep() -> None:
     # a strong use case.
     with pytest.raises(TypeError):
 
-        @prepped
+        @ioprepped
         @dataclass
         class _TestClass:
             ival: Sequence[int]
@@ -328,31 +329,31 @@ def test_prep() -> None:
     # get_type_hints() so we need to support at least that).
     with pytest.raises(TypeError):
 
-        @prepped
+        @ioprepped
         @dataclass
         class _TestClass2:
             ival: Union[int, str]
 
-    @prepped
+    @ioprepped
     @dataclass
     class _TestClass3:
         uval: Union[int, None]
 
     with pytest.raises(TypeError):
 
-        @prepped
+        @ioprepped
         @dataclass
         class _TestClass4:
             ival: Union[int, str]
 
     # This will get simplified down to simply int by get_type_hints so is ok.
-    @prepped
+    @ioprepped
     @dataclass
     class _TestClass5:
         ival: Union[int]
 
     # This will get simplified down to a valid 2 member union so is ok
-    @prepped
+    @ioprepped
     @dataclass
     class _TestClass6:
         ival: Union[int, None, int, None]
@@ -361,36 +362,36 @@ def test_prep() -> None:
     # having those value types.
     with pytest.raises(TypeError):
 
-        @prepped
+        @ioprepped
         @dataclass
         class _TestClass7:
             dval: Dict[float, int]
 
-    @prepped
+    @ioprepped
     @dataclass
     class _TestClass8:
         dval: Dict[str, int]
 
-    @prepped
+    @ioprepped
     @dataclass
     class _TestClass9:
         dval: Dict[_GoodEnum, int]
 
-    @prepped
+    @ioprepped
     @dataclass
     class _TestClass10:
         dval: Dict[_GoodEnum2, int]
 
     with pytest.raises(TypeError):
 
-        @prepped
+        @ioprepped
         @dataclass
         class _TestClass11:
             dval: Dict[_BadEnum1, int]
 
     with pytest.raises(TypeError):
 
-        @prepped
+        @ioprepped
         @dataclass
         class _TestClass12:
             dval: Dict[_BadEnum2, int]
@@ -399,7 +400,7 @@ def test_prep() -> None:
 def test_validate() -> None:
     """Testing validation."""
 
-    @prepped
+    @ioprepped
     @dataclass
     class _TestClass:
         ival: int = 0
@@ -434,7 +435,7 @@ def test_validate() -> None:
 def test_extra_data() -> None:
     """Test handling of data that doesn't map to dataclass attrs."""
 
-    @prepped
+    @ioprepped
     @dataclass
     class _TestClass:
         ival: int = 0
@@ -462,7 +463,7 @@ def test_extra_data() -> None:
 def test_dict() -> None:
     """Test various dict related bits."""
 
-    @prepped
+    @ioprepped
     @dataclass
     class _TestClass:
         dval: dict
@@ -481,7 +482,7 @@ def test_dict() -> None:
 
     # Int dict-keys should actually be stored as strings internally
     # (for json compatibility).
-    @prepped
+    @ioprepped
     @dataclass
     class _TestClass2:
         dval: Dict[int, float]
@@ -496,7 +497,7 @@ def test_dict() -> None:
     assert obj2.dval[1] == 2.35
 
     # Same with enum keys (we support enums with str and int values)
-    @prepped
+    @ioprepped
     @dataclass
     class _TestClass3:
         dval: Dict[_GoodEnum, int]
@@ -508,7 +509,7 @@ def test_dict() -> None:
     obj3 = dataclass_from_dict(_TestClass3, out)
     assert obj3.dval[_GoodEnum.VAL1] == 124
 
-    @prepped
+    @ioprepped
     @dataclass
     class _TestClass4:
         dval: Dict[_GoodEnum2, int]

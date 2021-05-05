@@ -657,8 +657,32 @@ def _get_server_config_template_yaml(projroot: str) -> str:
     ignore_vars = {'stress_test_players'}
     for line in lines_in:
         if any(line.startswith(f'{var}:') for var in ignore_vars):
-            pass
-        elif line != '' and not line.startswith('#'):
+            continue
+        if line.startswith(' '):
+            # Ignore indented lines (our few multi-line special cases).
+            continue
+
+        if line.startswith('team_names:'):
+            lines_out += [
+                '#team_names:',
+                '#- Blue',
+                '#- Red',
+            ]
+            continue
+
+        if line.startswith('team_colors:'):
+            lines_out += [
+                '#team_colors:',
+                '#- [0.1, 0.25, 1.0]',
+                '#- [1.0, 0.25, 0.2]',
+            ]
+            continue
+
+        if line.startswith('playlist_inline:'):
+            lines_out += ['#playlist_inline: []']
+            continue
+
+        if line != '' and not line.startswith('#'):
             vname, _vtype, veq, vval_raw = line.split()
             assert vname.endswith(':')
             vname = vname[:-1]

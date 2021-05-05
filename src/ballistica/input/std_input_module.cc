@@ -43,13 +43,15 @@ void StdInputModule::PushBeginReadCall() {
       char buffer[4096];
       char* val = fgets(buffer, sizeof(buffer), stdin);
       if (val) {
-        int last_char = static_cast<int>(strlen(buffer) - 1);
+        pending_input_ += val;
 
-        // Clip off our last char if its a newline (just to keep things tidier).
-        if (last_char >= 0 && buffer[last_char] == '\n') {
-          buffer[last_char] = 0;
+        if (!pending_input_.empty()
+            && pending_input_[pending_input_.size() - 1] == '\n') {
+          // Get rid of the last newline and ship it to the game.
+          pending_input_.pop_back();
+          g_game->PushStdinScriptCommand(pending_input_);
+          pending_input_.clear();
         }
-        g_game->PushStdinScriptCommand(buffer);
       } else {
         // At the moment we bail on any read error.
         if (feof(stdin)) {

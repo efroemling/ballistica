@@ -8,12 +8,12 @@ import os
 import copy
 import time
 from enum import Enum
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
 
 import ba
 import _ba
-from efro.dataclassio import dataclass_from_dict
+from efro.dataclassio import dataclass_from_dict, dataclass_to_dict
 from bacommon.net import (PrivateHostingState, PrivateHostingConfig,
                           PrivatePartyConnectResult)
 from bastd.ui.gather import GatherTab
@@ -150,6 +150,7 @@ class PrivateGatherTab(GatherTab):
         return self._container
 
     def _build_hosting_config(self) -> PrivateHostingConfig:
+        # pylint: disable=too-many-branches
         from bastd.ui.playlist import PlaylistTypeVars
         from ba.internal import filter_playlist
         hcfg = PrivateHostingConfig()
@@ -192,12 +193,29 @@ class PrivateGatherTab(GatherTab):
 
         tutorial = cfg.get('Show Tutorial')
         if not isinstance(tutorial, bool):
-            tutorial = False
+            tutorial = True
         hcfg.tutorial = tutorial
 
         if hcfg.session_type == 'teams':
-            hcfg.custom_team_names = copy.copy(cfg.get('Custom Team Names'))
-            hcfg.custom_team_colors = copy.copy(cfg.get('Custom Team Colors'))
+            ctn: Optional[List[str]] = cfg.get('Custom Team Names')
+            if ctn is not None:
+                if (isinstance(ctn, (list, tuple)) and len(ctn) == 2
+                        and all(isinstance(x, str) for x in ctn)):
+                    hcfg.custom_team_names = (ctn[0], ctn[1])
+                else:
+                    print(f'Found invalid custom-team-names data: {ctn}')
+
+            ctc: Optional[List[List[float]]] = cfg.get('Custom Team Colors')
+            if ctc is not None:
+                if (isinstance(ctc, (list, tuple)) and len(ctc) == 2
+                        and all(isinstance(x, (list, tuple)) for x in ctc)
+                        and all(len(x) == 3 for x in ctc)):
+                    hcfg.custom_team_colors = ((ctc[0][0], ctc[0][1],
+                                                ctc[0][2]),
+                                               (ctc[1][0], ctc[1][1],
+                                                ctc[1][2]))
+                else:
+                    print(f'Found invalid custom-team-colors data: {ctc}')
 
         return hcfg
 
@@ -764,6 +782,8 @@ class PrivateGatherTab(GatherTab):
             ba.playsound(ba.getsound('error'))
             return
 
+        ba.playsound(ba.getsound('click01'))
+
         # If we're not hosting, start.
         if self._hostingstate.party_code is None:
 
@@ -784,7 +804,7 @@ class PrivateGatherTab(GatherTab):
             _ba.add_transaction(
                 {
                     'type': 'PRIVATE_PARTY_START',
-                    'config': asdict(self._hostingconfig),
+                    'config': dataclass_to_dict(self._hostingconfig),
                     'region_pings': ba.app.net.region_pings,
                 },
                 callback=ba.WeakCall(self._hosting_state_response))

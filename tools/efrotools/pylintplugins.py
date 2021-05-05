@@ -153,10 +153,46 @@ def var_annotations_filter(node: nc.NodeNG) -> nc.NodeNG:
 
     This accounts for deferred evaluation.
     """
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-nested-blocks
+
     if using_future_annotations(node):
+
         # Future behavior:
-        # Annotations are never evaluated.
+        # Annotated assigns under functions are not evaluated.
+        # Class and module vars are normally not either. However we
+        # do evaluate if we come across an 'ioprepped' dataclass
+        # decorator. (the 'ioprepped' decorator explicitly evaluates
+        # dataclass annotations).
+
+        fnode = node
         willeval = False
+        while fnode is not None:
+            if isinstance(fnode, astroid.ClassDef):
+                if fnode.decorators is not None:
+                    found_ioprepped = False
+                    for dec in fnode.decorators.nodes:
+
+                        # Look for dataclassio.ioprepped.
+                        if (isinstance(dec, astroid.nodes.Attribute)
+                                and dec.attrname == 'ioprepped'
+                                and isinstance(dec.expr, astroid.nodes.Name)
+                                and dec.expr.name == 'dataclassio'):
+                            found_ioprepped = True
+                            break
+
+                        # Look for simply 'ioprepped'.
+                        if (isinstance(dec, astroid.nodes.Name)
+                                and dec.name == 'ioprepped'):
+                            found_ioprepped = True
+                            break
+
+                    if found_ioprepped:
+                        willeval = True
+                        break
+
+            fnode = fnode.parent
+
     else:
         # Legacy behavior:
         # Annotated assigns under functions are not evaluated,

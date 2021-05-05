@@ -5,15 +5,15 @@ from __future__ import annotations
 
 from enum import Enum
 from dataclasses import field, dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional, Tuple, Dict, Any
 
-from efro.dataclassio import prepped
+from efro.dataclassio import ioprepped
 
 if TYPE_CHECKING:
-    from typing import Optional, Tuple, List
+    pass
 
 
-@prepped
+@ioprepped
 @dataclass
 class ServerConfig:
     """Configuration for the server manager app (<appname>_server)."""
@@ -52,8 +52,7 @@ class ServerConfig:
     max_party_size: int = 6
 
     # Options here are 'ffa' (free-for-all) and 'teams'
-    # This value is only used if you do not supply a playlist_code (see below).
-    # In that case the default teams or free-for-all playlist gets used.
+    # This value is ignored if you supply a playlist_code (see below).
     session_type: str = 'ffa'
 
     # To host your own custom playlists, use the 'share' functionality in the
@@ -61,6 +60,10 @@ class ServerConfig:
     # This will give you a numeric code you can enter here to host that
     # playlist.
     playlist_code: Optional[int] = None
+
+    # Alternately, you can embed playlist data here instead of using codes.
+    # Make sure to set session_type to the correct type for the data here.
+    playlist_inline: Optional[List[Dict[str, Any]]] = None
 
     # Whether to shuffle the playlist or play its games in designated order.
     playlist_shuffle: bool = True
@@ -85,12 +88,12 @@ class ServerConfig:
     # performance)
     ffa_series_length: int = 24
 
-    # If you provide a custom stats webpage for your server, you can use
-    # this to provide a convenient in-game link to it in the server-browser
-    # beside the server name.
+    # If you have a custom stats webpage for your server, you can use this
+    # to provide a convenient in-game link to it in the server-browser
+    # alongside the server name.
     # if ${ACCOUNT} is present in the string, it will be replaced by the
     # currently-signed-in account's id. To fetch info about an account,
-    # your backend server can use the following url:
+    # your back-end server can use the following url:
     # http://bombsquadgame.com/accountquery?id=ACCOUNT_ID_HERE
     stats_url: Optional[str] = None
 
@@ -110,9 +113,19 @@ class ServerConfig:
 
     # If present, the server subprocess will shut down immediately if this
     # amount of time passes with no activity from any players. The server
-    # manager will then spin up a fresh server subprocess if
-    # auto-restart is enabled (the default).
+    # manager will then spin up a fresh server subprocess if auto-restart is
+    # enabled (the default).
     idle_exit_minutes: Optional[float] = None
+
+    # Should the tutorial be shown at the beginning of games?
+    show_tutorial: bool = False
+
+    # Team names (teams mode only).
+    team_names: Optional[Tuple[str, str]] = None
+
+    # Team colors (teams mode only).
+    team_colors: Optional[Tuple[Tuple[float, float, float],
+                                Tuple[float, float, float]]] = None
 
     # (internal) stress-testing mode.
     stress_test_players: Optional[int] = None

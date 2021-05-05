@@ -147,7 +147,7 @@ def dataclass_validate(obj: Any, coerce_to_float: bool = True) -> None:
     _Outputter(obj, create=False, coerce_to_float=coerce_to_float).run()
 
 
-def dataclass_prep(cls: Type, extra_types: Dict[str, Type] = None) -> None:
+def ioprep(cls: Type) -> None:
     """Prep a dataclass type for use with this module's functionality.
 
     Prepping ensures that all types contained in a data class as well as
@@ -167,19 +167,18 @@ def dataclass_prep(cls: Type, extra_types: Dict[str, Type] = None) -> None:
     conditional and thus not available at runtime, so are explicitly made
     available during annotation evaluation.
     """
-    PrepSession(explicit=True,
-                extra_types=extra_types).prep_dataclass(cls, recursion_level=0)
+    PrepSession(explicit=True).prep_dataclass(cls, recursion_level=0)
 
 
-def prepped(cls: Type[T]) -> Type[T]:
-    """Class decorator to easily prep a dataclass at definition time.
+def ioprepped(cls: Type[T]) -> Type[T]:
+    """Class decorator for easily prepping a dataclass at definition time.
 
     Note that in some cases it may not be possible to prep a dataclass
     immediately (such as when its type annotations refer to forward-declared
     types). In these cases, dataclass_prep() should be explicitly called for
     the class once it is safe to do so.
     """
-    dataclass_prep(cls)
+    ioprep(cls)
     return cls
 
 
@@ -197,9 +196,8 @@ class PrepData:
 class PrepSession:
     """Context for a prep."""
 
-    def __init__(self, explicit: bool, extra_types: Optional[Dict[str, Type]]):
+    def __init__(self, explicit: bool):
         self.explicit = explicit
-        self.extra_types = extra_types
 
     def prep_dataclass(self, cls: Type, recursion_level: int) -> PrepData:
         """Run prep on a dataclass if necessary and return its prep data."""
@@ -228,27 +226,18 @@ class PrepSession:
                 ' efro.dataclassio.dataclass_prep() or the'
                 ' @efro.dataclassio.prepped decorator).', cls)
 
-        localns: Dict[str, Any] = {
-            'Optional': typing.Optional,
-            'Union': typing.Union,
-            'List': typing.List,
-            'Tuple': typing.Tuple,
-            'Sequence': typing.Sequence,
-            'Set': typing.Set,
-            'Any': typing.Any,
-            'Dict': typing.Dict,
-        }
-        if self.extra_types is not None:
-            localns.update(self.extra_types)
-
         try:
             # Use default globalns which should be the class' module,
             # but provide our own locals to cover things like typing.*
             # which are generally not actually present at runtime for us.
-            resolved_annotations = get_type_hints(cls, localns=localns)
+            # resolved_annotations = get_type_hints(cls, localns=localns)
+            resolved_annotations = get_type_hints(cls)
         except Exception as exc:
             raise RuntimeError(
-                f'Dataclass prep failed with error: {exc}.') from exc
+                f'dataclassio prep for {cls} failed with error: {exc}.'
+                f' Make sure all types used in annotations are defined'
+                f' at the module level or add them as part of an explicit'
+                f' prep call.') from exc
 
         # Ok; we've resolved actual types for this dataclass.
         # now recurse through them, verifying that we support all contained
@@ -478,9 +467,8 @@ class _Outputter:
         return self._process_dataclass(type(self._obj), self._obj, '')
 
     def _process_dataclass(self, cls: Type, obj: Any, fieldpath: str) -> Any:
-        prep = PrepSession(explicit=False,
-                           extra_types=None).prep_dataclass(type(obj),
-                                                            recursion_level=0)
+        prep = PrepSession(explicit=False).prep_dataclass(type(obj),
+                                                          recursion_level=0)
         fields = dataclasses.fields(obj)
         out: Optional[Dict[str, Any]] = {} if self._create else None
         for field in fields:
@@ -823,9 +811,8 @@ class _Inputter(Generic[T]):
         if not isinstance(values, dict):
             raise TypeError("Expected a dict for 'values' arg.")
 
-        prep = PrepSession(explicit=False,
-                           extra_types=None).prep_dataclass(cls,
-                                                            recursion_level=0)
+        prep = PrepSession(explicit=False).prep_dataclass(cls,
+                                                          recursion_level=0)
 
         extra_attrs = {}
 
@@ -858,7 +845,12 @@ class _Inputter(Generic[T]):
                                 if fieldpath else fieldname)
                 args[key] = self._value_from_input(cls, subfieldpath,
                                                    fieldtype, value)
-        out = cls(**args)
+        try:
+            out = cls(**args)
+        except Exception as exc:
+            raise RuntimeError(
+                f'Error instantiating class {cls} at {fieldpath}: {exc}'
+            ) from exc
         if extra_attrs:
             setattr(out, EXTRA_ATTRS_ATTR, extra_attrs)
         return out

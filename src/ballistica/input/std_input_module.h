@@ -12,6 +12,9 @@ class StdInputModule : public Module {
   explicit StdInputModule(Thread* thread);
   ~StdInputModule() override;
   void PushBeginReadCall();
+
+ private:
+  std::string pending_input_;
 };
 
 }  // namespace ballistica

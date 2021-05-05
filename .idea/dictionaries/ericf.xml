@@ -143,6 +143,7 @@
       <w>audiobooks</w>
       <w>audioop</w>
       <w>autodesk</w>
+      <w>autodetected</w>
       <w>autogenerate</w>
       <w>autonoassets</w>
       <w>autopoint</w>
@@ -1085,6 +1086,8 @@
       <w>introspectable</w>
       <w>intstr</w>
       <w>iobj</w>
+      <w>ioprep</w>
+      <w>ioprepped</w>
       <w>ipaddress</w>
       <w>ipos</w>
       <w>iprof</w>
@@ -1712,6 +1715,7 @@
       <w>pthreads</w>
       <w>ptrans</w>
       <w>ptype</w>
+      <w>ptypename</w>
       <w>publictab</w>
       <w>pubsync</w>
       <w>pucknode</w>

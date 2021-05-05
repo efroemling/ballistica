@@ -372,7 +372,7 @@ class PartyWindow(ba.Window):
                 cfg.apply_and_commit()
                 self._update()
         else:
-            print('unhandled popup type: ' + str(self._popup_type))
+            print(f'unhandled popup type: {self._popup_type}')
 
     def popup_menu_closing(self, popup_window: popup.PopupWindow) -> None:
         """Called when the popup is closing."""

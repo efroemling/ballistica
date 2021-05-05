@@ -57,6 +57,7 @@
       <w>athome</w>
       <w>attrobj</w>
       <w>audiocache</w>
+      <w>autodetected</w>
       <w>automagically</w>
       <w>autoselect</w>
       <w>availmins</w>
@@ -485,6 +486,8 @@
       <w>intstr</w>
       <w>invote</w>
       <w>iobj</w>
+      <w>ioprep</w>
+      <w>ioprepped</w>
       <w>iserverget</w>
       <w>iserverput</w>
       <w>isinst</w>
@@ -758,6 +761,7 @@
       <w>pton</w>
       <w>ptrs</w>
       <w>ptype</w>
+      <w>ptypename</w>
       <w>publictab</w>
       <w>pulseaudio</w>
       <w>punchmomentumlinear</w>

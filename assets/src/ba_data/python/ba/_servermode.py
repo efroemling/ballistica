@@ -19,6 +19,7 @@ from ba._dualteamsession import DualTeamSession
 
 if TYPE_CHECKING:
     from typing import Optional, Dict, Any, Type
+
     import ba
     from bacommon.servermanager import ServerConfig
 
@@ -300,6 +301,28 @@ class ServerController:
         if _ba.get_account_state() != 'signed_in':
             print('WARNING: launch_server_session() expects to run '
                   'with a signed in server account')
+
+        # If we didn't fetch a playlist but there's an inline one in the
+        # server-config, pull it in to the game config and use it.
+        if (self._config.playlist_code is None
+                and self._config.playlist_inline is not None):
+            self._playlist_name = 'ServerModePlaylist'
+            if sessiontype is FreeForAllSession:
+                ptypename = 'Free-for-All'
+            elif sessiontype is DualTeamSession:
+                ptypename = 'Team Tournament'
+            else:
+                raise RuntimeError(f'Unknown session type {sessiontype}')
+
+            # Need to add this in a transaction instead of just setting
+            # it directly or it will get overwritten by the master-server.
+            _ba.add_transaction({
+                'type': 'ADD_PLAYLIST',
+                'playlistType': ptypename,
+                'playlistName': self._playlist_name,
+                'playlist': self._config.playlist_inline
+            })
+            _ba.run_transactions()
 
         if self._first_run:
             curtimestr = time.strftime('%c')

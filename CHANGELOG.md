@@ -1,4 +1,4 @@
-### 1.6.0 (20353)
+### 1.6.0 (20357)
 - Revamped netcode significantly. We still don't have client-prediction, but things should (hopefully) feel much lower latency now.
 - Added network debug graphs accessible by hitting F8.
 - Added private parties functionality (cloud hosted parties with associated codes making it easier to play with friends)
@@ -21,6 +21,11 @@
 - Plugins can now register to be called for pause, resume, and shutdown events in addition to launch
 - Added ba.app.state holding the overall state of the app (running, paused, etc)
 - renamed the efro.dataclasses module to efro.dataclassio and added significant functionality
+- command-line input no longer errors on commands longer than 4k bytes.
+- added show-tutorial option to the server wrapper config
+- added custom-team-names option to the server wrapper config
+- added custom-team-colors option to the server wrapper config
+- added inline-playlist option to the server wrapper config
 
 ### 1.5.29 (20246)
 - Exposed ba method/class initing in public C++ layer.
