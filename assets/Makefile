@@ -650,6 +650,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   build/ba_data/python/efro/entity/util.py \
   build/ba_data/python/efro/error.py \
   build/ba_data/python/efro/json.py \
+  build/ba_data/python/efro/net.py \
   build/ba_data/python/efro/terminal.py \
   build/ba_data/python/efro/util.py
 
@@ -671,6 +672,7 @@ SCRIPT_TARGETS_PYC_PUBLIC_TOOLS = \
   build/ba_data/python/efro/entity/__pycache__/util.cpython-38.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/error.cpython-38.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/json.cpython-38.opt-1.pyc \
+  build/ba_data/python/efro/__pycache__/net.cpython-38.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/terminal.cpython-38.opt-1.pyc \
   build/ba_data/python/efro/__pycache__/util.cpython-38.opt-1.pyc
 

@@ -26,8 +26,7 @@ from ba._messages import PlayerProfilesChangedMessage
 from ba._multiteamsession import DEFAULT_TEAM_COLORS, DEFAULT_TEAM_NAMES
 from ba._music import do_play_music
 from ba._net import (master_server_get, master_server_post,
-                     get_ip_address_type, is_urllib_network_error,
-                     is_udp_network_error, DEFAULT_REQUEST_TIMEOUT_SECONDS)
+                     get_ip_address_type, DEFAULT_REQUEST_TIMEOUT_SECONDS)
 from ba._powerup import get_default_powerup_distribution
 from ba._profile import (get_player_profile_colors, get_player_profile_icon,
                          get_player_colors)

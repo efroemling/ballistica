@@ -633,7 +633,7 @@ class ManualGatherTab(GatherTab):
                 from_other_thread=True,
             )
         except Exception as exc:
-            from ba.internal import is_udp_network_error
+            from efro.net import is_udp_network_error
             if is_udp_network_error(exc):
                 ba.pushcall(ba.Call(
                     _safe_set_text, self._checking_state_text,
