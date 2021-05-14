@@ -50,6 +50,7 @@
       <w>appconfig</w>
       <w>appname</w>
       <w>appnameupper</w>
+      <w>appspot</w>
       <w>appstate</w>
       <w>argsjoined</w>
       <w>asci</w>
@@ -572,10 +573,12 @@
       <w>magoogan</w>
       <w>magua</w>
       <w>mainmenu</w>
+      <w>malhotra</w>
       <w>mallocs</w>
       <w>manualtab</w>
       <w>maskhigh</w>
       <w>maskuv</w>
+      <w>masterver</w>
       <w>maximus</w>
       <w>maxtries</w>
       <w>maxwidth</w>
@@ -821,6 +824,7 @@
       <w>rgui</w>
       <w>richcompare</w>
       <w>rigth</w>
+      <w>ritiek</w>
       <w>rname</w>
       <w>rootwidget</w>
       <w>rowwidget</w>

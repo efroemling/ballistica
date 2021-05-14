@@ -93,6 +93,7 @@
       <w>appmode</w>
       <w>appname</w>
       <w>appnameupper</w>
+      <w>appspot</w>
       <w>appstate</w>
       <w>appstore</w>
       <w>apputils</w>
@@ -1289,6 +1290,7 @@
       <w>makedirs</w>
       <w>makesetup</w>
       <w>malformatted</w>
+      <w>malhotra</w>
       <w>mallimportedby</w>
       <w>mandir</w>
       <w>manualtab</w>
@@ -1303,6 +1305,7 @@
       <w>masktex</w>
       <w>masktexstorename</w>
       <w>masterhash</w>
+      <w>masterver</w>
       <w>mathmodule</w>
       <w>mathnode</w>
       <w>mathutils</w>
@@ -1844,6 +1847,7 @@
       <w>reversedepsraw</w>
       <w>rfudge</w>
       <w>rgba</w>
+      <w>ritiek</w>
       <w>rlcompleter</w>
       <w>rlock</w>
       <w>rmats</w>
