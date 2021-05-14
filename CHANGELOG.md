@@ -1,4 +1,9 @@
+### 1.6.2 (20365)
 - Declare opponent team as the winner if a player with their final turn leaves an elimination game.
+- Fix for certain cases when trying to host a private game where no available nearby servers could be found.
+
+### 1.6.1 (20362)
+- Some clean-up on Android builds, including simplifying ad-networks. No longer should ever show rewarded ads in between game rounds (only when actual rewards are involved).
 
 ### 1.6.0 (20357)
 - Revamped netcode significantly. We still don't have client-prediction, but things should (hopefully) feel much lower latency now.
