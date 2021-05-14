@@ -1,3 +1,6 @@
+### 1.6.3 (20366)
+- Telnet access works again for gui builds without requiring a password (access must still be granted via the gui).
+
 ### 1.6.2 (20365)
 - Declare opponent team as the winner if a player with their final turn leaves an elimination game.
 - Fix for certain cases when trying to host a private game where no available nearby servers could be found.

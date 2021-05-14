@@ -203,8 +203,11 @@ void AppConfig::SetupEntries() {
       StringEntry("VR Head Relative Audio", "Auto");
   string_entries_[StringID::kMacControllerSubsystem] =
       StringEntry("Mac Controller Subsystem", "Classic");
-  string_entries_[StringID::kTelnetPassword] =
-      StringEntry("Telnet Password", "changeme");
+
+  // We don't want passwords by default for GUI builds since we must
+  // approve access there.
+  string_entries_[StringID::kTelnetPassword] = StringEntry(
+      "Telnet Password", g_buildconfig.headless_build() ? "changeme" : "");
 
   int_entries_[IntID::kPort] = IntEntry("Port", kDefaultPort);
   int_entries_[IntID::kTelnetPort] =

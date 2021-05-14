@@ -181,7 +181,7 @@ class AccountSubsystem:
         """Return whether pro is currently unlocked."""
 
         # Check our tickets-based pro upgrade and our two real-IAP based
-        # upgrades. Also unlock this stuff in ballistica-core builds.
+        # upgrades. Also always unlock this stuff in ballistica-core builds.
         return bool(
             _ba.get_purchased('upgrades.pro')
             or _ba.get_purchased('static.pro')
@@ -191,8 +191,8 @@ class AccountSubsystem:
     def have_pro_options(self) -> bool:
         """Return whether pro-options are present.
 
-        This is True for owners of Pro or old installs
-        before Pro was a requirement for these.
+        This is True for owners of Pro or for old installs
+        before Pro was a requirement for these options.
         """
 
         # We expose pro options if the server tells us to
