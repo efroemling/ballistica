@@ -1,3 +1,5 @@
+- Declare opponent team as the winner if a player with their final turn leaves an elimination game.
+
 ### 1.6.0 (20357)
 - Revamped netcode significantly. We still don't have client-prediction, but things should (hopefully) feel much lower latency now.
 - Added network debug graphs accessible by hitting F8.

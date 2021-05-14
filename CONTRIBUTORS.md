@@ -23,3 +23,6 @@
 
 ### Daniil Rakhov
 - Plugin api additions
+
+### Ritiek Malhotra
+- Just <3 BombSquad

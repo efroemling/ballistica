@@ -483,6 +483,13 @@ class EliminationGame(ba.TeamGameActivity[Player, Team]):
         # list then.
         ba.timer(0, self._update_icons)
 
+        # If the player to leave was the last in spawn order and had
+        # their final turn currently in-progress, mark the survival time
+        # for their team.
+        if self._get_total_team_lives(player.team) == 0:
+            assert self._start_time is not None
+            player.team.survival_seconds = int(ba.time() - self._start_time)
+
     def _get_total_team_lives(self, team: Team) -> int:
         return sum(player.lives for player in team.players)
 
