@@ -8,8 +8,12 @@
 
 namespace ballistica {
 
-#define RAND_RANGE(min, max) \
-  (min) + (static_cast<float>(rand()) / RAND_MAX) * ((max) - (min))  // NOLINT
+static auto rand_range(float min, float max) -> float {
+  return min
+         + (static_cast<float>(rand())  // NOLINT
+            / static_cast<float>(RAND_MAX))
+               * (max - min);
+}
 
 class SmoothGen1D {
  public:
@@ -24,7 +28,7 @@ class SmoothGen1D {
   void Expand(uint32_t index) {
     if (index >= vals_x.size()) {
       if (vals_x.empty()) {
-        float initial_x = RAND_RANGE(0, 1);
+        float initial_x = rand_range(0.0f, 1.0f);
         root = std::make_unique<Node>(0, 1, initial_x);
         vals_x.push_back(initial_x);
       }
@@ -73,11 +77,11 @@ class SmoothGen1D {
         switch (q) {
           case kx:
             (*x) = initial_x[q] =
-                RAND_RANGE(min_x, min_x + (max_x - min_x) * 0.5f);
+                rand_range(min_x, min_x + (max_x - min_x) * 0.5f);
             break;
           case kX:
             (*x) = initial_x[q] =
-                RAND_RANGE(min_x + (max_x - min_x) * 0.5f, max_x);
+                rand_range(min_x + (max_x - min_x) * 0.5f, max_x);
         }
       } else {
         if (val_count == 2) {
@@ -142,8 +146,8 @@ class SmoothGen2D {
   void Expand(uint32_t index) {
     if (index >= vals_x.size()) {
       if (vals_x.empty()) {
-        float initial_x = RAND_RANGE(0, 1);
-        float initial_y = RAND_RANGE(0, 1);
+        float initial_x = rand_range(0.0f, 1.0f);
+        float initial_y = rand_range(0.0f, 1.0f);
         root = std::make_unique<Node>(0, 0, 1, 1, initial_x, initial_y);
         vals_x.push_back(initial_x);
         vals_y.push_back(initial_y);
@@ -207,23 +211,23 @@ class SmoothGen2D {
           case kxy:
           case kXy:
             (*y) = initial_y[q] =
-                RAND_RANGE(min_y, min_y + (max_y - min_y) * 0.5f);
+                rand_range(min_y, min_y + (max_y - min_y) * 0.5f);
             break;
           case kxY:
           case kXY:
             (*y) = initial_y[q] =
-                RAND_RANGE(min_y + (max_y - min_y) * 0.5f, max_y);
+                rand_range(min_y + (max_y - min_y) * 0.5f, max_y);
         }
         switch (q) {
           case kxy:
           case kxY:
             (*x) = initial_x[q] =
-                RAND_RANGE(min_x, min_x + (max_x - min_x) * 0.5f);
+                rand_range(min_x, min_x + (max_x - min_x) * 0.5f);
             break;
           case kXy:
           case kXY:
             (*x) = initial_x[q] =
-                RAND_RANGE(min_x + (max_x - min_x) * 0.5f, max_x);
+                rand_range(min_x + (max_x - min_x) * 0.5f, max_x);
         }
       } else {
         if (val_count == 4) {
@@ -303,9 +307,9 @@ class SmoothGen3D {
   void Expand(uint32_t index) {
     if (index >= vals_x.size()) {
       if (vals_x.empty()) {
-        float initial_x = RAND_RANGE(0, 1);
-        float initial_y = RAND_RANGE(0, 1);
-        float initial_z = RAND_RANGE(0, 1);
+        float initial_x = rand_range(0.0f, 1.0f);
+        float initial_y = rand_range(0.0f, 1.0f);
+        float initial_z = rand_range(0.0f, 1.0f);
         root = std::make_unique<Node>(0, 0, 0, 1, 1, 1, initial_x, initial_y,
                                       initial_z);
         vals_x.push_back(initial_x);
@@ -401,14 +405,14 @@ class SmoothGen3D {
           case kxYz:
           case kxYZ:
             (*x) = initial_x[q] =
-                RAND_RANGE(min_x, min_x + (max_x - min_x) * 0.5f);
+                rand_range(min_x, min_x + (max_x - min_x) * 0.5f);
             break;
           case kXyz:
           case kXyZ:
           case kXYz:
           case kXYZ:
             (*x) = initial_x[q] =
-                RAND_RANGE(min_x + (max_x - min_x) * 0.5f, max_x);
+                rand_range(min_x + (max_x - min_x) * 0.5f, max_x);
         }
         switch (q) {
           case kxyz:
@@ -416,14 +420,14 @@ class SmoothGen3D {
           case kXyz:
           case kXyZ:
             (*y) = initial_y[q] =
-                RAND_RANGE(min_y, min_y + (max_y - min_y) * 0.5f);
+                rand_range(min_y, min_y + (max_y - min_y) * 0.5f);
             break;
           case kxYz:
           case kxYZ:
           case kXYz:
           case kXYZ:
             (*y) = initial_y[q] =
-                RAND_RANGE(min_y + (max_y - min_y) * 0.5f, max_y);
+                rand_range(min_y + (max_y - min_y) * 0.5f, max_y);
         }
         switch (q) {
           case kxyz:
@@ -431,14 +435,14 @@ class SmoothGen3D {
           case kXYz:
           case kxYz:
             (*z) = initial_z[q] =
-                RAND_RANGE(min_z, min_z + (max_z - min_z) * 0.5f);
+                rand_range(min_z, min_z + (max_z - min_z) * 0.5f);
             break;
           case kxyZ:
           case kXyZ:
           case kXYZ:
           case kxYZ:
             (*z) = initial_z[q] =
-                RAND_RANGE(min_z + (max_z - min_z) * 0.5f, max_z);
+                rand_range(min_z + (max_z - min_z) * 0.5f, max_z);
         }
       } else {
         if (val_count == 8) {

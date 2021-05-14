@@ -44,7 +44,7 @@ class AppGlobals {
   std::string log;
   bool put_log{};
   bool log_full{};
-  int master_server_source{1};
+  int master_server_source{0};
   int session_count{};
   bool shutting_down{};
   bool have_incentivized_ad{true};

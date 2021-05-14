@@ -292,9 +292,10 @@ class Platform {
 
 #pragma mark ACCOUNTS ----------------------------------------------------------
 
-  virtual void SignIn(const std::string& account_type);
-  virtual void SignOut();
-  virtual void GameCenterLogin();
+  virtual auto SignIn(const std::string& account_type) -> void;
+  virtual auto SignOut() -> void;
+  virtual auto GameCenterLogin() -> void;
+  virtual auto AccountDidChange() -> void;
 
 #pragma mark MUSIC PLAYBACK ----------------------------------------------------
 

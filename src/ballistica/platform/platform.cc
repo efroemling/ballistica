@@ -1072,6 +1072,10 @@ void Platform::SignIn(const std::string& account_type) {
   Log("SignIn() unimplemented");
 }
 
+void Platform::AccountDidChange() {
+  // Default is no-op.
+}
+
 void Platform::SignOut() { Log("SignOut() unimplemented"); }
 
 void Platform::AndroidShowWifiSettings() {
