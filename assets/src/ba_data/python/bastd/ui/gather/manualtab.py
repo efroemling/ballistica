@@ -13,6 +13,7 @@ from bastd.ui.gather import GatherTab
 
 import _ba
 import ba
+
 if TYPE_CHECKING:
     from typing import Any, Optional, Dict, List, Tuple, Type, Union, Callable
     from bastd.ui.gather import GatherWindow
@@ -87,8 +88,10 @@ class ManualGatherTab(GatherTab):
         self._scrollwidget: Optional[ba.Widget] = None
         self._columnwidget: Optional[ba.Widget] = None
         self._favorite_selected: Optional[str] = None
-        self._favorite_rename_window: Optional[ba.Widget] = None
-        self._party_rename_text: Optional[ba.Widget] = None
+        self._favorite_edit_window: Optional[ba.Widget] = None
+        self._party_edit_name_text: Optional[ba.Widget] = None
+        self._party_edit_addr_text: Optional[ba.Widget] = None
+        self._party_edit_port_text: Optional[ba.Widget] = None
 
     def on_activate(
         self,
@@ -287,7 +290,7 @@ class ManualGatherTab(GatherTab):
             click_activate=True,
             position=(c_width * 0.5 - 125, v - 30),
             autoselect=True,
-            color=(0.5, 0.9, 0.5),
+            color=(0.8, 1.0, 0.8),
             scale=0.8,
             selectable=True,
             on_activate_call=ba.Call(self._on_show_my_address_button_press, v,
@@ -349,9 +352,9 @@ class ManualGatherTab(GatherTab):
                         button_type='square',
                         color=(0.6, 0.53, 0.63),
                         textcolor=(0.75, 0.7, 0.8),
-                        on_activate_call=self._on_favorites_rename_press,
+                        on_activate_call=self._on_favorites_edit_press,
                         text_scale=1.0 if uiscale is ba.UIScale.SMALL else 1.2,
-                        label=ba.Lstr(resource='renameText'),
+                        label=ba.Lstr(resource='editText'),
                         autoselect=True)
         btnv -= b_height + b_space_extra
         ba.buttonwidget(parent=self._container,
@@ -399,15 +402,15 @@ class ManualGatherTab(GatherTab):
                               call=ba.WeakCall(
                                   self._host_lookup_result)).start()
 
-    def _on_favorites_rename_press(self) -> None:
+    def _on_favorites_edit_press(self) -> None:
         if self._favorite_selected is None:
             self._no_favorite_selected_error()
             return
 
         c_width = 600
-        c_height = 250
+        c_height = 310
         uiscale = ba.app.ui.uiscale
-        self._favorite_rename_window = cnt = ba.containerwidget(
+        self._favorite_edit_window = cnt = ba.containerwidget(
             scale=(1.8 if uiscale is ba.UIScale.SMALL else
                    1.55 if uiscale is ba.UIScale.MEDIUM else 1.0),
             size=(c_width, c_height),
@@ -417,22 +420,84 @@ class ManualGatherTab(GatherTab):
                       size=(0, 0),
                       h_align='center',
                       v_align='center',
-                      text='Enter Name of Party',
+                      text=ba.Lstr(resource='editText'),
+                      color=(0.5, 0.8, 0.5),
                       maxwidth=c_width * 0.8,
                       position=(c_width * 0.5, c_height - 60))
-        self._party_rename_text = txt = ba.textwidget(
+
+        ba.textwidget(parent=cnt,
+                      position=(c_width * 0.2 - 15, c_height - 120),
+                      color=(0.6, 1.0, 0.6),
+                      scale=1.0,
+                      size=(0, 0),
+                      maxwidth=60,
+                      h_align='right',
+                      v_align='center',
+                      text=ba.Lstr(resource='nameText'))
+
+        self._party_edit_name_text = ba.textwidget(
             parent=cnt,
-            size=(c_width * 0.8, 40),
+            size=(c_width * 0.7, 40),
             h_align='left',
             v_align='center',
             text=ba.app.config['Saved Servers'][
                 self._favorite_selected]['name'],
             editable=True,
-            description='Server name text',
-            position=(c_width * 0.1, c_height - 140),
+            description=ba.Lstr(resource='nameText'),
+            position=(c_width * 0.2, c_height - 140),
             autoselect=True,
-            maxwidth=c_width * 0.7,
+            maxwidth=c_width * 0.6,
             max_chars=200)
+
+        ba.textwidget(parent=cnt,
+                      position=(c_width * 0.2 - 15, c_height - 180),
+                      color=(0.6, 1.0, 0.6),
+                      scale=1.0,
+                      size=(0, 0),
+                      maxwidth=60,
+                      h_align='right',
+                      v_align='center',
+                      text=ba.Lstr(resource='gatherWindow.'
+                                   'manualAddressText'))
+
+        self._party_edit_addr_text = ba.textwidget(
+            parent=cnt,
+            size=(c_width * 0.4, 40),
+            h_align='left',
+            v_align='center',
+            text=ba.app.config['Saved Servers'][
+                self._favorite_selected]['addr'],
+            editable=True,
+            description=ba.Lstr(resource='gatherWindow.manualAddressText'),
+            position=(c_width * 0.2, c_height - 200),
+            autoselect=True,
+            maxwidth=c_width * 0.35,
+            max_chars=200)
+
+        ba.textwidget(parent=cnt,
+                      position=(c_width * 0.7 - 10, c_height - 180),
+                      color=(0.6, 1.0, 0.6),
+                      scale=1.0,
+                      size=(0, 0),
+                      maxwidth=45,
+                      h_align='right',
+                      v_align='center',
+                      text=ba.Lstr(resource='gatherWindow.'
+                                   'portText'))
+
+        self._party_edit_port_text = ba.textwidget(
+            parent=cnt,
+            size=(c_width * 0.2, 40),
+            h_align='left',
+            v_align='center',
+            text=str(ba.app.config['Saved Servers'][self._favorite_selected]
+                     ['port']),
+            editable=True,
+            description=ba.Lstr(resource='gatherWindow.portText'),
+            position=(c_width * 0.7, c_height - 200),
+            autoselect=True,
+            maxwidth=c_width * 0.2,
+            max_chars=6)
         cbtn = ba.buttonwidget(
             parent=cnt,
             label=ba.Lstr(resource='cancelText'),
@@ -443,32 +508,40 @@ class ManualGatherTab(GatherTab):
             position=(30, 30),
             autoselect=True)
         okb = ba.buttonwidget(parent=cnt,
-                              label='Rename',
+                              label=ba.Lstr(resource='saveText'),
                               size=(180, 60),
                               position=(c_width - 230, 30),
-                              on_activate_call=ba.Call(
-                                  self._rename_saved_party),
+                              on_activate_call=ba.Call(self._edit_saved_party),
                               autoselect=True)
         ba.widget(edit=cbtn, right_widget=okb)
         ba.widget(edit=okb, left_widget=cbtn)
-        ba.textwidget(edit=txt, on_return_press_call=okb.activate)
         ba.containerwidget(edit=cnt, cancel_button=cbtn, start_button=okb)
 
-    def _rename_saved_party(self) -> None:
-
+    def _edit_saved_party(self) -> None:
         server = self._favorite_selected
         if self._favorite_selected is None:
             self._no_favorite_selected_error()
             return
-        if not self._party_rename_text:
+        if not self._party_edit_name_text or not self._party_edit_addr_text:
             return
-        new_name_raw = cast(str, ba.textwidget(query=self._party_rename_text))
+        new_name_raw = cast(str,
+                            ba.textwidget(query=self._party_edit_name_text))
+        new_addr_raw = cast(str,
+                            ba.textwidget(query=self._party_edit_addr_text))
+        new_port_raw = cast(str,
+                            ba.textwidget(query=self._party_edit_port_text))
         ba.app.config['Saved Servers'][server]['name'] = new_name_raw
+        ba.app.config['Saved Servers'][server]['addr'] = new_addr_raw
+        try:
+            ba.app.config['Saved Servers'][server]['port'] = int(new_port_raw)
+        except ValueError:
+            # Notify about incorrect port? I'm lazy; simply leave old value.
+            pass
         ba.app.config.commit()
         ba.playsound(ba.getsound('gunCocking'))
         self._refresh_favorites()
 
-        ba.containerwidget(edit=self._favorite_rename_window,
+        ba.containerwidget(edit=self._favorite_edit_window,
                            transition='out_scale')
 
     def _on_favorite_delete_press(self) -> None:
