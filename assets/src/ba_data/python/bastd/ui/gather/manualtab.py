@@ -290,7 +290,7 @@ class ManualGatherTab(GatherTab):
             click_activate=True,
             position=(c_width * 0.5 - 125, v - 30),
             autoselect=True,
-            color=(0.8, 1.0, 0.8),
+            color=(0.5, 0.9, 0.5),
             scale=0.8,
             selectable=True,
             on_activate_call=ba.Call(self._on_show_my_address_button_press, v,
@@ -421,7 +421,7 @@ class ManualGatherTab(GatherTab):
                       h_align='center',
                       v_align='center',
                       text=ba.Lstr(resource='editText'),
-                      color=(0.5, 0.8, 0.5),
+                      color=(0.6, 1.0, 0.6),
                       maxwidth=c_width * 0.8,
                       position=(c_width * 0.5, c_height - 60))
 
