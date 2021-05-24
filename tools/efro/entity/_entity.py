@@ -48,9 +48,8 @@ class EntityMixin:
         Note that it is more efficient to pass data to an Entity's constructor
         than it is to create a default Entity and then call this on it.
         """
-        self.d_data = data
         assert isinstance(self, CompoundValue)
-        self.apply_fields_to_data(self.d_data, error=error)
+        self.d_data = self.filter_input(data, error=error)
 
     def copy_data(self, target: Union[CompoundValue,
                                       BoundCompoundValue]) -> None:

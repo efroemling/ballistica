@@ -1072,7 +1072,7 @@ void Platform::SignIn(const std::string& account_type) {
   Log("SignIn() unimplemented");
 }
 
-void Platform::AccountDidChange() {
+void Platform::LoginDidChange() {
   // Default is no-op.
 }
 

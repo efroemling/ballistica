@@ -852,7 +852,7 @@ enum class NodeMessageType {
   kFooting
 };
 
-enum class AccountState { kSignedOut, kSigningIn, kSignedIn };
+enum class LoginState { kSignedOut, kSigningIn, kSignedIn };
 
 enum class CameraMode { kFollow, kOrbit };
 

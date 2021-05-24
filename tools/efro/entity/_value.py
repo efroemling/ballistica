@@ -66,7 +66,7 @@ class SimpleValue(TypedValue[T]):
         self._allow_none = allow_none
 
         # We store _default_data in our internal data format so need
-        # to run user-facing value through our input filter.
+        # to run user-facing values through our input filter.
         # Make sure we do this last since filter_input depends on above vals.
         self._default_data: T = self.filter_input(default, error=True)
 

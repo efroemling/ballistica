@@ -295,7 +295,7 @@ class Platform {
   virtual auto SignIn(const std::string& account_type) -> void;
   virtual auto SignOut() -> void;
   virtual auto GameCenterLogin() -> void;
-  virtual auto AccountDidChange() -> void;
+  virtual auto LoginDidChange() -> void;
 
 #pragma mark MUSIC PLAYBACK ----------------------------------------------------
 

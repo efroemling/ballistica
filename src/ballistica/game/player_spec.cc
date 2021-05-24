@@ -75,10 +75,10 @@ auto PlayerSpec::GetSpecString() const -> std::string {
 
 auto PlayerSpec::GetAccountPlayerSpec() -> PlayerSpec {
   PlayerSpec spec;
-  if (g_account->GetAccountState() == AccountState::kSignedIn) {
+  if (g_account->GetLoginState() == LoginState::kSignedIn) {
     spec.account_type_ = g_app_globals->account_type;
     spec.name_ =
-        Utils::GetValidUTF8(g_account->GetAccountName().c_str(), "bsgaps");
+        Utils::GetValidUTF8(g_account->GetLoginName().c_str(), "bsgaps");
   } else {
     spec.name_ =
         Utils::GetValidUTF8(g_platform->GetDeviceName().c_str(), "bsgaps2");

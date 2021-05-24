@@ -21,7 +21,10 @@ from enum import Enum
 import dataclasses
 import typing
 import datetime
-from typing import TYPE_CHECKING, TypeVar, Generic, get_type_hints
+from typing import TYPE_CHECKING, TypeVar, Generic
+# Note: can pull this from typing once we update to Python 3.9+
+# noinspection PyProtectedMember
+from typing_extensions import get_args, get_type_hints, _AnnotatedAlias
 
 from efro.util import enum_by_value
 
@@ -52,6 +55,27 @@ PREP_ATTR = '_DCIOPREP'
 # Attr name for dict of extra attributes included on dataclass instances.
 # Note that this is only added if extra attributes are present.
 EXTRA_ATTRS_ATTR = '_DCIOEXATTRS'
+
+
+class IOMeta:
+    """Metadata for specifying io behavior."""
+
+    def __init__(self, storagename: str = None, store_default: bool = True):
+        self.storagename = storagename
+        self.store_default = store_default
+
+    def validate_for_field(self, cls: Type, field: dataclasses.Field) -> None:
+        """Ensure the IOMeta instance is ok to use with the provided field."""
+
+        # Turning off store_default requires the field to have either
+        # a default_factory or a default
+        if not self.store_default:
+            default_factory: Any = field.default_factory  # type: ignore
+            if (default_factory is dataclasses.MISSING
+                    and field.default is dataclasses.MISSING):
+                raise TypeError(f'Field {field.name} of {cls} has'
+                                f' neither a default nor a default_factory;'
+                                f' store_default=False cannot be set for it.')
 
 
 def dataclass_to_dict(obj: Any, coerce_to_float: bool = True) -> dict:
@@ -192,6 +216,9 @@ class PrepData:
     # Resolved annotation data with 'live' classes.
     annotations: Dict[str, Any]
 
+    # Map of storage names to attr names.
+    storage_names_to_attr_names: Dict[str, str]
+
 
 class PrepSession:
     """Context for a prep."""
@@ -202,6 +229,7 @@ class PrepSession:
     def prep_dataclass(self, cls: Type, recursion_level: int) -> PrepData:
         """Run prep on a dataclass if necessary and return its prep data."""
 
+        # We should only need to do this once per dataclass.
         existing_data = getattr(cls, PREP_ATTR, None)
         if existing_data is not None:
             assert isinstance(existing_data, PrepData)
@@ -227,11 +255,11 @@ class PrepSession:
                 ' @efro.dataclassio.prepped decorator).', cls)
 
         try:
-            # Use default globalns which should be the class' module,
-            # but provide our own locals to cover things like typing.*
-            # which are generally not actually present at runtime for us.
-            # resolved_annotations = get_type_hints(cls, localns=localns)
-            resolved_annotations = get_type_hints(cls)
+            # NOTE: perhaps we want to expose the globalns/localns args
+            # to this?
+            # pylint: disable=unexpected-keyword-arg
+            resolved_annotations = get_type_hints(cls, include_extras=True)
+            # pylint: enable=unexpected-keyword-arg
         except Exception as exc:
             raise RuntimeError(
                 f'dataclassio prep for {cls} failed with error: {exc}.'
@@ -239,17 +267,35 @@ class PrepSession:
                 f' at the module level or add them as part of an explicit'
                 f' prep call.') from exc
 
+        # noinspection PyDataclass
+        fields = dataclasses.fields(cls)
+        fields_by_name = {f.name: f for f in fields}
+
+        storage_names_to_attr_names: Dict[str, str] = {}
+
         # Ok; we've resolved actual types for this dataclass.
         # now recurse through them, verifying that we support all contained
         # types and prepping any contained dataclass types.
-        for attrname, attrtype in resolved_annotations.items():
+        for attrname, anntype in resolved_annotations.items():
+
+            anntype, iometa = _parse_annotated(anntype)
+
+            # If we found attached IOMeta data, make sure it contains
+            # valid values for the field it is attached to.
+            if iometa is not None:
+                iometa.validate_for_field(cls, fields_by_name[attrname])
+                if iometa.storagename is not None:
+                    storage_names_to_attr_names[iometa.storagename] = attrname
+
             self.prep_type(cls,
                            attrname,
-                           attrtype,
+                           anntype,
                            recursion_level=recursion_level + 1)
 
         # Success! Store our resolved stuff with the class and we're done.
-        prepdata = PrepData(annotations=resolved_annotations)
+        prepdata = PrepData(
+            annotations=resolved_annotations,
+            storage_names_to_attr_names=storage_names_to_attr_names)
         setattr(cls, PREP_ATTR, prepdata)
         return prepdata
 
@@ -279,9 +325,14 @@ class PrepSession:
         # Everything below this point assumes the annotation type resolves
         # to a concrete type.
         if not isinstance(origin, type):
+            print('ORIGIN IS', origin, type(origin))
             raise TypeError(
                 f'Unsupported type found for \'{attrname}\' on {cls}:'
                 f' {anntype}')
+
+        # extras = get_args(anntype)
+        # if extras:
+        #     print('FOUND EXTRAS FOR', anntype)
 
         if origin in SIMPLE_TYPES:
             return
@@ -467,6 +518,8 @@ class _Outputter:
         return self._process_dataclass(type(self._obj), self._obj, '')
 
     def _process_dataclass(self, cls: Type, obj: Any, fieldpath: str) -> Any:
+        # pylint: disable=too-many-locals
+        # pylint: disable=too-many-branches
         prep = PrepSession(explicit=False).prep_dataclass(type(obj),
                                                           recursion_level=0)
         fields = dataclasses.fields(obj)
@@ -477,12 +530,35 @@ class _Outputter:
                 subfieldpath = f'{fieldpath}.{fieldname}'
             else:
                 subfieldpath = fieldname
-            fieldtype = prep.annotations[fieldname]
+            anntype = prep.annotations[fieldname]
             value = getattr(obj, fieldname)
-            outvalue = self._process_value(cls, subfieldpath, fieldtype, value)
+
+            anntype, iometa = _parse_annotated(anntype)
+
+            # If we're not storing default values for this fella,
+            # we can skip all output processing if we've got a default value.
+            if iometa is not None and not iometa.store_default:
+                default_factory: Any = field.default_factory  # type: ignore
+                if default_factory is not dataclasses.MISSING:
+                    if default_factory() == value:
+                        continue
+                elif field.default is not dataclasses.MISSING:
+                    if field.default == value:
+                        continue
+                else:
+                    raise RuntimeError(
+                        f'Field {fieldname} of {cls} has'
+                        f' neither a default nor a default_factory;'
+                        f' store_default=False cannot be set for it.'
+                        f' (AND THIS SHOULD HAVE BEEN CAUGHT IN PREP!)')
+
+            outvalue = self._process_value(cls, subfieldpath, anntype, value)
             if self._create:
                 assert out is not None
-                out[fieldname] = outvalue
+                storagename = (fieldname if
+                               (iometa is None or iometa.storagename is None)
+                               else iometa.storagename)
+                out[storagename] = outvalue
 
         # If there's extra-attrs stored on us, check/include them.
         extra_attrs = getattr(obj, EXTRA_ATTRS_ATTR, None)
@@ -820,8 +896,11 @@ class _Inputter(Generic[T]):
         fields = dataclasses.fields(cls)
         fields_by_name = {f.name: f for f in fields}
         args: Dict[str, Any] = {}
-        for key, value in values.items():
+        for rawkey, value in values.items():
+            key = prep.storage_names_to_attr_names.get(rawkey, rawkey)
             field = fields_by_name.get(key)
+
+            # Store unknown attrs off to the side (or error if desired).
             if field is None:
                 if self._allow_unknown_attrs:
                     if self._discard_unknown_attrs:
@@ -840,11 +919,13 @@ class _Inputter(Generic[T]):
                         f"'{cls.__name__}' has no '{key}' field.")
             else:
                 fieldname = field.name
-                fieldtype = prep.annotations[fieldname]
+                anntype = prep.annotations[fieldname]
+                anntype, _iometa = _parse_annotated(anntype)
+
                 subfieldpath = (f'{fieldpath}.{fieldname}'
                                 if fieldpath else fieldname)
-                args[key] = self._value_from_input(cls, subfieldpath,
-                                                   fieldtype, value)
+                args[key] = self._value_from_input(cls, subfieldpath, anntype,
+                                                   value)
         try:
             out = cls(**args)
         except Exception as exc:
@@ -1026,3 +1107,22 @@ class _Inputter(Generic[T]):
 
         assert len(out) == len(childanntypes)
         return tuple(out)
+
+
+def _parse_annotated(anntype: Any) -> Tuple[Any, Optional[IOMeta]]:
+    """Parse Annotated() constructs, returning annotated type & IOMeta data."""
+    # If we get an Annotated[foo, bar, eep] we take
+    # foo as the actual type and we look for IOMeta instances in
+    # bar/eep to affect our behavior.
+    iometa: Optional[IOMeta] = None
+    if isinstance(anntype, _AnnotatedAlias):
+        annargs = get_args(anntype)
+        for annarg in annargs[1:]:
+            if isinstance(annarg, IOMeta):
+                if iometa is not None:
+                    raise RuntimeError(
+                        'Multiple IOMeta instances found for a'
+                        ' single annotation; this is not supported.')
+                iometa = annarg
+        anntype = annargs[0]
+    return anntype, iometa

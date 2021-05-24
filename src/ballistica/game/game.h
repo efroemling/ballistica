@@ -32,9 +32,9 @@ class Game : public Module {
   auto LaunchClientSession() -> void;
   auto LaunchReplaySession(const std::string& file_name) -> void;
 
-  auto PushSetAccountCall(AccountType account_type, AccountState account_state,
-                          const std::string& account_name,
-                          const std::string& account_id) -> void;
+  auto PushSetLoginCall(AccountType account_type, LoginState account_state,
+                        const std::string& account_name,
+                        const std::string& account_id) -> void;
   auto PushSetAccountTokenCall(const std::string& account_id,
                                const std::string& token) -> void;
   auto PushPartyInviteCall(const std::string& name,

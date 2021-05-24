@@ -255,17 +255,14 @@ void Game::PushMediaPruneCall(int level) {
 
 void Game::PushSetAccountTokenCall(const std::string& account_id,
                                    const std::string& token) {
-  PushCall(
-      [account_id, token] { g_account->SetAccountToken(account_id, token); });
+  PushCall([account_id, token] { g_account->SetToken(account_id, token); });
 }
 
-void Game::PushSetAccountCall(AccountType account_type,
-                              AccountState account_state,
-                              const std::string& account_name,
-                              const std::string& account_id) {
+void Game::PushSetLoginCall(AccountType account_type, LoginState account_state,
+                            const std::string& account_name,
+                            const std::string& account_id) {
   PushCall([this, account_type, account_state, account_name, account_id] {
-    g_account->SetAccount(account_type, account_state, account_name,
-                          account_id);
+    g_account->SetLogin(account_type, account_state, account_name, account_id);
   });
 }
 

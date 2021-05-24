@@ -41,6 +41,8 @@
       <w>anchorx</w>
       <w>animcurve</w>
       <w>aniso</w>
+      <w>annarg</w>
+      <w>annargs</w>
       <w>anntype</w>
       <w>ansiwrap</w>
       <w>anyofallof</w>
@@ -487,6 +489,7 @@
       <w>intstr</w>
       <w>invote</w>
       <w>iobj</w>
+      <w>iometa</w>
       <w>ioprep</w>
       <w>ioprepped</w>
       <w>iserverget</w>
@@ -797,6 +800,7 @@
       <w>rakhov</w>
       <w>raspbian</w>
       <w>rasterizer</w>
+      <w>rawkey</w>
       <w>reaaaly</w>
       <w>readset</w>
       <w>realloc</w>

@@ -21,7 +21,7 @@
 namespace ballistica {
 
 // These are set automatically via script; don't change here.
-const int kAppBuildNumber = 20367;
+const int kAppBuildNumber = 20368;
 const char* kAppVersion = "1.6.3";
 
 // Our standalone globals.

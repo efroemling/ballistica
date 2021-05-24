@@ -9,12 +9,13 @@ import datetime
 from dataclasses import field, dataclass
 from typing import (TYPE_CHECKING, Optional, List, Set, Any, Dict, Sequence,
                     Union, Tuple)
+from typing_extensions import Annotated
 
 import pytest
 
 from efro.util import utc_now
 from efro.dataclassio import (dataclass_validate, dataclass_from_dict,
-                              dataclass_to_dict, ioprepped)
+                              dataclass_to_dict, ioprepped, IOMeta)
 
 if TYPE_CHECKING:
     pass
@@ -458,6 +459,58 @@ def test_extra_data() -> None:
     assert isinstance(obj, _TestClass)
     out = dataclass_to_dict(obj)
     assert 'nonexistent' not in out
+
+
+def test_meta() -> None:
+    """Testing iometa annotations."""
+
+    @ioprepped
+    @dataclass
+    class _TestClass:
+        dval: Annotated[Dict, IOMeta('d')]
+
+    obj = _TestClass(dval={'foo': 'bar'})
+
+    # Make sure key is working.
+    assert dataclass_to_dict(obj) == {'d': {'foo': 'bar'}}
+
+    # Setting store_default False without providing a default or
+    # default_factory should fail.
+    with pytest.raises(TypeError):
+
+        @ioprepped
+        @dataclass
+        class _TestClass2:
+            dval: Annotated[Dict, IOMeta('d', store_default=False)]
+
+    @ioprepped
+    @dataclass
+    class _TestClass3:
+        dval: Annotated[Dict, IOMeta('d', store_default=False)] = field(
+            default_factory=dict)
+        ival: Annotated[int, IOMeta('i', store_default=False)] = 123
+
+    # Both attrs are default; should get stripped out.
+    obj3 = _TestClass3()
+    assert dataclass_to_dict(obj3) == {}
+
+    # Both attrs are non-default vals; should remain in output.
+    obj3 = _TestClass3(dval={'foo': 'bar'}, ival=124)
+    assert dataclass_to_dict(obj3) == {'d': {'foo': 'bar'}, 'i': 124}
+
+    # Test going the other way.
+    obj3 = dataclass_from_dict(
+        _TestClass3,
+        {
+            'd': {
+                'foo': 'barf'
+            },
+            'i': 125
+        },
+        allow_unknown_attrs=False,
+    )
+    assert obj3.dval == {'foo': 'barf'}
+    assert obj3.ival == 125
 
 
 def test_dict() -> None:

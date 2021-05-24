@@ -67,6 +67,8 @@
       <w>androidstudiocode</w>
       <w>anim</w>
       <w>animcurve</w>
+      <w>annarg</w>
+      <w>annargs</w>
       <w>anntype</w>
       <w>anota</w>
       <w>anroid</w>
@@ -1087,6 +1089,7 @@
       <w>introspectable</w>
       <w>intstr</w>
       <w>iobj</w>
+      <w>iometa</w>
       <w>ioprep</w>
       <w>ioprepped</w>
       <w>ipaddress</w>
@@ -1805,6 +1808,7 @@
       <w>rankbutton</w>
       <w>rankwindow</w>
       <w>raspbian</w>
+      <w>rawkey</w>
       <w>rawpath</w>
       <w>rawpaths</w>
       <w>rcfile</w>
