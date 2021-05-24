@@ -1,3 +1,6 @@
+### 1.6.4 (20367)
+- Some cleanups in the Favorites tab of the gather window.
+
 ### 1.6.3 (20366)
 - Telnet access works again for gui builds without requiring a password (access must still be granted via the gui).
 
@@ -22,8 +25,8 @@
 - Added `ba.clipboard_*` functions for copying and pasting text on supported platforms.
 - Implemented clipboard functionality on SDL based builds (such as prefab).
 - Fixed an issue where click locations on scaled text fields could be incorrectly calculated.
-- Server-wrapper improvements allowing config path and ba_root path to be passed explicitly.
-- Binary -cfgdir option now properly allows any path, not just './ba_root'.
+- Server-wrapper improvements allowing config path and `ba_root` path to be passed explicitly.
+- Binary -cfgdir option now properly allows any path, not just `./ba_root`.
 - Additional server-wrapper options such as disabling auto-restart and automatic restarts on config file changes.
 - Running a `_ba.connect_to_party` command via the -exec arg should now do the right thing.
 - Fixed possible crash due to buffer under/overruns in `Utils::precalc_rands_*`.
