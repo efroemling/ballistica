@@ -57,15 +57,21 @@ PREP_ATTR = '_DCIOPREP'
 EXTRA_ATTRS_ATTR = '_DCIOEXATTRS'
 
 
-class IOMeta:
-    """Metadata for specifying io behavior."""
+class Codec(Enum):
+    """Influences format used for input/output."""
+    JSON = 'json'
+    FIRESTORE = 'firestore'
+
+
+class IOAttrs:
+    """For specifying io behavior in annotations."""
 
     def __init__(self, storagename: str = None, store_default: bool = True):
         self.storagename = storagename
         self.store_default = store_default
 
     def validate_for_field(self, cls: Type, field: dataclasses.Field) -> None:
-        """Ensure the IOMeta instance is ok to use with the provided field."""
+        """Ensure the IOAttrs instance is ok to use with the provided field."""
 
         # Turning off store_default requires the field to have either
         # a default_factory or a default
@@ -78,7 +84,9 @@ class IOMeta:
                                 f' store_default=False cannot be set for it.')
 
 
-def dataclass_to_dict(obj: Any, coerce_to_float: bool = True) -> dict:
+def dataclass_to_dict(obj: Any,
+                      codec: Codec = Codec.JSON,
+                      coerce_to_float: bool = True) -> dict:
     """Given a dataclass object, return a json-friendly dict.
 
     All values will be checked to ensure they match the types specified
@@ -95,7 +103,10 @@ def dataclass_to_dict(obj: Any, coerce_to_float: bool = True) -> dict:
     will be triggered.
     """
 
-    out = _Outputter(obj, create=True, coerce_to_float=coerce_to_float).run()
+    out = _Outputter(obj,
+                     create=True,
+                     codec=codec,
+                     coerce_to_float=coerce_to_float).run()
     assert isinstance(out, dict)
     return out
 
@@ -107,21 +118,24 @@ def dataclass_to_json(obj: Any, coerce_to_float: bool = True) -> str:
     """
     import json
     return json.dumps(
-        dataclass_to_dict(obj=obj, coerce_to_float=coerce_to_float),
+        dataclass_to_dict(obj=obj,
+                          coerce_to_float=coerce_to_float,
+                          codec=Codec.JSON),
         separators=(',', ':'),
     )
 
 
 def dataclass_from_dict(cls: Type[T],
                         values: dict,
+                        codec: Codec = Codec.JSON,
                         coerce_to_float: bool = True,
                         allow_unknown_attrs: bool = True,
                         discard_unknown_attrs: bool = False) -> T:
     """Given a dict, return a dataclass of a given type.
 
-    The dict must be in the json-friendly format as emitted from
-    dataclass_to_dict. This means that sequence values such as tuples or
-    sets should be passed as lists, enums should be passed as their
+    The dict must be formatted to match the specified codec (generally
+    json-friendly object types). This means that sequence values such as
+    tuples or sets should be passed as lists, enums should be passed as their
     associated values, nested dataclasses should be passed as dicts, etc.
 
     All values are checked to ensure their types/values are valid.
@@ -141,6 +155,7 @@ def dataclass_from_dict(cls: Type[T],
     case they will simply be discarded.
     """
     return _Inputter(cls,
+                     codec=codec,
                      coerce_to_float=coerce_to_float,
                      allow_unknown_attrs=allow_unknown_attrs,
                      discard_unknown_attrs=discard_unknown_attrs).run(values)
@@ -163,12 +178,15 @@ def dataclass_from_json(cls: Type[T],
                                discard_unknown_attrs=discard_unknown_attrs)
 
 
-def dataclass_validate(obj: Any, coerce_to_float: bool = True) -> None:
+def dataclass_validate(obj: Any,
+                       coerce_to_float: bool = True,
+                       codec: Codec = Codec.JSON) -> None:
     """Ensure that values in a dataclass instance are the correct types."""
 
     # Simply run an output pass but tell it not to generate data;
     # only run validation.
-    _Outputter(obj, create=False, coerce_to_float=coerce_to_float).run()
+    _Outputter(obj, create=False, codec=codec,
+               coerce_to_float=coerce_to_float).run()
 
 
 def ioprep(cls: Type) -> None:
@@ -186,10 +204,7 @@ def ioprep(cls: Type) -> None:
     Prepping a dataclass involves evaluating its type annotations, which,
     as of PEP 563, are stored simply as strings. This evaluation is done
     in the module namespace containing the class, so all referenced types
-    must be defined at that level. The exception is Typing types (Optional,
-    Union, etc.) which are often defined under an 'if TYPE_CHECKING'
-    conditional and thus not available at runtime, so are explicitly made
-    available during annotation evaluation.
+    must be defined at that level.
     """
     PrepSession(explicit=True).prep_dataclass(cls, recursion_level=0)
 
@@ -200,7 +215,8 @@ def ioprepped(cls: Type[T]) -> Type[T]:
     Note that in some cases it may not be possible to prep a dataclass
     immediately (such as when its type annotations refer to forward-declared
     types). In these cases, dataclass_prep() should be explicitly called for
-    the class once it is safe to do so.
+    the class as soon as possible; ideally at module import time to expose any
+    errors as early as possible in execution.
     """
     ioprep(cls)
     return cls
@@ -278,14 +294,14 @@ class PrepSession:
         # types and prepping any contained dataclass types.
         for attrname, anntype in resolved_annotations.items():
 
-            anntype, iometa = _parse_annotated(anntype)
+            anntype, ioattrs = _parse_annotated(anntype)
 
-            # If we found attached IOMeta data, make sure it contains
+            # If we found attached IOAttrs data, make sure it contains
             # valid values for the field it is attached to.
-            if iometa is not None:
-                iometa.validate_for_field(cls, fields_by_name[attrname])
-                if iometa.storagename is not None:
-                    storage_names_to_attr_names[iometa.storagename] = attrname
+            if ioattrs is not None:
+                ioattrs.validate_for_field(cls, fields_by_name[attrname])
+                if ioattrs.storagename is not None:
+                    storage_names_to_attr_names[ioattrs.storagename] = attrname
 
             self.prep_type(cls,
                            attrname,
@@ -325,14 +341,9 @@ class PrepSession:
         # Everything below this point assumes the annotation type resolves
         # to a concrete type.
         if not isinstance(origin, type):
-            print('ORIGIN IS', origin, type(origin))
             raise TypeError(
                 f'Unsupported type found for \'{attrname}\' on {cls}:'
                 f' {anntype}')
-
-        # extras = get_args(anntype)
-        # if extras:
-        #     print('FOUND EXTRAS FOR', anntype)
 
         if origin in SIMPLE_TYPES:
             return
@@ -415,6 +426,9 @@ class PrepSession:
 
         if dataclasses.is_dataclass(origin):
             self.prep_dataclass(origin, recursion_level=recursion_level + 1)
+            return
+
+        if origin is bytes:
             return
 
         raise TypeError(f"Attr '{attrname}' on {cls} contains type '{anntype}'"
@@ -508,9 +522,11 @@ def _get_origin(anntype: Any) -> Any:
 class _Outputter:
     """Validates or exports data contained in a dataclass instance."""
 
-    def __init__(self, obj: Any, create: bool, coerce_to_float: bool) -> None:
+    def __init__(self, obj: Any, create: bool, codec: Codec,
+                 coerce_to_float: bool) -> None:
         self._obj = obj
         self._create = create
+        self._codec = codec
         self._coerce_to_float = coerce_to_float
 
     def run(self) -> Any:
@@ -533,11 +549,11 @@ class _Outputter:
             anntype = prep.annotations[fieldname]
             value = getattr(obj, fieldname)
 
-            anntype, iometa = _parse_annotated(anntype)
+            anntype, ioattrs = _parse_annotated(anntype)
 
             # If we're not storing default values for this fella,
             # we can skip all output processing if we've got a default value.
-            if iometa is not None and not iometa.store_default:
+            if ioattrs is not None and not ioattrs.store_default:
                 default_factory: Any = field.default_factory  # type: ignore
                 if default_factory is not dataclasses.MISSING:
                     if default_factory() == value:
@@ -556,8 +572,8 @@ class _Outputter:
             if self._create:
                 assert out is not None
                 storagename = (fieldname if
-                               (iometa is None or iometa.storagename is None)
-                               else iometa.storagename)
+                               (ioattrs is None or ioattrs.storagename is None)
+                               else ioattrs.storagename)
                 out[storagename] = outvalue
 
         # If there's extra-attrs stored on us, check/include them.
@@ -712,18 +728,36 @@ class _Outputter:
             if not isinstance(value, origin):
                 raise TypeError(f'Expected a {origin} for {fieldpath};'
                                 f' found a {type(value)}.')
-            # We only support timezone-aware utc times.
-            if (value.tzinfo is not datetime.timezone.utc
-                    and (_pytz_utc is None or value.tzinfo is not _pytz_utc)):
-                raise ValueError(
-                    'datetime values must have timezone set as timezone.utc')
+            _ensure_datetime_is_timezone_aware(value)
+            if self._codec is Codec.FIRESTORE:
+                return value
+            assert self._codec is Codec.JSON
             return [
                 value.year, value.month, value.day, value.hour, value.minute,
                 value.second, value.microsecond
             ] if self._create else None
 
+        if origin is bytes:
+            return self._process_bytes(cls, fieldpath, value)
+
         raise TypeError(
             f"Field '{fieldpath}' of type '{anntype}' is unsupported here.")
+
+    def _process_bytes(self, cls: Type, fieldpath: str, value: bytes) -> Any:
+        import base64
+        if not isinstance(value, bytes):
+            raise TypeError(f'Expected bytes for {fieldpath} on {cls};'
+                            f' found a {type(value)}.')
+
+        if not self._create:
+            return None
+
+        # In JSON we convert to base64, but firestore directly supports bytes.
+        if self._codec is Codec.JSON:
+            return base64.b64encode(value).decode()
+
+        assert self._codec is Codec.FIRESTORE
+        return value
 
     def _process_dict(self, cls: Type, fieldpath: str, anntype: Any,
                       value: dict) -> Any:
@@ -792,10 +826,12 @@ class _Inputter(Generic[T]):
 
     def __init__(self,
                  cls: Type[T],
+                 codec: Codec,
                  coerce_to_float: bool,
                  allow_unknown_attrs: bool = True,
                  discard_unknown_attrs: bool = False):
         self._cls = cls
+        self._codec = codec
         self._coerce_to_float = coerce_to_float
         self._allow_unknown_attrs = allow_unknown_attrs
         self._discard_unknown_attrs = discard_unknown_attrs
@@ -871,8 +907,31 @@ class _Inputter(Generic[T]):
         if issubclass(origin, datetime.datetime):
             return self._datetime_from_input(cls, fieldpath, value)
 
+        if origin is bytes:
+            return self._bytes_from_input(origin, fieldpath, value)
+
         raise TypeError(
             f"Field '{fieldpath}' of type '{anntype}' is unsupported here.")
+
+    def _bytes_from_input(self, cls: Type, fieldpath: str,
+                          value: Any) -> bytes:
+        """Given input data, returns bytes."""
+        import base64
+
+        # For firestore, bytes are passed as-is. Otherwise they're encoded
+        # as base64.
+        if self._codec is Codec.FIRESTORE:
+            if not isinstance(value, bytes):
+                raise TypeError(f'Expected a bytes object for {fieldpath}'
+                                f' on {cls}; got a {type(value)}.')
+
+            return value
+
+        assert self._codec is Codec.JSON
+        if not isinstance(value, str):
+            raise TypeError(f'Expected a string object for {fieldpath}'
+                            f' on {cls}; got a {type(value)}.')
+        return base64.b64decode(value)
 
     def _dataclass_from_input(self, cls: Type, fieldpath: str,
                               values: dict) -> Any:
@@ -885,7 +944,8 @@ class _Inputter(Generic[T]):
         """
         # pylint: disable=too-many-locals
         if not isinstance(values, dict):
-            raise TypeError("Expected a dict for 'values' arg.")
+            raise TypeError(f'Expected a dict for {fieldpath} on {cls};'
+                            f' got a {type(values)}.')
 
         prep = PrepSession(explicit=False).prep_dataclass(cls,
                                                           recursion_level=0)
@@ -920,7 +980,7 @@ class _Inputter(Generic[T]):
             else:
                 fieldname = field.name
                 anntype = prep.annotations[fieldname]
-                anntype, _iometa = _parse_annotated(anntype)
+                anntype, _ioattrs = _parse_annotated(anntype)
 
                 subfieldpath = (f'{fieldpath}.{fieldname}'
                                 if fieldpath else fieldname)
@@ -1058,6 +1118,19 @@ class _Inputter(Generic[T]):
     def _datetime_from_input(self, cls: Type, fieldpath: str,
                              value: Any) -> Any:
 
+        # For firestore we expect a datetime object.
+        if self._codec is Codec.FIRESTORE:
+            # Don't compare exact type here, as firestore can give us
+            # a subclass with extended precision.
+            if not isinstance(value, datetime.datetime):
+                raise TypeError(
+                    f'Invalid input value for "{fieldpath}" on "{cls}";'
+                    f' expected a datetime, got a {type(value).__name__}')
+            _ensure_datetime_is_timezone_aware(value)
+            return value
+
+        assert self._codec is Codec.JSON
+
         # We expect a list of 7 ints.
         if type(value) is not list:
             raise TypeError(
@@ -1109,20 +1182,28 @@ class _Inputter(Generic[T]):
         return tuple(out)
 
 
-def _parse_annotated(anntype: Any) -> Tuple[Any, Optional[IOMeta]]:
-    """Parse Annotated() constructs, returning annotated type & IOMeta data."""
+def _ensure_datetime_is_timezone_aware(value: datetime.datetime) -> None:
+    # We only support timezone-aware utc times.
+    if (value.tzinfo is not datetime.timezone.utc
+            and (_pytz_utc is None or value.tzinfo is not _pytz_utc)):
+        raise ValueError(
+            'datetime values must have timezone set as timezone.utc')
+
+
+def _parse_annotated(anntype: Any) -> Tuple[Any, Optional[IOAttrs]]:
+    """Parse Annotated() constructs, returning annotated type & IOAttrs."""
     # If we get an Annotated[foo, bar, eep] we take
-    # foo as the actual type and we look for IOMeta instances in
+    # foo as the actual type and we look for IOAttrs instances in
     # bar/eep to affect our behavior.
-    iometa: Optional[IOMeta] = None
+    ioattrs: Optional[IOAttrs] = None
     if isinstance(anntype, _AnnotatedAlias):
         annargs = get_args(anntype)
         for annarg in annargs[1:]:
-            if isinstance(annarg, IOMeta):
-                if iometa is not None:
+            if isinstance(annarg, IOAttrs):
+                if ioattrs is not None:
                     raise RuntimeError(
-                        'Multiple IOMeta instances found for a'
+                        'Multiple IOAttrs instances found for a'
                         ' single annotation; this is not supported.')
-                iometa = annarg
+                ioattrs = annarg
         anntype = annargs[0]
-    return anntype, iometa
+    return anntype, ioattrs

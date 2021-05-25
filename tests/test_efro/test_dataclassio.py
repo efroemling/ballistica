@@ -15,7 +15,7 @@ import pytest
 
 from efro.util import utc_now
 from efro.dataclassio import (dataclass_validate, dataclass_from_dict,
-                              dataclass_to_dict, ioprepped, IOMeta)
+                              dataclass_to_dict, ioprepped, IOAttrs, Codec)
 
 if TYPE_CHECKING:
     pass
@@ -461,13 +461,13 @@ def test_extra_data() -> None:
     assert 'nonexistent' not in out
 
 
-def test_meta() -> None:
-    """Testing iometa annotations."""
+def test_ioattrs() -> None:
+    """Testing ioattrs annotations."""
 
     @ioprepped
     @dataclass
     class _TestClass:
-        dval: Annotated[Dict, IOMeta('d')]
+        dval: Annotated[Dict, IOAttrs('d')]
 
     obj = _TestClass(dval={'foo': 'bar'})
 
@@ -481,14 +481,14 @@ def test_meta() -> None:
         @ioprepped
         @dataclass
         class _TestClass2:
-            dval: Annotated[Dict, IOMeta('d', store_default=False)]
+            dval: Annotated[Dict, IOAttrs('d', store_default=False)]
 
     @ioprepped
     @dataclass
     class _TestClass3:
-        dval: Annotated[Dict, IOMeta('d', store_default=False)] = field(
+        dval: Annotated[Dict, IOAttrs('d', store_default=False)] = field(
             default_factory=dict)
-        ival: Annotated[int, IOMeta('i', store_default=False)] = 123
+        ival: Annotated[int, IOAttrs('i', store_default=False)] = 123
 
     # Both attrs are default; should get stripped out.
     obj3 = _TestClass3()
@@ -511,6 +511,51 @@ def test_meta() -> None:
     )
     assert obj3.dval == {'foo': 'barf'}
     assert obj3.ival == 125
+
+
+def test_codecs() -> None:
+    """Test differences with codecs."""
+
+    @ioprepped
+    @dataclass
+    class _TestClass:
+        bval: bytes
+
+    # bytes to/from JSON (goes through base64)
+    obj = _TestClass(bval=b'foo')
+    out = dataclass_to_dict(obj, codec=Codec.JSON)
+    assert isinstance(out['bval'], str) and out['bval'] == 'Zm9v'
+    obj = dataclass_from_dict(_TestClass, out, codec=Codec.JSON)
+    assert obj.bval == b'foo'
+
+    # bytes to/from FIRESTORE (passed as-is)
+    obj = _TestClass(bval=b'foo')
+    out = dataclass_to_dict(obj, codec=Codec.FIRESTORE)
+    assert isinstance(out['bval'], bytes) and out['bval'] == b'foo'
+    obj = dataclass_from_dict(_TestClass, out, codec=Codec.FIRESTORE)
+    assert obj.bval == b'foo'
+
+    now = utc_now()
+
+    @ioprepped
+    @dataclass
+    class _TestClass2:
+        dval: datetime.datetime
+
+    # datetime to/from JSON (turns into a list of values)
+    obj2 = _TestClass2(dval=now)
+    out = dataclass_to_dict(obj2, codec=Codec.JSON)
+    assert (isinstance(out['dval'], list) and len(out['dval']) == 7
+            and all(isinstance(val, int) for val in out['dval']))
+    obj2 = dataclass_from_dict(_TestClass2, out, codec=Codec.JSON)
+    assert obj2.dval == now
+
+    # datetime to/from FIRESTORE (passed through as-is)
+    obj2 = _TestClass2(dval=now)
+    out = dataclass_to_dict(obj2, codec=Codec.FIRESTORE)
+    assert isinstance(out['dval'], datetime.datetime)
+    obj2 = dataclass_from_dict(_TestClass2, out, codec=Codec.FIRESTORE)
+    assert obj2.dval == now
 
 
 def test_dict() -> None:
