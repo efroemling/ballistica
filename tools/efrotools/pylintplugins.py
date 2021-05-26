@@ -140,6 +140,7 @@ def func_annotations_filter(node: nc.NodeNG) -> nc.NodeNG:
     node.args.varargannotation = None
     node.args.kwargannotation = None
     node.args.kwonlyargs_annotations = [None for _ in node.args.kwonlyargs]
+    node.args.posonlyargs_annotations = [None for _ in node.args.kwonlyargs]
 
     # Wipe out return-value annotation.
     if node.returns is not None:

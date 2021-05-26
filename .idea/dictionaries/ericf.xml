@@ -1649,6 +1649,7 @@
       <w>positionadjusted</w>
       <w>posixpath</w>
       <w>posixsubprocess</w>
+      <w>posonlyargs</w>
       <w>postinit</w>
       <w>postinited</w>
       <w>postrun</w>

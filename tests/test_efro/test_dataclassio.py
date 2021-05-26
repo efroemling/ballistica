@@ -623,3 +623,31 @@ def test_dict() -> None:
     obj4.dval = {_GoodEnum.VAL1: 999}  # type: ignore
     with pytest.raises(TypeError):
         dataclass_to_dict(obj4)
+
+
+def test_name_clashes() -> None:
+    """Make sure we catch name clashes since we can remap attr names."""
+
+    with pytest.raises(TypeError):
+
+        @ioprepped
+        @dataclass
+        class _TestClass:
+            ival: Annotated[int, IOAttrs('i')] = 4
+            ival2: Annotated[int, IOAttrs('i')] = 5
+
+    with pytest.raises(TypeError):
+
+        @ioprepped
+        @dataclass
+        class _TestClass2:
+            ival: int = 4
+            ival2: Annotated[int, IOAttrs('ival')] = 5
+
+    with pytest.raises(TypeError):
+
+        @ioprepped
+        @dataclass
+        class _TestClass3:
+            ival: Annotated[int, IOAttrs(store_default=False)] = 4
+            ival2: Annotated[int, IOAttrs('ival')] = 5

@@ -38,7 +38,7 @@ except ModuleNotFoundError:
     _pytz_utc = None  # pylint: disable=invalid-name
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Type, Tuple, Optional, List
+    from typing import Any, Dict, Type, Tuple, Optional, List, Set
 
 T = TypeVar('T')
 
@@ -58,8 +58,14 @@ EXTRA_ATTRS_ATTR = '_DCIOEXATTRS'
 
 
 class Codec(Enum):
-    """Influences format used for input/output."""
+    """Specifies expected data format exported to or imported from."""
+
+    # Use only types that will translate cleanly to/from json: lists,
+    # dicts with str keys, bools, ints, floats, and None.
     JSON = 'json'
+
+    # Mostly like JSON but passes bytes and datetime objects through
+    # as-is instead of converting them to json-friendly types.
     FIRESTORE = 'firestore'
 
 
@@ -267,8 +273,8 @@ class PrepSession:
                 'efro.dataclassio: implicitly prepping dataclass: %s.'
                 ' It is highly recommended to explicitly prep dataclasses'
                 ' as soon as possible after definition (via'
-                ' efro.dataclassio.dataclass_prep() or the'
-                ' @efro.dataclassio.prepped decorator).', cls)
+                ' efro.dataclassio.ioprep() or the'
+                ' @efro.dataclassio.ioprepped decorator).', cls)
 
         try:
             # NOTE: perhaps we want to expose the globalns/localns args
@@ -287,6 +293,7 @@ class PrepSession:
         fields = dataclasses.fields(cls)
         fields_by_name = {f.name: f for f in fields}
 
+        all_storage_names: Set[str] = set()
         storage_names_to_attr_names: Dict[str, str] = {}
 
         # Ok; we've resolved actual types for this dataclass.
@@ -301,7 +308,18 @@ class PrepSession:
             if ioattrs is not None:
                 ioattrs.validate_for_field(cls, fields_by_name[attrname])
                 if ioattrs.storagename is not None:
+                    storagename = ioattrs.storagename
                     storage_names_to_attr_names[ioattrs.storagename] = attrname
+                else:
+                    storagename = attrname
+            else:
+                storagename = attrname
+
+            # Make sure we don't have any clashes in our storage names.
+            if storagename in all_storage_names:
+                raise TypeError(f'Multiple attrs on {cls} are using'
+                                f' storage-name \'{storagename}\'')
+            all_storage_names.add(storagename)
 
             self.prep_type(cls,
                            attrname,
