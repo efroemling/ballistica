@@ -1426,6 +1426,7 @@
       <w>mythingie</w>
       <w>myweakcall</w>
       <w>mywidget</w>
+      <w>namecap</w>
       <w>namedarg</w>
       <w>nametext</w>
       <w>nameval</w>
@@ -2108,6 +2109,7 @@
       <w>strt</w>
       <w>strval</w>
       <w>subargs</w>
+      <w>subc</w>
       <w>subclassof</w>
       <w>subcontainer</w>
       <w>subcontainerheight</w>

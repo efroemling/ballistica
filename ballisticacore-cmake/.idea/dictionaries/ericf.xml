@@ -626,6 +626,7 @@
       <w>mynode</w>
       <w>mystatspage</w>
       <w>mywidget</w>
+      <w>namecap</w>
       <w>nameval</w>
       <w>ndebug</w>
       <w>nearbytab</w>
@@ -950,6 +951,7 @@
       <w>strs</w>
       <w>strtof</w>
       <w>subargs</w>
+      <w>subc</w>
       <w>subclsssing</w>
       <w>subentities</w>
       <w>subfieldpath</w>

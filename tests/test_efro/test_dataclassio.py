@@ -9,13 +9,14 @@ import datetime
 from dataclasses import field, dataclass
 from typing import (TYPE_CHECKING, Optional, List, Set, Any, Dict, Sequence,
                     Union, Tuple)
-from typing_extensions import Annotated
 
+from typing_extensions import Annotated
 import pytest
 
 from efro.util import utc_now
 from efro.dataclassio import (dataclass_validate, dataclass_from_dict,
-                              dataclass_to_dict, ioprepped, IOAttrs, Codec)
+                              dataclass_to_dict, ioprepped, IOAttrs, Codec,
+                              FieldStoragePathCapture)
 
 if TYPE_CHECKING:
     pass
@@ -651,3 +652,34 @@ def test_name_clashes() -> None:
         class _TestClass3:
             ival: Annotated[int, IOAttrs(store_default=False)] = 4
             ival2: Annotated[int, IOAttrs('ival')] = 5
+
+
+@ioprepped
+@dataclass
+class _SPTestClass1:
+    barf: int = 5
+    eep: str = 'blah'
+    barf2: Annotated[int, IOAttrs('b')] = 5
+
+
+@ioprepped
+@dataclass
+class _SPTestClass2:
+    rah: bool = False
+    subc: _SPTestClass1 = field(default_factory=_SPTestClass1)
+    subc2: Annotated[_SPTestClass1,
+                     IOAttrs('s')] = field(default_factory=_SPTestClass1)
+
+
+def test_field_storage_path_capture() -> None:
+    """Test FieldStoragePathCapture functionality."""
+
+    obj = _SPTestClass2()
+
+    namecap = FieldStoragePathCapture(obj)
+    assert namecap.subc.barf == 'subc.barf'
+    assert namecap.subc2.barf == 's.barf'
+    assert namecap.subc2.barf2 == 's.b'
+
+    with pytest.raises(AttributeError):
+        assert namecap.nonexistent.barf == 's.barf'
