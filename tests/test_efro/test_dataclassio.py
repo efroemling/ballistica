@@ -683,3 +683,44 @@ def test_field_storage_path_capture() -> None:
 
     with pytest.raises(AttributeError):
         assert namecap.nonexistent.barf == 's.barf'
+
+
+def test_datetime_limits() -> None:
+    """Test limiting datetime values in various ways."""
+    from efro.util import utc_today, utc_this_hour
+
+    @ioprepped
+    @dataclass
+    class _TestClass:
+        tval: Annotated[datetime.datetime, IOAttrs(whole_hours=True)]
+
+    # Check whole-hour limit when validating/exporting.
+    obj = _TestClass(tval=utc_this_hour() + datetime.timedelta(minutes=1))
+    with pytest.raises(ValueError):
+        dataclass_validate(obj)
+    obj.tval = utc_this_hour()
+    dataclass_validate(obj)
+
+    # Check whole-days limit when importing.
+    out = dataclass_to_dict(obj)
+    out['tval'][-1] += 1
+    with pytest.raises(ValueError):
+        dataclass_from_dict(_TestClass, out)
+
+    # Check whole-days limit when validating/exporting.
+    @ioprepped
+    @dataclass
+    class _TestClass2:
+        tval: Annotated[datetime.datetime, IOAttrs(whole_days=True)]
+
+    obj2 = _TestClass2(tval=utc_today() + datetime.timedelta(hours=1))
+    with pytest.raises(ValueError):
+        dataclass_validate(obj2)
+    obj2.tval = utc_today()
+    dataclass_validate(obj2)
+
+    # Check whole-days limit when importing.
+    out = dataclass_to_dict(obj2)
+    out['tval'][-1] += 1
+    with pytest.raises(ValueError):
+        dataclass_from_dict(_TestClass2, out)
