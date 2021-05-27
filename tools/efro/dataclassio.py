@@ -474,7 +474,7 @@ class PrepSession:
             else:
                 raise TypeError(
                     f'Dict key type {childtypes[0]} for \'{attrname}\''
-                    f' on {cls} is not supported by dataclassio.')
+                    f' on {cls.__name__} is not supported by dataclassio.')
 
             # For value types we support any of our normal types.
             if not childtypes or _get_origin(childtypes[1]) is typing.Any:
@@ -498,7 +498,8 @@ class PrepSession:
                     f' has no type args; dataclassio requires type args.')
             if childtypes[-1] is ...:
                 raise TypeError(f'Found ellipsis as part of type for'
-                                f' \'{attrname}\' on {cls}; these are not'
+                                f' \'{attrname}\' on {cls.__name__};'
+                                f' these are not'
                                 f' supported by dataclassio.')
             for childtype in childtypes:
                 self.prep_type(cls,
@@ -523,7 +524,8 @@ class PrepSession:
         if origin is bytes:
             return
 
-        raise TypeError(f"Attr '{attrname}' on {cls} contains type '{anntype}'"
+        raise TypeError(f"Attr '{attrname}' on {cls.__name__} contains"
+                        f" type '{anntype}'"
                         f' which is not supported by dataclassio.')
 
     def prep_union(self, cls: Type, attrname: str, anntype: Any,
@@ -533,7 +535,7 @@ class PrepSession:
         if (len(typeargs) != 2
                 or len([c for c in typeargs if c is type(None)]) != 1):
             raise TypeError(f'Union {anntype} for attr \'{attrname}\' on'
-                            f' {cls} is not supported by dataclassio;'
+                            f' {cls.__name__} is not supported by dataclassio;'
                             f' only 2 member Unions with one type being None'
                             f' are supported.')
         for childtype in typeargs:
@@ -563,7 +565,7 @@ class PrepSession:
                                     f' them to be uniform.')
 
 
-def _is_valid_json(obj: Any) -> bool:
+def _is_valid_for_codec(obj: Any, codec: Codec) -> bool:
     """Return whether a value consists solely of json-supported types.
 
     Note that this does not include things like tuples which are
@@ -578,9 +580,15 @@ def _is_valid_json(obj: Any) -> bool:
     if objtype is dict:
         # JSON 'objects' supports only string dict keys, but all value types.
         return all(
-            type(k) is str and _is_valid_json(v) for k, v in obj.items())
+            type(k) is str and _is_valid_for_codec(v, codec)
+            for k, v in obj.items())
     if objtype is list:
-        return all(_is_valid_json(elem) for elem in obj)
+        return all(_is_valid_for_codec(elem, codec) for elem in obj)
+
+    # A few things are valid in firestore but not json.
+    if issubclass(objtype, datetime.datetime) or objtype is bytes:
+        return codec is Codec.FIRESTORE
+
     return False
 
 
@@ -655,7 +663,7 @@ class _Outputter:
                         continue
                 else:
                     raise RuntimeError(
-                        f'Field {fieldname} of {cls} has'
+                        f'Field {fieldname} of {cls.__name__} has'
                         f' neither a default nor a default_factory;'
                         f' store_default=False cannot be set for it.'
                         f' (AND THIS SHOULD HAVE BEEN CAUGHT IN PREP!)')
@@ -672,7 +680,7 @@ class _Outputter:
         # If there's extra-attrs stored on us, check/include them.
         extra_attrs = getattr(obj, EXTRA_ATTRS_ATTR, None)
         if isinstance(extra_attrs, dict):
-            if not _is_valid_json(extra_attrs):
+            if not _is_valid_for_codec(extra_attrs, self._codec):
                 raise TypeError(
                     f'Extra attrs on {fieldpath} contains data type(s)'
                     f' not supported by json.')
@@ -690,11 +698,12 @@ class _Outputter:
         origin = _get_origin(anntype)
 
         if origin is typing.Any:
-            if not _is_valid_json(value):
-                raise TypeError(f'Invalid value type for \'{fieldpath}\';'
-                                f" 'Any' typed values must be types directly"
-                                f' supported by json; got'
-                                f" '{type(value).__name__}'.")
+            if not _is_valid_for_codec(value, self._codec):
+                raise TypeError(
+                    f'Invalid value type for \'{fieldpath}\';'
+                    f" 'Any' typed values must contain types directly"
+                    f' supported by the specified codec ({self._codec.name});'
+                    f' found \'{type(value).__name__}\' which is not.')
             return value if self._create else None
 
         if origin is typing.Union:
@@ -752,13 +761,15 @@ class _Outputter:
                                 f' found a {type(value)}')
             childanntypes = typing.get_args(anntype)
 
-            # 'Any' type children; make sure they are valid json values.
+            # 'Any' type children; make sure they are valid values for
+            # the specified codec.
             if len(childanntypes) == 0 or childanntypes[0] is typing.Any:
                 for i, child in enumerate(value):
-                    if not _is_valid_json(child):
+                    if not _is_valid_for_codec(child, self._codec):
                         raise TypeError(
                             f'Item {i} of {fieldpath} contains'
-                            f' data type(s) not supported by json.')
+                            f' data type(s) not supported by the specified'
+                            f' codec ({self._codec.name}).')
                 # Hmm; should we do a copy here?
                 return value if self._create else None
 
@@ -783,10 +794,11 @@ class _Outputter:
             # 'Any' type children; make sure they are valid Any values.
             if len(childanntypes) == 0 or childanntypes[0] is typing.Any:
                 for child in value:
-                    if not _is_valid_json(child):
+                    if not _is_valid_for_codec(child, self._codec):
                         raise TypeError(
                             f'Set at {fieldpath} contains'
-                            f' data type(s) not supported by json.')
+                            f' data type(s) not supported by the'
+                            f' specified codec ({self._codec.name}).')
                 return list(value) if self._create else None
 
             # We contain elements of some specified type.
@@ -844,8 +856,9 @@ class _Outputter:
     def _process_bytes(self, cls: Type, fieldpath: str, value: bytes) -> Any:
         import base64
         if not isinstance(value, bytes):
-            raise TypeError(f'Expected bytes for {fieldpath} on {cls};'
-                            f' found a {type(value)}.')
+            raise TypeError(
+                f'Expected bytes for {fieldpath} on {cls.__name__};'
+                f' found a {type(value)}.')
 
         if not self._create:
             return None
@@ -868,11 +881,14 @@ class _Outputter:
 
         # We treat 'Any' dicts simply as json; we don't do any translating.
         if not childtypes or childtypes[0] is typing.Any:
-            if not isinstance(value, dict) or not _is_valid_json(value):
+            if not isinstance(value, dict) or not _is_valid_for_codec(
+                    value, self._codec):
                 raise TypeError(
                     f'Invalid value for Dict[Any, Any]'
-                    f' at \'{fieldpath}\' on {cls}; all keys and values'
-                    f' must be json-compatible when dict type is Any.')
+                    f' at \'{fieldpath}\' on {cls.__name__};'
+                    f' all keys and values must be directly compatible'
+                    f' with the specified codec ({self._codec.name})'
+                    f' when dict type is Any.')
             return value if self._create else None
 
         # Ok; we've got a definite key type (which we verified as valid
@@ -884,22 +900,24 @@ class _Outputter:
         if keyanntype is str:
             for key, val in value.items():
                 if not isinstance(key, str):
-                    raise TypeError(f'Got invalid key type {type(key)} for'
-                                    f' dict key at \'{fieldpath}\' on {cls};'
-                                    f' expected {keyanntype}.')
+                    raise TypeError(
+                        f'Got invalid key type {type(key)} for'
+                        f' dict key at \'{fieldpath}\' on {cls.__name__};'
+                        f' expected {keyanntype}.')
                 outval = self._process_value(cls, fieldpath, valanntype, val,
                                              ioattrs)
                 if self._create:
                     assert out is not None
                     out[key] = outval
 
-        # int keys are stored in json as str versions of themselves.
+        # int keys are stored as str versions of themselves.
         elif keyanntype is int:
             for key, val in value.items():
                 if not isinstance(key, int):
-                    raise TypeError(f'Got invalid key type {type(key)} for'
-                                    f' dict key at \'{fieldpath}\' on {cls};'
-                                    f' expected an int.')
+                    raise TypeError(
+                        f'Got invalid key type {type(key)} for'
+                        f' dict key at \'{fieldpath}\' on {cls.__name__};'
+                        f' expected an int.')
                 outval = self._process_value(cls, fieldpath, valanntype, val,
                                              ioattrs)
                 if self._create:
@@ -909,9 +927,10 @@ class _Outputter:
         elif issubclass(keyanntype, Enum):
             for key, val in value.items():
                 if not isinstance(key, keyanntype):
-                    raise TypeError(f'Got invalid key type {type(key)} for'
-                                    f' dict key at \'{fieldpath}\' on {cls};'
-                                    f' expected a {keyanntype}.')
+                    raise TypeError(
+                        f'Got invalid key type {type(key)} for'
+                        f' dict key at \'{fieldpath}\' on {cls.__name__};'
+                        f' expected a {keyanntype}.')
                 outval = self._process_value(cls, fieldpath, valanntype, val,
                                              ioattrs)
                 if self._create:
@@ -956,11 +975,12 @@ class _Inputter(Generic[T]):
         origin = _get_origin(anntype)
 
         if origin is typing.Any:
-            if not _is_valid_json(value):
+            if not _is_valid_for_codec(value, self._codec):
                 raise TypeError(f'Invalid value type for \'{fieldpath}\';'
-                                f' \'Any\' typed values must be types directly'
-                                f' supported by json; got'
-                                f' \'{type(value).__name__}\'.')
+                                f' \'Any\' typed values must contain only'
+                                f' types directly supported by the specified'
+                                f' codec ({self._codec.name}); found'
+                                f' \'{type(value).__name__}\' which is not.')
             return value
 
         if origin is typing.Union:
@@ -1026,14 +1046,14 @@ class _Inputter(Generic[T]):
         if self._codec is Codec.FIRESTORE:
             if not isinstance(value, bytes):
                 raise TypeError(f'Expected a bytes object for {fieldpath}'
-                                f' on {cls}; got a {type(value)}.')
+                                f' on {cls.__name__}; got a {type(value)}.')
 
             return value
 
         assert self._codec is Codec.JSON
         if not isinstance(value, str):
             raise TypeError(f'Expected a string object for {fieldpath}'
-                            f' on {cls}; got a {type(value)}.')
+                            f' on {cls.__name__}; got a {type(value)}.')
         return base64.b64decode(value)
 
     def _dataclass_from_input(self, cls: Type, fieldpath: str,
@@ -1047,8 +1067,9 @@ class _Inputter(Generic[T]):
         """
         # pylint: disable=too-many-locals
         if not isinstance(values, dict):
-            raise TypeError(f'Expected a dict for {fieldpath} on {cls};'
-                            f' got a {type(values)}.')
+            raise TypeError(
+                f'Expected a dict for {fieldpath} on {cls.__name__};'
+                f' got a {type(values)}.')
 
         prep = PrepSession(explicit=False).prep_dataclass(cls,
                                                           recursion_level=0)
@@ -1071,11 +1092,12 @@ class _Inputter(Generic[T]):
 
                     # Treat this like 'Any' data; ensure that it is valid
                     # raw json.
-                    if not _is_valid_json(value):
+                    if not _is_valid_for_codec(value, self._codec):
                         raise TypeError(
-                            f'Unknown attr {key}'
+                            f'Unknown attr \'{key}\''
                             f' on {fieldpath} contains data type(s)'
-                            f' not supported by json.')
+                            f' not supported by the specified codec'
+                            f' ({self._codec.name}).')
                     extra_attrs[key] = value
                 else:
                     raise AttributeError(
@@ -1092,9 +1114,8 @@ class _Inputter(Generic[T]):
         try:
             out = cls(**args)
         except Exception as exc:
-            raise RuntimeError(
-                f'Error instantiating class {cls} at {fieldpath}: {exc}'
-            ) from exc
+            raise RuntimeError(f'Error instantiating class {cls.__name__}'
+                               f' at {fieldpath}: {exc}') from exc
         if extra_attrs:
             setattr(out, EXTRA_ATTRS_ATTR, extra_attrs)
         return out
@@ -1105,8 +1126,9 @@ class _Inputter(Generic[T]):
         # pylint: disable=too-many-locals
 
         if not isinstance(value, dict):
-            raise TypeError(f'Expected a dict for \'{fieldpath}\' on {cls};'
-                            f' got a {type(value)}.')
+            raise TypeError(
+                f'Expected a dict for \'{fieldpath}\' on {cls.__name__};'
+                f' got a {type(value)}.')
 
         childtypes = typing.get_args(anntype)
         assert len(childtypes) in (0, 2)
@@ -1115,11 +1137,13 @@ class _Inputter(Generic[T]):
 
         # We treat 'Any' dicts simply as json; we don't do any translating.
         if not childtypes or childtypes[0] is typing.Any:
-            if not isinstance(value, dict) or not _is_valid_json(value):
+            if not isinstance(value, dict) or not _is_valid_for_codec(
+                    value, self._codec):
                 raise TypeError(f'Got invalid value for Dict[Any, Any]'
-                                f' at \'{fieldpath}\' on {cls};'
+                                f' at \'{fieldpath}\' on {cls.__name__};'
                                 f' all keys and values must be'
-                                f' json-compatible.')
+                                f' compatible with the specified codec'
+                                f' ({self._codec.name}).')
             out = value
         else:
             out = {}
@@ -1134,7 +1158,7 @@ class _Inputter(Generic[T]):
                     if not isinstance(key, str):
                         raise TypeError(
                             f'Got invalid key type {type(key)} for'
-                            f' dict key at \'{fieldpath}\' on {cls};'
+                            f' dict key at \'{fieldpath}\' on {cls.__name__};'
                             f' expected a str.')
                     out[key] = self._value_from_input(cls, fieldpath,
                                                       valanntype, val, ioattrs)
@@ -1145,14 +1169,14 @@ class _Inputter(Generic[T]):
                     if not isinstance(key, str):
                         raise TypeError(
                             f'Got invalid key type {type(key)} for'
-                            f' dict key at \'{fieldpath}\' on {cls};'
+                            f' dict key at \'{fieldpath}\' on {cls.__name__};'
                             f' expected a str.')
                     try:
                         keyint = int(key)
                     except ValueError as exc:
                         raise TypeError(
                             f'Got invalid key value {key} for'
-                            f' dict key at \'{fieldpath}\' on {cls};'
+                            f' dict key at \'{fieldpath}\' on {cls.__name__};'
                             f' expected an int in string form.') from exc
                     out[keyint] = self._value_from_input(
                         cls, fieldpath, valanntype, val, ioattrs)
@@ -1170,7 +1194,8 @@ class _Inputter(Generic[T]):
                         except ValueError as exc:
                             raise ValueError(
                                 f'Got invalid key value {key} for'
-                                f' dict key at \'{fieldpath}\' on {cls};'
+                                f' dict key at \'{fieldpath}\''
+                                f' on {cls.__name__};'
                                 f' expected a value corresponding to'
                                 f' a {keyanntype}.') from exc
                         out[enumval] = self._value_from_input(
@@ -1182,7 +1207,8 @@ class _Inputter(Generic[T]):
                         except (ValueError, TypeError) as exc:
                             raise ValueError(
                                 f'Got invalid key value {key} for'
-                                f' dict key at \'{fieldpath}\' on {cls};'
+                                f' dict key at \'{fieldpath}\''
+                                f' on {cls.__name__};'
                                 f' expected {keyanntype} value (though'
                                 f' in string form).') from exc
                         out[enumval] = self._value_from_input(
@@ -1208,7 +1234,7 @@ class _Inputter(Generic[T]):
         # and then just grab them.
         if len(childanntypes) == 0 or childanntypes[0] is typing.Any:
             for i, child in enumerate(value):
-                if not _is_valid_json(child):
+                if not _is_valid_for_codec(child, self._codec):
                     raise TypeError(f'Item {i} of {fieldpath} contains'
                                     f' data type(s) not supported by json.')
             return value if type(value) is seqtype else seqtype(value)
@@ -1229,7 +1255,8 @@ class _Inputter(Generic[T]):
             # a subclass with extended precision.
             if not isinstance(value, datetime.datetime):
                 raise TypeError(
-                    f'Invalid input value for "{fieldpath}" on "{cls}";'
+                    f'Invalid input value for "{fieldpath}" on'
+                    f' "{cls.__name__}";'
                     f' expected a datetime, got a {type(value).__name__}')
             _ensure_datetime_is_timezone_aware(value)
             return value
@@ -1239,11 +1266,11 @@ class _Inputter(Generic[T]):
         # We expect a list of 7 ints.
         if type(value) is not list:
             raise TypeError(
-                f'Invalid input value for "{fieldpath}" on "{cls}";'
+                f'Invalid input value for "{fieldpath}" on "{cls.__name__}";'
                 f' expected a list, got a {type(value).__name__}')
         if len(value) != 7 or not all(isinstance(x, int) for x in value):
             raise TypeError(
-                f'Invalid input value for "{fieldpath}" on "{cls}";'
+                f'Invalid input value for "{fieldpath}" on "{cls.__name__}";'
                 f' expected a list of 7 ints.')
         out = datetime.datetime(  # type: ignore
             *value, tzinfo=datetime.timezone.utc)
@@ -1277,7 +1304,7 @@ class _Inputter(Generic[T]):
             # 'Any' type children; make sure they are valid json values
             # and then just grab them.
             if childanntype is typing.Any:
-                if not _is_valid_json(childval):
+                if not _is_valid_for_codec(childval, self._codec):
                     raise TypeError(f'Item {i} of {fieldpath} contains'
                                     f' data type(s) not supported by json.')
                 out.append(childval)

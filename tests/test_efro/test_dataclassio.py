@@ -654,6 +654,32 @@ def test_name_clashes() -> None:
             ival2: Annotated[int, IOAttrs('ival')] = 5
 
 
+def test_any() -> None:
+    """Test data included with type Any."""
+
+    @ioprepped
+    @dataclass
+    class _TestClass:
+        anyval: Any
+
+    obj = _TestClass(anyval=b'bytes')
+
+    # JSON output doesn't allow bytes or datetime objects
+    # included in 'Any' data.
+    with pytest.raises(TypeError):
+        dataclass_validate(obj, codec=Codec.JSON)
+
+    obj.anyval = datetime.datetime.now()
+    with pytest.raises(TypeError):
+        dataclass_validate(obj, codec=Codec.JSON)
+
+    # Firestore, however, does.
+    obj.anyval = b'bytes'
+    dataclass_validate(obj, codec=Codec.FIRESTORE)
+    obj.anyval = datetime.datetime.now()
+    dataclass_validate(obj, codec=Codec.FIRESTORE)
+
+
 @ioprepped
 @dataclass
 class _SPTestClass1:
