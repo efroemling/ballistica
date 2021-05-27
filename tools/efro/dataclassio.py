@@ -72,15 +72,28 @@ class Codec(Enum):
 class IOAttrs:
     """For specifying io behavior in annotations."""
 
+    storagename: Optional[str] = None
+    store_default: bool = True
+    whole_days: bool = False
+    whole_hours: bool = False
+
     def __init__(self,
-                 storagename: str = None,
-                 store_default: bool = True,
-                 whole_days: bool = False,
-                 whole_hours: bool = False):
-        self.storagename = storagename
-        self.store_default = store_default
-        self.whole_days = whole_days
-        self.whole_hours = whole_hours
+                 storagename: Optional[str] = storagename,
+                 store_default: bool = store_default,
+                 whole_days: bool = whole_days,
+                 whole_hours: bool = whole_hours):
+
+        # Only store values that differ from class defaults to keep
+        # our instances nice and lean.
+        cls = type(self)
+        if storagename != cls.storagename:
+            self.storagename = storagename
+        if store_default != cls.store_default:
+            self.store_default = store_default
+        if whole_days != cls.whole_days:
+            self.whole_days = whole_days
+        if whole_hours != cls.whole_hours:
+            self.whole_hours = whole_hours
 
     def validate_for_field(self, cls: Type, field: dataclasses.Field) -> None:
         """Ensure the IOAttrs instance is ok to use with the provided field."""
