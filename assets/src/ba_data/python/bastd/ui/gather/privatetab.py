@@ -256,7 +256,10 @@ class PrivateGatherTab(GatherTab):
                     self._debug_server_comm('querying private party state')
                     if _ba.get_account_state() == 'signed_in':
                         _ba.add_transaction(
-                            {'type': 'PRIVATE_PARTY_QUERY'},
+                            {
+                                'type': 'PRIVATE_PARTY_QUERY',
+                                'expire_time': time.time() + 20,
+                            },
                             callback=ba.WeakCall(
                                 self._hosting_state_idle_response),
                         )
@@ -761,6 +764,7 @@ class PrivateGatherTab(GatherTab):
         _ba.add_transaction(
             {
                 'type': 'PRIVATE_PARTY_CONNECT',
+                'expire_time': time.time() + 20,
                 'code': code
             },
             callback=ba.WeakCall(self._connect_response),
@@ -806,15 +810,19 @@ class PrivateGatherTab(GatherTab):
                     'type': 'PRIVATE_PARTY_START',
                     'config': dataclass_to_dict(self._hostingconfig),
                     'region_pings': ba.app.net.region_pings,
+                    'expire_time': time.time() + 20,
                 },
                 callback=ba.WeakCall(self._hosting_state_response))
             _ba.run_transactions()
 
         else:
             self._last_action_send_time = time.time()
-            _ba.add_transaction({'type': 'PRIVATE_PARTY_STOP'},
-                                callback=ba.WeakCall(
-                                    self._hosting_state_response))
+            _ba.add_transaction(
+                {
+                    'type': 'PRIVATE_PARTY_STOP',
+                    'expire_time': time.time() + 20,
+                },
+                callback=ba.WeakCall(self._hosting_state_response))
             _ba.run_transactions()
         ba.playsound(ba.getsound('click01'))
 

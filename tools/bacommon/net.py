@@ -39,7 +39,6 @@ class PrivateHostingState:
     """Combined state of whether we're hosting, whether we can, etc."""
     unavailable_error: Optional[str] = None
     party_code: Optional[str] = None
-    able_to_host: bool = False
     tickets_to_host_now: int = 0
     minutes_until_free_host: Optional[float] = None
     free_host_minutes_remaining: Optional[float] = None

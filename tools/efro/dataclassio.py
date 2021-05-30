@@ -1340,5 +1340,12 @@ def _parse_annotated(anntype: Any) -> Tuple[Any, Optional[IOAttrs]]:
                         'Multiple IOAttrs instances found for a'
                         ' single annotation; this is not supported.')
                 ioattrs = annarg
+
+            # I occasionally just throw a 'x' down when I mean IOAttrs('x');
+            # catch these mistakes.
+            elif isinstance(annarg, (str, int, float, bool)):
+                raise RuntimeError(
+                    f'Raw {type(annarg)} found in Annotated[] entry:'
+                    f' {anntype}; this is probably not what you intended.')
         anntype = annargs[0]
     return anntype, ioattrs
