@@ -496,11 +496,8 @@ ballisticacore-windows/build/Debug_%/BallisticaCoreGenericInternal.exe: \
   ballisticacore-windows/build/Debug_%/BallisticaCoreGenericInternal.lib \
   ballisticacore-windows/Generic/BallisticaCore.ico \
   prereqs code resources
-	${WIN_MSBUILD_EXE_B} \
-  ${shell wslpath -m -a \
-  ballisticacore-windows/Generic/BallisticaCoreGeneric.vcxproj} \
-  -target:Build -property:Configuration=Debug \
-  -property:Platform=Generic ${VISUAL_STUDIO_VERSION}
+	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=$* \
+      ${MAKE} _windows-wsl-build
 
 # Tell make which of these targets don't represent files.
 .PHONY: prefab-debug prefab-release prefab-debug-build prefab-release-build \
