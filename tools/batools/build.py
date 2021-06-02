@@ -29,11 +29,11 @@ class PipRequirement:
 
 
 PIP_REQUIREMENTS = [
-    PipRequirement(modulename='pylint', minversion=[2, 8, 1]),
+    PipRequirement(modulename='pylint', minversion=[2, 8, 2]),
     PipRequirement(modulename='mypy', minversion=[0, 812]),
     PipRequirement(modulename='yapf', minversion=[0, 31, 0]),
-    PipRequirement(modulename='cpplint', minversion=[1, 5, 4]),
-    PipRequirement(modulename='pytest', minversion=[6, 2, 3]),
+    PipRequirement(modulename='cpplint', minversion=[1, 5, 5]),
+    PipRequirement(modulename='pytest', minversion=[6, 2, 4]),
     PipRequirement(modulename='typing_extensions'),
     PipRequirement(modulename='pytz'),
     PipRequirement(modulename='ansiwrap'),
@@ -340,7 +340,7 @@ def gen_fulltest_buildfile_windows() -> None:
     cfg2 = 'Release' if (dayoffset + 1) % 7 == 0 else 'Debug'
     cfg3 = 'Release' if (dayoffset + 2) % 7 == 0 else 'Debug'
 
-    lines.append(f'WINDOWS_PROJECT= WINDOWS_PLATFORM={pval1} '
+    lines.append(f'WINDOWS_PROJECT=Generic WINDOWS_PLATFORM={pval1} '
                  f'WINDOWS_CONFIGURATION={cfg1} make windows-cloud-build')
     lines.append(f'WINDOWS_PROJECT=Headless WINDOWS_PLATFORM={pval2} '
                  f'WINDOWS_CONFIGURATION={cfg2} make windows-cloud-build')

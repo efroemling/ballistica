@@ -23,7 +23,7 @@ class Console {
   auto HandleKeyPress(const SDL_Keysym* keysym) -> bool;
   auto HandleKeyRelease(const SDL_Keysym* keysym) -> bool;
   void ToggleState();
-  void Print(const std::string& s);
+  void Print(const std::string& s_in);
   void Draw(RenderPass* pass);
 
  private:

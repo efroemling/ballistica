@@ -458,11 +458,11 @@ prefab-windows-x86-server-debug: prefab-windows-x86-server-debug-build
 
 prefab-windows-x86-server-debug-build: prereqs \
  assets-windows-${WINPLAT_X86} \
- build/prefab/full/windows_x86_server/debug/dist/ballisticacore_headless.exe
+ build/prefab/full/windows_x86_server/debug/dist/BallisticaCoreHeadless.exe
 	@${STAGE_ASSETS} -winserver-${WINPLAT_X86}-Debug \
  build/prefab/full/windows_x86_server/debug
 
-build/prefab/full/windows_x86_server/debug/dist/ballisticacore_headless.exe: .efrocachemap
+build/prefab/full/windows_x86_server/debug/dist/BallisticaCoreHeadless.exe: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
 # Windows server release:
@@ -477,11 +477,11 @@ prefab-windows-x86-server-release: prefab-windows-x86-server-release-build
 
 prefab-windows-x86-server-release-build: prereqs \
  assets-windows-${WINPLAT_X86} \
- build/prefab/full/windows_x86_server/release/dist/ballisticacore_headless.exe
+ build/prefab/full/windows_x86_server/release/dist/BallisticaCoreHeadless.exe
 	@${STAGE_ASSETS} -winserver-${WINPLAT_X86}-Release \
  build/prefab/full/windows_x86_server/release
 
-build/prefab/full/windows_x86_server/release/dist/ballisticacore_headless.exe: .efrocachemap
+build/prefab/full/windows_x86_server/release/dist/BallisticaCoreHeadless.exe: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
 # Tell make which of these targets don't represent files.

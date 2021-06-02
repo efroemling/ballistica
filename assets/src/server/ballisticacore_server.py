@@ -35,6 +35,8 @@ if TYPE_CHECKING:
 VERSION_STR = '1.3'
 
 # Version history:
+# 1.3.1
+#  Windows binary is now named BallisticaCoreHeadless.exe
 # 1.3:
 #  Added show_tutorial config option
 #  Added team_names config option
@@ -573,7 +575,7 @@ class ServerManagerApp:
         os.environ['BA_SERVER_WRAPPER_MANAGED'] = '1'
 
         print(f'{Clr.CYN}Launching server subprocess...{Clr.RST}', flush=True)
-        binary_name = ('ballisticacore_headless.exe'
+        binary_name = ('BallisticaCoreHeadless.exe'
                        if os.name == 'nt' else './ballisticacore_headless')
         assert self._ba_root_path is not None
         self._subprocess = None

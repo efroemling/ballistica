@@ -480,18 +480,25 @@ class Updater:
                               Clr.RST)
                         sys.exit(255)
 
-    def _update_visual_studio_project(self, fname: str, src_root: str) -> None:
+    def _update_visual_studio_project(self, basename: str) -> None:
+
+        fname = f'ballisticacore-windows/{basename}/{basename}.vcxproj'
+
+        # Currently just silently skipping if not found (for public repo).
+        if not os.path.exists(fname):
+            return
+
         with open(fname) as infile:
             lines = infile.read().splitlines()
 
-        # Hmm can we include headers in the project for easy access?
-        # Seems VS attempts to compile them if we do so here.
-        # all_files = sorted(src_files + header_files)
-        # del header_files  # Unused.
+        src_root = '..\\..\\src'
+
+        public = 'Internal' not in basename
+
         all_files = sorted([
             f for f in (self._source_files + self._header_files)
-            if not f.endswith('.m') and not f.endswith('.mm')
-            and not f.endswith('.c')
+            if not f.endswith('.m') and not f.endswith('.mm') and
+            not f.endswith('.c') and self._is_public_source_file(f) == public
         ])
 
         # Find the ItemGroup containing stdafx.cpp. This is where we'll dump
@@ -564,17 +571,12 @@ class Updater:
                            '.filters'] = '\r\n'.join(filterlines) + '\r\n'
 
     def _update_visual_studio_projects(self) -> None:
-        fname = 'ballisticacore-windows/BallisticaCore/BallisticaCore.vcxproj'
-        if os.path.exists(fname):
-            self._update_visual_studio_project(fname, '..\\..\\src')
-        fname = ('ballisticacore-windows/BallisticaCoreHeadless/'
-                 'BallisticaCoreHeadless.vcxproj')
-        if os.path.exists(fname):
-            self._update_visual_studio_project(fname, '..\\..\\src')
-        fname = ('ballisticacore-windows/BallisticaCoreOculus'
-                 '/BallisticaCoreOculus.vcxproj')
-        if os.path.exists(fname):
-            self._update_visual_studio_project(fname, '..\\..\\src')
+        self._update_visual_studio_project('BallisticaCoreGeneric')
+        self._update_visual_studio_project('BallisticaCoreGenericInternal')
+        self._update_visual_studio_project('BallisticaCoreHeadless')
+        self._update_visual_studio_project('BallisticaCoreHeadlessInternal')
+        self._update_visual_studio_project('BallisticaCoreOculus')
+        self._update_visual_studio_project('BallisticaCoreOculusInternal')
 
     def _is_public_source_file(self, filename: str) -> bool:
         assert filename.startswith('/')
@@ -616,9 +618,13 @@ class Updater:
     def _update_cmake_files(self) -> None:
         # Note: currently not updating cmake files at all in public builds;
         # will need to get this working at some point...
+
+        # Top level cmake builds:
         fname = 'ballisticacore-cmake/CMakeLists.txt'
         if not self._public:
             self._update_cmake_file(fname)
+
+        # CMake android components:
         fname = ('ballisticacore-android/BallisticaCore'
                  '/src/main/cpp/CMakeLists.txt')
         if not self._public:

@@ -182,9 +182,12 @@ auto Console::HandleKeyRelease(const SDL_Keysym* keysym) -> bool {
   return state_ != State::kInactive;
 }
 
-void Console::Print(const std::string& sIn) {
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "LocalValueEscapesScope"
+
+void Console::Print(const std::string& s_in) {
   assert(InGameThread());
-  std::string s = Utils::GetValidUTF8(sIn.c_str(), "cspr");
+  std::string s = Utils::GetValidUTF8(s_in.c_str(), "cspr");
   last_line_ += s;
   std::vector<std::string> broken_up;
   g_text_graphics->BreakUpString(last_line_.c_str(), kStringBreakUpSize,
@@ -193,11 +196,15 @@ void Console::Print(const std::string& sIn) {
   // Spit out all completed lines and keep the last one as lastline.
   for (size_t i = 0; i < broken_up.size() - 1; i++) {
     lines_.emplace_back(broken_up[i], GetRealTime());
-    if (lines_.size() > kConsoleLineLimit) lines_.pop_front();
+    if (lines_.size() > kConsoleLineLimit) {
+      lines_.pop_front();
+    }
   }
   last_line_ = broken_up[broken_up.size() - 1];
   last_line_mesh_dirty_ = true;
 }
+
+#pragma clang diagnostic pop
 
 void Console::Draw(RenderPass* pass) {
   millisecs_t transition_ticks = 100;
@@ -205,7 +212,7 @@ void Console::Draw(RenderPass* pass) {
       && (state_ != State::kInactive
           || ((GetRealTime() - transition_start_) < transition_ticks))) {
     float ratio = (static_cast<float>(GetRealTime() - transition_start_)
-                   / transition_ticks);
+                   / static_cast<float>(transition_ticks));
     float bottom;
     float mini_size = 90;
     if (state_ == State::kMini) {

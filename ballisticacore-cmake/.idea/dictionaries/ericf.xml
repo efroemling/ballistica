@@ -18,6 +18,7 @@
       <w>activityplayer</w>
       <w>addcall</w>
       <w>addchars</w>
+      <w>addr</w>
       <w>addrs</w>
       <w>adjoint</w>
       <w>adminset</w>
@@ -1100,6 +1101,7 @@
       <w>worldspace</w>
       <w>wsroot</w>
       <w>wunused</w>
+      <w>wvmpth</w>
       <w>xclamped</w>
       <w>xdiff</w>
       <w>xdist</w>

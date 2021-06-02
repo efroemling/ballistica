@@ -40,14 +40,17 @@ void Audio::SetListenerOrientation(const Vector3f& forward,
 
 // This stops a particular sound play ID only.
 void Audio::PushSourceStopSoundCall(uint32_t play_id) {
-  g_audio_server->PushCall(
-      [this, play_id] { g_audio_server->StopSound(play_id); });
+  g_audio_server->PushCall([play_id] { g_audio_server->StopSound(play_id); });
 }
 
 void Audio::PushSourceFadeOutCall(uint32_t play_id, uint32_t time) {
   g_audio_server->PushCall(
-      [this, play_id, time] { g_audio_server->FadeSoundOut(play_id, time); });
+      [play_id, time] { g_audio_server->FadeSoundOut(play_id, time); });
 }
+
+// Seems we get a false alarm here.
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "LocalValueEscapesScope"
 
 auto Audio::SourceBeginNew() -> AudioSource* {
   BA_DEBUG_FUNCTION_TIMER_BEGIN();
@@ -77,6 +80,8 @@ auto Audio::SourceBeginNew() -> AudioSource* {
   BA_DEBUG_FUNCTION_TIMER_END_THREAD(20);
   return s;
 }
+
+#pragma clang diagnostic pop
 
 auto Audio::IsSoundPlaying(uint32_t play_id) -> bool {
   uint32_t source_id = AudioServer::source_id_from_play_id(play_id);
