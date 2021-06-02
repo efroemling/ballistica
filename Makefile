@@ -162,7 +162,7 @@ prefab-clean:
 
 # Specific platform prefab targets:
 
-# (what visual studio calls their x86 target platform)
+# (what visual studio calls their x86 (32 bit) target platform)
 WINPLAT_X86 = Win32
 
 # Mac debug:
@@ -411,7 +411,7 @@ build/prefab/full/linux_%_server/release/dist/ballisticacore_headless: .efrocach
 build/prefab/lib/linux_%_server/release/libballisticacore_internal.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-# Windows debug:
+# Windows prefab debug:
 
 RUN_PREFAB_WINDOWS_X86_DEBUG = cd build/prefab/full/windows_x86/debug \
   && ./BallisticaCore.exe
@@ -428,7 +428,7 @@ build/prefab/full/windows_x86/debug
 build/prefab/full/windows_x86/debug/BallisticaCore.exe: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-# Windows release:
+# Windows prefab release:
 
 RUN_PREFAB_WINDOWS_X86_RELEASE = cd build/prefab/full/windows_x86/release \
  && ./BallisticaCore.exe
@@ -446,7 +446,7 @@ build/prefab/full/windows_x86/release
 build/prefab/full/windows_x86/release/BallisticaCore.exe: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-# Windows server debug:
+# Windows prefab server debug:
 
 RUN_PREFAB_WINDOWS_X86_SERVER_DEBUG = cd \
  build/prefab/full/windows_x86_server/debug \
@@ -465,7 +465,7 @@ prefab-windows-x86-server-debug-build: prereqs \
 build/prefab/full/windows_x86_server/debug/dist/BallisticaCoreHeadless.exe: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-# Windows server release:
+# Windows prefab server release:
 
 RUN_PREFAB_WINDOWS_X86_SERVER_RELEASE = cd \
   build/prefab/full/windows_x86_server/release \
@@ -483,6 +483,24 @@ prefab-windows-x86-server-release-build: prereqs \
 
 build/prefab/full/windows_x86_server/release/dist/BallisticaCoreHeadless.exe: .efrocachemap
 	@tools/pcommand efrocache_get $@
+
+# Windows visual-studio-compiled debug
+
+ballisticacore-windows/build/Debug_%/BallisticaCoreGenericInternal.lib: .efrocachemap
+	@tools/pcommand efrocache_get $@
+
+ballisticacore-windows/Generic/BallisticaCore.ico: .efrocachemap
+	@tools/pcommand efrocache_get $@
+
+ballisticacore-windows/build/Debug_%/BallisticaCoreGenericInternal.exe: \
+  ballisticacore-windows/build/Debug_%/BallisticaCoreGenericInternal.lib \
+  ballisticacore-windows/Generic/BallisticaCore.ico \
+  prereqs code resources
+	${WIN_MSBUILD_EXE_B} \
+  ${shell wslpath -m -a \
+  ballisticacore-windows/Generic/BallisticaCoreGeneric.vcxproj} \
+  -target:Build -property:Configuration=Debug \
+  -property:Platform=Generic ${VISUAL_STUDIO_VERSION}
 
 # Tell make which of these targets don't represent files.
 .PHONY: prefab-debug prefab-release prefab-debug-build prefab-release-build \
