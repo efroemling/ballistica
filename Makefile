@@ -496,12 +496,19 @@ ballisticacore-windows/Generic/BallisticaCore.ico: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
 ballisticacore-windows/build/Debug_%/BallisticaCoreGenericInternal.exe: \
-  ballisticacore-windows/build/Debug_%/BallisticaCoreGenericInternal.lib \
-  ballisticacore-windows/build/Debug_%/BallisticaCoreGenericInternal.pdb \
-  ballisticacore-windows/Generic/BallisticaCore.ico \
-  prereqs code resources
+   ballisticacore-windows/build/Debug_%/BallisticaCoreGenericInternal.lib \
+   ballisticacore-windows/build/Debug_%/BallisticaCoreGenericInternal.pdb \
+   ballisticacore-windows/Generic/BallisticaCore.ico \
+   prereqs code resources
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=$* \
       ${MAKE} _windows-wsl-build
+
+# These are 'intermediate' files and will get deleted implicitly by make
+# if we don't do this.
+# See: https://www.gnu.org/software/make/manual/make.html#Special-Targets
+.PRECIOUS: \
+   ballisticacore-windows/build/Debug_%/BallisticaCoreGenericInternal.lib \
+   ballisticacore-windows/build/Debug_%/BallisticaCoreGenericInternal.pdb
 
 # Tell make which of these targets don't represent files.
 .PHONY: prefab-debug prefab-release prefab-debug-build prefab-release-build \

@@ -76,9 +76,9 @@ class SourceCategory(Enum):
 
 class PrefabTarget(Enum):
     """Types of prefab builds able to be run."""
-    DEBUG = 'gui-debug'
+    GUI_DEBUG = 'gui-debug'
     SERVER_DEBUG = 'server-debug'
-    RELEASE = 'gui-release'
+    GUI_RELEASE = 'gui-release'
     SERVER_RELEASE = 'server-release'
 
 
