@@ -3934,6 +3934,7 @@
   "assets/build/windows/Win32/vcruntime140d.dll": "https://files.ballistica.net/cache/ba1/50/8d/bc2600ac9491f1b14d659709451f",
   "ballisticacore-windows/Generic/BallisticaCore.ico": "https://files.ballistica.net/cache/ba1/89/c0/e32c7d2a35dc9aef57cc73b0911a",
   "ballisticacore-windows/build/Debug_Win32/BallisticaCoreGenericInternal.lib": "https://files.ballistica.net/cache/ba1/bb/ef/cbbb2871d6951c4178c51b9168ee",
+  "ballisticacore-windows/build/Debug_Win32/BallisticaCoreGenericInternal.pdb": "https://files.ballistica.net/cache/ba1/d4/4e/8f19b93f504faf01ab6110076482",
   "build/prefab/full/linux_arm64_gui/debug/ballisticacore": "https://files.ballistica.net/cache/ba1/e8/15/872df30172235c867eda63d89589",
   "build/prefab/full/linux_arm64_gui/release/ballisticacore": "https://files.ballistica.net/cache/ba1/74/1d/fc9e33e565475daaac80da5252f0",
   "build/prefab/full/linux_arm64_server/debug/dist/ballisticacore_headless": "https://files.ballistica.net/cache/ba1/78/4f/3c6279192f18688bd84bb6a4411b",

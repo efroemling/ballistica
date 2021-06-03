@@ -489,11 +489,15 @@ build/prefab/full/windows_x86_server/release/dist/BallisticaCoreHeadless.exe: .e
 ballisticacore-windows/build/Debug_%/BallisticaCoreGenericInternal.lib: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
+ballisticacore-windows/build/Debug_%/BallisticaCoreGenericInternal.pdb: .efrocachemap
+	@tools/pcommand efrocache_get $@
+
 ballisticacore-windows/Generic/BallisticaCore.ico: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
 ballisticacore-windows/build/Debug_%/BallisticaCoreGenericInternal.exe: \
   ballisticacore-windows/build/Debug_%/BallisticaCoreGenericInternal.lib \
+  ballisticacore-windows/build/Debug_%/BallisticaCoreGenericInternal.pdb \
   ballisticacore-windows/Generic/BallisticaCore.ico \
   prereqs code resources
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=$* \
