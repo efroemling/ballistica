@@ -920,4 +920,4 @@ _windows-wsl-rebuild:
   -property:Platform=${WINPLT} ${VISUAL_STUDIO_VERSION}
 
 # Tell make which of these targets don't represent files.
-.PHONY: _cmake-simple-ci-server-build _windows_wsl_build _windows_wsl_rebuild
+.PHONY: _cmake-simple-ci-server-build _windows-wsl-build _windows-wsl-rebuild
