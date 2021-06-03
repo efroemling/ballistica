@@ -474,7 +474,7 @@ def checkenv() -> None:
     batools.build.checkenv()
 
 
-def ensure_prefab_platform() -> None:
+def ensure_build_platform() -> None:
     """Ensure we are running on a particular prefab platform."""
     import batools.build
     from efro.error import CleanError
@@ -665,7 +665,7 @@ def update_cmake_prefab_lib() -> None:
         raise CleanError(f'Invalid mode: {mode}')
     platform = batools.build.get_current_prefab_platform(
         wsl_gives_windows=False)
-    suffix = '_server' if buildtype == 'server' else ''
+    suffix = '_server' if buildtype == 'server' else '_gui'
     target = (f'build/prefab/lib/{platform}{suffix}/{mode}/'
               f'libballisticacore_internal.a')
 

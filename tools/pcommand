@@ -34,7 +34,7 @@ from batools.pcommand import (
     python_build_android_debug, python_android_patch, python_gather,
     python_winprune, capitalize, upper, efrocache_update, efrocache_get,
     get_modern_make, warm_start_asset_build, update_docs_md, list_pip_reqs,
-    install_pip_reqs, checkenv, ensure_prefab_platform, prefab_run_var,
+    install_pip_reqs, checkenv, ensure_build_platform, prefab_run_var,
     make_prefab, update_makebob, lazybuild, android_archive_unstripped_libs,
     efro_gradle, stage_assets, update_assets_makefile, update_project,
     update_cmake_prefab_lib, cmake_prep_dir, gen_binding_code,
