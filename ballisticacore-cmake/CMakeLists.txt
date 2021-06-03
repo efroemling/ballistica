@@ -226,6 +226,9 @@ add_executable(ballisticacore
   ${BA_SRC_ROOT}/ballistica/ballistica.h
   ${BA_SRC_ROOT}/ballistica/config/config_cmake.h
   ${BA_SRC_ROOT}/ballistica/config/config_common.h
+  ${BA_SRC_ROOT}/ballistica/config/config_windows_common.h
+  ${BA_SRC_ROOT}/ballistica/config/config_windows_generic.h
+  ${BA_SRC_ROOT}/ballistica/config/config_windows_headless.h
   ${BA_SRC_ROOT}/ballistica/core/context.cc
   ${BA_SRC_ROOT}/ballistica/core/context.h
   ${BA_SRC_ROOT}/ballistica/core/exception.cc
