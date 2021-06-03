@@ -503,6 +503,8 @@ add_executable(ballisticacore
   ${BA_SRC_ROOT}/ballistica/platform/platform.h
   ${BA_SRC_ROOT}/ballistica/platform/sdl/sdl_app.cc
   ${BA_SRC_ROOT}/ballistica/platform/sdl/sdl_app.h
+  ${BA_SRC_ROOT}/ballistica/platform/windows/platform_windows.cc
+  ${BA_SRC_ROOT}/ballistica/platform/windows/platform_windows.h
   ${BA_SRC_ROOT}/ballistica/python/class/python_class.cc
   ${BA_SRC_ROOT}/ballistica/python/class/python_class.h
   ${BA_SRC_ROOT}/ballistica/python/class/python_class_activity_data.cc
