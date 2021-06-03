@@ -727,9 +727,7 @@
     <ResourceCompile Include="BallisticaCore.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\GenericInternal\BallisticaCoreGenericInternal.vcxproj">
-      <Project>{f20bed71-1a94-428b-b7f5-8aac3665753d}</Project>
-    </ProjectReference>
+    <Library Include="..\build\$(Configuration)_$(Platform)\$(MSBuildProjectName)Internal.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
