@@ -474,6 +474,25 @@ def checkenv() -> None:
     batools.build.checkenv()
 
 
+def wsl_to_escaped_win_path() -> None:
+    """Forward escape slashes in a provided win path arg."""
+    import subprocess
+    from efro.error import CleanError
+    if len(sys.argv) != 3:
+        raise CleanError('Expected 1 path arg.')
+    try:
+        out = subprocess.run(['wslpath', '-w', '-a', sys.argv[2]],
+                             capture_output=True,
+                             check=True)
+    except Exception:
+        # This gets used in a makefile so our returncode is ignored;
+        # try to convey failure in other ways.
+        print('wsl_to_escaped_win_path_error_occurred', end='')
+        return
+
+    print(out.stdout.decode().strip().replace('\\', '\\\\'), end='')
+
+
 def ensure_build_platform() -> None:
     """Ensure we are building on a particular platform."""
     import batools.build

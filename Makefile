@@ -907,14 +907,14 @@ _cmake-simple-ci-server-build:
 
 _windows-wsl-build:
 	${WIN_MSBUILD_EXE_B} \
-  ${shell wslpath -m -a \
+  ${shell tools/pcommand wsl_to_escaped_win_path \
   ballisticacore-windows/${WINPRJ}/BallisticaCore${WINPRJ}.vcxproj} \
   -target:Build -property:Configuration=${WINCFG} \
   -property:Platform=${WINPLT} ${VISUAL_STUDIO_VERSION}
 
 _windows-wsl-rebuild:
 	${WIN_MSBUILD_EXE_B} \
-  ${shell wslpath -m -a \
+  ${shell tools/pcommand wsl_to_escaped_win_path \
   ballisticacore-windows/${WINPRJ}/BallisticaCore${WINPRJ}.vcxproj} \
   -target:Rebuild -property:Configuration=${WINCFG} \
   -property:Platform=${WINPLT} ${VISUAL_STUDIO_VERSION}
