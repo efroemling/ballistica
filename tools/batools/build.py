@@ -460,14 +460,15 @@ def gen_fulltest_buildfile_linux() -> None:
         outfile.write('\n'.join(lines))
 
 
-def get_current_prefab_platform(wsl_gives_windows: bool = True) -> str:
-    """Get the name of the running platform.
+def get_current_build_platform(wsl_gives_windows: bool = True) -> str:
+    """Get an identifier for the platform running this build.
 
     Throws a RuntimeError on unsupported platforms.
     """
     import platform
     system = platform.system()
     machine = platform.machine()
+
     if system == 'Darwin':
         if machine == 'x86_64':
             return 'mac_x86_64'

@@ -124,12 +124,6 @@ clean-list:
 
 # Prebuilt binaries for various platforms.
 
-# Shortcut for run prefab-gui-debug.
-prefab-debug: prefab-gui-debug
-
-# Shortcut for prefab-gui-release.
-prefab-release: prefab-gui-release
-
 # Assemble & run a gui debug build for this platform.
 prefab-gui-debug: prefab-gui-debug-build
 	${${shell tools/pcommand prefab_run_var gui-debug}}

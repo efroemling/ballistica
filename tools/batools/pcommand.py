@@ -475,13 +475,13 @@ def checkenv() -> None:
 
 
 def ensure_build_platform() -> None:
-    """Ensure we are running on a particular prefab platform."""
+    """Ensure we are building on a particular platform."""
     import batools.build
     from efro.error import CleanError
     if len(sys.argv) != 3:
         raise CleanError('Expected 1 platform name arg.')
     needed = sys.argv[2]
-    current = batools.build.get_current_prefab_platform()
+    current = batools.build.get_current_build_platform()
     if current != needed:
         raise CleanError(
             f'Incorrect platform: we are {current}, this requires {needed}.')
@@ -493,7 +493,7 @@ def prefab_run_var() -> None:
     if len(sys.argv) != 3:
         raise RuntimeError('Expected 1 arg.')
     base = sys.argv[2].replace('-', '_').upper()
-    platform = batools.build.get_current_prefab_platform().upper()
+    platform = batools.build.get_current_build_platform().upper()
     print(f'RUN_PREFAB_{platform}_{base}', end='')
 
 
@@ -504,7 +504,7 @@ def make_prefab() -> None:
     if len(sys.argv) != 3:
         raise RuntimeError('Expected one argument')
     target = batools.build.PrefabTarget(sys.argv[2])
-    platform = batools.build.get_current_prefab_platform()
+    platform = batools.build.get_current_build_platform()
 
     # We use dashes instead of underscores in target names.
     platform = platform.replace('_', '-')
@@ -663,7 +663,7 @@ def update_cmake_prefab_lib() -> None:
         raise CleanError(f'Invalid buildtype: {buildtype}')
     if mode not in {'debug', 'release'}:
         raise CleanError(f'Invalid mode: {mode}')
-    platform = batools.build.get_current_prefab_platform(
+    platform = batools.build.get_current_build_platform(
         wsl_gives_windows=False)
     suffix = '_server' if buildtype == 'server' else '_gui'
     target = (f'build/prefab/lib/{platform}{suffix}/{mode}/'
