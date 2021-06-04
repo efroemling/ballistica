@@ -428,6 +428,12 @@ prefab-windows-x86-gui-debug-build: prereqs assets-windows-${WINPLAT_X86} \
 build/prefab/full/windows_x86_gui/debug/BallisticaCore.exe: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
+build/prefab/lib/windows/Debug_%/BallisticaCoreGenericInternal.lib: .efrocachemap
+	@tools/pcommand efrocache_get $@
+
+build/prefab/lib/windows/Debug_%/BallisticaCoreGenericInternal.pdb: .efrocachemap
+	@tools/pcommand efrocache_get $@
+
 # Windows prefab release:
 
 RUN_PREFAB_WINDOWS_X86_GUI_RELEASE = cd \
@@ -484,63 +490,30 @@ prefab-windows-x86-server-release-build: prereqs \
 build/prefab/full/windows_x86_server/release/dist/BallisticaCoreHeadless.exe: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-# Windows visual-studio-compiled debug
-
-build/prefab/lib/windows/Debug_%/BallisticaCoreGenericInternal.lib: .efrocachemap
-	@tools/pcommand efrocache_get $@
-
-build/prefab/lib/windows/Debug_%/BallisticaCoreGenericInternal.pdb: .efrocachemap
-	@tools/pcommand efrocache_get $@
-
-ballisticacore-windows/Generic/BallisticaCore.ico: .efrocachemap
-	@tools/pcommand efrocache_get $@
-
-windows-wsl-debug-build: \
-   prereqs code resources \
-   build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.lib \
-   build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.pdb \
-   ballisticacore-windows/Generic/BallisticaCore.ico
-	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 \
-  ${MAKE} _windows-wsl-build
-
-windows-wsl-debug-rebuild: \
-   prereqs code resources \
-   build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.lib \
-   build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.pdb \
-   ballisticacore-windows/Generic/BallisticaCore.ico
-	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 \
-  ${MAKE} _windows-wsl-rebuild
-
-# These are 'intermediate' files and will get deleted implicitly by make
-# if we don't do this.
-# See: https://www.gnu.org/software/make/manual/make.html#Special-Targets
-# .PRECIOUS: \
-#    ballisticacore-windows/build/Debug_%/BallisticaCoreGenericInternal.lib \
-#    ballisticacore-windows/build/Debug_%/BallisticaCoreGenericInternal.pdb
-
 # Tell make which of these targets don't represent files.
-.PHONY: prefab-debug prefab-release prefab-debug-build prefab-release-build \
- prefab-server-debug prefab-server-release prefab-server-debug-build \
- prefab-server-release-build prefab-clean _cmake_prefab_gui_binary \
- _cmake_prefab_server_binary prefab-mac-x86-64-debug prefab-mac-arm64-debug \
- prefab-mac-x86-64-debug-build prefab-mac-arm64-debug-build \
- prefab-mac-x86-64-release prefab-mac-arm64-release \
- prefab-mac-x86-64-release-build prefab-mac-arm64-release-build \
+.PHONY: prefab-gui-debug prefab-gui-release prefab-gui-debug-build \
+ prefab-gui-release-build prefab-server-debug prefab-server-release \
+ prefab-server-debug-build prefab-server-release-build prefab-clean \
+ _cmake_prefab_gui_binary _cmake_prefab_server_binary \
+ prefab-mac-x86-64-gui-debug prefab-mac-arm64-gui-debug \
+ prefab-mac-x86-64-gui-debug-build prefab-mac-arm64-gui-debug-build \
+ prefab-mac-x86-64-gui-release prefab-mac-arm64-gui-release \
+ prefab-mac-x86-64-gui-release-build prefab-mac-arm64-gui-release-build \
  prefab-mac-x86-64-server-debug prefab-mac-arm64-server-debug \
  prefab-mac-x86-64-server-debug-build prefab-mac-arm64-server-debug-build \
  prefab-mac-x86-64-server-release prefab-mac-arm64-server-release \
  prefab-mac-x86-64-server-release-build prefab-mac-arm64-server-release-build \
- prefab-linux-x86-64-debug prefab-linux-arm64-debug \
- prefab-linux-x86-64-debug-build prefab-linux-arm64-debug-build \
- prefab-linux-x86-64-release prefab-linux-arm64-release \
- prefab-linux-x86-64-release-build prefab-linux-arm64-release-build \
+ prefab-linux-x86-64-gui-debug prefab-linux-arm64-gui-debug \
+ prefab-linux-x86-64-gui-debug-build prefab-linux-arm64-gui-debug-build \
+ prefab-linux-x86-64-gui-release prefab-linux-arm64-gui-release \
+ prefab-linux-x86-64-gui-release-build prefab-linux-arm64-gui-release-build \
  prefab-linux-x86-64-server-debug prefab-linux-arm64-server-debug \
  prefab-linux-x86-64-server-debug-build prefab-linux-arm64-server-debug-build \
  prefab-linux-x86-64-server-release prefab-linux-arm64-server-release \
  prefab-linux-x86-64-server-release-build \
  prefab-linux-arm64-server-release-build \
- prefab-windows-x86-debug prefab-windows-x86-debug-build \
- prefab-windows-x86-release prefab-windows-x86-release-build \
+ prefab-windows-x86-gui-debug prefab-windows-x86-gui-debug-build \
+ prefab-windows-x86-gui-release prefab-windows-x86-gui-release-build \
  prefab-windows-x86-server-debug prefab-windows-x86-server-debug-build \
  prefab-windows-x86-server-release prefab-windows-x86-server-release-build
 
@@ -767,13 +740,35 @@ WINDOWS_CONFIGURATION ?= Debug
 # Note: this value only applies to MSBuild compiles when launched through
 # this Makefile. If you build/debug directly from within Visual Studio,
 # its own project paths will be used instead. Those are set to line up
-# with the defaults here, but if you change one then you may need to
-# change the other. (or just always build via Makefile and things will
+# with the default here, but if you change one then you may need to
+# change the other. (or just always build via Makefile and things should
 # always line up).
-WINDOWS_BUILD_DIR ?= build/windows
+WINDOWS_BUILD_DIR ?= /mnt/c/ballisticacore_builds
 
 foof:
 	echo ${WINTDIR}
+
+# Stage assets and other files so a built binary will run.
+windows-staging: assets-windows resources code
+	${STAGE_ASSETS} -win-${WINPLT}-${WINCFG} \
+   ${WINDOWS_BUILD_DIR}/$(WINCFG)_$(WINPLT)
+
+windows-wsl-debug-build: windows-staging \
+   build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.lib \
+   build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.pdb \
+   ballisticacore-windows/Generic/BallisticaCore.ico
+	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 \
+  ${MAKE} _windows-wsl-build
+
+windows-wsl-debug-rebuild: windows-staging \
+   build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.lib \
+   build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.pdb \
+   ballisticacore-windows/Generic/BallisticaCore.ico
+	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 \
+  ${MAKE} _windows-wsl-rebuild
+
+ballisticacore-windows/Generic/BallisticaCore.ico: .efrocachemap
+	@tools/pcommand efrocache_get $@
 
 # Remove all non-git-managed files in windows subdir.
 windows-clean:
@@ -911,23 +906,17 @@ _WMSBE_2 = \\Community\\MSBuild\\Current\\Bin\\MSBuild.exe\"
 _WMSBE_1B = /mnt/c/Program Files (x86)/Microsoft Visual Studio/2019
 _WMSBE_2B = /Community/MSBuild/Current/Bin/MSBuild.exe
 
+VISUAL_STUDIO_VERSION = -property:VisualStudioVersion=16
 WIN_MSBUILD_EXE = ${_WMSBE_1}${_WMSBE_2}
 WIN_MSBUILD_EXE_B = "${_WMSBE_1B}${_WMSBE_2B}"
 WINPRJ = $(WINDOWS_PROJECT)
 WINPLT = $(WINDOWS_PLATFORM)
 WINCFG = $(WINDOWS_CONFIGURATION)
 
-_WOUT1 = $(shell tools/pcommand wsl_path_to_win \
-  --escape --create $(WINDOWS_BUILD_DIR))
-_WOUT2 = \\\$$\(Configuration\)_\$$\(Platform\)\\
-WOUTDIR = $(_WOUT1)$(_WOUT2)
-_WINT1 = $(shell tools/pcommand wsl_path_to_win \
-  --escape --create $(WINDOWS_BUILD_DIR))
-_WINT2 = \\obj\\\$$\(MSBuildProjectName\)
-_WINT3 = \\\$$\(Configuration\)_\$$\(Platform\)\\
-WINTDIR = $(_WINT1)$(_WINT2)$(_WINT3)
-
-# WINTDIR = $(WINDOWS_BUILD_DIR)/obj/BallisticaCore$(WINPRJ)/$(WINCFG)_$(WINPLT)/
+_WINT1 = $(WINDOWS_BUILD_DIR)/obj/BallisticaCore$(WINPRJ)/$(WINCFG)_$(WINPLT)/
+WINTDIR = $(shell tools/pcommand wsl_path_to_win --escape --create $(_WINT1))
+_WOUT1 = $(WINDOWS_BUILD_DIR)/$(WINCFG)_$(WINPLT)/
+WOUTDIR = $(shell tools/pcommand wsl_path_to_win --escape --create $(_WOUT1))
 
 # When using CLion, our cmake dir is root. Expose .clang-format there too.
 ballisticacore-cmake/.clang-format: .clang-format
@@ -960,29 +949,30 @@ _cmake-simple-ci-server-build:
       && mv compile_commands.json .cache/irony
 	@tools/pcommand echo BLU Created Irony build db at $@
 
+_WINDOWS_WSL_PROP_INJECT = -property:IntDir=$(WINTDIR) \
+ -property:OutDir=$(WOUTDIR)
+
 _windows-wsl-build:
 	${WIN_MSBUILD_EXE_B} \
-  ${shell tools/pcommand wsl_path_to_win --escape \
+   ${shell tools/pcommand wsl_path_to_win --escape \
    ballisticacore-windows/${WINPRJ}/BallisticaCore${WINPRJ}.vcxproj} \
-  -target:Build \
-  -property:Configuration=${WINCFG} \
-  -property:Platform=${WINPLT} \
-  ${VISUAL_STUDIO_VERSION}
-
-  # -property:IntDir=$(WINTDIR) \
-  # -property:OutDir=$(WOUTDIR) \
+   -target:Build \
+   -property:Configuration=${WINCFG} \
+   -property:Platform=${WINPLT} \
+   ${_WINDOWS_WSL_PROP_INJECT} \
+   ${VISUAL_STUDIO_VERSION}
+	@tools/pcommand echo BLU BLD Built ${WOUTDIR}BallisticaCore${WINPRJ}.exe.
 
 _windows-wsl-rebuild:
 	${WIN_MSBUILD_EXE_B} \
-  ${shell tools/pcommand wsl_path_to_win --escape \
-   ballisticacore-windows/${WINPRJ}/BallisticaCore${WINPRJ}.vcxproj} \
-  -target:Rebuild \
-  -property:Configuration=${WINCFG} \
-  -property:Platform=${WINPLT} \
-  ${VISUAL_STUDIO_VERSION}
-
-  # -property:IntDir=$(WINTDIR) \
-  # -property:OutDir=$(WOUTDIR) \
+   ${shell tools/pcommand wsl_path_to_win --escape \
+    ballisticacore-windows/${WINPRJ}/BallisticaCore${WINPRJ}.vcxproj} \
+   -target:Rebuild \
+   -property:Configuration=${WINCFG} \
+   -property:Platform=${WINPLT} \
+   ${_WINDOWS_WSL_PROP_INJECT} \
+   ${VISUAL_STUDIO_VERSION}
+	@tools/pcommand echo BLU BLD Built ${WOUTDIR}BallisticaCore${WINPRJ}.exe.
 
 # Tell make which of these targets don't represent files.
 .PHONY: _cmake-simple-ci-server-build _windows-wsl-build _windows-wsl-rebuild
