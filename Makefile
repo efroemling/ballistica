@@ -773,7 +773,7 @@ WINDOWS_CONFIGURATION ?= Debug
 WINDOWS_BUILD_DIR ?= build/windows
 
 foof:
-	echo PTH $(shell tools/pcommand wsl_path_to_win --escape --create $(WOUTDIR))
+	echo ${WINTDIR}
 
 # Remove all non-git-managed files in windows subdir.
 windows-clean:
@@ -916,8 +916,18 @@ WIN_MSBUILD_EXE_B = "${_WMSBE_1B}${_WMSBE_2B}"
 WINPRJ = $(WINDOWS_PROJECT)
 WINPLT = $(WINDOWS_PLATFORM)
 WINCFG = $(WINDOWS_CONFIGURATION)
-WOUTDIR = $(WINDOWS_BUILD_DIR)/$(WINCFG)_$(WINPLT)/
-WINTDIR = $(WINDOWS_BUILD_DIR)/obj/BallisticaCore$(WINPRJ)/$(WINCFG)_$(WINPLT)/
+
+_WOUT1 = $(shell tools/pcommand wsl_path_to_win \
+  --escape --create $(WINDOWS_BUILD_DIR))
+_WOUT2 = \\\$$\(Configuration\)_\$$\(Platform\)\\
+WOUTDIR = $(_WOUT1)$(_WOUT2)
+_WINT1 = $(shell tools/pcommand wsl_path_to_win \
+  --escape --create $(WINDOWS_BUILD_DIR))
+_WINT2 = \\obj\\\$$\(MSBuildProjectName\)
+_WINT3 = \\\$$\(Configuration\)_\$$\(Platform\)\\
+WINTDIR = $(_WINT1)$(_WINT2)$(_WINT3)
+
+# WINTDIR = $(WINDOWS_BUILD_DIR)/obj/BallisticaCore$(WINPRJ)/$(WINCFG)_$(WINPLT)/
 
 # When using CLion, our cmake dir is root. Expose .clang-format there too.
 ballisticacore-cmake/.clang-format: .clang-format
@@ -957,11 +967,10 @@ _windows-wsl-build:
   -target:Build \
   -property:Configuration=${WINCFG} \
   -property:Platform=${WINPLT} \
-  -property:IntDir=$(shell tools/pcommand wsl_path_to_win \
-   --escape --create $(WINTDIR)) \
-  -property:OutDir=$(shell tools/pcommand wsl_path_to_win \
-   --escape --create $(WOUTDIR)) \
   ${VISUAL_STUDIO_VERSION}
+
+  # -property:IntDir=$(WINTDIR) \
+  # -property:OutDir=$(WOUTDIR) \
 
 _windows-wsl-rebuild:
 	${WIN_MSBUILD_EXE_B} \
@@ -970,11 +979,10 @@ _windows-wsl-rebuild:
   -target:Rebuild \
   -property:Configuration=${WINCFG} \
   -property:Platform=${WINPLT} \
-  -property:IntDir=$(shell tools/pcommand wsl_path_to_win \
-   --escape --create $(WINTDIR)) \
-  -property:OutDir=$(shell tools/pcommand wsl_path_to_win \
-   --escape --create $(WOUTDIR)) \
   ${VISUAL_STUDIO_VERSION}
+
+  # -property:IntDir=$(WINTDIR) \
+  # -property:OutDir=$(WOUTDIR) \
 
 # Tell make which of these targets don't represent files.
 .PHONY: _cmake-simple-ci-server-build _windows-wsl-build _windows-wsl-rebuild
