@@ -481,7 +481,6 @@ def wsl_path_to_win() -> None:
     import os
     from efro.error import CleanError
     try:
-        print('HELLO FROM WSL_PATH_TO_WIN', file=sys.stderr)
         create = False
         escape = False
         if len(sys.argv) < 3:

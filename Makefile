@@ -500,8 +500,16 @@ windows-wsl-debug-build: \
    build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.lib \
    build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.pdb \
    ballisticacore-windows/Generic/BallisticaCore.ico
-	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=$* \
+	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 \
   ${MAKE} _windows-wsl-build
+
+windows-wsl-debug-rebuild: \
+   prereqs code resources \
+   build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.lib \
+   build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.pdb \
+   ballisticacore-windows/Generic/BallisticaCore.ico
+	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 \
+  ${MAKE} _windows-wsl-rebuild
 
 # These are 'intermediate' files and will get deleted implicitly by make
 # if we don't do this.
