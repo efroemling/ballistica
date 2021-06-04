@@ -38,7 +38,7 @@ from batools.pcommand import (
     make_prefab, update_makebob, lazybuild, android_archive_unstripped_libs,
     efro_gradle, stage_assets, update_assets_makefile, update_project,
     update_cmake_prefab_lib, cmake_prep_dir, gen_binding_code,
-    gen_flat_data_code, wsl_to_escaped_win_path)
+    gen_flat_data_code, wsl_path_to_win)
 # pylint: enable=unused-import
 
 if TYPE_CHECKING:

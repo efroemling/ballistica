@@ -486,29 +486,29 @@ build/prefab/full/windows_x86_server/release/dist/BallisticaCoreHeadless.exe: .e
 
 # Windows visual-studio-compiled debug
 
-ballisticacore-windows/build/Debug_%/BallisticaCoreGenericInternal.lib: .efrocachemap
+build/prefab/lib/windows/Debug_%/BallisticaCoreGenericInternal.lib: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-ballisticacore-windows/build/Debug_%/BallisticaCoreGenericInternal.pdb: .efrocachemap
+build/prefab/lib/windows/Debug_%/BallisticaCoreGenericInternal.pdb: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
 ballisticacore-windows/Generic/BallisticaCore.ico: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-ballisticacore-windows/build/Debug_%/BallisticaCoreGenericInternal.exe: \
-   ballisticacore-windows/build/Debug_%/BallisticaCoreGenericInternal.lib \
-   ballisticacore-windows/build/Debug_%/BallisticaCoreGenericInternal.pdb \
-   ballisticacore-windows/Generic/BallisticaCore.ico \
-   prereqs code resources
+windows-wsl-debug-build: \
+   prereqs code resources \
+   build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.lib \
+   build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.pdb \
+   ballisticacore-windows/Generic/BallisticaCore.ico
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=$* \
-      ${MAKE} _windows-wsl-build
+  ${MAKE} _windows-wsl-build
 
 # These are 'intermediate' files and will get deleted implicitly by make
 # if we don't do this.
 # See: https://www.gnu.org/software/make/manual/make.html#Special-Targets
-.PRECIOUS: \
-   ballisticacore-windows/build/Debug_%/BallisticaCoreGenericInternal.lib \
-   ballisticacore-windows/build/Debug_%/BallisticaCoreGenericInternal.pdb
+# .PRECIOUS: \
+#    ballisticacore-windows/build/Debug_%/BallisticaCoreGenericInternal.lib \
+#    ballisticacore-windows/build/Debug_%/BallisticaCoreGenericInternal.pdb
 
 # Tell make which of these targets don't represent files.
 .PHONY: prefab-debug prefab-release prefab-debug-build prefab-release-build \
@@ -755,6 +755,30 @@ WINDOWS_PLATFORM ?= Win32
 # Can be Debug or Release
 WINDOWS_CONFIGURATION ?= Debug
 
+# Base dir for all windows asset staging, intermediate files, and builds.
+# Note: this value only applies to MSBuild compiles when launched through
+# this Makefile. If you build/debug directly from within Visual Studio,
+# its own project paths will be used instead. Those are set to line up
+# with the defaults here, but if you change one then you may need to
+# change the other. (or just always build via Makefile and things will
+# always line up).
+WINDOWS_BUILD_DIR ?= build/windows
+
+foof:
+	echo PTH $(shell tools/pcommand wsl_path_to_win --escape --create $(WOUTDIR))
+
+# Remove all non-git-managed files in windows subdir.
+windows-clean:
+	@${CHECK_CLEAN_SAFETY}
+	git clean -dfx ballisticacore-windows
+	rm -rf ${WINDOWS_BUILD_DIR} ${LAZYBUILDDIR}
+
+# Show what would be cleaned.
+windows-clean-list:
+	@${CHECK_CLEAN_SAFETY}
+	git clean -dnx ballisticacore-windows
+	echo would also remove ${WINDOWS_BUILD_DIR} ${LAZYBUILDDIR}
+
 
 ################################################################################
 #                                                                              #
@@ -884,6 +908,8 @@ WIN_MSBUILD_EXE_B = "${_WMSBE_1B}${_WMSBE_2B}"
 WINPRJ = $(WINDOWS_PROJECT)
 WINPLT = $(WINDOWS_PLATFORM)
 WINCFG = $(WINDOWS_CONFIGURATION)
+WOUTDIR = $(WINDOWS_BUILD_DIR)/$(WINCFG)_$(WINPLT)/
+WINTDIR = $(WINDOWS_BUILD_DIR)/obj/BallisticaCore$(WINPRJ)/$(WINCFG)_$(WINPLT)/
 
 # When using CLion, our cmake dir is root. Expose .clang-format there too.
 ballisticacore-cmake/.clang-format: .clang-format
@@ -918,17 +944,29 @@ _cmake-simple-ci-server-build:
 
 _windows-wsl-build:
 	${WIN_MSBUILD_EXE_B} \
-  ${shell tools/pcommand wsl_to_escaped_win_path \
-  ballisticacore-windows/${WINPRJ}/BallisticaCore${WINPRJ}.vcxproj} \
-  -target:Build -property:Configuration=${WINCFG} \
-  -property:Platform=${WINPLT} ${VISUAL_STUDIO_VERSION}
+  ${shell tools/pcommand wsl_path_to_win --escape \
+   ballisticacore-windows/${WINPRJ}/BallisticaCore${WINPRJ}.vcxproj} \
+  -target:Build \
+  -property:Configuration=${WINCFG} \
+  -property:Platform=${WINPLT} \
+  -property:IntDir=$(shell tools/pcommand wsl_path_to_win \
+   --escape --create $(WINTDIR)) \
+  -property:OutDir=$(shell tools/pcommand wsl_path_to_win \
+   --escape --create $(WOUTDIR)) \
+  ${VISUAL_STUDIO_VERSION}
 
 _windows-wsl-rebuild:
 	${WIN_MSBUILD_EXE_B} \
-  ${shell tools/pcommand wsl_to_escaped_win_path \
-  ballisticacore-windows/${WINPRJ}/BallisticaCore${WINPRJ}.vcxproj} \
-  -target:Rebuild -property:Configuration=${WINCFG} \
-  -property:Platform=${WINPLT} ${VISUAL_STUDIO_VERSION}
+  ${shell tools/pcommand wsl_path_to_win --escape \
+   ballisticacore-windows/${WINPRJ}/BallisticaCore${WINPRJ}.vcxproj} \
+  -target:Rebuild \
+  -property:Configuration=${WINCFG} \
+  -property:Platform=${WINPLT} \
+  -property:IntDir=$(shell tools/pcommand wsl_path_to_win \
+   --escape --create $(WINTDIR)) \
+  -property:OutDir=$(shell tools/pcommand wsl_path_to_win \
+   --escape --create $(WOUTDIR)) \
+  ${VISUAL_STUDIO_VERSION}
 
 # Tell make which of these targets don't represent files.
 .PHONY: _cmake-simple-ci-server-build _windows-wsl-build _windows-wsl-rebuild

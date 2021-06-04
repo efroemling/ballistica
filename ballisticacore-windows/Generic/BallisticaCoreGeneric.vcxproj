@@ -727,7 +727,7 @@
     <ResourceCompile Include="BallisticaCore.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Library Include="..\build\$(Configuration)_$(Platform)\$(MSBuildProjectName)Internal.lib" />
+    <Library Include="..\..\build\prefab\lib\windows\$(Configuration)_$(Platform)\$(MSBuildProjectName)Internal.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

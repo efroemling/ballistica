@@ -72,22 +72,22 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(ProjectDir)..\build\$(Configuration)_$(Platform)\</OutDir>
-    <IntDir>$(ProjectDir)..\build\obj\$(MSBuildProjectName)\$(Platform)_$(Configuration)\</IntDir>
+    <IntDir>$(ProjectDir)..\build\obj\$(MSBuildProjectName)\$(Configuration)_$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(ProjectDir)..\build\$(Configuration)_$(Platform)\</OutDir>
-    <IntDir>$(ProjectDir)..\build\obj\$(MSBuildProjectName)\$(Platform)_$(Configuration)\</IntDir>
+    <IntDir>$(ProjectDir)..\build\obj\$(MSBuildProjectName)\$(Configuration)_$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(ProjectDir)..\build\$(Configuration)_$(Platform)\</OutDir>
-    <IntDir>$(ProjectDir)..\build\obj\$(MSBuildProjectName)\$(Platform)_$(Configuration)\</IntDir>
+    <IntDir>$(ProjectDir)..\build\obj\$(MSBuildProjectName)\$(Configuration)_$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(ProjectDir)..\build\$(Configuration)_$(Platform)\</OutDir>
-    <IntDir>$(ProjectDir)..\build\obj\$(MSBuildProjectName)\$(Platform)_$(Configuration)\</IntDir>
+    <IntDir>$(ProjectDir)..\build\obj\$(MSBuildProjectName)\$(Configuration)_$(Platform)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -181,7 +181,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Library Include="..\build\$(Configuration)_$(Platform)\$(MSBuildProjectName)Internal.lib" />
+    <Library Include="..\..\build\prefab\lib\windows\$(Configuration)_$(Platform)\$(MSBuildProjectName)Internal.lib" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\ballistica\app\app.cc" />

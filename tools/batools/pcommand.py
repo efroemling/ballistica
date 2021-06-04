@@ -474,23 +474,56 @@ def checkenv() -> None:
     batools.build.checkenv()
 
 
-def wsl_to_escaped_win_path() -> None:
+def wsl_path_to_win() -> None:
     """Forward escape slashes in a provided win path arg."""
     import subprocess
+    import logging
+    import os
     from efro.error import CleanError
-    if len(sys.argv) != 3:
-        raise CleanError('Expected 1 path arg.')
     try:
-        out = subprocess.run(['wslpath', '-w', '-a', sys.argv[2]],
-                             capture_output=True,
-                             check=True)
+        print('HELLO FROM WSL_PATH_TO_WIN', file=sys.stderr)
+        create = False
+        escape = False
+        if len(sys.argv) < 3:
+            raise CleanError('Expected at least 1 path arg.')
+        wsl_path: Optional[str] = None
+        for arg in sys.argv[2:]:
+            if arg == '--create':
+                create = True
+            elif arg == '--escape':
+                escape = True
+            else:
+                if wsl_path is not None:
+                    raise CleanError('More than one path provided.')
+                wsl_path = arg
+        if wsl_path is None:
+            raise CleanError('No path provided.')
+
+        # wslpath fails on nonexistent paths; make it clear when that happens.
+        if create:
+            os.makedirs(wsl_path, exist_ok=True)
+        if not os.path.exists(wsl_path):
+            raise CleanError(f'Path \'{wsl_path}\' does not exist.')
+
+        results = subprocess.run(['wslpath', '-w', '-a', wsl_path],
+                                 capture_output=True,
+                                 check=True)
     except Exception:
         # This gets used in a makefile so our returncode is ignored;
-        # try to convey failure in other ways.
+        # let's try to make our failure known in other ways.
+        logging.exception('wsl_to_escaped_win_path failed.')
         print('wsl_to_escaped_win_path_error_occurred', end='')
         return
 
-    print(out.stdout.decode().strip().replace('\\', '\\\\'), end='')
+    out = results.stdout.decode().strip()
+
+    # If our input ended with a slash, match in the output.
+    if wsl_path.endswith('/') and not out.endswith('\\'):
+        out += '\\'
+
+    if escape:
+        out = out.replace('\\', '\\\\')
+    print(out, end='')
 
 
 def ensure_build_platform() -> None:
