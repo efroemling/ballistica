@@ -504,7 +504,7 @@ def wsl_build_check_win_drive() -> None:
 
     raise CleanError('\n\n'.join([
         _wrap('ERROR: This project appears to live on the Linux filesystem.'),
-        _wrap('Visual Studio builds will error here for reasons related'
+        _wrap('Visual Studio compiles will error here for reasons related'
               ' to Linux filesystem case-sensitivity, and thus are'
               ' disallowed.'
               ' Clone the repo to a location that maps to a native'

@@ -746,6 +746,7 @@ windows-debug-build: windows-staging \
    build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.pdb \
    ballisticacore-windows/Generic/BallisticaCore.ico
 	@tools/pcommand ensure_prefab_platform windows_x86
+	@tools/pcommand wsl_build_check_win_drive
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 \
   ${MAKE} _windows-wsl-build
 
@@ -754,6 +755,7 @@ windows-debug-rebuild: windows-staging \
    build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.pdb \
    ballisticacore-windows/Generic/BallisticaCore.ico
 	@tools/pcommand ensure_prefab_platform windows_x86
+	@tools/pcommand wsl_build_check_win_drive
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 \
   ${MAKE} _windows-wsl-rebuild
 
