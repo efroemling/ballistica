@@ -460,7 +460,7 @@ def gen_fulltest_buildfile_linux() -> None:
         outfile.write('\n'.join(lines))
 
 
-def get_current_build_platform(wsl_gives_windows: bool = True) -> str:
+def get_current_prefab_platform(wsl_gives_windows: bool = True) -> str:
     """Get an identifier for the platform running this build.
 
     Throws a RuntimeError on unsupported platforms.
@@ -482,9 +482,10 @@ def get_current_build_platform(wsl_gives_windows: bool = True) -> str:
         # we may want to operate on Windows versions.
         if wsl_gives_windows:
             if 'microsoft' in platform.uname().release.lower():
-                # TODO: add support for arm windows
                 if machine == 'x86_64':
+                    # Currently always targeting 32 bit for prefab stuff.
                     return 'windows_x86'
+                # TODO: add support for arm windows
                 raise RuntimeError(
                     f'make_prefab: unsupported win machine type:'
                     f' {machine}.')

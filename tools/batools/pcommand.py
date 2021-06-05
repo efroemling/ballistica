@@ -474,6 +474,50 @@ def checkenv() -> None:
     batools.build.checkenv()
 
 
+def wsl_build_check_win_drive() -> None:
+    """Make sure we're building on a windows drive."""
+    import os
+    import subprocess
+    import textwrap
+    from efro.error import CleanError
+
+    if subprocess.run(['which', 'wslpath'], check=False,
+                      capture_output=True).returncode != 0:
+        raise CleanError('wslpath not found; you must run'
+                         ' this from a WSL environment')
+
+    if os.environ.get('WSL_BUILD_CHECK_WIN_DRIVE_IGNORE') == '1':
+        return
+
+    # Get a windows path to the current dir.
+    path = subprocess.run(
+        ['wslpath', '-w', '-a', os.getcwd()], capture_output=True,
+        check=True).stdout.decode().strip()
+
+    # If we're sitting under the linux filesystem, our path
+    # will start with \\wsl$; fail in that case and explain why.
+    if not path.startswith('\\\\wsl$'):
+        return
+
+    def _wrap(txt: str) -> str:
+        return textwrap.fill(txt, 76)
+
+    raise CleanError('\n\n'.join([
+        _wrap('ERROR: This project appears to live on the Linux filesystem.'),
+        _wrap('Visual Studio builds will error here for reasons related'
+              ' to Linux filesystem case-sensitivity, and thus are'
+              ' disallowed.'
+              ' Clone the repo to a location that maps to a native'
+              ' Windows drive such as \'/mnt/c/ballistica\' and try again.'),
+        _wrap('Note that WSL2 filesystem performance is poor when accessing'
+              ' native Windows drives, so if Visual Studio builds are not'
+              ' needed it may be best to keep things on the Linux filesystem.'
+              ' This behavior may differ under WSL1 (untested).'),
+        _wrap('Set env-var WSL_BUILD_CHECK_WIN_DRIVE_IGNORE=1 to skip'
+              ' this check.')
+    ]))
+
+
 def wsl_path_to_win() -> None:
     """Forward escape slashes in a provided win path arg."""
     import subprocess
@@ -525,14 +569,15 @@ def wsl_path_to_win() -> None:
     print(out, end='')
 
 
-def ensure_build_platform() -> None:
+def ensure_prefab_platform() -> None:
     """Ensure we are building on a particular platform."""
     import batools.build
     from efro.error import CleanError
+
     if len(sys.argv) != 3:
         raise CleanError('Expected 1 platform name arg.')
     needed = sys.argv[2]
-    current = batools.build.get_current_build_platform()
+    current = batools.build.get_current_prefab_platform()
     if current != needed:
         raise CleanError(
             f'Incorrect platform: we are {current}, this requires {needed}.')
@@ -544,7 +589,7 @@ def prefab_run_var() -> None:
     if len(sys.argv) != 3:
         raise RuntimeError('Expected 1 arg.')
     base = sys.argv[2].replace('-', '_').upper()
-    platform = batools.build.get_current_build_platform().upper()
+    platform = batools.build.get_current_prefab_platform().upper()
     print(f'RUN_PREFAB_{platform}_{base}', end='')
 
 
@@ -555,7 +600,7 @@ def make_prefab() -> None:
     if len(sys.argv) != 3:
         raise RuntimeError('Expected one argument')
     target = batools.build.PrefabTarget(sys.argv[2])
-    platform = batools.build.get_current_build_platform()
+    platform = batools.build.get_current_prefab_platform()
 
     # We use dashes instead of underscores in target names.
     platform = platform.replace('_', '-')
@@ -714,7 +759,7 @@ def update_cmake_prefab_lib() -> None:
         raise CleanError(f'Invalid buildtype: {buildtype}')
     if mode not in {'debug', 'release'}:
         raise CleanError(f'Invalid mode: {mode}')
-    platform = batools.build.get_current_build_platform(
+    platform = batools.build.get_current_prefab_platform(
         wsl_gives_windows=False)
     suffix = '_server' if buildtype == 'server' else '_gui'
     target = (f'build/prefab/lib/{platform}{suffix}/{mode}/'

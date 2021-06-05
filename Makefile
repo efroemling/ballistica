@@ -182,11 +182,11 @@ prefab-mac-arm64-gui-debug: prefab-mac-arm64-gui-debug-build
 	@${RUN_PREFAB_MAC_ARM64_GUI_DEBUG}
 
 prefab-mac-x86-64-gui-debug-build: prereqs assets-cmake \
- build/prefab/full/mac_x86_64_gui/debug/ballisticacore
+   build/prefab/full/mac_x86_64_gui/debug/ballisticacore
 	@${STAGE_ASSETS} -cmake build/prefab/full/mac_x86_64_gui/debug
 
 prefab-mac-arm64-gui-debug-build: prereqs assets-cmake \
- build/prefab/full/mac_arm64_gui/debug/ballisticacore
+   build/prefab/full/mac_arm64_gui/debug/ballisticacore
 	@${STAGE_ASSETS} -cmake build/prefab/full/mac_arm64_gui/debug
 
 build/prefab/full/mac_%_gui/debug/ballisticacore: .efrocachemap
@@ -204,19 +204,19 @@ RUN_PREFAB_MAC_ARM64_GUI_RELEASE = cd build/prefab/full/mac_arm64_gui/release \
   && ./ballisticacore
 
 prefab-mac-x86-64-gui-release: prefab-mac-x86-64-gui-release-build
-	@tools/pcommand ensure_build_platform mac_x86_64
+	@tools/pcommand ensure_prefab_platform mac_x86_64
 	@${RUN_PREFAB_MAC_X86_64_GUI_RELEASE}
 
 prefab-mac-arm64-gui-release: prefab-mac-arm64-gui_release-build
-	@tools/pcommand ensure_build_platform mac_arm64
+	@tools/pcommand ensure_prefab_platform mac_arm64
 	@${RUN_PREFAB_MAC_ARM64_GUI_RELEASE}
 
 prefab-mac-x86-64-gui-release-build: prereqs assets-cmake \
- build/prefab/full/mac_x86_64_gui/release/ballisticacore
+   build/prefab/full/mac_x86_64_gui/release/ballisticacore
 	@${STAGE_ASSETS} -cmake build/prefab/full/mac_x86_64_gui/release
 
 prefab-mac-arm64-gui-release-build: prereqs assets-cmake \
- build/prefab/full/mac_arm64_gui/release/ballisticacore
+   build/prefab/full/mac_arm64_gui/release/ballisticacore
 	@${STAGE_ASSETS} -cmake build/prefab/full/mac_arm64_gui/release
 
 build/prefab/full/mac_%_gui/release/ballisticacore: .efrocachemap
@@ -234,11 +234,11 @@ RUN_PREFAB_MAC_ARM64_SERVER_DEBUG = cd \
  build/prefab/full/mac_arm64_server/debug && ./ballisticacore_server
 
 prefab-mac-x86-64-server-debug: prefab-mac-x86-64-server-debug-build
-	@tools/pcommand ensure_build_platform mac_x86_64
+	@tools/pcommand ensure_prefab_platform mac_x86_64
 	@${RUN_PREFAB_MAC_X86_64_SERVER_DEBUG}
 
 prefab-mac-arm64-server-debug: prefab-mac-arm64-server-debug-build
-	@tools/pcommand ensure_build_platform mac_arm64
+	@tools/pcommand ensure_prefab_platform mac_arm64
 	@${RUN_PREFAB_MAC_ARM64_SERVER_DEBUG}
 
 prefab-mac-x86-64-server-debug-build: prereqs assets-cmake \
@@ -261,14 +261,14 @@ RUN_PREFAB_MAC_X86_64_SERVER_RELEASE = cd \
  build/prefab/full/mac_x86_64_server/release && ./ballisticacore_server
 
 RUN_PREFAB_MAC_ARM64_SERVER_RELEASE = cd \
- build/prefab/full/mac_arm64_server/release && ./ballisticacore_server
+   build/prefab/full/mac_arm64_server/release && ./ballisticacore_server
 
 prefab-mac-x86-64-server-release: prefab-mac-x86-64-server-release-build
-	@tools/pcommand ensure_build_platform mac_x86_64
+	@tools/pcommand ensure_prefab_platform mac_x86_64
 	@${RUN_PREFAB_MAC_X86_64_SERVER_RELEASE}
 
 prefab-mac-arm64-server-release: prefab-mac-arm64-server-release-build
-	@tools/pcommand ensure_build_platform mac_arm64
+	@tools/pcommand ensure_prefab_platform mac_arm64
 	@${RUN_PREFAB_MAC_ARM64_SERVER_RELEASE}
 
 prefab-mac-x86-64-server-release-build: prereqs assets-cmake \
@@ -296,19 +296,19 @@ RUN_PREFAB_LINUX_ARM64_GUI_DEBUG = cd \
   build/prefab/full/linux_arm64_gui/debug && ./ballisticacore
 
 prefab-linux-x86-64-gui-debug: prefab-linux-x86-64-gui-debug-build
-	@tools/pcommand ensure_build_platform linux_x86_64
+	@tools/pcommand ensure_prefab_platform linux_x86_64
 	@${RUN_PREFAB_LINUX_X86_64_GUI_DEBUG}
 
 prefab-linux-arm64-gui-debug: prefab-linux-arm64-gui-debug-build
-	@tools/pcommand ensure_build_platform linux_arm64
+	@tools/pcommand ensure_prefab_platform linux_arm64
 	@${RUN_PREFAB_LINUX_ARM64_GUI_DEBUG}
 
 prefab-linux-x86-64-gui-debug-build: prereqs assets-cmake \
- build/prefab/full/linux_x86_64_gui/debug/ballisticacore
+   build/prefab/full/linux_x86_64_gui/debug/ballisticacore
 	@${STAGE_ASSETS} -cmake build/prefab/full/linux_x86_64_gui/debug
 
 prefab-linux-arm64-gui-debug-build: prereqs assets-cmake \
- build/prefab/full/linux_arm64_gui/debug/ballisticacore
+   build/prefab/full/linux_arm64_gui/debug/ballisticacore
 	@${STAGE_ASSETS} -cmake build/prefab/full/linux_arm64_gui/debug
 
 build/prefab/full/linux_%_gui/debug/ballisticacore: .efrocachemap
@@ -326,19 +326,19 @@ RUN_PREFAB_LINUX_ARM64_GUI_RELEASE = cd \
   build/prefab/full/linux_arm64_gui/release && ./ballisticacore
 
 prefab-linux-x86-64-gui-release: prefab-linux-x86-64-gui-release-build
-	@tools/pcommand ensure_build_platform linux_x86_64
+	@tools/pcommand ensure_prefab_platform linux_x86_64
 	@${RUN_PREFAB_LINUX_X86_64_GUI_RELEASE}
 
 prefab-linux-arm64-gui-release: prefab-linux-arm64-gui-release-build
-	@tools/pcommand ensure_build_platform linux_arm64
+	@tools/pcommand ensure_prefab_platform linux_arm64
 	@${RUN_PREFAB_LINUX_ARM64_GUI_RELEASE}
 
 prefab-linux-x86-64-gui-release-build: prereqs assets-cmake \
- build/prefab/full/linux_x86_64_gui/release/ballisticacore
+   build/prefab/full/linux_x86_64_gui/release/ballisticacore
 	@${STAGE_ASSETS} -cmake build/prefab/full/linux_x86_64_gui/release
 
 prefab-linux-arm64-gui-release-build: prereqs assets-cmake \
- build/prefab/full/linux_arm64_gui/release/ballisticacore
+   build/prefab/full/linux_arm64_gui/release/ballisticacore
 	@${STAGE_ASSETS} -cmake build/prefab/full/linux_arm64_gui/release
 
 build/prefab/full/linux_%_gui/release/ballisticacore: .efrocachemap
@@ -350,17 +350,17 @@ build/prefab/lib/linux_%_gui/release/libballisticacore_internal.a: .efrocachemap
 # Linux server debug:
 
 RUN_PREFAB_LINUX_X86_64_SERVER_DEBUG = cd \
-  build/prefab/full/linux_x86_64_server/debug && ./ballisticacore_server
+   build/prefab/full/linux_x86_64_server/debug && ./ballisticacore_server
 
 RUN_PREFAB_LINUX_ARM64_SERVER_DEBUG = cd \
-  build/prefab/full/linux_arm64_server/debug && ./ballisticacore_server
+   build/prefab/full/linux_arm64_server/debug && ./ballisticacore_server
 
 prefab-linux-x86-64-server-debug: prefab-linux-x86-64-server-debug-build
-	@tools/pcommand ensure_build_platform linux_x86_64
+	@tools/pcommand ensure_prefab_platform linux_x86_64
 	@${RUN_PREFAB_LINUX_X86_64_SERVER_DEBUG}
 
 prefab-linux-arm64-server-debug: prefab-linux-arm64-server-debug-build
-	@tools/pcommand ensure_build_platform linux_arm64
+	@tools/pcommand ensure_prefab_platform linux_arm64
 	@${RUN_PREFAB_LINUX_ARM64_SERVER_DEBUG}
 
 prefab-linux-x86-64-server-debug-build: prereqs assets-cmake \
@@ -382,26 +382,26 @@ build/prefab/lib/linux_%_server/debug/libballisticacore_internal.a: .efrocachema
 # Linux server release:
 
 RUN_PREFAB_LINUX_X86_64_SERVER_RELEASE = cd \
-  build/prefab/full/linux_x86_64_server/release && ./ballisticacore_server
+   build/prefab/full/linux_x86_64_server/release && ./ballisticacore_server
 
 RUN_PREFAB_LINUX_ARM64_SERVER_RELEASE = cd \
-  build/prefab/full/linux_arm64_server/release && ./ballisticacore_server
+   build/prefab/full/linux_arm64_server/release && ./ballisticacore_server
 
 prefab-linux-x86-64-server-release: prefab-linux-x86-64-server-release-build
-	@tools/pcommand ensure_build_platform linux_x86_64
+	@tools/pcommand ensure_prefab_platform linux_x86_64
 	@${RUN_PREFAB_LINUX_X86_64_SERVER_RELEASE}
 
 prefab-linux-arm64-server-release: prefab-linux-arm64-server-release-build
-	@tools/pcommand ensure_build_platform linux_arm64
+	@tools/pcommand ensure_prefab_platform linux_arm64
 	@${RUN_PREFAB_LINUX_ARM64_SERVER_RELEASE}
 
 prefab-linux-x86-64-server-release-build: prereqs assets-cmake \
- build/prefab/full/linux_x86_64_server/release/dist/ballisticacore_headless
+   build/prefab/full/linux_x86_64_server/release/dist/ballisticacore_headless
 	@${STAGE_ASSETS} -cmakeserver -release \
       build/prefab/full/linux_x86_64_server/release
 
 prefab-linux-arm64-server-release-build: prereqs assets-cmake \
- build/prefab/full/linux_arm64_server/release/dist/ballisticacore_headless
+   build/prefab/full/linux_arm64_server/release/dist/ballisticacore_headless
 	@${STAGE_ASSETS} -cmakeserver -release \
       build/prefab/full/linux_arm64_server/release
 
@@ -417,7 +417,7 @@ RUN_PREFAB_WINDOWS_X86_GUI_DEBUG = cd build/prefab/full/windows_x86_gui/debug \
   && ./BallisticaCore.exe
 
 prefab-windows-x86-gui-debug: prefab-windows-x86-gui-debug-build
-	@tools/pcommand ensure_build_platform windows_x86
+	@tools/pcommand ensure_prefab_platform windows_x86
 	@{RUN_PREFAB_WINDOWS_X86_GUI_DEBUG}
 
 prefab-windows-x86-gui-debug-build: prereqs assets-windows-${WINPLAT_X86} \
@@ -440,7 +440,7 @@ RUN_PREFAB_WINDOWS_X86_GUI_RELEASE = cd \
   build/prefab/full/windows_x86_gui/release && ./BallisticaCore.exe
 
 prefab-windows-x86-gui-release: prefab-windows-x86-gui-release-build
-	@tools/pcommand ensure_build_platform windows_x86
+	@tools/pcommand ensure_prefab_platform windows_x86
 	@{RUN_PREFAB_WINDOWS_X86_GUI_RELEASE}
 
 prefab-windows-x86-gui-release-build: prereqs \
@@ -455,18 +455,18 @@ build/prefab/full/windows_x86_gui/release/BallisticaCore.exe: .efrocachemap
 # Windows prefab server debug:
 
 RUN_PREFAB_WINDOWS_X86_SERVER_DEBUG = cd \
- build/prefab/full/windows_x86_server/debug \
- && dist/python_d.exe ballisticacore_server.py
+   build/prefab/full/windows_x86_server/debug \
+   && dist/python_d.exe ballisticacore_server.py
 
 prefab-windows-x86-server-debug: prefab-windows-x86-server-debug-build
-	@tools/pcommand ensure_build_platform windows_x86
+	@tools/pcommand ensure_prefab_platform windows_x86
 	@{RUN_PREFAB_WINDOWS_X86_SERVER_DEBUG}
 
 prefab-windows-x86-server-debug-build: prereqs \
    assets-windows-${WINPLAT_X86} \
    build/prefab/full/windows_x86_server/debug/dist/BallisticaCoreHeadless.exe
 	@${STAGE_ASSETS} -winserver-${WINPLAT_X86}-Debug \
- build/prefab/full/windows_x86_server/debug
+   build/prefab/full/windows_x86_server/debug
 
 build/prefab/full/windows_x86_server/debug/dist/BallisticaCoreHeadless.exe: .efrocachemap
 	@tools/pcommand efrocache_get $@
@@ -474,11 +474,11 @@ build/prefab/full/windows_x86_server/debug/dist/BallisticaCoreHeadless.exe: .efr
 # Windows prefab server release:
 
 RUN_PREFAB_WINDOWS_X86_SERVER_RELEASE = cd \
-  build/prefab/full/windows_x86_server/release \
-  && dist/python.exe -O ballisticacore_server.py
+   build/prefab/full/windows_x86_server/release \
+   && dist/python.exe -O ballisticacore_server.py
 
 prefab-windows-x86-server-release: prefab-windows-x86-server-release-build
-	@tools/pcommand ensure_build_platform windows_x86
+	@tools/pcommand ensure_prefab_platform windows_x86
 	@{RUN_PREFAB_WINDOWS_X86_SERVER_RELEASE}
 
 prefab-windows-x86-server-release-build: prereqs \
@@ -736,34 +736,24 @@ WINDOWS_PLATFORM ?= Win32
 # Can be Debug or Release
 WINDOWS_CONFIGURATION ?= Debug
 
-# Base dir for all windows asset staging, intermediate files, and builds.
-# Note: this value only applies to MSBuild compiles when launched through
-# this Makefile. If you build/debug directly from within Visual Studio,
-# its own project paths will be used instead. Those are set to line up
-# with the default here, but if you change one then you may need to
-# change the other. (or just always build via Makefile and things should
-# always line up).
-WINDOWS_BUILD_DIR ?= /mnt/c/ballisticacore_builds
-
-foof:
-	echo ${WINTDIR}
-
 # Stage assets and other files so a built binary will run.
 windows-staging: assets-windows resources code
 	${STAGE_ASSETS} -win-${WINPLT}-${WINCFG} \
-   ${WINDOWS_BUILD_DIR}/$(WINCFG)_$(WINPLT)
+   build/windows/$(WINCFG)_$(WINPLT)
 
-windows-wsl-debug-build: windows-staging \
+windows-debug-build: windows-staging \
    build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.lib \
    build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.pdb \
    ballisticacore-windows/Generic/BallisticaCore.ico
+	@tools/pcommand ensure_prefab_platform windows_x86
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 \
   ${MAKE} _windows-wsl-build
 
-windows-wsl-debug-rebuild: windows-staging \
+windows-debug-rebuild: windows-staging \
    build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.lib \
    build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.pdb \
    ballisticacore-windows/Generic/BallisticaCore.ico
+	@tools/pcommand ensure_prefab_platform windows_x86
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 \
   ${MAKE} _windows-wsl-rebuild
 
@@ -774,13 +764,13 @@ ballisticacore-windows/Generic/BallisticaCore.ico: .efrocachemap
 windows-clean:
 	@${CHECK_CLEAN_SAFETY}
 	git clean -dfx ballisticacore-windows
-	rm -rf ${WINDOWS_BUILD_DIR} ${LAZYBUILDDIR}
+	rm -rf build/windows ${LAZYBUILDDIR}
 
 # Show what would be cleaned.
 windows-clean-list:
 	@${CHECK_CLEAN_SAFETY}
 	git clean -dnx ballisticacore-windows
-	echo would also remove ${WINDOWS_BUILD_DIR} ${LAZYBUILDDIR}
+	echo would also remove build/windows ${LAZYBUILDDIR}
 
 
 ################################################################################
@@ -913,11 +903,6 @@ WINPRJ = $(WINDOWS_PROJECT)
 WINPLT = $(WINDOWS_PLATFORM)
 WINCFG = $(WINDOWS_CONFIGURATION)
 
-_WINT1 = $(WINDOWS_BUILD_DIR)/obj/BallisticaCore$(WINPRJ)/$(WINCFG)_$(WINPLT)/
-WINTDIR = $(shell tools/pcommand wsl_path_to_win --escape --create $(_WINT1))
-_WOUT1 = $(WINDOWS_BUILD_DIR)/$(WINCFG)_$(WINPLT)/
-WOUTDIR = $(shell tools/pcommand wsl_path_to_win --escape --create $(_WOUT1))
-
 # When using CLion, our cmake dir is root. Expose .clang-format there too.
 ballisticacore-cmake/.clang-format: .clang-format
 	@cd ballisticacore-cmake && ln -sf ../.clang-format .
@@ -949,30 +934,27 @@ _cmake-simple-ci-server-build:
       && mv compile_commands.json .cache/irony
 	@tools/pcommand echo BLU Created Irony build db at $@
 
-_WINDOWS_WSL_PROP_INJECT = -property:IntDir=$(WINTDIR) \
- -property:OutDir=$(WOUTDIR)
-
 _windows-wsl-build:
-	${WIN_MSBUILD_EXE_B} \
-   ${shell tools/pcommand wsl_path_to_win --escape \
-   ballisticacore-windows/${WINPRJ}/BallisticaCore${WINPRJ}.vcxproj} \
+	@tools/pcommand wsl_build_check_win_drive
+	$(WIN_MSBUILD_EXE_B) \
+   $(shell tools/pcommand wsl_path_to_win --escape \
+   ballisticacore-windows/$(WINPRJ)/BallisticaCore${WINPRJ}.vcxproj) \
    -target:Build \
-   -property:Configuration=${WINCFG} \
-   -property:Platform=${WINPLT} \
-   ${_WINDOWS_WSL_PROP_INJECT} \
-   ${VISUAL_STUDIO_VERSION}
-	@tools/pcommand echo BLU BLD Built ${WOUTDIR}BallisticaCore${WINPRJ}.exe.
+   -property:Configuration=$(WINCFG) \
+   -property:Platform=$(WINPLT) \
+   $(VISUAL_STUDIO_VERSION)
+	@tools/pcommand echo BLU BLD Built build/windows/BallisticaCore$(WINPRJ).exe.
 
 _windows-wsl-rebuild:
-	${WIN_MSBUILD_EXE_B} \
-   ${shell tools/pcommand wsl_path_to_win --escape \
-    ballisticacore-windows/${WINPRJ}/BallisticaCore${WINPRJ}.vcxproj} \
+	@tools/pcommand wsl_build_check_win_drive
+	$(WIN_MSBUILD_EXE_B) \
+   $(shell tools/pcommand wsl_path_to_win --escape \
+    ballisticacore-windows/$(WINPRJ)/BallisticaCore${WINPRJ}.vcxproj) \
    -target:Rebuild \
-   -property:Configuration=${WINCFG} \
-   -property:Platform=${WINPLT} \
-   ${_WINDOWS_WSL_PROP_INJECT} \
-   ${VISUAL_STUDIO_VERSION}
-	@tools/pcommand echo BLU BLD Built ${WOUTDIR}BallisticaCore${WINPRJ}.exe.
+   -property:Configuration=$(WINCFG) \
+   -property:Platform=$(WINPLT) \
+   $(VISUAL_STUDIO_VERSION)
+	@tools/pcommand echo BLU BLD Built build/windows/BallisticaCore$(WINPRJ).exe.
 
 # Tell make which of these targets don't represent files.
 .PHONY: _cmake-simple-ci-server-build _windows-wsl-build _windows-wsl-rebuild

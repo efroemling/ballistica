@@ -1,6 +1,7 @@
 ### 1.6.4 (20371)
 - Some cleanups in the Favorites tab of the gather window.
 - Reorganized prefab target names; some targets such as `prefab-debug` are now `prefab-gui-debug` (more consistent with the existing `prefab-server-debug` targets).
+- Windows builds now go to build/windows instead of ballisticacore_windows/build.
 
 ### 1.6.3 (20366)
 - Telnet access works again for gui builds without requiring a password (access must still be granted via the gui).
