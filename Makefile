@@ -758,42 +758,46 @@ windows-release: windows-release-build
 	build/windows/Release_Win32/BallisticaCoreGeneric.exe
 
 # Build a debug windows build (from WSL).
-windows-debug-build: windows-staging \
+windows-debug-build: \
    build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.lib \
    build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.pdb \
    ballisticacore-windows/Generic/BallisticaCore.ico
 	@tools/pcommand ensure_prefab_platform windows_x86
 	@tools/pcommand wsl_build_check_win_drive
+	WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 $(MAKE) windows-staging
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 \
   ${MAKE} _windows-wsl-build
 
 # Rebuild a debug windows build (from WSL).
-windows-debug-rebuild: windows-staging \
+windows-debug-rebuild: \
    build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.lib \
    build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.pdb \
    ballisticacore-windows/Generic/BallisticaCore.ico
 	@tools/pcommand ensure_prefab_platform windows_x86
 	@tools/pcommand wsl_build_check_win_drive
+	WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 $(MAKE) windows-staging
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 \
   ${MAKE} _windows-wsl-rebuild
 
 # Build a release windows build (from WSL).
-windows-release-build: windows-staging \
+windows-release-build: \
    build/prefab/lib/windows/Release_Win32/BallisticaCoreGenericInternal.lib \
    build/prefab/lib/windows/Release_Win32/BallisticaCoreGenericInternal.pdb \
    ballisticacore-windows/Generic/BallisticaCore.ico
 	@tools/pcommand ensure_prefab_platform windows_x86
 	@tools/pcommand wsl_build_check_win_drive
+	WINDOWS_CONFIGURATION=Release WINDOWS_PLATFORM=Win32 $(MAKE) windows-staging
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Release WINDOWS_PLATFORM=Win32 \
   ${MAKE} _windows-wsl-build
 
 # Rebuild a release windows build (from WSL).
-windows-release-rebuild: windows-staging \
+windows-release-rebuild: \
    build/prefab/lib/windows/Release_Win32/BallisticaCoreGenericInternal.lib \
    build/prefab/lib/windows/Release_Win32/BallisticaCoreGenericInternal.pdb \
    ballisticacore-windows/Generic/BallisticaCore.ico
 	@tools/pcommand ensure_prefab_platform windows_x86
 	@tools/pcommand wsl_build_check_win_drive
+	WINDOWS_CONFIGURATION=Release WINDOWS_PLATFORM=Win32 $(MAKE) windows-staging
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Release WINDOWS_PLATFORM=Win32 \
   ${MAKE} _windows-wsl-rebuild
 
