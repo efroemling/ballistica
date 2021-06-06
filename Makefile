@@ -884,11 +884,9 @@ LAZYBUILDDIR = .cache/lazybuild
 STAGE_ASSETS = ${PROJ_DIR}/tools/pcommand stage_assets
 
 # Things to ignore when doing root level cleans.
-ROOT_CLEAN_IGNORES = --exclude=assets/src_master \
-  --exclude=config/localconfig.json \
-  --exclude=.spinoffdata
+ROOT_CLEAN_IGNORES = --exclude=config/localconfig.json
 
-CHECK_CLEAN_SAFETY = ${PROJ_DIR}/tools/pcommand check_clean_safety
+CHECK_CLEAN_SAFETY = tools/pcommand check_clean_safety
 
 # Some tool configs that need filtering (mainly injecting projroot path).
 TOOL_CFG_INST = tools/pcommand tool_config_install
