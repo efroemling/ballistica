@@ -3970,5 +3970,7 @@
   "build/prefab/lib/mac_x86_64_server/debug/libballisticacore_internal.a": "https://files.ballistica.net/cache/ba1/86/9f/c6610a0006b255768a74d73ce77b",
   "build/prefab/lib/mac_x86_64_server/release/libballisticacore_internal.a": "https://files.ballistica.net/cache/ba1/a1/6e/c4b8e6499dd2404c010eb25fc55e",
   "build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.lib": "https://files.ballistica.net/cache/ba1/33/1b/2f39ff51ed00220a9fec7439679f",
-  "build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.pdb": "https://files.ballistica.net/cache/ba1/e9/0d/099c69f8ac43c38ca0fa453e720f"
+  "build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.pdb": "https://files.ballistica.net/cache/ba1/e9/0d/099c69f8ac43c38ca0fa453e720f",
+  "build/prefab/lib/windows/Release_Win32/BallisticaCoreGenericInternal.lib": "https://files.ballistica.net/cache/ba1/05/39/c6316ab0a10b2f7be04ec2e362bf",
+  "build/prefab/lib/windows/Release_Win32/BallisticaCoreGenericInternal.pdb": "https://files.ballistica.net/cache/ba1/a6/e2/fa09037662a6dea09a4e3535f0d5"
 }

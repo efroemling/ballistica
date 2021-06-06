@@ -40,73 +40,73 @@ prereqs-clean:
 
 # Build all assets for all platforms.
 assets: prereqs
-	@cd assets && make -j${CPUS}
+	cd assets && make -j${CPUS}
 
 # Build assets required for cmake builds (linux, mac)
 assets-cmake: prereqs
-	@cd assets && ${MAKE} -j${CPUS} cmake
+	cd assets && ${MAKE} -j${CPUS} cmake
 
 # Build assets required for WINDOWS_PLATFORM windows builds.
 assets-windows: prereqs
-	@cd assets && ${MAKE} -j${CPUS} win-${WINDOWS_PLATFORM}
+	cd assets && ${MAKE} -j${CPUS} win-${WINDOWS_PLATFORM}
 
 # Build assets required for Win32 windows builds.
 assets-windows-Win32: prereqs
-	@cd assets && ${MAKE} -j${CPUS} win-Win32
+	cd assets && ${MAKE} -j${CPUS} win-Win32
 
 # Build assets required for x64 windows builds.
 assets-windows-x64: prereqs
-	@cd assets && ${MAKE} -j${CPUS} win-x64
+	cd assets && ${MAKE} -j${CPUS} win-x64
 
 # Build assets required for mac xcode builds
 assets-mac: prereqs
-	@cd assets && ${MAKE} -j${CPUS} mac
+	cd assets && ${MAKE} -j${CPUS} mac
 
 # Build assets required for ios.
 assets-ios: prereqs
-	@cd assets && ${MAKE} -j${CPUS} ios
+	cd assets && ${MAKE} -j${CPUS} ios
 
 # Build assets required for android.
 assets-android: prereqs
-	@cd assets && ${MAKE} -j${CPUS} android
+	cd assets && ${MAKE} -j${CPUS} android
 
 # Clean all assets.
 assets-clean:
-	@cd assets && ${MAKE} clean
+	cd assets && ${MAKE} clean
 
 # Build resources.
 resources: prereqs
-	@tools/pcommand lazybuild resources_src ${LAZYBUILDDIR}/resources \
+	tools/pcommand lazybuild resources_src ${LAZYBUILDDIR}/resources \
  cd resources \&\& ${MAKE} -j${CPUS} resources
 
 # Clean resources.
 resources-clean:
-	@cd resources && ${MAKE} clean
-	@rm -f ${LAZYBUILDDIR}/resources
+	cd resources && ${MAKE} clean
+	rm -f ${LAZYBUILDDIR}/resources
 
 # Build our generated code.
 # TODO: should perhaps make this a more standard component, including it
 # in other standard targets such as checks and tests (at least once we're
 # generating things that can affect the outcome of said checks/tests).
 code: prereqs
-	@tools/pcommand lazybuild code_gen_src ${LAZYBUILDDIR}/code \
+	tools/pcommand lazybuild code_gen_src ${LAZYBUILDDIR}/code \
  cd src/generated_src \&\& ${MAKE} -j${CPUS} generated_code
 
 # Clean our generated code.
 code-clean:
-	@cd src/generated_src && ${MAKE} clean
-	@rm -f ${LAZYBUILDDIR}/code
+	cd src/generated_src && ${MAKE} clean
+	rm -f ${LAZYBUILDDIR}/code
 
 # Remove ALL files and directories that aren't managed by git
 # (except for a few things such as localconfig.json).
 clean:
-	@${CHECK_CLEAN_SAFETY}
-	@git clean -dfx ${ROOT_CLEAN_IGNORES}
+	${CHECK_CLEAN_SAFETY}
+	git clean -dfx ${ROOT_CLEAN_IGNORES}
 
 # Show what clean would delete without actually deleting it.
 clean-list:
-	@${CHECK_CLEAN_SAFETY}
-	@git clean -dnx ${ROOT_CLEAN_IGNORES}
+	${CHECK_CLEAN_SAFETY}
+	git clean -dnx ${ROOT_CLEAN_IGNORES}
 
 # Tell make which of these targets don't represent files.
 .PHONY: help prereqs prereqs-clean assets assets-cmake assets-windows \
@@ -452,6 +452,12 @@ build/prefab/full/windows_x86_gui/release
 build/prefab/full/windows_x86_gui/release/BallisticaCore.exe: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
+build/prefab/lib/windows/Release_%/BallisticaCoreGenericInternal.lib: .efrocachemap
+	@tools/pcommand efrocache_get $@
+
+build/prefab/lib/windows/Release_%/BallisticaCoreGenericInternal.pdb: .efrocachemap
+	@tools/pcommand efrocache_get $@
+
 # Windows prefab server debug:
 
 RUN_PREFAB_WINDOWS_X86_SERVER_DEBUG = cd \
@@ -741,6 +747,17 @@ windows-staging: assets-windows resources code
 	${STAGE_ASSETS} -win-${WINPLT}-${WINCFG} \
    build/windows/$(WINCFG)_$(WINPLT)
 
+# Build and run a debug windows build (from WSL).
+windows-debug: windows-debug-build
+	@tools/pcommand ensure_prefab_platform windows_x86
+	build/windows/Debug_Win32/BallisticaCoreGeneric.exe
+
+# Build and run a release windows build (from WSL).
+windows-release: windows-release-build
+	@tools/pcommand ensure_prefab_platform windows_x86
+	build/windows/Release_Win32/BallisticaCoreGeneric.exe
+
+# Build a debug windows build (from WSL).
 windows-debug-build: windows-staging \
    build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.lib \
    build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.pdb \
@@ -750,6 +767,7 @@ windows-debug-build: windows-staging \
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 \
   ${MAKE} _windows-wsl-build
 
+# Rebuild a debug windows build (from WSL).
 windows-debug-rebuild: windows-staging \
    build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.lib \
    build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.pdb \
@@ -757,6 +775,26 @@ windows-debug-rebuild: windows-staging \
 	@tools/pcommand ensure_prefab_platform windows_x86
 	@tools/pcommand wsl_build_check_win_drive
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 \
+  ${MAKE} _windows-wsl-rebuild
+
+# Build a release windows build (from WSL).
+windows-release-build: windows-staging \
+   build/prefab/lib/windows/Release_Win32/BallisticaCoreGenericInternal.lib \
+   build/prefab/lib/windows/Release_Win32/BallisticaCoreGenericInternal.pdb \
+   ballisticacore-windows/Generic/BallisticaCore.ico
+	@tools/pcommand ensure_prefab_platform windows_x86
+	@tools/pcommand wsl_build_check_win_drive
+	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Release WINDOWS_PLATFORM=Win32 \
+  ${MAKE} _windows-wsl-build
+
+# Rebuild a release windows build (from WSL).
+windows-release-rebuild: windows-staging \
+   build/prefab/lib/windows/Release_Win32/BallisticaCoreGenericInternal.lib \
+   build/prefab/lib/windows/Release_Win32/BallisticaCoreGenericInternal.pdb \
+   ballisticacore-windows/Generic/BallisticaCore.ico
+	@tools/pcommand ensure_prefab_platform windows_x86
+	@tools/pcommand wsl_build_check_win_drive
+	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Release WINDOWS_PLATFORM=Win32 \
   ${MAKE} _windows-wsl-rebuild
 
 ballisticacore-windows/Generic/BallisticaCore.ico: .efrocachemap
