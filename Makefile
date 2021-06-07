@@ -165,7 +165,7 @@ prefab-clean:
 # (what visual studio calls their x86 (32 bit) target platform)
 WINPLAT_X86 = Win32
 
-# Mac debug:
+# Mac gui debug:
 
 RUN_PREFAB_MAC_X86_64_GUI_DEBUG = cd build/prefab/full/mac_x86_64_gui/debug \
   && ./ballisticacore
@@ -287,7 +287,7 @@ build/prefab/full/mac_%_server/release/dist/ballisticacore_headless: .efrocachem
 build/prefab/lib/mac_%_server/release/libballisticacore_internal.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-# Linux debug:
+# Linux gui debug:
 
 RUN_PREFAB_LINUX_X86_64_GUI_DEBUG = cd \
   build/prefab/full/linux_x86_64_gui/debug && ./ballisticacore
@@ -317,7 +317,7 @@ build/prefab/full/linux_%_gui/debug/ballisticacore: .efrocachemap
 build/prefab/lib/linux_%_gui/debug/libballisticacore_internal.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-# Linux release:
+# Linux gui release:
 
 RUN_PREFAB_LINUX_X86_64_GUI_RELEASE = cd \
   build/prefab/full/linux_x86_64_gui/release && ./ballisticacore
@@ -411,7 +411,7 @@ build/prefab/full/linux_%_server/release/dist/ballisticacore_headless: .efrocach
 build/prefab/lib/linux_%_server/release/libballisticacore_internal.a: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-# Windows prefab debug:
+# Windows gui debug:
 
 RUN_PREFAB_WINDOWS_X86_GUI_DEBUG = cd build/prefab/full/windows_x86_gui/debug \
   && ./BallisticaCore.exe
@@ -434,7 +434,7 @@ build/prefab/lib/windows/Debug_%/BallisticaCoreGenericInternal.lib: .efrocachema
 build/prefab/lib/windows/Debug_%/BallisticaCoreGenericInternal.pdb: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-# Windows prefab release:
+# Windows gui release:
 
 RUN_PREFAB_WINDOWS_X86_GUI_RELEASE = cd \
   build/prefab/full/windows_x86_gui/release && ./BallisticaCore.exe
@@ -458,7 +458,7 @@ build/prefab/lib/windows/Release_%/BallisticaCoreGenericInternal.lib: .efrocache
 build/prefab/lib/windows/Release_%/BallisticaCoreGenericInternal.pdb: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-# Windows prefab server debug:
+# Windows server debug:
 
 RUN_PREFAB_WINDOWS_X86_SERVER_DEBUG = cd \
    build/prefab/full/windows_x86_server/debug \
@@ -477,7 +477,13 @@ prefab-windows-x86-server-debug-build: prereqs \
 build/prefab/full/windows_x86_server/debug/dist/BallisticaCoreHeadless.exe: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
-# Windows prefab server release:
+build/prefab/lib/windows/Debug_%/BallisticaCoreHeadlessInternal.lib: .efrocachemap
+	@tools/pcommand efrocache_get $@
+
+build/prefab/lib/windows/Debug_%/BallisticaCoreHeadlessInternal.pdb: .efrocachemap
+	@tools/pcommand efrocache_get $@
+
+# Windows server release:
 
 RUN_PREFAB_WINDOWS_X86_SERVER_RELEASE = cd \
    build/prefab/full/windows_x86_server/release \
@@ -494,6 +500,12 @@ prefab-windows-x86-server-release-build: prereqs \
    build/prefab/full/windows_x86_server/release
 
 build/prefab/full/windows_x86_server/release/dist/BallisticaCoreHeadless.exe: .efrocachemap
+	@tools/pcommand efrocache_get $@
+
+build/prefab/lib/windows/Release_%/BallisticaCoreHeadlessInternal.lib: .efrocachemap
+	@tools/pcommand efrocache_get $@
+
+build/prefab/lib/windows/Release_%/BallisticaCoreHeadlessInternal.pdb: .efrocachemap
 	@tools/pcommand efrocache_get $@
 
 # Tell make which of these targets don't represent files.
