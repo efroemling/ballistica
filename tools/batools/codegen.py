@@ -7,6 +7,8 @@ import os
 import json
 from typing import TYPE_CHECKING
 
+from efro.terminal import Clr
+
 if TYPE_CHECKING:
     from typing import List, Sequence, Optional, Any, Dict
 
@@ -41,7 +43,7 @@ def gen_flat_data_code(projroot: str, in_path: str, out_path: str,
     pretty_path = os.path.abspath(out_path)
     if pretty_path.startswith(projroot + '/'):
         pretty_path = pretty_path[len(projroot) + 1:]
-    print(f'Generating code: {pretty_path}')
+    print(f'Meta-building {Clr.BLD}{pretty_path}{Clr.RST}')
     with open(out_path, 'w') as outfile:
         outfile.write(sval_out)
 
@@ -99,6 +101,6 @@ def gen_binding_code(projroot: str, in_path: str, out_path: str) -> None:
     pretty_path = os.path.abspath(out_path)
     if pretty_path.startswith(projroot + '/'):
         pretty_path = pretty_path[len(projroot) + 1:]
-    print('Generating code: ' + pretty_path)
+    print(f'Meta-building {Clr.BLD}{pretty_path}{Clr.RST}')
     with open(out_path, 'w') as outfile:
         outfile.write(ccode)

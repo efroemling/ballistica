@@ -453,7 +453,8 @@ def _apply_pylint_run_to_cache(projroot: Path, run: Any, dirtyfiles: List[str],
 
     # Ignore some specific untracked deps; complain about any others.
     untracked_deps = set(dep for dep in untracked_deps
-                         if dep not in ignored_untracked_deps)
+                         if dep not in ignored_untracked_deps
+                         and not dep.startswith('bametainternal'))
     if untracked_deps:
         raise CleanError(
             f'Pylint found untracked dependencies: {untracked_deps}.'

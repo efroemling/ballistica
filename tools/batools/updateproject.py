@@ -80,7 +80,7 @@ class Updater:
         # NOTE: Do py-enums before updating asset deps since it *is* an asset.
         self._update_python_enums_module()
         self._update_resources_makefile()
-        self._update_generated_code_makefile()
+        self._update_meta_makefile()
         self._update_assets_makefile()
 
         self._check_makefiles()
@@ -667,10 +667,9 @@ class Updater:
                 f'{Clr.RED}Error checking/updating assets Makefile.{Clr.RST}')
             sys.exit(255)
 
-    def _update_generated_code_makefile(self) -> None:
-        if os.path.exists('tools/update_generated_code_makefile'):
-            if os.system('tools/update_generated_code_makefile' +
-                         self._checkarg) != 0:
+    def _update_meta_makefile(self) -> None:
+        if os.path.exists('tools/update_meta_makefile'):
+            if os.system('tools/update_meta_makefile' + self._checkarg) != 0:
                 print(f'{Clr.RED}Error checking/updating'
                       f' generated-code Makefile.{Clr.RED}')
                 sys.exit(255)

@@ -956,7 +956,7 @@ void Python::Reset(bool do_init) {
     // - add our user and system script dirs to python path
     // - import and instantiate our app-state class
 
-#include "generated/ballistica/bootstrap.inc"
+#include "ballistica/generated/python_embedded/bootstrap.inc"
     PyObject* result =
         PyRun_String(bootstrap_code, Py_file_input, bootstrap_context.get(),
                      bootstrap_context.get());
@@ -970,7 +970,7 @@ void Python::Reset(bool do_init) {
     Py_DECREF(result);
 
     // Import and grab all the Python stuff we use.
-#include "generated/ballistica/binding.inc"
+#include "ballistica/generated/python_embedded/binding.inc"
 
     AppInternalPythonPostInit();
 

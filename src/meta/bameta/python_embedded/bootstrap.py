@@ -1,5 +1,5 @@
 # Released under the MIT License. See LICENSE for details.
-"""Initial ba bootstrapping."""
+"""Initial ballistica bootstrapping."""
 
 from __future__ import annotations
 
