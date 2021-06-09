@@ -117,7 +117,7 @@ def _lazybuild_check_paths(inpaths: List[str], category: SourceCategory,
             continue
         for root, _dnames, fnames in os.walk(inpath):
 
-            # Only gen category uses generated src.
+            # Only the meta category uses meta src.
             if (root.startswith('src/meta')
                     and category is not SourceCategory.META):
                 continue

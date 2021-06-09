@@ -632,43 +632,43 @@ check2-full:
 	@tools/pcommand echo SGRN BLD ALL CHECKS PASSED!
 
 # Run Cpplint checks on all C/C++ code.
-cpplint: prereqs
+cpplint: prereqs meta
 	@tools/pcommand cpplint
 
 # Run Cpplint checks without caching (all files are checked).
-cpplint-full: prereqs
+cpplint-full: prereqs meta
 	@tools/pcommand cpplint -full
 
 # Run Pylint checks on all Python Code.
-pylint: prereqs
+pylint: prereqs meta
 	@tools/pcommand pylint
 
 # Run Pylint checks without caching (all files are checked).
-pylint-full: prereqs
+pylint-full: prereqs meta
 	@tools/pcommand pylint -full
 
 # Run Mypy checks on all Python code.
-mypy: prereqs
+mypy: prereqs meta
 	@tools/pcommand mypy
 
 # Run Mypy checks without caching (all files are checked).
-mypy-full: prereqs
+mypy-full: prereqs meta
 	@tools/pcommand mypy -full
 
 # Run Mypy checks on all Python code using daemon mode.
-dmypy: prereqs
+dmypy: prereqs meta
 	@tools/pcommand dmypy
 
 # Stop the mypy daemon
-dmypy-stop: prereqs
+dmypy-stop: prereqs meta
 	@tools/pcommand dmypy -stop
 
 # Run PyCharm checks on all Python code.
-pycharm: prereqs
+pycharm: prereqs meta
 	@tools/pcommand pycharm
 
 # Run PyCharm checks without caching (all files are checked).
-pycharm-full: prereqs
+pycharm-full: prereqs meta
 	@tools/pcommand pycharm -full
 
 # Tell make which of these targets don't represent files.
