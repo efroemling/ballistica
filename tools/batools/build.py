@@ -74,7 +74,7 @@ DO_SPARSE_TEST_BUILDS = 'ballistica' + 'core' == 'ballisticacore'
 class SourceCategory(Enum):
     """Types of sources."""
     RESOURCES = 'resources_src'
-    CODE_GEN = 'code_gen_src'
+    META = 'meta_src'
     ASSETS = 'assets_src'
     CMAKE = 'cmake_src'
     WIN = 'win_src'
@@ -117,9 +117,9 @@ def _lazybuild_check_paths(inpaths: List[str], category: SourceCategory,
             continue
         for root, _dnames, fnames in os.walk(inpath):
 
-            # Only gen category uses gen src.
-            if (root.startswith('src/generated_src')
-                    and category is not SourceCategory.CODE_GEN):
+            # Only gen category uses generated src.
+            if (root.startswith('src/meta')
+                    and category is not SourceCategory.META):
                 continue
 
             # None of our targets use tools-src.
@@ -172,11 +172,11 @@ def lazybuild(target: str, category: SourceCategory, command: str) -> None:
     """
     paths: List[str]
 
-    # Everything possibly affecting generated code.
-    if category is SourceCategory.CODE_GEN:
+    # Everything possibly affecting generated sources.
+    if category is SourceCategory.META:
         paths = [
             'Makefile', 'tools/generate_code', 'tools/batools/codegen.py',
-            'src/generated_src'
+            'src/meta'
         ]
 
     # Everything possibly affecting asset builds.

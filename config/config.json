@@ -41,7 +41,7 @@
   "python_source_dirs": [
     "assets/src/ba_data/python",
     "assets/src/server",
-    "src/generated_src",
+    "src/meta",
     "tools",
     "tests"
   ]

@@ -50,35 +50,35 @@ prereqs-clean:
 	@rm -rf ${PREREQS}
 
 # Build all assets for all platforms.
-assets: prereqs
+assets: prereqs meta
 	cd assets && $(MAKE) -j$(CPUS)
 
 # Build assets required for cmake builds (linux, mac)
-assets-cmake: prereqs
+assets-cmake: prereqs meta
 	cd assets && $(MAKE) -j$(CPUS) cmake
 
 # Build assets required for WINDOWS_PLATFORM windows builds.
-assets-windows: prereqs
+assets-windows: prereqs meta
 	cd assets && $(MAKE) -j$(CPUS) win-${WINDOWS_PLATFORM}
 
 # Build assets required for Win32 windows builds.
-assets-windows-Win32: prereqs
+assets-windows-Win32: prereqs meta
 	cd assets && $(MAKE) -j$(CPUS) win-Win32
 
 # Build assets required for x64 windows builds.
-assets-windows-x64: prereqs
+assets-windows-x64: prereqs meta
 	cd assets && $(MAKE) -j$(CPUS) win-x64
 
 # Build assets required for mac xcode builds
-assets-mac: prereqs
+assets-mac: prereqs meta
 	cd assets && $(MAKE) -j$(CPUS) mac
 
 # Build assets required for ios.
-assets-ios: prereqs
+assets-ios: prereqs meta
 	cd assets && $(MAKE) -j$(CPUS) ios
 
 # Build assets required for android.
-assets-android: prereqs
+assets-android: prereqs meta
 	cd assets && $(MAKE) -j$(CPUS) android
 
 # Clean all assets.
@@ -86,7 +86,7 @@ assets-clean:
 	cd assets && $(MAKE) clean
 
 # Build resources.
-resources: prereqs
+resources: prereqs meta
 	tools/pcommand lazybuild resources_src ${LAZYBUILDDIR}/resources \
  cd resources \&\& $(MAKE) -j$(CPUS) resources
 
@@ -96,17 +96,16 @@ resources-clean:
 	rm -f ${LAZYBUILDDIR}/resources
 
 # Build our generated sources.
-# TODO: should perhaps make this a more standard component, including it
-# in other standard targets such as checks and tests (at least once we're
-# generating things that can affect the outcome of said checks/tests).
-code: prereqs
-	tools/pcommand lazybuild code_gen_src ${LAZYBUILDDIR}/code \
- cd src/generated_src \&\& $(MAKE) -j$(CPUS) generated_code
+# Meta builds can affect sources used by asset builds, resource builds, and
+# compiles, so it should be listed as a dependency of any of those.
+meta: prereqs
+	tools/pcommand lazybuild meta_src ${LAZYBUILDDIR}/meta \
+ cd src/meta \&\& $(MAKE) -j$(CPUS)
 
 # Clean our generated sources.
-code-clean:
-	cd src/generated_src && $(MAKE) clean
-	rm -f ${LAZYBUILDDIR}/code
+meta-clean:
+	cd src/meta && $(MAKE) clean
+	rm -f ${LAZYBUILDDIR}/meta
 
 # Remove ALL files and directories that aren't managed by git
 # (except for a few things such as localconfig.json).
@@ -123,7 +122,7 @@ clean-list:
 .PHONY: help prereqs prereqs-clean assets assets-cmake assets-windows \
   assets-windows-Win32 assets-windows-x64 \
   assets-mac assets-ios assets-android assets-clean \
-  resources resources-clean code code-clean \
+  resources resources-clean meta meta-clean \
   clean clean-list
 
 
@@ -767,7 +766,7 @@ WINDOWS_PLATFORM ?= Win32
 WINDOWS_CONFIGURATION ?= Debug
 
 # Stage assets and other files so a built binary will run.
-windows-staging: assets-windows resources code
+windows-staging: assets-windows resources meta
 	${STAGE_ASSETS} -win-${WINPLT}-${WINCFG} \
    build/windows/$(WINCFG)_$(WINPLT)
 
@@ -857,7 +856,7 @@ cmake: cmake-build
 	@cd build/cmake/$(CM_BT_LC) && ./ballisticacore
 
 # Build but don't run it.
-cmake-build: assets-cmake resources code
+cmake-build: assets-cmake resources meta
 	@tools/pcommand cmake_prep_dir build/cmake/$(CM_BT_LC)
 	@tools/pcommand update_cmake_prefab_lib standard ${CM_BT_LC} build/cmake/${CM_BT_LC}
 	@${STAGE_ASSETS} -cmake build/cmake/$(CM_BT_LC)
@@ -872,7 +871,7 @@ cmake-clean:
 cmake-server: cmake-server-build
 	@cd build/cmake/server-$(CM_BT_LC) && ./ballisticacore_server
 
-cmake-server-build: assets-cmake resources code
+cmake-server-build: assets-cmake resources meta
 	@tools/pcommand cmake_prep_dir build/cmake/server-$(CM_BT_LC)/dist
 	@tools/pcommand update_cmake_prefab_lib server ${CM_BT_LC} build/cmake/server-${CM_BT_LC}/dist
 	@${STAGE_ASSETS} -cmakeserver -${CM_BT_LC} build/cmake/server-$(CM_BT_LC)
@@ -975,7 +974,7 @@ ballisticacore-cmake/.clang-format: .clang-format
 
 # Simple target for CI to build a binary but not download/assemble assets/etc.
 _cmake-simple-ci-server-build:
-	SKIP_ENV_CHECKS=1 $(MAKE) code
+	SKIP_ENV_CHECKS=1 $(MAKE) meta
 	rm -rf build/cmake_simple_ci_server_build
 	mkdir -p build/cmake_simple_ci_server_build
 	tools/pcommand update_cmake_prefab_lib \
