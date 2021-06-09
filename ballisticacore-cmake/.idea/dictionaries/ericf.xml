@@ -259,6 +259,7 @@
       <w>dlfcn</w>
       <w>dlife</w>
       <w>dllpath</w>
+      <w>dmake</w>
       <w>dname</w>
       <w>dncm</w>
       <w>dobell</w>
@@ -347,6 +348,7 @@
       <w>fieldname</w>
       <w>fieldpath</w>
       <w>fifteenbits</w>
+      <w>filelock</w>
       <w>filterstr</w>
       <w>filterval</w>
       <w>finishedptr</w>
@@ -578,6 +580,8 @@
       <w>magoogan</w>
       <w>magua</w>
       <w>mainmenu</w>
+      <w>makeflags</w>
+      <w>makelevel</w>
       <w>malhotra</w>
       <w>mallocs</w>
       <w>manualtab</w>
@@ -602,6 +606,7 @@
       <w>minsdl</w>
       <w>mipmapcount</w>
       <w>mipmaps</w>
+      <w>mkflags</w>
       <w>mmask</w>
       <w>mmdevapi</w>
       <w>modder</w>
@@ -729,6 +734,8 @@
       <w>pflag</w>
       <w>pflags</w>
       <w>pgmout</w>
+      <w>piplist</w>
+      <w>pipvers</w>
       <w>pixelformat</w>
       <w>playpause</w>
       <w>playsound</w>
@@ -780,6 +787,8 @@
       <w>putbits</w>
       <w>putbitshigh</w>
       <w>pval</w>
+      <w>pver</w>
+      <w>pverraw</w>
       <w>pvrtc</w>
       <w>pycommand</w>
       <w>pyconfig</w>

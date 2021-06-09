@@ -77,7 +77,7 @@ class Updater:
         if not os.path.isdir('config') or not os.path.isdir('tools'):
             raise Exception('This must be run from a project root.')
 
-        # NOTE: Do py-enums before updating asset deps since it is an asset.
+        # NOTE: Do py-enums before updating asset deps since it *is* an asset.
         self._update_python_enums_module()
         self._update_resources_makefile()
         self._update_generated_code_makefile()
@@ -101,7 +101,10 @@ class Updater:
         # by the above stuff.
         self._apply_line_changes()
         self._apply_file_changes()
-        self._update_compile_commands_file()
+
+        # This keeps our compile-commands list up to date with any
+        # source files we just added or removed.
+        self._update_prereqs()
 
         # We only check/update these in core; not spinoff projects.
         # That is because they create hashes based on source files
@@ -179,11 +182,11 @@ class Updater:
                       f' docs markdown.{Clr.RST}')
                 sys.exit(255)
 
-    def _update_compile_commands_file(self) -> None:
+    def _update_prereqs(self) -> None:
 
         # This will update our prereqs which may include compile-commands
         # files (.cache/irony/compile_commands.json, etc)
-        subprocess.run(['make', 'prereqs'], check=True)
+        subprocess.run(['make', '-j8', 'prereqs'], check=True)
 
     def _apply_file_changes(self) -> None:
         # Now write out any project files that have changed
@@ -687,7 +690,3 @@ class Updater:
                 print(f'{Clr.RED}Error checking/updating'
                       f' python enums module.{Clr.RST}')
                 sys.exit(255)
-
-
-# if __name__ == '__main__':
-#     App().run()

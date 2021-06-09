@@ -625,7 +625,7 @@ auto PythonMethodsGameplay::GetMethods() -> std::vector<PyMethodDef> {
        "\n"
        "(internal)\n"
        "\n"
-       "Set replay speed. Actual displayed speed is pow(2,speed)."},
+       "Set replay speed. Actual displayed speed is pow(2, speed)."},
 
       {"get_replay_speed_exponent", PyGetReplaySpeedExponent, METH_VARARGS,
        "get_replay_speed_exponent() -> int\n"

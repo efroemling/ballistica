@@ -553,6 +553,7 @@
       <w>dline</w>
       <w>dlldir</w>
       <w>dlls</w>
+      <w>dmake</w>
       <w>dmitry</w>
       <w>dmodule</w>
       <w>dmypy</w>
@@ -754,6 +755,7 @@
       <w>fileinfo</w>
       <w>fileinput</w>
       <w>filelist</w>
+      <w>filelock</w>
       <w>filenames</w>
       <w>filepath</w>
       <w>fileselector</w>
@@ -1292,6 +1294,8 @@
       <w>makebob</w>
       <w>makedeps</w>
       <w>makedirs</w>
+      <w>makeflags</w>
+      <w>makelevel</w>
       <w>makesetup</w>
       <w>malformatted</w>
       <w>malhotra</w>
@@ -1352,6 +1356,7 @@
       <w>mios</w>
       <w>mipmap</w>
       <w>mipmaps</w>
+      <w>mkflags</w>
       <w>mline</w>
       <w>mmapmodule</w>
       <w>mmult</w>
@@ -1599,7 +1604,9 @@
       <w>pickletools</w>
       <w>pickupmats</w>
       <w>pipestatus</w>
+      <w>piplist</w>
       <w>pipname</w>
+      <w>pipvers</w>
       <w>pkey</w>
       <w>pkgutil</w>
       <w>playercast</w>
@@ -1751,6 +1758,8 @@
       <w>putfiles</w>
       <w>pval</w>
       <w>pvars</w>
+      <w>pver</w>
+      <w>pverraw</w>
       <w>pvrtc</w>
       <w>pvrtcbest</w>
       <w>pvrtcfast</w>

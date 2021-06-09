@@ -6,6 +6,17 @@
 # Targets in this top level Makefile do not expect -jX to be passed to them
 # and generally handle spawning an appropriate number of child jobs themselves.
 
+# Can be used in place of the recommended $(MAKE) to suppress various
+# warnings about the jobserver being disabled due to -jX options being
+# passed to sub-makes. Generally passing -jX as part of a recursive make
+# instantiation is frowned upon, but we treat this Makefile as a high level
+# orchestration layer and we want to handle details like that for the user,
+# so we try to pick smart -j values ourselves. We can't really rely on the
+# jobserver anyway to balance our loads since we often call out to other
+# systems (XCode, Gradle, Visual Studio, etc.) which wrangle jobs in their
+# own ways.
+DMAKE = $(MAKE) MAKEFLAGS= MKFLAGS= MAKELEVEL=
+
 # Prefix used for output of docs/changelogs/etc. targets for use in webpages.
 DOCPREFIX = "ballisticacore_"
 
@@ -40,61 +51,61 @@ prereqs-clean:
 
 # Build all assets for all platforms.
 assets: prereqs
-	cd assets && make -j${CPUS}
+	cd assets && $(MAKE) -j$(CPUS)
 
 # Build assets required for cmake builds (linux, mac)
 assets-cmake: prereqs
-	cd assets && ${MAKE} -j${CPUS} cmake
+	cd assets && $(MAKE) -j$(CPUS) cmake
 
 # Build assets required for WINDOWS_PLATFORM windows builds.
 assets-windows: prereqs
-	cd assets && ${MAKE} -j${CPUS} win-${WINDOWS_PLATFORM}
+	cd assets && $(MAKE) -j$(CPUS) win-${WINDOWS_PLATFORM}
 
 # Build assets required for Win32 windows builds.
 assets-windows-Win32: prereqs
-	cd assets && ${MAKE} -j${CPUS} win-Win32
+	cd assets && $(MAKE) -j$(CPUS) win-Win32
 
 # Build assets required for x64 windows builds.
 assets-windows-x64: prereqs
-	cd assets && ${MAKE} -j${CPUS} win-x64
+	cd assets && $(MAKE) -j$(CPUS) win-x64
 
 # Build assets required for mac xcode builds
 assets-mac: prereqs
-	cd assets && ${MAKE} -j${CPUS} mac
+	cd assets && $(MAKE) -j$(CPUS) mac
 
 # Build assets required for ios.
 assets-ios: prereqs
-	cd assets && ${MAKE} -j${CPUS} ios
+	cd assets && $(MAKE) -j$(CPUS) ios
 
 # Build assets required for android.
 assets-android: prereqs
-	cd assets && ${MAKE} -j${CPUS} android
+	cd assets && $(MAKE) -j$(CPUS) android
 
 # Clean all assets.
 assets-clean:
-	cd assets && ${MAKE} clean
+	cd assets && $(MAKE) clean
 
 # Build resources.
 resources: prereqs
 	tools/pcommand lazybuild resources_src ${LAZYBUILDDIR}/resources \
- cd resources \&\& ${MAKE} -j${CPUS} resources
+ cd resources \&\& $(MAKE) -j$(CPUS) resources
 
 # Clean resources.
 resources-clean:
-	cd resources && ${MAKE} clean
+	cd resources && $(MAKE) clean
 	rm -f ${LAZYBUILDDIR}/resources
 
-# Build our generated code.
+# Build our generated sources.
 # TODO: should perhaps make this a more standard component, including it
 # in other standard targets such as checks and tests (at least once we're
 # generating things that can affect the outcome of said checks/tests).
 code: prereqs
 	tools/pcommand lazybuild code_gen_src ${LAZYBUILDDIR}/code \
- cd src/generated_src \&\& ${MAKE} -j${CPUS} generated_code
+ cd src/generated_src \&\& $(MAKE) -j$(CPUS) generated_code
 
-# Clean our generated code.
+# Clean our generated sources.
 code-clean:
-	cd src/generated_src && ${MAKE} clean
+	cd src/generated_src && $(MAKE) clean
 	rm -f ${LAZYBUILDDIR}/code
 
 # Remove ALL files and directories that aren't managed by git
@@ -562,12 +573,12 @@ update-check: prereqs
 
 # Run formatting on all files in the project considered 'dirty'.
 format:
-	@${MAKE} -j3 format-code format-scripts format-makefile
+	@$(MAKE) -j$(CPUS) format-code format-scripts format-makefile
 	@tools/pcommand echo BLD Formatting complete!
 
 # Same but always formats; ignores dirty state.
 format-full:
-	@${MAKE} -j3 format-code-full format-scripts-full format-makefile
+	@$(MAKE) -j$(CPUS) format-code-full format-scripts-full format-makefile
 	@tools/pcommand echo BLD Formatting complete!
 
 # Run formatting for compiled code sources (.cc, .h, etc.).
@@ -601,23 +612,24 @@ format-makefile: prereqs
 ################################################################################
 
 # Run all project checks. (static analysis)
-check: update-check
-	@${MAKE} -j3 cpplint pylint mypy
+check:
+	@${DMAKE} -j$(CPUS) update-check cpplint pylint mypy
 	@tools/pcommand echo SGRN BLD ALL CHECKS PASSED!
 
 # Same as check but no caching (all files are checked).
-check-full: update-check
-	@${MAKE} -j3 cpplint-full pylint-full mypy-full
+check-full:
+	@${DMAKE} -j$(CPUS) update-check cpplint-full pylint-full mypy-full
 	@tools/pcommand echo SGRN BLD ALL CHECKS PASSED!
 
 # Same as 'check' plus optional/slow extra checks.
-check2: update-check
-	@${MAKE} -j4 cpplint pylint mypy pycharm
+check2:
+	@${DMAKE} -j$(CPUS) update-check cpplint pylint mypy pycharm
 	@tools/pcommand echo SGRN BLD ALL CHECKS PASSED!
 
 # Same as check2 but no caching (all files are checked).
-check2-full: update-check
-	@${MAKE} -j4 cpplint-full pylint-full mypy-full pycharm-full
+check2-full:
+	@${DMAKE} -j$(CPUS) update-check cpplint-full pylint-full mypy-full \
+   pycharm-full
 	@tools/pcommand echo SGRN BLD ALL CHECKS PASSED!
 
 # Run Cpplint checks on all C/C++ code.
@@ -707,30 +719,30 @@ test-entity:
 
 # Format, update, check, & test the project. Do this before commits.
 preflight:
-	@${MAKE} format
-	@${MAKE} update
-	@${MAKE} -j4 cpplint pylint mypy test
+	@$(MAKE) format
+	@$(MAKE) update
+	@$(MAKE) -j$(CPUS) cpplint pylint mypy test
 	@tools/pcommand echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
 # Same as 'preflight' without caching (all files are visited).
 preflight-full:
-	@${MAKE} format-full
-	@${MAKE} update
-	@${MAKE} -j4 cpplint-full pylint-full mypy-full test-full
+	@$(MAKE) format-full
+	@$(MAKE) update
+	@$(MAKE) -j$(CPUS) cpplint-full pylint-full mypy-full test-full
 	@tools/pcommand echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
 # Same as 'preflight' plus optional/slow extra checks.
 preflight2:
-	@${MAKE} format
-	@${MAKE} update
-	@${MAKE} -j5 cpplint pylint mypy pycharm test
+	@$(MAKE) format
+	@$(MAKE) update
+	@$(MAKE) -j$(CPUS) cpplint pylint mypy pycharm test
 	@tools/pcommand echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
 # Same as 'preflight2' but without caching (all files visited).
 preflight2-full:
-	@${MAKE} format-full
-	@${MAKE} update
-	@${MAKE} -j5 cpplint-full pylint-full mypy-full pycharm-full test-full
+	@$(MAKE) format-full
+	@$(MAKE) update
+	@$(MAKE) -j$(CPUS) cpplint-full pylint-full mypy-full pycharm-full test-full
 	@tools/pcommand echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
 # Tell make which of these targets don't represent files.
@@ -778,7 +790,7 @@ windows-debug-build: \
 	@tools/pcommand wsl_build_check_win_drive
 	WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 $(MAKE) windows-staging
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 \
-  ${MAKE} _windows-wsl-build
+  $(MAKE) _windows-wsl-build
 
 # Rebuild a debug windows build (from WSL).
 windows-debug-rebuild: \
@@ -789,7 +801,7 @@ windows-debug-rebuild: \
 	@tools/pcommand wsl_build_check_win_drive
 	WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 $(MAKE) windows-staging
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 \
-  ${MAKE} _windows-wsl-rebuild
+  $(MAKE) _windows-wsl-rebuild
 
 # Build a release windows build (from WSL).
 windows-release-build: \
@@ -800,7 +812,7 @@ windows-release-build: \
 	@tools/pcommand wsl_build_check_win_drive
 	WINDOWS_CONFIGURATION=Release WINDOWS_PLATFORM=Win32 $(MAKE) windows-staging
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Release WINDOWS_PLATFORM=Win32 \
-  ${MAKE} _windows-wsl-build
+  $(MAKE) _windows-wsl-build
 
 # Rebuild a release windows build (from WSL).
 windows-release-rebuild: \
@@ -811,7 +823,7 @@ windows-release-rebuild: \
 	@tools/pcommand wsl_build_check_win_drive
 	WINDOWS_CONFIGURATION=Release WINDOWS_PLATFORM=Win32 $(MAKE) windows-staging
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Release WINDOWS_PLATFORM=Win32 \
-  ${MAKE} _windows-wsl-rebuild
+  $(MAKE) _windows-wsl-rebuild
 
 ballisticacore-windows/Generic/BallisticaCore.ico: .efrocachemap
 	@tools/pcommand efrocache_get $@
@@ -852,7 +864,7 @@ cmake-build: assets-cmake resources code
 	@cd build/cmake/$(CM_BT_LC) && test -f Makefile \
       || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
       ${PWD}/ballisticacore-cmake
-	@cd build/cmake/$(CM_BT_LC) && ${MAKE} -j${CPUS}
+	@cd build/cmake/$(CM_BT_LC) && $(MAKE) -j$(CPUS)
 
 cmake-clean:
 	rm -rf build/cmake/$(CM_BT_LC)
@@ -867,7 +879,7 @@ cmake-server-build: assets-cmake resources code
 	@cd build/cmake/server-$(CM_BT_LC)/dist && test -f Makefile \
       || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) -DHEADLESS=true \
       ${PWD}/ballisticacore-cmake
-	@cd build/cmake/server-$(CM_BT_LC)/dist && ${MAKE} -j${CPUS}
+	@cd build/cmake/server-$(CM_BT_LC)/dist && $(MAKE) -j$(CPUS)
 	@cd build/cmake/server-$(CM_BT_LC)/dist && test -f ballisticacore_headless \
       || ln -sf ballisticacore ballisticacore_headless
 
@@ -963,14 +975,14 @@ ballisticacore-cmake/.clang-format: .clang-format
 
 # Simple target for CI to build a binary but not download/assemble assets/etc.
 _cmake-simple-ci-server-build:
-	SKIP_ENV_CHECKS=1 ${MAKE} code
+	SKIP_ENV_CHECKS=1 $(MAKE) code
 	rm -rf build/cmake_simple_ci_server_build
 	mkdir -p build/cmake_simple_ci_server_build
 	tools/pcommand update_cmake_prefab_lib \
       server debug build/cmake_simple_ci_server_build
 	cd build/cmake_simple_ci_server_build && \
       cmake -DCMAKE_BUILD_TYPE=Debug -DHEADLESS=true ${PWD}/ballisticacore-cmake
-	cd build/cmake_simple_ci_server_build && ${MAKE} -j${CPUS}
+	cd build/cmake_simple_ci_server_build && $(MAKE) -j$(CPUS)
 
 # Irony in emacs requires us to use cmake to generate a full
 # list of compile commands for all files; lets try to keep it up to date

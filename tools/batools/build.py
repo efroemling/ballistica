@@ -23,22 +23,28 @@ if TYPE_CHECKING:
 @dataclass
 class PipRequirement:
     """A pip package required by our project."""
-    modulename: str
+    modulename: Optional[str] = None
     minversion: Optional[List[int]] = None  # None implies no min version.
     pipname: Optional[str] = None  # None implies same as modulename.
 
 
+# Note: we look directly for modules when possible instead of just pip
+# entries; this accounts for manual installations or other nonstandard setups.
 PIP_REQUIREMENTS = [
     PipRequirement(modulename='pylint', minversion=[2, 8, 2]),
-    PipRequirement(modulename='mypy', minversion=[0, 812]),
+    PipRequirement(modulename='mypy', minversion=[0, 901]),
     PipRequirement(modulename='yapf', minversion=[0, 31, 0]),
     PipRequirement(modulename='cpplint', minversion=[1, 5, 5]),
     PipRequirement(modulename='pytest', minversion=[6, 2, 4]),
-    PipRequirement(modulename='typing_extensions'),
     PipRequirement(modulename='pytz'),
     PipRequirement(modulename='ansiwrap'),
     PipRequirement(modulename='yaml', pipname='PyYAML'),
     PipRequirement(modulename='requests'),
+    PipRequirement(pipname='typing-extensions', minversion=[3, 10, 0, 0]),
+    PipRequirement(pipname='types-filelock', minversion=[0, 1, 3]),
+    PipRequirement(pipname='types-requests', minversion=[0, 1, 9]),
+    PipRequirement(pipname='types-pytz', minversion=[0, 1, 0]),
+    PipRequirement(pipname='types-PyYAML', minversion=[0, 1, 6]),
 ]
 
 # Parts of full-tests suite we only run on particular days.
@@ -507,6 +513,7 @@ def _vstr(nums: Sequence[int]) -> str:
 def checkenv() -> None:
     """Check for tools necessary to build and run the app."""
     # pylint: disable=too-many-branches
+    # pylint: disable=too-many-statements
 
     from efrotools import PYTHON_BIN
     print(f'{Clr.BLD}Checking environment...{Clr.RST}', flush=True)
@@ -537,12 +544,24 @@ def checkenv() -> None:
                          'it via apt, brew, etc.')
 
     # Make sure they've got pip for that python version.
-    if subprocess.run(f'{PYTHON_BIN} -m pip --version',
-                      shell=True,
+    if subprocess.run([PYTHON_BIN, '-m', 'pip', '--version'],
                       check=False,
                       capture_output=True).returncode != 0:
         raise CleanError(
             f'pip (for {PYTHON_BIN}) is required; please install it.')
+
+    # Parse package names and versions from pip.
+    piplist = subprocess.run(
+        [PYTHON_BIN, '-m', 'pip', 'list'], check=True,
+        capture_output=True).stdout.decode().strip().splitlines()
+    assert 'Package' in piplist[0] and 'Version' in piplist[0]
+    assert '--------' in piplist[1]
+    piplist = piplist[2:]
+    pipvers: Dict[str, List[int]] = {}
+    for line in piplist:
+        pname, pverraw = line.split()
+        pver = [int(x) if x.isdigit() else 0 for x in pverraw.split('.')]
+        pipvers[pname] = pver
 
     # Check for some required python modules.
     # FIXME: since all of these come from pip now, we should just use
@@ -550,43 +569,67 @@ def checkenv() -> None:
     for req in PIP_REQUIREMENTS:
         modname = req.modulename
         minver = req.minversion
-        packagename = req.pipname
-        if packagename is None:
-            packagename = modname
-        if minver is not None:
-            results = subprocess.run(f'{PYTHON_BIN} -m {modname} --version',
-                                     shell=True,
-                                     check=False,
-                                     capture_output=True)
-        else:
-            results = subprocess.run(f'{PYTHON_BIN} -c "import {modname}"',
-                                     shell=True,
-                                     check=False,
-                                     capture_output=True)
-        if results.returncode != 0:
-            raise CleanError(f'{packagename} (for {PYTHON_BIN}) is required.\n'
-                             f'To install it, try: "{PYTHON_BIN}'
-                             f' -m pip install {packagename}"\n'
-                             f'Alternately, "tools/pcommand install_pip_reqs"'
-                             f' will update all pip requirements.')
-        if minver is not None:
-            # Note: some modules such as pytest print their version to stderr,
-            # so grab both.
-            verlines = (results.stdout + results.stderr).decode().splitlines()
-            if verlines[0].startswith('Cpplint fork'):
-                verlines = verlines[1:]
-            ver_line = verlines[0]
-            assert modname in ver_line
-            vnums = [int(x) for x in ver_line.split()[-1].split('.')]
-            assert len(vnums) == len(minver)
-            if vnums < minver:
+        pipname = req.pipname
+        if modname is None:
+            assert pipname is not None
+            if pipname not in pipvers:
                 raise CleanError(
-                    f'{packagename} ver. {_vstr(minver)} or newer is required;'
-                    f' found {_vstr(vnums)}.\n'
-                    f'To upgrade it, try: "{PYTHON_BIN}'
-                    f' -m pip install --upgrade {packagename}".\n'
-                    'Alternately, "tools/pcommand install_pip_reqs"'
-                    ' will update all pip requirements.')
+                    f'{pipname} (for {PYTHON_BIN}) is required.\n'
+                    f'To install it, try: "{PYTHON_BIN}'
+                    f' -m pip install {pipname}"\n'
+                    f'Alternately, "tools/pcommand install_pip_reqs"'
+                    f' will update all pip requirements.')
+            if minver is not None:
+                vnums = pipvers[pipname]
+                assert len(vnums) == len(minver)
+                if vnums < minver:
+                    raise CleanError(
+                        f'{pipname} ver. {_vstr(minver)} or newer'
+                        f' is required; found {_vstr(vnums)}.\n'
+                        f'To upgrade it, try: "{PYTHON_BIN}'
+                        f' -m pip install --upgrade {pipname}".\n'
+                        'Alternately, "tools/pcommand install_pip_reqs"'
+                        ' will update all pip requirements.')
+        else:
+            if pipname is None:
+                pipname = modname
+            if minver is not None:
+                results = subprocess.run(
+                    f'{PYTHON_BIN} -m {modname} --version',
+                    shell=True,
+                    check=False,
+                    capture_output=True)
+            else:
+                results = subprocess.run(f'{PYTHON_BIN} -c "import {modname}"',
+                                         shell=True,
+                                         check=False,
+                                         capture_output=True)
+            if results.returncode != 0:
+                raise CleanError(
+                    f'{pipname} (for {PYTHON_BIN}) is required.\n'
+                    f'To install it, try: "{PYTHON_BIN}'
+                    f' -m pip install {pipname}"\n'
+                    f'Alternately, "tools/pcommand install_pip_reqs"'
+                    f' will update all pip requirements.')
+            if minver is not None:
+                # Note: some modules such as pytest print
+                # their version to stderr, so grab both.
+                verlines = (results.stdout +
+                            results.stderr).decode().splitlines()
+                if verlines[0].startswith('Cpplint fork'):
+                    verlines = verlines[1:]
+                ver_line = verlines[0]
+                assert modname in ver_line
+                vnums = [int(x) for x in ver_line.split()[-1].split('.')]
+                assert len(vnums) == len(minver)
+                if vnums < minver:
+                    raise CleanError(
+                        f'{pipname} ver. {_vstr(minver)} or newer'
+                        f' is required; found {_vstr(vnums)}.\n'
+                        f'To upgrade it, try: "{PYTHON_BIN}'
+                        f' -m pip install --upgrade {pipname}".\n'
+                        'Alternately, "tools/pcommand install_pip_reqs"'
+                        ' will update all pip requirements.')
 
     print(f'{Clr.BLD}Environment ok.{Clr.RST}', flush=True)
 

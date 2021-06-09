@@ -125,7 +125,7 @@ def _windows_enable_color() -> bool:
         mode = mask = ENABLE_VIRTUAL_TERMINAL_PROCESSING
         try:
             return set_conout_mode(mode, mask)
-        except WindowsError as exc:
+        except WindowsError as exc:  # type: ignore
             if exc.winerror == ERROR_INVALID_PARAMETER:
                 raise NotImplementedError from exc
             raise

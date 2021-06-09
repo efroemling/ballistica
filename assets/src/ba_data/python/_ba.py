@@ -3610,7 +3610,7 @@ def set_replay_speed_exponent(speed: int) -> None:
 
     (internal)
 
-    Set replay speed. Actual displayed speed is pow(2,speed).
+    Set replay speed. Actual displayed speed is pow(2, speed).
     """
     return None
 
