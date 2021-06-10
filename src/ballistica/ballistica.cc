@@ -21,7 +21,7 @@
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kAppBuildNumber = 20376;
+const int kAppBuildNumber = 20377;
 const char* kAppVersion = "1.6.4";
 
 // Our standalone globals.
@@ -155,6 +155,10 @@ auto BallisticaMain(int argc, char** argv) -> int {
     std::string error_msg =
         std::string("Unhandled exception in BallisticaMain(): ") + exc.what();
 
+    // Exiting the app via an exception tends to trigger crash reports
+    // on various platforms. If it doesn't appear that we're an official live
+    // build then we'd rather just  exit cleanly with an error code and avoid
+    // polluting crash report logs from dev builds.
     FatalError::ReportFatalError(error_msg, true);
     bool exit_cleanly = !IsUnmodifiedBlessedBuild();
     bool handled = FatalError::HandleFatalError(exit_cleanly, true);

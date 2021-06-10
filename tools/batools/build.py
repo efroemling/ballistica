@@ -172,7 +172,7 @@ def lazybuild(target: str, category: SourceCategory, command: str) -> None:
     """
     paths: List[str]
 
-    # Everything possibly affecting generated sources.
+    # Everything possibly affecting meta builds.
     if category is SourceCategory.META:
         paths = [
             'Makefile', 'tools/generate_code', 'tools/batools/codegen.py',

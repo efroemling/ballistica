@@ -136,11 +136,11 @@ clean-list:
 
 # Assemble & run a gui debug build for this platform.
 prefab-gui-debug: prefab-gui-debug-build
-	${${shell tools/pcommand prefab_run_var gui-debug}}
+	$($(shell tools/pcommand prefab_run_var gui-debug))
 
 # Assemble & run a gui release build for this platform.
 prefab-gui-release: prefab-gui-release-build
-	${${shell tools/pcommand prefab_run_var gui-release}}
+	$($(shell tools/pcommand prefab_run_var gui-release))
 
 # Assemble a debug build for this platform.
 prefab-gui-debug-build:
@@ -152,11 +152,11 @@ prefab-gui-release-build:
 
 # Assemble & run a server debug build for this platform.
 prefab-server-debug: prefab-server-debug-build
-	${${shell tools/pcommand prefab_run_var server-debug}}
+	$($(shell tools/pcommand prefab_run_var server-debug))
 
 # Assemble & run a server release build for this platform.
 prefab-server-release: prefab-server-release-build
-	${${shell tools/pcommand prefab_run_var server-release}}
+	$($(shell tools/pcommand prefab_run_var server-release))
 
 # Assemble a server debug build for this platform.
 prefab-server-debug-build:
@@ -238,7 +238,7 @@ build/prefab/lib/mac_%_gui/release/libballisticacore_internal.a: .efrocachemap
 # Mac server debug:
 
 RUN_PREFAB_MAC_X86_64_SERVER_DEBUG = cd \
- build/prefab/full/mac_server_x86_64_server/debug && ./ballisticacore_server
+ build/prefab/full/mac_x86_64_server/debug && ./ballisticacore_server
 
 RUN_PREFAB_MAC_ARM64_SERVER_DEBUG = cd \
  build/prefab/full/mac_arm64_server/debug && ./ballisticacore_server
