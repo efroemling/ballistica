@@ -444,6 +444,12 @@ def warm_start_asset_build() -> None:
             check=True)
 
 
+def gendocs() -> None:
+    """Generate docs html."""
+    import batools.gendocs
+    batools.gendocs.run(projroot=str(PROJROOT))
+
+
 def update_docs_md() -> None:
     """Updates docs markdown files if necessary."""
     import batools.build

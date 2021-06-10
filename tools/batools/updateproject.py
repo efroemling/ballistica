@@ -118,6 +118,10 @@ class Updater:
         # (this will get filtered and be unequal in spinoff projects)
         if 'ballistica' + 'core' == 'ballisticacore':
             self._update_dummy_module()
+
+        # Docs checks/updates will only run if BA_ENABLE_DOCS_UPDATES=1
+        # is set in the environment.
+        if os.environ.get('BA_ENABLE_DOCS_UPDATES') == '1':
             self._update_docs_md()
 
         if self._check:
@@ -175,14 +179,12 @@ class Updater:
         # We need to do this near the end because it may run the cmake build
         # so its success may depend on the cmake build files having already
         # been updated.
-        # (only do this if gendocs is available)
-        if os.path.exists('tools/gendocs.py'):
-            try:
-                subprocess.run(['tools/pcommand', 'update_docs_md'] +
-                               self._checkarglist,
-                               check=True)
-            except Exception as exc:
-                raise CleanError('Error checking/updating docs') from exc
+        try:
+            subprocess.run(['tools/pcommand', 'update_docs_md'] +
+                           self._checkarglist,
+                           check=True)
+        except Exception as exc:
+            raise CleanError('Error checking/updating docs') from exc
 
     def _update_prereqs(self) -> None:
 

@@ -784,7 +784,7 @@ def update_docs_md(check: bool) -> None:
     # We store the hash in a separate file that only exists on private
     # so public isn't full of constant hash change commits.
     # (don't care so much on private)
-    docs_hash_path = 'docs/ba_module_hash'
+    docs_hash_path = '.cache/ba_module_hash'
 
     # Generate a hash from all c/c++ sources under the python subdir
     # as well as all python scripts.
@@ -802,13 +802,18 @@ def update_docs_md(check: bool) -> None:
                 if any(fname.endswith(ext) for ext in exts):
                     pysources.append(os.path.join(root, fname))
     pysources.sort()
+    storedhash: Optional[str]
     curhash = get_files_hash(pysources)
 
     # Extract the current embedded hash.
-    with open(docs_hash_path) as infile:
-        storedhash = infile.read()
+    if os.path.exists(docs_hash_path):
+        with open(docs_hash_path) as infile:
+            storedhash = infile.read()
+    else:
+        storedhash = None
 
-    if curhash != storedhash or not os.path.exists(docs_path):
+    if (storedhash is None or curhash != storedhash
+            or not os.path.exists(docs_path)):
         if check:
             raise RuntimeError('Docs markdown is out of date.')
 
@@ -821,6 +826,7 @@ def update_docs_md(check: bool) -> None:
             docs = infile.read()
         docs = ('<!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->\n'
                 ) + docs
+        os.makedirs(os.path.dirname(docs_path), exist_ok=True)
         with open(docs_path, 'w') as outfile:
             outfile.write(docs)
         with open(docs_hash_path, 'w') as outfile:

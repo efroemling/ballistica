@@ -1021,5 +1021,12 @@ _windows-wsl-rebuild:
    $(VISUAL_STUDIO_VERSION)
 	@tools/pcommand echo BLU BLD Built build/windows/BallisticaCore$(WINPRJ).exe.
 
+# Generate docs.
+docs:
+	@tools/pcommand echo BLU GENERATING DOCS HTML...
+	@mkdir -p ${BUILD_DIR}
+	@tools/pcommand gendocs
+
 # Tell make which of these targets don't represent files.
-.PHONY: _cmake-simple-ci-server-build _windows-wsl-build _windows-wsl-rebuild
+.PHONY: _cmake-simple-ci-server-build _windows-wsl-build _windows-wsl-rebuild \
+      docs
