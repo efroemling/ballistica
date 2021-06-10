@@ -834,7 +834,7 @@ def win_ci_binary_build() -> None:
                'BallisticaCoreGenericInternal.pdb')
     get_target('ballisticacore-windows/Generic/BallisticaCore.ico')
 
-    if bool(True):
+    if bool(False):
         subprocess.run(
             [
                 'C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\'
@@ -848,4 +848,4 @@ def win_ci_binary_build() -> None:
             ],
             check=True,
         )
-    print('so far so good 3', flush=True)
+    print('so far so good 4', flush=True)
