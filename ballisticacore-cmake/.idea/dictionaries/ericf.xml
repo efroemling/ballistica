@@ -166,6 +166,7 @@
       <w>charstr</w>
       <w>chatmessage</w>
       <w>chdir</w>
+      <w>checkarglist</w>
       <w>checkboxwidget</w>
       <w>checkchisel</w>
       <w>childanntype</w>
@@ -399,6 +400,7 @@
       <w>gbus</w>
       <w>gcc's</w>
       <w>gearvr</w>
+      <w>genchangelog</w>
       <w>getactivity</w>
       <w>getattro</w>
       <w>getattrofunc</w>

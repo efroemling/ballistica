@@ -10,9 +10,9 @@ cpp_sources: ../ballistica/generated/python_embedded/binding.inc \
 clean:
 	@rm -rf ../ballistica/generated
 
-../ballistica/generated/python_embedded/bootstrap.inc : bameta/python_embedded/bootstrap.py ../../tools/batools/codegen.py
+../ballistica/generated/python_embedded/bootstrap.inc : bameta/python_embedded/bootstrap.py ../../tools/batools/meta.py
 	@../../tools/pcommand gen_flat_data_code $< $@ bootstrap_code
 
-../ballistica/generated/python_embedded/binding.inc : bameta/python_embedded/binding.py ../../tools/batools/codegen.py
+../ballistica/generated/python_embedded/binding.inc : bameta/python_embedded/binding.py ../../tools/batools/meta.py
 	@../../tools/pcommand gen_binding_code $< $@
 

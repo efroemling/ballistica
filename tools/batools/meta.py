@@ -1,6 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Functionality related to code generation."""
+"""Functionality used in meta-builds (dynamically generated sources)."""
 from __future__ import annotations
 
 import os

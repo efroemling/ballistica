@@ -804,24 +804,24 @@ def cmake_prep_dir() -> None:
 def gen_binding_code() -> None:
     """Generate binding.inc file."""
     from efro.error import CleanError
-    import batools.codegen
+    import batools.meta
     if len(sys.argv) != 4:
         raise CleanError('Expected 2 args (srcfile, dstfile)')
     inpath = sys.argv[2]
     outpath = sys.argv[3]
-    batools.codegen.gen_binding_code(str(PROJROOT), inpath, outpath)
+    batools.meta.gen_binding_code(str(PROJROOT), inpath, outpath)
 
 
 def gen_flat_data_code() -> None:
     """Generate a C++ include file from a Python file."""
     from efro.error import CleanError
-    import batools.codegen
+    import batools.meta
     if len(sys.argv) != 5:
         raise CleanError('Expected 3 args (srcfile, dstfile, varname)')
     inpath = sys.argv[2]
     outpath = sys.argv[3]
     varname = sys.argv[4]
-    batools.codegen.gen_flat_data_code(str(PROJROOT), inpath, outpath, varname)
+    batools.meta.gen_flat_data_code(str(PROJROOT), inpath, outpath, varname)
 
 
 def win_ci_binary_build() -> None:
@@ -849,3 +849,9 @@ def win_ci_binary_build() -> None:
             check=True,
         )
     print('so far so good 4', flush=True)
+
+
+def genchangelog() -> None:
+    """Gen a pretty html changelog."""
+    from batools.genchangelog import generate
+    generate(projroot=str(PROJROOT))

@@ -53,6 +53,7 @@ class Updater:
         self._check = check
         self._fix = fix
         self._checkarg = ' --check' if self._check else ''
+        self._checkarglist: List[str] = ['--check'] if self._check else []
 
         # We behave differently in the public repo
         self._public = getconfig(Path('.'))['public']
@@ -79,8 +80,8 @@ class Updater:
 
         # NOTE: Do py-enums before updating asset deps since it *is* an asset.
         self._update_python_enums_module()
-        self._update_resources_makefile()
         self._update_meta_makefile()
+        self._update_resources_makefile()
         self._update_assets_makefile()
 
         self._check_makefiles()
@@ -176,11 +177,12 @@ class Updater:
         # been updated.
         # (only do this if gendocs is available)
         if os.path.exists('tools/gendocs.py'):
-            if os.system('tools/pcommand update_docs_md' +
-                         self._checkarg) != 0:
-                print(f'{Clr.RED}Error checking/updating'
-                      f' docs markdown.{Clr.RST}')
-                sys.exit(255)
+            try:
+                subprocess.run(['tools/pcommand', 'update_docs_md'] +
+                               self._checkarglist,
+                               check=True)
+            except Exception as exc:
+                raise CleanError('Error checking/updating docs') from exc
 
     def _update_prereqs(self) -> None:
 

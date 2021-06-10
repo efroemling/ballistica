@@ -337,6 +337,7 @@
       <w>chdir</w>
       <w>cheadersline</w>
       <w>checkarg</w>
+      <w>checkarglist</w>
       <w>checkboxwidget</w>
       <w>checkchisel</w>
       <w>checkenv</w>
@@ -886,6 +887,7 @@
       <w>gameutils</w>
       <w>gbytecount</w>
       <w>gearvr</w>
+      <w>genchangelog</w>
       <w>gendocs</w>
       <w>gendummymodule</w>
       <w>genericpath</w>
