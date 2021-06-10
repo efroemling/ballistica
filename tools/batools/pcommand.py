@@ -827,9 +827,23 @@ def gen_flat_data_code() -> None:
 def win_ci_binary_build() -> None:
     """Simple windows binary build for ci."""
     from efrotools.efrocache import get_target
+    import subprocess
     get_target('build/prefab/lib/windows/Debug_Win32/'
-            'BallisticaCoreGenericInternal.lib')
+               'BallisticaCoreGenericInternal.lib')
     get_target('build/prefab/lib/windows/Debug_Win32/'
-            'BallisticaCoreGenericInternal.pdb')
+               'BallisticaCoreGenericInternal.pdb')
     get_target('ballisticacore-windows/Generic/BallisticaCore.ico')
-    print('so far so good 2', flush=True)
+
+    subprocess.run(
+        [
+            'C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\'
+            'Community\\MSBuild\\Current\\Bin\\MSBuild.exe',
+            'ballisticacore-windows\\Generic\\BallisticaCoreGeneric.vcxproj',
+            '-target:Build',
+            '-property:Configuration=Debug',
+            '-property:Platform=Win32',
+            '-property:VisualStudioVersion=16',
+        ],
+        check=True,
+    )
+    print('so far so good 3', flush=True)
