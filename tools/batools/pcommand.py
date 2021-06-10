@@ -834,11 +834,11 @@ def win_ci_binary_build() -> None:
                'BallisticaCoreGenericInternal.pdb')
     get_target('ballisticacore-windows/Generic/BallisticaCore.ico')
 
-    if bool(False):
+    if bool(True):
         subprocess.run(
             [
                 'C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\'
-                'Community\\MSBuild\\Current\\Bin\\MSBuild.exe',
+                'Enterprise\\MSBuild\\Current\\Bin\\MSBuild.exe',
                 'ballisticacore-windows\\Generic'
                 '\\BallisticaCoreGeneric.vcxproj',
                 '-target:Build',
