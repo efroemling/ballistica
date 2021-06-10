@@ -822,3 +822,17 @@ def gen_flat_data_code() -> None:
     outpath = sys.argv[3]
     varname = sys.argv[4]
     batools.codegen.gen_flat_data_code(str(PROJROOT), inpath, outpath, varname)
+
+
+def win_ci_binary_build() -> None:
+    """Simple windows binary build for ci."""
+    import subprocess
+    subprocess.run(
+        [
+            'tools/pcommand', 'efrocache_get',
+            'build/prefab/lib/windows/Debug_Win32/'
+            'BallisticaCoreGenericInternal.lib'
+        ],
+        check=True,
+    )
+    print('so far so good!')

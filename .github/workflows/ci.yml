@@ -57,4 +57,4 @@ jobs:
     - name: Run tests
       run: python tools/pcommand pytest -v tests
     - name: Compile binary
-      run: tools/pcommand efrocache_get build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.lib        
+      run: tools/pcommand win_ci_binary_build
