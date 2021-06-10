@@ -57,4 +57,4 @@ jobs:
     - name: Run tests
       run: python tools/pcommand pytest -v tests
     - name: Compile binary
-      run: tools/pcommand win_ci_binary_build
+      run: python tools/pcommand win_ci_binary_build
