@@ -835,4 +835,4 @@ def win_ci_binary_build() -> None:
         ],
         check=True,
     )
-    print('so far so good!')
+    print('so far so good', flush=True)
