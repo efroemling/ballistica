@@ -826,13 +826,16 @@ def gen_flat_data_code() -> None:
 
 def win_ci_binary_build() -> None:
     """Simple windows binary build for ci."""
-    import subprocess
-    subprocess.run(
-        [
-            'tools/pcommand', 'efrocache_get',
-            'build/prefab/lib/windows/Debug_Win32/'
-            'BallisticaCoreGenericInternal.lib'
-        ],
-        check=True,
-    )
+    from efrotools.efrocache import get_target
+    get_target('build/prefab/lib/windows/Debug_Win32/'
+            'BallisticaCoreGenericInternal.lib')
+    # import subprocess
+    # subprocess.run(
+    #     [
+    #         'python', 'tools/pcommand', 'efrocache_get',
+    #         'build/prefab/lib/windows/Debug_Win32/'
+    #         'BallisticaCoreGenericInternal.lib'
+    #     ],
+    #     check=True,
+    # )
     print('so far so good', flush=True)
