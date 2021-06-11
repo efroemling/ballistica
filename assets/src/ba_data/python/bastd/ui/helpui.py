@@ -301,17 +301,20 @@ class HelpWindow(ba.Window):
                           maxwidth=100,
                           text=txt,
                           h_align='right',
-                          color=header,
                           v_align='center',
+                          color=header,
                           flatness=1.0)
 
             txt_scale = 0.7
             if not app.vr_mode:
-                txt = ba.Lstr(resource=self._r + '.controllersInfoText',
-                              subs=[('${APP_NAME}',
-                                     ba.Lstr(resource='titleText')),
-                                    ('${REMOTE_APP_NAME}',
-                                     get_remote_app_name())]).evaluate()
+                infotxt = ('.controllersInfoTextRemoteOnly'
+                           if app.iircade_mode else '.controllersInfoText')
+                txt = ba.Lstr(
+                    resource=self._r + infotxt,
+                    fallback_resource=self._r + '.controllersInfoText',
+                    subs=[('${APP_NAME}', ba.Lstr(resource='titleText')),
+                          ('${REMOTE_APP_NAME}', get_remote_app_name())
+                          ]).evaluate()
             else:
                 txt = ba.Lstr(resource=self._r + '.devicesInfoText',
                               subs=[('${APP_NAME}',

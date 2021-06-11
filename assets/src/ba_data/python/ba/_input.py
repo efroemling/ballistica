@@ -29,6 +29,27 @@ def get_device_value(device: ba.InputDevice, name: str) -> Any:
     subplatform = app.subplatform
     appconfig = _ba.app.config
 
+    # iiRcade: hard-code for a/b/c/x for now...
+    if _ba.app.iircade_mode:
+        return {
+            'triggerRun2': 19,
+            'unassignedButtonsRun': False,
+            'buttonPickUp': 100,
+            'buttonBomb': 98,
+            'buttonJump': 97,
+            'buttonStart': 83,
+            'buttonStart2': 109,
+            'buttonPunch': 99,
+            'buttonRun2': 102,
+            'buttonRun1': 101,
+            'triggerRun1': 18,
+            'buttonLeft': 22,
+            'buttonRight': 23,
+            'buttonUp': 20,
+            'buttonDown': 21,
+            'buttonVRReorient': 110
+        }.get(name, -1)
+
     # If there's an entry in our config for this controller, use it.
     if 'Controllers' in appconfig:
         ccfgs = appconfig['Controllers']

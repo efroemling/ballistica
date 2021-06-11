@@ -724,6 +724,7 @@
       <w>f'fixme</w>
       <w>factoryclass</w>
       <w>fakemodule</w>
+      <w>fakeshake</w>
       <w>fallbacks</w>
       <w>farthestpt</w>
       <w>fback</w>
@@ -1069,6 +1070,7 @@
       <w>infilepath</w>
       <w>infos</w>
       <w>infotextcolor</w>
+      <w>infotxt</w>
       <w>inidividual</w>
       <w>initializers</w>
       <w>initialplayerinfos</w>
@@ -1114,6 +1116,7 @@
       <w>itms</w>
       <w>itmsp</w>
       <w>itunes</w>
+      <w>itunesconnectutils</w>
       <w>ival</w>
       <w>jackmorgan</w>
       <w>janktastic</w>
@@ -1166,6 +1169,7 @@
       <w>langnames</w>
       <w>langs</w>
       <w>langtarget</w>
+      <w>langutils</w>
       <w>langval</w>
       <w>larmbeast</w>
       <w>lasthash</w>
@@ -1510,6 +1514,7 @@
       <w>objname</w>
       <w>objs</w>
       <w>objt</w>
+      <w>objtoyaml</w>
       <w>objtype</w>
       <w>obval</w>
       <w>occurrances</w>
@@ -1595,6 +1600,7 @@
       <w>pcall</w>
       <w>pchild</w>
       <w>pcommand</w>
+      <w>pcommands</w>
       <w>pcstr</w>
       <w>pdataclass</w>
       <w>pedit</w>
@@ -1828,6 +1834,7 @@
       <w>rawkey</w>
       <w>rawpath</w>
       <w>rawpaths</w>
+      <w>rcade</w>
       <w>rcfile</w>
       <w>rdict</w>
       <w>rdir</w>
@@ -2523,6 +2530,7 @@
       <w>xpos</w>
       <w>xres</w>
       <w>xscl</w>
+      <w>xtweak</w>
       <w>xval</w>
       <w>xxdiff</w>
       <w>xxhdpi</w>
@@ -2536,6 +2544,7 @@
       <w>ypos</w>
       <w>yres</w>
       <w>yscl</w>
+      <w>ytweak</w>
       <w>yval</w>
       <w>zaggy</w>
       <w>zimbot</w>

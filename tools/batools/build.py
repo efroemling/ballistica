@@ -5,11 +5,11 @@ from __future__ import annotations
 
 import os
 import sys
-from enum import Enum
 import datetime
-from dataclasses import dataclass
 import subprocess
+from enum import Enum
 from pathlib import Path
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from efro.error import CleanError
@@ -32,7 +32,7 @@ class PipRequirement:
 # entries; this accounts for manual installations or other nonstandard setups.
 PIP_REQUIREMENTS = [
     PipRequirement(modulename='pylint', minversion=[2, 8, 2]),
-    PipRequirement(modulename='mypy', minversion=[0, 901]),
+    PipRequirement(modulename='mypy', minversion=[0, 902]),
     PipRequirement(modulename='yapf', minversion=[0, 31, 0]),
     PipRequirement(modulename='cpplint', minversion=[1, 5, 5]),
     PipRequirement(modulename='pytest', minversion=[6, 2, 4]),

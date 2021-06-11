@@ -71,18 +71,20 @@ def get_all_tips() -> List[str]:
         ('You can judge when a bomb is going to explode based on the\n'
          'color of sparks from its fuse:  yellow..orange..red..BOOM.'),
     ]
-    tips += [
-        'If your framerate is choppy, try turning down resolution\nor '
-        'visuals in the game\'s graphics settings.'
-    ]
     app = _ba.app
-    if app.platform in ('android', 'ios') and not app.on_tv:
+    if not app.iircade_mode:
+        tips += [
+            'If your framerate is choppy, try turning down resolution\nor '
+            'visuals in the game\'s graphics settings.'
+        ]
+    if (app.platform in ('android', 'ios') and not app.on_tv
+            and not app.iircade_mode):
         tips += [
             ('If your device gets too warm or you\'d like to conserve '
              'battery power,\nturn down "Visuals" or "Resolution" '
              'in Settings->Graphics'),
         ]
-    if app.platform in ['mac', 'android']:
+    if app.platform in ['mac', 'android'] and not app.iircade_mode:
         tips += [
             'Tired of the soundtrack?  Replace it with your own!'
             '\nSee Settings->Audio->Soundtrack'
@@ -90,7 +92,7 @@ def get_all_tips() -> List[str]:
 
     # Hot-plugging is currently only on some platforms.
     # FIXME: Should add a platform entry for this so don't forget to update it.
-    if app.platform in ['mac', 'android', 'windows']:
+    if app.platform in ['mac', 'android', 'windows'] and not app.iircade_mode:
         tips += [
             'Players can join and leave in the middle of most games,\n'
             'and you can also plug and unplug controllers on the fly.',

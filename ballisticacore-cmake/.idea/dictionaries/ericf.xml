@@ -331,6 +331,7 @@
       <w>extrascale</w>
       <w>exts</w>
       <w>facepts</w>
+      <w>fakeshake</w>
       <w>farval</w>
       <w>fastdot</w>
       <w>fastldlt</w>
@@ -485,6 +486,7 @@
       <w>imagewidget</w>
       <w>incentivized</w>
       <w>inet</w>
+      <w>infotxt</w>
       <w>inides</w>
       <w>initguid</w>
       <w>inittab</w>
@@ -511,6 +513,7 @@
       <w>itri</w>
       <w>itsclass</w>
       <w>itunes</w>
+      <w>itunesconnectutils</w>
       <w>ival</w>
       <w>ivals</w>
       <w>ized</w>
@@ -537,6 +540,7 @@
       <w>kronk</w>
       <w>kwds</w>
       <w>kxyz</w>
+      <w>langutils</w>
       <w>lantinga</w>
       <w>largeish</w>
       <w>larmbeast</w>
@@ -688,6 +692,7 @@
       <w>nyffenegger</w>
       <w>objexists</w>
       <w>objid</w>
+      <w>objtoyaml</w>
       <w>obstack</w>
       <w>obvs</w>
       <w>oculus</w>
@@ -733,6 +738,7 @@
       <w>parameteriv</w>
       <w>passcode</w>
       <w>pausable</w>
+      <w>pcommands</w>
       <w>pdataclass</w>
       <w>pdst</w>
       <w>persp</w>
@@ -819,6 +825,7 @@
       <w>raspbian</w>
       <w>rasterizer</w>
       <w>rawkey</w>
+      <w>rcade</w>
       <w>reaaaly</w>
       <w>readset</w>
       <w>realloc</w>
@@ -1127,6 +1134,7 @@
       <w>xmin</w>
       <w>xmmintrin</w>
       <w>xoffset</w>
+      <w>xtweak</w>
       <w>yclamped</w>
       <w>ydiff</w>
       <w>ydist</w>
@@ -1134,6 +1142,7 @@
       <w>ymin</w>
       <w>yoffs</w>
       <w>yooooooo</w>
+      <w>ytweak</w>
       <w>zmax</w>
       <w>zmin</w>
       <w>zoffset</w>

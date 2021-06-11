@@ -407,10 +407,8 @@ class Updater:
                     'tools/devtool', 'tools/version_utils', 'tools/vmshell'
             ]:
                 if not contents.startswith(f'#!/usr/bin/env python{PYVER}'):
-                    # TEMP: allow this until ballistica.net is updated
-                    if fname != 'tools/staging_server_upkeep':
-                        raise CleanError(f'Incorrect shebang (first line) for '
-                                         f'{fname}.')
+                    raise CleanError(f'Incorrect shebang (first line) for '
+                                     f'{fname}.')
         else:
             copyrightline = 0
 

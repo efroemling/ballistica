@@ -205,10 +205,14 @@ auto Joystick::GetButtonName(int index) -> std::string {
         return "Dpad Right";
       case 21:
         return "Dpad Down";
+      case 102:
+        return "Z";
       case 101:
         return "Y";
       case 100:
         return "X";
+      case 99:
+        return "C";
       case 98:
         return "B";
       case 97:

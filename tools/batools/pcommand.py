@@ -1,10 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Standard snippets that can be pulled into project pcommand scripts.
-
-A snippet is a mini-program that directly takes input from stdin and does
-some focused task. This module consists of ballistica-specific ones.
-"""
+"""A nice collection of ready-to-use pcommands for this package."""
 from __future__ import annotations
 
 # Note: import as little as possible here at the module level to
@@ -792,7 +788,7 @@ def update_cmake_prefab_lib() -> None:
 
 
 def cmake_prep_dir() -> None:
-    """Create a dir, recreating it when cmake/python/etc. version changes.
+    """Create dir & recreate when cmake/python/etc. version changes.
 
     Useful to prevent builds from breaking when cmake or other components
     are updated.
