@@ -169,8 +169,9 @@ def lazy_increment_build() -> None:
         if not update_hash_only:
             # Just go ahead and bless; this will increment the build as needed.
             # subprocess.run(['make', 'bless'], check=True)
-            subprocess.run(['tools/version_utils', 'incrementbuild'],
-                           check=True)
+            subprocess.run(
+                ['tools/pcommand', 'version_utils', 'incrementbuild'],
+                check=True)
 
         # We probably just changed code, so we need to re-calc the hash.
         codehash = get_files_hash(codefiles)
@@ -436,8 +437,12 @@ def warm_start_asset_build() -> None:
         # For internal builds we don't use efrocache but we do use an
         # internal build cache. Download an initial cache/etc. if need be.
         subprocess.run(
-            [str(Path(PROJROOT, 'tools/convert_util')), '--init-asset-cache'],
-            check=True)
+            [
+                str(Path(PROJROOT, 'tools/pcommand')), 'convert_util',
+                '--init-asset-cache'
+            ],
+            check=True,
+        )
 
 
 def gendocs() -> None:

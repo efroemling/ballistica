@@ -403,9 +403,7 @@ class Updater:
         # differ)
         if contents.startswith('#!/'):
             copyrightline = 1
-            if fname not in [
-                    'tools/devtool', 'tools/version_utils', 'tools/vmshell'
-            ]:
+            if fname not in ['tools/vmshell']:
                 if not contents.startswith(f'#!/usr/bin/env python{PYVER}'):
                     raise CleanError(f'Incorrect shebang (first line) for '
                                      f'{fname}.')

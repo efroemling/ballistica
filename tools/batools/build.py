@@ -181,7 +181,7 @@ def lazybuild(target: str, category: SourceCategory, command: str) -> None:
 
     # Everything possibly affecting asset builds.
     elif category is SourceCategory.ASSETS:
-        paths = ['Makefile', 'tools/convert_util', 'assets/src']
+        paths = ['Makefile', 'tools/pcommand', 'convert_util', 'assets/src']
 
     # Everything possibly affecting CMake builds.
     elif category is SourceCategory.CMAKE:
