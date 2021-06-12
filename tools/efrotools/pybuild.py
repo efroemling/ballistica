@@ -351,7 +351,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     # These builds require ANDROID_NDK to be set, so make sure that's
     # the case.
     os.environ['ANDROID_NDK'] = subprocess.check_output(
-        [rootdir + '/tools/android_sdk_utils',
+        [f'{rootdir}/tools/pcommand', 'android_sdk_utils',
          'get-ndk-path']).decode().strip()
 
     # Ok, let 'er rip

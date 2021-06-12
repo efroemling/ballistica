@@ -1,4 +1,3 @@
-#!/usr/bin/env python3.8
 # Released under the MIT License. See LICENSE for details.
 #
 """Functionality related to android builds."""
@@ -45,10 +44,10 @@ def androidaddr(archive_dir: str, arch: str, addr: str) -> None:
         print('ERROR: invalid arch "' + arch + '"; (choices are ' +
               ', '.join(archs.keys()) + ')')
         sys.exit(255)
-    sdkutils = 'tools/android_sdk_utils'
     rootdir = '.'
-    ndkpath = subprocess.check_output([sdkutils,
-                                       'get-ndk-path']).decode().strip()
+    ndkpath = subprocess.check_output(
+        ['tools/pcommand', 'android_sdk_utils',
+         'get-ndk-path']).decode().strip()
     if not os.path.isdir(ndkpath):
         print("ERROR: ndk-path '" + ndkpath + '" does not exist')
         sys.exit(255)

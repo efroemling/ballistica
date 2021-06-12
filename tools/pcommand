@@ -39,7 +39,8 @@ from batools.pcommand import (
     android_archive_unstripped_libs, efro_gradle, stage_assets,
     update_assets_makefile, update_project, update_cmake_prefab_lib,
     cmake_prep_dir, gen_binding_code, gen_flat_data_code, wsl_path_to_win,
-    wsl_build_check_win_drive, win_ci_binary_build, genchangelog)
+    wsl_build_check_win_drive, win_ci_binary_build, genchangelog,
+    android_sdk_utils)
 # pylint: enable=unused-import
 
 if TYPE_CHECKING:
