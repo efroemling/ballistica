@@ -880,3 +880,18 @@ def update_meta_makefile() -> None:
     """Update the meta Makefile if needed."""
     from batools.metamakefile import update
     update(projroot=str(PROJROOT), check='--check' in sys.argv)
+
+
+def xcode_build_path() -> None:
+    """Get the build path for an xcode project."""
+    import os
+    from batools.xcode import project_build_path
+    if len(sys.argv) != 4:
+        raise Exception(
+            'Expected 2 args: <xcode project path> <configuration name>')
+    project_path = os.path.abspath(sys.argv[2])
+    configuration = sys.argv[3]
+    path = project_build_path(projroot=str(PROJROOT),
+                              project_path=project_path,
+                              configuration=configuration)
+    print(path)

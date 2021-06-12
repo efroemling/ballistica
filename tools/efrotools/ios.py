@@ -67,10 +67,10 @@ def push_ipa(root: pathlib.Path, modename: str) -> None:
         raise Exception('invalid mode: "' + str(modename) + '"')
     mode = MODES[modename]
 
-    xc_build_path = pathlib.Path(root, 'tools/xc_build_path')
+    pcommand_path = pathlib.Path(root, 'tools/pcommand')
     xcprojpath = pathlib.Path(root, cfg.projectpath)
     app_dir = subprocess.run(
-        [xc_build_path, xcprojpath, mode['configuration']],
+        [pcommand_path, 'xcode_build_path', xcprojpath, mode['configuration']],
         check=True,
         capture_output=True).stdout.decode().strip()
     built_app_path = pathlib.Path(app_dir, cfg.app_bundle_name)
