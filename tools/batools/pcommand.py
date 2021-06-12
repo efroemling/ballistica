@@ -901,3 +901,11 @@ def update_python_enums_module() -> None:
     """Update our procedurally generated python enums."""
     from batools.pythonenumsmodule import update
     update(projroot=str(PROJROOT), check='--check' in sys.argv)
+
+
+def update_dummy_module() -> None:
+    """Update our _ba dummy module."""
+    from batools.dummymodule import update
+    update(projroot=str(PROJROOT),
+           check='--check' in sys.argv,
+           force='--force' in sys.argv)

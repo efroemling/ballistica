@@ -41,7 +41,7 @@ from batools.pcommand import (
     cmake_prep_dir, gen_binding_code, gen_flat_data_code, wsl_path_to_win,
     wsl_build_check_win_drive, win_ci_binary_build, genchangelog,
     android_sdk_utils, update_resources_makefile, update_meta_makefile,
-    xcode_build_path, update_python_enums_module)
+    xcode_build_path, update_python_enums_module, update_dummy_module)
 # pylint: enable=unused-import
 
 if TYPE_CHECKING:
