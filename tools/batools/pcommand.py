@@ -874,3 +874,9 @@ def update_resources_makefile() -> None:
     """Update the resources Makefile if needed."""
     from batools.resourcesmakefile import update
     update(projroot=str(PROJROOT), check='--check' in sys.argv)
+
+
+def update_meta_makefile() -> None:
+    """Update the meta Makefile if needed."""
+    from batools.metamakefile import update
+    update(projroot=str(PROJROOT), check='--check' in sys.argv)
