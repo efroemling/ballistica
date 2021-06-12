@@ -895,3 +895,9 @@ def xcode_build_path() -> None:
                               project_path=project_path,
                               configuration=configuration)
     print(path)
+
+
+def update_python_enums_module() -> None:
+    """Update our procedurally generated python enums."""
+    from batools.pythonenumsmodule import update
+    update(projroot=str(PROJROOT), check='--check' in sys.argv)

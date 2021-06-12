@@ -691,9 +691,13 @@ class Updater:
                     'Error checking/updating resources Makefile.') from exc
 
     def _update_python_enums_module(self) -> None:
-        if os.path.exists('tools/update_python_enums_module'):
-            if os.system('tools/update_python_enums_module' +
-                         self._checkarg) != 0:
-                print(f'{Clr.RED}Error checking/updating'
-                      f' python enums module.{Clr.RST}')
-                sys.exit(255)
+        # FIXME: should support running this in public too.
+        if not self._public:
+            try:
+                subprocess.run(
+                    ['tools/pcommand', 'update_python_enums_module'] +
+                    self._checkarglist,
+                    check=True)
+            except Exception as exc:
+                raise CleanError(
+                    'Error checking/updating python enums module.') from exc
