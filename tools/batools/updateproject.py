@@ -675,12 +675,16 @@ class Updater:
                 sys.exit(255)
 
     def _update_resources_makefile(self) -> None:
-        if os.path.exists('tools/update_resources_makefile'):
-            if os.system('tools/update_resources_makefile' +
-                         self._checkarg) != 0:
-                print(f'{Clr.RED}Error checking/updating'
-                      f' resources Makefile.{Clr.RST}')
-                sys.exit(255)
+        # FIXME: should support running this in public too.
+        if not self._public:
+            try:
+                subprocess.run(
+                    ['tools/pcommand', 'update_resources_makefile'] +
+                    self._checkarglist,
+                    check=True)
+            except Exception as exc:
+                raise CleanError(
+                    'Error checking/updating resources Makefile.') from exc
 
     def _update_python_enums_module(self) -> None:
         if os.path.exists('tools/update_python_enums_module'):

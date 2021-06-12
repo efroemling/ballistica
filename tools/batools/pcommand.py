@@ -868,3 +868,9 @@ def android_sdk_utils() -> None:
     """Wrangle android sdk stuff."""
     from batools.androidsdkutils import run
     run(projroot=str(PROJROOT), args=sys.argv[2:])
+
+
+def update_resources_makefile() -> None:
+    """Update the resources Makefile if needed."""
+    from batools.resourcesmakefile import update
+    update(projroot=str(PROJROOT), check='--check' in sys.argv)

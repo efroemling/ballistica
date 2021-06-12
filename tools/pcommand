@@ -40,7 +40,7 @@ from batools.pcommand import (
     update_assets_makefile, update_project, update_cmake_prefab_lib,
     cmake_prep_dir, gen_binding_code, gen_flat_data_code, wsl_path_to_win,
     wsl_build_check_win_drive, win_ci_binary_build, genchangelog,
-    android_sdk_utils)
+    android_sdk_utils, update_resources_makefile)
 # pylint: enable=unused-import
 
 if TYPE_CHECKING:
