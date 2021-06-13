@@ -118,12 +118,16 @@ clean-list:
 	${CHECK_CLEAN_SAFETY}
 	git clean -dnx ${ROOT_CLEAN_IGNORES}
 
+# Force regenerate the dummy module.
+dummymodule:
+	./tools/pcommand update_dummy_module --force
+
 # Tell make which of these targets don't represent files.
 .PHONY: help prereqs prereqs-clean assets assets-cmake assets-windows \
   assets-windows-Win32 assets-windows-x64 \
   assets-mac assets-ios assets-android assets-clean \
   resources resources-clean meta meta-clean \
-  clean clean-list
+  clean clean-list dummymodule
 
 
 ################################################################################

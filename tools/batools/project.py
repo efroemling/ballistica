@@ -1,20 +1,7 @@
 #!/usr/bin/env python3.8
 # Released under the MIT License. See LICENSE for details.
 #
-"""This script acts as a 'meta' Makefile for the project. It is in charge
-of generating Makefiles, IDE project files, procedurally generated source
-files, etc. based on the current structure of the project.
-It can also perform sanity checks or cleanup tasks.
-
-Updating should be explicitly run by the user through commands such as
-'make update', 'make check' or 'make preflight'. Other make targets should
-avoid running this script as it can modify the project structure
-arbitrarily which is not a good idea in the middle of a build.
-
-If the script is invoked with a --check argument, it should not modify any
-files but instead fail if any modifications *would* have been made.
-(used in CI builds to make sure things are kosher).
-"""
+"""General project related functionality."""
 
 from __future__ import annotations
 

@@ -742,8 +742,22 @@ def update_assets_makefile() -> None:
 
 
 def update_project() -> None:
-    """Update project files."""
-    from batools.updateproject import Updater
+    """Update project files.
+
+    This command is in charge of generating Makefiles, IDE project files,
+    etc. based on the current structure of the project.
+    It can also perform sanity checks or cleanup tasks.
+
+    Updating should be explicitly run by the user through commands such as
+    'make update', 'make check' or 'make preflight'. Other make targets should
+    avoid running this commnand as it can modify the project structure
+    arbitrarily which is not a good idea in the middle of a build.
+
+    If this command is invoked with a --check argument, it should not modify
+    any files but instead fail if any modifications *would* have been made.
+    (used in CI builds to make sure things are kosher).
+    """
+    from batools.project import Updater
     check = '--check' in sys.argv
     fix = '--fix' in sys.argv
 
