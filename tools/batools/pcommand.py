@@ -750,7 +750,7 @@ def update_project() -> None:
 
     Updating should be explicitly run by the user through commands such as
     'make update', 'make check' or 'make preflight'. Other make targets should
-    avoid running this commnand as it can modify the project structure
+    avoid running this command as it can modify the project structure
     arbitrarily which is not a good idea in the middle of a build.
 
     If this command is invoked with a --check argument, it should not modify

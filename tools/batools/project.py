@@ -670,6 +670,10 @@ class Updater:
         # build so its success may depend on the cmake build files having
         # already been updated.
 
+        # TEMP - dont do this in spinoffs
+        if 'ballistica' + 'core' != 'ballisticacore':
+            return
+
         # FIXME: should support running this in public too.
         if not self._public:
             try:
