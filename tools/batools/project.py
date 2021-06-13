@@ -102,9 +102,7 @@ class Updater:
         # independently for those projects as opposed to just using
         # things as spinoff creates them.
 
-        # (this will get filtered and be unequal in spinoff projects)
-        if 'ballistica' + 'core' == 'ballisticacore':
-            self._update_dummy_module()
+        self._update_dummy_module()
 
         # Docs checks/updates will only run if BA_ENABLE_DOCS_UPDATES=1
         # is set in the environment.
