@@ -175,8 +175,8 @@ def lazybuild(target: str, category: SourceCategory, command: str) -> None:
     # Everything possibly affecting meta builds.
     if category is SourceCategory.META:
         paths = [
-            'Makefile', 'tools/generate_code', 'tools/batools/meta.py',
-            'src/meta'
+            'Makefile', 'tools/batoolsinternal/meta.py',
+            'tools/batools/meta.py', 'src/meta'
         ]
 
     # Everything possibly affecting asset builds.

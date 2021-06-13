@@ -129,9 +129,10 @@ def _generate_targets() -> List[Target]:
                 extra_sources.append(os.path.join(TOOLS_DIR,
                                                   'batools/meta.py'))
             else:
-                cmd = os.path.join(
-                    TOOLS_DIR, f'generate_code {out_type} {name}_code $< $@')
-                extra_sources.append(os.path.join(TOOLS_DIR, 'generate_code'))
+                cmd = os.path.join(TOOLS_DIR,
+                                   'pcommand gen_encrypted_python_code $< $@')
+                extra_sources.append(
+                    os.path.join(TOOLS_DIR, 'batoolsinternal/meta.py'))
 
             targets.append(
                 Target(src=[f'{pkg}/python_embedded/{name}.py'] +

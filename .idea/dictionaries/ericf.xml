@@ -394,6 +394,7 @@
       <w>cmpf</w>
       <w>cnode</w>
       <w>codecsmodule</w>
+      <w>codedata</w>
       <w>codefilenames</w>
       <w>codefiles</w>
       <w>codehash</w>
@@ -1815,6 +1816,7 @@
       <w>pytest</w>
       <w>pythondirs</w>
       <w>pythondontwritebytecode</w>
+      <w>pythonenumsmodule</w>
       <w>pythonhashseed</w>
       <w>pythonpath</w>
       <w>pythonpaths</w>

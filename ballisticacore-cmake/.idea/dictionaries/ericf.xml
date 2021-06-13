@@ -185,6 +185,7 @@
       <w>cmath</w>
       <w>cmds</w>
       <w>cmdvals</w>
+      <w>codedata</w>
       <w>codewarrior</w>
       <w>codewarrior's</w>
       <w>cofnodes</w>
@@ -812,6 +813,7 @@
       <w>pylib</w>
       <w>pyobj</w>
       <w>pyobjs</w>
+      <w>pythonenumsmodule</w>
       <w>pytype</w>
       <w>qerr</w>
       <w>qrcode</w>
