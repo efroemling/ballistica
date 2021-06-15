@@ -1272,7 +1272,7 @@ class Generator:
         ba.quit()
 
 
-def run(projroot: str) -> None:
+def generate(projroot: str) -> None:
     """Main entry point."""
     toolsdir = os.path.abspath(os.path.join(projroot, 'tools'))
 
@@ -1298,8 +1298,8 @@ def run(projroot: str) -> None:
                 f'    import sys\n'
                 f'    import ba\n'
                 f'    sys.path.append("{toolsdir}")\n'
-                f'    from batools import gendocs\n'
-                f'    gendocs.Generator().run("{outfilename}")\n'
+                f'    import batools.docs\n'
+                f'    batools.docs.Generator().run("{outfilename}")\n'
                 f'    ba.quit()\n'
                 f'except Exception:\n'
                 f'    import sys\n'

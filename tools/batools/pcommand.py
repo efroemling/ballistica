@@ -447,8 +447,8 @@ def warm_start_asset_build() -> None:
 
 def gendocs() -> None:
     """Generate docs html."""
-    import batools.gendocs
-    batools.gendocs.run(projroot=str(PROJROOT))
+    import batools.docs
+    batools.docs.generate(projroot=str(PROJROOT))
 
 
 def update_docs_md() -> None:
@@ -874,7 +874,7 @@ def win_ci_binary_build() -> None:
 
 def genchangelog() -> None:
     """Gen a pretty html changelog."""
-    from batools.genchangelog import generate
+    from batools.changelog import generate
     generate(projroot=str(PROJROOT))
 
 

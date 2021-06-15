@@ -22,7 +22,7 @@ from efrotools import get_files_hash
 if TYPE_CHECKING:
     from types import ModuleType
     from typing import Sequence, Any, Tuple, List
-    from batools.gendocs import AttributeInfo
+    from batools.docs import AttributeInfo
 
 
 def _get_varying_func_info(sig_in: str) -> Tuple[str, str]:
@@ -488,7 +488,7 @@ def _formatdoc(docstr: str, indent: int) -> str:
 def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
     # pylint: disable=too-many-branches
     import types
-    from batools.gendocs import parse_docs_attrs
+    from batools.docs import parse_docs_attrs
     out = ''
     for classname in classnames:
         cls = getattr(module, classname)
