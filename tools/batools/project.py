@@ -669,20 +669,12 @@ class Updater:
         # Note: This should happen near the end because it may run the cmake
         # build so its success may depend on the cmake build files having
         # already been updated.
-
-        # TEMP - dont do this in spinoffs
-        if 'ballistica' + 'core' != 'ballisticacore':
-            return
-
-        # FIXME: should support running this in public too.
-        if not self._public:
-            try:
-                subprocess.run(['tools/pcommand', 'update_dummy_module'] +
-                               self._checkarglist,
-                               check=True)
-            except Exception as exc:
-                raise CleanError(
-                    'Error checking/updating dummy module.') from exc
+        try:
+            subprocess.run(['tools/pcommand', 'update_dummy_module'] +
+                           self._checkarglist,
+                           check=True)
+        except Exception as exc:
+            raise CleanError('Error checking/updating dummy module.') from exc
 
     def _update_docs_md(self) -> None:
         # Update our docs/*.md files.
