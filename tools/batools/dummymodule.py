@@ -682,10 +682,11 @@ def _dummy_module_dirty() -> Tuple[bool, str]:
         with open(outpath) as infile:
             existing_hash = infile.read()
 
+    # Important to keep this deterministic...
     pysources.sort()
 
-    # Note: returning plain integers instead of hex so linters
-    # don't see words and give spelling errors.
+    # Note: going with plain integers instead of hex so linters
+    # don't see words and whine about spelling errors.
     pysources_hash = get_files_hash(pysources, int_only=True)
     dirty = existing_hash != pysources_hash
     return dirty, pysources_hash
