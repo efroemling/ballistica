@@ -31,10 +31,12 @@ class AboutGatherTab(GatherTab):
         region_left: float,
         region_bottom: float,
     ) -> ba.Widget:
+        party_button_label = ('X' if ba.app.iircade_mode else ba.charstr(
+            ba.SpecialChar.TOP_BUTTON))
         message = ba.Lstr(
             resource='gatherWindow.aboutDescriptionText',
             subs=[('${PARTY}', ba.charstr(ba.SpecialChar.PARTY_ICON)),
-                  ('${BUTTON}', ba.charstr(ba.SpecialChar.TOP_BUTTON))],
+                  ('${BUTTON}', party_button_label)],
         )
 
         # Let's not talk about sharing in vr-mode; its tricky to fit more

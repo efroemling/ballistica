@@ -2438,6 +2438,7 @@ $(foreach element,$(SCRIPT_TARGETS_PYC_PRIVATE_ANDROID),\
 $(eval $(call make-opt-pyc-target,$(element))))
 
 SCRIPT_TARGETS_PY_PRIVATE_COMMON = \
+  build/ba_data/python-site-packages/_yaml/__init__.py \
   build/ba_data/python-site-packages/typing_extensions.py \
   build/ba_data/python-site-packages/yaml/__init__.py \
   build/ba_data/python-site-packages/yaml/composer.py \
@@ -2458,6 +2459,7 @@ SCRIPT_TARGETS_PY_PRIVATE_COMMON = \
   build/ba_data/python-site-packages/yaml/tokens.py
 
 SCRIPT_TARGETS_PYC_PRIVATE_COMMON = \
+  build/ba_data/python-site-packages/_yaml/__pycache__/__init__.cpython-38.opt-1.pyc \
   build/ba_data/python-site-packages/__pycache__/typing_extensions.cpython-38.opt-1.pyc \
   build/ba_data/python-site-packages/yaml/__pycache__/__init__.cpython-38.opt-1.pyc \
   build/ba_data/python-site-packages/yaml/__pycache__/composer.cpython-38.opt-1.pyc \
