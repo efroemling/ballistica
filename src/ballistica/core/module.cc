@@ -21,6 +21,16 @@ void Module::PushRunnable(Runnable* runnable) {
   }
 }
 
+auto Module::CheckPushSafety() -> bool {
+  if (std::this_thread::get_id() == thread()->thread_id()) {
+    // behave the same as the thread-message safety check for
+    // module messages.
+    return (runnables_.size() < kThreadMessageSafetyThreadhold);
+  } else {
+    return thread_->CheckPushModuleRunnableSafety();
+  }
+}
+
 Module::Module(std::string name_in, Thread* thread_in)
     : thread_(thread_in), name_(std::move(name_in)) {
   id_ = thread_->RegisterModule(name_, this);

@@ -21,13 +21,21 @@ class Module {
   /// Pass a Runnable that has been allocated with new().
   /// There must be no existing strong refs to it.
   /// It will be owned and disposed of by the module from this point.
-  void PushRunnable(Runnable* runnable);
+  auto PushRunnable(Runnable* runnable) -> void;
 
   /// Convenience function to push a lambda as a runnable.
   template <typename F>
-  void PushCall(const F& lambda) {
+  auto PushCall(const F& lambda) -> void {
     PushRunnable(NewLambdaRunnableRaw(lambda));
   }
+
+  /// Returns true if there is plenty of buffer space available for
+  /// PushCall/PushRunnable; can be used to avoid buffer-full errors
+  /// by discarding non-essential calls. An example is calls scheduled
+  /// due to receiving unreliable network packets; without watching
+  /// buffer space it can be possible for an attacker to bring down
+  /// the app through a flood of packets.
+  auto CheckPushSafety() -> bool;
 
   /// Return the thread this module is running on.
   auto thread() const -> Thread* { return thread_; }
@@ -35,21 +43,21 @@ class Module {
   virtual ~Module();
 
   /// Push a runnable from the same thread as the module.
-  void PushLocalRunnable(Runnable* runnable);
+  auto PushLocalRunnable(Runnable* runnable) -> void;
 
   /// Called for each module when its thread is about to be suspended
   /// (on platforms such as mobile).
-  virtual void HandleThreadPause() {}
+  virtual auto HandleThreadPause() -> void {}
 
   /// Called for each module when its thread is about to be resumed
   /// (on platforms such as mobile).
-  virtual void HandleThreadResume() {}
+  virtual auto HandleThreadResume() -> void {}
 
   /// Whether this module has pending runnables.
   auto has_pending_runnables() const -> bool { return !runnables_.empty(); }
 
   /// Used by the module's owner thread to let it do its thing.
-  void RunPendingRunnables();
+  auto RunPendingRunnables() -> void;
 
   auto name() const -> const std::string& { return name_; }
 

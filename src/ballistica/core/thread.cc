@@ -473,13 +473,9 @@ void Thread::LogThreadMessageTally() {
           break;
       }
       if (m.type == ThreadMessage::Type::kRunnable) {
-        // Runnable* e;
-        // e = static_cast<Runnable*>(m.pval);
-        {
-          std::string m_name = g_platform->DemangleCXXSymbol(
-              typeid(*(static_cast<Runnable*>(m.pval))).name());
-          s += std::string(": ") + m_name;
-        }
+        std::string m_name = g_platform->DemangleCXXSymbol(
+            typeid(*(static_cast<Runnable*>(m.pval))).name());
+        s += std::string(": ") + m_name;
       }
       auto j = tally.find(s);
       if (j == tally.end()) {

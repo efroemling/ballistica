@@ -107,7 +107,7 @@ class Updater:
         # Docs checks/updates will only run if BA_ENABLE_DOCS_UPDATES=1
         # is set in the environment.
         if os.environ.get('BA_ENABLE_DOCS_UPDATES') == '1':
-            self._update_docs_md()
+            self._update_docs()
 
         if self._check:
             print(f'{Clr.BLU}Check-Builds: Everything up to date.{Clr.RST}')
@@ -673,7 +673,7 @@ class Updater:
         except Exception as exc:
             raise CleanError('Error checking/updating dummy module.') from exc
 
-    def _update_docs_md(self) -> None:
+    def _update_docs(self) -> None:
         # Update our docs/*.md files.
         # We need to do this near the end because it may run the cmake build
         # so its success may depend on the cmake build files having already
@@ -683,4 +683,4 @@ class Updater:
                            self._checkarglist,
                            check=True)
         except Exception as exc:
-            raise CleanError('Error checking/updating docs') from exc
+            raise CleanError('Error checking/updating docs.') from exc

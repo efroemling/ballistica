@@ -17,6 +17,8 @@
 
 namespace ballistica {
 
+const int kThreadMessageSafetyThreadhold{50};
+
 // A thread with a built-in event loop.
 class Thread {
  public:
@@ -160,6 +162,12 @@ class Thread {
   void PushModuleRunnable(Runnable* runnable, int module_index) {
     PushThreadMessage(Thread::ThreadMessage(
         Thread::ThreadMessage::Type::kRunnable, module_index, runnable));
+  }
+
+  auto CheckPushModuleRunnableSafety() -> bool {
+    // We first complain when we get to 1000 queued messages so
+    // let's consider things unsafe when we're halfway there.
+    return (thread_message_count_ < kThreadMessageSafetyThreadhold);
   }
 
   // Register a timer to run on the thread.

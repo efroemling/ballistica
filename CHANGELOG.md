@@ -1,7 +1,9 @@
-### 1.6.4 (20371)
+### 1.6.4 (20382)
 - Some cleanups in the Favorites tab of the gather window.
 - Reorganized prefab target names; some targets such as `prefab-debug` are now `prefab-gui-debug` (more consistent with the existing `prefab-server-debug` targets).
 - Windows builds now go to build/windows instead of ballisticacore_windows/build.
+- Lots of project reorganization to allow things such as documentation or the dummy _ba.py module to be rebuilt from the public repo.
+- Added network flood attack mitigation.
 
 ### 1.6.3 (20366)
 - Telnet access works again for gui builds without requiring a password (access must still be granted via the gui).
