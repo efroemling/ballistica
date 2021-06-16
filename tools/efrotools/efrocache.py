@@ -47,11 +47,15 @@ def get_file_hash(path: str) -> str:
 
 def _project_centric_path(path: str) -> str:
     """Convert something like foo/../bar to simply bar."""
-    projpath = f'{os.getcwd()}/'
-    abspath = os.path.abspath(path)
+
+    # NOTE: we want this to function under raw Windows Python so lets
+    # keep everything using forward slashes which is what our cache maps
+    # use.
+    projpath = f'{os.getcwd()}/'.replace('\\', '/')
+    abspath = os.path.abspath(path).replace('\\', '/')
     if not abspath.startswith(projpath):
         raise RuntimeError(
-            f'Path "{path}" is not under project root "{projpath}"')
+            f'Path "{abspath}" is not under project root "{projpath}"')
     return abspath[len(projpath):]
 
 
