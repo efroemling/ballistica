@@ -45,10 +45,23 @@ def get_file_hash(path: str) -> str:
     return md5.hexdigest()
 
 
+def _project_centric_path(path: str) -> str:
+    """Convert something like foo/../bar to simply bar."""
+    projpath = f'{os.getcwd()}/'
+    abspath = os.path.abspath(path)
+    if not abspath.startswith(projpath):
+        raise RuntimeError(
+            f'Path "{path}" is not under project root "{projpath}"')
+    return abspath[len(projpath):]
+
+
 def get_target(path: str) -> None:
     """Fetch a target path from the cache, downloading if need be."""
     from efro.error import CleanError
     from efrotools import run
+
+    path = _project_centric_path(path)
+
     with open(CACHE_MAP_NAME) as infile:
         efrocachemap = json.loads(infile.read())
     if path not in efrocachemap:
@@ -186,7 +199,7 @@ def update_cache(makefile_dirs: List[str]) -> None:
         # Break these into 2 lists, one of which will be included in the
         # starter-cache.
         for rawpath in rawpaths:
-            fullpath = os.path.join(path, rawpath)
+            fullpath = _project_centric_path(os.path.join(path, rawpath))
 
             # The main reason for this cache is to reduce round trips to
             # the staging server for tiny files, so let's include small files

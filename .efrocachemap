@@ -3933,6 +3933,7 @@
   "assets/build/windows/Win32/ucrtbased.dll": "https://files.ballistica.net/cache/ba1/f5/8b/14895df9caf46f326a3c939b34a4",
   "assets/build/windows/Win32/vc_redist.x86.exe": "https://files.ballistica.net/cache/ba1/1c/e1/4a1a2eddda2f4aebd5f8b64ab08e",
   "assets/build/windows/Win32/vcruntime140d.dll": "https://files.ballistica.net/cache/ba1/50/8d/bc2600ac9491f1b14d659709451f",
+  "ballisticacore-windows/Generic/BallisticaCore.ico": "https://files.ballistica.net/cache/ba1/89/c0/e32c7d2a35dc9aef57cc73b0911a",
   "build/prefab/full/linux_arm64_gui/debug/ballisticacore": "https://files.ballistica.net/cache/ba1/6c/4a/ea20aa40a0336346481db7a3e7cc",
   "build/prefab/full/linux_arm64_gui/release/ballisticacore": "https://files.ballistica.net/cache/ba1/74/1d/fc9e33e565475daaac80da5252f0",
   "build/prefab/full/linux_arm64_server/debug/dist/ballisticacore_headless": "https://files.ballistica.net/cache/ba1/79/a4/151c407676751226822b7f3fea28",
@@ -3976,6 +3977,5 @@
   "build/prefab/lib/windows/Release_Win32/BallisticaCoreGenericInternal.lib": "https://files.ballistica.net/cache/ba1/36/05/bdbffaab5039230c2fbcb7d8c878",
   "build/prefab/lib/windows/Release_Win32/BallisticaCoreGenericInternal.pdb": "https://files.ballistica.net/cache/ba1/e7/c4/324bb33d12a37d46c6a38da7a63d",
   "build/prefab/lib/windows/Release_Win32/BallisticaCoreHeadlessInternal.lib": "https://files.ballistica.net/cache/ba1/2a/d8/77387d2781de3bb624538c80a2cc",
-  "build/prefab/lib/windows/Release_Win32/BallisticaCoreHeadlessInternal.pdb": "https://files.ballistica.net/cache/ba1/b1/51/67daef6f5638ddf3ebeb61186539",
-  "resources/../ballisticacore-windows/Generic/BallisticaCore.ico": "https://files.ballistica.net/cache/ba1/c8/8e/2b54b5f52bf21e27a893aeef75c9"
+  "build/prefab/lib/windows/Release_Win32/BallisticaCoreHeadlessInternal.pdb": "https://files.ballistica.net/cache/ba1/b1/51/67daef6f5638ddf3ebeb61186539"
 }

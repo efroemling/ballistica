@@ -21,7 +21,7 @@ clean-private:
 	rm -f "../ballisticacore-windows/Generic/BallisticaCore.ico"
 
 ../ballisticacore-windows/Generic/BallisticaCore.ico : ../.efrocachemap
-	@cd .. && tools/pcommand efrocache_get assets/$@
+	@cd .. && tools/pcommand efrocache_get resources/$@
 
 
 efrocache-list:
