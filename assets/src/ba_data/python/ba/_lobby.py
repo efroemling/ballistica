@@ -32,10 +32,14 @@ class JoinInfo:
         from ba._nodeactor import NodeActor
         from ba._general import WeakCall
         self._state = 0
-        self._press_to_punch: Union[str, ba.Lstr] = _ba.charstr(
-            SpecialChar.LEFT_BUTTON)
-        self._press_to_bomb: Union[str, ba.Lstr] = _ba.charstr(
-            SpecialChar.RIGHT_BUTTON)
+        self._press_to_punch: Union[str,
+                                    ba.Lstr] = ('C' if _ba.app.iircade_mode
+                                                else _ba.charstr(
+                                                    SpecialChar.LEFT_BUTTON))
+        self._press_to_bomb: Union[str,
+                                   ba.Lstr] = ('B' if _ba.app.iircade_mode else
+                                               _ba.charstr(
+                                                   SpecialChar.RIGHT_BUTTON))
         self._joinmsg = Lstr(resource='pressAnyButtonToJoinText')
         can_switch_teams = (len(lobby.sessionteams) > 1)
 

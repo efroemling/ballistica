@@ -2302,7 +2302,7 @@ class TutorialActivity(ba.Activity[Player, Team]):
         while self._entries:
             entry = self._entries.pop(0)
             try:
-                result = entry.generate(self)
+                result = entry.run(self)
             except Exception:
                 result = None
                 ba.print_exception()
