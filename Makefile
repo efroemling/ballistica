@@ -787,8 +787,7 @@ windows-release: windows-release-build
 # Build a debug windows build (from WSL).
 windows-debug-build: \
    build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.lib \
-   build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.pdb \
-   ballisticacore-windows/Generic/BallisticaCore.ico
+   build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.pdb
 	@tools/pcommand ensure_prefab_platform windows_x86
 	@tools/pcommand wsl_build_check_win_drive
 	WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 $(MAKE) windows-staging
@@ -798,8 +797,7 @@ windows-debug-build: \
 # Rebuild a debug windows build (from WSL).
 windows-debug-rebuild: \
    build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.lib \
-   build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.pdb \
-   ballisticacore-windows/Generic/BallisticaCore.ico
+   build/prefab/lib/windows/Debug_Win32/BallisticaCoreGenericInternal.pdb
 	@tools/pcommand ensure_prefab_platform windows_x86
 	@tools/pcommand wsl_build_check_win_drive
 	WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 $(MAKE) windows-staging
@@ -809,8 +807,7 @@ windows-debug-rebuild: \
 # Build a release windows build (from WSL).
 windows-release-build: \
    build/prefab/lib/windows/Release_Win32/BallisticaCoreGenericInternal.lib \
-   build/prefab/lib/windows/Release_Win32/BallisticaCoreGenericInternal.pdb \
-   ballisticacore-windows/Generic/BallisticaCore.ico
+   build/prefab/lib/windows/Release_Win32/BallisticaCoreGenericInternal.pdb
 	@tools/pcommand ensure_prefab_platform windows_x86
 	@tools/pcommand wsl_build_check_win_drive
 	WINDOWS_CONFIGURATION=Release WINDOWS_PLATFORM=Win32 $(MAKE) windows-staging
@@ -820,16 +817,12 @@ windows-release-build: \
 # Rebuild a release windows build (from WSL).
 windows-release-rebuild: \
    build/prefab/lib/windows/Release_Win32/BallisticaCoreGenericInternal.lib \
-   build/prefab/lib/windows/Release_Win32/BallisticaCoreGenericInternal.pdb \
-   ballisticacore-windows/Generic/BallisticaCore.ico
+   build/prefab/lib/windows/Release_Win32/BallisticaCoreGenericInternal.pdb
 	@tools/pcommand ensure_prefab_platform windows_x86
 	@tools/pcommand wsl_build_check_win_drive
 	WINDOWS_CONFIGURATION=Release WINDOWS_PLATFORM=Win32 $(MAKE) windows-staging
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Release WINDOWS_PLATFORM=Win32 \
   $(MAKE) _windows-wsl-rebuild
-
-ballisticacore-windows/Generic/BallisticaCore.ico: .efrocachemap
-	@tools/pcommand efrocache_get $@
 
 # Remove all non-git-managed files in windows subdir.
 windows-clean:

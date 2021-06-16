@@ -388,7 +388,7 @@ def upper() -> None:
 def efrocache_update() -> None:
     """Build & push files to efrocache for public access."""
     from efrotools.efrocache import update_cache
-    makefile_dirs = ['', 'assets']
+    makefile_dirs = ['', 'assets', 'resources']
     update_cache(makefile_dirs)
 
 

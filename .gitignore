@@ -129,6 +129,7 @@ xcuserdata/
 /ballisticacore-android/BallisticaCore/src/cardboard/res/drawable-*/icon.png
 /ballisticacore-android/BallisticaCore/src/main/res/drawable-*/banner.png
 /ballisticacore-android/BallisticaCore/src/main/res/mipmap-*/ic_launcher*.png
+/ballisticacore-android/BallisticaCore/src/cardboard/res/mipmap-*/ic_launcher*.png
 BallisticaCore.ico
 /ballisticacore-xcode/BallisticaCore Shared/Assets.xcassets/AppIcon iOS.appiconset/icon_*.png
 /ballisticacore-xcode/BallisticaCore Shared/Assets.xcassets/AppIcon macOS.appiconset/icon_*.png
