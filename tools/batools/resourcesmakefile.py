@@ -351,6 +351,7 @@ def _empty_line_if(condition: bool) -> List[str]:
 def update(projroot: str, check: bool) -> None:
     """main script entry point"""
     # pylint: disable=too-many-locals
+    # pylint: disable=too-many-statements
 
     from efrotools import getconfig
 
@@ -426,6 +427,9 @@ def update(projroot: str, check: bool) -> None:
         print(f'{fname} is up to date.')
     else:
         if check:
+            if bool(False):
+                print(f'FOUND------\n{original}\nEND FOUND--------\n'
+                      f'EXPECTED------\n{out}\nEND EXPECTED-------\n')
             raise CleanError(f"ERROR: file is out of date: '{fname}'.")
         print(f'{Clr.SBLU}Updating: {fname}{Clr.RST}')
         with open(fname, 'w') as outfile:

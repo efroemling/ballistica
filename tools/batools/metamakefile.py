@@ -192,6 +192,9 @@ def update(projroot: str, check: bool) -> None:
         print(f'{fname} is up to date.')
     else:
         if check:
+            if bool(True):
+                print(f'FOUND------\n{original}\nEND FOUND--------\n'
+                      f'EXPECTED------\n{out}\nEND EXPECTED-------\n')
             raise CleanError(f"ERROR: file is out of date: '{fname}'.")
         print(f'{Clr.SBLU}Updating {fname} (and cleaning existing output).'
               f'{Clr.RST}')
