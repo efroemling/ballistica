@@ -34,7 +34,7 @@ class Target:
 
 
 def update(projroot: str, check: bool) -> None:
-    """Main script entry point."""
+    """Update the project meta Makefile."""
 
     from efrotools import get_public_license
 
