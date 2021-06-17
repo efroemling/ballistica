@@ -685,6 +685,7 @@
       <w>ericf</w>
       <w>ericfroemling</w>
       <w>errcount</w>
+      <w>errname</w>
       <w>errno</w>
       <w>errored</w>
       <w>erroring</w>
@@ -1751,6 +1752,7 @@
       <w>ptypename</w>
       <w>publictab</w>
       <w>pubsync</w>
+      <w>pubtargets</w>
       <w>pucknode</w>
       <w>pulllist</w>
       <w>punchdir</w>

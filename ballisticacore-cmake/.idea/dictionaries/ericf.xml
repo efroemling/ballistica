@@ -316,6 +316,7 @@
       <w>envval</w>
       <w>ericf</w>
       <w>ericsson</w>
+      <w>errname</w>
       <w>erroring</w>
       <w>etcdec</w>
       <w>etcpack</w>
@@ -797,6 +798,7 @@
       <w>ptype</w>
       <w>ptypename</w>
       <w>publictab</w>
+      <w>pubtargets</w>
       <w>pulseaudio</w>
       <w>punchmomentumlinear</w>
       <w>punchthrough</w>

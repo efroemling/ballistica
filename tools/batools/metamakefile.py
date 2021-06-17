@@ -58,8 +58,7 @@ def _emit_group_build_lines(targets: List[Target], basename: str) -> List[str]:
     return out
 
 
-def _emit_group_efrocache_lines(targets: List[Target],
-                                basename: str) -> List[str]:
+def _emit_group_efrocache_lines(targets: List[Target]) -> List[str]:
     """Gen a group clean target."""
     out: List[str] = []
     if not targets:
@@ -76,7 +75,7 @@ def _emit_group_efrocache_lines(targets: List[Target],
     out.append('efrocache-list:\n\t@echo ' +
                ' \\\n        '.join('"' + dst + '"'
                                     for dst in sorted(all_dsts)) + '\n')
-    out.append(f'efrocache-build: resources-{basename}\n')
+    out.append('efrocache-build: sources\n')
 
     return out
 
@@ -177,6 +176,7 @@ def update(projroot: str, check: bool) -> None:
 
     # Public targets (full sources available in public)
     targets: List[Target] = []
+    pubtargets = targets
     basename = 'public'
     _add_python_embedded_targets(targets)
     our_lines_public = (_empty_line_if(bool(targets)) +
@@ -195,12 +195,13 @@ def update(projroot: str, check: bool) -> None:
         our_lines_private_1 = (
             _empty_line_if(bool(targets)) +
             _emit_group_build_lines(targets, basename) +
-            ['#__EFROCACHE_TARGET__\n' + t.emit() for t in targets] +
-            _emit_group_efrocache_lines(targets, basename))
+            ['#__EFROCACHE_TARGET__\n' + t.emit() for t in targets] + [
+                '\n# Note: we include our public targets in efrocache even\n'
+                '# though they are buildable in public. This allows us to\n'
+                '# fetch them on Windows to bootstrap binary CI builds in\n'
+                '# cases where we can\'t use our full Makefiles.\n'
+            ] + _emit_group_efrocache_lines(pubtargets + targets))
         all_dsts_private.update(t.dst for t in targets)
-        # NOTE: currently not efrocaching anything here; we'll need to
-        # add this makefile to the efrocache update if we ever do.
-        assert not targets
 
         # Private-internal targets (not available at all in public)
         targets = []
