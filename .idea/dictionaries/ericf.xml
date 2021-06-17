@@ -634,6 +634,7 @@
       <w>efro</w>
       <w>efrocache</w>
       <w>efrocachemap</w>
+      <w>efrocaching</w>
       <w>efroemling</w>
       <w>efrogradle</w>
       <w>efrohack</w>
@@ -1731,6 +1732,7 @@
       <w>projdir</w>
       <w>projectpath</w>
       <w>projectroot</w>
+      <w>projpath</w>
       <w>projroot</w>
       <w>projs</w>
       <w>promocode</w>

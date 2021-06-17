@@ -630,15 +630,12 @@ class Updater:
             sys.exit(255)
 
     def _update_meta_makefile(self) -> None:
-        # FIXME: should support running this in public too.
-        if not self._public:
-            try:
-                subprocess.run(['tools/pcommand', 'update_meta_makefile'] +
-                               self._checkarglist,
-                               check=True)
-            except Exception as exc:
-                raise CleanError(
-                    'Error checking/updating meta Makefile.') from exc
+        try:
+            subprocess.run(['tools/pcommand', 'update_meta_makefile'] +
+                           self._checkarglist,
+                           check=True)
+        except Exception as exc:
+            raise CleanError('Error checking/updating meta Makefile.') from exc
 
     def _update_resources_makefile(self) -> None:
         try:

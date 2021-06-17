@@ -292,6 +292,7 @@
       <w>edef</w>
       <w>effmult</w>
       <w>efro</w>
+      <w>efrocaching</w>
       <w>efrohack</w>
       <w>efrohome</w>
       <w>elapsedf</w>
@@ -785,6 +786,7 @@
       <w>prog</w>
       <w>proj</w>
       <w>projdir</w>
+      <w>projpath</w>
       <w>prolly</w>
       <w>psmx</w>
       <w>pspec</w>

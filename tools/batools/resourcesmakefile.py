@@ -21,31 +21,31 @@ if TYPE_CHECKING:
 
 @dataclass
 class Target:
-    """Info about a makefile target."""
+    """A target to be added to the Makefile."""
     src: List[str]
     dst: str
     cmd: str
     mkdir: bool = False
 
     def emit(self) -> str:
-        """Gen a makefile target."""
+        """Gen a Makefile target."""
         out: str = self.dst.replace(' ', '\\ ')
         out += ' : ' + ' '.join(s for s in self.src) + (
             ('\n\t@mkdir -p "' + os.path.dirname(self.dst) +
-             '"') if self.mkdir else '') + '\n\t@' + self.cmd + '\n\n'
+             '"') if self.mkdir else '') + '\n\t@' + self.cmd + '\n'
         return out
 
 
 def _emit_group_build_lines(targets: List[Target], basename: str) -> List[str]:
     """Gen a group build target."""
+    del basename  # Unused.
     out: List[str] = []
     if not targets:
         return out
-    out.append(f'resources: resources-{basename}\n')
     all_dsts = set()
     for target in targets:
         all_dsts.add(target.dst)
-    out.append(f'resources-{basename}: \\\n  ' + ' \\\n  '.join(
+    out.append('resources: \\\n  ' + ' \\\n  '.join(
         dst.replace(' ', '\\ ') for dst in sorted(all_dsts)) + '\n')
     return out
 
@@ -65,8 +65,7 @@ def _emit_group_clean_lines(targets: List[Target], basename: str) -> List[str]:
     return out
 
 
-def _emit_group_efrocache_lines(targets: List[Target],
-                                basename: str) -> List[str]:
+def _emit_group_efrocache_lines(targets: List[Target]) -> List[str]:
     """Gen a group clean target."""
     out: List[str] = []
     if not targets:
@@ -83,7 +82,7 @@ def _emit_group_efrocache_lines(targets: List[Target],
     out.append('efrocache-list:\n\t@echo ' +
                ' \\\n        '.join('"' + dst + '"'
                                     for dst in sorted(all_dsts)) + '\n')
-    out.append(f'efrocache-build: resources-{basename}\n')
+    out.append('efrocache-build: resources\n')
 
     return out
 
@@ -345,6 +344,10 @@ def _add_google_vr_icon(targets: List[Target]) -> None:
         targets.append(Target(src=[src], dst=dst, cmd=cmd, mkdir=True))
 
 
+def _empty_line_if(condition: bool) -> List[str]:
+    return [''] if condition else []
+
+
 def update(projroot: str, check: bool) -> None:
     """main script entry point"""
     # pylint: disable=too-many-locals
@@ -370,13 +373,13 @@ def update(projroot: str, check: bool) -> None:
     # Public targets (full sources available in public)
     targets: List[Target] = []
     basename = 'public'
-
-    # Always generate the public section.
-    our_lines_public = (_emit_group_build_lines(targets, basename) +
+    our_lines_public = (_empty_line_if(bool(targets)) +
+                        _emit_group_build_lines(targets, basename) +
                         _emit_group_clean_lines(targets, basename) +
                         [t.emit() for t in targets])
 
-    # Only generate the private section in the private repo.
+    # Only rewrite the private section in the private repo; otherwise
+    # keep the existing one intact.
     if public:
         our_lines_private = lines[auto_start_private + 1:auto_end_private]
     else:
@@ -384,12 +387,12 @@ def update(projroot: str, check: bool) -> None:
         targets = []
         basename = 'private'
         _add_windows_icon(targets, generic=True, oculus=False, inputs=False)
-
         our_lines_private_1 = (
+            _empty_line_if(bool(targets)) +
             _emit_group_build_lines(targets, basename) +
             _emit_group_clean_lines(targets, basename) +
-            ['#__EFROCACHE_TARGET__\n' + t.emit() for t in targets] +
-            _emit_group_efrocache_lines(targets, basename))
+            ['#__EFROCACHE_TARGET__\n' + t.emit()
+             for t in targets] + _emit_group_efrocache_lines(targets))
 
         # Private-internal targets (not available at all in public)
         targets = []
@@ -406,13 +409,13 @@ def update(projroot: str, check: bool) -> None:
         _add_apple_tv_3d_icon(targets)
         _add_apple_tv_store_icon(targets)
         _add_google_vr_icon(targets)
-
         our_lines_private_2 = (['#__PUBSYNC_STRIP_BEGIN__'] +
+                               _empty_line_if(bool(targets)) +
                                _emit_group_build_lines(targets, basename) +
                                _emit_group_clean_lines(targets, basename) +
                                [t.emit()
                                 for t in targets] + ['#__PUBSYNC_STRIP_END__'])
-        our_lines_private = [''] + our_lines_private_1 + our_lines_private_2
+        our_lines_private = our_lines_private_1 + our_lines_private_2
 
     filtered = (lines[:auto_start_public + 1] + our_lines_public +
                 lines[auto_end_public:auto_start_private + 1] +
