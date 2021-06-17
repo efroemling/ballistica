@@ -39,10 +39,12 @@ jobs:
     - name: Compile binary
       run: make _cmake-simple-ci-server-build
       
-  # Most of our toolset doesn't work on raw Windows without WSL set up.
-  # However, it's nice to at least run unit tests there since some behavior
-  # (filesystem, etc) can vary significantly between windows and linux/apple.
-  check_windows:
+  # Most of our toolset doesn't work on raw Windows without WSL set up,
+  # but we can bootstrap enough to run a few things manually. It's nice to
+  # run unit tests there since some behavior (filesystem, etc) can vary
+  # significantly between windows and linux/apple. We also are able to
+  # build our windows binary.
+  check_and_compile_windows:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v1
