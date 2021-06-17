@@ -1,0 +1,4 @@
+[
+ "src/ballistica/generated/python_embedded/binding.inc",
+ "src/ballistica/generated/python_embedded/bootstrap.inc"
+]
