@@ -17,7 +17,7 @@
 
 namespace ballistica {
 
-const int kThreadMessageSafetyThreadhold{50};
+const int kThreadMessageSafetyThreadhold{500};
 
 // A thread with a built-in event loop.
 class Thread {
