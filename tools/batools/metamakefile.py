@@ -82,7 +82,8 @@ def _emit_group_efrocache_lines(targets: List[Target],
 
 def _add_python_embedded_targets(targets: List[Target]) -> None:
     pkg = 'bameta'
-    for fname in os.listdir(f'src/meta/{pkg}/python_embedded'):
+    # Note: sort to keep things deterministic.
+    for fname in sorted(os.listdir(f'src/meta/{pkg}/python_embedded')):
         if (not fname.endswith('.py') or fname == '__init__.py'
                 or 'flycheck' in fname):
             continue
@@ -107,7 +108,8 @@ def _add_python_embedded_targets(targets: List[Target]) -> None:
 
 def _add_python_embedded_targets_internal(targets: List[Target]) -> None:
     pkg = 'bametainternal'
-    for fname in os.listdir(f'src/meta/{pkg}/python_embedded'):
+    # Note: sort to keep things deterministic.
+    for fname in sorted(os.listdir(f'src/meta/{pkg}/python_embedded')):
         if (not fname.endswith('.py') or fname == '__init__.py'
                 or 'flycheck' in fname):
             continue
@@ -192,7 +194,7 @@ def update(projroot: str, check: bool) -> None:
         print(f'{fname} is up to date.')
     else:
         if check:
-            if bool(True):
+            if bool(False):
                 print(f'FOUND------\n{original}\nEND FOUND--------\n'
                       f'EXPECTED------\n{out}\nEND EXPECTED-------\n')
             raise CleanError(f"ERROR: file is out of date: '{fname}'.")
