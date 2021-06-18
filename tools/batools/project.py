@@ -18,6 +18,18 @@ if TYPE_CHECKING:
     from typing import Optional, Tuple, List, Dict, Set
 
 
+def project_centric_path(projroot: str, path: str) -> str:
+    """Convert a CWD-relative path to a project-relative one."""
+    abspath = os.path.abspath(path)
+    if abspath == projroot:
+        return '.'
+    projprefix = f'{projroot}/'
+    if not abspath.startswith(projprefix):
+        raise RuntimeError(
+            f'Path "{abspath}" is not under project root "{projprefix}"')
+    return abspath[len(projprefix):]
+
+
 def get_legal_notice_private() -> str:
     """Return the one line legal notice we expect private files to have."""
     return 'Copyright (c) 2011-2021 Eric Froemling'

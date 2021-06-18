@@ -1713,6 +1713,7 @@
       <w>prereq</w>
       <w>prereqs</w>
       <w>prerun</w>
+      <w>prettypath</w>
       <w>prevstate</w>
       <w>priceraw</w>
       <w>printcolors</w>
@@ -1735,6 +1736,7 @@
       <w>projectpath</w>
       <w>projectroot</w>
       <w>projpath</w>
+      <w>projprefix</w>
       <w>projroot</w>
       <w>projs</w>
       <w>promocode</w>

@@ -941,18 +941,22 @@ def gen_python_enums_module() -> None:
     from batools.pythonenumsmodule import generate
     if len(sys.argv) != 4:
         raise Exception('Expected infile and outfile args.')
-    generate(infilename=sys.argv[2], outfilename=sys.argv[3])
+    generate(projroot=str(PROJROOT),
+             infilename=sys.argv[2],
+             outfilename=sys.argv[3])
 
 
 def gen_python_init_module() -> None:
     """Generate a basic __init__.py."""
     import os
     from efro.terminal import Clr
+    from batools.project import project_centric_path
     if len(sys.argv) != 3:
         raise Exception('Expected an outfile arg.')
     outfilename = sys.argv[2]
     os.makedirs(os.path.dirname(outfilename), exist_ok=True)
-    print(f'Meta-building {Clr.BLD}{outfilename}{Clr.RST}')
+    prettypath = project_centric_path(projroot=str(PROJROOT), path=outfilename)
+    print(f'Meta-building {Clr.BLD}{prettypath}{Clr.RST}')
     with open(outfilename, 'w') as outfile:
         outfile.write('# Released under the MIT License.'
                       ' See LICENSE for details.\n'

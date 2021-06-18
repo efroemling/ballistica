@@ -780,6 +780,7 @@
       <w>prepdata</w>
       <w>prereq</w>
       <w>prerun</w>
+      <w>prettypath</w>
       <w>printf</w>
       <w>printnodes</w>
       <w>printobjects</w>
@@ -790,6 +791,7 @@
       <w>proj</w>
       <w>projdir</w>
       <w>projpath</w>
+      <w>projprefix</w>
       <w>prolly</w>
       <w>psmx</w>
       <w>pspec</w>
