@@ -42,7 +42,7 @@ from batools.pcommand import (
     wsl_build_check_win_drive, win_ci_binary_build, genchangelog,
     android_sdk_utils, update_resources_makefile, update_meta_makefile,
     xcode_build_path, gen_python_enums_module, gen_python_init_module,
-    update_dummy_module)
+    update_dummy_module, win_ci_install_prereqs)
 # pylint: enable=unused-import
 
 if TYPE_CHECKING:
