@@ -869,8 +869,8 @@ def win_ci_install_prereqs() -> None:
     with open('src/meta/.meta_manifest_private.json') as infile:
         meta_private: List[str] = json.loads(infile.read())
     for target in meta_public + meta_private:
-        if (target.startswith('src/ballistica/generated/')
-                or target.startswith('src/ba_data/python/ba/_generated/')):
+        if (target.startswith('src/ballistica/generated/') or
+                target.startswith('assets/src/ba_data/python/ba/_generated/')):
             needed_targets.add(target)
 
     for target in needed_targets:
