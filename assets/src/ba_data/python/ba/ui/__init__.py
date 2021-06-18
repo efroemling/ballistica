@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast, Type
 
 import _ba
-from ba._enums import TimeType
+from ba._generated.enums import TimeType
 from ba._general import print_active_refs
 
 if TYPE_CHECKING:

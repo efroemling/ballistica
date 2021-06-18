@@ -33,7 +33,7 @@ class AdsSubsystem:
     def do_remove_in_game_ads_message(self) -> None:
         """(internal)"""
         from ba._language import Lstr
-        from ba._enums import TimeType
+        from ba._generated.enums import TimeType
 
         # Print this message once every 10 minutes at most.
         tval = _ba.time(TimeType.REAL)
@@ -70,7 +70,7 @@ class AdsSubsystem:
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
-        from ba._enums import TimeType
+        from ba._generated.enums import TimeType
         app = _ba.app
         show = True
 

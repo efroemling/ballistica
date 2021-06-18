@@ -65,8 +65,8 @@ class Updater:
         if not os.path.isdir('config') or not os.path.isdir('tools'):
             raise Exception('This must be run from a project root.')
 
-        # NOTE: Do py-enums before updating asset deps since it *is* an asset.
-        self._update_python_enums_module()
+        # Note: we need to update the meta Makefile first since its output
+        # manifest may be used when generating asset/resource targets.
         self._update_meta_makefile()
         self._update_resources_makefile()
         self._update_assets_makefile()
@@ -645,18 +645,6 @@ class Updater:
         except Exception as exc:
             raise CleanError(
                 'Error checking/updating resources Makefile.') from exc
-
-    def _update_python_enums_module(self) -> None:
-        # FIXME: should support running this in public too.
-        if not self._public:
-            try:
-                subprocess.run(
-                    ['tools/pcommand', 'update_python_enums_module'] +
-                    self._checkarglist,
-                    check=True)
-            except Exception as exc:
-                raise CleanError(
-                    'Error checking/updating python enums module.') from exc
 
     def _update_dummy_module(self) -> None:
         # Update our dummy _ba module.

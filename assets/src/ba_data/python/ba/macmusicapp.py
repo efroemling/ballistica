@@ -69,7 +69,7 @@ class _MacMusicAppThread(threading.Thread):
         """Run the Music.app thread."""
         from ba._general import Call
         from ba._language import Lstr
-        from ba._enums import TimeType
+        from ba._generated.enums import TimeType
         _ba.set_thread_name('BA_MacMusicAppThread')
         _ba.mac_music_app_init()
 

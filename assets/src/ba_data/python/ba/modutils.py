@@ -40,7 +40,7 @@ def get_human_readable_user_scripts_path() -> str:
 def _request_storage_permission() -> bool:
     """If needed, requests storage permission from the user (& return true)."""
     from ba._language import Lstr
-    from ba._enums import Permission
+    from ba._generated.enums import Permission
     if not _ba.have_permission(Permission.STORAGE):
         _ba.playsound(_ba.getsound('error'))
         _ba.screenmessage(Lstr(resource='storagePermissionAccessText'),

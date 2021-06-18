@@ -57,7 +57,7 @@ def handle_log() -> None:
     after a short bit if desired.
     """
     from ba._net import master_server_post
-    from ba._enums import TimeType
+    from ba._generated.enums import TimeType
     app = _ba.app
     app.log_have_new = True
     if not app.log_upload_timer_started:
@@ -225,7 +225,7 @@ def print_live_object_warnings(when: Any,
 def print_corrupt_file_error() -> None:
     """Print an error if a corrupt file is found."""
     from ba._general import Call
-    from ba._enums import TimeType
+    from ba._generated.enums import TimeType
     _ba.timer(2.0,
               lambda: _ba.screenmessage(
                   _ba.app.lang.get_resource('internal.corruptFileText').

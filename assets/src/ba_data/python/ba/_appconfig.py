@@ -97,7 +97,7 @@ def read_config() -> Tuple[AppConfig, bool]:
     """Read the game config."""
     import os
     import json
-    from ba._enums import TimeType
+    from ba._generated.enums import TimeType
 
     config_file_healthy = False
 

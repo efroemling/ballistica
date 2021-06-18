@@ -29,8 +29,8 @@ from ba._coopgame import CoopGameActivity
 from ba._coopsession import CoopSession
 from ba._dependency import (Dependency, DependencyComponent, DependencySet,
                             AssetPackage)
-from ba._enums import (TimeType, Permission, TimeFormat, SpecialChar,
-                       InputType, UIScale)
+from ba._generated.enums import (TimeType, Permission, TimeFormat, SpecialChar,
+                                 InputType, UIScale)
 from ba._error import (
     print_exception, print_error, ContextError, NotFoundError,
     PlayerNotFoundError, SessionPlayerNotFoundError, NodeNotFoundError,

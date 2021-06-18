@@ -290,7 +290,7 @@ class App:
         from bastd import appdelegate
         from bastd import maps as stdmaps
         from bastd.actor import spazappearance
-        from ba._enums import TimeType
+        from ba._generated.enums import TimeType
 
         cfg = self.config
 

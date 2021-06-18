@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, TypeVar, Protocol
 from efro.terminal import Clr
 import _ba
 from ba._error import print_error, print_exception
-from ba._enums import TimeType
+from ba._generated.enums import TimeType
 
 if TYPE_CHECKING:
     from types import FrameType

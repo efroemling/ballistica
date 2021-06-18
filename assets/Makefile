@@ -152,13 +152,14 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   build/ba_data/python/ba/_coopsession.py \
   build/ba_data/python/ba/_dependency.py \
   build/ba_data/python/ba/_dualteamsession.py \
-  build/ba_data/python/ba/_enums.py \
   build/ba_data/python/ba/_error.py \
   build/ba_data/python/ba/_freeforallsession.py \
   build/ba_data/python/ba/_gameactivity.py \
   build/ba_data/python/ba/_gameresults.py \
   build/ba_data/python/ba/_gameutils.py \
   build/ba_data/python/ba/_general.py \
+  build/ba_data/python/ba/_generated/__init__.py \
+  build/ba_data/python/ba/_generated/enums.py \
   build/ba_data/python/ba/_hooks.py \
   build/ba_data/python/ba/_input.py \
   build/ba_data/python/ba/_keyboard.py \
@@ -396,13 +397,14 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   build/ba_data/python/ba/__pycache__/_coopsession.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_dependency.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_dualteamsession.cpython-38.opt-1.pyc \
-  build/ba_data/python/ba/__pycache__/_enums.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_error.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_freeforallsession.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_gameactivity.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_gameresults.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_gameutils.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_general.cpython-38.opt-1.pyc \
+  build/ba_data/python/ba/_generated/__pycache__/__init__.cpython-38.opt-1.pyc \
+  build/ba_data/python/ba/_generated/__pycache__/enums.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_hooks.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_input.cpython-38.opt-1.pyc \
   build/ba_data/python/ba/__pycache__/_keyboard.cpython-38.opt-1.pyc \

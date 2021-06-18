@@ -53,12 +53,12 @@ def _get_py_targets(src: str, dst: str, py_targets: List[str],
                     subset: str) -> None:
     # pylint: disable=too-many-branches
 
-    # Create py and pyc targets for all scripts in src.
-    for root, _dname, fnames in os.walk(src):
+    py_generated_root = 'assets/src/ba_data/python/ba/_generated'
 
+    def _do_get_targets(root: str, fnames: List[str]) -> None:
         # Special case: ignore temp py files in data src.
         if root == 'assets/src/ba_data/data/maps':
-            continue
+            return
         assert root.startswith(src)
         dstrootvar = dst[len('assets') + 1:] + root[len(src):]
         dstfin = dst + root[len(src):]
@@ -108,6 +108,33 @@ def _get_py_targets(src: str, dst: str, py_targets: List[str],
             pyc_targets.append(
                 os.path.join(dstrootvar, '__pycache__', fname_pyc))
 
+    # Create py and pyc targets for all physical scripts in src, with
+    # the exception of our dynamically generated stuff.
+    for physical_root, _dname, physical_fnames in os.walk(src):
+
+        # Skip any generated files; we'll add those from the meta manifest.
+        # (dont want our results to require a meta build beforehand)
+        if (physical_root == py_generated_root
+                or physical_root.startswith(py_generated_root + '/')):
+            continue
+
+        _do_get_targets(physical_root, physical_fnames)
+
+    # Now create targets for any of our dynamically generated stuff that
+    # lives under this dir.
+    meta_targets: List[str] = []
+    for mantype in ['public', 'private']:
+        with open(f'src/meta/.meta_manifest_{mantype}.json') as infile:
+            meta_targets += json.loads(infile.read())
+    meta_targets = [
+        t for t in meta_targets
+        if t.startswith(src + '/') and t.startswith(py_generated_root + '/')
+    ]
+
+    for target in meta_targets:
+        _do_get_targets(root=os.path.dirname(target),
+                        fnames=[os.path.basename(target)])
+
 
 def _get_py_targets_subset(all_targets: Set[str], subset: str,
                            suffix: str) -> str:
@@ -146,6 +173,7 @@ def _get_py_targets_subset(all_targets: Set[str], subset: str,
 
     # We transform all non-public targets into efrocache-fetches in public.
     efc = '' if subset.startswith('public') else '#__EFROCACHE_TARGET__\n'
+
     out += ('\n# Rule to copy src asset scripts to dst.\n'
             '# (and make non-writable so I\'m less likely to '
             'accidentally edit them there)\n'

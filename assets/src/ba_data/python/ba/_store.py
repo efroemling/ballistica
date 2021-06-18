@@ -61,7 +61,7 @@ def get_store_items() -> Dict[str, Dict]:
     (internal)
     """
     # pylint: disable=cyclic-import
-    from ba._enums import SpecialChar
+    from ba._generated.enums import SpecialChar
     from bastd import maps
     if _ba.app.store_items is None:
         from bastd.game import ninjafight
@@ -440,7 +440,7 @@ def get_available_sale_time(tab: str) -> Optional[int]:
     # pylint: disable=too-many-locals
     try:
         import datetime
-        from ba._enums import TimeType, TimeFormat
+        from ba._generated.enums import TimeType, TimeFormat
         app = _ba.app
         sale_times: List[Optional[int]] = []
 

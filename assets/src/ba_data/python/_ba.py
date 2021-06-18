@@ -32,7 +32,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload, Sequence, TypeVar
 
-from ba._enums import TimeFormat, TimeType
+from ba._generated.enums import TimeFormat, TimeType
 
 if TYPE_CHECKING:
     from typing import (Any, Dict, Callable, Tuple, List, Optional, Union,

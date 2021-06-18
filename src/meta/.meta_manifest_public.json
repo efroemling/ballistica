@@ -1,4 +1,6 @@
 [
+ "assets/src/ba_data/python/ba/_generated/__init__.py",
+ "assets/src/ba_data/python/ba/_generated/enums.py",
  "src/ballistica/generated/python_embedded/binding.inc",
  "src/ballistica/generated/python_embedded/bootstrap.inc"
 ]

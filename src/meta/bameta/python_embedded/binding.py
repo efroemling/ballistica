@@ -16,7 +16,7 @@ from ba import _music
 from ba import _input
 from ba import _apputils
 from ba import _dependency
-from ba import _enums
+from ba._generated import enums
 from ba import _player
 from ba import _hooks
 import _ba
@@ -126,11 +126,11 @@ def get_binding_values() -> Tuple[Any, ...]:
         ba.ActivityNotFoundError,  # kActivityNotFoundError
         ba.SessionNotFoundError,  # kSessionNotFoundError
         _dependency.AssetPackage,  # kAssetPackageClass
-        _enums.TimeFormat,  # kTimeFormatClass
-        _enums.TimeType,  # kTimeTypeClass
-        _enums.InputType,  # kInputTypeClass
-        _enums.Permission,  # kPermissionClass
-        _enums.SpecialChar,  # kSpecialCharClass
+        enums.TimeFormat,  # kTimeFormatClass
+        enums.TimeType,  # kTimeTypeClass
+        enums.InputType,  # kInputTypeClass
+        enums.Permission,  # kPermissionClass
+        enums.SpecialChar,  # kSpecialCharClass
         _player.Player,  # kPlayerClass
         _hooks.get_player_icon,  # kGetPlayerIconCall
         _language.Lstr.from_json,  # kLstrFromJsonCall
