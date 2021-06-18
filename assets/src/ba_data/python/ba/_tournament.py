@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 def get_tournament_prize_strings(entry: Dict[str, Any]) -> List[str]:
     """Given a tournament entry, return strings for its prize levels."""
     # pylint: disable=too-many-locals
-    from ba._enums import SpecialChar
+    from ba._generated.enums import SpecialChar
     from ba._gameutils import get_trophy_string
     range1 = entry.get('prizeRange1')
     range2 = entry.get('prizeRange2')

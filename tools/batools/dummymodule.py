@@ -623,7 +623,7 @@ def generate(sources_hash: str, outfilename: str) -> None:
            '\n'
            'from typing import TYPE_CHECKING, overload, Sequence, TypeVar\n'
            '\n'
-           'from ba._enums import TimeFormat, TimeType\n'
+           'from ba._generated.enums import TimeFormat, TimeType\n'
            '\n'
            'if TYPE_CHECKING:\n'
            '    from typing import (Any, Dict, Callable, Tuple, '

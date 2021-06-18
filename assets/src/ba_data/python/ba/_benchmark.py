@@ -57,7 +57,7 @@ def run_stress_test(playlist_type: str = 'Random',
     """Run a stress test."""
     from ba import modutils
     from ba._general import Call
-    from ba._enums import TimeType
+    from ba._generated.enums import TimeType
     _ba.screenmessage(
         'Beginning stress test.. use '
         "'End Game' to stop testing.",
@@ -93,7 +93,7 @@ def start_stress_test(args: Dict[str, Any]) -> None:
     from ba._general import Call
     from ba._dualteamsession import DualTeamSession
     from ba._freeforallsession import FreeForAllSession
-    from ba._enums import TimeType, TimeFormat
+    from ba._generated.enums import TimeType, TimeFormat
     appconfig = _ba.app.config
     playlist_type = args['playlist_type']
     if playlist_type == 'Random':
@@ -127,7 +127,7 @@ def start_stress_test(args: Dict[str, Any]) -> None:
 
 def _reset_stress_test(args: Dict[str, Any]) -> None:
     from ba._general import Call
-    from ba._enums import TimeType
+    from ba._generated.enums import TimeType
     _ba.set_stress_testing(False, args['player_count'])
     _ba.screenmessage('Resetting stress test...')
     session = _ba.get_foreground_host_session()
@@ -144,7 +144,7 @@ def run_gpu_benchmark() -> None:
 def run_media_reload_benchmark() -> None:
     """Kick off a benchmark to test media reloading speeds."""
     from ba._general import Call
-    from ba._enums import TimeType
+    from ba._generated.enums import TimeType
     _ba.reload_media()
     _ba.show_progress_bar()
 

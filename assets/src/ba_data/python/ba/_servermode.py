@@ -13,7 +13,7 @@ from bacommon.servermanager import (ServerCommand, StartServerModeCommand,
                                     ChatMessageCommand, ScreenMessageCommand,
                                     ClientListCommand, KickCommand)
 import _ba
-from ba._enums import TimeType
+from ba._generated.enums import TimeType
 from ba._freeforallsession import FreeForAllSession
 from ba._dualteamsession import DualTeamSession
 

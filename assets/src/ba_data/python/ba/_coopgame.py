@@ -70,7 +70,7 @@ class CoopGameActivity(GameActivity[PlayerType, TeamType]):
         from efro.util import asserttype
         from ba._gameutils import timestring, animate
         from ba._nodeactor import NodeActor
-        from ba._enums import TimeFormat
+        from ba._generated.enums import TimeFormat
         display_type = self.get_score_type()
         if scores is not None:
 

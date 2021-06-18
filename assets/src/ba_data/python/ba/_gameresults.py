@@ -107,7 +107,7 @@ class GameResults:
         """
         from ba._gameutils import timestring
         from ba._language import Lstr
-        from ba._enums import TimeFormat
+        from ba._generated.enums import TimeFormat
         from ba._score import ScoreType
         if not self._game_set:
             raise RuntimeError("Can't get team-score-str until game is set.")

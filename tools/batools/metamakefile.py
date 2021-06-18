@@ -25,6 +25,7 @@ if TYPE_CHECKING:
 TOOLS_DIR = '../../tools'
 ROOT_DIR = '../..'
 OUT_DIR_CPP = '../ballistica/generated'
+OUT_DIR_PYTHON = '../../assets/src/ba_data/python/ba/_generated'
 
 
 @dataclass
@@ -78,6 +79,27 @@ def _emit_group_efrocache_lines(targets: List[Target]) -> List[str]:
     out.append('efrocache-build: sources\n')
 
     return out
+
+
+def _add_enums_module_target(targets: List[Target]) -> None:
+    targets.append(
+        Target(
+            src=[
+                '../ballistica/core/types.h',
+                os.path.join(TOOLS_DIR, 'batools', 'pythonenumsmodule.py')
+            ],
+            dst=os.path.join(OUT_DIR_PYTHON, 'enums.py'),
+            cmd='$(PCOMMAND) gen_python_enums_module $< $@',
+        ))
+
+
+def _add_init_module_target(targets: List[Target]) -> None:
+    targets.append(
+        Target(
+            src=[os.path.join(TOOLS_DIR, 'batools', 'pcommand.py')],
+            dst=os.path.join(OUT_DIR_PYTHON, '__init__.py'),
+            cmd='$(PCOMMAND) gen_python_init_module $@',
+        ))
 
 
 def _add_python_embedded_targets(targets: List[Target]) -> None:
@@ -179,6 +201,8 @@ def update(projroot: str, check: bool) -> None:
     pubtargets = targets
     basename = 'public'
     _add_python_embedded_targets(targets)
+    _add_init_module_target(targets)
+    _add_enums_module_target(targets)
     our_lines_public = (_empty_line_if(bool(targets)) +
                         _emit_group_build_lines(targets, basename) +
                         [t.emit() for t in targets])

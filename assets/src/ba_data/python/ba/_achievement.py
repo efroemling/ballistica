@@ -388,7 +388,7 @@ class AchievementSubsystem:
 
     def _test(self) -> None:
         """For testing achievement animations."""
-        from ba._enums import TimeType
+        from ba._generated.enums import TimeType
 
         def testcall1() -> None:
             self.achievements[0].announce_completion()
@@ -489,7 +489,7 @@ class Achievement:
 
     def announce_completion(self, sound: bool = True) -> None:
         """Kick off an announcement for this achievement's completion."""
-        from ba._enums import TimeType
+        from ba._generated.enums import TimeType
         app = _ba.app
 
         # Even though there are technically achievements when we're not
@@ -619,7 +619,7 @@ class Achievement:
         """
         # pylint: disable=cyclic-import
         from ba._language import Lstr
-        from ba._enums import SpecialChar
+        from ba._generated.enums import SpecialChar
         from ba._coopsession import CoopSession
         from bastd.actor.image import Image
         from bastd.actor.text import Text
@@ -923,7 +923,7 @@ class Achievement:
         from ba._general import WeakCall
         from ba._language import Lstr
         from ba._messages import DieMessage
-        from ba._enums import TimeType, SpecialChar
+        from ba._generated.enums import TimeType, SpecialChar
         app = _ba.app
         app.ach.last_achievement_display_time = _ba.time(TimeType.REAL)
 

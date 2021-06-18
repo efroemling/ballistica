@@ -334,7 +334,7 @@ class Session:
     def _launch_end_session_activity(self) -> None:
         """(internal)"""
         from ba._activitytypes import EndSessionActivity
-        from ba._enums import TimeType
+        from ba._generated.enums import TimeType
         with _ba.Context(self):
             curtime = _ba.time(TimeType.REAL)
             if self._ending:
@@ -367,7 +367,7 @@ class Session:
         will replace the old.
         """
         from ba._general import Call
-        from ba._enums import TimeType
+        from ba._generated.enums import TimeType
 
         # Only pay attention if this is coming from our current activity.
         if activity is not self._activity_retained:
@@ -431,7 +431,7 @@ class Session:
         (on_transition_in, etc) to get it. (so you can't do
         session.setactivity(foo) and then ba.newnode() to add a node to foo)
         """
-        from ba._enums import TimeType
+        from ba._generated.enums import TimeType
 
         # Make sure we don't get called recursively.
         _rlock = self._SetActivityScopedLock(self)

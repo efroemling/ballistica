@@ -1,14 +1,27 @@
 <component name="InspectionProjectProfileManager">
   <profile version="1.0">
     <option name="myName" value="Default" />
-    <inspection_tool class="DuplicatedCode" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
+    <inspection_tool class="Annotator" enabled="true" level="ERROR" enabled_by_default="true">
+      <scope name="PyIgnoreProtectedAccess" level="ERROR" enabled="false" />
+    </inspection_tool>
+    <inspection_tool class="DuplicatedCode" enabled="false" level="WEAK WARNING" enabled_by_default="false">
+      <scope name="PyIgnoreProtectedAccess" level="WEAK WARNING" enabled="false" />
+    </inspection_tool>
     <inspection_tool class="GrazieInspection" enabled="false" level="TYPO" enabled_by_default="false" />
     <inspection_tool class="HttpUrlsUsage" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
     <inspection_tool class="InconsistentLineSeparators" enabled="true" level="WARNING" enabled_by_default="true">
       <scope name="NonPython" level="WARNING" enabled="false" />
+      <scope name="PyIgnoreProtectedAccess" level="WARNING" enabled="false" />
+    </inspection_tool>
+    <inspection_tool class="InjectedReferences" enabled="true" level="ERROR" enabled_by_default="true">
+      <scope name="PyIgnoreProtectedAccess" level="ERROR" enabled="false" />
+    </inspection_tool>
+    <inspection_tool class="LongLine" enabled="false" level="WARNING" enabled_by_default="false">
+      <scope name="PyIgnoreProtectedAccess" level="WARNING" enabled="false" />
     </inspection_tool>
     <inspection_tool class="ProblematicWhitespace" enabled="true" level="WARNING" enabled_by_default="true">
       <scope name="NonPython" level="WARNING" enabled="false" />
+      <scope name="PyIgnoreProtectedAccess" level="WARNING" enabled="false" />
     </inspection_tool>
     <inspection_tool class="PyArgumentListInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="PyBroadExceptionInspection" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
@@ -40,6 +53,7 @@
       </option>
     </inspection_tool>
     <inspection_tool class="PyProtectedMemberInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <scope name="PyIgnoreProtectedAccess" level="WEAK WARNING" enabled="false" />
       <scope name="UncheckedPython" level="WEAK WARNING" enabled="false" />
     </inspection_tool>
     <inspection_tool class="PyRedundantParenthesesInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
@@ -99,6 +113,15 @@
     </inspection_tool>
     <inspection_tool class="PyUnusedLocalInspection" enabled="false" level="WEAK WARNING" enabled_by_default="false">
       <scope name="UncheckedPython" level="WEAK WARNING" enabled="false" />
+    </inspection_tool>
+    <inspection_tool class="RedundantSuppression" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="PyIgnoreProtectedAccess" level="WARNING" enabled="false" />
+    </inspection_tool>
+    <inspection_tool class="SyntaxError" enabled="true" level="ERROR" enabled_by_default="true">
+      <scope name="PyIgnoreProtectedAccess" level="ERROR" enabled="false" />
+    </inspection_tool>
+    <inspection_tool class="TodoComment" enabled="false" level="WARNING" enabled_by_default="false">
+      <scope name="PyIgnoreProtectedAccess" level="WARNING" enabled="false" />
     </inspection_tool>
   </profile>
 </component>

@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="PyIgnoreProtectedAccess" pattern="file[ballisticacore]:assets/src/ba_data/python/ba//*" />
+</component>

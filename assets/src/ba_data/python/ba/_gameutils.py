@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import _ba
-from ba._enums import TimeType, TimeFormat, SpecialChar, UIScale
+from ba._generated.enums import TimeType, TimeFormat, SpecialChar, UIScale
 from ba._error import ActivityNotFoundError
 
 if TYPE_CHECKING:

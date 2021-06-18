@@ -30,7 +30,7 @@ def get_player_profile_icon(profilename: str) -> str:
 
     (non-account profiles only)
     """
-    from ba._enums import SpecialChar
+    from ba._generated.enums import SpecialChar
 
     appconfig = _ba.app.config
     icon: str

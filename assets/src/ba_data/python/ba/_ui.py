@@ -7,7 +7,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import _ba
-from ba._enums import UIScale
+from ba._generated.enums import UIScale
 
 if TYPE_CHECKING:
     from typing import Optional, Dict, Any, Callable, List, Type
@@ -70,7 +70,7 @@ class UISubsystem:
     def on_app_launch(self) -> None:
         """Should be run on app launch."""
         from ba.ui import UIController, ui_upkeep
-        from ba._enums import TimeType
+        from ba._generated.enums import TimeType
 
         # IMPORTANT: If tweaking UI stuff, make sure it behaves for small,
         # medium, and large UI modes. (doesn't run off screen, etc).
@@ -107,7 +107,7 @@ class UISubsystem:
     def set_main_menu_window(self, window: ba.Widget) -> None:
         """Set the current 'main' window, replacing any existing."""
         existing = self._main_menu_window
-        from ba._enums import TimeType
+        from ba._generated.enums import TimeType
         from inspect import currentframe, getframeinfo
 
         # Let's grab the location where we were called from to report

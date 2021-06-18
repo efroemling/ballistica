@@ -385,7 +385,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         # pylint: disable=cyclic-import
         from bastd.ui.continues import ContinuesWindow
         from ba._coopsession import CoopSession
-        from ba._enums import TimeType
+        from ba._generated.enums import TimeType
 
         try:
             if _ba.get_account_misc_read_val('enableContinues', False):
@@ -653,7 +653,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
     def _show_tip(self) -> None:
         # pylint: disable=too-many-locals
         from ba._gameutils import animate, GameTip
-        from ba._enums import SpecialChar
+        from ba._generated.enums import SpecialChar
 
         # If there's any tips left on the list, display one.
         if self.tips:
@@ -1009,7 +1009,7 @@ class GameActivity(Activity[PlayerType, TeamType]):
         If the time-limit expires, end_game() will be called.
         """
         from ba._nodeactor import NodeActor
-        from ba._enums import TimeType
+        from ba._generated.enums import TimeType
         if duration <= 0.0:
             return
         self._tournament_time_limit = int(duration)

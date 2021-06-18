@@ -121,7 +121,7 @@ class AccountSubsystem:
 
     def cache_tournament_info(self, info: Any) -> None:
         """(internal)"""
-        from ba._enums import TimeType, TimeFormat
+        from ba._generated.enums import TimeType, TimeFormat
         for entry in info:
             cache_entry = self.tournament_info[entry['tournamentID']] = (
                 copy.deepcopy(entry))
@@ -206,7 +206,7 @@ class AccountSubsystem:
     def show_post_purchase_message(self) -> None:
         """(internal)"""
         from ba._language import Lstr
-        from ba._enums import TimeType
+        from ba._generated.enums import TimeType
         cur_time = _ba.time(TimeType.REAL)
         if (self.last_post_purchase_message_time is None
                 or cur_time - self.last_post_purchase_message_time > 3.0):
@@ -237,7 +237,7 @@ class AccountSubsystem:
     def add_pending_promo_code(self, code: str) -> None:
         """(internal)"""
         from ba._language import Lstr
-        from ba._enums import TimeType
+        from ba._generated.enums import TimeType
 
         # If we're not signed in, queue up the code to run the next time we
         # are and issue a warning if we haven't signed in within the next

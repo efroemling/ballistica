@@ -275,7 +275,7 @@ class Activity(DependencyComponent, Generic[PlayerType, TeamType]):
 
         (internal)
         """
-        from ba._enums import TimeType
+        from ba._generated.enums import TimeType
 
         # Create a real-timer that watches a weak-ref of this activity
         # and reports any lingering references keeping it alive.
