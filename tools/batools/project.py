@@ -90,24 +90,17 @@ class Updater:
         self._apply_line_changes()
         self._apply_file_changes()
 
-        # This keeps our compile-commands list up to date with any
-        # source files we just added or removed.
-        self._update_prereqs()
-
-        # We only check/update these in core; not spinoff projects.
-        # That is because they create hashes based on source files
-        # that get filtered for spinoff projects so always trip
-        # dirty-checks there. If we want to generate these uniquely per
-        # spinoff project we would need to start running updates
-        # independently for those projects as opposed to just using
-        # things as spinoff creates them.
-
         self._update_dummy_module()
 
-        # Docs checks/updates will only run if BA_ENABLE_DOCS_UPDATES=1
-        # is set in the environment.
+        # Docs checks/updates will only run with this env var set.
         if os.environ.get('BA_ENABLE_DOCS_UPDATES') == '1':
             self._update_docs()
+
+        # Though not technically necessary, let's go ahead and update
+        # irony compile-commands, tool configs, etc. as part of the
+        # update process. This lessens the chance we'll have tools
+        # behave funny until the next time we run a build.
+        subprocess.run(['make', f'-j{os.cpu_count()}', 'prereqs'], check=True)
 
         if self._check:
             print(f'{Clr.BLU}Check-Builds: Everything up to date.{Clr.RST}')
@@ -147,12 +140,6 @@ class Updater:
                                  f' got {type(sources)}')
             self._internal_source_dirs = set(sources)
         return self._internal_source_dirs
-
-    def _update_prereqs(self) -> None:
-
-        # This will update our prereqs which may include compile-commands
-        # files (.cache/irony/compile_commands.json, etc)
-        subprocess.run(['make', '-j8', 'prereqs'], check=True)
 
     def _apply_file_changes(self) -> None:
         # Now write out any project files that have changed
