@@ -206,8 +206,8 @@ class FootballTeamGame(ba.TeamGameActivity[Player, Team]):
             return
         region = ba.getcollision().sourcenode
         i = None
-        for i in range(len(self._score_regions)):
-            if region == self._score_regions[i].node:
+        for i, score_region in enumerate(self._score_regions):
+            if region == score_region.node:
                 break
         for team in self.teams:
             if team.id == i:
@@ -651,8 +651,8 @@ class FootballCoopGame(ba.CoopGameActivity[Player, Team]):
         # See which score region it was.
         region = ba.getcollision().sourcenode
         i = None
-        for i in range(len(self._score_regions)):
-            if region == self._score_regions[i].node:
+        for i, score_region in enumerate(self._score_regions):
+            if region == score_region.node:
                 break
 
         for team in [self.teams[0], self._bot_team]:

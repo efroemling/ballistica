@@ -697,7 +697,7 @@ def efro_gradle() -> None:
     from efrotools.android import filter_gradle_file
     args = ['./gradlew'] + sys.argv[2:]
     print(f'{Clr.BLU}Running gradle with args:{Clr.RST} {args}.', flush=True)
-    enabled_tags: Set[str] = set()
+    enabled_tags: Set[str] = {'true'}
     target_words = [w.lower() for w in _camel_case_split(args[-1])]
     if 'google' in target_words:
         enabled_tags = {'google', 'crashlytics'}

@@ -97,8 +97,7 @@ class Updater:
         self._update_cmake_files()
         self._update_visual_studio_projects()
 
-        # If we're all good to here, do actual writes set up
-        # by the above stuff.
+        # If we're all good to here, do the actual writes we set up above.
         self._apply_line_changes()
         self._apply_file_changes()
 

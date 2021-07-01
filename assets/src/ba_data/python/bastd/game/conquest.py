@@ -159,8 +159,8 @@ class ConquestGame(ba.TeamGameActivity[Player, Team]):
         self.setup_standard_powerup_drops()
 
         # Set up flags with marker lights.
-        for i in range(len(self.map.flag_points)):
-            point = self.map.flag_points[i]
+        for i, flag_point in enumerate(self.map.flag_points):
+            point = flag_point
             flag = ConquestFlag(position=point,
                                 touchable=False,
                                 materials=[self._extraflagmat])
@@ -177,14 +177,14 @@ class ConquestGame(ba.TeamGameActivity[Player, Team]):
                                     })
 
         # Give teams a flag to start with.
-        for i in range(len(self.teams)):
-            self._flags[i].team = self.teams[i]
+        for i, team in enumerate(self.teams):
+            self._flags[i].team = team
             light = self._flags[i].light
             assert light
             node = self._flags[i].node
             assert node
-            light.color = self.teams[i].color
-            node.color = self.teams[i].color
+            light.color = team.color
+            node.color = team.color
 
         self._update_scores()
 

@@ -277,8 +277,8 @@ class HockeyGame(ba.TeamGameActivity[Player, Team]):
 
         region = ba.getcollision().sourcenode
         index = 0
-        for index in range(len(self._score_regions)):
-            if region == self._score_regions[index].node:
+        for index, score_region in enumerate(self._score_regions):
+            if region == score_region.node:
                 break
 
         for team in self.teams:

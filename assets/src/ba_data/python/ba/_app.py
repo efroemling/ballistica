@@ -581,7 +581,8 @@ class App:
         """
         import urllib.request
         try:
-            val = urllib.request.urlopen('https://example.com').read()
+            with urllib.request.urlopen('https://example.com') as url:
+                val = url.read()
             print('HTTPS TEST SUCCESS', len(val))
         except Exception as exc:
             print('HTTPS TEST FAIL:', exc)

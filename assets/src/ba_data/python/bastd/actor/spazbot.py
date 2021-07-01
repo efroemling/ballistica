@@ -977,8 +977,8 @@ class SpazBotSet:
         if activity is None or activity.expired:
             return
 
-        for i in range(len(self._bot_lists)):
-            for bot in self._bot_lists[i]:
+        for i, bot_list in enumerate(self._bot_lists):
+            for bot in bot_list:
                 bot.handlemessage(ba.DieMessage(immediate=True))
             self._bot_lists[i] = []
 

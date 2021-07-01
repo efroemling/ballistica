@@ -30,23 +30,23 @@ except ModuleNotFoundError:
 class ExtendedJSONEncoder(json.JSONEncoder):
     """Custom json encoder supporting additional types."""
 
-    def default(self, obj: Any) -> Any:  # pylint: disable=W0221
-        if isinstance(obj, datetime.datetime):
+    def default(self, o: Any) -> Any:
+        if isinstance(o, datetime.datetime):
 
             # We only support timezone-aware utc times.
-            if (obj.tzinfo is not datetime.timezone.utc
-                    and (_pytz_utc is None or obj.tzinfo is not _pytz_utc)):
+            if (o.tzinfo is not datetime.timezone.utc
+                    and (_pytz_utc is None or o.tzinfo is not _pytz_utc)):
                 raise ValueError(
                     'datetime values must have timezone set as timezone.utc')
             return {
                 TYPE_TAG:
                     'dt',
                 'v': [
-                    obj.year, obj.month, obj.day, obj.hour, obj.minute,
-                    obj.second, obj.microsecond
+                    o.year, o.month, o.day, o.hour, o.minute, o.second,
+                    o.microsecond
                 ],
             }
-        return super().default(obj)
+        return super().default(o)
 
 
 class ExtendedJSONDecoder(json.JSONDecoder):

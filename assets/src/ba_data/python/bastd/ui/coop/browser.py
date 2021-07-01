@@ -989,22 +989,21 @@ class CoopBrowserWindow(ba.Window):
         # (for wiring up)
         self._refresh_campaign_row()
 
-        for i in range(len(self._tournament_buttons)):
+        for i, tbutton in enumerate(self._tournament_buttons):
             ba.widget(
-                edit=self._tournament_buttons[i]['button'],
+                edit=tbutton['button'],
                 up_widget=self._tournament_info_button
                 if i == 0 else self._tournament_buttons[i - 1]['button'],
                 down_widget=self._tournament_buttons[(i + 1)]['button']
                 if i + 1 < len(self._tournament_buttons) else custom_h_scroll)
             ba.widget(
-                edit=self._tournament_buttons[i]['more_scores_button'],
+                edit=tbutton['more_scores_button'],
                 down_widget=self._tournament_buttons[(
                     i + 1)]['current_leader_name_text']
                 if i + 1 < len(self._tournament_buttons) else custom_h_scroll)
-            ba.widget(
-                edit=self._tournament_buttons[i]['current_leader_name_text'],
-                up_widget=self._tournament_info_button if i == 0 else
-                self._tournament_buttons[i - 1]['more_scores_button'])
+            ba.widget(edit=tbutton['current_leader_name_text'],
+                      up_widget=self._tournament_info_button if i == 0 else
+                      self._tournament_buttons[i - 1]['more_scores_button'])
 
         for btn in self._custom_buttons:
             try:
