@@ -14,6 +14,8 @@
 //  version if we aren't careful and only include one header.
 //  For now just including both here at the top level to hopefully
 //  minimize problems.
+// UPDATE: We should now be building with C++17 everywhere; should add a
+// check to ensure that is the case and can simplify this.
 #ifdef __cplusplus
 #include <cassert>
 #include <cmath>
