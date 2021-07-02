@@ -561,7 +561,7 @@ def checkenv() -> None:
     piplist = piplist[2:]
     pipvers: Dict[str, List[int]] = {}
     for line in piplist:
-        pname, pverraw = line.split()
+        pname, pverraw = line.split()[:2]
         pver = [int(x) if x.isdigit() else 0 for x in pverraw.split('.')]
         pipvers[pname] = pver
 
