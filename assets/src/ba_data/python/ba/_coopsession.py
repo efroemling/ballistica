@@ -156,8 +156,29 @@ class CoopSession(Session):
         from ba._general import WeakCall
         super().on_player_leave(sessionplayer)
 
-        # If all our players leave we wanna quit out of the session.
-        _ba.timer(2.0, WeakCall(self._end_session_if_empty))
+        if _ba.app.server is not None:
+            # If we're in server mode, end game and show results.
+            activity = self.getactivity()
+            _ba.timer(2.0, WeakCall(self._end_activity_if_empty))
+        else:
+            # Otherwise, if all our players leave
+            # we wanna quit out of the session.
+            _ba.timer(2.0, WeakCall(self._end_session_if_empty))
+
+    def _end_activity_if_empty(self) -> None:
+        activity = self.getactivity()
+        if activity is None:
+            return  # Probably everything is already broken, why do something?
+
+        if activity.players:
+            return
+
+        with _ba.Context(activity):
+            from ba._gameactivity import GameActivity
+
+            # FIXME: rewrite this, doesn't cover all cases
+            assert isinstance(activity, GameActivity)
+            activity.end_game()
 
     def _end_session_if_empty(self) -> None:
         activity = self.getactivity()
@@ -250,10 +271,11 @@ class CoopSession(Session):
 
         # If at any point we have no in-game players, quit out of the session
         # (this can happen if someone leaves in the tutorial for instance).
-        active_players = [p for p in self.sessionplayers if p.in_game]
-        if not active_players:
-            self.end()
-            return
+        if isinstance(activity, TutorialActivity):
+            active_players = [p for p in self.sessionplayers if p.in_game]
+            if not active_players:
+                self.end()
+                return
 
         # If we're in a between-round activity or a restart-activity,
         # hop into a round.

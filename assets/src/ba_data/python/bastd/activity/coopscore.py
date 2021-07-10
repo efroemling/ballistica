@@ -122,7 +122,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         self._birth_time = ba.time()
         self._min_view_time = 5.0
         self._allow_server_transition = False
-        self._server_transitioning: Optional[bool] = True
+        self._server_transitioning: Optional[bool] = None
 
         self._playerinfos: List[ba.PlayerInfo] = settings['playerinfos']
         assert isinstance(self._playerinfos, list)
@@ -494,8 +494,6 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
     def _player_press(self) -> None:
         # (Only for headless builds).
 
-        print('HERE PLAYER PRESS')
-
         # If this activity is a good 'end point', ask server-mode just once if
         # it wants to do anything special like switch sessions or kill the app.
         if (self._allow_server_transition and _ba.app.server is not None
@@ -503,16 +501,14 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
             self._server_transitioning = _ba.app.server.handle_transition()
             assert isinstance(self._server_transitioning, bool)
 
-        print('HERE IF PASSED')
-
         # If server-mode is handling this, don't do anything ourself.
         if self._server_transitioning is True:
             return
 
-        print('HERE RESTARTING COOP')
         # Otherwise restart current level.
-        print('HERE ui_restart() only for testing; replace after that')
-        self._ui_restart()
+        self._campaign.set_selected_level(self._level_name)
+        with ba.Context(self):
+            self.end({'outcome': 'restart'})
 
     def _safe_assign(self, player: EmptyPlayer) -> None:
         # (Only for headless builds).
@@ -520,16 +516,15 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         # Just to be extra careful, don't assign if we're transitioning out.
         # (though theoretically that should be ok).
         if not self.is_transitioning_out() and player:
-            player.assigninput((ba.InputType.JUMP_PRESS, ba.InputType.PUNCH_PRESS,
-                                ba.InputType.BOMB_PRESS, ba.InputType.PICK_UP_PRESS),
-                               self._player_press)
+            player.assigninput(
+                (ba.InputType.JUMP_PRESS, ba.InputType.PUNCH_PRESS,
+                 ba.InputType.BOMB_PRESS, ba.InputType.PICK_UP_PRESS),
+                self._player_press)
 
     def on_player_join(self, player: PlayerType) -> None:
-        print('HERE ON PLAYER JOIN')
         super().on_player_join(player)
 
         if ba.app.server is not None:
-            print('HERE INPUT ASSIGNED')
             # Host can't press retry button, so anyone can do it instead.
             time_till_assign = max(
                 0, self._birth_time + self._min_view_time - _ba.time())
