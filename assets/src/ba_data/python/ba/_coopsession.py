@@ -158,7 +158,6 @@ class CoopSession(Session):
 
         if _ba.app.server is not None:
             # If we're in server mode, end game and show results.
-            activity = self.getactivity()
             _ba.timer(2.0, WeakCall(self._end_activity_if_empty))
         else:
             # Otherwise, if all our players leave

@@ -510,7 +510,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
         with ba.Context(self):
             self.end({'outcome': 'restart'})
 
-    def _safe_assign(self, player: EmptyPlayer) -> None:
+    def _safe_assign(self, player: ba.Player) -> None:
         # (Only for headless builds).
 
         # Just to be extra careful, don't assign if we're transitioning out.
@@ -521,7 +521,7 @@ class CoopScoreScreen(ba.Activity[ba.Player, ba.Team]):
                  ba.InputType.BOMB_PRESS, ba.InputType.PICK_UP_PRESS),
                 self._player_press)
 
-    def on_player_join(self, player: PlayerType) -> None:
+    def on_player_join(self, player: ba.Player) -> None:
         super().on_player_join(player)
 
         if ba.app.server is not None:

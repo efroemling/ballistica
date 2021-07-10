@@ -299,6 +299,7 @@ class ServerController:
 
     def _launch_server_session(self) -> None:
         """Kick off a host-session based on the current server config."""
+        # pylint: disable=too-many-branches
         app = _ba.app
         appcfg = app.config
         sessiontype = self._get_session_type()
@@ -348,7 +349,8 @@ class ServerController:
             appcfg['Team Tournament Playlist Randomize'] = (
                 self._config.playlist_shuffle)
         elif sessiontype is CoopSession:
-            campaignname, levelname = self._coop_game_name.split(':')
+            gamename = self._coop_game_name or 'Default:Onslaught Training'
+            campaignname, levelname = gamename.split(':')
             app.coop_session_args = {
                 'campaign': campaignname,
                 'level': levelname,
