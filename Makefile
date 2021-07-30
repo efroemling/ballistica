@@ -882,6 +882,11 @@ cmake-server-build: assets-cmake resources meta
 cmake-server-clean:
 	rm -rf build/cmake/server-$(CM_BT_LC)
 
+# Stage assets for building/running within CLion.
+clion-staging: assets-cmake resources meta
+	${STAGE_ASSETS} -cmake build/clion_debug
+	${STAGE_ASSETS} -cmake build/clion_release
+
 # Tell make which of these targets don't represent files.
 .PHONY: cmake cmake-build cmake-clean cmake-server cmake-server-build \
       cmake-server-clean

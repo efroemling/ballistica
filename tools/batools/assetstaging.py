@@ -51,7 +51,7 @@ class Config:
         self.include_payload_file = False
         self.tex_suffix: Optional[str] = None
         self.is_payload_full = False
-        self.debug = False
+        self.debug: Optional[bool] = None
 
     def _parse_android_args(self, args: List[str]) -> None:
         # On Android we get nitpicky with what
@@ -151,7 +151,9 @@ class Config:
             self.include_textures = False
             self.include_audio = False
             self.include_models = False
+
             # Require either -debug or -release in args.
+            # FIXME: should require this for all platforms for consistency.
             if '-debug' in args:
                 self.debug = True
                 assert '-release' not in args
@@ -247,6 +249,7 @@ def _sync_windows_extras(cfg: Config) -> None:
     # files in dst, so when building packages/etc. we should always start
     # from scratch.
     assert cfg.dst is not None
+    assert cfg.debug is not None
     if cfg.debug:
         pyd_rules = "--include '*_d.pyd'"
     else:
@@ -362,6 +365,7 @@ def _sync_standard_game_data(cfg: Config) -> None:
 
 def _sync_server_files(cfg: Config) -> None:
     assert cfg.serverdst is not None
+    assert cfg.debug is not None
     modeval = 'debug' if cfg.debug else 'release'
 
     # NOTE: staging these directly from src; not build.
