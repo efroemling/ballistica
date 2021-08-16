@@ -54,7 +54,7 @@ class BGDynamics {
   void Step(const Vector3f& cam_pos);
 
   // can be called to inform the bg dynamics thread to kill off some
-  // smoke/chunks/etc if rendering is chugging or whatnot.
+  // smoke/chunks/etc. if rendering is chugging or whatnot.
   void TooSlow();
 
   // Draws the last snapshot the bg-dynamics-server has delivered to us

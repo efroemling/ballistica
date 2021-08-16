@@ -11,10 +11,12 @@
     </inspection_tool>
     <inspection_tool class="ConstructionIsNotAllowed" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="DuplicateSwitchCase" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="GrazieInspection" enabled="false" level="TYPO" enabled_by_default="false" />
     <inspection_tool class="ImplicitPointerAndIntegerConversion" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="IncompatibleTypes" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="InitializationIssue" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="InterfaceHasNoImplementation" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="LocalValueEscapesScope" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="LoopDoesntUseConditionVariable" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="MemberFunctionCanBeStatic" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="MemberVisibility" enabled="false" level="ERROR" enabled_by_default="false" />
@@ -31,6 +33,9 @@
     <inspection_tool class="OtherCpp" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="OtherObjC" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="PointerTypeRequired" enabled="false" level="ERROR" enabled_by_default="false" />
+    <inspection_tool class="PreprocessorComment" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Ignored" level="WARNING" enabled="false" />
+    </inspection_tool>
     <inspection_tool class="Simplify" enabled="false" level="WARNING" enabled_by_default="false">
       <option name="clangTidyCheckOptions">
         <list>

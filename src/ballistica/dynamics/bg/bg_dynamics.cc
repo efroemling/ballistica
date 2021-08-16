@@ -182,7 +182,7 @@ void BGDynamics::Draw(FrameDef* frame_def) {
     sparks_mesh_->SetData(
         Object::Ref<MeshBuffer<VertexSprite>>(ds->spark_vertices));
 
-    // In high-quality we draw in the overlay pass so we don't get wiped
+    // In high-quality, we draw in the overlay pass so that we don't get wiped
     // out by depth-of-field.
     bool draw_in_overlay = (frame_def->quality() >= GraphicsQuality::kHigh);
     SpriteComponent c(draw_in_overlay ? frame_def->overlay_3d_pass()
@@ -284,7 +284,7 @@ void BGDynamics::DrawChunks(FrameDef* frame_def,
     return;
   }
 
-  // Draw ourself into the beauty pass.
+  // Draw ourselves into the beauty pass.
   ModelData* model;
   switch (chunk_type) {
     case BGDynamicsChunkType::kFlagStand:

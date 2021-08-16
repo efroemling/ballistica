@@ -207,7 +207,7 @@ void ButtonWidget::Draw(RenderPass* pass, bool draw_transparent) {
     float b = 0;
     float t = b + height_;
 
-    // Use these to pick styles so style doesnt
+    // Use these to pick styles so style doesn't
     // change during mouse-over, etc.
     float l_orig = l;
     float r_orig = r;
@@ -558,7 +558,7 @@ void ButtonWidget::DoActivate(bool isRepeat) {
     return;
   }
 
-  // We dont want holding down a repeat-button to keep flashing it.
+  // We don't want holding down a repeat-button to keep flashing it.
   if (!isRepeat) {
     last_activate_time_ = g_game->master_time();
   }
@@ -573,8 +573,8 @@ void ButtonWidget::DoActivate(bool isRepeat) {
     }
   }
   if (on_activate_call_.exists()) {
-    // Call this in the next cycle (don't wanna risk mucking with UI from
-    // within a UI loop.
+    // Call this in the next cycle (don't want to risk mucking with UI from
+    // within a UI loop.)
     g_game->PushPythonWeakCall(
         Object::WeakRef<PythonContextCall>(on_activate_call_));
     return;

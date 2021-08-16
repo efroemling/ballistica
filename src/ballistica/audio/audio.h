@@ -27,7 +27,7 @@ class Audio {
 
   // Return a pointer to a locked sound source, or nullptr if they're all busy.
   // The sound source will be reset to standard settings (no loop, fade 1, pos
-  // 0,0,0, etc).
+  // 0,0,0, etc.).
   // Send the source any immediate commands and then unlock it.
   // For later modifications, re-retrieve the sound with GetPlayingSound()
   auto SourceBeginNew() -> AudioSource*;

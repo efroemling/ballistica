@@ -190,22 +190,21 @@ auto PythonClassNode::GetDelegate(PythonClassNode* self, PyObject* args,
                                   PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   static const char* kwlist[] = {"type", "doraise", nullptr};
-  PyObject* type_obj{};
+  PyObject* tp_obj{};
   int doraise{};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|p",
-                                   const_cast<char**>(kwlist), &type_obj,
-                                   &doraise)) {
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "O|p", const_cast<char**>(kwlist), &tp_obj, &doraise)) {
     return nullptr;
   }
   Node* node = self->node_->get();
   if (!node) {
     throw Exception(PyExcType::kNodeNotFound);
   }
-  if (!PyType_Check(type_obj)) {
+  if (!PyType_Check(tp_obj)) {
     throw Exception("Passed type arg is not a type.", PyExcType::kType);
   }
   if (PyObject* obj = node->GetDelegate()) {
-    int isinst = PyObject_IsInstance(obj, type_obj);
+    int isinst = PyObject_IsInstance(obj, tp_obj);
     if (isinst == -1) {
       return nullptr;
     }
@@ -216,7 +215,7 @@ auto PythonClassNode::GetDelegate(PythonClassNode* self, PyObject* args,
       if (doraise) {
         throw Exception("Requested delegate type not found on '"
                             + node->type()->name()
-                            + "' node. (type=" + Python::ObjToString(type_obj)
+                            + "' node. (type=" + Python::ObjToString(tp_obj)
                             + ", delegate=" + Python::ObjToString(obj) + ")",
                         PyExcType::kDelegateNotFound);
       }

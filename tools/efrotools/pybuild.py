@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from efrotools import PYVER, run, readfile, writefile, replace_one
 
 if TYPE_CHECKING:
-    from typing import List, Dict, Any
+    from typing import List, Dict, Any, Optional
 
 ENABLE_OPENSSL = True
 PY38 = True
@@ -96,7 +96,7 @@ def build_apple(arch: str, debug: bool = False) -> None:
             '_codecs_jp cjkcodecs/_codecs_jp.c',
             '_codecs_kr cjkcodecs/_codecs_kr.c',
             '_codecs_tw cjkcodecs/_codecs_tw.c',
-            '_lsprof _lsprof.o rotatingtree.c',
+            '_lsprof _lsprof.c rotatingtree.c',
             '_multibytecodec cjkcodecs/multibytecodec.c',
             '_multiprocessing _multiprocessing/multiprocessing.c',
             '_opcode _opcode.c',
@@ -309,11 +309,17 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
 
     # Set these to particular releases to use those.
     # py_commit = '580fbb018fd0844806119614d752b41fc69660f9'  # 3.8.5
-    py_commit = '6503f05dd59e26a9986bdea097b3da9b3546f45b'  # 3.8.7
+    # py_commit = '6503f05dd59e26a9986bdea097b3da9b3546f45b'  # 3.8.7
+    py_commit = 'c3ffbbdf3d5645ee07c22649f2028f9dffc762ba'  # 3.8.11
 
     # cpython-source-deps stuff started failing for OpenSSL on Jan 8 2021.
     # Pinning it to an older one for now.
-    py_ssl_commit = '7f34c3085feb4692bbbb6c8b19d053ebc5049dad'  # From 6/12/20
+    if bool(False):
+        # From 6/12/20
+        py_ssl_commit: Optional[str] = (
+            '7f34c3085feb4692bbbb6c8b19d053ebc5049dad')
+    else:
+        py_ssl_commit = None
 
     commit_lines = ''
     if py_commit is not None:
@@ -322,11 +328,21 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
                          "            run_in_dir(['git', 'checkout', '" +
                          py_commit + "'], self.source_dir)\n")
     if py_ssl_commit is not None:
-        commit_lines += ('        if self.source_url == '
-                         "'https://github.com/python/cpython-source-deps'"
-                         " and self.branch == 'openssl-1.1.1':\n"
-                         "            run_in_dir(['git', 'checkout', '" +
-                         py_ssl_commit + "'], self.source_dir)\n")
+        commit_lines += (f'        if self.source_url == '
+                         f"'https://github.com/python/cpython-source-deps'"
+                         f" and self.branch == 'openssl-1.1.1':\n"
+                         f"            run_in_dir(['git', 'checkout', '"
+                         f"{py_ssl_commit}'], self.source_dir)\n")
+
+    # Complaint about patch already being applied...
+    if bool(True):
+        ftxt = readfile('pybuild/packages/openssl.py')
+        ftxt = replace_one(
+            ftxt,
+            '        LocalPatch(\'lld-issue32518\'),\n',
+            '        # LocalPatch(\'lld-issue32518\'),\n',
+        )
+        writefile('pybuild/packages/openssl.py', ftxt)
 
     ftxt = readfile('pybuild/source.py')
 

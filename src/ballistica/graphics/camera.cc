@@ -325,7 +325,7 @@ void Camera::UpdatePosition() {
             }
 
             // Now, for camera aiming purposes, add some of their velocity and
-            // clamp to bounds, taking their radius into account. if our AOI
+            // clamp to the bounds, taking their radius into account. if our AOI
             // sphere is bigger than a given dimension, center it; otherwise
             // clamp to the box inset by our radius.
             float x_clamped, y_clamped, z_clamped, x_mirrored_clamped;
@@ -453,7 +453,7 @@ void Camera::UpdatePosition() {
           SetTarget(position_.x + p.v[0], position_.y + p.v[1],
                     position_.z + p.v[2]);
 
-          // Now the same for cam up/down.
+          // Now the same for camera up/down.
           // Note: technically we should recalc angles since we just rotated,
           // but this should be close enough.
           Vector3f p2(target_.x - position_.x, target_.y - position_.y,
@@ -734,7 +734,7 @@ void Camera::Update(millisecs_t elapsed) {
   // Update audio position more often in vr since we can whip our head around.
   uint32_t interval = IsVRMode() ? 50 : 100;
 
-  // Every now and then, update microphone position for audio.
+  // Occasionally, update microphone position for audio.
   if (real_time - last_listener_update_time_ > interval) {
     last_listener_update_time_ = real_time;
     bool do_regular_update = true;
@@ -872,7 +872,7 @@ void Camera::DeleteAreaOfInterest(AreaOfInterest* a) {
 void Camera::SetManual(bool enable) {
   manual_ = enable;
   if (manual_) {
-    // Reset our target settings to our current smoothed ones
+    // Reset our target settings to our current smoothed ones,
     // so we don't see an instant jump to the target.
     target_.x = target_smoothed_.x;
     target_.y = target_smoothed_.y;
@@ -912,7 +912,7 @@ void Camera::ApplyToFrameDef(FrameDef* frame_def) {
     nullptr
   };
 
-  // Currently our x/y fovs are simply enough to fit everything.
+  // Currently, our x/y fovs are simply enough to fit everything.
   // Check the aspect ratio of what we're rendering to and fit them.
 
   // Add a few degrees just to keep things away from the edges a bit
@@ -972,7 +972,7 @@ void Camera::ApplyToFrameDef(FrameDef* frame_def) {
   }
 
   // Also store original positions with the frame_def in case we want to muck
-  // with them later (VR, etc).
+  // with them later (VR, etc.).
   frame_def->set_cam_original(Vector3f(position_.x + extra_pos_2_.x,
                                        position_.y + extra_pos_2_.y,
                                        position_.z + extra_pos_2_.z));

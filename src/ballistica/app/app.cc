@@ -31,9 +31,9 @@ App::App(Thread* thread)
 
 void App::PostInit() {
   // If we've got a nice themed hardware cursor, show it.
-  // Otherwise hide the hardware cursor; we'll draw it in software.
-  // (need to run this in postinit because SDL/etc may not be inited yet
-  // as of App::App().
+  // Otherwise, hide the hardware cursor; we'll draw it in software.
+  // (need to run this in postinit because SDL/etc. may not be inited yet
+  // as of App::App()).
   g_platform->SetHardwareCursorVisible(g_buildconfig.hardware_cursor());
 }
 
@@ -72,7 +72,7 @@ void App::RebuildLostGLContext() {
 void App::DrawFrame(bool during_resize) {
   assert(InMainThread());
 
-  // Its possible to receive frames before we're ready to draw.
+  // It's possible to receive frames before we're ready to draw.
   if (!g_graphics_server || !g_graphics_server->renderer()) {
     return;
   }
@@ -157,7 +157,7 @@ void App::OnPause() {
   g_graphics->SetGyroEnabled(false);
 
   // IMPORTANT: Any on-pause related stuff that threads need to do must
-  // must be done from their HandleThreadPause(). If we push runnables to them
+  // be done from their HandleThreadPause(). If we push runnables to them,
   // they may or may not be called before the thread is actually paused.
 
   Thread::SetThreadsPaused(true);
@@ -191,7 +191,7 @@ void App::OnResume() {
   }
 
   // Also let the Python layer do what it needs to
-  // (starting/stopping music, etc).
+  // (starting/stopping music, etc.).
   g_python->PushObjCall(Python::ObjID::kHandleAppResumeCall);
   g_game->PushOnAppResumeCall();
 

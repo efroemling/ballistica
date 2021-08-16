@@ -11,8 +11,8 @@ namespace ballistica {
 BGDynamicsShadow::BGDynamicsShadow(float height_scaling) {
   assert(InGameThread());
 
-  // allocate our shadow data.. we'll pass this to the BGDynamics thread
-  // and it'll then own it
+  // allocate our shadow data... we'll pass this to the BGDynamics thread,
+  // which will then own it.
   data_ = new BGDynamicsShadowData(height_scaling);
   assert(g_bg_dynamics_server);
   g_bg_dynamics_server->PushAddShadowCall(data_);
@@ -22,9 +22,9 @@ BGDynamicsShadow::~BGDynamicsShadow() {
   assert(InGameThread());
   assert(g_bg_dynamics_server);
 
-  // let the data know the client side is dead
+  // let the data know the client side is dead,
   // so we're no longer included in step messages
-  // (since by the time the worker gets the the data will be gone)
+  // (since by the time the worker gets it the data will be gone)
   data_->client_dead = true;
   g_bg_dynamics_server->PushRemoveShadowCall(data_);
 }

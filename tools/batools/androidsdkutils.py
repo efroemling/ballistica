@@ -13,8 +13,6 @@ from efro.error import CleanError
 if TYPE_CHECKING:
     from typing import List
 
-PROJROOT = Path(__file__).resolve().parents[1]
-
 
 def _parse_lprop_file(local_properties_path: str) -> str:
     with open(local_properties_path) as infile:
@@ -126,7 +124,7 @@ def run(projroot: str, args: List[str]) -> None:
     # as external python builds still ask for this. So now we just pull it from
     # the project gradle file where we set it explicitly.
     if command == 'get-ndk-path':
-        gradlepath = Path(PROJROOT, 'ballisticacore-android/build.gradle')
+        gradlepath = Path(projroot, 'ballisticacore-android/build.gradle')
         with gradlepath.open() as infile:
             lines = [
                 l for l in infile.readlines()

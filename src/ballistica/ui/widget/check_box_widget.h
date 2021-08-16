@@ -83,7 +83,7 @@ class CheckBoxWidget : public Widget {
   bool pressed_{};
   bool is_radio_button_{};
 
-  // Keep these at the bottom so they're torn down first.
+  // Keep these at the bottom, so they'll be torn down first.
   Object::Ref<PythonContextCall> on_value_change_call_;
 };
 

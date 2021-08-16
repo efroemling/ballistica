@@ -135,7 +135,7 @@ class ButtonWidget : public Widget {
   float tint2_color_green_{1.0f};
   float tint2_color_blue_{1.0f};
 
-  // Keep these at the bottom so they're torn down first.
+  // Keep these at the bottom, so they're torn down first.
   Object::Ref<TextWidget> text_;
   Object::Ref<PythonContextCall> on_activate_call_;
   Object::Ref<RealTimer<ButtonWidget> > repeat_timer_;

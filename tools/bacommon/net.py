@@ -56,6 +56,9 @@ class PrivateHostingConfig:
     custom_team_colors: Optional[Tuple[Tuple[float, float, float],
                                        Tuple[float, float, float]]] = None
     playlist: Optional[List[Dict[str, Any]]] = None
+    exit_minutes: float = 120.0
+    exit_minutes_unclean: float = 180.0
+    exit_minutes_idle: float = 10.0
 
 
 @ioprepped

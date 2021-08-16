@@ -256,6 +256,7 @@
       <w>dernit</w>
       <w>dets</w>
       <w>dfba</w>
+      <w>dffc</w>
       <w>dfff</w>
       <w>dfmt</w>
       <w>dictval</w>
@@ -326,6 +327,7 @@
       <w>ewwwww</w>
       <w>exctype</w>
       <w>execinfo</w>
+      <w>execing</w>
       <w>exhash</w>
       <w>exhashstr</w>
       <w>expbool</w>
@@ -347,6 +349,7 @@
       <w>fdirz</w>
       <w>fenv</w>
       <w>fesetround</w>
+      <w>ffbbdf</w>
       <w>ffff</w>
       <w>ffffff</w>
       <w>fffffff</w>
@@ -577,9 +580,11 @@
       <w>lpsockaddr</w>
       <w>lrintf</w>
       <w>lscope</w>
+      <w>lshort</w>
       <w>lstr</w>
       <w>lsync</w>
       <w>ltypes</w>
+      <w>lubyte</w>
       <w>lvec</w>
       <w>lvoid</w>
       <w>macbuild</w>
@@ -626,6 +631,7 @@
       <w>mmask</w>
       <w>mmdevapi</w>
       <w>modder</w>
+      <w>modders</w>
       <w>modelview</w>
       <w>moduletype</w>
       <w>momemtary</w>
@@ -845,6 +851,7 @@
       <w>reallocations</w>
       <w>realtimers</w>
       <w>recalc</w>
+      <w>recv</w>
       <w>recvfrom</w>
       <w>redundants</w>
       <w>refcounted</w>

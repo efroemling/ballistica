@@ -16,7 +16,7 @@
 namespace ballistica {
 
 // Some triangle-on-box cases generate tons of contacts; lets try limiting it
-// this way.. If that doesn't work we'll crank this up and add collision
+// this way... If that doesn't work we'll crank this up and add collision
 // simplification.
 const int kMaxBGDynamicsContacts = 20;
 
@@ -43,7 +43,7 @@ struct DebugLine {
   Vector3f color;
 };
 
-// Eww these aren't thread-safe but they're just for debugging so whatever.
+// Eww; these aren't thread-safe, but they're just for debugging so whatever.
 std::vector<DebugLine> g_debug_lines;
 std::vector<Vector3f> g_debug_points;
 #endif  // BA_DEBUG_BUILD
@@ -173,9 +173,9 @@ class BGDynamicsServer::Tendril {
           Vector3f diff_norm = diff.Normalized();
           p_distorted += diff_norm * mag;
 
-          // Also apply a very slight amount of actual outward force to ourself
-          // (only if we're kinda old though - otherwise it screws with our
-          // initial shape too much).
+          // Also apply a very slight amount of actual outward force to
+          // ourselves (only if we're kinda old though - otherwise it screws
+          // with our initial shape too much).
           if (age > 400) {
             v += Vector3f(diff_norm.x * 0.03f, diff_norm.y * 0.01f,
                           diff_norm.z * 0.03f)
@@ -190,7 +190,7 @@ class BGDynamicsServer::Tendril {
       for (auto&& li : d.volume_lights_) {
         BGDynamicsVolumeLightData& l(*li);
         Vector3f& pLight(l.pos_worker);
-        float light_rad = l.radius_worker * 9.0f;  // Lets grow it a bit.
+        float light_rad = l.radius_worker * 9.0f;  // Let's grow it a bit.
         float light_rad_squared = light_rad * light_rad;
         float dist_squared = (pLight - p).LengthSquared();
         if (dist_squared <= light_rad_squared) {
@@ -274,7 +274,7 @@ class BGDynamicsServer::Tendril {
         shadow_density_ = blend * shadow_density_
                           + (1.0f - blend) * (i->p1.fade + i->p2.fade) * 0.5f;
         count++;
-        if (count > 4) break;  // only use first few..
+        if (count > 4) break;  // only use first few...
         i++;
       }
     }
@@ -355,7 +355,7 @@ class BGDynamicsServer::TendrilController {
     tendril_->SetController(this);
   }
   ~TendrilController() {
-    // If we have a tendril, tell it we're dying and that its done emitting.
+    // If we have a tendril, tell it we're dying and that it's done emitting.
     if (tendril_) {
       tendril_->SetController(nullptr);
       tendril_->emit_rate_ = 0.0f;
@@ -591,7 +591,7 @@ void BGDynamicsServer::ParticleSet::UpdateAndCreateSnapshot(
         p_dst->flicker = 1.0f;
       }
 
-      // Render this point if its got a positive size.
+      // Render this point if it's got a positive size.
       if (p_dst->flicker > 0.0f && p_dst->size > 0.0f) {
         p_count_rendered++;
 
@@ -647,7 +647,7 @@ void BGDynamicsServer::ParticleSet::UpdateAndCreateSnapshot(
 
   if (p_count != p_count_rendered) {
     // If we dropped all the way to zero, return empty.
-    // Otherwise return a downsized buffer.
+    // Otherwise, return a downsized buffer.
     if (p_count_rendered == 0) {
       *index_buffer = Object::Ref<MeshIndexBuffer16>();
       *buffer = Object::Ref<MeshBufferVertexSprite>();
@@ -725,7 +725,7 @@ void BGDynamicsServer::UpdateTendrils() {
     // Step existing tendril points.
     t.UpdateSlices(this);
 
-    // Update the tendrils physics if it is not being controlled.
+    // Update the tendrils' physics if it is not being controlled.
     if (t.controller_ == nullptr) {
       t.prev_pos_ = t.position_;
       t.velocity_ += Vector3f(0, -0.1f, 0);  // Gravity.
@@ -782,7 +782,7 @@ void BGDynamicsServer::UpdateTendrils() {
 
         float inherit_velocity = 0.015f;
 
-        // If this is our first step, drop down a span immediately.
+        // If this is our first step, drop a span immediately.
         if (!t.has_updated_) {
           Vector3f r_uniform = Utils::Sphrand(0.2f * t.slice_rand_scale_);
           float density = emit_rate > 0.1f ? 1.0f : emit_rate / 0.1f;
@@ -1088,7 +1088,7 @@ void BGDynamicsServer::Emit(const BGDynamicsEmission& def) {
       }
     }
   } else {
-    // For debris, start scaling back once we pass 50.. at chunk_max lets
+    // For debris, start scaling back once we pass 50... at chunk_max lets
     // stop.
     if (chunk_count_ >= chunk_max) {
       emit_count = 0;
@@ -1161,7 +1161,7 @@ void BGDynamicsServer::Emit(const BGDynamicsEmission& def) {
           do_tendril = true;
         }
 
-        // If we're emitting sparks, every now and then give one of them a
+        // If we're emitting sparks, occasionally give one of them a
         // smoke tendril.
         if (do_tendril) {
           // Create a tendril, create a controller for it, and store it
@@ -1246,7 +1246,7 @@ void BGDynamicsServer::Emit(const BGDynamicsEmission& def) {
           if (dCollide(ray, t_geom, 1, &contact[0].geom, sizeof(dContact))) {
             pos = Vector3f(contact[0].geom.pos);
             vel = Reflect(dir, Vector3f(contact[0].geom.normal));
-            // bias direction up a bit.. this way it'll hopefully be less
+            // bias direction up a bit... this way it'll hopefully be less
             // likely to point underground when we smash it down on the
             // camera plane
             vel.y += RandomFloat() * def.spread * 1.0f;
@@ -1256,7 +1256,7 @@ void BGDynamicsServer::Emit(const BGDynamicsEmission& def) {
         }
         if (!hit) {
           // since dbias pushes us all in a direction away from a surface,
-          // nudge our start pos in the opposite dir a bit so we butt up
+          // nudge our start pos in the opposite dir a bit so that we butt up
           // against the surface more
           pos = def.position + d_bias * RandomFloat() * -0.3f;
           vel = dir;
@@ -1908,7 +1908,7 @@ auto BGDynamicsServer::CreateDrawSnapshot() -> BGDynamicsDrawSnapshot* {
       ss->shadow_indices.Clear();
       ss->shadow_vertices.Clear();
     } else if (shadow_drawn_count != shadow_max_count) {
-      // Otherwise resize our buffers down to what we actually used.
+      // Otherwise, resize our buffers down to what we actually used.
       assert(s_index - (&ss->shadow_indices->elements[0])
              == shadow_drawn_count * 6);
       assert(s_vertex - (&ss->shadow_vertices->elements[0])
@@ -1930,7 +1930,7 @@ auto BGDynamicsServer::CreateDrawSnapshot() -> BGDynamicsDrawSnapshot* {
       ss->light_indices.Clear();
       ss->light_vertices.Clear();
     } else if (light_drawn_count != light_max_count) {
-      // Otherwise resize our buffers down to what we actually used.
+      // Otherwise, resize our buffers down to what we actually used.
       assert(l_index - (&ss->light_indices->elements[0])
              == light_drawn_count * 6);
       assert(l_vertex - (&ss->light_vertices->elements[0])
@@ -2167,7 +2167,7 @@ auto BGDynamicsServer::CreateDrawSnapshot() -> BGDynamicsDrawSnapshot* {
         Vector3f from_cam = (cam_pos_ - fuse.dyn_pts_[0]).Normalized() * 0.2f;
         Vector3f side{};
 
-        // We push fuse points slightly towards cam so they're less likely to
+        // We push fuse points slightly towards cam, so they're less likely to
         // get occluded by stuff.
         Vector3f cam_offs = {0.0f, 0.0f, 0.0f};
 
@@ -2258,7 +2258,7 @@ void BGDynamicsServer::Step(StepData* step_data) {
   assert(InBGDynamicsThread());
   assert(step_data);
 
-  // Grab a ref to the raw StepData pointer we were passed.. we now own the
+  // Grab a ref to the raw StepData pointer we were passed... we now own the
   // data.
   auto ref(Object::MakeRefCounted(step_data));
 
@@ -2310,7 +2310,7 @@ void BGDynamicsServer::Step(StepData* step_data) {
   // Step the world.
   dWorldQuickStep(ode_world_, kGameStepSeconds);
 
-  // Now generate a snapshot of our state and send it to the game thread
+  // Now generate a snapshot of our state and send it to the game thread,
   // so they can draw us.
   BGDynamicsDrawSnapshot* snapshot = CreateDrawSnapshot();
   g_game->PushCall([snapshot] {
@@ -2541,7 +2541,7 @@ void BGDynamicsServer::UpdateChunks() {
         float vel_squared = vel[0] * vel[0] + vel[1] * vel[1] + vel[2] * vel[2];
 
         // Slow down fast if we're going fast.
-        // Otherwise slow down more gradually.
+        // Otherwise, slow down more gradually.
         if (vel_squared > 14) {
           dBodySetLinearVel(body, vel[0] * 0.94f, 0.13f + vel[1] * 0.94f,
                             vel[2] * 0.94f);
@@ -2557,7 +2557,7 @@ void BGDynamicsServer::UpdateChunks() {
         float vel_squared = vel[0] * vel[0] + vel[1] * vel[1] + vel[2] * vel[2];
 
         // Slow down fast if we're going fast.
-        // Otherwise slow down more gradually.
+        // Otherwise, slow down more gradually.
         if (vel_squared > 14) {
           dBodySetLinearVel(body, vel[0] * 0.93f, 0.13f + vel[1] * 0.93f,
                             vel[2] * 0.93f);
@@ -2576,7 +2576,7 @@ void BGDynamicsServer::UpdateChunks() {
       } else {
         const dReal* vel = dBodyGetAngularVel(body);
         if (vel[0] * vel[0] + vel[1] * vel[1] + vel[2] * vel[2] > 500) {
-          // Drastic slowdown for super fast stuff.
+          // Drastic slowdown for super-fast stuff.
           dBodySetAngularVel(body, vel[0] * 0.75f, vel[1] * 0.75f,
                              vel[2] * 0.75f);
         } else {
@@ -2587,7 +2587,7 @@ void BGDynamicsServer::UpdateChunks() {
 
       // If this chunk is disabled, we don't need to do anything
       // (since no terrain ever moves to wake us back up).
-      // Also we skip sweat since that neither casts shadows or collides.
+      // Also, we skip sweat since that neither casts shadows nor collides.
       if (dBodyIsEnabled(body) && type != BGDynamicsChunkType::kSweat) {
         // Move our shadow ray to where we are and reset our shadow length.
         const dReal* pos = dGeomGetPosition(geom);

@@ -21,7 +21,7 @@ class BGDynamicsDrawSnapshot {
   };
 
   // These are created in the bg-dynamics thread, and object ownership
-  // needs to be switched back the the game-thread default when it is passed
+  // needs to be switched back to the game-thread default when it is passed
   // over or else the debug thread-access-checks will error.
   void SetGameThreadOwnership() {
     if (g_buildconfig.debug_build()) {

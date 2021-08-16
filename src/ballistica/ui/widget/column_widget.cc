@@ -19,7 +19,7 @@ ColumnWidget::~ColumnWidget() = default;
 auto ColumnWidget::HandleMessage(const WidgetMessage& m) -> bool {
   switch (m.type) {
     case WidgetMessage::Type::kShow: {
-      // Told to show something.. send this along to our parent (we can't do
+      // Told to show something... send this along to our parent (we can't do
       // anything).
       Widget* w = parent_widget();
       if (w) {

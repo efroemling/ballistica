@@ -255,7 +255,7 @@ void AudioServer::PushSourcePlayCall(uint32_t play_id,
     ThreadSource* s = GetPlayingSound(play_id);
 
     // If this play command is valid, pass it along.
-    // Otherwise return it immediately for deletion.
+    // Otherwise, return it immediately for deletion.
     if (s) {
       s->Play(sound);
     } else {
@@ -325,7 +325,7 @@ AudioServer::AudioServer(Thread* thread)
       impl_{new AudioServer::Impl()}
 // impl_{std::make_unique<AudioServer::Impl>()}
 {
-  // we're a singleton..
+  // we're a singleton...
   assert(g_audio_server == nullptr);
   g_audio_server = this;
 
@@ -441,7 +441,7 @@ void AudioServer::UpdateAvailableSources() {
     i->UpdateAvailability();
   }
 
-// Some sanity checking. Every now and then lets go through our sources
+// Some sanity checking. Occasionally lets go through our sources
 // and see how many are in use, how many are currently locked by the client,
 // etc.
 #if (BA_DEBUG_BUILD || BA_TEST_BUILD)
@@ -511,7 +511,7 @@ auto AudioServer::GetPlayingSound(uint32_t play_id)
     // not return it here.
     sources_[source]->UpdateAvailability();
 
-    // If it still looks like its ours, return it..
+    // If it still looks like it's ours, return it...
     if (count == sources_[source]->play_count()) {
       return sources_[source];
     }
@@ -743,7 +743,7 @@ void AudioServer::ThreadSource::UpdateAvailability() {
 
   assert(InAudioThread());
 
-  // If its waiting to be picked up by a client or has pending client commands,
+  // If it's waiting to be picked up by a client or has pending client commands,
   // skip.
   if (!client_source_->TryLock(6)) {
     return;
@@ -757,15 +757,15 @@ void AudioServer::ThreadSource::UpdateAvailability() {
 
   // We consider ourselves busy if there's an active looping play command
   // (regardless of its actual physical play state - music could be turned off,
-  // stuttering, etc).
-  // If its non-looping, we check its play state and snatch it if its not
+  // stuttering, etc.).
+  // If it's non-looping, we check its play state and snatch it if it's not
   // playing.
   bool busy;
   if (looping_ || (is_streamed_ && streamer_.exists() && streamer_->loops())) {
     busy = want_to_play_;
   } else {
     // If our context is paused, we know nothing is playing
-    // (and we cant ask AL cuz we have no context).
+    // (and we can't ask AL cuz we have no context).
     if (g_audio_server->paused()) {
       busy = false;
     } else {
@@ -778,7 +778,7 @@ void AudioServer::ThreadSource::UpdateAvailability() {
 
   // Ok, now if we can get a lock on the availability list, go ahead and
   // make this guy available; give him a new play id and reset his state.
-  // If we can't get a lock its no biggie.. we'll come back to this guy later.
+  // If we can't get a lock it's no biggie... we'll come back to this guy later.
 
   if (!busy) {
     if (g_audio->available_sources_mutex().try_lock()) {
@@ -903,7 +903,7 @@ void AudioServer::ThreadSource::ExecPlay() {
     audio_thread_->streaming_sources_.push_back(this);
 
     // Make sure stereo sounds aren't positional.
-    // This is default behavior on Mac/Win but we enforce it for linux.
+    // This is default behavior on Mac/Win, but we enforce it for linux.
     // (though currently linux stereo sounds play in mono... eww))
 
     bool do_normal = true;
@@ -927,7 +927,7 @@ void AudioServer::ThreadSource::ExecPlay() {
 
   } else {  // Not streamed
     // Make sure stereo sounds aren't positional.
-    // This is default behavior on Mac/Win but we enforce it for linux.
+    // This is default behavior on Mac/Win, but we enforce it for linux.
     // (though currently linux stereo sounds play in mono... eww))
     if ((**source_sound_).format() == AL_FORMAT_STEREO16) {
       SetPositional(false);
@@ -957,8 +957,8 @@ auto AudioServer::ThreadSource::Play(const Object::Ref<SoundData>* sound)
   source_sound_ = sound;
 
   if (!g_audio_server->paused()) {
-    // Ok, here's where we might start needing to access our media.. can't hold
-    // off any longer..
+    // Ok, here's where we might start needing to access our media... can't hold
+    // off any longer...
     (**source_sound_).Load();
 
     is_streamed_ = (**source_sound_).is_streamed();
@@ -973,7 +973,7 @@ auto AudioServer::ThreadSource::Play(const Object::Ref<SoundData>* sound)
     CHECK_AL_ERROR;
 
     // Always update our volume and pitch here (we may be changing from music to
-    // nonMusic, etc)
+    // nonMusic, etc.)
     UpdateVolume();
     UpdatePitch();
 
@@ -1015,7 +1015,7 @@ void AudioServer::ThreadSource::ExecStop() {
 #endif  // BA_ENABLE_AUDIO
 }
 
-// Do a complete stop.. take us off the music list, detach our source, etc.
+// Do a complete stop... take us off the music list, detach our source, etc.
 void AudioServer::ThreadSource::Stop() {
 #if BA_ENABLE_AUDIO
   assert(g_audio_server);
@@ -1031,7 +1031,7 @@ void AudioServer::ThreadSource::Stop() {
     }
     // If we've got an attached sound, toss it back to the main thread
     // to free up...
-    // (we can't kill media-refs outside of the main thread)
+    // (we can't kill media-refs outside the main thread)
     if (source_sound_) {
       assert(g_media);
       g_audio_server->AddSoundRefDelete(source_sound_);
@@ -1096,12 +1096,12 @@ void AudioServer::PushSetPausedCall(bool pause) {
 void AudioServer::PushComponentUnloadCall(
     const std::vector<Object::Ref<MediaComponentData>*>& components) {
   PushCall([this, components] {
-    // Unload all components we were passed..
+    // Unload all components we were passed...
     for (auto&& i : components) {
       (**i).Unload();
     }
-    // ..and then ship these pointers back to the game thread so it can free the
-    // references
+    // ...and then ship these pointers back to the game thread, so it can free
+    // the references.
     g_game->PushFreeMediaComponentRefsCall(components);
   });
 }

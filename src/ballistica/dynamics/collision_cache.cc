@@ -146,7 +146,7 @@ void CollisionCache::CollideAgainstGeom(dGeomID g1, void* data,
 
   if (dirty_) Update();
 
-  // Do a quick out if its not within our cache bounds at all.
+  // Do a quick out if it's not within our cache bounds at all.
   dReal* bounds1 = g1->aabb;
   if (bounds1[0] > x_max_ || bounds1[1] < x_min_ || bounds1[2] > y_max_
       || bounds1[3] < y_min_ || bounds1[4] > z_max_ || bounds1[5] < z_min_) {
@@ -212,7 +212,7 @@ void CollisionCache::TestCell(size_t cell_index, int x, int z) {
   float bottom = (cells_[cell_index].height_confirmed_collide_ + top) * 0.5f;
   float height = top - bottom;
 
-  // Don't wanna test with too thin a box.. may miss stuff.
+  // Don't want to test with too thin a box... may miss stuff.
   float box_height = std::max(1.0f, height);
   if (height > 0.01f) {
     glow_[cell_index] = 1;
@@ -245,7 +245,7 @@ void CollisionCache::TestCell(size_t cell_index, int x, int z) {
       cells_[cell_index].height_confirmed_empty_ =
           std::min(cells_[cell_index].height_confirmed_empty_, bottom);
     }
-    // This shouldn' happen but just in case.
+    // This shouldn't happen but just in case.
     cells_[cell_index].height_confirmed_empty_ =
         std::max(cells_[cell_index].height_confirmed_empty_,
                  cells_[cell_index].height_confirmed_collide_);
@@ -254,7 +254,7 @@ void CollisionCache::TestCell(size_t cell_index, int x, int z) {
 
 void CollisionCache::CollideAgainstSpace(dSpaceID space, void* data,
                                          dNearCallback* callback) {
-  // We handle our own testing against trimeshes so we can bring our fancy
+  // We handle our own testing against trimeshes, so we can bring our fancy
   // caching into play.
   if (!geoms_.empty()) {
     // Intersect all geoms in the space against all terrains.

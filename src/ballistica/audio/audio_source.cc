@@ -72,8 +72,8 @@ auto AudioSource::Play(SoundData* ptr_in) -> uint32_t {
 
   // allocate a new reference to this guy and pass it along
   // to the thread... (these refs can't be created or destroyed
-  // or have their ref-counts changed outside of the main thread...)
-  // the thread will then send back this allocated ptr when its done
+  // or have their ref-counts changed outside the main thread...)
+  // the thread will then send back this allocated ptr when it's done
   // with it for the main thread to destroy.
 
   ptr_in->UpdatePlayTime();

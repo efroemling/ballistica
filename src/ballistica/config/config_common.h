@@ -60,7 +60,7 @@ namespace ballistica {
 #define BA_OSTYPE_LINUX 0
 #endif
 
-// On windows, are we built as a console app (vs a gui app)?
+// On Windows, are we built as a console app (vs a gui app)?
 #ifndef BA_WINDOWS_CONSOLE_BUILD
 #define BA_WINDOWS_CONSOLE_BUILD 1
 #endif
@@ -91,7 +91,7 @@ namespace ballistica {
 #endif
 
 // Does this build use our 'min-sdl' types?
-// (basic SDL types we define ourself; no actual SDL dependency)
+// (basic SDL types we define ourselves; no actual SDL dependency)
 #ifndef BA_MINSDL_BUILD
 #define BA_MINSDL_BUILD 0
 #endif
@@ -189,7 +189,7 @@ typedef BA_SOCKET_SEND_LENGTH_TYPE socket_send_length_t;
 
 bool InlineDebugExplicitBool(bool val);
 
-// Little hack so we avoid 'value is always true/false' and
+// Little hack so that we avoid 'value is always true/false' and
 // 'code will never/always be run' type warnings when using these in debug
 // builds.
 #if BA_DEBUG_BUILD

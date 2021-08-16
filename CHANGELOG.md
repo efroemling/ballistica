@@ -39,7 +39,7 @@
 - Fixed a potential crash-on-exit due to statically allocated colliders/caches in `ode_collision_trimesh.cpp` getting torn down while in use
 - Better randomization for player free-for-all starting locations
 - Plugins can now register to be called for pause, resume, and shutdown events in addition to launch
-- Added ba.app.state holding the overall state of the app (running, paused, etc)
+- Added ba.app.state holding the overall state of the app (running, paused, etc.)
 - renamed the efro.dataclasses module to efro.dataclassio and added significant functionality
 - command-line input no longer errors on commands longer than 4k bytes.
 - added show-tutorial option to the server wrapper config
@@ -84,7 +84,7 @@
 - Android asset-sync phase (completing install...) now emits log output for debugging.
 
 ### 1.5.24 (20163)
-- Upgraded Python from version 3.7 to 3.8. This is a substantial change (though nothing like the previous update from 2.7 to 3.7) so please holler if anything is broken. These updates will happen once every year or two now..
+- Upgraded Python from version 3.7 to 3.8. This is a substantial change (though nothing like the previous update from 2.7 to 3.7) so please holler if anything is broken. These updates will happen once every year or two now...
 - Windows debug builds now use Python debug libraries. This should hopefully catch more errors that would otherwise go undetected and potentially cause crashes.
 - Switched windows builds to use 'fast' mode math instead of 'strict'. This should make the game run more efficiently (similar modes are already in use on other platforms) but holler if any odd breakage happens such as things falling through floors (more often than the occasional random fluke-y case that happens now).
 - Added `_ba.can_display_full_unicode()` for any code that wants to avoid printing things that won't show up locally.
@@ -123,13 +123,13 @@
 - Fixed a case where an early fatal error could lead to a hung app and no error dialog.
 - Added environment variables which can override UI scale for testing. Set `BA_FORCE_UI_SCALE` to small, medium or large.
 - Added a ba.UIScale enum. The value at ba.app.uiscale replaces the old `ba.app.interface_type`, `ba.app.small_ui`, and `ba.app.med_ui` values.
-- Emoji no longer display in-game with a washed-out appearance. If there are any places in-game where bright colored emoji become distracting, please holler.
-- `_ba.get_game_roster()` now includes `account_id` which is the validated account id of all clients (will be None until completes). Also a few keys are renamed: `specString->spec_string` and `displayString->display_string`.
+- Emoji no longer display in-game with a washed-out appearance. If there are any places in-game where bright-colored emoji become distracting, please holler.
+- `_ba.get_game_roster()` now includes `account_id` which is the validated account id of all clients (will be None until completes). Also, a few keys are renamed: `specString->spec_string` and `displayString->display_string`.
 
 ### 1.5.19 (20123)
 - Cleaned up some bomb logic to avoid weird corner-cases such as land-mine explosions behaving like punches when set off by punches or bombs potentially resulting in multiple explosions when triggered by multiple other bombs simultaneously. Holler if anything explosion-related seems off now.
-- Reactivated and cleaned up fatal-error message dialogs; they should now show up more consistently and on more platforms when something really bad happens instead of getting a silent crash.
-- Certain hardware buttons on Android which stopped working in 1.5 should now be working again..
+- Reactivated and cleaned up fatal-error message dialogs; they should now show up more consistently and on more platforms when something catastrophic happens instead of getting a silent crash.
+- Certain hardware buttons on Android which stopped working in 1.5 should now be working again...
 
 ### 1.5.18 (20108)
 - A bit of project cleanup; tools/snippets is now tools/pcommand, etc.
@@ -137,7 +137,7 @@
 
 ### 1.5.17 (20102)
 - More cleanup to logging and crash reporting system.
-- Various other minor bug fixes..
+- Various other minor bug fixes...
 
 ### 1.5.16 (20099)
 - Hopefully finally fixed that pesky crash bug on score submissions.
@@ -185,7 +185,7 @@
 - Lots of low level input handling cleanup, also related to Android 1.5 version. Please holler if keyboard/game-controllers/etc. are behaving odd on any platforms.
 - Now including Android test builds for the first time since 1.5. These have not been thoroughly tested yet so please holler with anything that is obviously broken.
 - Mouse wheel now works in manual camera mode on more platforms.
-- Server scripts now run in opt mode in release builds so they can use bundled .opt-1.pyc files.
+- Server scripts now run in opt mode in release builds, so they can use bundled .opt-1.pyc files.
 - Fixes a potential crash in the local network browser.
 - Fixes an issue where Hockey Pucks would not show up in network games.
 - More misc bug fixes and tidying.
@@ -196,11 +196,11 @@
 
 ### 1.5.4 (20067)
 - Should now work properly with non-ascii paths on Windows (for real this time).
-- Note that Windows game data is now stored under 'Local' appdata instead of 'Roaming'; if you have an old install with data you want to preserve, you may want to move it over manually.
+- Note that Windows game data is now stored under 'Local' appdata instead of 'Roaming'; if you have an old installation with data you want to preserve, you may want to move it over manually.
 - Misc cleanup and minor bug fixes.
 
 ### 1.5.3 (20065)
-- Improved handling of non-ascii characters in file paths on windows.
+- Improved handling of non-ascii characters in file paths on Windows.
 
 ### 1.5.2 (20063)
 - Fixes an issue with controls not working correctly in net-play between 1.4.x and 1.5.x.
@@ -208,15 +208,15 @@
 - Fixes various other minor bugs.
 
 ### 1.5.1 (20062)
-- Windows server now properly displays color when run by double clicking the .bat file.
+- Windows server now properly displays color when run by double-clicking the .bat file.
 - Misc bug fixes.
 
 ### 1.5.0 (20001)
 - This build contains about 2 years worth of MAJOR internal refactoring to prepare for the future of BombSquad. As a player this should not (yet) look different from 1.4, but for modders there is a lot new. See the rest of these change entries or visit [ballistica.net](https://ballistica.net) for more info.
-- Ported the entire scripting layer from Python 2 to to Python 3 (currently at 3.7, and I intend to keep this updated to the latest widely-available release). There's some significant changes going from python 2 to 3 (new print statement, string behavior, etc), but these are well documented online, so please read up as needed.  This should provide us some nice benefits and future-proofs everything. (my janky 2.7 custom Python builds were getting a little long in the tooth).
+- Ported the entire scripting layer from Python 2 to Python 3 (currently at 3.7, and I intend to keep this updated to the latest widely-available release). There's some significant changes going from python 2 to 3 (new print statement, string behavior, etc.), but these are well documented online, so please read up as needed.  This should provide us some nice benefits and future-proofs everything. (my janky 2.7 custom Python builds were getting a little long in the tooth).
 - Refactored all script code to be PEP8 compliant (Python coding standards).  Basically, this means that stuff that was camel-case (fooBar) is now a single word or underscores (`foobar` / `foo_bar`).  There are a few minor exceptions such as existing resource and media filenames, but in general old code can be ported by taking a pass through and killing the camel-case.  I know this is a bit of a pain in the ass, but it'll let us use things like Pylint and just be more consistent with the rest of the Python world.
-- On a related note, I'm now using 'yapf' to keep my Python code formatted nicely (using pep8 style); I'd recommend checking it out if you're doing a lot of scripting as its a great time-saver.
-- On another related note, I'm trying to confirm to Google's recommendations for Python code (search 'Google Python Style Guide'). There are some good bits of wisdom in there so I recommend at least skimming through it.
+- On a related note, I'm now using 'yapf' to keep my Python code formatted nicely (using pep8 style); I'd recommend checking it out if you're doing a lot of scripting as it's a great time-saver.
+- On another related note, I'm trying to confirm to Google's recommendations for Python code (search 'Google Python Style Guide'). There are some good bits of wisdom in there, so I recommend at least skimming through it.
 - And as one last related note, I'm now running Pylint on all my own Python code. Highly recommended if you are doing serious scripting, as it can make Python almost feel as type-safe as C++.
 - The minimum required android version will now be 5.0 (a requirement of the Python 3 builds I'm using)
 - Minimum required macOS version is now 10.13 (for similar reasons)
@@ -227,13 +227,13 @@
 - Renamed 'exceptionOnNone' arg to 'doraise' in various calls.
 - bs.emitBGDynamics() is now ba.emitfx()
 - bs.shakeCamera() is now ba.camerashake()
-- Various other minor name changes (bs.getUIBounds() -> ba.app.uibounds, etc).  I'm keeping old and new Python API docs around for now so you can compare as needed.
+- Various other minor name changes (bs.getUIBounds() -> ba.app.uibounds, etc.).  I'm keeping old and new Python API docs around for now, so you can compare as needed.
 - Renamed bot classes based on their actions instead of their appearances (ie: PirateBot -> ExplodeyBot)
 - bs.getSharedObject() is now ba.stdobj()
 - Removed bs.uni(), bs.utf8(), `bs.uni_to_ints()`, and `bs.uni_from_ints()` which are no longer needed due to Python 3's better string handling.
 - Removed bs.SecureInt since it didn't do much to slow down hackers and hurts code readability.
 - Renamed 'finalize' to 'expire' for actors and activities. 'Finalize' sounds too much like a destructor, which is not really what that is.
-- bs.getMapsSupportingPlayType() is now simply ba.getmaps(). I might want to add more filter options to it besides just play-type, hence the rename.
+- bs.getMapsSupportingPlayType() is now simply ba.getmaps(). I might want to add more filter options to it besides just play-type, hence the renaming.
 - Changed the concept of 'game', 'net', and 'real' times to 'sim', 'base', and 'real'. See time function docs for specifics.  Also cleared up a few ambiguities over what can be used where.
 - I'm converting all scripting functions to operate on floating-point seconds by default instead of integer milliseconds. This will let us support more accurate simulations later and is just cleaner I feel. To keep existing calls working you should be able to add timeformat='ms' and you'll get the old behavior (or multiply your time values by 0.001). Specific notes listed below.
 - ba.Timer now takes its 'time' arg as seconds instead of milliseconds. To port old calls, add: timeformat='ms' to each call (or multiply your input by 0.001)
@@ -251,18 +251,18 @@
 - bs.getRealTime() is no more. Pass timetype='real' and timeformat='ms' to ba.time() if you need to recreate its behavior.
 - bs.getTimeString() is now just ba.timestring(), and accepts seconds by default (pass timeformat='ms' to keep old calls working).
 - bs.callInGameThread() has been replaced by an optional `from_other_thread` arg for ba.pushcall()
-- There is now a special ba.UNHANDLED value that handlemessage() calls should return any time they don't handle a passed message.  This will allow fallback message types and other nice things in the future.
+- There is now a special `ba.UNHANDLED` value that handlemessage() calls should return any time they don't handle a passed message.  This will allow fallback message types and other nice things in the future.
 - Wired the boolean operator up to ba.Actor's exists() method, so now a simple "if mynode" will do the right thing for both Actors and None values instead of having to explicitly check for both.
 - Ditto for ba.Node; you can now just do 'if mynode' which will do the right thing for both a dead Node or None.
 - Ditto for ba.InputDevice, ba.Widget, ba.Player
 - Added a bs.App class accessible via ba.app; will be migrating global app values there instead of littering python modules with globals. The only remaining module globals should be all-caps public 'constants'
-- 'Internal' methods and classes living in `_ba` and elsewhere no longer start with underscores.  They are now simply marked with '(internal)' in their docstrings.  'Internal' bits are likely to have janky interfaces and can change without warning, so be wary of using them.  If you find yourself depending on some internal thing often, please let me know and I can try to clean it up and make it 'public'.
+- 'Internal' methods and classes living in `_ba` and elsewhere no longer start with underscores.  They are now simply marked with '(internal)' in their docstrings.  'Internal' bits are likely to have janky interfaces and can change without warning, so be wary of using them. If you find yourself depending on some internal thing often, please let me know, and I can try to clean it up and make it 'public'.
 - bs.getLanguage() is no more; that value is now accessible via ba.app.language
-- bs.Actor now accepts an optional 'node' arg which it will store as self.node if passed.  Its default DieMessage() and exists() handlers will use self.node if it exists.  This removes the need for a separate NodeActor() for simple cases.
+- bs.Actor now accepts an optional 'node' arg which it will store as `self.node` if passed.  Its default DieMessage() and exists() handlers will use `self.node` if it exists.  This removes the need for a separate NodeActor() for simple cases.
 - bs.NodeActor is no more (it can simply be replaced with ba.Actor())
 - bs.playMusic() is now ba.setmusic() which better fits its functionality (it sometimes just continues playing or stops playing).
 - The bs.Vector class is no more; in its place is a shiny new ba.Vec3 which is implemented internally in C++ so its nice and speedy.  Will probably update certain things like vector node attrs to support this class in the future since it makes vector math nice and convenient.
-- Ok you get the point.. see [ballistica.net](https://ballistica.net) for more info on these changes.
+- Ok you get the point... see [ballistica.net](https://ballistica.net) for more info on these changes.
 
 ### 1.4.155 (14377)
 - Added protection against a repeated-input attack in lobbies.
@@ -282,7 +282,7 @@
 ### 1.4.147 (14364)
 - Fixes an issue where a client rejoining a server after being kicked could get stuck in limbo
 - Language updates
-- Increased security on games that list themselves as public. All joining players must now be validated by the master server or they will be kicked. This will let me globally ban accounts or ip addresses from joining games to avoid things like ad spam bots (which has been a problem this week).
+- Increased security on games that list themselves as public. All joining players must now be validated by the master server, or they will be kicked. This will let me globally ban accounts or ip addresses from joining games to avoid things like ad spam-bots (which has been a problem this week).
 - Added a max chat message length of 100
 - Clients sending abnormal amounts of data to the server will now be auto-kicked
 
@@ -319,7 +319,7 @@
 
 ### 1.4.137 (14331)
 - Lots of internal code cleanup and reorganization before I dig into networking rework (hopefully didn't break too much)
-- Slowly cleaning up Python files (hoping to move closer to to PEP 8 standards and eventually Python 3)
+- Slowly cleaning up Python files (hoping to move closer to PEP 8 standards and eventually Python 3)
 - Added Hindi language
 - Cleared out some old build types (farewell OUYA; thanks for the memories)
 - Added support for meshes with > 65535 verts (though turns out OpenGL ES2 doesn't support this so moot at the moment)
@@ -330,7 +330,7 @@
 - Fixed an issue where 'report this player' window would show up behind the window that spawned it
 
 ### 1.4.135 (14324)
-- Updated various SDKs for the android build (now building against api 27, removed inmobi ads, etc)
+- Updated various SDKs for the android build (now building against api 27, removed inmobi ads, etc.)
 
 ### 1.4.134 (14322)
 - Fixed an issue where the internal keyboard would sometimes show up behind game windows
@@ -350,8 +350,8 @@
 - Replay speed can now be controlled with -/= keys (on devices with keyboards)
 - Added Serbian language
 - Remote app connections are now disabled by default on server builds
-- Server wrapper script now supports python 3 in addition to python 2. (Python 3 support in the actual game will still be a while)
-- Added better crash reporting on Android so I can hopefully fix bugs quicker
+- Server wrapper script now supports python 3 in addition to python 2. (Python 3 support in the actual game will still be awhile)
+- Added better crash reporting on Android, so I can hopefully fix bugs more quickly.
 - bs.Lstr() can now take a 'fallbackResource' or 'fallbackValue' argument; the old 'fallback' argument is deprecated
 - Removed the long-since-deprecated bs.translate() and bs.getResource() calls (bs.Lstr() should be used for all that stuff now)
 - Removed some deprecated functions from GameActivity: getInstanceScoreBoardNameLocalized(), getInstanceNameLocalized(), getConfigDescriptionLocalized()
@@ -382,7 +382,7 @@
 - Added support for account unlinking
 
 ### 1.4.118 (14298)
-- Added 64 bit arm binary to Android builds
+- Added 64-bit arm binary to Android builds
 
 ### 1.4.111 (14286)
 - BallisticaCore Pro now unlocks 2 additional characters
@@ -398,15 +398,15 @@
 - added a 'playlistCode' option in the server config which corresponds with playlist codes added in Ballisticacore 1.4.100 (used for sharing playlists with friends). Now you can create a custom playlist, grab a code for it, and easily use it in a dedicated server.
 
 ### 1.4.99 (14252)
-- there is now a forced 10 second delay between a player leaving the game and another player from that same client joining the game.  This should fix the exploit where players were leaving and re-joining to avoid spawn times.
+- there is now a forced 10-second delay between a player leaving the game and another player from that same client joining the game.  This should fix the exploit where players were leaving and re-joining to avoid spawn times.
 - most in-game text is now set as bs.Lstr() values so that they show up in the client's own language instead of the server's  There are currently a few exceptions such as time values which I need to address.
 
 ### 1.4.98 (14248)
-- added kick-votes that can be started by any client.  currently a client must type '0' or '1' in chat to vote, but i'll add buttons for them soon.
-- modified text nodes so they can display in each client's own language.  (most text nodes don't do this yet but the capability is there).  However this means older clients can't connect to 1.4.98 servers, so you may want to stick with an older server for a bit until the userbase gets more updated.
+- added kick-votes that can be started by any client.  Currently, a client must type '0' or '1' in chat to vote, but I'll add buttons for them soon.
+- modified text nodes so that they can display in each client's own language.  (most text nodes don't do this yet but the capability is there).  However, this means older clients can't connect to 1.4.98 servers, so you may want to stick with an older server for a bit until the userbase gets more updated.
 
 ### 1.4.97 (14247)
-- back to displaying long names in more places; mainly just the in-game ones are clamped..  trying to find a good balance..
+- back to displaying long names in more places; mainly just the in-game ones are clamped...  trying to find a good balance...
 
 ### 1.4.97 (14246)
 - public party names will now show up for clients as the title of their party windows instead of "My Party" and also during connect/disconnect (requires client 14246+)
@@ -420,16 +420,16 @@
 - server now clamps in-game names to 8 characters so there's some hope of reading them in-game. Can loosen this or add controls for how clamping happens if need be.
 
 ### 1.4.96 (14241)
-- added an automatic chat-block to combat chat spammers. Blocks start at 10 seconds and double in duration for each repeat offense
+- added an automatic chat-block to combat chat spammers. Block durations start at 10 seconds and double with each repeat offense
 
 ### 1.4.95 (14240)
 - fixed an issue where a single account could not be used to host multiple parties at once
 
 ### 1.4.95 (14236)
-- added a port option to the config so its now possible to host multiple parties on one machine (note that ballisticacore 1.4.95+ is required to connect ports aside from 43210)
+- added a port option to the config, so it's now possible to host multiple parties on one machine (note that ballisticacore 1.4.95+ is required to connect ports aside from 43210)
 
 ### 1.4.95 (14234)
-- fixed a bug that could cause the windows version to freeze randomly after a while
+- fixed a bug that could cause the Windows version to freeze randomly after a while
 
 ### 1.4.95 (14233)
 - ballisticacore (both `bs_headless` and regular) now reads commands from standard input, making it easier to run commands via scripts or the terminal
@@ -439,7 +439,7 @@
 - added more options such as the ability to set game series lengths and to host a non-public party
 
 ### 1.4.94
-- now have mac, windows, and both 32 and 64 bit linux server builds
+- now have mac, windows, and both 32 and 64-bit linux server builds
 - added an optional config.py file that can be used instead of modifying the server script itself
 - added an autoBalanceTeams option for teams games
 - people joining and leaving the party are no longer announced (too much noise)

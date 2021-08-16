@@ -118,7 +118,7 @@ auto AnimCurveNode::GetOut() -> float {
         }
       }
     } else {
-      // No keyframes?.. hmm just go with 0.
+      // No keyframes?.. hmm, just go with 0.
       if (keyframes_.empty()) {
         out_ = 0.0f;
       } else {

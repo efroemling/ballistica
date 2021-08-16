@@ -21,7 +21,7 @@
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kAppBuildNumber = 20390;
+const int kAppBuildNumber = 20391;
 const char* kAppVersion = "1.6.5";
 
 // Our standalone globals.
@@ -59,11 +59,11 @@ TextGraphics* g_text_graphics{};
 //    should exist at the end of this step (if it is going to exist).
 //    Threads should not be talking to each other yet at this point.
 // 2: The system is set in motion. Game thread is told to load/apply the config.
-//    This kicks off an initial-screen-creation message sent to the
+//    This event kicks off an initial-screen-creation message sent to the
 //    graphics-server thread. Other systems are informed that bootstrapping
-//    is complete and they are free to talk to each other. Initial input-devices
-//    are added, media loads can begin (at least ones not dependent on the
-//    screen/renderer), etc.
+//    is complete and that they are free to talk to each other. Initial
+//    input-devices are added, media loads can begin (at least ones not
+//    dependent on the screen/renderer), etc.
 // 3: The initial screen is created on the graphics-server thread in response
 //    to the message sent from the game thread. A completion notice is sent
 //    back to the game thread when done.
@@ -145,7 +145,7 @@ auto BallisticaMain(int argc, char** argv) -> int {
     } else {
       // In this case we'll now simply return and let the OS feed us events
       // until the app quits.
-      // However we may need to 'prime the pump' first. For instance,
+      // However, we may need to 'prime the pump' first. For instance,
       // if the main thread event loop is driven by frame draws, it may need to
       // manually pump events until drawing begins (otherwise it will never
       // process the 'create-screen' event and wind up deadlocked).
@@ -185,13 +185,13 @@ auto GetRealTime() -> millisecs_t {
     std::lock_guard<std::mutex> lock(g_app_globals->real_time_mutex);
     millisecs_t passed = t - g_app_globals->last_real_time_ticks;
 
-    // GetTicks() is supposed to be monotonic but I've seen 'passed'
+    // GetTicks() is supposed to be monotonic, but I've seen 'passed'
     // equal -1 even when it is using std::chrono::steady_clock. Let's do
     // our own filtering here to make 100% sure we don't go backwards.
     if (passed < 0) {
       passed = 0;
     } else {
-      // Super big times-passed probably means we went to sleep or something;
+      // Very large times-passed probably means we went to sleep or something;
       // clamp to a reasonable value.
       if (passed > 250) {
         passed = 250;
@@ -289,7 +289,7 @@ auto GetCurrentThreadName() -> std::string {
 
 auto IsBootstrapped() -> bool { return g_app_globals->is_bootstrapped; }
 
-// Used by our built in exception type.
+// Used by our built-in exception type.
 void SetPythonException(PyExcType python_type, const char* description) {
   Python::SetPythonException(python_type, description);
 }

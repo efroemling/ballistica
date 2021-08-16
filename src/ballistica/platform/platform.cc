@@ -548,6 +548,9 @@ static void Init() {
   g_platform->GetUserPythonDirectory();
 }
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "NullDereferences"
+
 static void HandleArgs(int argc, char** argv) {
   assert(!g_app_globals->args_handled);
   g_app_globals->args_handled = true;
@@ -558,6 +561,7 @@ static void HandleArgs(int argc, char** argv) {
     fflush(stdout);
     exit(0);
   }
+  int dummyval{};
   for (int i = 1; i < argc; ++i) {
     // In our rift build, a '-2d' arg causes us to run in regular 2d mode.
     if (g_buildconfig.rift_build() && !strcmp(argv[i], "-2d")) {
@@ -571,7 +575,6 @@ static void HandleArgs(int argc, char** argv) {
         exit(-1);
       }
     } else if (!strcmp(argv[i], "--crash")) {
-      int dummyval{};
       int* invalid_ptr{&dummyval};
 
       // A bit of obfuscation to try and keep linters quiet.
@@ -605,6 +608,7 @@ static void HandleArgs(int argc, char** argv) {
       }
     }
   }
+#pragma clang diagnostic pop
 
   // In Android's case we have to pull our exec arg from the java/kotlin layer.
   if (g_buildconfig.ostype_android()) {
@@ -1129,7 +1133,7 @@ auto Platform::MacMusicAppPlayPlaylist(const std::string& playlist) -> bool {
 }
 auto Platform::MacMusicAppGetPlaylists() -> std::list<std::string> {
   Log("MacMusicAppGetPlaylists() unimplemented");
-  return std::list<std::string>();
+  return {};
 }
 
 void Platform::StartListeningForWiiRemotes() {

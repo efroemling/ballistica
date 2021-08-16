@@ -41,7 +41,7 @@ BombNode::BombNode(Scene* scene) : PropNode(scene, node_type) {}
 
 void BombNode::OnCreate() {
   // We can't do this in our constructor because
-  // it would prevent the user from setting density/etc attrs.
+  // it would prevent the user from setting density/etc. attrs.
   // (user attrs get applied after constructors fire)
   SetBody("sphere");
 }

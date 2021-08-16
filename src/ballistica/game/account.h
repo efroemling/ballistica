@@ -31,7 +31,7 @@ class Account {
   auto GetLoginState(int* state_num = nullptr) -> LoginState;
 
   // An extra value included when passing our account info to the server
-  // ..(can be used for platform-specific install-signature stuff, etc).
+  // ...(can be used for platform-specific install-signature stuff, etc.).
   auto SetExtra(const std::string& extra) -> void;
   auto SetExtra2(const std::string& extra) -> void;
   auto SetToken(const std::string& account_id, const std::string& token)

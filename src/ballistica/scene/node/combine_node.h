@@ -9,7 +9,7 @@
 
 namespace ballistica {
 
-// An node used to combine individual input values into one array output value
+// A node used to combine individual input values into one array output value
 class CombineNode : public Node {
  public:
   static auto InitType() -> NodeType*;

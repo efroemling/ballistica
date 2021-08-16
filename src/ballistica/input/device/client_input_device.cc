@@ -13,7 +13,7 @@ ClientInputDevice::ClientInputDevice(int remote_device_id,
     : remote_device_id_(remote_device_id),
       connection_to_client_(connection_to_client) {}
 
-// Hmm do we need to send a remote-detach in this case?
+// Hmm; do we need to send a remote-detach in this case?
 // I don't think so; if we're dying it means the connection is dying
 // which means we probably couldn't communicate anyway and
 // the other end will free the input-device up

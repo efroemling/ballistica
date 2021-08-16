@@ -11,7 +11,7 @@
 
 namespace ballistica {
 
-// Hmm this shouldn't be here.
+// Hmm; this shouldn't be here.
 const float kHappyThoughtsZPlane = -5.52f;
 
 // Default horizontal camera field of view.
@@ -32,7 +32,7 @@ class Camera : public Object {
   // Update the camera position values - done once per render
   void UpdatePosition();
 
-  // Update camera velocities/etc - done as often as possible.
+  // Update camera velocities/etc. This is done as often as possible.
   void Update(millisecs_t elapsed);
   void SetPosition(float x, float y, float z);
   void SetTarget(float x, float y, float z);

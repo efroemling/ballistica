@@ -706,6 +706,11 @@ test-dataclassio:
       tests/test_efro/test_dataclassio.py
 
 # Individual test with extra output enabled.
+test-message:
+	@tools/pcommand pytest -o log_cli=true -o log_cli_level=debug -s -vv \
+      tests/test_efro/test_message.py
+
+# Individual test with extra output enabled.
 test-entity:
 	@tools/pcommand pytest -o log_cli=true -o log_cli_level=debug -s -vv \
       tests/test_efro/test_entity.py

@@ -25,7 +25,7 @@ auto Module::CheckPushSafety() -> bool {
   if (std::this_thread::get_id() == thread()->thread_id()) {
     // behave the same as the thread-message safety check for
     // module messages.
-    return (runnables_.size() < kThreadMessageSafetyThreadhold);
+    return (runnables_.size() < kThreadMessageSafetyThreshold);
   } else {
     return thread_->CheckPushModuleRunnableSafety();
   }

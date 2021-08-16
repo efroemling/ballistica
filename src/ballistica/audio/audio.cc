@@ -57,9 +57,9 @@ auto Audio::SourceBeginNew() -> AudioSource* {
 
   AudioSource* s = nullptr;
   {
-    // Gotta make sure to hold this until we've locked the source.
-    // Otherwise theoretically the audio thread could make our source available
-    // again before we can use it.
+    // Got to make sure to hold this until we've locked the source.
+    // Otherwise, theoretically, the audio thread could make our source
+    // available again before we can use it.
     std::lock_guard<std::mutex> lock(available_sources_mutex_);
 
     // If there's an available source, reserve and return it.
@@ -99,7 +99,7 @@ auto Audio::SourceBeginExisting(uint32_t play_id, int debug_id)
 
   // Ok, the audio thread fills in this source list,
   // so theoretically a client could call this before the audio thread
-  // has set it up.  However no one should be trying to get a playing
+  // has set it up.  However, no one should be trying to get a playing
   // sound unless they've already started playing one which implies
   // everything was set up already. I think we're good.
   assert(g_audio->client_sources_.size() > source_id);

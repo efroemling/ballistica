@@ -19,7 +19,7 @@ struct BGDynamicsFuseData {
   }
 
   void Update(BGDynamicsServer* dyn) {
-    // Do nothing if we havn't received an initial transform.
+    // Do nothing if we haven't received an initial transform.
     if (!have_transform_worker_) {
       return;
     }
@@ -37,7 +37,7 @@ struct BGDynamicsFuseData {
       }
       initial_position_set_ = true;
     } else {
-      // ..otherwise dynamically update it.
+      // ...otherwise dynamically update it.
       Vector3f pt = transform_worker_.GetTranslate();
       target_pts_[0] = dyn_pts_[0] = pt;
       auto up = Vector3f(&transform_worker_.m[4]);

@@ -532,6 +532,7 @@
       <w>devel</w>
       <w>devicename</w>
       <w>devtool</w>
+      <w>dffc</w>
       <w>dgram</w>
       <w>dhave</w>
       <w>dheadless</w>
@@ -705,6 +706,7 @@
       <w>excludetypes</w>
       <w>excstr</w>
       <w>execcode</w>
+      <w>execing</w>
       <w>execlocals</w>
       <w>executils</w>
       <w>exhash</w>
@@ -746,6 +748,7 @@
       <w>feedparser</w>
       <w>ffaeff</w>
       <w>ffap</w>
+      <w>ffbbdf</w>
       <w>fflush</w>
       <w>fhash</w>
       <w>fhashes</w>
@@ -1285,6 +1288,7 @@
       <w>lprop</w>
       <w>lsbo</w>
       <w>lsbt</w>
+      <w>lshort</w>
       <w>lsprof</w>
       <w>lsqlite</w>
       <w>lssl</w>
@@ -1295,6 +1299,7 @@
       <w>lsval</w>
       <w>ltex</w>
       <w>ltypes</w>
+      <w>lubyte</w>
       <w>lzma</w>
       <w>lzmamodule</w>
       <w>macappstore</w>
@@ -1855,6 +1860,7 @@
       <w>realpath</w>
       <w>realsies</w>
       <w>recache</w>
+      <w>recv</w>
       <w>redist</w>
       <w>redistributables</w>
       <w>relpath</w>

@@ -243,8 +243,8 @@ void CheckBoxWidget::Activate() {
     PythonRef args(Py_BuildValue("(O)", checked_ ? Py_True : Py_False),
                    PythonRef::kSteal);
 
-    // Call this in the next cycle (don't wanna risk mucking with UI from within
-    // a UI loop)
+    // Call this in the next cycle (don't want to risk mucking with UI from
+    // within a UI loop)
     g_game->PushPythonWeakCallArgs(
         Object::WeakRef<PythonContextCall>(on_value_change_call_), args);
   }

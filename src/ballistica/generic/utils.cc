@@ -432,7 +432,10 @@ auto Utils::GetRandomNameList() -> const std::list<std::string>& {
   // Clion incorrectly thinks this might be null.
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "NullDereferences"
-  return *g_random_names_list;
+  if (g_random_names_list != nullptr) {
+    return *g_random_names_list;
+  }
+  throw Exception("random name list uninited");
 #pragma clang diagnostic pop
 }
 

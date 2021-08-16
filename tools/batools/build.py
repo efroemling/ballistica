@@ -31,8 +31,8 @@ class PipRequirement:
 # Note: we look directly for modules when possible instead of just pip
 # entries; this accounts for manual installations or other nonstandard setups.
 PIP_REQUIREMENTS = [
-    PipRequirement(modulename='pylint', minversion=[2, 9, 1]),
-    PipRequirement(modulename='mypy', minversion=[0, 902]),
+    PipRequirement(modulename='pylint', minversion=[2, 9, 6]),
+    PipRequirement(modulename='mypy', minversion=[0, 910]),
     PipRequirement(modulename='yapf', minversion=[0, 31, 0]),
     PipRequirement(modulename='cpplint', minversion=[1, 5, 5]),
     PipRequirement(modulename='pytest', minversion=[6, 2, 4]),
@@ -293,31 +293,43 @@ def gen_fulltest_buildfile_android() -> None:
         extras = SPARSE_TEST_BUILDS[dayoffset % len(SPARSE_TEST_BUILDS)]
         extras = [e for e in extras if e.startswith('android.')]
         cspre = 'tools/cloudshell linbeast --env android --'
+
+        # This is currently broken; turning off.
+        do_py_android = False
+
         for extra in extras:
             if extra == 'android.pylibs.arm':
-                lines.append(f'{cspre} tools/pcommand'
-                             f' python_build_android arm')
+                if do_py_android:
+                    lines.append(f'{cspre} tools/pcommand'
+                                 f' python_build_android arm')
             elif extra == 'android.pylibs.arm.debug':
-                lines.append(f'{cspre} tools/pcommand'
-                             f' python_build_android_debug arm')
+                if do_py_android:
+                    lines.append(f'{cspre} tools/pcommand'
+                                 f' python_build_android_debug arm')
             elif extra == 'android.pylibs.arm64':
-                lines.append(f'{cspre} tools/pcommand'
-                             f' python_build_android arm64')
+                if do_py_android:
+                    lines.append(f'{cspre} tools/pcommand'
+                                 f' python_build_android arm64')
             elif extra == 'android.pylibs.arm64.debug':
-                lines.append(f'{cspre} tools/pcommand'
-                             f' python_build_android_debug arm64')
+                if do_py_android:
+                    lines.append(f'{cspre} tools/pcommand'
+                                 f' python_build_android_debug arm64')
             elif extra == 'android.pylibs.x86':
-                lines.append(f'{cspre} tools/pcommand'
-                             f' python_build_android x86')
+                if do_py_android:
+                    lines.append(f'{cspre} tools/pcommand'
+                                 f' python_build_android x86')
             elif extra == 'android.pylibs.x86.debug':
-                lines.append(f'{cspre} tools/pcommand'
-                             f' python_build_android_debug x86')
+                if do_py_android:
+                    lines.append(f'{cspre} tools/pcommand'
+                                 f' python_build_android_debug x86')
             elif extra == 'android.pylibs.x86_64':
-                lines.append(f'{cspre} tools/pcommand'
-                             f' python_build_android x86_64')
+                if do_py_android:
+                    lines.append(f'{cspre} tools/pcommand'
+                                 f' python_build_android x86_64')
             elif extra == 'android.pylibs.x86_64.debug':
-                lines.append(f'{cspre} tools/pcommand'
-                             f' python_build_android_debug x86_64')
+                if do_py_android:
+                    lines.append(f'{cspre} tools/pcommand'
+                                 f' python_build_android_debug x86_64')
             elif extra == 'android.package':
                 lines.append('make android-cloud-package')
             else:
