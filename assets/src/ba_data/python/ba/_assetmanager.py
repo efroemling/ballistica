@@ -101,7 +101,7 @@ class AssetManager:
         try:
             state_path = self.state_path
             if state_path.exists():
-                with open(self.state_path) as infile:
+                with open(self.state_path, encoding='utf-8') as infile:
                     self._state = State.from_json_str(infile.read())
                     return
         except Exception:
@@ -113,7 +113,7 @@ class AssetManager:
 
         print('ASSET-MANAGER SAVING STATE')
         try:
-            with open(self.state_path, 'w') as outfile:
+            with open(self.state_path, 'w', encoding='utf-8') as outfile:
                 outfile.write(self._state.to_json_str())
         except Exception:
             logging.exception('Error writing AssetManager state')

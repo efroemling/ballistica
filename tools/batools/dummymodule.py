@@ -609,6 +609,8 @@ def generate(sources_hash: str, outfilename: str) -> None:
            '# I\'m sorry Pylint. I know this file saddens you. Be strong.\n'
            '# pylint: disable=useless-suppression\n'
            '# pylint: disable=unnecessary-pass\n'
+           '# pylint: disable=use-dict-literal\n'
+           '# pylint: disable=use-list-literal\n'
            '# pylint: disable=unused-argument\n'
            '# pylint: disable=missing-docstring\n'
            '# pylint: disable=too-many-locals\n'
@@ -650,10 +652,10 @@ def generate(sources_hash: str, outfilename: str) -> None:
     outhashpath = os.path.join(os.path.dirname(outfilename),
                                '._ba_sources_hash')
 
-    with open(outfilename, 'w') as outfile:
+    with open(outfilename, 'w', encoding='utf-8') as outfile:
         outfile.write(out)
 
-    with open(outhashpath, 'w') as outfile:
+    with open(outhashpath, 'w', encoding='utf-8') as outfile:
         outfile.write(sources_hash)
 
     # Lastly, format it.
@@ -679,7 +681,7 @@ def _dummy_module_dirty() -> Tuple[bool, str]:
     if not os.path.exists(outpath):
         existing_hash = ''
     else:
-        with open(outpath) as infile:
+        with open(outpath, encoding='utf-8') as infile:
             existing_hash = infile.read()
 
     # Important to keep this deterministic...

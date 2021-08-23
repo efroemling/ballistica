@@ -32,7 +32,7 @@ def project_build_path(projroot: str, project_path: str,
 
     try:
         if os.path.exists(config_path):
-            with open(config_path) as infile:
+            with open(config_path, encoding='utf-8') as infile:
                 config = json.loads(infile.read())
             if (project_path in config
                     and configuration in config[project_path]):
@@ -84,7 +84,7 @@ def project_build_path(projroot: str, project_path: str,
             'timestamp': time.time()
         }
         os.makedirs(os.path.dirname(config_path), exist_ok=True)
-        with open(config_path, 'w') as outfile:
+        with open(config_path, 'w', encoding='utf-8') as outfile:
             outfile.write(json.dumps(config))
 
     assert build_dir is not None

@@ -31,7 +31,7 @@ class PipRequirement:
 # Note: we look directly for modules when possible instead of just pip
 # entries; this accounts for manual installations or other nonstandard setups.
 PIP_REQUIREMENTS = [
-    PipRequirement(modulename='pylint', minversion=[2, 9, 6]),
+    PipRequirement(modulename='pylint', minversion=[2, 10, 2]),
     PipRequirement(modulename='mypy', minversion=[0, 910]),
     PipRequirement(modulename='yapf', minversion=[0, 31, 0]),
     PipRequirement(modulename='cpplint', minversion=[1, 5, 5]),
@@ -41,10 +41,10 @@ PIP_REQUIREMENTS = [
     PipRequirement(modulename='yaml', pipname='PyYAML'),
     PipRequirement(modulename='requests'),
     PipRequirement(pipname='typing-extensions', minversion=[3, 10, 0, 0]),
-    PipRequirement(pipname='types-filelock', minversion=[0, 1, 3]),
-    PipRequirement(pipname='types-requests', minversion=[0, 1, 9]),
-    PipRequirement(pipname='types-pytz', minversion=[0, 1, 0]),
-    PipRequirement(pipname='types-PyYAML', minversion=[0, 1, 6]),
+    PipRequirement(pipname='types-filelock', minversion=[0, 1, 5]),
+    PipRequirement(pipname='types-requests', minversion=[2, 25, 6]),
+    PipRequirement(pipname='types-pytz', minversion=[2021, 1, 2]),
+    PipRequirement(pipname='types-PyYAML', minversion=[5, 4, 6]),
 ]
 
 # Parts of full-tests suite we only run on particular days.
@@ -335,7 +335,7 @@ def gen_fulltest_buildfile_android() -> None:
             else:
                 raise RuntimeError(f'Unknown extra: {extra}')
 
-    with open('_fulltest_buildfile_android', 'w') as outfile:
+    with open('_fulltest_buildfile_android', 'w', encoding='utf-8') as outfile:
         outfile.write('\n'.join(lines))
 
 
@@ -381,7 +381,7 @@ def gen_fulltest_buildfile_windows() -> None:
             else:
                 raise RuntimeError(f'Unknown extra: {extra}')
 
-    with open('_fulltest_buildfile_windows', 'w') as outfile:
+    with open('_fulltest_buildfile_windows', 'w', encoding='utf-8') as outfile:
         outfile.write('\n'.join(lines))
 
 
@@ -448,7 +448,7 @@ def gen_fulltest_buildfile_apple() -> None:
             else:
                 raise RuntimeError(f'Unknown extra: {extra}')
 
-    with open('_fulltest_buildfile_apple', 'w') as outfile:
+    with open('_fulltest_buildfile_apple', 'w', encoding='utf-8') as outfile:
         outfile.write('\n'.join(lines))
 
 
@@ -476,7 +476,7 @@ def gen_fulltest_buildfile_linux() -> None:
             else:
                 raise RuntimeError(f'Unknown extra: {extra}')
 
-    with open('_fulltest_buildfile_linux', 'w') as outfile:
+    with open('_fulltest_buildfile_linux', 'w', encoding='utf-8') as outfile:
         outfile.write('\n'.join(lines))
 
 
@@ -685,8 +685,8 @@ def update_makebob() -> None:
 
 def _get_server_config_raw_contents(projroot: str) -> str:
     import textwrap
-    with open(os.path.join(projroot,
-                           'tools/bacommon/servermanager.py')) as infile:
+    with open(os.path.join(projroot, 'tools/bacommon/servermanager.py'),
+              encoding='utf-8') as infile:
         lines = infile.read().splitlines()
     firstline = lines.index('class ServerConfig:') + 1
     lastline = firstline + 1
@@ -782,7 +782,7 @@ def _get_server_config_template_yaml(projroot: str) -> str:
 
 def filter_server_config(projroot: str, infilepath: str) -> str:
     """Add commented-out config options to a server config."""
-    with open(infilepath) as infile:
+    with open(infilepath, encoding='utf-8') as infile:
         cfg = infile.read()
     return cfg.replace('#__CONFIG_TEMPLATE_VALUES__',
                        _get_server_config_template_yaml(projroot))
@@ -821,7 +821,7 @@ def update_docs_md(check: bool) -> None:
 
     # Extract the current embedded hash.
     if os.path.exists(docs_hash_path):
-        with open(docs_hash_path) as infile:
+        with open(docs_hash_path, encoding='utf-8') as infile:
             storedhash = infile.read()
     else:
         storedhash = None
@@ -836,14 +836,14 @@ def update_docs_md(check: bool) -> None:
 
         # Our docs markdown is just the docs html with a few added
         # bits at the top.
-        with open('build/docs.html') as infile:
+        with open('build/docs.html', encoding='utf-8') as infile:
             docs = infile.read()
         docs = ('<!-- THIS FILE IS AUTO GENERATED; DO NOT EDIT BY HAND -->\n'
                 ) + docs
         os.makedirs(os.path.dirname(docs_path), exist_ok=True)
-        with open(docs_path, 'w') as outfile:
+        with open(docs_path, 'w', encoding='utf-8') as outfile:
             outfile.write(docs)
-        with open(docs_hash_path, 'w') as outfile:
+        with open(docs_hash_path, 'w', encoding='utf-8') as outfile:
             outfile.write(curhash)
     print(f'{docs_path} is up to date.')
 
@@ -909,7 +909,7 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
 
     versions: Dict[str, str]
     if os.path.isfile(verfilename):
-        with open(verfilename) as infile:
+        with open(verfilename, encoding='utf-8') as infile:
             versions = json.loads(infile.read())
             assert isinstance(versions, dict)
             assert all(isinstance(x, str) for x in versions.keys())
@@ -932,7 +932,7 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
                 f'{Clr.BLD}{title}:{Clr.RST} Blowing away existing build dir.')
         subprocess.run(['rm', '-rf', dirname], check=True)
         os.makedirs(dirname, exist_ok=True)
-        with open(verfilename, 'w') as outfile:
+        with open(verfilename, 'w', encoding='utf-8') as outfile:
             outfile.write(
                 json.dumps(
                     {entry.name: entry.current_value

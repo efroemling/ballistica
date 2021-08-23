@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import astroid
 
 if TYPE_CHECKING:
-    from astroid import node_classes as nc
+    from astroid import nodes as nc
     from typing import Set, Dict, Any, List
 
 VERBOSE = False

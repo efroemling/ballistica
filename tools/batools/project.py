@@ -159,7 +159,7 @@ class Updater:
         for fname, fcode in self._file_changes.items():
             f_orig: Optional[str]
             if os.path.exists(fname):
-                with open(fname, 'r') as infile:
+                with open(fname, 'r', encoding='utf-8') as infile:
                     f_orig = infile.read()
             else:
                 f_orig = None
@@ -172,7 +172,7 @@ class Updater:
                     sys.exit(255)
 
                 print(f'{Clr.BLU}Writing project file: {fname}{Clr.RST}')
-                with open(fname, 'w') as outfile:
+                with open(fname, 'w', encoding='utf-8') as outfile:
                     outfile.write(fcode)
         if unchanged_project_count > 0:
             print(
@@ -209,7 +209,7 @@ class Updater:
                     print(f'{Clr.RED}#{i}: {change[0]}:{Clr.RST}')
                     print(
                         f'{Clr.RED}  Expected "{change[1].expected}"{Clr.RST}')
-                    with open(change[0]) as infile:
+                    with open(change[0], encoding='utf-8') as infile:
                         lines = infile.read().splitlines()
                     line = lines[change[1].line_number]
                     print(f'{Clr.RED}  Found "{line}"{Clr.RST}')
@@ -220,10 +220,10 @@ class Updater:
             else:
                 for i, change in enumerate(auto_changes):
                     print(f'{Clr.BLU}Correcting file: {change[0]}{Clr.RST}')
-                    with open(change[0]) as infile:
+                    with open(change[0], encoding='utf-8') as infile:
                         lines = infile.read().splitlines()
                     lines[change[1].line_number] = change[1].expected
-                    with open(change[0], 'w') as outfile:
+                    with open(change[0], 'w', encoding='utf-8') as outfile:
                         outfile.write('\n'.join(lines) + '\n')
 
         # If there were no issues whatsoever, note that.
@@ -250,7 +250,7 @@ class Updater:
             self._check_source_file(fname)
 
     def _check_source_file(self, fname: str) -> None:
-        with open(fname) as infile:
+        with open(fname, encoding='utf-8') as infile:
             lines = infile.read().splitlines()
 
         if self._license_line_checks:
@@ -299,7 +299,7 @@ class Updater:
 
         # Make sure its define guard is correct.
         guard = (fname[4:].upper().replace('/', '_').replace('.', '_') + '_')
-        with open(fname) as fhdr:
+        with open(fname, encoding='utf-8') as fhdr:
             lines = fhdr.read().splitlines()
 
         if self._license_line_checks:
@@ -340,7 +340,7 @@ class Updater:
         fnames = [n for n in fnames if '/build/' not in n]
 
         for fname in fnames:
-            with open(fname) as infile:
+            with open(fname, encoding='utf-8') as infile:
                 makefile = infile.read()
             if self._public:
                 public_license = get_public_license('makefile')
@@ -354,7 +354,7 @@ class Updater:
 
     def _check_python_file(self, fname: str) -> None:
         from efrotools import get_public_license, PYVER
-        with open(fname) as infile:
+        with open(fname, encoding='utf-8') as infile:
             contents = infile.read()
             lines = contents.splitlines()
 
@@ -451,7 +451,7 @@ class Updater:
         if not os.path.exists(fname):
             return
 
-        with open(fname) as infile:
+        with open(fname, encoding='utf-8') as infile:
             lines = infile.read().splitlines()
 
         src_root = '..\\..\\src'
@@ -556,7 +556,7 @@ class Updater:
         return filename not in self._get_internal_source_files()
 
     def _update_cmake_file(self, fname: str) -> None:
-        with open(fname) as infile:
+        with open(fname, encoding='utf-8') as infile:
             lines = infile.read().splitlines()
 
         for section in ['PUBLIC', 'PRIVATE']:

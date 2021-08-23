@@ -123,7 +123,7 @@ def _spelling(words: List[str]) -> None:
     ]:
         if not os.path.exists(fname):
             continue
-        with open(fname) as infile:
+        with open(fname, encoding='utf-8') as infile:
             lines = infile.read().splitlines()
         if lines[2] != '    <words>':
             raise RuntimeError('Unexpected dictionary format.')
@@ -134,7 +134,7 @@ def _spelling(words: List[str]) -> None:
                 lines.insert(3, line)
                 added_count += 1
 
-        with open(fname, 'w') as outfile:
+        with open(fname, 'w', encoding='utf-8') as outfile:
             # Sort lines in the words section.
             assert all(l.startswith('      <w>') for l in lines[3:-3])
 
@@ -252,14 +252,14 @@ def formatscripts() -> None:
 def formatmakefile() -> None:
     """Format the main makefile."""
     from efrotools.makefile import Makefile
-    with open('Makefile') as infile:
+    with open('Makefile', encoding='utf-8') as infile:
         original = infile.read()
 
     formatted = Makefile(original).get_output()
 
     # Only write if it changed.
     if formatted != original:
-        with open('Makefile', 'w') as outfile:
+        with open('Makefile', 'w', encoding='utf-8') as outfile:
             outfile.write(formatted)
 
 
@@ -582,7 +582,7 @@ def makefile_target_list() -> None:
     if len(sys.argv) != 3:
         raise RuntimeError('Expected exactly one filename arg.')
 
-    with open(sys.argv[2]) as infile:
+    with open(sys.argv[2], encoding='utf-8') as infile:
         lines = infile.readlines()
 
     def _docstr(lines2: List[str], linenum: int) -> str:

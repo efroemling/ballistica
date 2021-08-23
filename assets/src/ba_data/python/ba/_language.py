@@ -161,7 +161,8 @@ class LanguageSubsystem:
         else:
             switched = False
 
-        with open('ba_data/data/languages/english.json') as infile:
+        with open('ba_data/data/languages/english.json',
+                  encoding='utf-8') as infile:
             lenglishvalues = json.loads(infile.read())
 
         # None implies default.
@@ -173,7 +174,7 @@ class LanguageSubsystem:
             else:
                 lmodfile = 'ba_data/data/languages/' + language.lower(
                 ) + '.json'
-                with open(lmodfile) as infile:
+                with open(lmodfile, encoding='utf-8') as infile:
                     lmodvalues = json.loads(infile.read())
         except Exception:
             from ba import _error

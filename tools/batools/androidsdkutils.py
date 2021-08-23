@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 def _parse_lprop_file(local_properties_path: str) -> str:
-    with open(local_properties_path) as infile:
+    with open(local_properties_path, encoding='utf-8') as infile:
         lines = infile.read().splitlines()
     sdk_dir_lines = [l for l in lines if 'sdk.dir=' in l]
     if len(sdk_dir_lines) != 1:
@@ -68,7 +68,7 @@ def _gen_lprop_file(local_properties_path: str) -> str:
               ' sdk elsewhere\n'
               '\n'
               'sdk.dir=' + sdk_dir + '\n')
-    with open(local_properties_path, 'w') as outfile:
+    with open(local_properties_path, 'w', encoding='utf-8') as outfile:
         outfile.write(config)
     print('Generating local.properties file (found Android SDK at "' +
           sdk_dir + '")',

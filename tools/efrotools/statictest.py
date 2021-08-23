@@ -46,7 +46,7 @@ class StaticTestFile:
         self.linetypes_mypy: Dict[int, str] = {}
 
         print(f'Running Mypy static testing on "{filename}"...')
-        with open(filename, 'r') as infile:
+        with open(filename, 'r', encoding='utf-8') as infile:
             fdata = infile.read()
 
         # Make sure we're running where the config is..
@@ -63,7 +63,7 @@ class StaticTestFile:
         # instances of static_type_equals(), and run mypy type checks
         # in those places to get static types.
         tempfilepath = os.path.join(_tempdir.name, self.modulename + '.py')
-        with open(tempfilepath, 'w') as outfile:
+        with open(tempfilepath, 'w', encoding='utf-8') as outfile:
             outfile.write(self.filter_file_contents(fdata))
         results = subprocess.run(
             [

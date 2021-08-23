@@ -1,6 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Functionality for dealing with errors."""
+"""Common errors and related functionality."""
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -33,3 +33,29 @@ class CleanError(Exception):
         errstr = str(self)
         if errstr:
             print(f'{Clr.SRED}{errstr}{Clr.RST}', flush=flush)
+
+
+class TransportError(Exception):
+    """A transport-related communication error has occurred.
+
+    This covers anything network-related going wrong in the sending
+    of data or receiving of a response. This error does not imply
+    that data was not received on the other end; only that a full
+    response round trip was not completed.
+
+    These errors should be gracefully handled whenever possible, as
+    occasional network outages are generally unavoidable.
+    """
+
+
+class RemoteError(Exception):
+    """An error occurred on the other end of some connection.
+
+    This occurs when communication succeeds but another type of error
+    occurs remotely. The error string can consist of a remote stack
+    trace or a simple message depending on the context.
+    """
+
+    def __str__(self) -> str:
+        s = ''.join(str(arg) for arg in self.args)
+        return f'Remote Exception Follows:\n{s}'

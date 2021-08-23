@@ -156,7 +156,8 @@ class CreditsListWindow(ba.Window):
         freesound_names = _format_names(names, 90)
 
         try:
-            with open('ba_data/data/langdata.json') as infile:
+            with open('ba_data/data/langdata.json',
+                      encoding='utf-8') as infile:
                 translation_contributors = (json.loads(
                     infile.read())['translation_contributors'])
         except Exception:

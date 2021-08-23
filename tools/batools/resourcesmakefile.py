@@ -362,7 +362,7 @@ def update(projroot: str, check: bool) -> None:
     assert isinstance(public, bool)
 
     fname = 'resources/Makefile'
-    with open(fname) as infile:
+    with open(fname, encoding='utf-8') as infile:
         original = infile.read()
     lines = original.splitlines()
 
@@ -432,5 +432,5 @@ def update(projroot: str, check: bool) -> None:
                       f'EXPECTED------\n{out}\nEND EXPECTED-------\n')
             raise CleanError(f"ERROR: file is out of date: '{fname}'.")
         print(f'{Clr.SBLU}Updating: {fname}{Clr.RST}')
-        with open(fname, 'w') as outfile:
+        with open(fname, 'w', encoding='utf-8') as outfile:
             outfile.write(out)

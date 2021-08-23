@@ -44,7 +44,7 @@ def gen_flat_data_code(projroot: str, in_path: str, out_path: str,
     if pretty_path.startswith(projroot + '/'):
         pretty_path = pretty_path[len(projroot) + 1:]
     print(f'Meta-building {Clr.BLD}{pretty_path}{Clr.RST}')
-    with open(out_path, 'w') as outfile:
+    with open(out_path, 'w', encoding='utf-8') as outfile:
         outfile.write(sval_out)
 
 
@@ -56,7 +56,7 @@ def gen_binding_code(projroot: str, in_path: str, out_path: str) -> None:
         os.makedirs(out_dir, exist_ok=True)
 
     # Pull all lines in the embedded list and split into py and c++ names.
-    with open(in_path) as infile:
+    with open(in_path, encoding='utf-8') as infile:
         pycode = infile.read()
 
     # Double quotes cause errors.
@@ -102,5 +102,5 @@ def gen_binding_code(projroot: str, in_path: str, out_path: str) -> None:
     if pretty_path.startswith(projroot + '/'):
         pretty_path = pretty_path[len(projroot) + 1:]
     print(f'Meta-building {Clr.BLD}{pretty_path}{Clr.RST}')
-    with open(out_path, 'w') as outfile:
+    with open(out_path, 'w', encoding='utf-8') as outfile:
         outfile.write(ccode)

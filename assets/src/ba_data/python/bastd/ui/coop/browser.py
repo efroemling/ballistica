@@ -369,9 +369,9 @@ class CoopBrowserWindow(ba.Window):
 
         # If the number of tournaments or challenges in the data differs from
         # our current arrangement, refresh with the new number.
-        if (((data is None and (self._tournament_button_count != 0))
-             or (data is not None and
-                 (len(data) != self._tournament_button_count)))):
+        if ((data is None and self._tournament_button_count != 0)
+                or (data is not None and
+                    (len(data) != self._tournament_button_count))):
             self._tournament_button_count = len(
                 data) if data is not None else 0
             ba.app.config['Tournament Rows'] = self._tournament_button_count

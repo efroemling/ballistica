@@ -513,7 +513,7 @@ class ServerManagerApp:
                 f"Config file not found: '{self._config_path}'.")
 
         import yaml
-        with open(self._config_path) as infile:
+        with open(self._config_path, encoding='utf-8') as infile:
             user_config_raw = yaml.safe_load(infile.read())
 
         # An empty config file will yield None, and that's ok.
@@ -646,7 +646,7 @@ class ServerManagerApp:
         os.makedirs(self._ba_root_path, exist_ok=True)
         cfgpath = os.path.join(self._ba_root_path, 'config.json')
         if os.path.exists(cfgpath):
-            with open(cfgpath) as infile:
+            with open(cfgpath, encoding='utf-8') as infile:
                 bincfg = json.loads(infile.read())
         else:
             bincfg = {}
@@ -668,7 +668,7 @@ class ServerManagerApp:
             del bincfg['Custom Team Colors']
 
         bincfg['Idle Exit Minutes'] = self._config.idle_exit_minutes
-        with open(cfgpath, 'w') as outfile:
+        with open(cfgpath, 'w', encoding='utf-8') as outfile:
             outfile.write(json.dumps(bincfg))
 
     def _enqueue_server_command(self, command: ServerCommand) -> None:

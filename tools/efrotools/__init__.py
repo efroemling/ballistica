@@ -37,7 +37,8 @@ def getlocalconfig(projroot: Path) -> Dict[str, Any]:
     """Return a project's localconfig contents (or default if missing)."""
     localconfig: Dict[str, Any]
     try:
-        with open(Path(projroot, 'config/localconfig.json')) as infile:
+        with open(Path(projroot, 'config/localconfig.json'),
+                  encoding='utf-8') as infile:
             localconfig = json.loads(infile.read())
     except FileNotFoundError:
         localconfig = {}
@@ -48,7 +49,8 @@ def getconfig(projroot: Path) -> Dict[str, Any]:
     """Return a project's config contents (or default if missing)."""
     config: Dict[str, Any]
     try:
-        with open(Path(projroot, 'config/config.json')) as infile:
+        with open(Path(projroot, 'config/config.json'),
+                  encoding='utf-8') as infile:
             config = json.loads(infile.read())
     except FileNotFoundError:
         config = {}
@@ -84,13 +86,13 @@ def get_public_license(style: str) -> str:
 
 def readfile(path: Union[str, Path]) -> str:
     """Read a text file and return a str."""
-    with open(path) as infile:
+    with open(path, encoding='utf-8') as infile:
         return infile.read()
 
 
 def writefile(path: Union[str, Path], txt: str) -> None:
     """Write a string to a file."""
-    with open(path, 'w') as outfile:
+    with open(path, 'w', encoding='utf-8') as outfile:
         outfile.write(txt)
 
 
@@ -157,7 +159,7 @@ def py_examine(projroot: Path, filename: Path, line: int, column: int,
 
     # Pull in our pylint plugin which really just adds astroid filters.
     # That way our introspection here will see the same thing as pylint's does.
-    with open(filename) as infile:
+    with open(filename, encoding='utf-8') as infile:
         fcontents = infile.read()
     if '#@' in fcontents:
         raise Exception('#@ marker found in file; this breaks examinations.')

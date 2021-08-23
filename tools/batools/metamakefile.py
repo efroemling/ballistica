@@ -176,14 +176,14 @@ def update(projroot: str, check: bool) -> None:
     fname_pub_man = 'src/meta/.meta_manifest_public.json'
     fname_priv_man = 'src/meta/.meta_manifest_private.json'
 
-    with open(fname) as infile:
+    with open(fname, encoding='utf-8') as infile:
         original = infile.read()
     lines = original.splitlines()
 
-    with open(fname_pub_man) as infile:
+    with open(fname_pub_man, encoding='utf-8') as infile:
         original_pub_man = infile.read()
 
-    with open(fname_priv_man) as infile:
+    with open(fname_priv_man, encoding='utf-8') as infile:
         original_priv_man = infile.read()
 
     # We'll generate manifests of all public/private files we generate
@@ -263,7 +263,7 @@ def update(projroot: str, check: bool) -> None:
               f'{Clr.RST}')
 
         if out != original:
-            with open(fname, 'w') as outfile:
+            with open(fname, 'w', encoding='utf-8') as outfile:
                 outfile.write(out)
 
         # Also write our output file manifests every time we write the
@@ -271,10 +271,10 @@ def update(projroot: str, check: bool) -> None:
         # they're out of date but the Makefile isn't, though that should not
         # happen normally).
         if out_pub_man != fname_pub_man:
-            with open(fname_pub_man, 'w') as outfile:
+            with open(fname_pub_man, 'w', encoding='utf-8') as outfile:
                 outfile.write(out_pub_man)
         if out_priv_man != fname_priv_man:
-            with open(fname_priv_man, 'w') as outfile:
+            with open(fname_priv_man, 'w', encoding='utf-8') as outfile:
                 outfile.write(out_priv_man)
 
         # Also clean existing meta output every time the Makefile changes;

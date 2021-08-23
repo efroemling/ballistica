@@ -8,8 +8,13 @@ import json
 import os
 from typing import TYPE_CHECKING
 
-from efrotools import get_files_hash
+# Pylint's preferred import order here seems non-deterministic (as of 2.10.1).
+# pylint: disable=useless-suppression
+# pylint: disable=wrong-import-order
 from efro.terminal import Clr
+from efrotools import get_files_hash
+# pylint: enable=wrong-import-order
+# pylint: enable=useless-suppression
 
 if TYPE_CHECKING:
     from typing import Dict, Optional, Sequence, Any
@@ -27,7 +32,7 @@ class FileCache:
         if not os.path.exists(path):
             self.entries = {}
         else:
-            with open(path, 'r') as infile:
+            with open(path, 'r', encoding='utf-8') as infile:
                 self.entries = json.loads(infile.read())
 
     def update(self, filenames: Sequence[str], extrahash: str) -> None:

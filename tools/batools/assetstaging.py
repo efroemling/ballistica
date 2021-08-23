@@ -225,7 +225,7 @@ def _write_payload_file(assets_root: str, full: bool) -> None:
         # the file list.
         payload_str = (str(len(file_list)) + '\n' + ('1' if full else '0') +
                        '\n' + payload_str)
-        with open(payload_path, 'w') as outfile:
+        with open(payload_path, 'w', encoding='utf-8') as outfile:
             outfile.write(payload_str)
     else:
         # Remove the payload file; this will cause the game to completely
@@ -400,13 +400,13 @@ def _write_if_changed(path: str,
                       make_executable: bool = False) -> None:
     changed: bool
     try:
-        with open(path) as infile:
+        with open(path, encoding='utf-8') as infile:
             existing = infile.read()
         changed = (contents != existing)
     except FileNotFoundError:
         changed = True
     if changed:
-        with open(path, 'w') as outfile:
+        with open(path, 'w', encoding='utf-8') as outfile:
             outfile.write(contents)
         if make_executable:
             subprocess.run(['chmod', '+x', path], check=True)
@@ -434,7 +434,7 @@ def stage_server_file(projroot: str, mode: str, infilename: str,
 
     elif basename == 'ballisticacore_server.py':
         # Run Python in opt mode for release builds.
-        with open(infilename) as infile:
+        with open(infilename, encoding='utf-8') as infile:
             lines = infile.read().splitlines()
             if mode == 'release':
                 lines[0] = replace_one(lines[0],
@@ -444,12 +444,12 @@ def stage_server_file(projroot: str, mode: str, infilename: str,
                           '\n'.join(lines) + '\n',
                           make_executable=True)
     elif basename == 'README.txt':
-        with open(infilename) as infile:
+        with open(infilename, encoding='utf-8') as infile:
             readme = infile.read()
         _write_if_changed(outfilename, readme)
     elif basename == 'launch_ballisticacore_server.bat':
         # Run Python in opt mode for release builds.
-        with open(infilename) as infile:
+        with open(infilename, encoding='utf-8') as infile:
             lines = infile.read().splitlines()
         if mode == 'release':
             lines[1] = replace_one(

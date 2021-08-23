@@ -1264,7 +1264,7 @@ class Generator:
             raise Exception(
                 str(len(self._errors)) + ' docs generation issues.')
 
-        with open(outfilename, 'w') as outfile:
+        with open(outfilename, 'w', encoding='utf-8') as outfile:
             outfile.write(self._out)
 
         print(f"Generated docs file: '{Clr.BLU}{outfilename}.{Clr.RST}'")

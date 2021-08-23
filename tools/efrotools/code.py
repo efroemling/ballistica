@@ -198,7 +198,7 @@ def _should_include_script(fnamefull: str) -> bool:
     # Look for 'binary' scripts with no extensions too.
     if not fname.startswith('.') and '.' not in fname:
         try:
-            with open(fnamefull) as infile:
+            with open(fnamefull, encoding='utf-8') as infile:
                 line = infile.readline()
             if '/usr/bin/env python' in line or '/usr/bin/python' in line:
                 return True
@@ -726,7 +726,7 @@ def _run_idea_inspections_cached(cachepath: Path,
     current_hash = md5.hexdigest()
     existing_hash: Optional[str]
     try:
-        with open(cachepath) as infile2:
+        with open(cachepath, encoding='utf-8') as infile2:
             existing_hash = json.loads(infile2.read())['hash']
     except Exception:
         existing_hash = None
@@ -738,7 +738,7 @@ def _run_idea_inspections_cached(cachepath: Path,
                               verbose=verbose,
                               inspectdir=inspectdir)
         cachepath.parent.mkdir(parents=True, exist_ok=True)
-        with open(cachepath, 'w') as outfile:
+        with open(cachepath, 'w', encoding='utf-8') as outfile:
             outfile.write(json.dumps({'hash': current_hash}))
     print(
         f'{Clr.GRN}{displayname}: all {len(filenames)}'

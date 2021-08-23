@@ -16,7 +16,7 @@ def generate(projroot: str) -> None:
     out_path_tmp = out_path + '.md'
 
     # Do some filtering of our raw changelog.
-    with open('CHANGELOG.md') as infile:
+    with open('CHANGELOG.md', encoding='utf-8') as infile:
         lines = infile.read().splitlines()
 
     # Strip out anything marked internal.
@@ -24,7 +24,7 @@ def generate(projroot: str) -> None:
         line for line in lines if not line.strip().startswith('- (internal)')
     ]
 
-    with open(out_path_tmp, 'w') as outfile:
+    with open(out_path_tmp, 'w', encoding='utf-8') as outfile:
         outfile.write('\n'.join(lines))
 
     subprocess.run(f'pandoc -f markdown {out_path_tmp}  > {out_path}',

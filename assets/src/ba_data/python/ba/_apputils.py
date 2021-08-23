@@ -124,7 +124,7 @@ def handle_leftover_log_file() -> None:
         from ba._net import master_server_post
 
         if os.path.exists(_ba.get_log_file_path()):
-            with open(_ba.get_log_file_path()) as infile:
+            with open(_ba.get_log_file_path(), encoding='utf-8') as infile:
                 info = json.loads(infile.read())
             infile.close()
             do_send = should_submit_debug_info()

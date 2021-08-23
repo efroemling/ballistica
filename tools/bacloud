@@ -217,7 +217,7 @@ class App:
         if not os.path.exists(self._state_data_path):
             return
         try:
-            with open(self._state_data_path, 'r') as infile:
+            with open(self._state_data_path, 'r', encoding='utf-8') as infile:
                 self._state = StateData(**json.loads(infile.read()))
         except Exception:
             print(f'{Clr.RED}Error loading {TOOL_NAME} data;'
@@ -226,7 +226,7 @@ class App:
     def _save_state(self) -> None:
         if not self._state_dir.exists():
             self._state_dir.mkdir(parents=True, exist_ok=True)
-        with open(self._state_data_path, 'w') as outfile:
+        with open(self._state_data_path, 'w', encoding='utf-8') as outfile:
             outfile.write(json.dumps(self._state.__dict__))
 
     def _servercmd(self,

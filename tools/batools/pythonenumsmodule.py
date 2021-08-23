@@ -27,7 +27,7 @@ def camel_case_convert(name: str) -> str:
 def _gen_enums(infilename: str) -> str:
     out = ''
     enum_lnums: List[int] = []
-    with open(infilename) as infile:
+    with open(infilename, encoding='utf-8') as infile:
         lines = infile.read().splitlines()
 
     # Tally up all places tagged for exporting python enums.
@@ -150,5 +150,5 @@ def generate(projroot: str, infilename: str, outfilename: str) -> None:
     path = project_centric_path(projroot=projroot, path=outfilename)
     print(f'Meta-building {Clr.BLD}{path}{Clr.RST}')
     os.makedirs(os.path.dirname(outfilename), exist_ok=True)
-    with open(outfilename, 'w') as outfile:
+    with open(outfilename, 'w', encoding='utf-8') as outfile:
         outfile.write(out)

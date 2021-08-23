@@ -124,7 +124,8 @@ def _get_py_targets(src: str, dst: str, py_targets: List[str],
     # lives under this dir.
     meta_targets: List[str] = []
     for mantype in ['public', 'private']:
-        with open(f'src/meta/.meta_manifest_{mantype}.json') as infile:
+        with open(f'src/meta/.meta_manifest_{mantype}.json',
+                  encoding='utf-8') as infile:
             meta_targets += json.loads(infile.read())
     meta_targets = [
         t for t in meta_targets
@@ -282,7 +283,7 @@ def update_assets_makefile(projroot: str, check: bool) -> None:
     assert isinstance(public, bool)
 
     fname = 'assets/Makefile'
-    with open(fname) as infile:
+    with open(fname, encoding='utf-8') as infile:
         original = infile.read()
     lines = original.splitlines()
 
@@ -367,7 +368,7 @@ def update_assets_makefile(projroot: str, check: bool) -> None:
                       f'END COMPARE ========================================')
             sys.exit(255)
         print(f'{Clr.SBLU}Updating: {fname}{Clr.RST}')
-        with open(fname, 'w') as outfile:
+        with open(fname, 'w', encoding='utf-8') as outfile:
             outfile.write(out)
 
     # Lastly, write a simple manifest of the things we expect to have
@@ -387,7 +388,7 @@ def _write_manifest(manifest_path: str, all_targets: Set[str],
     if not os.path.exists(manifest_path):
         existing_manifest = None
     else:
-        with open(manifest_path) as infile:
+        with open(manifest_path, encoding='utf-8') as infile:
             existing_manifest = json.loads(infile.read())
     manifest = sorted(t[13:] for t in all_targets)
     if manifest == existing_manifest:
@@ -398,5 +399,5 @@ def _write_manifest(manifest_path: str, all_targets: Set[str],
                   f" '{manifest_path}'.{Clr.RST}")
             sys.exit(255)
         print(f'{Clr.SBLU}Updating: {manifest_path}{Clr.RST}')
-        with open(manifest_path, 'w') as outfile:
+        with open(manifest_path, 'w', encoding='utf-8') as outfile:
             outfile.write(json.dumps(manifest, indent=1))

@@ -23,7 +23,7 @@ def filter_gradle_file(buildfilename: str, enabled_tags: Set[str]) -> None:
 
     sections: List[GradleFilterSection] = []
 
-    with open(buildfilename) as infile:
+    with open(buildfilename, encoding='utf-8') as infile:
         original = infile.read()
     lines = original.splitlines()
 
@@ -61,5 +61,5 @@ def filter_gradle_file(buildfilename: str, enabled_tags: Set[str]) -> None:
     # Only write if its not changed (potentially avoid triggering builds).
     out = '\n'.join(lines) + '\n'
     if out != original:
-        with open(buildfilename, 'w') as outfile:
+        with open(buildfilename, 'w', encoding='utf-8') as outfile:
             outfile.write(out)

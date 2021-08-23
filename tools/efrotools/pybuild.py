@@ -713,7 +713,8 @@ def gather() -> None:
 
                 # Write a master pyconfig header that reroutes to each
                 # platform's actual header.
-                with open(header_dst + '/pyconfig.h', 'w') as hfile:
+                with open(header_dst + '/pyconfig.h', 'w',
+                          encoding='utf-8') as hfile:
                     hfile.write(
                         '#if BA_OSTYPE_MACOS\n'
                         '#include "pyconfig-macos.h"\n\n'

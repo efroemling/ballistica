@@ -66,7 +66,7 @@ def get_target(path: str) -> None:
 
     path = _project_centric_path(path)
 
-    with open(CACHE_MAP_NAME) as infile:
+    with open(CACHE_MAP_NAME, encoding='utf-8') as infile:
         efrocachemap = json.loads(infile.read())
     if path not in efrocachemap:
         raise RuntimeError(f'Path not found in efrocache: {path}')
@@ -218,7 +218,7 @@ def update_cache(makefile_dirs: List[str]) -> None:
     # is exactly the same as last time we can skip this step.
     hashes = _gen_hashes(fnames1 + fnames2)
     if os.path.isfile(UPLOAD_STATE_CACHE_FILE):
-        with open(UPLOAD_STATE_CACHE_FILE) as infile:
+        with open(UPLOAD_STATE_CACHE_FILE, encoding='utf-8') as infile:
             hashes_existing = infile.read()
     else:
         hashes_existing = ''
@@ -234,7 +234,7 @@ def update_cache(makefile_dirs: List[str]) -> None:
 
     # Write the cache state so we can skip the next run if nothing changes.
     os.makedirs(os.path.dirname(UPLOAD_STATE_CACHE_FILE), exist_ok=True)
-    with open(UPLOAD_STATE_CACHE_FILE, 'w') as outfile:
+    with open(UPLOAD_STATE_CACHE_FILE, 'w', encoding='utf-8') as outfile:
         outfile.write(hashes)
 
 
@@ -352,10 +352,11 @@ def _write_cache_files(fnames1: List[str], fnames2: List[str],
         'subprocess.run(["rm", "-rf", "efrocache", "genstartercache.py"])\n'
         'print("Starter cache generation complete!", flush=True)\n')
 
-    with open('build/efrocache/genstartercache.py', 'w') as outfile:
+    with open('build/efrocache/genstartercache.py', 'w',
+              encoding='utf-8') as outfile:
         outfile.write(script)
 
-    with open(mapping_file, 'w') as outfile:
+    with open(mapping_file, 'w', encoding='utf-8') as outfile:
         outfile.write(json.dumps(mapping, indent=2, sort_keys=True))
 
 
@@ -437,7 +438,7 @@ def warm_start_cache() -> None:
     # each time the cache map changes. It is much more efficient to do
     # it in one go here.
     cachemap: Dict[str, str]
-    with open(CACHE_MAP_NAME) as infile:
+    with open(CACHE_MAP_NAME, encoding='utf-8') as infile:
         cachemap = json.loads(infile.read())
     assert isinstance(cachemap, dict)
     cachemap_mtime = os.path.getmtime(CACHE_MAP_NAME)
